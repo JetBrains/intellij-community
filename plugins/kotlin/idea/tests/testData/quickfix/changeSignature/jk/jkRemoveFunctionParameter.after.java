@@ -1,4 +1,4 @@
-// "Remove 1st parameter from method 'foo'" "true"
+// "Remove 1st parameter from method 'foo()'" "true"
 
 public class J {
     void foo() {

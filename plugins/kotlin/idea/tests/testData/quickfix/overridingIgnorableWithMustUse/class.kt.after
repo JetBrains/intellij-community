@@ -1,6 +1,6 @@
 // "Add '@IgnorableReturnValue' annotation" "true"
 // WITH_STDLIB
-// LANGUAGE_VERSION: 2.2
+// LANGUAGE_VERSION: 2.3
 // COMPILER_ARGUMENTS: -Xreturn-value-checker=full
 
 interface MyInterface {
@@ -8,7 +8,7 @@ interface MyInterface {
     fun foo(): String
 }
 
-@MustUseReturnValue
+@MustUseReturnValues
 class MyClass : MyInterface {
     @IgnorableReturnValue
     override fun <caret>foo(): String = ""

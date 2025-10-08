@@ -219,4 +219,6 @@ open class JBHiDPIScaledImage : BufferedImage {
     }
     return g
   }
+
+  fun createUnscaledGraphics(): Graphics2D = super.createGraphics()
 }

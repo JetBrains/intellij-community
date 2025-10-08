@@ -2,7 +2,6 @@
 package com.jetbrains.python.psi.types;
 
 import com.intellij.openapi.util.*;
-import com.intellij.openapi.util.registry.Registry;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
 import com.intellij.util.ArrayUtil;
@@ -271,16 +270,16 @@ public final class PyTypeChecker {
       return false;
     }
 
-    PyType substituted = context.mySubstitutions.typeVars.get(expected);
+    Ref<PyType> substitutedRef = context.mySubstitutions.typeVars.get(expected);
     Ref<? extends PyType> defaultTypeRef = expected.getDefaultType();
     if (defaultTypeRef != null) {
       PyType defaultType = defaultTypeRef.get();
       // Skip default substitution
-      if (defaultType != null && defaultType.equals(substituted)) {
-        substituted = null;
+      if (defaultType != null && defaultType.equals(Ref.deref(substitutedRef))) {
+        substitutedRef = null;
       }
     }
-    final PyType substitution = substituted;
+    final PyType substitution = Ref.deref(substitutedRef);
     PyType bound = expected.getBound();
     List<@Nullable PyType> constraints = expected.getConstraints();
     int matchedConstraintIndex = -1;
@@ -306,8 +305,8 @@ public final class PyTypeChecker {
       }
     }
 
-    if (substitution != null) {
-      if (expected.equals(safeActual) || substitution.equals(expected)) {
+    if (substitutedRef != null) {
+      if (expected.equals(safeActual) || expected.equals(substitution)) {
         return true;
       }
 
@@ -321,12 +320,12 @@ public final class PyTypeChecker {
 
     if (safeActual != null) {
       PyType type = constraints.isEmpty() ? safeActual : constraints.get(matchedConstraintIndex);
-      context.mySubstitutions.typeVars.put(expected, type);
+      context.mySubstitutions.typeVars.put(expected, Ref.create(type));
     }
     else {
       PyType effectiveBound = PyTypeUtil.getEffectiveBound(expected);
       if (effectiveBound != null) {
-        context.mySubstitutions.typeVars.put(expected, PyUnionType.createWeakType(effectiveBound));
+        context.mySubstitutions.typeVars.put(expected, Ref.create(PyUnionType.createWeakType(effectiveBound)));
       }
     }
 
@@ -569,27 +568,6 @@ public final class PyTypeChecker {
       return Optional.of(true);
     }
     return Optional.empty();
-  }
-
-  public static boolean sameType(@Nullable PyType type1, @Nullable PyType type2, @NotNull TypeEvalContext context) {
-    if ((type1 == null || type2 == null) && type1 != type2) return false;
-
-    return match(type1, type2, context)
-           && match(type2, type1, context);
-  }
-
-  /**
-   * if some possible value of one type is assignable to the other type
-   */
-  public static boolean overlappingTypes(@Nullable PyType type1, @Nullable PyType type2, @NotNull TypeEvalContext context) {
-    if (type1 instanceof PyUnionType unionType1) {
-      return ContainerUtil.exists(unionType1.getMembers(), t -> overlappingTypes(t, type2, context));
-    }
-    if (type2 instanceof PyUnionType unionType2) {
-      return ContainerUtil.exists(unionType2.getMembers(), t -> overlappingTypes(type1, t, context));
-    }
-    return match(type1, type2, context)
-           || match(type2, type1, context);
   }
 
   private static boolean matchProtocols(@NotNull PyClassType expected, @NotNull PyClassType actual, @NotNull MatchContext matchContext) {
@@ -955,7 +933,7 @@ public final class PyTypeChecker {
       Map<PyType, PyType> substitutionsFromClassDefinition = provider.getGenericSubstitutions(classType.getPyClass(), context);
       for (Map.Entry<PyType, PyType> entry : substitutionsFromClassDefinition.entrySet()) {
         if (entry.getKey() instanceof PyTypeVarType typeVarType) {
-          result.typeVars.put(typeVarType, entry.getValue());
+          result.typeVars.put(typeVarType, Ref.create(entry.getValue()));
         }
         else if (entry.getKey() instanceof PyTypeVarTupleType typeVarTuple) {
           assert entry.getValue() instanceof PyPositionalVariadicType;
@@ -1113,7 +1091,7 @@ public final class PyTypeChecker {
       boolean isAlreadyBound = existingSubstitutions.typeVars.containsKey(returnTypeParam) ||
                                existingSubstitutions.typeVars.containsKey(invert(returnTypeParam));
       if (canGetBoundFromArguments && !isAlreadyBound) {
-        existingSubstitutions.typeVars.put(returnTypeParam, Ref.deref(returnTypeParam.getDefaultType()));
+        existingSubstitutions.typeVars.put(returnTypeParam, (Ref<PyType>)returnTypeParam.getDefaultType());
       }
     }
     for (PyParamSpecType paramSpecType : typeParamsFromReturnType.paramSpecs) {
@@ -1245,10 +1223,11 @@ public final class PyTypeChecker {
           }
           return typeVarType;
         }
-        PyType substitution = substitutions.typeVars.get(typeVarType);
-        if (substitution == null) {
+        Ref<PyType> substitutionRef = substitutions.typeVars.get(typeVarType);
+        PyType substitution = Ref.deref(substitutionRef);
+        if (substitutionRef == null) {
           final PyInstantiableType<?> invertedTypeVar = invert(typeVarType);
-          final PyInstantiableType<?> invertedSubstitution = as(substitutions.typeVars.get(invertedTypeVar), PyInstantiableType.class);
+          final PyInstantiableType<?> invertedSubstitution = as(Ref.deref(substitutions.typeVars.get(invertedTypeVar)), PyInstantiableType.class);
           if (invertedSubstitution != null) {
             substitution = invert(invertedSubstitution);
           }
@@ -1569,7 +1548,7 @@ public final class PyTypeChecker {
         .select(PyClassType.class)
         .map(type -> collectTypeSubstitutions(type, context))
         .forEach(newSubstitutions -> {
-          for (Map.Entry<PyTypeVarType, PyType> typeVarMapping : newSubstitutions.typeVars.entrySet()) {
+          for (Map.Entry<PyTypeVarType, Ref<PyType>> typeVarMapping : newSubstitutions.typeVars.entrySet()) {
             substitutions.typeVars.putIfAbsent(typeVarMapping.getKey(), typeVarMapping.getValue());
           }
           for (Map.Entry<PyTypeVarTupleType, PyPositionalVariadicType> typeVarMapping : newSubstitutions.typeVarTuples.entrySet()) {
@@ -1759,7 +1738,7 @@ public final class PyTypeChecker {
     if (mapping != null) {
       for (Couple<PyType> pair : mapping.getMappedTypes()) {
         if (pair.getFirst() instanceof PyTypeVarType typeVar) {
-          substitutions.typeVars.put(typeVar, pair.getSecond());
+          substitutions.typeVars.put(typeVar, Ref.create(pair.getSecond()));
         }
         else if (pair.getFirst() instanceof PyTypeVarTupleType typeVarTuple) {
           substitutions.typeVarTuples.put(typeVarTuple, as(pair.getSecond(), PyPositionalVariadicType.class));
@@ -1827,11 +1806,13 @@ public final class PyTypeChecker {
 
   @ApiStatus.Experimental
   public static class GenericSubstitutions {
-    private final @NotNull Map<PyTypeVarType, PyType> typeVars;
+    
+    // Nullable-Nullable because of com.jetbrains.python.psi.types.PyTypeChecker.collectTypeSubstitutions
+    private final @NotNull Map<PyTypeVarType, @Nullable Ref<@Nullable PyType>> typeVars;
 
-    private final @NotNull Map<PyTypeVarTupleType, PyPositionalVariadicType> typeVarTuples;
+    private final @NotNull Map<PyTypeVarTupleType, @Nullable PyPositionalVariadicType> typeVarTuples;
 
-    private final @NotNull Map<PyParamSpecType, PyCallableParameterVariadicType> paramSpecs;
+    private final @NotNull Map<PyParamSpecType, @Nullable PyCallableParameterVariadicType> paramSpecs;
 
     private @Nullable PyType qualifierType;
 
@@ -1839,6 +1820,7 @@ public final class PyTypeChecker {
       this(
         EntryStream.of(typeParameters)
           .selectKeys(PyTypeVarType.class)
+          .mapValues(Ref::create)
           .toCustomMap(LinkedHashMap::new),
         EntryStream.of(typeParameters)
           .selectKeys(PyTypeVarTupleType.class)
@@ -1856,7 +1838,7 @@ public final class PyTypeChecker {
       this(new LinkedHashMap<>(), new LinkedHashMap<>(), new LinkedHashMap<>(), null);
     }
 
-    private GenericSubstitutions(@NotNull Map<PyTypeVarType, PyType> typeVars,
+    private GenericSubstitutions(@NotNull Map<PyTypeVarType, Ref<PyType>> typeVars,
                                  @NotNull Map<PyTypeVarTupleType, PyPositionalVariadicType> typeVarTuples,
                                  @NotNull Map<PyParamSpecType, PyCallableParameterVariadicType> paramSpecs,
                                  @Nullable PyType qualifierType) {
@@ -1870,7 +1852,7 @@ public final class PyTypeChecker {
       return Collections.unmodifiableMap(paramSpecs);
     }
 
-    public @NotNull Map<PyTypeVarType, PyType> getTypeVars() {
+    public @NotNull Map<PyTypeVarType, Ref<PyType>> getTypeVars() {
       return Collections.unmodifiableMap(typeVars);
     }
 

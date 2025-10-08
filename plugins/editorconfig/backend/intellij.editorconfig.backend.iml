@@ -49,8 +49,8 @@
     <orderEntry type="module" module-name="intellij.platform.projectModel" />
     <orderEntry type="module" module-name="intellij.platform.refactoring" />
     <orderEntry type="module" module-name="intellij.platform.testFramework" scope="TEST" />
-    <orderEntry type="library" name="kotlin-reflect" level="project" />
-    <orderEntry type="library" name="gson" level="project" />
+    <orderEntry type="module" module-name="intellij.libraries.kotlin.reflect" />
+    <orderEntry type="module" module-name="intellij.libraries.gson" />
     <orderEntry type="module" module-name="intellij.spellchecker" />
     <orderEntry type="module" module-name="intellij.platform.indexing.impl" />
     <orderEntry type="library" name="automaton" level="project" />
@@ -62,7 +62,7 @@
     <orderEntry type="library" name="ec4j-core" level="project" />
     <orderEntry type="module" module-name="intellij.tools.ide.metrics.benchmark" scope="TEST" />
     <orderEntry type="module" module-name="intellij.platform.settings" />
-    <orderEntry type="library" name="kotlinx-serialization-core" level="project" />
+    <orderEntry type="module" module-name="intellij.libraries.kotlinx.serialization.core" />
     <orderEntry type="module" module-name="intellij.editorconfig.common" />
     <orderEntry type="module" module-name="intellij.platform.backend" />
   </component>

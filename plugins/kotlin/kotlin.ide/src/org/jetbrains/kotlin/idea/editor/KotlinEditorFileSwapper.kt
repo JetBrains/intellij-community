@@ -7,6 +7,7 @@ import com.intellij.openapi.fileEditor.impl.EditorFileSwapper
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.psi.PsiManager
+import com.intellij.psi.PsiNameIdentifierOwner
 import com.intellij.psi.util.PsiTreeUtil
 import org.jetbrains.kotlin.analysis.decompiler.psi.file.KtDecompiledFile
 import org.jetbrains.kotlin.psi.KotlinDeclarationNavigationPolicy
@@ -46,8 +47,16 @@ class KotlinEditorFileSwapper : EditorFileSwapper {
 
     private fun getCursorPosition(originalOffset: Int, decompiledFile: KtDecompiledFile): Int {
         val cursor = decompiledFile.navigationElement.findElementAt(originalOffset) ?: return 0
-        val declarationInSources = PsiTreeUtil.getParentOfType(cursor, KtDeclaration::class.java, false)?.let {
+        val declaration = PsiTreeUtil.getParentOfType(cursor, KtDeclaration::class.java, false)
+        val declarationInSources = declaration?.let {
             serviceOrNull<KotlinDeclarationNavigationPolicy>()?.getNavigationElement(it)
+        }
+        if (declaration != null && declarationInSources != null &&
+            declaration is PsiNameIdentifierOwner &&
+            declaration.nameIdentifier?.textRange?.endOffset == originalOffset &&
+            declarationInSources is PsiNameIdentifierOwner
+        ) {
+            return declarationInSources.textOffset + (declaration.nameIdentifier?.textLength ?: 0)
         }
         return declarationInSources?.textOffset ?: 0
     }

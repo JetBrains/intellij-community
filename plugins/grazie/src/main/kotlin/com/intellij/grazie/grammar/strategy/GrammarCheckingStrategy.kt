@@ -10,7 +10,6 @@ import com.intellij.grazie.grammar.strategy.GrammarCheckingStrategy.TextDomain.*
 import com.intellij.grazie.grammar.strategy.impl.ReplaceCharRule
 import com.intellij.grazie.grammar.strategy.impl.RuleGroup
 import com.intellij.grazie.utils.LinkedSet
-import com.intellij.grazie.utils.orTrue
 import com.intellij.lang.Language
 import com.intellij.lang.LanguageParserDefinitions
 import com.intellij.lang.ParserDefinition
@@ -140,7 +139,7 @@ interface GrammarCheckingStrategy {
    *
    * @return true if enabled else false
    */
-  fun isEnabledByDefault(): Boolean = !GraziePlugin.isBundled || ApplicationManager.getApplication()?.isUnitTestMode.orTrue()
+  fun isEnabledByDefault(): Boolean = !GraziePlugin.isBundled || ApplicationManager.getApplication()?.isUnitTestMode ?: true
 
   /**
    * Determine root PsiElement domain @see [TextDomain].

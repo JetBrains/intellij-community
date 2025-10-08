@@ -74,7 +74,7 @@ Navigation item file #0: kotlin-stdlib.jar!/kotlin/annotation/AnnotationTarget.c
      Lazy
      LazyThreadSafetyMode
      Metadata
-     MustUseReturnValue
+     MustUseReturnValues
      NotImplementedError
      NoWhenBranchMatchedException
      OptIn

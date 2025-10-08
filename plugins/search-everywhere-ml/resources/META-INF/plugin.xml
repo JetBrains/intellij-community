@@ -16,7 +16,9 @@
   <dependencies>
     <module name="intellij.json.backend"/>
   </dependencies>
-  <content>
+  <content namespace="jetbrains">
+    <module name="intellij.platform.ml.logs"/>
+
     <module name="intellij.searchEverywhereMl.typos"/>
     <module name="intellij.searchEverywhereMl.ranking.ext"/>
     <module name="intellij.searchEverywhereMl.ranking.core"/>

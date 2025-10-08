@@ -1,4 +1,4 @@
-<idea-plugin package="org.jetbrains.idea.devkit">
+<idea-plugin visibility="public" package="org.jetbrains.idea.devkit">
   <dependencies>
     <plugin id="com.intellij.properties"/>
     <plugin id="com.intellij.java"/>
@@ -44,7 +44,7 @@
 
     <dom.fileMetaData implementation="org.jetbrains.idea.devkit.dom.impl.PluginDescriptorDomFileDescription"
                       rootTagName="idea-plugin"
-                      stubVersion="19"/>
+                      stubVersion="20"/>
     <dom.extender domClass="org.jetbrains.idea.devkit.dom.Extensions"
                   extenderClass="org.jetbrains.idea.devkit.dom.impl.ExtensionsDomExtender"/>
     <dom.extender domClass="org.jetbrains.idea.devkit.dom.Action"
@@ -532,9 +532,16 @@
                      language="XML" applyToDialects="false"
                      projectType="INTELLIJ_PLUGIN"
                      groupPathKey="inspections.group.path" groupKey="inspections.group.descriptor"
-                     enabledByDefault="false" level="ERROR"
+                     enabledByDefault="true" level="ERROR"
                      implementationClass="org.jetbrains.idea.devkit.inspections.ModuleNotRegisteredAsPluginContentInspection"
                      key="inspection.module.not.registered.as.plugin.content.name"/>
+
+    <localInspection language="XML" applyToDialects="false"
+                     projectType="INTELLIJ_PLUGIN"
+                     groupPathKey="inspections.group.path" groupKey="inspections.group.descriptor"
+                     enabledByDefault="true" level="ERROR"
+                     implementationClass="org.jetbrains.idea.devkit.inspections.ContentModuleNamespaceInspection"
+                     key="inspection.content.module.namespace.name"/>
 
     <moduleConfigurationEditorProvider implementation="org.jetbrains.idea.devkit.module.PluginModuleEditorsProvider"/>
     <implicitUsageProvider implementation="org.jetbrains.idea.devkit.inspections.DevKitImplicitUsageProvider"/>
@@ -679,8 +686,6 @@
     <registryKey key="tmh.generate.line.numbers" defaultValue="true"
                  description="Generate line numbers when instrumenting @RequiresEdt and similar annotations.
                  This results in better stack traces when generated assertions throw exceptions, but might slow down the compilation."/>
-    <registryKey key="kotlin.commit.message.validation.enabled" defaultValue="true"
-                 description="Enables commit messages validation for Kotlin plugin"/>
     <registryKey key="kotlin.notebook.commit.message.validation.enabled" defaultValue="true"
                  description="Enables commit messages validation for Kotlin Notebook plugin"/>
     <registryKey key="kotlin.build.tools.code.ownership.commit.message.enabled" defaultValue="true"
@@ -697,10 +702,8 @@
     <registryKey key="devkit.inlay.threading" defaultValue="false"
                  description="Experimental inlays for Threading Annotations"/>
 
-    <registryKey key="intellij.commit.message.validation.enabled" defaultValue="false"
-                 description="Enables commit messages validation for intellij project"/>
-    <registryKey key="intellij.platform.commit.message.validation.enabled" defaultValue="false"
-                 description="Enables commit messages validation for IntelliJ Platform"/>
+    <registryKey key="intellij.monorepo.commit.message.validation.enabled" defaultValue="true"
+                 description="Enables commit messages validation for IntelliJ Monorepo"/>
     <registryKey key="aia.commit.message.validation.enabled" defaultValue="true"
                  description="Enables commit messages validation for AI Assistant project"/>
 

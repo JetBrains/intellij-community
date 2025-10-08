@@ -1,5 +1,5 @@
 // "Typo: Change to..." "false"
-// TOOL: com.intellij.spellchecker.inspections.SpellCheckingInspection
+// TOOL: com.intellij.grazie.spellcheck.GrazieSpellCheckingInspection
 // ACTION: Convert property initializer to getter
 // ACTION: Convert to 'buildString' call
 // ACTION: Convert to lazy property

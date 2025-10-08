@@ -15,7 +15,7 @@ jvm_library(
   deps = [
     "//plugins/kotlin/plugin/k2",
     "@lib//:kotlin-stdlib",
-    "@lib//:kotlin-reflect",
+    "//libraries/kotlin-reflect",
     "@lib//:kotlinc-kotlin-compiler-common",
     "@lib//:kotlinc-analysis-api",
     "@lib//:kotlinc-kotlin-compiler-tests",

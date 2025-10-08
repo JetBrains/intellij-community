@@ -1,9 +1,9 @@
 ### auto-generated section `build intellij.markdown` start
-load("@rules_jvm//:jvm.bzl", "jvm_library", "jvm_resources")
+load("@rules_jvm//:jvm.bzl", "jvm_library", "resourcegroup")
 
-jvm_resources(
+resourcegroup(
   name = "markdown_resources",
-  files = glob(["resources/**/*"]),
+  srcs = glob(["resources/**/*"]),
   strip_prefix = "resources"
 )
 
@@ -12,6 +12,7 @@ jvm_library(
   module_name = "intellij.markdown",
   visibility = ["//visibility:public"],
   srcs = glob(["gen/**/*.kt", "gen/**/*.java", "src/**/*.kt", "src/**/*.java", "src/**/*.form"], allow_empty = True),
+  resources = [":markdown_resources"],
   deps = [
     "//platform/analysis-api:analysis",
     "//platform/code-style-api:codeStyle",
@@ -22,7 +23,7 @@ jvm_library(
     "//platform/lang-impl",
     "//platform/markdown-utils",
     "//platform/built-in-server-api:builtInServer",
-    "@lib//:guava",
+    "//libraries/guava",
     "//platform/indexing-impl",
     "//platform/analysis-impl",
     "//platform/platform-impl:ide-impl",
@@ -41,11 +42,11 @@ jvm_library(
     "@lib//:jetbrains-markdown",
     "//platform/platform-util-io:ide-util-io",
     "//platform/platform-util-netty:ide-util-netty",
-    "@lib//:jackson",
-    "@lib//:jackson-databind",
-    "@lib//:jackson-module-kotlin",
+    "//libraries/jackson/jackson",
+    "//libraries/jackson/databind",
+    "//libraries/jackson/module-kotlin:libraries-jackson-module-kotlin",
     "//platform/execution-impl",
-    "@lib//:miglayout-swing",
+    "//libraries/miglayout-swing",
     "//platform/platform-api:ide",
     "//platform/statistics",
     "//platform/structure-view-impl:structureView-impl",
@@ -53,16 +54,15 @@ jvm_library(
     "@lib//:kotlinx-coroutines-core",
     "//platform/diagnostic",
     "//platform/util/coroutines",
-    "@lib//:caffeine",
+    "//libraries/caffeine",
     "//platform/ui.jcef",
     "@lib//:kotlin-stdlib",
     "//platform/project/shared:project",
-    "@lib//:kotlinx-serialization-core",
-    "@lib//:kotlinx-serialization-json",
+    "//libraries/kotlinx/serialization/core",
+    "//libraries/kotlinx/serialization/json",
     "//platform/kernel/shared:kernel",
     "//platform/platform-impl/rpc",
   ],
-  exports = ["//platform/ui.jcef"],
-  runtime_deps = [":markdown_resources"]
+  exports = ["//platform/ui.jcef"]
 )
 ### auto-generated section `build intellij.markdown` end

@@ -1,8 +1,10 @@
 // Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.remoteServer.impl.configuration;
 
+import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.remoteServer.ServerType;
 import com.intellij.remoteServer.configuration.RemoteServer;
+import com.intellij.remoteServer.configuration.RemoteServerListener;
 import com.intellij.remoteServer.configuration.ServerConfiguration;
 import org.jetbrains.annotations.NotNull;
 
@@ -39,6 +41,7 @@ public class RemoteServerImpl<C extends ServerConfiguration> implements RemoteSe
   @Override
   public void setName(String name) {
     myName = name;
+    ApplicationManager.getApplication().getMessageBus().syncPublisher(RemoteServerListener.TOPIC).serverChanged(this);
   }
 
   @Override

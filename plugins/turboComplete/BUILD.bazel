@@ -1,9 +1,9 @@
 ### auto-generated section `build intellij.turboComplete` start
-load("@rules_jvm//:jvm.bzl", "jvm_library", "jvm_resources")
+load("@rules_jvm//:jvm.bzl", "jvm_library", "resourcegroup")
 
-jvm_resources(
+resourcegroup(
   name = "turboComplete_resources",
-  files = glob(["resources/**/*"]),
+  srcs = glob(["resources/**/*"]),
   strip_prefix = "resources"
 )
 
@@ -12,6 +12,7 @@ jvm_library(
   module_name = "intellij.turboComplete",
   visibility = ["//visibility:public"],
   srcs = glob(["src/**/*.kt", "src/**/*.java", "src/**/*.form"], allow_empty = True),
+  resources = [":turboComplete_resources"],
   deps = [
     "@lib//:kotlin-stdlib",
     "//platform/analysis-api:analysis",
@@ -27,8 +28,7 @@ jvm_library(
     "//platform/ml-impl",
     "//platform/platform-impl/internal",
     "//platform/ml-api:ml",
-  ],
-  runtime_deps = [":turboComplete_resources"]
+  ]
 )
 ### auto-generated section `build intellij.turboComplete` end
 

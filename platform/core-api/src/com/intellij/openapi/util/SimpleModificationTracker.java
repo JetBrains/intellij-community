@@ -20,6 +20,8 @@ import com.intellij.util.xmlb.annotations.Transient;
 import java.util.concurrent.atomic.AtomicLongFieldUpdater;
 
 /**
+ * A simple implementation of {@link ModificationTracker}.
+ *
  * @author Max Medvedev
  */
 @Transient

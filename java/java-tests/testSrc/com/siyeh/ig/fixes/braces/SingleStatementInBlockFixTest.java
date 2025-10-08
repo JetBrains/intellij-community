@@ -39,6 +39,7 @@ public class SingleStatementInBlockFixTest extends IGQuickFixesTestCase {
   public void testIncompleteIf() { assertQuickfixNotAvailable(getMessage("for")); }
   public void testNestedFor() { assertQuickfixNotAvailable(getMessage("for")); }
   public void testNestedFor2() { doTest("for"); }
+  public void testFixAll() { super.doTest("Fix all 'Code block contains single statement' problems in file");}
   public void testHighlighting() {
     myFixture.configureByText("Test.java", """
       class X {

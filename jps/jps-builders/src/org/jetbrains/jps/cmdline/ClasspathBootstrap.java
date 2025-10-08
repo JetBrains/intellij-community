@@ -6,6 +6,7 @@ import com.github.benmanes.caffeine.cache.Caffeine;
 import com.google.gson.Gson;
 import com.google.protobuf.Message;
 import com.intellij.compiler.notNullVerification.NotNullVerifyingInstrumenter;
+import com.intellij.openapi.application.ArchivedCompilationContextUtil;
 import com.intellij.openapi.application.ClassPathUtil;
 import com.intellij.openapi.application.PathManager;
 import com.intellij.openapi.diagnostic.Logger;
@@ -304,8 +305,8 @@ public final class ClasspathBootstrap {
       return Arrays.asList(instrumentationUtilPath, new File(instrumentationUtil.getParentFile(), "intellij.java.compiler.instrumentationUtil.java8").getAbsolutePath());
     }
     else {
-      var relevantJarsRoot = PathManager.getArchivedCompliedClassesLocation();
-      Map<String, String> mapping = PathManager.getArchivedCompiledClassesMapping();
+      var relevantJarsRoot = ArchivedCompilationContextUtil.getArchivedCompiledClassesLocation();
+      Map<String, String> mapping = ArchivedCompilationContextUtil.getArchivedCompiledClassesMapping();
       if (relevantJarsRoot != null && mapping != null && instrumentationUtilPath.startsWith(relevantJarsRoot)) {
         return Arrays.asList(instrumentationUtilPath, mapping.get("production/intellij.java.compiler.instrumentationUtil.java8"));
       }

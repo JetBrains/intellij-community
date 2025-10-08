@@ -462,12 +462,7 @@ public final class JavaFormatterUtil {
   }
 
   private static boolean isModifierListWithSingleAnnotation(@NotNull ASTNode elem) {
-    if (elem.getPsi() instanceof PsiModifierList) {
-      if (((PsiModifierList)elem.getPsi()).getAnnotations().length == 1) {
-        return true;
-      }
-    }
-    return false;
+    return elem.getPsi() instanceof PsiModifierList modifierList && modifierList.getAnnotations().length == 1;
   }
 
   private static int getAnnotationWrapType(ASTNode parent,

@@ -1,9 +1,9 @@
 ### auto-generated section `build intellij.devkit.themes` start
-load("@rules_jvm//:jvm.bzl", "jvm_library", "jvm_resources")
+load("@rules_jvm//:jvm.bzl", "jvm_library", "resourcegroup")
 
-jvm_resources(
+resourcegroup(
   name = "themes_resources",
-  files = glob(["resources/**/*"]),
+  srcs = glob(["resources/**/*"]),
   strip_prefix = "resources"
 )
 
@@ -12,13 +12,14 @@ jvm_library(
   module_name = "intellij.devkit.themes",
   visibility = ["//visibility:public"],
   srcs = glob(["src/**/*.kt", "src/**/*.java", "src/**/*.form"], allow_empty = True),
+  resources = [":themes_resources"],
   deps = [
     "//platform/analysis-api:analysis",
     "//json/backend",
     "//platform/core-api:core",
     "//platform/editor-ui-api:editor-ui",
     "//platform/platform-impl:ide-impl",
-    "@lib//:guava",
+    "//libraries/guava",
     "//jps/model-api:model",
     "//platform/lang-core",
     "//platform/projectModel-api:projectModel",
@@ -32,8 +33,7 @@ jvm_library(
     "//xml/xml-psi-api:psi",
     "//xml/dom-openapi:dom",
     "//platform/core-ui",
-  ],
-  runtime_deps = [":themes_resources"]
+  ]
 )
 
 jvm_library(
@@ -47,7 +47,7 @@ jvm_library(
     "//platform/core-api:core",
     "//platform/editor-ui-api:editor-ui",
     "//platform/platform-impl:ide-impl",
-    "@lib//:guava",
+    "//libraries/guava",
     "//jps/model-api:model",
     "//platform/lang-core",
     "//platform/projectModel-api:projectModel",
@@ -65,8 +65,7 @@ jvm_library(
     "//xml/dom-openapi:dom",
     "//java/testFramework",
     "//platform/core-ui",
-  ],
-  runtime_deps = [":themes_resources"]
+  ]
 )
 ### auto-generated section `build intellij.devkit.themes` end
 

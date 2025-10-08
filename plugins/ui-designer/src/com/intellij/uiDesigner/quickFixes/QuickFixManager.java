@@ -296,7 +296,7 @@ public abstract class QuickFixManager <T extends JComponent>{
       if (!myEditor.ensureEditable()) return;
       myEditor.getRootContainer().suppressInspection(myInspectionId, myComponent);
       myEditor.refreshAndSave(true);
-      DaemonCodeAnalyzer.getInstance(myEditor.getProject()).restart();
+      DaemonCodeAnalyzer.getInstance(myEditor.getProject()).restart(this);
     }
   }
 

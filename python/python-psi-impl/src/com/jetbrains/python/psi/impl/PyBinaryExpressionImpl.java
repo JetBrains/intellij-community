@@ -2,9 +2,11 @@
 package com.jetbrains.python.psi.impl;
 
 import com.intellij.lang.ASTNode;
+import com.intellij.openapi.util.Ref;
 import com.intellij.psi.PsiPolyVariantReference;
 import com.intellij.util.IncorrectOperationException;
 import com.jetbrains.python.PyNames;
+import com.jetbrains.python.codeInsight.controlflow.PyTypeAssertionEvaluator;
 import com.jetbrains.python.psi.PyBinaryExpression;
 import com.jetbrains.python.psi.PyElementVisitor;
 import com.jetbrains.python.psi.PyExpression;
@@ -53,13 +55,18 @@ public class PyBinaryExpressionImpl extends PyElementImpl implements PyBinaryExp
 
   @Override
   public @Nullable PyType getType(@NotNull TypeEvalContext context, @NotNull TypeEvalContext.Key key) {
-    if (isOperator("and") || isOperator("or")) {
+    if (isOperator(PyNames.AND) || isOperator(PyNames.OR)) {
       final PyExpression left = getLeftExpression();
-      final PyType leftType = left != null ? context.getType(left) : null;
+      PyType leftType = left != null ? context.getType(left) : null;
       final PyExpression right = getRightExpression();
       final PyType rightType = right != null ? context.getType(right) : null;
       if (leftType == null && rightType == null) {
         return null;
+      }
+      if (isOperator(PyNames.OR)) {
+        // TODO: also exclude Literal[False, 0, ""]
+        leftType = Ref.deref(PyTypeAssertionEvaluator.createAssertionType(
+          leftType, PyBuiltinCache.getInstance(this).getNoneType(), false, true, context));
       }
       return PyUnionType.union(leftType, rightType);
     }

@@ -6,12 +6,23 @@ import org.jetbrains.annotations.NonNls
 import java.io.ByteArrayOutputStream
 import java.nio.charset.StandardCharsets
 
+/**
+ * Represents Git objects with both their raw body and parsed components.
+ * All objects are immutable and uniquely identified by their OID --
+ * a hash that depends on the body and object type.
+ * Each object has a [persisted] field that indicates whether it was
+ * explicitly persisted to the repository (this may be a false negative).
+ */
 internal sealed class GitObject {
   abstract val body: ByteArray
   abstract val oid: Oid
   abstract val type: GitObjectType
   abstract var persisted: Boolean
 
+  /**
+   * List of OIDs that this object references and that must exist
+   * in the repository before this object can be persisted
+   */
   open val dependencies: List<Oid> = listOf()
 
   override fun equals(other: Any?): Boolean {
@@ -30,7 +41,8 @@ internal sealed class GitObject {
     val parentsOids: List<Oid>,
     val treeOid: Oid,
     val message: ByteArray,
-    val gpgSignature: ByteArray?,
+    @Suppress("unused")
+    val gpgSignature: ByteArray?, // Will be used if we switch to git hash-object to create commits
   ) : GitObject() {
     override val type: GitObjectType = GitObjectType.COMMIT
     override var persisted: Boolean = false
@@ -99,17 +111,17 @@ internal sealed class GitObject {
         val gpgSignature: ByteArray?,
       )
 
-      /*
-      tree 6492093528503dd98e257825304e5beeb1d51f23
-      parent 2d5ec84702d59b06b01a85a0742de56ddcfdd1de
-      author John Doe <john.doe@example.com> 1753105582 +0200
-      committer John Doe <john.doe@example.com> 1753185710 +0200
-      gpgsig -----BEGIN PGP SIGNATURE-----
-
-       (lines of the signature, each with a leading space...)
-       -----END PGP SIGNATURE-----
-
-      Implement feature
+      /**
+       * tree 6492093528503dd98e257825304e5beeb1d51f23
+       * parent 2d5ec84702d59b06b01a85a0742de56ddcfdd1de
+       * author John Doe <john.doe@example.com> 1753105582 +0200
+       * committer John Doe <john.doe@example.com> 1753185710 +0200
+       * gpgsig -----BEGIN PGP SIGNATURE-----
+       *
+       *  (lines of the signature, each with a leading space...)
+       *  -----END PGP SIGNATURE-----
+       *
+       * Implement feature
        */
       fun parseBody(body: ByteArray): ParsedData {
         val bodyString = body.toString(Charsets.UTF_8)
@@ -243,6 +255,10 @@ internal sealed class GitObject {
     )
 
     companion object {
+      /**
+       * Each entry: mode + space + name + null byte + 20-byte SHA-1 hash
+       * There is no separator between entries.
+       */
       fun parseBody(body: ByteArray): Map<FileName, Entry> {
         val entries = mutableMapOf<FileName, Entry>()
         var ptr = 0
@@ -267,6 +283,8 @@ internal sealed class GitObject {
       }
 
       fun buildBody(entries: Map<FileName, Entry>): ByteArray {
+        // Sort entries according to Git's tree object sorting rules:
+        // Directories are sorted as if they have a trailing slash.
         val sortedEntries = entries.entries
           .sortedWith { entry1, entry2 ->
             val name1 = entry1.key.value

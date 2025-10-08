@@ -7,6 +7,7 @@ import com.intellij.lexer.MergingLexerAdapterBase;
 import com.intellij.psi.JavaTokenType;
 import com.intellij.psi.TokenType;
 import com.intellij.psi.tree.IElementType;
+import org.jetbrains.annotations.ApiStatus;
 
 /**
  * Lexer to wrap around the Java Lexer when parsing Java types for the markdown JavaDoc (JEP-467)
@@ -18,6 +19,7 @@ import com.intellij.psi.tree.IElementType;
  *             See {@link com.intellij.java.syntax.parser.JavaParser}
  */
 @Deprecated
+@ApiStatus.ScheduledForRemoval
 public class JavaTypeEscapeLexer extends MergingLexerAdapterBase {
   private final MergeFunction myMergeFunction = new EscapeMarkdownFunction();
 

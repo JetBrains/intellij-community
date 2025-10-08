@@ -22,15 +22,13 @@ object JdkDownloader {
   }
 
   suspend fun getJdkHome(communityRoot: BuildDependenciesCommunityRoot, jdkBuildNumber: String? = null, variation: String? = null, infoLog: (String) -> Unit): Path {
-    val isMusl = isLinuxMusl()
     return getJdkHome(
       communityRoot = communityRoot,
       os = OS.current,
       arch = Arch.current,
-      isMusl = isMusl,
       infoLog = infoLog,
       jdkBuildNumber = jdkBuildNumber,
-      variation = if (isMusl) null else variation
+      variation = variation
     )
   }
 

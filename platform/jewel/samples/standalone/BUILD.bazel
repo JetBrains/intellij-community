@@ -1,6 +1,6 @@
 ### auto-generated section `build intellij.platform.jewel.samples.standalone` start
 load("//build:compiler-options.bzl", "create_kotlinc_options")
-load("@rules_jvm//:jvm.bzl", "jvm_library", "jvm_resources")
+load("@rules_jvm//:jvm.bzl", "jvm_library", "resourcegroup")
 
 create_kotlinc_options(
   name = "custom_standalone",
@@ -10,13 +10,14 @@ create_kotlinc_options(
     "org.jetbrains.jewel.foundation.ExperimentalJewelApi",
     "org.jetbrains.jewel.foundation.InternalJewelApi",
   ],
-  x_context_receivers = True,
+  plugin_options = ["plugin:androidx.compose.compiler.plugins.kotlin:generateFunctionKeyMetaAnnotations=true"],
+  x_context_parameters = True,
   x_explicit_api_mode = "strict"
 )
 
-jvm_resources(
+resourcegroup(
   name = "standalone_resources",
-  files = glob(["src/main/resources/**/*"]),
+  srcs = glob(["src/main/resources/**/*"]),
   strip_prefix = "src/main/resources"
 )
 
@@ -25,13 +26,12 @@ jvm_library(
   module_name = "intellij.platform.jewel.samples.standalone",
   visibility = ["//visibility:public"],
   srcs = glob(["src/main/kotlin/**/*.kt", "src/main/kotlin/**/*.java", "src/main/kotlin/**/*.form"], allow_empty = True),
+  resources = [":standalone_resources"],
   kotlinc_opts = ":custom_standalone",
   deps = [
     "@lib//:kotlin-stdlib",
     "@lib//:kotlinx-coroutines-core",
     "@lib//:jetbrains-annotations",
-    "@lib//:platform-jewel-samples-standalone-com-darkrockstudios-mpfilepicker",
-    "@lib//:platform-jewel-samples-standalone-com-darkrockstudios-mpfilepicker-jvm",
     "//platform/jewel/markdown/extensions/autolink",
     "//platform/jewel/ui",
     "//platform/jewel/foundation",
@@ -48,13 +48,12 @@ jvm_library(
     "//libraries/compose-foundation-desktop",
     "//platform/jewel/samples/showcase",
     "//platform/icons",
+    "@lib//:jbr-api",
   ],
   runtime_deps = [
-    ":standalone_resources",
     "@lib//:platform-jewel-samples-standalone-org-lwjgl-lwjgl-tinyfd",
     "@lib//:platform-jewel-samples-standalone-org-nibor-autolink-autolink",
     "@lib//:jna",
-    "@lib//:platform-jewel-samples-standalone-org-lwjgl-lwjgl",
   ],
   plugins = ["@lib//:compose-plugin"]
 )

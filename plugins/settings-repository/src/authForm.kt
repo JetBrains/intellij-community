@@ -20,6 +20,7 @@ import javax.swing.JPasswordField
 import javax.swing.JTextField
 import javax.swing.event.DocumentEvent
 
+@ApiStatus.Internal
 @ApiStatus.ScheduledForRemoval
 @Deprecated("The form is going to be removed")
 internal suspend fun showAuthenticationForm(credentials: Credentials?,

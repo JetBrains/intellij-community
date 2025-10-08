@@ -115,10 +115,6 @@ a:com.intellij.concurrency.JobScheduler
 com.intellij.concurrency.ResultConsumer
 - a:onFailure(java.lang.Throwable):V
 - a:onSuccess(java.lang.Object):V
-f:com.intellij.core.CoreBundle
-- sf:BUNDLE:java.lang.String
-- s:message(java.lang.String,java.lang.Object[]):java.lang.String
-- s:messageOrNull(java.lang.String,java.lang.Object[]):java.lang.String
 com.intellij.diagnostic.Dumpable
 - a:dumpState():java.lang.String
 f:com.intellij.diagnostic.ImplementationConflictException
@@ -578,13 +574,11 @@ a:com.intellij.openapi.application.ApplicationInfo
 - a:getFullApplicationName():java.lang.String
 - a:getFullVersion():java.lang.String
 - s:getInstance():com.intellij.openapi.application.ApplicationInfo
-- a:getJetBrainsTvUrl():java.lang.String
 - a:getMajorVersion():java.lang.String
 - a:getMicroVersion():java.lang.String
 - a:getMinorVersion():java.lang.String
 - f:getMinorVersionMainPart():java.lang.String
 - a:getPatchVersion():java.lang.String
-- a:getProductUrl():java.lang.String
 - a:getShortCompanyName():java.lang.String
 - f:getShortVersion():java.lang.String
 - getSplashImageUrl():java.lang.String
@@ -608,10 +602,6 @@ f:com.intellij.openapi.application.ApplicationNamesInfo
 - getMotto():java.lang.String
 - getProductName():java.lang.String
 - getScriptName():java.lang.String
-a:com.intellij.openapi.application.BaseActionRunnable
-- <init>():V
-- a:execute():com.intellij.openapi.application.RunResult
-- pa:run(com.intellij.openapi.application.Result):V
 f:com.intellij.openapi.application.CoroutinesKt
 - bsf:asContextElement(com.intellij.openapi.application.ModalityState):kotlin.coroutines.CoroutineContext
 - sf:constrainedReadAction(com.intellij.openapi.application.ReadConstraint[],kotlin.jvm.functions.Function0,kotlin.coroutines.Continuation):java.lang.Object
@@ -683,7 +673,6 @@ a:com.intellij.openapi.application.QueryExecutorBase
 - f:execute(java.lang.Object,com.intellij.util.Processor):Z
 - a:processQuery(java.lang.Object,com.intellij.util.Processor):V
 a:com.intellij.openapi.application.ReadAction
-- com.intellij.openapi.application.BaseActionRunnable
 - <init>():V
 - s:compute(com.intellij.openapi.util.ThrowableComputable):java.lang.Object
 - execute():com.intellij.openapi.application.RunResult
@@ -708,7 +697,6 @@ c:com.intellij.openapi.application.Result
 - f:setResult(java.lang.Object):V
 f:com.intellij.openapi.application.RunResult
 - com.intellij.openapi.application.Result
-- <init>(com.intellij.openapi.application.BaseActionRunnable):V
 - getResultObject():java.lang.Object
 - getThrowable():java.lang.Throwable
 - hasException():Z
@@ -729,7 +717,6 @@ a:com.intellij.openapi.application.TransactionGuard
 - a:submitTransactionLater(com.intellij.openapi.Disposable,java.lang.Runnable):V
 com.intellij.openapi.application.TransactionId
 a:com.intellij.openapi.application.WriteAction
-- com.intellij.openapi.application.BaseActionRunnable
 - <init>():V
 - s:compute(com.intellij.openapi.util.ThrowableComputable):java.lang.Object
 - s:computeAndWait(com.intellij.openapi.util.ThrowableComputable):java.lang.Object
@@ -788,7 +775,6 @@ e:com.intellij.openapi.command.UndoConfirmationPolicy
 - s:valueOf(java.lang.String):com.intellij.openapi.command.UndoConfirmationPolicy
 - s:values():com.intellij.openapi.command.UndoConfirmationPolicy[]
 a:com.intellij.openapi.command.WriteCommandAction
-- com.intellij.openapi.application.BaseActionRunnable
 - p:<init>(com.intellij.openapi.project.Project,java.lang.String,java.lang.String,com.intellij.psi.PsiFile[]):V
 - p:<init>(com.intellij.openapi.project.Project,java.lang.String,com.intellij.psi.PsiFile[]):V
 - p:<init>(com.intellij.openapi.project.Project,com.intellij.psi.PsiFile[]):V
@@ -1341,14 +1327,6 @@ a:com.intellij.openapi.progress.ProgressManager
 - a:runProcessWithProgressSynchronously(com.intellij.openapi.util.ThrowableComputable,java.lang.String,Z,com.intellij.openapi.project.Project):java.lang.Object
 - a:runProcessWithProgressSynchronously(java.lang.Runnable,java.lang.String,Z,com.intellij.openapi.project.Project):Z
 - a:runProcessWithProgressSynchronously(java.lang.Runnable,java.lang.String,Z,com.intellij.openapi.project.Project,javax.swing.JComponent):Z
-f:com.intellij.openapi.progress.ProgressReporterKt
-- sf:durationStep(D,java.lang.String,kotlin.jvm.functions.Function2,kotlin.coroutines.Continuation):java.lang.Object
-- bs:durationStep$default(D,java.lang.String,kotlin.jvm.functions.Function2,kotlin.coroutines.Continuation,I,java.lang.Object):java.lang.Object
-- sf:indeterminateStep(java.lang.String,kotlin.jvm.functions.Function2,kotlin.coroutines.Continuation):java.lang.Object
-- bs:indeterminateStep$default(java.lang.String,kotlin.jvm.functions.Function2,kotlin.coroutines.Continuation,I,java.lang.Object):java.lang.Object
-- sf:progressStep(D,java.lang.String,kotlin.jvm.functions.Function2,kotlin.coroutines.Continuation):java.lang.Object
-- bs:progressStep$default(D,java.lang.String,kotlin.jvm.functions.Function2,kotlin.coroutines.Continuation,I,java.lang.Object):java.lang.Object
-- sf:withRawProgressReporter(kotlin.jvm.functions.Function2,kotlin.coroutines.Continuation):java.lang.Object
 a:com.intellij.openapi.progress.Task
 - com.intellij.openapi.progress.Progressive
 - com.intellij.openapi.progress.TaskInfo
@@ -1525,7 +1503,6 @@ a:com.intellij.openapi.project.DumbService
 - f:withAlternativeResolveEnabled(java.lang.Runnable):V
 - f:withAlternativeResolveEnabled(kotlin.jvm.functions.Function0):java.lang.Object
 - a:wrapGently(javax.swing.JComponent,com.intellij.openapi.Disposable):javax.swing.JComponent
-- a:wrapWithSpoiler(javax.swing.JComponent,java.lang.Runnable,com.intellij.openapi.Disposable):javax.swing.JComponent
 f:com.intellij.openapi.project.DumbService$Companion
 - f:allowStartingDumbModeInside(com.intellij.openapi.project.DumbModePermission,java.lang.Runnable):V
 - f:getDumbAwareExtensions(com.intellij.openapi.project.Project,com.intellij.openapi.extensions.ExtensionPointName):java.util.List
@@ -1543,7 +1520,6 @@ f:com.intellij.openapi.project.ProjectCoreUtil
 - sf:INSTANCE:com.intellij.openapi.project.ProjectCoreUtil
 - sf:isProjectOrWorkspaceFile(com.intellij.openapi.vfs.VirtualFile):Z
 - sf:isProjectOrWorkspaceFile(com.intellij.openapi.vfs.VirtualFile,com.intellij.openapi.fileTypes.FileType):Z
-- sf:isProjectOrWorkspaceFile(com.intellij.openapi.vfs.VirtualFile,java.lang.CharSequence):Z
 Fa:com.intellij.openapi.project.ProjectLocator
 - sf:Companion:com.intellij.openapi.project.ProjectLocator$Companion
 - <init>():V
@@ -3645,11 +3621,9 @@ f:com.intellij.psi.util.PsiTreeUtilKt
 - sf:findTopmostParentInFile(com.intellij.psi.PsiElement,Z,kotlin.jvm.functions.Function1):com.intellij.psi.PsiElement
 - bs:findTopmostParentInFile$default(com.intellij.psi.PsiElement,Z,kotlin.jvm.functions.Function1,I,java.lang.Object):com.intellij.psi.PsiElement
 - sf:firstLeaf(com.intellij.psi.PsiElement):com.intellij.psi.PsiElement
-- sf:getChildLeafs(com.intellij.psi.PsiElement):kotlin.sequences.Sequence
 - sf:getElementType(com.intellij.psi.PsiElement):com.intellij.psi.tree.IElementType
 - sf:getEndOffset(com.intellij.psi.PsiElement):I
 - sf:getFirstLeaf(com.intellij.psi.PsiElement):com.intellij.psi.PsiElement
-- sf:getLastLeaf(com.intellij.psi.PsiElement):com.intellij.psi.PsiElement
 - sf:getNextLeafs(com.intellij.psi.PsiElement):kotlin.sequences.Sequence
 - sf:getParents(com.intellij.psi.PsiElement):kotlin.sequences.Sequence
 - sf:getParentsWithSelf(com.intellij.psi.PsiElement):kotlin.sequences.Sequence

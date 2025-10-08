@@ -1,8 +1,6 @@
 // Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.util;
 
-import com.intellij.openapi.application.Application;
-import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ApplicationNamesInfo;
 import com.intellij.openapi.application.PathManager;
 import com.intellij.openapi.application.ex.ApplicationEx;
@@ -23,7 +21,9 @@ import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.StandardCopyOption;
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 import java.util.function.Supplier;
 
 import static com.intellij.openapi.util.NullableLazyValue.lazyNullable;
@@ -33,6 +33,7 @@ public final class Restarter {
 
   private static volatile boolean copyRestarterFiles = false;
   private static volatile List<String> mainAppArgs = List.of();
+  private static volatile Map<String, String> restarterEnv = Map.of();
 
   private Restarter() { }
 
@@ -64,18 +65,12 @@ public final class Restarter {
     if (launcher != null) return launcher;
 
     if (PlatformUtils.isJetBrainsClient()) {
-      // the client launched from a host IDE overrides `ApplicationNamesInfo#getScriptName`
-      Application application = ApplicationManager.getApplication();
-      if (application == null) return null;
-      //noinspection SimplifiableServiceRetrieving
-      IdeProductInfo productInfo = application.getService(IdeProductInfo.class);
-      if (productInfo == null) return null;
       var launchData = IdeProductInfo.getInstance().getCurrentProductInfo().getLaunch();
       if (launchData.size() == 1) {
         var hostLauncher = PathManager.getHomeDir()
           .resolve(OS.CURRENT == OS.macOS ? ApplicationEx.PRODUCT_INFO_FILE_NAME_MAC : ApplicationEx.PRODUCT_INFO_FILE_NAME)
           .getParent()
-          .resolve(launchData.get(0).getLauncherPath())
+          .resolve(launchData.getFirst().getLauncherPath())
           .normalize();
         if (Files.exists(hostLauncher)) return hostLauncher;
       }
@@ -221,6 +216,11 @@ public final class Restarter {
     mainAppArgs = new ArrayList<>(args);
   }
 
+  @ApiStatus.Internal
+  public static void setRestarterEnv(@NotNull Map<String, String> env) {
+    restarterEnv = new HashMap<>(env);
+  }
+
   private static List<String> prepareCommand(String restarterName, List<String> beforeRestart) throws IOException {
     var restarter = PathManager.getBinDir().resolve(restarterName);
     var command = new ArrayList<String>();
@@ -252,6 +252,7 @@ public final class Restarter {
       .redirectOutput(ProcessBuilder.Redirect.DISCARD)
       .redirectError(ProcessBuilder.Redirect.DISCARD);
     processBuilder.environment().put("IJ_RESTARTER_LOG", PathManager.getLogDir().resolve("restarter.log").toString());
+    processBuilder.environment().putAll(restarterEnv);
 
     if (OS.isGenericUnix()) setDesktopStartupId(processBuilder);
 

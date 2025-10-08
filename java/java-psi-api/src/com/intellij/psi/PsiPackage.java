@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.psi;
 
 import com.intellij.lang.jvm.JvmPackage;
@@ -119,14 +119,30 @@ public interface PsiPackage extends PsiCheckedRenameElement, NavigationItem, Psi
   @Nullable("default package") @NlsSafe
   String getName();
 
-  boolean containsClassNamed(@NotNull String name);
-
-  PsiClass @NotNull [] findClassByShortName(@NotNull String name, @NotNull GlobalSearchScope scope);
+  /**
+   * Returns {@code true} if the package contains a class with short name {@code shortName}.
+   *
+   * @see #hasClassWithShortName(String, GlobalSearchScope)
+   */
+  boolean containsClassNamed(@NotNull String shortName);
 
   /**
-   * Returns {@code true} if the package contains a class with short name {@code name} belonging to the provided scope.
+   * Returns classes with short name {@code shortName} in {@code scope}.
+   * NOTE that the result CAN contain classes outside the scope.
+   *
+   * @param shortName short name of the classes to find.
+   * @param scope scope to limit the query to, though the result can contain classes outside the scope.
+   *
+   * @return the array of classes with the specified short name.
    */
-  default boolean hasClassWithShortName(@NotNull String name, @NotNull GlobalSearchScope scope) {
-    return findClassByShortName(name, scope).length > 0;
+  PsiClass @NotNull [] findClassByShortName(@NotNull String shortName, @NotNull GlobalSearchScope scope);
+
+  /**
+   * Returns {@code true} if the package contains a class with short name {@code shortName} belonging to the provided scope.
+   *
+   * @see #containsClassNamed(String)
+   */
+  default boolean hasClassWithShortName(@NotNull String shortName, @NotNull GlobalSearchScope scope) {
+    return findClassByShortName(shortName, scope).length > 0;
   }
 }

@@ -2,18 +2,17 @@
 package com.intellij.grazie
 
 import ai.grazie.nlp.langs.LanguageISO
+import ai.grazie.rules.settings.TextStyle
 import com.intellij.codeInspection.LocalInspectionTool
 import com.intellij.grazie.grammar.LanguageToolChecker
 import com.intellij.grazie.ide.inspection.grammar.GrazieInspection
 import com.intellij.grazie.jlanguage.Lang
 import com.intellij.grazie.remote.HunspellDescriptor
 import com.intellij.grazie.spellcheck.GrazieCheckers
-import com.intellij.grazie.style.StyleInspection
+import com.intellij.grazie.spellcheck.GrazieSpellCheckingInspection
 import com.intellij.grazie.text.TextChecker
-import com.intellij.grazie.text.TextContent
-import com.intellij.grazie.text.TextExtractor
-import com.intellij.grazie.text.TextProblem
-import com.intellij.grazie.utils.filterFor
+import com.intellij.grazie.utils.TextStyleDomain
+import com.intellij.grazie.utils.TextStyleDomain.*
 import com.intellij.lang.Language
 import com.intellij.openapi.Disposable
 import com.intellij.openapi.application.PathManager
@@ -22,22 +21,18 @@ import com.intellij.openapi.extensions.ExtensionPointName
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.Disposer
 import com.intellij.openapi.util.registry.Registry
-import com.intellij.psi.PsiElement
-import com.intellij.psi.PsiPlainText
 import com.intellij.spellchecker.SpellCheckerManager.Companion.getInstance
-import com.intellij.spellchecker.inspections.SpellCheckingInspection
 import com.intellij.testFramework.ExtensionTestUtil
 import com.intellij.testFramework.PlatformTestUtil
 import com.intellij.testFramework.fixtures.BasePlatformTestCase
 import com.intellij.util.io.ZipUtil
-import kotlinx.coroutines.runBlocking
 import java.nio.file.Files
 import kotlin.io.path.Path
 
 abstract class GrazieTestBase : BasePlatformTestCase() {
   companion object {
-    val inspectionTools by lazy {
-      arrayOf<LocalInspectionTool>(GrazieInspection(), SpellCheckingInspection(), StyleInspection())
+    val inspectionTools: Array<LocalInspectionTool> by lazy {
+      arrayOf(GrazieInspection(), GrazieInspection.Grammar(), GrazieInspection.Style(), GrazieSpellCheckingInspection())
     }
 
     /**
@@ -129,7 +124,12 @@ abstract class GrazieTestBase : BasePlatformTestCase() {
     }
   }
 
-  protected fun enableProofreadingFor(languages: Set<Lang>) {
+  @JvmOverloads
+  protected fun enableProofreadingFor(
+    languages: Set<Lang>,
+    domainEnabledRules: MutableMap<TextStyleDomain, Set<String>> = HashMap(),
+    domainDisabledRules: MutableMap<TextStyleDomain, Set<String>> = HashMap(),
+  ) {
     // Load langs manually to prevent potential deadlock
     val enabledLanguages = languages + GrazieConfig.get().enabledLanguages
     loadLangs(enabledLanguages, project)
@@ -141,10 +141,17 @@ abstract class GrazieTestBase : BasePlatformTestCase() {
         isCheckInDocumentationEnabled = true,
         enabledLanguages = additionalEnabledContextLanguages.map { it.id }.toSet(),
       )
+      val domains = setOf(Commit, AIPrompt, CodeDocumentation, CodeComment)
+      if (domainEnabledRules.isEmpty()) {
+        domains.forEach { domainEnabledRules[it] = enabledRules + additionalEnabledRules }
+      }
       state.copy(
         enabledLanguages = enabledLanguages,
         userEnabledRules = enabledRules + additionalEnabledRules,
-        checkingContext = checkingContext
+        checkingContext = checkingContext,
+        styleProfile = TextStyle.Unspecified.id,
+        domainEnabledRules = domainEnabledRules,
+        domainDisabledRules = domainDisabledRules,
       )
     }
 
@@ -155,21 +162,5 @@ abstract class GrazieTestBase : BasePlatformTestCase() {
   protected open fun runHighlightTestForFile(file: String) {
     myFixture.configureByFile(file)
     myFixture.checkHighlighting(true, false, false)
-  }
-
-  fun plain(vararg texts: String) = plain(texts.toList())
-
-  fun plain(texts: List<String>): Collection<PsiElement> {
-    return texts.flatMap { myFixture.configureByText("${it.hashCode()}.txt", it).filterFor<PsiPlainText>() }
-  }
-
-  fun check(tokens: Collection<PsiElement>): List<TextProblem> {
-    return tokens.flatMap {
-      TextExtractor.findTextsAt(it, TextContent.TextDomain.ALL).flatMap { text ->
-        runBlocking {
-          LanguageToolChecker().check(text)
-        }
-      }
-    }
   }
 }

@@ -8,6 +8,7 @@ import com.intellij.openapi.project.Project
 import com.intellij.platform.project.projectId
 import com.intellij.platform.vcs.impl.shared.rpc.RepositoryId
 import com.intellij.vcs.git.rpc.GitIncomingOutgoingStateApi
+import fleet.rpc.client.durable
 import git4idea.GitStandardLocalBranch
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.launch
@@ -18,9 +19,11 @@ internal class GitInOutStateHolder(private val project: Project, cs: CoroutineSc
 
   init {
     cs.launch {
-      GitIncomingOutgoingStateApi.getInstance().syncState(project.projectId()).collect {
-        LOG.debug("Received new state - in ${it.incoming.size} repos, out ${it.outgoing.size} repos")
-        state = it
+      durable {
+        GitIncomingOutgoingStateApi.getInstance().syncState(project.projectId()).collect {
+          LOG.debug("Received new state - in ${it.incoming.size} repos, out ${it.outgoing.size} repos")
+          state = it
+        }
       }
     }
   }

@@ -2,6 +2,7 @@
 package com.intellij.execution.eel
 
 import com.intellij.application.options.PathMacrosImpl
+import com.intellij.openapi.application.ArchivedCompilationContextUtil
 import com.intellij.openapi.application.PathManager
 import com.intellij.openapi.diagnostic.fileLogger
 import com.intellij.openapi.util.NlsSafe
@@ -79,7 +80,7 @@ internal class JavaMainClassExecutor(clazz: Class<*>, vararg args: String) {
     private fun getJpsModuleNameForClass(clazz: Class<*>): String {
       val jarPathForClass = PathUtil.getJarPathForClass(clazz)
       val path = Path.of(jarPathForClass)
-      val relevantJarsRoot = PathManager.getArchivedCompliedClassesLocation()
+      val relevantJarsRoot = ArchivedCompilationContextUtil.archivedCompiledClassesLocation
 
       if (Files.isDirectory(path)) {
         // plain compilation output
@@ -87,7 +88,7 @@ internal class JavaMainClassExecutor(clazz: Class<*>, vararg args: String) {
       }
       else if (relevantJarsRoot != null && jarPathForClass.startsWith(relevantJarsRoot)) {
         // archived compilation output
-        val mapping = PathManager.getArchivedCompiledClassesMapping()
+        val mapping = ArchivedCompilationContextUtil.archivedCompiledClassesMapping
         checkNotNull(mapping) { "Mapping cannot be null at this point" }
         val key = mapping.entries.firstOrNull { (_, value) -> value == jarPathForClass }?.key
         if (key == null) {
@@ -104,7 +105,7 @@ internal class JavaMainClassExecutor(clazz: Class<*>, vararg args: String) {
     private fun getJpsModulesOutput(clazz: Class<*>, moduleNames: List<@NlsSafe String>): List<Path> {
       val jarPathForClass = PathUtil.getJarPathForClass(clazz)
       val path = Path.of(jarPathForClass)
-      val relevantJarsRoot = PathManager.getArchivedCompliedClassesLocation()
+      val relevantJarsRoot = ArchivedCompilationContextUtil.archivedCompiledClassesLocation
 
       if (Files.isDirectory(path)) {
         // plain compilation output
@@ -112,7 +113,7 @@ internal class JavaMainClassExecutor(clazz: Class<*>, vararg args: String) {
       }
       else if (relevantJarsRoot != null && jarPathForClass.startsWith(relevantJarsRoot)) {
         // archived compilation output, assume we need 'production' output
-        val mapping = PathManager.getArchivedCompiledClassesMapping()
+        val mapping = ArchivedCompilationContextUtil.archivedCompiledClassesMapping
         checkNotNull(mapping) { "Mapping cannot be null at this point" }
         return moduleNames.mapNotNull {
           val key = "production/$it"

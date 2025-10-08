@@ -31,6 +31,10 @@ import java.util.concurrent.locks.ReentrantReadWriteLock;
  *  * and set its indexed state to outdated.</li>
  *   <li>If we get another event we set indexed state to outdated.</li>
  * </ul>
+ *
+ * Since IndexingStamp contains only indexes modification count for each file, it can become outdated if a file was changed but the {@link Timestamps}
+ * for the given file was not updated or not flushed on disk before IDE was terminated. In such case {@link IndexingFlag} can be used
+ * to determine that a file needs to be reindexed as {@link IndexingFlag} contains file modification count when it was last indexed.
  */
 @Internal
 public final class IndexingStamp {
@@ -154,6 +158,11 @@ public final class IndexingStamp {
     });
   }
 
+  /**
+   * Non-trivial means "up to date" or "outdated".
+   * <p>
+   * "unindexed" is not included.
+   */
   public static @NotNull List<ID<?, ?>> getNontrivialFileIndexedStates(int fileId) {
     return ourLock.withReadLock(fileId, () -> {
       try {

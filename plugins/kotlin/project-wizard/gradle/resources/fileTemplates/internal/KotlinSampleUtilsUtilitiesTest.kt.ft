@@ -3,8 +3,6 @@ package ${PACKAGE_NAME}.utils
 import kotlin.test.Test
 import kotlin.test.assertEquals
 import kotlinx.serialization.json.Json
-import kotlinx.serialization.encodeToString
-import ${PACKAGE_NAME}.utils.*
 
 internal class PrinterTest {
 

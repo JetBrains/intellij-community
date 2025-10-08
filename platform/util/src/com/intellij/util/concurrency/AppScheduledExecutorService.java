@@ -15,6 +15,7 @@ import java.util.concurrent.*;
 import java.util.function.BiConsumer;
 
 import static com.intellij.util.concurrency.AppExecutorUtil.propagateContext;
+import static java.util.concurrent.TimeUnit.MINUTES;
 
 /**
  * A ThreadPoolExecutor which also implements {@link ScheduledExecutorService} by awaiting scheduled tasks in a separate thread
@@ -25,29 +26,44 @@ import static com.intellij.util.concurrency.AppExecutorUtil.propagateContext;
 @ApiStatus.Internal
 public final class AppScheduledExecutorService extends SchedulingWrapper {
   public static final String POOLED_THREAD_PREFIX = "ApplicationImpl pooled thread ";
+
   private final @NotNull String myName;
   private final LowMemoryWatcherManager myLowMemoryWatcherManager;
 
   private static final class Holder {
-    private static final AppScheduledExecutorService INSTANCE = new AppScheduledExecutorService("Global instance", 1, TimeUnit.MINUTES);
+    private static final AppScheduledExecutorService INSTANCE = new AppScheduledExecutorService("Global instance", 1, MINUTES, true);
   }
 
   static @NotNull ScheduledExecutorService getInstance() {
     return Holder.INSTANCE;
   }
 
+  /**
+   * @param initLowMemoryWatcherManager introduced to test AppScheduledExecutorService without initializing LowMemoryWatcherManager inside.
+   *                                    LowMemoryWatcherManager complicates the behavior of the AppScheduledExecutorService which makes it
+   *                                    harder to test
+   */
   @VisibleForTesting
-  public AppScheduledExecutorService(@NotNull String name, long keepAliveTime, @NotNull TimeUnit unit) {
+  public AppScheduledExecutorService(@NotNull String name, long keepAliveTime, @NotNull TimeUnit unit, boolean initLowMemoryWatcherManager) {
     super(new BackendThreadPoolExecutor(new MyThreadFactory(), keepAliveTime, unit), new AppDelayQueue());
     myName = name;
     //TODO RC: why LowMemoryWatcher is owned by AppScheduledExecutorService? Shouldn't it be a dedicated service itself?
     //         There are issues in LowMemoryWatcherManager initialization because of that, and also issues in tests,
-    //         see a todo in AppScheduledExecutorServiceTest
-    myLowMemoryWatcherManager = new LowMemoryWatcherManager(this);
+    //         (for those issues initLowMemoryWatcherManager=false option was introduced)
+    if (initLowMemoryWatcherManager) {
+      myLowMemoryWatcherManager = new LowMemoryWatcherManager(this);
+    }
+    else {
+      myLowMemoryWatcherManager = null;
+    }
   }
 
   private MyThreadFactory getCountingThreadFactory() {
     return (MyThreadFactory)((BackendThreadPoolExecutor)backendExecutorService).getThreadFactory();
+  }
+
+  public LowMemoryWatcherManager getLowMemoryWatcherManager() {
+    return myLowMemoryWatcherManager;
   }
 
   private static final class MyThreadFactory extends CountingThreadFactory {
@@ -100,8 +116,10 @@ public final class AppScheduledExecutorService extends SchedulingWrapper {
 
   @ApiStatus.Internal
   public void shutdownAppScheduledExecutorService() {
-    // LowMemoryWatcher starts background threads so stop it now to avoid RejectedExecutionException
-    myLowMemoryWatcherManager.shutdown();
+    // LowMemoryWatcher starts background tasks so stop it now to avoid RejectedExecutionException
+    if (myLowMemoryWatcherManager != null) {
+      myLowMemoryWatcherManager.shutdown();
+    }
     doShutdown();
     delayQueue.shutdown(new SchedulingWrapper.MyScheduledFutureTask<Void>(()->{}, null, 0) {
         @Override
@@ -230,13 +248,7 @@ public final class AppScheduledExecutorService extends SchedulingWrapper {
   public static @NotNull Thread getPeriodicTasksThread() {
     return Holder.INSTANCE.delayQueue.getThread();
   }
-
-  @TestOnly
-  public void waitForLowMemoryWatcherManagerInit(int timeout, @NotNull TimeUnit unit)
-    throws InterruptedException, ExecutionException, TimeoutException {
-    myLowMemoryWatcherManager.waitForInitComplete(timeout, unit);
-  }
-
+  
   public static @NotNull Runnable capturePropagationAndCancellationContext(@NotNull Runnable command) {
     if (!propagateContext()) {
       return command;

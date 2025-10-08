@@ -12,7 +12,6 @@ import com.intellij.openapi.actionSystem.ex.ActionUtil.SHOW_TEXT_IN_TOOLBAR
 import com.intellij.openapi.actionSystem.ex.ActionUtil.performAction
 import com.intellij.openapi.actionSystem.ex.ActionUtil.updateAction
 import com.intellij.openapi.application.ApplicationManager
-import com.intellij.openapi.application.ApplicationNamesInfo
 import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.keymap.KeymapUtil
 import com.intellij.openapi.progress.ProcessCanceledException
@@ -193,19 +192,16 @@ object ActionUtil {
   @JvmStatic
   fun getUnavailableMessage(action: String, plural: Boolean): @NlsContexts.PopupContent String {
     if (plural) {
-      return IdeBundle.message("popup.content.actions.not.available.while.updating.indices", action,
-                               ApplicationNamesInfo.getInstance().productName)
+      return IdeBundle.message("popup.content.actions.not.available.while.updating.indices", action)
     }
-    return IdeBundle.message("popup.content.action.not.available.while.updating.indices", action,
-                             ApplicationNamesInfo.getInstance().fullProductName)
+    return IdeBundle.message("popup.content.action.not.available.while.updating.indices", action)
   }
 
   @ApiStatus.Internal
   @JvmStatic
   fun getActionUnavailableMessage(@ActionText action: String?): @NlsContexts.PopupContent String {
-    val productName = ApplicationNamesInfo.getInstance().fullProductName
-    if (action == null) return IdeBundle.message("popup.content.this.action.not.available.while.updating.indices", productName)
-    return IdeBundle.message("popup.content.action.not.available.while.updating.indices", action, productName)
+    if (action == null) return IdeBundle.message("popup.content.this.action.not.available.while.updating.indices")
+    return IdeBundle.message("popup.content.action.not.available.while.updating.indices", action)
   }
 
   @JvmStatic
@@ -214,7 +210,6 @@ object ActionUtil {
       actionNames.isEmpty() -> getActionUnavailableMessage(null)
       actionNames.size == 1 -> getActionUnavailableMessage(actionNames[0])
       else -> IdeBundle.message("popup.content.none.of.following.actions.are.available.while.updating.indices",
-                                ApplicationNamesInfo.getInstance().productName,
                                 actionNames.joinToString(", "))
     }
   }

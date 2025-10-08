@@ -1,9 +1,9 @@
 ### auto-generated section `build intellij.settingsSync.core` start
-load("@rules_jvm//:jvm.bzl", "jvm_library", "jvm_resources")
+load("@rules_jvm//:jvm.bzl", "jvm_library", "resourcegroup")
 
-jvm_resources(
+resourcegroup(
   name = "settingsSync-core_resources",
-  files = glob(["resources/**/*"]),
+  srcs = glob(["resources/**/*"]),
   strip_prefix = "resources"
 )
 
@@ -12,6 +12,7 @@ jvm_library(
   module_name = "intellij.settingsSync.core",
   visibility = ["//visibility:public"],
   srcs = glob(["src/**/*.kt", "src/**/*.java", "src/**/*.form"], allow_empty = True),
+  resources = [":settingsSync-core_resources"],
   deps = [
     "@lib//:kotlin-stdlib",
     "//platform/analysis-api:analysis",
@@ -33,11 +34,11 @@ jvm_library(
     "//platform/util/jdom",
     "//platform/core-ui",
     "//platform/ide-core-impl",
-    "@lib//:jackson",
-    "@lib//:jackson-databind",
-    "@lib//:jackson-module-kotlin",
-    "@lib//:kotlinx-serialization-core",
-    "@lib//:kotlinx-serialization-json",
+    "//libraries/jackson/jackson",
+    "//libraries/jackson/databind",
+    "//libraries/jackson/module-kotlin:libraries-jackson-module-kotlin",
+    "//libraries/kotlinx/serialization/core",
+    "//libraries/kotlinx/serialization/json",
     "//platform/statistics",
     "//platform/workspace/jps",
     "//platform/editor-ui-ex:editor-ex",
@@ -50,8 +51,7 @@ jvm_library(
     "//platform/vcs-impl",
     "//platform/diff-impl",
   ],
-  exports = ["@lib//:jetbrains-intellij-deps-eclipse-jgit"],
-  runtime_deps = [":settingsSync-core_resources"]
+  exports = ["@lib//:jetbrains-intellij-deps-eclipse-jgit"]
 )
 
 jvm_library(
@@ -80,17 +80,17 @@ jvm_library(
     "//platform/testFramework",
     "//platform/testFramework:testFramework_test_lib",
     "@lib//:kotlinx-coroutines-core",
-    "@lib//:kotlin-reflect",
+    "//libraries/kotlin-reflect",
     "//platform/util/progress",
     "//platform/lang-impl",
     "//platform/util/jdom",
     "//platform/core-ui",
     "//platform/ide-core-impl",
-    "@lib//:jackson",
-    "@lib//:jackson-databind",
-    "@lib//:jackson-module-kotlin",
-    "@lib//:kotlinx-serialization-core",
-    "@lib//:kotlinx-serialization-json",
+    "//libraries/jackson/jackson",
+    "//libraries/jackson/databind",
+    "//libraries/jackson/module-kotlin:libraries-jackson-module-kotlin",
+    "//libraries/kotlinx/serialization/core",
+    "//libraries/kotlinx/serialization/json",
     "@lib//:kotlinx-coroutines-test",
     "//platform/testFramework/extensions:testExtensions",
     "//platform/statistics",
@@ -116,8 +116,7 @@ jvm_library(
     "//platform/plugins/testFramework",
     "//platform/platform-tests:tests_test_lib",
   ],
-  exports = ["@lib//:jetbrains-intellij-deps-eclipse-jgit"],
-  runtime_deps = [":settingsSync-core_resources"]
+  exports = ["@lib//:jetbrains-intellij-deps-eclipse-jgit"]
 )
 ### auto-generated section `build intellij.settingsSync.core` end
 

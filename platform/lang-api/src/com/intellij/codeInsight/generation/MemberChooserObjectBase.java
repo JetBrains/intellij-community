@@ -7,8 +7,10 @@ import com.intellij.ui.SimpleColoredComponent;
 import com.intellij.ui.SimpleTextAttributes;
 import com.intellij.ui.render.RenderingUtil;
 import com.intellij.ui.speedSearch.SpeedSearchUtil;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+import org.jetbrains.annotations.VisibleForTesting;
 
 import javax.swing.*;
 
@@ -42,7 +44,14 @@ public class MemberChooserObjectBase implements MemberChooserObject {
   }
 
   protected SimpleTextAttributes getTextAttributes(JTree tree) {
-    return new SimpleTextAttributes(SimpleTextAttributes.STYLE_PLAIN, RenderingUtil.getForeground(tree));
+    return new SimpleTextAttributes(getTextStyle(), RenderingUtil.getForeground(tree));
+  }
+
+  @SimpleTextAttributes.StyleAttributeConstant
+  @VisibleForTesting
+  @ApiStatus.Internal
+  public int getTextStyle() {
+    return SimpleTextAttributes.STYLE_PLAIN;
   }
 
   protected SimpleTextAttributes getTextAttributes() {

@@ -1,4 +1,4 @@
-// "Remove useless is check" "true"
+// "Remove redundant 'is' check" "true"
 fun foo() {
     if (<caret>null !is Boolean) {
     }

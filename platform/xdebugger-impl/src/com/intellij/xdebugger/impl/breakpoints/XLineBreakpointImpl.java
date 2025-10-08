@@ -32,7 +32,7 @@ public final class XLineBreakpointImpl<P extends XBreakpointProperties> extends 
   private final XBreakpointVisualRepresentation myVisualRepresentation;
 
   private final XLineBreakpointType<P> myType;
-  private XSourcePosition mySourcePosition;
+  private volatile XSourcePosition mySourcePosition;
 
   public XLineBreakpointImpl(final XLineBreakpointType<P> type,
                              XBreakpointManagerImpl breakpointManager,

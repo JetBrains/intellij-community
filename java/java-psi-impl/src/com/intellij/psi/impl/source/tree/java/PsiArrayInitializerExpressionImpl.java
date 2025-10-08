@@ -1,18 +1,4 @@
-/*
- * Copyright 2000-2012 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.psi.impl.source.tree.java;
 
 import com.intellij.lang.ASTNode;
@@ -32,27 +18,37 @@ public class PsiArrayInitializerExpressionImpl extends ExpressionPsiElement impl
   }
 
   @Override
-  public PsiExpression @NotNull [] getInitializers(){
+  public PsiExpression @NotNull [] getInitializers() {
     return getChildrenAsPsiElements(ElementType.EXPRESSION_BIT_SET, PsiExpression.ARRAY_FACTORY);
   }
 
   @Override
-  public PsiType getType(){
-    if (getTreeParent() instanceof PsiNewExpression){
+  public int getInitializerCount() {
+    return countChildren(ElementType.EXPRESSION_BIT_SET);
+  }
+
+  @Override
+  public boolean isEmpty() {
+    return findChildByType(ElementType.EXPRESSION_BIT_SET) == null;
+  }
+
+  @Override
+  public PsiType getType() {
+    if (getTreeParent() instanceof PsiNewExpression) {
       if (getTreeParent().getChildRole(this) == ChildRole.ARRAY_INITIALIZER){
         return ((PsiNewExpression)getTreeParent()).getType();
       }
     }
-    else if (getTreeParent() instanceof PsiVariable){
+    else if (getTreeParent() instanceof PsiVariable) {
       return ((PsiVariable)getTreeParent()).getType();
     }
-    else if (getTreeParent() instanceof PsiArrayInitializerExpression){
+    else if (getTreeParent() instanceof PsiArrayInitializerExpression) {
       PsiType parentType = ((PsiArrayInitializerExpression)getTreeParent()).getType();
       if (!(parentType instanceof PsiArrayType)) return null;
       final PsiType componentType = ((PsiArrayType)parentType).getComponentType();
       return componentType instanceof PsiArrayType ? componentType : null;
     }
-    else if (getTreeParent() instanceof FieldElement){
+    else if (getTreeParent() instanceof FieldElement) {
       return ((PsiField)getParent()).getType();
     }
 
@@ -62,7 +58,7 @@ public class PsiArrayInitializerExpressionImpl extends ExpressionPsiElement impl
   @Override
   public ASTNode findChildByRole(int role) {
     LOG.assertTrue(ChildRole.isUnique(role));
-    switch(role){
+    switch (role) {
       case ChildRole.LBRACE:
         return findChildByType(JavaTokenType.LBRACE);
 
@@ -87,12 +83,10 @@ public class PsiArrayInitializerExpressionImpl extends ExpressionPsiElement impl
     else if (i == JavaTokenType.RBRACE) {
       return ChildRole.RBRACE;
     }
-    else {
-      if (ElementType.EXPRESSION_BIT_SET.contains(child.getElementType())) {
-        return ChildRole.EXPRESSION_IN_LIST;
-      }
-      return ChildRoleBase.NONE;
+    else if (ElementType.EXPRESSION_BIT_SET.contains(child.getElementType())) {
+      return ChildRole.EXPRESSION_IN_LIST;
     }
+    return ChildRoleBase.NONE;
   }
 
   @Override
@@ -112,12 +106,12 @@ public class PsiArrayInitializerExpressionImpl extends ExpressionPsiElement impl
 
   @Override
   public TreeElement addInternal(TreeElement first, ASTNode last, ASTNode anchor, Boolean before) {
-    if (anchor == null){
-      if (before == null || before.booleanValue()){
+    if (anchor == null) {
+      if (before == null || before.booleanValue()) {
         anchor = findChildByRole(ChildRole.RBRACE);
         before = Boolean.TRUE;
       }
-      else{
+      else {
         anchor = findChildByRole(ChildRole.LBRACE);
         before = Boolean.FALSE;
       }

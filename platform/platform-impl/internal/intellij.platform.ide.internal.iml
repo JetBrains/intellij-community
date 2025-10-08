@@ -57,17 +57,18 @@
     <orderEntry type="module" module-name="intellij.platform.statistics.uploader" />
     <orderEntry type="module" module-name="intellij.platform.util.jdom" />
     <orderEntry type="module" module-name="intellij.platform.serviceContainer" />
-    <orderEntry type="library" name="Guava" level="project" />
-    <orderEntry type="library" name="miglayout-swing" level="project" />
-    <orderEntry type="library" name="kotlinx-serialization-json" level="project" />
-    <orderEntry type="library" name="fastutil-min" level="project" />
-    <orderEntry type="library" name="hash4j" level="project" />
-    <orderEntry type="library" name="gson" level="project" />
-    <orderEntry type="library" name="kotlinx-serialization-core" level="project" />
-    <orderEntry type="library" name="kotlin-reflect" level="project" />
+    <orderEntry type="module" module-name="intellij.libraries.guava" />
+    <orderEntry type="module" module-name="intellij.libraries.miglayout.swing" />
+    <orderEntry type="module" module-name="intellij.libraries.kotlinx.serialization.json" />
+    <orderEntry type="module" module-name="intellij.libraries.fastutil" />
+    <orderEntry type="module" module-name="intellij.libraries.hash4j" />
+    <orderEntry type="module" module-name="intellij.libraries.gson" />
+    <orderEntry type="module" module-name="intellij.libraries.kotlinx.serialization.core" />
+    <orderEntry type="module" module-name="intellij.libraries.kotlin.reflect" />
     <orderEntry type="library" name="jna" level="project" />
     <orderEntry type="module" module-name="intellij.platform.workspace.storage" />
     <orderEntry type="module" module-name="intellij.platform.ide.concurrency" />
+    <orderEntry type="module" module-name="intellij.platform.ide.updateChecker" />
     <orderEntry type="library" name="jbr-api" level="project" />
   </component>
 </module>

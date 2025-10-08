@@ -1,5 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
-
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.uast.java
 
 import com.intellij.psi.*
@@ -275,7 +274,7 @@ class JavaUEnumConstant(
   override val typeArguments: List<PsiType>
     get() = emptyList()
   override val valueArgumentCount: Int
-    get() = sourcePsi.argumentList?.expressions?.size ?: 0
+    get() = sourcePsi.argumentList?.expressionCount ?: 0
 
   override val valueArguments: List<UExpression>
     get() = valueArgumentsPart.getOrBuild {

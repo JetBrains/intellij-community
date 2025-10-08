@@ -11,6 +11,15 @@ public interface ElementSnapshotDelta<T extends ExternalizableGraphElement> {
   @NotNull
   Iterable<@NotNull T> getDeleted();
 
+  /**
+   * @return both changed or added elements
+   */
   @NotNull
   Iterable<@NotNull T> getModified();
+
+  /**
+   * @return elements that were present in the past, existing in present, but changed their state
+   */
+  @NotNull
+  Iterable<@NotNull T> getChanged();
 }

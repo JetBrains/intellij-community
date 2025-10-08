@@ -18,42 +18,40 @@ The Python plug-in provides smart editing for Python scripts. The feature set of
 
   <vendor url="https://www.jetbrains.com/pycharm/">JetBrains</vendor>
 
-  <!-- Declare that we support core Python functionality -->
-  <module value="com.intellij.modules.python"/>
-
   <dependencies>
     <plugin id="com.intellij.modules.lang"/>
     <plugin id="com.intellij.modules.python-core-capable"/>
-    <module name="intellij.json.backend"/>
-    <plugin id="org.toml.lang"/>
-    <module name="intellij.libraries.kotlinx.io"/>
   </dependencies>
 
-  <content>
-    <module name="intellij.python.parser" loading="embedded"/>
-    <module name="intellij.python.ast" loading="embedded"/>
-    <module name="intellij.python.syntax.core" loading="embedded"/>
-    <module name="intellij.python.syntax" loading="embedded"/>
-    <module name="intellij.python.psi" loading="embedded"/>
-    <module name="intellij.python.psi.impl" loading="embedded"/>
-    <module name="intellij.python.sdk" loading="embedded"/>
-    <module name="intellij.python.sdk.ui" loading="embedded"/>
-    <module name="intellij.python.pyproject" loading="embedded"/>
-    <module name="intellij.python.community.impl.poetry" loading="embedded"/>
-    <module name="intellij.python.community.core.impl" loading="embedded"/>
-    <module name="intellij.python.community.helpersLocator" loading="embedded"/>
-    <module name="intellij.python.community" loading="embedded"/>
-    <module name="intellij.python.community.impl" loading="embedded"/>
-    <module name="intellij.python.community.execService" loading="embedded"/>
-    <module name="intellij.python.community.execService.python" loading="embedded"/>
-    <module name="intellij.python.community.impl.installer" loading="embedded"/>
-    <module name="intellij.python.pydev" loading="embedded"/>
-    <module name="intellij.python.community.impl.venv" loading="embedded"/>
-    <module name="intellij.python.hatch" loading="embedded"/>
-    <module name="intellij.python.community.services.shared" loading="embedded"/>
-    <module name="intellij.python.community.services.internal.impl" loading="embedded"/>
-    <module name="intellij.python.community.services.systemPython" loading="embedded"/>
-    <module name="intellij.python.community.interpreters" loading="embedded"/>
+  <content namespace="jetbrains">
+    <module name="intellij.python.parser" loading="required"/>
+    <module name="intellij.python.ast" loading="required"/>
+    <module name="intellij.python.syntax.core" loading="required"/>
+    <module name="intellij.python.syntax" loading="required"/>
+    <module name="intellij.python.psi" loading="required"/>
+    <module name="intellij.python.psi.impl" loading="required"/>
+    <module name="intellij.python.sdk" loading="required"/>
+    <module name="intellij.python.sdk.ui" loading="required"/>
+    <module name="intellij.python.pyproject" loading="required"/>
+    <module name="intellij.python.sdkConfigurator.common" loading="required"/>
+    <module name="intellij.python.sdkConfigurator.backend"/>
+    <module name="intellij.python.sdkConfigurator.frontend"/>
+    <module name="intellij.python.community.impl.poetry" loading="required"/>
+    <module name="intellij.python.community.core.impl" loading="required"/>
+    <module name="intellij.python.community.helpersLocator" loading="required"/>
+    <module name="intellij.python.community" loading="required"/>
+    <module name="intellij.python.community.impl" loading="required"/>
+    <module name="intellij.python.community.execService" loading="required"/>
+    <module name="intellij.python.community.execService.python" loading="required"/>
+    <module name="intellij.python.community.impl.installer" loading="required"/>
+    <module name="intellij.python.pydev" loading="required"/>
+    <module name="intellij.python.community.impl.venv" loading="required"/>
+    <module name="intellij.python.hatch" loading="required"/>
+    <module name="intellij.python.community.services.shared" loading="required"/>
+    <module name="intellij.python.community.services.internal.impl" loading="required"/>
+    <module name="intellij.python.community.services.systemPython" loading="required"/>
+    <module name="intellij.python.community.interpreters" loading="required"/>
+    <module name="intellij.python.community.aliasProvider" loading="required"/>
     <!--Mini-IDes support community python only-->
     <module name="intellij.python.community.plugin.minor"/> <!-- Python for Mini-IDEs-->
     <module name="intellij.python.community.plugin.minorRider"/> <!-- Python special support for Rider -->
@@ -69,6 +67,9 @@ The Python plug-in provides smart editing for Python scripts. The feature set of
     <module name="intellij.python.markdown"/>
     <module name="intellij.python.ml.features"/>
     <module name="intellij.python.terminal"/>
-
+    <module name="intellij.python.common"/>
+    <module name="intellij.platform.ide.nonModalWelcomeScreen"/>
+    <module name="intellij.platform.ide.nonModalWelcomeScreen.backend"/>
+    <module name="intellij.platform.ide.nonModalWelcomeScreen.frontend"/>
   </content>
 </idea-plugin>

@@ -11,6 +11,8 @@
  * </code>
  *
  * @param T the type of member in this group. And another sentence.
+ *
+ * @author Should typopos be detected here? It is an friend there.
  */
 class ExampleClassWithNoTypos<T> {
 
@@ -28,7 +30,7 @@ class ExampleClassWithNoTypos<T> {
     /**
      * Adds a [member] to this group.
      *
-     * @param cancellable Whether the progress can be <STYLE_SUGGESTION descr="American English does not double '-l-' in suffixes">cancelled</STYLE_SUGGESTION>.
+     * @param cancellable Whether the progress can be <STYLE_SUGGESTION descr="Grazie.RuleEngine.En.Style.VARIANT_LEXICAL_DIFFERENCES">cancelled</STYLE_SUGGESTION>.
      * @param member member to add
      * @return the new size of the group. And another sentence.
      */
@@ -93,7 +95,7 @@ class ExampleClassWithTypos<T> {
  * А <GRAMMAR_ERROR descr="grammar_vse_li_noun">все ли ошибка</GRAMMAR_ERROR> найдены?
  * Это случилось <GRAMMAR_ERROR descr="INVALID_DATE">31 ноября</GRAMMAR_ERROR> 2014 г.
  * За весь вечер она <GRAMMAR_ERROR descr="ne_proronila_ni">не проронила и слово</GRAMMAR_ERROR>.
- * Собрание состоится в <GRAMMAR_ERROR descr="Стандартное написание – «конференц-зале»">конференц зале</GRAMMAR_ERROR>.
+ * Собрание состоится в <GRAMMAR_ERROR descr="Grazie.RuleEngine.Ru.Spelling.MULTI_WORD">конференц зале</GRAMMAR_ERROR>.
  * <GRAMMAR_ERROR descr="WORD_REPEAT_RULE">Он он</GRAMMAR_ERROR> ошибка.
  */
 // noinspection SqlDialectInspection das daert geschätzt fünf Mannstunden! А еще в коробке лежало пять карандаша

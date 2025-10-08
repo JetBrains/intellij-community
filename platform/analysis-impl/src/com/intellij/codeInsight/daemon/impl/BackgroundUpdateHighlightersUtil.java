@@ -47,6 +47,8 @@ import java.util.*;
 public final class BackgroundUpdateHighlightersUtil {
   private static final Logger LOG = Logger.getInstance(BackgroundUpdateHighlightersUtil.class);
 
+  @RequiresBackgroundThread
+  @RequiresReadLock
   public static void setHighlightersToEditor(@NotNull Project project,
                                              @NotNull PsiFile psiFile,
                                              @NotNull Document document,
@@ -84,8 +86,8 @@ public final class BackgroundUpdateHighlightersUtil {
     boolean[] changed = {false};
     HighlighterRecycler.runWithRecycler(session, toReuse -> {
       Processor<HighlightInfo> processor = info -> {
-        if (info.getGroup() == group && !info.isFromAnnotator() && !info.isFromInspection()) { // ignore annotators/inspections, they are applied via HighlightInfoUpdater
-          RangeHighlighterEx highlighter = info.getHighlighter();
+        RangeHighlighterEx highlighter = info.getHighlighter();
+        if (highlighter != null && info.getGroup() == group && !info.isFromAnnotator() && !info.isFromInspection()) { // ignore annotators/inspections, they are applied via HighlightInfoUpdater
           int hiStart = highlighter.getStartOffset();
           int hiEnd = highlighter.getEndOffset();
 
@@ -255,7 +257,7 @@ public final class BackgroundUpdateHighlightersUtil {
       info.updateQuickFixFields(document, range2markerCache, finalInfoRange);
     };
 
-    RangeHighlighterEx salvagedHighlighter = (RangeHighlighterEx)recycler.pickupHighlighterFromGarbageBin(infoStartOffset, infoEndOffset, layer);
+    RangeHighlighterEx salvagedHighlighter = (RangeHighlighterEx)recycler.pickupHighlighterFromGarbageBin(infoStartOffset, infoEndOffset, layer, info.getDescription());
 
     if (info.isFileLevelAnnotation()) {
       HighlightInfo oldFileInfo = salvagedHighlighter == null ? null : HighlightInfo.fromRangeHighlighter(salvagedHighlighter);

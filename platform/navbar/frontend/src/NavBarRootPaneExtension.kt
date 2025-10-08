@@ -13,6 +13,8 @@ import com.intellij.openapi.actionSystem.ex.ComboBoxAction
 import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.application.EDT
 import com.intellij.openapi.application.UI
+import com.intellij.openapi.application.impl.InternalUICustomization
+import com.intellij.openapi.application.impl.TopNavBarComponentFacade
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.wm.IdeRootPaneNorthExtension
 import com.intellij.openapi.wm.StatusBar
@@ -21,9 +23,7 @@ import com.intellij.openapi.wm.impl.status.InfoAndProgressPanel.AutoscrollLimit
 import com.intellij.openapi.wm.impl.status.InfoAndProgressPanel.ScrollableToSelected
 import com.intellij.platform.navbar.frontend.NavBarRootPaneExtension.NavBarWrapperPanel
 import com.intellij.platform.navbar.frontend.ui.NavBarBorder
-import com.intellij.ui.ClientProperty
-import com.intellij.ui.ExperimentalUI
-import com.intellij.ui.ScrollPaneFactory
+import com.intellij.ui.*
 import com.intellij.ui.components.JBScrollBar
 import com.intellij.ui.components.JBScrollPane
 import com.intellij.ui.components.JBThinOverlappingScrollBar
@@ -127,7 +127,7 @@ private fun createNavBarPanel(scrollPane: JScrollPane, navigationBar: JComponent
   return navBarPanel
 }
 
-internal class MyNavBarWrapperPanel(private val project: Project, useAsComponent: Boolean) : NavBarWrapperPanel(BorderLayout()) {
+internal open class MyNavBarWrapperPanel(private val project: Project, useAsComponent: Boolean) : NavBarWrapperPanel(BorderLayout()) {
   private var navBarPanel: JComponent? = null
   private var runPanel: JPanel? = null
   private var navToolbarGroupExist: Boolean? = null
@@ -273,6 +273,17 @@ internal class MyNavBarWrapperPanel(private val project: Project, useAsComponent
           ApplicationManager.getApplication().invokeLater(command, project.disposed)
         },
       )
+  }
+}
+
+internal class MyTopNavBarWrapperPanel(project: Project, useAsComponent: Boolean) :
+  MyNavBarWrapperPanel(project, useAsComponent), TopNavBarComponentFacade {
+
+  override var borderPainter: BorderPainter = DefaultBorderPainter()
+
+  override fun paintChildren(g: Graphics) {
+    super.paintChildren(g)
+    borderPainter.paintAfterChildren(this, g)
   }
 }
 
@@ -435,7 +446,9 @@ private object TopNavBarMode : NavBarMode {
   override suspend fun configure(project: Project, statusBar: StatusBar, uiSettings: UISettings): MyNavBarWrapperPanel {
     return withContext(Dispatchers.EDT) {
       setStatusBarCentralWidget(statusBar, null)
-      MyNavBarWrapperPanel(project, useAsComponent = true)
+      val panel = MyTopNavBarWrapperPanel(project, useAsComponent = true)
+      InternalUICustomization.getInstance()?.configureTopNavBar(panel)
+      panel
     }
   }
 }

@@ -107,7 +107,7 @@ public final class TypeParameterExtendsFinalClassInspection extends BaseInspecti
   }
 
   @Override
-  public BaseInspectionVisitor buildVisitor() {
+  public @NotNull BaseInspectionVisitor buildVisitor() {
     return new TypeParameterExtendsFinalClassVisitor();
   }
 

@@ -199,25 +199,15 @@ public final class RefParameterImpl extends RefJavaElementImpl implements RefPar
   }
 
   private static @NotNull Object convertToStringRepresentation(@NotNull Object value) {
-    if (value instanceof Long) {
-      return value + "L";
-    }
-    else if (value instanceof Short) {
-      return "(short)" + value;
-    }
-    else if (value instanceof Byte) {
-      return "(byte)" + value;
-    }
-    else if (value instanceof String string) {
-      return "\"" + StringUtil.escapeStringCharacters(string) + "\"";
-    }
-    else if (value instanceof Character) {
-      return "'" + StringUtil.escapeCharCharacters(String.valueOf(value)) + "'";
-    }
-    else if (value instanceof PsiType type) {
-      return new ConstValue(type.getCanonicalText() + ".class", type.getPresentableText() + ".class");
-    }
-    return value;
+    return switch (value) {
+      case Long aLong -> aLong + "L";
+      case Short aShort -> "(short)" + aShort;
+      case Byte aByte -> "(byte)" + aByte;
+      case String string -> "\"" + StringUtil.escapeStringCharacters(string) + "\"";
+      case Character character -> "'" + StringUtil.escapeCharCharacters(String.valueOf(character)) + "'";
+      case PsiType type -> new ConstValue(type.getCanonicalText() + ".class", type.getPresentableText() + ".class");
+      default -> value;
+    };
   }
 
   private static boolean isAccessible(@NotNull UField field, @NotNull PsiElement place) {

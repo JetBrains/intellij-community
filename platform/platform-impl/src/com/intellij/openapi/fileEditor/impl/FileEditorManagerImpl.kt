@@ -21,6 +21,8 @@ import com.intellij.openapi.actionSystem.IdeActions
 import com.intellij.openapi.application.*
 import com.intellij.openapi.application.impl.ApplicationImpl
 import com.intellij.openapi.application.impl.InternalUICustomization
+import com.intellij.openapi.application.impl.LaterInvocator
+import com.intellij.openapi.application.impl.inModalContext
 import com.intellij.openapi.client.ClientKind
 import com.intellij.openapi.client.currentSessionOrNull
 import com.intellij.openapi.components.*
@@ -82,6 +84,7 @@ import com.intellij.ui.docking.impl.DockManagerImpl
 import com.intellij.ui.tabs.TabInfo
 import com.intellij.util.ExceptionUtil
 import com.intellij.util.IconUtil
+import com.intellij.util.ObjectUtils
 import com.intellij.util.PlatformUtils
 import com.intellij.util.concurrency.ThreadingAssertions
 import com.intellij.util.concurrency.annotations.RequiresEdt
@@ -115,7 +118,6 @@ import java.util.concurrent.atomic.LongAdder
 import javax.swing.JComponent
 import javax.swing.JTabbedPane
 import javax.swing.KeyStroke
-import kotlin.math.max
 import kotlin.time.Duration.Companion.milliseconds
 
 private val LOG = logger<FileEditorManagerImpl>()
@@ -374,6 +376,11 @@ open class FileEditorManagerImpl(
   internal suspend fun init(): kotlin.Pair<EditorsSplitters, EditorSplitterState?> {
     initJob.join()
     return mainSplitters to state.getAndSet(null)
+  }
+
+  @Internal
+  suspend fun waitInitialization() {
+    initJob.join()
   }
 
   companion object {
@@ -1422,71 +1429,45 @@ open class FileEditorManagerImpl(
     return openEditorImpl(descriptor = descriptor, focusEditor = focusEditor).first
   }
 
-  override suspend fun openFileEditorAsync(descriptor: FileEditorNavigatable, focusEditor: Boolean): List<FileEditor> {
-    return openEditorImplAsync(descriptor = descriptor, focusEditor = focusEditor).first
-  }
-
   /**
    * @return the list of opened editors, and the one of them that was selected (if any)
    */
   @RequiresEdt
   private fun openEditorImpl(descriptor: FileEditorNavigatable, focusEditor: Boolean): kotlin.Pair<List<FileEditor>, FileEditor?> {
-    val effectiveDescriptor = produceEffectiveDescriptor(descriptor)
-    val file = effectiveDescriptor.file
-
-    val composite: FileEditorComposite = openFile(file = file, window = null, options = effectiveDescriptor.toOpenOptions(focusEditor))
-
-    return navigateInComposite(composite, effectiveDescriptor) ?: (composite.allEditors to null)
-  }
-
-  private suspend fun openEditorImplAsync(descriptor: FileEditorNavigatable, focusEditor: Boolean): kotlin.Pair<List<FileEditor>, FileEditor?> {
-    val effectiveDescriptor = produceEffectiveDescriptor(descriptor)
-    val file = effectiveDescriptor.file
-
-    val composite: FileEditorComposite = openFile(file = file, options = effectiveDescriptor.toOpenOptions(focusEditor))
-
-    return withContext(Dispatchers.EDT) {
-      navigateInComposite(composite, effectiveDescriptor) ?: (composite.allEditors to null)
-    }
-  }
-
-  private fun produceEffectiveDescriptor(descriptor: FileEditorNavigatable): FileEditorNavigatable {
-    return if (descriptor is OpenFileDescriptor && descriptor.getFile() is VirtualFileWindow) {
+    val effectiveDescriptor: FileEditorNavigatable
+    if (descriptor is OpenFileDescriptor && descriptor.getFile() is VirtualFileWindow) {
       val delegate = descriptor.getFile() as VirtualFileWindow
       val hostOffset = delegate.documentWindow.injectedToHost(descriptor.offset)
       val fixedDescriptor = OpenFileDescriptor(descriptor.project, delegate.delegate, hostOffset)
       fixedDescriptor.isUseCurrentWindow = descriptor.isUseCurrentWindow()
       fixedDescriptor.isUsePreviewTab = descriptor.isUsePreviewTab()
-      fixedDescriptor
+      effectiveDescriptor = fixedDescriptor
     }
-    else descriptor
-  }
+    else {
+      effectiveDescriptor = descriptor
+    }
 
-  private fun FileEditorNavigatable.toOpenOptions(focusEditor: Boolean): FileEditorOpenOptions {
-    return FileEditorOpenOptions(
-      reuseOpen = !isUseCurrentWindow,
-      usePreviewTab = isUsePreviewTab,
+    val file = effectiveDescriptor.file
+    val openOptions = FileEditorOpenOptions(
+      reuseOpen = !effectiveDescriptor.isUseCurrentWindow,
+      usePreviewTab = effectiveDescriptor.isUsePreviewTab,
       requestFocus = focusEditor,
       openMode = getOpenMode(IdeEventQueue.getInstance().trueCurrentEvent),
     )
-  }
 
-  @RequiresEdt
-  private fun navigateInComposite(
-    composite: FileEditorComposite,
-    effectiveDescriptor: FileEditorNavigatable,
-  ): kotlin.Pair<List<FileEditor>, FileEditor?>? {
-    if (composite !is EditorComposite) return null
+    val composite: FileEditorComposite = openFile(file = file, window = null, options = openOptions)
     val fileEditors = composite.allEditors
-    for (editor in fileEditors) {
-      if (editor is NavigatableFileEditor &&
-          navigateAndSelectEditor(editor, effectiveDescriptor, composite)) {
-        return fileEditors to editor
+
+    if (composite is EditorComposite) {
+      for (editor in fileEditors) {
+        if (editor is NavigatableFileEditor &&
+            navigateAndSelectEditor(editor, effectiveDescriptor, composite)) {
+          return fileEditors to editor
+        }
       }
     }
-    return null
+    return fileEditors to null
   }
-
 
   override fun getProject(): Project = project
 
@@ -2508,6 +2489,7 @@ fun blockingWaitForCompositeFileOpen(composite: EditorComposite) {
 
   // https://youtrack.jetbrains.com/issue/IDEA-319932
   // runWithModalProgressBlocking cannot be used under a write action - https://youtrack.jetbrains.com/issue/IDEA-319932
+  // IJPL-196175 & IJPL-202195: `pumpEventsForHierarchy` can't be used within `runWithModalProgressBlocking`
   if (ApplicationManager.getApplication().isWriteAccessAllowed) {
     // todo silenceWriteLock instead of executeSuspendingWriteAction
     (ApplicationManager.getApplication() as ApplicationImpl).executeSuspendingWriteAction(
@@ -2519,22 +2501,34 @@ fun blockingWaitForCompositeFileOpen(composite: EditorComposite) {
       }
     }
   }
+  else if (LaterInvocator.isInModalContext()) {
+    inModalContext(ObjectUtils.sentinel("Opening file=${composite.file.name}")) {
+      job.waitBlockingAndPumpEdt()
+    }
+  }
   else {
     // we don't need progress - handled by async editor loader
-    val (parallelizedLockContext, cleanup) = getGlobalThreadingSupport().getPermitAsContextElement(currentThreadContext(), true)
-    try {
-      runBlocking(parallelizedLockContext) {
-        job.invokeOnCompletion {
-          EventQueue.invokeLater(EmptyRunnable.getInstance())
-        }
+    job.waitBlockingAndPumpEdt()
+  }
+}
 
-        IdeEventQueue.getInstance().pumpEventsForHierarchy {
-          job.isCompleted
-        }
+@Suppress("RAW_RUN_BLOCKING")
+@RequiresEdt
+private fun Job.waitBlockingAndPumpEdt() {
+  val (parallelizedLockContext, cleanup) = getGlobalThreadingSupport().getPermitAsContextElement(currentThreadContext(), true)
+  try {
+    runBlocking(parallelizedLockContext) {
+      invokeOnCompletion {
+        EventQueue.invokeLater(EmptyRunnable.getInstance())
       }
-    } finally {
-      cleanup()
+
+      IdeEventQueue.getInstance().pumpEventsForHierarchy {
+        isCompleted
+      }
     }
+  }
+  finally {
+    cleanup()
   }
 }
 

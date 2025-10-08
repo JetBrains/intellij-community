@@ -22,12 +22,13 @@ jvm_library(
     "//libraries/io",
     "//platform/platform-impl:ide-impl",
     "@lib//:kotlinx-coroutines-core",
-    "@lib//:kotlinx-serialization-core",
-    "@lib//:kotlinx-serialization-json",
+    "//libraries/kotlinx/serialization/core",
+    "//libraries/kotlinx/serialization/json",
     "@lib//:kotlinc-kotlinx-serialization-compiler-plugin",
-    "@lib//:kotlin-reflect",
+    "//libraries/kotlin-reflect",
     "//platform/util",
     "//platform/util/storages",
+    "//libraries/fastutil",
   ]
 )
 ### auto-generated section `build intellij.platform.durability` end

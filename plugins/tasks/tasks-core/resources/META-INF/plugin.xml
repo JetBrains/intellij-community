@@ -1,4 +1,4 @@
-<idea-plugin>
+<idea-plugin allow-bundled-update="true">
   <id>com.intellij.tasks</id>
   <name>Task Management</name>
   <category>Other Tools</category>
@@ -13,12 +13,19 @@
 ]]></description>
   <vendor>JetBrains</vendor>
 
+  <content namespace="jetbrains">
+    <module name="intellij.tasks.trac"/>
+    <module name="intellij.tasks.bugzilla"/>
+    <module name="intellij.tasks.jira"/>
+  </content>
   <dependencies>
     <plugin id="com.intellij.modules.xml" />
     <module name="intellij.platform.vcs.impl"/>
     <module name="intellij.platform.tasks.impl"/>
+    <module name="intellij.libraries.gson"/>
     <module name="intellij.regexp"/>
   </dependencies>
+
   <depends optional="true" config-file="java-contexts.xml">com.intellij.java</depends>
   <!--
     Optional dependency on XPath plugin for syntax highlighting in GenericRepository configuration dialog
@@ -99,7 +106,6 @@
   </extensionPoints>
 
   <extensions defaultExtensionNs="com.intellij">
-
     <projectConfigurable groupId="tools" instance="com.intellij.tasks.config.TaskConfigurable" id="tasks"
                          bundle="messages.TaskBundle"
                          key="configurable.TaskConfigurable.display.name">
@@ -117,28 +123,15 @@
 
     <lang.documentationProvider language="TEXT" implementationClass="com.intellij.tasks.doc.TaskDocumentationProvider"/>
 
-    <tasks.repositoryType implementation="com.intellij.tasks.jira.JiraRepositoryType"/>
     <tasks.repositoryType implementation="com.intellij.tasks.youtrack.YouTrackRepositoryType"/>
     <tasks.repositoryType implementation="com.intellij.tasks.lighthouse.LighthouseRepositoryType"/>
     <tasks.repositoryType implementation="com.intellij.tasks.pivotal.PivotalTrackerRepositoryType"/>
     <tasks.repositoryType implementation="com.intellij.tasks.redmine.RedmineRepositoryType"/>
-    <tasks.repositoryType implementation="com.intellij.tasks.trac.TracRepositoryType"/>
     <tasks.repositoryType implementation="com.intellij.tasks.fogbugz.FogBugzRepositoryType"/>
     <tasks.repositoryType implementation="com.intellij.tasks.mantis.MantisRepositoryType"/>
     <tasks.repositoryType implementation="com.intellij.tasks.generic.GenericRepositoryType"/>
     <tasks.repositoryType implementation="com.intellij.tasks.trello.TrelloRepositoryType"/>
     <tasks.repositoryType implementation="com.intellij.tasks.gitlab.GitlabRepositoryType"/>
-    <tasks.repositoryType implementation="com.intellij.tasks.bugzilla.BugzillaRepositoryType"/>
-
-    <!-- JQL support -->
-    <fileType name="JQL" implementationClass="com.intellij.tasks.jira.jql.JqlFileType" fieldName="INSTANCE" language="JQL" extensions="jql" />
-    <lang.parserDefinition language="JQL"
-                           implementationClass="com.intellij.tasks.jira.jql.JqlParserDefinition"/>
-    <lang.syntaxHighlighterFactory language="JQL" implementationClass="com.intellij.tasks.jira.jql.JqlHighlighterFactory"/>
-    <lang.braceMatcher language="JQL" implementationClass="com.intellij.tasks.jira.jql.JqlBraceMatcher"/>
-    <completion.contributor language="JQL"
-                            implementationClass="com.intellij.tasks.jira.jql.codeinsight.JqlCompletionContributor"/>
-    <annotator language="JQL" implementationClass="com.intellij.tasks.jira.jql.codeinsight.JqlAnnotator"/>
 
     <checkinHandlerFactory implementation="com.intellij.tasks.impl.TaskCheckinHandlerFactory"/>
     <!-- YouTrack support -->
@@ -155,8 +148,5 @@
     <statistics.counterUsagesCollector implementationClass="com.intellij.tasks.impl.TaskManagementUsageCollector"/>
     <statistics.projectUsagesCollector implementation="com.intellij.tasks.impl.TaskManagementConfigurationCollector"/>
     <statistics.projectUsagesCollector implementation="com.intellij.tasks.core.fus.TasksStateCollector"/>
-
-    <registryKey key="tasks.use.search.jql.api" defaultValue="true"
-                 description="Use /rest/api/[2|3|laters]/search/jql REST API instead of /rest/api/[2|3|laters]/search/, deprecated in https://developer.atlassian.com/changelog/#CHANGE-2046"/>
   </extensions>
 </idea-plugin>

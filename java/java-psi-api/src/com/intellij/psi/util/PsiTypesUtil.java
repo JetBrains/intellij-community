@@ -387,7 +387,7 @@ public final class PsiTypesUtil {
     return type.accept(new PsiTypeVisitor<Boolean>() {
       @Override
       public Boolean visitType(@NotNull PsiType type) {
-        return type.getAnnotations().length > 0;
+        return type.hasAnnotations();
       }
 
       @Override

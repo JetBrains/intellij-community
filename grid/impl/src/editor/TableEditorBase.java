@@ -2,6 +2,9 @@ package com.intellij.database.editor;
 
 import com.intellij.database.DataGridBundle;
 import com.intellij.database.datagrid.DataGrid;
+import com.intellij.database.datagrid.GridColumn;
+import com.intellij.database.datagrid.GridDataHookUp;
+import com.intellij.database.datagrid.GridRow;
 import com.intellij.ide.structureView.StructureViewBuilder;
 import com.intellij.ide.structureView.StructureViewModel;
 import com.intellij.ide.structureView.TreeBasedStructureViewBuilder;
@@ -22,7 +25,7 @@ import java.beans.PropertyChangeSupport;
 /**
  * @author gregsh
  */
-public abstract class TableEditorBase extends UserDataHolderBase implements FileEditor {
+public abstract class TableEditorBase extends UserDataHolderBase implements FileEditor, DataGridContainer, DataHookupContainer {
 
   private final Project myProject;
   private final PropertyChangeSupport myPropertyChangeSupport = new PropertyChangeSupport(this);
@@ -36,7 +39,13 @@ public abstract class TableEditorBase extends UserDataHolderBase implements File
     return myProject;
   }
 
+  @Override
   public abstract @NotNull DataGrid getDataGrid();
+
+  @Override
+  public @NotNull GridDataHookUp<@NotNull GridRow, @NotNull GridColumn> getDataHookup() {
+    return getDataGrid().getDataHookup();
+  }
 
   @Override
   public @NotNull String getName() {

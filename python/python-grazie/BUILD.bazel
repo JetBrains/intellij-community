@@ -1,9 +1,9 @@
 ### auto-generated section `build intellij.python.grazie` start
-load("@rules_jvm//:jvm.bzl", "jvm_library", "jvm_resources")
+load("@rules_jvm//:jvm.bzl", "jvm_library", "resourcegroup")
 
-jvm_resources(
+resourcegroup(
   name = "grazie_resources",
-  files = glob(["resources/**/*"]),
+  srcs = glob(["resources/**/*"]),
   strip_prefix = "resources"
 )
 
@@ -12,6 +12,7 @@ jvm_library(
   module_name = "intellij.python.grazie",
   visibility = ["//visibility:public"],
   srcs = glob(["src/**/*.kt", "src/**/*.java", "src/**/*.form"], allow_empty = True),
+  resources = [":grazie_resources"],
   deps = [
     "//plugins/grazie",
     "//platform/core-api:core",
@@ -19,7 +20,6 @@ jvm_library(
     "//platform/util",
     "@lib//:kotlin-stdlib",
     "//platform/core-impl",
-  ],
-  runtime_deps = [":grazie_resources"]
+  ]
 )
 ### auto-generated section `build intellij.python.grazie` end

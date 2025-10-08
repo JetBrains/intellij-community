@@ -103,7 +103,7 @@ class MavenProject(val file: VirtualFile) {
   @Internal
   fun updateState(
     model: MavenModel,
-    managedDependencies: List<MavenId>,
+    managedDependencies: List<MavenArtifactInfo>,
     dependencyHash: String?,
     readingProblems: Collection<MavenProjectProblem>,
     activatedProfiles: MavenExplicitProfiles,
@@ -605,7 +605,9 @@ class MavenProject(val file: VirtualFile) {
     setState(newState)
   }
 
-  fun findManagedDependencyVersion(groupId: String, artifactId: String): String? = myState.managedDependencies[GroupAndArtifact(groupId, artifactId)]
+  fun findManagedDependencyVersion(groupId: String, artifactId: String): String? = myState.managedDependencies["$groupId:$artifactId"]?.version
+
+  fun managedDependencies(): Map<String, MavenArtifactInfo> = myState.managedDependencies
 
   fun findDependencies(depProject: MavenProject): List<MavenArtifact> {
     return findDependencies(depProject.mavenId)
@@ -851,7 +853,7 @@ class MavenProject(val file: VirtualFile) {
       state: MavenProjectState,
       incLastReadStamp: Boolean,
       model: MavenModel,
-      managedDependencies: List<MavenId>,
+      managedDependencies: List<MavenArtifactInfo>,
       readingProblems: Collection<MavenProjectProblem>,
       activatedProfiles: MavenExplicitProfiles,
       unresolvedArtifactIds: Set<MavenId>,
@@ -874,7 +876,7 @@ class MavenProject(val file: VirtualFile) {
       val newPluginInfos = LinkedHashSet<MavenPluginWithArtifact>()
       val newExtensions = LinkedHashSet<MavenArtifact>()
       val newAnnotationProcessors = LinkedHashSet<MavenArtifact>()
-      val newManagedDeps = HashMap<GroupAndArtifact, String>(managedDependencies.size)
+      val newManagedDeps = HashMap<String, MavenArtifactInfo>(managedDependencies.size)
 
       if (keepPreviousArtifacts) {
         newUnresolvedArtifacts.addAll(state.unresolvedArtifactIds)
@@ -906,7 +908,7 @@ class MavenProject(val file: VirtualFile) {
       newExtensions.addAll(model.extensions)
 
       for (md in managedDependencies) {
-        newManagedDeps.put(GroupAndArtifact(md.groupId ?: "", md.artifactId ?: ""), md.version ?: "")
+        newManagedDeps["${md.groupId}:${md.artifactId}"] = md
       }
 
       val remoteRepositories = ArrayList(newRepositories)
@@ -916,7 +918,7 @@ class MavenProject(val file: VirtualFile) {
       val pluginInfos = ArrayList(newPluginInfos)
       val extensions = ArrayList(newExtensions)
       val annotationProcessors = ArrayList(newAnnotationProcessors)
-      val managedDependenciesMap = LinkedHashMap(newManagedDeps)
+      val managedDependenciesMap = HashMap(newManagedDeps)
 
       val newDependencyHash = dependencyHash ?: state.dependencyHash
       val lastReadStamp = state.lastReadStamp + if (incLastReadStamp) 1 else 0

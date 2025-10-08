@@ -10,7 +10,7 @@
     <p>The plugin deals with the quality evaluation of IDE features based on artificial queries.</p>
   ]]></description>
   
-  <content>
+  <content namespace="jetbrains">
     <module name="intellij.evaluationPlugin.languages.java"/>
     <module name="intellij.evaluationPlugin.languages.python"/>
     <module name="intellij.evaluationPlugin.languages.kotlin"/>

@@ -1,6 +1,6 @@
 ### auto-generated section `build intellij.platform.whatsNew` start
 load("//build:compiler-options.bzl", "create_kotlinc_options")
-load("@rules_jvm//:jvm.bzl", "jvm_library", "jvm_resources")
+load("@rules_jvm//:jvm.bzl", "jvm_library", "resourcegroup")
 
 create_kotlinc_options(
   name = "custom_whatsNew",
@@ -10,9 +10,9 @@ create_kotlinc_options(
   ]
 )
 
-jvm_resources(
+resourcegroup(
   name = "whatsNew_resources",
-  files = glob(["resources/**/*"]),
+  srcs = glob(["resources/**/*"]),
   strip_prefix = "resources"
 )
 
@@ -21,6 +21,7 @@ jvm_library(
   module_name = "intellij.platform.whatsNew",
   visibility = ["//visibility:public"],
   srcs = glob(["src/**/*.kt", "src/**/*.java", "src/**/*.form"], allow_empty = True),
+  resources = [":whatsNew_resources"],
   kotlinc_opts = ":custom_whatsNew",
   deps = [
     "//platform/core-api:core",
@@ -33,15 +34,14 @@ jvm_library(
     "//platform/core-ui",
     "//platform/platform-util-io:ide-util-io",
     "//platform/ide-core-impl",
-    "@lib//:miglayout-swing",
+    "//libraries/miglayout-swing",
     "@lib//:kotlinc-kotlinx-serialization-compiler-plugin-provided",
-    "@lib//:kotlinx-serialization-json",
-    "@lib//:kotlinx-serialization-core",
+    "//libraries/kotlinx/serialization/json",
+    "//libraries/kotlinx/serialization/core",
     "//platform/ui.jcef",
     "//platform/analysis-api:analysis",
     "//platform/util/coroutines",
-  ],
-  runtime_deps = [":whatsNew_resources"]
+  ]
 )
 
 jvm_library(
@@ -63,10 +63,10 @@ jvm_library(
     "//platform/core-ui",
     "//platform/platform-util-io:ide-util-io",
     "//platform/ide-core-impl",
-    "@lib//:miglayout-swing",
+    "//libraries/miglayout-swing",
     "@lib//:kotlinc-kotlinx-serialization-compiler-plugin-provided",
-    "@lib//:kotlinx-serialization-json",
-    "@lib//:kotlinx-serialization-core",
+    "//libraries/kotlinx/serialization/json",
+    "//libraries/kotlinx/serialization/core",
     "//platform/ui.jcef",
     "//platform/analysis-api:analysis",
     "//platform/testFramework",
@@ -74,8 +74,7 @@ jvm_library(
     "//platform/testFramework/junit5",
     "//platform/testFramework/junit5:junit5_test_lib",
     "//platform/util/coroutines",
-  ],
-  runtime_deps = [":whatsNew_resources"]
+  ]
 )
 ### auto-generated section `build intellij.platform.whatsNew` end
 

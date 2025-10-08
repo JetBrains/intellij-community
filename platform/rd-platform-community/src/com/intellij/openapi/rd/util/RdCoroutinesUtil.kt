@@ -7,8 +7,8 @@ import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.application.EDT
 import com.intellij.openapi.application.ModalityState
 import com.intellij.openapi.application.asContextElement
-import com.jetbrains.rd.util.lifetime.Lifetime
 import com.jetbrains.rd.framework.util.withContext
+import com.jetbrains.rd.util.lifetime.Lifetime
 import com.jetbrains.rd.util.threading.coroutines.async
 import com.jetbrains.rd.util.threading.coroutines.launch
 import kotlinx.coroutines.*
@@ -70,44 +70,6 @@ fun Lifetime.launchOnUi(
 ): Job {
   return launch(uiDispatcher + ModalityState.defaultModalityState().asContextElement() + context, start, action)
 }
-
-/**
- * Use coroutineScope.launch(Dispatchers.EDT) or coroutineScope.launch(Dispatchers.EDT + ModalityState.nonModal().asContextElement())
- *
- * **Deprecated:** This method is deprecated as it launches coroutines directly tied to a [Lifetime],
- * which is equivalent to launching them from an application-level scope and cancelling them when the Lifetime is terminated.
- *
- * For project/client/plugin level scopes, it is recommended to obtain a [CoroutineScope] from the appropriate service.
- * This ensures coroutines are automatically cancelled and awaited when application/project is closed,
- * this scope also have included specific context elements like [com.intellij.codeWithMe.ClientId], [com.intellij.openapi.components.ComponentManager] for accessing project/client level services
- * through `com.intellij.serviceContainer.ContextKt#instance`.
- *
- * **Memory Leak Warning:** It is not recommended to manually manage coroutine cancellation with `lifetime.onTermination { job.cancel() }`
- * because if the lifetime significantly outlives the coroutine task, it can lead to memory leaks. This pattern causes the `Lifetime`
- * to retain references to coroutine jobs until termination. Over time, especially in long-lived scopes, this can accumulate and exhaust
- * memory resources.
- *
- * **Recommended Alternative:**
- * If you need to cancel a coroutine when a Lifetime is terminated, consider using [lifetimedCoroutineScope].
- * For launching coroutines at project/client/plugin level, obtain a coroutine scope from the appropriate service:
- * ```
- * val serviceScope = // obtain application/project/client/plugin level CoroutineScope
- * serviceScope.launch {
- *  lifetimedCoroutineScope(lifetime) {
- *      // your coroutine code here
- *   }
- * }
- * ```
- *
- * @deprecated Use application/project/client/plugin level [CoroutineScope] and [lifetimedCoroutineScope].
- */
-@ApiStatus.ScheduledForRemoval
-@Deprecated("Use application/project/client/plugin level CoroutineScope. See KDoc for details.")
-fun Lifetime.launchOnUiNonModal(
-  context: CoroutineContext = EmptyCoroutineContext,
-  start: CoroutineStart = CoroutineStart.DEFAULT,
-  action: suspend CoroutineScope.() -> Unit
-): Job = launch(uiDispatcher + context, start, action)
 
 @Deprecated("Do not use this method")
 fun Lifetime.launchOnUiAllowInlining(
@@ -174,13 +136,6 @@ fun Lifetime.launchBackground(
   action: suspend CoroutineScope.() -> Unit
 ): Job = launch(applicationThreadPool + ModalityState.defaultModalityState().asContextElement() + context, start, action)
 
-@ApiStatus.ScheduledForRemoval
-@Deprecated("Use launch with a specific IO dispatcher for your purposes.")
-fun Lifetime.launchSyncIOBackground(
-  start: CoroutineStart = CoroutineStart.DEFAULT,
-  action: () -> Unit
-): Job = launch(processIODispatcher, start) { action() }
-
 @Deprecated("Use launchBackground", ReplaceWith("launchBackground(start, action)"))
 fun Lifetime.launchLongBackground(
   context: CoroutineContext = EmptyCoroutineContext,
@@ -231,52 +186,6 @@ fun <T> Lifetime.startOnUiAsync(
   start: CoroutineStart = CoroutineStart.DEFAULT,
   action: suspend CoroutineScope.() -> T
 ): Deferred<T> = async(uiDispatcher + ModalityState.defaultModalityState().asContextElement() + context, start, action)
-
-/**
- * Use coroutineScope.async(Dispatchers.EDT) or coroutineScope.async(Dispatchers.EDT + ModalityState.nonModal().asContextElement())
- *
- * **Deprecated:** This method is deprecated as it launches coroutines directly tied to a [Lifetime],
- * which is equivalent to launching them from an application-level scope and cancelling them when the Lifetime is terminated.
- *
- * For project/client/plugin level scopes, it is recommended to obtain a [CoroutineScope] from the appropriate service.
- * This ensures coroutines are automatically cancelled and awaited when application/project is closed,
- * this scope also have included specific context elements like [com.intellij.codeWithMe.ClientId], [com.intellij.openapi.components.ComponentManager] for accessing project/client level services
- * through `com.intellij.serviceContainer.ContextKt#instance`.
- *
- * **Memory Leak Warning:** It is not recommended to manually manage coroutine cancellation with `lifetime.onTermination { job.cancel() }`
- * because if the lifetime significantly outlives the coroutine task, it can lead to memory leaks. This pattern causes the `Lifetime`
- * to retain references to coroutine jobs until termination. Over time, especially in long-lived scopes, this can accumulate and exhaust
- * memory resources.
- *
- * **Recommended Alternative:**
- * If you need to cancel a coroutine when a Lifetime is terminated, consider using [lifetimedCoroutineScope].
- * For launching coroutines at project/client/plugin level, obtain a coroutine scope from the appropriate service:
- * ```
- * val serviceScope = // obtain application/project/client/plugin level CoroutineScope
- * serviceScope.async {
- *  lifetimedCoroutineScope(lifetime) {
- *      // your coroutine code here
- *   }
- * }
- * ```
- *
- * @deprecated Use application/project/client/plugin level [CoroutineScope] and [lifetimedCoroutineScope].
- */
-@ApiStatus.ScheduledForRemoval
-@Deprecated("Use application/project/client/plugin level CoroutineScope. See KDoc for details.")
-fun <T> Lifetime.startOnUiNonModalAsync(
-  context: CoroutineContext = EmptyCoroutineContext,
-  start: CoroutineStart = CoroutineStart.DEFAULT,
-  action: suspend CoroutineScope.() -> T
-): Deferred<T> = async(uiDispatcher + context, start, action)
-
-@ApiStatus.ScheduledForRemoval
-@Deprecated("Do not use this method")
-fun <T> Lifetime.startOnUiAllowInliningAsync(
-  context: CoroutineContext = EmptyCoroutineContext,
-  start: CoroutineStart = CoroutineStart.DEFAULT,
-  action: suspend CoroutineScope.() -> T
-): Deferred<T> = async(uiDispatcherWithInlining + context, start, action)
 
 @Deprecated("Please use async with modality specified explicitly")
 fun <T> Lifetime.startOnUiAnyModalityAsync(
@@ -344,14 +253,6 @@ fun <T> Lifetime.startBackgroundAsync(
 ): Deferred<T> = async(applicationThreadPool + ModalityState.defaultModalityState().asContextElement() + context, start, action)
 
 @ApiStatus.ScheduledForRemoval
-@Deprecated("Use async with a specific IO dispatcher for your purposes.")
-fun <T> Lifetime.startSyncIOBackgroundAsync(
-  context: CoroutineContext = EmptyCoroutineContext,
-  start: CoroutineStart = CoroutineStart.DEFAULT,
-  action: () -> T
-): Deferred<T> = async(processIODispatcher + context, start) { action() }
-
-@ApiStatus.ScheduledForRemoval
 @Deprecated("Use launch with a specific dispatcher for your purposes")
 fun <T> Lifetime.startNonUrgentBackgroundAsync(
   context: CoroutineContext = EmptyCoroutineContext,
@@ -366,32 +267,11 @@ fun CoroutineScope.launchChildOnUi(
   action: suspend CoroutineScope.() -> Unit
 ): Job = launch(Dispatchers.EDT, start, action)
 
-@ApiStatus.ScheduledForRemoval
-@Deprecated("Do not use this method")
-fun CoroutineScope.launchChildOnUiAllowInlining(
-  start: CoroutineStart = CoroutineStart.DEFAULT,
-  action: suspend CoroutineScope.() -> Unit
-): Job = launch(uiDispatcherWithInlining, start, action)
-
-@ApiStatus.ScheduledForRemoval
-@Deprecated("Use async with a specific IO dispatcher for your purposes.")
-fun CoroutineScope.launchChildSyncIOBackground(
-  start: CoroutineStart = CoroutineStart.DEFAULT,
-  action: () -> Unit
-): Job = launch(processIODispatcher, start) { action() }
-
 @Deprecated("For CPU-bound tasks, use launch(Dispatchers.Default, action). For IO-bound tasks, use launch(Dispatchers.IO, action)")
 fun CoroutineScope.launchChildBackground(
   start: CoroutineStart = CoroutineStart.DEFAULT,
   action: suspend CoroutineScope.() -> Unit
 ): Job = launch(applicationThreadPool, start, action)
-
-@ApiStatus.ScheduledForRemoval
-@Deprecated("Use launch with a specific dispatcher for your purposes")
-fun CoroutineScope.launchChildNonUrgentBackground(
-  start: CoroutineStart = CoroutineStart.DEFAULT,
-  action: suspend CoroutineScope.() -> Unit
-): Job = launch(nonUrgentDispatcher, start, action)
 
 @ApiStatus.ScheduledForRemoval
 @Deprecated("Use async(Dispatchers.EDT)", ReplaceWith("async(Dispatchers.EDT, start, action)", "kotlinx.coroutines.async", "kotlinx.coroutines.Dispatchers",
@@ -400,20 +280,6 @@ fun <T> CoroutineScope.startChildOnUiAsync(
   start: CoroutineStart = CoroutineStart.DEFAULT,
   action: suspend CoroutineScope.() -> T
 ): Deferred<T> = async(uiDispatcher, start, action)
-
-@ApiStatus.ScheduledForRemoval
-@Deprecated("Do not use this method")
-fun <T> CoroutineScope.startChildOnUiAllowInliningAsync(
-  start: CoroutineStart = CoroutineStart.DEFAULT,
-  action: suspend CoroutineScope.() -> T
-): Deferred<T> = async(uiDispatcherWithInlining, start, action)
-
-@ApiStatus.ScheduledForRemoval
-@Deprecated("Use async with a specific IO dispatcher for your purposes.")
-fun <T> CoroutineScope.startChildSyncIOBackgroundAsync(
-  start: CoroutineStart = CoroutineStart.DEFAULT,
-  action: () -> T
-): Deferred<T> = async(processIODispatcher, start) { action() }
 
 @Deprecated("For CPU-bound tasks, use async(Dispatchers.Default, action). For IO-bound tasks, use async(Dispatchers.IO, action)")
 fun <T> CoroutineScope.startChildBackgroundAsync(
@@ -432,11 +298,6 @@ fun <T> CoroutineScope.startChildNonUrgentBackgroundAsync(
                                                             "com.intellij.openapi.application.EDT"))
 suspend fun <T> withUiContext(lifetime: Lifetime = Lifetime.Eternal, action: suspend CoroutineScope.() -> T): T =
   withContext(lifetime, uiDispatcher, action)
-
-@ApiStatus.ScheduledForRemoval
-@Deprecated("Do not use this method")
-suspend fun <T> withUiAllowInliningContext(lifetime: Lifetime = Lifetime.Eternal, action: suspend CoroutineScope.() -> T): T =
-  withContext(lifetime, uiDispatcherWithInlining, action)
 
 @Deprecated("Please use withContext with modality specified explicitly")
 suspend fun <T> withUiAnyModalityContext(lifetime: Lifetime = Lifetime.Eternal, action: suspend CoroutineScope.() -> T): T =
@@ -457,11 +318,6 @@ suspend fun <T> withLongBackgroundContext(lifetime: Lifetime = Lifetime.Eternal,
 @Deprecated("For CPU-bound tasks, use withContext(Dispatchers.Default, action). For IO-bound tasks, use withContext(Dispatchers.IO, action)")
 suspend fun <T> withBackgroundContext(lifetime: Lifetime = Lifetime.Eternal, action: suspend CoroutineScope.() -> T): T =
   withContext(lifetime, applicationThreadPool, action)
-
-@ApiStatus.ScheduledForRemoval
-@Deprecated("Use withContext with a specific dispatcher for your purposes")
-suspend fun <T> withNonUrgentBackgroundContext(lifetime: Lifetime = Lifetime.Eternal, action: suspend CoroutineScope.() -> T): T =
-  withContext(lifetime, nonUrgentDispatcher, action)
 
 @Deprecated("Api moved to Rd")
 suspend fun <T> lifetimedCoroutineScope(lifetime: Lifetime, action: suspend CoroutineScope.() -> T): T =

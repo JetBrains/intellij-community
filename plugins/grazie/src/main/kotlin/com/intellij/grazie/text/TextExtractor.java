@@ -1,5 +1,6 @@
 package com.intellij.grazie.text;
 
+import com.intellij.codeInspection.LocalInspectionTool;
 import com.intellij.codeInspection.SuppressionUtil;
 import com.intellij.diagnostic.PluginException;
 import com.intellij.grazie.grammar.strategy.GrammarCheckingStrategy;
@@ -14,10 +15,7 @@ import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.extensions.ExtensionPoint;
 import com.intellij.openapi.util.*;
 import com.intellij.openapi.util.text.StringUtil;
-import com.intellij.psi.FileViewProvider;
-import com.intellij.psi.PsiElement;
-import com.intellij.psi.PsiFile;
-import com.intellij.psi.SyntaxTraverser;
+import com.intellij.psi.*;
 import com.intellij.psi.util.CachedValue;
 import com.intellij.psi.util.CachedValueProvider;
 import com.intellij.psi.util.CachedValuesManager;
@@ -27,6 +25,8 @@ import one.util.streamex.StreamEx;
 import org.jetbrains.annotations.*;
 
 import java.util.*;
+import java.util.concurrent.atomic.AtomicReference;
+import java.util.function.Supplier;
 import java.util.regex.Pattern;
 
 import static com.intellij.util.containers.ContainerUtil.createConcurrentWeakKeyWeakValueMap;
@@ -40,10 +40,12 @@ public abstract class TextExtractor {
   @ApiStatus.Internal
   public static final LanguageExtension<TextExtractor> EP = new LanguageExtension<>("com.intellij.grazie.textExtractor");
   private static final Key<CachedValue<Cache>> COMMON_PARENT_CACHE = Key.create("TextExtractor common parent cache");
-  private static final Key<CachedValue<Cache>> QUERY_CACHE = Key.create("TextExtractor query cache");
+  private static final Key<CachedValue<AtomicReference<List<TextContent>>>> QUERY_CACHE = Key.create("TextExtractor query cache");
   private static final Key<Boolean> IGNORED = Key.create("TextExtractor ignored");
   private static final Key<CachedValue<Map<TextContent, TextContent>>> CONTENT_INTERNER = Key.create("TextExtractor interner");
-  private static final Pattern SUPPRESSION = Pattern.compile(SuppressionUtil.COMMON_SUPPRESS_REGEXP);
+  private static final Pattern NOINSPECTION_SUPPRESSION = Pattern.compile(SuppressionUtil.COMMON_SUPPRESS_REGEXP);
+  private static final Pattern PROPERTY_SUPPRESSION = Pattern.compile("\\s*suppress inspection \"" + LocalInspectionTool.VALID_ID_PATTERN + "\"");
+  private static final Pattern LICENSE_PATTERN = Pattern.compile("(?i)License.*?(as is|MIT|GNU|GPL|Apache|BSD)", Pattern.DOTALL);
 
   /**
    * Extract text from the given PSI element, if possible.
@@ -112,7 +114,7 @@ public abstract class TextExtractor {
   public static @NotNull List<TextContent> findTextsExactlyAt(@NotNull PsiElement psi, @NotNull Set<TextContent.TextDomain> allowedDomains) {
     PsiFile file = psi.getContainingFile();
     return ContainerUtil.filter(
-      obtainContents(allowedDomains, file, psi),
+      obtainContents(file, psi),
       c -> Boolean.FALSE.equals(c.getUserData(IGNORED)) && allowedDomains.contains(c.getDomain())
     );
   }
@@ -127,10 +129,15 @@ public abstract class TextExtractor {
     for (PsiElement each = psi; each != null; each = each.getParent()) {
       CachedValue<Cache> cache = each.getUserData(COMMON_PARENT_CACHE);
       if (cache != null) {
-        List<TextContent> cached = ContainerUtil.filter(cache.getValue().getCached(allowedDomains), c ->
-          Boolean.FALSE.equals(c.getUserData(IGNORED)) && c.intersectsRange(psiRange));
-        if (!cached.isEmpty()) {
-          return cached;
+        List<TextContent> textsInRange = ContainerUtil.filter(
+          cache.getValue().getCached(),
+          c -> c.intersectsRange(psiRange)
+        );
+        if (!textsInRange.isEmpty()) {
+          return ContainerUtil.filter(
+            textsInRange,
+            c -> allowedDomains.contains(c.getDomain()) && Boolean.FALSE.equals(c.getUserData(IGNORED))
+          );
         }
       }
       if (each instanceof PsiFile) {
@@ -139,32 +146,42 @@ public abstract class TextExtractor {
       }
     }
 
-    for (PsiElement each = psi; each != null; each = each.getParent()) {
+    for (PsiElement each = psi; each != null && each != file; each = each.getParent()) {
       RecursionGuard.StackStamp stamp = RecursionManager.markStack();
 
-      List<TextContent> contents = obtainContents(allowedDomains, file != null ? file : psi.getContainingFile(), each);
+      List<TextContent> contents = obtainContents(file != null ? file : psi.getContainingFile(), each);
       if (stamp.mayCacheNow() && !contents.isEmpty()) {
         StreamEx.of(contents)
           .groupingBy(TextContent::getCommonParent)
-          .forEach((commonParent, group) -> obtainCache(commonParent, COMMON_PARENT_CACHE).register(allowedDomains, group));
+          .forEach((commonParent, group) -> obtainCommonParentCache(commonParent).register(group));
       }
 
       if (!contents.isEmpty()) {
-        return ContainerUtil.filter(contents, c ->
-          Boolean.FALSE.equals(c.getUserData(IGNORED)) && allowedDomains.contains(c.getDomain()) && c.intersectsRange(psiRange));
+        return ContainerUtil.filter(
+          contents,
+          c -> Boolean.FALSE.equals(c.getUserData(IGNORED)) && allowedDomains.contains(c.getDomain()) && c.intersectsRange(psiRange)
+        );
       }
     }
 
     return Collections.emptyList();
   }
 
-  private static Cache obtainCache(PsiElement psi, Key<CachedValue<Cache>> key) {
+  private static AtomicReference<List<TextContent>> obtainQueryCache(PsiElement psi) {
+    return obtainCache(psi, QUERY_CACHE, () -> new AtomicReference<>(null));
+  }
+
+  private static Cache obtainCommonParentCache(PsiElement psi) {
+    return obtainCache(psi, COMMON_PARENT_CACHE, () -> new Cache());
+  }
+
+  private static <T> T obtainCache(PsiElement psi, Key<CachedValue<T>> key, Supplier<T> supplier) {
     var provider = TextContentModificationTrackerProvider.EP_NAME.forLanguage(psi.getLanguage());
     var providedTracker = provider != null ? provider.getModificationTracker(psi) : null;
     var tracker = providedTracker != null ? providedTracker : PsiModificationTracker.MODIFICATION_COUNT;
-    
-    CachedValue<Cache> cache = CachedValuesManager.getManager(psi.getProject())
-      .createCachedValue(() -> CachedValueProvider.Result.create(new Cache(), tracker));
+
+    CachedValue<T> cache = CachedValuesManager.getManager(psi.getProject())
+      .createCachedValue(() -> CachedValueProvider.Result.create(supplier.get(), tracker));
     cache = ((UserDataHolderEx)psi).putUserDataIfAbsent(key, cache);
     return cache.getValue();
   }
@@ -176,24 +193,20 @@ public abstract class TextExtractor {
     return cache.getValue();
   }
 
-  private static List<TextContent> obtainContents(Set<TextContent.TextDomain> allowedDomains,
-                                                  PsiFile file,
-                                                  PsiElement psi) {
-    CachedValue<Cache> cv = psi.getUserData(QUERY_CACHE);
-    if (cv != null) {
-      List<TextContent> result = cv.getValue().getCached(allowedDomains);
-      if (!result.isEmpty()) return result;
-    }
+  private static List<TextContent> obtainContents(PsiFile file, PsiElement psi) {
+    CachedValue<AtomicReference<List<TextContent>>> cv = psi.getUserData(QUERY_CACHE);
+    List<TextContent> cachedContent = cv != null ? cv.getValue().get() : null;
+    if (cachedContent != null) return cachedContent;
 
     RecursionGuard.StackStamp stamp = RecursionManager.markStack();
 
     Language psiLanguage = psi.getLanguage();
-    List<TextContent> contents = doExtract(psi, allowedDomains, psiLanguage);
+    List<TextContent> contents = doExtract(psi, psiLanguage);
     Language fileLanguage = file.getLanguage();
     if (contents.isEmpty() && fileLanguage != psiLanguage) {
-      contents = doExtract(psi, allowedDomains, fileLanguage);
+      contents = doExtract(psi, fileLanguage);
     }
-    if (contents.isEmpty()) return Collections.emptyList();
+    if (contents.isEmpty()) return List.of();
 
     // deduplicate equal contents created by different threads to avoid O(token_count) 'equals' checks later on
     var interner = obtainInterner(file);
@@ -205,15 +218,13 @@ public abstract class TextExtractor {
     }
 
     if (stamp.mayCacheNow()) {
-      obtainCache(psi, QUERY_CACHE).register(allowedDomains, contents);
-      cacheOnSiblings(allowedDomains, psi, contents);
+      obtainQueryCache(psi).compareAndSet(null, contents);
+      cacheOnSiblings(psi, contents);
     }
     return contents;
   }
 
-  private static void cacheOnSiblings(Set<TextContent.TextDomain> allowedDomains,
-                                      PsiElement psi,
-                                      List<TextContent> contents) {
+  private static void cacheOnSiblings(PsiElement psi, List<TextContent> contents) {
     contents.forEach(content -> {
       int startOffset = content.textOffsetToFile(0);
       int endOffset = content.textOffsetToFile(content.length());
@@ -221,29 +232,26 @@ public abstract class TextExtractor {
       if (psiRangeInFile.getStartOffset() > startOffset || psiRangeInFile.getEndOffset() < endOffset) {
         for (ASTNode child : psi.getParent().getNode().getChildren(null)) {
           PsiElement sibling = child.getPsi();
-          contents.stream()
+          List<TextContent> intersectingContents = contents.stream()
             .filter(it -> it.intersectsRange(sibling.getTextRange()))
-            .forEach(it -> {
-              obtainCache(sibling, QUERY_CACHE).register(allowedDomains, List.of(content));
-            });
+            .toList();
+          if (!intersectingContents.isEmpty()) {
+            obtainQueryCache(sibling).compareAndSet(null, intersectingContents);
+          }
         }
       }
     });
   }
 
   private static class Cache {
-    private final EnumSet<TextContent.TextDomain> checkedDomains = EnumSet.noneOf(TextContent.TextDomain.class);
     private final Set<TextContent> foundContents = new LinkedHashSet<>();
 
-    synchronized void register(Set<TextContent.TextDomain> allowedDomains, List<TextContent> contents) {
-      checkedDomains.addAll(allowedDomains);
+    synchronized void register(List<TextContent> contents) {
       foundContents.addAll(contents);
     }
 
-    synchronized List<TextContent> getCached(Set<TextContent.TextDomain> allowedDomains) {
-      return checkedDomains.containsAll(allowedDomains)
-             ? ContainerUtil.filter(foundContents, c -> allowedDomains.contains(c.getDomain()))
-             : Collections.emptyList();
+    synchronized List<TextContent> getCached() {
+      return new ArrayList<>(foundContents);
     }
   }
 
@@ -254,9 +262,13 @@ public abstract class TextExtractor {
   }
 
   private static boolean isCopyrightComment(TextContent content) {
-    return (content.getDomain() == TextContent.TextDomain.COMMENTS || content.getDomain() == TextContent.TextDomain.DOCUMENTATION) &&
-           StringUtil.containsIgnoreCase(content.toString(), "Copyright") &&
-           isAtFileStart(content);
+    return (content.getDomain() == TextContent.TextDomain.COMMENTS || content.getDomain() == TextContent.TextDomain.DOCUMENTATION)
+           && StringUtil.containsIgnoreCase(content.toString(), "Copyright")
+           && (isAtFileStart(content) || looksLikeLicense(content));
+  }
+
+  private static boolean looksLikeLicense(TextContent content) {
+    return LICENSE_PATTERN.matcher(content).find();
   }
 
   private static boolean isAtFileStart(TextContent content) {
@@ -266,7 +278,8 @@ public abstract class TextExtractor {
   }
 
   private static boolean isSuppressionComment(TextContent content) {
-    return content.getDomain() == TextContent.TextDomain.COMMENTS && SUPPRESSION.matcher(content).lookingAt();
+    return content.getDomain() == TextContent.TextDomain.COMMENTS &&
+           (NOINSPECTION_SUPPRESSION.matcher(content).lookingAt() || PROPERTY_SUPPRESSION.matcher(content).lookingAt());
   }
 
   /**
@@ -291,6 +304,7 @@ public abstract class TextExtractor {
     Set<TextContent> allContents = new HashSet<>();
     for (PsiFile root : vp.getAllFiles()) {
       for (PsiElement element : SyntaxTraverser.psiTraverser(root)) {
+        if (element instanceof PsiWhiteSpace) continue;
         allContents.addAll(findTextsExactlyAt(element, domains));
       }
     }
@@ -302,12 +316,10 @@ public abstract class TextExtractor {
   }
 
   @SuppressWarnings("deprecation")
-  private static @NotNull List<TextContent> doExtract(@NotNull PsiElement anyRoot,
-                                                      @NotNull Set<TextContent.TextDomain> allowedDomains,
-                                                      @NotNull Language language) {
+  private static @NotNull List<TextContent> doExtract(@NotNull PsiElement anyRoot, @NotNull Language language) {
     TextExtractor extractor = EP.forLanguage(language);
     if (extractor != null) {
-      List<TextContent> contents = extractor.buildTextContents(anyRoot, allowedDomains);
+      List<TextContent> contents = extractor.buildTextContents(anyRoot, TextContent.TextDomain.ALL);
       for (TextContent content : contents) {
         if (!content.getCommonParent().getTextRange().contains(content.textRangeToFile(TextRange.from(0, content.length())))) {
           if (!(extractor instanceof EventuallyConsistentTextExtractor)) {
@@ -324,7 +336,7 @@ public abstract class TextExtractor {
       if (strategy.isMyContextRoot(anyRoot)) {
         GrammarCheckingStrategy.TextDomain oldDomain = strategy.getContextRootTextDomain(anyRoot);
         TextContent.TextDomain domain = StrategyTextExtractor.convertDomain(oldDomain);
-        if (domain != null && allowedDomains.contains(domain)) {
+        if (domain != null) {
           return ContainerUtil.createMaybeSingletonList(new StrategyTextExtractor(strategy).extractText(strategy.getRootsChain(anyRoot)));
         }
       }
@@ -352,6 +364,6 @@ public abstract class TextExtractor {
   
   @TestOnly
   public @NotNull List<TextContent> buildTextContentsTestAccessor(@NotNull PsiElement element, @NotNull Set<TextContent.TextDomain> allowedDomains) {
-    return buildTextContents(element, allowedDomains); 
+    return buildTextContents(element, allowedDomains);
   }
 }

@@ -5,12 +5,14 @@ import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.wm.ToolWindow;
 import com.intellij.psi.PsiElement;
 import com.intellij.ui.content.Content;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 /**
  * @deprecated V2 implementation doesn't allow customization of the tool window in plugins.
  */
+@ApiStatus.Internal
 @Deprecated(forRemoval = true)
 public abstract class AbstractDocToolWindowManager implements DocToolWindowManager {
 

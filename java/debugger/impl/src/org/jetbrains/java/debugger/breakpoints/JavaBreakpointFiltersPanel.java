@@ -295,12 +295,7 @@ public class JavaBreakpointFiltersPanel<T extends JavaBreakpointProperties, B ex
   protected ClassFilter createClassConditionFilter() {
     ClassFilter classFilter;
     if (myBreakpointPsiClass != null) {
-      classFilter = new ClassFilter() {
-        @Override
-        public boolean isAccepted(PsiClass aClass) {
-          return myBreakpointPsiClass == aClass || aClass.isInheritor(myBreakpointPsiClass, true);
-        }
-      };
+      classFilter = aClass -> myBreakpointPsiClass == aClass || aClass.isInheritor(myBreakpointPsiClass, true);
     }
     else {
       classFilter = null;

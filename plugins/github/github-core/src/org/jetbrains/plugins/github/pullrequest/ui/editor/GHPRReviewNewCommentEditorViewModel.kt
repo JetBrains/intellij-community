@@ -7,6 +7,7 @@ import com.intellij.collaboration.ui.codereview.comment.CodeReviewSubmittableTex
 import com.intellij.collaboration.util.ComputedResult
 import com.intellij.collaboration.util.filePath
 import com.intellij.collaboration.util.getOrNull
+import com.intellij.diff.util.LineRange
 import com.intellij.openapi.project.Project
 import com.intellij.util.asSafely
 import com.intellij.vcsUtil.VcsFileUtil.relativePath
@@ -14,7 +15,9 @@ import git4idea.changes.GitBranchComparisonResult
 import git4idea.repo.GitRepository
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.cancel
+import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
+import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.combine
 import org.jetbrains.plugins.github.api.data.GHActor
 import org.jetbrains.plugins.github.api.data.GHPullRequestReviewEvent
@@ -30,13 +33,13 @@ import org.jetbrains.plugins.github.pullrequest.ui.editor.GHPRReviewNewCommentEd
 import org.jetbrains.plugins.github.ui.icons.GHAvatarIconsProvider
 
 interface GHPRReviewNewCommentEditorViewModel : CodeReviewSubmittableTextViewModel {
-  val position: GHPRReviewCommentPosition
-
+  val position: StateFlow<GHPRReviewCommentPosition>
   val currentUser: GHActor
   val avatarIconsProvider: GHAvatarIconsProvider
   val submitActions: StateFlow<List<SubmitAction>>
 
   fun cancel()
+  fun updateLineRange(range: LineRange?)
 
   sealed interface SubmitAction : () -> Unit {
     fun interface CreateSingleComment : SubmitAction
@@ -52,14 +55,29 @@ internal class GHPRReviewNewCommentEditorViewModelImpl(
   private val repository: GitRepository,
   override val currentUser: GHActor,
   override val avatarIconsProvider: GHAvatarIconsProvider,
-  override val position: GHPRReviewCommentPosition,
-  private val onCancel: () -> Unit
+  pos: GHPRReviewCommentPosition,
+  private val onCancel: (position: GHPRReviewCommentPosition) -> Unit,
 ) : CodeReviewSubmittableTextViewModelBase(project, parentCs, ""),
     GHPRReviewNewCommentEditorViewModel {
   private val settings = GithubPullRequestsProjectUISettings.getInstance(project)
   private val reviewDataProvider = dataProvider.reviewData
   private val changesState: StateFlow<ComputedResult<GitBranchComparisonResult>> =
     dataProvider.changesData.changesComputationState().stateInNow(cs, ComputedResult.loading())
+
+  private val side = pos.location.side
+  private val change = pos.change
+  private val _position: MutableStateFlow<GHPRReviewCommentPosition> = MutableStateFlow(pos)
+  override val position: StateFlow<GHPRReviewCommentPosition> = _position.asStateFlow()
+
+  override fun updateLineRange(range: LineRange?) {
+    if (range == null) return
+    _position.value = if (range.start == range.end) {
+      GHPRReviewCommentPosition(change, GHPRReviewCommentLocation.SingleLine(side, range.end))
+    }
+    else {
+      GHPRReviewCommentPosition(change, GHPRReviewCommentLocation.MultiLine(side, range.start, range.end))
+    }
+  }
 
   private val pendingReviewState: StateFlow<ComputedResult<GHPullRequestPendingReview?>> =
     reviewDataProvider.pendingReviewComputationFlow.stateInNow(cs, ComputedResult.loading())
@@ -69,7 +87,7 @@ internal class GHPRReviewNewCommentEditorViewModelImpl(
   private val createSingleCommentAction = SubmitAction.CreateSingleComment {
     submit {
       val thread = createThreadDTO(it)
-      val commitSha = position.change.revisionNumberAfter.asString()
+      val commitSha = position.value.change.revisionNumberAfter.asString()
       reviewDataProvider.createReview(GHPullRequestReviewEvent.COMMENT, null, commitSha, listOf(thread))
       settings.reviewCommentsPreferred = false
       cancel()
@@ -79,7 +97,7 @@ internal class GHPRReviewNewCommentEditorViewModelImpl(
   private val createReviewAction = SubmitAction.CreateReview {
     submit {
       val thread = createThreadDTO(it)
-      val commitSha = position.change.revisionNumberAfter.asString()
+      val commitSha = position.value.change.revisionNumberAfter.asString()
       reviewDataProvider.createReview(null, null, commitSha, listOf(thread))
       settings.reviewCommentsPreferred = true
       cancel()
@@ -96,7 +114,7 @@ internal class GHPRReviewNewCommentEditorViewModelImpl(
           else listOf(createSingleCommentAction, createReviewAction)
         }
         else if (changes != null) {
-          listOf(createReviewCommentAction(review.id, changes.changes.contains(position.change)))
+          listOf(createReviewCommentAction(review.id, changes.changes.contains(position.value.change)))
         }
         else {
           emptyList()
@@ -107,19 +125,19 @@ internal class GHPRReviewNewCommentEditorViewModelImpl(
       }
     }.stateInNow(cs, emptyList())
 
-  override fun cancel() = onCancel()
+  override fun cancel() = onCancel(position.value)
 
   private fun createReviewCommentAction(reviewId: String, isCumulative: Boolean) = SubmitAction.CreateReviewComment {
     submit {
-      val filePath = relativePath(repository.root, position.change.filePath)
-      val location = position.location
+      val filePath = relativePath(repository.root, position.value.change.filePath)
+      val location = position.value.location
       val line = location.lineIdx.inc()
       if (isCumulative) {
         val startLine = location.asSafely<GHPRReviewCommentLocation.MultiLine>()?.startLineIdx?.inc() ?: line
         reviewDataProvider.createThread(reviewId, it, line, location.side, startLine, filePath)
       }
       else {
-        val commitSha = position.change.revisionNumberAfter.asString()
+        val commitSha = position.value.change.revisionNumberAfter.asString()
         reviewDataProvider.addComment(reviewId, it, commitSha, filePath, location.side, line)
       }
       cancel()
@@ -127,8 +145,8 @@ internal class GHPRReviewNewCommentEditorViewModelImpl(
   }
 
   private fun createThreadDTO(body: String): GHPullRequestDraftReviewThread {
-    val filePath = relativePath(repository.root, position.change.filePath)
-    return when (val location = position.location) {
+    val filePath = relativePath(repository.root, position.value.change.filePath)
+    return when (val location = position.value.location) {
       is GHPRReviewCommentLocation.MultiLine ->
         GHPullRequestDraftReviewThread(body, location.lineIdx.inc(), filePath, location.side, location.startLineIdx.inc(), location.side)
       is GHPRReviewCommentLocation.SingleLine ->

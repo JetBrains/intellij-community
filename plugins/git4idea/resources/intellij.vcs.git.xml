@@ -1,3 +1,4 @@
+<!-- todo: register this as a content module (IJPL-210868); currently it's included via 'xi:include' tag -->
 <idea-plugin package="git4idea">
   <resource-bundle>messages.GitBundle</resource-bundle>
 
@@ -6,6 +7,7 @@
     <module name="intellij.platform.vcs.dvcs"/>
     <module name="intellij.platform.vcs.log.graph.impl"/>
     <module name="intellij.platform.collaborationTools"/>
+    <module name="intellij.platform.ide.impl.wsl"/>
   </dependencies>
 
   <actions resource-bundle="messages.GitBundle">
@@ -41,7 +43,6 @@
       <add-to-group group-id="Vcs.RepositoryChangesBrowserMenu" relative-to-action="Vcs.ApplySelectedChanges" anchor="after"/>
     </action>
 
-    <action id="Git.InMemory.Reword.Commit" class="git4idea.inMemory.rebase.log.reword.GitInMemoryRewordAction"/>
     <action id="Git.InMemory.Extract.Selected.Changes" class="git4idea.inMemory.rebase.log.changes.GitExtractSelectedChangesAction">
       <add-to-group group-id="Vcs.RepositoryChangesBrowserMenu" relative-to-action="Vcs.ApplySelectedChanges" anchor="after"/>
     </action>
@@ -297,7 +298,6 @@
       <reference ref="Git.Uncommit"/>
       <separator/>
       <reference ref="Git.Reword.Commit"/>
-      <reference ref="Git.InMemory.Reword.Commit"/>
       <reference ref="Git.Fixup.To.Commit"/>
       <reference ref="Git.Squash.Into.Commit"/>
       <reference ref="Git.Drop.Commits"/>
@@ -353,7 +353,7 @@
     <action id="Git.Stage.AcceptYours" class="git4idea.index.actions.GitStageAcceptYoursAction"/>
     <action id="Git.Stage.Merge" class="git4idea.index.actions.GitStageMergeConflictAction" icon="AllIcons.Vcs.Merge"/>
     <action id="Git.Stage.ThreeSideDiff" class="git4idea.index.actions.GitStageThreeSideDiffAction"/>
-    <action id="Git.Stage.ToggleIgnored" class="git4idea.index.actions.GitToggleIgnoredFilesAction"/>
+    <action id="Git.Stage.ToggleIgnored" class="git4idea.index.actions.GitToggleIgnoredFilesAction" icon="AllIcons.Actions.ToggleVisibility"/>
     <action id="Git.Stage.ToggleCommitAll" class="git4idea.index.actions.GitToggleCommitAllAction">
       <add-to-group group-id="CommitView.GearActions"/>
     </action>
@@ -859,7 +859,6 @@
                  restartRequired="true"
                  description="Amount of time in minutes to check new Git version after IDE inactivity.\n
                              -1 to disable check."/>
-    <postStartupActivity os="windows" implementation="git4idea.config.GitNewVersionChecker$Starter"/>
     <settingsEntryPointActionProvider os="windows" implementation="git4idea.config.GitVersionUpdateSettingsEntryProvider"/>
 
     <history.activityPresentationProvider implementation="git4idea.GitActivityPresentationProvider"/>
@@ -929,5 +928,7 @@
               topic="com.intellij.ide.ui.UISettingsListener"/>
     <listener class="git4idea.config.GitBackendVcsSettingsListener"
               topic="git4idea.config.GitVcsSettings$GitVcsSettingsListener"/>
+    <listener os="windows" class="git4idea.config.GitNewVersionCheckerStarter"
+              topic="com.intellij.openapi.vcs.VcsMappingListener"/>
   </projectListeners>
 </idea-plugin>

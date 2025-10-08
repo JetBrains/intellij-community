@@ -37,7 +37,6 @@ import org.jetbrains.annotations.*;
 import java.io.File;
 import java.io.OutputStream;
 import java.io.PrintWriter;
-import java.net.DatagramSocket;
 import java.net.InetAddress;
 import java.nio.charset.StandardCharsets;
 import java.nio.file.InvalidPathException;
@@ -59,7 +58,6 @@ import static com.intellij.util.ObjectUtils.coalesce;
  * On WSL2 both OSes have separate interfaces ("eth0" on Linux and "vEthernet (WSL)" on Windows).
  * One can't connect from Linux to Windows because of <a href="https://www.jetbrains.com/help/idea/how-to-use-wsl-development-environment-in-product.html#debugging_system_settings">Windows Firewall which you need to disable or accomplish with rule</a>, because
  * of that it is not recommended to connect to IJ from processes launched on WSL.
- * In other words, you shouldn't use {@link #getHostIpAddress()} in most cases.
  * <p>
  * If you cant avoid that, use {@link com.intellij.execution.wsl.WslProxy} which makes tunnel to solve firewall issues.
  * <br/>
@@ -99,14 +97,6 @@ public class WSLDistribution implements AbstractWslDistribution {
   private final @Nullable Path myExecutablePath;
   private @Nullable Integer myVersion;
 
-  private final WslDistributionSafeNullableLazyValue<IpOrException> myLazyHostIp = WslDistributionSafeNullableLazyValue.create(() -> {
-    try {
-      return new IpOrException(readHostIp());
-    }
-    catch (ExecutionException e) {
-      return new IpOrException(e);
-    }
-  });
   private final WslDistributionSafeNullableLazyValue<String> myLazyWslIp = WslDistributionSafeNullableLazyValue.create(() -> {
     try {
       return readWslIp();
@@ -689,21 +679,6 @@ public class WSLDistribution implements AbstractWslDistribution {
   }
 
   /**
-   * Windows IP address. See class doc before using it, because this is probably not what you are looking for.
-   *
-   * @throws ExecutionException if IP can't be obtained (see logs for more info)
-   * @deprecated use {@link com.intellij.execution.wsl.WslProxy} because Windows IP address is almost always closed by firewall and this method also uses `eth0` address which also might be broken
-   */
-  @Deprecated(forRemoval = true)
-  public final @NotNull InetAddress getHostIpAddress() throws ExecutionException {
-    final var hostIpOrException = getValueWithLogging(myLazyHostIp, "host IP");
-    if (hostIpOrException == null) {
-      throw new ExecutionException(IdeBundle.message("wsl.error.host.ip.not.obtained.message", getPresentableName()));
-    }
-    return InetAddresses.forString(hostIpOrException.getIp());
-  }
-
-  /**
    * Linux IP address. See class doc IP section for more info.
    */
   public final @NotNull InetAddress getWslIpAddress() {
@@ -711,41 +686,6 @@ public class WSLDistribution implements AbstractWslDistribution {
       return InetAddresses.forString(DEFAULT_WSL_IP);
     }
     return InetAddresses.forString(coalesce(getValueWithLogging(myLazyWslIp, "WSL IP"), DEFAULT_WSL_IP));
-  }
-
-  // https://docs.microsoft.com/en-us/windows/wsl/compare-versions#accessing-windows-networking-apps-from-linux-host-ip
-  private @NotNull String readHostIp() throws ExecutionException {
-    String wsl1LoopbackAddress = getWsl1LoopbackAddress();
-    if (wsl1LoopbackAddress != null) {
-      return wsl1LoopbackAddress;
-    }
-    if (Registry.is("wsl.obtain.windows.host.ip.alternatively", true)) {
-      // Connect to any port on WSL IP. The destination endpoint is not needed to be reachable as no real connection is established.
-      // This transfers the socket into "connected" state including setting the local endpoint according to the system's routing table.
-      // Works on Windows and Linux.
-      try (DatagramSocket datagramSocket = new DatagramSocket()) {
-        // We always need eth0 ip, can't use 127.0.0.1
-        InetAddress wslAddr = InetAddresses.forString(readWslIp());
-        // Any port in range [1, 0xFFFF] can be used. Port=0 is forbidden: https://datatracker.ietf.org/doc/html/rfc8085
-        // "A UDP receiver SHOULD NOT bind to port zero".
-        // Java asserts "port != 0" since v15 (https://bugs.java.com/bugdatabase/view_bug.do?bug_id=8240533).
-        int anyPort = 1;
-        datagramSocket.connect(wslAddr, anyPort);
-        return datagramSocket.getLocalAddress().getHostAddress();
-      }
-      catch (Exception e) {
-        LOG.error("Cannot obtain Windows host IP alternatively: failed to connect to WSL IP. Fallback to default way.", e);
-      }
-    }
-
-    return executeAndParseOutput(IdeBundle.message("wsl.win.ip"), strings -> {
-      for (String line : strings) {
-        if (line.startsWith("nameserver")) {
-          return line.substring("nameserver".length()).trim();
-        }
-      }
-      return null;
-    }, "cat", "/etc/resolv.conf");
   }
 
   private @NotNull String readWslIp() throws ExecutionException {

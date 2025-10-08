@@ -106,6 +106,12 @@ public abstract class CompletionResultSet implements Consumer<LookupElement> {
   @Contract(pure = true)
   public abstract @NotNull CompletionResultSet withPrefixMatcher(@NotNull String prefix);
 
+  /**
+   * Creates a new CompletionResultSet with the given relevance sorter. Previously contributed results are not affected.
+   *
+   * @param sorter a new relevance sorter
+   * @return a new result set with the given sorter installed
+   */
   @Contract(pure = true)
   public abstract @NotNull CompletionResultSet withRelevanceSorter(@NotNull CompletionSorter sorter);
 

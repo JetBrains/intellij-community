@@ -3,6 +3,7 @@ package com.intellij.notebooks.visualization.ui
 import com.intellij.notebooks.ui.visualization.NotebookUtil.notebookAppearance
 import com.intellij.notebooks.visualization.EditorCellInputFactory
 import com.intellij.notebooks.visualization.ui.cellsDnD.EditorCellDragAssistant
+import com.intellij.openapi.application.runInEdt
 import com.intellij.openapi.editor.Inlay
 import com.intellij.openapi.util.Disposer
 import com.intellij.openapi.util.registry.Registry
@@ -75,8 +76,10 @@ class EditorCellInput(val cell: EditorCell) : EditorCellViewComponent() {
       }
   }
 
-  fun updateInput(): Unit? = editor.updateManager.update { ctx ->
-    (component as? InputComponent)?.updateInput(ctx)
+  fun updateInput(): Unit = runInEdt {
+    editor.updateManager.update { ctx ->
+      (component as? InputComponent)?.updateInput(ctx)
+    }
   }
 
   fun requestCaret() {

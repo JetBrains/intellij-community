@@ -3,7 +3,6 @@ package com.intellij.ide.ui
 
 import com.intellij.diagnostic.LoadingState
 import com.intellij.idea.AppMode
-import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.components.BaseState
 import com.intellij.openapi.components.ReportValue
 import com.intellij.openapi.components.service
@@ -12,28 +11,30 @@ import com.intellij.openapi.util.SystemInfoRt
 import com.intellij.util.PlatformUtils
 import com.intellij.util.xmlb.annotations.OptionTag
 import com.intellij.util.xmlb.annotations.Transient
-import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.annotations.ApiStatus.Internal
 import javax.swing.SwingConstants
 
-@ApiStatus.Internal
+@Internal
 interface UISettingsStateDefaultsProvider {
   companion object {
     @JvmStatic
-    fun getInstance(): UISettingsStateDefaultsProvider = ApplicationManager.getApplication().service<UISettingsStateDefaultsProvider>()
+    fun getInstance(): UISettingsStateDefaultsProvider = service<UISettingsStateDefaultsProvider>()
 
     @JvmStatic
-    fun getInstanceOrNull(): UISettingsStateDefaultsProvider? = if (LoadingState.CONFIGURATION_STORE_INITIALIZED.isOccurred) getInstance() else null
+    fun getInstanceOrNull(): UISettingsStateDefaultsProvider? {
+      return if (LoadingState.CONFIGURATION_STORE_INITIALIZED.isOccurred) getInstance() else null
+    }
   }
 
   val searchEverywherePreviewDefault: Boolean
 }
 
-@ApiStatus.Internal
+@Internal
 open class UISettingsStateDefaultsProviderImpl : UISettingsStateDefaultsProvider {
   override val searchEverywherePreviewDefault: Boolean = false
 }
 
+@Internal
 class UISettingsState : BaseState() {
   @get:OptionTag("FONT_FACE")
   @Deprecated("", replaceWith = ReplaceWith("NotRoamableUiOptions.fontFace"))
@@ -220,7 +221,7 @@ class UISettingsState : BaseState() {
   var fullPathsInWindowHeader: Boolean by property(false)
   @get:OptionTag("BORDERLESS_MODE")
   var mergeMainMenuWithWindowTitle: Boolean by property(
-    (SystemInfo.isWin10OrNewer || (SystemInfo.isUnix && !SystemInfo.isMac)) && SystemInfo.isJetBrainsJvm)
+    (SystemInfo.isWin10OrNewer || (SystemInfoRt.isUnix && !SystemInfoRt.isMac)) && SystemInfo.isJetBrainsJvm)
 
   var animatedScrolling: Boolean by property(!AppMode.isRemoteDevHost() && (!SystemInfoRt.isMac || !SystemInfo.isJetBrainsJvm))
   var animatedScrollingDuration: Int by property(getDefaultAnimatedScrollingDuration())
@@ -261,6 +262,11 @@ class UISettingsState : BaseState() {
   @set:Internal
   @get:OptionTag("SHOW_PROGRESSES_IN_EDITOR")
   var showProgressesInEditor: Boolean by property(false)
+
+  @get:Internal
+  @set:Internal
+  @get:OptionTag("USE_SIMPLIFIED_SPLASH_IMAGE")
+  var useSimplifiedSplashImage: Boolean by property(false)
 
   @Suppress("FunctionName")
   fun _incrementModificationCount(): Unit = incrementModificationCount()

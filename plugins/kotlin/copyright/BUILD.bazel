@@ -1,9 +1,9 @@
 ### auto-generated section `build kotlin.copyright` start
-load("@rules_jvm//:jvm.bzl", "jvm_library", "jvm_resources")
+load("@rules_jvm//:jvm.bzl", "jvm_library", "resourcegroup")
 
-jvm_resources(
+resourcegroup(
   name = "copyright_resources",
-  files = glob(["resources/**/*"]),
+  srcs = glob(["resources/**/*"]),
   strip_prefix = "resources"
 )
 
@@ -12,6 +12,7 @@ jvm_library(
   module_name = "kotlin.copyright",
   visibility = ["//visibility:public"],
   srcs = glob(["src/**/*.kt", "src/**/*.java", "src/**/*.form"], allow_empty = True),
+  resources = [":copyright_resources"],
   deps = [
     "@lib//:kotlin-stdlib",
     "@lib//:kotlinc-kotlin-compiler-common",
@@ -20,7 +21,6 @@ jvm_library(
     "//platform/core-api:core",
     "//platform/util",
     "//plugins/copyright",
-  ],
-  runtime_deps = [":copyright_resources"]
+  ]
 )
 ### auto-generated section `build kotlin.copyright` end

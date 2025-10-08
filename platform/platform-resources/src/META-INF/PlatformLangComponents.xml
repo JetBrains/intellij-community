@@ -29,6 +29,7 @@
       serviceImplementation="com.intellij.codeInsight.daemon.impl.DaemonCodeAnalyzerImpl"
     />
     <postStartupActivity implementation="com.intellij.codeInsight.daemon.impl.DaemonCodeAnalyzerStatusBarUpdater"/>
+    <backgroundPostStartupActivity implementation="com.intellij.codeInsight.daemon.impl.ResetAutoReparseSettingsActivity"/>
 
     <vfs.asyncListener implementation="com.intellij.workspaceModel.ide.impl.WorkspaceModelRootWatcher"/>
     <projectService
@@ -155,6 +156,8 @@
                     serviceInterface="com.intellij.facet.pointers.FacetPointersManager"/>
     <postStartupActivity implementation="com.intellij.facet.impl.pointers.FacetPointersPostStartupActivity"/>
 
+    <postStartupActivity implementation="com.intellij.openapi.application.impl.islands.IslandsFeedback"/>
+
     <applicationService
       serviceInterface="com.intellij.formatting.visualLayer.VisualFormattingLayerService"
       serviceImplementation="com.intellij.formatting.visualLayer.VisualFormattingLayerServiceImpl" />
@@ -274,6 +277,9 @@
 
     <listener class="com.intellij.refactoring.suggested.SuggestedRefactoringEditorHintAdvSettingListener"
               topic="com.intellij.openapi.options.advanced.AdvancedSettingsChangeListener"/>
+
+    <listener class="com.intellij.codeInsight.completion.command.commands.ActionsAdjustLastListener"
+              topic="com.intellij.openapi.actionSystem.ex.AnActionListener"/>
   </applicationListeners>
   <projectListeners>
     <listener class="com.intellij.openapi.command.impl.UndoCommandListener"

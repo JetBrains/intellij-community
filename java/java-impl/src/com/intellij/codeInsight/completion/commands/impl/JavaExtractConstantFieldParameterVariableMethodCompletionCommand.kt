@@ -7,6 +7,7 @@ import com.intellij.idea.ActionsBundle
 import com.intellij.openapi.editor.Editor
 import com.intellij.psi.*
 import com.intellij.psi.util.PsiTreeUtil
+import com.intellij.psi.util.elementType
 import com.intellij.psi.util.findParentOfType
 
 internal class JavaExtractConstantCompletionCommandProvider : AbstractExtractConstantCompletionCommandProvider() {
@@ -29,7 +30,12 @@ internal class JavaExtractParameterCompletionCommandProvider : AbstractExtractPa
 
 internal class JavaExtractLocalVariableCompletionCommandProvider : AbstractExtractLocalVariableCompletionCommandProvider() {
   override fun findOutermostExpression(offset: Int, psiFile: PsiFile, editor: Editor?): PsiExpression? {
-    return findExpressionInsideMethod(offset, psiFile)
+    val expression = findExpressionInsideMethod(offset, psiFile)
+    if (
+      expression?.findParentOfType<PsiMethod>() != null &&
+      (expression.findParentOfType<PsiLocalVariable>() != null || isApplicableCallExpression(expression, offset))
+    ) return expression
+    return null
   }
 }
 
@@ -39,8 +45,33 @@ internal class JavaExtractMethodCompletionCommandProvider : AbstractExtractMetho
   previewText = ActionsBundle.message("action.ExtractMethod.description"),
   synonyms = listOf("Extract method", "Introduce method")
 ) {
+  override fun findControlFlowStatement(offset: Int, psiFile: PsiFile): PsiElement? {
+    val element = getCommandContext(offset, psiFile) ?: return null
+    val elementType = element.elementType
+    if (elementType != JavaTokenType.RBRACE && elementType != JavaTokenType.LBRACE) return null
+
+    val parent = element.parent
+    if (parent !is PsiCodeBlock) return null
+
+    val blockParent = parent.parent
+    if (blockParent !is PsiBlockStatement) return null
+
+    val controlFlowStatement = blockParent.parent
+    if (controlFlowStatement is PsiLoopStatement) return controlFlowStatement
+    else if (controlFlowStatement is PsiIfStatement) {
+      var expression = controlFlowStatement
+      while(true) {
+        val parent = expression.parent
+        if (parent is PsiIfStatement) expression = parent else return expression
+      }
+    }
+    return null
+  }
+
   override fun findOutermostExpression(offset: Int, psiFile: PsiFile, editor: Editor?): PsiElement? {
-    return findExpressionInsideMethod(offset, psiFile)
+    val expression = findExpressionInsideMethod(offset, psiFile)
+    if (expression?.findParentOfType<PsiMethod>() != null || expression?.findParentOfType<PsiLocalVariable>() != null) return expression
+    return expression
   }
 }
 
@@ -53,17 +84,19 @@ private fun findExpressionInsideMethod(offset: Int, psiFile: PsiFile): PsiExpres
       expression = parent
     }
     else {
-      if (expression.textRange.endOffset == offset) {
-        break
+      if (expression.textRange.endOffset == offset || expression is PsiNewExpression) {
+        return expression
       }
       else {
         return null
       }
     }
   }
+}
 
-  if (expression.findParentOfType<PsiLocalVariable>() == null && expression.findParentOfType<PsiMethod>() == null) return null
-  return expression
+private fun isApplicableCallExpression(expression: PsiExpression?, offset: Int): Boolean {
+  return expression is PsiMethodCallExpression
+         || expression is PsiNewExpression && (expression.textRange.endOffset != offset || PsiTreeUtil.skipWhitespacesForward(expression) !is PsiErrorElement)
 }
 
 private fun findOffsetForLocalVariable(offset: Int, psiFile: PsiFile): Int? {

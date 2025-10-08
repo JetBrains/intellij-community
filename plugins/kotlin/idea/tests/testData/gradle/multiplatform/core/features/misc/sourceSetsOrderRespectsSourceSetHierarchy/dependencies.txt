@@ -1,0 +1,60 @@
+MODULES
+my-app
+
+my-app.consumer
+
+my-app.consumer.commonMain
+    producer.commonMain (COMPILE)
+
+my-app.consumer.commonTest
+    producer.commonMain (TEST)
+
+my-app.consumer.jvmMain
+    producer.jvmMain (COMPILE)
+    producer.commonMain (COMPILE)
+
+my-app.consumer.jvmTest
+    producer.jvmMain (TEST)
+    producer.commonMain (TEST)
+
+my-app.consumer.linuxMain
+    producer.linuxX64Main (COMPILE)
+    producer.linuxMain (COMPILE)
+    producer.nativeMain (COMPILE)
+    producer.commonMain (COMPILE)
+
+my-app.consumer.linuxTest
+    producer.linuxX64Main (TEST)
+    producer.linuxMain (TEST)
+    producer.nativeMain (TEST)
+    producer.commonMain (TEST)
+
+my-app.consumer.linuxX64Main
+    producer.linuxX64Main (COMPILE)
+    producer.linuxMain (COMPILE)
+    producer.nativeMain (COMPILE)
+    producer.commonMain (COMPILE)
+
+my-app.consumer.linuxX64Test
+    producer.linuxX64Main (TEST)
+    producer.linuxMain (TEST)
+    producer.nativeMain (TEST)
+    producer.commonMain (TEST)
+
+my-app.consumer.nativeMain
+    producer.linuxX64Main (COMPILE)
+    producer.linuxMain (COMPILE)
+    producer.nativeMain (COMPILE)
+    producer.commonMain (COMPILE)
+
+my-app.consumer.nativeTest
+    producer.linuxX64Main (TEST)
+    producer.linuxMain (TEST)
+    producer.nativeMain (TEST)
+    producer.commonMain (TEST)
+
+
+Test configuration:
+- hiding source modules matching .*producer.*
+- hiding following standard dependencies: stdlib, kotlin-test, Kotlin/Native distribution, sdk, self
+- hiding dependencies matching .*consumer.*

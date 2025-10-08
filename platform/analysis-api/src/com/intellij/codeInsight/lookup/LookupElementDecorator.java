@@ -129,7 +129,10 @@ public abstract class LookupElementDecorator<T extends LookupElement> extends Lo
   /**
    * Wraps the given lookup element into a decorator that overrides its insertion behavior (passes the decorator to the handler).
    */
-  public static @NotNull <T extends LookupElement> LookupElementDecorator<T> withInsertHandler(@NotNull T element, final @NotNull InsertHandler<? super LookupElementDecorator<T>> insertHandler) {
+  public static @NotNull <T extends LookupElement> LookupElementDecorator<T> withInsertHandler(
+    @NotNull T element,
+    @NotNull InsertHandler<? super LookupElementDecorator<T>> insertHandler
+  ) {
     return new InsertingDecorator<>(element, insertHandler);
   }
 
@@ -174,13 +177,13 @@ public abstract class LookupElementDecorator<T extends LookupElement> extends Lo
   private static final class InsertingDecorator<T extends LookupElement> extends LookupElementDecorator<T> {
     private final InsertHandler<? super LookupElementDecorator<T>> myInsertHandler;
 
-    InsertingDecorator(T element, InsertHandler<? super LookupElementDecorator<T>> insertHandler) {
+    InsertingDecorator(@NotNull T element, @NotNull InsertHandler<? super LookupElementDecorator<T>> insertHandler) {
       super(element);
       myInsertHandler = insertHandler;
     }
 
     @Override
-    public @Nullable InsertHandler<? super LookupElementDecorator<@NotNull T>> getDecoratorInsertHandler() {
+    public @NotNull InsertHandler<? super LookupElementDecorator<@NotNull T>> getDecoratorInsertHandler() {
       return myInsertHandler;
     }
 

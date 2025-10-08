@@ -1,0 +1,53 @@
+PsiJavaFile:SeeTag20.java
+  PsiImportList
+    <empty list>
+  PsiClass:C
+    PsiDocComment
+      PsiDocToken:DOC_COMMENT_START('/**')
+      PsiWhiteSpace('\n ')
+      PsiDocToken:DOC_COMMENT_LEADING_ASTERISKS('*')
+      PsiDocToken:DOC_COMMENT_DATA(' ')
+      PsiDocTag:@see
+        PsiDocToken:DOC_TAG_NAME('@see')
+        PsiWhiteSpace(' ')
+        PsiElement(DOC_TAG_VALUE_ELEMENT)
+          PsiJavaModuleReference
+            PsiDocToken:DOC_TAG_VALUE_TOKEN('java.base')
+          PsiDocToken:DOC_TAG_VALUE_SLASH('/')
+          PsiElement(DOC_FRAGMENT_REF)
+            PsiElement(DOC_REFERENCE_HOLDER)
+              PsiJavaCodeReferenceElement:java.util.ArrayList
+                PsiJavaCodeReferenceElement:java.util
+                  PsiJavaCodeReferenceElement:java
+                    PsiIdentifier:java('java')
+                    PsiReferenceParameterList
+                      <empty list>
+                  PsiJavaToken:DOT('.')
+                  PsiIdentifier:util('util')
+                  PsiReferenceParameterList
+                    <empty list>
+                PsiJavaToken:DOT('.')
+                PsiIdentifier:ArrayList('ArrayList')
+                PsiReferenceParameterList
+                  <empty list>
+            PsiDocToken:DOC_TAG_VALUE_DOUBLE_SHARP_TOKEN('##')
+            PsiElement(DOC_FRAGMENT_NAME)
+              PsiDocToken:DOC_TAG_VALUE_TOKEN('fragmentName')
+        PsiWhiteSpace(' ')
+        PsiDocToken:DOC_COMMENT_DATA('label')
+      PsiWhiteSpace('\n ')
+      PsiDocToken:DOC_COMMENT_END('*/')
+    PsiWhiteSpace('\n')
+    PsiModifierList:
+      <empty list>
+    PsiKeyword:class('class')
+    PsiWhiteSpace(' ')
+    PsiIdentifier:C('C')
+    PsiTypeParameterList
+      <empty list>
+    PsiReferenceList
+      <empty list>
+    PsiReferenceList
+      <empty list>
+    PsiJavaToken:LBRACE('{')
+    PsiJavaToken:RBRACE('}')

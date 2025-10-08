@@ -11,6 +11,8 @@ import com.intellij.idea.AppModeAssertions
 import com.intellij.openapi.actionSystem.KeyboardShortcut
 import com.intellij.openapi.actionSystem.Shortcut
 import com.intellij.openapi.application.ApplicationBundle
+import com.intellij.openapi.application.ApplicationManager
+import com.intellij.openapi.application.ModalityState
 import com.intellij.openapi.client.ClientKind
 import com.intellij.openapi.client.ClientSystemInfo
 import com.intellij.openapi.client.sessions
@@ -67,9 +69,12 @@ import org.jetbrains.plugins.terminal.TerminalBundle.message
 import org.jetbrains.plugins.terminal.block.BlockTerminalOptions
 import org.jetbrains.plugins.terminal.block.completion.TerminalCommandCompletionShowingMode.ALWAYS
 import org.jetbrains.plugins.terminal.block.completion.TerminalCommandCompletionShowingMode.ONLY_PARAMETERS
+import org.jetbrains.plugins.terminal.block.completion.feedback.TerminalCompletionFeedbackSurvey
+import org.jetbrains.plugins.terminal.block.feedback.TerminalFeedbackUtils
 import org.jetbrains.plugins.terminal.block.feedback.askForFeedbackIfReworkedTerminalDisabled
 import org.jetbrains.plugins.terminal.block.prompt.TerminalPromptStyle
 import org.jetbrains.plugins.terminal.block.reworked.TerminalCommandCompletion
+import org.jetbrains.plugins.terminal.block.ui.TerminalContrastRatio
 import org.jetbrains.plugins.terminal.runner.LocalShellIntegrationInjector
 import org.jetbrains.plugins.terminal.runner.LocalTerminalStartCommandBuilder
 import java.awt.Color
@@ -138,7 +143,19 @@ internal class TerminalOptionsConfigurable(private val project: Project) : Bound
 
             row {
               completionEnabledCheckBox = checkBox(message("terminal.command.completion.show"))
-                .bindSelected(optionsProvider::showCompletionPopupAutomatically)
+                .bindSelected(
+                  getter = { optionsProvider.showCompletionPopupAutomatically },
+                  setter = {
+                    optionsProvider.showCompletionPopupAutomatically = it
+                    if (!it) {
+                      ApplicationManager.getApplication().invokeLater(
+                        { TerminalFeedbackUtils.showFeedbackNotificationOnDemand(project, TerminalCompletionFeedbackSurvey::class) },
+                        ModalityState.nonModal(), // show the notification after settings dialog is closed
+                        project.disposed
+                      )
+                    }
+                  },
+                )
                 .component
             }
             indent {
@@ -303,6 +320,27 @@ internal class TerminalOptionsConfigurable(private val project: Project) : Bound
             .bindText(optionsProvider::tabName)
             .align(AlignX.FILL)
         }
+        row {
+          val enforceContrastCheckbox = checkBox(message("settings.enforce.minimum.contrast.ratio"))
+            .bindSelected(optionsProvider::enforceMinContrastRatio)
+            .gap(RightGap.SMALL)
+
+          fun parseRatio(text: String): TerminalContrastRatio {
+            val float = text.toFloatOrNull()
+            return if (float != null) TerminalContrastRatio.ofFloat(float) else TerminalContrastRatio.DEFAULT_VALUE
+          }
+
+          textField()
+            .columns(4)
+            .enabledIf(enforceContrastCheckbox.selected)
+            .gap(RightGap.SMALL)
+            .bindText(
+              getter = { optionsProvider.minContrastRatio.toFormattedString() },
+              setter = { optionsProvider.minContrastRatio = parseRatio(it) }
+            )
+
+          contextHelp(message("settings.enforce.minimum.contrast.ratio.description"))
+        }.visibleIf(terminalEngineComboBox.selectedValueIs(TerminalEngine.REWORKED))
         row {
           checkBox(message("settings.show.separators.between.blocks"))
             .bindSelected(blockTerminalOptions::showSeparatorsBetweenBlocks)

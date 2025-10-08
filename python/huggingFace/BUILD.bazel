@@ -1,9 +1,9 @@
 ### auto-generated section `build intellij.python.community.impl.huggingFace` start
-load("@rules_jvm//:jvm.bzl", "jvm_library", "jvm_resources")
+load("@rules_jvm//:jvm.bzl", "jvm_library", "resourcegroup")
 
-jvm_resources(
+resourcegroup(
   name = "huggingFace_resources",
-  files = glob(["resources/**/*"]),
+  srcs = glob(["resources/**/*"]),
   strip_prefix = "resources"
 )
 
@@ -12,12 +12,13 @@ jvm_library(
   module_name = "intellij.python.community.impl.huggingFace",
   visibility = ["//visibility:public"],
   srcs = glob(["src/**/*.kt", "src/**/*.java", "src/**/*.form", "gen/**/*.kt", "gen/**/*.java"], allow_empty = True),
+  resources = [":huggingFace_resources"],
   deps = [
     "@lib//:kotlin-stdlib",
     "@lib//:gradle",
-    "@lib//:jackson",
-    "@lib//:jackson-databind",
-    "@lib//:jackson-module-kotlin",
+    "//libraries/jackson/jackson",
+    "//libraries/jackson/databind",
+    "//libraries/jackson/module-kotlin:libraries-jackson-module-kotlin",
     "//platform/analysis-api:analysis",
     "//platform/core-api:core",
     "//platform/core-impl",
@@ -33,7 +34,6 @@ jvm_library(
     "//platform/markdown-utils",
     "//platform/statistics",
     "//json/backend",
-  ],
-  runtime_deps = [":huggingFace_resources"]
+  ]
 )
 ### auto-generated section `build intellij.python.community.impl.huggingFace` end

@@ -22,8 +22,8 @@ import com.intellij.openapi.application.EDT
 import com.intellij.openapi.application.ModalityState
 import com.intellij.openapi.application.PathManager
 import com.intellij.openapi.application.asContextElement
-import com.intellij.openapi.application.contextModality
 import com.intellij.openapi.application.ex.ApplicationInfoEx
+import com.intellij.openapi.components.service
 import com.intellij.openapi.diagnostic.Logger
 import com.intellij.openapi.extensions.PluginId
 import com.intellij.openapi.options.ConfigurationException
@@ -32,13 +32,11 @@ import com.intellij.openapi.progress.ProgressIndicator
 import com.intellij.openapi.progress.coroutineToIndicator
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.updateSettings.impl.PluginDownloader
-import com.intellij.openapi.updateSettings.impl.UpdateChecker
+import com.intellij.openapi.updateSettings.impl.UpdateCheckerFacade
 import com.intellij.openapi.updateSettings.impl.pluginsAdvertisement.FUSEventSource
 import com.intellij.openapi.util.BuildNumber
 import com.intellij.openapi.util.Pair
 import com.intellij.openapi.util.io.FileUtil
-import com.intellij.openapi.util.registry.Registry
-import com.intellij.platform.ide.progress.withBackgroundProgress
 import com.intellij.util.concurrency.annotations.RequiresBackgroundThread
 import com.intellij.util.concurrency.annotations.RequiresReadLockAbsence
 import kotlinx.coroutines.Dispatchers
@@ -67,7 +65,6 @@ object DefaultUiPluginManagerController : UiPluginManagerController {
   override suspend fun initSession(sessionId: String): InitSessionResult {
     return initSessionSync(sessionId)
   }
-
 
   fun initSessionSync(sessionId: String): InitSessionResult {
     val session = createSession(sessionId)
@@ -137,6 +134,7 @@ object DefaultUiPluginManagerController : UiPluginManagerController {
     installSource: FUSEventSource?,
     modalityState: ModalityState?,
     pluginEnabler: PluginEnabler?,
+    customRepoPlugins: List<PluginUiModel>,
   ): InstallPluginResult {
     val session = findSession(sessionId) ?: return InstallPluginResult.FAILED
     val pluginEnabler = pluginEnabler ?: SessionStatePluginEnabler(session)
@@ -216,7 +214,7 @@ object DefaultUiPluginManagerController : UiPluginManagerController {
                                                         session.needRestart
         )
 
-        return@withContext performInstallOperation(installPluginRequest, parentComponent, modalityState, pluginEnabler)
+        return@withContext performInstallOperation(installPluginRequest, parentComponent, modalityState, pluginEnabler, customRepoPlugins)
 
       }
     }
@@ -230,6 +228,7 @@ object DefaultUiPluginManagerController : UiPluginManagerController {
     pluginEnabler: PluginEnabler?,
     modalityState: ModalityState?,
     parentComponent: JComponent?,
+    customRepoPlugins: List<PluginUiModel>,
   ): InstallPluginResult {
     val session = findSession(sessionId) ?: return InstallPluginResult.FAILED
     val pluginEnabler = pluginEnabler ?: SessionStatePluginEnabler(session)
@@ -253,11 +252,7 @@ object DefaultUiPluginManagerController : UiPluginManagerController {
                                                     session.needRestart
     )
 
-    return performInstallOperation(installPluginRequest, parentComponent, modalityState, pluginEnabler)
-  }
-
-  private fun getCustomRepoPlugins(): List<PluginUiModel> {
-    return CustomPluginRepositoryService.getInstance().getCustomRepositoryPlugins().toList().withSource()
+    return performInstallOperation(installPluginRequest, parentComponent, modalityState, pluginEnabler, customRepoPlugins)
   }
 
   private suspend fun loadDetails(descriptor: PluginUiModel): PluginUiModel? {
@@ -417,8 +412,7 @@ object DefaultUiPluginManagerController : UiPluginManagerController {
   }
 
   override suspend fun loadDescriptorById(pluginId: PluginId): PluginUiModel? {
-    val clientPluginId = PluginId.getId(pluginId.idString)
-    val updateData = UpdateChecker.getInternalPluginUpdates(updateablePluginsMap = mutableMapOf(clientPluginId to null))
+    val updateData = service<UpdateCheckerFacade>().getInternalPluginUpdates(updateablePluginsMap = mutableMapOf(pluginId to null))
     return updateData.pluginUpdates.all.asSequence()
       .filter { it.pluginVersion != null }
       .map { it.uiModel ?: PluginUiModelAdapter(it.descriptor) }
@@ -467,12 +461,13 @@ object DefaultUiPluginManagerController : UiPluginManagerController {
     parentComponent: JComponent?,
     modalityState: ModalityState?,
     pluginEnabler: PluginEnabler,
+    customRepoPlugins: List<PluginUiModel>,
   ): InstallPluginResult {
     val session = findSession(request.sessionId) ?: return InstallPluginResult.FAILED
     val result = InstallPluginResult()
     val pluginsToInstallSynchronously: MutableList<PendingDynamicPluginInstall> = mutableListOf()
     coroutineToIndicator {
-      val operation = PluginInstallOperation(request.pluginsToInstall, getCustomRepoPlugins(), it, pluginEnabler)
+      val operation = PluginInstallOperation(request.pluginsToInstall, customRepoPlugins, it, pluginEnabler)
       operation.setAllowInstallWithoutRestart(request.allowInstallWithoutRestart)
       var cancel = false
       var success = true
@@ -518,7 +513,7 @@ object DefaultUiPluginManagerController : UiPluginManagerController {
   }
 
   override suspend fun updateDescriptorsForInstalledPlugins() {
-    UpdateChecker.updateDescriptorsForInstalledPlugins(InstalledPluginsState.getInstance())
+    service<UpdateCheckerFacade>().updateDescriptorsForInstalledPlugins(InstalledPluginsState.getInstance())
   }
 
   override suspend fun performUninstall(sessionId: String, pluginId: PluginId): Boolean {
@@ -666,7 +661,7 @@ object DefaultUiPluginManagerController : UiPluginManagerController {
   }
 
   override suspend fun isRestartRequired(sessionId: String): Boolean {
-    return findSession(sessionId)?.needRestart ?: false
+    return findSession(sessionId)?.needRestart == true || InstalledPluginsState.getInstance().installedPlugins.isNotEmpty()
   }
 
   override fun isPluginRequiresUltimateButItIsDisabled(sessionId: String, pluginId: PluginId): Boolean {

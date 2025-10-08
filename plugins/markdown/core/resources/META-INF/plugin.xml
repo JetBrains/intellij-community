@@ -9,7 +9,7 @@
     <plugin id="com.intellij.modules.lang"/>
   </dependencies>
 
-  <content>
+  <content namespace="jetbrains">
     <module name="intellij.markdown" loading="embedded"/>
     <module name="intellij.markdown.fenceInjection"/>
     <module name="intellij.markdown.frontmatter"/>

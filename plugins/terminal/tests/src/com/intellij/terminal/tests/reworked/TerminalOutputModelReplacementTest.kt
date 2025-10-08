@@ -13,7 +13,7 @@ import org.assertj.core.api.Assertions.assertThat
 import org.jetbrains.plugins.terminal.block.output.EmptyTextAttributesProvider
 import org.jetbrains.plugins.terminal.block.output.HighlightingInfo
 import org.jetbrains.plugins.terminal.block.output.TerminalOutputHighlightingsSnapshot
-import org.jetbrains.plugins.terminal.block.reworked.TerminalOutputModelImpl
+import org.jetbrains.plugins.terminal.block.reworked.MutableTerminalOutputModelImpl
 import org.junit.Test
 import org.junit.runner.RunWith
 import org.junit.runners.JUnit4
@@ -248,17 +248,17 @@ private fun testReplace(
   }
 }
 
-private fun assertText(model: TerminalOutputModelImpl, expectedText: String) {
+private fun assertText(model: MutableTerminalOutputModelImpl, expectedText: String) {
   assertEquals(expectedText, model.document.text)
 }
 
-private fun assertHighlightings(model: TerminalOutputModelImpl, expectedHighlightings: List<HighlightingInfo>) {
+private fun assertHighlightings(model: MutableTerminalOutputModelImpl, expectedHighlightings: List<HighlightingInfo>) {
   val actualHighlightings = model.getHighlightings()
   assertActualHighlightingsCoverTheDocument(model, actualHighlightings)
   assertActualHighlightingsMatchExpected(model, expectedHighlightings, actualHighlightings)
 }
 
-private fun assertActualHighlightingsCoverTheDocument(model: TerminalOutputModelImpl, actualHighlightings: TerminalOutputHighlightingsSnapshot) {
+private fun assertActualHighlightingsCoverTheDocument(model: MutableTerminalOutputModelImpl, actualHighlightings: TerminalOutputHighlightingsSnapshot) {
   var previousEnd = 0
   val validRange = 0..model.document.textLength
   for (i in 0 until actualHighlightings.size) {
@@ -275,7 +275,7 @@ private fun assertActualHighlightingsCoverTheDocument(model: TerminalOutputModel
 }
 
 private fun assertActualHighlightingsMatchExpected(
-  model: TerminalOutputModelImpl,
+  model: MutableTerminalOutputModelImpl,
   expectedHighlightings: List<HighlightingInfo>,
   actualHighlightings: TerminalOutputHighlightingsSnapshot,
 ) {

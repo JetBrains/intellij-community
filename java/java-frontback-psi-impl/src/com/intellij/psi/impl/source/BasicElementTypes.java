@@ -6,6 +6,7 @@ import com.intellij.psi.JavaDocTokenType;
 import com.intellij.psi.JavaTokenType;
 import com.intellij.psi.tree.ParentAwareTokenSet;
 import com.intellij.psi.tree.TokenSet;
+import org.jetbrains.annotations.ApiStatus;
 
 /**
  * The BasicElementTypes interface represents a collection of basic element types used in frontback java modules.
@@ -16,8 +17,18 @@ import com.intellij.psi.tree.TokenSet;
  *
  * @see ParentAwareTokenSet
  * @see SyntaxElementTypes
+ * @deprecated Use the new Java syntax library instead.
+ *             See {@link com.intellij.java.syntax.parser.JavaParser}
+ *             This class is planned to be removed.
+ *             As a temporary solution, use
+ *             {@link com.intellij.psi.impl.java.stubs.JavaStubElementTypes},
+ *             {@link com.intellij.psi.impl.source.tree.JavaElementType},
+ *             {@link com.intellij.psi.impl.source.tree.ElementType}
  */
+
 @SuppressWarnings("unused")
+@Deprecated
+@ApiStatus.ScheduledForRemoval
 public interface BasicElementTypes extends JavaTokenType, JavaDocTokenType, BasicJavaElementType, BasicJavaDocElementType {
 
   TokenSet BASIC_JAVA_PLAIN_COMMENT_BIT_SET = TokenSet.create(END_OF_LINE_COMMENT, C_STYLE_COMMENT);

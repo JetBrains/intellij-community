@@ -7,10 +7,12 @@ import com.intellij.openapi.actionSystem.CommonDataKeys
 import com.intellij.openapi.editor.ex.EditorGutterComponentEx
 import com.intellij.openapi.util.registry.Registry
 import com.intellij.openapi.vfs.VirtualFile
-import com.intellij.xdebugger.XDebuggerManager
-import com.intellij.xdebugger.breakpoints.XBreakpoint
-import com.intellij.xdebugger.breakpoints.XBreakpointManager
+import com.intellij.xdebugger.impl.breakpoints.XBreakpointManagerProxy
+import com.intellij.xdebugger.impl.breakpoints.XBreakpointProxy
+import com.intellij.xdebugger.impl.frame.XDebugManagerProxy
+import org.jetbrains.annotations.ApiStatus
 
+@ApiStatus.Internal
 abstract class AllButThisBreakpointAction : AnAction() {
   override fun update(e: AnActionEvent) {
     if (!Registry.`is`("debugger.remove.disable.actions", false)) {
@@ -24,8 +26,8 @@ abstract class AllButThisBreakpointAction : AnAction() {
       return
     }
 
-    val breakpointManager = XDebuggerManager.getInstance(project).breakpointManager
-    val breakpoints = breakpointManager.allBreakpoints
+    val breakpointManager = XDebugManagerProxy.getInstance().getBreakpointManagerProxy(project)
+    val breakpoints = breakpointManager.getAllBreakpoints()
 
     e.presentation.isEnabledAndVisible = breakpoints.any { it.matches(currentFile, caretLines) }
   }
@@ -34,8 +36,8 @@ abstract class AllButThisBreakpointAction : AnAction() {
     val project = e.project ?: return
     val (currentFile, caretLines) = getCurrentLines(e) ?: return
 
-    val breakpointManager = XDebuggerManager.getInstance(project).breakpointManager
-    val breakpoints = breakpointManager.allBreakpoints
+    val breakpointManager = XDebugManagerProxy.getInstance().getBreakpointManagerProxy(project)
+    val breakpoints = breakpointManager.getAllBreakpoints()
 
     for (breakpoint in breakpoints) {
       if (!breakpoint.matches(currentFile, caretLines)) {
@@ -44,7 +46,7 @@ abstract class AllButThisBreakpointAction : AnAction() {
     }
   }
 
-  protected abstract fun performAction(breakpointManager: XBreakpointManager, breakpoint: XBreakpoint<*>)
+  protected abstract fun performAction(breakpointManager: XBreakpointManagerProxy, breakpoint: XBreakpointProxy)
 
   private fun getCurrentLines(e: AnActionEvent): Pair<VirtualFile, List<Int>>? {
     val editor = e.getData(CommonDataKeys.EDITOR) ?: return null
@@ -57,8 +59,8 @@ abstract class AllButThisBreakpointAction : AnAction() {
     return currentFile to caretLines
   }
 
-  private fun XBreakpoint<*>.matches(currentFile: VirtualFile, caretLines: List<Int>): Boolean {
-    val sourcePosition = this.sourcePosition
+  private fun XBreakpointProxy.matches(currentFile: VirtualFile, caretLines: List<Int>): Boolean {
+    val sourcePosition = this.getSourcePosition()
     val breakpointFile = sourcePosition?.file
     val breakpointLine = sourcePosition?.line
 

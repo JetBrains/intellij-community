@@ -872,7 +872,7 @@ public final class GenerateMembersUtil {
     stack.add(typeElement);
     StringBuilder builder = new StringBuilder();
     while (!stack.isEmpty()) {
-      PsiElement current = stack.remove(stack.size() - 1);
+      PsiElement current = stack.removeLast();
       if (current instanceof PsiAnnotation annotation) {
         if (!NullableNotNullManager.isNullabilityAnnotation(annotation)) {
           continue;

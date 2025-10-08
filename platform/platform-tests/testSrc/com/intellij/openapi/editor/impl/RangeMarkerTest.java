@@ -996,7 +996,6 @@ public class RangeMarkerTest extends LightPlatformTestCase {
     deleteString(document, 4, 5);
     DaemonCodeAnalyzerImpl myDaemonCodeAnalyzer = (DaemonCodeAnalyzerImpl)DaemonCodeAnalyzerImpl.getInstanceEx(getProject());
     myDaemonCodeAnalyzer.waitForUpdateFileStatusBackgroundQueueInTests();
-    myDaemonCodeAnalyzer.getFileStatusMap().disposeDirtyDocumentRangeStorage(document);
     assertTrue(m1.isValid());
     assertTrue(m2.isValid());
     assertTrue(m3.isValid());

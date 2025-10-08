@@ -42,7 +42,7 @@ object GradleArtifactDownloader {
     executionName: @Nls String,
     artifactNotation: String,
     projectPath: String,
-  ): CompletableFuture<Path> {
+  ): CompletableFuture<Path?> {
     return project.gradleCoroutineScope.async {
       downloadArtifactImpl(project, executionName, artifactNotation, projectPath)
     }.asCompletableFuture()
@@ -53,7 +53,7 @@ object GradleArtifactDownloader {
     executionName: @Nls String,
     artifactNotation: String,
     projectPath: String,
-  ): Path {
+  ): Path? {
     val eel = project.getEelDescriptor().toEelApi()
     val taskOutputEelPath = createTaskOutputFile(eel)
     val taskOutputPath = taskOutputEelPath.asNioPath()
@@ -91,7 +91,7 @@ object GradleArtifactDownloader {
     }
     catch (e: Exception) {
       GradleDependencySourceDownloaderErrorHandler.handle(project, projectPath, artifactNotation, e)
-      throw IllegalStateException("Unable to download artifact.", e)
+      return null
     }
     finally {
       taskOutputPath.deleteIfExists()

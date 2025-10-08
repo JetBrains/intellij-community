@@ -28,7 +28,9 @@ interface StartupActivity {
   /**
    * Represents a startup activity that should be executed before [com.intellij.openapi.project.DumbService] switches to the "smart mode".
    */
-  interface RequiredForSmartMode : StartupActivity
+  interface RequiredForSmartMode {
+    fun runActivity(project: Project)
+  }
 
   /**
    * See **obsolescence notice** on [StartupActivity].

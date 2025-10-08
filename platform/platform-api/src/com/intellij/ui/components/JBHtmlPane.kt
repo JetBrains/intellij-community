@@ -338,6 +338,8 @@ open class JBHtmlPane : JEditorPane, Disposable, ExtendableHTMLViewFactory.Scale
     fun applyCssToView(pane: JBHtmlPane)
 
     fun ensureEditableViewsAreNotFocusable(pane: JBHtmlPane)
+
+    val jsoupCustomTagSet: Any
   }
 
 }

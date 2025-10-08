@@ -1,4 +1,4 @@
-/// Some <GRAMMAR_ERROR descr="The standard spelling is 'Javadoc'">javadoc</GRAMMAR_ERROR>. Maybe with some <TYPO descr="Typo: In word 'grammr'">grammr</TYPO> and, punctuation, <TYPO descr="Typo: In word 'mistaks'">mistaks</TYPO>.
+/// Some <GRAMMAR_ERROR descr="Grazie.RuleEngine.En.Spelling.MULTI_WORD">javadoc</GRAMMAR_ERROR>. Maybe with some <TYPO descr="Typo: In word 'grammr'">grammr</TYPO> and, punctuation, <TYPO descr="Typo: In word 'mistaks'">mistaks</TYPO>.
 ///
 /// ```
 /// void main(String[] args){

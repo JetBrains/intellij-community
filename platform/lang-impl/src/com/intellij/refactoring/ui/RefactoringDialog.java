@@ -12,7 +12,6 @@ import com.intellij.openapi.application.ReadAction;
 import com.intellij.openapi.options.ConfigurationException;
 import com.intellij.openapi.project.*;
 import com.intellij.openapi.ui.DialogWrapper;
-import com.intellij.openapi.ui.DoNotAskOption;
 import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.util.NlsContexts.Button;
 import com.intellij.openapi.util.SystemInfo;
@@ -56,7 +55,7 @@ public abstract class RefactoringDialog extends DialogWrapper implements Possibl
    * Must be called before {@link #init()}.
    */
   protected void addOpenInEditorCheckbox() {
-    setDoNotAskOption(new DoNotAskOption.Adapter() {
+    setDoNotAskOption(new com.intellij.openapi.ui.DoNotAskOption.Adapter() {
       @Override
       public void rememberChoice(boolean selected, int exitCode) {
         PropertiesComponent.getInstance().setValue(getRefactoringId() + ".OpenInEditor", selected, isOpenInEditorEnabledByDefault());

@@ -1,4 +1,4 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 @file:Suppress("ReplacePutWithAssignment")
 
 package com.intellij.openapi.wm.impl.headertoolbar
@@ -25,6 +25,7 @@ import com.intellij.openapi.actionSystem.impl.PresentationFactory
 import com.intellij.openapi.actionSystem.toolbarLayout.CompressingLayoutStrategy
 import com.intellij.openapi.actionSystem.toolbarLayout.ToolbarLayoutStrategy
 import com.intellij.openapi.application.ApplicationManager
+import com.intellij.openapi.application.EDT
 import com.intellij.openapi.application.UiWithModelAccess
 import com.intellij.openapi.application.impl.InternalUICustomization
 import com.intellij.openapi.diagnostic.logger
@@ -188,7 +189,7 @@ class MainToolbar(
       CustomizationUtil.createToolbarCustomizationHandler(it, MAIN_TOOLBAR_ID, this, ActionPlaces.MAIN_TOOLBAR)
     }
 
-    val widgets = withContext(Dispatchers.UiWithModelAccess) {
+    val widgets = withContext(Dispatchers.EDT) {
       removeAll()
 
       flavor.addWidget()

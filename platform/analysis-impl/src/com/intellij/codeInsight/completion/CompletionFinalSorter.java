@@ -13,7 +13,7 @@ import java.util.Map;
 
 /**
  * IMPORTANT: DO NOT USE IT
- * Supposed to be used ONLY by plugin allowing to sort completion using ml-ranking algorithm.
+ * Supposed to be used ONLY by "Completion-ML-Ranking" plugin allowing to sort completion using ml-ranking algorithm.
  * Needed to sort items from different sorters together.
  */
 @ApiStatus.Internal

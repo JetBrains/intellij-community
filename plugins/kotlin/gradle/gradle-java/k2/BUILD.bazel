@@ -1,9 +1,9 @@
 ### auto-generated section `build kotlin.gradle.gradle-java.k2` start
-load("@rules_jvm//:jvm.bzl", "jvm_library", "jvm_resources")
+load("@rules_jvm//:jvm.bzl", "jvm_library", "resourcegroup")
 
-jvm_resources(
+resourcegroup(
   name = "k2_resources",
-  files = glob(["resources/**/*"]),
+  srcs = glob(["resources/**/*"]),
   strip_prefix = "resources"
 )
 
@@ -12,14 +12,14 @@ jvm_library(
   module_name = "kotlin.gradle.gradle-java.k2",
   visibility = ["//visibility:public"],
   srcs = glob(["src/**/*.kt", "src/**/*.java", "src/**/*.form"], allow_empty = True),
+  resources = [":k2_resources"],
   deps = [
     "@lib//:kotlin-stdlib",
     "@lib//:kotlinc-kotlin-jps-common",
     "//plugins/kotlin/base/plugin",
     "//plugins/gradle/java",
     "//plugins/kotlin/highlighting/highlighting-shared:kotlin-highlighting-shared",
-  ],
-  runtime_deps = [":k2_resources"]
+  ]
 )
 
 jvm_library(
@@ -50,7 +50,7 @@ jvm_library(
     "//java/testFramework",
     "//plugins/kotlin/highlighting/highlighting-shared:kotlin-highlighting-shared",
     "@lib//:kotlinc-kotlin-compiler-common",
-    "@lib//:fastutil-min",
+    "//libraries/fastutil",
     "//plugins/groovy",
     "//plugins/groovy:groovy_test_lib",
     "//plugins/gradle:gradle-tests_test_lib",
@@ -60,8 +60,7 @@ jvm_library(
     "//platform/testFramework/junit5:junit5_test_lib",
     "//plugins/kotlin/project-configuration",
     "//plugins/kotlin/fir/tests:tests_test_lib",
-  ],
-  runtime_deps = [":k2_resources"]
+  ]
 )
 ### auto-generated section `build kotlin.gradle.gradle-java.k2` end
 

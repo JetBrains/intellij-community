@@ -1,9 +1,9 @@
 // Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package fleet.util.openmap
 
-import fleet.util.updateAndGet
 import kotlinx.collections.immutable.PersistentMap
 import kotlin.concurrent.atomics.AtomicReference
+import kotlin.concurrent.atomics.updateAndFetch
 
 internal class MutableBoundedOpenMapImpl<Domain, V : Any>(val map: AtomicReference<PersistentMap<Key<out V, in Domain>, V>>) : MutableBoundedOpenMap<Domain, V> {
   override fun <T : Any> get(k: Key<T, in Domain>): T? {
@@ -13,11 +13,11 @@ internal class MutableBoundedOpenMapImpl<Domain, V : Any>(val map: AtomicReferen
   override fun isEmpty() = map.load().size == 0
 
   override fun <T : V> set(k: Key<T, Domain>, v: T) {
-    map.updateAndGet { map -> map.put(k, v) }
+    map.updateAndFetch { map -> map.put(k, v) }
   }
 
   override fun remove(k: Key<out V, Domain>) {
-    map.updateAndGet { map -> map.remove(k) }
+    map.updateAndFetch { map -> map.remove(k) }
   }
 
   override fun <T : V> assoc(k: Key<T, Domain>, v: T): BoundedOpenMap<Domain, V> {
@@ -33,14 +33,14 @@ internal class MutableBoundedOpenMapImpl<Domain, V : Any>(val map: AtomicReferen
   }
 
   override fun <T : V> update(key: Key<T, Domain>, f: (T?) -> T): T {
-    return map.updateAndGet { map ->
+    return map.updateAndFetch { map ->
       val v1 = f(map.get(key) as T?)
       map.put(key, v1)
     }.get(key) as T
   }
 
   override fun <T : V> getOrInit(key: Key<T, Domain>, init: () -> T): T {
-    return map.updateAndGet { map ->
+    return map.updateAndFetch { map ->
       val v = map.get(key)
       if (v == null) {
         map.put(key, init())

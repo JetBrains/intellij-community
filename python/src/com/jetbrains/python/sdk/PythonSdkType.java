@@ -27,15 +27,14 @@ import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.reference.SoftReference;
 import com.intellij.remote.ExceptionFix;
 import com.intellij.remote.ext.LanguageCaseCollector;
-import com.intellij.util.Consumer;
 import com.intellij.util.ExceptionUtil;
 import com.intellij.util.PlatformUtils;
 import com.intellij.util.concurrency.annotations.RequiresBackgroundThread;
 import com.intellij.util.containers.ContainerUtil;
 import com.jetbrains.python.PyBundle;
 import com.jetbrains.python.PyNames;
+import com.jetbrains.python.parser.icons.PythonParserIcons;
 import com.jetbrains.python.psi.LanguageLevel;
-import com.jetbrains.python.psi.icons.PythonPsiApiIcons;
 import com.jetbrains.python.remote.PyCredentialsContribution;
 import com.jetbrains.python.remote.PyRemoteInterpreterUtil;
 import com.jetbrains.python.remote.PyRemoteSdkAdditionalDataBase;
@@ -60,6 +59,7 @@ import java.nio.file.Paths;
 import java.util.*;
 import java.util.List;
 import java.util.concurrent.atomic.AtomicReference;
+import java.util.function.Consumer;
 
 import static com.intellij.execution.target.TargetBasedSdks.loadTargetConfiguration;
 import static com.jetbrains.python.statistics.PythonSDKUpdaterIdsHolder.REFRESH_SKELETONS_FOR_REMOTE_INTERPRETER_FAILED;
@@ -95,7 +95,7 @@ public final class PythonSdkType extends SdkType {
 
   @Override
   public Icon getIcon() {
-    return PythonPsiApiIcons.Python;
+    return PythonParserIcons.PythonFile;
   }
 
   @Override
@@ -175,6 +175,7 @@ public final class PythonSdkType extends SdkType {
     return true;
   }
 
+  @ApiStatus.Internal
   @Override
   public void showCustomCreateUI(@NotNull SdkModel sdkModel,
                                  @NotNull JComponent parentComponent,
@@ -183,7 +184,7 @@ public final class PythonSdkType extends SdkType {
     Project project = CommonDataKeys.PROJECT.getData(DataManager.getInstance().getDataContext(parentComponent));
     PyAddSdkDialog.show(project, null, sdk -> {
       sdk.putUserData(SDK_CREATOR_COMPONENT_KEY, new WeakReference<>(parentComponent));
-      sdkCreatedCallback.consume(sdk);
+      sdkCreatedCallback.accept(sdk);
     });
   }
 
@@ -230,7 +231,7 @@ public final class PythonSdkType extends SdkType {
     final File virtualEnvRoot = PythonSdkUtil.getVirtualEnvRoot(sdkHome);
     if (virtualEnvRoot != null) {
       final String path = FileUtil.getLocationRelativeToUserHome(virtualEnvRoot.getAbsolutePath());
-      return name + " virtualenv at " + path;
+      return name + " " + path;
     }
     else {
       return name;

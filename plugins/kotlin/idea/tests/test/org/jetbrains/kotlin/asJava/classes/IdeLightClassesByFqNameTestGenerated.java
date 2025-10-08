@@ -725,6 +725,16 @@ public abstract class IdeLightClassesByFqNameTestGenerated extends AbstractIdeLi
             runTest(compilerTestData("compiler/testData/asJava/lightClasses/lightClassByFqName/DollarsInNameNoPackage.kt"));
         }
 
+        @TestMetadata("duplicatedNoArg.kt")
+        public void testDuplicatedNoArg() throws Exception {
+            runTest(compilerTestData("compiler/testData/asJava/lightClasses/lightClassByFqName/duplicatedNoArg.kt"));
+        }
+
+        @TestMetadata("duplicatedNoArg2.kt")
+        public void testDuplicatedNoArg2() throws Exception {
+            runTest(compilerTestData("compiler/testData/asJava/lightClasses/lightClassByFqName/duplicatedNoArg2.kt"));
+        }
+
         @TestMetadata("EnumClass.kt")
         public void testEnumClass() throws Exception {
             runTest(compilerTestData("compiler/testData/asJava/lightClasses/lightClassByFqName/EnumClass.kt"));
@@ -753,6 +763,11 @@ public abstract class IdeLightClassesByFqNameTestGenerated extends AbstractIdeLi
         @TestMetadata("HiddenDeprecatedInClass.kt")
         public void testHiddenDeprecatedInClass() throws Exception {
             runTest(compilerTestData("compiler/testData/asJava/lightClasses/lightClassByFqName/HiddenDeprecatedInClass.kt"));
+        }
+
+        @TestMetadata("HiddenDeprecatedInClassWithJavaLangDeprecated.kt")
+        public void testHiddenDeprecatedInClassWithJavaLangDeprecated() throws Exception {
+            runTest(compilerTestData("compiler/testData/asJava/lightClasses/lightClassByFqName/HiddenDeprecatedInClassWithJavaLangDeprecated.kt"));
         }
 
         @TestMetadata("InheritingInterfaceDefaultImpls.kt")
@@ -838,6 +853,11 @@ public abstract class IdeLightClassesByFqNameTestGenerated extends AbstractIdeLi
         @TestMetadata("OnlySecondaryConstructors.kt")
         public void testOnlySecondaryConstructors() throws Exception {
             runTest(compilerTestData("compiler/testData/asJava/lightClasses/lightClassByFqName/OnlySecondaryConstructors.kt"));
+        }
+
+        @TestMetadata("privateInterfaceCallable.kt")
+        public void testPrivateInterfaceCallable() throws Exception {
+            runTest(compilerTestData("compiler/testData/asJava/lightClasses/lightClassByFqName/privateInterfaceCallable.kt"));
         }
 
         @TestMetadata("PrivateObject.kt")

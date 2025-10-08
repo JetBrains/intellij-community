@@ -1,4 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.execution.junit
 
 import com.intellij.java.library.JavaLibraryModificationTracker
@@ -24,7 +24,7 @@ internal fun isJUnit4InScope(file: PsiFile): Boolean {
   return hasInModuleScope(file, ORG_JUNIT_TEST)
 }
 
-internal fun isJUnit5InScope(file: PsiFile): Boolean {
+internal fun isJUnit5Or6InScope(file: PsiFile): Boolean {
   return hasInModuleScope(file, ORG_JUNIT_JUPITER_API_TEST)
 }
 
@@ -58,6 +58,7 @@ class JUnitVersion(val asString: String) : Comparable<JUnitVersion> {
     val V_3_X = JUnitVersion("3")
     val V_4_X = JUnitVersion("4")
     val V_5_X = JUnitVersion("5")
+    val V_6_X = JUnitVersion("6")
     val V_5_8_0 = JUnitVersion("5.8.0")
     val V_5_10_0 = JUnitVersion("5.10.0")
   }

@@ -10,6 +10,7 @@ import java.nio.file.Files
 import java.nio.file.InvalidPathException
 import java.nio.file.Path
 import java.security.MessageDigest
+import java.util.concurrent.ConcurrentHashMap
 import kotlin.io.path.*
 import kotlin.jvm.optionals.getOrNull
 
@@ -22,19 +23,25 @@ object KotlinTestsDependenciesUtil {
 
     // We cannot reference PathManager or build scripts here because we call this code from Gradle in TeamCity
     val communityRoot: Path by lazy {
+        findCommunityRoot().toAbsolutePath().normalize()
+    }
+
+    private fun findCommunityRoot(): Path {
         val possibleHomePaths = mutableListOf<Path>()
         System.getProperty(PROPERTY_HOME_PATH)?.let { possibleHomePaths.add(Path(it)) }
         System.getenv(IDEA_HOME)?.let { possibleHomePaths.add(Path(it)) }
         possibleHomePaths.add(Path("."))
         for (explicit in possibleHomePaths) {
             if (explicit.resolve(COMMUNITY_MARKER).isRegularFile()) {
-                return@lazy explicit
+                return explicit
             }
+
             val communityPath = explicit.resolve("community")
             if (communityPath.resolve(COMMUNITY_MARKER).isRegularFile()) {
-                return@lazy communityPath.toAbsolutePath()
+                return communityPath.toAbsolutePath()
             }
         }
+
         val aClass: Class<*> = KotlinTestsDependenciesUtil::class.java
         val aClassFilename = "${aClass.getName().replace('.', '/')}.class"
         val aClassLocation = aClass.classLoader.getResource(aClassFilename)?.toString()?.substringAfter("file:")
@@ -53,17 +60,30 @@ object KotlinTestsDependenciesUtil {
 
         while (rootPath != null) {
             if (rootPath.resolve(COMMUNITY_MARKER).isRegularFile()) {
-                return@lazy rootPath.toAbsolutePath()
+                return rootPath.toAbsolutePath()
             } else if (rootPath.resolve(ULTIMATE_MARKER).isRegularFile()) {
                 val communityPath = rootPath.resolve("community")
                 if (communityPath.isDirectory()) {
-                    return@lazy communityPath.toAbsolutePath()
+                    return communityPath.toAbsolutePath()
                 }
             }
             rootPath = rootPath.parent
         }
+
         error("cannot detect community root path for class $aClassLocation")
     }
+
+    val monorepoRoot: Path?
+        get() = communityRoot.parent?.takeIf { it.resolve(ULTIMATE_MARKER).exists() }
+
+    val projectRoot: Path
+        get() = monorepoRoot ?: communityRoot
+
+    internal val kotlinCompilerSnapshotLocationInsideCommunity: String
+        get() = "lib/kotlin-snapshot"
+
+    val kotlinCompilerSnapshotPath: Path
+        get() = communityRoot.resolve(kotlinCompilerSnapshotLocationInsideCommunity)
 
     private val httpClient = HttpClient.newBuilder().followRedirects(HttpClient.Redirect.NEVER).build()
 
@@ -149,11 +169,9 @@ object KotlinTestsDependenciesUtil {
     }
 
     private fun loadVersions(content: String): Map<String, String> {
-        val kotlinCompilerCliVersionRegex = Regex("""kotlinCompilerCliVersion\s*=\s*"(\S+)"""")
         val kotlinCompilerCliVersion = kotlinCompilerCliVersionRegex.find(content)?.groupValues[1]
             ?: error("cannot find kotlinCompilerCliVersion in content:\n$content")
 
-        val kotlincKotlinJpsPluginTestsVersionRegex = Regex("""kotlincKotlinJpsPluginTestsVersion\s*=\s*"(\S+)"""")
         val kotlincKotlinJpsPluginTestsVersion = kotlincKotlinJpsPluginTestsVersionRegex.find(content)?.groupValues[1]
             ?: error("cannot find kotlincKotlinJpsPluginTestsVersion in content:\n$content")
         return mapOf(
@@ -181,7 +199,7 @@ object KotlinTestsDependenciesUtil {
             if (sha256 == null) {
                 error("cannot find sha256 in '$block'")
             }
-            val checksum = calculateSha256SumForUrl(url)
+            val checksum = sha256SumForUrl(url)
             if (isUpToDateCheck) {
                 if (checksum != sha256) {
                     errors.add("sha256 mismatch for '$url' expected '$sha256' but got '$checksum'")
@@ -203,8 +221,12 @@ object KotlinTestsDependenciesUtil {
         }
     }
 
+    private val sha256Cache = ConcurrentHashMap<String, String>()
+
+    internal fun sha256SumForUrl(url: String): String = sha256Cache.getOrPut(url) { calculateSha256SumForUrl(url) }
+
     private fun calculateSha256SumForUrl(url: String): String {
-        println("Calculating SHA256 checksum for '$url'")
+        println("Calculating SHA256 checksum for '$url'...")
         val digest = MessageDigest.getInstance("SHA-256")
         val requestBuilder = HttpRequest.newBuilder()
             .uri(URI.create(url))

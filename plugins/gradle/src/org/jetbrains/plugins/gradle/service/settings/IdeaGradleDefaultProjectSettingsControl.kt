@@ -13,8 +13,8 @@ import com.intellij.openapi.ui.ValidationInfo
 import com.intellij.openapi.ui.getCanonicalPath
 import com.intellij.openapi.ui.getPresentablePath
 import com.intellij.openapi.ui.setEmptyState
-import com.intellij.openapi.ui.validation.CHECK_DIRECTORY
 import com.intellij.openapi.ui.validation.CHECK_NON_EMPTY
+import com.intellij.openapi.ui.validation.CHECK_READABLE_DIRECTORY
 import com.intellij.openapi.ui.validation.WHEN_GRAPH_PROPAGATION_FINISHED
 import com.intellij.ui.dsl.builder.*
 import com.intellij.ui.dsl.listCellRenderer.textListCellRenderer
@@ -98,7 +98,7 @@ internal class IdeaGradleDefaultProjectSettingsControl : GradleSettingsControl()
                 textFieldWithBrowseButton(fileChooserDescriptor)
                   .applyToComponent { setEmptyState(GradleBundle.message("gradle.project.settings.distribution.local.location.empty.state")) }
                   .bindText(gradleHomeProperty.toUiPathProperty())
-                  .trimmedTextValidation(CHECK_NON_EMPTY, CHECK_DIRECTORY)
+                  .trimmedTextValidation(CHECK_NON_EMPTY, CHECK_READABLE_DIRECTORY)
                   .validationInfo { validateGradleHome(gradleHome) }
                   .align(AlignX.FILL)
               }

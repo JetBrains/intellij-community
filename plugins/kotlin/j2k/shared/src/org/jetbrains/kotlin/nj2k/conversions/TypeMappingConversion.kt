@@ -3,7 +3,6 @@
 package org.jetbrains.kotlin.nj2k.conversions
 
 import com.intellij.psi.PsiClass
-import org.jetbrains.kotlin.analysis.api.KaSession
 import org.jetbrains.kotlin.builtins.jvm.JavaToKotlinClassMap
 import org.jetbrains.kotlin.j2k.ConverterContext
 import org.jetbrains.kotlin.j2k.Nullability
@@ -20,7 +19,6 @@ class TypeMappingConversion(
     context: ConverterContext,
     val filter: (typeElement: JKTypeElement) -> Boolean = { true }
 ) : RecursiveConversion(context) {
-    context(_: KaSession)
     override fun applyToElement(element: JKTreeElement): JKTreeElement {
         when (element) {
             is JKTypeElement -> {

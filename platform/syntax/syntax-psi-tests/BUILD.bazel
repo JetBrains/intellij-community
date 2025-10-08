@@ -25,7 +25,7 @@ jvm_library(
     "//platform/core-api:core",
     "@lib//:kotlin-stdlib",
     "//platform/core-impl",
-    "@lib//:fastutil-min",
+    "//libraries/fastutil",
     "//platform/syntax/syntax-util:util",
     "//platform/platform-impl:ide-impl",
     "//platform/platform-impl:ide-impl_test_lib",

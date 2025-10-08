@@ -512,6 +512,59 @@ public class PsiBuilderQuickTest extends BareTestFixtureTestCase {
     );
   }
 
+  @Test
+  public void testRemapNoRestore() {
+    doTest(
+      "ab",
+      """
+        Element(ROOT)
+          Element(OTHER)
+            PsiElement(LETTER)('a')
+          Element(OTHER)
+            PsiElement(DIGIT)('b')
+        """,
+      builder -> {
+        var a = builder.mark();
+        builder.advanceLexer();
+        a.done(OTHER);
+
+        var b = builder.mark();
+        builder.remapCurrentTokenAndRestoreOnRollback(DIGIT);
+        builder.advanceLexer();
+        b.done(OTHER);
+      }
+    );
+  }
+
+  @Test
+  public void testRemapAndRestore() {
+    doTest(
+      "ab",
+      """
+        Element(ROOT)
+          Element(OTHER)
+            PsiElement(LETTER)('a')
+          Element(OTHER)
+            PsiElement(LETTER)('b')
+        """,
+      builder -> {
+        var a = builder.mark();
+        builder.advanceLexer();
+        a.done(OTHER);
+
+        var b = builder.mark();
+        builder.remapCurrentTokenAndRestoreOnRollback(DIGIT);
+        builder.remapCurrentTokenAndRestoreOnRollback(OTHER);
+        builder.advanceLexer();
+
+        var b1 = b.precede();
+        b.rollbackTo();
+        builder.advanceLexer();
+        b1.done(OTHER);
+      }
+    );
+  }
+
   private static void doTest(String text, String expected, Consumer<? super PsiBuilder> parser) {
     PsiBuilder builder = createBuilder(text);
     PsiBuilder.Marker rootMarker = builder.mark();

@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInsight.completion.impl;
 
 import com.intellij.codeInsight.completion.CompletionSorter;
@@ -11,27 +11,28 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.function.Predicate;
 
-public class CompletionSorterImpl extends CompletionSorter {
+public final class CompletionSorterImpl extends CompletionSorter {
   private final List<? extends ClassifierFactory<LookupElement>> myMembers;
   private final int myHashCode;
 
   @ApiStatus.Internal
-  public CompletionSorterImpl(List<? extends ClassifierFactory<LookupElement>> members) {
+  public CompletionSorterImpl(@NotNull List<? extends ClassifierFactory<LookupElement>> members) {
     myMembers = members;
     myHashCode = myMembers.hashCode();
   }
 
-  public static ClassifierFactory<LookupElement> weighingFactory(final LookupElementWeigher weigher) {
-    final String id = weigher.toString();
+  public static @NotNull ClassifierFactory<LookupElement> weighingFactory(@NotNull LookupElementWeigher weigher) {
+    String id = weigher.toString();
     return new ClassifierFactory<>(id) {
       @Override
-      public Classifier<LookupElement> createClassifier(Classifier<LookupElement> next) {
+      public @NotNull Classifier<LookupElement> createClassifier(@NotNull Classifier<LookupElement> next) {
         return new CachingComparingClassifier(next, weigher);
       }
     };
   }
 
-  @Override public CompletionSorterImpl weighBefore(final @NotNull String beforeId, LookupElementWeigher... weighers) {
+  @Override
+  public @NotNull CompletionSorterImpl weighBefore(@NotNull String beforeId, @NotNull LookupElementWeigher @NotNull ... weighers) {
     if (weighers.length == 0) return this;
 
     CompletionSorterImpl result = this;
@@ -41,7 +42,8 @@ public class CompletionSorterImpl extends CompletionSorter {
     return result;
   }
 
-  @Override public CompletionSorterImpl weighAfter(final @NotNull String afterId, LookupElementWeigher... weighers) {
+  @Override
+  public @NotNull CompletionSorterImpl weighAfter(@NotNull String afterId, @NotNull LookupElementWeigher @NotNull ... weighers) {
     if (weighers.length == 0) return this;
 
     CompletionSorterImpl result = this;
@@ -52,31 +54,36 @@ public class CompletionSorterImpl extends CompletionSorter {
     return result;
   }
 
-  @Override public CompletionSorterImpl weigh(final LookupElementWeigher weigher) {
+  @Override
+  public @NotNull CompletionSorterImpl weigh(@NotNull LookupElementWeigher weigher) {
     return withClassifier(weighingFactory(weigher));
   }
 
-  public CompletionSorterImpl withClassifier(ClassifierFactory<LookupElement> classifierFactory) {
+  public @NotNull CompletionSorterImpl withClassifier(@NotNull ClassifierFactory<LookupElement> classifierFactory) {
     return enhanced(classifierFactory, myMembers.size());
   }
 
   public @NotNull CompletionSorterImpl withClassifier(@NotNull String anchorId,
-                                             boolean beforeAnchor, ClassifierFactory<LookupElement> classifierFactory) {
-    final int i = idIndex(anchorId);
+                                                      boolean beforeAnchor,
+                                                      @NotNull ClassifierFactory<LookupElement> classifierFactory) {
+    int i = idIndex(anchorId);
     return enhanced(classifierFactory, beforeAnchor ? Math.max(0, i) : i + 1);
   }
 
-  public CompletionSorterImpl withoutClassifiers(@NotNull Predicate<? super ClassifierFactory<LookupElement>> removeCondition) {
+  public @NotNull CompletionSorterImpl withoutClassifiers(@NotNull Predicate<? super ClassifierFactory<LookupElement>> removeCondition) {
     return new CompletionSorterImpl(ContainerUtil.filter(myMembers, t -> !removeCondition.test(t)));
   }
 
-  private @NotNull CompletionSorterImpl enhanced(ClassifierFactory<LookupElement> classifierFactory, int index) {
-    final List<ClassifierFactory<LookupElement>> copy = new ArrayList<>(myMembers);
+  /**
+   * @return a copy of sorter with classifierFactory added to the specified index
+   */
+  private @NotNull CompletionSorterImpl enhanced(@NotNull ClassifierFactory<LookupElement> classifierFactory, int index) {
+    List<ClassifierFactory<LookupElement>> copy = new ArrayList<>(myMembers);
     copy.add(index, classifierFactory);
     return new CompletionSorterImpl(copy);
   }
 
-  private int idIndex(final String id) {
+  private int idIndex(@NotNull String id) {
     return ContainerUtil.indexOf(myMembers, factory -> id.equals(factory.getId()));
   }
 
@@ -90,9 +97,12 @@ public class CompletionSorterImpl extends CompletionSorter {
     return myHashCode;
   }
 
-  private static Classifier<LookupElement> createClassifier(final int index,
-                                                            final List<? extends ClassifierFactory<LookupElement>> components,
-                                                            Classifier<LookupElement> tail) {
+  /**
+   * @return a function-style list of classifiers corresponding to {@code components} starting from {@code index}
+   */
+  private static @NotNull Classifier<LookupElement> createClassifier(int index,
+                                                                     @NotNull List<? extends ClassifierFactory<LookupElement>> components,
+                                                                     @NotNull Classifier<LookupElement> tail) {
     if (index == components.size()) {
       return tail;
     }
@@ -100,7 +110,7 @@ public class CompletionSorterImpl extends CompletionSorter {
     return components.get(index).createClassifier(createClassifier(index + 1, components, tail));
   }
 
-  public Classifier<LookupElement> buildClassifier(Classifier<LookupElement> tail) {
+  public @NotNull Classifier<LookupElement> buildClassifier(@NotNull Classifier<LookupElement> tail) {
     return createClassifier(0, myMembers, tail);
   }
 }

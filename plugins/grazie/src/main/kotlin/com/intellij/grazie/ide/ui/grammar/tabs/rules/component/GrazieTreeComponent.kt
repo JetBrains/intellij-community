@@ -1,6 +1,7 @@
 // Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.grazie.ide.ui.grammar.tabs.rules.component
 
+import ai.grazie.nlp.langs.Language
 import com.intellij.grazie.GrazieConfig
 import com.intellij.grazie.ide.ui.components.GrazieUIComponent
 import com.intellij.grazie.ide.ui.components.dsl.panel
@@ -10,6 +11,8 @@ import com.intellij.grazie.ide.ui.grammar.tabs.rules.component.rules.GrazieRules
 import com.intellij.grazie.jlanguage.Lang
 import com.intellij.grazie.text.Rule
 import com.intellij.grazie.text.TextChecker
+import com.intellij.grazie.utils.TextStyleDomain
+import com.intellij.grazie.utils.getAffectedGlobalRules
 import com.intellij.ide.CommonActionsManager
 import com.intellij.ide.DefaultTreeExpander
 import com.intellij.openapi.Disposable
@@ -20,14 +23,18 @@ import com.intellij.util.ui.JBUI
 import com.intellij.util.ui.tree.TreeUtil
 import org.jetbrains.annotations.ApiStatus
 import java.awt.BorderLayout
-import javax.swing.ScrollPaneConstants
 import javax.swing.tree.DefaultTreeModel
 
-internal class GrazieTreeComponent(onSelectionChanged: (meta: Any) -> Unit) : CheckboxTree(GrazieRulesTreeCellRenderer(), GrazieRulesTreeNode()),
-                                                                              Disposable, GrazieUIComponent {
+class GrazieTreeComponent(
+  onSelectionChanged: (meta: Any) -> Unit,
+  private val language: Language,
+  private val domain: TextStyleDomain,
+  private val filter: SearchTextField,
+) : CheckboxTree(GrazieRulesTreeCellRenderer(), GrazieRulesTreeNode(domain)),
+    Disposable, GrazieUIComponent {
   private val disabledRules = hashSetOf<String>()
   private val enabledRules = hashSetOf<String>()
-  private val filterComponent: GrazieRulesTreeFilter = GrazieRulesTreeFilter(this)
+  private val filterComponent = GrazieRulesTreeFilter(this, language)
 
   init {
     selectionModel.addTreeSelectionListener { event ->
@@ -42,7 +49,7 @@ internal class GrazieTreeComponent(onSelectionChanged: (meta: Any) -> Unit) : Ch
           val id = meta.globalId
           enabledRules.remove(id)
           disabledRules.remove(id)
-          if (node.isChecked != meta.isEnabledByDefault) {
+          if (node.isChecked != meta.isEnabledByDefault(domain)) {
             (if (node.isChecked) enabledRules else disabledRules).add(id)
           }
         }
@@ -69,76 +76,76 @@ internal class GrazieTreeComponent(onSelectionChanged: (meta: Any) -> Unit) : Ch
           toolbar.setTargetComponent(this@tree)
           add(toolbar.component, BorderLayout.WEST)
         }
-
-        add(filterComponent, BorderLayout.CENTER)
-      }
-
-      panel(constraint = BorderLayout.CENTER) {
-        add(ScrollPaneFactory.createScrollPane(this@GrazieTreeComponent,
-                                               ScrollPaneConstants.VERTICAL_SCROLLBAR_AS_NEEDED,
-                                               ScrollPaneConstants.HORIZONTAL_SCROLLBAR_NEVER))
       }
     }
   }
 
   override fun isModified(state: GrazieConfig.State): Boolean {
-    return state.userEnabledRules != enabledRules || state.userDisabledRules != disabledRules
+    val (userEnabledRules, userDisabledRules) = state.getUserChangedRules(domain)
+    return filterByLanguage(userEnabledRules) != enabledRules || filterByLanguage(userDisabledRules) != disabledRules
   }
 
   override fun reset(state: GrazieConfig.State) {
-    enabledRules.clear(); enabledRules.addAll(state.userEnabledRules)
-    disabledRules.clear(); disabledRules.addAll(state.userDisabledRules)
-    filterComponent.filter()
-    if (isSelectionEmpty) setSelectionRow(0)
+    val (userEnabledRules, userDisabledRules) = state.getUserChangedRules(domain)
+    enabledRules.clear(); enabledRules.addAll(filterByLanguage(userEnabledRules))
+    disabledRules.clear(); disabledRules.addAll(filterByLanguage(userDisabledRules))
+    filterComponent.filter(filter.text)
   }
 
   override fun apply(state: GrazieConfig.State): GrazieConfig.State {
-    return state.copy(
-      userEnabledRules = HashSet(enabledRules),
-      userDisabledRules = HashSet(disabledRules)
-    )
+    return state.updateUserRules(domain, enabledRules, disabledRules)
   }
 
-  override fun dispose() {
-    filterComponent.dispose()
+  override fun dispose() {}
+
+  private fun filterByLanguage(rules: Set<String>): Set<String> =
+    rules.filter { it.contains(".${language.iso.name}.", ignoreCase = true) }.toSet()
+
+  @JvmOverloads
+  fun filter(filterText: String? = filter.text) {
+    filterComponent.filter(filterText)
   }
 
-  fun filter(str: String) {
-    filterComponent.filter = str
-    filterComponent.filter()
+  fun getCurrentFilterString(): String? = filter.text
+
+  fun focusRule(rule: Rule) {
+    val ruleNode = (model.root as GrazieRulesTreeNode).findRuleNode(rule.globalId)
+    if (ruleNode != null) {
+      TreeUtil.selectNode(this, ruleNode)
+    }
   }
 
-  fun getCurrentFilterString(): String? = filterComponent.filter
-
-  fun resetTreeModel(rules: Map<Lang, List<Rule>>) {
-    val root = GrazieRulesTreeNode()
+  fun resetTreeModel(rules: List<Rule>) {
+    val root = GrazieRulesTreeNode(domain)
     val model = model as DefaultTreeModel
 
-    rules.entries.sortedBy { it.key.nativeName }.forEach { (lang, rules) ->
-      val langNode = GrazieRulesTreeNode(lang)
-      model.insertNodeInto(langNode, root, root.childCount)
-
-      fun splitIntoCategories(level: Int, rules: List<Rule>, parent: GrazieRulesTreeNode) {
-        rules.groupBy { it.categories.getOrNull(level) }.entries
-          .sortedWith(Comparator.comparing({ it.key }, nullsLast(Comparator.comparing { it.lowercase() })))
-          .forEach { (category, catRules) ->
-            if (category != null) {
-              val categoryNode = GrazieRulesTreeNode(category)
-              model.insertNodeInto(categoryNode, parent, parent.childCount)
-              splitIntoCategories(level + 1, catRules, categoryNode)
-            }
-            else {
-              catRules.sortedBy { it.presentableName.lowercase() }.forEach { rule ->
-                model.insertNodeInto(GrazieRulesTreeNode(rule), parent, parent.childCount)
-              }
+    fun splitIntoCategories(level: Int, rules: List<Rule>, parent: GrazieRulesTreeNode) {
+      rules.groupBy { it.categories.getOrNull(level) }.entries
+        .sortedWith(Comparator.comparing({ it.key }, nullsLast(Comparator.comparing { it.lowercase() })))
+        .forEach { (category, categoryRules) ->
+          if (category != null) {
+            val categoryNode = GrazieRulesTreeNode(domain, category)
+            model.insertNodeInto(categoryNode, parent, parent.childCount)
+            splitIntoCategories(level + 1, categoryRules, categoryNode)
+          }
+          else {
+            categoryRules.sortedBy { it.presentableName.lowercase() }.forEach { rule ->
+              model.insertNodeInto(GrazieRulesTreeNode(domain, rule), parent, parent.childCount)
             }
           }
-      }
-      splitIntoCategories(0, rules, langNode)
+        }
     }
 
+    val affectedGlobalRules = getAffectedGlobalRules(language)
+    splitIntoCategories(
+      0,
+      rules.filter { it.globalId !in affectedGlobalRules },
+      root
+    )
+
+    val state = GrazieConfig.get()
     model.setRoot(root)
-    root.resetMark(apply(GrazieConfig.get()))
+    root.resetMark(apply(state))
     model.nodeChanged(root)
   }
 }
@@ -156,4 +163,17 @@ fun allRules(state: GrazieConfig.State = GrazieConfig.get()): Map<Lang, List<Rul
     }
   }
   return result
+}
+
+@ApiStatus.Internal
+fun allRules(lang: Lang, state: GrazieConfig.State = GrazieConfig.get()): List<Rule> {
+  if (lang !in state.enabledLanguages) return emptyList()
+  val jLanguage = lang.jLanguage
+  if (jLanguage != null) {
+    val rules = TextChecker.allCheckers().flatMap { it.getRules(jLanguage.localeWithCountryAndVariant) }
+    if (rules.isNotEmpty()) {
+      return rules
+    }
+  }
+  return emptyList()
 }

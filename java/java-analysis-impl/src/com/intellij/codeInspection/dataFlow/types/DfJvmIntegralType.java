@@ -60,7 +60,7 @@ public interface DfJvmIntegralType extends DfIntegralType, DfPrimitiveType {
 
   @Override
   default @NotNull DfType join(@NotNull DfType other) {
-    if (other == DfType.BOTTOM) return this;
+    if (other == DfType.BOTTOM || other == this) return this;
     if (!(other instanceof DfIntegralType)) return DfType.TOP;
     if (((DfIntegralType)other).getLongRangeType() != getLongRangeType()) return DfType.TOP;
     LongRangeSet range = ((DfIntegralType)other).getRange().join(getRange());
@@ -70,7 +70,7 @@ public interface DfJvmIntegralType extends DfIntegralType, DfPrimitiveType {
 
   @Override
   default @Nullable DfType tryJoinExactly(@NotNull DfType other) {
-    if (other == DfType.BOTTOM) return this;
+    if (other == DfType.BOTTOM || other == this) return this;
     if (other == DfType.TOP) return other;
     if (!(other instanceof DfIntegralType)) return null;
     if (((DfIntegralType)other).getLongRangeType() != getLongRangeType()) return null;
@@ -82,7 +82,7 @@ public interface DfJvmIntegralType extends DfIntegralType, DfPrimitiveType {
 
   @Override
   default @NotNull DfType meet(@NotNull DfType other) {
-    if (other == DfType.TOP) return this;
+    if (other == DfType.TOP || other == this) return this;
     if (!(other instanceof DfIntegralType)) return DfType.BOTTOM;
     if (((DfIntegralType)other).getLongRangeType() != getLongRangeType()) return DfType.BOTTOM;
     LongRangeSet range = ((DfIntegralType)other).getRange().meet(getRange());

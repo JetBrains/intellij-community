@@ -1,9 +1,9 @@
 ### auto-generated section `build intellij.platform.ide.util.io` start
-load("@rules_jvm//:jvm.bzl", "jvm_library", "jvm_resources")
+load("@rules_jvm//:jvm.bzl", "jvm_library", "resourcegroup")
 
-jvm_resources(
+resourcegroup(
   name = "ide-util-io_resources",
-  files = glob(["resources/**/*"]),
+  srcs = glob(["resources/**/*"]),
   strip_prefix = "resources"
 )
 
@@ -12,17 +12,17 @@ jvm_library(
   module_name = "intellij.platform.ide.util.io",
   visibility = ["//visibility:public"],
   srcs = glob(["src/**/*.kt", "src/**/*.java", "src/**/*.form"], allow_empty = True),
+  resources = [":ide-util-io_resources"],
   deps = [
     "@lib//:kotlin-stdlib",
     "//platform/core-api:core",
-    "@lib//:guava",
-    "@lib//:fastutil-min",
+    "//libraries/guava",
+    "//libraries/fastutil",
     "//platform/util/base",
     "//platform/util",
     "@lib//:jna",
     "//platform/diagnostic",
     "//platform/eel-provider",
-  ],
-  runtime_deps = [":ide-util-io_resources"]
+  ]
 )
 ### auto-generated section `build intellij.platform.ide.util.io` end

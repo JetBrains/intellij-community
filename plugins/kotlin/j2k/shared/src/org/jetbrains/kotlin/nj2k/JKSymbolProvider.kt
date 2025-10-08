@@ -144,7 +144,6 @@ class JKSymbolProvider(private val resolver: JKResolver) {
     fun provideMethodSymbol(fqName: String): JKMethodSymbol =
         provideMethodSymbol(fqName.asSafeFqName())
 
-    context(_: KaSession)
     fun provideMethodSymbolWithExactSignature(methodFqName: String, parameterTypesFqNames: List<String>): JKMethodSymbol {
         return symbolsByFqNameWithExactSignature.getOrPutIfNotNull(listOf(methodFqName) + parameterTypesFqNames) {
             resolver.resolveMethodWithExactSignature(
@@ -203,7 +202,7 @@ class JKSymbolProvider(private val resolver: JKResolver) {
     private val NO_NAME_PROVIDED: String = "NO_NAME_PROVIDED"
 }
 
-private class SymbolProviderVisitor(private val symbolProvider: JKSymbolProvider) : JavaElementVisitor(),PsiRecursiveVisitor {
+private class SymbolProviderVisitor(private val symbolProvider: JKSymbolProvider) : JavaElementVisitor(), PsiRecursiveVisitor {
     override fun visitElement(element: PsiElement) {
         element.acceptChildren(this)
     }

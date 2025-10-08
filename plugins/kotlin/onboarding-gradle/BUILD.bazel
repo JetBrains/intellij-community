@@ -1,9 +1,9 @@
 ### auto-generated section `build kotlin.onboarding.gradle` start
-load("@rules_jvm//:jvm.bzl", "jvm_library", "jvm_resources")
+load("@rules_jvm//:jvm.bzl", "jvm_library", "resourcegroup")
 
-jvm_resources(
+resourcegroup(
   name = "onboarding-gradle_resources",
-  files = glob(["resources/**/*"]),
+  srcs = glob(["resources/**/*"]),
   strip_prefix = "resources"
 )
 
@@ -12,6 +12,7 @@ jvm_library(
   module_name = "kotlin.onboarding.gradle",
   visibility = ["//visibility:public"],
   srcs = glob(["src/**/*.kt", "src/**/*.java", "src/**/*.form"], allow_empty = True),
+  resources = [":onboarding-gradle_resources"],
   deps = [
     "@lib//:kotlin-stdlib",
     "@lib//:kotlinc-kotlin-compiler-common",
@@ -25,8 +26,8 @@ jvm_library(
     "//platform/platform-impl:ide-impl",
     "//plugins/kotlin/base/plugin",
     "@lib//:kotlinx-datetime-jvm",
-    "@lib//:kotlinx-serialization-core",
-    "@lib//:kotlinx-serialization-json",
+    "//libraries/kotlinx/serialization/core",
+    "//libraries/kotlinx/serialization/json",
     "//plugins/gradle:gradle-common",
     "//plugins/kotlin/project-configuration",
     "//plugins/kotlin/base/facet",
@@ -34,8 +35,7 @@ jvm_library(
     "//plugins/kotlin/onboarding",
     "//plugins/kotlin/gradle/gradle-java",
     "//plugins/kotlin/gradle/gradle-tooling/impl",
-  ],
-  runtime_deps = [":onboarding-gradle_resources"]
+  ]
 )
 
 jvm_library(
@@ -60,8 +60,8 @@ jvm_library(
     "//plugins/kotlin/base/plugin",
     "//plugins/kotlin/base/plugin:plugin_test_lib",
     "@lib//:kotlinx-datetime-jvm",
-    "@lib//:kotlinx-serialization-core",
-    "@lib//:kotlinx-serialization-json",
+    "//libraries/kotlinx/serialization/core",
+    "//libraries/kotlinx/serialization/json",
     "@lib//:kotlin-test",
     "@lib//:kotlin-test-assertions-core-jvm",
     "@lib//:kotlin-test-junit",
@@ -77,8 +77,7 @@ jvm_library(
     "//plugins/kotlin/gradle/gradle-java:gradle-java_test_lib",
     "//plugins/kotlin/gradle/gradle-tooling/impl",
     "//plugins/kotlin/gradle/gradle-tooling/impl:impl_test_lib",
-  ],
-  runtime_deps = [":onboarding-gradle_resources"]
+  ]
 )
 ### auto-generated section `build kotlin.onboarding.gradle` end
 

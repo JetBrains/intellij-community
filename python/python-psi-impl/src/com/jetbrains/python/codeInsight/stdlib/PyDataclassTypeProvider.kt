@@ -114,7 +114,7 @@ class PyDataclassTypeProvider : PyTypeProviderBase() {
       cls: PyClass,
       dataclassParams: PyDataclassParameters?,
       context: TypeEvalContext,
-    ): Sequence<InitVarInfo>? {
+    ): List<InitVarInfo>? {
       if (dataclassParams == null || !dataclassParams.init) {
         return null
       }
@@ -133,6 +133,7 @@ class PyDataclassTypeProvider : PyTypeProviderBase() {
             null
           }
         }
+        .toList()
     }
 
     @ApiStatus.Internal

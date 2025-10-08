@@ -764,8 +764,8 @@ public final class TypoTolerantMatcher extends MinusculeMatcher {
     }
 
     private static char[] applyError(char[] pattern, ErrorWithIndex error) {
-      if (error.error instanceof TypoError typoError) {
-        pattern[error.index] = typoError.correctChar;
+      if (error.error instanceof TypoError(char correctChar)) {
+        pattern[error.index] = correctChar;
         return pattern;
       }
       else if (error.error instanceof SwapError) {
@@ -775,8 +775,8 @@ public final class TypoTolerantMatcher extends MinusculeMatcher {
         pattern[index + 1] = c;
         return pattern;
       }
-      else if (error.error instanceof MissError missError) {
-        return ArrayUtil.insert(pattern, error.index, missError.missedChar);
+      else if (error.error instanceof MissError(char missedChar)) {
+        return ArrayUtil.insert(pattern, error.index, missedChar);
       }
 
       return pattern;

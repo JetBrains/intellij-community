@@ -145,6 +145,7 @@ class ClassLoaderConfigurator(
     else {
       val mimicJarUrlConnection = module.vendor == PluginManagerCore.VENDOR_JETBRAINS
                                   && (module.moduleId.id == "intellij.rider.test.cases"
+                                      || module.moduleId.id == "intellij.rider.plugins.android.test.cases"
                                       || module.moduleId.id == "intellij.rider.plugins.efCore.test.cases"
                                       || module.moduleId.id == "intellij.rider.plugins.for.tea.test.cases"
                                       || module.moduleId.id == "intellij.rider.plugins.fsharp.test.cases"

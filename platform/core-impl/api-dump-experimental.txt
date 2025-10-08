@@ -46,6 +46,9 @@ f:com.intellij.ide.plugins.PluginManagerCore
 - getTokenType(I):com.intellij.psi.tree.IElementType
 - getTokenizedText():java.lang.CharSequence
 - s:performLexing(java.lang.CharSequence,com.intellij.lexer.Lexer):com.intellij.lexer.TokenList
+c:com.intellij.mock.MockFileIndexFacade
+- com.intellij.openapi.roots.FileIndexFacade
+- *:isIndexable(com.intellij.openapi.vfs.VirtualFile):Z
 com.intellij.openapi.application.ex.ApplicationEx
 - com.intellij.openapi.application.Application
 - *:addWriteActionListener(com.intellij.openapi.application.WriteActionListener,com.intellij.openapi.Disposable):V
@@ -80,9 +83,8 @@ a:com.intellij.psi.impl.PsiDocumentManagerBase
 - com.intellij.openapi.editor.event.DocumentListener
 - *:getPsiFile(com.intellij.openapi.editor.Document,com.intellij.codeInsight.multiverse.CodeInsightContext):com.intellij.psi.PsiFile
 *:com.intellij.psi.impl.PsiDocumentTransactionListenerBackgroundable
+- com.intellij.psi.impl.PsiDocumentTransactionListener
 - sf:TOPIC:com.intellij.util.messages.Topic
-- transactionCompleted(com.intellij.openapi.editor.Document,com.intellij.psi.PsiFile):V
-- a:transactionStarted(com.intellij.openapi.editor.Document,com.intellij.psi.PsiFile):V
 com.intellij.psi.impl.PsiFileEx
 - com.intellij.psi.PsiFile
 - *s:isBatchReferenceProcessingEnabled(com.intellij.psi.PsiFile):Z

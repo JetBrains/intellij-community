@@ -8,10 +8,14 @@ import com.intellij.psi.stubs.StubElement
 import com.intellij.psi.stubs.StubElementFactory
 import com.intellij.psi.tree.IElementType
 
-open class HtmlStubBasedTagStubFactory(val elementType: IElementType) : StubElementFactory<XmlTagStubImpl, HtmlStubBasedTagImpl> {
-  override fun createStub(psi: HtmlStubBasedTagImpl, parentStub: StubElement<out PsiElement>?): XmlTagStubImpl =
-    XmlTagStubImpl(psi, parentStub, elementType)
+open class HtmlStubBasedTagStubFactory(elementTypeSupplier: () -> IElementType) : StubElementFactory<XmlTagStubImpl, HtmlStubBasedTagImpl> {
+  val elementType: IElementType by lazy(elementTypeSupplier)
 
-  override fun createPsi(stub: XmlTagStubImpl): HtmlStubBasedTagImpl =
-    HtmlStubBasedTagImpl(stub, elementType)
+  override fun createStub(psi: HtmlStubBasedTagImpl, parentStub: StubElement<out PsiElement>?): XmlTagStubImpl {
+    return XmlTagStubImpl(psi, parentStub, elementType)
+  }
+
+  override fun createPsi(stub: XmlTagStubImpl): HtmlStubBasedTagImpl {
+    return HtmlStubBasedTagImpl(stub, elementType)
+  }
 }

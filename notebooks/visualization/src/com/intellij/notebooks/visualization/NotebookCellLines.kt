@@ -1,6 +1,7 @@
 package com.intellij.notebooks.visualization
 
 import com.intellij.lang.Language
+import com.intellij.notebooks.jupyter.core.jupyter.CellType
 import com.intellij.openapi.editor.Document
 import com.intellij.openapi.editor.Editor
 import com.intellij.openapi.fileEditor.FileDocumentManager
@@ -22,9 +23,6 @@ import java.util.*
  * while UI of PyCharm DS doesn't allow to create a stem cell at all.
  */
 interface NotebookCellLines {
-  enum class CellType {
-    CODE, MARKDOWN, RAW
-  }
 
   enum class MarkersAtLines(val hasTopLine: Boolean, val hasBottomLine: Boolean) {
     NO(false, false),

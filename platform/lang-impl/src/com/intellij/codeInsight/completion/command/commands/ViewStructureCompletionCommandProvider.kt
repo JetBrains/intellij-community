@@ -15,6 +15,8 @@ import com.intellij.psi.util.PsiTreeUtil
 
 class ViewStructureCompletionCommandProvider : ActionCommandProvider(actionId = "FileStructurePopup", synonyms = listOf("File Structure", "Go to members", "Show structure"), presentableName = CodeInsightBundle.message("command.completion.view.structure.text"), priority = -150, previewText = ActionsBundle.message("action.FileStructurePopup.description")) {
 
+  override fun supportNewLineCompletion(): Boolean = true
+
   override fun createCommand(context: CommandCompletionProviderContext): ActionCompletionCommand {
     return object : ActionCompletionCommand(actionId = super.actionId, presentableActionName = super.presentableName, icon = super.icon, priority = super.priority, previewText = super.previewText, synonyms = super.synonyms) {
       override val action: AnAction

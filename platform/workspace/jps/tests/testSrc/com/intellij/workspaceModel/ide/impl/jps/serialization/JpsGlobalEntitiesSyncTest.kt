@@ -11,7 +11,6 @@ import com.intellij.openapi.projectRoots.ProjectJdkTable
 import com.intellij.openapi.roots.libraries.LibraryTablesRegistrar
 import com.intellij.openapi.util.io.FileUtil
 import com.intellij.platform.backend.workspace.WorkspaceModel
-import com.intellij.platform.eel.provider.LocalEelDescriptor
 import com.intellij.platform.eel.provider.LocalEelMachine
 import com.intellij.platform.workspace.jps.entities.*
 import com.intellij.testFramework.ApplicationRule
@@ -21,6 +20,7 @@ import com.intellij.testFramework.UsefulTestCase
 import com.intellij.workspaceModel.ide.impl.GlobalWorkspaceModel
 import com.intellij.workspaceModel.ide.impl.WorkspaceModelImpl
 import com.intellij.workspaceModel.ide.impl.legacyBridge.library.GlobalLibraryTableBridgeImpl
+import org.junit.Before
 import org.junit.ClassRule
 import org.junit.Rule
 import org.junit.Test
@@ -44,6 +44,11 @@ class JpsGlobalEntitiesSyncTest {
   @Rule
   @JvmField
   val disposableRule = DisposableRule()
+
+  @Before
+  fun ensureAnnotationAndJavadocOrderRootTypes() {
+    ensureAnnotationAndJavadocOrderRootTypes(disposableRule.disposable)
+  }
 
   @Test
   fun `test project and global storage sdk sync`() {
@@ -169,9 +174,9 @@ class JpsGlobalEntitiesSyncTest {
       val project = loadedProjects.first()
       ApplicationManager.getApplication().invokeAndWait {
         runWriteAction {
-          val workspaceModel = WorkspaceModel.getInstance(project)
+          val workspaceModel = GlobalWorkspaceModel.getInstance(LocalEelMachine)
           val virtualFileManager = workspaceModel.getVirtualFileUrlManager()
-          workspaceModel.updateProjectModel("Test update") { builder ->
+          workspaceModel.updateModel("Test update") { builder ->
             val libraryEntity = builder.entities(LibraryEntity::class.java).first { it.name == "com.google.plugin" }
             val libraryNameToRemove = libraryEntity.name
             builder.removeEntity(libraryEntity)

@@ -793,26 +793,7 @@ public class StatementParsing extends Parsing implements ITokenTypeRemapper {
     if (myBuilder.getTokenType() == PyTokenTypes.EXCEPT_KEYWORD) {
       haveExceptClause = true;
       while (myBuilder.getTokenType() == PyTokenTypes.EXCEPT_KEYWORD) {
-        final SyntaxTreeBuilder.Marker exceptBlock = myBuilder.mark();
-        myBuilder.advanceLexer();
-
-        boolean star = matchToken(PyTokenTypes.MULT);
-        if (myBuilder.getTokenType() != PyTokenTypes.COLON) {
-          if (!getExpressionParser().parseSingleExpression(false)) {
-            myBuilder.error(PyParsingBundle.message("PARSE.expected.expression"));
-          }
-          if (myBuilder.getTokenType() == PyTokenTypes.COMMA || myBuilder.getTokenType() == PyTokenTypes.AS_KEYWORD) {
-            myBuilder.advanceLexer();
-            if (!getExpressionParser().parseSingleExpression(true)) {
-              myBuilder.error(PyParsingBundle.message("PARSE.expected.expression"));
-            }
-          }
-        }
-        else if (star) {
-          myBuilder.error(PyParsingBundle.message("PARSE.expected.expression"));
-        }
-        parseColonAndSuite();
-        exceptBlock.done(PyElementTypes.EXCEPT_PART);
+        parseExceptClause();
       }
       final SyntaxTreeBuilder.Marker elsePart = myBuilder.mark();
       if (myBuilder.getTokenType() == PyTokenTypes.ELSE_KEYWORD) {
@@ -839,6 +820,45 @@ public class StatementParsing extends Parsing implements ITokenTypeRemapper {
       }
     }
     statement.done(PyElementTypes.TRY_EXCEPT_STATEMENT);
+  }
+
+  private void parseExceptClause() {
+    final SyntaxTreeBuilder.Marker exceptBlock = myBuilder.mark();
+    myBuilder.advanceLexer();
+
+    boolean star = matchToken(PyTokenTypes.MULT);
+    if (myBuilder.getTokenType() != PyTokenTypes.COLON) {
+      if (myContext.getLanguageLevel().isAtLeast(LanguageLevel.PYTHON314)) {
+        // Python 3.14, support PEP-758 syntax: except ImportError, OtherError: ...
+        if (!getExpressionParser().parseExpressionOptional(false)) {
+          myBuilder.error(PyParsingBundle.message("PARSE.expected.expression"));
+        }
+        if (myBuilder.getTokenType() == PyTokenTypes.AS_KEYWORD) {
+          myBuilder.advanceLexer();
+          if (!getExpressionParser().parseSingleExpression(true)) {
+            myBuilder.error(PyParsingBundle.message("PARSE.expected.expression"));
+          }
+        }
+      }
+      else {
+        // Python 2, support syntax: except ImportError, targetE: ...
+        if (!getExpressionParser().parseSingleExpression(false)) {
+          myBuilder.error(PyParsingBundle.message("PARSE.expected.expression"));
+        }
+        // support Py3K syntax with 'as' to show an error with a quickfix
+        if (myBuilder.getTokenType() == PyTokenTypes.COMMA || myBuilder.getTokenType() == PyTokenTypes.AS_KEYWORD) {
+          myBuilder.advanceLexer();
+          if (!getExpressionParser().parseSingleExpression(true)) {
+            myBuilder.error(PyParsingBundle.message("PARSE.expected.expression"));
+          }
+        }
+      }
+    }
+    else if (star) {
+      myBuilder.error(PyParsingBundle.message("PARSE.expected.expression"));
+    }
+    parseColonAndSuite();
+    exceptBlock.done(PyElementTypes.EXCEPT_PART);
   }
 
   private void parseColonAndSuite() {

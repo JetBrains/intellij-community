@@ -139,7 +139,7 @@ public final class VcsUtil {
       T result = null;
       if (!project.isDisposed()) {
         ProjectLevelVcsManager manager = ProjectLevelVcsManager.getInstance(project);
-        result = manager != null ? provider.apply(manager) : null;
+        result = provider.apply(manager);
       }
       return result;
     });

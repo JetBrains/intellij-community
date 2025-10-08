@@ -389,7 +389,7 @@ public final class HotSwapUIImpl extends HotSwapUI {
 
     @Override
     public void started(@NotNull ProjectTaskContext context) {
-      context.enableCollectionOfGeneratedFiles();
+      context.setCollectionOfGeneratedFilesEnabled(true);
       ensureListenerIsInstalled(context);
     }
 
@@ -446,7 +446,7 @@ public final class HotSwapUIImpl extends HotSwapUI {
 
       Map<String, Collection<String>> generatedPaths = collectGeneratedPaths(context);
       NotNullLazyValue<List<String>> outputRoots = context.getDirtyOutputPaths()
-        .map(stream -> NotNullLazyValue.createValue(() -> stream.collect(Collectors.toList())))
+        .map(paths -> NotNullLazyValue.createValue(() -> paths))
         .orElse(null);
       instance.hotSwapSessions(sessions, generatedPaths, outputRoots, callback, context.isAutoRun());
     }

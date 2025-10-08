@@ -3,9 +3,9 @@ package org.jetbrains.plugins.terminal.hyperlinks
 
 import com.intellij.execution.filters.HyperlinkInfo
 import com.intellij.openapi.components.service
-import com.intellij.terminal.session.TerminalHyperlinkId
 import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.plugins.terminal.block.reworked.session.rpc.TerminalSessionId
+import org.jetbrains.plugins.terminal.session.TerminalHyperlinkId
 import java.awt.event.MouseEvent
 
 /**

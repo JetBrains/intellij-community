@@ -13,8 +13,8 @@ import org.jetbrains.kotlin.builtins.StandardNames
 import org.jetbrains.kotlin.j2k.Nullability
 import org.jetbrains.kotlin.j2k.Nullability.*
 import org.jetbrains.kotlin.name.FqNameUnsafe
-import org.jetbrains.kotlin.nj2k.NullabilityInfo
 import org.jetbrains.kotlin.nj2k.JKSymbolProvider
+import org.jetbrains.kotlin.nj2k.NullabilityInfo
 import org.jetbrains.kotlin.nj2k.symbols.JKClassSymbol
 import org.jetbrains.kotlin.nj2k.symbols.JKTypeParameterSymbol
 import org.jetbrains.kotlin.nj2k.symbols.JKUnresolvedClassSymbol

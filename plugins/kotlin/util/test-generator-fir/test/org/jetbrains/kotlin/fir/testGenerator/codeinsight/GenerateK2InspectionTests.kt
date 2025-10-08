@@ -30,6 +30,7 @@ internal fun MutableTWorkspace.generateK2InspectionTests() {
             model("${idea}/inspectionsLocal/implicitThis")
             model("${idea}/inspectionsLocal/redundantInnerClassModifier")
             model("${idea}/inspectionsLocal/doubleNegation")
+            model("${idea}/inspectionsLocal/emptyRange")
             model("${idea}/inspectionsLocal/safeCastWithReturn")
             model("${idea}/intentions/removeExplicitSuperQualifier")
             model("${idea}/intentions/destructuringInLambda")
@@ -75,6 +76,7 @@ internal fun MutableTWorkspace.generateK2InspectionTests() {
             model("${idea}/inspectionsLocal/moveLambdaOutsideParentheses")
             model("${idea}/inspectionsLocal/foldInitializerAndIfToElvis")
             model("${idea}/inspectionsLocal/redundantElseInIf")
+            model("${idea}/inspectionsLocal/kdocMissingDocumentation")
             model("${idea}/inspectionsLocal/redundantExplicitType")
             model("${idea}/intentions/convertArgumentToSet")
             model("${idea}/inspectionsLocal/coroutines/redundantRunCatching")
@@ -83,6 +85,7 @@ internal fun MutableTWorkspace.generateK2InspectionTests() {
             model("${idea}/inspectionsLocal/replaceArrayOfWithLiteral")
             model("${idea}/inspectionsLocal/selfAssignment")
             model("${idea}/inspectionsLocal/replaceJavaStaticMethodWithKotlinAnalog")
+            model("${idea}/inspectionsLocal/replaceManualRangeWithIndicesCalls")
             // unusedSymbol is covered with K2UnusedSymbolHighlightingTestGenerated
             //model("${idea}/inspectionsLocal/unusedSymbol", pattern = pattern)
             model("${idea}/inspectionsLocal/branched/introduceWhenSubject")
@@ -121,6 +124,7 @@ internal fun MutableTWorkspace.generateK2InspectionTests() {
             model("${idea}/inspectionsLocal/contextParametersMigration")
             model("${idea}/inspectionsLocal/defaultAnnotationTarget")
             model("${idea}/inspectionsLocal/redundantEnumConstructorInvocation")
+            model("${idea}/inspectionsLocal/redundantReturnKeyword")
             model("${idea}/inspectionsLocal/orInWhenGuard")
             model("${idea}/inspectionsLocal/convertFromMultiDollarToRegularString")
             model("${idea}/inspectionsLocal/redundantCompanionReference")
@@ -138,14 +142,17 @@ internal fun MutableTWorkspace.generateK2InspectionTests() {
             model("${idea}/inspectionsLocal/replaceNotNullAssertionWithElvisReturn")
             model("${idea}/inspectionsLocal/replaceGuardClauseWithFunctionCall")
             model("${idea}/inspectionsLocal/convertNaNEquality")
+            model("${idea}/inspectionsLocal/replaceWithEnumMap")
             model("${idea}/inspectionsLocal/javaCollectionsWithNullableTypes")
             model("${idea}/inspectionsLocal/redundantNullableReturnType")
             model("${idea}/inspectionsLocal/copyWithoutNamedArguments")
             model("${idea}/inspectionsLocal/unusedUnaryOperator")
             model("${idea}/inspectionsLocal/javaMapForEach")
+            model("${idea}/inspectionsLocal/mapToForEach")
             model("${idea}/inspectionsLocal/functionWithLambdaExpressionBody")
             model("${idea}/inspectionsLocal/replaceUntilWithRangeUntil")
             model("${idea}/inspectionsLocal/scriptExecutable", pattern = Patterns.KTS)
+            model("${idea}/inspectionsLocal/replaceAddAllWithMapTo")
 
             // There is no `RemoveExplicitTypeArgumentsIntention` in K2 because `RemoveExplicitTypeArgumentsInspection` is available
             // and the inspection can have the "No highlighting (fix available)" severity.
@@ -183,6 +190,7 @@ internal fun MutableTWorkspace.generateK2InspectionTests() {
         testClass<AbstractK2MultiFileInspectionTest> {
             model("${idea}/multiFileInspections/mismatchedPackageDirectoryWithEmptyKts", pattern = Patterns.TEST)
             model("${idea}/multiFileInspections/mismatchedProjectAndDirectory", pattern = Patterns.TEST)
+            model("${idea}/multiFileInspections/kotlinSealedInJavaTest", pattern = Patterns.TEST)
             model("${idea}/multiFileInspections/mismatchedProjectAndDirectoryRoot", pattern = Patterns.TEST)
         }
 

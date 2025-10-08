@@ -14,7 +14,6 @@ import com.intellij.util.xml.dom.XmlInterner
 import com.intellij.util.xml.dom.createNonCoalescingXmlStreamReader
 import com.intellij.util.xml.dom.readXmlAsModel
 import org.codehaus.stax2.XMLStreamReader2
-import org.codehaus.stax2.typed.TypedXMLStreamException
 import java.io.IOException
 import java.io.InputStream
 import java.text.ParseException
@@ -103,6 +102,7 @@ private fun readRootAttributes(reader: XMLStreamReader2, builder: PluginDescript
       PluginXmlConst.PLUGIN_REQUIRE_RESTART_ATTR -> builder.isRestartRequired = reader.getAttributeAsBoolean(i)
       PluginXmlConst.PLUGIN_DEPENDENT_ON_CORE_ATTR -> builder.isIndependentFromCoreClassLoader = !reader.getAttributeAsBoolean(i)
       PluginXmlConst.PLUGIN_IS_SEPARATE_JAR_ATTR -> builder.isSeparateJar = reader.getAttributeAsBoolean(i)
+      PluginXmlConst.CONTENT_MODULE_VISIBILITY_ATTR -> builder.visibility = readModuleVisibility(reader.getAttributeValue(i), reader)
       PluginXmlConst.PLUGIN_VERSION_ATTR -> {
         // internalVersionString - why it is not used, but just checked?
         getNullifiedAttributeValue(reader, i)?.let {
@@ -110,10 +110,22 @@ private fun readRootAttributes(reader: XMLStreamReader2, builder: PluginDescript
             it.toInt()
           }
           catch (e: NumberFormatException) {
-            LOG.error("Cannot parse version: $it'", e)
+            LOG.error("Cannot parse version: '$it'", e)
           }
         }
       }
+    }
+  }
+}
+
+private fun readModuleVisibility(value: String, reader: XMLStreamReader2): ModuleVisibility {
+  return when (value) {
+    PluginXmlConst.CONTENT_MODULE_VISIBILITY_PRIVATE_VALUE -> ModuleVisibility.PRIVATE
+    PluginXmlConst.CONTENT_MODULE_VISIBILITY_INTERNAL_VALUE -> ModuleVisibility.INTERNAL
+    PluginXmlConst.CONTENT_MODULE_VISIBILITY_PUBLIC_VALUE -> ModuleVisibility.PUBLIC
+    else -> {
+      LOG.error("Unexpected value '$value' of '${PluginXmlConst.CONTENT_MODULE_VISIBILITY_ATTR}' attribute at ${reader.location}")
+      ModuleVisibility.PRIVATE
     }
   }
 }
@@ -546,21 +558,26 @@ private fun readServiceElement(reader: XMLStreamReader2, os: OS?): ServiceElemen
 private fun readProduct(reader: XMLStreamReader2, builder: PluginDescriptorBuilder) {
   for (i in 0 until reader.attributeCount) {
     when (reader.getAttributeLocalName(i)) {
-      PluginXmlConst.PRODUCT_DESCRIPTOR_CODE_ATTR -> builder.productCode = getNullifiedAttributeValue(
-        reader, i)
+      PluginXmlConst.PRODUCT_DESCRIPTOR_CODE_ATTR -> builder.productCode = getNullifiedAttributeValue(reader, i)
       PluginXmlConst.PRODUCT_DESCRIPTOR_RELEASE_DATE_ATTR -> builder.releaseDate = parseReleaseDate(reader.getAttributeValue(i))
-      PluginXmlConst.PRODUCT_DESCRIPTOR_RELEASE_VERSION_ATTR -> {
-        try {
-          builder.releaseVersion = reader.getAttributeAsInt(i)
-        }
-        catch (_: TypedXMLStreamException) {
-          builder.releaseVersion = 0
-        }
-      }
+      PluginXmlConst.PRODUCT_DESCRIPTOR_RELEASE_VERSION_ATTR -> builder.releaseVersion = parseIntOrZero(reader.getAttributeValue(i))
       PluginXmlConst.PRODUCT_DESCRIPTOR_OPTIONAL_ATTR -> builder.isLicenseOptional = reader.getAttributeAsBoolean(i)
     }
   }
   reader.skipElement()
+}
+
+// optimization: do not throw/catch IllegalArgumentException multiple times on startup in case of incorrect product version in XML
+private fun parseIntOrZero(value: String?): Int {
+  try {
+    if (value.isNullOrEmpty() || !Character.isDigit(value.codePointAt(0))) {
+      return 0
+    }
+    return Integer.parseInt(value)
+  }
+  catch (_: NumberFormatException) {
+    return 0
+  }
 }
 
 private fun readComponents(reader: XMLStreamReader2, containerDescriptor: ScopedElementsContainerBuilder) {
@@ -637,6 +654,19 @@ private fun readComponents(reader: XMLStreamReader2, containerDescriptor: Scoped
 }
 
 private fun readContent(reader: XMLStreamReader2, builder: PluginDescriptorBuilder, readContext: PluginDescriptorReaderContext) {
+  for (i in 0 until reader.attributeCount) {
+    if (reader.getAttributeLocalName(i) == PluginXmlConst.CONTENT_MODULE_NAMESPACE_ATTR) {
+      val namespace = readContext.interner.name(reader.getAttributeValue(i))
+      if (builder.namespace == null) {
+        builder.namespace = namespace
+      }
+      else if (builder.namespace != namespace) {
+        LOG.error("Some 'content' tag already set namespace ('${builder.namespace}'), but a different namespace '$namespace' is specified at ${reader.location}; " +
+                  "it will be ignored because multiple namespace in a single plugin aren't allowed")
+      }
+    }
+  }
+
   reader.consumeChildElements { elementName ->
     if (elementName != PluginXmlConst.CONTENT_MODULE_ELEM) {
       reader.skipElement()
@@ -645,7 +675,6 @@ private fun readContent(reader: XMLStreamReader2, builder: PluginDescriptorBuild
 
     var name: String? = null
     var loadingRule = LoadingRule.OPTIONAL
-    var os: OS? = null
     for (i in 0 until reader.attributeCount) {
       when (reader.getAttributeLocalName(i)) {
         PluginXmlConst.CONTENT_MODULE_NAME_ATTR -> name = readContext.interner.name(reader.getAttributeValue(i))
@@ -659,7 +688,6 @@ private fun readContent(reader: XMLStreamReader2, builder: PluginDescriptorBuild
             else -> error("Unexpected value '$loading' of 'loading' attribute at ${reader.location}")
           }
         }
-        PluginXmlConst.CONTENT_MODULE_OS_ATTR -> os = readOSValue(reader.getAttributeValue(i))
       }
     }
 
@@ -669,18 +697,14 @@ private fun readContent(reader: XMLStreamReader2, builder: PluginDescriptorBuild
 
     val isEndElement = reader.next() == XMLStreamConstants.END_ELEMENT
     if (isEndElement) {
-      if (os == null || readContext.elementOsFilter(os)) {
-        builder.addContentModule(ContentModuleElement(name = name, loadingRule = loadingRule, embeddedDescriptorContent = null))
-      }
+      builder.addContentModule(ContentModuleElement(name = name, loadingRule = loadingRule, embeddedDescriptorContent = null))
     }
     else {
-      if (os == null || readContext.elementOsFilter(os)) {
-        val fromIndex = reader.textStart
-        val toIndex = fromIndex + reader.textLength
-        val length = toIndex - fromIndex
-        val descriptorContent = if (length == 0) null else reader.textCharacters.copyOfRange(fromIndex, toIndex)
-        builder.addContentModule(ContentModuleElement(name = name, loadingRule = loadingRule, embeddedDescriptorContent = descriptorContent))
-      }
+      val fromIndex = reader.textStart
+      val toIndex = fromIndex + reader.textLength
+      val length = toIndex - fromIndex
+      val descriptorContent = if (length == 0) null else reader.textCharacters.copyOfRange(fromIndex, toIndex)
+      builder.addContentModule(ContentModuleElement(name = name, loadingRule = loadingRule, embeddedDescriptorContent = descriptorContent))
 
       var nesting = 1
       while (true) {

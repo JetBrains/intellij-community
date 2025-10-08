@@ -19,9 +19,9 @@
     <orderEntry type="module" module-name="intellij.platform.analysis.impl" />
     <orderEntry type="module" module-name="intellij.platform.util.coroutines" />
     <orderEntry type="module" module-name="intellij.platform.indexing" />
-    <orderEntry type="library" name="Guava" level="project" />
+    <orderEntry type="module" module-name="intellij.libraries.guava" />
     <orderEntry type="library" scope="TEST" name="JUnit5" level="project" />
     <orderEntry type="library" scope="TEST" name="assertJ" level="project" />
-    <orderEntry type="library" name="caffeine" level="project" />
+    <orderEntry type="module" module-name="intellij.libraries.caffeine" />
   </component>
 </module>

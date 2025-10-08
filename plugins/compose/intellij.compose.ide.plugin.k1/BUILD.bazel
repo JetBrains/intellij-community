@@ -1,15 +1,15 @@
 ### auto-generated section `build intellij.compose.ide.plugin.k1` start
 load("//build:compiler-options.bzl", "create_kotlinc_options")
-load("@rules_jvm//:jvm.bzl", "jvm_library", "jvm_resources")
+load("@rules_jvm//:jvm.bzl", "jvm_library", "resourcegroup")
 
 create_kotlinc_options(
   name = "custom_ide-plugin-k1",
-  x_context_receivers = True
+  x_context_parameters = True
 )
 
-jvm_resources(
+resourcegroup(
   name = "ide-plugin-k1_resources",
-  files = glob(["resources/**/*"]),
+  srcs = glob(["resources/**/*"]),
   strip_prefix = "resources"
 )
 
@@ -18,6 +18,7 @@ jvm_library(
   module_name = "intellij.compose.ide.plugin.k1",
   visibility = ["//visibility:public"],
   srcs = glob(["src/**/*.kt", "src/**/*.java", "src/**/*.form"], allow_empty = True),
+  resources = [":ide-plugin-k1_resources"],
   kotlinc_opts = ":custom_ide-plugin-k1",
   deps = [
     "@lib//:kotlin-stdlib",
@@ -39,8 +40,7 @@ jvm_library(
     "@lib//:kotlinc-kotlin-compiler-common-provided",
     "@lib//:kotlinc-kotlin-compiler-fe10-provided",
     "@lib//:kotlinc-compose-compiler-plugin-provided",
-  ],
-  runtime_deps = [":ide-plugin-k1_resources"]
+  ]
 )
 ### auto-generated section `build intellij.compose.ide.plugin.k1` end
 

@@ -40,8 +40,14 @@ public final class PersistentFSHeaders {
     @ApiStatus.Internal
     public static final int FLAGS_DEFRAGMENTATION_REQUESTED    = 1;
 
+    /**
+     * If this flag is set -- VFS was NOT properly closed at some point of its lifetime (including the very last time).
+     * This property is <b>'sticky'</b> (contrary to {@link PersistentFSRecordsStorage#wasClosedProperly()}): once set, it
+     * is never reset. I.e., once VFS wasn't closed properly once, VFS always remains under some level of suspicion.
+     */
+    @ApiStatus.Internal
+    public static final int FLAGS_WAS_NOT_PROPERLY_CLOSED_ONCE = 2;
+
     //@formatter:on
   }
-
-
 }

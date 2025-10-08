@@ -18,10 +18,6 @@ internal class MavenProjectOpenProcessor : ProjectOpenProcessor() {
 
   override fun canOpenProject(file: VirtualFile): Boolean = importProvider.canOpenProject(file)
 
-  override fun doOpenProject(virtualFile: VirtualFile, projectToClose: Project?, forceOpenInNewFrame: Boolean): Project? {
-    return runUnderModalProgressIfIsEdt { importProvider.openProject(virtualFile, projectToClose, forceOpenInNewFrame) }
-  }
-
   override suspend fun openProjectAsync(virtualFile: VirtualFile,
                                         projectToClose: Project?,
                                         forceOpenInNewFrame: Boolean): Project? {

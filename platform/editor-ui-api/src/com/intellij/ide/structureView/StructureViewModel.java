@@ -107,16 +107,6 @@ public interface StructureViewModel extends TreeModel, Disposable {
     }
   }
 
-  /**
-   * @deprecated use ClickHandler
-   */
-  @Deprecated(forRemoval = true, since = "2025.2")
-  interface ActionHandler {
-
-    boolean handleClick(StructureViewTreeElement element, int fragmentIndex);
-
-  }
-
   @ApiStatus.Experimental
   @FunctionalInterface
   interface ClickHandler {

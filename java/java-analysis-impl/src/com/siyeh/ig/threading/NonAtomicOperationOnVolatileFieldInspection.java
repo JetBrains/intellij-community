@@ -34,7 +34,7 @@ public final class NonAtomicOperationOnVolatileFieldInspection extends BaseInspe
   }
 
   @Override
-  public BaseInspectionVisitor buildVisitor() {
+  public @NotNull BaseInspectionVisitor buildVisitor() {
     return new NonAtomicOperationOnVolatileFieldVisitor();
   }
 

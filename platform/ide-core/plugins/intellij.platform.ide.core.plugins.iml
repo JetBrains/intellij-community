@@ -34,6 +34,6 @@
     <orderEntry type="module" module-name="intellij.platform.core" />
     <orderEntry type="module" module-name="intellij.platform.util" />
     <orderEntry type="library" name="kotlin-stdlib" level="project" />
-    <orderEntry type="library" name="kotlinx-serialization-core" level="project" />
+    <orderEntry type="module" module-name="intellij.libraries.kotlinx.serialization.core" />
   </component>
 </module>

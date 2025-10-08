@@ -1,6 +1,6 @@
 ### auto-generated section `build intellij.platform.jewel.ui` start
 load("//build:compiler-options.bzl", "create_kotlinc_options")
-load("@rules_jvm//:jvm.bzl", "jvm_library", "jvm_resources")
+load("@rules_jvm//:jvm.bzl", "jvm_library", "resourcegroup")
 
 create_kotlinc_options(
   name = "custom_ui",
@@ -10,19 +10,19 @@ create_kotlinc_options(
     "org.jetbrains.jewel.foundation.ExperimentalJewelApi",
     "org.jetbrains.jewel.foundation.InternalJewelApi",
   ],
-  x_context_receivers = True,
+  x_context_parameters = True,
   x_explicit_api_mode = "strict"
 )
 
-jvm_resources(
+resourcegroup(
   name = "ui_resources",
-  files = glob(["src/main/resources/**/*"]),
+  srcs = glob(["src/main/resources/**/*"]),
   strip_prefix = "src/main/resources"
 )
 
-jvm_resources(
+resourcegroup(
   name = "ui_test_resources",
-  files = glob(["src/test/resources/**/*"]),
+  srcs = glob(["src/test/resources/**/*"]),
   strip_prefix = "src/test/resources"
 )
 
@@ -31,6 +31,7 @@ jvm_library(
   module_name = "intellij.platform.jewel.ui",
   visibility = ["//visibility:public"],
   srcs = glob(["src/main/kotlin/**/*.kt", "src/main/kotlin/**/*.java", "src/main/kotlin/**/*.form", "generated/**/*.kt", "generated/**/*.java"], allow_empty = True),
+  resources = [":ui_resources"],
   kotlinc_opts = ":custom_ui",
   deps = [
     "@lib//:kotlin-stdlib",
@@ -48,7 +49,6 @@ jvm_library(
     "@lib//:platform-jewel-ui-org-jetbrains-compose-components-components-resources-desktop",
     "//libraries/compose-foundation-desktop",
   ],
-  runtime_deps = [":ui_resources"],
   plugins = ["@lib//:compose-plugin"]
 )
 
@@ -56,6 +56,7 @@ jvm_library(
   name = "ui_test_lib",
   visibility = ["//visibility:public"],
   srcs = glob(["src/test/kotlin/**/*.kt", "src/test/kotlin/**/*.java", "src/test/kotlin/**/*.form"], allow_empty = True),
+  resources = [":ui_test_resources"],
   kotlinc_opts = ":custom_ui",
   associates = [":ui"],
   deps = [
@@ -76,10 +77,6 @@ jvm_library(
     "@lib//:platform-jewel-ui-org-jetbrains-compose-components-components-resources",
     "@lib//:platform-jewel-ui-org-jetbrains-compose-components-components-resources-desktop",
     "//libraries/compose-foundation-desktop",
-  ],
-  runtime_deps = [
-    ":ui_resources",
-    ":ui_test_resources",
   ],
   plugins = ["@lib//:compose-plugin"]
 )

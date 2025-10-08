@@ -1,3 +1,4 @@
+<!-- todo: register this as a content module (IJPL-210868); currently it's included via 'xi:include' tag -->
 <idea-plugin>
   <extensionPoints>
     <extensionPoint qualifiedName="com.intellij.platform.entityTypes" dynamic="true"

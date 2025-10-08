@@ -327,7 +327,7 @@ public final class ForEachWithRecordPatternCanBeUsedInspection extends AbstractB
         return expectedCallExpression;
       }
       PsiType componentType = context.classSubstitutor.substitute(component.getType());
-      if (PsiTypesUtil.compareTypes(componentType, variable.getType(), false) && variable.getAnnotations().length == 0) {
+      if (PsiTypesUtil.compareTypes(componentType, variable.getType(), false) && !variable.hasAnnotations()) {
         return variable;
       }
     }

@@ -1,9 +1,9 @@
 ### auto-generated section `build intellij.vcs.svn` start
-load("@rules_jvm//:jvm.bzl", "jvm_library", "jvm_resources")
+load("@rules_jvm//:jvm.bzl", "jvm_library", "resourcegroup")
 
-jvm_resources(
+resourcegroup(
   name = "vcs-svn_resources",
-  files = glob(["resources/**/*"]),
+  srcs = glob(["resources/**/*"]),
   strip_prefix = "resources"
 )
 
@@ -12,6 +12,7 @@ jvm_library(
   module_name = "intellij.vcs.svn",
   visibility = ["//visibility:public"],
   srcs = glob(["src/**/*.kt", "src/**/*.java", "src/**/*.form", "gen/**/*.kt", "gen/**/*.java"], allow_empty = True),
+  resources = [":vcs-svn_resources"],
   deps = [
     "//platform/analysis-api:analysis",
     "//platform/core-api:core",
@@ -31,7 +32,7 @@ jvm_library(
     "//platform/diff-impl",
     "//platform/util/concurrency",
     "//platform/util-ex",
-    "@lib//:guava",
+    "//libraries/guava",
     "@lib//:ini4j",
     "@lib//:oro_matcher",
     "@lib//:jaxb-api",
@@ -39,14 +40,13 @@ jvm_library(
     "@lib//:stream_ex",
     "//platform/statistics",
     "//platform/lvcs-api:lvcs",
-    "@lib//:fastutil-min",
+    "//libraries/fastutil",
     "//platform/core-ui",
     "//platform/platform-util-io:ide-util-io",
     "//platform/external-process-auth-helper",
     "//platform/vcs-impl/shared",
   ],
   runtime_deps = [
-    ":vcs-svn_resources",
     "@lib//:jaxb-runtime",
     "@lib//:sqlite",
   ]

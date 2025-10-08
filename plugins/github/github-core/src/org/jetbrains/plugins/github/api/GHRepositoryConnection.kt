@@ -10,14 +10,16 @@ import org.jetbrains.plugins.github.authentication.accounts.GithubAccount
 import org.jetbrains.plugins.github.pullrequest.data.GHPRDataContext
 import org.jetbrains.plugins.github.util.GHGitRepositoryMapping
 
+/**
+ * A low-level helper representing a GitHub repository, to which the app was authorized to connect
+ */
 @ApiStatus.Internal
 class GHRepositoryConnection internal constructor(
   private val scope: CoroutineScope,
   override val repo: GHGitRepositoryMapping,
   override val account: GithubAccount,
   val dataContext: GHPRDataContext,
-)
-  : HostedGitRepositoryConnection<GHGitRepositoryMapping, GithubAccount> {
+) : HostedGitRepositoryConnection<GHGitRepositoryMapping, GithubAccount> {
 
   override suspend fun close() {
     try {

@@ -15,10 +15,7 @@ import com.intellij.lang.xml.XMLLanguage;
 import com.intellij.openapi.util.NotNullLazyValue;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.openapi.util.registry.Registry;
-import com.intellij.psi.PsiElement;
-import com.intellij.psi.PsiRecursiveElementWalkingVisitor;
-import com.intellij.psi.SyntaxTraverser;
-import com.intellij.psi.TokenType;
+import com.intellij.psi.*;
 import com.intellij.psi.formatter.xml.HtmlCodeStyleSettings;
 import com.intellij.psi.html.HtmlTag;
 import com.intellij.psi.templateLanguages.OuterLanguageElement;
@@ -157,12 +154,15 @@ public class XmlTextExtractor extends TextExtractor {
       private void flushGroup(boolean unknownAfter) {
         int containerStart = container.getTextRange().getStartOffset();
         List<TextContent> components = new ArrayList<>(group.size());
-        for (int i = 0; i < group.size(); i++) {
+        int i = 0;
+        while (i < group.size() && group.get(i) instanceof PsiWhiteSpace) i++;
+        while (i < group.size()) {
           PsiElement e = group.get(i);
           TextContent component = extractRange(e.getTextRange().shiftLeft(containerStart));
           component = applyExclusions(i, component, markupIndices, ExclusionKind.markup);
           component = applyExclusions(i, component, unknownIndices, ExclusionKind.unknown);
           components.add(component);
+          i++;
         }
         unknownIndices.clear();
         markupIndices.clear();
@@ -216,7 +216,7 @@ public class XmlTextExtractor extends TextExtractor {
   }
 
   private static boolean isNonText(XmlTag tag) {
-    return tag instanceof HtmlTag && (isInlineNonTextTag(tag.getName()) || isBlockNonTextTag(tag.getName()));
+    return tag instanceof HtmlTag && (isInlineNonTextTag(tag.getName()) || isBlockNonTextTag(tag.getName())) || isAuthorTag(tag.getName());
   }
 
   private static boolean isBlockNonTextTag(String name) {
@@ -225,6 +225,10 @@ public class XmlTextExtractor extends TextExtractor {
 
   private static boolean isInlineNonTextTag(String name) {
     return "code".equals(name);
+  }
+
+  private static boolean isAuthorTag(String name) {
+    return "author".equals(name) || "authors".equals(name);
   }
 
   public static class Xml extends XmlTextExtractor {
@@ -241,11 +245,7 @@ public class XmlTextExtractor extends TextExtractor {
     @Override
     protected @NotNull List<TextContent> buildTextContents(@NotNull PsiElement element,
                                                            @NotNull Set<TextContent.TextDomain> allowedDomains) {
-      if (PsiUtilCore.getElementType(element) == XmlTokenType.XML_ATTRIBUTE_VALUE_TOKEN &&
-          element.getParent() instanceof XmlAttributeValue value &&
-          value.getParent() instanceof XmlAttribute attr) {
-        if ("class".equals(attr.getName()) || HtmlSpellcheckingStrategy.shouldBeIgnored(value)) return List.of();
-      }
+      if (HtmlSpellcheckingStrategy.shouldParentAttributeBeIgnored(element)) return List.of();
       return super.buildTextContents(element, allowedDomains);
     }
 

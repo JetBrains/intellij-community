@@ -1,0 +1,13 @@
+// IGNORE_K1
+enum class Direction {
+    NORTH, SOUTH, WEST, EAST
+}
+
+fun foo(direction: Direction): String {
+    return when (/* lead */ /* mid */ /* rhs */ direction /* trail */) {
+        Direction.NORTH -> "north"
+        Direction.SOUTH -> "south"
+        Direction.WEST -> "west"
+        Direction.EAST -> "east"
+    }
+}

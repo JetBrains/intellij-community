@@ -303,7 +303,7 @@ public final class PythonSdkUpdater {
         ApplicationManager.getApplication().invokeLater(() -> {
           Disposer.dispose(indicatorDisposable);
           // restart code analysis
-          DaemonCodeAnalyzer.getInstance(myProject).restart();
+          DaemonCodeAnalyzer.getInstance(myProject).restart(this);
         }, myProject.getDisposed());
       }
     }

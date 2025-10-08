@@ -3,17 +3,9 @@ package com.intellij.grazie.utils
 
 import ai.grazie.gec.model.problem.ProblemFix
 import com.intellij.openapi.util.TextRange
-import org.languagetool.rules.RuleMatch
 import java.util.*
 
 fun ProblemFix.Part.Change.ijRange(): TextRange = TextRange(range.start, range.endExclusive)
-
-fun RuleMatch.toIntRange(offset: Int = 0) = IntRange(fromPos + offset, toPos + offset - 1)
-
-fun IntRange.withOffset(offset: Int) = IntRange(start + offset, endInclusive + offset)
-
-fun Boolean?.orTrue() = this ?: true
-fun Boolean?.orFalse() = this ?: false
 
 fun String.trimToNull(): String? = trim().takeIf(String::isNotBlank)
 

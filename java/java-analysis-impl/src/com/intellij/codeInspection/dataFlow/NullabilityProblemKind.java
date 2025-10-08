@@ -197,7 +197,7 @@ public final class NullabilityProblemKind<T extends PsiElement> {
       if (var.getType() instanceof PsiPrimitiveType) {
         return createUnboxingProblem(context, expression);
       }
-      Nullability nullability = DfaPsiUtil.getElementNullability(var.getType(), var);
+      Nullability nullability = DfaPsiUtil.getElementNullabilityForWrite(var.getType(), var);
       if (nullability == Nullability.NOT_NULL) {
         return assigningToNotNull.problem(context, expression);
       }
@@ -289,9 +289,11 @@ public final class NullabilityProblemKind<T extends PsiElement> {
     if (grandParent instanceof PsiAnonymousClass) {
       grandParent = grandParent.getParent();
     }
-    if (grandParent instanceof PsiCall) {
-      PsiSubstitutor substitutor = ((PsiCall)grandParent).resolveMethodGenerics().getSubstitutor();
-      Nullability nullability = DfaPsiUtil.getElementNullability(substitutor.substitute(parameter.getType()), parameter);
+    if (grandParent instanceof PsiCall call) {
+      PsiSubstitutor substitutor = call.resolveMethodGenerics().getSubstitutor();
+      PsiType paramType = substitutor.substitute(parameter.getType());
+      if (assignableTypeParameter(paramType, expression.getType())) return null;
+      Nullability nullability = DfaPsiUtil.getElementNullabilityForWrite(paramType, parameter);
       if (nullability == Nullability.NOT_NULL) {
         return passingToNotNullParameter.problem(context, expression);
       }
@@ -300,6 +302,23 @@ public final class NullabilityProblemKind<T extends PsiElement> {
       }
     }
     return null;
+  }
+
+  /**
+   * @param leftType type of l-value
+   * @param rightType type of r-value
+   * @return true if the nullability is definitely assignment-compatible due to the fact that the it's the same
+   * type parameter.
+   */
+  private static boolean assignableTypeParameter(@NotNull PsiType leftType, @Nullable PsiType rightType) {
+    if (rightType == null) return false;
+    if (rightType.getNullability().nullability() == Nullability.NOT_NULL) return false;
+    if (!(PsiUtil.resolveClassInClassTypeOnly(rightType) instanceof PsiTypeParameter tp)) return false;
+    if (leftType instanceof PsiCapturedWildcardType captured) {
+      leftType = captured.getLowerBound();
+    }
+    return PsiUtil.resolveClassInClassTypeOnly(leftType) instanceof PsiTypeParameter leftTp && leftTp.isEquivalentTo(tp)
+      && rightType.getNullability().equals(leftType.getNullability());
   }
 
   private static @Nullable NullabilityProblem<?> getArrayInitializerProblem(@NotNull PsiArrayInitializerExpression initializer,
@@ -364,10 +383,10 @@ public final class NullabilityProblemKind<T extends PsiElement> {
         }
         Nullability nullability = Nullability.UNKNOWN;
         PsiVariable target = null;
-        if (lho instanceof PsiReferenceExpression) {
-          target = tryCast(((PsiReferenceExpression)lho).resolve(), PsiVariable.class);
+        if (lho instanceof PsiReferenceExpression ref) {
+          target = tryCast(ref.resolve(), PsiVariable.class);
           if (target != null) {
-            nullability = DfaPsiUtil.getElementNullability(type, target);
+            nullability = DfaPsiUtil.getElementNullabilityForWrite(type, target);
           }
         }
         else {
@@ -377,8 +396,8 @@ public final class NullabilityProblemKind<T extends PsiElement> {
         if (forceDeclaredNullity && nullability == Nullability.NOT_NULL) {
           return (lho instanceof PsiArrayAccessExpression ? storingToNotNullArray : assigningToNotNull).problem(context, expression);
         }
-        if (nullability == Nullability.UNKNOWN && lho instanceof PsiReferenceExpression) {
-          PsiField field = tryCast(((PsiReferenceExpression)lho).resolve(), PsiField.class);
+        if (nullability == Nullability.UNKNOWN && lho instanceof PsiReferenceExpression ref) {
+          PsiField field = tryCast(ref.resolve(), PsiField.class);
           if (field != null && !field.hasModifierProperty(PsiModifier.FINAL)) {
             return assigningToNonAnnotatedField.problem(context, expression);
           }

@@ -15,7 +15,7 @@ import java.awt.Point
 import java.awt.Rectangle
 
 @ApiStatus.Internal
-class CodeVisionListPainter(
+open class CodeVisionListPainter(
   private val delimiterPainter: ICodeVisionGraphicPainter = DelimiterPainter(),
   private val theme: CodeVisionTheme
 ) : ICodeVisionEntryBasePainter<CodeVisionListData?> {
@@ -68,7 +68,7 @@ class CodeVisionListPainter(
   ) {
 
     var x = point.x + theme.left
-    val y = point.y + theme.top + (editor as EditorImpl).ascent
+    val y = point.y + theme.top + (inlayTextAscent(editor) ?: (editor as EditorImpl).ascent)
 
     if (value == null || value.visibleLens.isEmpty()) {
       loadingPainter.paint(editor, textAttributes, g, Point(x, y), state, hovered)
@@ -86,7 +86,7 @@ class CodeVisionListPainter(
       painter.paint(editor, textAttributes, g, it, Point(x, y), state, it == hoveredEntry, hoveredEntry)
       x += size.width
 
-      if (index < value.visibleLens.size - 1 || hovered) {
+      if (painter.shouldBeDelimited() && (index < value.visibleLens.size - 1 || hovered)) {
         delimiterPainter.paint(editor, textAttributes, g, Point(x, y), state, false)
         x += delimiterWidth
       }
@@ -129,6 +129,15 @@ class CodeVisionListPainter(
         editor.lineHeight + theme.top + theme.bottom
       )
     }
+  }
+
+  @ApiStatus.Internal
+  open fun inlayHeightInPixels(editor: Editor): Int? {
+    return null
+  }
+
+  open fun inlayTextAscent(editor: Editor): Int? {
+    return editor.ascent
   }
 
   private fun loadingSize(editor: Editor, state: RangeCodeVisionModel.InlayState) =

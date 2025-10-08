@@ -357,7 +357,6 @@ public final class TypeConstraints {
     @Override
     public DfType getUnboxedType() {
       String name = classDef.getQualifiedName();
-      if (name == null) return DfType.BOTTOM;
       return switch (name) {
         case JAVA_LANG_BOOLEAN -> DfTypes.BOOLEAN;
         case JAVA_LANG_INTEGER -> DfTypes.INT;
@@ -367,7 +366,7 @@ public final class TypeConstraints {
         case JAVA_LANG_BYTE -> DfTypes.intRange(Objects.requireNonNull(JvmPsiRangeSetUtil.typeRange(PsiTypes.byteType())));
         case JAVA_LANG_SHORT -> DfTypes.intRange(Objects.requireNonNull(JvmPsiRangeSetUtil.typeRange(PsiTypes.shortType())));
         case JAVA_LANG_CHARACTER -> DfTypes.intRange(Objects.requireNonNull(JvmPsiRangeSetUtil.typeRange(PsiTypes.charType())));
-        default -> DfType.BOTTOM;
+        case null, default -> DfType.BOTTOM;
       };
     }
 
@@ -548,13 +547,13 @@ public final class TypeConstraints {
 
     @Override
     public boolean isAssignableFrom(@NotNull Exact other) {
-      return other instanceof ExactArray exactArray && component.isAssignableFrom(exactArray.component);
+      return other instanceof ExactArray(Exact otherComponent) && component.isAssignableFrom(otherComponent);
     }
 
     @Override
     public boolean isConvertibleFrom(@NotNull Exact other) {
-      if (other instanceof ExactArray exactArray) {
-        return component.isConvertibleFrom(exactArray.component);
+      if (other instanceof ExactArray(Exact otherComponent)) {
+        return component.isConvertibleFrom(otherComponent);
       }
       if (other instanceof ArraySuperInterface) return true;
       if (other == EXACTLY_OBJECT) return true;

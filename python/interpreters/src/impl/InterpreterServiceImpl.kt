@@ -12,7 +12,7 @@ import com.intellij.python.community.interpreters.Interpreter
 import com.intellij.python.community.interpreters.InterpreterService
 import com.intellij.python.community.interpreters.impl.PyInterpreterBundle.message
 import com.intellij.python.community.interpreters.spi.InterpreterProvider
-import com.intellij.python.community.services.shared.UICustomization
+import com.jetbrains.python.PyToolUIInfo
 import com.jetbrains.python.Result
 import com.jetbrains.python.errorProcessing.MessageError
 import com.jetbrains.python.psi.LanguageLevel
@@ -101,7 +101,7 @@ private suspend fun <T : PyFlavorData> createInterpreter(provider: InterpreterPr
 }
 
 private class VanillaInterpreterProvider : InterpreterProvider<PyFlavorData.Empty> {
-  override val ui: UICustomization? = null
+  override val ui: PyToolUIInfo? = null
   override val flavorDataClass: Class<PyFlavorData.Empty> = PyFlavorData.Empty::class.java
 
   override suspend fun createExecutablePython(sdkHomePath: Path, flavorData: PyFlavorData.Empty): Result<ExecutablePython, MessageError> {

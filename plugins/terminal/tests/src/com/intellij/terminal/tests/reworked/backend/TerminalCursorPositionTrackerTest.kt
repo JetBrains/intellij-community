@@ -2,12 +2,12 @@
 package com.intellij.terminal.tests.reworked.backend
 
 import com.intellij.terminal.backend.*
-import com.intellij.terminal.session.TerminalCursorPositionChangedEvent
 import com.intellij.terminal.tests.reworked.util.write
 import com.jediterm.terminal.model.StyleState
 import com.jediterm.terminal.model.TerminalTextBuffer
 import com.jediterm.terminal.ui.settings.DefaultSettingsProvider
 import org.assertj.core.api.Assertions.assertThat
+import org.jetbrains.plugins.terminal.session.TerminalCursorPositionChangedEvent
 import org.junit.Test
 
 internal class TerminalCursorPositionTrackerTest {

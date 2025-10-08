@@ -4,11 +4,9 @@ package org.jetbrains.plugins.terminal.block.feedback
 import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.application.ModalityState
 import com.intellij.openapi.project.Project
-import com.intellij.openapi.util.Key
 import com.intellij.platform.feedback.*
 import com.intellij.platform.feedback.dialog.BlockBasedFeedbackDialog
 import com.intellij.platform.feedback.dialog.SystemDataJsonSerializable
-import com.intellij.platform.feedback.impl.OnDemandFeedbackResolver
 import com.intellij.platform.feedback.impl.notification.RequestFeedbackNotification
 import com.intellij.util.PlatformUtils
 import kotlinx.datetime.LocalDate
@@ -16,38 +14,20 @@ import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.plugins.terminal.TerminalBundle
 import org.jetbrains.plugins.terminal.TerminalEngine
 import org.jetbrains.plugins.terminal.TerminalOptionsProvider
+import org.jetbrains.plugins.terminal.block.feedback.TerminalFeedbackUtils.getFeedbackMoment
 import org.jetbrains.plugins.terminal.block.reworked.TerminalUsageLocalStorage
-import org.jetbrains.plugins.terminal.fus.TerminalFeedbackMoment
-import org.jetbrains.plugins.terminal.fus.TerminalFeedbackMoment.AFTER_USAGE
-import org.jetbrains.plugins.terminal.fus.TerminalFeedbackMoment.ON_DISABLING
-
-/** Used to indicate that we are trying to show the feedback notification after the reworked terminal is disabled */
-private val REWORKED_TERMINAL_DISABLING: Key<Boolean> = Key.create("ReworkedTerminalDisabling")
 
 @ApiStatus.Internal
 fun askForFeedbackIfReworkedTerminalDisabled(project: Project, oldEngine: TerminalEngine, newEngine: TerminalEngine) {
   ApplicationManager.getApplication().invokeLater(
     {
       if (oldEngine == TerminalEngine.REWORKED && newEngine != TerminalEngine.REWORKED) {
-        // REWORKED_TERMINAL_DISABLING can be used in showFeedbackNotification and after exiting this method.
-        // This key will be left in the project user data, and won't be cleared if the feedback notification is shown.
-        project.putUserData(REWORKED_TERMINAL_DISABLING, true)
-        OnDemandFeedbackResolver.getInstance()
-          .showFeedbackNotification(ReworkedTerminalFeedbackSurvey::class, project) { isNotificationShown: Boolean ->
-            if (!isNotificationShown) {
-              // If the notification was not shown, the REWORKED_TERMINAL_DISABLING would not be used, so we can just clear it.
-              project.putUserData(REWORKED_TERMINAL_DISABLING, null)
-            }
-          }
+        TerminalFeedbackUtils.showFeedbackNotificationOnDemand(project, ReworkedTerminalFeedbackSurvey::class)
       }
     },
     ModalityState.nonModal(), // when invoked from the settings dialog, show the notification after the dialog is closed
     project.disposed,
   )
-}
-
-internal fun getFeedbackMoment(project: Project): TerminalFeedbackMoment {
-  return if (project.getUserData(REWORKED_TERMINAL_DISABLING) == true) ON_DISABLING else AFTER_USAGE
 }
 
 internal class ReworkedTerminalFeedbackSurvey : FeedbackSurvey() {
@@ -78,7 +58,7 @@ object ReworkedTerminalSurveyConfig : InIdeFeedbackSurveyConfig, ActionBasedFeed
     return !usageStorage.state.feedbackNotificationShown &&
            (
              usageStorage.state.enterKeyPressedTimes >= 15 ||
-             usageStorage.state.enterKeyPressedTimes > 0 && getFeedbackMoment(project) == ON_DISABLING
+             usageStorage.state.enterKeyPressedTimes > 0 && getFeedbackMoment(project) == TerminalFeedbackMoment.ON_DEMAND
            )
   }
 

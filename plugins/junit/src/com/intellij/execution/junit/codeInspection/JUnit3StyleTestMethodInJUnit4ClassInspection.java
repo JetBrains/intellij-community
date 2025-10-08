@@ -15,10 +15,13 @@ import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
+import java.util.List;
+
 /**
  * @author Bas Leijdekkers
  */
 public final class JUnit3StyleTestMethodInJUnit4ClassInspection extends BaseInspection {
+  private static final List<String> IGNORED_FRAMEWORKS = List.of("JUnit4", "JUnit5", "JUnit6");
 
   @Override
   protected @NotNull String buildErrorString(Object... infos) {
@@ -31,7 +34,7 @@ public final class JUnit3StyleTestMethodInJUnit4ClassInspection extends BaseInsp
   }
 
   @Override
-  public BaseInspectionVisitor buildVisitor() {
+  public @NotNull BaseInspectionVisitor buildVisitor() {
     return new JUnit3StyleTestMethodInJUnit4ClassInspectionVisitor();
   }
 
@@ -49,7 +52,7 @@ public final class JUnit3StyleTestMethodInJUnit4ClassInspection extends BaseInsp
       if (testFramework != null) {
         if (testFramework.isTestMethod(method, false)) {
           final @NonNls String testFrameworkName = testFramework.getName();
-          if (testFrameworkName.equals("JUnit4") || testFrameworkName.equals("JUnit5")) return;
+          if (IGNORED_FRAMEWORKS.contains(testFrameworkName)) return;
         }
         if (AnnotationUtil.isAnnotated(method, "org.junit.Ignore", 0) ||
             testFramework.findSetUpMethod(containingClass) == method ||

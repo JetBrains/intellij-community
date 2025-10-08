@@ -2,6 +2,7 @@
 package org.jetbrains.kotlin.idea.codeinsight.utils
 
 import com.intellij.lang.jvm.JvmModifier
+import com.intellij.openapi.util.TextRange
 import com.intellij.psi.PsiComment
 import com.intellij.psi.PsiElement
 import com.intellij.psi.PsiMember
@@ -20,6 +21,7 @@ import org.jetbrains.kotlin.analysis.api.symbols.KaSymbolOrigin
 import org.jetbrains.kotlin.idea.base.psi.copied
 import org.jetbrains.kotlin.idea.base.psi.deleteBody
 import org.jetbrains.kotlin.idea.base.psi.replaced
+import org.jetbrains.kotlin.idea.base.psi.textRangeIn
 import org.jetbrains.kotlin.idea.codeinsight.utils.NegatedBinaryExpressionSimplificationUtils.negate
 import org.jetbrains.kotlin.idea.references.mainReference
 import org.jetbrains.kotlin.idea.util.CommentSaver
@@ -234,6 +236,36 @@ fun KtDotQualifiedExpression.replaceFirstReceiver(
 
 val KtQualifiedExpression.callExpression: KtCallExpression?
     get() = selectorExpression as? KtCallExpression
+
+/**
+ * For [KtExpression] representing a possibly qualified function call,
+ * returns an absolute [TextRange] which represents only the callee expression with a possible qualifier.
+ *
+ * Some examples:
+ * - `foo(...)` -> `foo`
+ * - `foo.bar(...)` -> `foo.bar`
+ * - `foo.baz(...).bar { ... }` -> `foo.baz(...).bar`
+ * - `(<complex expression>)(...)` -> `(<complex expression>)`
+ */
+@get:ApiStatus.Internal
+val KtExpression.qualifiedCalleeExpressionTextRangeInThis: TextRange?
+    get() {
+        val possiblyQualifiedCall = this
+
+        val callExpression = possiblyQualifiedCall.getPossiblyQualifiedCallExpression() ?: return null
+        val calleeExpression = callExpression.calleeExpression ?: return null
+
+        val calleeExpressionEnd = calleeExpression.textRangeIn(possiblyQualifiedCall).endOffset
+
+        return TextRange.create(0, calleeExpressionEnd)
+    }
+
+/**
+ * Similar to [qualifiedCalleeExpressionTextRangeInThis], but it returns a [TextRange] relative to the whole document.
+ */
+@get:ApiStatus.Internal
+val KtExpression.qualifiedCalleeExpressionTextRange: TextRange?
+    get() = qualifiedCalleeExpressionTextRangeInThis?.shiftRight(startOffset)
 
 fun KtCallExpression.singleArgumentExpression(): KtExpression? {
     return valueArguments.singleOrNull()?.getArgumentExpression()

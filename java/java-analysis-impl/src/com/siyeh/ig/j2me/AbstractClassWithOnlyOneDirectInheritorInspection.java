@@ -32,7 +32,7 @@ public final class AbstractClassWithOnlyOneDirectInheritorInspection extends Bas
   }
 
   @Override
-  public BaseInspectionVisitor buildVisitor() {
+  public @NotNull BaseInspectionVisitor buildVisitor() {
     return new AbstractClassWithOnlyOneDirectInheritorVisitor();
   }
 

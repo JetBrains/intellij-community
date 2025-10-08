@@ -4,6 +4,8 @@ package org.jetbrains.bazel.jvm
 import io.opentelemetry.api.trace.Tracer
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
+import org.jetbrains.intellij.build.io.AddDirEntriesMode
+import org.jetbrains.intellij.build.io.PackageIndexBuilder
 import org.jetbrains.intellij.build.io.zipWriter
 import java.io.File
 import java.io.Writer
@@ -89,9 +91,11 @@ private suspend fun createZip(outJar: Path, inputs: Array<Input>, baseDir: Path,
   //Files.writeString(Path.of("/tmp/f2.txt"), stripPrefixWithSlash + "\n" + files.joinToString("\n") { it.toString() })
 
   withContext(Dispatchers.IO) {
-    zipWriter(targetFile = outJar, packageIndexBuilder = null, overwrite = true).use { stream ->
+    val packageIndexBuilder = PackageIndexBuilder(AddDirEntriesMode.RESOURCE_ONLY)
+    zipWriter(targetFile = outJar, packageIndexBuilder = packageIndexBuilder, overwrite = true).use { stream ->
       for (path in files) {
         val name = addPrefixWithSlash + path
+        packageIndexBuilder.addFile(name = name)
         stream.fileWithoutCrc(path = name.toByteArray(), file = root.resolve(path))
       }
     }

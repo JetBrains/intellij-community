@@ -1,4 +1,4 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInsight.editorActions;
 
 import com.intellij.codeInsight.AutoPopupController;
@@ -11,7 +11,7 @@ import com.intellij.openapi.application.AppUIExecutor;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.editor.Editor;
-import com.intellij.openapi.editor.EditorModificationUtil;
+import com.intellij.openapi.editor.EditorModificationUtilEx;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Key;
 import com.intellij.psi.PsiFile;
@@ -35,7 +35,7 @@ public class CompletionAutoPopupHandler extends TypedHandlerDelegate {
 
     if (lookup != null) {
       if (editor.getSelectionModel().hasSelection()) {
-        lookup.performGuardedChange(() -> EditorModificationUtil.deleteSelectedText(editor));
+        lookup.performGuardedChange(() -> EditorModificationUtilEx.deleteSelectedText(editor));
       }
       return Result.STOP;
     }

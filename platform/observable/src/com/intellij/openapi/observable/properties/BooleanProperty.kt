@@ -10,6 +10,7 @@ import org.jetbrains.annotations.ApiStatus
  * Set event happens when value is changed from false to true.
  * Reset is opposite, it happens value is changed from true to false.
  */
+@ApiStatus.Internal
 @Deprecated("Use instead MutableBooleanProperty")
 @ApiStatus.ScheduledForRemoval
 interface BooleanProperty : ObservableClearableProperty<Boolean> {

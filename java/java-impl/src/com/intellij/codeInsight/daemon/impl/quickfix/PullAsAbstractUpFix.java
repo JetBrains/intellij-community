@@ -157,7 +157,7 @@ public class PullAsAbstractUpFix extends LocalQuickFixAndIntentionActionOnPsiEle
         name = JavaBundle.message("intention.name.extract.method.to.new.interface", methodWithOverrides.getName());
         canBePulledUp = false;
       } else if (classesToPullUp.size() == 1) {
-        final PsiClass baseClass = classesToPullUp.iterator().next();
+        final PsiClass baseClass = classesToPullUp.getFirst();
         name = JavaBundle.message("intention.name.pull.method.up.and.make.it.abstract.conditionally", methodWithOverrides.getName(), baseClass.getName(), !baseClass.hasModifierProperty(PsiModifier.ABSTRACT) ? 0 : 1);
       }
     }

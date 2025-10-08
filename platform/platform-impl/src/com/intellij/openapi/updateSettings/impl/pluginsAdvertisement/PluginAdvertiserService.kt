@@ -26,11 +26,10 @@ import com.intellij.openapi.updateSettings.impl.PluginDownloader
 import com.intellij.openapi.updateSettings.impl.pluginsAdvertisement.PluginAdvertiserService.Companion.DEPENDENCY_SUPPORT_TYPE
 import com.intellij.openapi.updateSettings.impl.pluginsAdvertisement.PluginAdvertiserService.Companion.EXECUTABLE_DEPENDENCY_KIND
 import com.intellij.openapi.updateSettings.impl.pluginsAdvertisement.PluginAdvertiserService.Companion.ideaUltimate
-import com.intellij.openapi.updateSettings.impl.upgradeToUltimate.installation.install.UltimateInstallationService
 import com.intellij.openapi.util.IntellijInternalApi
 import com.intellij.openapi.util.NlsContexts
 import com.intellij.openapi.util.NlsContexts.NotificationContent
-import com.intellij.openapi.util.registry.Registry
+import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.ui.EditorNotificationPanel
 import com.intellij.ui.EditorNotifications
 import com.intellij.util.concurrency.annotations.RequiresBackgroundThread
@@ -70,7 +69,7 @@ sealed interface PluginAdvertiserService {
 
     @Suppress("HardCodedStringLiteral")
     val ideaUltimate: SuggestedIde = SuggestedIde(
-      name = "IntelliJ IDEA Ultimate",
+      name = "IntelliJ IDEA",
       productCode = "IU",
       defaultDownloadUrl = "https://www.jetbrains.com/idea/download/",
       platformSpecificDownloadUrlTemplate = "https://www.jetbrains.com/idea/download/download-thanks.html?platform={type}",
@@ -79,7 +78,7 @@ sealed interface PluginAdvertiserService {
 
     @Suppress("HardCodedStringLiteral", "DialogTitleCapitalization")
     val pyCharmProfessional: SuggestedIde = SuggestedIde(
-      name = "PyCharm",
+      name = "PyCharm Pro",
       productCode = "PY",
       defaultDownloadUrl = "https://www.jetbrains.com/pycharm/download/",
       platformSpecificDownloadUrlTemplate = "https://www.jetbrains.com/pycharm/download/download-thanks.html?platform={type}",
@@ -668,19 +667,20 @@ fun tryUltimate(
   suggestedIde: SuggestedIde,
   project: Project?,
   fusEventSource: FUSEventSource? = null,
+  currentFile: VirtualFile? = null,
   fallback: (() -> Unit)? = null,
 ) {
   val eventSource = fusEventSource ?: FUSEventSource.EDITOR
-  if (Registry.`is`("ide.try.ultimate.automatic.installation") && project != null) {
-    eventSource.logTryUltimate(project, pluginId)
-    project.service<UltimateInstallationService>().install(pluginId, suggestedIde, eventSource)
-  }
-  else {
-    fallback?.invoke() ?: eventSource.openDownloadPageAndLog(project = project,
-                                                             url = suggestedIde.defaultDownloadUrl,
-                                                             suggestedIde = suggestedIde,
-                                                             pluginId = pluginId)
-  }
+  OpenAnotherToolHandler.EP_NAME.extensionList
+    .firstOrNull() { it.isApplicable(project, suggestedIde, pluginId) }
+    ?.openTool(project, suggestedIde, pluginId, currentFile?.toNioPath())
+  ?: fallback?.invoke()
+  ?: eventSource.openDownloadPageAndLog(
+    project = project,
+    url = suggestedIde.defaultDownloadUrl,
+    suggestedIde = suggestedIde,
+    pluginId = pluginId
+  )
 }
 
 @ApiStatus.Internal
@@ -688,12 +688,18 @@ fun EditorNotificationPanel.createTryUltimateActionLabel(
   suggestedIde: SuggestedIde,
   project: Project,
   pluginId: PluginId? = null,
+  currentFile: VirtualFile? = null,
   action: (() -> Unit)? = null,
 ) {
   val labelName = IdeBundle.message("plugins.advertiser.action.try.ultimate", suggestedIde.name)
   createActionLabel(labelName) {
     action?.invoke()
-    tryUltimate(pluginId, suggestedIde, project)
+    tryUltimate(
+      pluginId = pluginId,
+      suggestedIde = suggestedIde,
+      project = project,
+      currentFile = currentFile
+    )
   }
 }
 

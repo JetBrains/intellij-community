@@ -34,7 +34,7 @@ import org.jetbrains.kotlin.asJava.elements.KtLightMethod
 import org.jetbrains.kotlin.idea.base.plugin.KotlinPluginModeProvider.Companion.isK1Mode
 import org.jetbrains.kotlin.idea.base.psi.kotlinFqName
 import org.jetbrains.kotlin.idea.j2k.content
-import org.jetbrains.kotlin.j2k.Nullability.*
+import org.jetbrains.kotlin.j2k.Nullability.NotNull
 import org.jetbrains.kotlin.j2k.ReferenceSearcher
 import org.jetbrains.kotlin.lexer.KtTokens
 import org.jetbrains.kotlin.name.FqName
@@ -851,22 +851,27 @@ class JavaToJKTreeBuilder(
                         annotation,
                         PsiAnnotation.TargetType.METHOD,
                     ) == null -> null
+
                     this is PsiField && AnnotationTargetUtil.findAnnotationTarget(
                         annotation,
                         PsiAnnotation.TargetType.FIELD,
                     ) == null -> null
+
                     this is PsiParameter && AnnotationTargetUtil.findAnnotationTarget(
                         annotation,
                         PsiAnnotation.TargetType.PARAMETER,
                     ) == null -> null
+
                     this is PsiLocalVariable && AnnotationTargetUtil.findAnnotationTarget(
                         annotation,
                         PsiAnnotation.TargetType.LOCAL_VARIABLE,
                     ) == null -> null
+
                     this is PsiRecordComponent && AnnotationTargetUtil.findAnnotationTarget(
                         annotation,
                         PsiAnnotation.TargetType.RECORD_COMPONENT,
                     ) == null -> null
+
                     else -> annotation.toJK()
                 }
             }

@@ -44,7 +44,7 @@ public final class ProtectedFieldInspection extends BaseInspection {
   }
 
   @Override
-  public BaseInspectionVisitor buildVisitor() {
+  public @NotNull BaseInspectionVisitor buildVisitor() {
     return new ProtectedFieldVisitor();
   }
 

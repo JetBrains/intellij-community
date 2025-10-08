@@ -16,14 +16,12 @@ import com.intellij.ui.paint.PaintUtil
 import com.intellij.ui.scale.DerivedScaleType
 import com.intellij.ui.scale.ScaleContext
 import com.intellij.util.ReflectionUtil
-import com.intellij.util.SVGLoader.SvgElementColorPatcherProvider
 import com.intellij.util.ui.EmptyIcon
 import com.intellij.util.ui.GraphicsUtil
 import com.intellij.util.ui.ImageUtil
 import com.intellij.util.ui.StartupUiUtil
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.asExecutor
-import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.annotations.ApiStatus.Internal
 import org.jetbrains.annotations.NonNls
 import org.jetbrains.annotations.TestOnly
@@ -253,13 +251,6 @@ object IconLoader {
    */
   @JvmStatic
   fun getDisabledIcon(icon: Icon): Icon = getDisabledIcon(icon = icon, disableFilter = null)
-
-  @ApiStatus.ScheduledForRemoval
-  @Deprecated("Use com.intellij.ui.svg.colorPatchedIcon")
-  @Internal
-  fun colorPatchedIcon(icon: Icon, colorPatcher: SvgElementColorPatcherProvider): Icon {
-    return com.intellij.ui.svg.colorPatchedIcon(icon = icon, colorPatcher = colorPatcher)
-  }
 
   /**
    * Creates a new icon with the filter applied.

@@ -8,12 +8,11 @@ import com.intellij.platform.ide.progress.runWithModalProgressBlocking
 import com.intellij.psi.util.PsiUtilCore
 import com.intellij.testFramework.common.runAll
 import com.intellij.testFramework.replaceService
-import com.intellij.testFramework.utils.vfs.getPsiFile
 import kotlinx.coroutines.CoroutineScope
 import org.jetbrains.kotlin.idea.base.test.IgnoreTests
 import org.jetbrains.kotlin.idea.base.test.k2FileName
-import org.jetbrains.kotlin.idea.core.script.k2.configurations.ScriptConfigurationWithSdk
 import org.jetbrains.kotlin.idea.core.script.k2.configurations.DefaultScriptConfigurationHandler
+import org.jetbrains.kotlin.idea.core.script.k2.configurations.ScriptConfigurationWithSdk
 import org.jetbrains.kotlin.idea.core.script.k2.configurations.getConfigurationResolver
 import org.jetbrains.kotlin.idea.core.script.v1.alwaysVirtualFile
 import org.jetbrains.kotlin.idea.fir.K2DirectiveBasedActionUtils
@@ -24,7 +23,6 @@ import org.jetbrains.kotlin.idea.test.KotlinWithJdkAndRuntimeLightProjectDescrip
 import org.jetbrains.kotlin.psi.KtFile
 import org.jetbrains.kotlin.scripting.definitions.ScriptDefinition
 import org.jetbrains.kotlin.scripting.definitions.findScriptDefinition
-import org.jetbrains.kotlin.test.services.EnvironmentBasedStandardLibrariesPathProvider.getFile
 import java.io.File
 import java.nio.file.Path
 import kotlin.coroutines.EmptyCoroutineContext

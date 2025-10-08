@@ -102,6 +102,7 @@ public class EntityStorageSerializerImpl(
   }
 
   override fun serializeCache(file: Path, storage: ImmutableEntityStorage): SerializationResult {
+    LOG.debug("Start serializing workspace model cache: ${file}")
     storage as ImmutableEntityStorageImpl
 
     val output = createKryoOutput(file)
@@ -112,19 +113,26 @@ public class EntityStorageSerializerImpl(
       output.writeString(serializerDataFormatVersion)
       output.writeString(ijBuildVersion)
 
-      val cacheMetadata = getCacheMetadata(storage, typesResolver)
+      var time = System.nanoTime()
+      val startTime = time
 
+      val cacheMetadata = getCacheMetadata(storage, typesResolver)
       kryo.writeObject(output, cacheMetadata) // Serialize all Entities, Entity Source and Symbolic id metadata from the storage
+      time = logAndResetTime(time) { measuredTime -> "Writing cache metadata: ${String.format("%,d", measuredTime)} ns" }
 
       registerEntitiesClasses(kryo, cacheMetadata, typesResolver, classCache)
+      time = logAndResetTime(time) { measuredTime -> "Writing entity classes: ${String.format("%,d", measuredTime)} ns" }
 
       // Write entity data and references
       kryo.writeClassAndObject(output, storage.entitiesByType)
       kryo.writeObject(output, storage.refs)
+      time = logAndResetTime(time) { measuredTime -> "Writing entity data and references: ${String.format("%,d", measuredTime)} ns" }
 
       // Write indexes
       writeIndexes(kryo, output, storage.indexes, storageSerializerUtil)
+      time = logAndResetTime(time) { measuredTime -> "Writing indices: ${String.format("%,d", measuredTime)} ns" }
 
+      logAndResetTime(startTime) { measuredTime -> "Total serialization time: ${String.format("%,d", measuredTime)} ns" }
       SerializationResult.Success(output.total())
     }
     catch (e: Exception) {
@@ -138,7 +146,7 @@ public class EntityStorageSerializerImpl(
 
   @Suppress("UNCHECKED_CAST")
   override fun deserializeCache(file: Path): Result<MutableEntityStorage?> {
-    LOG.debug("Start deserializing workspace model cache")
+    LOG.debug("Start deserializing workspace model cache: ${file}")
     val deserializedCache = createKryoInput(file).use { input ->
       val (kryo, classCache, storageSerializerUtil) = createKryo()
 
@@ -149,6 +157,7 @@ public class EntityStorageSerializerImpl(
         val cacheIjBuildVersion = input.readString()
 
         var time = System.nanoTime()
+        val startTime = time
         val metadataDeserializationStartTimeMs = Milliseconds.now()
 
         val (comparisonResult, cacheMetadata) = compareCacheMetadata(kryo, input)
@@ -159,23 +168,23 @@ public class EntityStorageSerializerImpl(
 
         loadCacheMetadataFromFileTimeMs.addElapsedTime(metadataDeserializationStartTimeMs)
 
-        time = logAndResetTime(time) { measuredTime -> "Read cache metadata and compare it with the existing metadata: $measuredTime ns" }
+        time = logAndResetTime(time) { measuredTime -> "Read cache metadata and compare it with the existing metadata: ${String.format("%,d", measuredTime)} ns" }
 
 
         registerEntitiesClasses(kryo, cacheMetadata, typesResolver, classCache)
-        time = logAndResetTime(time) { measuredTime -> "Read and register classes: $measuredTime ns" }
+        time = logAndResetTime(time) { measuredTime -> "Read and register classes: ${String.format("%,d", measuredTime)} ns" }
 
 
         // Read entity data and references
         val entitiesBarrel = kryo.readClassAndObject(input) as ImmutableEntitiesBarrel
         val refsTable = kryo.readObject(input, RefsTable::class.java)
 
-        time = logAndResetTime(time) { measuredTime -> "Read data and references: $measuredTime ns" }
+        time = logAndResetTime(time) { measuredTime -> "Read data and references: ${String.format("%,d", measuredTime)} ns" }
 
         // Read indexes
         val softLinks = kryo.readObject(input, ImmutableMultimapStorageIndex::class.java)
 
-        time = logAndResetTime(time) { measuredTime -> "Read soft links: $measuredTime ns" }
+        time = logAndResetTime(time) { measuredTime -> "Read soft links: ${String.format("%,d", measuredTime)} ns" }
         
         val entityId2VirtualFileUrlInfo = kryo.readObject(input, PersistentMap::class.java, storageSerializerUtil.getEntityId2VfuPersistentMapSerializer()) as PersistentMap<Long, Any>
         val vfu2VirtualFileUrlInfo = kryo.readObject(input,
@@ -184,15 +193,15 @@ public class EntityStorageSerializerImpl(
 
         val virtualFileIndex = VirtualFileIndex(entityId2VirtualFileUrlInfo, vfu2VirtualFileUrlInfo, entityId2JarDir)
 
-        time = logAndResetTime(time) { measuredTime -> "Read virtual file index: $measuredTime ns" }
+        time = logAndResetTime(time) { measuredTime -> "Read virtual file index: ${String.format("%,d", measuredTime)} ns" }
 
         val entitySourceIndex = kryo.readObject(input, EntityStorageInternalIndex::class.java) as EntityStorageInternalIndex<EntitySource>
 
-        time = logAndResetTime(time) { measuredTime -> "Read entity source index: $measuredTime ns" }
+        time = logAndResetTime(time) { measuredTime -> "Read entity source index: ${String.format("%,d", measuredTime)} ns" }
 
         val symbolicIdIndex = kryo.readObject(input, SymbolicIdInternalIndex::class.java)
 
-        time = logAndResetTime(time) { measuredTime -> "Persistent id index: $measuredTime ns" }
+        time = logAndResetTime(time) { measuredTime -> "Persistent id index: ${String.format("%,d", measuredTime)} ns" }
 
         val storageIndexes = ImmutableStorageIndexes(softLinks, virtualFileIndex, entitySourceIndex, symbolicIdIndex)
 
@@ -215,6 +224,7 @@ public class EntityStorageSerializerImpl(
           LOG.info("Builder loaded from caches has no consistency issues. Current version of IJ: $ijBuildVersion. IJ version from cache: $cacheIjBuildVersion")
         }
 
+        logAndResetTime(startTime) { measuredTime -> "Total deserialization time: ${String.format("%,d", measuredTime)} ns" }
         builder
       }
       catch (e: Exception) {

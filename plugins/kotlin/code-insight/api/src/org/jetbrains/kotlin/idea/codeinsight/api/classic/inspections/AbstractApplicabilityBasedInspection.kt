@@ -2,6 +2,7 @@
 package org.jetbrains.kotlin.idea.codeinsight.api.classic.inspections
 
 import com.intellij.codeInsight.intention.FileModifier
+import com.intellij.codeInsight.intention.preview.IntentionPreviewInfo
 import com.intellij.codeInspection.*
 import com.intellij.codeInspection.util.InspectionMessage
 import com.intellij.codeInspection.util.IntentionName
@@ -86,6 +87,8 @@ abstract class AbstractApplicabilityBasedInspection<TElement : KtElement>(
 
     open val startFixInWriteAction: Boolean = true
 
+    open fun generatePreview(project: Project, previewDescriptor: ProblemDescriptor): IntentionPreviewInfo? = null
+
     private class LocalFix<TElement : KtElement>(
       @FileModifier.SafeFieldForPreview val inspection: AbstractApplicabilityBasedInspection<TElement>,
       @IntentionName val text: String
@@ -103,5 +106,9 @@ abstract class AbstractApplicabilityBasedInspection<TElement : KtElement>(
         override fun getName() = text
 
         override fun getSubstitutedClass(): Class<*> = inspection.javaClass
+
+        override fun generatePreview(project: Project, previewDescriptor: ProblemDescriptor): IntentionPreviewInfo {
+            return inspection.generatePreview(project, previewDescriptor) ?: super.generatePreview(project, previewDescriptor)
+        }
     }
 }

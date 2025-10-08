@@ -1,9 +1,9 @@
 ### auto-generated section `build intellij.devkit` start
-load("@rules_jvm//:jvm.bzl", "jvm_library", "jvm_resources")
+load("@rules_jvm//:jvm.bzl", "jvm_library", "resourcegroup")
 
-jvm_resources(
+resourcegroup(
   name = "devkit_resources",
-  files = glob(["resources/**/*"]),
+  srcs = glob(["resources/**/*"]),
   strip_prefix = "resources"
 )
 
@@ -11,7 +11,7 @@ jvm_library(
   name = "devkit",
   visibility = ["//visibility:public"],
   srcs = glob([], allow_empty = True),
-  runtime_deps = [":devkit_resources"]
+  resources = [":devkit_resources"]
 )
 ### auto-generated section `build intellij.devkit` end
 

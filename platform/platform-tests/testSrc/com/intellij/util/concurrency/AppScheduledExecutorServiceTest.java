@@ -50,9 +50,7 @@ public class AppScheduledExecutorServiceTest extends CatchLogErrorsInAllThreadsT
   @Override
   protected void setUp() throws Exception {
     super.setUp();
-    service = new AppScheduledExecutorService(getName(), 1, HOURS);
-    // LowMemoryWatcherManager submits something immediately
-    service.waitForLowMemoryWatcherManagerInit(1, TimeUnit.MINUTES);
+    service = new AppScheduledExecutorService(getName(), 1, HOURS, /*initLowMemoryManager:*/ false);
   }
 
   @Override
@@ -72,7 +70,7 @@ public class AppScheduledExecutorServiceTest extends CatchLogErrorsInAllThreadsT
   public void testDelayedWorks() throws Exception {
     assertFalse(service.isShutdown());
     assertFalse(service.isTerminated());
-    // avoid conflicts when thread are timed out/restarted, since we are inclined to count them all in this test
+    // avoid conflicts when threads are timed out/restarted, since we are inclined to count them all in this test
     ((AppScheduledExecutorService.BackendThreadPoolExecutor)service.backendExecutorService).superSetKeepAliveTime(1, TimeUnit.MINUTES);
     int N = 3;
     CountDownLatch c = new CountDownLatch(1);
@@ -272,7 +270,7 @@ public class AppScheduledExecutorServiceTest extends CatchLogErrorsInAllThreadsT
   }
 
   public void testAwaitTerminationMakesSureTasksTransferredToBackendExecutorAreFinished() throws InterruptedException {
-    final AppScheduledExecutorService service = new AppScheduledExecutorService(getName(), 1, HOURS);
+    final AppScheduledExecutorService service = new AppScheduledExecutorService(getName(), 1, HOURS, /*initTowMemoryManager:*/false);
     final List<LogInfo> log = Collections.synchronizedList(new ArrayList<>());
 
     int N = 20;
@@ -290,9 +288,6 @@ public class AppScheduledExecutorServiceTest extends CatchLogErrorsInAllThreadsT
     AppDelayQueue delayQueue = service.getDelayQueue();
     while (!delayQueue.isEmpty()) {
       // wait till all tasks transferred from delayQueue to backend executor:
-      //TODO RC: the issue here is that it could be other tasks than created by the test itself,
-      //         e.g. LowMemoryWatcherManager does schedule a periodic task after ~10 seconds with re-schedule each 5 seconds
-      //         that could ruin this logic:
       if (System.currentTimeMillis() > start + 20000) {
         List<SchedulingWrapper.MyScheduledFutureTask<?>> unprocessedTasks = new ArrayList<>(delayQueue);
         if (!unprocessedTasks.isEmpty()) {

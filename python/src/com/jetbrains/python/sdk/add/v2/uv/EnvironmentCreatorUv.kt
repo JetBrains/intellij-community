@@ -46,7 +46,7 @@ import kotlinx.coroutines.withContext
 import java.nio.file.Path
 import java.nio.file.Paths
 import kotlin.io.path.exists
-import kotlin.io.path.inputStream
+import kotlin.io.path.readText
 
 
 internal class EnvironmentCreatorUv(
@@ -132,7 +132,7 @@ internal class EnvironmentCreatorUv(
 
           val pythonVersions = withContext(Dispatchers.IO) {
             val versionRequest = if (pyProjectTomlPath.exists()) {
-              PyProjectToml.parse(pyProjectTomlPath.inputStream()).getOrNull()?.project?.requiresPython
+              PyProjectToml.parse(pyProjectTomlPath.readText()).getOrNull()?.project?.requiresPython
             } else {
               null
             }

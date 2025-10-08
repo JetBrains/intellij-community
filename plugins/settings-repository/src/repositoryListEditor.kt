@@ -17,6 +17,7 @@ import com.intellij.ui.dsl.builder.panel
 import com.intellij.util.ui.ComboBoxModelEditor
 import com.intellij.util.ui.ListItemEditor
 import kotlinx.coroutines.ensureActive
+import kotlinx.coroutines.launch
 import javax.swing.JButton
 
 private class RepositoryItem(var url: String? = null) {
@@ -106,11 +107,13 @@ private fun deleteRepository(icsManager: IcsManager) {
   }
 
   val store = ApplicationManager.getApplication().stateStore as ComponentStoreImpl
-  if (!reloadAppStore((store.storageManager as StateStorageManagerImpl).getCachedFileStorages())) {
-    return
-  }
+  icsManager.coroutineScope.launch {
+    if (!reloadAppStore((store.storageManager as StateStorageManagerImpl).getCachedFileStorages())) {
+      return@launch
+    }
 
-  (SchemeManagerFactory.getInstance() as SchemeManagerFactoryBase).process {
-    it.reload()
+    (SchemeManagerFactory.getInstance() as SchemeManagerFactoryBase).process {
+      it.reload()
+    }
   }
 }

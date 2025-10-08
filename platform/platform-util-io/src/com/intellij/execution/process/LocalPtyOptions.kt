@@ -5,9 +5,7 @@ import com.intellij.execution.process.LocalPtyOptions.Companion.shouldUseWinConP
 import com.intellij.openapi.diagnostic.Logger
 import com.intellij.openapi.util.SystemInfo
 import com.intellij.openapi.util.registry.Registry
-import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.annotations.ApiStatus.Internal
-import java.util.function.Consumer
 import java.util.function.LongConsumer
 
 class LocalPtyOptions private constructor(val consoleMode: Boolean,
@@ -28,11 +26,6 @@ class LocalPtyOptions private constructor(val consoleMode: Boolean,
   companion object {
     @JvmStatic
     fun defaults(): LocalPtyOptions = LocalPtyOptions(false, false, -1, -1, shouldUseWinConPty(), null)
-
-    @ApiStatus.ScheduledForRemoval
-    @Deprecated("Use [defaults] instead", ReplaceWith("LocalPtyOptions.defaults()"))
-    @JvmField
-    val DEFAULT: LocalPtyOptions = LocalPtyOptions(false, false, -1, -1, false, null)
 
     @JvmStatic
     @Internal

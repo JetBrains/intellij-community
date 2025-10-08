@@ -65,6 +65,7 @@
 
     <syncContributor implementation="org.jetbrains.plugins.gradle.service.syncAction.impl.contributors.GradleProjectRootSyncContributor"/>
     <syncContributor implementation="org.jetbrains.plugins.gradle.service.syncAction.impl.contributors.GradleContentRootSyncContributor"/>
+    <syncContributor implementation="org.jetbrains.plugins.gradle.service.syncAction.impl.contributors.GradleVersionCatalogSyncContributor"/>
     <syncExtension implementation="org.jetbrains.plugins.gradle.service.syncAction.impl.extensions.GradleJpsSyncExtension"/>
     <syncExtension implementation="org.jetbrains.plugins.gradle.service.syncAction.impl.extensions.GradleBaseSyncExtension"/>
     <syncExtension implementation="org.jetbrains.plugins.gradle.service.syncAction.impl.extensions.GradleDependencySubstitutionSyncExtension"/>
@@ -102,6 +103,7 @@
   <extensions defaultExtensionNs="com.intellij">
 
     <externalProjectDataService implementation="org.jetbrains.plugins.gradle.service.syncAction.impl.bridge.GradleBridgeProjectDataService"/>
+    <externalWorkspaceDataService implementation="org.jetbrains.plugins.gradle.service.syncAction.impl.bridge.GradleBridgeModuleDataService"/>
 
     <postStartupActivity implementation="org.jetbrains.plugins.gradle.service.project.GradleStartupActivity"/>
     <backgroundPostStartupActivity implementation="org.jetbrains.plugins.gradle.service.project.GradleVersionUpdateStartupActivity"/>
@@ -349,6 +351,6 @@
   </actions>
   <projectListeners>
     <listener class="org.jetbrains.plugins.gradle.service.GradleFileModificationListener"
-              topic="com.intellij.openapi.fileEditor.FileDocumentManagerListener"/>
+              topic="com.intellij.openapi.fileEditor.FileDocumentManagerListenerBackgroundable"/>
   </projectListeners>
 </idea-plugin>

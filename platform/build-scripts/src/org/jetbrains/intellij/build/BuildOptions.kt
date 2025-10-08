@@ -279,9 +279,9 @@ data class BuildOptions(
     const val TARGET_OS_PROPERTY: String = "intellij.build.target.os"
 
     /**
-     * Use this system property to specify the target JVM architecture. 
-     * Possible values are `x64`, `aarch64` and `current` (which refers to the architecture on which the build scripts are executed). 
-     * If no value is provided, artifacts for all supported architectures will be built.  
+     * Use this system property to specify the target JVM architecture.
+     * Possible values are `x64`, `aarch64` and `current` (which refers to the architecture on which the build scripts are executed).
+     * If no value is provided, artifacts for all supported architectures will be built.
      */
     const val TARGET_ARCH_PROPERTY: String = "intellij.build.target.arch"
     private const val ARCH_CURRENT: String = "current"
@@ -336,6 +336,16 @@ data class BuildOptions(
      * By default, calculated based on the build number.
      */
     const val INTELLIJ_BUILD_IS_NIGHTLY: String = "intellij.build.is.nightly"
+
+    /**
+     * The branch used for the TeamCity build.
+     */
+    const val TEAMCITY_BUILD_BRANCH: String = "teamcity.build.branch"
+
+    /**
+     * Whether the branch used for the build is default or not.
+     */
+    const val TEAMCITY_BUILD_BRANCH_IS_DEFAULT: String = "teamcity.build.branch.is_default"
 
     /**
      * IJPL-176 Download pre-compiled IJent executables.
@@ -435,7 +445,7 @@ data class BuildOptions(
   val nonBundledPluginDirectoriesToInclude: Set<String> = getSetProperty("intellij.build.non.bundled.plugin.dirs.to.include")
 
   /**
-   * If this option is set to `true` and [ProductProperties.rootModuleForModularLoader] is non-null, a file containing module descriptors 
+   * If this option is set to `true` and [ProductProperties.rootModuleForModularLoader] is non-null, a file containing module descriptors
    * will be added to the distribution (IJPL-109), and launchers will use it to start the IDE (IJPL-128).
    */
   @ApiStatus.Experimental
@@ -443,8 +453,8 @@ data class BuildOptions(
 
   /**
    * If this option is set to `false`, [runtime module repository][com.intellij.platform.runtime.repository.RuntimeModuleRepository] won't be included in the installation.
-   * It's supposed to be used only for development to speed up the building process a bit. 
-   * Production builds must always include the module repository since tools like IntelliJ Platform Gradle Plugin and Plugin Verifier relies on it. 
+   * It's supposed to be used only for development to speed up the building process a bit.
+   * Production builds must always include the module repository since tools like IntelliJ Platform Gradle Plugin and Plugin Verifier relies on it.
    * This option doesn't make sense if [modular loader][BuildContext.useModularLoader] is used
    * (in this case, the generation is always enabled).
    */
@@ -476,7 +486,7 @@ data class BuildOptions(
   var isNightlyBuild: Boolean = getBooleanProperty(INTELLIJ_BUILD_IS_NIGHTLY, false)
 
   /**
-   * By default, the current Git revision is stored as a custom property in the product-info.json file. Set this property to `false` to disable this. 
+   * By default, the current Git revision is stored as a custom property in the product-info.json file. Set this property to `false` to disable this.
    */
   var storeGitRevision: Boolean = getBooleanProperty("intellij.build.store.git.revision", true)
 

@@ -4,6 +4,7 @@ package com.intellij.codeInsight.daemon.impl;
 import com.intellij.openapi.editor.ex.RangeHighlighterEx;
 import com.intellij.openapi.editor.impl.RangeMarkerImpl;
 import com.intellij.openapi.editor.markup.RangeHighlighter;
+import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.TextRangeScalarUtil;
 import com.intellij.util.containers.ContainerUtil;
 import it.unimi.dsi.fastutil.longs.Long2ObjectMap;
@@ -44,26 +45,40 @@ final class HighlighterRecycler {
   }
 
   // null means no highlighter found in the cache
-  synchronized @Nullable RangeHighlighter pickupHighlighterFromGarbageBin(int startOffset, int endOffset, int layer) {
+  synchronized @Nullable RangeHighlighter pickupHighlighterFromGarbageBin(int startOffset, int endOffset, int layer, @Nullable String preferredDescription) {
     long range = TextRangeScalarUtil.toScalarRange(startOffset, endOffset);
-    List<HighlightInfo> collection = incinerator.get(range);
-    if (collection != null) {
-      for (int i = 0; i < collection.size(); i++) {
-        HighlightInfo info = collection.get(i);
-        RangeHighlighterEx highlighter = info.getHighlighter();
-        if (highlighter.isValid() && highlighter.getLayer() == layer) {
-          collection.remove(info);
-          if (collection.isEmpty()) {
-            incinerator.remove(range);
-          }
-          if (UpdateHighlightersUtil.LOG.isDebugEnabled()) {
-            UpdateHighlightersUtil.LOG.debug("pickupHighlighterFromGarbageBin pickedup:" + highlighter + HighlightInfoUpdaterImpl.currentProgressInfo());
-          }
-          return highlighter;
+    List<HighlightInfo> list = incinerator.get(range);
+    if (list == null) {
+      return null;
+    }
+    int i;
+    int previousFound = -1;
+    for (i = list.size()-1; i>=0; i--) {
+      HighlightInfo info = list.get(i);
+      RangeHighlighterEx highlighter = info.getHighlighter();
+      if (highlighter.isValid() && highlighter.getLayer() == layer) {
+        if (Comparing.strEqual(info.getDescription(), preferredDescription)) {
+          break;
+        }
+        else {
+          previousFound = i;
         }
       }
     }
-    return null;
+    if (i == -1) {
+      i = previousFound;
+      if (i == -1) {
+        return null;
+      }
+    }
+    HighlightInfo info = list.remove(i);
+    if (list.isEmpty()) {
+      incinerator.remove(range);
+    }
+    if (UpdateHighlightersUtil.LOG.isDebugEnabled()) {
+      UpdateHighlightersUtil.LOG.debug("pickupHighlighterFromGarbageBin pickedup:" + info + HighlightInfoUpdaterImpl.currentProgressInfo());
+    }
+    return info.getHighlighter();
   }
   //
   private synchronized @NotNull @Unmodifiable Collection<? extends HighlightInfo> forAllInGarbageBin() {
@@ -71,8 +86,8 @@ final class HighlighterRecycler {
   }
 
   @Nullable
-  RangeHighlighter pickupFileLevelRangeHighlighter(int fileTextLength) {
-    return pickupHighlighterFromGarbageBin(0, fileTextLength, HighlightInfoUpdaterImpl.FILE_LEVEL_FAKE_LAYER);
+  RangeHighlighter pickupFileLevelRangeHighlighter(int fileTextLength, @Nullable String description) {
+    return pickupHighlighterFromGarbageBin(0, fileTextLength, HighlightInfoUpdaterImpl.FILE_LEVEL_FAKE_LAYER, description);
   }
 
   /**

@@ -16,7 +16,7 @@ import org.jetbrains.annotations.NotNull;
 public final class UnqualifiedMethodAccessInspection extends BaseInspection implements CleanupLocalInspectionTool {
 
   @Override
-  public BaseInspectionVisitor buildVisitor() {
+  public @NotNull BaseInspectionVisitor buildVisitor() {
     return new UnqualifiedMethodAccessVisitor();
   }
 

@@ -9,6 +9,7 @@ import com.intellij.lang.ParserDefinition;
 import com.intellij.openapi.extensions.ExtensionPointName;
 import com.intellij.openapi.fileTypes.FileType;
 import com.intellij.openapi.fileTypes.impl.CustomSyntaxTableFileType;
+import com.intellij.openapi.project.DumbService;
 import com.intellij.openapi.project.PossiblyDumbAware;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.psi.*;
@@ -72,9 +73,6 @@ public class SpellcheckingStrategy implements PossiblyDumbAware {
    * @return {@link #EMPTY_TOKENIZER} to skip spellchecking, {@link #TEXT_TOKENIZER} for full element text or custom Tokenizer implementation.
    */
   public @NotNull Tokenizer getTokenizer(PsiElement element) {
-    if (element instanceof PsiWhiteSpace) {
-      return EMPTY_TOKENIZER;
-    }
     if (isInjectedLanguageFragment(element)) {
       return EMPTY_TOKENIZER;
     }
@@ -151,6 +149,16 @@ public class SpellcheckingStrategy implements PossiblyDumbAware {
                                          boolean useRename,
                                          String typo) {
     return getDefaultRegularFixes(useRename, typo, element, textRange);
+  }
+
+  public static SpellcheckingStrategy getSpellcheckingStrategy(@NotNull PsiElement element) {
+    DumbService dumbService = DumbService.getInstance(element.getProject());
+    for (SpellcheckingStrategy strategy : LanguageSpellchecking.INSTANCE.allForLanguage(element.getLanguage())) {
+      if (dumbService.isUsableInCurrentContext(strategy) && strategy.isMyContext(element)) {
+        return strategy;
+      }
+    }
+    return null;
   }
 
   public static LocalQuickFix[] getDefaultRegularFixes(boolean useRename,

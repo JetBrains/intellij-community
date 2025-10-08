@@ -3,6 +3,7 @@ package com.intellij.tools
 
 import com.intellij.ide.DataManager
 import com.intellij.openapi.Disposable
+import com.intellij.openapi.project.DumbAware
 import com.intellij.openapi.vcs.CheckinProjectPanel
 import com.intellij.openapi.vcs.changes.CommitContext
 import com.intellij.openapi.vcs.checkin.CheckinHandler
@@ -21,7 +22,7 @@ import javax.swing.JComponent
 class ExternalToolsCheckinHandlerFactory : CheckinHandlerFactory() {
   override fun createHandler(panel: CheckinProjectPanel, commitContext: CommitContext): CheckinHandler {
     val config = ToolsProjectConfig.getInstance(panel.project)
-    return object : CheckinHandler() {
+    return object : CheckinHandler(), DumbAware {
       override fun getAfterCheckinConfigurationPanel(parentDisposable: Disposable): RefreshableOnComponent? {
         val toolComboBox = ToolSelectComboBox(panel.project)
         if (toolComboBox.valuableItemCount == 0) {

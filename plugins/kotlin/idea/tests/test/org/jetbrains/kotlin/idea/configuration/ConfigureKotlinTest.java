@@ -22,7 +22,7 @@ import com.intellij.psi.PsiJavaModule;
 import com.intellij.psi.PsiRequiresStatement;
 import kotlin.KotlinVersion;
 import org.jetbrains.annotations.NotNull;
-import org.jetbrains.kotlin.cli.common.arguments.InternalArgument;
+import org.jetbrains.kotlin.cli.common.arguments.ManualLanguageFeatureSetting;
 import org.jetbrains.kotlin.cli.common.arguments.K2JSCompilerArguments;
 import org.jetbrains.kotlin.cli.common.arguments.K2JVMCompilerArguments;
 import org.jetbrains.kotlin.config.*;
@@ -306,7 +306,7 @@ public class ConfigureKotlinTest extends AbstractConfigureKotlinTest {
     }
 
     public void testProjectWithInternalArgs() {
-        List<InternalArgument> internalArguments =
+        List<ManualLanguageFeatureSetting> internalArguments =
                 KotlinCommonCompilerArgumentsHolder.Companion.getInstance(myProject).getSettings().getInternalArguments();
         assertEquals(
                 0,

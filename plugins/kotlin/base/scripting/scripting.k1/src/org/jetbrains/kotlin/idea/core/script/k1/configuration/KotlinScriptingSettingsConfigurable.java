@@ -15,13 +15,16 @@ import org.jetbrains.annotations.Nullable;
 import org.jetbrains.kotlin.idea.base.resources.KotlinBundle;
 import org.jetbrains.kotlin.idea.core.script.k1.ScriptDefinitionsManager;
 import org.jetbrains.kotlin.idea.core.script.k1.settings.KotlinScriptingSettingsImpl;
-import org.jetbrains.kotlin.idea.core.script.v1.IdeScriptDefinitionProvider;
 import org.jetbrains.kotlin.scripting.definitions.ScriptDefinition;
+import org.jetbrains.kotlin.scripting.definitions.ScriptDefinitionProvider;
+import org.jetbrains.kotlin.idea.core.script.shared.KotlinScriptingSetttingsIdKt;
 
 import javax.swing.*;
 
+import static kotlin.streams.jdk8.StreamsKt.asStream;
+
+
 public class KotlinScriptingSettingsConfigurable implements SearchableConfigurable {
-    public static final String ID = "preferences.language.Kotlin.scripting";
 
     private JPanel root;
     private JPanel panelScriptDefinitionsChooser;
@@ -34,7 +37,8 @@ public class KotlinScriptingSettingsConfigurable implements SearchableConfigurab
     public KotlinScriptingSettingsConfigurable(Project project) {
         manager = ScriptDefinitionsManager.Companion.getInstance(project);
         settings = KotlinScriptingSettingsImpl.Companion.getInstance(project);
-        model = KotlinScriptDefinitionsModel.Companion.createModel(IdeScriptDefinitionProvider.Companion.getInstance(project).getDefinitions(), settings);
+        model = KotlinScriptDefinitionsModel.Companion.createModel(
+                asStream(ScriptDefinitionProvider.Companion.getInstance(project).getCurrentDefinitions()).toList(), settings);
     }
 
     @Override
@@ -82,7 +86,7 @@ public class KotlinScriptingSettingsConfigurable implements SearchableConfigurab
 
     @Override
     public void reset() {
-        model.setDefinitions(manager.getDefinitions(), settings);
+        model.setDefinitions(asStream(manager.getCurrentDefinitions()).toList(), settings);
     }
 
     private boolean isScriptDefinitionsChanged() {
@@ -94,7 +98,7 @@ public class KotlinScriptingSettingsConfigurable implements SearchableConfigurab
                 return true;
             }
         }
-        return !model.getDefinitions().equals(manager.getDefinitions());
+        return !model.getDefinitions().equals(asStream(manager.getCurrentDefinitions()));
     }
 
 
@@ -106,6 +110,6 @@ public class KotlinScriptingSettingsConfigurable implements SearchableConfigurab
 
     @Override
     public @NotNull String getId() {
-        return ID;
+        return KotlinScriptingSetttingsIdKt.KOTLIN_SCRIPTING_SETTINGS_ID;
     }
 }

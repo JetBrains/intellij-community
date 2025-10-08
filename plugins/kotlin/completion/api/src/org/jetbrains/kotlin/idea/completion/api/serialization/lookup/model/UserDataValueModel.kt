@@ -28,6 +28,12 @@ sealed class UserDataValueModel {
     data class IntModel(val value: Int) : UserDataValueModel()
 
     @Serializable
+    data class FloatModel(val value: Float) : UserDataValueModel()
+
+    @Serializable
+    data class DoubleModel(val value: Double) : UserDataValueModel()
+
+    @Serializable
     data class LongModel(val value: Long) : UserDataValueModel()
 
     @Serializable

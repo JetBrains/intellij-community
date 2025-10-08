@@ -39,6 +39,7 @@ import com.intellij.openapi.vfs.newvfs.persistent.recovery.VFSRecoveryInfo;
 import com.intellij.openapi.vfs.pointers.VirtualFilePointerManager;
 import com.intellij.platform.diagnostic.telemetry.PlatformScopesKt;
 import com.intellij.platform.diagnostic.telemetry.TelemetryManager;
+import com.intellij.serviceContainer.AlreadyDisposedException;
 import com.intellij.util.*;
 import com.intellij.util.concurrency.ThreadingAssertions;
 import com.intellij.util.containers.ContainerUtil;
@@ -911,14 +912,11 @@ public final class PersistentFSImpl extends PersistentFS implements Disposable {
       else {
         //just actualise the length:
         vfsPeer.updateRecordFields(fileId, record -> {
-          record.setLength(content.length);
+          boolean lengthChanged = record.setLength(content.length);
           int oldFlags = record.getFlags();
           int flags = oldFlags & ~Flags.MUST_RELOAD_LENGTH;
-
-          if (oldFlags != flags) {
-            record.setFlags(flags);
-          }
-          return true;
+          boolean flagsChanged = record.setFlags(flags);
+          return lengthChanged || flagsChanged;
         });
       }
 
@@ -1594,7 +1592,7 @@ public final class PersistentFSImpl extends PersistentFS implements Disposable {
     runSuppressing(
       () -> publisherBackgroundable.before(toSend),
       () -> runActionOnEdtRegardlessOfCurrentThread(() -> publisherEdt.before(toSend)),
-      () -> runActionOnEdtRegardlessOfCurrentThread(() -> ((BulkFileListener)VirtualFilePointerManager.getInstance()).before(toSend)),
+      () -> ((BulkFileListener)VirtualFilePointerManager.getInstance()).before(toSend),
       EmptyRunnable.INSTANCE
     );
   }
@@ -1604,7 +1602,7 @@ public final class PersistentFSImpl extends PersistentFS implements Disposable {
                                       @NotNull List<? extends VFileEvent> toSend) {
     runSuppressing(
       () -> CachedFileType.clearCache(),
-      () -> runActionOnEdtRegardlessOfCurrentThread(() -> ((BulkFileListener)VirtualFilePointerManager.getInstance()).after(toSend)),
+      () -> ((BulkFileListener)VirtualFilePointerManager.getInstance()).after(toSend),
       () -> runActionOnEdtRegardlessOfCurrentThread(() -> publisherEdt.after(toSend)),
       () -> publisherBackgroundable.after(toSend)
     );
@@ -1849,6 +1847,10 @@ public final class PersistentFSImpl extends PersistentFS implements Disposable {
       fileByIdCacheHits.incrementAndGet();  //a bit of a stretch, but...
       return null;
     }
+    VfsData vfsData = this.vfsData;
+    if (vfsData == null) {
+      throw new AlreadyDisposedException("VFS is disconnected");
+    }
     VirtualDirectoryImpl cached = vfsData.cachedDir(fileId);
     if (cached != null) {
       fileByIdCacheHits.incrementAndGet();
@@ -1872,6 +1874,8 @@ public final class PersistentFSImpl extends PersistentFS implements Disposable {
       return;
     }
     Ref<String> missedRootUrlRef = new Ref<>();
+    //TODO RC: according to Diogen, this roots lookup is responsible for ~50% of findFileById() freezes
+    //         maybe cache >1 roots per turn to amortise the cost?
     vfsPeer.forEachRoot((rootFileId, rootUrlId) -> {
       if (rootId == rootFileId) {
         missedRootUrlRef.set(getNameByNameId(rootUrlId));
@@ -2430,13 +2434,17 @@ public final class PersistentFSImpl extends PersistentFS implements Disposable {
                                              @NotNull ChildInfo @Nullable [] children) {
     assert parentId > 0 : parentId; // 0 means it's root => should use .writeRootFields() instead
 
+    //VfsData.DirectoryData directoryData = ((VirtualDirectoryImpl)parentFile).directoryData;
+    //if(!Thread.holdsLock(directoryData)){
+    //  LOG.error("Don't hold .directoryData lock!");
+    //}
+
     FileAttributes attributes = childData.first;
     String symLinkTarget = childData.second;
 
     //MAYBE RC: .updateRecordFields(id=0, ...) also creates a new record, so .createRecord() could be dropped?
     int newChildId = vfsPeer.createRecord();
     int nameId = vfsPeer.updateRecordFields(newChildId, parentId, attributes, name.toString(), /* cleanAttributeRef: */ true);
-
     if (attributes.isDirectory()) {
       vfsPeer.loadDirectoryData(newChildId, parentFile, name, fs);
     }
@@ -2540,6 +2548,7 @@ public final class PersistentFSImpl extends PersistentFS implements Disposable {
 
   private void executeRename(@NotNull VirtualFile file, @NotNull String newName) {
     ((VirtualFileSystemEntry)file).setNewName(newName);
+    //TODO RC: update symlink?
   }
 
   private void executeSetWritable(@NotNull VirtualFile file, boolean writableFlag) {
@@ -2618,6 +2627,10 @@ public final class PersistentFSImpl extends PersistentFS implements Disposable {
     vfsPeer.moveChild(newParent::isCaseSensitive, oldParentId, newParentId, childToMoveId);
 
     ((VirtualFileSystemEntry)file).setParent(newParent);
+    //TODO RC: update symlink?
+    //if (fs instanceof LocalFileSystemImpl) {
+    //  ((LocalFileSystemImpl)fs).symlinkUpdated(id, file.getParent(), file.getNameSequence(), file.getPath(), target);
+    //}
   }
 
   @Override

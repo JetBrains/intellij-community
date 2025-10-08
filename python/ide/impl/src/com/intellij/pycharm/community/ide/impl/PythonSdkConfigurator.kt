@@ -20,10 +20,12 @@ import com.intellij.openapi.util.UserDataHolderBase
 import com.intellij.openapi.util.use
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.platform.DirectoryProjectConfigurator
+import com.intellij.platform.eel.provider.getEelDescriptor
 import com.intellij.platform.ide.progress.withBackgroundProgress
 import com.intellij.platform.util.progress.reportRawProgress
+import com.intellij.python.community.services.systemPython.SystemPython
+import com.intellij.python.community.services.systemPython.SystemPythonService
 import com.jetbrains.python.PyBundle
-import com.jetbrains.python.PySdkBundle
 import com.jetbrains.python.packaging.utils.PyPackageCoroutine
 import com.jetbrains.python.sdk.*
 import com.jetbrains.python.sdk.conda.PyCondaSdkCustomizer
@@ -31,9 +33,11 @@ import com.jetbrains.python.sdk.configuration.PyProjectSdkConfiguration.setReady
 import com.jetbrains.python.sdk.configuration.PyProjectSdkConfiguration.setSdkUsingExtension
 import com.jetbrains.python.sdk.configuration.PyProjectSdkConfiguration.suppressTipAndInspectionsFor
 import com.jetbrains.python.sdk.configuration.PyProjectSdkConfigurationExtension
+import com.jetbrains.python.sdk.impl.PySdkBundle
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
 import org.jetbrains.annotations.ApiStatus
+import java.nio.file.Path
 
 
 class PythonSdkConfigurator : DirectoryProjectConfigurator {
@@ -51,6 +55,7 @@ class PythonSdkConfigurator : DirectoryProjectConfigurator {
 
     StartupManager.getInstance(project).runWhenProjectIsInitialized {
       PyPackageCoroutine.launch(project) {
+        if (module.isDisposed) return@launch
         val extension = findExtension(module)
         val title = extension?.getIntention(module) ?: PySdkBundle.message("python.configuring.interpreter.progress")
         withBackgroundProgress(project, title, true) {
@@ -114,26 +119,37 @@ class PythonSdkConfigurator : DirectoryProjectConfigurator {
       return@withContext
     }
 
-    findSystemWideSdk(module, existingSdks, context, project)
+    if (setupFallbackSdk(module)) {
+      return@withContext
+    }
+
+    findSystemWideSdk(module, existingSdks, project)
   }
 
   private suspend fun findSystemWideSdk(
     module: Module,
     existingSdks: List<Sdk>,
-    context: UserDataHolderBase,
     project: Project,
-  ) = reportRawProgress { indicator ->
+  ): Unit = reportRawProgress { indicator ->
     indicator.text(PyBundle.message("looking.for.system.interpreter"))
     thisLogger().debug("Looking for a system-wide interpreter")
-    detectSystemWideSdks(module, existingSdks, context).firstOrNull()?.let {
-      thisLogger().debug { "Detected system-wide interpreter: $it" }
-      withContext(Dispatchers.EDT) {
-        SdkConfigurationUtil.createAndAddSDK(it.homePath!!, PythonSdkType.getInstance())?.apply {
-          thisLogger().debug { "Created system-wide interpreter: $this" }
-          setReadyToUseSdk(project, module, this)
+    val eelDescriptor = module.project.getEelDescriptor()
+    val homePaths = existingSdks
+      .mapNotNull { sdk -> sdk.homePath?.let { homePath -> Path.of(homePath) } }
+      .filter { it.getEelDescriptor() == eelDescriptor }
+    SystemPythonService().findSystemPythons(eelDescriptor.toEelApi())
+      .sortedWith(compareByDescending<SystemPython> { it.languageLevel }.thenBy { it.pythonBinary })
+      .sortedByDescending { it.pythonBinary }
+      .sortedByDescending { it.languageLevel }
+      .firstOrNull { it.pythonBinary !in homePaths }?.let {
+        thisLogger().debug { "Detected system-wide interpreter: $it" }
+        withContext(Dispatchers.EDT) {
+          SdkConfigurationUtil.createAndAddSDK(project, it.pythonBinary, PythonSdkType.getInstance())?.apply {
+            thisLogger().debug { "Created system-wide interpreter: $this" }
+            setReadyToUseSdk(project, module, this)
+          }
         }
       }
-    }
   }
 
   private suspend fun findPreviousUsedSdk(
@@ -171,6 +187,17 @@ class PythonSdkConfigurator : DirectoryProjectConfigurator {
     val preferred = mostPreferred(sharedCondaEnvs) ?: return@reportRawProgress false
     setReadyToUseSdk(project, module, preferred)
     return@reportRawProgress false
+  }
+
+  private suspend fun setupFallbackSdk(
+    module: Module,
+  ): Boolean {
+    val fallback = PyCondaSdkCustomizer.instance.fallbackConfigurator
+    if (fallback == null) {
+      return false
+    }
+    fallback.createAndAddSdkForConfigurator(module)
+    return true
   }
 
   private suspend fun searchPreviousUsed(

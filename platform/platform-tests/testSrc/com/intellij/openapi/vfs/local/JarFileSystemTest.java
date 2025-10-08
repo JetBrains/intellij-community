@@ -204,15 +204,6 @@ public class JarFileSystemTest extends BareTestFixtureTestCase {
   }
 
   @Test
-  @SuppressWarnings("removal")
-  public void testJarHandlerDoNotCreateCopyWhenListingArchive() {
-    var jar = IoTestUtil.createTestJar(tempDir.newFile("test.jar"));
-    var fs = (JarFileSystemImpl)JarFileSystem.getInstance();
-    fs.setNoCopyJarForPath(jar.getPath());
-    assertFalse(fs.isMakeCopyOfJar(jar));
-  }
-
-  @Test
   public void testNonConformantZipTolerance() {
     var zip = createJar(
       "/", "w/../W",                      // entries to be ignored

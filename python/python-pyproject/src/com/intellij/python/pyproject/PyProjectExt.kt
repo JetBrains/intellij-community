@@ -85,7 +85,7 @@ inline fun <reified T> TomlTable.safeGet(key: String): Result<T?, TomlTableSafeG
  * ```
  */
 @Internal
-inline fun <reified T> TomlTable.safeGetRequired(key: String): Result<T, TomlTableSafeGetError> =
+internal inline fun <reified T> TomlTable.safeGetRequired(key: String): Result<T, TomlTableSafeGetError> =
   safeGet<T>(key).mapResult {
     if (it == null) {
       failure(TomlTableSafeGetError.RequiredValueMissing(key))

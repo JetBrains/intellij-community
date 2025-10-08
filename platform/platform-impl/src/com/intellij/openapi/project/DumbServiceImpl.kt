@@ -1,10 +1,7 @@
 // Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.project
 
-import com.intellij.icons.AllIcons
-import com.intellij.ide.IdeBundle
 import com.intellij.openapi.Disposable
-import com.intellij.openapi.actionSystem.AnActionEvent
 import com.intellij.openapi.application.*
 import com.intellij.openapi.application.impl.ApplicationImpl
 import com.intellij.openapi.components.service
@@ -34,7 +31,6 @@ import com.intellij.util.application
 import com.intellij.util.concurrency.ThreadingAssertions
 import com.intellij.util.concurrency.annotations.RequiresBlockingContext
 import com.intellij.util.indexing.IndexingBundle
-import com.intellij.util.ui.DeprecationStripePanel
 import com.intellij.util.ui.EDT
 import com.intellij.util.ui.EdtInvocationManager
 import kotlinx.coroutines.*
@@ -546,29 +542,6 @@ open class DumbServiceImpl @NonInjectable @VisibleForTesting constructor(
       }
     })
     return wrapper
-  }
-
-  override fun wrapWithSpoiler(dumbAwareContent: JComponent, updateRunnable: Runnable, parentDisposable: Disposable): JComponent {
-    //TODO replace with a proper mockup implementation
-    val stripePanel = DeprecationStripePanel(IdeBundle.message("dumb.mode.results.might.be.incomplete"), AllIcons.General.Warning)
-      .withAlternativeAction(IdeBundle.message("dumb.mode.spoiler.wrapper.reload.text"), object : DumbAwareAction() {
-        override fun actionPerformed(e: AnActionEvent) {
-          updateRunnable.run()
-        }
-      })
-    stripePanel.isVisible = isDumb
-    project.messageBus.connect(parentDisposable).subscribe(DUMB_MODE, object : DumbModeListener {
-      override fun enteredDumbMode() {
-        stripePanel.isVisible = true
-        updateRunnable.run()
-      }
-
-      override fun exitDumbMode() {
-        stripePanel.isVisible = false
-        updateRunnable.run()
-      }
-    })
-    return stripePanel.wrap(dumbAwareContent)
   }
 
   override fun smartInvokeLater(runnable: Runnable) {

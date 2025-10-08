@@ -2,12 +2,12 @@
 package org.jetbrains.plugins.github.util
 
 import com.github.benmanes.caffeine.cache.Caffeine
+import com.intellij.collaboration.async.childScope
 import com.intellij.collaboration.async.nestedDisposable
 import com.intellij.openapi.components.Service
 import com.intellij.openapi.components.service
 import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.util.LowMemoryWatcher
-import com.intellij.platform.util.coroutines.childScope
 import com.intellij.util.ImageLoader
 import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.CoroutineScope
@@ -26,7 +26,7 @@ import java.util.concurrent.CompletableFuture
 
 @Service
 class CachingGHUserAvatarLoader internal constructor(serviceCs: CoroutineScope) {
-  private val cs = serviceCs.childScope()
+  private val cs = serviceCs.childScope(this::class)
 
   private val avatarCache = Caffeine.newBuilder()
     .expireAfterAccess(Duration.of(5, ChronoUnit.MINUTES))

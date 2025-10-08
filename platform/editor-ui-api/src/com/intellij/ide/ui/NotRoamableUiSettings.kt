@@ -9,6 +9,7 @@ import com.intellij.util.xmlb.annotations.OptionTag
 import com.intellij.util.xmlb.annotations.Property
 import org.jetbrains.annotations.ApiStatus.Internal
 import java.awt.Font
+import javax.swing.SwingUtilities
 
 @State(name = NotRoamableUiSettings.COMPONENT_NAME,
        category = SettingsCategory.UI,
@@ -101,7 +102,9 @@ class NotRoamableUiSettings @Internal constructor(): SerializablePersistentState
 
     fixFontSettings()
     if (initialConfigurationLoaded) {
-      UISettings.getInstance().fireUISettingsChanged()
+      SwingUtilities.invokeLater {
+        UISettings.getInstance().fireUISettingsChanged()
+      }
     }
     initialConfigurationLoaded = true
   }

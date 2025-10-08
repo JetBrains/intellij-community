@@ -1,4 +1,4 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.platform.util.io.storages.blobstorage;
 
 import com.intellij.openapi.util.IntRef;
@@ -391,7 +391,8 @@ public abstract class StreamlinedBlobStorageHelper implements StreamlinedBlobSto
 
   protected void checkRecordIdExists(int recordId) throws IllegalArgumentException, IOException {
     if (!isExistingRecordId(recordId)) {
-      throw new IllegalArgumentException("recordId(" + recordId + ") is not valid: allocated ids are in (0, " + nextRecordId() + ")");
+      throw new IllegalArgumentException("recordId(" + recordId + ") is not valid: allocated ids are in (0, " + nextRecordId() + "), " +
+                                         "(wasClosedProperly: " + wasClosedProperly() + ")");
     }
   }
 
@@ -399,12 +400,14 @@ public abstract class StreamlinedBlobStorageHelper implements StreamlinedBlobSto
                                    int currentRecordId,
                                    int redirectToId) throws IOException {
     if (redirectToId == NULL_ID) { //!actual && redirectTo = NULL
-      throw new RecordAlreadyDeletedException("Can't access record[" + startingRecordId + "/" + currentRecordId + "]: it was deleted");
+      throw new RecordAlreadyDeletedException("Can't access record[" + startingRecordId + "/" + currentRecordId + "]: it was deleted " +
+                                              "(wasClosedProperly: " + wasClosedProperly() + ")");
     }
     if (!isExistingRecordId(redirectToId)) {
       throw new CorruptedException(
         "record(" + startingRecordId + "/" + currentRecordId + ").redirectToId(=" + redirectToId + ") is not exist: " +
-        "allocated ids are in (0, " + nextRecordId() + ")");
+        "allocated ids are in (0, " + nextRecordId() + "), "+
+        "(wasClosedProperly: " + wasClosedProperly() + ")");
     }
   }
 

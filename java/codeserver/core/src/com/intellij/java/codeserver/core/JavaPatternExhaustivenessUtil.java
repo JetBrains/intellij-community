@@ -270,22 +270,19 @@ public final class JavaPatternExhaustivenessUtil {
         List<? extends PatternDescriptor> patternDescriptions = basePattern.list();
         for (int i = 0; i < patternDescriptions.size(); i++) {
           PatternDescriptor baseDescription = patternDescriptions.get(i);
-          if (!(baseDescription instanceof PatternTypeTestDescriptor baseTypeDescription)) continue;
-          if (baseTypeDescription.psiClass == null) continue;
-          if (!JavaPsiSealedUtil.isAbstractSealed(baseTypeDescription.psiClass)) continue;
+          if (!(baseDescription instanceof PatternTypeTestDescriptor(PsiType baseType, PsiClass baseClass))) continue;
+          if (baseClass == null) continue;
+          if (!JavaPsiSealedUtil.isAbstractSealed(baseClass)) continue;
           for (PatternDeconstructionDescriptor comparedPattern : deconstructionExistedPatternWithTheSameType) {
             if (comparedPattern == basePattern) continue;
             if (!comparedPattern.type().equals(basePattern.type())) continue;
             if (comparedPattern.list().size() != patternDescriptions.size()) continue;
             PatternDescriptor comparedDescription = comparedPattern.list().get(i);
-            if (!(comparedDescription instanceof PatternTypeTestDescriptor comparedTypeDescription)) continue;
-            if (comparedTypeDescription.psiClass == null) continue;
-            if (baseTypeDescription.psiClass.getManager()
-              .areElementsEquivalent(baseTypeDescription.psiClass, comparedTypeDescription.psiClass)) {
-              continue;
-            }
-            if (!baseTypeDescription.type.isAssignableFrom(comparedTypeDescription.type)) continue;
-            if (!isDirectSealedPath(comparedTypeDescription.psiClass, baseTypeDescription.psiClass, cache, new HashSet<>())) {
+            if (!(comparedDescription instanceof PatternTypeTestDescriptor(PsiType cmpType, PsiClass cmpClass))) continue;
+            if (cmpClass == null) continue;
+            if (baseClass.getManager().areElementsEquivalent(baseClass, cmpClass)) continue;
+            if (!baseType.isAssignableFrom(cmpType)) continue;
+            if (!isDirectSealedPath(cmpClass, baseClass, cache, new HashSet<>())) {
               continue;
             }
             result.addAll(createPatternsFrom(i, Set.of(comparedDescription), basePattern));
@@ -638,7 +635,7 @@ public final class JavaPatternExhaustivenessUtil {
       ClassWithDependencies peeked = nonVisited.peek();
       if (!visited.add(peeked)) continue;
       PsiClass psiClass = peeked.mainClass;
-      PsiClass selectorClass = peeked.dependencies.get(peeked.dependencies.size() - 1);
+      PsiClass selectorClass = peeked.dependencies.getLast();
       PsiElementFactory factory = JavaPsiFacade.getElementFactory(psiClass.getProject());
       if (sealedUpperClasses.contains(psiClass) ||
           //used to generate missed classes when the switch is empty
@@ -786,7 +783,7 @@ public final class JavaPatternExhaustivenessUtil {
   /**
    * Pattern descriptor
    */
-  sealed private interface PatternDescriptor permits PatternDeconstructionDescriptor, PatternTypeTestDescriptor {
+  private sealed interface PatternDescriptor permits PatternDeconstructionDescriptor, PatternTypeTestDescriptor {
     @NotNull
     PsiType type();
   }

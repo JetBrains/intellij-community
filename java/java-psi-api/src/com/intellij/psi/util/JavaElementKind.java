@@ -16,6 +16,7 @@ public enum JavaElementKind {
   ABSTRACT_METHOD("element.abstract_method"),
   ANNOTATION("element.annotation"),
   ANONYMOUS_CLASS("element.anonymous_class"),
+  CATCH_PARAMETER("element.catch_parameter"),
   CLASS("element.class"),
   CONSTANT("element.constant"),
   CONSTRUCTOR("element.constructor"),
@@ -24,9 +25,11 @@ public enum JavaElementKind {
   EXPRESSION("element.expression"),
   EXTENDS_LIST("element.extends.list"),
   FIELD("element.field"),
+  FOR_PARAMETER("element.for_parameter"),
   INITIALIZER("element.initializer"),
   INTERFACE("element.interface"),
   LABEL("element.label"),
+  LAMBDA_PARAMETER("element.lambda_parameter"),
   LOCAL_VARIABLE("element.local_variable"),
   METHOD("element.method"),
   METHOD_CALL("element.method.call"),
@@ -86,6 +89,10 @@ public enum JavaElementKind {
       case TYPE_PARAMETER:
       case ANONYMOUS_CLASS:
         return CLASS;
+      case LAMBDA_PARAMETER:
+      case CATCH_PARAMETER:
+      case FOR_PARAMETER:
+        return PARAMETER;
       default:
         return this;
     }
@@ -171,6 +178,16 @@ public enum JavaElementKind {
       return PATTERN_VARIABLE;
     }
     if (element instanceof PsiParameter) {
+      PsiElement scope = ((PsiParameter)element).getDeclarationScope();
+      if (scope instanceof PsiForeachStatement) {
+        return FOR_PARAMETER;
+      }
+      if (scope instanceof PsiLambdaExpression) {
+        return LAMBDA_PARAMETER;
+      }
+      if (scope instanceof PsiCatchSection) {
+        return CATCH_PARAMETER;
+      }
       return PARAMETER;
     }
     if (element instanceof PsiReceiverParameter) {

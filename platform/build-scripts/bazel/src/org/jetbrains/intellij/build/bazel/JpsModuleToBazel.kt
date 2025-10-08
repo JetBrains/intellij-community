@@ -81,7 +81,7 @@ internal class JpsModuleToBazel {
         urlCache = urlCache,
         customModules = if (defaultCustomModules.toBooleanStrict()) DEFAULT_CUSTOM_MODULES else emptyMap(),
       )
-      val moduleList = generator.computeModuleList()
+      val moduleList = generator.computeModuleList(Path.of(m2Repo))
       // first, generate community to collect libs, that used by community (to separate community and ultimate libs)
       val communityResult = generator.generateModuleBuildFiles(moduleList, isCommunity = true)
       val ultimateResult = generator.generateModuleBuildFiles(moduleList, isCommunity = false)

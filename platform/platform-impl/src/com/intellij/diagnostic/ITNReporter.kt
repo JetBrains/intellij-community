@@ -46,6 +46,7 @@ open class ITNReporter internal constructor(private val postUrl: String) : Error
   override fun getPrivacyNoticeText(): String =
     DiagnosticBundle.message("error.dialog.notice.anonymous")
 
+  @ApiStatus.OverrideOnly
   override fun submit(
     events: Array<IdeaLoggingEvent>,
     additionalInfo: String?,

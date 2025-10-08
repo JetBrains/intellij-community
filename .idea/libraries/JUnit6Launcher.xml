@@ -1,0 +1,33 @@
+<component name="libraryTable">
+  <library name="JUnit6Launcher" type="repository">
+    <properties maven-id="org.junit.platform:junit-platform-launcher:6.0.0-RC2">
+      <verification>
+        <artifact url="file://$MAVEN_REPOSITORY$/org/junit/platform/junit-platform-launcher/6.0.0-RC2/junit-platform-launcher-6.0.0-RC2.jar">
+          <sha256sum>3c41ec667a185ec0b51ca8d9d68e5f0e425d6645c6e4eb64b8a81716a4deaed1</sha256sum>
+        </artifact>
+        <artifact url="file://$MAVEN_REPOSITORY$/org/junit/platform/junit-platform-engine/6.0.0-RC2/junit-platform-engine-6.0.0-RC2.jar">
+          <sha256sum>8f5e8cb552c311d4a236334975a5ff9ec4db5f64e84151d01500f31fa19edfba</sha256sum>
+        </artifact>
+        <artifact url="file://$MAVEN_REPOSITORY$/org/jspecify/jspecify/1.0.0/jspecify-1.0.0.jar">
+          <sha256sum>1fad6e6be7557781e4d33729d49ae1cdc8fdda6fe477bb0cc68ce351eafdfbab</sha256sum>
+        </artifact>
+      </verification>
+      <exclude>
+        <dependency maven-id="org.apiguardian:apiguardian-api" />
+        <dependency maven-id="org.opentest4j:opentest4j" />
+        <dependency maven-id="org.junit.platform:junit-platform-commons" />
+      </exclude>
+    </properties>
+    <CLASSES>
+      <root url="jar://$MAVEN_REPOSITORY$/org/junit/platform/junit-platform-launcher/6.0.0-RC2/junit-platform-launcher-6.0.0-RC2.jar!/" />
+      <root url="jar://$MAVEN_REPOSITORY$/org/junit/platform/junit-platform-engine/6.0.0-RC2/junit-platform-engine-6.0.0-RC2.jar!/" />
+      <root url="jar://$MAVEN_REPOSITORY$/org/jspecify/jspecify/1.0.0/jspecify-1.0.0.jar!/" />
+    </CLASSES>
+    <JAVADOC />
+    <SOURCES>
+      <root url="jar://$MAVEN_REPOSITORY$/org/junit/platform/junit-platform-launcher/6.0.0-RC2/junit-platform-launcher-6.0.0-RC2-sources.jar!/" />
+      <root url="jar://$MAVEN_REPOSITORY$/org/junit/platform/junit-platform-engine/6.0.0-RC2/junit-platform-engine-6.0.0-RC2-sources.jar!/" />
+      <root url="jar://$MAVEN_REPOSITORY$/org/jspecify/jspecify/1.0.0/jspecify-1.0.0-sources.jar!/" />
+    </SOURCES>
+  </library>
+</component>

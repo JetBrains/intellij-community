@@ -125,7 +125,7 @@ public class JUnitConfigurationTest extends JUnitConfigurationTestCase {
 
     PsiMethod mainMethod = innerTest.findMethodsByName("main", false)[0];
     ApplicationConfiguration appConfiguration = createConfiguration(mainMethod);
-    assertEquals(RT_INNER_TEST_NAME, appConfiguration.getMainClassName());
+    assertEquals(INNER_TEST_NAME, appConfiguration.getMainClassName());
     checkCanRun(configuration);
   }
 
@@ -445,7 +445,7 @@ public class JUnitConfigurationTest extends JUnitConfigurationTestCase {
     PsiClass psiClass = findClass(getModule1(), "test2.NotATest.InnerApplication");
     assertNotNull(psiClass);
     ApplicationConfiguration configuration = createConfiguration(psiClass);
-    assertEquals("test2.NotATest$InnerApplication", configuration.getMainClassName());
+    assertEquals("test2.NotATest.InnerApplication", configuration.getMainClassName());
     checkCanRun(configuration);
   }
 
@@ -483,6 +483,7 @@ public class JUnitConfigurationTest extends JUnitConfigurationTestCase {
   }
 
   public void testRunThirdPartyApplication() throws ExecutionException {
+    assertNotNull(findClass(getModule1(), "third.party.Main"));
     ApplicationConfiguration configuration = new ApplicationConfiguration("Third party", myProject);
     configuration.setModule(getModule1());
     configuration.setMainClassName("third.party.Main");

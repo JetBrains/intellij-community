@@ -94,7 +94,7 @@ public abstract class ChangeListManager implements ChangeListModification {
    * @deprecated Use {@link #getChangeLists()} instead.
    */
   @Deprecated
-  public @NotNull List<LocalChangeList> getChangeListsCopy() {
+  public @NotNull @Unmodifiable List<LocalChangeList> getChangeListsCopy() {
     return getChangeLists();
   }
 
@@ -118,9 +118,9 @@ public abstract class ChangeListManager implements ChangeListModification {
   /**
    * @return all files that belong to some changelist (have an associated {@link Change}).
    */
-  public abstract @NotNull List<File> getAffectedPaths();
+  public abstract @NotNull @Unmodifiable List<File> getAffectedPaths();
 
-  public abstract @NotNull List<VirtualFile> getAffectedFiles();
+  public abstract @NotNull @Unmodifiable List<VirtualFile> getAffectedFiles();
 
   /**
    * @return if a file belongs to some changelist
@@ -138,9 +138,9 @@ public abstract class ChangeListManager implements ChangeListModification {
   public abstract @Nullable LocalChangeList getChangeList(@Nullable @NonNls String id);
 
 
-  public abstract @NotNull List<LocalChangeList> getChangeLists(@NotNull Change change);
+  public abstract @NotNull @Unmodifiable List<LocalChangeList> getChangeLists(@NotNull Change change);
 
-  public abstract @NotNull List<LocalChangeList> getChangeLists(@NotNull VirtualFile file);
+  public abstract @NotNull @Unmodifiable List<LocalChangeList> getChangeLists(@NotNull VirtualFile file);
 
   public abstract @Nullable LocalChangeList getChangeList(@NotNull Change change);
 
@@ -169,13 +169,13 @@ public abstract class ChangeListManager implements ChangeListModification {
    * @return All the changes under a given path (inc. from other VCS roots)
    * @see com.intellij.vcsUtil.VcsImplUtil#filterChangesUnderFiles
    */
-  public abstract @NotNull Collection<Change> getChangesIn(@NotNull VirtualFile dir);
+  public abstract @NotNull @Unmodifiable Collection<Change> getChangesIn(@NotNull VirtualFile dir);
 
   /**
    * @return All the changes under a given path (inc. from other VCS roots)
    * @see com.intellij.vcsUtil.VcsImplUtil#filterChangesUnder
    */
-  public abstract @NotNull Collection<Change> getChangesIn(@NotNull FilePath path);
+  public abstract @NotNull @Unmodifiable Collection<Change> getChangesIn(@NotNull FilePath path);
 
   /**
    * Check if a directory has modified children in {@link #getAllChanges().
@@ -206,9 +206,9 @@ public abstract class ChangeListManager implements ChangeListModification {
   @Deprecated(forRemoval = true)
   public abstract void registerCommitExecutor(@NotNull CommitExecutor executor);
 
-  public abstract @NotNull List<CommitExecutor> getRegisteredExecutors();
+  public abstract @NotNull @Unmodifiable List<CommitExecutor> getRegisteredExecutors();
 
-  public abstract void commitChanges(@NotNull LocalChangeList changeList, @NotNull List<? extends Change> changes);
+  public abstract void commitChanges(@NotNull LocalChangeList changeList, @NotNull @Unmodifiable List<? extends Change> changes);
 
 
   public abstract void scheduleAutomaticEmptyChangeListDeletion(@NotNull LocalChangeList list);
@@ -251,7 +251,7 @@ public abstract class ChangeListManager implements ChangeListModification {
    *
    * @see FileStatus#HIJACKED
    */
-  public abstract @NotNull List<VirtualFile> getModifiedWithoutEditing();
+  public abstract @NotNull @Unmodifiable List<VirtualFile> getModifiedWithoutEditing();
 
   /**
    * Files that were checked-out from another branch, different from the rest of the repository (ex: in Subversion).
@@ -276,5 +276,5 @@ public abstract class ChangeListManager implements ChangeListModification {
   public abstract boolean isFreezedWithNotification(@NlsContexts.DialogTitle @Nullable String modalTitle);
 
   @Deprecated(forRemoval = true)
-  public abstract void reopenFiles(@NotNull List<? extends FilePath> paths);
+  public abstract void reopenFiles(@NotNull @Unmodifiable List<? extends FilePath> paths);
 }

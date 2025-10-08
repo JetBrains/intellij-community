@@ -263,14 +263,23 @@ com.intellij.codeInspection.RefactoringQuickFix
 com.intellij.codeInspection.ui.StringValidatorWithSwingSelector
 - com.intellij.codeInspection.options.StringValidator
 - a:select(com.intellij.openapi.project.Project):java.lang.String
+com.intellij.execution.dashboard.RunDashboardCustomizationBuilder
+- a:addLink(java.lang.String,java.lang.Runnable):com.intellij.execution.dashboard.RunDashboardCustomizationBuilder
+- a:addText(java.lang.String,com.intellij.ui.SimpleTextAttributes):com.intellij.execution.dashboard.RunDashboardCustomizationBuilder
+- a:setClearText():com.intellij.execution.dashboard.RunDashboardCustomizationBuilder
+- a:setIcon(javax.swing.Icon):com.intellij.execution.dashboard.RunDashboardCustomizationBuilder
+a:com.intellij.execution.dashboard.RunDashboardCustomizer
+- sf:CUSTOMIZER_EP_NAME:com.intellij.openapi.extensions.ExtensionPointName
+- getPsiElement(com.intellij.execution.configurations.RunConfiguration):com.intellij.psi.PsiElement
+- updatePresentation(com.intellij.execution.dashboard.RunDashboardCustomizationBuilder,com.intellij.execution.RunnerAndConfigurationSettings,com.intellij.execution.ui.RunContentDescriptor):Z
 com.intellij.execution.dashboard.RunDashboardDefaultTypesProvider
 - a:getDefaultTypeIds(com.intellij.openapi.project.Project):java.util.Collection
 com.intellij.execution.dashboard.RunDashboardRunConfigurationNode
-- com.intellij.execution.dashboard.RunDashboardNode
-- com.intellij.openapi.util.UserDataHolder
 - a:getConfigurationSettings():com.intellij.execution.RunnerAndConfigurationSettings
-- a:getCustomizers():java.util.List
-- a:getStatus():com.intellij.execution.dashboard.RunDashboardRunConfigurationStatus
+- a:getContent():com.intellij.ui.content.Content
+- a:getDescriptor():com.intellij.execution.ui.RunContentDescriptor
+c:com.intellij.execution.dashboard.RunDashboardRunConfigurationStatus
+- s:getStatus(com.intellij.execution.ui.RunContentDescriptor):com.intellij.execution.dashboard.RunDashboardRunConfigurationStatus
 com.intellij.execution.filters.ConsoleFilterProvider
 - sf:FILTER_PROVIDERS:com.intellij.openapi.extensions.ExtensionPointName
 - a:getDefaultFilters(com.intellij.openapi.project.Project):com.intellij.execution.filters.Filter[]
@@ -349,6 +358,30 @@ com.intellij.execution.testframework.PoolOfTestIcons
 - sf:SKIPPED_ICON:javax.swing.Icon
 - sf:TEAR_DOWN_FAILURE:javax.swing.Icon
 - sf:TERMINATED_ICON:javax.swing.Icon
+f:com.intellij.execution.util.EnvVariables
+- sf:Companion:com.intellij.execution.util.EnvVariables$Companion
+- <init>():V
+- <init>(java.util.Map,java.util.List):V
+- b:<init>(java.util.Map,java.util.List,I,kotlin.jvm.internal.DefaultConstructorMarker):V
+- f:component1():java.util.Map
+- f:component2():java.util.List
+- f:copy(java.util.Map,java.util.List):com.intellij.execution.util.EnvVariables
+- bs:copy$default(com.intellij.execution.util.EnvVariables,java.util.Map,java.util.List,I,java.lang.Object):com.intellij.execution.util.EnvVariables
+- equals(java.lang.Object):Z
+- f:getEnvFiles():java.util.List
+- f:getEnvs():java.util.Map
+- hashCode():I
+- sf:parseFromText(java.lang.String):com.intellij.execution.util.EnvVariables
+f:com.intellij.execution.util.EnvVariables$Companion
+- f:parseFromText(java.lang.String):com.intellij.execution.util.EnvVariables
+c:com.intellij.execution.util.EnvVariablesTable
+- sf:Companion:com.intellij.execution.util.EnvVariablesTable$Companion
+- f:editVariableName(com.intellij.execution.util.EnvironmentVariable):V
+- f:getEnvironmentVariables():java.util.List
+- sf:parseEnvsFromText(java.lang.String):java.util.Map
+- f:setPasteActionEnabled(Z):V
+f:com.intellij.execution.util.EnvVariablesTable$Companion
+- f:parseEnvsFromText(java.lang.String):java.util.Map
 com.intellij.facet.FacetRootsProvider
 - a:getFacetRoots():java.util.Collection
 com.intellij.facet.ProjectFacetListener
@@ -920,6 +953,16 @@ com.intellij.task.ProjectModelBuildTask
 - a:getBuildableElement():com.intellij.openapi.roots.ProjectModelBuildableElement
 com.intellij.task.ProjectTask
 - a:getPresentableName():java.lang.String
+c:com.intellij.task.ProjectTaskContext
+- <init>(java.lang.Object,com.intellij.execution.configurations.RunConfiguration,Z,com.intellij.openapi.actionSystem.DataContext):V
+- b:<init>(java.lang.Object,com.intellij.execution.configurations.RunConfiguration,Z,com.intellij.openapi.actionSystem.DataContext,I,kotlin.jvm.internal.DefaultConstructorMarker):V
+- f:getDataContext():com.intellij.openapi.actionSystem.DataContext
+- f:getDirtyOutputPaths():java.util.Optional
+- f:getRunConfiguration():com.intellij.execution.configurations.RunConfiguration
+- f:getSessionId():java.lang.Object
+- f:isAutoRun():Z
+- f:setCollectionOfGeneratedFilesEnabled(Z):V
+- f:withUserData(com.intellij.openapi.util.Key,java.lang.Object):com.intellij.task.ProjectTaskContext
 com.intellij.task.ProjectTaskListener
 - sf:TOPIC:com.intellij.util.messages.Topic
 - finished(com.intellij.task.ProjectTaskManager$Result):V

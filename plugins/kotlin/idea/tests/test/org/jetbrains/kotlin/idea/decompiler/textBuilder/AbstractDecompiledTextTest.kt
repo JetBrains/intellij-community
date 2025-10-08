@@ -41,7 +41,7 @@ abstract class AbstractDecompiledTextTest(baseDirectory: String) : AbstractDecom
         val stubTreeFromDecompiledText = KtFileStubBuilder().buildStubTree(decompiledFile)
         val expectedText = stubTreeFromDecompiledText.serializeToString()
 
-        val fileStub = KotlinClsStubBuilder().buildFileStub(FileContentImpl.createByFile(file))!!
+        val fileStub = KotlinClsStubBuilder.buildFileStub(FileContentImpl.createByFile(file))!!
         val actual = fileStub.serializeToString()
         Assert.assertEquals(expectedText, actual)
     }
@@ -58,7 +58,9 @@ abstract class AbstractJvmDecompiledTextTest : AbstractDecompiledTextTest("/deco
 
 fun findTestLibraryRoot(module: Module): VirtualFile? {
     for (orderEntry in ModuleRootManager.getInstance(module).orderEntries) {
-        if (orderEntry is LibraryOrderEntry && orderEntry.libraryName?.startsWith("org.jetbrains:annotations") != true) {
+        if (orderEntry is LibraryOrderEntry &&
+            orderEntry.libraryName?.startsWith("@kotlin_test_deps//:annotations") != true &&
+            orderEntry.libraryName?.startsWith("org.jetbrains:annotations") != true) {
             return orderEntry.getRootFiles(OrderRootType.CLASSES)[0]
         }
     }

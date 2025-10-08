@@ -37,7 +37,6 @@ import java.util.function.Predicate;
  */
 @ApiStatus.Internal
 public class SelectExternalSystemNodeDialog extends DialogWrapper {
-
   private final @NotNull SimpleTree myTree;
   private final @Nullable Predicate<? super SimpleNode> mySelector;
   protected @Nullable Boolean groupTasks;
@@ -46,7 +45,7 @@ public class SelectExternalSystemNodeDialog extends DialogWrapper {
   public SelectExternalSystemNodeDialog(@NotNull ProjectSystemId systemId,
                                         @NotNull Project project,
                                         @NotNull @NlsContexts.DialogTitle String title,
-                                        Class<? extends ExternalSystemNode> nodeClass,
+                                        Class<? extends ExternalSystemNode<?>> nodeClass,
                                         @Nullable Predicate<? super SimpleNode> selector) {
     //noinspection unchecked
     this(systemId, project, title, new Class[]{nodeClass}, selector);
@@ -55,7 +54,7 @@ public class SelectExternalSystemNodeDialog extends DialogWrapper {
   public SelectExternalSystemNodeDialog(@NotNull ProjectSystemId systemId,
                                         @NotNull Project project,
                                         @NotNull @NlsContexts.DialogTitle String title,
-                                        final Class<? extends ExternalSystemNode>[] nodeClasses,
+                                        final Class<? extends ExternalSystemNode<?>>[] nodeClasses,
                                         @Nullable Predicate<? super SimpleNode> selector) {
     super(project, false);
     mySelector = selector;
@@ -68,14 +67,13 @@ public class SelectExternalSystemNodeDialog extends DialogWrapper {
     if (projectsView == null) {
       ToolWindow toolWindow = ExternalToolWindowManager.getToolWindow(project, systemId);
       if (toolWindow instanceof ToolWindowEx) {
-        projectsView = new ExternalProjectsViewImpl(project, (ToolWindowEx)toolWindow, systemId);
-        Disposer.register(getDisposable(), (ExternalProjectsViewImpl)projectsView);
+        projectsView = new ExternalProjectsViewImpl(getDisposable(), project, (ToolWindowEx)toolWindow, systemId);
       }
     }
     if(projectsView != null) {
       final ExternalProjectsStructure treeStructure = new ExternalProjectsStructure(project, myTree) {
         @Override
-        protected Class<? extends ExternalSystemNode>[] getVisibleNodesClasses() {
+        protected Class<? extends ExternalSystemNode<?>>[] getVisibleNodesClasses() {
           return nodeClasses;
         }
 
@@ -141,7 +139,7 @@ public class SelectExternalSystemNodeDialog extends DialogWrapper {
     return myTree;
   }
 
-  protected void handleDoubleClickOrEnter(@NotNull ExternalSystemNode node, @Nullable String actionId, InputEvent inputEvent) {
+  protected void handleDoubleClickOrEnter(@NotNull ExternalSystemNode<?> node, @Nullable String actionId, InputEvent inputEvent) {
   }
 
   protected SimpleNode getSelectedNode() {

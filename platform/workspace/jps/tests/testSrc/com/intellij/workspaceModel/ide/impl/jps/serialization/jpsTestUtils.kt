@@ -15,6 +15,10 @@ import com.intellij.openapi.components.impl.ProjectPathMacroManager
 import com.intellij.openapi.components.impl.stores.stateStore
 import com.intellij.openapi.module.impl.UnloadedModulesNameHolderImpl
 import com.intellij.openapi.project.ExternalStorageConfigurationManager
+import com.intellij.openapi.roots.AnnotationOrderRootType
+import com.intellij.openapi.roots.JavadocOrderRootType
+import com.intellij.openapi.roots.OrderRootType
+import com.intellij.openapi.roots.PersistentOrderRootType
 import com.intellij.openapi.util.JDOMUtil
 import com.intellij.openapi.util.io.FileUtil
 import com.intellij.openapi.util.io.systemIndependentPath
@@ -494,4 +498,15 @@ internal fun copyAndLoadGlobalEntities(originalFile: String? = null,
 internal fun unloadedHolder(unloaded: String): UnloadedModulesNameHolder {
   val unloadedModuleNames = StringUtil.split(unloaded, ",").toSet()
   return UnloadedModulesNameHolderImpl(unloadedModuleNames)
+}
+
+internal fun ensureAnnotationAndJavadocOrderRootTypes(disposable: Disposable) {
+  ensurePersistentOrderRootType(disposable) { AnnotationOrderRootType() }
+  ensurePersistentOrderRootType(disposable) { JavadocOrderRootType() }
+}
+
+private inline fun <reified T : PersistentOrderRootType> ensurePersistentOrderRootType(disposable: Disposable, factory: () -> T) {
+  if (OrderRootType.EP_NAME.findExtension(T::class.java) == null) {
+    OrderRootType.EP_NAME.point.registerExtension(factory(), disposable)
+  }
 }

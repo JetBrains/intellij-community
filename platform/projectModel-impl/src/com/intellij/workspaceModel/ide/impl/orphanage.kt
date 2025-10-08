@@ -60,7 +60,7 @@ internal class EntitiesOrphanageImpl(private val project: Project) : EntitiesOrp
     checkIfParentsAlreadyExist(changes, builder)
 
     val newStorage: ImmutableEntityStorage = builder.toSnapshot()
-    entityStorage.replace(newStorage, emptyMap(), emptyMap(), {}, {})
+    entityStorage.replace(newStorage, emptyMap(), emptySet(), {}, {})
 
     log.info("Update orphanage. ${changes[ModuleEntity::class.java]?.size ?: 0} modules added")
   }

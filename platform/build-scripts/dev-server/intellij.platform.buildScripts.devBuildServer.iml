@@ -31,8 +31,8 @@
     <orderEntry type="sourceFolder" forTests="false" />
     <orderEntry type="library" name="kotlin-stdlib" level="project" />
     <orderEntry type="module" module-name="intellij.platform.buildScripts" />
-    <orderEntry type="library" name="kotlinx-serialization-core" level="project" />
-    <orderEntry type="library" name="kotlinx-serialization-json" level="project" />
+    <orderEntry type="module" module-name="intellij.libraries.kotlinx.serialization.core" />
+    <orderEntry type="module" module-name="intellij.libraries.kotlinx.serialization.json" />
     <orderEntry type="module" module-name="intellij.idea.community.build.tasks" />
     <orderEntry type="library" name="slf4j-api" level="project" />
     <orderEntry type="module" module-name="intellij.platform.util" />
@@ -46,9 +46,9 @@
     <orderEntry type="module" module-name="intellij.platform.boot" />
     <orderEntry type="module" module-name="intellij.platform.util.classLoader" />
     <orderEntry type="module" module-name="intellij.platform.util.rt.java8" />
-    <orderEntry type="library" scope="RUNTIME" name="xz" level="project" />
-    <orderEntry type="library" name="fastutil-min" level="project" />
-    <orderEntry type="library" name="hash4j" level="project" />
+    <orderEntry type="module" module-name="intellij.libraries.xz" scope="RUNTIME" />
+    <orderEntry type="module" module-name="intellij.libraries.fastutil" />
+    <orderEntry type="module" module-name="intellij.libraries.hash4j" />
     <orderEntry type="module" module-name="intellij.platform.diagnostic.telemetry.exporters" />
     <orderEntry type="module" module-name="intellij.platform.util.coroutines" />
     <orderEntry type="module" module-name="intellij.platform.util.zip" />

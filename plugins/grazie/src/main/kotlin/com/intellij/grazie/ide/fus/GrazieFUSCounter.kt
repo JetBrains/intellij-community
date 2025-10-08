@@ -24,10 +24,10 @@ private val actionInfo = listOf("rule.settings:canceled",
                                 "rule.settings:changes:domains",
                                 "rule.settings:changes:unclassified")
 
-private val GROUP = EventLogGroup("grazie.count", 10)
+private val GROUP = EventLogGroup("grazie.count", 11)
 
 private val LANGUAGE_FIELD = EventFields.Enum<Language>("language") { it.iso.name.lowercase() }
-private val RULE_FIELD = EventFields.StringValidatedByEnum("id", "grazie_rule_long_ids")
+private val RULE_FIELD = EventFields.StringValidatedByDictionary("id", "grazie_rule_long_ids.ndjson")
 private val FIXES_FIELD = EventFields.Int("fixes")
 private val ACTION_INFO_FIELD = EventFields.String("info", actionInfo)
 private val DOMAIN_FIELD = EventFields.Enum<TextContext>("domain")
@@ -148,7 +148,7 @@ private val translateReplaced = GROUP.registerVarargEvent(
 )
 
 private object RuleIdFields {
-  val RULE_FIELD = EventFields.StringValidatedByEnum("id", "grazie_rule_long_ids")
+  val RULE_FIELD = EventFields.StringValidatedByDictionary("id", "grazie_rule_long_ids.ndjson")
   val DOMAIN_FIELD = EventFields.Enum<TextContext>("domain")
   val TEXT_LANGUAGE_FIELD = EventFields.Enum<Language>("natural_language")
 }

@@ -174,7 +174,7 @@ class GradleBuildRootsLocatorImpl(val project: Project, private val coroutineSco
 
                 // this required only for "pause" state
                 PsiManager.getInstance(project).findFile(it)?.let { ktFile ->
-                  DaemonCodeAnalyzer.getInstance(project).restart(ktFile)
+                  DaemonCodeAnalyzer.getInstance(project).restart(ktFile, this)
                 }
 
               }

@@ -34,6 +34,7 @@ jvm_library(
     "//plugins/kotlin/refactorings/kotlin.refactorings.common:kotlin-refactorings-common",
     "//platform/lang-impl",
     "//uast/uast-common-ide:ide",
+    "//java/java-impl:impl",
   ]
 )
 ### auto-generated section `build kotlin.uast.uast-kotlin-idea` end

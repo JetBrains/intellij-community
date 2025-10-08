@@ -34,12 +34,9 @@ class NlsTypeUse {
         cons.accept(<warning descr="Hardcoded string literal: \"foo\"">"foo"</warning>, "bar");
     }
 
-    void typeArgsCustomType(NlsValueMap<String> map, NlsValueMap2<String, String> map2) {
+    void typeArgsCustomType(NlsValueMap<String> map) {
         map.put("foo", <warning descr="Hardcoded string literal: \"bar\"">"bar"</warning>);
-        map2.put("foo", <warning descr="Hardcoded string literal: \"bar\"">"bar"</warning>);
     }
 
     interface NlsValueMap<K> extends Map<K, @Nls String> {}
-
-    interface NlsValueMap2<K, V> extends Map<K, @Nls V> {}
 }

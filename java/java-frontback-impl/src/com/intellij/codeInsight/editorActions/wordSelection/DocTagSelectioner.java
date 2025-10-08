@@ -44,9 +44,7 @@ public final class DocTagSelectioner extends WordSelectioner {
 
     List<ASTNode> children = BasicJavaAstTreeUtil.getChildren(node);
 
-    for (int i = children.size() - 1; i >= 0; i--) {
-      ASTNode child = children.get(i);
-
+    for (ASTNode child : children.reversed()) {
       int childStartOffset = child.getTextRange().getStartOffset();
 
       if (childStartOffset <= minOffset) {

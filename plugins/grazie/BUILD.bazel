@@ -1,9 +1,9 @@
 ### auto-generated section `build intellij.grazie` start
-load("@rules_jvm//:jvm.bzl", "jvm_library", "jvm_resources")
+load("@rules_jvm//:jvm.bzl", "jvm_library", "resourcegroup")
 
-jvm_resources(
+resourcegroup(
   name = "grazie_resources",
-  files = glob(["resources/**/*"]),
+  srcs = glob(["resources/**/*"]),
   strip_prefix = "resources"
 )
 
@@ -11,9 +11,9 @@ jvm_library(
   name = "grazie",
   visibility = ["//visibility:public"],
   srcs = glob([], allow_empty = True),
+  resources = [":grazie_resources"],
   exports = ["//plugins/grazie/src:core"],
   runtime_deps = [
-    ":grazie_resources",
     "//plugins/grazie/src:core",
     "//plugins/grazie/java",
     "//plugins/grazie/json",

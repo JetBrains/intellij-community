@@ -1,4 +1,4 @@
-<idea-plugin package="com.intellij.platform.searchEverywhere">
+<idea-plugin visibility="internal" package="com.intellij.platform.searchEverywhere">
   <dependencies>
     <module name="intellij.platform.scopes"/>
   </dependencies>
@@ -10,5 +10,8 @@
 
   <extensions defaultExtensionNs="com.intellij">
     <platform.entityTypes implementation="com.intellij.platform.searchEverywhere.SeEntityTypeProvider"/>
+    <remote.customDataContextSerializer implementation="com.intellij.platform.searchEverywhere.data.SeSelectedItemsDataContextSerializer" />
+    <remote.customDataContextSerializer implementation="com.intellij.platform.searchEverywhere.data.SeSessionDataContextSerializer" />
+    <remote.customDataContextSerializer implementation="com.intellij.platform.searchEverywhere.data.SeIsAllTabDataContextSerializer" />
   </extensions>
 </idea-plugin>

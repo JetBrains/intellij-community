@@ -23,17 +23,8 @@ import com.siyeh.ig.psiutils.SerializationUtils
 import org.jetbrains.kotlin.analysis.api.KaExperimentalApi
 import org.jetbrains.kotlin.analysis.api.KaSession
 import org.jetbrains.kotlin.analysis.api.analyze
-import org.jetbrains.kotlin.analysis.api.components.containingDeclaration
-import org.jetbrains.kotlin.analysis.api.components.expandedSymbol
-import org.jetbrains.kotlin.analysis.api.components.importableFqName
-import org.jetbrains.kotlin.analysis.api.components.resolveToCall
-import org.jetbrains.kotlin.analysis.api.components.resolveToSymbol
-import org.jetbrains.kotlin.analysis.api.components.resolveToSymbols
-import org.jetbrains.kotlin.analysis.api.resolution.singleConstructorCallOrNull
-import org.jetbrains.kotlin.analysis.api.resolution.singleFunctionCallOrNull
-import org.jetbrains.kotlin.analysis.api.resolution.successfulFunctionCallOrNull
-import org.jetbrains.kotlin.analysis.api.resolution.successfulVariableAccessCall
-import org.jetbrains.kotlin.analysis.api.resolution.symbol
+import org.jetbrains.kotlin.analysis.api.components.*
+import org.jetbrains.kotlin.analysis.api.resolution.*
 import org.jetbrains.kotlin.analysis.api.symbols.*
 import org.jetbrains.kotlin.asJava.LightClassUtil
 import org.jetbrains.kotlin.asJava.classes.KtLightClass
@@ -43,6 +34,7 @@ import org.jetbrains.kotlin.asJava.toLightMethods
 import org.jetbrains.kotlin.builtins.StandardNames
 import org.jetbrains.kotlin.config.AnalysisFlags
 import org.jetbrains.kotlin.config.ExplicitApiMode
+import org.jetbrains.kotlin.descriptors.annotations.AnnotationUseSiteTarget
 import org.jetbrains.kotlin.idea.base.codeInsight.KotlinMainFunctionDetector
 import org.jetbrains.kotlin.idea.base.codeInsight.isEnumValuesSoftDeprecateEnabled
 import org.jetbrains.kotlin.idea.base.projectStructure.languageVersionSettings
@@ -103,6 +95,9 @@ object K2UnusedSymbolUtil {
                     if (isExpectedOrActual(containingClass)) return false
                 }
             } else if (ownerFunction is KtFunction) {
+                if (ownerFunction.name == null) {
+                    return false
+                }
                 if (ownerFunction.hasModifier(KtTokens.OPERATOR_KEYWORD)) {
                     // operator parameters are hardcoded to be used since they can't be removed at will, because operator convention would break
                     return false
@@ -833,6 +828,19 @@ object K2UnusedSymbolUtil {
                     if (javaFieldPsi != null && isJavaEntryPoint.isEntryPoint(javaFieldPsi)) {
                         return true
                     }
+
+                    // `@get:` or `@set:` behaves like an accessor method with annotation
+                    val getterOrSetterSiteTargetAnnotationPresent = declaration.annotationEntries.any {
+                        val target = it.useSiteTarget?.getAnnotationUseSiteTarget()
+                        target == AnnotationUseSiteTarget.PROPERTY_GETTER || target == AnnotationUseSiteTarget.PROPERTY_SETTER
+                    }
+                    if (getterOrSetterSiteTargetAnnotationPresent) {
+                        val psiMethods = LightClassUtil.getLightClassPropertyMethods(declaration)
+                        if (psiMethods.any { isJavaEntryPoint.isEntryPoint(it) }) {
+                            return true
+                        }
+                    }
+
                 }
                 // can't rely on a light element, check annotation ourselves
                 val entryPointsManager = EntryPointsManager.getInstance(declaration.project) as EntryPointsManagerBase

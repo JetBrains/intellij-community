@@ -1,9 +1,9 @@
 ### auto-generated section `build intellij.dotenv` start
-load("@rules_jvm//:jvm.bzl", "jvm_library", "jvm_resources")
+load("@rules_jvm//:jvm.bzl", "jvm_library", "resourcegroup")
 
-jvm_resources(
+resourcegroup(
   name = "dotenv_resources",
-  files = glob(["src/main/resources/**/*"]),
+  srcs = glob(["src/main/resources/**/*"]),
   strip_prefix = "src/main/resources"
 )
 
@@ -12,6 +12,7 @@ jvm_library(
   module_name = "intellij.dotenv",
   visibility = ["//visibility:public"],
   srcs = glob(["src/main/java/**/*.kt", "src/main/java/**/*.java", "src/main/java/**/*.form", "src/main/gen/**/*.kt", "src/main/gen/**/*.java"], allow_empty = True),
+  resources = [":dotenv_resources"],
   deps = [
     "//platform/analysis-api:analysis",
     "//platform/core-api:core",
@@ -24,7 +25,6 @@ jvm_library(
     "//platform/analysis-impl",
     "//platform/refactoring",
     "//platform/lang-impl",
-  ],
-  runtime_deps = [":dotenv_resources"]
+  ]
 )
 ### auto-generated section `build intellij.dotenv` end

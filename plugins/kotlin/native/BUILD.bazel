@@ -1,9 +1,9 @@
 ### auto-generated section `build kotlin.native` start
-load("@rules_jvm//:jvm.bzl", "jvm_library", "jvm_resources")
+load("@rules_jvm//:jvm.bzl", "jvm_library", "resourcegroup")
 
-jvm_resources(
+resourcegroup(
   name = "native_resources",
-  files = glob(["resources/**/*"]),
+  srcs = glob(["resources/**/*"]),
   strip_prefix = "resources"
 )
 
@@ -12,6 +12,7 @@ jvm_library(
   module_name = "kotlin.native",
   visibility = ["//visibility:public"],
   srcs = glob(["src/**/*.kt", "src/**/*.java", "src/**/*.form", "gen/**/*.kt", "gen/**/*.java"], allow_empty = True),
+  resources = [":native_resources"],
   deps = [
     "@lib//:kotlin-stdlib",
     "@lib//:kotlinc-kotlin-compiler-common",
@@ -35,7 +36,6 @@ jvm_library(
     "//platform/lang-impl",
     "//java/java-psi-api:psi",
     "//java/idea-ui:ui",
-  ],
-  runtime_deps = [":native_resources"]
+  ]
 )
 ### auto-generated section `build kotlin.native` end

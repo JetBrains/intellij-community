@@ -16,7 +16,7 @@ public final class SynchronizationOnStaticFieldInspection extends BaseInspection
   }
 
   @Override
-  public BaseInspectionVisitor buildVisitor() {
+  public @NotNull BaseInspectionVisitor buildVisitor() {
     return new SynchronizationOnStaticFieldVisitor();
   }
 

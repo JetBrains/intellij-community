@@ -1,0 +1,13 @@
+<html>
+<body>
+Validates namespace attributes in content module declarations within plugin.xml files.
+<p>
+  The inspection reports the following issues:
+</p>
+<ul>
+  <li><strong>Missing namespace:</strong> Content namespace is required when plugin content includes at least one module with non-private visibility</li>
+  <li><strong>Invalid namespace format:</strong> Namespace must match the required pattern (<code>[a-zA-Z0-9]+([_-][a-zA-Z0-9]+)*</code>) and its length must be between 5 and 30 characters</li>
+  <li><strong>Inconsistent namespaces:</strong> All content elements must define the same namespace</li>
+</ul>
+</body>
+</html>

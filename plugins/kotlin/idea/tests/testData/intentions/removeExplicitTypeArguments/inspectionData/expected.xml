@@ -255,6 +255,20 @@
   </problem>
 
   <problem>
+    <file>unresolvedUnrelatedReference.kt</file>
+    <line>11</line>
+    <module>light_idea_test_case</module>
+    <package>unresolvedUnrelatedReference</package>
+    <entry_point TYPE="method" FQNAME="unresolvedUnrelatedReference.UnresolvedUnrelatedReferenceKt void foo()" />
+    <problem_class id="RemoveExplicitTypeArguments" severity="WEAK WARNING" attribute_key="INFO_ATTRIBUTES">Unnecessary type argument</problem_class>
+    <description>Explicit type arguments can be inferred</description>
+    <highlighted_element>&lt;String&gt;</highlighted_element>
+    <language>kotlin</language>
+    <offset>7</offset>
+    <length>8</length>
+  </problem>
+
+  <problem>
     <file>KTIJ-31286.kt</file>
     <line>9</line>
     <module>light_idea_test_case</module>

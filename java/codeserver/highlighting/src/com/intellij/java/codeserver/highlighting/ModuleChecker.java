@@ -47,12 +47,10 @@ final class ModuleChecker {
     PsiJavaModule javaModule = myVisitor.javaModule();
     if (javaModule != null) {
       String packageName = statement.getPackageName();
-      if (packageName != null) {
-        PsiJavaModule origin = JavaPsiModuleUtil.findOrigin(javaModule, packageName);
-        if (origin != null) {
-          PsiJavaCodeReferenceElement reference = statement.getPackageReference();
-          myVisitor.report(JavaErrorKinds.MODULE_CONFLICTING_PACKAGES.create(reference, origin));
-        }
+      PsiJavaModule origin = JavaPsiModuleUtil.findOrigin(javaModule, packageName);
+      if (origin != null) {
+        PsiJavaCodeReferenceElement reference = statement.getPackageReference();
+        myVisitor.report(JavaErrorKinds.MODULE_CONFLICTING_PACKAGES.create(reference, origin));
       }
     }
     else {
@@ -66,7 +64,7 @@ final class ModuleChecker {
           PsiJavaModule anotherJavaModule = JavaPsiModuleUtil.findDescriptorByElement(directory);
           if (anotherJavaModule != null) {
             VirtualFile moduleVFile = PsiUtilCore.getVirtualFile(anotherJavaModule);
-            if (moduleVFile != null && ContainerUtil.find(fileIndex.getOrderEntriesForFile(moduleVFile), JdkOrderEntry.class::isInstance) != null) {
+            if (moduleVFile != null && !fileIndex.findContainingSdks(moduleVFile).isEmpty()) {
               VirtualFile rootForFile = fileIndex.getSourceRootForFile(file.getVirtualFile());
               if (rootForFile != null && JavaCompilerConfigurationProxy.isPatchedModuleRoot(anotherJavaModule.getName(), module, rootForFile)) {
                 return;
@@ -233,7 +231,7 @@ final class ModuleChecker {
                        : JavaErrorKinds.MODULE_NOT_FOUND.create(refElement));
       case 1 -> myVisitor.report(JavaErrorKinds.MODULE_NOT_ON_PATH.create(refElement));
       default -> {
-        // ambiguous module is reported as warning
+        // an ambiguous module is reported as a warning
       }
     }
   }

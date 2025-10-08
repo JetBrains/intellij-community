@@ -14,18 +14,19 @@ import com.intellij.openapi.project.DumbService;
 import com.intellij.openapi.project.PossiblyDumbAware;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.NlsContexts;
-import com.intellij.openapi.util.Pair;
 import com.intellij.patterns.ElementPattern;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiReference;
 import com.intellij.psi.util.PsiUtilCore;
 import com.intellij.util.Consumer;
 import com.intellij.util.ProcessingContext;
+import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.MultiMap;
 import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
+import java.util.Collection;
 import java.util.List;
 
 /**
@@ -72,7 +73,7 @@ import java.util.List;
  * the deleting range end offset, do it in {@link CompletionContributor#beforeCompletion(CompletionInitializationContext)}
  * by putting new offset to {@link CompletionInitializationContext#getOffsetMap()} as {@link CompletionInitializationContext#IDENTIFIER_END_OFFSET}.<p>
  *
- * <b>Q: I know more about my environment than the IDE does, and I can swear that those 239 variants it suggests me in some places aren't all that relevant,
+ * <b>Q: I know more about my environment than the IDE does, and I can swear that those 239 variants it suggests to me in some places aren't all that relevant,
  * so I'd be happy to filter out 42 of them. How do I do this?</b><br>
  * A: This is a bit harder than just adding variants. First, you should invoke
  * {@link CompletionResultSet#runRemainingContributors(CompletionParameters, Consumer)}.
@@ -81,7 +82,7 @@ import java.util.List;
  * ordered to invoke remaining contributors yourself, they won't be invoked automatically after yours finishes (see
  * {@link CompletionResultSet#stopHere()} and {@link CompletionResultSet#isStopped()}).
  * Calling {@link CompletionResultSet#stopHere()} explicitly will stop other contributors (which happened to be loaded after yours)
- * from execution, and the user will never see their so useful and precious completion variants, so please be careful with this method.<p>
+ * from execution, and the user will never see their such useful and precious completion variants, so please be careful with this method.<p>
  *
  * <b>Q: How are lookup elements sorted?</b><br>
  * A: Basically in lexicographic order, ascending, by lookup string ({@link LookupElement#getLookupString()}).
@@ -91,7 +92,7 @@ import java.util.List;
  * shown (Ctrl+Alt+Shift+W / Cmd+Alt+Shift+W), the action also copies the debug info to the Clipboard.<p>
  *
  * <b>Q: Elements in the lookup are sorted unexpectedly, the weights I provide are not honored, why?</b><br>
- * A: To be more responsive, when first lookup elements are produced, the completion infrastructure waits for some short time
+ * A: To be more responsive, when the first lookup elements are produced, the completion infrastructure waits for some short time
  * and then displays the lookup with whatever items are ready. After that, few of the most relevant displayed items
  * are considered "frozen" and not re-sorted anymore, to avoid changes around the selected item that the user already sees
  * and can interact with. Even if new, more relevant items are added, they won't make it to the top of the list anymore.
@@ -102,7 +103,7 @@ import java.util.List;
  * <b>Q: My completion is not working! How do I debug it?</b><br>
  * A: One source of common errors is that the pattern you gave to {@link #extend(CompletionType, ElementPattern, CompletionProvider)} method
  * may be incorrect. To debug this problem you can still override {@link #fillCompletionVariants(CompletionParameters, CompletionResultSet)} in
- * your contributor, make it only call its super and put a breakpoint there.<br>
+ * your contributor, make it only call its super method, and put a breakpoint there.<br>
  * If you want to know which contributor added a particular lookup element, the best place for a breakpoint will be
  * {@link CompletionService#performCompletion(CompletionParameters, Consumer)}. The consumer passed there
  * is the 'final' consumer, it will pass your lookup elements directly to the lookup.<br>
@@ -126,50 +127,47 @@ import java.util.List;
  * but I want completion to keep going, matching against the typed character.</b><br>
  * A: See {@link com.intellij.codeInsight.lookup.CharFilter#acceptChar(char, int, com.intellij.codeInsight.lookup.Lookup)}.
  */
+@SuppressWarnings("JavadocReference")
 public abstract class CompletionContributor implements PossiblyDumbAware {
   public static final ExtensionPointName<CompletionContributorEP> EP = new ExtensionPointName<>("com.intellij.completion.contributor");
 
-  private final MultiMap<CompletionType, Pair<ElementPattern<? extends PsiElement>, CompletionProvider<CompletionParameters>>> myMap =
-    new MultiMap<>();
+  private final MultiMap<CompletionType, ProviderWithPattern> myMap = new MultiMap<>();
 
   public final void extend(@Nullable CompletionType type,
-                           final @NotNull ElementPattern<? extends PsiElement> place, CompletionProvider<CompletionParameters> provider) {
-    myMap.putValue(type, new Pair<>(place, provider));
+                           @NotNull ElementPattern<? extends PsiElement> place,
+                           @NotNull CompletionProvider<CompletionParameters> provider) {
+    myMap.putValue(type, new ProviderWithPattern(place, provider));
   }
 
   /**
-   * The main contributor method that is supposed to provide completion variants to result, based on completion parameters.
+   * The main contributor method that is supposed to provide completion variants to the result, based on completion parameters.
    * The default implementation looks for {@link CompletionProvider}s you could register by
    * invoking {@link #extend(CompletionType, ElementPattern, CompletionProvider)} from your contributor constructor,
    * matches the desired completion type and {@link ElementPattern} with actual ones, and, depending on it, invokes those
    * completion providers.<p>
-   *
+   * <p>
    * If you want to implement this functionality directly by overriding this method, the following is for you.
    * Always check that parameters match your situation, and that completion type ({@link CompletionParameters#getCompletionType()}
    * is of your favourite kind. This method is run inside a read action. If you do any long activity non-related to PSI in it, please
    * ensure you call {@link ProgressManager#checkCanceled()} often enough so that the completion process
    * can be canceled smoothly when the user begins to type in the editor.
    */
-  public void fillCompletionVariants(final @NotNull CompletionParameters parameters, @NotNull CompletionResultSet result) {
-    for (final Pair<ElementPattern<? extends PsiElement>, CompletionProvider<CompletionParameters>> pair : myMap.get(parameters.getCompletionType())) {
+  public void fillCompletionVariants(@NotNull CompletionParameters parameters, @NotNull CompletionResultSet result) {
+    Iterable<ProviderWithPattern> providers = getProviders(parameters);
+    for (ProviderWithPattern provider : providers) {
       ProgressManager.checkCanceled();
-      final ProcessingContext context = new ProcessingContext();
-      if (pair.first.accepts(parameters.getPosition(), context)) {
-        pair.second.addCompletionVariants(parameters, context, result);
-        if (result.isStopped()) {
-          return;
-        }
+      provider.processCandidates(parameters, result);
+      if (result.isStopped()) {
+        return;
       }
     }
-    for (final Pair<ElementPattern<? extends PsiElement>, CompletionProvider<CompletionParameters>> pair : myMap.get(null)) {
-      final ProcessingContext context = new ProcessingContext();
-      if (pair.first.accepts(parameters.getPosition(), context)) {
-        pair.second.addCompletionVariants(parameters, context, result);
-        if (result.isStopped()) {
-          return;
-        }
-      }
-    }
+  }
+
+  private @NotNull Iterable<ProviderWithPattern> getProviders(@NotNull CompletionParameters parameters) {
+    Collection<ProviderWithPattern> providers1 = myMap.get(parameters.getCompletionType());
+    Collection<ProviderWithPattern> providers2 = myMap.get(null);
+    Iterable<ProviderWithPattern> allProviders = ContainerUtil.concat(providers1, providers2);
+    return allProviders;
   }
 
   /**
@@ -180,8 +178,8 @@ public abstract class CompletionContributor implements PossiblyDumbAware {
   }
 
   /**
-   * @deprecated use {@link CompletionResultSet#addLookupAdvertisement(String)}
    * @return text to be shown at the bottom of the lookup list
+   * @deprecated use {@link CompletionResultSet#addLookupAdvertisement(String)}
    */
   @Deprecated(forRemoval = true)
   public @Nullable @Nls(capitalization = Nls.Capitalization.Sentence) String advertise(@NotNull CompletionParameters parameters) {
@@ -192,7 +190,7 @@ public abstract class CompletionContributor implements PossiblyDumbAware {
    *
    * @return hint text to be shown if no variants are found, typically "No suggestions"
    */
-  public @Nullable @NlsContexts.HintText String handleEmptyLookup(@NotNull CompletionParameters parameters, final Editor editor) {
+  public @Nullable @NlsContexts.HintText String handleEmptyLookup(@NotNull CompletionParameters parameters, @NotNull Editor editor) {
     return null;
   }
 
@@ -217,7 +215,7 @@ public abstract class CompletionContributor implements PossiblyDumbAware {
    * (see {@link CompletionInitializationContext#setReplacementOffset(int)})
    * if it takes too much time to spend it in {@link #beforeCompletion(CompletionInitializationContext)},
    * e.g., doing {@link com.intellij.psi.PsiFile#findReferenceAt(int)}
-   *
+   * <p>
    * Guaranteed to be invoked before any lookup element is selected
    *
    * @param context context
@@ -242,4 +240,16 @@ public abstract class CompletionContributor implements PossiblyDumbAware {
   }
 
   private static final LanguageExtension<CompletionContributor> INSTANCE = new LanguageExtensionWithAny<>(EP.getName());
+
+  private record ProviderWithPattern(
+    @NotNull ElementPattern<? extends PsiElement> pattern,
+    @NotNull CompletionProvider<CompletionParameters> provider
+  ) {
+    void processCandidates(@NotNull CompletionParameters parameters, @NotNull CompletionResultSet result) {
+      ProcessingContext context = new ProcessingContext();
+      if (pattern.accepts(parameters.getPosition(), context)) {
+        provider.addCompletionVariants(parameters, context, result);
+      }
+    }
+  }
 }

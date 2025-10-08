@@ -10,11 +10,9 @@ import com.intellij.openapi.components.PersistentStateComponent
 import com.intellij.openapi.components.ServiceDescriptor
 import com.intellij.openapi.extensions.PluginDescriptor
 import com.intellij.openapi.extensions.PluginId
-import com.intellij.openapi.progress.Cancellation
 import com.intellij.openapi.util.Disposer
 import com.intellij.platform.instanceContainer.instantiation.InstantiationException
 import com.intellij.platform.instanceContainer.instantiation.instantiate
-import com.intellij.platform.instanceContainer.instantiation.withStoredTemporaryContext
 import com.intellij.platform.instanceContainer.internal.InstanceInitializer
 import kotlinx.coroutines.CoroutineScope
 import org.jetbrains.annotations.ApiStatus
@@ -127,18 +125,5 @@ private suspend fun initializeService(
     "You cannot get $component before component store is initialized"
   }
 
-  // If a service is requested during highlighting (under impatient=true),
-  // then it's initialization might be broken forever.
-  // Impatient reader is a property of thread (at the moment, before IJPL-53 is completed),
-  // so it leaks to initializeComponent call, where it might cause ReadMostlyRWLock.throwIfImpatient() to throw,
-  // for example, if a service obtains a read action in loadState.
-  // Non-cancellable section is required to silence throwIfImpatient().
-  // In general, we want initialization to be cancellable, and it must be canceled only on parent scope cancellation,
-  // which happens only on project/application shutdown, or on plugin unload.
-  Cancellation.withNonCancelableSection().use {
-    // loadState may invokeLater => don't capture the context
-    withStoredTemporaryContext(parentScope) {
-      componentStore.initComponentBlocking(component = component, serviceDescriptor = serviceDescriptor, pluginId = pluginId)
-    }
-  }
+  componentStore.initComponent(component, serviceDescriptor, pluginId, parentScope)
 }

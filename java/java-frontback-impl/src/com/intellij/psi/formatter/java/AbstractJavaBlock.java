@@ -19,6 +19,7 @@ import com.intellij.psi.impl.source.codeStyle.ShiftIndentInsideHelper;
 import com.intellij.psi.impl.source.tree.*;
 import com.intellij.psi.impl.source.tree.injected.InjectedLanguageUtil;
 import com.intellij.psi.impl.source.tree.java.ClassElement;
+import com.intellij.psi.javadoc.PsiMarkdownCodeBlock;
 import com.intellij.psi.jsp.JspClassLevelDeclarationStatementType;
 import com.intellij.psi.jsp.JspCodeBlockType;
 import com.intellij.psi.tree.IElementType;
@@ -204,7 +205,7 @@ public abstract class AbstractJavaBlock extends AbstractBlock implements JavaBlo
         InjectedLanguageUtil.hasInjections((PsiLanguageInjectionHost)child)) {
       return new CommentWithInjectionBlock(child, wrap, alignment, indent, settings, javaSettings, formattingMode);
     }
-    if (child instanceof LeafElement) {
+    if (child instanceof LeafElement || child instanceof PsiMarkdownCodeBlock) {
       if (child.getElementType() == JavaTokenType.C_STYLE_COMMENT) {
         return new CStyleCommentBlock(child, actualIndent);
       }

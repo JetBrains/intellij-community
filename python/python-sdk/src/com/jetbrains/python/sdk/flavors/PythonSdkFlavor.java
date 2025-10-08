@@ -17,8 +17,8 @@ import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.util.PatternUtil;
 import com.intellij.util.concurrency.annotations.RequiresBackgroundThread;
+import com.jetbrains.python.parser.icons.PythonParserIcons;
 import com.jetbrains.python.psi.LanguageLevel;
-import com.jetbrains.python.psi.icons.PythonPsiApiIcons;
 import com.jetbrains.python.run.CommandLinePatcher;
 import com.jetbrains.python.sdk.*;
 import org.jetbrains.annotations.ApiStatus;
@@ -443,7 +443,7 @@ public abstract class PythonSdkFlavor<D extends PyFlavorData> {
   }
 
   public @NotNull Icon getIcon() {
-    return PythonPsiApiIcons.Python;
+    return PythonParserIcons.PythonFile;
   }
 
   @ApiStatus.Internal

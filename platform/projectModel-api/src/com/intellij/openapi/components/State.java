@@ -2,6 +2,7 @@
 package com.intellij.openapi.components;
 
 import org.jetbrains.annotations.ApiStatus;
+import org.jetbrains.annotations.ApiStatus.Internal;
 import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
@@ -43,7 +44,7 @@ public @interface State {
   boolean defaultStateAsResource() default false;
 
   /**
-   * Additional export directory path (relative to application-level configuration root directory).
+   * Additional export directory path (relative to an application-level configuration root directory).
    */
   @NotNull String additionalExportDirectory() default "";
 
@@ -56,12 +57,12 @@ public @interface State {
   Class<? extends NameGetter> presentableName() default NameGetter.class;
 
   /**
-   * Is this component intended to store data only in the external storage.
+   * Is this component intended to store data only in the external storage?
    */
   boolean externalStorageOnly() default false;
 
   /**
-   * <p>Enables recording of boolean and numerical fields, if true and statistics is allowed.</p>
+   * <p>Enables recording of boolean and numerical fields if true and statistics is allowed.</p>
    * <br/>
    * <p>Boolean: records not default value of the field.</p>
    * <p>Numerical/Enums/Strings: records an event that the value is not default.
@@ -77,10 +78,14 @@ public @interface State {
 
   boolean allowLoadInTests() default false;
 
-  @ApiStatus.Internal
+  @Internal
   boolean useLoadedStateAsExisting() default true;
 
-  @ApiStatus.Experimental
+  /**
+   * @deprecated Reimplement implementation to avoid read action or EDT requirement.
+   */
+  @Deprecated
+  @Internal
   boolean getStateRequiresEdt() default false;
 
   /**
@@ -93,7 +98,7 @@ public @interface State {
    * @see ServiceDescriptor#client
    */
   @ApiStatus.Experimental
-  @ApiStatus.Internal
+  @Internal
   boolean perClient() default false;
 
   abstract class NameGetter implements Supplier<@Nls String> {

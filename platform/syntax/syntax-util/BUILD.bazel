@@ -1,6 +1,6 @@
 ### auto-generated section `build intellij.platform.syntax.util` start
 load("//build:compiler-options.bzl", "create_kotlinc_options")
-load("@rules_jvm//:jvm.bzl", "jvm_library", "jvm_resources")
+load("@rules_jvm//:jvm.bzl", "jvm_library", "resourcegroup")
 
 create_kotlinc_options(
   name = "custom_util",
@@ -9,9 +9,9 @@ create_kotlinc_options(
   x_no_param_assertions = True
 )
 
-jvm_resources(
+resourcegroup(
   name = "util_resources",
-  files = glob(["resources/**/*"]),
+  srcs = glob(["resources/**/*"]),
   strip_prefix = "resources"
 )
 
@@ -20,6 +20,7 @@ jvm_library(
   module_name = "intellij.platform.syntax.util",
   visibility = ["//visibility:public"],
   srcs = glob(["src/**/*.kt", "src/**/*.java", "src/**/*.form", "gen/**/*.kt", "gen/**/*.java"], allow_empty = True),
+  resources = [":util_resources"],
   kotlinc_opts = ":custom_util",
   deps = [
     "@lib//:kotlin-stdlib",
@@ -29,7 +30,6 @@ jvm_library(
     "//platform/util/multiplatform",
     "//platform/syntax/syntax-i18n:i18n",
     "//platform/syntax/syntax-extensions:extensions",
-  ],
-  runtime_deps = [":util_resources"]
+  ]
 )
 ### auto-generated section `build intellij.platform.syntax.util` end

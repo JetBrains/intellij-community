@@ -4,7 +4,7 @@ package com.intellij.platform.ide.newUsersOnboarding
 import com.intellij.ide.util.PropertiesComponent
 import com.intellij.notification.Notification
 import com.intellij.notification.NotificationType
-import com.intellij.openapi.application.ConfigImportHelper
+import com.intellij.openapi.application.InitialConfigImportState
 import com.intellij.openapi.components.Service
 import com.intellij.openapi.components.service
 import com.intellij.openapi.project.Project
@@ -13,11 +13,9 @@ import com.intellij.platform.ide.newUiOnboarding.NewUiOnboardingStep
 import com.intellij.platform.ide.newUsersOnboarding.NewUsersOnboardingStatistics.OnboardingStartingPlace
 import com.intellij.platform.util.coroutines.childScope
 import kotlinx.coroutines.CoroutineScope
-import org.jetbrains.annotations.ApiStatus
 
-@ApiStatus.Internal
 @Service(Service.Level.PROJECT)
-class NewUsersOnboardingService(private val project: Project, private val coroutineScope: CoroutineScope) {
+internal class NewUsersOnboardingService(private val project: Project, private val coroutineScope: CoroutineScope) {
   // Should be accessed only in EDT
   private var currentExecutor: NewUsersOnboardingExecutor? = null
   private var currentDialog: DialogWrapper? = null
@@ -66,7 +64,7 @@ class NewUsersOnboardingService(private val project: Project, private val corout
   fun shouldShowOnboardingDialog(): Boolean {
     return service<NewUsersOnboardingExperiment>().isEnabled() &&
            !PropertiesComponent.getInstance().getBoolean(NEW_USERS_ONBOARDING_DIALOG_SHOWN_PROPERTY) &&
-           ConfigImportHelper.isNewUser()
+           InitialConfigImportState.isNewUser()
   }
 
   fun startOnboarding() {

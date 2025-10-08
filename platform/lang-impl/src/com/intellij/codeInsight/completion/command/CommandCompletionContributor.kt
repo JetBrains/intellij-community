@@ -22,7 +22,7 @@ internal class CommandCompletionContributor : CompletionContributor(), DumbAware
       val commandCompletionService = parameters?.editor?.project?.service<CommandCompletionService>() ?: return false
       val factory = commandCompletionService.getFactory(parameters.originalFile.language) ?: return false
       val supportFiltersWithDoublePrefix = factory.supportFiltersWithDoublePrefix()
-      val commandType = findCommandCompletionType(factory, !parameters.originalFile.isWritable, parameters.offset, parameters.editor)
+      val commandType = findCommandCompletionType(factory, !parameters.originalFile.isWritable, parameters.editor.caretModel.offset, parameters.editor)
                         ?: return false
       if (commandType is InvocationCommandType.FullSuffix && supportFiltersWithDoublePrefix) return false
       return true
@@ -39,6 +39,6 @@ internal class CommandCompletionContributor : CompletionContributor(), DumbAware
   init {
     extend(CompletionType.BASIC,
            PlatformPatterns.psiElement(),
-           CommandCompletionProvider())
+           CommandCompletionProvider(this))
   }
 }

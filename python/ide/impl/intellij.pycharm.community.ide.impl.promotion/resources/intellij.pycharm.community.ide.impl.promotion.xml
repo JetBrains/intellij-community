@@ -1,8 +1,8 @@
-<idea-plugin package="com.intellij.pycharm.community.ide.impl.promotion">
+<idea-plugin visibility="internal">
   <!--Customization code for Community Pycharm only. Promotes PyCharm Prof.-->
 
   <dependencies>
-    <plugin id="PythonCore"/>
+    <plugin id="com.intellij.modules.python"/>
     <module name="intellij.pycharm.community.ide.impl"/>
   </dependencies>
 

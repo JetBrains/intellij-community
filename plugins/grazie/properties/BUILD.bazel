@@ -1,9 +1,9 @@
 ### auto-generated section `build intellij.grazie.properties` start
-load("@rules_jvm//:jvm.bzl", "jvm_library", "jvm_resources")
+load("@rules_jvm//:jvm.bzl", "jvm_library", "resourcegroup")
 
-jvm_resources(
+resourcegroup(
   name = "properties_resources",
-  files = glob(["src/main/resources/**/*"]),
+  srcs = glob(["src/main/resources/**/*"]),
   strip_prefix = "src/main/resources"
 )
 
@@ -12,6 +12,7 @@ jvm_library(
   module_name = "intellij.grazie.properties",
   visibility = ["//visibility:public"],
   srcs = glob(["src/main/kotlin/**/*.kt", "src/main/kotlin/**/*.java", "src/main/kotlin/**/*.form"], allow_empty = True),
+  resources = [":properties_resources"],
   deps = [
     "@lib//:kotlin-stdlib",
     "//plugins/grazie/src:core",
@@ -21,7 +22,6 @@ jvm_library(
     "//platform/core-api:core",
     "//platform/core-impl",
     "//platform/util-ex",
-  ],
-  runtime_deps = [":properties_resources"]
+  ]
 )
 ### auto-generated section `build intellij.grazie.properties` end

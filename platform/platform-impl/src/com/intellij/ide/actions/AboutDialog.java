@@ -166,14 +166,23 @@ public final class AboutDialog extends DialogWrapper {
 
     @NotNull Pair<String, String> result = getBuildInfo(appInfo);
     lines.add(result.first);
-    lines.add("");
     myInfo.add(result.second);
+    @Nullable Pair<String, String> branchInfo = getBuildBranchInfo(appInfo);
+    if (branchInfo != null) {
+      lines.add(branchInfo.first);
+      myInfo.add(branchInfo.second);
+    }
+
     CustomProperty revision = ContainerUtil.find(
       IdeProductInfo.getInstance().getCurrentProductInfo()
         .getCustomProperties(), o -> CustomPropertyNames.GIT_REVISION.equals(o.getKey()));
     if (revision != null) {
+      if (branchInfo != null) {
+        lines.add(IdeBundle.message("about.box.build.revision", revision.getValue()));
+      }
       myInfo.add("Source revision: " + revision.getValue());
     }
+    lines.add("");
 
     LicensingFacade la = LicensingFacade.getInstance();
     if (la != null) {
@@ -250,7 +259,7 @@ public final class AboutDialog extends DialogWrapper {
     Date buildDate = appInfo.getBuildDate().getTime();
     String formattedBuildDate = DateFormat.getDateInstance(DateFormat.LONG, Locale.US).format(buildDate);
 
-    if (AppMode.isDevServer()) {
+    if (AppMode.isRunningFromDevBuild()) {
       // Dev mode build date is not accurate, so we don't show it to avoid confusion
       buildInfo += IdeBundle.message("about.box.build.date.omitted.in.dev.build.mode");
       buildInfoNonLocalized += ", build date omitted in Dev build mode";
@@ -267,6 +276,15 @@ public final class AboutDialog extends DialogWrapper {
 
     return Pair.create(buildInfo, buildInfoNonLocalized);
   }
+
+  private static @Nullable Pair<String, String> getBuildBranchInfo(@NotNull ApplicationInfo appInfo) {
+    var buildBranch = appInfo.getBuildBranchName();
+    if (buildBranch != null) {
+      return Pair.create(IdeBundle.message("about.box.build.from.branch", buildBranch), "Built from the branch: " + buildBranch);
+    }
+    return null;
+  }
+
 
   private static JBFont getDefaultTextFont() {
     return JBFont.medium();

@@ -1,15 +1,15 @@
 ### auto-generated section `build intellij.editorconfig.backend` start
-load("@rules_jvm//:jvm.bzl", "jvm_library", "jvm_resources")
+load("@rules_jvm//:jvm.bzl", "jvm_library", "resourcegroup")
 
-jvm_resources(
+resourcegroup(
   name = "backend_resources",
-  files = glob(["resources/**/*"]),
+  srcs = glob(["resources/**/*"]),
   strip_prefix = "resources"
 )
 
-jvm_resources(
+resourcegroup(
   name = "backend_resources_1",
-  files = glob(["compatibilityResources/**/*"]),
+  srcs = glob(["compatibilityResources/**/*"]),
   strip_prefix = "compatibilityResources"
 )
 
@@ -18,6 +18,10 @@ jvm_library(
   module_name = "intellij.editorconfig.backend",
   visibility = ["//visibility:public"],
   srcs = glob(["src/**/*.kt", "src/**/*.java", "src/**/*.form", "gen/**/*.kt", "gen/**/*.java"], allow_empty = True),
+  resources = [
+    ":backend_resources",
+    ":backend_resources_1",
+  ],
   deps = [
     "//platform/analysis-api:analysis",
     "//platform/code-style-api:codeStyle",
@@ -34,8 +38,8 @@ jvm_library(
     "//platform/ide-core-impl",
     "//platform/projectModel-api:projectModel",
     "//platform/refactoring",
-    "@lib//:kotlin-reflect",
-    "@lib//:gson",
+    "//libraries/kotlin-reflect",
+    "//libraries/gson",
     "//spellchecker",
     "//platform/indexing-impl",
     "@lib//:automaton",
@@ -46,13 +50,9 @@ jvm_library(
     "@lib//:kotlinx-coroutines-core",
     "@lib//:ec4j-core",
     "//platform/settings",
-    "@lib//:kotlinx-serialization-core",
+    "//libraries/kotlinx/serialization/core",
     "//plugins/editorconfig/common",
     "//platform/backend",
-  ],
-  runtime_deps = [
-    ":backend_resources",
-    ":backend_resources_1",
   ]
 )
 
@@ -80,8 +80,8 @@ jvm_library(
     "//platform/refactoring",
     "//platform/testFramework",
     "//platform/testFramework:testFramework_test_lib",
-    "@lib//:kotlin-reflect",
-    "@lib//:gson",
+    "//libraries/kotlin-reflect",
+    "//libraries/gson",
     "//spellchecker",
     "//spellchecker:spellchecker_test_lib",
     "//platform/indexing-impl",
@@ -96,13 +96,9 @@ jvm_library(
     "//tools/intellij.tools.ide.metrics.benchmark:ide-metrics-benchmark",
     "//tools/intellij.tools.ide.metrics.benchmark:ide-metrics-benchmark_test_lib",
     "//platform/settings",
-    "@lib//:kotlinx-serialization-core",
+    "//libraries/kotlinx/serialization/core",
     "//plugins/editorconfig/common",
     "//platform/backend",
-  ],
-  runtime_deps = [
-    ":backend_resources",
-    ":backend_resources_1",
   ]
 )
 ### auto-generated section `build intellij.editorconfig.backend` end

@@ -31,12 +31,12 @@ jvm_library(
     "//java/testFramework",
     "//platform/vcs-impl",
     "//platform/vcs-impl:vcs-impl_test_lib",
-    "@lib//:xml_r_p_c",
+    "//libraries/xml-rpc",
     "//java/debugger/openapi:java-debugger",
     "//plugins/xslt-debugger",
     "//platform/xdebugger-impl:debugger-impl",
     "//platform/xdebugger-impl:debugger-impl_test_lib",
-    "@lib//:gson",
+    "//libraries/gson",
     "//plugins/tasks/tasks-core/jira",
     "//platform/testFramework",
     "//platform/testFramework:testFramework_test_lib",
@@ -57,6 +57,7 @@ jvm_library(
     "//platform/bookmarks",
     "//plugins/git4idea/shared",
     "//platform/dvcs-impl/shared",
+    "//plugins/tasks/tasks-core/trac",
   ],
   runtime_deps = ["//spellchecker"]
 )

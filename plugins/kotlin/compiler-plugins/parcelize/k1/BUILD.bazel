@@ -1,6 +1,6 @@
 ### auto-generated section `build kotlin.compiler-plugins.parcelize.k1` start
 load("//build:compiler-options.bzl", "create_kotlinc_options")
-load("@rules_jvm//:jvm.bzl", "jvm_library", "jvm_resources")
+load("@rules_jvm//:jvm.bzl", "jvm_library", "resourcegroup")
 
 create_kotlinc_options(
   name = "custom_k1",
@@ -11,9 +11,9 @@ create_kotlinc_options(
   x_context_parameters = True
 )
 
-jvm_resources(
+resourcegroup(
   name = "k1_resources",
-  files = glob(["resources/**/*"]),
+  srcs = glob(["resources/**/*"]),
   strip_prefix = "resources"
 )
 
@@ -22,6 +22,7 @@ jvm_library(
   module_name = "kotlin.compiler-plugins.parcelize.k1",
   visibility = ["//visibility:public"],
   srcs = glob(["src/**/*.kt", "src/**/*.java", "src/**/*.form"], allow_empty = True),
+  resources = [":k1_resources"],
   kotlinc_opts = ":custom_k1",
   deps = [
     "@lib//:kotlin-stdlib",
@@ -43,7 +44,6 @@ jvm_library(
     "//plugins/kotlin/idea",
     "//platform/editor-ui-api:editor-ui",
     "@lib//:kotlinc-kotlin-compiler-ir",
-  ],
-  runtime_deps = [":k1_resources"]
+  ]
 )
 ### auto-generated section `build kotlin.compiler-plugins.parcelize.k1` end

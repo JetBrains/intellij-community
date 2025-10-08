@@ -76,9 +76,6 @@ public class StreamChainInliner implements CallInliner {
     staticCall(JAVA_UTIL_STREAM_COLLECTORS, "toMap", "toConcurrentMap", "toUnmodifiableMap");
   private static final CallMatcher GROUPING_COLLECTOR =
     staticCall(JAVA_UTIL_STREAM_COLLECTORS, "groupingBy", "partitioningBy", "groupingByConcurrent");
-  private static final CallMatcher NOT_NULL_COLLECTORS =
-    staticCall(JAVA_UTIL_STREAM_COLLECTORS, "joining", "maxBy", "minBy", "averagingInt", "averagingLong", "averagingDouble",
-               "summingInt", "summingLong", "summingDouble", "summarizingInt", "summarizingLong", "summarizingDouble");
 
   private static final CallMatcher SKIP_STEP =
     instanceCall(JAVA_UTIL_STREAM_BASE_STREAM, "unordered", "parallel", "sequential").parameterCount(0);
@@ -187,14 +184,8 @@ public class StreamChainInliner implements CallInliner {
         myNext.pushResult(builder);
       }
       else {
-        DfType resultValue = DfTypes.typedObject(myCall.getType(), getNullability());
-        builder.push(resultValue, myCall);
+        builder.push(DfTypes.typedObject(myCall.getType()), myCall);
       }
-    }
-
-    @NotNull
-    Nullability getNullability() {
-      return DfaPsiUtil.getElementNullability(myCall.getType(), myCall.resolveMethod());
     }
 
     boolean expectNotNull() {

@@ -1,6 +1,7 @@
-<idea-plugin>
+<idea-plugin visibility="public">
   <dependencies>
     <module name="intellij.python.psi.impl"/>
+    <module name="intellij.python.community"/>
     <module name="intellij.python.community.helpersLocator"/>
   </dependencies>
   <extensionPoints>
@@ -14,5 +15,8 @@
   </extensionPoints>
   <extensions defaultExtensionNs="com.intellij">
     <applicationService serviceImplementation="com.jetbrains.python.packaging.PyCondaPackageService"/>
+    <applicationService serviceInterface="com.jetbrains.python.sdk.WinRegistryService"
+                        serviceImplementation="com.jetbrains.python.sdk.WinRegistryServiceImpl"/>
+    <applicationService serviceImplementation="com.jetbrains.python.sdk.PySdkSettings"/>
   </extensions>
 </idea-plugin>

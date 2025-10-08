@@ -1,9 +1,9 @@
 ### auto-generated section `build intellij.platform.structuralSearch` start
-load("@rules_jvm//:jvm.bzl", "jvm_library", "jvm_resources")
+load("@rules_jvm//:jvm.bzl", "jvm_library", "resourcegroup")
 
-jvm_resources(
+resourcegroup(
   name = "structuralSearch_resources",
-  files = glob(["resources/**/*"]),
+  srcs = glob(["resources/**/*"]),
   strip_prefix = "resources"
 )
 
@@ -12,6 +12,7 @@ jvm_library(
   module_name = "intellij.platform.structuralSearch",
   visibility = ["//visibility:public"],
   srcs = glob(["source/**/*.kt", "source/**/*.java", "source/**/*.form"], allow_empty = True),
+  resources = [":structuralSearch_resources"],
   deps = [
     "//platform/analysis-api:analysis",
     "//platform/core-api:core",
@@ -35,10 +36,9 @@ jvm_library(
     "//platform/lang-impl",
     "//platform/core-ui",
     "//xml/xml-psi-api:psi",
-    "@lib//:fastutil-min",
+    "//libraries/fastutil",
   ],
-  exports = ["//platform/duplicates-analysis"],
-  runtime_deps = [":structuralSearch_resources"]
+  exports = ["//platform/duplicates-analysis"]
 )
 ### auto-generated section `build intellij.platform.structuralSearch` end
 

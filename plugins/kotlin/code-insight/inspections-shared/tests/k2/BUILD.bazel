@@ -17,7 +17,7 @@ jvm_library(
     "//platform/projectModel-api:projectModel",
     "//plugins/kotlin/plugin/k2",
     "@lib//:kotlin-stdlib",
-    "@lib//:kotlin-reflect",
+    "//libraries/kotlin-reflect",
     "@lib//:kotlinc-kotlin-compiler-common",
     "//platform/testFramework",
     "//platform/testFramework:testFramework_test_lib",

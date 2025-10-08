@@ -4,7 +4,6 @@ package com.intellij.platform.core.nio.fs;
 import org.jetbrains.annotations.Contract;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
-import org.jetbrains.annotations.VisibleForTesting;
 
 import java.io.IOException;
 import java.io.InputStream;
@@ -146,37 +145,41 @@ public abstract class DelegatingFileSystemProvider<
     return getDelegate(path, null).newByteChannel(toDelegatePath(path), options, attrs);
   }
 
+  private class WrappingDirectoryStream implements DirectoryStream<Path> {
+    final DirectoryStream<Path> myStream;
+
+    WrappingDirectoryStream(DirectoryStream<Path> stream) { myStream = stream; }
+
+    @Override
+    public Iterator<Path> iterator() {
+      return new Iterator<Path>() {
+        final Iterator<Path> myIterator = myStream.iterator();
+
+        @Override
+        public boolean hasNext() {
+          return myIterator.hasNext();
+        }
+
+        @Override
+        public Path next() {
+          return wrapDelegatePath(myIterator.next());
+        }
+      };
+    }
+
+    @Override
+    public void close() throws IOException {
+      myStream.close();
+    }
+  }
+
+  final protected DirectoryStream<Path> delegateNewDirectoryStream(FileSystemProvider delegate, Path dir, @Nullable DirectoryStream.Filter<? super Path> filter) throws IOException {
+    return new WrappingDirectoryStream(delegate.newDirectoryStream(toDelegatePath(dir), craftFilter(filter)));
+  }
+
   @Override
   public DirectoryStream<Path> newDirectoryStream(Path dir, @Nullable DirectoryStream.Filter<? super Path> filter) throws IOException {
-    return new DirectoryStream<Path>() {
-      final DirectoryStream<Path> myStream = getDelegate(dir, null)
-        .newDirectoryStream(
-          toDelegatePath(dir),
-          craftFilter(filter)
-        );
-
-      @Override
-      public Iterator<Path> iterator() {
-        return new Iterator<Path>() {
-          final Iterator<Path> myIterator = myStream.iterator();
-
-          @Override
-          public boolean hasNext() {
-            return myIterator.hasNext();
-          }
-
-          @Override
-          public Path next() {
-            return wrapDelegatePath(myIterator.next());
-          }
-        };
-      }
-
-      @Override
-      public void close() throws IOException {
-        myStream.close();
-      }
-    };
+    return delegateNewDirectoryStream(getDelegate(dir, null), dir, filter);
   }
 
   @Contract("null -> null; !null -> !null")

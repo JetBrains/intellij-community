@@ -64,8 +64,8 @@ public final class ReplaceArmWithTryFinallyIntention extends MCIntention {
       final PsiElement child = children[i];
       newTryStatement.append(child.getText());
     }
-    for (int i = resources.size() - 1; i >= 0; i--) {
-      newTryStatement.append("} finally {\n").append(resources.get(i)).append(".close();\n}");
+    for (String res : resources.reversed()) {
+      newTryStatement.append("} finally {\n").append(res).append(".close();\n}");
     }
     newTryStatement.append('}');
     final PsiElementFactory factory = JavaPsiFacade.getElementFactory(element.getProject());

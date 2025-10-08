@@ -55,6 +55,7 @@ import com.intellij.ui.awt.RelativePoint
 import com.intellij.ui.mac.MacMenuSettings
 import com.intellij.ui.mac.foundation.NSDefaults
 import com.intellij.ui.mac.screenmenu.Menu
+import com.intellij.util.IntelliJCoroutinesFacade
 import com.intellij.util.SlowOperations
 import com.intellij.util.TimeoutUtil
 import com.intellij.util.application
@@ -71,7 +72,6 @@ import kotlinx.coroutines.*
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.collectLatest
 import kotlinx.coroutines.future.asCompletableFuture
-import kotlinx.coroutines.internal.intellij.IntellijCoroutines
 import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.annotations.NonNls
 import org.jetbrains.annotations.TestOnly
@@ -294,7 +294,7 @@ object Utils {
     val fastTrackTime = getFastTrackMaxTime(fastTrack, place, uiKind is ActionUiKind.Toolbar, true)
     val edtDispatcher =
       if (fastTrackTime > 0) AltEdtDispatcher.apply { switchToQueue() }
-      else Dispatchers.UiWithModelAccess[CoroutineDispatcher]!!
+      else Dispatchers.EDT[CoroutineDispatcher]!!
     val updater = ActionUpdater(presentationFactory, asyncDataContext, place, uiKind, edtDispatcher)
     val deferred = async(edtDispatcher, CoroutineStart.UNDISPATCHED) {
       updater.runUpdateSession(updaterContext(place, fastTrackTime, uiKind)) {
@@ -915,7 +915,7 @@ object Utils {
   @JvmStatic
   fun initUpdateSession(e: AnActionEvent) {
     if (e.updateSession !== UpdateSession.EMPTY) return
-    val edtDispatcher = Dispatchers.UiWithModelAccess[CoroutineDispatcher]!!
+    val edtDispatcher = Dispatchers.EDT[CoroutineDispatcher]!!
     val actionUpdater = ActionUpdater(PresentationFactory(), e.dataContext, e.place, e.uiKind, edtDispatcher)
     e.updateSession = actionUpdater.asUpdateSession()
   }
@@ -923,7 +923,7 @@ object Utils {
   suspend fun <R> withSuspendingUpdateSession(e: AnActionEvent, factory: PresentationFactory,
                                               actionFilter: (AnAction) -> Boolean,
                                               block: suspend CoroutineScope.(SuspendingUpdateSession) -> R): R = coroutineScope {
-    val edtDispatcher = Dispatchers.UiWithModelAccess[CoroutineDispatcher]!!
+    val edtDispatcher = Dispatchers.EDT[CoroutineDispatcher]!!
     val dataContext = createAsyncDataContext(e.dataContext)
     checkAsyncDataContext(dataContext, "withSuspendingUpdateSession")
     val updater = ActionUpdater(factory, dataContext, e.place, e.uiKind, edtDispatcher, actionFilter)
@@ -1300,7 +1300,7 @@ internal inline fun <R> runBlockingForActionExpand(context: CoroutineContext = E
     val (lockContextElement, cleanup) = getGlobalThreadingSupport().getPermitAsContextElement(ctx, !application.isWriteAccessAllowed)
     try {
       @OptIn(InternalCoroutinesApi::class)
-      IntellijCoroutines.runBlockingWithParallelismCompensation(
+      IntelliJCoroutinesFacade.runBlockingWithParallelismCompensation(
         ctx +
         context +
         lockContextElement +

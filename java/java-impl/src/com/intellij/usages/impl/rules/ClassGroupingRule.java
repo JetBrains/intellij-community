@@ -28,6 +28,12 @@ import org.jetbrains.annotations.Nullable;
 import javax.swing.*;
 
 class ClassGroupingRule extends SingleParentUsageGroupingRule implements DumbAware {
+  private final boolean myShowShortFilePath;
+
+  ClassGroupingRule(boolean showShortFilePath) {
+    myShowShortFilePath = showShortFilePath;
+  }
+
   @Override
   protected @Nullable UsageGroup getParentGroupFor(@NotNull Usage usage, UsageTarget @NotNull [] targets) {
     if (!(usage instanceof PsiElementUsage)) {
@@ -76,7 +82,7 @@ class ClassGroupingRule extends SingleParentUsageGroupingRule implements DumbAwa
 
     final VirtualFile virtualFile = topLevelFile.getVirtualFile();
     if (virtualFile != null) {
-      return new FileGroupingRule.FileUsageGroup(topLevelFile.getProject(), virtualFile);
+      return new FileGroupingRule.FileUsageGroup(topLevelFile.getProject(), virtualFile, myShowShortFilePath);
     }
     return null;
   }

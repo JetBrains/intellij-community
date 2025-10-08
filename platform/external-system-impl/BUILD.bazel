@@ -1,9 +1,9 @@
 ### auto-generated section `build intellij.platform.externalSystem.impl` start
-load("@rules_jvm//:jvm.bzl", "jvm_library", "jvm_resources")
+load("@rules_jvm//:jvm.bzl", "jvm_library", "resourcegroup")
 
-jvm_resources(
+resourcegroup(
   name = "externalSystem-impl_resources",
-  files = glob(["resources/**/*"]),
+  srcs = glob(["resources/**/*"]),
   strip_prefix = "resources"
 )
 
@@ -12,6 +12,7 @@ jvm_library(
   module_name = "intellij.platform.externalSystem.impl",
   visibility = ["//visibility:public"],
   srcs = glob(["src/**/*.kt", "src/**/*.java", "src/**/*.form", "gen/**/*.kt", "gen/**/*.java"], allow_empty = True),
+  resources = [":externalSystem-impl_resources"],
   deps = [
     "//platform/analysis-api:analysis",
     "//platform/util/concurrency",
@@ -30,7 +31,7 @@ jvm_library(
     "//platform/observable",
     "//platform/testRunner",
     "//platform/configuration-store-impl:configurationStore-impl",
-    "@lib//:kotlin-reflect",
+    "//libraries/kotlin-reflect",
     "//platform/object-serializer",
     "//platform/platform-impl/concurrency",
     "//platform/object-serializer:objectSerializer-annotations",
@@ -38,7 +39,7 @@ jvm_library(
     "//platform/statistics",
     "//platform/workspace/jps",
     "//platform/workspace/storage",
-    "@lib//:fastutil-min",
+    "//libraries/fastutil",
     "@lib//:commons-cli",
     "//platform/core-ui",
     "//platform/platform-util-io-impl:ide-util-io-impl",
@@ -52,17 +53,16 @@ jvm_library(
     "//platform/diagnostic",
     "//platform/backend/observation",
     "//platform/settings",
-    "@lib//:kotlinx-serialization-core",
+    "//libraries/kotlinx/serialization/core",
     "//platform/eel-provider",
-  ],
-  runtime_deps = [":externalSystem-impl_resources"]
+  ]
 )
 ### auto-generated section `build intellij.platform.externalSystem.impl` end
 
 ### auto-generated section `build intellij.platform.externalSystem.tests` start
-jvm_resources(
+resourcegroup(
   name = "externalSystem-tests_test_resources",
-  files = glob(["testResources/**/*"]),
+  srcs = glob(["testResources/**/*"]),
   strip_prefix = "testResources"
 )
 
@@ -77,6 +77,7 @@ jvm_library(
   module_name = "intellij.platform.externalSystem.tests",
   visibility = ["//visibility:public"],
   srcs = glob(["testSrc/**/*.kt", "testSrc/**/*.java", "testSrc/**/*.form"], allow_empty = True),
+  resources = [":externalSystem-tests_test_resources"],
   deps = [
     "//platform/analysis-api:analysis",
     "//platform/core-api:core",
@@ -96,7 +97,7 @@ jvm_library(
     "//platform/configuration-store-impl:configurationStore-tests_test_lib",
     "//java/compiler:compiler-tests_test_lib",
     "//java/compiler/impl",
-    "@lib//:kotlin-reflect",
+    "//libraries/kotlin-reflect",
     "//java/openapi:java",
     "@lib//:junit4",
     "@lib//:assert_j",
@@ -119,8 +120,7 @@ jvm_library(
     "//tools/intellij.tools.ide.metrics.benchmark:ide-metrics-benchmark",
     "//tools/intellij.tools.ide.metrics.benchmark:ide-metrics-benchmark_test_lib",
   ],
-  exports = ["//platform/lang-impl:lang-tests_test_lib"],
-  runtime_deps = [":externalSystem-tests_test_resources"]
+  exports = ["//platform/lang-impl:lang-tests_test_lib"]
 )
 ### auto-generated section `build intellij.platform.externalSystem.tests` end
 

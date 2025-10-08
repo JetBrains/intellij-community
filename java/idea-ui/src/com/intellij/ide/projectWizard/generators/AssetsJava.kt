@@ -25,7 +25,8 @@ private const val DEFAULT_TEMPLATE_WITH_ONBOARDING_TIPS_NAME_INSTANCE_MAIN = "Sa
 private const val DEFAULT_TEMPLATE_WITH_RENDERED_ONBOARDING_TIPS_NAME_INSTANCE_MAIN = "SampleCodeWithRenderedOnboardingTipsInstanceMain.java"
 
 object AssetsJava {
-
+  @ApiStatus.Internal
+  @ApiStatus.ScheduledForRemoval
   @Deprecated("The onboarding tips generated unconditionally")
   fun getJavaSampleTemplateName(generateOnboardingTips: Boolean): String =
     getJavaSampleTemplateName()
@@ -71,6 +72,8 @@ object AssetsJava {
   }
 }
 
+@ApiStatus.Internal
+@ApiStatus.ScheduledForRemoval
 @Deprecated("The onboarding tips generated unconditionally")
 fun AssetsNewProjectWizardStep.withJavaSampleCodeAsset(sourceRootPath: String, packageName: String?, generateOnboardingTips: Boolean) {
   val templateName = AssetsJava.getJavaSampleTemplateName()
@@ -78,6 +81,8 @@ fun AssetsNewProjectWizardStep.withJavaSampleCodeAsset(sourceRootPath: String, p
   withJavaSampleCodeAsset(sourcePath, packageName, templateName)
 }
 
+@ApiStatus.Internal
+@ApiStatus.ScheduledForRemoval
 @Deprecated("The onboarding tips generated unconditionally")
 fun AssetsNewProjectWizardStep.withJavaSampleCodeAsset(sourcePath: String, templateName: String, packageName: String?, generateOnboardingTips: Boolean): Unit =
   withJavaSampleCodeAsset(sourcePath, packageName, templateName)
@@ -138,6 +143,8 @@ private fun AssetsNewProjectWizardStep.withJavaSampleCodeAsset(
   addFilesToOpen(sourcePath)
 }
 
+@ApiStatus.Internal
+@ApiStatus.ScheduledForRemoval
 @Deprecated("The onboarding tips are prepared in the withJavaSampleCodeAsset function")
 fun AssetsNewProjectWizardStep.prepareJavaSampleOnboardingTips(project: Project): Unit =
   AssetsJava.prepareJavaSampleOnboardingTips(project, DEFAULT_FILE_NAME)

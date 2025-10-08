@@ -1,22 +1,30 @@
-<idea-plugin>
+<idea-plugin visibility="internal">
   <dependencies>
     <module name="intellij.platform.execution.serviceView"/>
   </dependencies>
+  <extensionPoints>
+    <extensionPoint qualifiedName="com.intellij.runDashboardManagerProxy"
+                    interface="com.intellij.execution.dashboard.RunDashboardManagerProxy" dynamic="true"/>
+    <extensionPoint name="runDashboardGroupingRule"
+                    interface="com.intellij.platform.execution.dashboard.splitApi.frontend.RunDashboardGroupingRule" dynamic="true"/>
+  </extensionPoints>
+
   <extensions defaultExtensionNs="com.intellij">
+    <remote.customDataContextSerializer implementation="com.intellij.platform.execution.dashboard.RunDashboardServiceDataContextSerializer"/>
+
+    <runDashboardManagerProxy
+      implementation="com.intellij.platform.execution.dashboard.splitApi.frontend.FrontendRunDashboardManagerProxy"/>
+    <projectService serviceInterface="com.intellij.execution.dashboard.RunDashboardUiManager"
+                    serviceImplementation="com.intellij.platform.execution.dashboard.splitApi.frontend.RunDashboardUiManagerImpl"/>
+    <postStartupActivity implementation="com.intellij.platform.execution.dashboard.splitApi.frontend.RunDashboardServiceSynchronizer"/>
     <serviceViewContributor implementation="com.intellij.platform.execution.dashboard.RunDashboardServiceViewContributor"/>
 
-    <projectService serviceInterface="com.intellij.execution.dashboard.RunDashboardManager"
-                    serviceImplementation="com.intellij.platform.execution.dashboard.RunDashboardManagerImpl"/>
-    <backgroundPostStartupActivity implementation="com.intellij.platform.execution.dashboard.RunDashboardCheckerActivity"/>
-    <notificationGroup id="Services Tool Window" displayType="BALLOON" isLogByDefault="true" bundle="messages.ExecutionBundle"
-                       key="notification.group.services"
-                       notificationIds="run.dashboard.multiple.run.configurations"/>
     <runDashboardGroupingRule id="type" order="first"
-                              implementation="com.intellij.platform.execution.dashboard.tree.ConfigurationTypeDashboardGroupingRule"/>
+                              implementation="com.intellij.platform.execution.dashboard.splitApi.frontend.tree.ConfigurationTypeDashboardGroupingRule"/>
     <runDashboardGroupingRule id="status" order="after type"
-                              implementation="com.intellij.platform.execution.dashboard.tree.StatusDashboardGroupingRule"/>
+                              implementation="com.intellij.platform.execution.dashboard.splitApi.frontend.tree.StatusDashboardGroupingRule"/>
     <runDashboardGroupingRule id="folder" order="after status"
-                              implementation="com.intellij.platform.execution.dashboard.tree.FolderDashboardGroupingRule"/>
+                              implementation="com.intellij.platform.execution.dashboard.splitApi.frontend.tree.FolderDashboardGroupingRule"/>
     <actionPromoter implementation="com.intellij.platform.execution.dashboard.actions.RunDashboardActionPromoter"/>
   </extensions>
   <extensions defaultExtensionNs="com.intellij.statistics">
@@ -24,25 +32,27 @@
     <validation.customValidationRule
       implementation="com.intellij.platform.execution.dashboard.RunDashboardUsagesCollector$RunConfigurationTypeValidator"/>
   </extensions>
-  <extensionPoints>
-    <extensionPoint name="runDashboardChecker" interface="com.intellij.execution.dashboard.RunDashboardChecker" dynamic="true"/>
-  </extensionPoints>
   <actions>
+    <action id="RunDashboard.Run" icon="AllIcons.Actions.Execute" use-shortcut-of="RunClass"
+            class="com.intellij.platform.execution.dashboard.actions.RunAction">
+      <add-to-group anchor="first" group-id="RunTab.TopToolbar"/>
+      <add-to-group anchor="first" group-id="RunTab.TopToolbar.Old"/>
+      <add-to-group anchor="first" group-id="XDebugger.ToolWindow.TopToolbar3"/>
+    </action>
+    <action id="RunDashboard.Debug" icon="AllIcons.Actions.StartDebugger" use-shortcut-of="DebugClass"
+            class="com.intellij.platform.execution.dashboard.actions.DebugAction">
+      <add-to-group anchor="after" relative-to-action="RunDashboard.Run" group-id="RunTab.TopToolbar"/>
+      <add-to-group anchor="after" relative-to-action="RunDashboard.Run" group-id="RunTab.TopToolbar.Old"/>
+      <add-to-group anchor="after" relative-to-action="RunDashboard.Run" group-id="XDebugger.ToolWindow.TopToolbar3"/>
+    </action>
+    <action id="RunDashboard.Stop" icon="AllIcons.Actions.Suspend" use-shortcut-of="Stop"
+            class="com.intellij.platform.execution.dashboard.actions.StopAction">
+    </action>
+
     <group id="RunDashboardContentToolbar">
-      <action id="RunDashboard.Run" icon="AllIcons.Actions.Execute" use-shortcut-of="RunClass"
-              class="com.intellij.platform.execution.dashboard.actions.RunAction">
-        <add-to-group anchor="first" group-id="RunTab.TopToolbar"/>
-        <add-to-group anchor="first" group-id="RunTab.TopToolbar.Old"/>
-        <add-to-group anchor="first" group-id="XDebugger.ToolWindow.TopToolbar3"/>
-      </action>
-      <action id="RunDashboard.Debug" icon="AllIcons.Actions.StartDebugger" use-shortcut-of="DebugClass"
-              class="com.intellij.platform.execution.dashboard.actions.DebugAction">
-        <add-to-group anchor="after" relative-to-action="RunDashboard.Run" group-id="RunTab.TopToolbar"/>
-        <add-to-group anchor="after" relative-to-action="RunDashboard.Run" group-id="RunTab.TopToolbar.Old"/>
-        <add-to-group anchor="after" relative-to-action="RunDashboard.Run" group-id="XDebugger.ToolWindow.TopToolbar3"/>
-      </action>
-      <action id="RunDashboard.Stop" icon="AllIcons.Actions.Suspend" use-shortcut-of="Stop"
-              class="com.intellij.platform.execution.dashboard.actions.StopAction"/>
+      <reference ref="RunDashboard.Run"/>
+      <reference ref="RunDashboard.Debug"/>
+      <reference ref="RunDashboard.Stop"/>
       <separator/>
       <reference ref="ExpandAll"/>
       <reference ref="CollapseAll"/>

@@ -28,6 +28,7 @@ import org.jetbrains.annotations.ApiStatus.Internal;
 import org.jetbrains.annotations.NotNull;
 import org.picocontainer.PicoContainer;
 
+@Internal
 public class CoreProjectEnvironment {
   private final Disposable myParentDisposable;
   private final CoreApplicationEnvironment myEnvironment;

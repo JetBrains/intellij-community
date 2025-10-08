@@ -1,4 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.vcs.changes.patch
 
 import com.intellij.ide.IdeBundle
@@ -8,6 +8,7 @@ import com.intellij.openapi.fileChooser.FileSaverDescriptor
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.ui.*
 import com.intellij.openapi.util.io.FileUtil
+import com.intellij.openapi.util.io.OSAgnosticPathUtil
 import com.intellij.openapi.vcs.VcsBundle.message
 import com.intellij.openapi.vfs.CharsetToolkit
 import com.intellij.openapi.vfs.encoding.EncodingProjectManager
@@ -116,13 +117,9 @@ class CreatePatchConfigurationPanel(val project: Project) {
     return panel
   }
 
-  fun getFileName(): String {
-    return FileUtil.expandUserHome(fileNameField.text.trim())
-  }
+  fun getFileName(): String = OSAgnosticPathUtil.expandUserHome(fileNameField.text.trim())
 
-  fun getBaseDirName(): String {
-    return FileUtil.expandUserHome(basePathField.getText().trim())
-  }
+  fun getBaseDirName(): String = OSAgnosticPathUtil.expandUserHome(basePathField.text.trim())
 
   fun setFileName(file: Path) {
     fileNameField.text = file.toString()

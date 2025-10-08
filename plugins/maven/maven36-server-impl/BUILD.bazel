@@ -1,9 +1,9 @@
 ### auto-generated section `build intellij.maven.server.m36.impl` start
-load("@rules_jvm//:jvm.bzl", "jvm_library", "jvm_resources")
+load("@rules_jvm//:jvm.bzl", "jvm_library", "resourcegroup")
 
-jvm_resources(
+resourcegroup(
   name = "server-m36-impl_resources",
-  files = glob(["resources/**/*"]),
+  srcs = glob(["resources/**/*"]),
   strip_prefix = "resources"
 )
 
@@ -12,6 +12,7 @@ jvm_library(
   module_name = "intellij.maven.server.m36.impl",
   visibility = ["//visibility:public"],
   srcs = glob(["src/**/*.kt", "src/**/*.java", "src/**/*.form"], allow_empty = True),
+  resources = [":server-m36-impl_resources"],
   kotlinc_opts = "@community//:k8",
   deps = [
     "//plugins/maven-server-api:maven-server",
@@ -23,7 +24,6 @@ jvm_library(
     "@lib//:maven-server-m36-impl-org-apache-maven-maven-core-3-6-0-provided",
     "@lib//:maven-server-m36-impl-org-apache-maven-maven-embedder-3-6-0-provided",
     "@lib//:maven-server-m36-impl-org-apache-maven-shared-maven-dependency-tree-1-2-provided",
-  ],
-  runtime_deps = [":server-m36-impl_resources"]
+  ]
 )
 ### auto-generated section `build intellij.maven.server.m36.impl` end

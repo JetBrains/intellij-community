@@ -1,13 +1,11 @@
 package com.intellij.findUsagesMl
 
-import com.jetbrains.ml.api.logs.BooleanEventField
-import com.jetbrains.ml.api.logs.EventField
-import com.jetbrains.ml.api.logs.EventPair
-import com.jetbrains.ml.api.logs.IntEventField
-import com.jetbrains.ml.api.logs.LongEventField
-import com.jetbrains.ml.tools.logs.extractEventFields
+import com.jetbrains.mlapi.feature.Feature
+import com.jetbrains.mlapi.feature.FeatureContainer
+import com.jetbrains.mlapi.feature.FeatureDeclaration
 
 data class FindUsagesFileRankingAnalysisInfo(
+  val customSessionId: Long,
   val isUsage: Boolean,
   val timestamp: Long,
   val isSearchValid: Boolean = true,
@@ -17,8 +15,9 @@ data class FindUsagesFileRankingAnalysisInfo(
   val activeSessionId: Long = -1,
   val finishSessionId: Long = -1,
 ) {
-  constructor(isUsage: Boolean, timestamp: Long, isSearchValid: Boolean, numberOfUsageFiles: Int?, numberOfCandidates: Int?, indexInOriginalOrder: Int?, activeSessionId: Long?, finishSessionId: Long?)
-    : this(isUsage,
+  constructor(customSessionId: Long, isUsage: Boolean, timestamp: Long, isSearchValid: Boolean, numberOfUsageFiles: Int?, numberOfCandidates: Int?, indexInOriginalOrder: Int?, activeSessionId: Long?, finishSessionId: Long?)
+    : this(customSessionId,
+           isUsage,
            timestamp,
            isSearchValid,
            numberOfUsageFiles ?: -1,
@@ -28,27 +27,26 @@ data class FindUsagesFileRankingAnalysisInfo(
            finishSessionId ?: -1)
 }
 
-object FindUsagesFileRankerAnalysisTargets {
-  val IS_USAGE: BooleanEventField = BooleanEventField("is_usage", lazyDescription = { "Is usage" })
-  val SEARCH_TIMESTAMP: LongEventField = LongEventField("search_timestamp_ms", lazyDescription = { "Search timestamp" })
-  val IS_VALID: BooleanEventField = BooleanEventField(name = "is_valid", lazyDescription = { "Is the search session valid (false if corrupted)" })
+object FindUsagesFileRankerAnalysisTargets : FeatureContainer {
+  val SESSION_ID: FeatureDeclaration<Long> = FeatureDeclaration.long("session_id") { "Id of the search session" }
 
-  val NUMBER_OF_USAGE_FILES: IntEventField = IntEventField(name = "number_of_usage_files", lazyDescription = { "Number of files containing a usage" })
-  val NUMBER_OF_CANDIDATES: IntEventField = IntEventField(name = "number_of_candidates", lazyDescription = { "Number of candidates" })
-  val INDEX_IN_ORIGINAL_ORDER: IntEventField = IntEventField(name = "index_in_original_order", lazyDescription = { "Index in original order" })
+  val IS_USAGE: FeatureDeclaration<Boolean> = FeatureDeclaration.boolean("is_usage") { "Is usage" }
+  val SEARCH_TIMESTAMP: FeatureDeclaration<Long> = FeatureDeclaration.long("search_timestamp_ms") { "Search timestamp" }
+  val IS_VALID: FeatureDeclaration<Boolean> = FeatureDeclaration.boolean("is_valid") { "Is the search session valid (false if corrupted)" }
 
-  val ACTIVE_SESSION: LongEventField = LongEventField(name = "active_session", lazyDescription = { "Id of last active (started) session" })
-  val FINISH_SESSION: LongEventField = LongEventField(name = "finish_session", lazyDescription = { "Id of finishing session" })
+  val NUMBER_OF_USAGE_FILES: FeatureDeclaration<Int> = FeatureDeclaration.int("number_of_usage_files") { "Number of files containing a usage" }
+  val NUMBER_OF_CANDIDATES: FeatureDeclaration<Int> = FeatureDeclaration.int("number_of_candidates") { "Number of candidates" }
+  val INDEX_IN_ORIGINAL_ORDER: FeatureDeclaration<Int> = FeatureDeclaration.int("index_in_original_order") { "Index in original order" }
 
-  fun eventFields(): List<List<EventField<*>>> {
-    return listOf(extractEventFields(FindUsagesFileRankerAnalysisTargets))
-  }
+  val ACTIVE_SESSION: FeatureDeclaration<Long> = FeatureDeclaration.long("active_session") { "Id of last active (started) session" }
+  val FINISH_SESSION: FeatureDeclaration<Long> = FeatureDeclaration.long("finish_session") { "Id of finishing session" }
 }
 
 class FindUsagesFileRankerAnalysisProvider {
-  fun provideAnalysisTargets(info: FindUsagesFileRankingAnalysisInfo): List<EventPair<*>> {
+  fun provideAnalysisTargets(info: FindUsagesFileRankingAnalysisInfo): List<Feature> {
     if (!info.isSearchValid) {
       return listOf(
+        FindUsagesFileRankerAnalysisTargets.SESSION_ID with info.customSessionId,
         FindUsagesFileRankerAnalysisTargets.SEARCH_TIMESTAMP with info.timestamp,
         FindUsagesFileRankerAnalysisTargets.IS_VALID with false,
         FindUsagesFileRankerAnalysisTargets.ACTIVE_SESSION with info.activeSessionId,
@@ -56,6 +54,7 @@ class FindUsagesFileRankerAnalysisProvider {
       )
     }
     return listOf(
+      FindUsagesFileRankerAnalysisTargets.SESSION_ID with info.customSessionId,
       FindUsagesFileRankerAnalysisTargets.IS_VALID with true,
       FindUsagesFileRankerAnalysisTargets.IS_USAGE with info.isUsage,
       FindUsagesFileRankerAnalysisTargets.SEARCH_TIMESTAMP with info.timestamp,

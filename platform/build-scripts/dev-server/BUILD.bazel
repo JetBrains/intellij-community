@@ -9,8 +9,8 @@ jvm_library(
   deps = [
     "@lib//:kotlin-stdlib",
     "//platform/build-scripts",
-    "@lib//:kotlinx-serialization-core",
-    "@lib//:kotlinx-serialization-json",
+    "//libraries/kotlinx/serialization/core",
+    "//libraries/kotlinx/serialization/json",
     "//build/tasks",
     "@lib//:slf4j-api",
     "//platform/util",
@@ -24,13 +24,13 @@ jvm_library(
     "//platform/boot",
     "//platform/util-class-loader:util-classLoader",
     "//platform/util/rt-java8",
-    "@lib//:fastutil-min",
-    "@lib//:hash4j",
+    "//libraries/fastutil",
+    "//libraries/hash4j",
     "//platform/diagnostic/telemetry.exporters",
     "//platform/util/coroutines",
     "//platform/util/zip",
     "@lib//:kotlinx-serialization-protobuf",
   ],
-  runtime_deps = ["@lib//:xz"]
+  runtime_deps = ["//libraries/xz"]
 )
 ### auto-generated section `build intellij.platform.buildScripts.devBuildServer` end

@@ -1,10 +1,16 @@
 ### auto-generated section `build intellij.python.community.services.shared` start
-load("@rules_jvm//:jvm.bzl", "jvm_library", "jvm_resources")
+load("@rules_jvm//:jvm.bzl", "jvm_library", "resourcegroup")
 
-jvm_resources(
+resourcegroup(
   name = "shared_resources",
-  files = glob(["resources/**/*"]),
+  srcs = glob(["resources/**/*"]),
   strip_prefix = "resources"
+)
+
+resourcegroup(
+  name = "shared_test_resources",
+  srcs = glob(["testResources/**/*"]),
+  strip_prefix = "testResources"
 )
 
 jvm_library(
@@ -12,6 +18,7 @@ jvm_library(
   module_name = "intellij.python.community.services.shared",
   visibility = ["//visibility:public"],
   srcs = glob(["src/**/*.kt", "src/**/*.java", "src/**/*.form"], allow_empty = True),
+  resources = [":shared_resources"],
   deps = [
     "@lib//:kotlin-stdlib",
     "//python/openapi:community",
@@ -20,14 +27,14 @@ jvm_library(
     "//python/python-exec-service/execService.python",
     "//platform/diagnostic",
     "//platform/util",
-  ],
-  runtime_deps = [":shared_resources"]
+  ]
 )
 
 jvm_library(
   name = "shared_test_lib",
   visibility = ["//visibility:public"],
   srcs = glob(["tests/**/*.kt", "tests/**/*.java", "tests/**/*.form"], allow_empty = True),
+  resources = [":shared_test_resources"],
   associates = [":shared"],
   deps = [
     "@lib//:kotlin-stdlib",
@@ -44,8 +51,7 @@ jvm_library(
     "//python/python-exec-service/execService.python:execService.python_test_lib",
     "//platform/diagnostic",
     "//platform/util",
-  ],
-  runtime_deps = [":shared_resources"]
+  ]
 )
 ### auto-generated section `build intellij.python.community.services.shared` end
 

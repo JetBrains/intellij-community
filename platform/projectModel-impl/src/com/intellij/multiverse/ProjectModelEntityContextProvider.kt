@@ -92,7 +92,7 @@ internal class ProjectModelEntityContextProvider : CodeInsightContextProvider {
   }
 
   override fun invalidationRequestFlow(project: Project): Flow<Unit> {
-    val eventLog = WorkspaceModel.Companion.getInstance(project).eventLog
+    val eventLog = WorkspaceModel.getInstance(project).eventLog
     return eventLog.mapNotNull { change ->
       Unit.takeIf { change.getChanges(ModuleEntity::class.java).isNotEmpty() }
     }
@@ -117,6 +117,8 @@ class ModuleContextImpl(
   override fun hashCode(): Int {
     return modulePointer.hashCode()
   }
+
+  override fun toString(): String = "ModuleContextImpl(modulePointer=$modulePointer, project=$project)"
 }
 
 @ApiStatus.Internal
@@ -138,6 +140,8 @@ class LibraryContextImpl(
   override fun hashCode(): Int {
     return libraryPointer.hashCode()
   }
+
+  override fun toString(): String = "LibraryContextImpl(libraryPointer=$libraryPointer, project=$project)"
 }
 
 @ApiStatus.Internal
@@ -159,4 +163,6 @@ class SdkContextImpl(
   override fun hashCode(): Int {
     return sdkPointer.hashCode()
   }
+
+  override fun toString(): String = "SdkContextImpl(sdkPointer=$sdkPointer, project=$project)"
 }

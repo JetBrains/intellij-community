@@ -6,6 +6,7 @@ import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.Ref;
+import com.intellij.openapi.util.SystemInfoRt;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.vfs.JarFileSystem;
 import com.intellij.openapi.vfs.LocalFileSystem.WatchRequest;
@@ -37,8 +38,10 @@ public final class WatchRootsManager {
   private final NavigableMap<String, List<WatchRequest>> myRecursiveWatchRoots = WatchRootsUtil.createFileNavigableMap();
   private final NavigableMap<String, List<WatchRequest>> myFlatWatchRoots = WatchRootsUtil.createFileNavigableMap();
   private final NavigableSet<String> myOptimizedRecursiveWatchRoots = WatchRootsUtil.createFileNavigableSet();
+
   private final NavigableMap<String, SymlinkData> mySymlinksByPath = WatchRootsUtil.createFileNavigableMap();
   private final Int2ObjectMap<SymlinkData> mySymlinksById = new Int2ObjectOpenHashMap<>();
+  /** Set of [symlink.targetPath, symlink.path] */
   private final NavigableSet<Pair<String, String>> myPathMappings = WatchRootsUtil.createMappingsNavigableSet();
 
   @SuppressWarnings("FieldAccessedSynchronizedAndUnsynchronized")
@@ -96,31 +99,83 @@ public final class WatchRootsManager {
 
   void updateSymlink(int fileId, @NotNull String linkPath, @Nullable String linkTarget) {
     synchronized (myLock) {
-      SymlinkData data = mySymlinksById.get(fileId);
-      if (data != null) {
-        if (FileUtil.pathsEqual(data.path, linkPath) && FileUtil.pathsEqual(data.target, linkTarget)) {
+      SymlinkData oldDataById = mySymlinksById.get(fileId);
+      SymlinkData oldDataByPath = mySymlinksByPath.get(linkPath);
+
+
+      if (oldDataById != null) {
+        if (FileUtil.pathsEqual(oldDataById.path, linkPath) && FileUtil.pathsEqual(oldDataById.target, linkTarget)) {
           // avoiding costly removal and re-addition of the request in case of a no-op update
           return;
         }
         mySymlinksById.remove(fileId);
-        mySymlinksByPath.remove(data.path);
-        data.removeRequest(this);
+        mySymlinksByPath.remove(oldDataById.path);
+        oldDataById.removeRequest(this);
       }
 
-      data = new SymlinkData(fileId, linkPath, linkTarget);
-
-      SymlinkData existing = mySymlinksByPath.get(linkPath);
-      if (existing != null) {
-        LOG.error("Path conflict. Existing symlink: " + existing + " vs. incoming symlink: " + data);
+      if (!isDataConsistent(fileId, linkPath, linkTarget, oldDataById, oldDataByPath)) {
         return;
       }
 
-      mySymlinksByPath.put(data.path, data);
-      mySymlinksById.put(data.id, data);
-      if (data.hasValidTarget() && WatchRootsUtil.isCoveredRecursively(myOptimizedRecursiveWatchRoots, data.path)) {
-        addWatchSymlinkRequest(data.getWatchRequest());
+      SymlinkData newData = new SymlinkData(fileId, linkPath, linkTarget);
+      mySymlinksByPath.put(newData.path, newData);
+      mySymlinksById.put(newData.id, newData);
+
+      if (newData.hasValidTarget() && WatchRootsUtil.isCoveredRecursively(myOptimizedRecursiveWatchRoots, newData.path)) {
+        addWatchSymlinkRequest(newData.getWatchRequest());
       }
     }
+  }
+
+  /** @return true if symlink data is consistent, false otherwise */
+  private static boolean isDataConsistent(int fileId,
+                                          @NotNull String linkPath,
+                                          @Nullable String linkTarget,
+                                          @Nullable SymlinkData oldDataById,
+                                          @Nullable SymlinkData oldDataByPath) {
+    //TODO RC: How inconsistency could arise:
+    //         1) seems like one of the reasons is case-sensitivity: in this class we assume that local file-system
+    //            case-sensitivity is constant (=SystemInfoRt.isFileSystemCaseSensitive) but it is not always true:
+    //            Windows/MacOS allows to override default case-sensitivity on per-directory or per-partition basis.
+    //            Which lead to conflicts here, since VFS treats files as different, while WatchRootsManager as the same.
+    //         2) another reason seems to be the move/rename operations, that currently do NOT update symlink
+    //         But these could be not all the reasons, so better improve diagnostics!
+
+    if (oldDataById != null
+        && oldDataByPath == null
+        && !FileUtil.pathsEqual(oldDataById.path, linkPath)) {
+      //likely a move/rename of the link, or one of it's parents.
+      // Report an error, because we should have updated the symlink then move/rename happens, not some time after,
+      // by occasion -- so this branch is just to be able to see the % of all errors are due to move/rename
+      LOG.error("Symlink update is inconsistent: likely missed move/rename. Existing symlink data by id: \n" +
+                oldDataById + "\n" +
+                ", existing symlink data by path is null\n" +
+                "incoming symlink: \n" +
+                "{#" + fileId + ", " + linkPath + " -> " + linkTarget + "}, " +
+                "default caseSensitivity: " + SystemInfoRt.isFileSystemCaseSensitive);
+      return true;
+    }
+    else if (oldDataById != oldDataByPath) {
+      LOG.error("Symlink update is inconsistent. Existing symlink data by id: \n" +
+                oldDataById + "\n" +
+                " != existing symlink data by path: \n" +
+                oldDataByPath + "\n" +
+                "incoming symlink: \n" +
+                "{#" + fileId + ", " + linkPath + " -> " + linkTarget + "}, " +
+                "default caseSensitivity: " + SystemInfoRt.isFileSystemCaseSensitive);
+      return false;
+    }
+    else if (oldDataByPath != null && !FileUtil.pathsEqual(oldDataByPath.path, linkPath)) {
+      LOG.error("Symlink update is inconsistent. Existing symlink data by id: \n" +
+                oldDataById + "\n" +
+                " == existing symlink data by path: \n" +
+                oldDataByPath + "\n" +
+                "but dataByPath.path != incoming linkPath. incoming symlink: \n" +
+                "{#" + fileId + ", " + linkPath + " -> " + linkTarget + "}, " +
+                "default caseSensitivity: " + SystemInfoRt.isFileSystemCaseSensitive);
+      return false;
+    }
+    return true;
   }
 
   void removeSymlink(int fileId) {
@@ -428,7 +483,7 @@ public final class WatchRootsManager {
 
     @Override
     public String toString() {
-      return "SymlinkData{" + id + ", " + path + " -> " + target + "}[" + (myWatchRequest == null ? "cleared" : "valid") + "]";
+      return "SymlinkData{#" + id + ", " + path + " -> " + target + "}[" + (myWatchRequest == null ? "<empty>" : "<active>") + "]";
     }
   }
 }

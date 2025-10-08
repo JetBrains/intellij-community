@@ -193,7 +193,8 @@ class EchoTeamCityMessages(object):
         if test_name:
             test_name = str(test_name).split(".")[-1]
         path = os.path.join(self.rootdir, path)
-        self.ensure_test_start_reported(self.format_test_id(nodeid, location), test_name, path=path, lineno=lineno + 1)
+        lineno = lineno + 1 if lineno is not None else None
+        self.ensure_test_start_reported(self.format_test_id(nodeid, location), test_name, path=path, lineno=lineno)
 
     def pytest_runtest_protocol(self, item):
         self.current_test_item = item
@@ -205,7 +206,8 @@ class EchoTeamCityMessages(object):
                 capture_standard_output = "false"
             else:
                 capture_standard_output = "true"
-            self.teamcity.testStarted(test_id, flowId=test_id, captureStandardOutput=capture_standard_output, metainfo=metainfo, path=path, lineno=lineno)
+            self.teamcity.testStarted(test_id, flowId=test_id, captureStandardOutput=capture_standard_output,
+                                      metainfo=metainfo, path=path, lineno=str(lineno) if lineno is not None else None)
             self.test_start_reported_mark.add(test_id)
 
     def report_has_output(self, report):

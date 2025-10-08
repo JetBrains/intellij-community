@@ -1,9 +1,9 @@
 ### auto-generated section `build intellij.platform.vcs.log` start
-load("@rules_jvm//:jvm.bzl", "jvm_library", "jvm_resources")
+load("@rules_jvm//:jvm.bzl", "jvm_library", "resourcegroup")
 
-jvm_resources(
+resourcegroup(
   name = "vcs-log_resources",
-  files = glob(["resources/**/*"]),
+  srcs = glob(["resources/**/*"]),
   strip_prefix = "resources"
 )
 
@@ -12,6 +12,7 @@ jvm_library(
   module_name = "intellij.platform.vcs.log",
   visibility = ["//visibility:public"],
   srcs = glob(["src/**/*.kt", "src/**/*.java", "src/**/*.form"], allow_empty = True),
+  resources = [":vcs-log_resources"],
   deps = [
     "//platform/util-rt",
     "//platform/vcs-log/graph-api:vcs-log-graph",
@@ -25,7 +26,6 @@ jvm_library(
     "//platform/core-ui",
     "//platform/diff-api:diff",
   ],
-  exports = ["//platform/vcs-log/graph-api:vcs-log-graph"],
-  runtime_deps = [":vcs-log_resources"]
+  exports = ["//platform/vcs-log/graph-api:vcs-log-graph"]
 )
 ### auto-generated section `build intellij.platform.vcs.log` end

@@ -1077,7 +1077,7 @@ public final class FileBasedIndexImpl extends FileBasedIndexEx {
           FileContentImpl newFc = getUnsavedDocContent(document, project, vFile, currentDocStamp, contentText);
           tuneFileContent(document, dominantContentFile, content, newFc);
 
-          markFileIndexed(vFile, newFc);
+          markFileBeingIndexed(vFile, newFc);
           try {
             updateIndexInNonCancellableSection(requestedIndexId, inputId, newFc);
           }
@@ -1515,21 +1515,21 @@ public final class FileBasedIndexImpl extends FileBasedIndexEx {
             ProgressManager.checkCanceled();
           }
 
-          boolean update;
-          boolean acceptedAndRequired = getIndexingState(fileContent, indexId, indexingStamp).updateRequired();
-          if (acceptedAndRequired) {
-            update = RebuildStatus.isOk(indexId);
-            if (!update) {
+          boolean shouldUpdate;
+          boolean requiredIndexNotUpToDate = getIndexingState(fileContent, indexId, indexingStamp).updateRequired();
+          if (requiredIndexNotUpToDate) {
+            shouldUpdate = RebuildStatus.isOk(indexId);
+            if (!shouldUpdate) {
               setIndexedStatus.set(Boolean.FALSE);
             }
           }
           else {
-            update = false;
+            shouldUpdate = false;
           }
 
-          if (!update && doTraceStubUpdates(indexId)) {
+          if (!shouldUpdate && doTraceStubUpdates(indexId)) {
             String reason;
-            if (acceptedAndRequired) {
+            if (requiredIndexNotUpToDate) {
               reason = "index is required to rebuild, and indexing does not update such";
             }
             else {
@@ -1539,7 +1539,7 @@ public final class FileBasedIndexImpl extends FileBasedIndexEx {
             LOG.info("index " + indexId + " should not be updated for " + fileContent.getFileName() + " because " + reason);
           }
 
-          if (update) {
+          if (shouldUpdate) {
             ProgressManager.checkCanceled();
             SingleIndexValueApplier<?> singleIndexValueApplier = createSingleIndexValueApplier(indexId, file, inputId, fileContent);
             if (singleIndexValueApplier == null) {
@@ -1665,7 +1665,7 @@ public final class FileBasedIndexImpl extends FileBasedIndexEx {
       IndexedHashesSupport.getOrInitIndexedHash((FileContentImpl)currentFC);
     }
 
-    markFileIndexed(file, currentFC);
+    markFileBeingIndexed(file, currentFC);
     try {
       StorageUpdate storageUpdate;
       long evaluatingIndexValueApplierTime = System.nanoTime();
@@ -1754,8 +1754,8 @@ public final class FileBasedIndexImpl extends FileBasedIndexEx {
     );
   }
 
-  public static void markFileIndexed(@Nullable VirtualFile file,
-                                     @Nullable FileContent fc) {
+  public static void markFileBeingIndexed(@Nullable VirtualFile file,
+                                          @Nullable FileContent fc) {
     // TODO restore original assertion
     if (fc != null && ourIndexedFile.get() != null) {
       throw new AssertionError("Reentrant indexing");
@@ -1937,10 +1937,10 @@ public final class FileBasedIndexImpl extends FileBasedIndexEx {
     return myFilesToUpdateCollector;
   }
 
-  public void scheduleFileForIndexing(int fileId,
-                                      @NotNull VirtualFile file,
-                                      boolean onlyContentChanged,
-                                      @NotNull List<Project> dirtyQueueProjects) {
+  public void scheduleFileForIncrementalIndexing(int fileId,
+                                                 @NotNull VirtualFile file,
+                                                 boolean onlyContentChanged,
+                                                 @NotNull List<Project> dirtyQueueProjects) {
     Set<Project> containingProjects = getContainingProjects(file);
     if (containingProjects.isEmpty() || !canBeIndexed(file)) {
       // large file might be scheduled for update in before event when its size was not large

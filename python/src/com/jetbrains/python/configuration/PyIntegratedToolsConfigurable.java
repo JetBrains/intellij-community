@@ -267,7 +267,7 @@ public class PyIntegratedToolsConfigurable implements SearchableConfigurable {
   @Override
   public void apply() throws ConfigurationException {
     if (myDocstringFormatComboBox.getSelectedItem() != myDocumentationSettings.getFormat()) {
-      DaemonCodeAnalyzer.getInstance(myProject).restart();
+      DaemonCodeAnalyzer.getInstance(myProject).restart(this);
     }
     if (analyzeDoctest.isSelected() != myDocumentationSettings.isAnalyzeDoctest()) {
       final List<VirtualFile> files = new ArrayList<>();
@@ -291,7 +291,7 @@ public class PyIntegratedToolsConfigurable implements SearchableConfigurable {
     myDocumentationSettings.setAnalyzeDoctest(analyzeDoctest.isSelected());
     setRequirementsPath(myRequirementsPathField.getText());
 
-    DaemonCodeAnalyzer.getInstance(myProject).restart();
+    DaemonCodeAnalyzer.getInstance(myProject).restart(this);
     PipenvCommandExecutorKt.setPipEnvPath(PropertiesComponent.getInstance(), StringUtil.nullize(myPipEnvPathField.getText()));
 
     for (@NotNull DialogPanel panel : myCustomizePanels) {
@@ -311,7 +311,7 @@ public class PyIntegratedToolsConfigurable implements SearchableConfigurable {
 
     PyUiUtil.rehighlightOpenEditors(myProject);
 
-    DaemonCodeAnalyzer.getInstance(myProject).restart();
+    DaemonCodeAnalyzer.getInstance(myProject).restart(this);
   }
 
   @Override

@@ -1,4 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.kotlin.idea.base.indices.names
 
 import com.intellij.ide.highlighter.JavaClassFileType
@@ -10,9 +10,9 @@ import com.intellij.util.indexing.*
 import com.intellij.util.io.DataExternalizer
 import com.intellij.util.io.IOUtil
 import org.jetbrains.annotations.ApiStatus
-import org.jetbrains.kotlin.analysis.decompiler.konan.FileWithMetadata
 import org.jetbrains.kotlin.analysis.decompiler.konan.KlibMetaFileType
 import org.jetbrains.kotlin.analysis.decompiler.psi.KotlinBuiltInFileType
+import org.jetbrains.kotlin.analysis.decompiler.stub.file.KotlinMetadataStubBuilder.FileWithMetadata
 import org.jetbrains.kotlin.idea.KotlinFileType
 import org.jetbrains.kotlin.idea.vfilefinder.FqNameKeyDescriptor
 import org.jetbrains.kotlin.idea.vfilefinder.KotlinPartialPackageNamesIndex
@@ -39,9 +39,9 @@ abstract class NameByPackageShortNameIndex : FileBasedIndexExtension<FqName, Lis
     private val LOG = logger<KotlinPartialPackageNamesIndex>()
 
     protected abstract fun getDeclarationNamesByKtFile(ktFile: KtFile): List<Name>
-    protected abstract fun getDeclarationNamesByMetadata(kotlinJvmBinaryClass: KotlinJvmBinaryClass): List<Name>
+    protected abstract fun getDeclarationNamesByClassFile(kotlinJvmBinaryClass: KotlinJvmBinaryClass): List<Name>
     protected abstract fun getPackageAndNamesFromBuiltIns(fileContent: FileContent): Map<FqName, List<Name>>
-    protected abstract fun getDeclarationNamesByKnm(kotlinNativeMetadata: FileWithMetadata.Compatible): List<Name>
+    protected abstract fun getDeclarationNamesByKnm(metadata: FileWithMetadata.Compatible): List<Name>
 
     override fun dependsOnFileContent() = true
     override fun getVersion() = 2
@@ -82,11 +82,11 @@ abstract class NameByPackageShortNameIndex : FileBasedIndexExtension<FqName, Lis
         if (binaryClass.classId.isLocal) return emptyMap()
 
         val packageName = binaryClass.packageName
-        return mapOf(packageName to getDeclarationNamesByMetadata(binaryClass).distinct())
+        return mapOf(packageName to getDeclarationNamesByClassFile(binaryClass).distinct())
     }
 
     private fun getPackageAndNamesFromKnm(fileContent: FileContent): Map<FqName, List<Name>> {
-        val fileWithMetadata = fileContent.toCompatibleFileWithMetadata() ?: return emptyMap()
+        val fileWithMetadata = fileContent.toKlibMetadataCompatibleFileWithMetadata() ?: return emptyMap()
         return mapOf(fileWithMetadata.packageFqName to getDeclarationNamesByKnm(fileWithMetadata))
     }
 }

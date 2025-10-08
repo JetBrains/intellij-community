@@ -3,6 +3,7 @@ package com.intellij.platform.lang.impl.backend
 
 import com.intellij.find.impl.IdeLanguageCustomizationApi
 import com.intellij.lang.IdeLanguageCustomization
+import com.intellij.openapi.components.serviceAsync
 import com.intellij.openapi.fileTypes.ExtensionFileNameMatcher
 import com.intellij.openapi.fileTypes.FileTypeManager
 import com.intellij.openapi.fileTypes.LanguageFileType
@@ -11,15 +12,18 @@ import fleet.rpc.remoteApiDescriptor
 
 private class IdeLanguageCustomizationApiImpl : IdeLanguageCustomizationApi {
   override suspend fun getPrimaryIdeLanguagesExtensions(): Set<String> {
-    return IdeLanguageCustomization.getInstance().primaryIdeLanguages
+    return serviceAsync<IdeLanguageCustomization>().primaryIdeLanguages
+      .asSequence()
       .mapNotNull { it.associatedFileType }
-      .flatMap { fileType: LanguageFileType ->
-        mutableListOf(fileType.getDefaultExtension()).plus(getAssociatedExtensions(fileType))
-      }.toSet()
+      .flatMap { fileType ->
+        sequenceOf(fileType.getDefaultExtension()).plus(getAssociatedExtensions(fileType))
+      }
+      .toSet()
   }
 
-  private fun getAssociatedExtensions(fileType: LanguageFileType): List<String> {
+  private fun getAssociatedExtensions(fileType: LanguageFileType): Sequence<String> {
     return FileTypeManager.getInstance().getAssociations(fileType)
+      .asSequence()
       .filterIsInstance<ExtensionFileNameMatcher>()
       .map { it.extension }
   }

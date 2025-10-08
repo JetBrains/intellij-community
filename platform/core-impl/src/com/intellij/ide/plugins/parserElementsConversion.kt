@@ -15,6 +15,7 @@ import com.intellij.util.messages.ListenerDescriptor
 import org.jetbrains.annotations.ApiStatus
 import com.intellij.platform.plugins.parser.impl.elements.ClientKind as ClientKindElement
 import com.intellij.platform.plugins.parser.impl.elements.ModuleLoadingRule as ModuleLoadingRuleElement
+import com.intellij.platform.plugins.parser.impl.elements.ModuleVisibility as ModuleVisibilityElement
 
 fun ScopedElementsContainer.convert(): ContainerDescriptor = ContainerDescriptor(
   services = services.map { it.convert() },
@@ -94,4 +95,10 @@ fun ModuleLoadingRuleElement.convert(): ModuleLoadingRule = when (this) {
   ModuleLoadingRuleElement.OPTIONAL -> ModuleLoadingRule.OPTIONAL
   ModuleLoadingRuleElement.ON_DEMAND -> ModuleLoadingRule.ON_DEMAND
   else -> throw IllegalArgumentException("Unknown module loading rule: ${this}")
+}
+
+fun ModuleVisibilityElement.convert(): ModuleVisibility = when (this) {
+  ModuleVisibilityElement.PRIVATE -> ModuleVisibility.PRIVATE
+  ModuleVisibilityElement.INTERNAL -> ModuleVisibility.INTERNAL
+  ModuleVisibilityElement.PUBLIC -> ModuleVisibility.PUBLIC
 }

@@ -5,24 +5,23 @@ import com.intellij.openapi.application.readAction
 import com.intellij.openapi.fileEditor.FileEditorManager
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.psi.PsiManager
-import com.jetbrains.ml.api.feature.*
+import com.jetbrains.mlapi.feature.Feature
+import com.jetbrains.mlapi.feature.FeatureContainer
+import com.jetbrains.mlapi.feature.FeatureDeclaration
+import com.jetbrains.mlapi.feature.FeatureSet
 import com.jetbrains.python.psi.PyFile
 import kotlinx.coroutines.async
 import kotlinx.coroutines.coroutineScope
 
 private const val FILES_TO_WATCH = 8
 
-object NeighborFilesImportsFeatures : ImportCandidateFeatures() {
-  object Features {
+object NeighborFilesImportsFeatures : ImportCandidateFeatures(Features) {
+  object Features : FeatureContainer {
     val NEIGHBOR_FILES_EXISTING_IMPORT_FROM_PREFIX: FeatureDeclaration<Int?> = FeatureDeclaration.int("neighbor_files_existing_import_from_prefix") { "A maximal prefix for which there exists some import from" }.nullable()
     val NEIGHBOR_FILES_EXISTING_IMPORT_PREFIX: FeatureDeclaration<Int?> = FeatureDeclaration.int("neighbor_files_existing_import_prefix") { "A maximal prefix for which there exists some import" }.nullable()
     val NEIGHBOR_FILES_NEEDED_IMPORT_FROM_PREFIX: FeatureDeclaration<Int?> = FeatureDeclaration.int("neighbor_files_needed_import_from_prefix") { "COMPONENT_COUNT - NEIGHBOR_FILES_EXISTING_IMPORT_FROM_PREFIX" }.nullable()
     val NEIGHBOR_FILES_NEEDED_IMPORT_PREFIX: FeatureDeclaration<Int?> = FeatureDeclaration.int("neighbor_files_needed_import_prefix") { "COMPONENT_COUNT - NEIGHBOR_FILES_EXISTING_IMPORT_PREFIX" }.nullable()
   }
-
-  override val featureComputationPolicy: FeatureComputationPolicy = FeatureComputationPolicy(true, true)
-
-  override val namespaceFeatureDeclarations: List<FeatureDeclaration<*>> = extractFeatureDeclarations(Features)
 
   override suspend fun computeNamespaceFeatures(instance: ImportCandidateContext, filter: FeatureSet): List<Feature> = coroutineScope {
     val importCandidate = instance.candidate

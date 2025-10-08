@@ -2,7 +2,6 @@
 
 package org.jetbrains.kotlin.nj2k.conversions
 
-import org.jetbrains.kotlin.analysis.api.KaSession
 import org.jetbrains.kotlin.j2k.ConverterContext
 import org.jetbrains.kotlin.nj2k.RecursiveConversion
 import org.jetbrains.kotlin.nj2k.blockStatement
@@ -15,7 +14,6 @@ import org.jetbrains.kotlin.nj2k.types.determineType
  * because in Kotlin parameters are not mutable.
  */
 class ParameterModificationConversion(context: ConverterContext) : RecursiveConversion(context) {
-    context(_: KaSession)
     override fun applyToElement(element: JKTreeElement): JKTreeElement {
         when (element) {
             is JKMethod -> convertMethod(element)
@@ -25,13 +23,11 @@ class ParameterModificationConversion(context: ConverterContext) : RecursiveConv
         return recurse(element)
     }
 
-    context(_: KaSession)
     private fun convertMethod(element: JKMethod) {
         val newVariables = createVariables(element.parameters, element.block).ifEmpty { return }
         element.block.statements = listOf(JKDeclarationStatement(newVariables)) + element.block.statements
     }
 
-    context(_: KaSession)
     private fun convertLambda(element: JKLambdaExpression) {
         val newVariables = createVariables(element.parameters, element.statement).ifEmpty { return }
         val declaration = JKDeclarationStatement(newVariables)
@@ -46,7 +42,6 @@ class ParameterModificationConversion(context: ConverterContext) : RecursiveConv
         }
     }
 
-    context(_: KaSession)
     private fun convertForInStatement(element: JKForInStatement) {
         val newVariables = createVariables(listOf(element.parameter), element.body).ifEmpty { return }
         val declaration = JKDeclarationStatement(newVariables)
@@ -61,7 +56,6 @@ class ParameterModificationConversion(context: ConverterContext) : RecursiveConv
         }
     }
 
-    context(_: KaSession)
     private fun createVariables(parameters: List<JKParameter>, scope: JKTreeElement): List<JKLocalVariable> =
         parameters.mapNotNull { parameter ->
             if (parameter.hasWritableUsages(scope, context)) {

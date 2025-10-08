@@ -3,8 +3,8 @@ package org.jetbrains.plugins.terminal.fus
 
 import com.intellij.openapi.components.service
 import com.intellij.openapi.editor.impl.EditorImpl
-import com.intellij.terminal.session.TerminalContentUpdatedEvent
 import org.jetbrains.annotations.ApiStatus
+import org.jetbrains.plugins.terminal.session.TerminalContentUpdatedEvent
 
 @ApiStatus.Internal
 interface FrontendLatencyService {

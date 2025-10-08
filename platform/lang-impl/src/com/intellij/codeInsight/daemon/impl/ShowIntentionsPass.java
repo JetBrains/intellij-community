@@ -32,7 +32,6 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.NlsContexts;
 import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.ProperTextRange;
-import com.intellij.openapi.util.Segment;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.impl.source.tree.injected.InjectedLanguageUtil;
@@ -117,7 +116,7 @@ public final class ShowIntentionsPass extends TextEditorHighlightingPass impleme
     boolean[] hasAvailableAction = {false};
     HighlightInfo.IntentionActionDescriptor[] unavailableAction = {null};
     info.findRegisteredQuickFix((descriptor, fixRange) -> {
-      if (!DumbService.getInstance(psiFile.getProject()).isUsableInCurrentContext(descriptor.getAction())) {
+      if (!DumbService.getInstance(psiFile.getProject()).isUsableInCurrentContext(descriptor.getAction(), psiFile.getVirtualFile())) {
         return null;
       }
 
@@ -161,10 +160,6 @@ public final class ShowIntentionsPass extends TextEditorHighlightingPass impleme
         outList.add(emptyActionDescriptor);
       }
     }
-  }
-
-  private static boolean isEmpty(@NotNull Segment segment) {
-    return segment.getEndOffset() <= segment.getStartOffset();
   }
 
   public static final class IntentionsInfo {
@@ -302,8 +297,9 @@ public final class ShowIntentionsPass extends TextEditorHighlightingPass impleme
     intentions.setOffset(offset);
 
     List<HighlightInfo.IntentionActionDescriptor> fixes = new ArrayList<>();
-    CodeInsightContext context = EditorContextManager.getEditorContext(hostEditor, hostFile.getProject());
-    DaemonCodeAnalyzerImpl.HighlightByOffsetProcessor highestPriorityInfoFinder = new DaemonCodeAnalyzerImpl.HighlightByOffsetProcessor(true, true, context);
+    Project project = hostFile.getProject();
+    CodeInsightContext context = EditorContextManager.getEditorContext(hostEditor, project);
+    DaemonCodeAnalyzerImpl.HighlightByOffsetProcessor highestPriorityInfoFinder = new DaemonCodeAnalyzerImpl.HighlightByOffsetProcessor(true, true, context, project);
     List<HighlightInfo> infos = new ArrayList<>();
     List<HighlightInfo> additionalInfos = new ArrayList<>();
     Document document = hostEditor.getDocument();
@@ -311,7 +307,6 @@ public final class ShowIntentionsPass extends TextEditorHighlightingPass impleme
     int lineStartOffset = document.getLineStartOffset(line);
     int lineEndOffset = document.getLineEndOffset(line);
     // assumption: HighlightInfo.fixRange does not extend beyond that the containing lines, otherwise it would look silly, and searching for these infos would be expensive
-    Project project = hostFile.getProject();
     MarkupModelEx model = (MarkupModelEx)DocumentMarkupModel.forDocument(document, project, true);
     DaemonCodeAnalyzerEx.processHighlights(model, project, HighlightSeverity.INFORMATION, lineStartOffset, lineEndOffset, context, info -> {
       if (info.containsOffset(offset, true)) {
@@ -364,7 +359,7 @@ public final class ShowIntentionsPass extends TextEditorHighlightingPass impleme
                                                     int passIdToShowIntentionsFor,
                                                     int offset,
                                                     @Nullable PsiElement psiElement,
-                                                    @NotNull List<? extends HighlightInfo.IntentionActionDescriptor> currentFixes) {
+                                                    @NotNull List<HighlightInfo.IntentionActionDescriptor> currentFixes) {
     ProgressIndicator indicator = ProgressIndicatorProvider.getGlobalProgressIndicator();
     PsiFile injectedFile = InjectedLanguageUtilBase.findInjectedPsiNoCommit(hostFile, offset);
 
@@ -374,7 +369,7 @@ public final class ShowIntentionsPass extends TextEditorHighlightingPass impleme
     DumbService dumbService = DumbService.getInstance(hostFile.getProject());
     for (IntentionAction action : availableIntentions) {
       ProgressManager.checkCanceled();
-      if (!dumbService.isUsableInCurrentContext(action)) {
+      if (!dumbService.isUsableInCurrentContext(action, hostFile.getVirtualFile())) {
         continue;
       }
 
@@ -410,7 +405,7 @@ public final class ShowIntentionsPass extends TextEditorHighlightingPass impleme
     for (IntentionMenuContributor extension : IntentionMenuContributor.EP_NAME.getExtensionList()) {
       ProgressManager.checkCanceled();
       try {
-        if (dumbService.isUsableInCurrentContext(extension)) {
+        if (dumbService.isUsableInCurrentContext(extension, hostFile.getVirtualFile())) {
           extension.collectActions(hostEditor, hostFile, intentions, passIdToShowIntentionsFor, offset);
         }
       }

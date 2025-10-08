@@ -11,6 +11,7 @@ import one.util.streamex.StreamEx;
 import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+import org.jetbrains.annotations.Unmodifiable;
 
 import java.util.List;
 @ApiStatus.Internal
@@ -38,7 +39,7 @@ public class PyPackagingSettings implements PersistentStateComponent<PyPackaging
    * @return first item in {@code versions} if {@link PyPackagingSettings#earlyReleasesAsUpgrades} is true,
    * first non-pre- and non-developmental release otherwise.
    */
-  public @Nullable String selectLatestVersion(@NotNull List<String> versions) {
+  public @Nullable String selectLatestVersion(@NotNull @Unmodifiable List<String> versions) {
     if (!earlyReleasesAsUpgrades) {
       return StreamEx
         .of(versions)

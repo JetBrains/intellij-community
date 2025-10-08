@@ -8,6 +8,7 @@ import com.intellij.psi.JavaTokenType;
 import com.intellij.psi.impl.source.AbstractBasicJavaElementTypeFactory;
 import com.intellij.psi.impl.source.WhiteSpaceAndCommentSetHolder;
 import com.intellij.psi.tree.TokenSet;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.Contract;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -18,8 +19,11 @@ import static com.intellij.lang.java.parser.BasicJavaParserUtil.*;
 /**
  * @deprecated Use the new Java syntax library instead.
  *             See {@link com.intellij.java.syntax.parser.JavaParser}
+ *             This class is planned to be removed.
+ *             As a temporary solution, use {@link PatternParser}.
  */
 @Deprecated
+@ApiStatus.ScheduledForRemoval
 public class BasicPatternParser {
   private static final TokenSet PATTERN_MODIFIERS = TokenSet.create(JavaTokenType.FINAL_KEYWORD);
 

@@ -1,5 +1,5 @@
 /*
- * Copyright 2003-2018 Dave Griffith, Bas Leijdekkers
+ * Copyright 2003-2025 Dave Griffith, Bas Leijdekkers
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -64,7 +64,7 @@ public final class MismatchedArrayReadWriteInspection extends BaseInspection {
   }
 
   @Override
-  public BaseInspectionVisitor buildVisitor() {
+  public @NotNull BaseInspectionVisitor buildVisitor() {
     return new MismatchedArrayReadWriteVisitor();
   }
 
@@ -177,8 +177,7 @@ public final class MismatchedArrayReadWriteInspection extends BaseInspection {
         return arrayInitializer == null || isZeroSizeArrayExpression(arrayInitializer);
       }
       if (initializer instanceof PsiArrayInitializerExpression arrayInitializerExpression) {
-        final PsiExpression[] initializers = arrayInitializerExpression.getInitializers();
-        return initializers.length == 0;
+        return arrayInitializerExpression.isEmpty();
       }
       return false;
     }

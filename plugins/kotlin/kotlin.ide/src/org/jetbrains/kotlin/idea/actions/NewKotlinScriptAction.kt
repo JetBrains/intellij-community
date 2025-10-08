@@ -7,6 +7,7 @@ import com.intellij.ide.actions.CreateTemplateInPackageAction
 import com.intellij.openapi.actionSystem.CommonDataKeys
 import com.intellij.openapi.actionSystem.DataContext
 import com.intellij.openapi.actionSystem.LangDataKeys
+import com.intellij.openapi.components.service
 import com.intellij.openapi.fileEditor.FileDocumentManager
 import com.intellij.openapi.project.DumbAware
 import com.intellij.openapi.fileEditor.FileEditorManager
@@ -16,10 +17,10 @@ import com.intellij.openapi.util.NlsContexts
 import com.intellij.psi.PsiDirectory
 import com.intellij.psi.PsiFile
 import org.jetbrains.kotlin.idea.KotlinIcons
-import org.jetbrains.kotlin.idea.base.resources.KotlinBundle
 import org.jetbrains.kotlin.idea.base.util.KOTLIN_AWARE_SOURCE_ROOT_TYPES
-import org.jetbrains.kotlin.idea.core.script.v1.IdeScriptDefinitionProvider
 import org.jetbrains.kotlin.idea.core.script.v1.kotlinScriptTemplateInfo
+import org.jetbrains.kotlin.idea.base.resources.KotlinBundle
+import org.jetbrains.kotlin.scripting.definitions.ScriptDefinitionProvider
 import javax.swing.Icon
 import kotlin.script.experimental.api.ScriptCompilationConfiguration
 import kotlin.script.experimental.api.ide
@@ -42,7 +43,7 @@ internal class NewKotlinScriptAction : AbstractNewKotlinFileAction(), DumbAware 
         with(builder) {
             setTitle(KotlinBundle.message("action.new.script.dialog.title"))
 
-            val definitions = IdeScriptDefinitionProvider.getInstance(project).getDefinitions()
+            val definitions = project.service<ScriptDefinitionProvider>().currentDefinitions.toList()
             if (definitions.isNotEmpty()) {
                 definitions.mapNotNull {
                     it.compilationConfiguration[ScriptCompilationConfiguration.ide.kotlinScriptTemplateInfo]

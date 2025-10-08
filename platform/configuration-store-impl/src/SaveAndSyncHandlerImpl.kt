@@ -228,8 +228,13 @@ private class SaveAndSyncHandlerImpl(private val coroutineScope: CoroutineScope)
 
           if (settings.isSaveOnFrameDeactivation && canSyncOrSave()) {
             // for many tasks (compilation, web development, etc.), it is important to save documents on frame deactivation ASAP
-            WriteIntentReadAction.run {
-              (FileDocumentManager.getInstance() as FileDocumentManagerImpl).saveAllDocuments(false)
+            if (Registry.`is`("document.save.in.background.allowed")) {
+              saveDocumentsInBackgroundWriteAction()
+            }
+            else {
+              WriteIntentReadAction.run {
+                (FileDocumentManager.getInstance() as FileDocumentManagerImpl).saveAllDocuments(false)
+              }
             }
             if (addToSaveQueue(saveAppAndProjectsSettingsTask)) {
               requestSave()
@@ -265,6 +270,14 @@ private class SaveAndSyncHandlerImpl(private val coroutineScope: CoroutineScope)
       .collect {
         executeOnIdle()
       }
+  }
+
+  private fun saveDocumentsInBackgroundWriteAction() {
+    coroutineScope.launch(CoroutineName("Saving documents on frame deactivation") + NonCancellable) {
+      backgroundWriteAction {
+        (FileDocumentManager.getInstance() as FileDocumentManagerImpl).saveAllDocuments(false)
+      }
+    }
   }
 
   private suspend fun executeOnIdle() {
@@ -328,25 +341,26 @@ private class SaveAndSyncHandlerImpl(private val coroutineScope: CoroutineScope)
         }
       }
 
-      val project = (componentManager as? Project)?.takeIf { !it.isDefault }
+      val project = componentManager as? Project
+      require(project == null || !project.isDefault) { "Must be called for default project" }
+
       @Suppress("DialogTitleCapitalization")
       runWithModalProgressBlocking(
         owner = if (project == null) ModalTaskOwner.guess() else ModalTaskOwner.project(project),
         title = getProgressTitle(componentManager),
         cancellation = TaskCancellation.nonCancellable(),
       ) {
-        withContext(NonCancellable) {
-          // ensure that is fully canceled
-          currentJob?.join()
+        // ensure that is fully canceled
+        currentJob?.join()
 
-          isSavedSuccessfully = saveSettings(componentManager, forceSavingAllSettings = true)
+        isSavedSuccessfully = saveSettings(componentManager = componentManager, forceSavingAllSettings = true)
 
-          if (project != null && !ApplicationManager.getApplication().isUnitTestMode) {
-            val stateStore = project.stateStore
-            val path = if (stateStore.storageScheme == StorageScheme.DIRECTORY_BASED) stateStore.projectBasePath else stateStore.projectFilePath
-            // update last modified for all project files modified between project open and close
-            (componentManager as ComponentManagerEx).getServiceAsyncIfDefined(ConversionService::class.java)?.saveConversionResult(path)
-          }
+        if (project != null && !ApplicationManager.getApplication().isUnitTestMode) {
+          val stateStore = project.stateStore
+          val storeDescriptor = stateStore.storeDescriptor
+          val path = if (storeDescriptor.dotIdea == null) storeDescriptor.presentableUrl else storeDescriptor.historicalProjectBasePath
+          // update last modified for all project files modified between project open and close
+          (componentManager as ComponentManagerEx).getServiceAsyncIfDefined(ConversionService::class.java)?.saveConversionResult(path)
         }
       }
     }

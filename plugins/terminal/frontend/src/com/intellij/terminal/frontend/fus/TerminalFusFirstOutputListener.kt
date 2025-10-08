@@ -1,6 +1,7 @@
 package com.intellij.terminal.frontend.fus
 
 import com.intellij.openapi.diagnostic.thisLogger
+import org.jetbrains.plugins.terminal.block.reworked.TerminalOffset
 import org.jetbrains.plugins.terminal.block.reworked.TerminalOutputModel
 import org.jetbrains.plugins.terminal.block.reworked.TerminalOutputModelListener
 import org.jetbrains.plugins.terminal.fus.ReworkedTerminalUsageCollector
@@ -10,7 +11,7 @@ internal class TerminalFusFirstOutputListener(private val startupFusInfo: Termin
   /** Guarded by EDT */
   private var reported = false
 
-  override fun afterContentChanged(model: TerminalOutputModel, startOffset: Int, isTypeAhead: Boolean) {
+  override fun afterContentChanged(model: TerminalOutputModel, startOffset: TerminalOffset, isTypeAhead: Boolean) {
     if (!reported && hasAnyMeaningfulText(model)) {
       reportFirstOutputReceived()
       reported = true
@@ -19,7 +20,7 @@ internal class TerminalFusFirstOutputListener(private val startupFusInfo: Termin
 
   private fun hasAnyMeaningfulText(model: TerminalOutputModel): Boolean {
     // Do not consider the '%' character as meaningful because Zsh can print and remove it several times on startup.
-    return model.document.charsSequence.any { !it.isWhitespace() && it != '%' }
+    return model.immutableText.any { !it.isWhitespace() && it != '%' }
   }
 
   private fun reportFirstOutputReceived() {

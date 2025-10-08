@@ -36,6 +36,8 @@ import org.jetbrains.annotations.ApiStatus
 
 /**
  * Computes identifier highlighting ranges by doing find usages/calling [com.intellij.codeInsight.highlighting.HighlightUsagesHandlerBase.computeUsages]
+ * @param myPsiFile may be injected fragment, in which case the `editor` must be corresponding injected editor and  `visibleRange` must have consistent offsets inside the injected document.
+ * In both cases, [computeRanges] will produce and apply HighlightInfos to the host file.
  */
 @ApiStatus.Internal
 class IdentifierHighlightingComputer(
@@ -46,10 +48,6 @@ class IdentifierHighlightingComputer(
 ) {
   private val myEnabled: Boolean
 
-  /**
-   * @param myPsiFile may be injected fragment, in which case the `editor` must be corresponding injected editor and  `visibleRange` must have consistent offsets inside the injected document.
-   * In both cases, [.doCollectInformation] will produce and apply HighlightInfos to the host file.
-   */
   init {
     val model = myEditor.getCaretModel()
     val highlightSelectionOccurrences = myEditor.getSettings().isHighlightSelectionOccurrences()
@@ -252,7 +250,10 @@ class IdentifierHighlightingComputer(
 
     private fun findTarget(editor: Editor, file: PsiFile, myCaretOffset: Int): PsiElement? {
       val offset = TargetElementUtil.adjustOffset(file, editor.getDocument(), myCaretOffset)
-      return file.findElementAt(offset)
+      val psiElement = file.findElementAt(offset)
+      // LSP has an edge case when it tries to highlight a file with no (finegrained) PSI, where the only PSI element is the whole file.
+      // In this situation we wouldn't want to cache the whole file as an underlying identifier
+      return if (psiElement != null && psiElement.textRange == file.textRange) null else psiElement
     }
 
     /**

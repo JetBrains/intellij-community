@@ -474,6 +474,35 @@ public abstract class K2JvmOptimizeImportsTestGenerated extends AbstractK2JvmOpt
         }
 
         @RunWith(JUnit3RunnerWithInners.class)
+        @TestMetadata("../../idea/tests/testData/editor/optimizeImports/common/contextSensitiveResolution")
+        public static class ContextSensitiveResolution extends AbstractK2JvmOptimizeImportsTest {
+            @java.lang.Override
+            @org.jetbrains.annotations.NotNull
+            public final KotlinPluginMode getPluginMode() {
+                return KotlinPluginMode.K2;
+            }
+
+            private void runTest(String testDataFilePath) throws Exception {
+                KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
+            }
+
+            @TestMetadata("EnumConstants.kt")
+            public void testEnumConstants() throws Exception {
+                runTest("../../idea/tests/testData/editor/optimizeImports/common/contextSensitiveResolution/EnumConstants.kt");
+            }
+
+            @TestMetadata("FromCompanionObject.kt")
+            public void testFromCompanionObject() throws Exception {
+                runTest("../../idea/tests/testData/editor/optimizeImports/common/contextSensitiveResolution/FromCompanionObject.kt");
+            }
+
+            @TestMetadata("SealedHierarchy.kt")
+            public void testSealedHierarchy() throws Exception {
+                runTest("../../idea/tests/testData/editor/optimizeImports/common/contextSensitiveResolution/SealedHierarchy.kt");
+            }
+        }
+
+        @RunWith(JUnit3RunnerWithInners.class)
         @TestMetadata("../../idea/tests/testData/editor/optimizeImports/common/kDoc")
         public static class KDoc extends AbstractK2JvmOptimizeImportsTest {
             @java.lang.Override

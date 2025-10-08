@@ -3,15 +3,19 @@ package com.intellij.platform.searchEverywhere.providers
 
 import com.intellij.ide.actions.searcheverywhere.statistics.SearchEverywhereUsageTriggerCollector
 import com.intellij.openapi.Disposable
+import com.intellij.openapi.application.EDT
+import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.Disposer
 import com.intellij.platform.scopes.SearchScopesInfo
 import com.intellij.platform.searchEverywhere.*
 import com.intellij.platform.searchEverywhere.providers.target.SeTypeVisibilityStatePresentation
-import fleet.kernel.DurableRef
+import com.intellij.platform.searchEverywhere.providers.topHit.SeTopHitItemsProvider
 import kotlinx.coroutines.CancellationException
+import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.channels.BufferOverflow
 import kotlinx.coroutines.flow.*
 import kotlinx.coroutines.isActive
+import kotlinx.coroutines.withContext
 import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.annotations.Nls
 import java.util.*
@@ -21,25 +25,27 @@ import kotlin.concurrent.atomics.incrementAndFetch
 
 @ApiStatus.Internal
 class SeLocalItemDataProvider(
-  private val provider: SeItemsProvider,
-  private val sessionRef: DurableRef<SeSessionEntity>,
+  val provider: SeItemsProvider,
+  private val session: SeSession,
   private val logLabel: String = "Local",
 ) : Disposable {
   val id: SeProviderId
     get() = SeProviderId(provider.id)
   val displayName: @Nls String
     get() = provider.displayName
+  val isAdapted: Boolean
+    get() = provider is SeAdaptedItemsProvider
 
   private val infoWithReportableId = mapOf(
     SeItemDataKeys.REPORTABLE_PROVIDER_ID to
-      (if (SearchEverywhereUsageTriggerCollector.isReportable(provider)) provider.id else SearchEverywhereUsageTriggerCollector.NOT_REPORTABLE_ID)
+      if (SearchEverywhereUsageTriggerCollector.isReportable(provider)) provider.id else SearchEverywhereUsageTriggerCollector.NOT_REPORTABLE_ID
   )
 
   @OptIn(ExperimentalAtomicApi::class)
   fun getItems(params: SeParams): Flow<SeItemData> {
     val counter = AtomicInt(0)
     return getRawItems(params).mapNotNull { item ->
-      val itemData = SeItemData.createItemData(sessionRef, UUID.randomUUID().toString(), item, id, item.weight(), item.presentation(), infoWithReportableId, emptyList())
+      val itemData = SeItemData.createItemData(session, UUID.randomUUID().toString(), item, id, item.weight(), item.presentation(), infoWithReportableId, emptyList())
       itemData?.also {
         SeLog.log(SeLog.ITEM_EMIT) {
           val count = counter.incrementAndFetch()
@@ -88,6 +94,28 @@ class SeLocalItemDataProvider(
    */
   suspend fun canBeShownInFindResults(): Boolean {
     return provider.canBeShownInFindResults()
+  }
+
+  suspend fun performExtendedAction(itemData: SeItemData): Boolean {
+    val item = itemData.fetchItemIfExists() ?: return false
+    return withContext(Dispatchers.EDT) {
+      provider.performExtendedAction(item)
+    }
+  }
+
+  suspend fun getPreviewInfo(itemData: SeItemData, project: Project): SePreviewInfo? {
+    val item = itemData.fetchItemIfExists() ?: return null
+
+    return (provider as? SeItemsPreviewProvider)?.getPreviewInfo(item, project)
+  }
+
+  fun isPreviewEnabled(): Boolean {
+    if (provider is SeTopHitItemsProvider) {
+      return provider.isPreviewProvider()
+    } else if (provider is SeAdaptedItemsProvider) {
+      return provider.isPreviewProvider()
+    }
+    return provider is SeItemsPreviewProvider
   }
 
   override fun dispose() {

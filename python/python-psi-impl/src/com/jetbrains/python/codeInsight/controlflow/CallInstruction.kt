@@ -17,10 +17,14 @@ class CallInstruction(builder: ControlFlowBuilder, call: PyCallExpression) : Ins
     val callees = element.multiResolveCalleeFunction(PyResolveContext.defaultContext(context))
     if (callees.size == 1) {
       val pyFunction = callees.single()
-      if (pyFunction is PyFunction) {
+      if (pyFunction is PyFunction && hasReturnTypeAnnotation(pyFunction)) {
         return context.getReturnType(pyFunction) is PyNeverType
       }
     }
     return false
   }
+}
+
+private fun hasReturnTypeAnnotation(function: PyFunction): Boolean {
+  return function.annotation != null || function.typeCommentAnnotation != null
 }

@@ -27,8 +27,10 @@ import com.intellij.openapi.util.UserDataHolderBase
 import com.intellij.openapi.util.io.FileUtil
 import com.intellij.openapi.vfs.*
 import com.intellij.openapi.vfs.ex.temp.TempFileSystem
+import com.intellij.platform.eel.EelApi
 import com.intellij.platform.ide.progress.ModalTaskOwner
 import com.intellij.platform.ide.progress.runWithModalProgressBlocking
+import com.intellij.python.community.services.systemPython.SystemPythonService
 import com.intellij.util.PathUtil
 import com.intellij.util.concurrency.annotations.RequiresBackgroundThread
 import com.intellij.webcore.packaging.PackagesNotificationPanel
@@ -53,6 +55,7 @@ import com.jetbrains.python.target.createDetectedSdk
 import com.jetbrains.python.util.ShowingMessageErrorSync
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
+import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.annotations.ApiStatus.Internal
 import java.nio.file.Files
 import java.nio.file.Path
@@ -108,10 +111,22 @@ fun configurePythonSdk(project: Project, module: Module, sdk: Sdk) {
   module.excludeInnerVirtualEnv(sdk)
 }
 
-// TODO: PythonInterpreterService: get system pythons
 /**
+ * Detects system-wide Python SDKs available in the current environment.
+ *
+ * **Deprecation Notice**
+ *
+ * This method relies on the outdated [com.jetbrains.python.sdk.flavors.PyFlavorData] concept, which is not compatible with the modern
+ * [EelApi] used throughout the platform.
+ *
+ * **Recommended Alternative**
+ *
+ * Use [SystemPythonService.findSystemPythons] instead for discovering Python interpreters in dedicated environments with proper EelApi
+ * integration.
+ *
  * @param context used to get [BASE_DIR] in [VirtualEnvSdkFlavor.suggestLocalHomePaths]
  */
+@ApiStatus.Obsolete
 @JvmOverloads
 fun detectSystemWideSdks(
   module: Module?,
@@ -381,7 +396,7 @@ var Module.pythonSdk: Sdk?
     thisLogger().info("Setting PythonSDK $newSdk to module $this")
     ModuleRootModificationUtil.setModuleSdk(this, newSdk)
     runInEdt {
-      DaemonCodeAnalyzer.getInstance(project).restart()
+      DaemonCodeAnalyzer.getInstance(project).restart("Setting PythonSDK $newSdk to module $this")
     }
     ApplicationManager.getApplication().messageBus.syncPublisher(PySdkListener.TOPIC).moduleSdkUpdated(this, prevSdk, newSdk)
   }

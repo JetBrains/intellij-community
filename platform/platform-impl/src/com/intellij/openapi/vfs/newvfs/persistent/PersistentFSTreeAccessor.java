@@ -227,7 +227,10 @@ public class PersistentFSTreeAccessor {
       int maxAllocatedID = connection.records().maxAllocatedID();
       int rootsCount = DataInputOutputUtil.readINT(input);
       if (rootsCount < 0) {
-        throw new IOException("SUPER_ROOT.CHILDREN attribute is corrupted: roots count(=" + rootsCount + ") must be >=0");
+        throw new CorruptedException(
+          "SUPER_ROOT.CHILDREN attribute is corrupted: roots count(=" + rootsCount + ") must be >=0, " +
+          "VFS.status: {" + connection.describeConsistencyStatus() + "}"
+        );
       }
       int[] rootsUrlIds = ArrayUtil.newIntArray(rootsCount);
       int[] rootsIds = ArrayUtil.newIntArray(rootsCount);
@@ -239,7 +242,9 @@ public class PersistentFSTreeAccessor {
         int diffRootId = DataInputOutputUtil.readINT(input);
 
         if (diffUrlId <= 0) {//'cos urlIds array must be sorted
-          throw new CorruptedException("SUPER_ROOT.CHILDREN attribute is corrupted: diffUrlId[" + i + "](=" + diffUrlId + ") must be >0");
+          throw new CorruptedException(
+            "SUPER_ROOT.CHILDREN attribute is corrupted: diffUrlId[" + i + "](=" + diffUrlId + ") must be >0, " +
+            "VFS.status: {" + connection.describeConsistencyStatus() + "}");
         }
 
         int urlId = diffUrlId + prevUrlId;
@@ -373,11 +378,14 @@ public class PersistentFSTreeAccessor {
    * urlIds array must be sorted, urlIds and fileIds arrays must be the same length, and without duplicates -- otherwise
    * {@link IllegalStateException} is thrown
    */
-  private static void saveUrlAndFileIdsAsDiffCompressed(int[] urlIds,
-                                                        int[] fileIds,
-                                                        @NotNull DataOutputStream output) throws IOException {
+  private void saveUrlAndFileIdsAsDiffCompressed(int[] urlIds,
+                                                 int[] fileIds,
+                                                 @NotNull DataOutputStream output) throws IOException {
     if (urlIds.length != fileIds.length) {
-      throw new IllegalArgumentException("urlIds.length(=" + urlIds.length + ") != fileIds.length(=" + fileIds.length + ")");
+      throw new IllegalArgumentException(
+        "urlIds.length(=" + urlIds.length + ") != fileIds.length(=" + fileIds.length + "), " +
+        "VFS.status: {" + connection.describeConsistencyStatus() + "}"
+      );
     }
     DataInputOutputUtil.writeINT(output, urlIds.length);
     int prevUrlId = 0;
@@ -392,7 +400,8 @@ public class PersistentFSTreeAccessor {
         //          very high roots count today, so printing them all could be quite a burden for logs reading
         throw new IllegalStateException(
           "urlIds are not sorted: urlIds[" + i + "](=" + urlId + ") <= urlIds[" + (i - 1) + "](=" + prevUrlId + "), " +
-          "urlIds: " + Arrays.toString(urlIds)
+          "urlIds: " + Arrays.toString(urlIds) + ", " +
+          "VFS.status: {" + connection.describeConsistencyStatus() + "}"
         );
       }
       DataInputOutputUtil.writeINT(output, diffUrlId);
@@ -406,18 +415,21 @@ public class PersistentFSTreeAccessor {
     return connection.paths().getRootsStorage(loader.getName());
   }
 
-  protected static void checkNameIdValid(int nameId,
-                                         int parentId,
-                                         int childId) throws CorruptedException {
+  protected void checkNameIdValid(int nameId,
+                                  int parentId,
+                                  int childId) throws CorruptedException {
     if (nameId == DataEnumerator.NULL_ID) {
-      throw new CorruptedException("parentId: " + parentId + ", childId: " + childId + ", nameId: " + nameId + " is invalid");
+      throw new CorruptedException(
+        "parentId: " + parentId + ", childId: " + childId + ", nameId: " + nameId + " is invalid " +
+        "-> VFS is corrupted (" + connection.describeConsistencyStatus() + ")"
+      );
     }
   }
 
-  protected static void checkChildIdValid(int parentId,
-                                          int childId,
-                                          int childNo,
-                                          int maxAllocatedID) throws CorruptedException {
+  protected void checkChildIdValid(int parentId,
+                                   int childId,
+                                   int childNo,
+                                   int maxAllocatedID) throws CorruptedException {
     if (childId < SUPER_ROOT_ID || maxAllocatedID < childId) {
       //RC: generally we throw IndexOutOfBoundsException for id out of bounds -- because this is just an invalid
       // argument, i.e. 'error on caller side'. But if VFS guts are the source of invalid id -- e.g. CHILDREN
@@ -425,7 +437,8 @@ public class PersistentFSTreeAccessor {
       throw new CorruptedException(
         "file[" + parentId + "].child[" + childNo + "][#" + childId + "] is out of valid/allocated id range" +
         " (" + SUPER_ROOT_ID + ".." + maxAllocatedID + "] " +
-        "-> VFS is corrupted (was IDE forcibly terminated?)");
+        "-> VFS is corrupted (" + connection.describeConsistencyStatus() + ")"
+      );
     }
   }
 

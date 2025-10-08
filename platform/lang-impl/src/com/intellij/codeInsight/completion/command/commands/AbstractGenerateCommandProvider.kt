@@ -23,6 +23,9 @@ import org.jetbrains.annotations.Nls
  * in a code completion system.
  */
 abstract class AbstractGenerateCommandProvider : CommandProvider, DumbAware {
+
+  override fun supportNewLineCompletion(): Boolean = true
+
   override fun getCommands(context: CommandCompletionProviderContext): List<CompletionCommand> {
     val psiFile = context.psiFile
     val project = context.project

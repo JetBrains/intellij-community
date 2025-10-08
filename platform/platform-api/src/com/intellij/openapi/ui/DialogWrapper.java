@@ -106,17 +106,17 @@ public abstract class DialogWrapper {
   public static final @NotNull Key<Boolean> KEEP_POPUPS_OPEN = Key.create("KEEP_POPUPS_OPEN");
 
   /**
-   * The default exit code for "OK" action.
+   * The default exit code for the "OK" action.
    */
   public static final int OK_EXIT_CODE = 0;
 
   /**
-   * The default exit code for "Cancel" action.
+   * The default exit code for the "Cancel" action.
    */
   public static final int CANCEL_EXIT_CODE = 1;
 
   /**
-   * The default exit code for "Close" action. Equal to cancel.
+   * The default exit code for the "Close" action. Equal to cancel.
    */
   public static final int CLOSE_EXIT_CODE = CANCEL_EXIT_CODE;
 
@@ -128,7 +128,7 @@ public abstract class DialogWrapper {
   /**
    * If your action returned by {@code createActions} method has non
    * {@code null} value for this key, then the button that corresponds to the action will be the
-   * default button for the dialog. It's true if you don't change this behaviour
+   * default button for the dialog. It's true if you don't change this behavior
    * of {@code createJButtonForAction(Action)} method.
    */
   public static final String DEFAULT_ACTION = "DefaultAction";
@@ -186,7 +186,7 @@ public abstract class DialogWrapper {
   private boolean myUserSizeSet;
   private Dimension  myActualSize;
   private List<ValidationInfo> myInfo = List.of();
-  private @Nullable DoNotAskOption myDoNotAsk;
+  private @Nullable com.intellij.openapi.ui.DoNotAskOption myDoNotAsk;
   private Action myYesAction;
   private Action myNoAction;
   private int myCurrentOptionsButtonIndex = -1;
@@ -197,7 +197,7 @@ public abstract class DialogWrapper {
   private int myValidationDelay = 300;
   private boolean myValidationStarted;
   private boolean myKeepPopupsOpen;
-  @Nls private @NonNls @Nullable String invocationPlace = null;
+  private @NonNls @Nullable String invocationPlace = null;
   private boolean useWriteIntentReadAction = true;
 
   protected Action myOKAction;
@@ -301,9 +301,9 @@ public abstract class DialogWrapper {
    * Creates modal {@code DialogWrapper} that can be a parent for other windows.
    * The currently active window will be the dialog's parent.
    *
-   * @param project parent window for the dialog will be calculated based on focused window for the
-   *                specified {@code project}. This parameter can be {@code null}. In this case parent window
-   *                will be suggested based on current focused window.
+   * @param project parent window for the dialog will be calculated based on a focused window for the
+   *                specified {@code project}. This parameter can be {@code null}. In this case the parent window
+   *                will be suggested based on the current focused window.
    * @throws IllegalStateException if the dialog is invoked not on the event dispatch thread
    * @see DialogWrapper#DialogWrapper(Project, boolean)
    */
@@ -369,6 +369,14 @@ public abstract class DialogWrapper {
     return UIBundle.message("dialog.options.do.not.show");
   }
 
+  public void setDoNotAskOption(@Nullable com.intellij.openapi.ui.DoNotAskOption doNotAsk) {
+    myDoNotAsk = doNotAsk;
+  }
+
+  /**
+   * @deprecated Please use setDoNotAskOption(com.intellij.openapi.ui.DoNotAskOption) instead
+   */
+  @Deprecated(forRemoval = true)
   public void setDoNotAskOption(@Nullable DoNotAskOption doNotAsk) {
     myDoNotAsk = doNotAsk;
   }
@@ -389,7 +397,7 @@ public abstract class DialogWrapper {
   }
 
   /**
-   * Allows postponing first start of validation
+   * Allows postponing the first start of validation.
    *
    * @return {@code false} if start validation in {@code init()} method
    */
@@ -410,7 +418,7 @@ public abstract class DialogWrapper {
 
   /**
    * Validates user input and returns {@code null} if everything is fine
-   * or validation description with component where problem has been found.
+   * or validation description with a component where the problem has been found.
    * <p>
    *   See {@link #doValidateAll()} for threading guarantees
    * </p>
@@ -426,7 +434,7 @@ public abstract class DialogWrapper {
 
   /**
    * Validates user input and returns {@code List<ValidationInfo>}.
-   * If everything is fine the returned list is empty otherwise
+   * If everything is fine, the returned list is empty, otherwise
    * the list contains all invalid fields with error messages.
    * This method should preferably be used when validating forms with multiply
    * fields that require validation.
@@ -439,8 +447,7 @@ public abstract class DialogWrapper {
    *   When called on the OK action, it's always invoked on the EDT.
    * </p>
    *
-   * @return {@code List<ValidationInfo>} of invalid fields. List
-   * is empty if no errors found.
+   * @return {@code List<ValidationInfo>} of invalid fields. The list is empty if no errors are found.
    *
    * @see <a href="https://plugins.jetbrains.com/docs/intellij/validation-errors.html">Validation errors guidelines</a>
    */
@@ -517,7 +524,7 @@ public abstract class DialogWrapper {
 
     // Can be called very early when there is no application yet
     if (LoadingState.COMPONENTS_LOADED.isOccurred() && useWriteIntentReadAction) {
-      //maybe readaction
+      //maybe readAction
       WriteIntentReadAction.run((Runnable)() -> Disposer.dispose(myDisposable));
     }
     else {
@@ -790,7 +797,7 @@ public abstract class DialogWrapper {
   }
 
   /**
-   * Additional panel in the lower left part of dialog to the left from additional buttons
+   * Additional panel in the lower left part of the dialog to the left from additional buttons
    *
    * @return panel to be shown or null if it's not required
    */
@@ -800,8 +807,8 @@ public abstract class DialogWrapper {
 
   /**
    *
-   * @param action should be registered to find corresponding JButton
-   * @return button for specified action or null if it's not found
+   * @param action should be registered to find the corresponding JButton
+   * @return button for a specified action or null if it's not found
    */
   protected @Nullable JButton getButton(@NotNull Action action) {
     return myButtonMap.get(action);
@@ -949,7 +956,7 @@ public abstract class DialogWrapper {
   }
 
   /**
-   * Factory method. It creates panel with dialog options. Options panel is located at the
+   * Factory method. It creates a panel with dialog options. Options panel is located at the
    * center of the dialog's content pane. The implementation can return {@code null}
    * value. In this case there will be no options panel.
    */
@@ -981,7 +988,7 @@ public abstract class DialogWrapper {
   }
 
   /**
-   * Dispose the wrapped and releases all resources allocated be the wrapper to help
+   * Disposes the wrapped and releases all resources allocated be the wrapper to help
    * more efficient garbage collection. You should never invoke this method twice or
    * invoke any method of the wrapper after invocation of {@code dispose}.
    *
@@ -998,7 +1005,7 @@ public abstract class DialogWrapper {
     myButtonMap.clear();
 
     JRootPane rootPane = getRootPane();
-    // if rootPane = null, dialog has already been disposed
+    // if rootPane = null, the dialog has already been disposed
     if (rootPane != null) {
       if (myActualSize != null && isAutoAdjustable()) {
         if (LOG.isDebugEnabled()) {
@@ -1046,9 +1053,9 @@ public abstract class DialogWrapper {
   }
 
   /**
-   * This method is invoked by default implementation of "Cancel" action. It just closes dialog
-   * with {@code CANCEL_EXIT_CODE}. This is convenient place to override functionality of "Cancel" action.
-   * Note that the method does nothing if "Cancel" action isn't enabled.
+   * This method is invoked by default implementation of the "Cancel" action. It just closes dialog
+   * with {@code CANCEL_EXIT_CODE}. This is a convenient place to override the functionality of the "Cancel" action.
+   * Note that the method does nothing if the "Cancel" action isn't enabled.
    */
   public void doCancelAction() {
     if (getCancelAction().isEnabled()) {
@@ -1063,7 +1070,7 @@ public abstract class DialogWrapper {
   }
 
   /**
-   * You can use this method if you want to know by which event this actions got triggered. It is called only if
+   * You can use this method if you want to know by which event this action got triggered. It is called only if
    * the cancel action was triggered by some input event, {@code doCancelAction} is called otherwise.
    *
    * @param source AWT event
@@ -1075,7 +1082,7 @@ public abstract class DialogWrapper {
   }
 
   /**
-   * Programmatically perform a "click" of default dialog's button. The method does
+   * Programmatically perform a "click" of the default dialog's button. The method does
    * nothing if the dialog has no default button.
    */
   public void clickDefaultButton() {
@@ -1099,9 +1106,9 @@ public abstract class DialogWrapper {
   }
 
   /**
-   * This method is invoked by default implementation of "OK" action. It just closes dialog
-   * with {@code OK_EXIT_CODE}. This is convenient place to override functionality of "OK" action.
-   * Note that the method does nothing if "OK" action isn't enabled.
+   * This method is invoked by default implementation of the "OK" action. It just closes dialog
+   * with {@code OK_EXIT_CODE}. This is a convenient place to override the functionality of the "OK" action.
+   * Note that the method does nothing if the "OK" action isn't enabled.
    */
   protected void doOKAction() {
     if (getOKAction().isEnabled()) {
@@ -1123,7 +1130,7 @@ public abstract class DialogWrapper {
   }
 
   /**
-   * @return whether the native window cross button closes the window or not.
+   * @return whether the native window "cross" button closes the window or not.
    * {@code true} means that cross performs hide or dispose of the dialog.
    */
   public boolean shouldCloseOnCross() {
@@ -1131,7 +1138,7 @@ public abstract class DialogWrapper {
   }
 
   /**
-   * Creates actions for dialog.
+   * Creates actions for the dialog.
    * <p/>
    * By default, "OK" and "Cancel" actions are returned. The "Help" action is automatically added if
    * {@link #getHelpId()} returns non-null value.
@@ -1164,7 +1171,7 @@ public abstract class DialogWrapper {
   }
 
   /**
-   * @return default implementation of "Cancel" action. This action just invokes
+   * @return default implementation of the "Cancel" action. This action just invokes
    * {@code doCancelAction()} method.
    * @see #doCancelAction
    */
@@ -1255,7 +1262,7 @@ public abstract class DialogWrapper {
 
   /**
    * @return horizontal stretch of the dialog. It means that the dialog's horizontal size is
-   * the product of horizontal stretch by horizontal size of packed dialog. The default value
+   * the product of horizontal stretch by the horizontal size of the packed dialog. The default value
    * is {@code 1.0f}
    */
   public final float getHorizontalStretch() {
@@ -1264,7 +1271,7 @@ public abstract class DialogWrapper {
 
   /**
    * @return vertical stretch of the dialog. It means that the dialog's vertical size is
-   * the product of vertical stretch by vertical size of packed dialog. The default value
+   * the product of vertical stretch by vertical size of the packed dialog. The default value
    * is {@code 1.0f}
    */
   public final float getVerticalStretch() {
@@ -1528,7 +1535,7 @@ public abstract class DialogWrapper {
   }
 
   /**
-   * Override to set default initial size of the window
+   * Override to set the default initial size of the window
    *
    * @return initial window size
    */
@@ -1553,7 +1560,7 @@ public abstract class DialogWrapper {
     myCrossClosesWindow = crossClosesWindow;
   }
 
-  /** @see #setOKButtonText(String) for mnemonic hadling */
+  /** @see #setOKButtonText(String) for mnemonic handling */
   protected final void setCancelButtonText(@NlsContexts.Button @NotNull String text) {
     myCancelAction.putValue(Action.NAME, text);
   }
@@ -1567,7 +1574,7 @@ public abstract class DialogWrapper {
   }
 
   /**
-   * Checks if this dialog will keep previously opened popup open while it's showing.
+   * Checks if this dialog will keep the previously opened popup open while it's showing.
    *
    * @see #setKeepPopupsOpen(boolean)
    * @return the current value of the "keep popups open" flag
@@ -1578,9 +1585,9 @@ public abstract class DialogWrapper {
   }
 
   /**
-   * Sets whether this dialog will keep previously opened popup open while it's showing.
+   * Sets whether this dialog will keep the previously opened popup open while it's showing.
    *<p>
-   * Some dialogs (e.g. Paste from History) can be invoked from a popup to perform
+   * Some dialogs (e.g., Paste from History) can be invoked from a popup to perform
    * a certain task and then get back to working with the popup. However, as popups
    * normally disappear on losing focus, this doesn't work by default. Calling this
    * method with the parameter set to {@code true} will override this behavior
@@ -1730,7 +1737,7 @@ public abstract class DialogWrapper {
   }
 
   /**
-   * Called to fit window bounds of dialog to a screen
+   * Called to fit window bounds of a dialog to a screen
    * @param rect the suggested window bounds. This rect should be modified to change resulting bounds.
    */
   @ApiStatus.Internal
@@ -1767,7 +1774,7 @@ public abstract class DialogWrapper {
    * Show the modal dialog and check if it was closed with OK.
    *
    * @return true if the {@link #getExitCode() exit code} is {@link #OK_EXIT_CODE}.
-   * @throws IllegalStateException if the dialog is non-modal, or if the method is invoked not on the EDT.
+   * @throws IllegalStateException if the dialog is non-modal, or if the method is invoked, not on the EDT.
    * @see #show()
    */
   public boolean showAndGet() {
@@ -1930,7 +1937,7 @@ public abstract class DialogWrapper {
   }
 
   /**
-   * If dialog open/close events should be recorded in user event log, it can be used to understand how often this dialog is used.
+   * If dialog open/close events should be recorded in the user event log, it can be used to understand how often this dialog is used.
    */
   protected boolean canRecordDialogId() {
     return true;
@@ -2038,7 +2045,7 @@ public abstract class DialogWrapper {
   }
 
   /**
-   * The action that just closes dialog with the specified exit code
+   * The action that just closes the dialog with the specified exit code
    * (like the default behavior of the actions "Ok" and "Cancel").
    */
   protected class DialogWrapperExitAction extends DialogWrapperAction {
@@ -2187,7 +2194,7 @@ public abstract class DialogWrapper {
   }
 
   /**
-   * Check if component is in error state validation-wise
+   * Check if the component is in error state validation-wise
    */
   protected boolean hasErrors(@NotNull JComponent component) {
     return ContainerUtil.exists(myInfo, i -> component.equals(i.component) && !i.warning);
@@ -2314,5 +2321,13 @@ public abstract class DialogWrapper {
       }
       return super.getBackground();
     }
+  }
+
+  /**
+   * @deprecated Please use com.intellij.openapi.ui.DoNotAskOption instead
+   */
+  @Deprecated(forRemoval = true)
+  public interface DoNotAskOption extends com.intellij.openapi.ui.DoNotAskOption {
+    abstract class Adapter extends com.intellij.openapi.ui.DoNotAskOption.Adapter implements DoNotAskOption {}
   }
 }

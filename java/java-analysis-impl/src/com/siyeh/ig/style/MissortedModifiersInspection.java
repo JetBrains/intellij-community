@@ -89,7 +89,7 @@ public final class MissortedModifiersInspection extends BaseInspection implement
   }
 
   @Override
-  public BaseInspectionVisitor buildVisitor() {
+  public @NotNull BaseInspectionVisitor buildVisitor() {
     return new MissortedModifiersVisitor();
   }
 

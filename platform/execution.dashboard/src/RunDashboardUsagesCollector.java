@@ -39,7 +39,7 @@ final class RunDashboardUsagesCollector extends ProjectUsagesCollector {
   @Override
   public @NotNull Set<MetricEvent> getMetrics(@NotNull Project project) {
     final Set<MetricEvent> metricEvents = new HashSet<>();
-    RunDashboardManagerImpl runDashboardManager = (RunDashboardManagerImpl)RunDashboardManager.getInstance(project);
+    RunDashboardManager runDashboardManager = RunDashboardManager.getInstance(project);
     final Set<String> dashboardTypes = new HashSet<>(runDashboardManager.getTypes());
     Set<String> removedDefaultType = new HashSet<>(runDashboardManager.getEnableByDefaultTypes());
     dashboardTypes.removeAll(removedDefaultType); // do not report enable by default types

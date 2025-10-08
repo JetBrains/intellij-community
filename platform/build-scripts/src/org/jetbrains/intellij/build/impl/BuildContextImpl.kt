@@ -46,7 +46,6 @@ import org.jetbrains.intellij.build.jarCache.JarCacheManager
 import org.jetbrains.intellij.build.jarCache.LocalDiskJarCacheManager
 import org.jetbrains.intellij.build.jarCache.NonCachingJarCacheManager
 import org.jetbrains.intellij.build.productRunner.IntellijProductRunner
-import org.jetbrains.intellij.build.productRunner.ModuleBasedProductRunner
 import org.jetbrains.intellij.build.productRunner.createDevModeProductRunner
 import org.jetbrains.jps.model.JpsProject
 import org.jetbrains.jps.model.module.JpsModule
@@ -448,9 +447,8 @@ class BuildContextImpl internal constructor(
     createDevModeProductRunner(this@BuildContextImpl)
   }
 
-  override suspend fun createProductRunner(additionalPluginModules: List<String>, forceUseDevBuild: Boolean): IntellijProductRunner {
+  override suspend fun createProductRunner(additionalPluginModules: List<String>): IntellijProductRunner {
     when {
-      useModularLoader && !forceUseDevBuild -> return ModuleBasedProductRunner(productProperties.rootModuleForModularLoader!!, this)
       additionalPluginModules.isEmpty() -> return devModeProductRunner.await()
       else -> return createDevModeProductRunner(additionalPluginModules = additionalPluginModules, context = this)
     }

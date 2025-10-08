@@ -17,7 +17,7 @@ import git4idea.index.isTracked
 import git4idea.index.repositoryPath
 import org.jetbrains.annotations.NonNls
 
-class LightGitEditorHighlighterManager(val tracker: LightGitTracker) : Disposable {
+internal class LightGitEditorHighlighterManager(private val tracker: LightGitTracker) : Disposable {
   private val disposableFlag = Disposer.newCheckedDisposable()
   private val singleTaskController = MySingleTaskController()
   private var lst: SimpleLocalLineStatusTracker? = null
@@ -28,7 +28,7 @@ class LightGitEditorHighlighterManager(val tracker: LightGitTracker) : Disposabl
   init {
     tracker.addUpdateListener(object : LightGitTrackerListener {
       override fun update() {
-        lightEditService.selectedFileEditor?.let { fileEditor -> updateLst(fileEditor) }
+        lightEditService.getSelectedFileEditor()?.let { fileEditor -> updateLst(fileEditor) }
       }
     }, this)
     lightEditService.editorManager.addListener(object : LightEditorListener {
@@ -58,7 +58,7 @@ class LightGitEditorHighlighterManager(val tracker: LightGitTracker) : Disposabl
   }
 
   private fun setBaseVersion(baseVersion: BaseVersion) {
-    if (lightEditService.selectedFile == baseVersion.file && lst?.virtualFile == baseVersion.file) {
+    if (lightEditService.getSelectedFile() == baseVersion.file && lst?.virtualFile == baseVersion.file) {
       if (baseVersion.text != null) {
         lst?.setBaseRevision(baseVersion.text)
       }

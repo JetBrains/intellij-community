@@ -47,6 +47,11 @@ public final class PlatformModifiableModelsProvider implements ModifiableModelsP
   }
 
   @Override
+  public @NotNull LibraryTable.ModifiableModel getGlobalLibraryTableModifiableModel(@NotNull Project project) {
+    return LibraryTablesRegistrar.getInstance().getGlobalLibraryTable(project).getModifiableModel();
+  }
+
+  @Override
   public LibraryTable.ModifiableModel getLibraryTableModifiableModel(@NotNull Project project) {
     return LibraryTablesRegistrar.getInstance().getLibraryTable(project).getModifiableModel();
   }

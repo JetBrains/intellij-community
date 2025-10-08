@@ -1,10 +1,10 @@
 // Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.plugins.github.pullrequest.ui.editor
 
-import com.intellij.collaboration.async.associateCachingBy
 import com.intellij.collaboration.async.collectScoped
 import com.intellij.collaboration.async.launchNow
 import com.intellij.collaboration.async.mapScoped
+import com.intellij.collaboration.async.mapStatefulToStateful
 import com.intellij.collaboration.ui.codereview.diff.DiscussionsViewOption
 import com.intellij.collaboration.ui.codereview.editor.*
 import com.intellij.collaboration.util.HashingUtil
@@ -25,7 +25,6 @@ import com.intellij.openapi.fileEditor.OpenFileDescriptor
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.Disposer
 import com.intellij.util.cancelOnDispose
-import com.intellij.util.containers.HashingStrategy
 import kotlinx.coroutines.*
 import kotlinx.coroutines.flow.*
 import org.jetbrains.plugins.github.pullrequest.config.GithubPullRequestsProjectUISettings
@@ -122,12 +121,11 @@ private suspend fun showReview(project: Project, settings: GithubPullRequestsPro
     launchNow {
       val userIcon = fileVm.iconProvider.getIcon(fileVm.currentUser.url, 16)
       editor.renderInlays(model.inlays, HashingUtil.mappingStrategy(GHPREditorMappedComponentModel::key)) {
+        GHPRInlayUtils.installInlaysDimming(this, model)
         launchNow {
-          model.inlays.associateCachingBy(
-            keyExtractor = { it },
-            hashingStrategy = HashingStrategy.identity(),
-            valueExtractor = { inlay -> GHPRInlayUtils.installInlayHoverOutline(this, editor, Side.RIGHT, null, inlay) }
-          ).collect()
+          model.inlays
+            .mapStatefulToStateful { inlayModel -> GHPRInlayUtils.installInlayHoverOutline(this, editor, Side.RIGHT, null, inlayModel) }
+            .collect()
         }
         createRenderer(it, userIcon)
       }

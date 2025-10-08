@@ -54,6 +54,7 @@ import com.intellij.refactoring.JavaRefactoringActionHandlerFactory;
 import com.intellij.util.ObjectUtils;
 import com.intellij.util.ThreeState;
 import com.intellij.util.concurrency.ThreadingAssertions;
+import com.intellij.util.concurrency.annotations.RequiresBackgroundThread;
 import com.siyeh.ig.controlflow.UnnecessaryDefaultInspection;
 import com.siyeh.ig.fixes.*;
 import com.siyeh.ipp.imports.ReplaceOnDemandImportIntention;
@@ -244,6 +245,11 @@ public final class QuickFixFactoryImpl extends QuickFixFactory {
   @Override
   public @NotNull IntentionAction createNavigateToDuplicateElementFix(@NotNull NavigatablePsiElement element) {
     return new NavigateToDuplicateElementFix(element).asIntention();
+  }
+
+  @Override
+  public @NotNull IntentionAction createShowDuplicateElementsFix(@NotNull List<@NotNull ? extends NavigatablePsiElement> elements) {
+    return new ShowDuplicateElementsFix(elements).asIntention();
   }
 
   @Override
@@ -585,6 +591,7 @@ public final class QuickFixFactoryImpl extends QuickFixFactory {
   }
 
   @Override
+  @RequiresBackgroundThread
   public @NotNull ModCommandAction createOptimizeImportsFix(final boolean fixOnTheFly, @NotNull PsiFile file) {
     ApplicationManager.getApplication().assertIsNonDispatchThread();
     VirtualFile virtualFile = file.getVirtualFile();
@@ -721,10 +728,10 @@ public final class QuickFixFactoryImpl extends QuickFixFactory {
   }
 
   @Override
-  public @NotNull List<@NotNull LocalQuickFix> registerOrderEntryFixes(@NotNull PsiReference reference,
-                                                                       @NotNull PsiMember target,
-                                                                       @NotNull List<? super IntentionAction> registrar) {
-    return OrderEntryFix.registerFixes(reference, target, registrar);
+  public void registerOrderEntryFixes(@NotNull PsiReference reference,
+                                      @NotNull PsiMember target,
+                                      @NotNull List<? super IntentionAction> registrar) {
+    OrderEntryFix.registerFixes(reference, target, registrar);
   }
 
   @Override
@@ -1163,5 +1170,19 @@ public final class QuickFixFactoryImpl extends QuickFixFactory {
   public @Nullable IntentionAction createLiftThrowOutOfSwitchExpression(@NotNull PsiSwitchExpression psiSwitchExpression) {
     LiftThrowOutOfSwitchExpressionFix fix = LiftThrowOutOfSwitchExpressionFix.create(psiSwitchExpression);
     return fix != null ? fix.asIntention() : null;
+  }
+
+  @Override
+  public @NotNull List<? extends @NotNull ModCommandAction> createReplaceTypeWithWrongImportFixes(@Nullable PsiJavaCodeReferenceElement reference) {
+    if(reference == null) return List.of();
+    return ReplaceTypeWithWrongImportFix.createFixes(reference);
+  }
+
+  @Override
+  public @Nullable ModCommandAction createChangeToSimilarKeyword(@Nullable PsiElement old,
+                                                                 @NotNull Collection<@NotNull String> newKeywords) {
+    if (old == null) return null;
+    if (newKeywords.isEmpty()) return null;
+    return ChangeToSimilarKeywordFix.createFix(old, newKeywords);
   }
 }

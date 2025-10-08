@@ -158,7 +158,7 @@ public class MockChangeListManager extends ChangeListManagerEx {
   }
 
   @Override
-  public boolean isUnversioned(VirtualFile file) {
+  public boolean isUnversioned(@NotNull VirtualFile file) {
     throw new UnsupportedOperationException();
   }
 

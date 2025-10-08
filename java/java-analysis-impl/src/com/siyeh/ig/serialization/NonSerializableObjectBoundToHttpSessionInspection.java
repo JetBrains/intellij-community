@@ -33,7 +33,7 @@ public final class NonSerializableObjectBoundToHttpSessionInspection
   }
 
   @Override
-  public BaseInspectionVisitor buildVisitor() {
+  public @NotNull BaseInspectionVisitor buildVisitor() {
     return new NonSerializableObjectBoundToHttpSessionVisitor();
   }
 

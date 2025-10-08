@@ -15,21 +15,21 @@
  */
 package org.jetbrains.idea.maven.dom
 
+import com.intellij.grazie.spellcheck.GrazieSpellCheckingInspection
 import com.intellij.maven.testFramework.MavenDomTestCase
-import com.intellij.spellchecker.inspections.SpellCheckingInspection
 import kotlinx.coroutines.runBlocking
 import org.junit.Test
 
 class MavenSpellcheckerTest : MavenDomTestCase() {
   @Test
   fun testSpell() = runBlocking {
-    fixture.enableInspections(SpellCheckingInspection::class.java)
+    fixture.enableInspections(GrazieSpellCheckingInspection::class.java)
 
     createProjectPom("""
                        <groupId>test</groupId>
                        <artifactId>project</artifactId>
                        <version>1</version>
-                       <description><TYPO>xxxxx</TYPO></description>
+                       <description><TYPO>descriptioon</TYPO></description>
                        <dependencies>
                          <dependency>
                            <groupId>xxxxx</groupId>

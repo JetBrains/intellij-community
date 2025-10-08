@@ -2,6 +2,7 @@
 package org.jetbrains.jps.incremental;
 
 import com.intellij.openapi.util.UserDataHolder;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.jps.ModuleChunk;
@@ -24,6 +25,7 @@ public interface CompileContext extends UserDataHolder, MessageHandler {
   /**
    * @deprecated use {@link JavaBuilderUtil#isForcedRecompilationAllJavaModules(CompileContext)} for java-related usages
    */
+  @ApiStatus.Internal
   @Deprecated(forRemoval = true)
   default boolean isProjectRebuild() {
     return JavaBuilderUtil.isForcedRecompilationAllJavaModules(getScope());

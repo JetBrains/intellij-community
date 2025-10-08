@@ -163,7 +163,12 @@ c:com.intellij.ide.RecentProjectListActionProvider
 - getActions(Z,Z,Z):java.util.List
 - bs:getActions$default(com.intellij.ide.RecentProjectListActionProvider,Z,Z,Z,I,java.lang.Object):java.util.List
 c:com.intellij.ide.RecentProjectsManagerBase
-- f:getCurrentBranch(java.lang.String,Z):java.lang.String
+- f:addRecentPath(java.nio.file.Path,com.intellij.ide.RecentProjectMetaInfo):V
+- f:getDisplayName(java.nio.file.Path):java.lang.String
+- f:getProjectIcon(java.nio.file.Path,Z):javax.swing.Icon
+- f:getProjectIcon(java.nio.file.Path,Z,I,java.lang.String):javax.swing.Icon
+- bs:getProjectIcon$default(com.intellij.ide.RecentProjectsManagerBase,java.nio.file.Path,Z,I,java.lang.String,I,java.lang.Object):javax.swing.Icon
+- f:getProjectName(java.nio.file.Path):java.lang.String
 - willReopenProjectOnStart(kotlin.coroutines.Continuation):java.lang.Object
 c:com.intellij.ide.ReopenProjectAction
 - getNameToDisplayAsText():java.lang.String
@@ -173,7 +178,6 @@ com.intellij.ide.actions.CloseAction$CloseTarget
 c:com.intellij.ide.actions.OpenFileAction
 - p:doOpenFile(com.intellij.openapi.project.Project,com.intellij.openapi.vfs.VirtualFile,kotlin.coroutines.Continuation):java.lang.Object
 c:com.intellij.ide.actions.RevealFileAction
-- s:showDialog(com.intellij.openapi.project.Project,java.lang.String,java.lang.String,java.io.File,com.intellij.openapi.ui.DoNotAskOption):V
 com.intellij.ide.actions.SettingsEntryPointAction$ActionProvider
 - sf:EP_NAME:com.intellij.openapi.extensions.ExtensionPointName
 - getLastActions(com.intellij.openapi.actionSystem.DataContext):java.util.Collection
@@ -183,6 +187,20 @@ com.intellij.ide.actions.SettingsEntryPointAction$IconCustomizer
 - sf:EP_NAME:com.intellij.openapi.extensions.ExtensionPointName
 - a:getCustomIcon(com.intellij.ui.BadgeIconSupplier):javax.swing.Icon
 - getSecondIcon():javax.swing.Icon
+c:com.intellij.ide.browsers.StartBrowserSettings
+- <init>():V
+- getBrowser():com.intellij.ide.browsers.WebBrowser
+- getBrowserReference():java.lang.String
+- getUrl():java.lang.String
+- isSelected():Z
+- isStartJavaScriptDebugger():Z
+- s:readExternal(org.jdom.Element):com.intellij.ide.browsers.StartBrowserSettings
+- setBrowser(com.intellij.ide.browsers.WebBrowser):V
+- setBrowserReference(java.lang.String):V
+- setSelected(Z):V
+- setStartJavaScriptDebugger(Z):V
+- setUrl(java.lang.String):V
+- writeExternal(org.jdom.Element):V
 c:com.intellij.ide.browsers.actions.OpenInBrowserBaseGroupAction$OpenInBrowserFloatingToolbarProvider
 - com.intellij.openapi.editor.toolbar.floating.AbstractFloatingToolbarProvider
 - <init>():V
@@ -291,8 +309,33 @@ bf:com.intellij.ide.plugins.marketplace.IdeCompatibleUpdate$$serializer
 - f:deserialize(kotlinx.serialization.encoding.Decoder):com.intellij.ide.plugins.marketplace.IdeCompatibleUpdate
 - f:getDescriptor():kotlinx.serialization.descriptors.SerialDescriptor
 - f:serialize(kotlinx.serialization.encoding.Encoder,com.intellij.ide.plugins.marketplace.IdeCompatibleUpdate):V
+f:com.intellij.ide.startup.StartupActionScriptManager
+- s:addActionCommand(com.intellij.ide.startup.StartupActionScriptManager$ActionCommand):V
+- s:addActionCommands(java.util.List):V
 com.intellij.ide.startup.StartupActionScriptManager$ActionCommand
-- a:execute():V
+- execute():V
+- a:execute(java.nio.file.FileSystem):V
+f:com.intellij.ide.startup.StartupActionScriptManager$CopyCommand
+- com.intellij.ide.startup.StartupActionScriptManager$ActionCommand
+- java.io.Serializable
+- <init>(java.io.File,java.io.File):V
+- <init>(java.nio.file.Path,java.nio.file.Path):V
+- execute(java.nio.file.FileSystem):V
+- getSource():java.lang.String
+f:com.intellij.ide.startup.StartupActionScriptManager$DeleteCommand
+- com.intellij.ide.startup.StartupActionScriptManager$ActionCommand
+- java.io.Serializable
+- <init>(java.io.File):V
+- <init>(java.nio.file.Path):V
+- execute(java.nio.file.FileSystem):V
+f:com.intellij.ide.startup.StartupActionScriptManager$UnzipCommand
+- com.intellij.ide.startup.StartupActionScriptManager$ActionCommand
+- java.io.Serializable
+- <init>(java.io.File,java.io.File):V
+- <init>(java.nio.file.Path,java.nio.file.Path):V
+- <init>(java.nio.file.Path,java.nio.file.Path,java.util.function.Predicate):V
+- execute(java.nio.file.FileSystem):V
+- getSource():java.lang.String
 com.intellij.ide.trustedProjects.TrustedProjectsLocator
 - sf:Companion:com.intellij.ide.trustedProjects.TrustedProjectsLocator$Companion
 - a:getProjectRoots(com.intellij.openapi.project.Project):java.util.List
@@ -325,6 +368,47 @@ com.intellij.ide.ui.customization.ToolbarQuickActionInsertStrategy
 - a:addActions(java.util.List,com.intellij.ide.ui.customization.CustomActionsSchema):Z
 - a:checkExists(java.lang.String,com.intellij.ide.ui.customization.CustomActionsSchema):Z
 - orElse(com.intellij.ide.ui.customization.ToolbarQuickActionInsertStrategy):com.intellij.ide.ui.customization.ToolbarQuickActionInsertStrategy
+c:com.intellij.ide.ui.laf.darcula.ui.DarculaButtonUI
+- javax.swing.plaf.basic.BasicButtonUI
+- sf:DEFAULT_STYLE_KEY:com.intellij.openapi.util.Key
+- ps:HELP_BUTTON_DIAMETER:com.intellij.util.ui.JBValue
+- ps:HORIZONTAL_PADDING:com.intellij.util.ui.JBValue
+- <init>():V
+- s:createUI(javax.swing.JComponent):javax.swing.plaf.ComponentUI
+- p:getBackground(javax.swing.JComponent,java.awt.Rectangle):java.awt.Paint
+- p:getButtonColorEnd():java.awt.Color
+- p:getButtonColorStart():java.awt.Color
+- p:getButtonTextColor(javax.swing.AbstractButton):java.awt.Color
+- p:getDarculaButtonSize(javax.swing.JComponent,java.awt.Dimension):java.awt.Dimension
+- p:getDefaultButtonColorEnd():java.awt.Color
+- p:getDefaultButtonColorStart():java.awt.Color
+- s:getDisabledTextColor():java.awt.Color
+- p:getMnemonicIndex(javax.swing.AbstractButton):I
+- f:getPreferredSize(javax.swing.JComponent):java.awt.Dimension
+- installDefaults(javax.swing.AbstractButton):V
+- s:isComboAction(java.awt.Component):Z
+- s:isContrastGotIt(java.awt.Component):Z
+- s:isContrastGotItOnlyButton(java.awt.Component):Z
+- s:isDefaultButton(javax.swing.JComponent):Z
+- s:isGotItButton(java.awt.Component):Z
+- s:isSmallVariant(java.awt.Component):Z
+- s:isSquare(java.awt.Component):Z
+- s:isTag(java.awt.Component):Z
+- paint(java.awt.Graphics,javax.swing.JComponent):V
+- p:paintContents(java.awt.Graphics,javax.swing.AbstractButton):V
+- p:paintDecorations(java.awt.Graphics2D,javax.swing.JComponent):Z
+- p:paintDisabledText(java.awt.Graphics,java.lang.String,javax.swing.JComponent,java.awt.Rectangle,java.awt.FontMetrics):V
+- p:paintText(java.awt.Graphics,javax.swing.JComponent,java.awt.Rectangle,java.lang.String):V
+- p:setupDefaultButton(javax.swing.JComponent,java.awt.Graphics):V
+- p:textIconGap():I
+- update(java.awt.Graphics,javax.swing.JComponent):V
+f:com.intellij.ide.ui.laf.darcula.ui.TextFieldWithPopupHandlerUI$IconHolder
+- f:bounds:java.awt.Rectangle
+- f:extension:com.intellij.ui.components.fields.ExtendableTextComponent$Extension
+- hovered:Z
+- icon:javax.swing.Icon
+- iconButton:javax.swing.JButton
+- isClickable():Z
 com.intellij.ide.util.ElementsChooser$ElementsMarkListener
 - a:elementMarkChanged(java.lang.Object,Z):V
 com.intellij.ide.util.ElementsChooser$StatisticsCollector
@@ -342,10 +426,6 @@ com.intellij.ide.util.TipUIUtil$Browser
 - a:getComponent():javax.swing.JComponent
 - a:load(java.lang.String):V
 - a:setText(java.lang.String):V
-com.intellij.ide.vcs.RecentProjectsBranchesProvider
-- a:getCurrentBranch(java.lang.String,Z):java.lang.String
-f:com.intellij.ide.vcs.RecentProjectsBranchesProvider$Companion
-- f:getCurrentBranch(java.lang.String,Z):java.lang.String
 c:com.intellij.ide.wizard.AbstractWizardEx
 - p:getHelpId():java.lang.String
 com.intellij.ide.wizard.BuildSystemNewProjectWizardData
@@ -721,6 +801,20 @@ e:com.intellij.openapi.updateSettings.impl.ExternalUpdateManager
 - f:toolName:java.lang.String
 - s:valueOf(java.lang.String):com.intellij.openapi.updateSettings.impl.ExternalUpdateManager
 - s:values():com.intellij.openapi.updateSettings.impl.ExternalUpdateManager[]
+f:com.intellij.openapi.updateSettings.impl.UpdateChannel
+- f:getBuilds():java.util.List
+- f:getEvalDays():I
+- f:getId():java.lang.String
+- f:getLicensing():com.intellij.openapi.updateSettings.impl.UpdateChannel$Licensing
+- f:getStatus():com.intellij.openapi.updateSettings.impl.ChannelStatus
+- f:getUrl():java.lang.String
+e:com.intellij.openapi.updateSettings.impl.UpdateChannel$Licensing
+- java.lang.Enum
+- sf:EAP:com.intellij.openapi.updateSettings.impl.UpdateChannel$Licensing
+- sf:RELEASE:com.intellij.openapi.updateSettings.impl.UpdateChannel$Licensing
+- s:getEntries():kotlin.enums.EnumEntries
+- s:valueOf(java.lang.String):com.intellij.openapi.updateSettings.impl.UpdateChannel$Licensing
+- s:values():com.intellij.openapi.updateSettings.impl.UpdateChannel$Licensing[]
 com.intellij.openapi.updateSettings.impl.UpdateSettingsProvider
 - a:getPluginRepositories():java.util.List
 com.intellij.openapi.updateSettings.impl.UpdateSettingsUIProvider
@@ -780,7 +874,6 @@ com.intellij.openapi.wm.impl.IdeGlassPaneEx
 - a:remove(java.awt.Component):V
 f:com.intellij.openapi.wm.impl.IdeGlassPaneImpl
 - com.intellij.ide.IdeEventQueue$NonLockedEventDispatcher
-- isColorfulToolbar():Z
 com.intellij.openapi.wm.impl.TitleInfoProvider
 - sf:Companion:com.intellij.openapi.wm.impl.TitleInfoProvider$Companion
 - a:addUpdateListener(com.intellij.openapi.project.Project,com.intellij.openapi.Disposable,kotlin.jvm.functions.Function1):V
@@ -800,6 +893,14 @@ com.intellij.openapi.wm.impl.content.tabActions.ContentTabActionProvider
 - sf:Companion:com.intellij.openapi.wm.impl.content.tabActions.ContentTabActionProvider$Companion
 - sf:EP_NAME:com.intellij.openapi.extensions.ExtensionPointName
 - a:createTabActions(com.intellij.ui.content.Content):java.util.List
+f:com.intellij.openapi.wm.impl.welcomeScreen.cloneableProjects.CloneableProjectsService
+- f:runCloneTask(java.nio.file.Path,com.intellij.openapi.wm.impl.welcomeScreen.cloneableProjects.CloneableProjectsService$CloneTask):V
+f:com.intellij.openapi.wm.impl.welcomeScreen.cloneableProjects.CloneableProjectsService$CloneableProject
+- <init>(java.nio.file.Path,com.intellij.openapi.wm.impl.welcomeScreen.cloneableProjects.CloneableProjectsService$CloneTaskInfo,com.intellij.openapi.wm.ex.ProgressIndicatorEx,com.intellij.openapi.wm.impl.welcomeScreen.cloneableProjects.CloneableProjectsService$CloneStatus):V
+- f:component1():java.nio.file.Path
+- f:copy(java.nio.file.Path,com.intellij.openapi.wm.impl.welcomeScreen.cloneableProjects.CloneableProjectsService$CloneTaskInfo,com.intellij.openapi.wm.ex.ProgressIndicatorEx,com.intellij.openapi.wm.impl.welcomeScreen.cloneableProjects.CloneableProjectsService$CloneStatus):com.intellij.openapi.wm.impl.welcomeScreen.cloneableProjects.CloneableProjectsService$CloneableProject
+- bs:copy$default(com.intellij.openapi.wm.impl.welcomeScreen.cloneableProjects.CloneableProjectsService$CloneableProject,java.nio.file.Path,com.intellij.openapi.wm.impl.welcomeScreen.cloneableProjects.CloneableProjectsService$CloneTaskInfo,com.intellij.openapi.wm.ex.ProgressIndicatorEx,com.intellij.openapi.wm.impl.welcomeScreen.cloneableProjects.CloneableProjectsService$CloneStatus,I,java.lang.Object):com.intellij.openapi.wm.impl.welcomeScreen.cloneableProjects.CloneableProjectsService$CloneableProject
+- f:getProjectPath():java.nio.file.Path
 f:com.intellij.openapi.wm.impl.welcomeScreen.collapsedActionGroup.CollapsedActionGroup
 - f:getCollapsed():Z
 - f:setCollapsed(Z):V
@@ -830,7 +931,9 @@ com.intellij.platform.DirectoryProjectGenerator
 com.intellij.platform.HideableProjectGenerator
 - a:isHidden():Z
 f:com.intellij.platform.PlatformProjectOpenProcessor$Companion
+- f:runDirectoryProjectConfigurators(java.nio.file.Path,com.intellij.openapi.project.Project,Z,kotlin.coroutines.Continuation):java.lang.Object
 - f:runDirectoryProjectConfigurators(java.nio.file.Path,com.intellij.openapi.project.Project,Z,Z,kotlin.coroutines.Continuation):java.lang.Object
+- bs:runDirectoryProjectConfigurators$default(com.intellij.platform.PlatformProjectOpenProcessor$Companion,java.nio.file.Path,com.intellij.openapi.project.Project,Z,Z,kotlin.coroutines.Continuation,I,java.lang.Object):java.lang.Object
 com.intellij.platform.ProjectGeneratorPeer
 - addSettingsListener(com.intellij.platform.ProjectGeneratorPeer$SettingsListener):V
 - addSettingsStateListener(com.intellij.platform.WebProjectGenerator$SettingsStateListener):V
@@ -1162,9 +1265,7 @@ com.intellij.ui.dsl.builder.CellBase
 - a:enabledIf(com.intellij.openapi.observable.properties.ObservableProperty):com.intellij.ui.dsl.builder.CellBase
 - a:enabledIf(com.intellij.ui.layout.ComponentPredicate):com.intellij.ui.dsl.builder.CellBase
 - a:gap(com.intellij.ui.dsl.builder.RightGap):com.intellij.ui.dsl.builder.CellBase
-- a:horizontalAlign(com.intellij.ui.dsl.gridLayout.HorizontalAlign):com.intellij.ui.dsl.builder.CellBase
 - a:resizableColumn():com.intellij.ui.dsl.builder.CellBase
-- a:verticalAlign(com.intellij.ui.dsl.gridLayout.VerticalAlign):com.intellij.ui.dsl.builder.CellBase
 - a:visible(Z):com.intellij.ui.dsl.builder.CellBase
 - a:visibleIf(com.intellij.openapi.observable.properties.ObservableProperty):com.intellij.ui.dsl.builder.CellBase
 - a:visibleIf(com.intellij.ui.layout.ComponentPredicate):com.intellij.ui.dsl.builder.CellBase
@@ -1307,6 +1408,9 @@ com.intellij.ui.dsl.validation.CellValidation
 - a:enabledIf(com.intellij.ui.layout.ComponentPredicate):V
 - a:getEnabled():Z
 - a:setEnabled(Z):V
+com.intellij.ui.layout.BaseBuilder
+a:com.intellij.ui.layout.Cell
+- com.intellij.ui.layout.BaseBuilder
 com.intellij.ui.layout.CellBuilder
 - ba:comment(java.lang.String,I,Z):com.intellij.ui.layout.CellBuilder
 - bs:comment$default(com.intellij.ui.layout.CellBuilder,java.lang.String,I,Z,I,java.lang.Object):com.intellij.ui.layout.CellBuilder
@@ -1456,6 +1560,11 @@ c:com.intellij.ui.tree.ui.DefaultTreeUI
 - p:updateCachedPreferredSize():V
 - p:updateSize():V
 com.intellij.ui.tree.ui.PlainSelectionTree
+f:com.intellij.util.NetworkUtils
+- sf:INSTANCE:com.intellij.util.NetworkUtils
+- f:findFreePort():I
+- f:findFreePort(I):I
+- f:findFreePort(I,java.util.Set):I
 com.intellij.util.textCompletion.TextCompletionCache
 - a:getItems(java.lang.String,com.intellij.codeInsight.completion.CompletionParameters):java.util.Collection
 - a:setItems(java.util.Collection):V

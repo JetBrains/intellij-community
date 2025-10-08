@@ -4,20 +4,33 @@ package com.intellij.ide.plugins
 import com.intellij.core.CoreBundle
 import com.intellij.openapi.extensions.PluginId
 import com.intellij.openapi.util.BuildNumber
+import com.intellij.openapi.util.text.HtmlChunk
 import com.intellij.platform.plugins.parser.impl.PluginDescriptorBuilder
 import com.intellij.platform.plugins.parser.impl.PluginDescriptorReaderContext
-import com.intellij.platform.plugins.parser.impl.elements.OS
 import com.intellij.util.xml.dom.XmlInterner
 import it.unimi.dsi.fastutil.objects.ObjectOpenHashSet
 import it.unimi.dsi.fastutil.objects.ReferenceOpenHashSet
 import org.jetbrains.annotations.ApiStatus
-import org.jetbrains.annotations.Nls
+import org.jetbrains.annotations.VisibleForTesting
 import java.nio.file.Path
 import java.util.*
 import java.util.concurrent.ConcurrentHashMap
 import java.util.concurrent.ConcurrentLinkedQueue
 import java.util.concurrent.CopyOnWriteArrayList
 import java.util.function.Supplier
+
+/**
+ * Represents a plugin loading error with both structured data and HTML message.
+ */
+@ApiStatus.Internal
+class PluginLoadingError(
+  val reason: PluginNonLoadReason?,
+  private val htmlMessageSupplier: Supplier<HtmlChunk>,
+  val error: Throwable?,
+) {
+  val htmlMessage: HtmlChunk
+    get() = htmlMessageSupplier.get()
+}
 
 @ApiStatus.Internal
 class PluginDescriptorLoadingContext(
@@ -39,8 +52,8 @@ class PluginDescriptorLoadingContext(
   private val interner: XmlInterner
     get() = threadLocalXmlFactory.get()[0]!!
 
-  private val elementOsFilter: (OS) -> Boolean = { it.convert().isSuitableForOs() }
-
+  @VisibleForTesting
+  @JvmField
   val readContext: PluginDescriptorReaderContext = ReaderContext()
 
   @Volatile
@@ -56,15 +69,19 @@ class PluginDescriptorLoadingContext(
 
   private val optionalConfigNames: MutableMap<String, PluginId>? = if (checkOptionalConfigFileUniqueness) ConcurrentHashMap() else null
 
-  private val descriptorLoadingErrors: CopyOnWriteArrayList<Supplier<@Nls String>> = CopyOnWriteArrayList<Supplier<String>>()
+  private val descriptorLoadingErrors = CopyOnWriteArrayList<PluginLoadingError>()
 
-  fun copyDescriptorLoadingErrors(): MutableList<Supplier<@Nls String>> = ArrayList(descriptorLoadingErrors)
+  fun copyDescriptorLoadingErrors(): List<PluginLoadingError> = descriptorLoadingErrors.toList()
 
   internal fun reportCannotLoad(file: Path, e: Throwable?) {
     PluginManagerCore.logger.warn("Cannot load $file", e)
-    descriptorLoadingErrors.add(Supplier {
-      CoreBundle.message("plugin.loading.error.text.file.contains.invalid.plugin.descriptor", PluginUtils.pluginPathToUserString(file))
-    })
+    descriptorLoadingErrors.add(PluginLoadingError(
+      reason = null,
+      htmlMessageSupplier = Supplier {
+        HtmlChunk.text(CoreBundle.message("plugin.loading.error.text.file.contains.invalid.plugin.descriptor", PluginUtils.pluginPathToUserString(file)))
+      },
+      error = e,
+    ))
   }
 
   fun patchPlugin(builder: PluginDescriptorBuilder) {
@@ -86,7 +103,7 @@ class PluginDescriptorLoadingContext(
     }
 
     PluginManagerCore.logger.error("Optional config file with name $configFile already registered by $oldPluginId. " +
-                                   "Please rename to ensure that lookup in the classloader by short name returns correct optional config. " +
+                                   "Please rename it to ensure that lookup in the classloader by short name returns correct optional config. " +
                                    "Current plugin: $descriptor.")
     return true
   }
@@ -100,8 +117,6 @@ class PluginDescriptorLoadingContext(
   private inner class ReaderContext : PluginDescriptorReaderContext {
     override val interner: XmlInterner
       get() = this@PluginDescriptorLoadingContext.interner
-    override val elementOsFilter: (OS) -> Boolean
-      get() = this@PluginDescriptorLoadingContext.elementOsFilter
     override val isMissingIncludeIgnored: Boolean
       get() = this@PluginDescriptorLoadingContext.isMissingIncludeIgnored
   }
@@ -141,7 +156,7 @@ private class MyXmlInterner : XmlInterner {
   override fun name(value: String): String = strings.addOrGet(value)
 
   override fun value(name: String, value: String): String {
-    // doesn't make sense to intern a long texts (JdomInternFactory doesn't intern CDATA, but plugin description can be simply Text)
+    // doesn't make sense to intern a long text (JdomInternFactory doesn't intern CDATA, but plugin description can be simply Text)
     return if (value.length > 64 || CLASS_NAMES.contains(name)) value else strings.addOrGet(value)
   }
 }

@@ -9,6 +9,7 @@ import com.intellij.openapi.externalSystem.service.execution.ExternalSystemJdkUt
 import com.intellij.openapi.externalSystem.service.execution.ExternalSystemJdkUtilTestCase.TestJdkProvider
 import com.intellij.openapi.externalSystem.service.execution.TestUnknownSdkResolver
 import com.intellij.openapi.externalSystem.util.ExternalSystemUtil
+import com.intellij.openapi.externalSystem.util.awaitProjectActivity
 import com.intellij.openapi.externalSystem.util.environment.Environment
 import com.intellij.openapi.externalSystem.util.environment.TestEnvironment
 import com.intellij.openapi.projectRoots.JavaSdk
@@ -23,7 +24,6 @@ import com.intellij.testFramework.VfsTestUtil
 import com.intellij.testFramework.replaceService
 import com.intellij.util.lang.JavaVersion
 import org.jetbrains.plugins.gradle.service.project.open.linkAndSyncGradleProject
-import org.jetbrains.plugins.gradle.testFramework.util.awaitGradleProjectConfiguration
 import org.jetbrains.plugins.gradle.testFramework.util.createBuildFile
 import org.jetbrains.plugins.gradle.testFramework.util.createSettingsFile
 import org.jetbrains.plugins.gradle.tooling.GradleJvmResolver
@@ -57,13 +57,13 @@ abstract class GradleProjectSdkResolverTestCase : GradleImportingTestCase() {
   }
 
   suspend fun loadProject() {
-    awaitGradleProjectConfiguration(myProject) {
+    awaitProjectActivity(myProject) {
       linkAndSyncGradleProject(myProject, projectPath)
     }
   }
 
   suspend fun reloadProject() {
-    awaitGradleProjectConfiguration(myProject) {
+    awaitProjectActivity(myProject) {
       val importSpec = ImportSpecBuilder(myProject, externalSystemId)
       ExternalSystemUtil.refreshProject(projectPath, importSpec)
     }

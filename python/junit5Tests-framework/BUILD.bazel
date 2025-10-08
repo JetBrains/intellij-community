@@ -1,9 +1,9 @@
 ### auto-generated section `build intellij.python.community.junit5Tests.framework` start
-load("@rules_jvm//:jvm.bzl", "jvm_library", "jvm_resources")
+load("@rules_jvm//:jvm.bzl", "jvm_library", "resourcegroup")
 
-jvm_resources(
+resourcegroup(
   name = "community-junit5Tests-framework_test_resources",
-  files = glob(["testResources/**/*"]),
+  srcs = glob(["testResources/**/*"]),
   strip_prefix = "testResources"
 )
 
@@ -18,6 +18,7 @@ jvm_library(
   module_name = "intellij.python.community.junit5Tests.framework",
   visibility = ["//visibility:public"],
   srcs = glob(["src/**/*.kt", "src/**/*.java", "src/**/*.form"], allow_empty = True),
+  resources = [":community-junit5Tests-framework_test_resources"],
   deps = [
     "@lib//:junit4",
     "@lib//:junit5",
@@ -32,9 +33,13 @@ jvm_library(
     "@lib//:testcontainers-junit-jupiter",
     "//wintools",
     "//wintools:wintools_test_lib",
+    "//libraries/system-stubs-jupiter",
     "//libraries/testcontainers",
     "//platform/analysis-api:analysis",
+    "//platform/analysis-impl",
     "//platform/core-api:core",
+    "//platform/editor-ui-ex:editor-ex",
+    "//platform/editor-ui-api:editor-ui",
     "//platform/eel-provider",
     "//platform/execution",
     "//platform/execution-impl",
@@ -42,27 +47,24 @@ jvm_library(
     "//platform/platform-impl:ide-impl",
     "//platform/platform-impl:ide-impl_test_lib",
     "//platform/projectModel-api:projectModel",
+    "//platform/testFramework",
+    "//platform/testFramework:testFramework_test_lib",
     "//platform/testFramework/junit5",
     "//platform/testFramework/junit5:junit5_test_lib",
     "//platform/util",
+    "//platform/util/coroutines",
     "//python/openapi:community",
     "//python/openapi:community_test_lib",
     "//python/poetry",
     "//python/setup-test-environment:community-testFramework-testEnv",
     "//python/python-sdk:sdk",
     "//python/python-sdk:sdk_test_lib",
-    "@lib//:python-community-junit5_tests-framework-uk-webcompere-system-stubs-jupiter",
-    "//platform/util/coroutines",
-    "@lib//:byte-buddy",
   ],
   exports = [
+    "//libraries/system-stubs-jupiter",
     "//python/setup-test-environment:community-testFramework-testEnv",
-    "@lib//:python-community-junit5_tests-framework-uk-webcompere-system-stubs-jupiter",
   ],
-  runtime_deps = [
-    ":community-junit5Tests-framework_test_resources",
-    "//python/pluginCore:community-plugin",
-  ]
+  runtime_deps = ["//python/pluginCore:community-plugin"]
 )
 ### auto-generated section `build intellij.python.community.junit5Tests.framework` end
 

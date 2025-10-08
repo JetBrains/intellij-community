@@ -109,7 +109,7 @@ public class HintManagerImpl extends HintManager {
 
   private static final Key<Integer> LAST_HINT_ON_EDITOR_Y_POSITION = Key.create("hint.previous.editor.y.position");
 
-  static void updateScrollableHintPosition(VisibleAreaEvent e, LightweightHint hint, boolean hideIfOutOfEditor) {
+  static void updateScrollableHintPosition(VisibleAreaEvent e, @NotNull LightweightHint hint, boolean hideIfOutOfEditor) {
     if (hint.getComponent() instanceof ScrollAwareHint) {
       ((ScrollAwareHint)hint.getComponent()).editorScrolled();
     }

@@ -18,7 +18,7 @@ interface IjentSession<T : IjentApi> {
   fun getIjentInstance(descriptor: EelDescriptor): T
 
   enum class LogLevel {
-    INFO, DEBUG, TRACE, ALL
+    INFO, DEBUG, TRACE
   }
 }
 

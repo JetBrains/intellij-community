@@ -7,6 +7,7 @@ import com.intellij.psi.PsiClass
 import com.intellij.psi.PsiElement
 import com.intellij.psi.PsiPackage
 import com.intellij.psi.util.elementType
+import org.jetbrains.kotlin.analysis.api.analyze
 import org.jetbrains.kotlin.idea.base.analysis.api.utils.analyzeInModalWindow
 import org.jetbrains.kotlin.idea.base.resources.KotlinBundle
 import org.jetbrains.kotlin.idea.k2.refactoring.introduce.introduceVariable.K2IntroduceVariableHandler.getCandidateContainers
@@ -68,6 +69,7 @@ internal class KotlinIntroduceVariableServiceK2Impl(private val project: Project
             project = project,
             editor = editor,
             expression = expressionToExtract,
+            occurrencesToReplace = occurrencesToReplace,
             // TODO: fix occurence container (currently it is not used in K2-implementation)
             containers = KotlinIntroduceVariableHelper.Containers(container, container),
             isVar = KotlinCommonRefactoringSettings.getInstance().INTRODUCE_DECLARE_WITH_VAR,
@@ -75,7 +77,7 @@ internal class KotlinIntroduceVariableServiceK2Impl(private val project: Project
     }
 
     override fun hasUnitType(element: KtExpression): Boolean {
-        return analyzeInModalWindow(element, KotlinBundle.message("find.usages.prepare.dialog.progress")) {
+        return analyze(element) {
             val expressionType = element.expressionType
             expressionType == null || expressionType.isUnitType
         } || isNonExtractableQualifier(element)

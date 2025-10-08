@@ -1,9 +1,9 @@
 ### auto-generated section `build intellij.platform.diagnostic.telemetry.agent.extension` start
-load("@rules_jvm//:jvm.bzl", "jvm_library", "jvm_resources")
+load("@rules_jvm//:jvm.bzl", "jvm_library", "resourcegroup")
 
-jvm_resources(
+resourcegroup(
   name = "diagnostic-telemetry-agent-extension_resources",
-  files = glob(["resources/**/*"]),
+  srcs = glob(["resources/**/*"]),
   strip_prefix = "resources"
 )
 
@@ -12,16 +12,16 @@ jvm_library(
   module_name = "intellij.platform.diagnostic.telemetry.agent.extension",
   visibility = ["//visibility:public"],
   srcs = glob(["src/**/*.kt", "src/**/*.java", "src/**/*.form"], allow_empty = True),
+  resources = [":diagnostic-telemetry-agent-extension_resources"],
   kotlinc_opts = "@community//:k8",
   deps = [
     "@lib//:opentelemetry",
     "@lib//:jetbrains-annotations",
     "@lib//:opentelemetry-exporter-otlp-common",
-    "@lib//:jackson",
+    "//libraries/jackson/jackson",
     "@lib//:io-opentelemetry-sdk-extension-autoconfigure-spi-provided",
-    "@lib//:jackson-databind",
-  ],
-  runtime_deps = [":diagnostic-telemetry-agent-extension_resources"]
+    "//libraries/jackson/databind",
+  ]
 )
 
 jvm_library(
@@ -35,12 +35,11 @@ jvm_library(
     "@lib//:jetbrains-annotations",
     "@lib//:junit5",
     "@lib//:opentelemetry-exporter-otlp-common",
-    "@lib//:jackson",
+    "//libraries/jackson/jackson",
     "@lib//:io-opentelemetry-sdk-extension-autoconfigure-spi-provided",
-    "@lib//:jackson-databind",
+    "//libraries/jackson/databind",
     "@lib//:kotlin-stdlib",
-  ],
-  runtime_deps = [":diagnostic-telemetry-agent-extension_resources"]
+  ]
 )
 ### auto-generated section `build intellij.platform.diagnostic.telemetry.agent.extension` end
 

@@ -2,14 +2,17 @@
 package com.intellij.codeInsight.completion.command
 
 import com.intellij.codeInsight.completion.*
+import com.intellij.codeInsight.completion.CompletionResult.SHOULD_NOT_CHECK_WHEN_WRAP
 import com.intellij.codeInsight.completion.command.commands.AfterHighlightingCommandProvider
 import com.intellij.codeInsight.completion.command.commands.DirectIntentionCommandProvider
 import com.intellij.codeInsight.completion.command.configuration.ApplicationCommandCompletionService
+import com.intellij.codeInsight.completion.group.GroupedCompletionContributor
 import com.intellij.codeInsight.completion.impl.CamelHumpMatcher
 import com.intellij.codeInsight.completion.ml.MLWeigherUtil
 import com.intellij.codeInsight.lookup.LookupElement
 import com.intellij.codeInsight.lookup.LookupElementBuilder
 import com.intellij.codeInsight.lookup.LookupElementWeigher
+import com.intellij.codeInsight.template.impl.TemplateManagerImpl
 import com.intellij.icons.AllIcons.Actions.IntentionBulbGrey
 import com.intellij.icons.AllIcons.Actions.Lightning
 import com.intellij.idea.AppMode
@@ -29,18 +32,25 @@ import com.intellij.openapi.util.registry.Registry
 import com.intellij.openapi.util.text.StringUtil
 import com.intellij.patterns.PatternCondition
 import com.intellij.patterns.StandardPatterns
-import com.intellij.psi.PsiComment
-import com.intellij.psi.PsiDocumentManager
-import com.intellij.psi.PsiFile
-import com.intellij.psi.PsiFileFactory
+import com.intellij.psi.*
 import com.intellij.psi.impl.source.PsiFileImpl
 import com.intellij.psi.impl.source.tree.injected.InjectedLanguageEditorUtil
 import com.intellij.psi.impl.source.tree.injected.InjectedLanguageUtil.FORCE_INJECTED_COPY_ELEMENT_KEY
 import com.intellij.psi.impl.source.tree.injected.InjectedLanguageUtil.FORCE_INJECTED_EDITOR_KEY
+import com.intellij.psi.util.PsiTreeUtil
 import com.intellij.testFramework.LightVirtualFile
 import com.intellij.util.ProcessingContext
 import com.intellij.util.Processor
 import org.jetbrains.annotations.ApiStatus
+import org.jetbrains.annotations.Unmodifiable
+
+private const val STANDARD_MEAN_PRIORITY = 100.0
+
+private const val DEFAULT_PRIORITY = -150.0
+
+private val CHAR_TO_FILTER = setOf('\'', '"', '_', '-')
+
+private val CHAR_TO_FILTER_WITH_SPACE = setOf('\'', '"', '_', '-', ' ')
 
 /**
  * Internal provider for handling command completion in IntelliJ-based editors.
@@ -51,7 +61,7 @@ import org.jetbrains.annotations.ApiStatus
  *
  */
 @ApiStatus.Internal
-internal class CommandCompletionProvider : CompletionProvider<CompletionParameters?>() {
+internal class CommandCompletionProvider(val contributor: CommandCompletionContributor) : CompletionProvider<CompletionParameters?>() {
 
   companion object {
     private val LOG = logger<CommandCompletionProvider>()
@@ -68,15 +78,17 @@ internal class CommandCompletionProvider : CompletionProvider<CompletionParamete
     if (parameters.completionType != CompletionType.BASIC) return
     if (parameters.position is PsiComment) return
     if (parameters.editor.caretModel.caretCount != 1) return
-
+    val templateState = TemplateManagerImpl.getTemplateState(parameters.editor)
+    if (templateState != null && !templateState.isFinished) return
     resultSet.runRemainingContributors(parameters) {
       resultSet.passResult(it)
     }
+    enableFastShown(parameters)
     val project = parameters.editor.project ?: return
     var editor = parameters.editor
     var isReadOnly = false
     var isInjected = false
-    var offset = parameters.offset
+    var offset = parameters.editor.caretModel.offset
     val targetEditor = editor.getUserData(ORIGINAL_EDITOR)
     var originalFile = parameters.originalFile
     if (targetEditor != null) {
@@ -132,7 +144,8 @@ internal class CommandCompletionProvider : CompletionProvider<CompletionParamete
 
     val prefix = commandCompletionType.pattern
     val sorter = createSorter(parameters)
-    val withPrefixMatcher = resultSet.withPrefixMatcher(LimitedToleranceMatcher(prefix))
+    val matcher = LimitedToleranceMatcher(prefix)
+    val withPrefixMatcher = resultSet.withPrefixMatcher(matcher)
       .withRelevanceSorter(sorter)
 
     withPrefixMatcher.restartCompletionOnPrefixChange(
@@ -145,37 +158,65 @@ internal class CommandCompletionProvider : CompletionProvider<CompletionParamete
       }))
 
     // Fetch commands applicable to the position
-    processCommandsForContext(commandCompletionFactory,
-                              originalFile.project,
-                              copyEditor,
-                              adjustedParameters,
-                              editor,
-                              parameters.offset,
-                              originalFile,
-                              isReadOnly,
-                              isInjected) { commands ->
+    processCommandsForContext(commandCompletionFactory = commandCompletionFactory,
+                              project = originalFile.project,
+                              copyEditor = copyEditor,
+                              adjustedParameters = adjustedParameters,
+                              originalEditor = editor,
+                              originalOffset = offset,
+                              originalFile = originalFile,
+                              isReadOnly = isReadOnly,
+                              isInjected = isInjected,
+                              commandCompletionType = commandCompletionType) { commands ->
       commands.forEach { command ->
         CommandCompletionCollector.shown(command::class.java, originalFile.language, commandCompletionType::class.java)
-        val lookupElement = createLookupElement(command, commandCompletionFactory, prefix)
         val customPrefixMatcher = command.customPrefixMatcher(prefix)
+        val lookupElements = createLookupElements(command, commandCompletionFactory, prefix, customPrefixMatcher)
         if (customPrefixMatcher != null) {
           val alwaysShowMatcher = resultSet.withPrefixMatcher(customPrefixMatcher)
             .withRelevanceSorter(sorter)
-          alwaysShowMatcher.addElement(lookupElement)
+          for (element in lookupElements) {
+            alwaysShowMatcher.addElement(element)
+          }
         }
         else {
-          withPrefixMatcher.addElement(lookupElement)
+          for (element in lookupElements) {
+            if (!matcher.basePrefixMatches(element)) continue
+            element.putUserData(SHOULD_NOT_CHECK_WHEN_WRAP, true)
+            withPrefixMatcher.addElement(element)
+          }
         }
       }
       true
     }
   }
 
-  private fun createLookupElement(
+  private fun enableFastShown(parameters: CompletionParameters) {
+    if (Registry.`is`("ide.completion.command.faster.paint")) {
+      if (!GroupedCompletionContributor.isGroupEnabledInApp()) return
+      if (!contributor.groupIsEnabled(parameters)) return
+      val completionProgressIndicator = parameters.process as? CompletionProgressIndicator
+      val count = completionProgressIndicator?.lookup?.list?.model?.size ?: 0
+      //just to avoid irritating flickering without items
+      if (count > 0 &&
+          (prevVisibleLeaf(parameters.position) as? PsiWhiteSpace)?.textContains('\n') == true) {
+        completionProgressIndicator?.unfreezeAndShowLookupAsSoonAsPossible()
+      }
+    }
+  }
+
+  private fun prevVisibleLeaf(element: PsiElement): PsiElement? {
+    var prevLeaf = PsiTreeUtil.prevLeaf(element, true)
+    while (prevLeaf != null && StringUtil.isEmpty(prevLeaf.getText())) prevLeaf = PsiTreeUtil.prevLeaf(prevLeaf, true)
+    return prevLeaf
+  }
+
+  private fun createLookupElements(
     command: CompletionCommand,
     commandCompletionFactory: CommandCompletionFactory,
     prefix: String,
-  ): LookupElement {
+    customPrefixMatcher: PrefixMatcher?,
+  ): List<LookupElement> {
     val presentableName = command.presentableName.replace("_", "").replace("...", "").replace("…", "")
     val additionalInfo = command.additionalInfo ?: ""
     var tailText = ""
@@ -191,29 +232,76 @@ internal class CommandCompletionProvider : CompletionProvider<CompletionParamete
       }
     }
     val synonyms = command.synonyms.toMutableList()
-    synonyms.add(lookupString)
-    synonyms.addAll(generateSynonyms(synonyms))
-    val element: LookupElement = CommandCompletionLookupElement(LookupElementBuilder.create(lookupString)
-                                                                  .withLookupStrings(synonyms)
-                                                                  .withPresentableText(lookupString)
-                                                                  .withTypeText(tailText)
-                                                                  .withIcon(command.icon ?: IntentionBulbGrey)
-                                                                  .withInsertHandler(CommandInsertHandler(command))
-                                                                  .withBoldness(false),
-                                                                command,
-                                                                commandCompletionFactory.suffix().toString() +
-                                                                (commandCompletionFactory.filterSuffix() ?: ""),
-                                                                command.icon ?: Lightning,
-                                                                command.highlightInfo,
-                                                                command.customPrefixMatcher(prefix) == null)
-    val priority = command.priority
-    return PrioritizedLookupElement.withPriority(element, priority?.let { it.toDouble() - 100.0 } ?: -150.0)
+    synonyms.remove(lookupString)
+    synonyms.addFirst(lookupString)
+    if (customPrefixMatcher != null) {
+      val element: LookupElement = createElement(
+        lookupString = lookupString,
+        lookupStrings = synonyms,
+        tailText = tailText,
+        command = command,
+        commandCompletionFactory = commandCompletionFactory,
+        prefix = prefix,
+        currentSynonyms = emptyList(),
+        otherSynonyms = emptyList()
+      )
+      val priority = command.priority
+      return listOf(PrioritizedLookupElement.withPriority(element, priority?.let { it.toDouble() - STANDARD_MEAN_PRIORITY } ?: DEFAULT_PRIORITY))
+    }
+    val elements = mutableListOf<LookupElement>()
+    for (synonym in synonyms) {
+      val currentSynonyms = mutableListOf(synonym)
+      currentSynonyms.addAll(generateSynonyms(currentSynonyms))
+      val element: LookupElement = createElement(
+        lookupString = lookupString,
+        lookupStrings = currentSynonyms,
+        tailText = tailText,
+        command = command,
+        commandCompletionFactory = commandCompletionFactory,
+        prefix = prefix,
+        currentSynonyms = currentSynonyms,
+        otherSynonyms = synonyms
+      )
+      val priority = command.priority
+      elements.add(PrioritizedLookupElement.withPriority(element, priority?.let { it.toDouble() - STANDARD_MEAN_PRIORITY } ?: DEFAULT_PRIORITY))
+    }
+    return elements
+  }
+
+  private fun createElement(lookupString: String,
+                            lookupStrings: List<String>,
+                            tailText: String,
+                            command: CompletionCommand,
+                            commandCompletionFactory: CommandCompletionFactory,
+                            prefix: String,
+                            currentSynonyms: List<String>,
+                            otherSynonyms: List<String>): CommandCompletionLookupElement {
+    return CommandCompletionLookupElement(lookupElement =
+                                            LookupElementBuilder.create(lookupString)
+                                              .withLookupStrings(lookupStrings)
+                                              .withPresentableText(lookupString)
+                                              .withTypeText(tailText)
+                                              .withIcon(command.icon ?: IntentionBulbGrey)
+                                              .withInsertHandler(CommandInsertHandler(command))
+                                              .withBoldness(false),
+                                          command = command,
+                                          suffix = commandCompletionFactory.suffix().toString() +
+                                                   (commandCompletionFactory.filterSuffix() ?: ""),
+                                          icon = command.icon ?: Lightning,
+                                          highlighting = command.highlightInfo,
+                                          useLookupString = command.customPrefixMatcher(prefix) == null,
+                                          currentTags = currentSynonyms,
+                                          otherTags = otherSynonyms)
   }
 
   private fun generateSynonyms(synonyms: MutableList<String>): Collection<String> {
     val result = mutableSetOf<String>()
     for (string in synonyms) {
-      val newString = string.trim().filter { it !in setOf('\'', '"', '_', "-") }
+      var newString = string.trim().filter { it !in CHAR_TO_FILTER }
+      if (newString != string) {
+        result.add(newString)
+      }
+      newString = string.trim().filter { it !in CHAR_TO_FILTER_WITH_SPACE }
       if (newString != string) {
         result.add(newString)
       }
@@ -248,6 +336,7 @@ internal class CommandCompletionProvider : CompletionProvider<CompletionParamete
     originalFile: PsiFile,
     isReadOnly: Boolean,
     isInjected: Boolean,
+    commandCompletionType: InvocationCommandType,
     processor: Processor<in Collection<CompletionCommand>>,
   ) {
     if (!ApplicationCommandCompletionService.getInstance().commandCompletionEnabled()) return
@@ -255,6 +344,7 @@ internal class CommandCompletionProvider : CompletionProvider<CompletionParamete
                                                                                ?: adjustedParameters.copyFile).language)
     val afterHighlightingCommandProviders = commandProviders.filter { it is AfterHighlightingCommandProvider }.toSet()
     for (provider in commandProviders.filter { it !is AfterHighlightingCommandProvider }) {
+      if(commandCompletionType is InvocationCommandType.FullLine && !provider.supportNewLineCompletion()) continue
       try {
         if (provider is DirectIntentionCommandProvider) {
           provider.setAfterHighlightingProviders(afterHighlightingCommandProviders)
@@ -463,14 +553,14 @@ internal fun findActualIndex(suffix: String, text: CharSequence, offset: Int): I
   }
   if (indexOf == 0) {
     var currentIndex = 1
-    while (offset - currentIndex >= 0 && (text[offset - currentIndex].isLetter() ||
-                                          text[offset - currentIndex] == ' ' ||
-                                          text[offset - currentIndex] == '\'')
+    while (text.getOrNull(offset - currentIndex)?.isLetter() == true ||
+           text.getOrNull(offset - currentIndex) == ' ' ||
+           text.getOrNull(offset - currentIndex) == '\''
     ) {
       currentIndex++
     }
-    if (currentIndex <= 1 || offset - currentIndex >= 0 && text[offset - currentIndex] != '\n') return 0
-    while (currentIndex >= 0 && offset - currentIndex >= 0 && text[offset - currentIndex].isWhitespace()) {
+    if (currentIndex <= 1 || text.getOrNull(offset - currentIndex) != '\n') return 0
+    while (currentIndex >= 0 && text.getOrNull(offset - currentIndex)?.isWhitespace() == true) {
       currentIndex--
     }
     if (currentIndex >= 0) indexOf = currentIndex
@@ -514,22 +604,40 @@ internal fun findCommandCompletionType(
 }
 
 private class LimitedToleranceMatcher(private val myCurrentPrefix: String) : CamelHumpMatcher(myCurrentPrefix, false, true) {
+
+  fun basePrefixMatches(element: LookupElement): Boolean {
+    return super.prefixMatches(element)
+  }
+
   override fun prefixMatches(element: LookupElement): Boolean {
     if (!super.prefixMatches(element)) return false
-    for (lookupString in element.allLookupStrings) {
+    val commandCompletionElement = element.`as`(CommandCompletionLookupElement::class.java) ?: return false
+    val currentTags = commandCompletionElement.currentTags
+    val allLookupStrings = currentTags.ifEmpty { element.allLookupStrings } ?: return false
+    if (!matched(allLookupStrings)) return false
+    val otherTags = commandCompletionElement.otherTags
+    if (otherTags.isEmpty()) return true
+    val indexOfFirst = otherTags.indexOfFirst { allLookupStrings.contains(it) }
+    if (indexOfFirst <= 0) return true
+    if (matched(otherTags.subList(0, indexOfFirst))) return false
+    return true
+  }
+
+  private fun matched(allLookupStrings: @Unmodifiable Collection<String>): Boolean {
+    for (lookupString in allLookupStrings) {
       val indexOf = lookupString.indexOf(prefix, ignoreCase = true)
       if (indexOf != -1 && indexOf < 3) return true
       val fragments = matchingFragments(lookupString) ?: continue
       for (range in fragments) {
         if (prefix.length != range.length) continue
         if (range.startOffset >= range.endOffset ||
-            range.startOffset < 0 || range.startOffset >= (lookupString.length - 1) ||
-            range.endOffset < 0 || range.endOffset >= (lookupString.length - 1)) continue
+            range.startOffset < 0 || range.startOffset >= lookupString.length - 1 ||
+            range.endOffset < 0 || range.endOffset > lookupString.length) continue
         val matchedFragment = lookupString.substring(range.startOffset, range.endOffset)
         var errors = 0
         for (i in matchedFragment.indices) {
           if (prefix[i] != matchedFragment[i]) errors++
-          if (errors > 2) return false
+          if (errors > 2) continue
         }
         if (range.startOffset <= 1) return true
         if (!lookupString[range.startOffset].isLowerCase()) return true

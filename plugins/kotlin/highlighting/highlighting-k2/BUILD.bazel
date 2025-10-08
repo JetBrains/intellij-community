@@ -1,6 +1,6 @@
 ### auto-generated section `build kotlin.highlighting.k2` start
 load("//build:compiler-options.bzl", "create_kotlinc_options")
-load("@rules_jvm//:jvm.bzl", "jvm_library", "jvm_resources")
+load("@rules_jvm//:jvm.bzl", "jvm_library", "resourcegroup")
 
 create_kotlinc_options(
   name = "custom_kotlin-highlighting-k2",
@@ -13,9 +13,9 @@ create_kotlinc_options(
   x_context_parameters = True
 )
 
-jvm_resources(
+resourcegroup(
   name = "kotlin-highlighting-k2_resources",
-  files = glob(["resources/**/*"]),
+  srcs = glob(["resources/**/*"]),
   strip_prefix = "resources"
 )
 
@@ -24,6 +24,7 @@ jvm_library(
   module_name = "kotlin.highlighting.k2",
   visibility = ["//visibility:public"],
   srcs = glob(["src/**/*.kt", "src/**/*.java", "src/**/*.form"], allow_empty = True),
+  resources = [":kotlin-highlighting-k2_resources"],
   kotlinc_opts = ":custom_kotlin-highlighting-k2",
   deps = [
     "//java/java-indexing-api:indexing",
@@ -63,8 +64,7 @@ jvm_library(
     "//platform/util/coroutines",
     "//plugins/kotlin/code-insight/impl-base",
     "//plugins/kotlin/base/scripting/scripting.shared",
-  ],
-  runtime_deps = [":kotlin-highlighting-k2_resources"]
+  ]
 )
 
 jvm_library(
@@ -123,6 +123,7 @@ jvm_library(
     "//platform/backend",
     "//plugins/kotlin/base/analysis",
     "//plugins/kotlin/base/scripting/scripting.k2",
+    "//plugins/kotlin/base/scripting/scripting.k2:scripting.k2_test_lib",
     "@lib//:kotlinc-kotlin-scripting-common",
     "//plugins/kotlin/test-framework:test-framework_test_lib",
     "@lib//:kotlinc-kotlin-scripting-compiler-impl",
@@ -131,8 +132,7 @@ jvm_library(
     "//platform/util/coroutines",
     "//plugins/kotlin/code-insight/impl-base",
     "//plugins/kotlin/base/scripting/scripting.shared",
-  ],
-  runtime_deps = [":kotlin-highlighting-k2_resources"]
+  ]
 )
 ### auto-generated section `build kotlin.highlighting.k2` end
 

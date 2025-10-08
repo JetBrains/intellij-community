@@ -37,19 +37,19 @@ import static com.intellij.openapi.util.NlsContexts.DialogMessage;
  * A simple implementation of this class might have the following lifecycle:
  *
  * <ol>
- *   <li>{@link #canProcessElement(PsiElement)} is called to determine if this RenameProcessor can be used to rename the element</li>
- *   <li>If yes, {@link #findReferences} is called with on that element to find references to it that also should be renamed
+ *   <li>{@link #canProcessElement(PsiElement) canProcessElement()} is called to determine if this RenameProcessor can be used to rename the element</li>
+ *   <li>If yes, {@link #findReferences findReferences()} is called with on that element to find references to it that also should be renamed
  *   (it is what {@code usages} are in the next call)
  *   </li>
- *   <li>{@link #renameElement(PsiElement element, String newName, UsageInfo[] usages, RefactoringElementListener)} is called, with the new
- *   step name entered in the rename dialog and a list of usages.
+ *   <li>{@link #renameElement(PsiElement element, String newName, UsageInfo[] usages, RefactoringElementListener) renameElement()} is called,
+ *   with the new step name entered in the rename dialog and a list of usages.
  * <p>
- *   It has to rename the element and all its usages. Should not perform duplicate work that findReferences has already done.
+ *   This method must rename the element and all its usages. Should not perform duplicate work that findReferences has already done.
  *   </li>
  * </ol>
  * <p>
  * The class follows the <i>Chain of Responsibility</i> design pattern - when a rename operation is requested, the platform iterates through
- * all registered processors and uses the first one that returns true from {@link #canProcessElement}.
+ * all registered processors and uses the first one that returns true from {@link #canProcessElement canProcessElement()}.
  *
  * @see RenameHandler
  * @see RenameProcessor

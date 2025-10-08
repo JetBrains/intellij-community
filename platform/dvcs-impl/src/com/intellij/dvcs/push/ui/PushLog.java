@@ -497,7 +497,7 @@ public final class PushLog extends JPanel implements Disposable, UiDataProvider 
       .toCollection(LinkedHashSet::new);
     if (checkedNodes.isEmpty()) return;
     // use new state from first lead node;
-    boolean newState = !checkedNodes.iterator().next().isChecked();
+    boolean newState = !checkedNodes.getFirst().isChecked();
     checkedNodes.forEach(n -> myTree.setNodeState(n, newState));
   }
 

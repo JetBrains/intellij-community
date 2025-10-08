@@ -98,7 +98,7 @@ public final class StaticImportInspection extends BaseInspection {
   }
 
   @Override
-  public BaseInspectionVisitor buildVisitor() {
+  public @NotNull BaseInspectionVisitor buildVisitor() {
     return new StaticImportVisitor();
   }
 

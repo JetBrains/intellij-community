@@ -3,12 +3,12 @@
 package org.jetbrains.kotlin.checkers;
 
 import com.intellij.codeInsight.daemon.impl.DaemonCodeAnalyzerEx;
+import com.intellij.grazie.spellcheck.GrazieSpellCheckingInspection;
 import com.intellij.openapi.fileEditor.FileDocumentManager;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.platform.testFramework.core.FileComparisonFailedError;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
-import com.intellij.spellchecker.inspections.SpellCheckingInspection;
 import com.intellij.testFramework.ExpectedHighlightingData;
 import com.intellij.testFramework.fixtures.impl.JavaCodeInsightTestFixtureImpl;
 import kotlin.Unit;
@@ -60,7 +60,7 @@ public abstract class AbstractKotlinHighlightVisitorTest extends KotlinLightCode
     void doTestWithInfos(@NotNull String __) {
         myFixture.configureByFile(fileName());
 
-        myFixture.enableInspections(SpellCheckingInspection.class);
+        myFixture.enableInspections(GrazieSpellCheckingInspection.class);
 
         try {
             // TODO fix duplicate highlighting of some symbols

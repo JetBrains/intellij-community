@@ -43,7 +43,25 @@
     <orderEntry type="library" name="kotlinc.analysis-api-k2" level="project" />
     <orderEntry type="library" name="kotlinc.low-level-api-fir" level="project" />
     <orderEntry type="library" scope="TEST" name="kotlinc.kotlin-compiler-tests" level="project" />
-    <orderEntry type="library" scope="TEST" name="gson" level="project" />
+    <orderEntry type="module-library">
+      <library name="ehcache.sizeof" type="repository">
+        <properties include-transitive-deps="false" maven-id="org.ehcache:sizeof:0.4.0">
+          <verification>
+            <artifact url="file://$MAVEN_REPOSITORY$/org/ehcache/sizeof/0.4.0/sizeof-0.4.0.jar">
+              <sha256sum>0429cb1f5cda94180007874ea926a88149fca2028e92b4556d35f0cfce310c53</sha256sum>
+            </artifact>
+          </verification>
+        </properties>
+        <CLASSES>
+          <root url="jar://$MAVEN_REPOSITORY$/org/ehcache/sizeof/0.4.0/sizeof-0.4.0.jar!/" />
+        </CLASSES>
+        <JAVADOC />
+        <SOURCES>
+          <root url="jar://$MAVEN_REPOSITORY$/org/ehcache/sizeof/0.4.0/sizeof-0.4.0-sources.jar!/" />
+        </SOURCES>
+      </library>
+    </orderEntry>
+    <orderEntry type="module" module-name="intellij.libraries.gson" scope="TEST" />
     <orderEntry type="module" module-name="kotlin.base.util" />
     <orderEntry type="module" module-name="kotlin.base.project-structure" />
     <orderEntry type="module" module-name="kotlin.base.analysis" />

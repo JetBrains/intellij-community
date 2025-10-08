@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.internal.statistic.eventLog
 
 import com.fasterxml.jackson.core.JsonParseException
@@ -220,7 +220,7 @@ class LogEventJsonDeserializer : JsonDeserializer<LogEvent>() {
       is ArrayNode -> value.map { if (it != null) transformData(it) else null }
       is ObjectNode -> {
         val data = HashMap<Any, Any?>()
-        value.fields().forEach { (entryKey, entryValue) ->
+        value.properties().forEach { (entryKey, entryValue) ->
           val newValue = if (entryValue != null) transformData(entryValue) else null
           data[entryKey] = newValue
         }
@@ -244,16 +244,13 @@ class LogEventJsonDeserializer : JsonDeserializer<LogEvent>() {
     val data = HashMap<String, Any>()
     if (obj.has("data")) {
       val dataObj = obj.get("data")
-      val fields = dataObj.fields()
-      while (fields.hasNext()) {
-        val field = fields.next()
-        data[field.key] = transformData(field.value)
+      dataObj.properties().forEach { (entryKey, entryValue) ->
+        data[entryKey] = transformData(entryValue)
       }
     }
-
-    if (obj.has("count") && obj.get("count").isNumber) {
-        return LogEventAction(id, state = isState, count = obj.get("count").asInt(), data = data)
-    }
-    return LogEventAction(id, state = isState, data = data)
+    return if (obj.has("count") && obj.get("count").isNumber)
+      LogEventAction(id, isState, data, obj.get("count").asInt())
+    else
+      LogEventAction(id, isState, data)
   }
 }

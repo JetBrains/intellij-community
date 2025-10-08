@@ -90,12 +90,12 @@ public final class PsiSuperMethodUtil {
    * For the multi-module projects which use different jdks or libraries,
    * it's important to map e.g. super class hierarchy to the current jdk.
    * <p>Example:</p>
-   * Suppose there is an abstract reader in a module with jdk 1.6 which inherits {@link Closeable} (no super interfaces!). 
+   * Suppose there is an abstract reader in a module with jdk 1.6 which inherits {@link Closeable} (no super interfaces!).
    * In another module with jdk 1.7+ an inheritor of this reader should implement {@link AutoCloseable} though.
-   * 
-   * @param psiClass       a class to remap
-   * @param resolveScope   scope where class should be found
-   * @return               remapped class or same, if no other candidates were found
+   *
+   * @param psiClass     a class to remap
+   * @param resolveScope scope where class should be found
+   * @return remapped class or same, if no other candidates were found
    */
   public static @Nullable PsiClass correctClassByScope(@NotNull PsiClass psiClass, @NotNull GlobalSearchScope resolveScope) {
     String qualifiedName = psiClass.getQualifiedName();
@@ -107,7 +107,10 @@ public final class PsiSuperMethodUtil {
     if (file == null || !file.getViewProvider().isPhysical()) {
       return psiClass;
     }
-
+    //it shouldn't be corrected because it is not inside indexes and doesn't have FQN
+    if (JavaImplicitClassUtil.isFileWithImplicitClass(file)) {
+      return psiClass;
+    }
     final VirtualFile vFile = file.getVirtualFile();
     if (vFile == null) {
       return psiClass;

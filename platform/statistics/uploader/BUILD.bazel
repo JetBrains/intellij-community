@@ -1,9 +1,9 @@
 ### auto-generated section `build intellij.platform.statistics.uploader` start
-load("@rules_jvm//:jvm.bzl", "jvm_library", "jvm_resources")
+load("@rules_jvm//:jvm.bzl", "jvm_library", "resourcegroup")
 
-jvm_resources(
+resourcegroup(
   name = "uploader_resources",
-  files = glob(["resources/**/*"]),
+  srcs = glob(["resources/**/*"]),
   strip_prefix = "resources"
 )
 
@@ -12,20 +12,20 @@ jvm_library(
   module_name = "intellij.platform.statistics.uploader",
   visibility = ["//visibility:public"],
   srcs = glob(["src/**/*.kt", "src/**/*.java", "src/**/*.form"], allow_empty = True),
+  resources = [":uploader_resources"],
   deps = [
     "@lib//:jetbrains-annotations",
     "@lib//:kotlin-stdlib",
     "//platform/statistics/config",
-    "@lib//:jackson",
-    "@lib//:jackson-databind",
-    "@lib//:jackson-module-kotlin",
+    "//libraries/jackson/jackson",
+    "//libraries/jackson/databind",
+    "//libraries/jackson/module-kotlin:libraries-jackson-module-kotlin",
     "@lib//:com-jetbrains-fus-reporting-model",
     "@lib//:com-jetbrains-fus-reporting-serialization-kotlin",
     "@lib//:com-jetbrains-fus-reporting-configuration",
     "@lib//:com-jetbrains-fus-reporting-ap-validation",
     "@lib//:com-jetbrains-fus-reporting-connection-client",
   ],
-  exports = ["//platform/statistics/config"],
-  runtime_deps = [":uploader_resources"]
+  exports = ["//platform/statistics/config"]
 )
 ### auto-generated section `build intellij.platform.statistics.uploader` end

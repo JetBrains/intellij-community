@@ -10,12 +10,11 @@ import com.intellij.python.ml.features.imports.features.FeaturesRegistry
 import com.intellij.python.ml.features.imports.features.ImportCandidateContext
 import com.intellij.python.ml.features.imports.features.ImportRankingContext
 import com.intellij.util.application
-import com.jetbrains.ml.api.feature.Feature
-import com.jetbrains.ml.api.feature.FeatureDeclaration
-import com.jetbrains.ml.api.logs.EventPair
-import com.jetbrains.ml.tools.logs.MLLogsTree
-import com.jetbrains.ml.tools.model.MLModel
-import com.jetbrains.ml.tools.model.catboost.prediction.CatBoostRegressionResult
+import com.jetbrains.mlapi.feature.Feature
+import com.jetbrains.mlapi.feature.FeatureDeclaration
+import com.jetbrains.mlapi.logs.MLLogsTree
+import com.jetbrains.mlapi.model.MLModel
+import com.jetbrains.mlapi.model.prediction.RegressionResult
 import com.jetbrains.python.codeInsight.imports.ImportCandidateHolder
 import kotlinx.coroutines.*
 import java.util.concurrent.atomic.AtomicBoolean
@@ -29,7 +28,7 @@ internal class MLApiComputations(
 
 internal sealed class FinalCandidatesRanker(
   protected val contextFeatures: MutableList<Feature>,
-  protected val contextAnalysis: MutableList<EventPair<*>>,
+  protected val contextAnalysis: MutableList<Feature>,
   protected val timestampStarted: Long,
 ) {
 
@@ -40,9 +39,9 @@ internal sealed class FinalCandidatesRanker(
 
 private class ExperimentalMLRanker(
   contextFeatures: MutableList<Feature>,
-  contextAnalysis: MutableList<EventPair<*>>,
+  contextAnalysis: MutableList<Feature>,
   timestampStarted: Long,
-  private val mlModel: MLModel<CatBoostRegressionResult>,
+  private val mlModel: MLModel<RegressionResult>,
 ) : FinalCandidatesRanker(contextFeatures, contextAnalysis, timestampStarted) {
 
   override val mlEnabled = true
@@ -55,7 +54,10 @@ private class ExperimentalMLRanker(
         async { FeaturesRegistry.computeCandidateFeatures(ImportCandidateContext(initialCandidatesOrder, candidate), mlModel.inputFeatures) }
       }.mapValues { it.value.await() }
 
-      val scoreByCandidate = mlModel.predictBatch(contextFeatures + fillTypingFeatures(), importCandidatesFeatures)
+      val resultContextFeatures = contextFeatures + fillTypingFeatures()
+      val featuresBatch = importCandidatesFeatures.mapValues { (_, fs) -> fs + resultContextFeatures }
+
+      val scoreByCandidate = mlModel.predictBatch(featuresBatch)
 
       val relevanceCandidateOrder = scoreByCandidate.toList()
         .sortedByDescending { it.second.logit }
@@ -79,7 +81,7 @@ private class ExperimentalMLRanker(
 
 private class InitialOrderKeepingRanker(
   contextFeatures: MutableList<Feature>,
-  contextLogs: MutableList<EventPair<*>>,
+  contextLogs: MutableList<Feature>,
   timestampStarted: Long,
 ) : FinalCandidatesRanker(contextFeatures, contextLogs, timestampStarted) {
   override val mlEnabled = false
@@ -100,7 +102,7 @@ internal fun launchMLRanking(initialCandidatesOrder: MutableList<out ImportCandi
 
   val timestampStarted = System.currentTimeMillis()
   val mlContextFeatures = mutableListOf<Feature>()
-  val mlContextLogs = mutableListOf<EventPair<*>>()
+  val mlContextLogs = mutableListOf<Feature>()
   val rankingStatus = service<FinalImportRankingStatusService>().status
   val ranker = when (rankingStatus) {
     is FinalImportRankingStatus.Disabled -> {
@@ -124,14 +126,14 @@ internal fun launchMLRanking(initialCandidatesOrder: MutableList<out ImportCandi
 
 internal class RateableRankingResult(
   private val contextFeatures: List<Feature>,
-  private val contextAnalysis: MutableList<EventPair<*>>,
+  private val contextAnalysis: MutableList<Feature>,
   private val importCandidates: Map<ImportCandidateHolder, List<Feature>>,
   val orderInitial: List<ImportCandidateHolder>,
   val order: List<ImportCandidateHolder>,
   private val timestampStarted: Long,
 ) {
   private var submitted = AtomicBoolean(false)
-  private val candidateAnalysis: MutableMap<ImportCandidateHolder, EventPair<*>> = mutableMapOf()
+  private val candidateAnalysis: MutableMap<ImportCandidateHolder, Feature> = mutableMapOf()
 
   fun submitPopUpClosed() {
     val timestampClosed = System.currentTimeMillis()

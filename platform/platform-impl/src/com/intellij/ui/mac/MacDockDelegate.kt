@@ -44,7 +44,7 @@ private class MacDockDelegate(private val recentProjectsMenu: Menu) : SystemDock
     // todo get rid of UI dispatcher here
     withContext(Dispatchers.UiWithModelAccess) {
       recentProjectsMenu.removeAll()
-      for (action in projectListActionProvider.getActions()) {
+      for (action in projectListActionProvider.getActionsWithoutGroups()) {
         if (action !is ProjectToolbarWidgetPresentable) {
           continue
         }

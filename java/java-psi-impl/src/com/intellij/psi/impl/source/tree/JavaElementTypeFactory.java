@@ -5,6 +5,13 @@ import com.intellij.psi.impl.source.AbstractBasicJavaElementTypeFactory;
 import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 
+/**
+ * @deprecated This class is planned to be removed.
+ *             Use {@link com.intellij.psi.impl.java.stubs.JavaStubElementTypes} and
+ *             {@link com.intellij.psi.impl.source.tree.JavaElementType} directly.
+ */
+@Deprecated
+@ApiStatus.ScheduledForRemoval
 @ApiStatus.Experimental
 public class JavaElementTypeFactory extends AbstractBasicJavaElementTypeFactory {
 

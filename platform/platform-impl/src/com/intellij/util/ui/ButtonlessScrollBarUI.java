@@ -17,6 +17,7 @@ import com.intellij.util.MethodHandleUtil;
 import com.intellij.util.SingleEdtTaskScheduler;
 import com.intellij.util.concurrency.SynchronizedClearableLazy;
 import kotlinx.coroutines.CoroutineScope;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -753,11 +754,13 @@ public class ButtonlessScrollBarUI extends BasicScrollBarUI {
     return value;
   }
 
+  @ApiStatus.Internal
   @Deprecated
   protected boolean isThumbTranslucent() {
     return scrollbar == null || !scrollbar.isOpaque();
   }
 
+  @ApiStatus.Internal
   @Deprecated
   protected int getThumbOffset(int value) {
     // com.intellij.ui.components.AbstractScrollBarUI.scale

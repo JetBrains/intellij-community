@@ -3,6 +3,7 @@ package com.intellij.openapi.application.impl
 
 import com.intellij.concurrency.currentThreadContext
 import com.intellij.concurrency.installThreadContext
+import com.intellij.openapi.Disposable
 import com.intellij.openapi.actionSystem.ActionManager
 import com.intellij.openapi.actionSystem.ActionUpdateThread
 import com.intellij.openapi.actionSystem.AnAction
@@ -10,13 +11,17 @@ import com.intellij.openapi.actionSystem.AnActionEvent
 import com.intellij.openapi.application.*
 import com.intellij.openapi.application.ex.ApplicationManagerEx
 import com.intellij.openapi.progress.*
+import com.intellij.openapi.progress.util.ProgressIndicatorUtils
 import com.intellij.openapi.project.DumbAware
 import com.intellij.openapi.ui.DialogWrapper
+import com.intellij.openapi.util.Disposer
 import com.intellij.platform.locking.impl.getGlobalThreadingSupport
 import com.intellij.testFramework.LoggedErrorProcessor
 import com.intellij.testFramework.common.timeoutRunBlocking
 import com.intellij.testFramework.junit5.TestApplication
 import com.intellij.util.application
+import com.intellij.util.cancelOnDispose
+import com.intellij.util.ref.DebugReflectionUtil
 import com.intellij.util.ui.EDT
 import com.intellij.util.ui.UIUtil
 import kotlinx.coroutines.*
@@ -26,6 +31,7 @@ import org.assertj.core.api.Assertions.fail
 import org.jetbrains.concurrency.AsyncPromise
 import org.jetbrains.concurrency.Promise
 import org.jetbrains.concurrency.resolvedPromise
+import org.junit.jupiter.api.Assertions
 import org.junit.jupiter.api.Assumptions
 import org.junit.jupiter.api.Test
 import org.junit.jupiter.api.assertThrows
@@ -439,6 +445,48 @@ class PlatformUtilitiesTest {
       }
       dialog.show()
     }
+  }
+
+  @Test
+  fun `yieldToPendingWriteAction does not cause thread starvation`() : Unit = timeoutRunBlocking {
+    val job = Job(coroutineContext.job)
+    val edtCanFinish = Job(coroutineContext.job)
+    launch(Dispatchers.UiWithModelAccess) {
+      WriteIntentReadAction.run {
+        job.complete()
+        edtCanFinish.asCompletableFuture().join()
+      }
+    }
+    job.join()
+    launch(Dispatchers.Default) {
+      backgroundWriteAction {
+
+      }
+    }
+    delay(50)
+    repeat(Runtime.getRuntime().availableProcessors()) {
+      launch(Dispatchers.Default) {
+        ProgressIndicatorUtils.yieldToPendingWriteActions()
+      }
+    }
+    delay(50)
+    edtCanFinish.complete()
+  }
+
+  suspend fun `interesting caller`() {
+    val job = Job(currentCoroutineContext().job)
+    val disposable = Disposer.newDisposable()
+    job.cancelOnDispose(disposable)
+    val result = DebugReflectionUtil.walkObjects(5, mapOf(Disposer.getTree() to "Disposer root tree"), Disposable::class.java, { true }) { disposable, _ ->
+      !disposable.toString().contains("interesting caller")
+    }
+    Assertions.assertFalse(result)
+    Disposer.dispose(disposable)
+  }
+
+  @Test
+  fun `cancelOnDispose contains information about caller`() = timeoutRunBlocking {
+   `interesting caller`()
   }
 
 }

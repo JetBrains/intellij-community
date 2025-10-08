@@ -36,7 +36,9 @@ public class ReplaceDelimiterFix extends GrPsiUpdateIntention {
     if (clause instanceof GrForInClause) {
       GrForStatement stubFor = (GrForStatement)GroovyPsiElementFactory.getInstance(context.project()).createStatementFromText("for (x in y){}");
       PsiElement newDelimiter = ((GrForInClause)stubFor.getClause()).getDelimiter();
+      if (newDelimiter == null) return;
       PsiElement delimiter = ((GrForInClause)clause).getDelimiter();
+      if (delimiter == null) return;
       delimiter.replace(newDelimiter);
     }
   }

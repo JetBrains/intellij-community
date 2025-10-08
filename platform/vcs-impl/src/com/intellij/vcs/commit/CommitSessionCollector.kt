@@ -38,7 +38,7 @@ import java.util.*
 import javax.swing.JTree
 
 internal object CommitSessionCounterUsagesCollector : CounterUsagesCollector() {
-  val GROUP = EventLogGroup("commit.interactions", 4)
+  val GROUP = EventLogGroup("commit.interactions", 5)
 
   val FILES_TOTAL = EventFields.RoundedInt("files_total")
   val FILES_INCLUDED = EventFields.RoundedInt("files_included")
@@ -69,12 +69,13 @@ internal object CommitSessionCounterUsagesCollector : CounterUsagesCollector() {
   val SHOW_DIFF = GROUP.registerEvent("show.diff")
   val CLOSE_DIFF = GROUP.registerEvent("close.diff")
   val JUMP_TO_SOURCE = GROUP.registerEvent("jump.to.source", EventFields.InputEventByAnAction)
-  val COMMIT = GROUP.registerEvent("commit", FILES_INCLUDED, UNVERSIONED_INCLUDED)
-  val COMMIT_AND_PUSH = GROUP.registerEvent("commit.and.push", FILES_INCLUDED, UNVERSIONED_INCLUDED)
+  val COMMIT = GROUP.registerEvent("commit", FILES_INCLUDED, UNVERSIONED_INCLUDED, EventFields.Dumb)
+  val COMMIT_AND_PUSH = GROUP.registerEvent("commit.and.push", FILES_INCLUDED, UNVERSIONED_INCLUDED, EventFields.Dumb)
   val TOGGLE_COMMIT_CHECK = GROUP.registerEvent("toggle.commit.check", COMMIT_CHECK_CLASS, IS_FROM_SETTINGS, EventFields.Enabled)
   val TOGGLE_COMMIT_OPTION = GROUP.registerEvent("toggle.commit.option", COMMIT_OPTION, EventFields.Enabled)
   val VIEW_COMMIT_PROBLEM = GROUP.registerEvent("view.commit.problem", COMMIT_PROBLEM_CLASS, COMMIT_PROBLEM_PLACE)
   val CODE_ANALYSIS_WARNING = GROUP.registerEvent("code.analysis.warning", WARNINGS_COUNT, ERRORS_COUNT)
+  val COMMIT_DUMB_BLOCKED = GROUP.registerEvent("commit.dumb.blocked")
 
   override fun getGroup(): EventLogGroup = GROUP
 }
@@ -152,13 +153,13 @@ class CommitSessionCollector(val project: Project) {
     }
   }
 
-  fun logCommit(executorId: String?, includedChanges: Int, includedUnversioned: Int) {
+  fun logCommit(executorId: String?, includedChanges: Int, includedUnversioned: Int, inDumbMode: Boolean) {
     if (!shouldTrackEvents()) return
     if (executorId == "Git.Commit.And.Push.Executor") {
-      CommitSessionCounterUsagesCollector.COMMIT_AND_PUSH.log(project, includedChanges, includedUnversioned)
+      CommitSessionCounterUsagesCollector.COMMIT_AND_PUSH.log(project, includedChanges, includedUnversioned, inDumbMode)
     }
     else {
-      CommitSessionCounterUsagesCollector.COMMIT.log(project, includedChanges, includedUnversioned)
+      CommitSessionCounterUsagesCollector.COMMIT.log(project, includedChanges, includedUnversioned, inDumbMode)
     }
 
     finishActivity()
@@ -190,6 +191,10 @@ class CommitSessionCollector(val project: Project) {
 
   fun logCodeAnalysisWarnings(warnings: Int, errors: Int) {
     CommitSessionCounterUsagesCollector.CODE_ANALYSIS_WARNING.log(warnings, errors)
+  }
+
+  internal fun logSmartCommitCheckBlocked() {
+    CommitSessionCounterUsagesCollector.COMMIT_DUMB_BLOCKED.log(project)
   }
 
   internal fun logCommitProblemViewed(commitProblem: CommitProblem, place: CommitProblemPlace) {

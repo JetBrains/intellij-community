@@ -18,6 +18,7 @@ import com.intellij.internal.ui.sandbox.dsl.validation.ValidationPanel
 import com.intellij.internal.ui.sandbox.dsl.validation.ValidationRefactoringPanel
 import com.intellij.internal.ui.sandbox.tests.accessibility.AccessibilityFailedInspectionsPanel
 import com.intellij.internal.ui.sandbox.tests.components.JBTextAreaTestPanel
+import com.intellij.internal.ui.sandbox.tests.components.JEditorPaneCopyableTestPanel
 import com.intellij.internal.ui.sandbox.tests.dsl.CommentRightTestPanel
 import com.intellij.internal.ui.sandbox.tests.dsl.listCellRenderer.LcrPerformanceTestPanel
 import com.intellij.openapi.Disposable
@@ -114,13 +115,14 @@ internal class UISandboxDialog(private val project: Project?) : DialogWrapper(pr
         AccessibilityFailedInspectionsPanel()
       )),
       Group("Components", children = listOf(
-        JBTextAreaTestPanel()
+        JEditorPaneCopyableTestPanel(),
+        JBTextAreaTestPanel(),
       )),
       Group("Kotlin UI DSL", children = listOf(
         Group("ListCellRenderer", children = listOf(
           LcrPerformanceTestPanel(),
         )),
-        CommentRightTestPanel()
+        CommentRightTestPanel(),
       )),
     ))
   )

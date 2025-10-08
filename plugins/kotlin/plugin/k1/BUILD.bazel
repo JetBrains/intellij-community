@@ -1,9 +1,9 @@
 ### auto-generated section `build kotlin.plugin.k1` start
-load("@rules_jvm//:jvm.bzl", "jvm_library", "jvm_resources")
+load("@rules_jvm//:jvm.bzl", "jvm_library", "resourcegroup")
 
-jvm_resources(
+resourcegroup(
   name = "k1_resources",
-  files = glob(["resources/**/*"]),
+  srcs = glob(["resources/**/*"]),
   strip_prefix = "resources"
 )
 
@@ -11,8 +11,8 @@ jvm_library(
   name = "k1",
   visibility = ["//visibility:public"],
   srcs = glob([], allow_empty = True),
+  resources = [":k1_resources"],
   runtime_deps = [
-    ":k1_resources",
     "//plugins/kotlin/plugin/common",
     "//plugins/kotlin/plugin",
     "@lib//:kotlinc-kotlin-compiler-common",
@@ -74,6 +74,7 @@ jvm_library(
     "//plugins/kotlin/compiler-plugins/assignment/common-k1:kotlin-compiler-plugins-assignment-common-k1",
     "//plugins/kotlin/compiler-plugins/assignment/gradle",
     "//plugins/kotlin/compiler-plugins/assignment/maven",
+    "//plugins/kotlin/compiler-plugins/kotlin-dataframe/maven",
     "//plugins/kotlin/compiler-plugins/scripting",
     "//plugins/kotlin/completion/api",
     "//plugins/kotlin/completion/impl-shared:kotlin-completion-impl-shared",

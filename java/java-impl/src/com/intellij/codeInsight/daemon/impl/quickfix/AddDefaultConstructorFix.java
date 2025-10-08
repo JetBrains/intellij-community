@@ -16,11 +16,11 @@ import org.jetbrains.annotations.Nullable;
 public class AddDefaultConstructorFix extends AddMethodFix {
   private final @IntentionName String myText;
 
-  public AddDefaultConstructorFix(PsiClass aClass) {
+  public AddDefaultConstructorFix(@NotNull PsiClass aClass) {
     this(aClass, PsiUtil.getSuitableModifierForMember(aClass, true));
   }
 
-  public AddDefaultConstructorFix(PsiClass aClass, @PsiModifier.ModifierConstant final @NotNull String modifier) {
+  public AddDefaultConstructorFix(@NotNull PsiClass aClass, @PsiModifier.ModifierConstant final @NotNull String modifier) {
     super(generateConstructor(aClass.getName(), modifier), aClass);
     myText = QuickFixBundle.message("add.default.constructor.text", VisibilityUtil.toPresentableText(modifier), aClass.getName());
   }
@@ -30,7 +30,7 @@ public class AddDefaultConstructorFix extends AddMethodFix {
     return super.getPresentation(context, myClass) == null ? null : Presentation.of(myText);
   }
 
-  private static String generateConstructor(final String className, @PsiModifier.ModifierConstant final String modifier) {
+  private static @NotNull String generateConstructor(@NotNull String className, @PsiModifier.ModifierConstant final String modifier) {
     if (modifier.equals(PsiModifier.PACKAGE_LOCAL)) {
       return className + "() {}";
     }

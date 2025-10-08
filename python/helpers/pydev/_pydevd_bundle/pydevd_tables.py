@@ -5,7 +5,7 @@ from _pydevd_bundle import pydevd_vars
 from _pydevd_bundle.pydevd_constants import NEXT_VALUE_SEPARATOR
 from _pydevd_bundle.pydevd_xml import ExceptionOnEvaluate
 from _pydevd_bundle.tables.images.pydevd_image_loader import load_image_chunk
-
+from _pydev_bundle.pydev_imports import Exec
 
 class TableCommandType:
     DF_INFO = "DF_INFO"
@@ -41,6 +41,13 @@ def exec_image_table_command(init_command, command_type, offset, image_id, f_glo
 
     return True, load_image_chunk(offset, image_id)
 
+
+def exec_raw(command, f_globals, f_locals):
+    try:
+        res = Exec(command, f_globals, f_locals)
+        return True, str(res)
+    except:
+        return False, pydevd_vars.get_eval_exception_msg(command, f_locals).result
 
 def exec_table_command(init_command, command_type, start_index, end_index, format, f_globals,
                        f_locals):

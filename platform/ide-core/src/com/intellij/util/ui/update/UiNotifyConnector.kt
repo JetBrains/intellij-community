@@ -57,21 +57,6 @@ open class UiNotifyConnector : Disposable, HierarchyListener {
     setupListeners(component)
   }
 
-  @ApiStatus.ScheduledForRemoval
-  @Deprecated(
-    """Use the static method {@link UiNotifyConnector#installOn(Component, Activatable, boolean)}.
-    <p>
-    For inheritance use the non-deprecated constructor.
-    <p>
-    Also, note that non-deprecated constructor is side effect free, and you should call for {@link UiNotifyConnector#setupListeners()}
-    method""")
-  constructor(component: Component, target: Activatable, deferred: Boolean) {
-    this.component = WeakReference(component)
-    this.target = target.wrapIfNeeded()
-    isDeferred = deferred
-    setupListeners(component)
-  }
-
   private class ContextActivatable(private val target: Activatable) : Activatable {
     companion object {
       fun Activatable.wrapIfNeeded(): ContextActivatable = this as? ContextActivatable ?: ContextActivatable(this)

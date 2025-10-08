@@ -30,6 +30,7 @@ import org.jetbrains.annotations.Nullable;
 import org.jetbrains.concurrency.Promise;
 import org.jetbrains.concurrency.Promises;
 
+import java.util.Collection;
 import java.util.Collections;
 import java.util.concurrent.Callable;
 import java.util.concurrent.ConcurrentMap;
@@ -42,15 +43,19 @@ public abstract class JavaTestFramework implements JvmTestFramework {
   public boolean isLibraryAttached(@NotNull Module module) {
     GlobalSearchScope scope = GlobalSearchScope.moduleWithDependenciesAndLibrariesScope(module);
     Project project = module.getProject();
-    PsiClass c = DumbService.getInstance(project).computeWithAlternativeResolveEnabled(() -> JavaPsiFacade.getInstance(project).findClass(getMarkerClassFQName(), scope));
-    return c != null;
+    return DumbService.getInstance(project).computeWithAlternativeResolveEnabled(() -> {
+      for (String markerClassFQName : getMarkerClassFQNames()) {
+        if (JavaPsiFacade.getInstance(project).findClass(markerClassFQName, scope) != null) return true;
+      }
+      return false;
+    });
   }
 
   @Override
   public @Nullable String getLibraryPath() {
     ExternalLibraryDescriptor descriptor = getFrameworkLibraryDescriptor();
     if (descriptor != null) {
-      return descriptor.getLibraryClassesRoots().get(0);
+      return descriptor.getLibraryClassesRoots().getFirst();
     }
     return null;
   }
@@ -60,14 +65,24 @@ public abstract class JavaTestFramework implements JvmTestFramework {
     return null;
   }
 
+  protected Collection<String> getMarkerClassFQNames() {
+    return Collections.singleton(getMarkerClassFQName());
+  }
+
+  /**
+   * @deprecated Use {@link #getMarkerClassFQNames()} instead
+   */
+  @Deprecated
   protected abstract String getMarkerClassFQName();
 
   /**
-   * Return {@code true} iff {@link #getMarkerClassFQName()} can be found in the resolve scope of {@code clazz}
+   * Return {@code true} iff {@link #getMarkerClassFQNames()} can be found in the resolve scope of {@code clazz}
    */
   public boolean isFrameworkAvailable(@NotNull PsiElement clazz) {
-    String markerClassFQName = getMarkerClassFQName();
-    return isFrameworkApplicable(clazz, markerClassFQName);
+    for (String markerClassFQName : getMarkerClassFQNames()) {
+      if (isFrameworkApplicable(clazz, markerClassFQName)) return true;
+    }
+    return false;
   }
 
   protected static boolean isFrameworkApplicable(@NotNull PsiElement clazz, String markerClassFQName) {

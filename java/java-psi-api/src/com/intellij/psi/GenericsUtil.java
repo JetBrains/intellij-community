@@ -1,4 +1,4 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.psi;
 
 import com.intellij.codeInsight.TypeNullability;
@@ -25,7 +25,7 @@ public final class GenericsUtil {
   private GenericsUtil() { }
 
   /// Returns the Greatest Lower Bound (GLB) of the given types.
-  /// 
+  ///
   /// @see PsiIntersectionType
   public static @Nullable PsiType getGreatestLowerBound(@Nullable PsiType type1, @Nullable PsiType type2) {
     if (type1 == null || type2 == null) return null;
@@ -34,24 +34,22 @@ public final class GenericsUtil {
     return PsiIntersectionType.createIntersection(type1, type2);
   }
 
-  //@formatter:off Temporarily disable formatter because of bug IDEA-371809
   /// Returns the Least Upper Bound (LUB) of the given types.
   ///
   /// The calculation of LUB performed by this method is more precise than what is specified in JLS. Consider this example:
-  /// 
+  ///
   /// ```
   /// void main(String[] args) {
   ///   var a = args.length == 1 ? new ArrayList<String>() : new LinkedList<String>();
   /// }
   /// ```
-  /// 
+  ///
   /// This method determines the type of `a` to be an intersection type `java.util.AbstractList<String> & Cloneable & java.io.Serializable`,
   /// whereas javac 24.0.2 determines the type of `a` to be `java.util.AbstractList` (this is the type present in bytecode).
   ///
   /// See JLS 4.10.4 Least Upper Bound
   ///
   /// @see PsiIntersectionType
-  //@formatter:on
   public static @Nullable PsiType getLeastUpperBound(PsiType type1, PsiType type2, PsiManager manager) {
     if (TypeConversionUtil.isPrimitiveAndNotNull(type1) || TypeConversionUtil.isPrimitiveAndNotNull(type2)) return null;
     if (TypeConversionUtil.isNullType(type1)) return type2.withNullability(TypeNullability.NULLABLE_MANDATED);
@@ -126,6 +124,7 @@ public final class GenericsUtil {
       final PsiElementFactory elementFactory = JavaPsiFacade.getElementFactory(manager.getProject());
       PsiClassType[] conjuncts = new PsiClassType[supers.length];
       Set<Couple<PsiType>> siblings = new HashSet<>();
+      TypeNullability nullability = type1.getNullability().join(type2.getNullability());
       try {
         for (int i = 0; i < supers.length; i++) {
           PsiClass aSuper = supers[i];
@@ -160,7 +159,7 @@ public final class GenericsUtil {
             }
           }
 
-          conjuncts[i] = elementFactory.createType(aSuper, substitutor);
+          conjuncts[i] = elementFactory.createType(aSuper, substitutor).withNullability(nullability);
         }
       }
       finally {
@@ -693,5 +692,45 @@ public final class GenericsUtil {
            method.hasModifierProperty(PsiModifier.STATIC) ||
            method.isConstructor() ||
            method.hasModifierProperty(PsiModifier.PRIVATE) && PsiUtil.getLanguageLevel(method).isAtLeast(LanguageLevel.JDK_1_9);
+  }
+
+  /**
+   * Checks whether a given type is a wildcard type with explicit extends bound.
+   *
+   * @param type the type to check
+   * @return {@code true} if the type is a wildcard type with explicit extends bound, {@code false} otherwise
+   */
+  @Contract("null -> false")
+  public static boolean isWildcardWithExtendsBound(@Nullable PsiType type) {
+    if (type instanceof PsiWildcardType) {
+      PsiWildcardType wildcardType = (PsiWildcardType)type;
+      return wildcardType.isExtends();
+    } else if (type instanceof PsiCapturedWildcardType) {
+      PsiCapturedWildcardType wildcardType = (PsiCapturedWildcardType)type;
+      return isWildcardWithExtendsBound(wildcardType.getWildcard());
+    }
+    return false;
+  }
+
+  /**
+   * Calculates the type bounded to the given wildcard type.
+   * <ul>
+   * <li>for ? extends XXX: XXX</li>
+   * <li>for ? super YYY: YYY</li>
+   * </ul>
+   * @param type wildcard type to calculate bounded type for
+   * @return bounded type if {@code type} is bounded, {@code null} otherwise
+   */
+  @Contract("null -> null")
+  public static @Nullable PsiType getWildcardBound(@Nullable PsiType type) {
+    if (type instanceof PsiWildcardType) {
+      PsiWildcardType wildcardType = (PsiWildcardType)type;
+      if (wildcardType.isExtends()) return wildcardType.getExtendsBound();
+      if (wildcardType.isSuper()) return wildcardType.getSuperBound();
+    } else if (type instanceof PsiCapturedWildcardType) {
+      PsiCapturedWildcardType wildcardType = (PsiCapturedWildcardType)type;
+      return getWildcardBound(wildcardType.getWildcard());
+    }
+    return null;
   }
 }

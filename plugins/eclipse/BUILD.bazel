@@ -1,9 +1,9 @@
 ### auto-generated section `build intellij.eclipse` start
-load("@rules_jvm//:jvm.bzl", "jvm_library", "jvm_resources")
+load("@rules_jvm//:jvm.bzl", "jvm_library", "resourcegroup")
 
-jvm_resources(
+resourcegroup(
   name = "eclipse_resources",
-  files = glob(["resources/**/*"]),
+  srcs = glob(["resources/**/*"]),
   strip_prefix = "resources"
 )
 
@@ -12,6 +12,7 @@ jvm_library(
   module_name = "intellij.eclipse",
   visibility = ["//visibility:public"],
   srcs = glob(["src/**/*.kt", "src/**/*.java", "src/**/*.form", "gen/**/*.kt", "gen/**/*.java"], allow_empty = True),
+  resources = [":eclipse_resources"],
   deps = [
     "//platform/analysis-api:analysis",
     "//platform/code-style-api:codeStyle",
@@ -37,11 +38,10 @@ jvm_library(
     "//platform/workspace/jps",
     "//platform/workspace/storage",
     "//platform/statistics",
-    "@lib//:kotlin-reflect",
+    "//libraries/kotlin-reflect",
     "//platform/backend/workspace",
     "//xml/xml-psi-impl:psi-impl",
-  ],
-  runtime_deps = [":eclipse_resources"]
+  ]
 )
 
 jvm_library(
@@ -83,13 +83,12 @@ jvm_library(
     "//platform/statistics",
     "//platform/statistics:statistics_test_lib",
     "@lib//:junit5",
-    "@lib//:kotlin-reflect",
+    "//libraries/kotlin-reflect",
     "//platform/testFramework/junit5",
     "//platform/testFramework/junit5:junit5_test_lib",
     "//platform/backend/workspace",
     "//xml/xml-psi-impl:psi-impl",
-  ],
-  runtime_deps = [":eclipse_resources"]
+  ]
 )
 ### auto-generated section `build intellij.eclipse` end
 

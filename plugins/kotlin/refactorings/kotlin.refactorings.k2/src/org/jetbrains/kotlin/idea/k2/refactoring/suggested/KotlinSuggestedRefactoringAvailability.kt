@@ -73,6 +73,7 @@ class KotlinSuggestedRefactoringAvailability(refactoringSupport: SuggestedRefact
     @OptIn(KaExperimentalApi::class)
     context(_: KaSession)
     private fun signatureTypes(declaration: KtCallableDeclaration): SignatureTypes? {
+        if ((declaration as? KtParameter)?.isFunctionTypeParameter == true) return null
         val symbol = declaration.symbol as? KaFunctionSymbol
         return if (symbol == null) {
             null

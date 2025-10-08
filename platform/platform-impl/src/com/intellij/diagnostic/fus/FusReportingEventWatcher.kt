@@ -33,10 +33,6 @@ class FusReportingEventWatcher : PreciseEventWatcher() {
   init {
     // preload service so that it starts monitoring locks
     service<EdtLockAggregatingMonitor>()
-    if (SystemProperties.getBooleanProperty("ui.freeze.chain.reporting.enabled", false)) {
-      // start freeze chain monitor to report sequences of micro-freezes
-      service<EdtFreezeChainMonitor>()
-    }
     _instance = this
   }
 

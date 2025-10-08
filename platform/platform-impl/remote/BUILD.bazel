@@ -17,7 +17,7 @@ jvm_library(
     "//platform/execution",
     "//platform/platform-impl:ide-impl",
     "//platform/util/concurrency",
-    "@lib//:guava",
+    "//libraries/guava",
     "//platform/core-ui",
   ]
 )

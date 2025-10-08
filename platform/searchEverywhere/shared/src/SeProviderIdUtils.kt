@@ -17,9 +17,6 @@ object SeProviderIdUtils {
 
   const val TOP_HIT_ID: String = "TopHitSEContributor"
   const val TOP_HIT_HOST_ID: String = "TopHitSEContributor-Host"
-
-  const val ESSENTIAL_KEY: String = "essential"
-  const val NON_ESSENTIAL_KEY: String = "non-essential"
 }
 
 @get:ApiStatus.Internal

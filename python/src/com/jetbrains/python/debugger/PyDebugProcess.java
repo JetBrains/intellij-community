@@ -126,7 +126,6 @@ public class PyDebugProcess extends XDebugProcess implements IPyDebugProcess, Pr
   private PyStackFrame myConsoleContextFrame = null;
   private PyReferrersLoader myReferrersProvider;
   private final List<PyFrameListener> myFrameListeners = ContainerUtil.createLockFreeCopyOnWriteList();
-  private boolean isCythonWarningShown = false;
   private @Nullable XCompositeNode myCurrentRootNode;
 
   private final Map<String, Map<String, PyDebugValueDescriptor>> myDescriptorsCache = Maps.newConcurrentMap();
@@ -445,9 +444,9 @@ public class PyDebugProcess extends XDebugProcess implements IPyDebugProcess, Pr
   @Override
   public void showWarning(String warningId) {
     if (warningId.equals("cython")) {
-      if (!isCythonWarningShown) {
-        PyCythonExtensionWarning.showCythonExtensionWarning(getSession().getProject());
-        isCythonWarningShown = true;
+      if (!PyDebugShowingNotificationsService.getInstance().isCythonNotificationShown()) {
+        PyDebugNotificationForCythonExtension.showCythonExtensionWarning(getSession().getProject());
+        PyDebugShowingNotificationsService.getInstance().setCythonNotificationShown(true);
       }
     }
   }

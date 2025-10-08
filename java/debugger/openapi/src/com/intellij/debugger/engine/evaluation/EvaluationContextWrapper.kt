@@ -1,6 +1,7 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.debugger.engine.evaluation
 
+import com.intellij.debugger.engine.DebuggerUtils
 import com.intellij.ide.IconProvider
 import com.intellij.openapi.extensions.ExtensionPointName
 import com.intellij.openapi.project.DumbAware
@@ -35,7 +36,7 @@ interface AdditionalContextProvider {
    @JvmStatic
    fun getAllAdditionalContextElements(project: Project, context: PsiElement?): List<AdditionalContextElement> {
      val result = mutableListOf<AdditionalContextElement>()
-     EP_NAME.forEachExtensionSafe {
+     DebuggerUtils.forEachSafe(EP_NAME) {
        result.addAll(it.getAdditionalContextElements(project, context))
      }
      return result

@@ -1,4 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 
 package org.jetbrains.kotlin.idea.decompiler.navigation
 
@@ -11,8 +11,8 @@ import com.intellij.psi.search.GlobalSearchScope
 import com.intellij.psi.search.ProjectScope
 import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.annotations.TestOnly
-import org.jetbrains.kotlin.analysis.decompiler.psi.text.ByDescriptorIndexer
 import org.jetbrains.kotlin.asJava.findFacadeClass
+import org.jetbrains.kotlin.base.fe10.analysis.decompiler.ByDescriptorIndexer
 import org.jetbrains.kotlin.descriptors.CallableDescriptor
 import org.jetbrains.kotlin.fileClasses.JvmMultifileClassPartInfo
 import org.jetbrains.kotlin.fileClasses.fileClassInfo

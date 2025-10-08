@@ -110,7 +110,7 @@ public final class ListIndexOfReplaceableByContainsInspection extends BaseInspec
   }
 
   @Override
-  public BaseInspectionVisitor buildVisitor() {
+  public @NotNull BaseInspectionVisitor buildVisitor() {
     return new IndexOfReplaceableByContainsVisitor();
   }
 

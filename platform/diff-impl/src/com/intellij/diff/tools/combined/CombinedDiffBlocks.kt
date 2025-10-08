@@ -43,7 +43,7 @@ import javax.swing.JComponent
 import kotlin.properties.Delegates
 
 @ApiStatus.Experimental
-class CombinedBlockProducer(
+open class CombinedBlockProducer(
   val id: CombinedBlockId,
   val producer: DiffRequestProducer
 )

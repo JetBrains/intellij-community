@@ -1,6 +1,6 @@
 ### auto-generated section `build kotlin.base.injection` start
 load("//build:compiler-options.bzl", "create_kotlinc_options")
-load("@rules_jvm//:jvm.bzl", "jvm_library", "jvm_provided_library", "jvm_resources")
+load("@rules_jvm//:jvm.bzl", "jvm_library", "jvm_provided_library", "resourcegroup")
 
 create_kotlinc_options(
   name = "custom_kotlin-base-injection",
@@ -8,9 +8,9 @@ create_kotlinc_options(
   x_context_parameters = True
 )
 
-jvm_resources(
+resourcegroup(
   name = "kotlin-base-injection_resources",
-  files = glob(["resources/**/*"]),
+  srcs = glob(["resources/**/*"]),
   strip_prefix = "resources"
 )
 
@@ -24,11 +24,12 @@ jvm_library(
   module_name = "kotlin.base.injection",
   visibility = ["//visibility:public"],
   srcs = glob(["src/**/*.kt", "src/**/*.java", "src/**/*.form"], allow_empty = True),
+  resources = [":kotlin-base-injection_resources"],
   kotlinc_opts = ":custom_kotlin-base-injection",
   deps = [
     "@lib//:kotlin-stdlib",
     "@lib//:kotlinc-kotlin-compiler-common",
-    "@lib//:guava",
+    "//libraries/guava",
     "//platform/analysis-api:analysis",
     "//platform/core-api:core",
     "//platform/editor-ui-api:editor-ui",
@@ -49,7 +50,6 @@ jvm_library(
     "@lib//:kotlinc-analysis-api",
     "//plugins/kotlin/base/analysis",
     ":plugins_IntelliLang_backend_provided",
-  ],
-  runtime_deps = [":kotlin-base-injection_resources"]
+  ]
 )
 ### auto-generated section `build kotlin.base.injection` end

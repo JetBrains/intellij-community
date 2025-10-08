@@ -1,9 +1,9 @@
 ### auto-generated section `build intellij.json.tests` start
-load("@rules_jvm//:jvm.bzl", "jvm_library", "jvm_resources")
+load("@rules_jvm//:jvm.bzl", "jvm_library", "resourcegroup")
 
-jvm_resources(
+resourcegroup(
   name = "tests_test_resources",
-  files = glob(["testData/**/*"]),
+  srcs = glob(["testData/**/*"]),
   strip_prefix = "testData"
 )
 
@@ -18,6 +18,7 @@ jvm_library(
   module_name = "intellij.json.tests",
   visibility = ["//visibility:public"],
   srcs = glob(["test/**/*.kt", "test/**/*.java", "test/**/*.form"], allow_empty = True),
+  resources = [":tests_test_resources"],
   deps = [
     "//platform/analysis-api:analysis",
     "//platform/code-style-api:codeStyle",
@@ -46,12 +47,11 @@ jvm_library(
     "//platform/ide-core-impl",
     "//tools/intellij.tools.ide.metrics.benchmark:ide-metrics-benchmark",
     "//tools/intellij.tools.ide.metrics.benchmark:ide-metrics-benchmark_test_lib",
-    "@lib//:kotlin-reflect",
+    "//libraries/kotlin-reflect",
     "//platform/syntax/syntax-psi:psi",
     "//json/syntax",
     "//platform/syntax/syntax-util:util",
-  ],
-  runtime_deps = [":tests_test_resources"]
+  ]
 )
 ### auto-generated section `build intellij.json.tests` end
 

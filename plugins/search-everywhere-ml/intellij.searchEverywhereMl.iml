@@ -17,21 +17,21 @@
     <orderEntry type="module" module-name="intellij.platform.testFramework" scope="TEST" />
     <orderEntry type="module-library" exported="">
       <library name="ai.grazie.emb" type="repository">
-        <properties maven-id="ai.grazie.model:model-emb-jvm:0.8.48">
+        <properties maven-id="ai.grazie.model:model-emb-jvm:0.8.63">
           <verification>
-            <artifact url="file://$MAVEN_REPOSITORY$/ai/grazie/model/model-emb-jvm/0.8.48/model-emb-jvm-0.8.48.jar">
+            <artifact url="file://$MAVEN_REPOSITORY$/ai/grazie/model/model-emb-jvm/0.8.63/model-emb-jvm-0.8.63.jar">
               <sha256sum>fd646112e2bb2bb16527397946016a17e269a27095d0c7343a8f154b83db9d0a</sha256sum>
             </artifact>
-            <artifact url="file://$MAVEN_REPOSITORY$/ai/grazie/model/model-text-jvm/0.8.48/model-text-jvm-0.8.48.jar">
-              <sha256sum>c62312e6bfd47960bc17c4710f00547769f025962879c0ad42a3bb5ea7e6d389</sha256sum>
+            <artifact url="file://$MAVEN_REPOSITORY$/ai/grazie/model/model-text-jvm/0.8.63/model-text-jvm-0.8.63.jar">
+              <sha256sum>7a8eb4e8fcd555e7776ff6638b8c9a400da1ddfe87ef4f4e9e63135764cda984</sha256sum>
             </artifact>
-            <artifact url="file://$MAVEN_REPOSITORY$/ai/grazie/model/model-common-jvm/0.8.48/model-common-jvm-0.8.48.jar">
+            <artifact url="file://$MAVEN_REPOSITORY$/ai/grazie/model/model-common-jvm/0.8.63/model-common-jvm-0.8.63.jar">
               <sha256sum>d9c0813e00ff06888f30008098a3938a348863ee65c0b7f9a6aa524bb10982bf</sha256sum>
             </artifact>
-            <artifact url="file://$MAVEN_REPOSITORY$/ai/grazie/utils/utils-common-jvm/0.8.48/utils-common-jvm-0.8.48.jar">
-              <sha256sum>a509dbbfa9162429475ddf9ff3106c3e92df18e9611b135f05da8d807c045d0a</sha256sum>
+            <artifact url="file://$MAVEN_REPOSITORY$/ai/grazie/utils/utils-common-jvm/0.8.63/utils-common-jvm-0.8.63.jar">
+              <sha256sum>83b572b886c73983e21bcaffc88ca96f0b0d1d1576ed3b5e1ce04a8cf0d8902f</sha256sum>
             </artifact>
-            <artifact url="file://$MAVEN_REPOSITORY$/ai/grazie/utils/utils-multiplatform-jvm/0.8.48/utils-multiplatform-jvm-0.8.48.jar">
+            <artifact url="file://$MAVEN_REPOSITORY$/ai/grazie/utils/utils-multiplatform-jvm/0.8.63/utils-multiplatform-jvm-0.8.63.jar">
               <sha256sum>ce5f571e5eae530cc4835d99977181a545bc07c85755b5b73a1bfb1a669f40d1</sha256sum>
             </artifact>
           </verification>
@@ -49,37 +49,37 @@
           </exclude>
         </properties>
         <CLASSES>
-          <root url="jar://$MAVEN_REPOSITORY$/ai/grazie/model/model-emb-jvm/0.8.48/model-emb-jvm-0.8.48.jar!/" />
-          <root url="jar://$MAVEN_REPOSITORY$/ai/grazie/model/model-text-jvm/0.8.48/model-text-jvm-0.8.48.jar!/" />
-          <root url="jar://$MAVEN_REPOSITORY$/ai/grazie/model/model-common-jvm/0.8.48/model-common-jvm-0.8.48.jar!/" />
-          <root url="jar://$MAVEN_REPOSITORY$/ai/grazie/utils/utils-common-jvm/0.8.48/utils-common-jvm-0.8.48.jar!/" />
-          <root url="jar://$MAVEN_REPOSITORY$/ai/grazie/utils/utils-multiplatform-jvm/0.8.48/utils-multiplatform-jvm-0.8.48.jar!/" />
+          <root url="jar://$MAVEN_REPOSITORY$/ai/grazie/model/model-emb-jvm/0.8.63/model-emb-jvm-0.8.63.jar!/" />
+          <root url="jar://$MAVEN_REPOSITORY$/ai/grazie/model/model-text-jvm/0.8.63/model-text-jvm-0.8.63.jar!/" />
+          <root url="jar://$MAVEN_REPOSITORY$/ai/grazie/model/model-common-jvm/0.8.63/model-common-jvm-0.8.63.jar!/" />
+          <root url="jar://$MAVEN_REPOSITORY$/ai/grazie/utils/utils-common-jvm/0.8.63/utils-common-jvm-0.8.63.jar!/" />
+          <root url="jar://$MAVEN_REPOSITORY$/ai/grazie/utils/utils-multiplatform-jvm/0.8.63/utils-multiplatform-jvm-0.8.63.jar!/" />
         </CLASSES>
         <JAVADOC />
         <SOURCES>
-          <root url="jar://$MAVEN_REPOSITORY$/ai/grazie/model/model-emb-jvm/0.8.48/model-emb-jvm-0.8.48-sources.jar!/" />
-          <root url="jar://$MAVEN_REPOSITORY$/ai/grazie/model/model-text-jvm/0.8.48/model-text-jvm-0.8.48-sources.jar!/" />
-          <root url="jar://$MAVEN_REPOSITORY$/ai/grazie/model/model-common-jvm/0.8.48/model-common-jvm-0.8.48-sources.jar!/" />
-          <root url="jar://$MAVEN_REPOSITORY$/ai/grazie/utils/utils-common-jvm/0.8.48/utils-common-jvm-0.8.48-sources.jar!/" />
-          <root url="jar://$MAVEN_REPOSITORY$/ai/grazie/utils/utils-multiplatform-jvm/0.8.48/utils-multiplatform-jvm-0.8.48-sources.jar!/" />
+          <root url="jar://$MAVEN_REPOSITORY$/ai/grazie/model/model-emb-jvm/0.8.63/model-emb-jvm-0.8.63-sources.jar!/" />
+          <root url="jar://$MAVEN_REPOSITORY$/ai/grazie/model/model-text-jvm/0.8.63/model-text-jvm-0.8.63-sources.jar!/" />
+          <root url="jar://$MAVEN_REPOSITORY$/ai/grazie/model/model-common-jvm/0.8.63/model-common-jvm-0.8.63-sources.jar!/" />
+          <root url="jar://$MAVEN_REPOSITORY$/ai/grazie/utils/utils-common-jvm/0.8.63/utils-common-jvm-0.8.63-sources.jar!/" />
+          <root url="jar://$MAVEN_REPOSITORY$/ai/grazie/utils/utils-multiplatform-jvm/0.8.63/utils-multiplatform-jvm-0.8.63-sources.jar!/" />
         </SOURCES>
       </library>
     </orderEntry>
     <orderEntry type="module-library">
       <library name="ai.grazie.model.swagger.annotations.jvm" type="repository">
-        <properties include-transitive-deps="false" maven-id="ai.grazie.model:swagger-annotations-jvm:0.8.48">
+        <properties include-transitive-deps="false" maven-id="ai.grazie.model:swagger-annotations-jvm:0.8.63">
           <verification>
-            <artifact url="file://$MAVEN_REPOSITORY$/ai/grazie/model/swagger-annotations-jvm/0.8.48/swagger-annotations-jvm-0.8.48.jar">
-              <sha256sum>6d8c4695ec289df56768e4fd7671a249076eb5c1fa17c59ec306665f9f98191a</sha256sum>
+            <artifact url="file://$MAVEN_REPOSITORY$/ai/grazie/model/swagger-annotations-jvm/0.8.63/swagger-annotations-jvm-0.8.63.jar">
+              <sha256sum>e3c8ebc2e1d06fd9efece9fed214d80e16416b6630567d891e200dcad2f07144</sha256sum>
             </artifact>
           </verification>
         </properties>
         <CLASSES>
-          <root url="jar://$MAVEN_REPOSITORY$/ai/grazie/model/swagger-annotations-jvm/0.8.48/swagger-annotations-jvm-0.8.48.jar!/" />
+          <root url="jar://$MAVEN_REPOSITORY$/ai/grazie/model/swagger-annotations-jvm/0.8.63/swagger-annotations-jvm-0.8.63.jar!/" />
         </CLASSES>
         <JAVADOC />
         <SOURCES>
-          <root url="jar://$MAVEN_REPOSITORY$/ai/grazie/model/swagger-annotations-jvm/0.8.48/swagger-annotations-jvm-0.8.48-sources.jar!/" />
+          <root url="jar://$MAVEN_REPOSITORY$/ai/grazie/model/swagger-annotations-jvm/0.8.63/swagger-annotations-jvm-0.8.63-sources.jar!/" />
         </SOURCES>
       </library>
     </orderEntry>

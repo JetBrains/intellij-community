@@ -8,12 +8,11 @@ import com.intellij.openapi.diagnostic.fileLogger
 import com.intellij.openapi.util.registry.RegistryManager
 import com.intellij.platform.eel.EelApi
 import com.intellij.platform.eel.EelDescriptor
-import com.intellij.platform.eel.EelMachine
 import com.intellij.platform.eel.provider.getEelDescriptor
 import com.intellij.platform.eel.provider.localEel
 import com.intellij.python.community.impl.installer.PySdkToInstallManager
 import com.intellij.python.community.services.internal.impl.VanillaPythonWithLanguageLevelImpl
-import com.intellij.python.community.services.shared.UICustomization
+import com.jetbrains.python.PyToolUIInfo
 import com.intellij.python.community.services.systemPython.SystemPythonServiceImpl.MyServiceState
 import com.intellij.python.community.services.systemPython.impl.Cache
 import com.intellij.python.community.services.systemPython.impl.PySystemPythonBundle
@@ -107,7 +106,7 @@ internal class SystemPythonServiceImpl(scope: CoroutineScope) : SystemPythonServ
 
   private suspend fun searchPythonsPhysicallyNoCache(eelApi: EelApi): List<SystemPython> = withContext(Dispatchers.IO) {
     findPythonsMutex.withLock {
-      val pythonsUi = mutableMapOf<PythonBinary, UICustomization>()
+      val pythonsUi = mutableMapOf<PythonBinary, PyToolUIInfo>()
 
       val pythonsFromExtensions = SystemPythonProvider.EP.extensionList
         .flatMap { provider ->

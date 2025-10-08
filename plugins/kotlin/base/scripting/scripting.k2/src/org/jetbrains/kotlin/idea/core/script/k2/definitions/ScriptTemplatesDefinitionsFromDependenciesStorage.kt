@@ -96,7 +96,7 @@ class ScriptTemplatesFromDependenciesDefinitionSource(
 
         _definitions = newDefinitions
 
-        ScriptDefinitionProviderImpl.getInstance(project).notifyDefinitionsChanged()
+        ScriptDefinitionsModificationTracker.getInstance(project).incModificationCount()
 
         return newDefinitions
     }

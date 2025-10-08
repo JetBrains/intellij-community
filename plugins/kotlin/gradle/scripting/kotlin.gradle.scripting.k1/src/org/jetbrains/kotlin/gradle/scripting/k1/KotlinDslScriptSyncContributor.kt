@@ -2,11 +2,10 @@
 package org.jetbrains.kotlin.gradle.scripting.k1
 
 import com.intellij.platform.workspace.storage.ImmutableEntityStorage
-import org.gradle.tooling.model.kotlin.dsl.KotlinDslScriptsModel
+import org.jetbrains.kotlin.gradle.scripting.shared.importing.collectErrors
+import org.jetbrains.kotlin.gradle.scripting.shared.importing.getKotlinDslScripts
 import org.jetbrains.kotlin.gradle.scripting.shared.importing.kotlinDslSyncListenerInstance
-import org.jetbrains.kotlin.gradle.scripting.shared.importing.processScriptModel
 import org.jetbrains.kotlin.gradle.scripting.shared.importing.saveGradleBuildEnvironment
-import org.jetbrains.kotlin.gradle.scripting.shared.kotlinDslScriptsModelImportSupported
 import org.jetbrains.plugins.gradle.service.project.ProjectResolverContext
 import org.jetbrains.plugins.gradle.service.syncAction.GradleSyncContributor
 import org.jetbrains.plugins.gradle.service.syncAction.GradleSyncPhase
@@ -25,23 +24,18 @@ internal class KotlinDslScriptSyncContributor : GradleSyncContributor {
         val tasks = kotlinDslSyncListenerInstance?.tasks ?: return storage
         val sync = synchronized(tasks) { tasks[taskId] }
 
-        for (buildModel in context.allBuilds) {
-            for (projectModel in buildModel.projects) {
-                val projectIdentifier = projectModel.projectIdentifier.projectPath
-                if (projectIdentifier == ":") {
-                    if (kotlinDslScriptsModelImportSupported(context.projectGradleVersion)) {
-                        val model = context.getProjectModel(projectModel, KotlinDslScriptsModel::class.java)
-                        if (model != null) {
-                            if (!processScriptModel(context, sync, model, projectIdentifier)) {
-                                continue
-                            }
-                        }
-                    }
+        val models = getKotlinDslScripts(context).toList()
 
-                    saveGradleBuildEnvironment(context)
+        if (sync != null) {
+            synchronized(sync) {
+                sync.models.addAll(models)
+                if (models.collectErrors().any()) {
+                    sync.failed = true
                 }
             }
         }
+
+        saveGradleBuildEnvironment(context)
 
         return storage
     }

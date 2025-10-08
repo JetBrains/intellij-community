@@ -135,8 +135,7 @@ internal object TerminalSessionTestUtil {
     val result: CompletableFuture<CommandResult> = CompletableFuture()
     session.commandManager.addListener(object : ShellCommandListener {
       override fun commandFinished(event: CommandFinishedEvent) {
-        val (text, commandEndMarkerFound) = scraper.scrapeOutput()
-        Assert.assertEquals(session.commandBlockIntegration.commandEndMarker != null, commandEndMarkerFound)
+        val text = scraper.scrapeOutput().text
         result.complete(CommandResult(event.exitCode, text))
         Disposer.dispose(disposable)
       }
@@ -168,7 +167,7 @@ internal object TerminalSessionTestUtil {
   }
 
   private fun assumeBlockShellIntegration(options: ShellStartupOptions) {
-    Assume.assumeTrue("Block shell integration is expected", options.shellIntegration?.commandBlockIntegration != null)
+    Assume.assumeTrue("Block shell integration is expected", options.shellIntegration?.commandBlocks == true)
   }
 
   fun getJavaCommand(mainClass: Class<*>, args: List<String>): List<String> {

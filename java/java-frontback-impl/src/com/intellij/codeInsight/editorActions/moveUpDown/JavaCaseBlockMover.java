@@ -39,8 +39,8 @@ public final class JavaCaseBlockMover extends LineMover {
     if (statements.isEmpty()) return false;
     if (firstElement != null) return info.prohibitMove(); // nonsensical selection
 
-    PsiSwitchLabelStatement firstToMove = getThisCaseBlockStart(statements.get(0));
-    PsiSwitchLabelStatement lastStatement = statements.get(statements.size() - 1);
+    PsiSwitchLabelStatement firstToMove = getThisCaseBlockStart(statements.getFirst());
+    PsiSwitchLabelStatement lastStatement = statements.getLast();
     PsiElement nextCaseBlockStart = getNextCaseBlockStart(lastStatement);
     PsiElement lastToMove = PsiTreeUtil.skipWhitespacesBackward(nextCaseBlockStart);
     assert lastToMove != null;

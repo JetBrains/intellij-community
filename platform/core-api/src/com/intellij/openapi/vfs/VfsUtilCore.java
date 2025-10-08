@@ -456,7 +456,7 @@ public class VfsUtilCore {
   }
 
   public static @NotNull String pathToUrl(@NotNull String path) {
-    return VirtualFileManager.constructUrl(URLUtil.FILE_PROTOCOL, FileUtil.toSystemIndependentName(path));
+    return VirtualFileManager.constructUrl(URLUtil.FILE_PROTOCOL, FileUtilRt.toSystemIndependentName(path));
   }
 
   public static @NotNull String fileToUrl(@NotNull File file) {

@@ -22,10 +22,10 @@ import org.jetbrains.plugins.groovy.codeInspection.BaseInspectionVisitor;
 import org.jetbrains.plugins.groovy.codeInspection.GroovyFix;
 import org.jetbrains.plugins.groovy.codeInspection.GroovyQuickFixFactory;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.GrCatchClause;
-import org.jetbrains.plugins.groovy.lang.psi.api.statements.GrField;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.GrForStatement;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.GrVariable;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.params.GrParameter;
+import org.jetbrains.plugins.groovy.lang.psi.util.PsiUtil;
 
 public final class GroovyLocalVariableNamingConventionInspection extends ConventionInspection {
 
@@ -77,9 +77,8 @@ public final class GroovyLocalVariableNamingConventionInspection extends Convent
     @Override
     public void visitVariable(@NotNull GrVariable grVariable) {
       super.visitVariable(grVariable);
-      if (grVariable instanceof GrField || grVariable instanceof GrParameter) {
-        return;
-      }
+      if (!PsiUtil.isLocalVariable(grVariable)) return;
+
       final String name = grVariable.getName();
       if (isValid(name)) {
         return;

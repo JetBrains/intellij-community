@@ -4,6 +4,7 @@ package com.intellij.psi.impl.source.tree.java;
 import com.intellij.psi.*;
 import com.intellij.psi.impl.source.Constants;
 import com.intellij.psi.impl.source.tree.ChildRole;
+import com.intellij.psi.scope.ElementClassHint;
 import com.intellij.psi.scope.PsiScopeProcessor;
 import org.jetbrains.annotations.NotNull;
 
@@ -32,7 +33,8 @@ public class PsiForeachStatementImpl extends PsiForeachStatementBaseImpl impleme
       return true;
 
     PsiParameter parameter = getIterationParameter();
-    if (parameter.isUnnamed()) return true;
+    if (parameter.isUnnamed() &&
+        !Boolean.TRUE.equals(processor.getHint(ElementClassHint.PROCESS_UNNAMED_VARIABLES))) return true;
     return processor.execute(parameter, state);
   }
 

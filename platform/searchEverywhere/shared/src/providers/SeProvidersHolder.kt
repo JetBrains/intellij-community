@@ -12,7 +12,6 @@ import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.Disposer
 import com.intellij.platform.searchEverywhere.*
 import com.intellij.platform.searchEverywhere.providers.SeProvidersHolder.Companion.initialize
-import fleet.kernel.DurableRef
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
 import org.jetbrains.annotations.ApiStatus
@@ -26,9 +25,12 @@ import org.jetbrains.annotations.ApiStatus
 class SeProvidersHolder(
   private val allTabProviders: Map<SeProviderId, SeLocalItemDataProvider>,
   private val separateTabProviders: Map<SeProviderId, SeLocalItemDataProvider>,
-  private val legacyAllTabContributors: Map<SeProviderId, SearchEverywhereContributor<Any>>,
-  private val legacySeparateTabContributors: Map<SeProviderId, SearchEverywhereContributor<Any>>,
+  val legacyAllTabContributors: Map<SeProviderId, SearchEverywhereContributor<Any>>,
+  private val legacySeparateTabContributors: Map<SeProviderId, SearchEverywhereContributor<Any>>
 ) : Disposable {
+  val adaptedAllTabProviders: Set<SeProviderId> =
+    allTabProviders.values.mapNotNull { it.takeIf { it.isAdapted }?.id }.toSet()
+
   fun get(providerId: SeProviderId, isAllTab: Boolean): SeLocalItemDataProvider? =
     if (isAllTab) allTabProviders[providerId]
     else separateTabProviders[providerId] ?: allTabProviders[providerId]
@@ -36,6 +38,8 @@ class SeProvidersHolder(
   override fun dispose() {
     allTabProviders.values.forEach { Disposer.dispose(it) }
     separateTabProviders.values.forEach { Disposer.dispose(it) }
+    legacyAllTabContributors.values.forEach { Disposer.dispose(it) }
+    legacySeparateTabContributors.values.forEach { Disposer.dispose(it) }
   }
 
   fun getLegacyContributor(providerId: SeProviderId, isAllTab: Boolean): SearchEverywhereContributor<Any>? {
@@ -47,16 +51,16 @@ class SeProvidersHolder(
 
   fun getEssentialAllTabProviderIds(): Set<SeProviderId> =
     legacyAllTabContributors.filter {
-      allTabProviders.contains(it.key) && EssentialContributor.checkEssential(it.value)
+      (allTabProviders[it.key]?.isAdapted == false) && EssentialContributor.checkEssential(it.value)
     }.keys
 
   companion object {
     suspend fun initialize(
       initEvent: AnActionEvent,
       project: Project?,
-      sessionRef: DurableRef<SeSessionEntity>,
+      session: SeSession,
       logLabel: String,
-      providerIds: List<SeProviderId>? = null,
+      withAdaptedLegacyContributors: Boolean,
     ): SeProvidersHolder {
       val legacyContributors = mutableMapOf<SeProviderId, SearchEverywhereContributor<Any>>()
       val separateTabLegacyContributors = mutableMapOf<SeProviderId, SearchEverywhereContributor<Any>>()
@@ -68,9 +72,7 @@ class SeProvidersHolder(
       val providers = mutableMapOf<SeProviderId, SeLocalItemDataProvider>()
       val separateTabProviders = mutableMapOf<SeProviderId, SeLocalItemDataProvider>()
 
-      SeItemsProviderFactory.EP_NAME.extensionList.filter {
-        providerIds == null || SeProviderId(it.id) in providerIds
-      }.forEach { providerFactory ->
+      SeItemsProviderFactory.EP_NAME.extensionList.forEach { providerFactory ->
         val provider: SeItemsProvider?
         val separateTabProvider: SeItemsProvider?
 
@@ -96,16 +98,21 @@ class SeProvidersHolder(
         }
 
         provider?.let {
-          providers[SeProviderId(it.id)] = SeLocalItemDataProvider(it, sessionRef, logLabel)
+          providers[SeProviderId(it.id)] = SeLocalItemDataProvider(it, session, logLabel)
         }
 
         separateTabProvider?.let {
-          separateTabProviders[SeProviderId(it.id)] = SeLocalItemDataProvider(it, sessionRef, logLabel)
+          separateTabProviders[SeProviderId(it.id)] = SeLocalItemDataProvider(it, session, logLabel)
         }
       }
 
-      legacyContributors.disposeAndFilterOutUnnecessaryLegacyContributors(providers.keys)
-      separateTabLegacyContributors.disposeAndFilterOutUnnecessaryLegacyContributors(separateTabProviders.keys)
+      if (withAdaptedLegacyContributors) {
+        val adaptedProviders = legacyContributors.filter { !providers.keys.contains(it.key) }.map {
+          it.key to SeLocalItemDataProvider(SeAdaptedItemsProvider(it.value), session, logLabel)
+        }
+
+        providers.putAll(adaptedProviders)
+      }
 
       return SeProvidersHolder(providers,
                                separateTabProviders,

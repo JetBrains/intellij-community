@@ -1,6 +1,6 @@
 ### auto-generated section `build kotlin.base.analysis` start
 load("//build:compiler-options.bzl", "create_kotlinc_options")
-load("@rules_jvm//:jvm.bzl", "jvm_library", "jvm_resources")
+load("@rules_jvm//:jvm.bzl", "jvm_library", "resourcegroup")
 
 create_kotlinc_options(
   name = "custom_analysis",
@@ -13,9 +13,9 @@ create_kotlinc_options(
   x_context_parameters = True
 )
 
-jvm_resources(
+resourcegroup(
   name = "analysis_resources",
-  files = glob(["resources/**/*"]),
+  srcs = glob(["resources/**/*"]),
   strip_prefix = "resources"
 )
 
@@ -24,6 +24,7 @@ jvm_library(
   module_name = "kotlin.base.analysis",
   visibility = ["//visibility:public"],
   srcs = glob(["src/**/*.kt", "src/**/*.java", "src/**/*.form"], allow_empty = True),
+  resources = [":analysis_resources"],
   kotlinc_opts = ":custom_analysis",
   deps = [
     "@lib//:kotlin-stdlib",
@@ -41,7 +42,7 @@ jvm_library(
     "@lib//:kotlinc-kotlin-jps-common",
     "@lib//:kotlinc-analysis-api-platform-interface",
     "@lib//:kotlinx-coroutines-core",
-    "@lib//:guava",
+    "//libraries/guava",
     "//platform/indexing-api:indexing",
     "//jps/model-api:model",
     "//platform/projectModel-api:projectModel",
@@ -69,7 +70,6 @@ jvm_library(
     "//platform/backend/workspace",
     "//java/java-analysis-api:analysis",
     "//plugins/kotlin/base/scripting/scripting.shared",
-  ],
-  runtime_deps = [":analysis_resources"]
+  ]
 )
 ### auto-generated section `build kotlin.base.analysis` end

@@ -113,7 +113,7 @@ public final class SerializableDeserializableClassInSecureContextInspection exte
   }
 
   @Override
-  public BaseInspectionVisitor buildVisitor() {
+  public @NotNull BaseInspectionVisitor buildVisitor() {
     return new SerializableDeserializableClassInSecureContextVisitor();
   }
 

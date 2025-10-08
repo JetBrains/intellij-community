@@ -12,16 +12,16 @@ class A1(B):
     b: int
 
 @dataclass
-class <error descr="Non-default argument(s) follows default argument(s) defined in 'B'">A2</error>(B):
+class A2(B):
     a: int
-    c: int
+    <error descr="Non-default argument(s) follows default argument(s) defined in 'B'">c</error>: int
     b: int
 
 @dataclass
-class <error descr="Non-default argument(s) follows default argument(s) defined in 'B'">A3</error>(B):
+class A3(B):
     a: int
     b: int
-    c: int
+    <error descr="Non-default argument(s) follows default argument(s) defined in 'B'">c</error>: int
 
 @dataclass
 class A4(B):
@@ -30,25 +30,25 @@ class A4(B):
     c: int = 1
 
 @dataclass
-class <error descr="Non-default argument(s) follows default argument(s) defined in 'B'">A5</error>(B):
+class A5(B):
     a: int
     <error descr="Fields with a default value must come after any fields without a default.">c</error>: int = 1
     <error descr="Fields with a default value must come after any fields without a default.">d</error>: int = 1
     b: int
-    e: int
+    <error descr="Non-default argument(s) follows default argument(s) defined in 'B'">e</error>: int
 
 @dataclass
-class <error descr="Non-default argument(s) follows default argument(s) defined in 'B'">A6</error>(B):
+class A6(B):
     a: int
     <error descr="Fields with a default value must come after any fields without a default.">c</error>: int = 1
-    d: int
+    <error descr="Non-default argument(s) follows default argument(s) defined in 'B'">d</error>: int
     e: int
     b: int = 1
 
 @dataclass
-class <error descr="Non-default argument(s) follows default argument(s) defined in 'B'">A7</error>(B):
+class A7(B):
     a: int
     b: int
     <error descr="Fields with a default value must come after any fields without a default.">c</error>: int = 1
     <error descr="Fields with a default value must come after any fields without a default.">d</error>: int = 1
-    e: int
+    <error descr="Non-default argument(s) follows default argument(s) defined in 'B'">e</error>: int

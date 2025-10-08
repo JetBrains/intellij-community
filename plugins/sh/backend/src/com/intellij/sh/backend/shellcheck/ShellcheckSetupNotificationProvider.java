@@ -36,7 +36,7 @@ public class ShellcheckSetupNotificationProvider implements EditorNotificationPr
       Runnable onSuccess = () -> {
         EditorNotifications.getInstance(project).updateAllNotifications();
         PsiFile psiFile = PsiManager.getInstance(project).findFile(file);
-        if (psiFile != null) DaemonCodeAnalyzer.getInstance(project).restart(psiFile);
+        if (psiFile != null) DaemonCodeAnalyzer.getInstance(project).restart(psiFile, this);
         NOTIFICATION_GROUP.createNotification(message("sh.shell.script"),
                                               message("sh.shellcheck.success.install"),
                                               NotificationType.INFORMATION).notify(project);

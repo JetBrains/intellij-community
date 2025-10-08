@@ -2,11 +2,12 @@
 @file:JvmName("TargetPlatformDetectorUtils")
 package org.jetbrains.kotlin.idea.base.facet.platform
 
-import com.intellij.openapi.application.runReadAction
+import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.extensions.ExtensionPointName
 import com.intellij.openapi.module.Module
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.roots.ProjectFileIndex
+import com.intellij.openapi.util.Computable
 import org.jetbrains.kotlin.config.JvmTarget
 import org.jetbrains.kotlin.idea.base.platforms.forcedTargetPlatform
 import org.jetbrains.kotlin.idea.compiler.configuration.Kotlin2JvmCompilerArgumentsHolder
@@ -34,12 +35,17 @@ val Project.platform: TargetPlatform?
     }
 
 val Module.platform: TargetPlatform
-    get() = runReadAction { ModulePlatformCache.getInstance(project)[this] }
+    get() {
+        val modulePlatformCache = ModulePlatformCache.getInstance(project)
+        return ApplicationManager.getApplication().runReadAction(Computable {
+            modulePlatformCache.get(this)
+        })
+    }
 
 interface TargetPlatformDetector {
     companion object {
         val EP_NAME: ExtensionPointName<TargetPlatformDetector> =
-            ExtensionPointName.create("org.jetbrains.kotlin.idea.base.platforms.targetPlatformDetector")
+            ExtensionPointName("org.jetbrains.kotlin.idea.base.platforms.targetPlatformDetector")
     }
 
     fun detectPlatform(file: KtFile): TargetPlatform?

@@ -81,7 +81,7 @@ public final class UnnecessaryExplicitNumericCastInspection extends BaseInspecti
   }
 
   @Override
-  public BaseInspectionVisitor buildVisitor() {
+  public @NotNull BaseInspectionVisitor buildVisitor() {
     return new UnnecessaryExplicitNumericCastVisitor();
   }
 

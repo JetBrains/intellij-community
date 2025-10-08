@@ -1,5 +1,5 @@
 <idea-plugin>
   <dependencies>
-    <plugin id="PythonCore"/>
+    <plugin id="com.intellij.modules.python"/>
   </dependencies>
 </idea-plugin>

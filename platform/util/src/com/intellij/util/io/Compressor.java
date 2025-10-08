@@ -11,6 +11,7 @@ import org.apache.commons.compress.archivers.tar.TarArchiveOutputStream;
 import org.apache.commons.compress.archivers.tar.TarConstants;
 import org.apache.commons.compress.compressors.bzip2.BZip2CompressorOutputStream;
 import org.apache.commons.compress.compressors.gzip.GzipCompressorOutputStream;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -39,6 +40,7 @@ public abstract class Compressor implements Closeable {
     }
 
     /** @deprecated use {@link #Tar(Path, Compression)} instead */
+    @ApiStatus.Internal
     @Deprecated
     @SuppressWarnings("IO_FILE_USAGE")
     public Tar(@NotNull File file, @NotNull Compression compression) throws IOException {
@@ -267,6 +269,7 @@ public abstract class Compressor implements Closeable {
   }
 
   /** @deprecated use {@link #addDirectory(String, Path)} instead */
+  @ApiStatus.Internal
   @Deprecated
   @SuppressWarnings("IO_FILE_USAGE")
   public final void addDirectory(@NotNull String prefix, @NotNull File directory) throws IOException {

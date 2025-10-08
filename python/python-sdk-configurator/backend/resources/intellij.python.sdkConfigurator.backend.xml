@@ -1,0 +1,17 @@
+<idea-plugin>
+  <dependencies>
+    <module name="intellij.python.pyproject"/>
+    <module name="intellij.python.sdk"/>
+    <module name="intellij.python.community"/>
+    <module name="intellij.python.sdkConfigurator.common"/>
+    <module name="intellij.platform.backend"/>
+    <module name="intellij.platform.rpc.backend"/>
+  </dependencies>
+  <projectListeners>
+    <listener class="com.intellij.python.sdkConfigurator.backend.impl.platformBridge.ModelRebuiltListenerImpl"
+              topic="com.intellij.python.pyproject.model.api.ModelRebuiltListener"/>
+  </projectListeners>
+  <extensions defaultExtensionNs="com.intellij.platform">
+    <rpc.backend.remoteApiProvider implementation="com.intellij.python.sdkConfigurator.backend.impl.rpcBridge.ApiProvider"/>
+  </extensions>
+</idea-plugin>

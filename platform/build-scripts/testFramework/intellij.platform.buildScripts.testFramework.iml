@@ -37,7 +37,7 @@
     <orderEntry type="library" name="grpc-core" level="project" />
     <orderEntry type="library" name="grpc-protobuf" level="project" />
     <orderEntry type="library" name="grpc-stub" level="project" />
-    <orderEntry type="library" name="jackson-jr-objects" level="project" />
+    <orderEntry type="module" module-name="intellij.libraries.jackson.jr.objects" />
     <orderEntry type="module" module-name="intellij.platform.core" />
     <orderEntry type="module" module-name="intellij.platform.jps.model" />
     <orderEntry type="module" module-name="intellij.platform.util" />
@@ -49,14 +49,14 @@
     <orderEntry type="library" name="assertJ" level="project" />
     <orderEntry type="library" name="kotlinx-collections-immutable" level="project" />
     <orderEntry type="library" name="kotlinx-coroutines-core" level="project" />
-    <orderEntry type="library" name="kotlinx-serialization-core" level="project" />
-    <orderEntry type="library" name="kotlinx-serialization-json" level="project" />
+    <orderEntry type="module" module-name="intellij.libraries.kotlinx.serialization.core" />
+    <orderEntry type="module" module-name="intellij.libraries.kotlinx.serialization.json" />
     <orderEntry type="library" name="kaml" level="project" />
     <orderEntry type="module" module-name="intellij.platform.buildScripts.downloader" />
     <orderEntry type="module" module-name="intellij.tools.reproducibleBuilds.diff" />
     <orderEntry type="module" module-name="intellij.platform.jps.build" />
     <orderEntry type="module" module-name="intellij.platform.runtime.product" />
-    <orderEntry type="library" name="aalto-xml" level="project" />
+    <orderEntry type="module" module-name="intellij.libraries.aalto.xml" />
     <orderEntry type="module" module-name="intellij.platform.ide.bootstrap" />
     <orderEntry type="module" module-name="intellij.platform.core.impl" />
     <orderEntry type="module" module-name="intellij.platform.util.classLoader" />

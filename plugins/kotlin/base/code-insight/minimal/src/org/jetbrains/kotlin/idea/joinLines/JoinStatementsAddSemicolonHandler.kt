@@ -4,7 +4,6 @@ package org.jetbrains.kotlin.idea.joinLines
 import com.intellij.codeInsight.editorActions.JoinLinesHandlerDelegate
 import com.intellij.codeInsight.editorActions.JoinRawLinesHandlerDelegate
 import com.intellij.openapi.editor.Document
-import com.intellij.psi.PsiComment
 import com.intellij.psi.PsiElement
 import com.intellij.psi.PsiFile
 import org.jetbrains.kotlin.KtNodeTypes
@@ -37,8 +36,6 @@ class JoinStatementsAddSemicolonHandler : JoinRawLinesHandlerDelegate {
             ?: return JoinLinesHandlerDelegate.CANNOT_JOIN
         val element2 = linebreak.firstMaterialSiblingSameLine { nextSibling }
             ?: return JoinLinesHandlerDelegate.CANNOT_JOIN
-
-        if (element2 is PsiComment) return JoinLinesHandlerDelegate.CANNOT_JOIN
 
         if (element1 !is KtPropertyAccessor) {
             val parentOfElement1 = element1.parent

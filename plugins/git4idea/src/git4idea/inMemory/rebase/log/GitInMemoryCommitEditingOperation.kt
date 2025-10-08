@@ -28,6 +28,9 @@ internal abstract class GitInMemoryCommitEditingOperation(
 
   protected lateinit var initialHeadPosition: String
 
+  /**
+   * A linear range of commits that is being edited is loaded into memory
+   */
   protected val baseToHeadCommitsRange: List<GitObject.Commit> by lazy {
     objectRepo.findCommitsRange(baseCommitMetadata.id.asString(), initialHeadPosition)
   }

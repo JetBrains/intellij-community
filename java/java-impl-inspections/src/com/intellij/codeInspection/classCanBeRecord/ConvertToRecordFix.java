@@ -403,9 +403,8 @@ public final class ConvertToRecordFix implements LocalQuickFix {
       }
 
       final Set<PsiStatement> otherStatements = new HashSet<>(bodyProcessor.getOtherStatements());
-      return new RecordConstructorCandidate(
-        type, constructorMethod, bodyProcessor.getParamsToFields(), bodyProcessor.getFieldNamesToInitializers(), otherStatements
-      );
+      return new RecordConstructorCandidate(type, constructorMethod, bodyProcessor.getParamsToFields(),
+                                            bodyProcessor.getFieldNamesToInitializers(), otherStatements);
     }
   }
 
@@ -413,13 +412,10 @@ public final class ConvertToRecordFix implements LocalQuickFix {
    * Encapsulates information about converting of a single constructor, for example, whether it is canonical or not.
    */
   @NotNullByDefault
-  record RecordConstructorCandidate(
-    Kind kind,
-    PsiMethod constructor,
-    Map<PsiParameter, @Nullable PsiField> paramsToFields,
-    LinkedHashMap<String, PsiExpression> fieldNamesToInitializers, // TODO(bartekpacia): change type to SequencedMap once we move to Java 21
-    Set<PsiStatement> otherStatements
-  ) {
+  record RecordConstructorCandidate(Kind kind, PsiMethod constructor, Map<PsiParameter, @Nullable PsiField> paramsToFields,
+                                    LinkedHashMap<String, PsiExpression> fieldNamesToInitializers,
+                                    // TODO(bartekpacia): change type to SequencedMap once we move to Java 21
+                                    Set<PsiStatement> otherStatements) {
 
     /// The "kind" of record constructor that [#constructor] will take after being converted to a record (if at all).
     enum Kind {
@@ -442,7 +438,6 @@ public final class ConvertToRecordFix implements LocalQuickFix {
       CUSTOM,
     }
 
-    //@formatter:off Temporarily disable formatter because of bug IDEA-371809
     /// Maps each formal parameter of the constructor to the instance field it is assigned to.
     ///
     /// Allows for conversion to record when constructor parameter names aren't equal to instance field names.
@@ -453,7 +448,7 @@ public final class ConvertToRecordFix implements LocalQuickFix {
     /// class Point {
     ///   final double x;
     ///   final double y;
-    /// 
+    ///
     ///   Point(double x, double second) {
     ///     this.x = x;
     ///     this.y = second;
@@ -464,21 +459,19 @@ public final class ConvertToRecordFix implements LocalQuickFix {
     /// ```
     /// PsiParameter:x -> PsiField:x
     /// PsiParameter:second -> PsiField:y
-    ///```
-    //@formatter:on
+    /// ```
     @Override
     public @UnmodifiableView Map<PsiParameter, @Nullable PsiField> paramsToFields() {
       return Collections.unmodifiableMap(paramsToFields);
     }
 
-    //@formatter:off Temporarily disable formatter because of bug IDEA-371809
     /// Maps the name of each field (that is assigned to in the constructor body) to the [PsiExpression] it is assigned to.
     ///
     /// Allows for conversion to record when the constructor is not canonical and not delegating,
     /// i.e., it assigns to all required fields directly.
     ///
     /// ### Example
-    /// 
+    ///
     /// ```java
     /// class Point {
     ///   final double x;
@@ -498,11 +491,11 @@ public final class ConvertToRecordFix implements LocalQuickFix {
     /// "y" -> PsiLiteralExpression:0
     /// "z" -> PsiMethodCallExpression:Integer.parseInt("42")
     /// ```
-    /// 
+    ///
     /// ### How it is used
-    /// 
+    ///
     /// Contents of this map are used by [RecordBuilder] to generate the correct redirecting constructor call.
-    /// 
+    ///
     /// Before:
     /// ```java
     /// Point(double x) {
@@ -511,24 +504,22 @@ public final class ConvertToRecordFix implements LocalQuickFix {
     ///   this.z = Integer.parseInt("42");
     /// }
     /// ```
-    /// 
+    ///
     /// After:
     /// ```java
     /// Point(double x) {
     ///   this(x, 0, Integer.parseInt("42");
     /// }
     /// ```
-    // @formatter:on
     @Override
     public @UnmodifiableView LinkedHashMap<String, PsiExpression> fieldNamesToInitializers() {
       return fieldNamesToInitializers;
     }
 
-    //@formatter:off Temporarily disable formatter because of bug IDEA-371809
     /// Set of statements which are not assignments to instance fields or calls to constructors.
     ///
     /// ### Example
-    /// 
+    ///
     /// For the single constructor in the following class:
     ///
     /// ```java
@@ -545,9 +536,8 @@ public final class ConvertToRecordFix implements LocalQuickFix {
     /// }
     /// ```
     /// this set holds the two [PsiExpressionStatement]s that call `System.out.println`.
-    /// 
+    ///
     /// Order is not important.
-    // @formatter:on
     @Override
     public @UnmodifiableView Set<PsiStatement> otherStatements() {
       return Collections.unmodifiableSet(otherStatements);

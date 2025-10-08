@@ -40,6 +40,7 @@ f:org.jetbrains.jewel.bridge.BridgeUtilsKt
 - sf:retrieveEditorColorScheme():com.intellij.openapi.editor.colors.EditorColorsScheme
 - sf:retrieveInsetsAsPaddingValues(java.lang.String,androidx.compose.foundation.layout.PaddingValues):androidx.compose.foundation.layout.PaddingValues
 - bs:retrieveInsetsAsPaddingValues$default(java.lang.String,androidx.compose.foundation.layout.PaddingValues,I,java.lang.Object):androidx.compose.foundation.layout.PaddingValues
+- sf:retrieveInsetsAsPaddingValuesOrNull(java.lang.String):androidx.compose.foundation.layout.PaddingValues
 - sf:retrieveIntAsDp-3F_vd3o(java.lang.String,androidx.compose.ui.unit.Dp):F
 - bs:retrieveIntAsDp-3F_vd3o$default(java.lang.String,androidx.compose.ui.unit.Dp,I,java.lang.Object):F
 - sf:retrieveIntAsDpOrUnspecified(java.lang.String):F
@@ -69,13 +70,19 @@ f:org.jetbrains.jewel.bridge.JewelBridgeException$KeysNotFoundException
 - sf:$stable:I
 - <init>(java.util.List,java.lang.String):V
 f:org.jetbrains.jewel.bridge.JewelComposePanelWrapperKt
-- sf:JewelComposePanel(kotlin.jvm.functions.Function1,kotlin.jvm.functions.Function2):javax.swing.JComponent
+- bsf:JewelComposePanel(kotlin.jvm.functions.Function1,kotlin.jvm.functions.Function2):javax.swing.JComponent
+- sf:JewelComposePanel(Z,kotlin.jvm.functions.Function1,kotlin.jvm.functions.Function2):javax.swing.JComponent
 - bs:JewelComposePanel$default(kotlin.jvm.functions.Function1,kotlin.jvm.functions.Function2,I,java.lang.Object):javax.swing.JComponent
-- sf:compose(kotlin.jvm.functions.Function1,kotlin.jvm.functions.Function2):javax.swing.JComponent
+- bs:JewelComposePanel$default(Z,kotlin.jvm.functions.Function1,kotlin.jvm.functions.Function2,I,java.lang.Object):javax.swing.JComponent
+- bsf:compose(kotlin.jvm.functions.Function1,kotlin.jvm.functions.Function2):javax.swing.JComponent
+- sf:compose(Z,kotlin.jvm.functions.Function1,kotlin.jvm.functions.Function2):javax.swing.JComponent
 - bs:compose$default(kotlin.jvm.functions.Function1,kotlin.jvm.functions.Function2,I,java.lang.Object):javax.swing.JComponent
+- bs:compose$default(Z,kotlin.jvm.functions.Function1,kotlin.jvm.functions.Function2,I,java.lang.Object):javax.swing.JComponent
 f:org.jetbrains.jewel.bridge.ToolWindowExtensionsKt
-- sf:addComposeTab(com.intellij.openapi.wm.ToolWindow,java.lang.String,Z,Z,kotlin.jvm.functions.Function3):V
+- bsf:addComposeTab(com.intellij.openapi.wm.ToolWindow,java.lang.String,Z,Z,kotlin.jvm.functions.Function3):V
+- sf:addComposeTab(com.intellij.openapi.wm.ToolWindow,java.lang.String,Z,Z,Z,kotlin.jvm.functions.Function3):V
 - bs:addComposeTab$default(com.intellij.openapi.wm.ToolWindow,java.lang.String,Z,Z,kotlin.jvm.functions.Function3,I,java.lang.Object):V
+- bs:addComposeTab$default(com.intellij.openapi.wm.ToolWindow,java.lang.String,Z,Z,Z,kotlin.jvm.functions.Function3,I,java.lang.Object):V
 org.jetbrains.jewel.bridge.ToolWindowScope
 - a:getToolWindow():com.intellij.openapi.wm.ToolWindow
 f:org.jetbrains.jewel.bridge.TypographyKt

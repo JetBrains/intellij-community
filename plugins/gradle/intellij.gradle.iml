@@ -32,12 +32,12 @@
     <orderEntry type="library" exported="" name="slf4j-jdk14" level="project" />
     <orderEntry type="module" module-name="intellij.platform.ide.core.impl" />
     <orderEntry type="library" exported="" name="Gradle" level="project" />
-    <orderEntry type="library" name="gson" level="project" />
+    <orderEntry type="module" module-name="intellij.libraries.gson" />
     <orderEntry type="module" module-name="intellij.platform.objectSerializer.annotations" />
-    <orderEntry type="library" name="ion" level="project" />
+    <orderEntry type="module" module-name="intellij.libraries.ion" />
     <orderEntry type="library" name="StreamEx" level="project" />
     <orderEntry type="module" module-name="intellij.platform.statistics" />
-    <orderEntry type="library" name="fastutil-min" level="project" />
+    <orderEntry type="module" module-name="intellij.libraries.fastutil" />
     <orderEntry type="library" name="commons-cli" level="project" />
     <orderEntry type="module" module-name="intellij.platform.workspace.storage" />
     <orderEntry type="module" module-name="intellij.properties.backend.psi" />
@@ -59,7 +59,7 @@
     <orderEntry type="module" module-name="intellij.platform.eel.provider" />
     <orderEntry type="module" module-name="intellij.platform.ijent" />
     <orderEntry type="module" module-name="intellij.platform.core" />
-    <orderEntry type="library" name="Guava" level="project" />
+    <orderEntry type="module" module-name="intellij.libraries.guava" />
     <orderEntry type="module" module-name="intellij.platform.util.trove" />
   </component>
 </module>

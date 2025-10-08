@@ -82,7 +82,7 @@ public final class ExtractSetFromComparisonChainAction implements ModCommandActi
 
       PsiElementFactory factory = JavaPsiFacade.getElementFactory(project);
       JavaCodeStyleManager manager = JavaCodeStyleManager.getInstance(project);
-      String name = manager.suggestUniqueVariableName(suggestions.iterator().next(), cls, false);
+      String name = manager.suggestUniqueVariableName(suggestions.getFirst(), cls, false);
       String fieldInitializer = context.myInitializer;
       PsiType elementType = context.myType;
       if (elementType == null) return;
@@ -119,8 +119,8 @@ public final class ExtractSetFromComparisonChainAction implements ModCommandActi
           List<ExpressionToConstantComparison> otherComparisons = comparisons(operand).toList();
           otherComparisons.stream().map(c -> c.myComparison).forEach(processedOperands::add);
           if (otherComparisons.size() == comparisons.size() &&
-              otherComparisons.get(0).myExpression != comparisons.get(0).myExpression &&
-              otherComparisons.get(0).myType.equals(comparisons.get(0).myType)
+              otherComparisons.getFirst().myExpression != comparisons.getFirst().myExpression &&
+              otherComparisons.getFirst().myType.equals(comparisons.getFirst().myType)
               && StreamEx.of(otherComparisons).map(c -> c.myConstantRepresentation).toSet().equals(orig)) {
             copies.add(new ExpressionToConstantReplacementContext(otherComparisons));
           }
@@ -178,11 +178,11 @@ public final class ExtractSetFromComparisonChainAction implements ModCommandActi
   }
 
   private static @NotNull LinkedHashSet<String> getSuggestions(List<ExpressionToConstantComparison> comparisons) {
-    PsiExpression stringExpression = comparisons.get(0).myExpression;
+    PsiExpression stringExpression = comparisons.getFirst().myExpression;
     Project project = stringExpression.getProject();
     JavaCodeStyleManager manager = JavaCodeStyleManager.getInstance(project);
     SuggestedNameInfo info = manager.suggestVariableName(VariableKind.STATIC_FINAL_FIELD, null, stringExpression,
-                                                         comparisons.get(0).myType, false);
+                                                         comparisons.getFirst().myType, false);
     // Suggestions like OBJECT and AN_OBJECT appear because Object.equals argument type is an Object,
     // such names are rarely appropriate
     LinkedHashSet<String> suggestions =
@@ -196,7 +196,7 @@ public final class ExtractSetFromComparisonChainAction implements ModCommandActi
       .limit(5)
       .map(StringUtil::pluralize)
       .forEach(suggestions::add);
-    if(comparisons.get(0).myType.equalsToText(CommonClassNames.JAVA_LANG_STRING)) {
+    if(comparisons.getFirst().myType.equalsToText(CommonClassNames.JAVA_LANG_STRING)) {
       suggestions.add("STRINGS");
     }
     return suggestions;
@@ -235,10 +235,10 @@ public final class ExtractSetFromComparisonChainAction implements ModCommandActi
 
     ExpressionToConstantReplacementContext(List<ExpressionToConstantComparison> comparisons) {
       assert !comparisons.isEmpty();
-      myExpression = comparisons.get(0).myExpression;
-      myFirstComparison = comparisons.get(0).myComparison;
-      myLastComparison = comparisons.get(comparisons.size() - 1).myComparison;
-      myType = comparisons.get(0).myType;
+      myExpression = comparisons.getFirst().myExpression;
+      myFirstComparison = comparisons.getFirst().myComparison;
+      myLastComparison = comparisons.getLast().myComparison;
+      myType = comparisons.getFirst().myType;
       myInitializer = StreamEx.of(comparisons).map(cmp -> cmp.myConstant.getText()).joining(",");
     }
 

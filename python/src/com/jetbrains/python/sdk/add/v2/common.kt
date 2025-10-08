@@ -31,7 +31,7 @@ import com.jetbrains.python.Result
 import com.jetbrains.python.errorProcessing.PyResult
 import com.jetbrains.python.icons.PythonIcons
 import com.jetbrains.python.newProject.collector.InterpreterStatisticsInfo
-import com.jetbrains.python.psi.icons.PythonPsiApiIcons
+import com.jetbrains.python.parser.icons.PythonParserIcons
 import com.jetbrains.python.sdk.*
 import com.jetbrains.python.sdk.pipenv.PIPENV_ICON
 import com.jetbrains.python.sdk.poetry.POETRY_ICON
@@ -126,7 +126,7 @@ enum class PythonSupportedEnvironmentManagers(val nameKey: String, val icon: Ico
   PIPENV("sdk.create.custom.pipenv", PIPENV_ICON),
   UV("sdk.create.custom.uv", UV_ICON),
   HATCH("sdk.create.custom.hatch", PythonHatchIcons.Logo),
-  PYTHON("sdk.create.custom.python", PythonPsiApiIcons.Python)
+  PYTHON("sdk.create.custom.python", PythonParserIcons.PythonFile)
 }
 
 enum class PythonInterpreterSelectionMode(val nameKey: String) {

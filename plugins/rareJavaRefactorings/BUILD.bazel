@@ -1,9 +1,9 @@
 ### auto-generated section `build intellij.java.rareRefactorings` start
-load("@rules_jvm//:jvm.bzl", "jvm_library", "jvm_resources")
+load("@rules_jvm//:jvm.bzl", "jvm_library", "resourcegroup")
 
-jvm_resources(
+resourcegroup(
   name = "java-rareRefactorings_resources",
-  files = glob(["resources/**/*"]),
+  srcs = glob(["resources/**/*"]),
   strip_prefix = "resources"
 )
 
@@ -12,6 +12,7 @@ jvm_library(
   module_name = "intellij.java.rareRefactorings",
   visibility = ["//visibility:public"],
   srcs = glob(["src/**/*.kt", "src/**/*.java", "src/**/*.form"], allow_empty = True),
+  resources = [":java-rareRefactorings_resources"],
   deps = [
     "//java/java-impl:impl",
     "//java/java-indexing-api:indexing",
@@ -28,9 +29,8 @@ jvm_library(
     "//platform/usageView",
     "//java/java-impl-refactorings:impl-refactorings",
     "@lib//:stream_ex",
-    "@lib//:fastutil-min",
-  ],
-  runtime_deps = [":java-rareRefactorings_resources"]
+    "//libraries/fastutil",
+  ]
 )
 
 jvm_library(
@@ -57,9 +57,8 @@ jvm_library(
     "//platform/testFramework:testFramework_test_lib",
     "//java/java-impl-refactorings:impl-refactorings",
     "@lib//:stream_ex",
-    "@lib//:fastutil-min",
-  ],
-  runtime_deps = [":java-rareRefactorings_resources"]
+    "//libraries/fastutil",
+  ]
 )
 ### auto-generated section `build intellij.java.rareRefactorings` end
 

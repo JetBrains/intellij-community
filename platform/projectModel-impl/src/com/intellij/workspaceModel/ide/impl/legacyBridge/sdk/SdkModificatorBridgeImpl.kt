@@ -1,6 +1,7 @@
 // Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.workspaceModel.ide.impl.legacyBridge.sdk
 
+import com.intellij.openapi.diagnostic.thisLogger
 import com.intellij.openapi.projectRoots.ProjectJdkTable
 import com.intellij.openapi.projectRoots.SdkAdditionalData
 import com.intellij.openapi.projectRoots.SdkModificator
@@ -109,6 +110,9 @@ internal class SdkModificatorBridgeImpl(private val originalEntity: SdkEntity.Bu
   @RequiresWriteLock
   override fun commitChanges() {
     ThreadingAssertions.assertWriteAccess()
+    if (thisLogger().isTraceEnabled) {
+      thisLogger().trace(Throwable("Committing changes for SDK"))
+    }
     if (isCommitted) error("Modification already completed")
 
     val descriptor = getMachine(modifiedSdkEntity.homePath?.toString())

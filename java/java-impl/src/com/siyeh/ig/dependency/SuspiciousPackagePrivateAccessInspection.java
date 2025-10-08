@@ -1,4 +1,4 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.siyeh.ig.dependency;
 
 import com.intellij.codeInsight.intention.IntentionAction;
@@ -12,6 +12,7 @@ import com.intellij.codeInspection.options.OptionController;
 import com.intellij.lang.jvm.JvmModifier;
 import com.intellij.lang.jvm.actions.JvmElementActionFactories;
 import com.intellij.lang.jvm.actions.MemberRequestsKt;
+import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.module.ModuleUtilCore;
 import com.intellij.openapi.roots.ProjectFileIndex;
@@ -76,7 +77,7 @@ public final class SuspiciousPackagePrivateAccessInspection extends AbstractBase
 
     @Override
     public void processReference(@NotNull UElement sourceNode, @NotNull PsiModifierListOwner target, @Nullable UExpression qualifier) {
-      PsiClass accessObjectType = getAccessObjectType(qualifier);
+      PsiClass accessObjectType = getAccessObjectType(target, qualifier);
       if (target instanceof PsiJvmMember) {
         checkAccess(sourceNode, (PsiJvmMember)target, accessObjectType);
         if (!(target instanceof PsiClass)) {
@@ -107,8 +108,13 @@ public final class SuspiciousPackagePrivateAccessInspection extends AbstractBase
       }
     }
 
-    private static @Nullable PsiClass getAccessObjectType(@Nullable UExpression qualifier) {
+    private static @Nullable PsiClass getAccessObjectType(@NotNull PsiModifierListOwner target, @Nullable UExpression qualifier) {
       if (qualifier == null || qualifier instanceof UThisExpression || qualifier instanceof USuperExpression) {
+        return null;
+      }
+
+      KotlinExtensionMemberChecker checker = ApplicationManager.getApplication().getService(KotlinExtensionMemberChecker.class);
+      if (checker != null && checker.check(target)) {
         return null;
       }
 
@@ -132,6 +138,7 @@ public final class SuspiciousPackagePrivateAccessInspection extends AbstractBase
     }
 
     private void checkPackageLocalAccess(@NotNull UElement sourceNode, PsiJvmMember targetElement, final String accessType) {
+      if (targetElement instanceof SyntheticElement) return;
       PsiElement sourcePsi = sourceNode.getSourcePsi();
       if (sourcePsi != null) {
         SuspiciousPackagePrivateAccess suspiciousAccess = verifyPackagePrivateAccess(sourcePsi, targetElement);
@@ -158,6 +165,7 @@ public final class SuspiciousPackagePrivateAccessInspection extends AbstractBase
     }
 
     private void checkOverridePackageLocal(@NotNull UMethod sourceNode, @NotNull PsiJvmMember targetElement) {
+      if (targetElement instanceof SyntheticElement) return;
       PsiElement sourcePsi = sourceNode.getSourcePsi();
       PsiElement nameIdentifier = UElementKt.getSourcePsiElement(sourceNode.getUastAnchor());
       if (sourcePsi != null && nameIdentifier != null && targetElement.hasModifier(JvmModifier.PACKAGE_LOCAL)) {

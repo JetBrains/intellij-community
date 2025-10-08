@@ -19,7 +19,7 @@ jvm_library(
     "@lib//:kotlin-stdlib",
     "@lib//:kotlinc-analysis-api",
     "@lib//:kotlinc-kotlin-compiler-common",
-    "@lib//:kotlin-reflect",
+    "//libraries/kotlin-reflect",
     "@lib//:kotlinc-kotlin-compiler-tests",
     "//plugins/kotlin/base/util",
     "//plugins/kotlin/base/util:util_test_lib",

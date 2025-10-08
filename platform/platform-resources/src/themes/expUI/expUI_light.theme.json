@@ -557,7 +557,9 @@
       "passedEndColor": "Green8",
       "failedColor": "Red5",
       "failedEndColor": "Red8",
-      "trackColor": "Gray11"
+      "trackColor": "Gray11",
+      "progressCounterBackground": "#5288f2",
+      "progressCounterForeground": "#FFFFFF"
     },
 
     "RadioButton": {
@@ -978,6 +980,8 @@
       "termsAndConditionsForeground": "Gray8",
       "waitingLabelForeground": "Gray8",
       "separatorColor": "Gray12",
+      "freeBadgeForeground": "Gray14",
+      "freeBadgeBackground": "Green4",
       "LicenseList": {
         "licenseDetailsForeground": "Gray6",
         "licenseIdForeground": "Gray8",

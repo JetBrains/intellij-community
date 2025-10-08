@@ -40,7 +40,7 @@ public final class SerializableInnerClassHasSerialVersionUIDFieldInspection exte
   }
 
   @Override
-  public BaseInspectionVisitor buildVisitor() {
+  public @NotNull BaseInspectionVisitor buildVisitor() {
     return new SerializableInnerClassHasSerialVersionUIDFieldVisitor(this);
   }
 }

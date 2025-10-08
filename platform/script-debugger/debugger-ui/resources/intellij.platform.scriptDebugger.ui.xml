@@ -1,4 +1,4 @@
-<idea-plugin>
+<idea-plugin visibility="public">
   <module value="com.intellij.modules.scriptDebugger.ui"/>
   <dependencies>
     <module name="intellij.platform.scriptDebugger.backend"/>

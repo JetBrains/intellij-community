@@ -1,9 +1,9 @@
 ### auto-generated section `build kotlin.plugin.k2` start
-load("@rules_jvm//:jvm.bzl", "jvm_library", "jvm_resources")
+load("@rules_jvm//:jvm.bzl", "jvm_library", "resourcegroup")
 
-jvm_resources(
+resourcegroup(
   name = "k2_resources",
-  files = glob(["resources/**/*"]),
+  srcs = glob(["resources/**/*"]),
   strip_prefix = "resources"
 )
 
@@ -12,6 +12,7 @@ jvm_library(
   module_name = "kotlin.plugin.k2",
   visibility = ["//visibility:public"],
   srcs = glob(["src/**/*.kt", "src/**/*.java", "src/**/*.form"], allow_empty = True),
+  resources = [":k2_resources"],
   deps = [
     "@lib//:kotlin-stdlib",
     "@lib//:jetbrains-annotations",
@@ -24,7 +25,6 @@ jvm_library(
     "//plugins/kotlin/kotlin.ide:ide",
   ],
   runtime_deps = [
-    ":k2_resources",
     "//plugins/kotlin/plugin/common",
     "//plugins/kotlin/plugin",
     "@lib//:kotlinc-kotlin-compiler-common",
@@ -125,6 +125,7 @@ jvm_library(
     "//plugins/kotlin/compiler-plugins/assignment/maven",
     "//plugins/kotlin/compiler-plugins/kotlinx-serialization/k2",
     "//plugins/kotlin/compiler-plugins/parcelize/k2",
+    "//plugins/kotlin/compiler-plugins/kotlin-dataframe/maven",
     "//plugins/kotlin/i18n",
     "//plugins/kotlin/onboarding",
     "//plugins/kotlin/onboarding-gradle",

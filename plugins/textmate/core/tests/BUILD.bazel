@@ -20,6 +20,9 @@ jvm_library(
     "//plugins/textmate/core",
     "//platform/util/xmlDom",
     "//platform/util",
+    "@lib//:kotlinx-coroutines-test",
+    "@lib//:kotlinx-coroutines-core",
+    "@lib//:kotlinx-collections-immutable",
   ]
 )
 ### auto-generated section `build intellij.textmate.core.tests` end

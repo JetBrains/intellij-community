@@ -128,7 +128,7 @@ public final class EmptyFinallyBlockInspection extends BaseInspection implements
   }
 
   @Override
-  public BaseInspectionVisitor buildVisitor() {
+  public @NotNull BaseInspectionVisitor buildVisitor() {
     return new EmptyFinallyBlockVisitor();
   }
 

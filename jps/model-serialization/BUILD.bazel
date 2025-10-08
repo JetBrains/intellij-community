@@ -1,9 +1,9 @@
 ### auto-generated section `build intellij.platform.jps.model.serialization` start
-load("@rules_jvm//:jvm.bzl", "jvm_library", "jvm_resources")
+load("@rules_jvm//:jvm.bzl", "jvm_library", "resourcegroup")
 
-jvm_resources(
+resourcegroup(
   name = "model-serialization_resources",
-  files = glob(["resources/**/*"]),
+  srcs = glob(["resources/**/*"]),
   strip_prefix = "resources"
 )
 
@@ -12,23 +12,23 @@ jvm_library(
   module_name = "intellij.platform.jps.model.serialization",
   visibility = ["//visibility:public"],
   srcs = glob(["src/**/*.kt", "src/**/*.java", "src/**/*.form"], allow_empty = True),
+  resources = [":model-serialization_resources"],
   kotlinc_opts = "@community//:k11",
   deps = [
     "//platform/util",
     "//jps/model-api:model",
-    "@lib//:fastutil-min",
+    "//libraries/fastutil",
     "//platform/util/jdom",
     "@lib//:opentelemetry",
     "@lib//:opentelemetry-semconv",
-  ],
-  runtime_deps = [":model-serialization_resources"]
+  ]
 )
 ### auto-generated section `build intellij.platform.jps.model.serialization` end
 
 ### auto-generated section `build intellij.platform.jps.model.serialization.tests` start
-jvm_resources(
+resourcegroup(
   name = "model-serialization-tests_test_resources",
-  files = glob(["testResources/**/*"]),
+  srcs = glob(["testResources/**/*"]),
   strip_prefix = "testResources"
 )
 
@@ -43,6 +43,7 @@ jvm_library(
   module_name = "intellij.platform.jps.model.serialization.tests",
   visibility = ["//visibility:public"],
   srcs = glob(["testSrc/**/*.kt", "testSrc/**/*.java", "testSrc/**/*.form"], allow_empty = True),
+  resources = [":model-serialization-tests_test_resources"],
   deps = [
     "//jps/model-api:model",
     "//platform/testFramework/junit5",
@@ -57,10 +58,7 @@ jvm_library(
     "//platform/projectModel-impl",
     "//jps/model-test-framework:model-testFramework",
   ],
-  runtime_deps = [
-    ":model-serialization-tests_test_resources",
-    "//platform/workspace/jps",
-  ]
+  runtime_deps = ["//platform/workspace/jps"]
 )
 ### auto-generated section `build intellij.platform.jps.model.serialization.tests` end
 

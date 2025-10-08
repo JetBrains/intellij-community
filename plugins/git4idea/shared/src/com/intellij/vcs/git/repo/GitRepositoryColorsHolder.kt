@@ -9,6 +9,7 @@ import com.intellij.platform.project.projectId
 import com.intellij.platform.vcs.impl.shared.rpc.RepositoryId
 import com.intellij.vcs.git.repo.GitRepositoryColor.Companion.toAwtColor
 import com.intellij.vcs.git.rpc.GitRepositoryColorsApi
+import fleet.rpc.client.durable
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.launch
 import kotlinx.serialization.Serializable
@@ -41,9 +42,11 @@ internal class GitRepositoryColorsHolder(project: Project, cs: CoroutineScope) {
 
   init {
     cs.launch {
-      GitRepositoryColorsApi.getInstance().syncColors(project.projectId()).collect { newState ->
-        LOG.debug("Received new colors - ${newState.colors.size} repos")
-        state = newState
+      durable {
+        GitRepositoryColorsApi.getInstance().syncColors(project.projectId()).collect { newState ->
+          LOG.debug("Received new colors - ${newState.colors.size} repos")
+          state = newState
+        }
       }
     }
   }

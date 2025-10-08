@@ -54,7 +54,8 @@ internal class PlainTerminalView(
   override fun getTerminalSize(): TermSize? {
     if (view.component.bounds.isEmpty) return null
     val contentSize = Dimension(view.terminalWidth, view.component.height)
-    return TerminalUiUtils.calculateTerminalSize(contentSize, view.charSize)
+    val gridSize = TerminalUiUtils.calculateTerminalSize(contentSize, view.charSize)
+    return TermSize(gridSize.columns, gridSize.rows)
   }
 
   override fun getTerminalSizeInitializedFuture(): CompletableFuture<*> {

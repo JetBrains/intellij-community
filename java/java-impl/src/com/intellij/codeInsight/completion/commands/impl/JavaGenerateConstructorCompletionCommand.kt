@@ -15,32 +15,37 @@ import com.intellij.codeInsight.generation.PsiMethodMember
 import com.intellij.codeInsight.intention.preview.IntentionPreviewInfo
 import com.intellij.java.JavaBundle
 import com.intellij.modcommand.ActionContext
+import com.intellij.modcommand.ModCommand
 import com.intellij.modcommand.ModCommandExecutor
 import com.intellij.modcommand.PsiUpdateModCommandAction
 import com.intellij.openapi.editor.Editor
 import com.intellij.openapi.keymap.KeymapUtil
 import com.intellij.psi.*
 import com.intellij.psi.util.TypeConversionUtil
-import com.intellij.psi.util.parentOfType
 import org.jetbrains.annotations.Nls
+import java.util.function.Supplier
 
 internal class JavaGenerateConstructorCompletionCommandProvider : CommandProvider {
+
+  override fun supportNewLineCompletion(): Boolean = true
+
   private fun findContext(context: CommandCompletionProviderContext): PsiClass? {
     val element = getCommandContext(context.offset, context.psiFile) ?: return null
-    val containingClass = element.parentOfType<PsiClass>() ?: return null
+    val containingClass = element.parent as? PsiClass ?: return null
     if (containingClass.isInterface || containingClass.isRecord || containingClass is PsiImplicitClass) return null
-    if (element is PsiIdentifier && element.parent is PsiClass) return element.parent as PsiClass
+    if (element is PsiIdentifier) return containingClass
     if (!(element is PsiWhiteSpace && element.text.contains("\n"))) return null
-    return element.parentOfType<PsiClass>()
+    return containingClass
   }
 
   override fun getCommands(context: CommandCompletionProviderContext): List<CompletionCommand> {
     val clazz = findContext(context) ?: return emptyList()
     val result = mutableListOf<CompletionCommand>()
     val actionContext = ActionContext.from(context.editor, context.psiFile)
-    if (clazz.constructors.none { it.parameters.isEmpty() }) {
+    if (clazz.name == null) return emptyList()
+    if (clazz.constructors.none { it.parameters.isEmpty() } && clazz.superClass?.qualifiedName == CommonClassNames.JAVA_LANG_OBJECT) {
       val fix = AddDefaultConstructorFix(clazz, PsiModifier.PUBLIC)
-      result.add(GenerateConstructorCompletionCommand(fix,
+      result.add(GenerateConstructorCompletionCommand({ fix },
                                                       actionContext,
                                                       CodeInsightBundle.message("command.completion.generate.text", JavaBundle.message("command.completion.generate.no.args.constructor.text")),
                                                       listOf("generate default constructor", "generate no args constructor")))
@@ -61,10 +66,11 @@ internal class JavaGenerateConstructorCompletionCommandProvider : CommandProvide
     //let's simplify condition, because it can be quite tricky to find out whether there is a constructor with the same arguments or
     //which super constructor should be called
     val superClass = clazz.superClass
-    if ((clazz.constructors.none { it.parameters.size == members.size } &&
-         (superClass == null ||
-          superClass.constructors.isEmpty() ||
-          superClass.constructors.any { it.parameters.isEmpty() })) ||
+
+    if (clazz.constructors.none { it.parameters.size == members.size } &&
+        (superClass == null ||
+         superClass.constructors.isEmpty() ||
+         superClass.constructors.any { it.parameters.isEmpty() }) ||
         canUseSuperConstructor(superClass, clazz, members)) {
       val superConstructors = superClass?.constructors
       if (superConstructors?.size == 1) {
@@ -72,17 +78,21 @@ internal class JavaGenerateConstructorCompletionCommandProvider : CommandProvide
         val superConstructor = PsiMethodMember(superConstructors[0], substitutor)
         members = arrayOf(superConstructor, *members)
       }
-      val prototypes = handler.generateMemberPrototypes(clazz, members)
-      if (prototypes.size == 1) {
-        val generationInfo = prototypes[0]
-        val text = (generationInfo?.psiMember as? PsiMethod)?.text ?: return result
-        val fix = AddMethodFix(text, clazz)
 
-        result.add(GenerateConstructorCompletionCommand(fix,
-                                                        actionContext,
-                                                        CodeInsightBundle.message("command.completion.generate.text", JavaBundle.message("command.completion.generate.all.args.constructor.text")),
-                                                        listOf("generate all args constructor")))
+      //lazy generation
+      //null should not be returned if everything is ok
+      val fix: Supplier<PsiUpdateModCommandAction<*>?> = Supplier {
+        val prototypes = handler.generateMemberPrototypes(clazz, members)
+        if (prototypes.isEmpty()) return@Supplier null
+        val generationInfo = prototypes[0]
+        val text = (generationInfo?.psiMember as? PsiMethod)?.text ?: return@Supplier null
+        AddMethodFix(text, clazz)
       }
+
+      result.add(GenerateConstructorCompletionCommand(fix,
+                                                      actionContext,
+                                                      CodeInsightBundle.message("command.completion.generate.text", JavaBundle.message("command.completion.generate.all.args.constructor.text")),
+                                                      listOf("generate all args constructor")))
     }
 
     return result
@@ -102,8 +112,8 @@ internal class JavaGenerateConstructorCompletionCommandProvider : CommandProvide
     }
   }
 
-  class GenerateConstructorCompletionCommand(
-    val fix: PsiUpdateModCommandAction<*>,
+  private class GenerateConstructorCompletionCommand(
+    val fix: Supplier<PsiUpdateModCommandAction<*>?>,
     val actionContext: ActionContext,
     @param:Nls override val presentableName: String,
     additionalSynonyms: List<String>,
@@ -123,12 +133,12 @@ internal class JavaGenerateConstructorCompletionCommandProvider : CommandProvide
     override fun execute(offset: Int, psiFile: PsiFile, editor: Editor?) {
       val actionContext = ActionContext.from(editor, psiFile)
       ModCommandExecutor.executeInteractively(actionContext, presentableName, editor) {
-        fix.perform(actionContext)
+        fix.get()?.perform(actionContext) ?: ModCommand.nop()
       }
     }
 
     override fun getPreview(): IntentionPreviewInfo {
-      return fix.generatePreview(actionContext)
+      return fix.get()?.generatePreview(actionContext) ?: IntentionPreviewInfo.EMPTY
     }
   }
 }

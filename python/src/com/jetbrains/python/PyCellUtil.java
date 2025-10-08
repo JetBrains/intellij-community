@@ -33,8 +33,21 @@ public final class PyCellUtil {
     return PsiTreeUtil.nextLeaf(el);
   }
 
+  public static final String[] CELL_SEPARATORS = {
+    "# %%",
+    "#%%",
+    "# <codecell>",
+    "# In[",
+    "# COMMAND ----------" // Databricks py-notebooks separator.
+  };
+
   public static boolean isBlockDefinition(String text) {
-    return text.startsWith("# %%") || text.startsWith("#%%") || text.startsWith("# <codecell>") || text.startsWith("# In[");
+    for (String separator : CELL_SEPARATORS) {
+      if (text.startsWith(separator)) {
+        return true;
+      }
+    }
+    return false;
   }
 
   public static boolean isBlockCell(PsiElement element) {

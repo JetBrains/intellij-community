@@ -19,7 +19,6 @@ import com.intellij.vcs.git.branch.tree.GitBranchesTreeFilters
 import com.intellij.vcs.git.branch.tree.GitBranchesTreeModel.RefUnderRepository
 import com.intellij.vcs.git.branch.tree.GitBranchesTreeRenderer
 import com.intellij.vcs.git.ref.GitReferenceName
-import com.intellij.vcs.git.repo.GitRepositoriesHolder
 import com.intellij.vcs.git.repo.GitRepositoryModel
 import com.intellij.vcs.git.rpc.GitRepositoryApi
 import com.intellij.vcs.git.rpc.GitUiSettingsApi
@@ -148,8 +147,7 @@ internal class GitDefaultBranchesPopup private constructor(
   companion object {
     private const val DIMENSION_SERVICE_KEY = "Git.Branch.Popup"
 
-    fun create(project: Project, preferredSelection: GitRepositoryModel?): GitDefaultBranchesPopup {
-      val repositories = GitRepositoriesHolder.getInstance(project).getAll()
+    fun create(project: Project, preferredSelection: GitRepositoryModel?, repositories: List<GitRepositoryModel>): GitDefaultBranchesPopup {
       return GitDefaultBranchesPopup(project, GitDefaultBranchesPopupStep.create(project, preferredSelection, repositories)).also {
         it.setIsMovable(true)
       }

@@ -12,6 +12,7 @@ import org.jetbrains.annotations.Nullable;
  * A pointer to a PSI element which can survive PSI reparse.
  *
  * @see SmartPointerManager#createSmartPsiElementPointer(PsiElement)
+ * @see Pointer
  */
 public interface SmartPsiElementPointer<E extends PsiElement> extends Pointer<E> {
   /**

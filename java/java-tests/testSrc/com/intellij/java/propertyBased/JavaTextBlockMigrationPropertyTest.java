@@ -73,9 +73,7 @@ public class JavaTextBlockMigrationPropertyTest extends LightJavaCodeInsightFixt
       MadTestingUtil.performOnFileContents(myFixture, PathManager.getHomePath(), f -> f.getName().endsWith(".java"),
                                            this::transformContent);
     PropertyChecker.
-      customized()
-      .rechecking("8pL0YcjoxdYPRt0E2RIJAAUA2gNIBw0OAwUJBBwBBAUICAQAAwIJBQYTAQAGByAJ")
-      .checkScenarios(fileAction);
+      checkScenarios(fileAction);
   }
 
   private void transformContent(@NotNull ImperativeCommand.Environment env, @NotNull VirtualFile file) {

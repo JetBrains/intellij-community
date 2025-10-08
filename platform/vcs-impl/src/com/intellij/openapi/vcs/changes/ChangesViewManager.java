@@ -7,26 +7,17 @@ import com.intellij.diagnostic.StartUpMeasurer;
 import com.intellij.diff.impl.DiffEditorViewer;
 import com.intellij.diff.tools.util.DiffDataKeys;
 import com.intellij.diff.util.DiffUtil;
-import com.intellij.icons.AllIcons;
-import com.intellij.ide.CommonActionsManager;
 import com.intellij.ide.DataManager;
-import com.intellij.ide.TreeExpander;
 import com.intellij.ide.dnd.DnDEvent;
-import com.intellij.ide.ui.customization.CustomActionsSchema;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.actionSystem.ex.ActionUtil;
 import com.intellij.openapi.application.AppUIExecutor;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ModalityState;
-import com.intellij.openapi.components.PersistentStateComponent;
-import com.intellij.openapi.components.State;
-import com.intellij.openapi.components.Storage;
-import com.intellij.openapi.components.StoragePathMacros;
 import com.intellij.openapi.options.advanced.AdvancedSettingsChangeListener;
 import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.progress.ProgressManager;
-import com.intellij.openapi.project.DumbAware;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.SimpleToolWindowPanel;
 import com.intellij.openapi.util.Disposer;
@@ -43,11 +34,14 @@ import com.intellij.openapi.vcs.telemetry.VcsBackendTelemetrySpan.ChangesView;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.wm.ToolWindow;
 import com.intellij.platform.diagnostic.telemetry.TelemetryManager;
+import com.intellij.platform.vcs.impl.shared.RdLocalChanges;
 import com.intellij.platform.vcs.impl.shared.changes.ChangeListsViewModel;
+import com.intellij.platform.vcs.impl.shared.changes.ChangesViewDataKeys;
+import com.intellij.platform.vcs.impl.shared.changes.ChangesViewSettings;
 import com.intellij.platform.vcs.impl.shared.changes.PreviewDiffSplitterComponent;
 import com.intellij.platform.vcs.impl.shared.telemetry.VcsScopeKt;
 import com.intellij.problems.ProblemListener;
-import com.intellij.ui.ExperimentalUI;
+import com.intellij.ui.ComponentUtil;
 import com.intellij.ui.JBColor;
 import com.intellij.ui.components.JBLabel;
 import com.intellij.ui.components.panels.Wrapper;
@@ -62,8 +56,6 @@ import com.intellij.util.ui.JBUI;
 import com.intellij.util.ui.UIUtil;
 import com.intellij.util.ui.components.BorderLayoutPanel;
 import com.intellij.util.ui.tree.TreeUtil;
-import com.intellij.util.xmlb.annotations.Attribute;
-import com.intellij.util.xmlb.annotations.XCollection;
 import com.intellij.vcs.commit.*;
 import com.intellij.vcsUtil.VcsUtil;
 import io.opentelemetry.api.trace.Span;
@@ -82,9 +74,6 @@ import java.util.List;
 import java.util.function.Predicate;
 import java.util.function.Supplier;
 
-import static com.intellij.openapi.vcs.changes.ui.ChangesGroupingSupport.REPOSITORY_GROUPING;
-import static com.intellij.openapi.vcs.changes.ui.ChangesTree.DEFAULT_GROUPING_KEYS;
-import static com.intellij.openapi.vcs.changes.ui.ChangesTree.GROUP_BY_ACTION_GROUP;
 import static com.intellij.openapi.vcs.changes.ui.ChangesViewContentManager.*;
 import static com.intellij.openapi.vcs.changes.ui.ChangesViewContentManagerKt.isCommitToolWindowShown;
 import static com.intellij.openapi.vcs.changes.ui.ChangesViewContentManagerKt.subscribeOnVcsToolWindowLayoutChanges;
@@ -92,17 +81,12 @@ import static com.intellij.util.ui.JBUI.Panels.simplePanel;
 import static java.util.Arrays.asList;
 import static org.jetbrains.concurrency.Promises.cancelledPromise;
 
-@State(name = "ChangesViewManager", storages = @Storage(StoragePathMacros.WORKSPACE_FILE))
-public class ChangesViewManager implements ChangesViewEx,
-                                           PersistentStateComponent<ChangesViewManager.State>,
-                                           Disposable {
+public class ChangesViewManager implements ChangesViewEx, Disposable {
 
   private static final Tracer TRACER = TelemetryManager.getInstance().getTracer(VcsScopeKt.VcsScope);
   private static final String CHANGES_VIEW_PREVIEW_SPLITTER_PROPORTION = "ChangesViewManager.DETAILS_SPLITTER_PROPORTION";
 
   private final @NotNull Project myProject;
-
-  private @NotNull ChangesViewManager.State myState = new ChangesViewManager.State();
 
   private @Nullable ChangesViewPanel myChangesPanel;
   private @Nullable ChangesViewToolWindowPanel myToolWindowPanel;
@@ -126,7 +110,7 @@ public class ChangesViewManager implements ChangesViewEx,
 
       // ChangesViewPanel is used for a singular ChangesViewToolWindowPanel instance. Cleanup is not needed.
       ChangesViewPanel changesViewPanel = initChangesPanel();
-      ChangesViewToolWindowPanel panel = new ChangesViewToolWindowPanel(myProject, this, changesViewPanel);
+      ChangesViewToolWindowPanel panel = new ChangesViewToolWindowPanel(myProject, ChangesViewSettings.getInstance(myProject), changesViewPanel);
       Disposer.register(this, panel);
 
       panel.updateCommitWorkflow();
@@ -149,15 +133,6 @@ public class ChangesViewManager implements ChangesViewEx,
 
     MessageBusConnection busConnection = project.getMessageBus().connect(this);
     busConnection.subscribe(ChangesViewWorkflowManager.TOPIC, () -> updateCommitWorkflow());
-  }
-
-  @Override
-  public @NotNull ChangesViewManager.State getState() {
-    return myState;
-  }
-
-  public @NotNull Collection<String> getGrouping() {
-    return myState.groupingKeys;
   }
 
   public static class DisplayNameSupplier implements Supplier<String> {
@@ -208,47 +183,12 @@ public class ChangesViewManager implements ChangesViewEx,
     }
   }
 
-  @Override
-  public void loadState(@NotNull ChangesViewManager.State state) {
-    myState = state;
-    migrateShowFlattenSetting();
-  }
-
-  private void migrateShowFlattenSetting() {
-    if (!myState.myShowFlatten) {
-      myState.groupingKeys.clear();
-      myState.groupingKeys.addAll(DEFAULT_GROUPING_KEYS);
-      myState.myShowFlatten = true;
-    }
-  }
-
   static final class ContentPredicate implements Predicate<Project> {
     @Override
     public boolean test(Project project) {
       return ProjectLevelVcsManager.getInstance(project).hasActiveVcss() &&
              !CommitModeManager.getInstance(project).getCurrentCommitMode().hideLocalChangesTab();
     }
-  }
-
-  public void setGrouping(@NotNull Collection<String> grouping) {
-    myState.groupingKeys.clear();
-    myState.groupingKeys.addAll(grouping);
-  }
-
-  public static class State {
-    /**
-     * @deprecated Use {@link #groupingKeys} instead.
-     */
-    @Deprecated
-    @SuppressWarnings("DeprecatedIsStillUsed")
-    @Attribute("flattened_view")
-    public boolean myShowFlatten = true;
-
-    @XCollection
-    public TreeSet<String> groupingKeys = new TreeSet<>(List.of(REPOSITORY_GROUPING));
-
-    @Attribute("show_ignored")
-    public boolean myShowIgnored;
   }
 
   @Override
@@ -299,12 +239,6 @@ public class ChangesViewManager implements ChangesViewEx,
   }
 
   @Override
-  public void refreshImmediately() {
-    if (myToolWindowPanel == null) return;
-    myToolWindowPanel.scheduleRefreshNow();
-  }
-
-  @Override
   public boolean isAllowExcludeFromCommit() {
     if (myToolWindowPanel == null) return false;
     return myToolWindowPanel.isAllowExcludeFromCommit();
@@ -331,6 +265,19 @@ public class ChangesViewManager implements ChangesViewEx,
 
     @Override
     public void initTabContent(@NotNull Content content) {
+      if (RdLocalChanges.isEnabled()) {
+        // Action isn't executed unless a context component is showing,
+        // which makes things complicated in RD scenario because:
+        // * For Commit TW we still use PROJECTOR_STEALING hacking content of the particular tab.
+        // * The current content component in a backend TW is selected as the context component.
+        // (see `ToolWindowComponentIdProvider` and `ComponentIdOwner` for more insights).
+        // * An empty panel is used for this tab content on the backend.
+        //
+        // As a workaround, it's explicitly marked as shown.
+        ComponentUtil.markAsShowing(content.getComponent(), true);
+        return;
+      }
+
       ChangesViewManager viewManager = (ChangesViewManager)getInstance(myProject);
       ChangesViewToolWindowPanel panel = viewManager.initToolWindowPanel();
 
@@ -386,7 +333,7 @@ public class ChangesViewManager implements ChangesViewEx,
       Registry.get("show.diff.preview.as.editor.tab.with.single.click");
 
     private final @NotNull Project myProject;
-    private final @NotNull ChangesViewManager myChangesViewManager;
+    private final @NotNull ChangesViewSettings myChangesViewSettings;
     private final @NotNull VcsConfiguration myVcsConfiguration;
 
     private final @NotNull Wrapper myMainPanelContent;
@@ -411,11 +358,11 @@ public class ChangesViewManager implements ChangesViewEx,
     private boolean myDisposed = false;
 
     private ChangesViewToolWindowPanel(@NotNull Project project,
-                                       @NotNull ChangesViewManager changesViewManager,
+                                       @NotNull ChangesViewSettings changesViewSettings,
                                        @NotNull ChangesViewPanel changesViewPanel) {
       super(false, true);
       myProject = project;
-      myChangesViewManager = changesViewManager;
+      myChangesViewSettings = changesViewSettings;
       myChangesPanel = changesViewPanel;
 
       MessageBusConnection busConnection = myProject.getMessageBus().connect(this);
@@ -425,12 +372,12 @@ public class ChangesViewManager implements ChangesViewEx,
       myView = myChangesPanel.getChangesView();
       myView.installPopupHandler((DefaultActionGroup)ActionManager.getInstance().getAction("ChangesViewPopupMenu"));
       ChangesTree.installGroupingSupport(myView.getGroupingSupport(),
-                                         () -> myChangesViewManager.getGrouping(),
-                                         (newValue) -> myChangesViewManager.setGrouping(newValue),
+                                         changesViewSettings::getGroupingKeys,
+                                         changesViewSettings::setGroupingKeys,
                                          () -> scheduleRefresh());
       ChangesViewDnDSupport.install(myProject, myView, this);
 
-      myChangesPanel.getToolbarActionGroup().addAll(createChangesToolbarActions(myView.getTreeExpander()));
+      ChangesViewPanelActions.initActions(myChangesPanel);
       registerShortcuts(this);
 
       ApplicationManager.getApplication().getMessageBus().connect(project)
@@ -708,6 +655,9 @@ public class ChangesViewManager implements ChangesViewEx,
     public void uiDataSnapshot(@NotNull DataSink sink) {
       super.uiDataSnapshot(sink);
       sink.set(DiffDataKeys.EDITOR_TAB_DIFF_PREVIEW, myEditorDiffPreview);
+      sink.set(ChangesViewDataKeys.SETTINGS, myChangesViewSettings);
+      sink.set(ChangesViewDataKeys.REFRESHER, () -> scheduleRefreshNow());
+
       // This makes COMMIT_WORKFLOW_HANDLER available anywhere in "Local Changes" - so commit executor actions are enabled.
       DataSink.uiDataSnapshot(sink, myCommitPanel);
     }
@@ -717,32 +667,6 @@ public class ChangesViewManager implements ChangesViewEx,
       ActionUtil.wrap("ChangesView.NewChangeList").registerCustomShortcutSet(CommonShortcuts.getNew(), component);
       ActionUtil.wrap("ChangesView.RemoveChangeList").registerCustomShortcutSet(CommonShortcuts.getDelete(), component);
       ActionUtil.wrap(IdeActions.MOVE_TO_ANOTHER_CHANGE_LIST).registerCustomShortcutSet(CommonShortcuts.getMove(), component);
-    }
-
-    private @NotNull List<AnAction> createChangesToolbarActions(@NotNull TreeExpander treeExpander) {
-      List<AnAction> actions = new ArrayList<>();
-      actions.add(CustomActionsSchema.getInstance().getCorrectedAction(ActionPlaces.CHANGES_VIEW_TOOLBAR));
-
-      if (!ExperimentalUI.isNewUI()) {
-        actions.add(Separator.getInstance());
-      }
-
-      DefaultActionGroup viewOptionsGroup =
-        DefaultActionGroup.createPopupGroup(() -> VcsBundle.message("action.ChangesViewToolWindowPanel.text"));
-
-      viewOptionsGroup.getTemplatePresentation().setIcon(AllIcons.Actions.Show);
-      viewOptionsGroup.add(ActionManager.getInstance().getAction(GROUP_BY_ACTION_GROUP));
-      viewOptionsGroup.add(new Separator(VcsBundle.message("action.vcs.log.show.separator")));
-      viewOptionsGroup.add(new ToggleShowIgnoredAction());
-      viewOptionsGroup.add(ActionManager.getInstance().getAction("ChangesView.ViewOptions"));
-
-      actions.add(viewOptionsGroup);
-      actions.add(CommonActionsManager.getInstance().createExpandAllHeaderAction(treeExpander, myView));
-      actions.add(CommonActionsManager.getInstance().createCollapseAllAction(treeExpander, myView));
-      actions.add(Separator.getInstance());
-      actions.add(ActionManager.getInstance().getAction("ChangesView.SingleClickPreview"));
-
-      return actions;
     }
 
     private void updateProgressComponent(@NotNull List<Supplier<@Nullable JComponent>> progress) {
@@ -800,7 +724,7 @@ public class ChangesViewManager implements ChangesViewEx,
           myView.getGrouping(),
           changeLists,
           unversionedFiles,
-          myChangesViewManager.myState.myShowIgnored,
+          myChangesViewSettings.getShowIgnored(),
           () -> isAllowExcludeFromCommit()
         );
 
@@ -922,29 +846,6 @@ public class ChangesViewManager implements ChangesViewEx,
 
         ChangeListManagerImpl changeListManager = ChangeListManagerImpl.getInstanceImpl(myProject);
         updateProgressComponent(changeListManager.getAdditionalUpdateInfo());
-      }
-    }
-
-    private class ToggleShowIgnoredAction extends ToggleAction implements DumbAware {
-      ToggleShowIgnoredAction() {
-        super(VcsBundle.messagePointer("changes.action.show.ignored.text"),
-              VcsBundle.messagePointer("changes.action.show.ignored.description"), AllIcons.Actions.ToggleVisibility);
-      }
-
-      @Override
-      public @NotNull ActionUpdateThread getActionUpdateThread() {
-        return ActionUpdateThread.EDT;
-      }
-
-      @Override
-      public boolean isSelected(@NotNull AnActionEvent e) {
-        return myChangesViewManager.myState.myShowIgnored;
-      }
-
-      @Override
-      public void setSelected(@NotNull AnActionEvent e, boolean state) {
-        myChangesViewManager.myState.myShowIgnored = state;
-        scheduleRefreshNow();
       }
     }
 

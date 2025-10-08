@@ -5,6 +5,7 @@ import com.intellij.openapi.actionSystem.AnAction
 import com.intellij.openapi.actionSystem.AnActionEvent
 import com.intellij.openapi.actionSystem.ex.ActionUtil
 import com.intellij.openapi.ui.popup.ListSeparator
+import com.intellij.openapi.vfs.readText
 import com.intellij.python.community.services.systemPython.SystemPythonService
 import com.intellij.python.sdk.ui.evolution.sdk.EvoModuleSdk
 import com.intellij.python.sdk.ui.evolution.sdk.resolvePythonExecutable
@@ -15,6 +16,7 @@ import com.intellij.python.sdk.ui.evolution.ui.components.EvoTreeLazyNodeElement
 import com.intellij.python.sdk.ui.evolution.ui.components.EvoTreeLeafElement
 import com.intellij.python.sdk.ui.evolution.ui.components.EvoTreeSection
 import com.intellij.python.pyproject.PyProjectToml
+import com.jetbrains.python.PyBundle
 import com.jetbrains.python.PythonHomePath
 import com.jetbrains.python.Result
 import com.jetbrains.python.errorProcessing.PyResult
@@ -37,7 +39,7 @@ private class PoetrySelectSdkProvider() : EvoSelectSdkProvider {
 
     val pyProjectTomlFile = withContext(Dispatchers.IO) {
       PyProjectToml.findFile(evoModuleSdk.module)
-    } ?: return@EvoTreeLazyNodeElement PyResult.localizedError("pyproject.toml file is required for Poetry")
+    } ?: return@EvoTreeLazyNodeElement PyResult.localizedError(PyBundle.message("evolution.pyproject.toml.file.is.required.for.poetry"))
 
     val envList = runPoetry(pyProjectTomlFile.parent.toNioPath(), "env", "list", "--full-path").getOr { return@EvoTreeLazyNodeElement it }
 
@@ -46,7 +48,7 @@ private class PoetrySelectSdkProvider() : EvoSelectSdkProvider {
 
 
     val (projectName, requiresPython) = withContext(Dispatchers.IO) {
-      val toml = PyProjectToml.parse(pyProjectTomlFile.inputStream).getOrNull()
+      val toml = PyProjectToml.parse(pyProjectTomlFile.readText()).getOrNull()
       (toml?.project?.name) to (toml?.project?.requiresPython)
     }
     val poetryVirtualenvsPath = runPoetry(pyProjectTomlFile.parent.toNioPath(), "config", "virtualenvs.path")

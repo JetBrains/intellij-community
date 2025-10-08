@@ -394,8 +394,8 @@ public class PyFunctionImpl extends PyBaseElementImpl<PyFunctionStub> implements
 
   @Override
   public @NotNull List<PyStatement> getReturnPoints(@NotNull TypeEvalContext context) {
-    final Instruction[] flow = ControlFlowCache.getControlFlow(this).getInstructions();
-    final PyDataFlow dataFlow = ControlFlowCache.getDataFlow(this, context);
+    final PyDataFlow dataFlow = ControlFlowCache.getDataFlow(this, new FlowContext(context, false));
+    final Instruction[] flow = dataFlow.getInstructions();
 
     class ReturnPointCollector {
       final List<PyStatement> returnPoints = new ArrayList<>();

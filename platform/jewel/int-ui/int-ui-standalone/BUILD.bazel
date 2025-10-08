@@ -1,6 +1,6 @@
 ### auto-generated section `build intellij.platform.jewel.intUi.standalone` start
 load("//build:compiler-options.bzl", "create_kotlinc_options")
-load("@rules_jvm//:jvm.bzl", "jvm_library", "jvm_resources")
+load("@rules_jvm//:jvm.bzl", "jvm_library", "resourcegroup")
 
 create_kotlinc_options(
   name = "custom_jewel-intUi-standalone",
@@ -10,13 +10,13 @@ create_kotlinc_options(
     "org.jetbrains.jewel.foundation.ExperimentalJewelApi",
     "org.jetbrains.jewel.foundation.InternalJewelApi",
   ],
-  x_context_receivers = True,
+  x_context_parameters = True,
   x_explicit_api_mode = "strict"
 )
 
-jvm_resources(
+resourcegroup(
   name = "jewel-intUi-standalone_resources",
-  files = glob(["src/main/resources/**/*"]),
+  srcs = glob(["src/main/resources/**/*"]),
   strip_prefix = "src/main/resources"
 )
 
@@ -25,6 +25,7 @@ jvm_library(
   module_name = "intellij.platform.jewel.intUi.standalone",
   visibility = ["//visibility:public"],
   srcs = glob(["src/main/kotlin/**/*.kt", "src/main/kotlin/**/*.java", "src/main/kotlin/**/*.form", "generated/**/*.kt", "generated/**/*.java"], allow_empty = True),
+  resources = [":jewel-intUi-standalone_resources"],
   kotlinc_opts = ":custom_jewel-intUi-standalone",
   deps = [
     "@lib//:kotlin-stdlib",
@@ -36,7 +37,6 @@ jvm_library(
     "//platform/jewel/foundation",
     "@lib//:jbr-api",
   ],
-  runtime_deps = [":jewel-intUi-standalone_resources"],
   plugins = ["@lib//:compose-plugin"]
 )
 ### auto-generated section `build intellij.platform.jewel.intUi.standalone` end

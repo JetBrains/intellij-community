@@ -68,7 +68,7 @@ class InlineToAnonymousConstructorProcessor {
     JavaResolveResult classResolveResult = myNewExpression.getClassReference().advancedResolve(false);
     JavaResolveResult methodResolveResult = myNewExpression.resolveMethodGenerics();
     final PsiElement element = methodResolveResult.getElement();
-    myConstructor = element != null ? (PsiMethod) element.getNavigationElement() : null;
+    myConstructor = (element == null || element instanceof SyntheticElement) ? null : (PsiMethod)element.getNavigationElement();
     myConstructorArguments = initConstructorArguments();
 
     PsiSubstitutor classResolveSubstitutor = classResolveResult.getSubstitutor();
@@ -116,7 +116,8 @@ class InlineToAnonymousConstructorProcessor {
     for (PsiElement child : classCopy.getChildren()) {
       if ((child instanceof PsiMethod method && !method.isConstructor()) ||
           child instanceof PsiClassInitializer || child instanceof PsiClass) {
-        if (!myFieldInitializers.isEmpty() || !myLocalsForParameters.isEmpty() || classResolveSubstitutor != PsiSubstitutor.EMPTY || outerClassLocal != null) {
+        if (!myFieldInitializers.isEmpty() || !myLocalsForParameters.isEmpty() 
+            || classResolveSubstitutor != PsiSubstitutor.EMPTY || outerClassLocal != null) {
           replaceReferences((PsiMember) child, substitutedParameters, outerClassLocal);
         }
         anonymousClass.addBefore(child, token);
@@ -138,11 +139,13 @@ class InlineToAnonymousConstructorProcessor {
       anonymousClass.deleteChildRange(anonymousClass.getLBrace(), anonymousClass.getRBrace());
     }
     PsiNewExpression superNewExpression = (PsiNewExpression) myNewExpression.replace(superNewExpressionTemplate);
-    superNewExpression = (PsiNewExpression)ChangeContextUtil.decodeContextInfo(superNewExpression, superNewExpression.getAnonymousClass(), null);
+    superNewExpression = (PsiNewExpression)
+      ChangeContextUtil.decodeContextInfo(superNewExpression, superNewExpression.getAnonymousClass(), null);
     PsiAnonymousClass newExpressionAnonymousClass = superNewExpression.getAnonymousClass();
     if (newExpressionAnonymousClass != null && 
         AnonymousCanBeLambdaInspection.isLambdaForm(newExpressionAnonymousClass, false, Collections.emptySet())) {
-      PsiExpression lambda = AnonymousCanBeLambdaInspection.replaceAnonymousWithLambda(superNewExpression, newExpressionAnonymousClass.getBaseClassType());
+      PsiExpression lambda = 
+        AnonymousCanBeLambdaInspection.replaceAnonymousWithLambda(superNewExpression, newExpressionAnonymousClass.getBaseClassType());
       JavaCodeStyleManager.getInstance(newExpressionAnonymousClass.getProject()).shortenClassReferences(superNewExpression.replace(lambda));
     }
     else {

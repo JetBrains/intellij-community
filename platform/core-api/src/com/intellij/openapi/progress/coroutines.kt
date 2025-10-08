@@ -1,4 +1,4 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 
 package com.intellij.openapi.progress
 
@@ -13,6 +13,7 @@ import com.intellij.openapi.util.NlsContexts
 import com.intellij.openapi.util.registry.Registry
 import com.intellij.platform.util.progress.internalCreateRawHandleFromContextStepIfExistsAndFresh
 import com.intellij.platform.util.progress.reportRawProgress
+import com.intellij.util.IntelliJCoroutinesFacade
 import com.intellij.util.concurrency.BlockingJob
 import com.intellij.util.concurrency.ThreadScopeCheckpoint
 import com.intellij.util.concurrency.annotations.RequiresBackgroundThread
@@ -20,7 +21,6 @@ import com.intellij.util.concurrency.annotations.RequiresBlockingContext
 import com.intellij.util.concurrency.annotations.RequiresWriteLock
 import com.intellij.util.ui.EDT
 import kotlinx.coroutines.*
-import kotlinx.coroutines.internal.intellij.IntellijCoroutines
 import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.annotations.ApiStatus.Internal
 import kotlin.coroutines.ContinuationInterceptor
@@ -140,7 +140,7 @@ private fun <T> runBlockingCancellable(allowOrphan: Boolean, compensateParalleli
       try {
         if (compensateParallelism) {
           @OptIn(InternalCoroutinesApi::class)
-          IntellijCoroutines.runBlockingWithParallelismCompensation(ctx + lockContext, action)
+          IntelliJCoroutinesFacade.runBlockingWithParallelismCompensation(ctx + lockContext, action)
         }
         else {
           @Suppress("RAW_RUN_BLOCKING")

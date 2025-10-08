@@ -7,7 +7,6 @@ import com.intellij.diagnostic.*
 import com.intellij.diagnostic.logs.LogLevelConfigurationManager
 import com.intellij.ide.*
 import com.intellij.ide.bootstrap.InitAppContext
-import com.intellij.ide.gdpr.EndUserAgreement
 import com.intellij.ide.plugins.BundledPluginsState
 import com.intellij.ide.plugins.PluginManagerCore
 import com.intellij.ide.plugins.PluginSet
@@ -30,7 +29,7 @@ import com.intellij.openapi.application.ex.ApplicationEx
 import com.intellij.openapi.application.ex.ApplicationInfoEx
 import com.intellij.openapi.application.ex.ApplicationManagerEx
 import com.intellij.openapi.application.impl.ApplicationImpl
-import com.intellij.openapi.components.impl.stores.IComponentStore
+import com.intellij.openapi.components.impl.stores.ComponentStoreOwner
 import com.intellij.openapi.components.service
 import com.intellij.openapi.components.serviceAsync
 import com.intellij.openapi.diagnostic.Logger
@@ -84,7 +83,7 @@ internal suspend fun loadApp(
   app: ApplicationImpl,
   pluginSetDeferred: Deferred<Deferred<PluginSet>>,
   appInfoDeferred: Deferred<ApplicationInfoEx>,
-  euaDocumentDeferred: Deferred<EndUserAgreement.Document?>,
+  euaDocumentDeferred: Deferred<EndUserAgreementStatus>,
   asyncScope: CoroutineScope,
   initLafJob: Job,
   logDeferred: Deferred<Logger>,
@@ -107,9 +106,12 @@ internal suspend fun loadApp(
 
     val languageAndRegionTaskDeferred: Deferred<(suspend () -> Boolean)?>? = if (AppMode.isHeadless()) null else {
       async(CoroutineName("language and region")) {
-        euaDocumentDeferred.await()?.let {
-          getLanguageAndRegionDialogIfNeeded(it)
+        val euaDocumentStatus = euaDocumentDeferred.await()
+        if (euaDocumentStatus is EndUserAgreementStatus.Required ||
+            euaDocumentStatus is EndUserAgreementStatus.RemoteDev) {
+          getLanguageAndRegionDialogIfNeeded()
         }
+        else null
       }
     }
     
@@ -251,7 +253,7 @@ internal suspend fun loadApp(
 private val asyncAppListenerAllowListForNonCorePlugin = java.util.Set.of(
   "com.jetbrains.rdserver.unattendedHost.logs.BackendMessagePoolExporter\$MyAppListener",
   "com.intellij.settingsSync.SettingsSynchronizerApplicationInitializedListener",
-  "com.intellij.pycharm.ds.jupyter.JupyterDSProjectLifecycleListener",
+  "com.intellij.dataspell.ide.impl.jupyter.JupyterDSProjectLifecycleListener",
   "com.jetbrains.gateway.GatewayBuildDateExpirationListener",
   "com.intellij.ide.misc.PluginAgreementUpdateScheduler",
   "org.jetbrains.kotlin.idea.macros.ApplicationWideKotlinBundledPathMacroCleaner",
@@ -417,7 +419,7 @@ suspend fun initConfigurationStore(app: ApplicationImpl, args: List<String>) {
 
     span("init app store") {
       // we set it after beforeApplicationLoaded call, because the app store can depend on a stream provider state
-      app.serviceAsync<IComponentStore>().setPath(configDir)
+      (app as ComponentStoreOwner).componentStore.setPath(configDir)
       if (!LoadingState.CONFIGURATION_STORE_INITIALIZED.isOccurred) {
         LoadingState.setCurrentState(LoadingState.CONFIGURATION_STORE_INITIALIZED)
       }
@@ -485,7 +487,7 @@ private suspend fun createAppStarter(args: List<String>, asyncScope: CoroutineSc
     }
     else -> {
       span("app custom starter creation") {
-        val starter = findStarter(commandName) ?: createDefaultAppStarter()
+        val starter = ApplicationStarter.findStarter(commandName) ?: createDefaultAppStarter()
         if (AppMode.isHeadless() && !starter.isHeadless) {
           val message = BootstrapBundle.message(
             "bootstrap.error.message.headless",

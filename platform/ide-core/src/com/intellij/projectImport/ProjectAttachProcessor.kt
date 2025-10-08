@@ -17,11 +17,12 @@ open class ProjectAttachProcessor {
     val EP_NAME: ExtensionPointName<ProjectAttachProcessor> = ExtensionPointName("com.intellij.projectAttachProcessor")
 
     @JvmStatic
-    fun canAttachToProject(): Boolean = getProcessor(null, null, null) != null
+    fun canAttachToProject(): Boolean = getProcessor(project = null, path = null, newProject = null) != null
 
     @JvmStatic
-    fun getProcessor(project: Project?, path: Path?, newProject: Project?) =
-      EP_NAME.extensionList.firstOrNull { it.isEnabled(project, path, newProject) }
+    fun getProcessor(project: Project?, path: Path?, newProject: Project?): ProjectAttachProcessor? {
+      return EP_NAME.extensionList.firstOrNull { it.isEnabled(project, path, newProject) }
+    }
   }
 
   /**
@@ -37,10 +38,12 @@ open class ProjectAttachProcessor {
   }
 
   @Experimental
-  open suspend fun attachToProjectAsync(project: Project,
-                                        projectDir: Path,
-                                        callback: ProjectOpenedCallback?,
-                                        beforeOpen: (suspend (Project) -> Boolean)? = null): Boolean {
+  open suspend fun attachToProjectAsync(
+    project: Project,
+    projectDir: Path,
+    callback: ProjectOpenedCallback?,
+    beforeOpen: (suspend (Project) -> Boolean)? = null,
+  ): Boolean {
     return withContext(Dispatchers.EDT) {
       attachToProject(project = project, projectDir = projectDir, callback = callback)
     }

@@ -74,7 +74,7 @@ abstract class AbstractSurroundWithCompletionCommandProvider : CommandProvider {
           val event = AnActionEvent.createEvent(targetAction, dataContext, presentation, ActionPlaces.ACTION_PLACE_QUICK_LIST_POPUP_ACTION,
                                                 ActionUiKind.NONE, null)
 
-          ActionUtil.performAction(action, event)
+          ActionUtil.performAction(targetAction, event)
         }
 
         override fun getPreview(): IntentionPreviewInfo {

@@ -6,6 +6,7 @@ import com.intellij.openapi.util.Pair
 import io.opentelemetry.api.common.AttributeKey
 import io.opentelemetry.api.common.Attributes
 import io.opentelemetry.api.trace.Span
+import org.jdom.Element
 import org.jetbrains.intellij.build.BuildContext
 import org.jetbrains.intellij.build.BuiltinModulesFileData
 import org.jetbrains.intellij.build.PluginBundlingRestrictions
@@ -108,6 +109,7 @@ suspend fun collectPluginDescriptors(
   }
 
   val allBundledPlugins = java.util.Set.copyOf(context.getBundledPluginModules())
+
   for (jpsModule in context.project.modules) {
     val moduleName = jpsModule.name
     if ((skipBundled && allBundledPlugins.contains(moduleName)) ||
@@ -122,11 +124,6 @@ suspend fun collectPluginDescriptors(
 
     // not a plugin
     if (context.productProperties.platformPrefix != "FleetBackend" && moduleName.startsWith("fleet.plugins.")) {
-      continue
-    }
-
-    // Temporarily ignore org.jetbrains.bazel plugin when running under Bazel (https://youtrack.jetbrains.com/issue/IJI-3021)
-    if (isRunningFromBazelOut() && moduleName == "intellij.bazel.plugin") {
       continue
     }
 
@@ -164,9 +161,9 @@ suspend fun collectPluginDescriptors(
     // a non-product plugin cannot include VCS and other such platform modules in the content
     if (xml.getChildren("content").any { contentElement ->
         contentElement.getChildren("module").any {
-          val name = it.getAttributeValue("name", "")
+          val contentModuleName = it.getAttributeValue("name", "")
           //intellij.platform.vcs.*.split modules are currently included in the CodeWithMe plugin
-          name.startsWith("intellij.platform.vcs.") && !name.endsWith(".split") || name == "intellij.ide.startup.importSettings"
+          contentModuleName.startsWith("intellij.platform.vcs.") && !contentModuleName.endsWith(".split") || contentModuleName == "intellij.ide.startup.importSettings"
         }
       }) {
       Span.current().addEvent(
@@ -201,20 +198,39 @@ suspend fun collectPluginDescriptors(
       continue
     }
 
+    // Even though Database plugin does not depend on Ultimate anymore,
+    // we do not include it in the Community IDEs
+    if (id == "com.intellij.database" && !allBundledPlugins.contains("com.intellij.modules.ultimate")) {
+      continue
+    }
+
     val declaredModules = HashSet<String>()
-    for (moduleElement in xml.getChildren("module")) {
-      val value = moduleElement.getAttributeValue("value")
-      if (value != null) {
-        declaredModules.add(value)
+    fun addAliases(element: Element) {
+      for (moduleElement in element.getChildren("module")) {
+        val value = moduleElement.getAttributeValue("value")
+        if (value != null) {
+          declaredModules.add(value)
+        }
       }
     }
 
+    addAliases(xml)
     val content = xml.getChild("content")
     if (content != null) {
       for (module in content.getChildren("module")) {
-        val name = module.getAttributeValue("name")
-        if (name != null && !name.isEmpty()) {
-          declaredModules.add(name)
+        val contentModuleName = module.getAttributeValue("name")
+        if (contentModuleName != null && !contentModuleName.isEmpty()) {
+          val jpsModuleName = contentModuleName.take(contentModuleName.lastIndexOf('/').takeIf { it != -1 } ?: contentModuleName.length)
+          val fileName = contentModuleName.replace("/", ".")
+          val jpsContentModule = context.findModule(jpsModuleName)
+          if (jpsContentModule != null) {
+            val moduleFile = findFileInModuleSources(module = jpsContentModule, relativePath = "$fileName.xml", onlyProductionSources = true)
+            if (moduleFile != null) {
+              val moduleXml = JDOMUtil.load(moduleFile)
+              addAliases(moduleXml)
+            }
+          }
+          declaredModules.add(contentModuleName)
         }
       }
     }

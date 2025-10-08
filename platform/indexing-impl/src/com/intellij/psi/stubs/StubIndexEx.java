@@ -136,6 +136,16 @@ public abstract class StubIndexEx extends StubIndex {
                                                                @Nullable IdFilter idFilter,
                                                                @NotNull Class<Psi> requiredClass,
                                                                @NotNull Processor<? super Psi> processor) {
+    var index = getIndex(indexKey);
+    if ((index != null && !index.canUpdate()) || !getStubUpdatingIndex().canUpdate()) {
+      var exception = new IllegalStateException("Nesting processElements call under other stub index operation can lead to a deadlock.");
+      if (ApplicationManager.getApplication().isUnitTestMode()) {
+        throw exception;
+      }
+      else {
+        getLogger().error(exception);
+      }
+    }
     var trace = lookupStubEntriesStarted(indexKey)
       .withProject(project);
 

@@ -2,11 +2,10 @@
 package com.intellij.configurationStore
 
 import com.intellij.ide.highlighter.ModuleFileType
-import com.intellij.openapi.application.EDT
 import com.intellij.openapi.application.edtWriteAction
 import com.intellij.openapi.components.StoragePathMacros
-import com.intellij.openapi.components.service
 import com.intellij.openapi.components.impl.stores.stateStore
+import com.intellij.openapi.components.service
 import com.intellij.openapi.module.Module
 import com.intellij.openapi.project.ModuleListener
 import com.intellij.openapi.project.Project
@@ -21,7 +20,6 @@ import com.intellij.testFramework.*
 import com.intellij.testFramework.assertions.Assertions.assertThat
 import com.intellij.testFramework.rules.TempDirectory
 import com.intellij.util.Function
-import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.runBlocking
 import org.junit.ClassRule
 import org.junit.Rule
@@ -189,7 +187,7 @@ class ChangeModuleStorePathTest {
   }
 
   @Test
-  fun `rename module source root`() = runBlocking<Unit>(Dispatchers.EDT) {
+  fun `rename module source root`() = runBlocking<Unit> {
     saveProjectState()
     val storage = module.storage
     val parentVirtualDir = storage.getVirtualFile()!!.parent

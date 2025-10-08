@@ -191,49 +191,54 @@ private fun smartSelectElement(
     elementKinds: Collection<ElementKind>,
     callback: (PsiElement?) -> Unit
 ) {
-    val elements = elementKinds.flatMap { getSmartSelectSuggestions(file, offset, it) }
-    if (elements.isEmpty()) {
-        if (failOnEmptySuggestion) throw IntroduceRefactoringException(
-            KotlinBundle.message("cannot.refactor.not.expression")
-        )
-        callback(null)
-        return
-    }
+    ReadAction.nonBlocking(Callable {
+        elementKinds.flatMap { getSmartSelectSuggestions(file, offset, it) }
+    }).expireWhen { editor.isDisposed }
+        .finishOnUiThread(ModalityState.nonModal()) { elements ->
+            if (elements.isEmpty()) {
+                if (failOnEmptySuggestion) throw IntroduceRefactoringException(
+                    KotlinBundle.message("cannot.refactor.not.expression")
+                )
+                callback(null)
+                return@finishOnUiThread
+            }
 
-    if (elements.size == 1 || isUnitTestMode()) {
-        callback(elements.first())
-        return
-    }
+            if (elements.size == 1 || isUnitTestMode()) {
+                callback(elements.first())
+                return@finishOnUiThread
+            }
 
-    val highlighter = ScopeHighlighter(editor)
-    val title = if (elementKinds.size == 1) {
-        when (elementKinds.iterator().next()) {
-            ElementKind.EXPRESSION -> KotlinBundle.message("popup.title.expressions")
-            ElementKind.TYPE_ELEMENT, ElementKind.TYPE_CONSTRUCTOR -> KotlinBundle.message("popup.title.types")
-        }
-    } else {
-        KotlinBundle.message("popup.title.elements")
-    }
-
-    PsiTargetNavigator(elements)
-        .presentationProvider { element -> TargetPresentation.builder(getExpressionShortText(element)).presentation() }
-        .builderConsumer { builder ->
-            builder
-                .setMovable(false)
-                .setResizable(false)
-                .setRequestFocus(true)
-                .setItemChosenCallback { presentation -> callback((presentation.item as SmartPsiElementPointer<*>).element) }
-                .setItemSelectedCallback { presentation ->
-                    highlighter.dropHighlight()
-                    val psiElement = (presentation?.item as? SmartPsiElementPointer<*>)?.element ?: return@setItemSelectedCallback
-                    highlighter.highlight(psiElement, listOf(psiElement))
+            val highlighter = ScopeHighlighter(editor)
+            val title = if (elementKinds.size == 1) {
+                when (elementKinds.iterator().next()) {
+                    ElementKind.EXPRESSION -> KotlinBundle.message("popup.title.expressions")
+                    ElementKind.TYPE_ELEMENT, ElementKind.TYPE_CONSTRUCTOR -> KotlinBundle.message("popup.title.types")
                 }
-                .addListener(object : JBPopupListener {
-                    override fun onClosed(event: LightweightWindowEvent) {
-                        highlighter.dropHighlight()
-                    }
-                })
-        }
-        .createPopup(file.project, title)
-        .showInBestPositionFor(editor)
+            } else {
+                KotlinBundle.message("popup.title.elements")
+            }
+
+            PsiTargetNavigator(elements)
+                .presentationProvider { element -> TargetPresentation.builder(getExpressionShortText(element)).presentation() }
+                .builderConsumer { builder ->
+                    builder
+                        .setMovable(false)
+                        .setResizable(false)
+                        .setRequestFocus(true)
+                        .setItemChosenCallback { presentation -> callback((presentation.item as SmartPsiElementPointer<*>).element) }
+                        .setItemSelectedCallback { presentation ->
+                            highlighter.dropHighlight()
+                            val psiElement = (presentation?.item as? SmartPsiElementPointer<*>)?.element ?: return@setItemSelectedCallback
+                            highlighter.highlight(psiElement, listOf(psiElement))
+                        }
+                        .addListener(object : JBPopupListener {
+                            override fun onClosed(event: LightweightWindowEvent) {
+                                highlighter.dropHighlight()
+                            }
+                        })
+                }
+                .createPopup(file.project, title)
+                .showInBestPositionFor(editor)
+        }.submit(AppExecutorUtil.getAppExecutorService())
+
 }

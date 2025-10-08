@@ -38,7 +38,7 @@ public final class TextContentImpl extends UserDataHolderBase implements TextCon
     }
     for (TokenInfo token : _tokens) {
       if (!tokens.isEmpty()) {
-        TokenInfo merged = merge(tokens.get(tokens.size() - 1), token);
+        TokenInfo merged = merge(tokens.getLast(), token);
         if (merged != null) {
           tokens.set(tokens.size() - 1, merged);
           continue;
@@ -46,8 +46,8 @@ public final class TextContentImpl extends UserDataHolderBase implements TextCon
       }
       tokens.add(token);
     }
-    if (tokens.get(0) instanceof WSTokenInfo) tokens.remove(0);
-    if (tokens.get(tokens.size() - 1) instanceof WSTokenInfo) tokens.remove(tokens.size() - 1);
+    if (tokens.getFirst() instanceof WSTokenInfo) tokens.removeFirst();
+    if (tokens.getLast() instanceof WSTokenInfo) tokens.removeLast();
     if (tokens.isEmpty()) {
       throw new IllegalArgumentException("There should be at least one non-whitespace token");
     }
@@ -238,7 +238,7 @@ public final class TextContentImpl extends UserDataHolderBase implements TextCon
     ProgressManager.checkCanceled();
     if (ranges.isEmpty()) return this;
 
-    if (ranges.get(0).start < 0 || ranges.get(ranges.size() - 1).end > length()) {
+    if (ranges.getFirst().start < 0 || ranges.getLast().end > length()) {
       throw new IllegalArgumentException("Text ranges " + ranges + " should be between 0 and " + length());
     }
     for (int i = 1; i < ranges.size(); i++) {
@@ -262,9 +262,9 @@ public final class TextContentImpl extends UserDataHolderBase implements TextCon
     }
 
     if (newTokens.isEmpty()) {
-      PsiToken first = (PsiToken) tokens.get(0);
+      PsiToken first = (PsiToken) tokens.getFirst();
       TokenKind kind1 = first.kind;
-      TokenKind kind2 = ((PsiToken)tokens.get(tokens.size() - 1)).kind;
+      TokenKind kind2 = ((PsiToken)tokens.getLast()).kind;
       TokenKind mostUnknown = kind1.compareTo(kind2) > 0 ? kind1 : kind2;
       newTokens.add(new PsiToken("", first.psi, TextRange.from(first.rangeInPsi.getStartOffset(), 0), mostUnknown));
     }
@@ -502,7 +502,7 @@ public final class TextContentImpl extends UserDataHolderBase implements TextCon
 
     private List<PsiToken> splitToken(int tokenStart, List<Exclusion> affecting) {
       int tokenEnd = tokenStart + length();
-      if (affecting.size() == 1 && affecting.get(0).start < tokenStart && affecting.get(0).end > tokenEnd) {
+      if (affecting.size() == 1 && affecting.getFirst().start < tokenStart && affecting.getFirst().end > tokenEnd) {
         return Collections.emptyList();
       }
 
@@ -519,7 +519,7 @@ public final class TextContentImpl extends UserDataHolderBase implements TextCon
         }
         prevEnd = range.end;
       }
-      Exclusion lastRange = affecting.get(affecting.size() - 1);
+      Exclusion lastRange = affecting.getLast();
       if (tokenEnd > lastRange.end) {
         shreds.add(withRange(new TextRange(startInPsi + lastRange.end - tokenStart, startInPsi + length())));
       }

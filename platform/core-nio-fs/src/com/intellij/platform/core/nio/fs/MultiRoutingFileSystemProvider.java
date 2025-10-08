@@ -31,7 +31,7 @@ import java.util.function.Function;
  */
 @SuppressWarnings("UseOfSystemOutOrSystemErr")
 public final class MultiRoutingFileSystemProvider
-  extends DelegatingFileSystemProvider<MultiRoutingFileSystemProvider, MultiRoutingFileSystem> {
+  extends TracingFileSystemProvider<MultiRoutingFileSystemProvider, MultiRoutingFileSystem> {
 
   /**
    * A production IDE has two VM options file: the bundled one and the user-defined one.

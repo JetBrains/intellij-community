@@ -37,3 +37,6 @@ fun main() = runBlocking {
 fun use(value: Any) {
 
 }
+
+// IGNORE_K1
+// SKIP_WRONG_DIRECTIVE_CHECK

@@ -27,10 +27,7 @@ import com.intellij.util.ThreeState;
 import com.intellij.util.concurrency.annotations.RequiresEdt;
 import com.intellij.util.ui.VcsSynchronousProgressWrapper;
 import com.intellij.vcs.commit.CommitMode;
-import org.jetbrains.annotations.Nls;
-import org.jetbrains.annotations.NonNls;
-import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
+import org.jetbrains.annotations.*;
 
 import java.util.Collection;
 import java.util.Collections;
@@ -274,6 +271,7 @@ public abstract class AbstractVcs extends StartedActivated {
    * @return true if the path is managed by this VCS, false otherwise.
    * @deprecated Use {@link VcsRootChecker} instead.
    */
+  @ApiStatus.Internal
   @Deprecated(forRemoval = true)
   public boolean fileIsUnderVcs(FilePath filePath) {
     return true;
@@ -317,13 +315,11 @@ public abstract class AbstractVcs extends StartedActivated {
   @RequiresEdt
   public void enableIntegration(@Nullable VirtualFile targetDirectory) {
     ProjectLevelVcsManager vcsManager = ProjectLevelVcsManager.getInstance(myProject);
-    if (vcsManager != null) {
-      if (targetDirectory != null) {
-        vcsManager.setDirectoryMappings(Collections.singletonList(new VcsDirectoryMapping(targetDirectory.getPath(), getName())));
-      }
-      else {
-        vcsManager.setDirectoryMappings(Collections.singletonList(VcsDirectoryMapping.createDefault(getName())));
-      }
+    if (targetDirectory != null) {
+      vcsManager.setDirectoryMappings(Collections.singletonList(new VcsDirectoryMapping(targetDirectory.getPath(), getName())));
+    }
+    else {
+      vcsManager.setDirectoryMappings(Collections.singletonList(VcsDirectoryMapping.createDefault(getName())));
     }
   }
 
@@ -493,7 +489,8 @@ public abstract class AbstractVcs extends StartedActivated {
    * @return {@code true} if directory is managed by this VCS
    * @deprecated Use {@link VcsRootChecker} instead.
    */
-  @Deprecated
+  @ApiStatus.Internal
+  @Deprecated(forRemoval = true)
   public boolean isVersionedDirectory(VirtualFile dir) {
     return false;
   }
@@ -525,6 +522,7 @@ public abstract class AbstractVcs extends StartedActivated {
    * Consider implementing other means of automatic VCS root detection,
    * such as {@link VcsRootChecker#detectProjectMappings(Project, Collection, Set)} or {@link VcsRootChecker#isRoot(VirtualFile)}.
    */
+  @ApiStatus.Internal
   @Deprecated
   public @Nullable RootsConvertor getCustomConvertor() {
     return null;
@@ -579,6 +577,7 @@ public abstract class AbstractVcs extends StartedActivated {
     return false;
   }
 
+  @ApiStatus.Internal
   @Deprecated
   public @NotNull <S> List<S> filterUniqueRoots(@NotNull List<S> in, @NotNull Function<? super S, ? extends VirtualFile> convertor) {
     if (!allowsNestedRoots()) {

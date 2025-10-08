@@ -1,0 +1,25 @@
+package org.example;
+
+import org.jetbrains.annotations.Nullable;
+
+public class TestAnnotationExtendObjectStaticMethods {
+   public static void main(String[] args) {
+   }// 8
+
+   public static native <T extends @Nullable Object> Iterable<T> concat(Iterable<? extends T> var0, Iterable<? extends T> var1);
+
+   public static native <T extends @Nullable String> Iterable<T> concat2(Iterable<? extends T> var0, Iterable<? extends T> var1);
+
+   public static native <T extends String> Iterable<T> concat3(Iterable<? extends T> var0, Iterable<? extends T> var1);
+
+   public static native <T> Iterable<T> concat4(Iterable<? extends T> var0, Iterable<? extends T> var1);
+}
+
+class 'org/example/TestAnnotationExtendObjectStaticMethods' {
+   method 'main ([Ljava/lang/String;)V' {
+      0      6
+   }
+}
+
+Lines mapping:
+8 <-> 7

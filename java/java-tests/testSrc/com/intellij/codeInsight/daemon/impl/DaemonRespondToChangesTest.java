@@ -1582,7 +1582,7 @@ public class DaemonRespondToChangesTest extends DaemonAnalyzerTestCase {
         }
       }
       if (System.currentTimeMillis() > deadline) {
-        DaemonRespondToChangesPerformanceTest.dumpThreadsToConsole();
+        DaemonRespondToChangesPerfTest.dumpThreadsToConsole();
         fail("Too long waiting for daemon to finish ("+(System.currentTimeMillis()-start)+"ms already)");
       }
       PlatformTestUtil.dispatchAllInvocationEventsInIdeEventQueue();
@@ -2159,7 +2159,7 @@ public class DaemonRespondToChangesTest extends DaemonAnalyzerTestCase {
               }
             });
             //updater.assertNoDuplicates(myFile, getErrorsFromMarkup(markupModel), "errors from markup ");
-            myDaemonCodeAnalyzer.restart(myFile);
+            myDaemonCodeAnalyzer.restart(myFile, this);
             List<HighlightInfo> errorsFromMarkup = getErrorsFromMarkup(markupModel);
             //updater.assertNoDuplicates(myFile, errorsFromMarkup, "errors from markup ");
             //((HighlightInfoUpdaterImpl)HighlightInfoUpdater.getInstance(getProject())).assertMarkupDataConsistent(myFile);
@@ -2439,4 +2439,25 @@ public class DaemonRespondToChangesTest extends DaemonAnalyzerTestCase {
     }
   }
 
+
+  public void testStartingTypingCommentMustExtendExistingHighlighterButShrinkItBackAfterRehighlighting() {
+    @Language("JAVA")
+    String text = """
+      class X {
+         void foo() {
+           Str/*ing xxx;
+         }
+      }""";
+
+    configureByText(JavaFileType.INSTANCE, text);
+    List<HighlightInfo> errs = highlightErrors();
+    HighlightInfo info = ContainerUtil.find(errs, e -> "Cannot resolve symbol 'Str'".equals(e.getDescription()));
+    assertTrue(errs.toString(), info != null && info.getText().equals("Str"));
+
+    int i = getEditor().getDocument().getText().indexOf("/*");
+    WriteCommandAction.writeCommandAction(getProject()).run(() -> getEditor().getDocument().insertString(i, "/*"));
+    errs = highlightErrors();
+    info = ContainerUtil.find(errs, e -> "Cannot resolve symbol 'Str'".equals(e.getDescription()));
+    assertTrue(errs.toString(), info != null && info.getText().equals("Str"));
+  }
 }

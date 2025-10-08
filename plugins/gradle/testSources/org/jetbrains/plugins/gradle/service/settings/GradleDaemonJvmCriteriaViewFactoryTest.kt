@@ -59,8 +59,9 @@ class GradleDaemonJvmCriteriaViewFactoryTest : GradleDaemonJvmCriteriaViewFactor
 
   @Test
   fun `test Given created view Then dropdown items are the expected ones`() {
-    createDaemonJvmCriteriaView(GradleVersion.version("8.9")).run {
-      assertVersionDropdownItems()
+    val gradleVersion = GradleVersion.version("9.1.0")
+    createDaemonJvmCriteriaView(gradleVersion).run {
+      assertVersionDropdownItems(gradleVersion)
       assertVendorDropdownItems()
     }
   }

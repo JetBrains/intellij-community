@@ -3,12 +3,18 @@ package com.jetbrains.python.inspections;
 
 import com.intellij.openapi.application.WriteAction;
 import com.intellij.openapi.vfs.VirtualFile;
+import com.jetbrains.python.PyPsiBundle;
+import com.jetbrains.python.PythonFileType;
 import com.jetbrains.python.fixtures.PyInspectionTestCase;
 import com.jetbrains.python.psi.LanguageLevel;
+import com.jetbrains.python.psi.PyClass;
+import com.jetbrains.python.psi.PyFile;
+import com.jetbrains.python.psi.types.TypeEvalContext;
 import org.jetbrains.annotations.NotNull;
 
 import java.io.IOException;
 import java.io.UncheckedIOException;
+import java.util.List;
 
 public class PyDunderSlotsInspectionTest extends PyInspectionTestCase {
 
@@ -301,6 +307,106 @@ public class PyDunderSlotsInspectionTest extends PyInspectionTestCase {
                        def __init__(self, a: int) -> None:
                            self.a = a""");
   }
+
+  // PY-76811
+  public void testDataclassSlotsEnabledTwice() {
+    doTestByText("""
+                   from dataclasses import dataclass
+                   
+                   @dataclass(<warning descr="A data class that explicitly defines '__slots__' must not be configured with 'slots=True'">slots=True</warning>)
+                   class C:
+                        __slots__ = ("a",)
+                   """);
+  }
+
+  // PY-76811
+  public void testDataclassSlotsEnabledTwiceQuickFix() {
+    String before = """
+      from dataclasses import dataclass
+      
+      @dataclass(<warning descr="A data class that explicitly defines '__slots__' must not be configured with 'slots=True'">slots=<caret>True</warning>)
+      class C:
+          __slots__ = ("a",)
+      """;
+
+    String after = """
+      from dataclasses import dataclass
+      
+      @dataclass()
+      class C:
+          __slots__ = ("a",)
+      """;
+
+    myFixture.configureByText(PythonFileType.INSTANCE, before);
+    configureInspection();
+    var action = myFixture.findSingleIntention(PyPsiBundle.message("QFIX.dunder.slots.enabled.twice"));
+    myFixture.launchAction(action);
+    myFixture.checkResult(after);
+  }
+
+  // PY-76811
+  public void testDataclassSlotsExcludesInitVarClassVarUnannotatedAndNonFields() {
+    String code = """
+      from dataclasses import dataclass, InitVar
+      from typing import ClassVar
+      
+      @dataclass(slots=True)
+      class C1:
+          a: int                    # should be slotted
+          b: ClassVar[int]          # excluded (ClassVar)
+          c = 1                     # excluded (unannotated class attr)
+          d: InitVar[int]           # excluded (InitVar)
+      
+          # Non-field members should never become slots
+          def meth(self):           # excluded (method)
+              pass
+      
+          @property                 # excluded (property)
+          def p(self) -> int:
+              return 0
+      """;
+
+    PyClass cls = loadClass("C1", code);
+    TypeEvalContext ctx = TypeEvalContext.codeAnalysis(myFixture.getProject(), cls.getContainingFile());
+
+    List<String> slots = cls.getSlots(ctx);
+    assertNotNull("Slots should be computed for dataclass(slots=True)", slots);
+
+    // Only 'a' should be present
+    assertEquals(List.of("a"), slots);
+  }
+
+  // PY-76811
+  public void testDataclassSlotsExcludesInitVarAndClassVarViaAliases() {
+    String code = """
+      import dataclasses as dc
+      import typing as t
+      
+      @dc.dataclass(slots=True)
+      class C2:
+          ok: int                  # should be slotted
+          cv: t.ClassVar[str]      # excluded
+          iv: dc.InitVar[bytes]    # excluded
+          u = object()             # excluded (unannotated)
+      """;
+
+    PyClass cls = loadClass("C2", code);
+    TypeEvalContext ctx = TypeEvalContext.codeAnalysis(myFixture.getProject(), cls.getContainingFile());
+
+    List<String> slots = cls.getSlots(ctx);
+    assertNotNull("Slots should be computed for dataclass(slots=True)", slots);
+
+    assertEquals(List.of("ok"), slots);
+  }
+
+  private @NotNull PyClass loadClass(@NotNull String className, @NotNull String code) {
+    myFixture.configureByText(PythonFileType.INSTANCE, code);
+    PyFile pyFile = (PyFile)myFixture.getFile();
+    PyClass cls = pyFile.findTopLevelClass(className);
+    assertNotNull("Class " + className + " should be found", cls);
+    return cls;
+  }
+
 
   private void doTestPy2() {
     runWithLanguageLevel(LanguageLevel.PYTHON27, this::doTest);

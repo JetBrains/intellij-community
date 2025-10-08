@@ -6,7 +6,7 @@
       Supports <a href="https://junit.org">JUnit</a> tests.
       The following features are available:
         <ul>
-        <li>Ability to create JUnit 3.x, JUnit 4.x or JUnit 5.x tests.</li>
+        <li>Ability to create JUnit 3.x, JUnit 4.x, JUnit 5.x or JUnit 6.x tests.</li>
         <li>Navigation between a test and test subject.</li>
         <li>Running tests.</li>
         <li>Viewing test results in the dedicated Test Runner tab of the Run tool window.</li>
@@ -28,7 +28,8 @@
     <cantBeStatic implementation="com.intellij.execution.junit2.inspection.JUnitCantBeStaticExtension" />
     <testFramework implementation="com.intellij.execution.junit.JUnit4Framework" id="junit4"/>
     <testFramework implementation="com.intellij.execution.junit.JUnit3Framework" id="junit3" order="after junit4"/>
-    <testFramework implementation="com.intellij.execution.junit.JUnit5Framework" id="junit5" order="after junit3"/>
+    <testFramework implementation="com.intellij.execution.junit.JUnit6Framework" id="junit6" order="after junit3"/>
+    <testFramework implementation="com.intellij.execution.junit.JUnit5Framework" id="junit5" order="after junit6"/>
     <configurationType implementation="com.intellij.execution.junit.JUnitConfigurationType"/>
     <library.dependencyScopeSuggester implementation="com.intellij.execution.junit.JUnitDependencyScopeSuggester"/>
     <externalSystem.runConfigurationImporter implementation="com.intellij.execution.junit.JUnitRunConfigurationImporter"/>
@@ -49,6 +50,7 @@
     <stacktrace.fold substring="at com.intellij.junit3."/>
     <stacktrace.fold substring="at com.intellij.junit4."/>
     <stacktrace.fold substring="at com.intellij.junit5."/>
+    <stacktrace.fold substring="at com.intellij.junit6."/>
     <stacktrace.fold substring="at com.intellij.rt.junit."/>
     <stacktrace.fold substring="at junit.framework.TestSuite.run"/>
     <stacktrace.fold substring="at junit.framework.TestCase.run"/>
@@ -60,6 +62,7 @@
     <programRunner implementation="com.intellij.execution.junit.JUnitDebuggerRunner"/>
     <codeInsight.externalLibraryResolver implementation="com.intellij.execution.junit.codeInsight.JUnitExternalLibraryResolver"/>
     <codeInsight.externalLibraryResolver implementation="com.intellij.execution.junit.codeInsight.JUnit5ExternalLibraryResolver"/>
+    <codeInsight.externalLibraryResolver implementation="com.intellij.execution.junit.codeInsight.JUnit6ExternalLibraryResolver"/>
     <junitListener implementation="com.intellij.junit4.JUnitTestDiscoveryListener"/>
     <runConfigurationProducer implementation="com.intellij.execution.junit.testDiscovery.JUnitTestDiscoveryConfigurationProducer"/>
     <testDiscoveryProducer implementation="com.intellij.execution.testDiscovery.LocalTestDiscoveryProducer"/>

@@ -13,6 +13,9 @@ f:com.intellij.psi.search.FileTypeIndex
 - *sf:INDEX_CHANGE_TOPIC:com.intellij.util.messages.Topic
 *:com.intellij.psi.search.FileTypeIndex$IndexChangeListener
 - a:onChangedForFileType(com.intellij.openapi.fileTypes.FileType):V
+f:com.intellij.psi.search.FilenameIndex
+- *s:firstVirtualFileWithName(java.lang.String,Z,com.intellij.psi.search.GlobalSearchScope,com.intellij.util.indexing.IdFilter):com.intellij.openapi.vfs.VirtualFile
+- *s:hasVirtualFileWithName(java.lang.String,Z,com.intellij.psi.search.GlobalSearchScope,com.intellij.util.indexing.IdFilter):Z
 f:com.intellij.psi.search.IndexPattern
 - *:getWordToHighlight():java.lang.String
 a:com.intellij.psi.stubs.StubIndex

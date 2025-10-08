@@ -19,7 +19,6 @@ import java.io.InputStream
 import java.net.URL
 import java.nio.file.Files
 import java.nio.file.Path
-import java.nio.file.Paths
 import java.util.*
 
 @ApiStatus.Internal
@@ -126,7 +125,7 @@ object GrazieDynamic : DynamicPluginListener {
       try {
         Class.forName(className, true, it)
       }
-      catch (e: ClassNotFoundException) {
+      catch (_: ClassNotFoundException) {
         null
       }
     }
@@ -142,7 +141,7 @@ object GrazieDynamic : DynamicPluginListener {
 
   fun getResources(path: String): List<URL> {
     return forClassLoader { loader ->
-      loader.getResources(path.removePrefix("/")).toList().takeIf<List<URL>> { it.isNotEmpty<URL?>() }
+      loader.getResources(path.removePrefix("/")).toList().takeIf { it.isNotEmpty<URL?>() }
     }.orEmpty()
   }
 

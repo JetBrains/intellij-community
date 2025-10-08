@@ -244,6 +244,7 @@ public abstract class InplaceRefactoring {
     }
   }
 
+  /// @return Scope for in-place template and highlighting in file. When `null` modal dialog refactoring will be started instead.
   protected @Nullable PsiElement checkLocalScope() {
     SearchScope searchScope = PsiSearchHelper.getInstance(myElementToRename.getProject()).getUseScope(myElementToRename);
     if (searchScope instanceof LocalSearchScope local) {

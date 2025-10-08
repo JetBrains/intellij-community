@@ -2,6 +2,7 @@
 package org.jetbrains.plugins.gitlab.mergerequest.data
 
 import com.intellij.collaboration.api.page.ApiPageUtil
+import com.intellij.collaboration.util.CodeReviewDomainEntity
 import com.intellij.openapi.components.serviceAsync
 import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.project.Project
@@ -24,6 +25,7 @@ import org.jetbrains.plugins.gitlab.util.GitLabRegistry
 
 private val LOG = logger<GitLabProject>()
 
+@CodeReviewDomainEntity
 interface GitLabProject {
   val projectMapping: GitLabProjectMapping
 
@@ -50,6 +52,7 @@ interface GitLabProject {
   fun reloadData()
 }
 
+@CodeReviewDomainEntity
 class GitLabLazyProject(
   private val project: Project,
   parentCs: CoroutineScope,

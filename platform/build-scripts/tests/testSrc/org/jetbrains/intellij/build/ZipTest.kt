@@ -38,6 +38,7 @@ import java.util.zip.CRC32
 import java.util.zip.Deflater
 import java.util.zip.ZipEntry
 import java.util.zip.ZipInputStream
+import kotlin.io.path.createDirectories
 import kotlin.io.path.name
 import kotlin.random.Random
 
@@ -116,11 +117,15 @@ class ZipTest {
 
     val archiveFile = tempDir.resolve("archive.zip")
     val fs = dir.fileSystem
-    buildJar(archiveFile, listOf(DirSource(dir = dir, excludes = listOf(
-      fs.getPathMatcher("glob:**/entry-item*"),
-      fs.getPathMatcher("glob:test-relative-ignore"),
-      fs.getPathMatcher("glob:**/icon-robots.txt"),
-    ))))
+    buildJar(archiveFile, listOf(DirSource(
+      dir = dir,
+      excludes = listOf(
+        fs.getPathMatcher("glob:**/entry-item*"),
+        fs.getPathMatcher("glob:test-relative-ignore"),
+        fs.getPathMatcher("glob:**/icon-robots.txt"),
+      ),
+      moduleName = null,
+    )))
 
     checkZip(archiveFile) { zipFile ->
       if (zipFile is ImmutableZipFile) {
@@ -174,7 +179,7 @@ class ZipTest {
     val archiveFile = tempDir.resolve("archive.zip")
     val regex = Regex("^zip-excl.*")
     buildJar(archiveFile, listOf(
-      ZipSource(file = zip, distributionFileEntryProducer = null, filter = { name -> !regex.matches(name)})
+      ZipSource(file = zip, distributionFileEntryProducer = null, filter = { name -> !regex.matches(name)}, moduleName = null)
     ))
 
     checkZip(archiveFile) { zipFile ->
@@ -191,7 +196,7 @@ class ZipTest {
     Files.writeString(dir.resolve("file2"), "2")
 
     val archiveFile = tempDir.resolve("archive.zip")
-    buildJar(targetFile = archiveFile, sources = listOf(DirSource(dir)), compress = true)
+    buildJar(targetFile = archiveFile, sources = listOf(DirSource(dir, moduleName = null)), compress = true)
 
     java.util.zip.ZipFile(archiveFile.toString()).use { zipFile ->
       assertThat(zipFile.entries().asSequence().map { it.name }.toList())
@@ -637,6 +642,27 @@ class ZipTest {
         assertThat(entry.data.size).isEqualTo(item.size)
         assertThat(entry.data.all { it == 0xFF.toByte() }).isTrue()
       }
+    }
+  }
+
+  @Test
+  fun `ensure entries are in sorted order`(@TempDir tempDir: Path) {
+    val dir = Files.createDirectories(tempDir.resolve("dir"))
+    Files.writeString(dir.resolve("1"), "1")
+    Files.writeString(dir.resolve("2").resolve("1").createDirectories().resolve("1"), "2.1.1")
+    Files.writeString(dir.resolve("3").createDirectories().resolve("1"), "3.1")
+    Files.writeString(dir.resolve("4"), "4")
+
+    val archiveFile = tempDir.resolve("archive.zip")
+    zip(archiveFile, mapOf(dir to ""), addDirEntriesMode = AddDirEntriesMode.NONE)
+
+    HashMapZipFile.load(archiveFile).use { zipFile ->
+      assertThat(zipFile.entries.map { it.name }).containsExactly(
+        "1",
+        "2/1/1",
+        "3/1",
+        "4",
+      )
     }
   }
 }

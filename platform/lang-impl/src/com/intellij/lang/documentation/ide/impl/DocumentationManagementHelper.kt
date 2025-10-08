@@ -12,7 +12,7 @@ import com.intellij.platform.ide.documentation.DOCUMENTATION_TARGETS
 
 @Service(Service.Level.PROJECT)
 class DocumentationManagementHelper(private val project: Project) {
-  fun showQuickDoc(editor: Editor, target: DocumentationTarget, popupClosedCallback: (() -> Unit)? = null) {
+  fun showQuickDoc(editor: Editor, target: DocumentationTarget, popupClosedCallback: (() -> Unit)? = null, documentationUiClosedCallback: (() -> Unit)? = null) {
     val context = DataContext {
       when (it) {
         CommonDataKeys.EDITOR.name -> editor
@@ -20,7 +20,7 @@ class DocumentationManagementHelper(private val project: Project) {
         else -> null
       }
     }
-    DocumentationManager.getInstance(project).actionPerformed(context, popupClosedCallback)
+    DocumentationManager.getInstance(project).actionPerformed(context, popupClosedCallback, documentationUiClosedCallback)
   }
 
   companion object {

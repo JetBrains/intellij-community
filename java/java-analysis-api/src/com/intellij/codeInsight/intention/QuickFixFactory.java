@@ -13,6 +13,7 @@ import com.intellij.pom.java.LanguageLevel;
 import com.intellij.psi.*;
 import com.intellij.psi.tree.IElementType;
 import com.intellij.psi.util.PropertyMemberType;
+import com.intellij.util.concurrency.annotations.RequiresBackgroundThread;
 import org.jetbrains.annotations.*;
 
 import java.util.*;
@@ -126,6 +127,8 @@ public abstract class QuickFixFactory {
   public abstract @NotNull IntentionAction createNavigateToAlreadyDeclaredVariableFix(@NotNull PsiVariable variable);
 
   public abstract @NotNull IntentionAction createNavigateToDuplicateElementFix(@NotNull NavigatablePsiElement element);
+
+  public abstract @NotNull IntentionAction createShowDuplicateElementsFix(@NotNull List<@NotNull ? extends NavigatablePsiElement> elements);
 
   public abstract @NotNull IntentionAction createConvertToStringLiteralAction();
 
@@ -278,6 +281,7 @@ public abstract class QuickFixFactory {
 
   public abstract @NotNull IntentionAction createCreateAnnotationMethodFromUsageFix(@NotNull PsiNameValuePair pair);
 
+  @RequiresBackgroundThread
   public abstract @NotNull ModCommandAction createOptimizeImportsFix(boolean fixOnTheFly, @NotNull PsiFile file);
 
   public abstract @NotNull IntentionAction createSafeDeleteUnusedParameterInHierarchyFix(@NotNull PsiParameter parameter, boolean excludingHierarchy);
@@ -311,9 +315,16 @@ public abstract class QuickFixFactory {
   public abstract @NotNull List<@NotNull LocalQuickFix> registerOrderEntryFixes(@NotNull PsiReference reference,
                                                                                 @NotNull List<? super IntentionAction> registrar);
 
-  public abstract @NotNull List<@NotNull LocalQuickFix> registerOrderEntryFixes(@NotNull PsiReference reference,
-                                                                                @NotNull PsiMember target,
-                                                                                @NotNull List<? super IntentionAction> registrar);
+  /**
+   * Add fixes that modify the project structure to satisfy the missing dependency (e.g., add module dependency, or library dependency).
+   * 
+   * @param reference a reference to an inaccessible target (due to a missing dependency)
+   * @param target a desired target
+   * @param registrar list of fixes to add new fixes to
+   */
+  public abstract void registerOrderEntryFixes(@NotNull PsiReference reference,
+                                               @NotNull PsiMember target,
+                                               @NotNull List<? super IntentionAction> registrar);
 
   /**
    * @param annotationMethods unused, could be empty array
@@ -528,4 +539,20 @@ public abstract class QuickFixFactory {
   public abstract @Nullable ModCommandAction createRecordThisDelegateFix(PsiMethod psi);
 
   public abstract @Nullable CommonIntentionAction createLiftThrowOutOfSwitchExpression(@NotNull PsiSwitchExpression psiSwitchExpression);
+
+  /**
+   * Creates a list of ModCommandAction objects to fix a type with a possible wrong import.
+   */
+  public abstract @NotNull List<? extends @NotNull ModCommandAction> createReplaceTypeWithWrongImportFixes(@Nullable PsiJavaCodeReferenceElement reference);
+
+  /**
+   * Creates an action to change an old PsiElement to a similar keyword
+   * from the provided list of new keywords.
+   *
+   * @param old the PsiElement to be replaced; may be null if no element exists.
+   * @param newKeywords a collection of new keyword strings to replace the old element; must not be null.
+   * @return a ModCommandAction that represents the change, or null if the action cannot be created.
+   */
+  public abstract @Nullable ModCommandAction createChangeToSimilarKeyword(@Nullable PsiElement old,
+                                                                          @NotNull Collection<@NotNull String> newKeywords);
 }

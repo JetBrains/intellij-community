@@ -247,11 +247,11 @@ fun tryCheckingFileInScope(
       val context = contextInfo.contexts.first()
       @Suppress("DEPRECATION")
       val actualCodeInsightContext = contextManager.getOrSetContext(viewProvider, context)
-      if (actualCodeInsightContext === context) {
+      if (actualCodeInsightContext == context) {
         return true
       }
       else {
-        fileLogger().warn("Unexpected context $actualCodeInsightContext for $context for $viewProvider", Throwable())
+        fileLogger().warn(Throwable("Nondeterministic context assignment: $actualCodeInsightContext vs $context for $viewProvider"))
 
         return globalScope.contains(file, actualCodeInsightContext)
       }

@@ -3,7 +3,7 @@
 package org.jetbrains.kotlin.idea.update
 
 import com.intellij.ide.plugins.IdeaPluginDescriptor
-import com.intellij.ide.plugins.PluginUpdateStatus
+import org.jetbrains.kotlin.idea.PluginUpdateStatus
 import org.jetbrains.kotlin.idea.base.util.KotlinPlatformUtils
 
 // Do an additional verification with PluginUpdateVerifier. Enabled only in AS 3.2+

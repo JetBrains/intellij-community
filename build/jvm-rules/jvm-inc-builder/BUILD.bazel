@@ -32,6 +32,7 @@ kt_jvm_library(
     "//:qdox",
     "//src/worker-framework",
     "//src/worker-util",
+    "//zip",
     "patched-kotlin-compiler-for-bazel",
     "//:kotlin-compose-compiler-plugin",
     "//:kotlin-serialization-compiler-plugin",
@@ -94,51 +95,51 @@ java_library(
   name = "patched-kotlin-compiler-for-bazel",
   visibility = ["//visibility:public"],  # used by @community//:monorepo-jvm-builder (@community//fleet/compiler-plugins/expects:expects-compiler-plugin, etc.)
   exports = [
-    ":kotlin-compiler-2_2_20-RC_http_import",
-    ":kotlin-stdlib-jdk8-2_2_20-RC_http_import",
-    ":kotlin-stdlib-2_2_20-RC_http_import",
-    ":kotlin-stdlib-jdk7-2_2_20-RC_http_import",
-    ":kotlin-script-runtime-2_2_20-RC_http_import",
-    ":kotlin-reflect-1_6_10_http_import",
+    ":jvm-abi-gen-2_2_21-RC-376_import",
+    ":kotlin-compiler-2_2_21-RC-376_import",
+    ":kotlin-stdlib-jdk8-2_2_21-RC-376_import",
+    ":kotlin-stdlib-2_2_21-RC-376_import",
+    ":kotlin-stdlib-jdk7-2_2_21-RC-376_import",
+    ":kotlin-script-runtime-2_2_21-RC-376_import",
+    ":kotlin-reflect-2_2_21-RC-376_import",
     #":kotlinx-coroutines-core-jvm-1_8_0_http_import",
     #":annotations-23_0_0_http_import",
-    ":patched-jvm-abi-gen-for-bazel_http_import",
   ],
 )
 
 jvm_import(
-  name = "patched-jvm-abi-gen-for-bazel_http_import",
-  jar = "@jvm-abi-gen-2_2_20-RC_http//file",
+  name = "jvm-abi-gen-2_2_21-RC-376_import",
+  jar = "@jvm-abi-gen-2_2_21-RC-376_http//file",
 )
 
 jvm_import(
-    name = "kotlin-compiler-2_2_20-RC_http_import",
-    jar = "@kotlin-compiler-2_2_20-RC_http//file",
+    name = "kotlin-compiler-2_2_21-RC-376_import",
+    jar = "@kotlin-compiler-2_2_21-RC-376_http//file",
 )
 
 jvm_import(
-    name = "kotlin-stdlib-jdk8-2_2_20-RC_http_import",
-    jar = "@kotlin-stdlib-jdk8-2_2_20-RC_http//file",
+    name = "kotlin-stdlib-jdk8-2_2_21-RC-376_import",
+    jar = "@kotlin-stdlib-jdk8-2_2_21-RC-376_http//file",
 )
 
 jvm_import(
-    name = "kotlin-stdlib-2_2_20-RC_http_import",
-    jar = "@kotlin-stdlib-2_2_20-RC_http//file",
+    name = "kotlin-stdlib-2_2_21-RC-376_import",
+    jar = "@kotlin-stdlib-2_2_21-RC-376_http//file",
 )
 
 jvm_import(
-    name = "kotlin-stdlib-jdk7-2_2_20-RC_http_import",
-    jar = "@kotlin-stdlib-jdk7-2_2_20-RC_http//file",
+    name = "kotlin-stdlib-jdk7-2_2_21-RC-376_import",
+    jar = "@kotlin-stdlib-jdk7-2_2_21-RC-376_http//file",
 )
 
 jvm_import(
-    name = "kotlin-script-runtime-2_2_20-RC_http_import",
-    jar = "@kotlin-script-runtime-2_2_20-RC_http//file",
+    name = "kotlin-script-runtime-2_2_21-RC-376_import",
+    jar = "@kotlin-script-runtime-2_2_21-RC-376_http//file",
 )
 
 jvm_import(
-    name = "kotlin-reflect-1_6_10_http_import",
-    jar = "@kotlin-reflect-1_6_10_http//file",
+    name = "kotlin-reflect-2_2_21-RC-376_import",
+    jar = "@kotlin-reflect-2_2_21-RC-376_http//file",
 )
 
 #jvm_import(

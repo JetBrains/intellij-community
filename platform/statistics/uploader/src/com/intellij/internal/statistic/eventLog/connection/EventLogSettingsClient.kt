@@ -130,19 +130,7 @@ abstract class EventLogSettingsClient {
    */
   fun provideMetadataProductUrl(): String? {
     val result = logError {
-      configurationClient.provideMetadataProductUrl()
-    }
-    applicationInfo.logger.info("Statistics. Configuration metadata product url: $result")
-    return result
-  }
-
-  /**
-   * @return versioned metadata product url for the required product version,
-   * null otherwise. Info/warn exception, log exception to 'recorderId.event.log' group.
-   */
-  fun provideMetadataProductUrl(metadataVersion: Int): String? {
-    val result = logError {
-      configurationClient.provideMetadataProductUrl(metadataVersion)
+      configurationClient.provideMetadataProductUrl(applicationInfo.baselineVersion)
     }
     applicationInfo.logger.info("Statistics. Configuration metadata product url: $result")
     return result
@@ -168,8 +156,8 @@ abstract class EventLogSettingsClient {
   /**
    * @return LogEventMetadataFilter.
    */
-  fun provideBaseEventFilter(metadataVersion: Int? = null): LogEventFilter {
-    return LogEventMetadataFilter(notNull(loadApprovedGroupsRules(metadataVersion), EventGroupsFilterRules.empty()))
+  fun provideBaseEventFilter(): LogEventFilter {
+    return LogEventMetadataFilter(notNull(loadApprovedGroupsRules(), EventGroupsFilterRules.empty()))
   }
 
   /**
@@ -198,8 +186,8 @@ abstract class EventLogSettingsClient {
 
   }
 
-  private fun loadApprovedGroupsRules(metadataVersion: Int? = null): EventGroupsFilterRules<EventLogBuild>? {
-    val productUrl = if (metadataVersion == null) provideMetadataProductUrl() else provideMetadataProductUrl(metadataVersion)
+  private fun loadApprovedGroupsRules(): EventGroupsFilterRules<EventLogBuild>? {
+    val productUrl = provideMetadataProductUrl()
     if (productUrl == null) return null
     return EventLogMetadataUtils.loadAndParseGroupsFilterRules(productUrl, applicationInfo.connectionSettings)
   }

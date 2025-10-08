@@ -94,4 +94,58 @@ public class GroovyHighlighting50Test extends LightGroovyTestCase implements Hig
                        }
                        """, GroovyAssignabilityCheckInspection.class);
   }
+
+  public void testUnnamedVariableIsNotDuplicateInVariableDefinitions() {
+    highlightingTest("""
+                       void f() {
+                           def (_, _) = [1, 2]
+                       }
+                       """);
+  }
+
+  public void testUnnamedVariableIsNotDuplicateInVariableDefinitionsWithOuterScope() {
+    highlightingTest("""
+                       void f() {
+                           def (_) = [1]
+                           def _ = 1
+                       }
+                       """);
+  }
+
+  public void testUnnamedVariableIsNotDuplicateInLambdaExpression() {
+    highlightingTest("""
+                       void f() {
+                           def x = (_, _, a, b) -> a + b
+                       }
+                       """);
+  }
+
+  public void testUnnamedVariableIsNotDuplicateInLambdaExpressionWithScope() {
+    highlightingTest("""
+                       void f() {
+                           def x = (_, _, a) -> {
+                              def _ = 1
+                              println a
+                           }
+                       }
+                       """);
+  }
+
+  public void testUnnamedVariableIsNotDuplicateInClosure() {
+    highlightingTest("""
+                       void f() {
+                           def x = {a, _, _ -> a }
+                       }
+                       """);
+  }
+
+  public void testUnnamedVariableIsNotDuplicateInClosureWithScope() {
+    highlightingTest("""
+                       void f() {
+                           def x = {_ ->
+                           def _ = 1
+                            }
+                       }
+                       """);
+  }
 }

@@ -75,7 +75,9 @@ object GradleLibrarySourcesDownloader {
       sourceArtifactNotation,
       externalProjectPath
     ).await()
-    attachSources(path, orderEntries)
+    if (path != null) {
+      attachSources(path, orderEntries)
+    }
     return path
   }
 

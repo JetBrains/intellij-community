@@ -382,7 +382,7 @@ public final class PsiElementFactoryImpl extends PsiJavaParserFacadeImpl impleme
         return cachedObjectType;
       }
     }
-    return new PsiClassReferenceType(createReferenceElementByFQClassName(qName, resolveScope), null);
+    return new PsiClassReferenceType(createReferenceElementByFQClassName(qName, resolveScope), null, TypeAnnotationProvider.EMPTY);
   }
 
   @Override

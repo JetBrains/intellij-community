@@ -125,6 +125,9 @@ object Switcher : BaseSwitcherAction(null), ActionRemoteBehaviorSpecification.Fr
     private val uiUpdateScope: CoroutineScope
     private val modelUpdateScope: CoroutineScope
 
+    private val unpinnedFilesKind: RecentFileKind
+      get() = if (EditorWindow.tabLimit > 1) RecentFileKind.RECENTLY_OPENED_UNPINNED else RecentFileKind.RECENTLY_OPENED
+
     override fun uiDataSnapshot(sink: DataSink) {
       sink[CommonDataKeys.PROJECT] = project
       sink[PlatformCoreDataKeys.SELECTED_ITEM] =
@@ -269,7 +272,7 @@ object Switcher : BaseSwitcherAction(null), ActionRemoteBehaviorSpecification.Fr
 
       // setup files
       val initialData = when {
-        !pinned -> frontendModel.getRecentFiles(RecentFileKind.RECENTLY_OPENED_UNPINNED)
+        !pinned -> frontendModel.getRecentFiles(unpinnedFilesKind)
         onlyEdited -> frontendModel.getRecentFiles(RecentFileKind.RECENTLY_EDITED)
         else -> frontendModel.getRecentFiles(RecentFileKind.RECENTLY_OPENED)
       }
@@ -394,7 +397,7 @@ object Switcher : BaseSwitcherAction(null), ActionRemoteBehaviorSpecification.Fr
         .setModalContext(false)
         .setFocusable(true)
         .setRequestFocus(true)
-        .setCancelOnWindowDeactivation(true)
+        .setCancelOnWindowDeactivation(!pinned || !StartupUiUtil.isWaylandToolkit())
         .setCancelOnOtherWindowOpen(true)
         .setMovable(pinned)
         .setDimensionServiceKey(if (pinned) project else null, if (pinned) "SwitcherDM" else null, false)
@@ -501,7 +504,7 @@ object Switcher : BaseSwitcherAction(null), ActionRemoteBehaviorSpecification.Fr
       }
 
       val currentlyShownFileType = when {
-        cbShowOnlyEditedFiles == null -> RecentFileKind.RECENTLY_OPENED_UNPINNED
+        cbShowOnlyEditedFiles == null -> unpinnedFilesKind
         cbShowOnlyEditedFiles.isSelected -> RecentFileKind.RECENTLY_EDITED
         else -> RecentFileKind.RECENTLY_OPENED
       }

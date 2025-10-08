@@ -3,6 +3,7 @@ package org.jetbrains.kotlin.idea.k2.refactoring.introduce.introduceVariable
 
 import com.intellij.codeInsight.lookup.LookupElementBuilder
 import com.intellij.codeInsight.template.*
+import com.intellij.openapi.actionSystem.ex.ActionUtil
 import com.intellij.openapi.command.impl.FinishMarkAction
 import com.intellij.openapi.command.impl.StartMarkAction
 import com.intellij.openapi.editor.Editor
@@ -24,6 +25,9 @@ import org.jetbrains.kotlin.analysis.api.KaExperimentalApi
 import org.jetbrains.kotlin.analysis.api.KaSession
 import org.jetbrains.kotlin.analysis.api.analyze
 import org.jetbrains.kotlin.analysis.api.components.KaDiagnosticCheckerFilter
+import org.jetbrains.kotlin.analysis.api.components.builtinTypes
+import org.jetbrains.kotlin.analysis.api.components.isDenotable
+import org.jetbrains.kotlin.analysis.api.components.isUnitType
 import org.jetbrains.kotlin.analysis.api.fir.diagnostics.KaFirDiagnostic
 import org.jetbrains.kotlin.analysis.api.permissions.KaAllowAnalysisFromWriteAction
 import org.jetbrains.kotlin.analysis.api.permissions.KaAllowAnalysisOnEdt
@@ -33,6 +37,8 @@ import org.jetbrains.kotlin.analysis.api.resolution.KaCallableMemberCall
 import org.jetbrains.kotlin.analysis.api.resolution.singleCallOrNull
 import org.jetbrains.kotlin.analysis.api.symbols.KaSymbolOrigin
 import org.jetbrains.kotlin.analysis.api.symbols.KaValueParameterSymbol
+import org.jetbrains.kotlin.analysis.api.types.KaFlexibleType
+import org.jetbrains.kotlin.analysis.api.types.KaIntersectionType
 import org.jetbrains.kotlin.analysis.api.types.KaType
 import org.jetbrains.kotlin.idea.base.analysis.api.utils.analyzeInModalWindow
 import org.jetbrains.kotlin.idea.base.analysis.api.utils.getImplicitReceivers
@@ -159,7 +165,7 @@ object K2IntroduceVariableHandler : KotlinIntroduceVariableHandler() {
                             }
                         ) {
                             mustSpecifyTypeExplicitly = true
-                        } else if (property.returnType.render(position = Variance.INVARIANT) == expressionRenderedType) {
+                        } else if (property.returnType.toDenotable()?.render(position = Variance.INVARIANT) == expressionRenderedType) {
                             renderedTypeArgumentsIfMightBeNeeded = null
                         } else if (initializer is KtLambdaExpression && !areTypeArgumentsNeededForCorrectTypeInference(initializer)) {
                             mustSpecifyTypeExplicitly = true
@@ -256,6 +262,21 @@ object K2IntroduceVariableHandler : KotlinIntroduceVariableHandler() {
         }
     }
 
+    context(_: KaSession)
+    private fun KaType?.toDenotable(): KaType? {
+        val type = when {
+            this?.isDenotable == true -> this
+            this is KaFlexibleType -> this.lowerBound
+            this is KaIntersectionType -> this.conjuncts.firstOrNull { it.isDenotable }
+            else -> null
+        }
+        return if (type?.isUnitType == true) {
+            null
+        } else {
+            (type ?: builtinTypes.any)
+        }
+    }
+
     @OptIn(KaExperimentalApi::class)
     override fun doRefactoringWithSelectedTargetContainer(
         project: Project,
@@ -273,8 +294,7 @@ object K2IntroduceVariableHandler : KotlinIntroduceVariableHandler() {
             val physicalExpression = expression.substringContextOrThis
 
             val expressionType = substringInfo?.guessLiteralType() ?: calculateExpectedType(physicalExpression)
-            if (expressionType != null && expressionType.isUnitType) return@analyzeInModalWindow null
-            (expressionType ?: builtinTypes.any).render(position = Variance.INVARIANT)
+            expressionType?.toDenotable()?.render(position = Variance.INVARIANT)
         } ?: return showErrorHint(project, editor, KotlinBundle.message("cannot.refactor.expression.has.unit.type"))
 
         val renderedTypeArguments = expression.getPossiblyQualifiedCallExpression()?.let { callExpression ->
@@ -285,7 +305,7 @@ object K2IntroduceVariableHandler : KotlinIntroduceVariableHandler() {
 
         val isInplaceAvailable = isInplaceAvailable(editor, project)
 
-        val allOccurrences = occurrencesToReplace ?: expression.findOccurrences(containers.occurrenceContainer)
+        val allOccurrences = occurrencesToReplace ?: ActionUtil.underModalProgress(expression.project, KotlinBundle.message("find.usages.prepare.dialog.progress")) { expression.findOccurrences(containers.occurrenceContainer) }
 
         val callback = Pass.create { replaceChoice: OccurrencesChooser.ReplaceChoice ->
             val allReplaces = when (replaceChoice) {
@@ -425,12 +445,12 @@ object K2IntroduceVariableHandler : KotlinIntroduceVariableHandler() {
                 chooser.showChooser(expression, allOccurrences, callback)
             }
         } else {
-            callback.accept(OccurrencesChooser.ReplaceChoice.ALL)
+            callback.accept(occurenceReplaceChoice)
         }
     }
 
     override fun KtExpression.findOccurrences(occurrenceContainer: KtElement): List<KtExpression> =
-        analyzeInModalWindow(contextElement = extractableSubstringInfo?.template ?: this, KotlinBundle.message("find.usages.prepare.dialog.progress")) {
+        analyze(extractableSubstringInfo?.template ?: this) {
             K2SemanticMatcher.findMatches(patternElement = this@findOccurrences, scopeElement = occurrenceContainer)
                 .filterNot { it.isAssignmentLHS() }
                 .mapNotNull { match ->

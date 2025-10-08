@@ -750,26 +750,31 @@ public class IndexTest extends JavaCodeInsightFixtureTestCase {
         return true;
       });
 
-
     assertTrue(foundClass.get(0));
     assertTrue(foundMethod.get(0));// allow access stub index processing other index
 
     final List<Boolean> foundClassProcessAll = new ArrayList<>(List.of(false));
     final List<Boolean> foundClassStub = new ArrayList<>(List.of(false));
 
-    StubIndex.getInstance().processAllKeys(JavaStubIndexKeys.CLASS_SHORT_NAMES, getProject(), aClass -> {
-      if (!className.equals(aClass)) return true;
-      foundClassProcessAll.set(0, true);
-      StubIndex.getInstance()
-        .processElements(JavaStubIndexKeys.CLASS_SHORT_NAMES, aClass, getProject(), scope, PsiClass.class, clazz -> {
-          foundClassStub.set(0, true);
-          return true;
-        });
-      return true;
-    });
+    try {
+      StubIndex.getInstance().processAllKeys(JavaStubIndexKeys.CLASS_SHORT_NAMES, getProject(), aClass -> {
+        if (!className.equals(aClass)) return true;
+        foundClassProcessAll.set(0, true);
+        StubIndex.getInstance()
+          .processElements(JavaStubIndexKeys.CLASS_SHORT_NAMES, aClass, getProject(), scope, PsiClass.class, clazz -> {
+            foundClassStub.set(0, true);
+            return true;
+          });
+        return true;
+      });
+      fail("IllegalStateException should be thrown in tests");
+    }
+    catch (IllegalStateException e) {
+      assertEquals("Nesting processElements call under other stub index operation can lead to a deadlock.", e.getMessage());
+    }
 
     assertTrue(foundClassProcessAll.get(0));
-    assertTrue(foundClassStub.get(0));
+    assertFalse(foundClassStub.get(0));
 
     final List<Boolean> foundId = new ArrayList<>(List.of(false));
     final List<Boolean> foundStub = new ArrayList<>(List.of(false));
@@ -970,21 +975,26 @@ public class IndexTest extends JavaCodeInsightFixtureTestCase {
     final List<Boolean> foundClassProcessAll = new ArrayList<>(List.of(false));
     final List<Boolean> foundClassStub = new ArrayList<>(List.of(false));
 
-    StubIndex.getInstance().processAllKeys(JavaStubIndexKeys.CLASS_SHORT_NAMES, getProject(), aClass -> {
-      if (!className.equals(aClass)) return true;
-      foundClassProcessAll.set(0, true);
-      // adding file will add file to index's dirty set, but it should not be processed within current read action
-      myFixture.addFileToProject("Bar.java", "class Bar { }");
-      StubIndex.getInstance()
-        .processElements(JavaStubIndexKeys.CLASS_SHORT_NAMES, aClass, getProject(), scope, PsiClass.class, clazz -> {
-          foundClassStub.set(0, true);
-          return true;
-        });
-      return true;
-    });
+    try {
+      StubIndex.getInstance().processAllKeys(JavaStubIndexKeys.CLASS_SHORT_NAMES, getProject(), aClass -> {
+        if (!className.equals(aClass)) return true;
+        foundClassProcessAll.set(0, true);
+        // adding file will add file to index's dirty set, but it should not be processed within current read action
+        myFixture.addFileToProject("Bar.java", "class Bar { }");
+        StubIndex.getInstance()
+          .processElements(JavaStubIndexKeys.CLASS_SHORT_NAMES, aClass, getProject(), scope, PsiClass.class, clazz -> {
+            foundClassStub.set(0, true);
+            return true;
+          });
+        return true;
+      });
+      fail("IllegalStateException should be thrown in tests");
+    } catch (IllegalStateException e) {
+      assertEquals("Nesting processElements call under other stub index operation can lead to a deadlock.", e.getMessage());
+    }
 
     assertTrue(foundClassProcessAll.get(0));
-    assertTrue(foundClassStub.get(0));// allow access stub index processing other index
+    assertFalse(foundClassStub.get(0));// do not allow access stub index processing other index
   }
 
   public void test_document_increases_beyond_too_large_limit() {
@@ -1420,7 +1430,8 @@ public class IndexTest extends JavaCodeInsightFixtureTestCase {
 
     fileBasedIndex.ensureUpToDate(trigramId, getProject(), GlobalSearchScope.everythingScope(getProject()));
     assertEmpty(fileBasedIndex.getIndex(trigramId).getIndexedFileData(fileId).values());
-    IndexingRequestToken indexingRequest = getProject().getService(ProjectIndexingDependenciesService.class).getLatestIndexingRequestToken();
+    IndexingRequestToken indexingRequest =
+      getProject().getService(ProjectIndexingDependenciesService.class).getLatestIndexingRequestToken();
     assertFalse(IndexingFlag.isFileIndexed(file, indexingRequest.getFileIndexingStamp(file)));
   }
 
@@ -1462,7 +1473,8 @@ public class IndexTest extends JavaCodeInsightFixtureTestCase {
 
   public void test_stub_index_updated_after_language_level_change() {
     VirtualFile file = myFixture.addFileToProject("src1/A.java", "class A {}").getVirtualFile();
-    FilePropertyKey<LanguageLevel> javaLanguageLevelKey = FilePropertyPusher.EP_NAME.findExtension(JavaLanguageLevelPusher.class).getFilePropertyKey();
+    FilePropertyKey<LanguageLevel> javaLanguageLevelKey =
+      FilePropertyPusher.EP_NAME.findExtension(JavaLanguageLevelPusher.class).getFilePropertyKey();
 
     LanguageLevel languageLevel = javaLanguageLevelKey.getPersistentValue(file.getParent());
     assertNotNull(languageLevel);
@@ -1531,7 +1543,8 @@ public class IndexTest extends JavaCodeInsightFixtureTestCase {
 
     VirtualFile scratchTxt = ScratchRootType.getInstance().createScratchFile(getProject(), "Foo.txt", PlainTextLanguage.INSTANCE, "xxx");
     assertTrue(ScratchesSearchScope.getScratchesScope(getProject()).contains(scratchTxt));
-    GlobalSearchScope scratchJava = GlobalSearchScope.getScopeRestrictedByFileTypes(ScratchesSearchScope.getScratchesScope(getProject()), JavaFileType.INSTANCE);
+    GlobalSearchScope scratchJava =
+      GlobalSearchScope.getScopeRestrictedByFileTypes(ScratchesSearchScope.getScratchesScope(getProject()), JavaFileType.INSTANCE);
     assertFalse(scratchJava.contains(scratchTxt));
     VirtualFileEnumeration scratchJavaEnum = VirtualFileEnumeration.extract(scratchJava);
     assertNotNull(scratchJavaEnum);
@@ -1550,6 +1563,7 @@ public class IndexTest extends JavaCodeInsightFixtureTestCase {
 
     var processor = new Processor<String>() {
       final AtomicInteger processed = new AtomicInteger(0);
+
       @Override
       public boolean process(String i) {
         processed.incrementAndGet();

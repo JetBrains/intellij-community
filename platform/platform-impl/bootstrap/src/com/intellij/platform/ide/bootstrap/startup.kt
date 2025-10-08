@@ -33,9 +33,9 @@ import com.intellij.ui.mac.screenmenu.Menu
 import com.intellij.ui.scale.JBUIScale
 import com.intellij.ui.svg.SvgCacheManager
 import com.intellij.util.EnvironmentUtil
-import com.intellij.util.containers.Java11Shim
 import com.intellij.util.PlatformUtils
 import com.intellij.util.ShellEnvironmentReader
+import com.intellij.util.containers.Java11Shim
 import com.intellij.util.lang.ZipFilePool
 import com.intellij.util.system.OS
 import com.jetbrains.JBR
@@ -211,9 +211,8 @@ fun startApplication(
 
   val configImportDeferred: Deferred<Job?> = scope.async {
     importConfigIfNeeded(
-      scope, isHeadless, configImportNeededDeferred, lockSystemDirsJob, logDeferred, args, customTargetDirectoryToImportConfig, appStarterDeferred,
-      euaDocumentDeferred, initLafJob
-    )
+      scope, isHeadless, configImportNeededDeferred, lockSystemDirsJob, logDeferred, args, customTargetDirectoryToImportConfig,
+      appStarterDeferred, euaDocumentDeferred, initLafJob)
   }
 
   val appStartPreparedJob = CompletableDeferred<Unit>()
@@ -275,10 +274,8 @@ fun startApplication(
       ApplicationImpl(CoroutineScope(mainScope.coroutineContext.job + kernelStarted.await().coroutineContext).childScope("Application"), isInternal)
     }
 
-    loadApp(
-      app, pluginSetDeferred, appInfoDeferred, euaDocumentDeferred, scope, initLafJob, logDeferred, appRegisteredJob,
-      args = args.filterNot { CommandLineArgs.isKnownArgument(it) }, initEventQueueJob
-    )
+    val args = args.filterNot { CommandLineArgs.isKnownArgument(it) }
+    loadApp(app, pluginSetDeferred, appInfoDeferred, euaDocumentDeferred, scope, initLafJob, logDeferred, appRegisteredJob, args, initEventQueueJob)
   }
 
   scope.launch {
@@ -316,7 +313,7 @@ fun startApplication(
       val isInitialStart = configImportDeferred.await()
       // appLoaded not only provides starter but also loads app; that's why it is here
       launch {
-        if (ConfigImportHelper.isFirstSession()) {
+        if (InitialConfigImportState.isFirstSession()) {
           IdeStartupWizardCollector.logWizardExperimentState()
         }
       }
@@ -331,6 +328,7 @@ fun startApplication(
         }.getOrLogException(log)
       }
 
+      applyIslandsTheme(afterImportSettings = false)
       executeApplicationStarter(starter, args)
     }
     // no need to use a pool once started
@@ -399,23 +397,25 @@ private suspend fun runPreAppClass(args: List<String>, classBeforeAppProperty: S
   }
 }
 
-private fun configureJavaUtilLogging(scope: CoroutineScope): Job = scope.launch(CoroutineName("console logger configuration")) {
-  val rootLogger = java.util.logging.Logger.getLogger("")
-  if (rootLogger.handlers.isEmpty()) {
-    rootLogger.level = Level.WARNING
-    val consoleHandler = ConsoleHandler()
-    consoleHandler.level = Level.WARNING
-    rootLogger.addHandler(consoleHandler)
+private fun configureJavaUtilLogging(scope: CoroutineScope): Job {
+  return scope.launch(CoroutineName("console logger configuration")) {
+    val rootLogger = java.util.logging.Logger.getLogger("")
+    if (rootLogger.handlers.isEmpty()) {
+      rootLogger.level = Level.WARNING
+      val consoleHandler = ConsoleHandler()
+      consoleHandler.level = Level.WARNING
+      rootLogger.addHandler(consoleHandler)
+    }
   }
 }
 
 private fun checkDirectories(scope: CoroutineScope, lockSystemDirJob: Job): Job = scope.launch {
   lockSystemDirJob.join()
 
-  val homePath = PathManager.getHomePath()
+  val homePath = PathManager.getHomeDir().toString()
   val configPath = PathManager.getConfigDir()
   val systemPath = PathManager.getSystemDir()
-  if (!span("system dirs checking") { checkDirectories(homePath, configPath, systemPath) }) {
+  if (!span("system dirs checking") { checkDirectories(homePath = homePath, configPath = configPath, systemPath = systemPath) }) {
     exitProcess(AppExitCodes.DIR_CHECK_FAILED)
   }
 }
@@ -614,6 +614,7 @@ private fun shouldLoadShellEnv(log: Logger): Boolean {
   }
 
   val shLvl = System.getenv("SHLVL")
+  @Suppress("RemoveUnnecessaryParentheses")
   if (shLvl != null && (shLvl.toIntOrNull() ?: 1) > 0) {
     log.info("skipping shell environment: the IDE is likely launched from a terminal (SHLVL=${shLvl})")
     return false
@@ -636,9 +637,9 @@ private fun loadEnvironment(parentJob: Job, log: Logger): Boolean {
     envFuture.complete(env.toImmutableMap())
     return true
   }
-  catch (t: Throwable) {
-    log.warn("can't get shell environment", t)
-    (t as? ExceptionWithAttachments)?.attachments?.forEach { log.warn("${it.path}:\n${it.displayText}") }
+  catch (e: Throwable) {
+    log.warn("can't get shell environment", e)
+    (e as? ExceptionWithAttachments)?.attachments?.forEach { log.warn("${it.path}:\n${it.displayText}") }
     envFuture.complete(emptyMap())
     return false
   }

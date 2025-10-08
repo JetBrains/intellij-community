@@ -46,7 +46,7 @@ public final class CompiledClassPropertiesProvider implements PropertiesProvider
       beanInfo = Introspector.getBeanInfo(aClass);
     }
     catch (Throwable e) {
-      return null;
+      throw new RuntimeException("Error loading BeanInfo for component " + className + ": " + e.getMessage(), e);
     }
 
     final HashMap<String, LwIntrospectedProperty> result = new HashMap<>();

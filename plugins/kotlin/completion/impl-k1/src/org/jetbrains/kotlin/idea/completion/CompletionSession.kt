@@ -24,6 +24,7 @@ import org.jetbrains.kotlin.idea.base.projectStructure.moduleInfo.OriginCapabili
 import org.jetbrains.kotlin.idea.base.psi.isInsideAnnotationEntryArgumentList
 import org.jetbrains.kotlin.idea.base.util.ImportableFqNameClassifier
 import org.jetbrains.kotlin.idea.base.util.isJavaClassNotToBeUsedInKotlin
+import org.jetbrains.kotlin.idea.base.util.isJavaClassWithKotlinTypeAlias
 import org.jetbrains.kotlin.idea.caches.resolve.getResolutionFacade
 import org.jetbrains.kotlin.idea.caches.resolve.resolveToDescriptorIfAny
 import org.jetbrains.kotlin.idea.codeInsight.ReferenceVariantsHelper
@@ -219,6 +220,10 @@ abstract class CompletionSession(
     private fun isVisibleDescriptor(descriptor: DeclarationDescriptor, completeNonAccessible: Boolean): Boolean {
         if (!configuration.javaClassesNotToBeUsed && descriptor is ClassDescriptor) {
             if (descriptor.importableFqName?.isJavaClassNotToBeUsedInKotlin() == true) return false
+        }
+
+        if (!configuration.javaClassesNotToBeUsed && descriptor is ClassDescriptor) {
+            if (descriptor.importableFqName?.isJavaClassWithKotlinTypeAlias() == true) return false
         }
 
         if (descriptor is TypeParameterDescriptor && !isTypeParameterVisible(descriptor)) return false

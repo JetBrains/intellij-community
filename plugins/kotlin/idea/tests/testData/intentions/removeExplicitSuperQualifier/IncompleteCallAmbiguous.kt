@@ -1,7 +1,7 @@
 // IS_APPLICABLE: false
 // PROBLEM: none
 // ERROR: None of the following functions can be called with the arguments supplied: <br>public final fun foo(p: Int): Unit defined in B<br>public open fun foo(p: String): Unit defined in B
-// K2_ERROR: None of the following candidates is applicable:<br><br>fun foo(p: String): Unit:<br>  No value passed for parameter 'p'.<br><br>fun foo(p: Int): Unit:<br>  No value passed for parameter 'p'.<br><br>
+// K2_ERROR: None of the following candidates is applicable:<br><br>fun foo(p: String): Unit:<br>  No value passed for parameter 'p'.<br><br>fun foo(p: Int): Unit:<br>  No value passed for parameter 'p'.
 
 open class B {
     open fun foo(p: String){}

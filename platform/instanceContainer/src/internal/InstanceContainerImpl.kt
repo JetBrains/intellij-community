@@ -168,7 +168,8 @@ class InstanceContainerImpl(
     updateState { state ->
       // key -> holder to add/replace; key -> null to remove
       val restorationMap = LinkedHashMap<String, InstanceHolder?>()
-      val builder = state.holders.builder()
+      val builder = HashMap<String, InstanceHolder>(state.holders.size + holders.size)
+      builder.putAll(state.holders)
       var hasPreviousHolders = false
       for (key in keysToRemove) {
         val previous = builder.remove(key)
@@ -183,7 +184,7 @@ class InstanceContainerImpl(
         hasPreviousHolders = hasPreviousHolders || (previous != null)
       }
       handle = UnregisterHandleImpl(restorationMap, holders, keysToRemove, hasPreviousHolders)
-      InstanceContainerState(builder.build())
+      InstanceContainerState(builder.takeUnless { it.isEmpty() } ?: java.util.Map.of())
     }
     return handle
   }
@@ -199,7 +200,7 @@ class InstanceContainerImpl(
     //  restorationTwo should be finished before restorationOne,
     //  or, in other words, two should be fully nested into one
     updateState { state: InstanceContainerState ->
-      val builder = state.holders.builder()
+      val builder = HashMap(state.holders)
       for(i in 0 until keys.size) {
         val key = keys[i]
         val value = instanceHolders[i]
@@ -211,7 +212,7 @@ class InstanceContainerImpl(
         }
       }
       keysToRemove?.forEach { builder.remove(it) }
-      InstanceContainerState(builder.build())
+      InstanceContainerState(builder.takeUnless { it.isEmpty() } ?: java.util.Map.of())
     }
   }
 

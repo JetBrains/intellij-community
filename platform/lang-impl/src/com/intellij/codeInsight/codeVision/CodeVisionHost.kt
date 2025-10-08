@@ -52,6 +52,7 @@ import com.intellij.ui.SimpleTextAttributes
 import com.intellij.util.Alarm
 import com.intellij.util.application
 import com.intellij.util.concurrency.AppExecutorUtil
+import com.intellij.util.concurrency.annotations.RequiresEdt
 import com.intellij.util.ui.EDT
 import com.intellij.util.ui.update.MergingUpdateQueue
 import com.intellij.util.ui.update.Update
@@ -108,6 +109,7 @@ open class CodeVisionHost(val project: Project) {
 
   private val defaultSortedProvidersList = mutableListOf<String>()
 
+  @RequiresEdt
   open fun initialize() {
     lifeSettingModel.isRegistryEnabled.whenTrue(codeVisionLifetime) { enableCodeVisionLifetime ->
       runReadAction {
@@ -121,6 +123,15 @@ open class CodeVisionHost(val project: Project) {
         subscribeCVSettingsChanged(enableCodeVisionLifetime)
       }
     }
+  }
+
+  @get:RequiresEdt
+  val isInitialised: Boolean get() = _isInitialised
+  private var _isInitialised = false
+
+  @RequiresEdt
+  fun finishInitialisation() {
+    _isInitialised = true
   }
 
   open fun collectAllProviders(): List<Pair<String, CodeVisionProvider<*>>> {
@@ -303,7 +314,7 @@ open class CodeVisionHost(val project: Project) {
           for (editor in EditorFactory.getInstance().allEditors) {
             ModificationStampUtil.clearModificationStamp(editor)
           }
-          DaemonCodeAnalyzer.getInstance(project).restart()
+          DaemonCodeAnalyzer.getInstance(project).restart("CodeVisionHost.providerAvailabilityChanged $id")
           invalidateProviderSignal.fire(LensInvalidateSignal(null))
         }
       })

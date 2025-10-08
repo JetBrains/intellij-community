@@ -1,9 +1,9 @@
 ### auto-generated section `build intellij.sh.core` start
-load("@rules_jvm//:jvm.bzl", "jvm_library", "jvm_resources")
+load("@rules_jvm//:jvm.bzl", "jvm_library", "resourcegroup")
 
-jvm_resources(
+resourcegroup(
   name = "core_resources",
-  files = glob(["resources/**/*"]),
+  srcs = glob(["resources/**/*"]),
   strip_prefix = "resources"
 )
 
@@ -12,6 +12,7 @@ jvm_library(
   module_name = "intellij.sh.core",
   visibility = ["//visibility:public"],
   srcs = glob(["gen/**/*.kt", "gen/**/*.java", "src/**/*.kt", "src/**/*.java", "src/**/*.form"], allow_empty = True),
+  resources = [":core_resources"],
   deps = [
     "//platform/code-style-api:codeStyle",
     "//platform/core-api:core",
@@ -24,7 +25,7 @@ jvm_library(
     "//platform/refactoring",
     "//platform/statistics",
     "//platform/core-ui",
-    "@lib//:fastutil-min",
+    "//libraries/fastutil",
     "//platform/code-style-impl:codeStyle-impl",
     "//platform/platform-util-io:ide-util-io",
     "//platform/util/jdom",
@@ -33,8 +34,7 @@ jvm_library(
     "//platform/eel-impl",
     "//platform/analysis-api:analysis",
     "//platform/projectModel-api:projectModel",
-  ],
-  runtime_deps = [":core_resources"]
+  ]
 )
 ### auto-generated section `build intellij.sh.core` end
 
@@ -55,6 +55,8 @@ jvm_library(
     "//plugins/sh/plugin:plugin-main",
     "//spellchecker",
     "//spellchecker:spellchecker_test_lib",
+    "//plugins/grazie/src:core",
+    "//plugins/grazie/src/test:grazie-tests_test_lib",
     "//platform/testFramework",
     "//platform/testFramework:testFramework_test_lib",
     "//platform/analysis-impl",

@@ -18,6 +18,7 @@ import java.awt.Rectangle
 import java.beans.PropertyChangeListener
 import javax.swing.JComponent
 import javax.swing.JFrame
+import kotlin.io.path.invariantSeparatorsPathString
 
 internal open class CustomDecorationPath(private val frame: JFrame) : SelectedEditorFilePath(frame), CustomHeaderTitle {
   companion object {
@@ -37,13 +38,13 @@ internal open class CustomDecorationPath(private val frame: JFrame) : SelectedEd
   private fun checkOpenedProjects() {
     val currentProject = project ?: return
     val manager = RecentProjectsManager.getInstance() as RecentProjectsManagerBase
-    val currentPath = manager.getProjectPath(currentProject) ?: return
+    val currentPath = manager.getProjectPath(currentProject)?.invariantSeparatorsPathString ?: return
     val currentName = manager.getProjectName(currentPath)
     val sameNameInRecent = manager.getRecentPaths().any {
       currentPath != it && currentName == manager.getProjectName(it)
     }
     val sameNameInOpen = ProjectManager.getInstance().openProjects.any {
-      val path = manager.getProjectPath(it) ?: return@any false
+      val path = manager.getProjectPath(it)?.invariantSeparatorsPathString ?: return@any false
       val name = manager.getProjectName(path)
       currentPath != path && currentName == name
     }

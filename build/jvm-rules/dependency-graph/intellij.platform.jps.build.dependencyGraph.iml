@@ -27,10 +27,10 @@
     <orderEntry type="module" module-name="intellij.platform.jps.build.javac.rt" />
     <orderEntry type="library" name="jetbrains-annotations" level="project" />
     <orderEntry type="library" name="kotlin-metadata" level="project" />
-    <orderEntry type="library" name="caffeine" level="project" />
-    <orderEntry type="library" name="ASM" level="project" />
-    <orderEntry type="library" name="hash4j" level="project" />
-    <orderEntry type="library" name="fastutil-min" level="project" />
+    <orderEntry type="module" module-name="intellij.libraries.caffeine" />
+    <orderEntry type="module" module-name="intellij.libraries.asm" />
+    <orderEntry type="module" module-name="intellij.libraries.hash4j" />
+    <orderEntry type="module" module-name="intellij.libraries.fastutil" />
     <orderEntry type="library" scope="PROVIDED" name="kotlin-stdlib" level="project" />
   </component>
 </module>

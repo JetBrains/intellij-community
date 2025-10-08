@@ -8,6 +8,7 @@ import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.fileTypes.FileType;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.NlsSafe;
+import com.intellij.openapi.util.TextRange;
 import com.intellij.openapi.util.text.HtmlBuilder;
 import com.intellij.openapi.util.text.HtmlChunk;
 import com.intellij.openapi.vfs.VfsUtilCore;
@@ -450,6 +451,10 @@ public interface IntentionPreviewInfo {
    * @return a presentation describing that the action will navigate to the specified target element
    */
   static @NotNull Html navigate(@NotNull PsiFile file, int offset) {
+    return new Html(navigatePreviewHtmlChunk(file, offset).wrapWith("p"));
+  }
+
+  static @NotNull HtmlChunk navigatePreviewHtmlChunk(@NotNull PsiFile file, int offset) {
     Icon icon = file.getIcon(0);
     Document document = file.getFileDocument();
     HtmlBuilder builder = new HtmlBuilder();
@@ -461,7 +466,7 @@ public interface IntentionPreviewInfo {
       builder.append(AnalysisBundle.message("html.preview.navigate.line"))
         .append(String.valueOf(lineNumber+1));
     }
-    return new Html(builder.wrapWith("p"));
+    return builder.toFragment();
   }
 
   /**
@@ -496,5 +501,36 @@ public interface IntentionPreviewInfo {
       .append(select)
       .toFragment();
     return new Html(content);
+  }
+
+  /**
+   * Preview of a code snippet. It will be rendered using the color scheme configured for specified {@code fileType}
+   * with line numbers.
+   *
+   * @param fileType  file type of code snippet
+   * @param text      snippet text
+   * @param startLine line number of the first line of the snippet
+   */
+  @ApiStatus.Experimental
+  record Snippet(@NotNull FileType fileType, @NotNull String text, int startLine) implements IntentionPreviewInfo {
+  }
+
+  /**
+   * Creates snippet preview containing text of {@code element}.
+   *
+   * @param element element which text will be used as a snippet
+   * @return snippet preview for given element
+   */
+  @ApiStatus.Experimental
+  static @NotNull Snippet snippet(@NotNull NavigatablePsiElement element) {
+    var textRange = element.getTextRange();
+    var document = element.getContainingFile().getFileDocument();
+    int startOffset = textRange.getStartOffset();
+    int startLine = document.getLineNumber(startOffset);
+    int startOffsetOfFirstLine = document.getLineStartOffset(startLine);
+    int endOffset = textRange.getEndOffset();
+    var fileType = element.getContainingFile().getFileType();
+    var text = document.getText(TextRange.create(startOffsetOfFirstLine, endOffset)).stripIndent();
+    return new Snippet(fileType, text, startLine);
   }
 }

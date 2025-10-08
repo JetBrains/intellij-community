@@ -17,3 +17,6 @@ interface T {
 
 // EXPRESSION: object: T {}
 // RESULT: instance of Generated_for_debugger_class$generated_for_debugger_fun$1(id=ID): LGenerated_for_debugger_class$generated_for_debugger_fun$1;
+
+// IGNORE_K1
+// SKIP_WRONG_DIRECTIVE_CHECK

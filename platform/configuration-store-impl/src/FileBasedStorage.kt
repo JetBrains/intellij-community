@@ -39,7 +39,7 @@ import javax.xml.stream.XMLStreamException
 internal val XML_PROLOG: ByteArray = """<?xml version="1.0" encoding="UTF-8"?>""".toByteArray()
 
 @ApiStatus.Internal
-abstract class FileBasedStorage(
+abstract class FileBasedStorage internal constructor(
   file: Path,
   fileSpec: String,
   rootElementName: String?,
@@ -65,11 +65,11 @@ abstract class FileBasedStorage(
   protected open val isUseXmlProlog: Boolean
     get() = false
 
+  // only ApplicationStore doesn't use an XML prolog
   private val isUseUnixLineSeparator: Boolean
-    // only ApplicationStore doesn't use xml prolog
     get() = !isUseXmlProlog
 
-  // we never set I/O file to null
+  // we never set an I/O file to null
   fun setFile(virtualFile: VirtualFile?, ioFileIfChanged: Path?) {
     cachedVirtualFile = virtualFile
     if (ioFileIfChanged != null) {
@@ -94,61 +94,39 @@ abstract class FileBasedStorage(
       }
     }
 
-    override fun saveLocally(dataWriter: DataWriter?, useVfs: Boolean, events: MutableList<VFileEvent>?) {
+    override fun remove(events: MutableList<VFileEvent>?) {
+      val virtualFile = if (events == null) null else storage.getVirtualFile()
+      Files.deleteIfExists(storage.file)
+      storage.cachedVirtualFile = null
+      if (events != null && virtualFile != null && virtualFile.isValid) {
+        events.add(VFileDeleteEvent(/*requestor =*/ this, virtualFile))
+      }
+    }
+
+    override fun saveLocally(dataWriter: DataWriter, events: MutableList<VFileEvent>?) {
+      val lineSeparator = getOrCacheLineSeparator()
+
+      val virtualFile = if (events == null) null else storage.getVirtualFile()
+      writeFile(file = storage.file, requestor = this, dataWriter = dataWriter, lineSeparator = lineSeparator, prependXmlProlog = storage.isUseXmlProlog)
+      if (events != null) {
+        if (virtualFile == null) {
+          LocalFileSystem.getInstance().refreshAndFindFileByNioFile(storage.file.parent)?.let { dir ->
+            events.add(creationEvent(storage.file, dir))
+          }
+        }
+        else {
+          events.add(updatingEvent(storage.file, virtualFile))
+        }
+      }
+    }
+
+    private fun getOrCacheLineSeparator(): LineSeparator {
       var lineSeparator = storage.lineSeparator
       if (lineSeparator == null) {
         lineSeparator = if (storage.isUseUnixLineSeparator) LineSeparator.LF else LineSeparator.getSystemLineSeparator()
         storage.lineSeparator = lineSeparator
       }
-
-      val virtualFile = if (useVfs || events != null) storage.getVirtualFile() else null
-      when {
-        dataWriter == null -> {
-          if (useVfs && virtualFile == null) LOG.warn("Cannot find virtual file")
-          deleteFile(storage.file, virtualFile = if (useVfs) virtualFile else null, requestor = this)
-          storage.cachedVirtualFile = null
-          if (events != null && virtualFile != null && virtualFile.isValid) {
-            events += VFileDeleteEvent(/*requestor =*/ this, virtualFile)
-          }
-        }
-        useVfs -> {
-          storage.cachedVirtualFile = writeFile(storage.file, requestor = this, virtualFile, dataWriter, lineSeparator, storage.isUseXmlProlog)
-        }
-        else -> {
-          writeFile(storage.file, requestor = this, dataWriter, lineSeparator, storage.isUseXmlProlog)
-          if (events != null) {
-            if (virtualFile != null) {
-              events.add(updatingEvent(storage.file, virtualFile))
-            }
-            else {
-              LocalFileSystem.getInstance().refreshAndFindFileByNioFile(storage.file.parent)?.let { dir ->
-                events.add(creationEvent(storage.file, dir))
-              }
-            }
-          }
-        }
-      }
-    }
-
-    private fun deleteFile(file: Path, virtualFile: VirtualFile?, requestor: StorageManagerFileWriteRequestor) {
-      if (virtualFile == null) {
-        Files.deleteIfExists(file)
-      }
-      else if (virtualFile.exists()) {
-        if (virtualFile.isWritable) {
-          virtualFile.delete(requestor)
-        }
-        else {
-          throw ReadOnlyModificationException(virtualFile, object : SaveSession {
-            override suspend fun save(events: MutableList<VFileEvent>?) = throw IllegalStateException()
-
-            override fun saveBlocking() {
-              // the caller must wrap into undo-transparent write action
-              virtualFile.delete(requestor)
-            }
-          })
-        }
-      }
+      return lineSeparator
     }
   }
 
@@ -207,15 +185,21 @@ abstract class FileBasedStorage(
         return element
       }
     }
-    catch (e: JDOMException) { processReadException(e) }
-    catch (e: XMLStreamException) { processReadException(e) }
-    catch (e: IOException) { processReadException(e) }
+    catch (e: JDOMException) {
+      processReadException(e)
+    }
+    catch (e: XMLStreamException) {
+      processReadException(e)
+    }
+    catch (e: IOException) {
+      processReadException(e)
+    }
     return null
   }
 
   private fun processReadException(e: Exception?) {
     if (e != null &&
-        (fileSpec == PROJECT_FILE || fileSpec.startsWith(PROJECT_CONFIG_DIR) ||
+        (fileSpec == StoragePathMacros.PROJECT_FILE || fileSpec.startsWith(PROJECT_CONFIG_DIR) ||
          fileSpec == StoragePathMacros.MODULE_FILE || fileSpec == StoragePathMacros.WORKSPACE_FILE)) {
       blockSaving = e.toString()
     }
@@ -302,9 +286,7 @@ internal fun writeFile(
         else -> dataWriterOrByteArray as BufferExposingByteArrayOutputStream
       }
       throw ReadOnlyModificationException(file, object : SaveSession {
-        override suspend fun save(events: MutableList<VFileEvent>?) = throw IllegalStateException()
-
-        override fun saveBlocking() {
+        override suspend fun save(events: MutableList<VFileEvent>?) {
           doWrite(requestor, file, byteArray, lineSeparator, prependXmlProlog)
         }
       })

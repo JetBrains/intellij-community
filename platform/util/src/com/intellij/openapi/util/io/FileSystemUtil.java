@@ -3,7 +3,7 @@ package com.intellij.openapi.util.io;
 
 import com.intellij.jna.JnaLoader;
 import com.intellij.openapi.diagnostic.Logger;
-import com.intellij.openapi.util.SystemInfo;
+import com.intellij.util.system.OS;
 import com.sun.jna.*;
 import com.sun.jna.platform.win32.Kernel32;
 import com.sun.jna.platform.win32.WinBase;
@@ -17,7 +17,6 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.annotations.VisibleForTesting;
 
-import java.io.FileNotFoundException;
 import java.io.IOException;
 import java.nio.charset.StandardCharsets;
 import java.nio.file.*;
@@ -45,7 +44,7 @@ public final class FileSystemUtil {
   }
 
   private static String normalizePath(@NotNull String path) {
-    if (SystemInfo.isWindows && path.length() == 2 && path.charAt(1) == ':') {
+    if (OS.CURRENT == OS.Windows && path.length() == 2 && path.charAt(1) == ':') {
       path += '\\';
     }
     return path;
@@ -142,12 +141,12 @@ public final class FileSystemUtil {
     FileAttributes.CaseSensitivity detected = readCaseSensitivityByNativeAPI(anyChild);
     if (detected.isKnown()) return detected;
     // native queries failed, fallback to the Java I/O:
-    return readParentCaseSensitivityByJavaIO(anyChild);
+    return readCaseSensitivityByJavaIO(anyChild);
   }
 
   @VisibleForTesting
   @ApiStatus.Internal
-  public static @NotNull FileAttributes.CaseSensitivity readParentCaseSensitivityByJavaIO(@NotNull java.io.File anyChild) {
+  public static @NotNull FileAttributes.CaseSensitivity readCaseSensitivityByJavaIO(@NotNull java.io.File anyChild) {
     // try to query this path by different-case strings and deduce case sensitivity from the answers
     java.io.File parent = anyChild.getParentFile();
     if (parent == null) {
@@ -195,7 +194,7 @@ public final class FileSystemUtil {
       try {
         newAttributes = getAttributesNotNull(Paths.get(altPath));
       }
-      catch (FileNotFoundException e) {
+      catch (NoSuchFileException e) {
         if (!anyChild.exists()) {
           if (LOG.isDebugEnabled()) {
             LOG.debug("readParentCaseSensitivityByJavaIO(" + anyChild + "): does not exist");
@@ -239,21 +238,20 @@ public final class FileSystemUtil {
   @VisibleForTesting
   @ApiStatus.Internal
   public static @NotNull FileAttributes.CaseSensitivity readCaseSensitivityByNativeAPI(@NotNull java.io.File anyChild) {
-    FileAttributes.CaseSensitivity detected = com.intellij.openapi.util.io.FileAttributes.CaseSensitivity.UNKNOWN;
     if (JnaLoader.isLoaded()) {
       java.io.File parent = anyChild.getParentFile();
       String path = (parent != null ? parent : anyChild).getAbsolutePath();
-      if (SystemInfo.isWin10OrNewer && WINDOWS_CS_API_AVAILABLE) {
-        detected = OSAgnosticPathUtil.isAbsoluteDosPath(path) ? getNtfsCaseSensitivity(path) : com.intellij.openapi.util.io.FileAttributes.CaseSensitivity.UNKNOWN;
+      if (OS.CURRENT == OS.Windows && OS.CURRENT.isAtLeast(10, 0) && WINDOWS_CS_API_AVAILABLE && OSAgnosticPathUtil.isAbsoluteDosPath(path)) {
+        return getNtfsCaseSensitivity(path);
       }
-      else if (SystemInfo.isMac && MAC_CS_API_AVAILABLE) {
-        detected = getMacOsCaseSensitivity(path);
+      else if (OS.CURRENT == OS.macOS && MAC_CS_API_AVAILABLE) {
+        return getMacOsCaseSensitivity(path);
       }
-      else if (SystemInfo.isLinux && LINUX_CS_API_AVAILABLE) {
-        detected = getLinuxCaseSensitivity(path);
+      else if (OS.CURRENT == OS.Linux && LINUX_CS_API_AVAILABLE) {
+        return getLinuxCaseSensitivity(path);
       }
     }
-    return detected;
+    return FileAttributes.CaseSensitivity.UNKNOWN;
   }
 
   private static String toggleCase(String name) {

@@ -307,4 +307,9 @@ public final class TransientChangesIndexStorage<Key, Value> implements VfsAwareI
     //    and persistent storage
     return inMemoryStorage.size() + underlyingStorage.keysCountApproximately();
   }
+
+  @Override
+  public boolean isReadLockHeldByCurrentThread() {
+    return underlyingStorage.isReadLockHeldByCurrentThread();
+  }
 }

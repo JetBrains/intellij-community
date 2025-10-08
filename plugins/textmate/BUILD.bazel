@@ -1,9 +1,9 @@
 ### auto-generated section `build intellij.textmate` start
-load("@rules_jvm//:jvm.bzl", "jvm_library", "jvm_resources")
+load("@rules_jvm//:jvm.bzl", "jvm_library", "resourcegroup")
 
-jvm_resources(
+resourcegroup(
   name = "textmate_resources",
-  files = glob(["resources/**/*"]),
+  srcs = glob(["resources/**/*"]),
   strip_prefix = "resources"
 )
 
@@ -12,6 +12,7 @@ jvm_library(
   module_name = "intellij.textmate",
   visibility = ["//visibility:public"],
   srcs = glob(["src/**/*.kt", "src/**/*.java", "src/**/*.form"], allow_empty = True),
+  resources = [":textmate_resources"],
   deps = [
     "//platform/analysis-api:analysis",
     "//platform/code-style-api:codeStyle",
@@ -25,20 +26,19 @@ jvm_library(
     "//plugins/textmate/joni",
     "//platform/core-ui",
     "//platform/editor-ui-ex:editor-ex",
-    "@lib//:jackson",
-    "@lib//:jackson-databind",
+    "//libraries/jackson/jackson",
+    "//libraries/jackson/databind",
     "//platform/platform-impl:ide-impl",
-    "@lib//:kotlinx-serialization-core",
+    "//libraries/kotlinx/serialization/core",
     "//platform/code-style-impl:codeStyle-impl",
-    "@lib//:caffeine",
+    "//libraries/caffeine",
     "//fleet/fastutil",
-    "@lib//:fastutil-min",
+    "//libraries/fastutil",
     "//platform/util/xmlDom",
   ],
   exports = [
     "//plugins/textmate/core",
     "//plugins/textmate/joni",
-  ],
-  runtime_deps = [":textmate_resources"]
+  ]
 )
 ### auto-generated section `build intellij.textmate` end

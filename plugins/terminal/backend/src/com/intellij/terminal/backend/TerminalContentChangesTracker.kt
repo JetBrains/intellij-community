@@ -3,9 +3,6 @@ package com.intellij.terminal.backend
 
 import com.intellij.openapi.diagnostic.debug
 import com.intellij.openapi.diagnostic.logger
-import com.intellij.terminal.session.StyleRange
-import com.intellij.terminal.session.dto.StyleRangeDto
-import com.intellij.terminal.session.dto.toDto
 import com.jediterm.terminal.model.TerminalLine
 import com.jediterm.terminal.model.TerminalTextBuffer
 import com.jediterm.terminal.model.TextBufferChangesListener
@@ -15,6 +12,9 @@ import org.jetbrains.plugins.terminal.block.session.collectLines
 import org.jetbrains.plugins.terminal.block.session.scraper.SimpleStringCollector
 import org.jetbrains.plugins.terminal.block.session.scraper.StylesCollectingTerminalLinesCollector
 import org.jetbrains.plugins.terminal.fus.*
+import org.jetbrains.plugins.terminal.session.StyleRange
+import org.jetbrains.plugins.terminal.session.dto.StyleRangeDto
+import org.jetbrains.plugins.terminal.session.dto.toDto
 import java.util.concurrent.CopyOnWriteArrayList
 import kotlin.math.min
 import kotlin.time.TimeSource
@@ -148,7 +148,7 @@ class TerminalContentChangesTracker(
     }
     textBuffer.collectLines(terminalLinesCollector, startLine)
 
-    return StyledCommandOutput(stringCollector.buildText(), false, styles)
+    return StyledCommandOutput(stringCollector.buildText(), styles)
   }
 }
 

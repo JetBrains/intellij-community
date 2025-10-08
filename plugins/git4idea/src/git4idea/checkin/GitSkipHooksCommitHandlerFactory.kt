@@ -2,6 +2,7 @@
 package git4idea.checkin
 
 import com.intellij.openapi.options.advanced.AdvancedSettings
+import com.intellij.openapi.project.DumbAware
 import com.intellij.openapi.util.Key
 import com.intellij.openapi.vcs.CheckinProjectPanel
 import com.intellij.openapi.vcs.changes.CommitContext
@@ -36,7 +37,7 @@ class GitSkipHooksCommitHandlerFactory : CheckinHandlerFactory() {
 private class GitSkipHooksCommitHandler(
   private val panel: CheckinProjectPanel,
   private val commitContext: CommitContext
-) : CheckinHandler() {
+) : CheckinHandler(), DumbAware {
 
   override fun getBeforeCheckinConfigurationPanel() = GitSkipHooksConfigurationPanel(panel, commitContext)
 }

@@ -1,4 +1,4 @@
-<idea-plugin>
+<idea-plugin visibility="public">
   <resource-bundle>messages.GitLabBundle</resource-bundle>
 
   <dependencies>

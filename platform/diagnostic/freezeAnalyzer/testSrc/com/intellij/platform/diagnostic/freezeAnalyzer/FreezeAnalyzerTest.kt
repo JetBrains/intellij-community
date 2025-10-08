@@ -29,7 +29,7 @@ class FreezeAnalyzerTest {
   @Test
   fun testDeadlockWithSuvorovIndicator() {
     val threadDump = getResourceContent("freezes/readWriteLock/deadLock.txt")
-    FreezeAnalyzer.analyzeFreeze(threadDump)?.message.shouldBe("Long read action in org.jetbrains.idea.maven.buildtool.MavenSyncConsole.doFinish")
+    FreezeAnalyzer.analyzeFreeze(threadDump)?.message.shouldBe("Long read action in org.jetbrains.idea.maven.server.AbstractMavenServerRemoteProcessSupport.lambda\$onProcessTerminated\$1")
     FreezeAnalyzer.analyzeFreeze(threadDump)?.threads?.first()?.stackTrace?.lineSequence()?.first().shouldBe("\"java\" prio=0 tid=0x0 nid=0x0 blocked")
   }
 
@@ -38,6 +38,13 @@ class FreezeAnalyzerTest {
     val threadDump = getResourceContent("freezes/readWriteLock/suvorov-indicator.txt")
     FreezeAnalyzer.analyzeFreeze(threadDump)?.message.shouldBe("Long read action in com.intellij.codeInsight.NullabilitySource\$MultiSource.hashCode")
     FreezeAnalyzer.analyzeFreeze(threadDump)?.threads?.first()?.stackTrace?.lineSequence()?.first().shouldBe("\"JobScheduler FJ pool 11/19\" prio=0 tid=0x0 nid=0x0 runnable")
+  }
+
+  @Test
+  fun testSuvorovIndicator2() {
+    val threadDump = getResourceContent("freezes/readWriteLock/suvorov-indicator-2.txt")
+    FreezeAnalyzer.analyzeFreeze(threadDump)?.message.shouldBe("Long read action in com.intellij.ml.llm.embeddings.indexer.searcher.IndexBasedEmbeddingEntitiesIndexer\$launchFetchingEntities\$1.invokeSuspend\$lambda\$1")
+    FreezeAnalyzer.analyzeFreeze(threadDump)?.threads?.first()?.stackTrace?.lineSequence()?.first().shouldBe("\"DefaultDispatcher-worker-2\" prio=0 tid=0x0 nid=0x0 runnable")
   }
 
   @Test
@@ -80,14 +87,14 @@ class FreezeAnalyzerTest {
   @Test
   fun testLockFreeze1() {
     val threadDump = getResourceContent("freezes/readWriteLock/ML-2562.txt")
-    FreezeAnalyzer.analyzeFreeze(threadDump)?.message.shouldBe("Long read action in org.jetbrains.completion.full.line.local.generation.SimilarContextRetriever.getSimilarity")
+    FreezeAnalyzer.analyzeFreeze(threadDump)?.message.shouldBe("Long read action in org.jetbrains.completion.full.line.local.suggest.collector.CompletionInputBuilder\$smartContextComposition\$ragContext\$1.invoke")
     FreezeAnalyzer.analyzeFreeze(threadDump)?.threads?.joinToString { it -> it.stackTrace }.shouldContain("\"DefaultDispatcher-worker-27\" prio=0 tid=0x0 nid=0x0 runnable")
   }
 
   @Test
   fun testLockFreeze2() {
     val threadDump = getResourceContent("freezes/readWriteLock/KTIJ-23464.txt").replace("2.", ".")
-    FreezeAnalyzer.analyzeFreeze(threadDump)?.message.shouldBe("Long read action in org.jetbrains.kotlin.org.eclipse.aether.internal.impl.synccontext.named.DiscriminatingNameMapper.getHostname")
+    FreezeAnalyzer.analyzeFreeze(threadDump)?.message.shouldBe("Long read action in org.jetbrains.kotlin.idea.references.AbstractKtReference.isReferenceTo")
   }
 
   @Test
@@ -99,7 +106,7 @@ class FreezeAnalyzerTest {
   @Test
   fun testLockFreeze4() {
     val threadDump = getResourceContent("freezes/readWriteLock/WEB-65320.txt").replace("2.", ".")
-    FreezeAnalyzer.analyzeFreeze(threadDump)?.message.shouldBe("Long read action in com.intellij.lang.javascript.buildTools.npm.PackageJsonUtil.findChildPackageJsonFile")
+    FreezeAnalyzer.analyzeFreeze(threadDump)?.message.shouldBe("Long read action in com.intellij.javascript.nodejs.packageJson.notification.DefaultPackageJsonNotifierConfiguration.lambda\$detectPackageJsonFiles\$0")
   }
 
   @Test
@@ -125,7 +132,7 @@ class FreezeAnalyzerTest {
   @Test
   fun testGeneralLockFreezeWithLockId() {
     val threadDump = getResourceContent("freezes/generalLock/generalLockWithLockId.txt")
-    FreezeAnalyzer.analyzeFreeze(threadDump)?.message.shouldBe("Possible deadlock. Read lock is taken by com.intellij.execution.impl.RunManagerImpl.getSelectedConfiguration, but the thread is blocked by com.android.tools.idea.gradle.project.GradleProjectInfo.isBuildWithGradle which is waiting on RWLock")
+    FreezeAnalyzer.analyzeFreeze(threadDump)?.message.shouldBe("Possible deadlock. Read lock is taken by com.intellij.openapi.actionSystem.impl.ActionUpdater\$callAction\$2\$1.invoke, but the thread is blocked by com.android.tools.idea.gradle.project.GradleProjectInfo.isBuildWithGradle which is waiting on RWLock")
   }
 
   @Test
@@ -139,7 +146,7 @@ class FreezeAnalyzerTest {
     val threadDump = getResourceContent("freezes/readWriteLock/NewLock.txt")
     withClue("") {
       assertSoftly {
-        FreezeAnalyzer.analyzeFreeze(threadDump)?.message.shouldBe("Long read action in com.intellij.openapi.roots.impl.PackageDirectoryCacheImpl\$PackageInfo.lambda\$new\$0")
+        FreezeAnalyzer.analyzeFreeze(threadDump)?.message.shouldBe("Long read action in com.intellij.jsp.javaee.web.utils.JspWebUtil.lambda\$detectCharsetAsPerJspSpec\$0")
         FreezeAnalyzer.analyzeFreeze(threadDump)?.threads?.joinToString { it -> it.stackTrace }.shouldStartWith("\"DefaultDispatcher-worker-22\" prio=0 tid=0x0 nid=0x0 waiting on condition")
       }
     }

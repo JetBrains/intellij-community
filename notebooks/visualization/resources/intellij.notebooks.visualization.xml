@@ -1,7 +1,8 @@
-<idea-plugin package="com.intellij.notebooks.visualization">
+<idea-plugin visibility="internal" package="com.intellij.notebooks.visualization">
   <dependencies>
     <module name="intellij.notebooks.ui"/>
     <plugin id="org.intellij.plugins.markdown"/>
+    <module name="intellij.notebooks.jupyter.core"/>
   </dependencies>
 
   <extensionPoints>

@@ -36,6 +36,14 @@ interface EelOutputChannel {
   fun available(): Int
   fun receiveAvailable(dst: ByteBuffer): ReadResult
 
+  /**
+   * The buffer position can be modified concurrently at any time,
+   * so [update] should be safe to concurrent modifications.
+   * But in that case, returning value of [update] will be ignored and [update] will
+   * be call again, so [update] should be pure.
+   *
+   * See [sendWholeBuffer] and [sendUntilEnd] for more high-level api.
+   */
   @Throws(EelChannelClosedException::class)
   suspend fun updateBuffer(update: (ByteBuffer) -> ByteBuffer)
 
@@ -200,8 +208,11 @@ suspend fun EelOutputChannel.sendUntilEnd(flow: Flow<ByteArray>, end: Deferred<*
       updateBuffer { ByteBuffer.wrap(byteArray) }
     } else {
       updateBuffer { oldBuffer ->
-        ByteBuffer.allocate(oldBuffer.remaining() + byteArray.size).also { newBuffer ->
-          newBuffer.put(oldBuffer.slice())
+        // the oldBuffer position can be changed concurrently (it only decreases, but that doesn't matter),
+        // so we shouldn't read it twice
+        val slice = oldBuffer.slice()
+        ByteBuffer.allocate(slice.remaining() + byteArray.size).also { newBuffer ->
+          newBuffer.put(slice)
           newBuffer.put(byteArray)
           newBuffer.flip()
         }

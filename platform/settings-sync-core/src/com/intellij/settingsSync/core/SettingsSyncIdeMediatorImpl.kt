@@ -4,7 +4,6 @@ import com.intellij.concurrency.ConcurrentCollectionFactory
 import com.intellij.configurationStore.*
 import com.intellij.idea.AppMode
 import com.intellij.openapi.application.PathManager.OPTIONS_DIRECTORY
-import com.intellij.openapi.application.invokeAndWaitIfNeeded
 import com.intellij.openapi.components.RoamingType
 import com.intellij.openapi.diagnostic.Attachment
 import com.intellij.openapi.diagnostic.logger
@@ -257,7 +256,7 @@ internal class SettingsSyncIdeMediatorImpl(private val componentStore: Component
     }
   }
 
-  private fun writeStatesToAppConfig(fileStates: Collection<FileState>) {
+  private suspend fun writeStatesToAppConfig(fileStates: Collection<FileState>) {
     val changedFileSpecs = ArrayList<String>()
     val deletedFileSpecs = ArrayList<String>()
     for (fileState in fileStates) {
@@ -282,12 +281,10 @@ internal class SettingsSyncIdeMediatorImpl(private val componentStore: Component
       }
     }
 
-    invokeAndWaitIfNeeded {
-      val (normalChanged, lastChanged) = changedFileSpecs.partition { !(files2applyLast.contains(it)) }
-      componentStore.reloadComponents(normalChanged, deletedFileSpecs)
-      if (lastChanged.isNotEmpty()) {
-        componentStore.reloadComponents(lastChanged, emptyList())
-      }
+    val (normalChanged, lastChanged) = changedFileSpecs.partition { !(files2applyLast.contains(it)) }
+    componentStore.reloadComponents(normalChanged, deletedFileSpecs)
+    if (lastChanged.isNotEmpty()) {
+      componentStore.reloadComponents(lastChanged, emptyList())
     }
   }
 

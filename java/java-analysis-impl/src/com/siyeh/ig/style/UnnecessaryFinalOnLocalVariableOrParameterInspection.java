@@ -69,7 +69,7 @@ public final class UnnecessaryFinalOnLocalVariableOrParameterInspection extends 
 
 
   @Override
-  public BaseInspectionVisitor buildVisitor() {
+  public @NotNull BaseInspectionVisitor buildVisitor() {
     return new UnnecessaryFinalOnLocalVariableOrParameterVisitor();
   }
 

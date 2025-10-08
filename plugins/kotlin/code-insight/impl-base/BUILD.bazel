@@ -1,6 +1,6 @@
 ### auto-generated section `build kotlin.code-insight.impl-base` start
 load("//build:compiler-options.bzl", "create_kotlinc_options")
-load("@rules_jvm//:jvm.bzl", "jvm_library", "jvm_resources")
+load("@rules_jvm//:jvm.bzl", "jvm_library", "resourcegroup")
 
 create_kotlinc_options(
   name = "custom_impl-base",
@@ -14,9 +14,9 @@ create_kotlinc_options(
   x_context_parameters = True
 )
 
-jvm_resources(
+resourcegroup(
   name = "impl-base_resources",
-  files = glob(["resources/**/*"]),
+  srcs = glob(["resources/**/*"]),
   strip_prefix = "resources"
 )
 
@@ -25,6 +25,7 @@ jvm_library(
   module_name = "kotlin.code-insight.impl-base",
   visibility = ["//visibility:public"],
   srcs = glob(["src/**/*.kt", "src/**/*.java", "src/**/*.form"], allow_empty = True),
+  resources = [":impl-base_resources"],
   kotlinc_opts = ":custom_impl-base",
   deps = [
     "@lib//:jetbrains-annotations",
@@ -38,7 +39,7 @@ jvm_library(
     "//platform/projectModel-api:projectModel",
     "//platform/refactoring",
     "//platform/usageView",
-    "@lib//:kotlin-reflect",
+    "//libraries/kotlin-reflect",
     "@lib//:kotlinc-kotlin-compiler-common",
     "@lib//:kotlinc-kotlin-scripting-compiler-impl",
     "@lib//:kotlinc-analysis-api",
@@ -73,8 +74,7 @@ jvm_library(
     "//platform/core-ui",
     "//plugins/kotlin/base/facet",
     "//plugins/kotlin/base/plugin",
-    "@lib//:fastutil-min",
-  ],
-  runtime_deps = [":impl-base_resources"]
+    "//libraries/fastutil",
+  ]
 )
 ### auto-generated section `build kotlin.code-insight.impl-base` end

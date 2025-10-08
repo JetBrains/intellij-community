@@ -42,6 +42,8 @@ import java.util.function.Supplier;
  *
  * <p>If an in-memory implementation of VirtualFile is required, {@link LightVirtualFile} can be used.</p>
  *
+ * <p>VirtualFile is also a {@link ModificationTracker} whose stamp is incremented whenever the file's content changes.</p>
+ *
  * <p>Please see <a href="https://plugins.jetbrains.com/docs/intellij/virtual-file-system.html">Virtual File System</a>
  * for a high-level overview.</p>
  *

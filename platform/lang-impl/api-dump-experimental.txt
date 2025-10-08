@@ -192,13 +192,15 @@ c:com.intellij.codeInsight.actions.VcsFacade
 - com.intellij.codeInsight.completion.command.commands.ActionCommandProvider
 - <init>():V
 - p:createCommand(com.intellij.codeInsight.completion.command.CommandCompletionProviderContext):com.intellij.codeInsight.completion.command.commands.ActionCompletionCommand
-- a:findOutermostExpression(I,com.intellij.psi.PsiFile,com.intellij.openapi.editor.Editor):com.intellij.psi.PsiElement
+- pa:findOutermostExpression(I,com.intellij.psi.PsiFile,com.intellij.openapi.editor.Editor):com.intellij.psi.PsiElement
 - p:isApplicable(I,com.intellij.psi.PsiFile,com.intellij.openapi.editor.Editor):Z
 *a:com.intellij.codeInsight.completion.command.commands.AbstractExtractMethodCompletionCommandProvider
 - com.intellij.codeInsight.completion.command.commands.ActionCommandProvider
 - <init>(java.lang.String,java.lang.String,java.lang.String,java.util.List):V
 - b:<init>(java.lang.String,java.lang.String,java.lang.String,java.util.List,I,kotlin.jvm.internal.DefaultConstructorMarker):V
-- a:findOutermostExpression(I,com.intellij.psi.PsiFile,com.intellij.openapi.editor.Editor):com.intellij.psi.PsiElement
+- p:createCommand(com.intellij.codeInsight.completion.command.CommandCompletionProviderContext):com.intellij.codeInsight.completion.command.commands.ActionCompletionCommand
+- pa:findControlFlowStatement(I,com.intellij.psi.PsiFile):com.intellij.psi.PsiElement
+- pa:findOutermostExpression(I,com.intellij.psi.PsiFile,com.intellij.openapi.editor.Editor):com.intellij.psi.PsiElement
 - p:isApplicable(I,com.intellij.psi.PsiFile,com.intellij.openapi.editor.Editor):Z
 *a:com.intellij.codeInsight.completion.command.commands.AbstractExtractParameterCompletionCommandProvider
 - com.intellij.codeInsight.completion.command.commands.ActionCommandProvider
@@ -219,6 +221,7 @@ c:com.intellij.codeInsight.actions.VcsFacade
 - <init>():V
 - a:createCommand(com.intellij.codeInsight.completion.command.CommandCompletionProviderContext):com.intellij.codeInsight.completion.command.CompletionCommand
 - getCommands(com.intellij.codeInsight.completion.command.CommandCompletionProviderContext):java.util.List
+- supportNewLineCompletion():Z
 *a:com.intellij.codeInsight.completion.command.commands.AbstractGenerateCommandProvider
 - com.intellij.codeInsight.completion.command.CommandProvider
 - com.intellij.openapi.project.DumbAware
@@ -226,6 +229,7 @@ c:com.intellij.codeInsight.actions.VcsFacade
 - a:generationIsAvailable(com.intellij.psi.PsiElement,I):Z
 - getCommands(com.intellij.codeInsight.completion.command.CommandCompletionProviderContext):java.util.List
 - pf:isOnlySpaceInLine(com.intellij.openapi.editor.Document,I):Z
+- supportNewLineCompletion():Z
 *pf:com.intellij.codeInsight.completion.command.commands.AbstractGenerateCommandProvider$GenerateCompletionCommand
 - com.intellij.codeInsight.completion.command.CompletionCommand
 - <init>(com.intellij.codeInsight.actions.CodeInsightAction,java.lang.String,java.lang.String):V
@@ -280,6 +284,7 @@ c:com.intellij.codeInsight.actions.VcsFacade
 - a:getTextRangeImportList(com.intellij.psi.PsiFile,I):com.intellij.openapi.util.TextRange
 - p:isApplicable(I,com.intellij.psi.PsiFile,com.intellij.openapi.editor.Editor):Z
 - a:isImportList(com.intellij.psi.PsiFile,I):Z
+- supportNewLineCompletion():Z
 *a:com.intellij.codeInsight.completion.command.commands.AbstractQuickDocumentationCompletionCommand
 - com.intellij.codeInsight.completion.command.commands.ActionCommandProvider
 - <init>():V
@@ -331,6 +336,7 @@ c:com.intellij.codeInsight.actions.VcsFacade
 - b:<init>(java.lang.String,java.lang.String,javax.swing.Icon,java.lang.Integer,java.lang.String,java.util.List,I,kotlin.jvm.internal.DefaultConstructorMarker):V
 - p:createCommand(com.intellij.codeInsight.completion.command.CommandCompletionProviderContext):com.intellij.codeInsight.completion.command.commands.ActionCompletionCommand
 - pf:createCommandWithNameIdentifier(com.intellij.codeInsight.completion.command.CommandCompletionProviderContext):com.intellij.codeInsight.completion.command.commands.ActionCompletionCommand
+- *pf:createCommandWithNameIdentifierAndLastAdjusted(com.intellij.codeInsight.completion.command.CommandCompletionProviderContext):com.intellij.codeInsight.completion.command.commands.ActionCompletionCommand
 - f:getActionId():java.lang.String
 - getCommands(com.intellij.codeInsight.completion.command.CommandCompletionProviderContext):java.util.List
 - f:getIcon():javax.swing.Icon
@@ -385,8 +391,11 @@ c:com.intellij.codeInsight.actions.VcsFacade
 *f:com.intellij.codeInsight.completion.command.commands.ViewStructureCompletionCommandProvider
 - com.intellij.codeInsight.completion.command.commands.ActionCommandProvider
 - <init>():V
+- supportNewLineCompletion():Z
 *:com.intellij.codeInsight.daemon.impl.focusMode.FocusModeProvider
 - a:calcFocusZones(com.intellij.psi.PsiFile):java.util.List
+com.intellij.codeInsight.editorActions.CopyPastePreProcessor
+- *:isReformatCodeBeforePaste():Z
 *:com.intellij.codeInsight.editorActions.TypingActionsExtension
 - sf:EP_NAME:com.intellij.openapi.extensions.ExtensionPointName
 - endCopy(com.intellij.openapi.project.Project,com.intellij.openapi.editor.Editor):V
@@ -753,14 +762,12 @@ com.intellij.ide.projectView.impl.ProjectViewListener
 - sf:EP:com.intellij.openapi.extensions.ExtensionPointName
 - a:createNode(com.intellij.platform.workspace.storage.WorkspaceEntity,com.intellij.openapi.project.Project,com.intellij.ide.projectView.ViewSettings):com.intellij.ide.util.treeView.AbstractTreeNode
 - a:getWorkspaceClass():java.lang.Class
-c:com.intellij.ide.projectView.impl.nodes.PsiFileNode
-- com.intellij.ide.projectView.impl.nodes.BasePsiNode
-- com.intellij.pom.AsyncNavigatable
-- com.intellij.pom.NavigatableWithText
-- *:navigateAsync(Z,kotlin.coroutines.Continuation):java.lang.Object
 c:com.intellij.ide.util.scopeChooser.ScopeDescriptor
 - com.intellij.openapi.util.ColoredItem
 - *:needsUserInputForScope():Z
+*f:com.intellij.ide.util.treeView.TreeChildrenPreloaderKt
+- *sf:isChildrenPreloadingEnabled(javax.swing.JTree):Z
+- *sf:setChildrenPreloadingEnabled(javax.swing.JTree,Z):V
 *f:com.intellij.microservices.client.generator.ClientGeneratorOpenInScratchService
 - <init>(com.intellij.openapi.project.Project,kotlinx.coroutines.CoroutineScope):V
 - f:createScratchFile(com.intellij.microservices.client.generator.ClientGenerator,com.intellij.microservices.oas.OpenApiSpecification,kotlin.coroutines.Continuation):java.lang.Object
@@ -835,7 +842,6 @@ f:com.intellij.mock.MockPsiManager
 - a:handleText(I,I,java.lang.StringBuilder,java.lang.Runnable):V
 *:com.intellij.openapi.roots.ui.configuration.SdkLookupProvider
 - *sf:Companion:com.intellij.openapi.roots.ui.configuration.SdkLookupProvider$Companion
-- a:blockingGetSdk():com.intellij.openapi.projectRoots.Sdk
 - s:getInstance(com.intellij.openapi.project.Project,com.intellij.openapi.roots.ui.configuration.SdkLookupProvider$Id):com.intellij.openapi.roots.ui.configuration.SdkLookupProvider
 - a:getProgressIndicator():com.intellij.openapi.progress.ProgressIndicator
 - a:getSdk():com.intellij.openapi.projectRoots.Sdk

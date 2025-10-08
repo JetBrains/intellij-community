@@ -1,0 +1,23 @@
+// PRIORITY: HIGH
+// INTENTION_TEXT: "Import members from 'pack.name.Fixtures'"
+
+package pack.name
+
+import pack.name.Fixtures.*
+
+class Fixtures {
+    class Register {
+        class Domain {
+            object UserRepository {
+                val authSuccess = true
+                val authError = false
+            }
+        }
+    }
+}
+
+fun test() {
+    val ur: Register.Domain.UserRepository? = null
+}
+
+// IGNORE_K1

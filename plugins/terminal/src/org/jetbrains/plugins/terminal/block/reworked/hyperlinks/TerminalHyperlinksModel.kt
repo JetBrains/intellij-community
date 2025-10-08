@@ -2,12 +2,12 @@
 package org.jetbrains.plugins.terminal.block.reworked.hyperlinks
 
 import com.intellij.openapi.diagnostic.logger
-import com.intellij.terminal.session.TerminalFilterResultInfo
-import com.intellij.terminal.session.TerminalHyperlinkId
-import com.intellij.terminal.session.TerminalHyperlinksModelState
 import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.plugins.terminal.block.reworked.TerminalOffset
 import org.jetbrains.plugins.terminal.block.reworked.TerminalOutputModel
+import org.jetbrains.plugins.terminal.session.TerminalFilterResultInfo
+import org.jetbrains.plugins.terminal.session.TerminalHyperlinkId
+import org.jetbrains.plugins.terminal.session.TerminalHyperlinksModelState
 
 @ApiStatus.Internal
 class TerminalHyperlinksModel(private val debugName: String, private val outputModel: TerminalOutputModel) {
@@ -54,7 +54,7 @@ class TerminalHyperlinksModel(private val debugName: String, private val outputM
   private fun removeTrimmedHyperlinks(removedIds: MutableList<TerminalHyperlinkId>) {
     // We use absoluteEndOffset here because the list is sorted by it,
     // so we can end up with a partially removed link, but that's OK, it'll be removed later.
-    val trimOffset = outputModel.relativeOffset(0).toAbsolute()
+    val trimOffset = outputModel.startOffset.toAbsolute()
     val removeUntilIndex = hyperlinks.binarySearch { it.absoluteEndOffset.compareTo(trimOffset) }.let {
       if (it >= 0) it + 1 else -it - 1
     }
@@ -106,23 +106,21 @@ class TerminalHyperlinksModel(private val debugName: String, private val outputM
     removedIds: List<TerminalHyperlinkId>,
   ) {
     if (!LOG.isDebugEnabled) return
-    LOG.debug("$debugName Hyperlinks removed from offset $fromAbsoluteOffset (${fromAbsoluteOffset.toRelative()}) " +
-      "and trimmed until ${outputModel.relativeOffset(0).toAbsolute()}: " +
-      "removed IDs ${removedIds.minOfOrNull { it.value }}-${removedIds.maxOfOrNull { it.value }}, " +
-      "now ${hyperlinks.size} links ${hyperlinks.loggableRange()}")
+    LOG.debug("$debugName Hyperlinks removed from offset $fromAbsoluteOffset " +
+              "and trimmed until ${outputModel.startOffset}: " +
+              "removed IDs ${removedIds.minOfOrNull { it.value }}-${removedIds.maxOfOrNull { it.value }}, " +
+              "now ${hyperlinks.size} links ${hyperlinks.loggableRange()}")
   }
 
   private fun List<TerminalFilterResultInfo>.loggableRange() =
     LoggableRange(
-      firstOrNull()?.absoluteStartOffset?.addRelative(),
-      lastOrNull()?.absoluteEndOffset?.addRelative(),
+      firstOrNull()?.absoluteStartOffset?.toTerminalOffset(),
+      lastOrNull()?.absoluteEndOffset?.toTerminalOffset(),
       minOfOrNull { it.id.value },
       maxOfOrNull { it.id.value },
     )
 
-  private fun Long.toRelative(): Int = outputModel.absoluteOffset(this).toRelative()
-
-  private fun Long.addRelative(): TerminalOffset = outputModel.absoluteOffset(this)
+  private fun Long.toTerminalOffset(): TerminalOffset = outputModel.absoluteOffset(this)
 
 }
 

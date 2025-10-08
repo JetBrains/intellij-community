@@ -705,6 +705,16 @@ public abstract class BasicCompletionWeigherTestGenerated extends AbstractBasicC
             runTest("../testData/weighers/basic/PreferGetMethodToProperty.kt");
         }
 
+        @TestMetadata("PreferMatchingArgumentName.kt")
+        public void testPreferMatchingArgumentName() throws Exception {
+            runTest("../testData/weighers/basic/PreferMatchingArgumentName.kt");
+        }
+
+        @TestMetadata("PreferMatchingNamedArgumentName.kt")
+        public void testPreferMatchingNamedArgumentName() throws Exception {
+            runTest("../testData/weighers/basic/PreferMatchingNamedArgumentName.kt");
+        }
+
         @TestMetadata("Prefix.kt")
         public void testPrefix() throws Exception {
             runTest("../testData/weighers/basic/Prefix.kt");

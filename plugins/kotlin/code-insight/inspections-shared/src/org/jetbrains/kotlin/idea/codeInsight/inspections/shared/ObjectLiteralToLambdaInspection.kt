@@ -4,6 +4,7 @@ package org.jetbrains.kotlin.idea.codeInsight.inspections.shared
 
 import com.intellij.codeInspection.ProblemHighlightType
 import com.intellij.openapi.editor.Editor
+import com.intellij.openapi.util.Key
 import com.intellij.openapi.util.TextRange
 import com.intellij.psi.PsiComment
 import com.intellij.psi.createSmartPointer
@@ -144,6 +145,7 @@ class ObjectLiteralToLambdaIntention : SelfTargetingRangeIntention<KtObjectLiter
 
         val commentSaver = CommentSaver(element)
         val returnSaver = ReturnSaver(singleFunction)
+        val contextParametersSaver = ContextParametersSaver(singleFunction)
 
         val body = singleFunction.bodyExpression!!
 
@@ -192,6 +194,7 @@ class ObjectLiteralToLambdaIntention : SelfTargetingRangeIntention<KtObjectLiter
         val returnLabel = callee.getReferencedNameAsName()
         runWriteActionIfPhysical(element) {
             returnSaver.restore(functionLiteral, returnLabel)
+            contextParametersSaver.restore(functionLiteral.bodyExpression!!)
         }
         val parentCall = ((replaced.parent as? KtValueArgument)
             ?.parent as? KtValueArgumentList)
@@ -269,6 +272,34 @@ private fun extractData(element: KtObjectLiteralExpression): Data? {
                 // TODO: it should be WITH_QUALIFIED_NAMES but shortenReferencesInRange does not handle that properly
                 val typeRepresentation = type.render(KaTypeRendererForSource.WITH_SHORT_NAMES, position = Variance.OUT_VARIANCE)
                 Data(typeRef, baseTypeClassId, typeRepresentation, singleFunction)
+            }
+        }
+    }
+}
+
+@OptIn(KaExperimentalApi::class)
+private class ContextParametersSaver(function: KtNamedFunction) {
+    companion object {
+        private val CONTEXT_PARAMETER_KEY = Key<String>("CONTEXT_PARAMETER_KEY")
+    }
+
+    init {
+        function.contextReceiverList?.contextParameters()?.forEach { param ->
+            val paramType = allowAnalysisFromWriteActionInEdt(param) {
+                param.returnType.render(KaTypeRendererForSource.WITH_SHORT_NAMES, Variance.IN_VARIANCE)
+            }
+            ReferencesSearch.search(param).forEach { ref ->
+                ref.element.putCopyableUserData(CONTEXT_PARAMETER_KEY, paramType)
+            }
+        }
+    }
+
+    fun restore(body: KtExpression) {
+        val psiFactory = KtPsiFactory(body.project)
+        body.forEachDescendantOfType<KtNameReferenceExpression> { ref ->
+            val parameter = ref.getCopyableUserData(CONTEXT_PARAMETER_KEY)
+            if (parameter != null) {
+                ref.replace(psiFactory.createExpression("contextOf<$parameter>()"))
             }
         }
     }

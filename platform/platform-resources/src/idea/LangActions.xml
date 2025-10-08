@@ -346,6 +346,8 @@
         <reference ref="InsertInlineCompletionAction"/>
         <reference ref="InsertInlineCompletionWordAction"/>
         <reference ref="InsertInlineCompletionLineAction"/>
+        <action class="com.intellij.codeInsight.completion.command.configuration.EnableCommandCompletionAction"
+                id="EnableCommandCompletion"/>
       </group>
 
       <group id="InspectCodeInCodeMenuGroup">

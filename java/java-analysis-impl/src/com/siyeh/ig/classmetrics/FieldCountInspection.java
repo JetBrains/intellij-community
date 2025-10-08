@@ -71,7 +71,7 @@ public final class FieldCountInspection extends ClassMetricInspection {
   }
 
   @Override
-  public BaseInspectionVisitor buildVisitor() {
+  public @NotNull BaseInspectionVisitor buildVisitor() {
     return new FieldCountVisitor();
   }
 

@@ -31,12 +31,6 @@ class SdkLookupProviderImpl : SdkLookupProvider {
     return context?.getSdk()
   }
 
-  @Deprecated("Consider using the SdkLookupProvider.waitForLookup with the SdkLookupUtil.getSdk")
-  override fun blockingGetSdk(): Sdk? {
-    waitForLookup()
-    return getSdk()
-  }
-
   override fun waitForLookup() {
     context?.waitForSdkResolution()
   }

@@ -3,8 +3,10 @@ package com.intellij.spellchecker.quickfixes;
 
 import com.intellij.codeInsight.intention.EventTrackingIntentionAction;
 import com.intellij.codeInsight.intention.preview.IntentionPreviewUtils;
-import com.intellij.modcommand.ModPsiUpdater;
-import com.intellij.modcommand.PsiUpdateModCommandQuickFix;
+import com.intellij.codeInspection.IntentionAndQuickFixAction;
+import com.intellij.ide.DataManager;
+import com.intellij.openapi.actionSystem.DataContext;
+import com.intellij.openapi.actionSystem.PlatformCoreDataKeys;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Iconable;
@@ -12,7 +14,9 @@ import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.psi.*;
 import com.intellij.psi.util.PsiTreeUtil;
-import com.intellij.refactoring.rename.RenameUtil;
+import com.intellij.refactoring.RefactoringActionHandler;
+import com.intellij.refactoring.RefactoringActionHandlerFactory;
+import com.intellij.refactoring.rename.*;
 import com.intellij.spellchecker.SpellCheckerManager;
 import com.intellij.spellchecker.statistics.SpellcheckerActionStatistics;
 import com.intellij.spellchecker.statistics.SpellcheckerRateTracker;
@@ -26,13 +30,14 @@ import javax.swing.*;
 import java.util.ArrayList;
 import java.util.List;
 
-public class RenameTo extends PsiUpdateModCommandQuickFix implements Iconable, EventTrackingIntentionAction {
+public class RenameTo extends IntentionAndQuickFixAction implements Iconable, EventTrackingIntentionAction {
 
   private final String typo;
   private final TextRange range;
   private final SmartPsiElementPointer<PsiElement> pointer;
   private final SpellcheckerRateTracker tracker;
-  private final List<String> suggestions = new ArrayList<>();
+  private volatile List<String> suggestions;
+  private SmartPsiElementPointer<PsiElement> namedPointer;
 
   public RenameTo(String typo, TextRange range, PsiElement psi, SpellcheckerRateTracker tracker) {
     this.typo = typo;
@@ -42,16 +47,51 @@ public class RenameTo extends PsiUpdateModCommandQuickFix implements Iconable, E
   }
 
   @Override
-  public @NotNull String getFamilyName() {
-    return getFixName();
+  public boolean isAvailable(@NotNull Project project, @Nullable Editor editor, PsiFile psiFile) {
+    PsiElement element = pointer.getElement();
+    if (element == null) return false;
+    var presentationName = getPresentationName(element);
+    if (presentationName == null) return false;
+    generateSuggestions(presentationName.getSecond(), element);
+    this.namedPointer = SmartPointerManager.getInstance(project).createSmartPsiElementPointer(presentationName.getFirst());
+    if (suggestions.isEmpty()) return false;
+    return true;
   }
 
   @Override
-  protected void applyFix(@NotNull Project project, @NotNull PsiElement psiElement, @NotNull ModPsiUpdater updater) {
-    var name = getPresentationName(psiElement);
-    if (name == null) return;
-    generateSuggestions(name.second, psiElement);
-    updater.rename(name.first, psiElement, suggestions);
+  public boolean startInWriteAction() {
+    return false;
+  }
+
+  @Override
+  public @NotNull String getName() {
+    return getFixName(suggestions);
+  }
+
+  @Override
+  public @NotNull String getFamilyName() {
+    return getFixName(suggestions);
+  }
+
+  @Override
+  public void applyFix(@NotNull Project project, PsiFile psiFile, @Nullable Editor editor) {
+    PsiElement element = namedPointer.getElement() == null ? null : namedPointer.getElement();
+    if (element == null) return;
+
+    if (suggestions.size() == 1) {
+      runRenamer(element, suggestions.getFirst());
+    }
+    else {
+      var context = DataManager.getInstance().getDataContext(editor.getContentComponent());
+      DataContext contextWithSuggestions = dataId -> {
+        if (PsiElementRenameHandler.NAME_SUGGESTIONS.is(dataId)) return new ArrayList<>(suggestions);
+        if (PlatformCoreDataKeys.PSI_ELEMENT_ARRAY.is(dataId)) return new PsiElement[]{element};
+        return context.getData(dataId);
+      };
+      RefactoringActionHandler handler = getRenameHandler(contextWithSuggestions);
+      handler.invoke(project, editor, psiFile, contextWithSuggestions);
+    }
+
     if (!IntentionPreviewUtils.isIntentionPreviewActive()) {
       SpellcheckerActionStatistics.renameToPerformed(tracker, suggestions.size());
     }
@@ -64,8 +104,10 @@ public class RenameTo extends PsiUpdateModCommandQuickFix implements Iconable, E
     }
   }
 
-  public static @Nls String getFixName() {
-    return SpellCheckerBundle.message("rename.to");
+  public static @Nls String getFixName(List<String> suggestions) {
+    return (suggestions != null && suggestions.size() == 1) ?
+           SpellCheckerBundle.message("rename.to.0", suggestions.getFirst()) :
+           SpellCheckerBundle.message("rename.to");
   }
 
   @Override
@@ -83,14 +125,25 @@ public class RenameTo extends PsiUpdateModCommandQuickFix implements Iconable, E
     return new Pair<>(namedElement, name);
   }
 
+  private static RefactoringActionHandler getRenameHandler(DataContext dataContext) {
+    RenameHandler handler = RenameHandlerRegistry.getInstance().getRenameHandler(dataContext);
+    if (handler == null) return RefactoringActionHandlerFactory.getInstance().createRenameHandler();
+    return handler;
+  }
+
   private void generateSuggestions(String name, PsiElement element) {
-    if (suggestions.isEmpty()) {
+    if (suggestions == null) {
       TextRange range = this.range.shiftLeft(element.getText().indexOf(name));
-      SpellCheckerManager.getInstance(pointer.getProject()).getSuggestions(typo)
+      this.suggestions = SpellCheckerManager.getInstance(pointer.getProject()).getSuggestions(typo)
         .stream()
         .map(suggestion -> range.replace(name, suggestion))
         .filter(suggestion -> RenameUtil.isValidName(element.getProject(), element, suggestion))
-        .forEach(suggestions::add);
+        .distinct()
+        .toList();
     }
+  }
+
+  private void runRenamer(PsiElement element, String suggestion) {
+    new RenameProcessor(pointer.getProject(), element, suggestion, true, true).run();
   }
 }

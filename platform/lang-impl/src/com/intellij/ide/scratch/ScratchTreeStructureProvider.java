@@ -18,6 +18,8 @@ import com.intellij.openapi.application.ReadAction;
 import com.intellij.openapi.extensions.ExtensionPointListener;
 import com.intellij.openapi.extensions.PluginDescriptor;
 import com.intellij.openapi.fileTypes.LanguageFileType;
+import com.intellij.openapi.options.advanced.AdvancedSettings;
+import com.intellij.openapi.options.advanced.AdvancedSettingsChangeListener;
 import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.project.DumbAware;
 import com.intellij.openapi.project.Project;
@@ -38,6 +40,7 @@ import com.intellij.psi.search.PsiElementProcessor;
 import com.intellij.util.containers.ConcurrentFactoryMap;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.JBIterable;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.annotations.Unmodifiable;
@@ -49,6 +52,9 @@ import java.util.concurrent.ConcurrentMap;
  * @author gregsh
  */
 public final class ScratchTreeStructureProvider implements TreeStructureProvider, DumbAware {
+
+  @ApiStatus.Internal
+  public static final String SCRATCHES_NODE_SETTING = "project.view.show.scratches.and.consoles";
 
   public ScratchTreeStructureProvider(Project project) {
     registerUpdaters(project, project, new Runnable() {
@@ -62,6 +68,15 @@ public final class ScratchTreeStructureProvider implements TreeStructureProvider
         if (updateTarget != null) updateTarget.updateFromRoot(true);
       }
     });
+    ApplicationManager.getApplication().getMessageBus()
+      .connect(project).subscribe(AdvancedSettingsChangeListener.TOPIC, new AdvancedSettingsChangeListener() {
+        @Override
+        public void advancedSettingChanged(@NotNull String id, @NotNull Object oldValue, @NotNull Object newValue) {
+          if (SCRATCHES_NODE_SETTING.equals(id)) {
+            ProjectView.getInstance(project).refresh();
+          }
+        }
+      });
   }
 
   private static void registerUpdaters(@NotNull Project project, @NotNull Disposable disposable, @NotNull Runnable onUpdate) {
@@ -174,7 +189,9 @@ public final class ScratchTreeStructureProvider implements TreeStructureProvider
     }
     List<AbstractTreeNode<?>> list = new ArrayList<>(children.size() + 1);
     list.addAll(children);
-    list.add(new MyProjectNode(project, settings));
+    if (AdvancedSettings.getBoolean(SCRATCHES_NODE_SETTING)) {
+      list.add(new MyProjectNode(project, settings));
+    }
     return list;
   }
 

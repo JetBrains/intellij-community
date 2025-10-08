@@ -209,14 +209,14 @@ class J2KNullityInferrer {
                 PsiModifierListOwner owner =
                         typeElement.getParent() instanceof PsiModifierListOwner modifierListOwner ? modifierListOwner : null;
                 if (owner instanceof PsiMethod) return;
-                Nullability nullability = DfaPsiUtil.getElementNullability(type, owner);
+                Nullability nullability = DfaPsiUtil.getElementNullabilityForWrite(type, owner);
                 switch (nullability) {
                     case NULLABLE -> registerNullableType(type);
                     case NOT_NULL -> registerNotNullType(type);
                 }
                 if (type instanceof PsiArrayType arrayType) {
                     PsiType componentType = arrayType.getComponentType();
-                    Nullability componentNullability = DfaPsiUtil.getTypeNullability(componentType);
+                    Nullability componentNullability = componentType.getNullability().nullability();
                     switch (componentNullability) {
                         case NULLABLE -> registerNullableType(componentType);
                         case NOT_NULL -> registerNotNullType(componentType);
@@ -477,13 +477,13 @@ class J2KNullityInferrer {
             PsiType methodReturnType = method.getReturnType();
             if (methodReturnType == null) return;
 
-            Nullability methodNullability = DfaPsiUtil.getElementNullability(methodReturnType, method);
+            Nullability methodNullability = DfaPsiUtil.getElementNullabilityForWrite(methodReturnType, method);
             if (methodNullability == Nullability.NOT_NULL) {
                 registerNotNullType(methodReturnType);
             }
             if (methodReturnType instanceof PsiArrayType arrayType) {
                 PsiType componentType = arrayType.getComponentType();
-                Nullability componentNullability = DfaPsiUtil.getTypeNullability(componentType);
+                Nullability componentNullability = componentType.getNullability().nullability();
                 switch (componentNullability) {
                     case NULLABLE -> registerNullableType(componentType);
                     case NOT_NULL -> registerNotNullType(componentType);

@@ -43,6 +43,17 @@ class SharedEventsFlow(
     }
   }
 
+  override fun <EventType : Event> subscribeOnce(
+    eventClass: Class<EventType>,
+    subscriber: Any,
+    timeout: Duration,
+    callback: suspend (event: EventType) -> Unit,
+  ): Boolean {
+    return localEventsFlow.subscribeOnce(eventClass, subscriber, timeout, callback).also {
+      if (it) client.newSubscriber(eventClass, timeout, getSubscriberObject(subscriber).toString())
+    }
+  }
+
   override fun <T : Event> postAndWaitProcessing(event: T) {
     LOG.debug("Post event $event")
     client.postAndWaitProcessing(

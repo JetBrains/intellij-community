@@ -44,6 +44,8 @@ import java.util.Collection;
 import java.util.List;
 import java.util.Map;
 
+import static com.intellij.codeInsight.folding.impl.UpdateFoldRegionsOperation.CAN_BE_REMOVED_WHEN_COLLAPSED;
+
 @ApiStatus.Internal
 public final class CodeFoldingManagerImpl extends CodeFoldingManager implements Disposable {
   private static final Key<Boolean> FOLDING_STATE_KEY = Key.create("FOLDING_STATE_KEY");
@@ -205,6 +207,14 @@ public final class CodeFoldingManagerImpl extends CodeFoldingManager implements 
 
   public static boolean isFrontendCreated(@Nullable FoldRegion region) {
     return FRONTEND_CREATED.isIn(region);
+  }
+
+  public static void markAsCanBeRemovedWhenCollapsed(@NotNull FoldRegion region) {
+    CAN_BE_REMOVED_WHEN_COLLAPSED.set(region, true);
+  }
+
+  public static boolean canBeRemovedWhenCollapsed(@Nullable FoldRegion region) {
+    return CAN_BE_REMOVED_WHEN_COLLAPSED.get(region) == Boolean.TRUE;
   }
 
   public static Boolean getCollapsedByDef(@NotNull FoldRegion region) {

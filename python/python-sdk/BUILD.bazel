@@ -1,10 +1,16 @@
 ### auto-generated section `build intellij.python.sdk` start
-load("@rules_jvm//:jvm.bzl", "jvm_library", "jvm_resources")
+load("@rules_jvm//:jvm.bzl", "jvm_library", "resourcegroup")
 
-jvm_resources(
+resourcegroup(
   name = "sdk_resources",
-  files = glob(["resources/**/*"]),
+  srcs = glob(["resources/**/*"]),
   strip_prefix = "resources"
+)
+
+resourcegroup(
+  name = "sdk_test_resources",
+  srcs = glob(["testResources/**/*"]),
+  strip_prefix = "testResources"
 )
 
 jvm_library(
@@ -12,10 +18,11 @@ jvm_library(
   module_name = "intellij.python.sdk",
   visibility = ["//visibility:public"],
   srcs = glob(["src/**/*.kt", "src/**/*.java", "src/**/*.form"], allow_empty = True),
+  resources = [":sdk_resources"],
   deps = [
     "@lib//:kotlin-stdlib",
-    "@lib//:gson",
-    "@lib//:guava",
+    "//libraries/gson",
+    "//libraries/guava",
     "@lib//:stream_ex",
     "//platform/analysis-api:analysis",
     "//platform/analysis-impl",
@@ -34,30 +41,27 @@ jvm_library(
     "//platform/execution",
     "//platform/remote-core",
     "@lib//:jna",
-    "@lib//:caffeine",
-    "@lib//:jackson",
-    "@lib//:jackson-databind",
-    "@lib//:jackson-module-kotlin",
+    "//libraries/caffeine",
+    "//libraries/jackson/jackson",
+    "//libraries/jackson/databind",
+    "//libraries/jackson/module-kotlin:libraries-jackson-module-kotlin",
     "//platform/progress/shared:ide-progress",
-    "//platform/eel-impl",
     "//platform/eel-provider",
     "//python/impl.helperLocator:community-helpersLocator",
   ],
-  runtime_deps = [
-    ":sdk_resources",
-    "//platform/backend",
-  ]
+  runtime_deps = ["//platform/backend"]
 )
 
 jvm_library(
   name = "sdk_test_lib",
   visibility = ["//visibility:public"],
   srcs = glob(["tests/**/*.kt", "tests/**/*.java", "tests/**/*.form"], allow_empty = True),
+  resources = [":sdk_test_resources"],
   associates = [":sdk"],
   deps = [
     "@lib//:kotlin-stdlib",
-    "@lib//:gson",
-    "@lib//:guava",
+    "//libraries/gson",
+    "//libraries/guava",
     "@lib//:stream_ex",
     "//platform/analysis-api:analysis",
     "//platform/analysis-impl",
@@ -78,17 +82,15 @@ jvm_library(
     "//platform/remote-core",
     "@lib//:jna",
     "@lib//:junit4",
-    "@lib//:caffeine",
-    "@lib//:jackson",
-    "@lib//:jackson-databind",
-    "@lib//:jackson-module-kotlin",
+    "//libraries/caffeine",
+    "//libraries/jackson/jackson",
+    "//libraries/jackson/databind",
+    "//libraries/jackson/module-kotlin:libraries-jackson-module-kotlin",
     "//platform/progress/shared:ide-progress",
     "@lib//:junit5",
-    "//platform/eel-impl",
     "//platform/eel-provider",
     "//python/impl.helperLocator:community-helpersLocator",
-  ],
-  runtime_deps = [":sdk_resources"]
+  ]
 )
 ### auto-generated section `build intellij.python.sdk` end
 

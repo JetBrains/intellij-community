@@ -25,10 +25,10 @@ import org.jetbrains.uast.visitor.AbstractUastVisitor
 
 class TestMethodWithoutAssertionInspection : AbstractBaseUastLocalInspectionTool() {
   @JvmField
-  var assertKeywordIsAssertion = false
+  var assertKeywordIsAssertion: Boolean = false
 
   @JvmField
-  var ignoreIfExceptionThrown = false
+  var ignoreIfExceptionThrown: Boolean = false
 
   private val methodMatcher = MethodMatcher(false, "assertionMethods")
     .add(ORG_JUNIT_ASSERT, "assert.*|fail.*")

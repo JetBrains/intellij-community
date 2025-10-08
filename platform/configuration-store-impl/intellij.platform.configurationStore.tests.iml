@@ -49,13 +49,13 @@
     <orderEntry type="module" module-name="intellij.platform.ide.core.impl" scope="TEST" />
     <orderEntry type="library" scope="TEST" name="kotlinx-coroutines-core" level="project" />
     <orderEntry type="module" module-name="intellij.platform.statistics" scope="TEST" />
-    <orderEntry type="library" scope="TEST" name="fastutil-min" level="project" />
+    <orderEntry type="module" module-name="intellij.libraries.fastutil" scope="TEST" />
     <orderEntry type="module" module-name="intellij.platform.util.jdom" scope="TEST" />
     <orderEntry type="module" module-name="intellij.platform.settings" scope="TEST" />
     <orderEntry type="module" module-name="intellij.platform.settings.local" scope="TEST" />
     <orderEntry type="module" module-name="intellij.platform.testFramework.junit5" scope="TEST" />
-    <orderEntry type="library" scope="TEST" name="kotlinx-serialization-json" level="project" />
-    <orderEntry type="library" scope="TEST" name="kotlinx-serialization-core" level="project" />
+    <orderEntry type="module" module-name="intellij.libraries.kotlinx.serialization.json" scope="TEST" />
+    <orderEntry type="module" module-name="intellij.libraries.kotlinx.serialization.core" scope="TEST" />
     <orderEntry type="module" module-name="intellij.java.impl" scope="TEST" />
   </component>
   <component name="TestModuleProperties" production-module="intellij.platform.configurationStore.impl" />

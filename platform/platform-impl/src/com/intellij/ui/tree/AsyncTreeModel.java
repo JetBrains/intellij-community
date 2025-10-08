@@ -1157,6 +1157,12 @@ public final class AsyncTreeModel extends AbstractTreeModel
 
   @ApiStatus.Internal
   @Override
+  public @Nullable CachedTreePresentation getCachedPresentation() {
+    return tree.cachedPresentation;
+  }
+
+  @ApiStatus.Internal
+  @Override
   public void setCachedPresentation(@Nullable CachedTreePresentation presentation) {
     tree.cachedPresentation = presentation;
     if (tree.root == null && presentation != null) {

@@ -62,7 +62,7 @@ internal class RegistryManagerImpl(coroutineScope: CoroutineScope) : PersistentS
     try {
       return Registry._getWithoutStateCheck(key).asInteger()
     }
-    catch (ignore: MissingResourceException) {
+    catch (_: MissingResourceException) {
       return defaultValue
     }
   }

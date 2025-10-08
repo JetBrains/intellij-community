@@ -3,12 +3,10 @@ package com.intellij.codeInsight.daemon.quickFix;
 
 import com.intellij.codeInsight.CodeInsightBundle;
 import com.intellij.codeInsight.daemon.DaemonCodeAnalyzer;
-import com.intellij.codeInsight.hint.HintManager;
 import com.intellij.codeInsight.intention.preview.IntentionPreviewInfo;
 import com.intellij.codeInspection.LocalQuickFixAndIntentionActionOnPsiElement;
 import com.intellij.icons.AllIcons;
 import com.intellij.openapi.application.ApplicationManager;
-import com.intellij.openapi.command.WriteCommandAction;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.roots.ProjectFileIndex;
@@ -164,37 +162,9 @@ public abstract class AbstractCreateFileFix extends LocalQuickFixAndIntentionAct
     }
   }
 
-  /**
-   * @deprecated override {@link #apply(Project, Supplier, Editor)} instead
-   */
-  @SuppressWarnings("unused")
-  @Deprecated(forRemoval = true)
-  protected void apply(@NotNull Project project, @NotNull PsiDirectory targetDirectory, @Nullable Editor editor)
-    throws IncorrectOperationException {
-  }
-
   protected void apply(@NotNull Project project,
                        @NotNull Supplier<? extends @Nullable PsiDirectory> targetDirectory,
-                       @Nullable Editor editor)
-    throws IncorrectOperationException {
-
-    // only for compatibility with 3-rd party plugins, not used
-    @Nullable PsiDirectory directory;
-    try {
-      directory = WriteCommandAction.writeCommandAction(project)
-        .withName(CodeInsightBundle.message(myKey, myNewFileName))
-        .compute(() -> targetDirectory.get());
-    }
-    catch (IncorrectCreateFilePathException e) {
-      if (editor != null) {
-        HintManager.getInstance().showErrorHint(editor, e.getLocalizedMessage());
-      }
-      directory = null;
-    }
-    if (directory != null) {
-      // for compatibility with plugins
-      apply(project, directory, editor);
-    }
+                       @Nullable Editor editor) {
   }
 
   protected @Nullable HtmlChunk getDescription(@NotNull Icon itemIcon) {
@@ -285,7 +255,7 @@ public abstract class AbstractCreateFileFix extends LocalQuickFixAndIntentionAct
           // rerun code-insight after popup close
           PsiFile psiFile = PsiDocumentManager.getInstance(project).getPsiFile(editor.getDocument());
           if (psiFile != null) {
-            DaemonCodeAnalyzer.getInstance(project).restart(psiFile);
+            DaemonCodeAnalyzer.getInstance(project).restart(psiFile, this);
           }
         }
       })

@@ -32,15 +32,14 @@ internal class FrontendXBreakpointTypesManager(
 
   init {
     cs.launch {
-      val (initialBreakpointTypes, breakpointTypesFlow) = durable {
-        XBreakpointTypeApi.getInstance().getBreakpointTypeList(project.projectId())
-      }
-      handleBreakpointTypesFromBackend(initialBreakpointTypes)
-      typesInitialized.complete(Unit)
-
-      breakpointTypesFlow.toFlow().collectLatest {
-        handleBreakpointTypesFromBackend(it)
-        typesChanged.tryEmit(Unit)
+      durable {
+        val (initialBreakpointTypes, breakpointTypesFlow) = XBreakpointTypeApi.getInstance().getBreakpointTypeList(project.projectId())
+        handleBreakpointTypesFromBackend(initialBreakpointTypes)
+        typesInitialized.complete(Unit)
+        breakpointTypesFlow.toFlow().collectLatest {
+          handleBreakpointTypesFromBackend(it)
+          typesChanged.tryEmit(Unit)
+        }
       }
     }
   }

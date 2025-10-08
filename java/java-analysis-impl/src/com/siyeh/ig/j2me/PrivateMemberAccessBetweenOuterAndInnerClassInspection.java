@@ -170,7 +170,7 @@ public final class PrivateMemberAccessBetweenOuterAndInnerClassInspection extend
   }
 
   @Override
-  public BaseInspectionVisitor buildVisitor() {
+  public @NotNull BaseInspectionVisitor buildVisitor() {
     return new PrivateMemberAccessFromInnerClassVisitor();
   }
 

@@ -14,8 +14,9 @@ import com.intellij.openapi.roots.impl.ProjectFileIndexScopes.IN_LIBRARY
 import com.intellij.openapi.roots.impl.ProjectFileIndexScopes.IN_SOURCE
 import com.intellij.openapi.roots.impl.ProjectFileIndexScopes.NOT_IN_PROJECT
 import com.intellij.openapi.roots.impl.ProjectFileIndexScopes.assertScope
-import com.intellij.openapi.util.registry.Registry
 import com.intellij.openapi.vfs.VirtualFile
+import com.intellij.platform.testFramework.assertion.collectionAssertion.CollectionAssertions.assertEmpty
+import com.intellij.platform.testFramework.assertion.collectionAssertion.CollectionAssertions.assertEqualsUnordered
 import com.intellij.testFramework.junit5.RunInEdt
 import com.intellij.testFramework.junit5.TestApplication
 import com.intellij.testFramework.rules.ProjectModelExtension
@@ -23,13 +24,13 @@ import com.intellij.testFramework.rules.TempDirectoryExtension
 import org.junit.jupiter.api.BeforeEach
 import org.junit.jupiter.api.Test
 import org.junit.jupiter.api.extension.RegisterExtension
+import kotlin.test.assertEquals
 
 @TestApplication
 @RunInEdt(writeIntent = true)
 class SdkInProjectFileIndexTest {
 
-  private val useWsmForProjectSdk = Registry.`is`("project.root.manager.over.wsm")
-  private val unreferencedProjectSdkScope = if (useWsmForProjectSdk) IN_LIBRARY else NOT_IN_PROJECT
+  private val unreferencedProjectSdkScope = IN_LIBRARY
 
   @JvmField
   @RegisterExtension
@@ -60,11 +61,30 @@ class SdkInProjectFileIndexTest {
       it.addRoot(sdkSourcesRoot, OrderRootType.SOURCES)
       it.addRoot(sdkDocRoot, OrderRootType.DOCUMENTATION)
     }
+    assertEmpty(fileIndex.findContainingSdks(sdkRoot))
     ModuleRootModificationUtil.setModuleSdk(module, sdk)
     
     fileIndex.assertScope(sdkRoot, IN_LIBRARY)
     fileIndex.assertScope(sdkSourcesRoot, IN_LIBRARY or IN_SOURCE)
     fileIndex.assertScope(sdkDocRoot, NOT_IN_PROJECT)
+    assertEquals(sdk.name, fileIndex.findContainingSdks(sdkRoot).single().name)
+    assertEquals(sdk.name, fileIndex.findContainingSdks(sdkSourcesRoot).single().name)
+    assertEmpty(fileIndex.findContainingSdks(sdkDocRoot))
+  }
+
+  @Test
+  fun `two sdk with same root`() {
+    val sdk1 = projectModel.addSdk("sdk1") {
+      it.addRoot(sdkRoot, OrderRootType.CLASSES)
+    }
+    val sdk2 = projectModel.addSdk("sdk2") {
+      it.addRoot(sdkRoot, OrderRootType.CLASSES)
+    }
+    val module2 = projectModel.createModule("module2")
+    ModuleRootModificationUtil.setModuleSdk(module, sdk1)
+    assertEquals("sdk1", fileIndex.findContainingSdks(sdkRoot).single().name)
+    ModuleRootModificationUtil.setModuleSdk(module2, sdk2)
+    assertEqualsUnordered(listOf("sdk1", "sdk2"), fileIndex.findContainingSdks(sdkRoot).map { it.name })
   }
 
   @Test

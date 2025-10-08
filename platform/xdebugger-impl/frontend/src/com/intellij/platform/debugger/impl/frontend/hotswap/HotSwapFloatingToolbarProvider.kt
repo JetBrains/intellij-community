@@ -26,7 +26,6 @@ import com.intellij.xdebugger.impl.hotswap.HotSwapUiExtension
 import com.intellij.xdebugger.impl.rpc.HotSwapSource
 import com.intellij.xdebugger.impl.rpc.HotSwapVisibleStatus
 import com.intellij.xdebugger.impl.rpc.XDebugHotSwapCurrentSessionStatus
-import icons.PlatformDebuggerImplIcons
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.cancel
 import kotlinx.coroutines.flow.collectLatest
@@ -41,7 +40,7 @@ import javax.swing.JPanel
 import javax.swing.SwingConstants
 
 private val hotSwapIcon: Icon by lazy {
-  HotSwapUiExtension.computeSafeIfAvailable { it.hotSwapIcon } ?: PlatformDebuggerImplIcons.Actions.DebuggerSync
+  HotSwapUiExtension.computeSafeIfAvailable { it.hotSwapIcon } ?: AllIcons.Debugger.DebuggerSync
 }
 
 private val addHideAction: Boolean by lazy {
@@ -171,6 +170,9 @@ private fun JComponent.installPopupMenu() {
 
 private val logger = logger<HotSwapFloatingToolbarProvider>()
 
+private const val SHOWING_TIME_MS = 500
+private const val HIDING_TIME_MS = 500
+
 internal class HotSwapFloatingToolbarProvider : FloatingToolbarProvider {
 
   override val backgroundAlpha: Float = JBUI.CurrentTheme.FloatingToolbar.TRANSLUCENT_BACKGROUND_ALPHA
@@ -264,11 +266,6 @@ internal class HotSwapFloatingToolbarProvider : FloatingToolbarProvider {
       logger.debug("Button is hidden by Esc button: ${dataContext.editorTag}")
     }
     FrontendHotSwapManager.getInstance(project).notifyHidden()
-  }
-
-  companion object {
-    private const val SHOWING_TIME_MS = 500
-    private const val HIDING_TIME_MS = 500
   }
 }
 

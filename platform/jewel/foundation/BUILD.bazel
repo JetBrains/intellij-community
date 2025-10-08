@@ -1,6 +1,6 @@
 ### auto-generated section `build intellij.platform.jewel.foundation` start
 load("//build:compiler-options.bzl", "create_kotlinc_options")
-load("@rules_jvm//:jvm.bzl", "jvm_library", "jvm_resources")
+load("@rules_jvm//:jvm.bzl", "jvm_library", "resourcegroup")
 
 create_kotlinc_options(
   name = "custom_foundation",
@@ -10,13 +10,13 @@ create_kotlinc_options(
     "org.jetbrains.jewel.foundation.ExperimentalJewelApi",
     "org.jetbrains.jewel.foundation.InternalJewelApi",
   ],
-  x_context_receivers = True,
+  x_context_parameters = True,
   x_explicit_api_mode = "strict"
 )
 
-jvm_resources(
+resourcegroup(
   name = "foundation_resources",
-  files = glob(["src/main/resources/**/*"]),
+  srcs = glob(["src/main/resources/**/*"]),
   strip_prefix = "src/main/resources"
 )
 
@@ -25,6 +25,7 @@ jvm_library(
   module_name = "intellij.platform.jewel.foundation",
   visibility = ["//visibility:public"],
   srcs = glob(["src/main/kotlin/**/*.kt", "src/main/kotlin/**/*.java", "src/main/kotlin/**/*.form", "src/main/generated-kotlin/**/*.kt", "src/main/generated-kotlin/**/*.java"], allow_empty = True),
+  resources = [":foundation_resources"],
   kotlinc_opts = ":custom_foundation",
   deps = [
     "@lib//:kotlin-stdlib",
@@ -37,7 +38,6 @@ jvm_library(
     "//libraries/compose-foundation-desktop",
     "//libraries/skiko",
   ],
-  runtime_deps = [":foundation_resources"],
   plugins = ["@lib//:compose-plugin"]
 )
 
@@ -59,7 +59,6 @@ jvm_library(
     "//libraries/compose-foundation-desktop",
     "//libraries/skiko",
   ],
-  runtime_deps = [":foundation_resources"],
   plugins = ["@lib//:compose-plugin"]
 )
 ### auto-generated section `build intellij.platform.jewel.foundation` end

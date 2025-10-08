@@ -136,7 +136,7 @@ final class SettingsHelper {
     String[] proxyArgs = null;
     if (proxySettings.USE_PROXY_PAC) {
       if (proxySettings.USE_PAC_URL) {
-        proxyArgs = new String[] {"--proxy-pac-url=" + proxySettings.PAC_URL + ":" + proxySettings.PROXY_PORT};
+        proxyArgs = new String[] {"--proxy-pac-url=" + proxySettings.PAC_URL};
       }
       else {
         // when "Auto-detect proxy settings" proxy option is enabled in IntelliJ:

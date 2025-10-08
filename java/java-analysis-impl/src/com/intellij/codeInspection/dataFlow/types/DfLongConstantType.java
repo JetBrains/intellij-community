@@ -23,7 +23,13 @@ public class DfLongConstantType extends DfConstantType<Long> implements DfLongTy
 
   @Override
   public boolean isSuperType(@NotNull DfType other) {
-    return DfLongType.super.isSuperType(other);
+    if (other == BOTTOM) return true;
+    if (!(other instanceof DfLongConstantType otherConst)) return false;
+    if (!otherConst.getValue().equals(getValue())) return false;
+    if (myWideRange == null) {
+      return otherConst.myWideRange == null || otherConst.myWideRange.equals(getRange());
+    }
+    return getWideRange().contains(otherConst.getWideRange());
   }
 
   @Override

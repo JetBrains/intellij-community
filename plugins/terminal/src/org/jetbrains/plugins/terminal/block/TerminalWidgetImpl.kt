@@ -6,7 +6,6 @@ import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.Disposer
 import com.intellij.openapi.wm.IdeFocusManager
 import com.intellij.terminal.TerminalTitle
-import com.intellij.terminal.session.TerminalSession
 import com.intellij.terminal.ui.TerminalWidget
 import com.intellij.terminal.ui.TtyConnectorAccessor
 import com.intellij.ui.components.panels.Wrapper
@@ -65,7 +64,7 @@ internal class TerminalWidgetImpl(
   fun initialize(options: ShellStartupOptions): CompletableFuture<TermSize> {
     val oldView = view
 
-    view = if (options.shellIntegration?.commandBlockIntegration != null) {
+    view = if (options.shellIntegration?.commandBlocks == true) {
       createBlockTerminalView(options)
     }
     else OldPlainTerminalView(project, settings, terminalTitle)
@@ -147,13 +146,6 @@ internal class TerminalWidgetImpl(
 
   override fun getPreferredFocusableComponent(): JComponent = view.preferredFocusableComponent
 
-  override val session: TerminalSession?
-    get() = null
-
-  override fun connectToSession(session: TerminalSession) {
-    error("connectToSession is not supported in TerminalWidgetImpl, use connectToTty instead")
-  }
-
   override fun getTerminalSizeInitializedFuture(): CompletableFuture<TermSize> {
     error("getTerminalSizeInitializedFuture is not supported in TerminalWidgetImpl")
   }
@@ -165,7 +157,7 @@ internal class TerminalWidgetImpl(
 
     override val component: JComponent = object : JPanel() {
       init {
-        background = TerminalUi.defaultBackground()
+        background = TerminalUi.defaultBackgroundLazy()
       }
     }
 

@@ -191,6 +191,7 @@ open class MavenArtifactsBuilder(protected val context: BuildContext) {
       val moduleCoordinates = modules.mapTo(HashSet()) { aModule -> generateMavenCoordinatesForModule(aModule) }
       val dependencies = modules
         .asSequence()
+        .filter { !it.isLibraryModule() }
         .flatMap { aModule -> squashingMavenArtifactsData.getValue(aModule).dependencies }
         .distinct()
         .filter { !moduleCoordinates.contains(it.coordinates) }
@@ -550,10 +551,10 @@ private suspend fun layoutMavenArtifacts(
                 "$it module output directory doesn't exist: $moduleOutput"
               }
               if (moduleOutput.toString().endsWith(".jar")) {
-                ZipSource(file = moduleOutput, distributionFileEntryProducer = null, filter = createModuleSourcesNamesFilter(commonModuleExcludes))
+                ZipSource(file = moduleOutput, distributionFileEntryProducer = null, filter = createModuleSourcesNamesFilter(commonModuleExcludes), moduleName = null)
               }
               else {
-                DirSource(dir = moduleOutput, excludes = commonModuleExcludes)
+                DirSource(dir = moduleOutput, excludes = commonModuleExcludes, moduleName = null)
               }
             }
           },
@@ -569,10 +570,10 @@ private suspend fun layoutMavenArtifacts(
             targetFile = sources,
             sources = publishSourcesForModules.flatMap { module ->
               module.getSourceRoots(JavaSourceRootType.SOURCE).asSequence().map {
-                DirSource(dir = it.path, prefix = it.properties.packagePrefix.replace('.', '/'), excludes = commonModuleExcludes)
+                DirSource(dir = it.path, prefix = it.properties.packagePrefix.replace('.', '/'), excludes = commonModuleExcludes, moduleName = null)
               } +
               module.getSourceRoots(JavaResourceRootType.RESOURCE).asSequence().map {
-                DirSource(dir = it.path, prefix = it.properties.relativeOutputPath, excludes = commonModuleExcludes)
+                DirSource(dir = it.path, prefix = it.properties.relativeOutputPath, excludes = commonModuleExcludes, moduleName = null)
               }
             },
             compress = true,
@@ -587,7 +588,7 @@ private suspend fun layoutMavenArtifacts(
           val javadoc = artifactDir.resolve(artifactData.coordinates.getFileName("javadoc", "jar"))
           buildJar(
             targetFile = javadoc,
-            sources = listOf(DirSource(docsFolder)),
+            sources = listOf(DirSource(docsFolder, moduleName = null)),
             compress = true,
           )
           artifacts.add(javadoc)
@@ -600,7 +601,7 @@ private suspend fun layoutMavenArtifacts(
 
 @ApiStatus.Internal
 data class GeneratedMavenArtifacts(
-  val module: JpsModule,
-  val coordinates: MavenCoordinates,
-  val files: List<Path>,
+  @JvmField val module: JpsModule,
+  @JvmField val coordinates: MavenCoordinates,
+  @JvmField val files: List<Path>,
 )

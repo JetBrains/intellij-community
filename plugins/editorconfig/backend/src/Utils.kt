@@ -216,6 +216,7 @@ object Utils {
   fun editorConfigExists(project: Project): Boolean {
     val projectDir = File(project.basePath ?: return false)
     return EditorConfigPropertiesService.getInstance(project).getRootDirs().asSequence()
+      .filter { it.isInLocalFileSystem }
       .map { File(it.path) }
       .ifEmpty { sequenceOf(projectDir) }
       .flatMap { rootDir ->
@@ -228,7 +229,7 @@ object Utils {
   }
 
   private fun containsEditorConfig(dir: File): Boolean =
-    dir.exists() && dir.isDirectory && FileUtil.exists(dir.path + File.separator + ".editorconfig")
+    dir.exists() && dir.isDirectory && File(dir, ".editorconfig").exists()
 
   fun pathsToFiles(paths: List<String>): List<VirtualFile> =
     paths.mapNotNull { VfsUtil.findFile(Paths.get(it), true) }

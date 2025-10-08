@@ -1,9 +1,9 @@
 ### auto-generated section `build intellij.platform.codeStyle.impl` start
-load("@rules_jvm//:jvm.bzl", "jvm_library", "jvm_resources")
+load("@rules_jvm//:jvm.bzl", "jvm_library", "resourcegroup")
 
-jvm_resources(
+resourcegroup(
   name = "codeStyle-impl_resources",
-  files = glob(["resources/**/*"]),
+  srcs = glob(["resources/**/*"]),
   strip_prefix = "resources"
 )
 
@@ -12,6 +12,7 @@ jvm_library(
   module_name = "intellij.platform.codeStyle.impl",
   visibility = ["//visibility:public"],
   srcs = glob(["src/**/*.kt", "src/**/*.java", "src/**/*.form"], allow_empty = True),
+  resources = [":codeStyle-impl_resources"],
   deps = [
     "//platform/analysis-api:analysis",
     "//platform/analysis-impl",
@@ -22,9 +23,8 @@ jvm_library(
     "//platform/util:util-ui",
     "@lib//:kotlin-stdlib",
     "@lib//:stream_ex",
-    "@lib//:fastutil-min",
+    "//libraries/fastutil",
     "//platform/editor-ui-api:editor-ui",
-  ],
-  runtime_deps = [":codeStyle-impl_resources"]
+  ]
 )
 ### auto-generated section `build intellij.platform.codeStyle.impl` end

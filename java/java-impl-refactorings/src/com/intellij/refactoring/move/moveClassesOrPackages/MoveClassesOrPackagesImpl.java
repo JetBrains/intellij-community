@@ -214,20 +214,18 @@ public final class MoveClassesOrPackagesImpl {
   }
 
   private static String getContainerPackageName(final PsiElement psiElement) {
-    if (psiElement instanceof PsiPackage) {
-      return ((PsiPackage)psiElement).getQualifiedName();
-    }
-    else if (psiElement instanceof PsiDirectory) {
-      PsiPackage aPackage = JavaDirectoryService.getInstance().getPackage((PsiDirectory)psiElement);
-      return aPackage != null ? aPackage.getQualifiedName() : "";
-    }
-    else if (psiElement != null) {
-      PsiPackage aPackage = JavaDirectoryService.getInstance().getPackage(psiElement.getContainingFile().getContainingDirectory());
-      return aPackage != null ? aPackage.getQualifiedName() : "";
-    }
-    else {
-      return null;
-    }
+    return switch (psiElement) {
+      case null -> null;
+      case PsiPackage psiPackage -> psiPackage.getQualifiedName();
+      case PsiDirectory directory -> {
+        PsiPackage aPackage = JavaDirectoryService.getInstance().getPackage(directory);
+        yield aPackage != null ? aPackage.getQualifiedName() : "";
+      }
+      default -> {
+        PsiPackage aPackage = JavaDirectoryService.getInstance().getPackage(psiElement.getContainingFile().getContainingDirectory());
+        yield aPackage != null ? aPackage.getQualifiedName() : "";
+      }
+    };
   }
 
   private static String getTargetPackageNameForMovedElement(final PsiElement psiElement) {

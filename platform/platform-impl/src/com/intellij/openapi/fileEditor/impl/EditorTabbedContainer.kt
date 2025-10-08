@@ -616,7 +616,10 @@ private class EditorTabs(
 
   override fun shouldPaintBottomBorder(): Boolean {
     val tab = selectedInfo ?: return true
-    return !(tab.component as EditorCompositePanel).composite.selfBorder
+    if ((tab.component as EditorCompositePanel).composite.selfBorder) {
+      return false
+    }
+    return InternalUICustomization.getInstance()?.shouldPaintEditorTabsBottomBorder(tab.component) ?: true
   }
 
   // return same instance to avoid unnecessary action toolbar updates

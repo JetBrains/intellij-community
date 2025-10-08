@@ -1,4 +1,4 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInsight;
 
 import com.intellij.openapi.application.ApplicationManager;
@@ -6,6 +6,7 @@ import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.util.Computable;
 import com.intellij.psi.*;
 import com.intellij.psi.augment.PsiExtensionMethod;
+import com.intellij.psi.impl.light.LightDefaultConstructor;
 import com.intellij.psi.impl.light.LightRecordCanonicalConstructor;
 import com.intellij.psi.impl.light.LightRecordMember;
 import com.intellij.psi.javadoc.PsiDocTag;
@@ -160,6 +161,9 @@ public class JavaTargetElementEvaluator extends TargetElementEvaluatorEx2 implem
 
       if (refElement instanceof LightRecordCanonicalConstructor) {
         return ((LightRecordCanonicalConstructor)refElement).getContainingClass();
+      }
+      if (refElement instanceof LightDefaultConstructor def) {
+        return def.getContainingClass();
       }
     }
     return super.adjustReferenceOrReferencedElement(file, editor, offset, flags, refElement);

@@ -20,10 +20,12 @@ import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.util.ArrayUtil;
 import com.intellij.util.IncorrectOperationException;
 import com.intellij.util.ReflectionUtil;
+import com.siyeh.ig.psiutils.TypeUtils;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.plugins.groovy.codeInspection.utils.ControlFlowUtils;
+import org.jetbrains.plugins.groovy.config.GroovyConfigUtils;
 import org.jetbrains.plugins.groovy.lang.lexer.GroovyTokenTypes;
 import org.jetbrains.plugins.groovy.lang.lexer.TokenSets;
 import org.jetbrains.plugins.groovy.lang.psi.*;
@@ -70,6 +72,7 @@ import org.jetbrains.plugins.groovy.lang.psi.util.GdkMethodUtil;
 import org.jetbrains.plugins.groovy.lang.psi.util.GrStringUtil;
 import org.jetbrains.plugins.groovy.lang.psi.util.PsiUtil;
 import org.jetbrains.plugins.groovy.refactoring.introduce.StringPartInfo;
+import org.jetbrains.plugins.groovy.util.GroovyMainMethodSearcher;
 
 import java.lang.ref.SoftReference;
 import java.util.ArrayList;
@@ -339,11 +342,11 @@ public final class PsiImplUtil {
 
   public static boolean isMainMethod(GrMethod method) {
     if (!method.getName().equals(MAIN_METHOD)) return false;
-    else if (!GrModifierListUtil.hasCodeModifierProperty(method, PsiModifier.STATIC)) return false;
+    else if (!GrModifierListUtil.hasCodeModifierProperty(method, PsiModifier.STATIC) && !GroovyMainMethodSearcher.INSTANCE.instanceMainMethodsEnabled(method)) return false;
 
     final GrParameter[] parameters = method.getParameters();
 
-    if (parameters.length == 0) return false;
+    if (parameters.length == 0) return GroovyConfigUtils.isAtLeastGroovy50(method);
     if (parameters.length == 1 && parameters[0].getTypeElementGroovy() == null) return true;
 
     int args_count = 0;
@@ -355,8 +358,14 @@ public final class PsiImplUtil {
       if (optional) {
         optional_count++;
       }
-      else if (declaredType == null || declaredType.getType().equalsToText(CommonClassNames.JAVA_LANG_STRING + "[]")) {
+      else if (declaredType == null) {
         args_count++;
+      }
+      else {
+        PsiType type = declaredType.getType();
+        if (type.equalsToText(CommonClassNames.JAVA_LANG_STRING + "[]") || TypeUtils.isJavaLangObject(type)) {
+          args_count++;
+        }
       }
     }
 

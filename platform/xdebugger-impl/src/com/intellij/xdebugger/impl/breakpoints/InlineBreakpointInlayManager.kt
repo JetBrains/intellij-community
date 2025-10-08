@@ -1,6 +1,7 @@
 // Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.xdebugger.impl.breakpoints
 
+import com.intellij.openapi.application.EDT
 import com.intellij.openapi.application.edtWriteAction
 import com.intellij.openapi.application.readAndEdtWriteAction
 import com.intellij.openapi.components.Service
@@ -23,16 +24,22 @@ import com.intellij.psi.PsiDocumentManager
 import com.intellij.util.DocumentUtil
 import com.intellij.util.concurrency.annotations.RequiresReadLock
 import com.intellij.util.concurrency.annotations.RequiresWriteLock
+import com.intellij.util.containers.isEmpty
 import com.intellij.util.ui.update.MergingUpdateQueue
 import com.intellij.util.ui.update.Update
 import com.intellij.xdebugger.XDebuggerUtil
 import com.intellij.xdebugger.impl.frame.XDebugManagerProxy
 import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
+import kotlinx.coroutines.withContext
+import org.jetbrains.annotations.ApiStatus
 import java.util.concurrent.atomic.AtomicLong
+import java.util.stream.Stream
 
+@ApiStatus.Internal
 @Service(Service.Level.PROJECT)
-internal class InlineBreakpointInlayManager(private val project: Project, parentScope: CoroutineScope) {
+class InlineBreakpointInlayManager(private val project: Project, parentScope: CoroutineScope) {
   private val scope = parentScope.childScope("InlineBreakpoints")
 
   private val redrawQueue = MergingUpdateQueue.mergingUpdateQueue(
@@ -57,6 +64,10 @@ internal class InlineBreakpointInlayManager(private val project: Project, parent
       EditorFactory.getInstance().addEditorFactoryListener(object : EditorFactoryListener {
         override fun editorCreated(event: EditorFactoryEvent) {
           initializeInNewEditor(event.editor)
+        }
+
+        override fun editorReleased(event: EditorFactoryEvent) {
+          XDebugManagerProxy.getInstance().getBreakpointManagerProxy(project).inlineBreakpointsCache.editorReleased(event.editor)
         }
       }, project)
 
@@ -120,9 +131,7 @@ internal class InlineBreakpointInlayManager(private val project: Project, parent
     if (!isSuitableEditor(editor)) return
     scope.launch {
       val document = editor.document
-      val allBreakpoints = XDebugManagerProxy.getInstance().getBreakpointManagerProxy(project).getLineBreakpointManager()
-        .getDocumentBreakpointProxies(document)
-      if (allBreakpoints.isEmpty()) {
+      if (allBreakpoints(document).isEmpty()) {
         // No need to clear inlays in new editor, so we can just skip whole redraw.
         // FIXME[inline-bp]: test DaemonRespondToChangesTest.testLocalInspectionMustReceiveCorrectVisibleRangeViaItsHighlightingSession
         //                   fails if you remove this fast-path,
@@ -131,6 +140,18 @@ internal class InlineBreakpointInlayManager(private val project: Project, parent
       }
       redraw(document, null, editor)
     }
+  }
+
+  private fun allBreakpoints(document: Document): Collection<XLineBreakpointProxy> =
+    XDebugManagerProxy.getInstance().getBreakpointManagerProxy(project).getLineBreakpointManager()
+      .getDocumentBreakpointProxies(document)
+
+  private fun getBreakpointLines(document: Document, onlyLine: Int?): Set<Int> {
+    var lines: Set<Int> = allBreakpoints(document).map { it.getLine() }.toHashSet()
+    if (onlyLine != null) {
+      lines = if (onlyLine in lines) setOf(onlyLine) else emptySet()
+    }
+    return lines
   }
 
   /**
@@ -159,57 +180,112 @@ internal class InlineBreakpointInlayManager(private val project: Project, parent
     }
   }
 
-  private suspend fun redraw(document: Document, onlyLine: Int?, onlyEditor: Editor?) {
-    val documenetStamp = document.modificationStamp
+  private class RedrawPostponeException : Exception()
+
+  private inner class RedrawSnapshot(
+    val document: Document,
+    val onlyLine: Int?,
+    val onlyEditor: Editor?,
+  ) {
+    val documentStamp = document.modificationStamp
     val breakpointsStamp = breakpointModificationStamp.get()
 
+    fun postpone(): Nothing {
+      doPostpone()
+      throw RedrawPostponeException()
+    }
+
+    fun checkPostponed() {
+      if (shouldBePostponed()) {
+        postpone()
+      }
+    }
+
     fun postponeOnChanged(): Boolean {
-      val documentAndPsiAreOutOfSync = !PsiDocumentManager.getInstance(project).isCommitted(document)
-      val documentIsOutdated = document.modificationStamp != documenetStamp
-      val breakpointsAreOutdated = breakpointModificationStamp.get() != breakpointsStamp
-      val isOutdated = documentAndPsiAreOutOfSync || documentIsOutdated || breakpointsAreOutdated
+      val isOutdated = shouldBePostponed()
 
       if (isOutdated) {
-        redrawQueue.queue(Update.create(Pair(document, onlyLine)) {
-          scope.launch {
-            redraw(document, onlyLine, onlyEditor)
-          }
-        })
+        doPostpone()
       }
 
       return isOutdated
     }
 
-    if (postponeOnChanged()) return
+    private fun doPostpone() {
+      redrawQueue.queue(Update.create(Pair(document, onlyLine)) {
+        scope.launch {
+          redraw(document, onlyLine, onlyEditor)
+        }
+      })
+    }
+
+    private fun shouldBePostponed(): Boolean {
+      val documentAndPsiAreOutOfSync = !PsiDocumentManager.getInstance(project).isCommitted(document)
+      val documentIsOutdated = document.modificationStamp != documentStamp
+      val breakpointsAreOutdated = breakpointModificationStamp.get() != breakpointsStamp
+      return documentAndPsiAreOutOfSync || documentIsOutdated || breakpointsAreOutdated
+    }
+  }
+
+  private suspend fun redraw(document: Document, onlyLine: Int?, onlyEditor: Editor?) {
+    val noSuitableEditors = withContext(Dispatchers.EDT) { suitableEditorsFor(document).isEmpty() }
+    if (noSuitableEditors) return
+    val snapshot = RedrawSnapshot(document, onlyLine, onlyEditor)
+
+    val lines = getBreakpointLines(document, onlyLine)
+
+    if (snapshot.postponeOnChanged()) return
     // Double-checked now.
 
-    val variants = XDebugManagerProxy.getInstance().getBreakpointManagerProxy(project).getBreakpointVariants(document, onlyLine)
+    XDebugManagerProxy.getInstance().getBreakpointManagerProxy(project).inlineBreakpointsCache.performWithVariants(document, lines) {
+      redrawVariants(snapshot, it)
+    }
+  }
 
-    if (postponeOnChanged()) return
+  private suspend fun redrawVariants(
+    snapshot: RedrawSnapshot,
+    variantsByLine: Map<Int, List<InlineVariantWithMatchingBreakpointProxy>>,
+  ): Boolean {
+    val document = snapshot.document
+    val onlyLine = snapshot.onlyLine
+    val onlyEditor = snapshot.onlyEditor
+    try {
+      with(snapshot) {
+        checkPostponed()
 
-    readAndEdtWriteAction {
-      if (postponeOnChanged()) return@readAndEdtWriteAction value(Unit)
-      val inlays = variants.flatMap { (line, variants) ->
-        collectInlayData(document, line, variants)
+        return readAndEdtWriteAction {
+          if (onlyLine != null && !DocumentUtil.isValidLine(onlyLine, document)) return@readAndEdtWriteAction value(false)
+          checkPostponed()
+          if (variantsByLine.keys.any { !DocumentUtil.isValidLine(it, document) }) {
+            postpone()
+          }
+          val inlays = variantsByLine.flatMap { (line, variants) ->
+            collectInlayData(document, line, variants)
+          }
+          checkPostponed()
+
+          if (onlyLine != null && inlays.isEmpty() &&
+              allEditorsFor(document).allMatch { getExistingInlays(it.inlayModel, document, onlyLine).isEmpty() }
+          ) {
+            // It's a fast path: no need to fire write action to remove inlays if there are already no inlays.
+            // It's required to prevent performance degradations due to IDEA-339224,
+            // otherwise fast insertion of twenty new lines could lead to 10 seconds of inlay recalculations.
+            return@readAndEdtWriteAction value(false)
+          }
+
+          writeAction {
+            checkPostponed()
+
+            insertInlays(document, onlyEditor, onlyLine, inlays)
+
+            checkPostponed()
+            true
+          }
+        }
       }
-      if (postponeOnChanged()) return@readAndEdtWriteAction value(Unit)
-
-      if (onlyLine != null && inlays.isEmpty() &&
-          allEditorsFor(document).all { getExistingInlays(it.inlayModel, document, onlyLine).isEmpty() }
-      ) {
-        // It's a fast path: no need to fire write action to remove inlays if there are already no inlays.
-        // It's required to prevent performance degradations due to IDEA-339224,
-        // otherwise fast insertion of twenty new lines could lead to 10 seconds of inlay recalculations.
-        return@readAndEdtWriteAction value(Unit)
-      }
-
-      writeAction {
-        if (postponeOnChanged()) return@writeAction
-
-        insertInlays(document, onlyEditor, onlyLine, inlays)
-
-        if (postponeOnChanged()) return@writeAction
-      }
+    }
+    catch (_: RedrawPostponeException) {
+      return false
     }
   }
 
@@ -217,12 +293,15 @@ internal class InlineBreakpointInlayManager(private val project: Project, parent
     !DiffUtil.isDiffEditor(editor)
 
   private data class SingleInlayDatum(
-    val breakpoint: XLineBreakpointProxy?,
+    val breakpoint: InlineLightBreakpoint?,
     val variant: XLineBreakpointInlineVariantProxy?,
     val offset: Int,
+    val document: Document,
+    val line: Int,
   )
 
   @RequiresReadLock
+  context(_: RedrawSnapshot)
   private fun collectInlayData(
     document: Document,
     line: Int,
@@ -234,14 +313,14 @@ internal class InlineBreakpointInlayManager(private val project: Project, parent
     val lineRange = DocumentUtil.getLineStartIndentedOffset(document, line)..document.getLineEndOffset(line)
     assert(!lineRange.isEmpty())
 
-    return variants.map { (breakpoint, variant) ->
+    return variants.map { (variant, breakpoint) ->
       val offset = if (breakpoint != null) {
         getBreakpointRangeStartOffset(breakpoint, lineRange)
       }
       else {
         getBreakpointVariantRangeStartOffset(variant!!, lineRange)
       }
-      SingleInlayDatum(breakpoint, variant, offset)
+      SingleInlayDatum(breakpoint, variant, offset, document, line)
     }
   }
 
@@ -250,9 +329,12 @@ internal class InlineBreakpointInlayManager(private val project: Project, parent
     return getBreakpointRangeStartNormalized(range, lineRange)
   }
 
-  private fun getBreakpointRangeStartOffset(breakpoint: XLineBreakpointProxy, lineRange: IntRange): Int {
-    val range = breakpoint.getHighlightRange()
-    if (range !is XLineBreakpointHighlighterRange.Available) return lineRange.first
+  context(snapshot: RedrawSnapshot)
+  private fun getBreakpointRangeStartOffset(breakpoint: InlineLightBreakpoint, lineRange: IntRange): Int {
+    val range = breakpoint.highlightRange
+    if (range !is XLineBreakpointHighlighterRange.Available) {
+      snapshot.postpone()
+    }
     return getBreakpointRangeStartNormalized(range.range, lineRange)
   }
 
@@ -272,8 +354,7 @@ internal class InlineBreakpointInlayManager(private val project: Project, parent
       insertInlays(document, onlyEditor.inlayModel, onlyLine, inlays)
     }
     else {
-      for (editor in allEditorsFor(document)) {
-        if (!isSuitableEditor(editor)) continue
+      for (editor in suitableEditorsFor(document)) {
         insertInlays(document, editor.inlayModel, onlyLine, inlays)
       }
     }
@@ -290,8 +371,8 @@ internal class InlineBreakpointInlayManager(private val project: Project, parent
     getExistingInlays(inlayModel, document, onlyLine).forEach { Disposer.dispose(it) }
 
     // draw new ones
-    for ((breakpoint, variant, offset) in inlays) {
-      val renderer = InlineBreakpointInlayRenderer(breakpoint, variant)
+    for ((breakpoint, variant, offset, document, line) in inlays) {
+      val renderer = InlineBreakpointInlayRenderer(breakpoint, variant, document, line)
       val inlay = inlayModel.addInlineElement(offset, renderer)
       inlay?.let { renderer.inlay = it }
     }
@@ -313,8 +394,11 @@ internal class InlineBreakpointInlayManager(private val project: Project, parent
     return inlayModel.getInlineElementsInRange(startOffset, endOffset, InlineBreakpointInlayRenderer::class.java)
   }
 
-  private fun allEditorsFor(document: Document): Array<out Editor> =
-    EditorFactory.getInstance().getEditors(document, project)
+  private fun allEditorsFor(document: Document): Stream<Editor> =
+    EditorFactory.getInstance().editors(document, project)
+
+  private fun suitableEditorsFor(document: Document): Stream<Editor> =
+    allEditorsFor(document).filter { isSuitableEditor(it) }
 
   companion object {
     @JvmStatic

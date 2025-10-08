@@ -1,9 +1,9 @@
 ### auto-generated section `build intellij.tasks.core` start
-load("@rules_jvm//:jvm.bzl", "jvm_library", "jvm_resources")
+load("@rules_jvm//:jvm.bzl", "jvm_library", "resourcegroup")
 
-jvm_resources(
+resourcegroup(
   name = "core_resources",
-  files = glob(["resources/**/*"]),
+  srcs = glob(["resources/**/*"]),
   strip_prefix = "resources"
 )
 
@@ -12,6 +12,7 @@ jvm_library(
   module_name = "intellij.tasks.core",
   visibility = ["//visibility:public"],
   srcs = glob(["src/**/*.kt", "src/**/*.java", "src/**/*.form", "gen/**/*.kt", "gen/**/*.java"], allow_empty = True),
+  resources = [":core_resources"],
   deps = [
     "//platform/analysis-api:analysis",
     "//platform/editor-ui-api:editor-ui",
@@ -23,8 +24,7 @@ jvm_library(
     "//platform/lang-impl",
     "//platform/vcs-impl",
     "//plugins/tasks/tasks-core/lib:axis-1-4",
-    "@lib//:xml_r_p_c",
-    "@lib//:gson",
+    "//libraries/gson",
     "//xml/impl",
     "//platform/core-api:core",
     "//RegExpSupport:regexp",
@@ -41,7 +41,6 @@ jvm_library(
     "//platform/util/jdom",
     "//platform/markdown-utils",
   ],
-  exports = ["//plugins/tasks/tasks-core/lib:axis-1-4"],
-  runtime_deps = [":core_resources"]
+  exports = ["//plugins/tasks/tasks-core/lib:axis-1-4"]
 )
 ### auto-generated section `build intellij.tasks.core` end

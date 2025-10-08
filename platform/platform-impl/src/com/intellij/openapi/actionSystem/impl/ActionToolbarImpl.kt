@@ -296,7 +296,7 @@ open class ActionToolbarImpl @JvmOverloads constructor(
       }
 
       initOnShow("ActionToolbarImpl.updateActionsOnAdd") {
-        withContext(Dispatchers.UiWithModelAccess) {
+        withContext(Dispatchers.EDT) {
           // a first update really
           if (myForcedUpdateRequested && myLastUpdate == null) {
             @Suppress("DEPRECATION")
@@ -965,7 +965,7 @@ open class ActionToolbarImpl @JvmOverloads constructor(
 
     val cs = service<CoreUiCoroutineScopeHolder>().coroutineScope
     val job = cs.launch(
-      Dispatchers.UiWithModelAccess + ModalityState.any().asContextElement() +
+      Dispatchers.EDT + ModalityState.any().asContextElement() +
       ClientId.coroutineContext(), CoroutineStart.UNDISPATCHED) {
       try {
         val actions = Utils.expandActionGroupSuspend(
@@ -1088,6 +1088,9 @@ open class ActionToolbarImpl @JvmOverloads constructor(
       val prev: AnAction = myVisibleActions[index]
       val next: AnAction = newVisibleActions[index]
       if (next.javaClass != prev.javaClass) return false // in theory, that should be OK, but better to be safe
+
+      val isSecondaryAction = isSecondaryAction(next, index)
+      if (isSecondaryAction) continue
 
       if (prev is Separator) {
         if (next !is Separator) return false

@@ -1,4 +1,4 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInsight.daemon.impl.analysis;
 
 import com.intellij.application.options.colors.ScopeAttributesUtil;
@@ -23,6 +23,7 @@ import com.intellij.psi.*;
 import com.intellij.psi.impl.light.LightRecordField;
 import com.intellij.psi.impl.source.tree.ElementType;
 import com.intellij.psi.impl.source.tree.TreeUtil;
+import com.intellij.psi.javadoc.PsiDocFragmentName;
 import com.intellij.psi.search.scope.packageSet.NamedScope;
 import com.intellij.psi.search.scope.packageSet.NamedScopesHolder;
 import com.intellij.psi.search.scope.packageSet.PackageSet;
@@ -393,6 +394,10 @@ public final class HighlightNamesUtil {
 
   static HighlightInfo highlightClassKeyword(@NotNull PsiKeyword keyword) {
     return nameBuilder(JavaHighlightInfoTypes.JAVA_KEYWORD_CLASS_FILE).range(keyword).create();
+  }
+
+  static HighlightInfo highlightFragmentReference(@NotNull PsiDocFragmentName fragmentName) {
+    return nameBuilder(JavaHighlightInfoTypes.LOCAL_VARIABLE).range(fragmentName).create();
   }
 
   public static @NotNull @NlsSafe String formatClass(@NotNull PsiClass aClass) {

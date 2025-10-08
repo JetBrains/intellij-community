@@ -7,5 +7,5 @@ import com.intellij.openapi.vcs.IssueNavigationConfiguration
 
 internal class VcsRemoteSettingsInfoProvider  : RemoteSettingInfoProvider {
   override fun getRemoteSettingsInfo(): Map<String, RemoteSettingInfo> =
-    mapOf(IssueNavigationConfiguration.SETTINGS_KEY to RemoteSettingInfo(RemoteSettingInfo.Direction.OnlyFromBackend))
+    mapOf(IssueNavigationConfiguration.SETTINGS_KEY to RemoteSettingInfo(RemoteSettingInfo.Direction.InitialFromBackend))
 }

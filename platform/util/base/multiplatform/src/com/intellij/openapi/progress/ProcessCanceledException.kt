@@ -29,10 +29,14 @@ open class ProcessCanceledException : CancellationException, ControlFlowExceptio
   constructor()
 
   constructor(cause: Throwable?) : super(cause?.toString()) { // repeat Throwable(Throwable) constructor logic
-    if (cause is ProcessCanceledException) {
-      throw IllegalArgumentException("Must not self-wrap ProcessCanceledException: ", cause)
+    this._cause = if (cause is ProcessCanceledException) {
+      /**
+       * can be the case when [java.util.concurrent.ForkJoinTask.get] tries to create another instance of this PCE to report it from the other thread.
+       * see [java.util.concurrent.ForkJoinTask.getException]
+       */
+      cause._cause
     }
-    this._cause = cause
+    else cause
   }
 
   protected constructor(message: String) : super(message)

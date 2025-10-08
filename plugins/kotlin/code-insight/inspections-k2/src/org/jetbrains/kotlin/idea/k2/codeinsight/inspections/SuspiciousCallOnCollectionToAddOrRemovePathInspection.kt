@@ -25,6 +25,7 @@ import org.jetbrains.kotlin.name.Name
 import org.jetbrains.kotlin.name.StandardClassIds
 import org.jetbrains.kotlin.psi.*
 import org.jetbrains.kotlin.psi.psiUtil.getQualifiedExpressionForSelector
+import org.jetbrains.kotlin.analysis.api.resolution.symbol
 
 private val PATH_CLASS_ID: ClassId = ClassId.fromString("java/nio/file/Path")
 private val SUSPICIOUS_CALLABLE_IDS: Set<CallableId> = setOf(
@@ -57,7 +58,7 @@ internal class SuspiciousCallOnCollectionToAddOrRemovePathInspection : KotlinApp
                 val right = element.right ?: return false
                 if (left is KtConstantExpression || right is KtConstantExpression) return false
                 if (left is KtStringTemplateExpression || right is KtStringTemplateExpression) return false
-                val op = element.operationReference.getReferencedNameElementType()
+                val op = element.operationToken
                 op == KtTokens.PLUS || op == KtTokens.MINUS
             }
 
@@ -78,7 +79,7 @@ internal class SuspiciousCallOnCollectionToAddOrRemovePathInspection : KotlinApp
         val isPlus = when (element) {
             is KtBinaryExpression -> {
                 if (element.right?.expressionType?.symbol?.classId != PATH_CLASS_ID) return null
-                element.operationReference.getReferencedNameElementType() == KtTokens.PLUS
+                element.operationToken == KtTokens.PLUS
             }
 
             is KtCallExpression -> {
@@ -91,7 +92,7 @@ internal class SuspiciousCallOnCollectionToAddOrRemovePathInspection : KotlinApp
         }
 
         val call = element.resolveToCall()?.successfulFunctionCallOrNull() ?: return null
-        if (call.partiallyAppliedSymbol.signature.callableId !in SUSPICIOUS_CALLABLE_IDS) return null
+        if (call.partiallyAppliedSymbol.symbol.callableId !in SUSPICIOUS_CALLABLE_IDS) return null
         return Context(isPlus)
     }
 

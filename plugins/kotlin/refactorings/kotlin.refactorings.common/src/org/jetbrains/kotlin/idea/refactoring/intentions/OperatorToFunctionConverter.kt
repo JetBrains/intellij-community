@@ -2,7 +2,6 @@
 package org.jetbrains.kotlin.idea.codeinsights.impl.base.inspections
 
 import org.jetbrains.annotations.NonNls
-import org.jetbrains.kotlin.analysis.api.KaExperimentalApi
 import org.jetbrains.kotlin.analysis.api.analyze
 import org.jetbrains.kotlin.analysis.api.permissions.KaAllowAnalysisFromWriteAction
 import org.jetbrains.kotlin.analysis.api.permissions.KaAllowAnalysisOnEdt
@@ -44,20 +43,20 @@ object OperatorToFunctionConverter {
         */
 
         val callExpression = qualifiedExpression.selectorExpression.safeAs<KtCallExpression>()?.copied() ?: return null
-        val calleExpression = callExpression.calleeExpression as KtNameReferenceExpression
+        val calleeExpression = callExpression.calleeExpression as KtNameReferenceExpression
         val receiverExpression = qualifiedExpression.receiverExpression
         val selectorInReceiver = receiverExpression.safeAs<KtDotQualifiedExpression>()?.selectorExpression
         return if (selectorInReceiver is KtNameReferenceExpression) {
-            calleExpression.rawReplace(selectorInReceiver.copied())
+            calleeExpression.rawReplace(selectorInReceiver.copied())
             selectorInReceiver.rawReplace(callExpression)
             qualifiedExpression.replaced(receiverExpression)
         } else {
             if ((receiverExpression is KtCallExpression || receiverExpression is KtDotQualifiedExpression) &&
                 callExpression.valueArgumentList == null && callExpression.typeArgumentList == null
             ) {
-                calleExpression.replace(receiverExpression)
+                calleeExpression.replace(receiverExpression)
             } else {
-                calleExpression.rawReplace(receiverExpression)
+                calleeExpression.rawReplace(receiverExpression)
             }
 
             qualifiedExpression.replaced(callExpression)
@@ -181,6 +180,7 @@ object OperatorToFunctionConverter {
                 appendFixedText("set(")
                 appendExpressions(element.indexExpressions)
                 appendFixedText(",")
+                appendIfVarargType(element, this)
                 appendExpression(parent.right)
             } else {
                 appendFixedText("get(")
@@ -193,6 +193,22 @@ object OperatorToFunctionConverter {
         return expressionToReplace.replace(transformed) as KtExpression
     }
 
+    @OptIn(KaAllowAnalysisOnEdt::class, KaAllowAnalysisFromWriteAction::class)
+    private fun appendIfVarargType(element: KtArrayAccessExpression, pattern: BuilderByPattern<KtExpression>) {
+        allowAnalysisOnEdt {
+            allowAnalysisFromWriteAction {
+                analyze(element) {
+                    val argumentMapping = element.resolveToCall()?.singleFunctionCallOrNull()?.argumentMapping.orEmpty()
+                    if (argumentMapping[element.indexExpressions.firstOrNull()]?.symbol?.isVararg == true) {
+                        argumentMapping[(element.parent as KtBinaryExpression).right]?.symbol?.name?.asString()
+                            .let { pattern.appendFixedText("$it = ") }
+                    }
+                }
+            }
+        }
+    }
+
+
     private fun isAssignmentLeftSide(element: KtArrayAccessExpression): Boolean {
         val parent = element.parent
         return parent is KtBinaryExpression &&
@@ -200,83 +216,49 @@ object OperatorToFunctionConverter {
     }
 
     //TODO: don't use creation by plain text
-    @OptIn(KaAllowAnalysisOnEdt::class, KaAllowAnalysisFromWriteAction::class, KaExperimentalApi::class)
     private fun convertCall(element: KtCallExpression): KtExpression {
         val callee = element.calleeExpression!!
         val receiver = element.parent?.safeAs<KtQualifiedExpression>()?.receiverExpression
-        val isAnonymousFunctionWithReceiver = receiver != null && (callee.safeDeparenthesize() as? KtNamedFunction)?.receiverTypeReference != null
+        val isAnonymousFunctionWithReceiver =
+            receiver != null && (callee.safeDeparenthesize() as? KtNamedFunction)?.receiverTypeReference != null
 
-        val isReceiverToPassAsParameter = ((callee.mainReference?.resolve() as? KtCallableDeclaration)?.typeReference?.typeElement as? KtFunctionType)?.receiverTypeReference != null
+        val isReceiverToPassAsParameter =
+            ((callee.mainReference?.resolve() as? KtCallableDeclaration)?.typeReference?.typeElement as? KtFunctionType)?.receiverTypeReference != null
 
         // to skip broken code like Main.({ println("hello")})() which is possible during inline anonymous function.
         // see KotlinInlineAnonymousFunctionProcessor.Companion.findFunction
         // and corresponding test InlineVariableOrProperty.testFunctionalPropertyWithReceiver
-        val isLambdaWithReceiver = receiver != null && receiver != element && callee.safeDeparenthesize() is KtLambdaExpression
-        val argumentsList = element.valueArgumentList
-        val argumentString = argumentsList?.text?.removeSurrounding("(", ")") ?: ""
+        val argumentString = element.valueArgumentList?.text?.removeSurrounding("(", ")") ?: ""
+
         val argumentsWithReceiverIfNeeded = if (isAnonymousFunctionWithReceiver || isReceiverToPassAsParameter) {
-            val receiverText = if (receiver != null) {
-                receiver.text
-            } else {
-                val owner = allowAnalysisOnEdt {
-                    allowAnalysisFromWriteAction {
-                        analyze(callee) {
-                            val partiallyAppliedSymbol = element.resolveToCall()?.successfulFunctionCallOrNull()?.partiallyAppliedSymbol
-                            val symbol = (partiallyAppliedSymbol?.extensionReceiver as? KaImplicitReceiverValue)?.symbol
-                            (symbol as? KaReceiverParameterSymbol)?.owningCallableSymbol?.psi
-                        }
-                    }
-                }
-                val label = when(owner) {
-                    is KtFunctionLiteral -> owner.findLabelAndCall().first?.asString()
-                    is KtNamedDeclaration -> owner.name
-                    else -> null
-                }
-                "this" + (if (label != null) "@$label" else "")
-            }
+            val receiverText = receiver?.text ?: resolveImplicitReceiverText(element).orEmpty()
             val delimiter = if (receiverText.isNotEmpty() && argumentString.isNotEmpty()) ", " else ""
             receiverText + delimiter + argumentString
         } else {
             argumentString
         }
 
-        val funcLitArgs = element.lambdaArguments
-        val calleeText = callee.text
-        val transformation = "$calleeText.${OperatorNameConventions.INVOKE.asString()}" + "($argumentsWithReceiverIfNeeded)"
+        val transformation = "${callee.text}.${OperatorNameConventions.INVOKE.asString()}" + "($argumentsWithReceiverIfNeeded)"
         val factory = KtPsiFactory(element.project)
         val transformed = factory.createExpression(transformation)
-        val callExpression = transformed.getCalleeExpressionIfAny()?.parent as? KtCallExpression
-        if (callExpression != null && funcLitArgs.isNotEmpty()) {
-            funcLitArgs.forEach { callExpression.add(it) }
-            if (argumentsWithReceiverIfNeeded.isEmpty()) {
-                callExpression.valueArgumentList?.delete()
-            }
-        }
+
+        deleteValueArgumentList(element.lambdaArguments, transformed, argumentsWithReceiverIfNeeded)
 
         val parent = element.parent
-        if (!isAnonymousFunctionWithReceiver && !isReceiverToPassAsParameter && !isLambdaWithReceiver && parent is KtDotQualifiedExpression && parent.selectorExpression == element) {
-            // lift dot qualifier (calleeText) to the upper level, otherwise psi is created as
-            // dotQualified
-            // - receiver
-            // - selection dotQualified
-            //   - calleeText
-            //   - callExpression newName(args)
-            // though from text the following structure is expected
-            // dotQualified
-            //  - receiver dotQualified
-            //     - receiver
-            //     - calleeText
-            //  - callExpression newName(arge)
-            val dotExpression = parent.replace(factory.createExpression(parent.receiverExpression.text + "." + transformed.text)) as KtDotQualifiedExpression
-            return dotExpression.selectorExpression as KtExpression
+        val isLambdaWithReceiver = receiver != null && receiver != element && callee.safeDeparenthesize() is KtLambdaExpression
+
+        if (shouldLiftDotQualifier(element, isAnonymousFunctionWithReceiver, isReceiverToPassAsParameter, isLambdaWithReceiver)) {
+            val newElement = factory.createExpression((parent as KtDotQualifiedExpression).receiverExpression.text + "." + transformed.text)
+            return (parent.replace(newElement) as KtDotQualifiedExpression).selectorExpression as KtExpression
         }
 
-        val elementToReplace = if (isAnonymousFunctionWithReceiver || isLambdaWithReceiver || receiver != null && isReceiverToPassAsParameter) element.parent else element
+        val elementToReplace =
+            if (isAnonymousFunctionWithReceiver || isLambdaWithReceiver || (receiver != null && isReceiverToPassAsParameter)) element.parent else element
         return elementToReplace.replace(transformed) as KtExpression
     }
 
     /**
-     * Converts operator call to an explicit function call.
+     * Converts an operator call to an explicit function call.
      *
      * N.B. Has to use some resolve inside, so resorts to [allowAnalysisOnEdt].
      */
@@ -300,6 +282,68 @@ object OperatorToFunctionConverter {
 
         val callName = findCallName(result) ?: error("No call name found in ${result.text}")
         return result to callName
+    }
+
+    private fun deleteValueArgumentList(
+        lambdaArguments: List<KtLambdaArgument>,
+        transformed: KtExpression,
+        arguments: String
+    ) {
+        val callExpression = transformed.getCalleeExpressionIfAny()?.parent as? KtCallExpression
+        if (callExpression != null && lambdaArguments.isNotEmpty()) {
+            lambdaArguments.forEach { callExpression.add(it) }
+            if (arguments.isEmpty()) {
+                callExpression.valueArgumentList?.delete()
+            }
+        }
+    }
+
+    private fun shouldLiftDotQualifier(
+        element: KtCallExpression,
+        isAnonymousFunctionWithReceiver: Boolean,
+        isReceiverToPassAsParameter: Boolean,
+        isLambdaWithReceiver: Boolean
+    ): Boolean {
+        /* lift dot qualifier (calleeText) to the upper level, otherwise psi is created as
+         dotQualified
+         - receiver
+         - selection dotQualified
+           - calleeText
+           - callExpression newName(args)
+         though from text the following structure is expected
+         dotQualified
+          - receiver dotQualified
+             - receiver
+             - calleeText
+          - callExpression newName(arge)*/
+        val parent = element.parent
+        return parent is KtDotQualifiedExpression &&
+                parent.selectorExpression == element &&
+                !isAnonymousFunctionWithReceiver &&
+                !isReceiverToPassAsParameter &&
+                !isLambdaWithReceiver
+    }
+
+    @OptIn(KaAllowAnalysisFromWriteAction::class, KaAllowAnalysisOnEdt::class)
+    private fun resolveImplicitReceiverText(element: KtCallExpression): String? {
+        val callee = element.calleeExpression!!
+        val owner = allowAnalysisOnEdt {
+            allowAnalysisFromWriteAction {
+                analyze(callee) {
+                    val partiallyAppliedSymbol = element.resolveToCall()?.successfulFunctionCallOrNull()?.partiallyAppliedSymbol
+                    val symbol = (partiallyAppliedSymbol?.extensionReceiver as? KaImplicitReceiverValue)?.symbol
+                    (symbol as? KaReceiverParameterSymbol)?.owningCallableSymbol?.psi
+                }
+            }
+        }
+        return when (owner) {
+            is KtFunctionLiteral -> {
+                val label = owner.findLabelAndCall().first?.asString()
+                "this" + (if (label != null) "@$label" else "")
+            }
+            is KtNamedDeclaration -> owner.name?.let { "this@$it" }
+            else -> null
+        }
     }
 
     private fun findCallName(result: KtExpression): KtSimpleNameExpression? = when (result) {

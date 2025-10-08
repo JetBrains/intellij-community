@@ -630,6 +630,7 @@ public abstract class DebuggerTestCase extends ExecutionWithDebuggerToolsTestCas
     ApplicationManagerEx.setInStressTest(true);
     setRegistryPropertyForTest("debugger.track.instrumentation", "false");
     setRegistryPropertyForTest("debugger.evaluate.single.threaded.timeout", "-1");
+    setRegistryPropertyForTest("debugger.preload.types.async", "false");
     setRegistryPropertyForTest("debugger.preload.types.hierarchy", "false");
 
     boolean dfa = ViewsGeneralSettings.getInstance().USE_DFA_ASSIST;

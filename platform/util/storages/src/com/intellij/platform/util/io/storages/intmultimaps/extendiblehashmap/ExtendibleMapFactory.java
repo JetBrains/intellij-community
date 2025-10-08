@@ -1,8 +1,8 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.platform.util.io.storages.intmultimaps.extendiblehashmap;
 
 import com.intellij.openapi.diagnostic.Logger;
-import com.intellij.openapi.util.io.FileUtil;
+import com.intellij.openapi.util.io.NioFiles;
 import com.intellij.platform.util.io.storages.StorageFactory;
 import com.intellij.platform.util.io.storages.mmapped.MMappedFileStorageFactory;
 import com.intellij.util.io.CorruptedException;
@@ -143,7 +143,7 @@ public class ExtendibleMapFactory implements StorageFactory<ExtendibleHashMap> {
         LOG.info("[" + storagePath + "]: map is not closed properly, factory strategy[" + notClosedProperlyAction + "]" +
                  " -> trying to drop & re-create map from 0");
 
-        FileUtil.delete(storagePath);
+        NioFiles.deleteRecursively(storagePath);
 
         return mappedStorageFactory.wrapStorageSafely(
           storagePath,
@@ -201,7 +201,7 @@ public class ExtendibleMapFactory implements StorageFactory<ExtendibleHashMap> {
                    "-> delete it, and pretend never seen it incompatible " +
                    "(incompatibility: " + ex.getMessage() + ")"
           );
-          FileUtil.delete(storagePath);
+          NioFiles.deleteRecursively(storagePath);
         }
         else {
           throw ex;
@@ -217,7 +217,7 @@ public class ExtendibleMapFactory implements StorageFactory<ExtendibleHashMap> {
           );
           case DROP_AND_CREATE_EMPTY_MAP -> {
             LOG.info("[" + storagePath + "] was not closed properly, can't be trusted -> delete it, and re-create from 0");
-            FileUtil.delete(storagePath);
+            NioFiles.deleteRecursively(storagePath);
           }
           case IGNORE_AND_HOPE_FOR_THE_BEST -> {
             //nothing

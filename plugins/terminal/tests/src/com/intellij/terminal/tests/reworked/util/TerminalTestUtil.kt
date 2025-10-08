@@ -5,36 +5,36 @@ import com.intellij.openapi.Disposable
 import com.intellij.openapi.application.EDT
 import com.intellij.openapi.editor.impl.DocumentImpl
 import com.intellij.openapi.util.Disposer
-import com.intellij.terminal.session.StyleRange
-import com.intellij.terminal.session.TerminalOutputModelState
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
 import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.plugins.terminal.TerminalEngine
 import org.jetbrains.plugins.terminal.TerminalOptionsProvider
-import org.jetbrains.plugins.terminal.block.reworked.TerminalOutputModel
-import org.jetbrains.plugins.terminal.block.reworked.TerminalOutputModelImpl
+import org.jetbrains.plugins.terminal.block.reworked.MutableTerminalOutputModel
+import org.jetbrains.plugins.terminal.block.reworked.MutableTerminalOutputModelImpl
+import org.jetbrains.plugins.terminal.session.StyleRange
+import org.jetbrains.plugins.terminal.session.TerminalOutputModelState
 
 @ApiStatus.Internal
 object TerminalTestUtil {
-  fun createOutputModel(maxLength: Int = 0): TerminalOutputModelImpl {
+  fun createOutputModel(maxLength: Int = 0): MutableTerminalOutputModelImpl {
     val document = DocumentImpl("", true)
-    return TerminalOutputModelImpl(document, maxLength)
+    return MutableTerminalOutputModelImpl(document, maxLength)
   }
 
-  suspend fun TerminalOutputModel.update(absoluteLineIndex: Long, text: String, styles: List<StyleRange> = emptyList()) {
+  suspend fun MutableTerminalOutputModel.update(absoluteLineIndex: Long, text: String, styles: List<StyleRange> = emptyList()) {
     updateOutputModel { updateContent(absoluteLineIndex, text, styles) }
   }
 
-  suspend fun TerminalOutputModel.replace(relativeStartOffset: Int, length: Int, text: String, styles: List<StyleRange> = emptyList()) {
-    updateOutputModel { replaceContent(relativeOffset(relativeStartOffset), length, text, styles) }
+  suspend fun MutableTerminalOutputModel.replace(relativeStartOffset: Int, length: Int, text: String, styles: List<StyleRange> = emptyList()) {
+    updateOutputModel { replaceContent(startOffset + relativeStartOffset.toLong(), length, text, styles) }
   }
 
-  suspend fun TerminalOutputModel.updateCursor(absoluteLineIndex: Long, column: Int) {
+  suspend fun MutableTerminalOutputModel.updateCursor(absoluteLineIndex: Long, column: Int) {
     updateOutputModel { updateCursorPosition(absoluteLineIndex, column) }
   }
 
-  suspend fun TerminalOutputModel.restore(state: TerminalOutputModelState) {
+  suspend fun MutableTerminalOutputModel.restore(state: TerminalOutputModelState) {
     updateOutputModel { restoreFromState(state) }
   }
 

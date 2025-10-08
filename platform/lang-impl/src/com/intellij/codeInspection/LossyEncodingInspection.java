@@ -13,6 +13,7 @@ import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.fileEditor.FileDocumentManager;
 import com.intellij.openapi.fileEditor.impl.LoadTextUtil;
 import com.intellij.openapi.fileTypes.CharsetUtil;
+import com.intellij.openapi.project.DumbAware;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.popup.ListPopup;
 import com.intellij.openapi.util.TextRange;
@@ -37,7 +38,7 @@ import java.util.List;
 import java.util.Set;
 
 @ApiStatus.Internal
-public final class LossyEncodingInspection extends LocalInspectionTool {
+public final class LossyEncodingInspection extends LocalInspectionTool implements DumbAware {
   @Override
   public @Nls @NotNull String getGroupDisplayName() {
     return InspectionsBundle.message("group.names.internationalization.issues");

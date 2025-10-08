@@ -1,51 +1,55 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+/*
+ * Copyright 2003-2025 Dave Griffith, Bas Leijdekkers
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ * http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
 package com.siyeh.ig.classlayout;
 
 import com.intellij.codeInspection.LocalQuickFix;
 import com.intellij.modcommand.ModPsiUpdater;
 import com.intellij.modcommand.PsiUpdateModCommandQuickFix;
 import com.intellij.openapi.project.Project;
-import com.intellij.psi.*;
-import com.intellij.psi.search.GlobalSearchScope;
-import com.intellij.psi.search.SearchScope;
+import com.intellij.psi.PsiClass;
+import com.intellij.psi.PsiElement;
+import com.intellij.psi.PsiMethod;
+import com.intellij.psi.PsiModifier;
 import com.intellij.psi.search.searches.ClassInheritorsSearch;
-import com.intellij.util.Query;
 import com.siyeh.InspectionGadgetsBundle;
 import com.siyeh.ig.BaseInspection;
 import com.siyeh.ig.BaseInspectionVisitor;
 import com.siyeh.ig.psiutils.UtilityClassUtil;
 import org.jetbrains.annotations.NotNull;
 
-public final class UtilityClassWithPublicConstructorInspection
-  extends BaseInspection {
-
+public final class UtilityClassWithPublicConstructorInspection extends BaseInspection {
 
   @Override
   protected @NotNull String buildErrorString(Object... infos) {
-    return InspectionGadgetsBundle.message(
-      "utility.class.with.public.constructor.problem.descriptor");
+    return InspectionGadgetsBundle.message("utility.class.with.public.constructor.problem.descriptor");
   }
 
   @Override
   protected LocalQuickFix buildFix(Object... infos) {
     final PsiClass psiClass = (PsiClass)infos[0];
     final boolean hasInheritors = (Boolean)infos[1];
-    if (psiClass.getConstructors().length > 1) {
-      return new UtilityClassWithPublicConstructorFix(true, hasInheritors);
-    }
-    else {
-      return new UtilityClassWithPublicConstructorFix(false, hasInheritors);
-    }
+    return new UtilityClassWithPublicConstructorFix(psiClass.getConstructors().length > 1, hasInheritors);
   }
 
-  private static class UtilityClassWithPublicConstructorFix
-    extends PsiUpdateModCommandQuickFix {
+  private static class UtilityClassWithPublicConstructorFix extends PsiUpdateModCommandQuickFix {
 
     private final boolean m_multipleConstructors;
     private final boolean m_hasInheritors;
 
     UtilityClassWithPublicConstructorFix(boolean multipleConstructors, boolean hasInheritors) {
-      super();
       m_multipleConstructors = multipleConstructors;
       m_hasInheritors = hasInheritors;
     }
@@ -71,46 +75,32 @@ public final class UtilityClassWithPublicConstructorInspection
         return;
       }
 
-      String modifier = m_hasInheritors? PsiModifier.PROTECTED : PsiModifier.PRIVATE;
-
-      final PsiMethod[] constructors = psiClass.getConstructors();
-      for (PsiMethod constructor : constructors) {
-        final PsiModifierList modifierList =
-          constructor.getModifierList();
-        modifierList.setModifierProperty(modifier, true);
+      String modifier = m_hasInheritors ? PsiModifier.PROTECTED : PsiModifier.PRIVATE;
+      for (PsiMethod constructor : psiClass.getConstructors()) {
+        constructor.getModifierList().setModifierProperty(modifier, true);
       }
     }
   }
 
   @Override
-  public BaseInspectionVisitor buildVisitor() {
+  public @NotNull BaseInspectionVisitor buildVisitor() {
     return new StaticClassWithPublicConstructorVisitor();
   }
 
-  private static class StaticClassWithPublicConstructorVisitor
-    extends BaseInspectionVisitor {
+  private static class StaticClassWithPublicConstructorVisitor extends BaseInspectionVisitor {
 
     @Override
     public void visitClass(@NotNull PsiClass aClass) {
-      // no call to super, so that it doesn't drill down to inner classes
-      if (!UtilityClassUtil.isUtilityClass(aClass)) {
-        return;
-      }
-      if (!hasPublicConstructor(aClass)) {
+      if (!UtilityClassUtil.isUtilityClass(aClass) || !hasPublicConstructor(aClass)) {
         return;
       }
 
-      final SearchScope scope = GlobalSearchScope.projectScope(aClass.getProject());
-      final Query<PsiClass> query = ClassInheritorsSearch.search(aClass, scope, false);
-      final PsiClass subclass = query.findFirst();
-      Boolean hasInheritors = subclass != null;
-
+      boolean hasInheritors = ClassInheritorsSearch.search(aClass, aClass.getUseScope(), false).findFirst() != null;
       registerClassError(aClass, aClass, hasInheritors);
     }
 
     private static boolean hasPublicConstructor(PsiClass aClass) {
-      final PsiMethod[] constructors = aClass.getConstructors();
-      for (final PsiMethod constructor : constructors) {
+      for (PsiMethod constructor : aClass.getConstructors()) {
         if (constructor.hasModifierProperty(PsiModifier.PUBLIC)) {
           return true;
         }

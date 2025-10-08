@@ -2,6 +2,7 @@
 package com.intellij.codeInsight;
 
 import com.intellij.psi.*;
+import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 
@@ -260,6 +261,9 @@ public /* sealed */ interface NullabilitySource {
     }
     if (set.isEmpty()) return Standard.NONE;
     if (set.size() == 1) return set.iterator().next();
+    if (ContainerUtil.and(set, s -> s instanceof ExtendsBound)) {
+      return new MultiSource(ContainerUtil.map2LinkedSet(set, s -> ((ExtendsBound)s).boundSource())).inherited();
+    }
     return new MultiSource(set);
   }
 }

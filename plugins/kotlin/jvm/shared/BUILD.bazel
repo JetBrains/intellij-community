@@ -1,6 +1,6 @@
 ### auto-generated section `build kotlin.jvm.shared` start
 load("//build:compiler-options.bzl", "create_kotlinc_options")
-load("@rules_jvm//:jvm.bzl", "jvm_library", "jvm_resources")
+load("@rules_jvm//:jvm.bzl", "jvm_library", "resourcegroup")
 
 create_kotlinc_options(
   name = "custom_shared",
@@ -12,9 +12,9 @@ create_kotlinc_options(
   ]
 )
 
-jvm_resources(
+resourcegroup(
   name = "shared_resources",
-  files = glob(["resources/**/*"]),
+  srcs = glob(["resources/**/*"]),
   strip_prefix = "resources"
 )
 
@@ -23,6 +23,7 @@ jvm_library(
   module_name = "kotlin.jvm.shared",
   visibility = ["//visibility:public"],
   srcs = glob(["src/**/*.kt", "src/**/*.java", "src/**/*.form"], allow_empty = True),
+  resources = [":shared_resources"],
   kotlinc_opts = ":custom_shared",
   deps = [
     "@lib//:kotlin-stdlib",
@@ -33,7 +34,7 @@ jvm_library(
     "//platform/lvcs-api:lvcs",
     "//platform/projectModel-api:projectModel",
     "//platform/util/jdom",
-    "@lib//:gson",
+    "//libraries/gson",
     "@lib//:kotlinc-kotlin-compiler-common",
     "//platform/platform-impl:ide-impl",
     "//plugins/kotlin/base/compiler-configuration",
@@ -79,13 +80,12 @@ jvm_library(
     "//platform/util/coroutines",
     "//platform/core-api:core",
     "@lib//:kotlinc-analysis-api",
-    "@lib//:asm",
+    "//libraries/asm",
     "//platform/ide-core-impl",
     "//platform/ide-core",
     "//platform/util",
     "//platform/editor-ui-api:editor-ui",
     "//plugins/kotlin/base/scripting/scripting.shared",
-  ],
-  runtime_deps = [":shared_resources"]
+  ]
 )
 ### auto-generated section `build kotlin.jvm.shared` end

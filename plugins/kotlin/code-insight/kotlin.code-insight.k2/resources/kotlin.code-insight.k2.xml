@@ -132,6 +132,7 @@
 
     <applicationService serviceInterface="org.jetbrains.kotlin.idea.base.codeInsight.KotlinNameValidatorProvider"
                         serviceImplementation="org.jetbrains.kotlin.idea.k2.codeinsight.K2NameValidatorProviderImpl"/>
+    <copyPastePreProcessor implementation="org.jetbrains.kotlin.idea.k2.codeinsight.copyPaste.K2KotlinLiteralCopyPasteProcessor"/>
 
     <copyPastePostProcessor implementation="org.jetbrains.kotlin.idea.k2.codeinsight.copyPaste.KotlinCopyPasteReferenceProcessor"/>
     <copyPastePostProcessor implementation="org.jetbrains.kotlin.idea.k2.codeinsight.copyPaste.KotlinCopyPasteStringTemplatePostProcessor"/>

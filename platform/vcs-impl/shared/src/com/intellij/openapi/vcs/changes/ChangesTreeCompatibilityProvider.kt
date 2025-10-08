@@ -42,6 +42,8 @@ interface ChangesTreeCompatibilityProvider {
 
   fun resolveLocalFile(path: String): VirtualFile?
 
+  fun toHijackedChange(project: Project, file: VirtualFile): Change?
+
   companion object {
     @JvmStatic
     fun getInstance(): ChangesTreeCompatibilityProvider = application.service<ChangesTreeCompatibilityProvider>()

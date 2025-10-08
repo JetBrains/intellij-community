@@ -1,7 +1,7 @@
 // Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.jps.incremental.groovy;
 
-import com.intellij.openapi.application.PathManager;
+import com.intellij.openapi.application.ArchivedCompilationContextUtil;
 
 import java.io.File;
 import java.util.ArrayList;
@@ -30,10 +30,10 @@ public final class GroovyRtJarPaths {
                                          List<String> to) {
     File parentDir = jpsPluginClassesRoot.getParentFile();
     if (jpsPluginClassesRoot.isFile()) {
-      String relevantJarsRoot = PathManager.getArchivedCompliedClassesLocation();
+      String relevantJarsRoot = ArchivedCompilationContextUtil.getArchivedCompiledClassesLocation();
       if (relevantJarsRoot != null && jpsPluginClassesRoot.getAbsolutePath().startsWith(relevantJarsRoot)) {
         // running from archived compilation output
-        Map<String, String> mapping = PathManager.getArchivedCompiledClassesMapping();
+        Map<String, String> mapping = ArchivedCompilationContextUtil.getArchivedCompiledClassesMapping();
         if (mapping == null) {
           throw new IllegalStateException("Mapping cannot be null at this point. 'intellij.test.jars.location' is not null");
         }

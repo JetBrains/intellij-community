@@ -1,21 +1,21 @@
 ### auto-generated section `build intellij.java.guiForms.designer` start
-load("@rules_jvm//:jvm.bzl", "jvm_library", "jvm_resources")
+load("@rules_jvm//:jvm.bzl", "jvm_library", "resourcegroup")
 
-jvm_resources(
+resourcegroup(
   name = "java-guiForms-designer_resources",
-  files = glob(["resources/**/*"]),
+  srcs = glob(["resources/**/*"]),
   strip_prefix = "resources"
 )
 
-jvm_resources(
+resourcegroup(
   name = "java-guiForms-designer_test_resources",
-  files = glob(["testData/**/*"]),
+  srcs = glob(["testData/**/*"]),
   strip_prefix = "testData"
 )
 
-jvm_resources(
+resourcegroup(
   name = "java-guiForms-designer_test_resources_1",
-  files = glob(["testResources/**/*"]),
+  srcs = glob(["testResources/**/*"]),
   strip_prefix = "testResources"
 )
 
@@ -24,6 +24,7 @@ jvm_library(
   module_name = "intellij.java.guiForms.designer",
   visibility = ["//visibility:public"],
   srcs = glob(["src/**/*.kt", "src/**/*.java", "src/**/*.form"], allow_empty = True),
+  resources = [":java-guiForms-designer_resources"],
   deps = [
     "//java/openapi:java",
     "//java/java-indexing-api:indexing",
@@ -52,7 +53,7 @@ jvm_library(
     "//java/compiler/impl",
     "//platform/icons",
     "@lib//:jgoodies-forms",
-    "@lib//:asm",
+    "//libraries/asm",
     "//plugins/java-i18n",
     "//java/idea-ui:ui",
     "//java/java-impl:impl",
@@ -63,7 +64,7 @@ jvm_library(
     "//xml/impl",
     "//plugins/properties/properties-psi-api:psi",
     "@lib//:java_compatibility",
-    "@lib//:fastutil-min",
+    "//libraries/fastutil",
     "//platform/util-class-loader:util-classLoader",
     "//platform/core-ui",
     "//plugins/properties/properties-psi-impl:backend-psi",
@@ -75,14 +76,17 @@ jvm_library(
   exports = [
     "//java/compiler/forms-compiler:java-guiForms-compiler",
     "//plugins/java-i18n",
-  ],
-  runtime_deps = [":java-guiForms-designer_resources"]
+  ]
 )
 
 jvm_library(
   name = "java-guiForms-designer_test_lib",
   visibility = ["//visibility:public"],
   srcs = glob(["testSrc/**/*.kt", "testSrc/**/*.java", "testSrc/**/*.form"], allow_empty = True),
+  resources = [
+    ":java-guiForms-designer_test_resources",
+    ":java-guiForms-designer_test_resources_1",
+  ],
   associates = [":java-guiForms-designer"],
   deps = [
     "//java/openapi:java",
@@ -118,7 +122,7 @@ jvm_library(
     "//java/compiler/impl",
     "//platform/icons",
     "@lib//:jgoodies-forms",
-    "@lib//:asm",
+    "//libraries/asm",
     "//plugins/java-i18n",
     "//plugins/java-i18n:java-i18n_test_lib",
     "//java/idea-ui:ui",
@@ -134,7 +138,7 @@ jvm_library(
     "@lib//:assert_j",
     "//java/compiler:compiler-tests_test_lib",
     "@lib//:java_compatibility",
-    "@lib//:fastutil-min",
+    "//libraries/fastutil",
     "//platform/util-class-loader:util-classLoader",
     "//platform/core-ui",
     "//plugins/properties/properties-psi-impl:backend-psi",
@@ -144,18 +148,13 @@ jvm_library(
     "//platform/util/jdom",
     "//jps/jps-builders:build-tests_test_lib",
     "//xml/xml-psi-api:psi",
-    "@lib//:caffeine",
+    "//libraries/caffeine",
   ],
   exports = [
     "//java/compiler/forms-compiler:java-guiForms-compiler",
     "//java/compiler/forms-compiler:java-guiForms-compiler_test_lib",
     "//plugins/java-i18n",
     "//plugins/java-i18n:java-i18n_test_lib",
-  ],
-  runtime_deps = [
-    ":java-guiForms-designer_resources",
-    ":java-guiForms-designer_test_resources",
-    ":java-guiForms-designer_test_resources_1",
   ]
 )
 ### auto-generated section `build intellij.java.guiForms.designer` end

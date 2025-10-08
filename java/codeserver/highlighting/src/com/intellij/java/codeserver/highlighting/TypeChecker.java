@@ -84,6 +84,9 @@ final class TypeChecker {
     PsiExpression initializer = variable.getInitializer();
     // array initializer checked in checkArrayInitializerApplicable
     if (initializer == null || initializer instanceof PsiArrayInitializerExpression) return;
+    PsiTypeElement typeElement = variable.getTypeElement();
+    // initializer cannot be incompatible with the inferred type
+    if (typeElement != null && typeElement.isInferredType()) return;
     PsiType lType = variable.getType();
     PsiType rType = initializer.getType();
     myVisitor.myExpressionChecker.checkAssignability(lType, rType, initializer, initializer);

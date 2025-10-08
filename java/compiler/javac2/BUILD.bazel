@@ -11,7 +11,7 @@ jvm_library(
     "@lib//ant/lib:ant-antlr-provided",
     "//java/compiler/forms-compiler:java-guiForms-compiler",
     "//platform/forms_rt:java-guiForms-rt",
-    "@lib//:asm",
+    "//libraries/asm",
     "//java/compiler/instrumentation-util",
   ],
   runtime_deps = ["//java/compiler/instrumentation-util-8:java-compiler-instrumentationUtil-java8"]

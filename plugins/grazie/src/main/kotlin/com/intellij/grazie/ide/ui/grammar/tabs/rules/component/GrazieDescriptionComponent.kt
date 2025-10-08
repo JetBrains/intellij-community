@@ -1,12 +1,13 @@
 // Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.grazie.ide.ui.grammar.tabs.rules.component
 
+import ai.grazie.nlp.langs.Language
+import ai.grazie.nlp.langs.utils.nativeName
 import com.intellij.grazie.ide.ui.components.dsl.msg
 import com.intellij.grazie.ide.ui.components.dsl.padding
 import com.intellij.grazie.ide.ui.components.dsl.panel
 import com.intellij.grazie.ide.ui.components.utils.GrazieLinkLabel
 import com.intellij.grazie.ide.ui.components.utils.html
-import com.intellij.grazie.jlanguage.Lang
 import com.intellij.grazie.text.Rule
 import com.intellij.ide.BrowserUtil
 import com.intellij.openapi.util.NlsSafe
@@ -66,7 +67,7 @@ class GrazieDescriptionComponent {
 
   @NlsSafe
   private fun getDescriptionPaneContent(meta: Any): String = when (meta) {
-    is Lang -> html { unsafe { +msg("grazie.settings.grammar.rule.language.template", meta.nativeName) } }
+    is Language -> html { unsafe { +msg("grazie.settings.grammar.rule.language.template", meta.nativeName) } }
     is String -> html { unsafe { +msg("grazie.settings.grammar.rule.category.template", meta) } }
     is Rule -> meta.description
     else -> ""

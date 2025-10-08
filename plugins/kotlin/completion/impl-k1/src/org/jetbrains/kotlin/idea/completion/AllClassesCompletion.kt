@@ -14,6 +14,7 @@ import org.jetbrains.kotlin.descriptors.ClassifierDescriptorWithTypeParameters
 import org.jetbrains.kotlin.idea.base.facet.platform.platform
 import org.jetbrains.kotlin.idea.base.psi.kotlinFqName
 import org.jetbrains.kotlin.idea.base.util.isJavaClassNotToBeUsedInKotlin
+import org.jetbrains.kotlin.idea.base.util.isJavaClassWithKotlinTypeAlias
 import org.jetbrains.kotlin.idea.caches.KotlinShortNamesCache
 import org.jetbrains.kotlin.idea.core.KotlinIndicesHelper
 import org.jetbrains.kotlin.idea.resolve.ResolutionFacade
@@ -88,7 +89,7 @@ class AllClassesCompletion(
                         psiClass.isEnum -> ClassKind.ENUM_CLASS
                         else -> ClassKind.CLASS
                     }
-                    if (kindFilter(kind) && !isNotToBeUsed(psiClass)) {
+                    if (kindFilter(kind) && !isNotToBeUsed(psiClass) && !hasPreferableKotlinTypeAlias(psiClass)) {
                         collector(psiClass)
                     }
                 }
@@ -102,5 +103,11 @@ class AllClassesCompletion(
     if (includeJavaClassesNotToBeUsed) return false
     val fqName = javaClass.kotlinFqName
     return fqName?.isJavaClassNotToBeUsedInKotlin() == true
+  }
+
+  private fun hasPreferableKotlinTypeAlias(javaClass: PsiClass): Boolean {
+    if (includeJavaClassesNotToBeUsed) return false
+    val fqName = javaClass.kotlinFqName
+    return fqName?.isJavaClassWithKotlinTypeAlias() == true
   }
 }

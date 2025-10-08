@@ -50,7 +50,7 @@ jvm_library(
     "//plugins/kotlin/highlighting/highlighting-shared:kotlin-highlighting-shared",
     "//platform/external-system-impl:externalSystem-tests_test_lib",
     "//plugins/kotlin/idea/tests:tests_test_lib",
-    "@lib//:fastutil-min",
+    "//libraries/fastutil",
     "@lib//:kotlinc-kotlin-compiler-tests",
     "//plugins/kotlin/base/facet",
     "@lib//:kotlinc-kotlin-jps-plugin-classpath",

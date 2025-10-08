@@ -1,9 +1,9 @@
 ### auto-generated section `build intellij.platform.polySymbols` start
-load("@rules_jvm//:jvm.bzl", "jvm_library", "jvm_resources")
+load("@rules_jvm//:jvm.bzl", "jvm_library", "resourcegroup")
 
-jvm_resources(
+resourcegroup(
   name = "polySymbols_resources",
-  files = glob(["resources/**/*"]),
+  srcs = glob(["resources/**/*"]),
   strip_prefix = "resources"
 )
 
@@ -12,6 +12,7 @@ jvm_library(
   module_name = "intellij.platform.polySymbols",
   visibility = ["//visibility:public"],
   srcs = glob(["gen/**/*.kt", "gen/**/*.java", "src/**/*.kt", "src/**/*.java", "src/**/*.form", "src-web/**/*.kt", "src-web/**/*.java", "src-web/**/*.form"], allow_empty = True),
+  resources = [":polySymbols_resources"],
   deps = [
     "//platform/analysis-api:analysis",
     "//platform/editor-ui-api:editor-ui",
@@ -21,17 +22,16 @@ jvm_library(
     "//platform/core-ui",
     "//platform/editor-ui-ex:editor-ex",
     "//platform/core-api:core",
-    "@lib//:jackson-databind",
-    "@lib//:jackson",
-    "@lib//:jackson-module-kotlin",
-    "@lib//:fastutil-min",
+    "//libraries/jackson/databind",
+    "//libraries/jackson/jackson",
+    "//libraries/jackson/module-kotlin:libraries-jackson-module-kotlin",
+    "//libraries/fastutil",
     "@lib//:commons-compress",
     "@lib//:jetbrains-markdown",
-    "@lib//:gson",
+    "//libraries/gson",
     "//platform/projectModel-api:projectModel",
     "//platform/markdown-utils",
-  ],
-  runtime_deps = [":polySymbols_resources"]
+  ]
 )
 ### auto-generated section `build intellij.platform.polySymbols` end
 
@@ -54,14 +54,14 @@ jvm_library(
     "//platform/projectModel-api:projectModel",
     "//platform/usageView",
     "//platform/refactoring",
-    "@lib//:jackson-databind",
+    "//libraries/jackson/databind",
     "//platform/analysis-impl",
-    "@lib//:jackson",
-    "@lib//:jackson-module-kotlin",
-    "@lib//:fastutil-min",
+    "//libraries/jackson/jackson",
+    "//libraries/jackson/module-kotlin:libraries-jackson-module-kotlin",
+    "//libraries/fastutil",
     "@lib//:commons-compress",
     "@lib//:jetbrains-markdown",
-    "@lib//:gson",
+    "//libraries/gson",
     "//platform/markdown-utils",
     "//platform/testFramework",
     "//java/java-runtime:rt",
@@ -70,9 +70,9 @@ jvm_library(
 ### auto-generated section `build intellij.platform.polySymbols.testFramework` end
 
 ### auto-generated section `build intellij.platform.polySymbols.tests` start
-jvm_resources(
+resourcegroup(
   name = "polySymbols-tests_test_resources",
-  files = glob(["testData/**/*"]),
+  srcs = glob(["testData/**/*"]),
   strip_prefix = "testData"
 )
 
@@ -81,6 +81,7 @@ jvm_library(
   module_name = "intellij.platform.polySymbols.tests",
   visibility = ["//visibility:public"],
   srcs = glob(["testSrc/**/*.kt", "testSrc/**/*.java", "testSrc/**/*.form"], allow_empty = True),
+  resources = [":polySymbols-tests_test_resources"],
   deps = [
     "//platform/analysis-api:analysis",
     "//platform/lang-impl",
@@ -91,14 +92,14 @@ jvm_library(
     "//platform/core-api:core",
     "//platform/usageView",
     "//platform/refactoring",
-    "@lib//:jackson-databind",
+    "//libraries/jackson/databind",
     "//platform/analysis-impl",
-    "@lib//:jackson",
-    "@lib//:jackson-module-kotlin",
-    "@lib//:fastutil-min",
+    "//libraries/jackson/jackson",
+    "//libraries/jackson/module-kotlin:libraries-jackson-module-kotlin",
+    "//libraries/fastutil",
     "@lib//:commons-compress",
     "@lib//:jetbrains-markdown",
-    "@lib//:gson",
+    "//libraries/gson",
     "//platform/markdown-utils",
     "//platform/markdown-utils:markdown-utils_test_lib",
     "//platform/testFramework",
@@ -106,8 +107,7 @@ jvm_library(
     "//platform/polySymbols",
     "//platform/polySymbols:polySymbols-testFramework",
     "//java/java-runtime:rt",
-  ],
-  runtime_deps = [":polySymbols-tests_test_resources"]
+  ]
 )
 ### auto-generated section `build intellij.platform.polySymbols.tests` end
 

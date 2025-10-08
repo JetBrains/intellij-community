@@ -12,11 +12,9 @@ import com.intellij.ide.lightEdit.LightEditFeatureUsagesUtil.OpenPlace
 import com.intellij.ide.lightEdit.LightEditService
 import com.intellij.ide.lightEdit.LightEditUtil
 import com.intellij.ide.util.PsiNavigationSupport
-import com.intellij.idea.AppMode
 import com.intellij.notification.Notification
 import com.intellij.notification.NotificationType
 import com.intellij.openapi.application.*
-import com.intellij.openapi.application.ex.ApplicationManagerEx
 import com.intellij.openapi.components.ComponentManagerEx
 import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.extensions.ExtensionPointName
@@ -43,7 +41,7 @@ import com.intellij.util.io.URLUtil
 import io.netty.handler.codec.http.QueryStringDecoder
 import kotlinx.coroutines.*
 import kotlinx.coroutines.future.asDeferred
-import org.jetbrains.annotations.ApiStatus.Internal
+import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.annotations.VisibleForTesting
 import java.awt.Frame
 import java.awt.Window
@@ -52,26 +50,21 @@ import java.nio.file.Path
 import java.text.ParseException
 import java.util.concurrent.CancellationException
 import kotlin.Boolean
+import kotlin.Deprecated
+import kotlin.DeprecationLevel
 import kotlin.Int
 import kotlin.Result
 import kotlin.String
 import kotlin.Suppress
 import kotlin.Throwable
 import kotlin.check
+import kotlin.collections.any
+import kotlin.collections.count
 import kotlin.error
 import kotlin.let
 import kotlin.require
 import kotlin.requireNotNull
 import kotlin.use
-
-@get:Internal
-val isIdeStartupWizardEnabled: Boolean
-  get() {
-    return (!ApplicationManagerEx.isInIntegrationTest() ||
-            System.getProperty("show.wizard.in.test", "false").toBoolean()) &&
-           !AppMode.isRemoteDevHost() &&
-           System.getProperty("intellij.startup.wizard", "true").toBoolean()
-  }
 
 object CommandLineProcessor {
   private val LOG = logger<CommandLineProcessor>()
@@ -80,11 +73,11 @@ object CommandLineProcessor {
   @JvmField
   val OK_FUTURE: Deferred<CliResult> = CompletableDeferred(value = CliResult.OK)
 
-  @Internal
+  @ApiStatus.Internal
   const val SCHEME_INTERNAL: String = "!!!internal!!!"
 
   @VisibleForTesting
-  @Internal
+  @ApiStatus.Internal
   suspend fun doOpenFileOrProject(file: Path, shouldWait: Boolean): CommandLineProcessorResult {
     if (!LightEditUtil.isForceOpenInLightEditMode()) {
       val options = OpenProjectTask {
@@ -96,13 +89,11 @@ object CommandLineProcessor {
       try {
         val project = ProjectUtil.openOrImportAsync(file, options)
         if (project != null) {
-          return CommandLineProcessorResult(
-            project = project,
-            future = if (shouldWait) CommandLineWaitingManager.getInstance().addHookForProject(project).asDeferred() else OK_FUTURE,
-          )
+          val future = if (shouldWait) CommandLineWaitingManager.getInstance().addHookForProject(project).asDeferred() else OK_FUTURE
+          return CommandLineProcessorResult(project, future)
         }
       }
-      catch (_: ProcessCanceledException) {
+      catch (@Suppress("IncorrectCancellationExceptionHandling") _: ProcessCanceledException) {
         return createError(IdeBundle.message("dialog.message.open.cancelled"))
       }
     }
@@ -157,6 +148,7 @@ object CommandLineProcessor {
       else {
         PsiNavigationSupport.getInstance().createNavigatable(project, file, -1)
       }
+      @Suppress("UsagesOfObsoleteApi")
       (project as ComponentManagerEx).getCoroutineScope().launch(Dispatchers.EDT) {
         navigatable.navigate(true)
       }
@@ -175,7 +167,7 @@ object CommandLineProcessor {
     return if (project != null && !LightEdit.owns(project)) project else projects.first()
   }
 
-  @Internal
+  @ApiStatus.Internal
   suspend fun processProtocolCommand(rawUri: @NlsSafe String): CliResult {
     LOG.info("external URI request:\n$rawUri")
     check(!ApplicationManager.getApplication().isHeadlessEnvironment) { "cannot process URI requests in headless state" }
@@ -183,7 +175,7 @@ object CommandLineProcessor {
     val uri = if (internal) rawUri.substring(SCHEME_INTERNAL.length) else rawUri
     val separatorStart = uri.indexOf(URLUtil.SCHEME_SEPARATOR)
     require(separatorStart >= 0) { uri }
-    val scheme = uri.substring(0, separatorStart)
+    val scheme = uri.take(separatorStart)
     val query = uri.substring(separatorStart + URLUtil.SCHEME_SEPARATOR.length)
 
     val cliResult = try {
@@ -238,9 +230,7 @@ object CommandLineProcessor {
     val logMessage = StringBuilder()
     logMessage.append("External command line:").append('\n')
     logMessage.append("Dir: ").append(currentDirectory).append('\n')
-    for (arg in args) {
-      logMessage.append(arg).append('\n')
-    }
+    for (arg in args) logMessage.append(arg).append('\n')
     logMessage.append("-----")
     LOG.info(logMessage.toString())
     if (args.isEmpty()) {
@@ -252,13 +242,13 @@ object CommandLineProcessor {
           }
         }
       }
-      return CommandLineProcessorResult(project = null, future = OK_FUTURE)
+      return CommandLineProcessorResult(project = null, OK_FUTURE)
     }
 
-    processApplicationStarters(args, currentDirectory)?.let {
+    processApplicationStarters(args, currentDirectory)?.let { result ->
       FUSProjectHotStartUpMeasurer.reportStarterUsed()
       // app focus is up to app starter
-      return CommandLineProcessorResult(project = null, result = it)
+      return CommandLineProcessorResult(project = null, result)
     }
 
     val result = processOpenFile(args, currentDirectory)
@@ -284,17 +274,14 @@ object CommandLineProcessor {
     return result
   }
 
-  // find a frame to activate
-  @Internal
-  fun findVisibleFrame(): Window? {
-    // we assume that the most recently created frame is the most relevant one
-    return Frame.getFrames().asList().asReversed().firstOrNull { it.isVisible }
-  }
+  // find a frame to activate (assuming that the most recently created frame is the most relevant one)
+  @ApiStatus.Internal
+  fun findVisibleFrame(): Window? = Frame.getFrames().asList().asReversed().firstOrNull { it.isVisible }
 
   private suspend fun processApplicationStarters(args: List<String>, currentDirectory: String?): CliResult? {
     val command = args.first()
 
-    val starter = findStarter(command) ?: return null
+    val starter = ApplicationStarter.findStarter(command) ?: return null
 
     if (!starter.canProcessExternalCommandLine()) {
       return CliResult(1, IdeBundle.message("dialog.message.only.one.instance.can.be.run.at.time",
@@ -353,9 +340,11 @@ object CommandLineProcessor {
       FUSProjectHotStartUpMeasurer.noProjectFound()
     }
     else if (commands.size > 1) {
-      val numberOfProjects = commands.count { command -> command is OpenProjectResult }
-      val hasLightEditProject = commands.any { command -> (command is OpenProjectResult && command.lightEditMode) ||
-                                                          (command is NoProjectResult && !command.shouldWait && command.lightEditMode) }
+      val numberOfProjects = commands.count { it is OpenProjectResult }
+      val hasLightEditProject = commands.any {
+        it is OpenProjectResult && it.lightEditMode ||
+        it is NoProjectResult && !it.shouldWait && it.lightEditMode
+      }
       FUSProjectHotStartUpMeasurer.openingMultipleProjects(false, numberOfProjects, hasLightEditProject)
     }
     else {
@@ -376,12 +365,7 @@ object CommandLineProcessor {
         result = when (command) {
           is OpenProjectResult -> {
             FUSProjectHotStartUpMeasurer.withProjectContextElement(command.file) {
-              openFileOrProject(file = command.file,
-                                line = command.line,
-                                column = command.column,
-                                tempProject = command.tempProject,
-                                shouldWait = command.shouldWait,
-                                lightEditMode = command.lightEditMode)
+              openFileOrProject(command.file, command.line, command.column, command.tempProject, command.shouldWait, command.lightEditMode)
             }
           }
           is NoProjectResult -> {
@@ -406,10 +390,7 @@ object CommandLineProcessor {
     return result ?: error("Parsing result shouldn't be null at this point; args are not empty")
   }
 
-  private fun parseArgs(
-    args: List<String>,
-    currentDirectory: String?,
-  ): Result<List<ParsingResult>> {
+  private fun parseArgs(args: List<String>, currentDirectory: String?): Result<List<ParsingResult>> {
     val openProjectResults = mutableListOf<OpenProjectResult>()
     var line = -1
     var column = -1
@@ -458,31 +439,17 @@ object CommandLineProcessor {
       }
       val file = parseFilePath(arg, currentDirectory) ?: return Result.failure(ParseException(arg, i))
 
-      openProjectResults += OpenProjectResult(
-        file = file,
-        line = line,
-        column = column,
-        tempProject = tempProject,
-        shouldWait = shouldWait,
-        lightEditMode = lightEditMode
-      )
-      if (shouldWait) {
-        break
-      }
+      openProjectResults += OpenProjectResult(file, line, column, tempProject, shouldWait, lightEditMode)
+
+      if (shouldWait) break
+
       column = -1
       line = column
       tempProject = false
       i++
     }
 
-    return Result.success(
-      openProjectResults.ifEmpty {
-        listOf(NoProjectResult(
-          shouldWait = shouldWait,
-          lightEditMode = lightEditMode
-        ))
-      }
-    )
+    return Result.success(openProjectResults.ifEmpty { listOf(NoProjectResult(shouldWait, lightEditMode)) })
   }
 
   private fun parseFilePath(path: String, currentDirectory: String?): Path? {
@@ -500,41 +467,25 @@ object CommandLineProcessor {
     }
   }
 
-  private suspend fun openFileOrProject(file: Path,
-                                        line: Int,
-                                        column: Int,
-                                        tempProject: Boolean,
-                                        shouldWait: Boolean,
-                                        lightEditMode: Boolean): CommandLineProcessorResult {
-    return LightEditUtil.computeWithCommandLineOptions(shouldWait, lightEditMode).use {
-      val asFile = line != -1 || tempProject
-      if (asFile) {
-        doOpenFile(file, line, column, tempProject, shouldWait)
-      }
-      else {
-        doOpenFileOrProject(file, shouldWait)
-      }
-    }
+  private suspend fun openFileOrProject(
+    file: Path,
+    line: Int,
+    column: Int,
+    tempProject: Boolean,
+    shouldWait: Boolean,
+    lightEditMode: Boolean,
+  ): CommandLineProcessorResult = LightEditUtil.computeWithCommandLineOptions(shouldWait, lightEditMode).use {
+    val asFile = line != -1 || tempProject
+    if (asFile) doOpenFile(file, line, column, tempProject, shouldWait)
+    else doOpenFileOrProject(file, shouldWait)
   }
 }
 
-private const val APP_STARTER_EP_NAME = "com.intellij.appStarter"
-
-/**
- * Returns name of the command for this [ApplicationStarter] specified in plugin.xml file.
- * It should be used instead of deprecated [ApplicationStarter.commandName].
- */
-@get:Internal
+@Deprecated("Replace with a hard-coded name", level = DeprecationLevel.ERROR)
+@Suppress("unused")
+@get:ApiStatus.Internal
 val ApplicationStarter.commandNameFromExtension: String?
-  get() {
-    return ExtensionPointName<ApplicationStarter>(APP_STARTER_EP_NAME)
-      .filterableLazySequence()
-      .find { it.implementationClassName == javaClass.name }
-      ?.id
-  }
-
-@Suppress("DEPRECATION")
-@Internal
-fun findStarter(key: String): ApplicationStarter? {
-  return ExtensionPointName<ApplicationStarter>(APP_STARTER_EP_NAME).findByIdOrFromInstance(key) { it.commandName }
-}
+  get() = ExtensionPointName<ApplicationStarter>("com.intellij.appStarter")
+    .filterableLazySequence()
+    .find { it.implementationClassName == javaClass.name }
+    ?.id

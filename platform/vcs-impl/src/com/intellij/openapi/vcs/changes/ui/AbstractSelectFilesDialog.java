@@ -89,7 +89,7 @@ public abstract class AbstractSelectFilesDialog extends DialogWrapper {
     return new DefaultActionGroup();
   }
 
-  private static final class MyDoNotAskOption extends DoNotAskOption.Adapter {
+  private static final class MyDoNotAskOption extends com.intellij.openapi.ui.DoNotAskOption.Adapter {
     private final VcsShowConfirmationOption myConfirmationOption;
 
     private MyDoNotAskOption(@NotNull VcsShowConfirmationOption confirmationOption) {

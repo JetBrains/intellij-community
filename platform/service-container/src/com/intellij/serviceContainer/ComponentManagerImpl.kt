@@ -14,6 +14,7 @@ import com.intellij.diagnostic.PluginException
 import com.intellij.diagnostic.StartUpMeasurer
 import com.intellij.ide.plugins.*
 import com.intellij.ide.plugins.cl.PluginAwareClassLoader
+import com.intellij.idea.AppMode
 import com.intellij.idea.AppMode.isLightEdit
 import com.intellij.openapi.Disposable
 import com.intellij.openapi.application.*
@@ -39,6 +40,7 @@ import com.intellij.openapi.util.IntellijInternalApi
 import com.intellij.openapi.util.UserDataHolderBase
 import com.intellij.platform.instanceContainer.internal.*
 import com.intellij.platform.util.coroutines.childScope
+import com.intellij.util.IntelliJCoroutinesFacade
 import com.intellij.util.concurrency.ThreadingAssertions
 import com.intellij.util.concurrency.annotations.RequiresBlockingContext
 import com.intellij.util.containers.UList
@@ -50,7 +52,6 @@ import com.intellij.util.messages.impl.*
 import com.intellij.util.runSuppressing
 import kotlinx.coroutines.*
 import kotlinx.coroutines.Job
-import kotlinx.coroutines.internal.intellij.IntellijCoroutines
 import org.jetbrains.annotations.ApiStatus.Internal
 import org.jetbrains.annotations.TestOnly
 import org.jetbrains.annotations.VisibleForTesting
@@ -469,7 +470,7 @@ abstract class ComponentManagerImpl(
       return null
     }
     return {
-      componentContainer.preloadAllInstances()
+      preloadAllInstances(componentContainer)
       containerState.compareAndSet(ContainerState.PRE_INIT, ContainerState.COMPONENT_CREATED)
     }
   }
@@ -484,7 +485,7 @@ abstract class ComponentManagerImpl(
   protected fun doCreateComponents() {
     LOG.assertTrue(containerState.get() == ContainerState.PRE_INIT)
     runBlockingInitialization {
-      componentContainer.preloadAllInstances()
+      preloadAllInstances(componentContainer)
     }
     LOG.assertTrue(containerState.compareAndSet(ContainerState.PRE_INIT, ContainerState.COMPONENT_CREATED))
   }
@@ -499,7 +500,7 @@ abstract class ComponentManagerImpl(
       else -> StartUpMeasurer.startActivity("$activityNamePrefix${StartUpMeasurer.Activities.CREATE_COMPONENTS_SUFFIX}")
     }
 
-    componentContainer.preloadAllInstances()
+    preloadAllInstances(componentContainer)
 
     activity?.end()
 
@@ -642,11 +643,21 @@ abstract class ComponentManagerImpl(
     return getOrCreateInstanceBlocking(holder = adapter.holder, debugString = key.name, keyClass = key) as T
   }
 
+  private fun isDevelopmentTime(): Boolean {
+    return Thread.currentThread().contextClassLoader is DevTimeClassLoader
+  }
+
   final override fun <T : Any> getService(serviceClass: Class<T>): T? {
+    if (isDevelopmentTime()) return null
+
     return doGetService(serviceClass, true) ?: return postGetService(serviceClass, createIfNeeded = true)
   }
 
   final override suspend fun <T : Any> getServiceAsync(keyClass: Class<T>): T {
+    if (isDevelopmentTime()) {
+      throw IllegalStateException("Getting services is not allowed from development tools threads")
+    }
+
     return serviceContainer.instance(keyClass)
   }
 
@@ -659,6 +670,8 @@ abstract class ComponentManagerImpl(
   protected open fun <T : Any> postGetService(serviceClass: Class<T>, createIfNeeded: Boolean): T? = null
 
   final override fun <T : Any> getServiceIfCreated(serviceClass: Class<T>): T? {
+    if (isDevelopmentTime()) return null
+
     return doGetService(serviceClass, createIfNeeded = false) ?: postGetService(serviceClass, createIfNeeded = false)
   }
 
@@ -1029,7 +1042,14 @@ abstract class ComponentManagerImpl(
           }
           else if (!isKnown || !impl.startsWith("com.intellij.")) {
             val application = ApplicationManager.getApplication()
-            if (application == null || application.isUnitTestMode || application.isInternal) {
+
+            if (impl.startsWith("com.intellij.")) {
+              // logged only in the IJ project, let's not spam developers of plugins
+              if (AppMode.isRunningFromDevBuild() || PluginManagerCore.isRunningFromSources()) {
+                LOG.warn(message)
+              }
+            }
+            else if (application == null || application.isUnitTestMode || application.isInternal) {
               // logged only during development, let's not spam users
               LOG.warn(message)
             }
@@ -1088,7 +1108,7 @@ abstract class ComponentManagerImpl(
   protected open suspend fun preloadService(service: ServiceDescriptor, serviceInterface: String) {
     serviceContainer.getInstanceHolder(keyClassName = serviceInterface)
       ?.takeIf(InstanceHolder::isStatic)
-      ?.getInstance(keyClass = null)
+      ?.getInstanceInCallerContext(keyClass = null)
   }
 
   override fun isDisposed(): Boolean {
@@ -1502,6 +1522,8 @@ private fun getInstanceBlocking(holder: InstanceHolder, debugString: String, cre
   }
 }
 
+private val forbidGetServiceEvenInNonCancellable = System.getProperty("idea.forbid.get.service.in.nc.static.init", "false").toBoolean()
+
 internal fun getOrCreateInstanceBlocking(holder: InstanceHolder, debugString: String, keyClass: Class<*>?): Any {
   // container scope might be canceled
   // => holder is initialized with CE
@@ -1513,18 +1535,30 @@ internal fun getOrCreateInstanceBlocking(holder: InstanceHolder, debugString: St
     }
   }
 
-  if (!Cancellation.isInNonCancelableSection() && !checkOutsideClassInitializer(debugString)) {
+  @Suppress("UsagesOfObsoleteApi")
+  val inNonCancelableSection = Cancellation.isInNonCancelableSection()
+
+  val guiltyClassName = if (inNonCancelableSection && !forbidGetServiceEvenInNonCancellable) null else isInsideClassInitializer(debugString)
+  if (guiltyClassName != null) {
+    checkOutsideClassInitializer(debugString, guiltyClassName)
+  }
+
+  // if guiltyClassName is not null, it means that we are inside class initializer,
+  // and so, we should execute it in a non-cancellable section
+  if (inNonCancelableSection || guiltyClassName == null) {
+    return doGetOrCreateInstanceBlocking(holder, keyClass)
+  }
+  else {
     Cancellation.withNonCancelableSection().use {
-      return holder.doGetOrCreateInstanceBlocking(keyClass)
+      return doGetOrCreateInstanceBlocking(holder, keyClass)
     }
   }
-  return holder.doGetOrCreateInstanceBlocking(keyClass)
 }
 
-private fun InstanceHolder.doGetOrCreateInstanceBlocking(keyClass: Class<*>?): Any {
+private fun doGetOrCreateInstanceBlocking(holder: InstanceHolder, keyClass: Class<*>?): Any {
   try {
     return runBlockingInitialization {
-      getInstanceInCallerContext(keyClass)
+      holder.getInstanceInCallerContext(keyClass)
     }
   }
   catch (e: ProcessCanceledException) {
@@ -1536,23 +1570,23 @@ private fun InstanceHolder.doGetOrCreateInstanceBlocking(keyClass: Class<*>?): A
 /**
  * @return `true` if called outside a class initializer, `false` if called inside a class initializer
  */
-private fun checkOutsideClassInitializer(debugString: String): Boolean {
-  val className = isInsideClassInitializer(debugString) ?: return true
-  if (logAccessInsideClinit.get()) {
-    dontLogAccessInClinit().use {
-      val message = "$className <clinit> requests $debugString instance. " +
-                    "Class initialization must not depend on services. " +
-                    "Consider using instance of the service on-demand instead."
-      if (!ApplicationManager.getApplication().isUnitTestMode) {
-        LOG.error(message)
-      }
-      else {
-        // TODO make this an error IJPL-156676
-        LOG.warn(message)
-      }
+private fun checkOutsideClassInitializer(debugString: String, guiltyClassName: String) {
+  if (!logAccessInsideClinit.get()) {
+    return
+  }
+
+  dontLogAccessInClinit().use {
+    val message = "$guiltyClassName <clinit> requests $debugString instance. " +
+                  "Class initialization must not depend on services. " +
+                  "Consider using instance of the service on-demand instead."
+    if (ApplicationManager.getApplication().isUnitTestMode) {
+      // TODO make this an error IJPL-156676
+      LOG.warn(message)
+    }
+    else {
+      LOG.error(message)
     }
   }
-  return false
 }
 
 private val expectedComponentsUsedByEelNio = setOf(
@@ -1655,7 +1689,7 @@ private fun <X> runBlockingInitialization(action: suspend CoroutineScope.() -> X
         NestedBlockingEventLoop(Thread.currentThread()) // avoid processing events from outer runBlocking (if any)
       resetThreadLocalEventLoop {
         @OptIn(InternalCoroutinesApi::class)
-        IntellijCoroutines.runBlockingWithParallelismCompensation(contextForInitializer, action)
+        IntelliJCoroutinesFacade.runBlockingWithParallelismCompensation(contextForInitializer, action)
       }
     }
     catch (e: ProcessCanceledException) {
@@ -1708,5 +1742,20 @@ private class StartUpMessageDeliveryListener(
       return
     }
     logMessageBusDeliveryFunction(topic, messageName, handler, durationNanos)
+  }
+}
+
+private suspend fun preloadAllInstances(container: InstanceContainerInternal) {
+  val holders = container.instanceHolders()
+  for (holder in holders) {
+    try {
+      holder.getInstanceInCallerContext(keyClass = null)
+    }
+    catch (e: CancellationException) {
+      throw e
+    }
+    catch (e: Throwable) {
+      LOG.error("Cannot create ${holder.instanceClassName()}", e)
+    }
   }
 }

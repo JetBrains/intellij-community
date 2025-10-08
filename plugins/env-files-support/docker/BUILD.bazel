@@ -1,8 +1,8 @@
-load("@rules_jvm//:jvm.bzl", "jvm_resources")
+load("@rules_jvm//:jvm.bzl", "resourcegroup")
 
-jvm_resources(
+resourcegroup(
   name = "docker_resources",
-  files = glob(["resources/**/*"]),
+  srcs = glob(["resources/**/*"]),
   strip_prefix = "resources",
   visibility = ["//visibility:public"],  # used by @ultimate//:dotenv-docker
 )

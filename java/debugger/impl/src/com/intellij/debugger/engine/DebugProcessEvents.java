@@ -18,10 +18,7 @@ import com.intellij.debugger.requests.Requestor;
 import com.intellij.debugger.settings.DebuggerSettings;
 import com.intellij.debugger.statistics.DebuggerStatistics;
 import com.intellij.debugger.statistics.StatisticsStorage;
-import com.intellij.debugger.ui.breakpoints.Breakpoint;
-import com.intellij.debugger.ui.breakpoints.InstrumentationTracker;
-import com.intellij.debugger.ui.breakpoints.StackCapturingLineBreakpoint;
-import com.intellij.debugger.ui.breakpoints.SyntheticBreakpoint;
+import com.intellij.debugger.ui.breakpoints.*;
 import com.intellij.debugger.ui.overhead.OverheadProducer;
 import com.intellij.debugger.ui.overhead.OverheadTimings;
 import com.intellij.ide.BrowserUtil;
@@ -69,7 +66,7 @@ import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.function.Consumer;
 import java.util.function.Supplier;
 
-import static com.intellij.debugger.impl.DebuggerUtilsImpl.forEachSafe;
+import static com.intellij.debugger.engine.DebuggerUtils.forEachSafe;
 
 public class DebugProcessEvents extends DebugProcessImpl {
   private static final Logger LOG = Logger.getInstance(DebugProcessEvents.class);
@@ -656,18 +653,26 @@ public class DebugProcessEvents extends DebugProcessImpl {
         // Don't try to check breakpoint's condition or evaluate its log expression,
         // because these evaluations may lead to skipping of more important stepping events,
         // see IDEA-336282.
+        boolean postponeSuspendRunToCursorBP = false;
         boolean useThreadFiltering = requestor == null || !requestor.shouldIgnoreThreadFiltering();
         if (!DebuggerSession.filterBreakpointsDuringSteppingUsingDebuggerEngine() && useThreadFiltering) {
           LightOrRealThreadInfo filter = getRequestsManager().getFilterThread();
           if (filter != null) {
             if (myPreparingToSuspendAll || !filter.checkSameThread(thread, suspendContext)) {
-              // notify only if the current session is not one with evaluations hidden from the user
-              if (!checkContextIsFromImplicitThread(suspendContext)) {
-                notifySkippedBreakpoints(event, SkippedBreakpointReason.STEPPING);
+              if (requestor instanceof RunToCursorBreakpoint runToCursorBreakpoint &&
+                  !runToCursorBreakpoint.isEngineBreakpoint() &&
+                  suspendContext.getSuspendPolicy() == EventRequest.SUSPEND_EVENT_THREAD &&
+                  myRunToCursorManager.shouldTryToPauseAnotherHit(suspendContext)) {
+                postponeSuspendRunToCursorBP = true;
+              } else {
+                // notify only if the current session is not one with evaluations hidden from the user
+                if (!checkContextIsFromImplicitThread(suspendContext)) {
+                  notifySkippedBreakpoints(event, SkippedBreakpointReason.STEPPING);
+                }
+                logSuspendContext(suspendContext, () -> "Skip breakpoint because of filter " + filter);
+                suspendManager.voteResume(suspendContext);
+                return;
               }
-              logSuspendContext(suspendContext, () -> "Skip breakpoint because of filter " + filter);
-              suspendManager.voteResume(suspendContext);
-              return;
             }
           }
         }
@@ -755,18 +760,23 @@ public class DebugProcessEvents extends DebugProcessImpl {
           suspendManager.voteResume(suspendContext);
         }
         else {
-          logSuspendContext(suspendContext, () -> "suspend is expected");
-          stopWatchingMethodReturn();
-          //if (suspendContext.getSuspendPolicy() == EventRequest.SUSPEND_ALL) {
-          //  // there could be explicit resume as a result of call to voteSuspend()
-          //  // e.g. when breakpoint was considered invalid, in that case the filter will be applied _after_
-          //  // resuming and all breakpoints in other threads will be ignored.
-          //  // As resume() implicitly cleares the filter, the filter must be always applied _before_ any resume() action happens
-          //  myBreakpointManager.applyThreadFilter(DebugProcessEvents.this, event.thread());
-          //}
+          if (postponeSuspendRunToCursorBP) {
+            // Let's wait the more fit context
+            myRunToCursorManager.saveRunToCursorHit(suspendContext);
+          } else {
+            logSuspendContext(suspendContext, () -> "suspend is expected");
+            stopWatchingMethodReturn();
+            //if (suspendContext.getSuspendPolicy() == EventRequest.SUSPEND_ALL) {
+            //  // there could be explicit resume as a result of call to voteSuspend()
+            //  // e.g. when breakpoint was considered invalid, in that case the filter will be applied _after_
+            //  // resuming and all breakpoints in other threads will be ignored.
+            //  // As resume() implicitly cleares the filter, the filter must be always applied _before_ any resume() action happens
+            //  myBreakpointManager.applyThreadFilter(DebugProcessEvents.this, event.thread());
+            //}
 
-          suspendManager.voteSuspend(suspendContext);
-          showStatusText(DebugProcessEvents.this, event);
+            suspendManager.voteSuspend(suspendContext);
+            showStatusText(DebugProcessEvents.this, event);
+          }
         }
       }
     });

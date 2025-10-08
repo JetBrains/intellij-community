@@ -29,7 +29,6 @@ import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.actionSystem.ex.ActionUtil;
 import com.intellij.openapi.actionSystem.impl.ActionMenu;
 import com.intellij.openapi.application.ApplicationManager;
-import com.intellij.openapi.application.ApplicationNamesInfo;
 import com.intellij.openapi.application.ModalityState;
 import com.intellij.openapi.application.ReadAction;
 import com.intellij.openapi.application.ex.ApplicationManagerEx;
@@ -53,6 +52,7 @@ import com.intellij.openapi.ui.popup.ListItemDescriptorAdapter;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.NlsContexts;
 import com.intellij.openapi.util.NlsSafe;
+import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.util.text.Strings;
@@ -78,7 +78,6 @@ import com.intellij.usages.*;
 import com.intellij.usages.impl.UsagePreviewPanel;
 import com.intellij.usages.impl.UsageViewManagerImpl;
 import com.intellij.util.Alarm;
-import com.intellij.util.PlatformUtils;
 import com.intellij.util.Processor;
 import com.intellij.util.concurrency.AppExecutorUtil;
 import com.intellij.util.concurrency.ThreadingAssertions;
@@ -154,7 +153,8 @@ public final class SearchEverywhereUI extends BigPopupUI implements UiDataProvid
 
   private UsagePreviewPanel myUsagePreviewPanel;
   private UsageViewPresentation myUsageViewPresentation;
-  private static final String SPLITTER_SERVICE_KEY = "search.everywhere.splitter";
+  @ApiStatus.Internal
+  public static final String SPLITTER_SERVICE_KEY = "search.everywhere.splitter";
 
   private static final Logger LOG = Logger.getInstance(SearchEverywhereUI.class);
 
@@ -382,15 +382,15 @@ public final class SearchEverywhereUI extends BigPopupUI implements UiDataProvid
     if (mySearchField == null) return;
 
     List<SearchEverywhereContributor<?>> contributors = myHeader.getSelectedTab().getContributors();
-    String advertisementText = ReadAction.compute(() -> getWarning(contributors));
-    if (advertisementText != null) {
-      myHintHelper.setWarning(advertisementText);
+    Pair<@Nls String, @Nls String> advertisementTextAndTooltip = ReadAction.compute(() -> getLoadingTextAndTooltip(contributors));
+    if (advertisementTextAndTooltip != null) {
+      myHintHelper.setLoadingText(advertisementTextAndTooltip.first, advertisementTextAndTooltip.second);
       updateRightActions(contributors);
       return;
     }
 
-    advertisementText = getAdvertisement(contributors);
-    myHintHelper.setHint(advertisementText);
+    String hint = getAdvertisement(contributors);
+    myHintHelper.setHint(hint);
 
     updateRightActions(contributors);
   }
@@ -427,7 +427,7 @@ public final class SearchEverywhereUI extends BigPopupUI implements UiDataProvid
   }
 
   @RequiresReadLock
-  private @Nls @Nullable String getWarning(List<SearchEverywhereContributor<?>> contributors) {
+  private @Nullable Pair<@Nls String, @Nls String> getLoadingTextAndTooltip(List<SearchEverywhereContributor<?>> contributors) {
     if (myProject == null) return null;
 
     boolean isDumb = DumbService.isDumb(myProject);
@@ -439,8 +439,8 @@ public final class SearchEverywhereUI extends BigPopupUI implements UiDataProvid
     if (!containsPSIContributors) return null;
 
     return isDumb
-           ? IdeBundle.message("dumb.mode.results.might.be.incomplete")
-           : IdeBundle.message("incomplete.mode.results.might.be.incomplete");
+           ? new Pair<>(IdeBundle.message("dumb.mode.results.might.be.incomplete"), IdeBundle.message("dumb.mode.results.might.be.incomplete.during.project.analysis"))
+           : new Pair<>(IdeBundle.message("incomplete.mode.results.might.be.incomplete"), null);
   }
 
   @Override
@@ -823,9 +823,7 @@ public final class SearchEverywhereUI extends BigPopupUI implements UiDataProvid
                          ? myHeader.getSelectedTab().getContributors().get(0).filterControlSymbols(rawPattern)
                          : rawPattern;
 
-    MinusculeMatcher matcher =
-      NameUtil.buildMatcherWithFallback("*" + rawPattern, "*" + namePattern, NameUtil.MatchingCaseSensitivity.NONE);
-    MatcherHolder.associateMatcher(myResultsList, matcher);
+    associateMatcherToResultsList(myResultsList, rawPattern, namePattern);
 
     Map<SearchEverywhereContributor<?>, Integer> contributorsMap = new HashMap<>();
 
@@ -838,15 +836,13 @@ public final class SearchEverywhereUI extends BigPopupUI implements UiDataProvid
       if (contributors.isEmpty() && DumbService.isDumb(myProject)) {
         DumbModeBlockedFunctionalityCollector.INSTANCE.logFunctionalityBlocked(myProject, DumbModeBlockedFunctionality.SearchEverywhere);
         myResultsList.setEmptyText(IdeBundle.message("searcheverywhere.indexing.mode.not.supported",
-                                                     myHeader.getSelectedTab().getName(),
-                                                     ApplicationNamesInfo.getInstance().getFullProductName()));
+                                                     myHeader.getSelectedTab().getName()));
         myListModel.clear();
         return;
       }
       if (contributors.size() != contributorsMap.size()) {
         myResultsList.setEmptyText(IdeBundle.message("searcheverywhere.indexing.incomplete.results",
-                                                     myHeader.getSelectedTab().getName(),
-                                                     ApplicationNamesInfo.getInstance().getFullProductName()));
+                                                     myHeader.getSelectedTab().getName()));
       }
     }
 
@@ -890,6 +886,13 @@ public final class SearchEverywhereUI extends BigPopupUI implements UiDataProvid
 
     myHintHelper.setSearchInProgress(StringUtil.isNotEmpty(getSearchPattern()));
     mySearchProgressIndicator = mySearcher.search(contributorsMap, rawPattern);
+  }
+
+  @ApiStatus.Internal
+  public static void associateMatcherToResultsList(JComponent resultsList, String rawPattern, String namePattern) {
+    MinusculeMatcher matcher =
+      NameUtil.buildMatcherWithFallback("*" + rawPattern, "*" + namePattern, NameUtil.MatchingCaseSensitivity.NONE);
+    MatcherHolder.associateMatcher(resultsList, matcher);
   }
 
   private void initSearchActions() {
@@ -1069,8 +1072,8 @@ public final class SearchEverywhereUI extends BigPopupUI implements UiDataProvid
     return Registry.is("search.everywhere.footer.extended.info") || ApplicationManager.getApplication().isInternal();
   }
 
-  static boolean isPreviewEnabled() {
-    return PreviewExperiment.isExperimentEnabled() && !PlatformUtils.isJetBrainsClient();
+  private boolean isPreviewEnabled() {
+    return SearchEverywhereManager.getInstance(myProject).isPreviewEnabled();
   }
 
   private static boolean isPreviewActive() {
@@ -1475,6 +1478,7 @@ public final class SearchEverywhereUI extends BigPopupUI implements UiDataProvid
       presentation.setTargetsNodeText(IdeBundle.message("searcheverywhere.found.targets.title", searchText, contributorsString));
       presentation.setTabName(tabCaptionText);
       presentation.setTabText(tabCaptionText);
+      presentation.setSearchString(searchText);
 
       Collection<Usage> usages = new LinkedHashSet<>();
       Collection<PsiElement> targets = new LinkedHashSet<>();

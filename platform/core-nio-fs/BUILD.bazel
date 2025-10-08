@@ -1,5 +1,5 @@
 ### auto-generated section `build intellij.platform.core.nio.fs` start
-load("@rules_jvm//:jvm.bzl", "jvm_library", "jvm_resources", "kt_javac_options")
+load("@rules_jvm//:jvm.bzl", "jvm_library", "kt_javac_options", "resourcegroup")
 
 kt_javac_options(
   name = "custom-javac-options",
@@ -9,9 +9,9 @@ kt_javac_options(
   no_proc = True
 )
 
-jvm_resources(
+resourcegroup(
   name = "core-nio-fs_resources",
-  files = glob(["resources/**/*"]),
+  srcs = glob(["resources/**/*"]),
   strip_prefix = "resources"
 )
 
@@ -20,9 +20,9 @@ jvm_library(
   module_name = "intellij.platform.core.nio.fs",
   visibility = ["//visibility:public"],
   srcs = glob(["src/**/*.kt", "src/**/*.java", "src/**/*.form"], allow_empty = True),
+  resources = [":core-nio-fs_resources"],
   javac_opts = ":custom-javac-options",
-  deps = ["@lib//:jetbrains-annotations"],
-  runtime_deps = [":core-nio-fs_resources"]
+  deps = ["@lib//:jetbrains-annotations"]
 )
 ### auto-generated section `build intellij.platform.core.nio.fs` end
 
@@ -38,7 +38,7 @@ jvm_library(
     "@lib//:io-mockk",
     "@lib//:io-mockk-jvm",
     "@lib//:junit5",
-    "@lib//:kotlin-reflect",
+    "//libraries/kotlin-reflect",
     "@lib//:kotlin-stdlib",
     "@lib//:kotlin-test-assertions-core-jvm",
     "//libraries/mockito",

@@ -1,9 +1,9 @@
 ### auto-generated section `build intellij.java.i18n` start
-load("@rules_jvm//:jvm.bzl", "jvm_library", "jvm_resources")
+load("@rules_jvm//:jvm.bzl", "jvm_library", "resourcegroup")
 
-jvm_resources(
+resourcegroup(
   name = "java-i18n_resources",
-  files = glob(["resources/**/*"]),
+  srcs = glob(["resources/**/*"]),
   strip_prefix = "resources"
 )
 
@@ -12,6 +12,7 @@ jvm_library(
   module_name = "intellij.java.i18n",
   visibility = ["//visibility:public"],
   srcs = glob(["src/**/*.kt", "src/**/*.java", "src/**/*.form"], allow_empty = True),
+  resources = [":java-i18n_resources"],
   deps = [
     "//java/java-indexing-api:indexing",
     "//platform/analysis-api:analysis",
@@ -41,8 +42,8 @@ jvm_library(
     "//jvm/jvm-analysis-api:analysis",
     "@lib//:stream_ex",
     "//platform/core-ui",
-    "@lib//:icu4j",
-    "@lib//:fastutil-min",
+    "//libraries/icu4j",
+    "//libraries/fastutil",
     "//java/java-impl-refactorings:impl-refactorings",
     "//platform/util/jdom",
     "//xml/xml-psi-api:psi",
@@ -50,8 +51,7 @@ jvm_library(
   exports = [
     "//plugins/properties:properties-backend",
     "//java/java-impl:impl",
-  ],
-  runtime_deps = [":java-i18n_resources"]
+  ]
 )
 
 jvm_library(
@@ -83,6 +83,7 @@ jvm_library(
     "//xml/impl",
     "//spellchecker",
     "//spellchecker:spellchecker_test_lib",
+    "//plugins/grazie/src/test:grazie-tests_test_lib",
     "//plugins/grazie/src:core",
     "//plugins/grazie",
     "//java/java-impl:impl",
@@ -97,8 +98,8 @@ jvm_library(
     "//jvm/jvm-analysis-api:analysis",
     "@lib//:stream_ex",
     "//platform/core-ui",
-    "@lib//:icu4j",
-    "@lib//:fastutil-min",
+    "//libraries/icu4j",
+    "//libraries/fastutil",
     "//java/java-impl-refactorings:impl-refactorings",
     "//platform/util/jdom",
     "//xml/xml-psi-api:psi",
@@ -108,8 +109,7 @@ jvm_library(
   exports = [
     "//plugins/properties:properties-backend",
     "//java/java-impl:impl",
-  ],
-  runtime_deps = [":java-i18n_resources"]
+  ]
 )
 ### auto-generated section `build intellij.java.i18n` end
 

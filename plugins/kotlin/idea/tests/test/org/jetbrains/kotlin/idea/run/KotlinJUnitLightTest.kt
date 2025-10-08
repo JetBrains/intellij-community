@@ -207,7 +207,7 @@ abstract class KotlinJUnitLightTest : KotlinLightCodeInsightFixtureTestCaseBase(
         doTestClassWithMain {
             val manager = getInstance(project)
             val test = KotlinRunConfiguration("ATestKt", JavaRunConfigurationModule(project, true), KotlinRunConfigurationType.instance)
-            test.runClass = "ATestKt"
+            test.mainClassName = "ATestKt"
             val settings = RunnerAndConfigurationSettingsImpl((manager as RunManagerImpl), test)
             manager.addConfiguration(settings)
             tempSettings.add(settings)

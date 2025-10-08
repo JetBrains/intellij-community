@@ -31,20 +31,16 @@ import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertNotNull;
 
 public final class ArtifactsTestUtil {
-  public static String printToString(PackagingElement element, int level) {
+  public static String printToString(PackagingElement<?> element, int level) {
     StringBuilder builder = new StringBuilder(StringUtil.repeatSymbol(' ', level));
-    if (element instanceof ArchivePackagingElement) {
-      builder.append(((ArchivePackagingElement)element).getArchiveFileName());
-    }
-    else if (element instanceof DirectoryPackagingElement) {
-      builder.append(((DirectoryPackagingElement)element).getDirectoryName()).append("/");
-    }
-    else {
-      builder.append(element.toString());
-    }
+    builder.append(switch (element) {
+      case ArchivePackagingElement packagingElement -> packagingElement.getArchiveFileName();
+      case DirectoryPackagingElement packagingElement -> packagingElement.getDirectoryName() + "/";
+      default -> element;
+    });
     builder.append("\n");
-    if (element instanceof CompositePackagingElement) {
-      for (PackagingElement<?> child : ((CompositePackagingElement<?>)element).getChildren()) {
+    if (element instanceof CompositePackagingElement<?> packagingElement) {
+      for (PackagingElement<?> child : packagingElement.getChildren()) {
         builder.append(printToString(child, level + 1));
       }
     }

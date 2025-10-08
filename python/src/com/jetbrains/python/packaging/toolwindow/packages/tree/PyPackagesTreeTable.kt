@@ -65,6 +65,7 @@ class PyPackagesTreeTable(
 
   internal val isReadOnly
     get() = packagingService.currentSdk?.isReadOnly == true
+
   init {
     table.putUserData(TREE_TABLE_KEY, this)
     initializeUI()
@@ -135,6 +136,8 @@ class PyPackagesTreeTable(
 
   private fun hasActiveFocus(): Boolean = tree.hasFocus() || table.hasFocus()
 
+  private var suppressClearOnFocusLoss: Boolean = false
+
   private fun createSharedFocusListener(): FocusListener = object : FocusAdapter() {
     override fun focusGained(e: FocusEvent) {
       val pkg = selectedItem() ?: return
@@ -142,6 +145,7 @@ class PyPackagesTreeTable(
     }
 
     override fun focusLost(e: FocusEvent) {
+      if (suppressClearOnFocusLoss || e.isTemporary) return
       controller.setEmpty()
     }
   }
@@ -156,10 +160,12 @@ class PyPackagesTreeTable(
     val pkg = treeTableModel.getValueAt(node, 0) as? DisplayablePackage ?: return@TreeSelectionListener
     handlePackageSelection(pkg)
   }
+
   private fun createTreeExpansionListener() = object : TreeExpansionListener {
     override fun treeExpanded(event: TreeExpansionEvent) {
       treeListener?.onTreeStructureChanged()
     }
+
     override fun treeCollapsed(event: TreeExpansionEvent) {
       treeListener?.onTreeStructureChanged()
     }
@@ -221,12 +227,18 @@ class PyPackagesTreeTable(
       val popupMenu = ActionManager.getInstance()
         .createActionPopupMenu(POPUP_MENU_PLACE, actionGroup)
         .component
-      popupMenu.show(comp, x, y)
+      try {
+        suppressClearOnFocusLoss = true
+        popupMenu.show(comp, x, y)
+      }
+      finally {
+        suppressClearOnFocusLoss = false
+      }
     }
   }
 
   private fun loadMoreItems(node: ExpandResultNode) {
-    val result = packagingService.getMoreResultsForRepo(node.repository, items.size - 1) ?: return
+    val result = packagingService.getMoreResultsForRepo(node.repository, items.size - 1)
     items = items.dropLast(1) + result.packages
     if (result.moreItems > 0) {
       node.more = result.moreItems

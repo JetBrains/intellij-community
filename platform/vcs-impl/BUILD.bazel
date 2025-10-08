@@ -1,9 +1,9 @@
 ### auto-generated section `build intellij.platform.vcs.impl` start
-load("@rules_jvm//:jvm.bzl", "jvm_library", "jvm_resources")
+load("@rules_jvm//:jvm.bzl", "jvm_library", "resourcegroup")
 
-jvm_resources(
+resourcegroup(
   name = "vcs-impl_resources",
-  files = glob(["resources/**/*"]),
+  srcs = glob(["resources/**/*"]),
   strip_prefix = "resources"
 )
 
@@ -12,6 +12,7 @@ jvm_library(
   module_name = "intellij.platform.vcs.impl",
   visibility = ["//visibility:public"],
   srcs = glob(["src/**/*.kt", "src/**/*.java", "src/**/*.form", "gen/**/*.kt", "gen/**/*.java"], allow_empty = True),
+  resources = [":vcs-impl_resources"],
   deps = [
     "//platform/analysis-api:analysis",
     "//platform/code-style-api:codeStyle",
@@ -31,18 +32,18 @@ jvm_library(
     "//platform/platform-impl:ide-impl",
     "//platform/lang-api:lang",
     "//jps/model-serialization",
-    "@lib//:guava",
+    "//libraries/guava",
     "//platform/lang-impl",
-    "@lib//:gson",
+    "//libraries/gson",
     "//platform/diff-impl",
     "//platform/refactoring",
     "//platform/vcs-log/api:vcs-log",
     "@lib//:swingx",
-    "@lib//:miglayout-swing",
+    "//libraries/miglayout-swing",
     "@lib//:stream_ex",
     "//platform/statistics",
     "//platform/util",
-    "@lib//:fastutil-min",
+    "//libraries/fastutil",
     "//platform/core-ui",
     "//platform/built-in-server:builtInServer-impl",
     "//platform/editor-ui-ex:editor-ex",
@@ -50,7 +51,7 @@ jvm_library(
     "//platform/code-style-impl:codeStyle-impl",
     "//platform/platform-util-io-impl:ide-util-io-impl",
     "//platform/util/progress",
-    "@lib//:caffeine",
+    "//libraries/caffeine",
     "//platform/workspace/storage",
     "//platform/util/jdom",
     "//platform/diagnostic/telemetry",
@@ -64,8 +65,8 @@ jvm_library(
     "//platform/diagnostic",
     "//platform/util:util-ui",
     "//platform/util/coroutines",
-    "@lib//:kotlinx-serialization-core",
-    "@lib//:kotlinx-serialization-json",
+    "//libraries/kotlinx/serialization/core",
+    "//libraries/kotlinx/serialization/json",
     "//libraries/microba",
     "//platform/kernel/shared:kernel",
     "//platform/vcs-impl/shared",
@@ -75,8 +76,7 @@ jvm_library(
     "//platform/project/shared:project",
     "//platform/kernel/backend",
     "//platform/platform-impl/rpc",
-  ],
-  runtime_deps = [":vcs-impl_resources"]
+  ]
 )
 
 jvm_library(
@@ -104,21 +104,21 @@ jvm_library(
     "//platform/platform-impl:ide-impl",
     "//platform/lang-api:lang",
     "//jps/model-serialization",
-    "@lib//:guava",
+    "//libraries/guava",
     "//platform/lang-impl",
     "//platform/testFramework",
     "//platform/testFramework:testFramework_test_lib",
-    "@lib//:gson",
+    "//libraries/gson",
     "//platform/diff-impl",
     "//platform/refactoring",
     "//platform/vcs-log/api:vcs-log",
     "@lib//:swingx",
-    "@lib//:miglayout-swing",
+    "//libraries/miglayout-swing",
     "@lib//:stream_ex",
     "//platform/statistics",
     "//platform/statistics:statistics_test_lib",
     "//platform/util",
-    "@lib//:fastutil-min",
+    "//libraries/fastutil",
     "//platform/core-ui",
     "//platform/built-in-server:builtInServer-impl",
     "//platform/editor-ui-ex:editor-ex",
@@ -126,7 +126,7 @@ jvm_library(
     "//platform/code-style-impl:codeStyle-impl",
     "//platform/platform-util-io-impl:ide-util-io-impl",
     "//platform/util/progress",
-    "@lib//:caffeine",
+    "//libraries/caffeine",
     "//platform/workspace/storage",
     "//platform/util/jdom",
     "//platform/diagnostic/telemetry",
@@ -145,8 +145,8 @@ jvm_library(
     "//tools/intellij.tools.ide.metrics.benchmark:ide-metrics-benchmark",
     "//tools/intellij.tools.ide.metrics.benchmark:ide-metrics-benchmark_test_lib",
     "//platform/util/coroutines",
-    "@lib//:kotlinx-serialization-core",
-    "@lib//:kotlinx-serialization-json",
+    "//libraries/kotlinx/serialization/core",
+    "//libraries/kotlinx/serialization/json",
     "//libraries/microba",
     "//platform/kernel/shared:kernel",
     "//platform/vcs-impl/shared",
@@ -157,8 +157,7 @@ jvm_library(
     "//platform/kernel/backend",
     "//platform/platform-impl/rpc",
     "//platform/diff-impl/tests:tests_test_lib",
-  ],
-  runtime_deps = [":vcs-impl_resources"]
+  ]
 )
 ### auto-generated section `build intellij.platform.vcs.impl` end
 

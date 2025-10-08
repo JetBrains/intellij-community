@@ -33,8 +33,8 @@ class SeTextFilterEditor(
 ) {
   private val findInProjectModel = FindManager.getInstance(project).findInProjectModel
   private val scopeFilterAction: AnAction? = scopesInfo?.let {
-    SeScopeChooserActionProvider(scopesInfo) {
-      filterValue = filterValue.cloneWithScope(it)
+    SeScopeChooserActionProvider(scopesInfo) { scopeId, _ ->
+      filterValue = filterValue.cloneWithScope(scopeId)
     }.getAction()
   }
   private val typesFilterAction: JComboboxAction? = project?.let {

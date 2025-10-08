@@ -59,9 +59,6 @@ class MockDumbService(override val project: Project) : DumbService() {
   override fun wrapGently(dumbUnawareContent: JComponent, parentDisposable: Disposable): JComponent =
     throw UnsupportedOperationException()
 
-  override fun wrapWithSpoiler(dumbAwareContent: JComponent, updateRunnable: Runnable, parentDisposable: Disposable): JComponent =
-    dumbAwareContent
-
   override fun showDumbModeNotification(message: String) {
     throw UnsupportedOperationException()
   }

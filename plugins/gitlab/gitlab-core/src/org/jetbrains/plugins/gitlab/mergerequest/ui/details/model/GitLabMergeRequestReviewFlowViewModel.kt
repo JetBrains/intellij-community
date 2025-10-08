@@ -1,6 +1,7 @@
 // Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.plugins.gitlab.mergerequest.ui.details.model
 
+import com.intellij.collaboration.async.childScope
 import com.intellij.collaboration.async.launchNow
 import com.intellij.collaboration.async.mapState
 import com.intellij.collaboration.async.modelFlow
@@ -16,7 +17,6 @@ import com.intellij.openapi.application.EDT
 import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.text.StringUtil
-import com.intellij.platform.util.coroutines.childScope
 import com.intellij.ui.awt.RelativePoint
 import kotlinx.coroutines.*
 import kotlinx.coroutines.flow.*
@@ -102,7 +102,7 @@ internal class GitLabMergeRequestReviewFlowViewModelImpl(
   private val mergeRequest: GitLabMergeRequest,
   private val avatarIconsProvider: IconsProvider<GitLabUserDTO>
 ) : GitLabMergeRequestReviewFlowViewModel {
-  private val scope = parentScope.childScope()
+  private val scope = parentScope.childScope(this::class)
   private val taskLauncher = SingleCoroutineLauncher(scope)
 
   override val isBusy: Flow<Boolean> = taskLauncher.busy
@@ -222,7 +222,7 @@ internal class GitLabMergeRequestReviewFlowViewModelImpl(
     val details = mergeRequest.details.first()
     val sourceBranch = details.sourceBranch
     val targetBranch = details.targetBranch
-    val commits = mergeRequest.changes.first().commits.await()
+    val commits = mergeRequest.changes.first().getCommits()
     val commitMessage: String? = withContext(scope.coroutineContext + Dispatchers.EDT) {
       val body = "* " + StringUtil.join(commits, { it.fullTitle }, "\n\n* ")
       val dialog = ReviewMergeCommitMessageDialog(

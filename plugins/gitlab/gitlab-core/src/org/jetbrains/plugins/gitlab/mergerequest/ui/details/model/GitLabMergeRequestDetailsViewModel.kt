@@ -1,6 +1,7 @@
 // Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.plugins.gitlab.mergerequest.ui.details.model
 
+import com.intellij.collaboration.async.childScope
 import com.intellij.collaboration.async.launchNow
 import com.intellij.collaboration.async.modelFlow
 import com.intellij.collaboration.ui.codereview.details.data.ReviewRequestState
@@ -10,7 +11,6 @@ import com.intellij.collaboration.ui.codereview.issues.processIssueIdsHtml
 import com.intellij.collaboration.ui.icon.IconsProvider
 import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.project.Project
-import com.intellij.platform.util.coroutines.childScope
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.flow.*
 import kotlinx.coroutines.launch
@@ -49,7 +49,7 @@ internal class GitLabMergeRequestDetailsViewModelImpl(
   private val avatarIconsProvider: IconsProvider<GitLabUserDTO>,
 ) : GitLabMergeRequestDetailsViewModel {
 
-  private val cs = parentCs.childScope()
+  private val cs = parentCs.childScope(this::class)
 
   override val number: String = "!${mergeRequest.iid}"
   override val url: String = mergeRequest.url

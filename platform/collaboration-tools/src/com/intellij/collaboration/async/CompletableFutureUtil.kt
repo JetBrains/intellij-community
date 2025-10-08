@@ -11,6 +11,7 @@ import com.intellij.openapi.progress.ProgressIndicator
 import com.intellij.openapi.progress.ProgressManager
 import com.intellij.openapi.util.Computable
 import com.intellij.openapi.util.Disposer
+import org.jetbrains.annotations.ApiStatus
 import java.util.concurrent.*
 import java.util.concurrent.atomic.AtomicReference
 import java.util.function.BiFunction
@@ -54,6 +55,7 @@ object CompletableFutureUtil {
   /**
    * Submit a [task] to IO thread pool under correct [ProgressIndicator]
    */
+  @ApiStatus.Internal
   @Deprecated("Deprecated with migration to coroutines")
   fun <T> ProgressManager.submitIOTask(progressIndicator: ProgressIndicator,
                                        cancelIndicatorOnFutureCancel: Boolean = false,
@@ -77,6 +79,7 @@ object CompletableFutureUtil {
   /**
    * Submit a [task] to IO thread pool under correct [ProgressIndicator] acquired from [indicatorProvider] and release the indicator when task is completed
    */
+  @ApiStatus.Internal
   @Deprecated("Deprecated with migration to coroutines")
   fun <T> ProgressManager.submitIOTask(indicatorProvider: ProgressIndicatorsProvider,
                                        cancelIndicatorOnFutureCancel: Boolean = false,
@@ -94,6 +97,8 @@ object CompletableFutureUtil {
    *
    * @param handler invoked when computation completes
    */
+  @ApiStatus.Internal
+  @ApiStatus.ScheduledForRemoval
   @Deprecated("Deprecated with migration to coroutines")
   fun <T> CompletableFuture<T>.handleOnEdt(disposable: Disposable,
                                            handler: (T?, Throwable?) -> Unit): CompletableFuture<Unit> {
@@ -114,6 +119,7 @@ object CompletableFutureUtil {
    * @see [CompletableFuture.handle]
    * @param handler invoked when computation completes
    */
+  @ApiStatus.Internal
   @Deprecated("Deprecated with migration to coroutines")
   fun <T, R> CompletableFuture<T>.handleOnEdt(modalityState: ModalityState? = null,
                                               handler: (T?, Throwable?) -> R): CompletableFuture<R> =
@@ -162,6 +168,8 @@ object CompletableFutureUtil {
    * @see [CompletableFuture.exceptionally]
    * @param handler invoked when computation throws an exception which IS [isCancellation]
    */
+  @ApiStatus.Internal
+  @ApiStatus.ScheduledForRemoval
   @Deprecated("Deprecated with migration to coroutines")
   fun <T> CompletableFuture<T>.cancellationOnEdt(modalityState: ModalityState? = null,
                                                  handler: (ProcessCanceledException) -> Unit): CompletableFuture<T> =
@@ -181,6 +189,8 @@ object CompletableFutureUtil {
    * @see [CompletableFuture.whenComplete]
    * @param handler invoked when computation completes successfully or throws an exception which IS NOT [isCancellation]
    */
+  @ApiStatus.Internal
+  @ApiStatus.ScheduledForRemoval
   @Deprecated("Deprecated with migration to coroutines")
   fun <T> CompletableFuture<T>.completionOnEdt(modalityState: ModalityState? = null,
                                                handler: () -> Unit): CompletableFuture<T> =

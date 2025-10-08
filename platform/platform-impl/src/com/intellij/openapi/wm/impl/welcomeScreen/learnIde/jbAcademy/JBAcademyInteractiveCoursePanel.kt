@@ -5,14 +5,17 @@ import com.intellij.icons.AllIcons
 import com.intellij.ide.plugins.PluginManager
 import com.intellij.ide.plugins.PluginManagerCore
 import com.intellij.openapi.actionSystem.ActionPlaces
+import com.intellij.openapi.actionSystem.ActionUiKind
 import com.intellij.openapi.actionSystem.AnActionEvent
 import com.intellij.openapi.actionSystem.DataContext
+import com.intellij.openapi.actionSystem.ex.ActionUtil
 import com.intellij.openapi.application.EDT
 import com.intellij.openapi.components.service
 import com.intellij.openapi.wm.InteractiveCourseData
 import com.intellij.openapi.wm.impl.welcomeScreen.learnIde.InteractiveCoursePanel
 import com.intellij.openapi.wm.impl.welcomeScreen.learnIde.getBrowseCoursesAction
 import com.intellij.openapi.wm.impl.welcomeScreen.learnIde.jbAcademy.InstallJBAcademyTask.JB_ACADEMY_PLUGIN_ID
+import com.intellij.openapi.wm.impl.welcomeScreen.statistics.WelcomeScreenCounterUsageCollector
 import com.intellij.platform.ide.CoreUiCoroutineScopeHolder
 import com.intellij.platform.util.coroutines.flow.throttle
 import com.intellij.platform.util.progress.createProgressPipe
@@ -78,12 +81,16 @@ class JBAcademyInteractiveCoursePanel(data: InteractiveCourseData) : Interactive
 
     override fun actionPerformed(e: ActionEvent?) {
       if (PluginManager.isPluginInstalled(JB_ACADEMY_PLUGIN_ID) && !PluginManagerCore.isDisabled(JB_ACADEMY_PLUGIN_ID)) {
-        val event = AnActionEvent.createFromDataContext(ActionPlaces.WELCOME_SCREEN, null, DataContext.EMPTY_CONTEXT)
-        val action = getBrowseCoursesAction()
-        action?.actionPerformed(event)
+        WelcomeScreenCounterUsageCollector.reportLearnGetStartedButtonClicked()
+
+        val event = AnActionEvent.createEvent(DataContext.EMPTY_CONTEXT, null, ActionPlaces.WELCOME_SCREEN, ActionUiKind.NONE, null)
+        val action = getBrowseCoursesAction() ?: return
+        ActionUtil.performAction(action, event)
 
         return
       }
+
+      WelcomeScreenCounterUsageCollector.reportLearnEnableAccessButtonClicked()
 
       showProgress()
       job = service<CoreUiCoroutineScopeHolder>().coroutineScope.launch {

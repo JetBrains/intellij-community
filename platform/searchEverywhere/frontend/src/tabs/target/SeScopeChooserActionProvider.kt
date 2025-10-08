@@ -11,22 +11,22 @@ import com.intellij.util.Processor
 import org.jetbrains.annotations.ApiStatus
 
 @ApiStatus.Internal
-class SeScopeChooserActionProvider(val scopesInfo: SearchScopesInfo, private val onSelectedScopeChanged: (String?) -> Unit) {
+class SeScopeChooserActionProvider(val scopesInfo: SearchScopesInfo, private val onSelectedScopeChanged: (String?, Boolean) -> Unit) {
   private val descriptors: Map<String, ScopeDescriptor> = scopesInfo.getScopeDescriptors()
+  private var selectedScopeId: String? = scopesInfo.selectedScopeId
 
-  var selectedScopeId: String? = scopesInfo.selectedScopeId
-    private set(value) {
-      field = value
-      onSelectedScopeChanged(value)
-    }
+  private fun setSelectedScope(scopeId: String?, isAutoToggleEnabled: Boolean) {
+    selectedScopeId = scopeId
+    onSelectedScopeChanged(scopeId, isAutoToggleEnabled && !action.isEverywhere)
+  }
 
   private val action = object : ScopeChooserAction(), AutoToggleAction {
     private var isAutoToggleEnabled: Boolean = true
 
     override fun onScopeSelected(o: ScopeDescriptor) {
       scopesInfo.scopes.firstOrNull { it.name == o.displayName }?.let {
-        selectedScopeId = it.scopeId
         isAutoToggleEnabled = false
+        setSelectedScope(it.scopeId, false)
       }
     }
 
@@ -45,12 +45,12 @@ class SeScopeChooserActionProvider(val scopesInfo: SearchScopesInfo, private val
 
     private fun updateScope(everywhere: Boolean) {
       val targetScope = if (everywhere) scopesInfo.everywhereScopeId else scopesInfo.projectScopeId
-      selectedScopeId = targetScope
+      setSelectedScope(targetScope, isAutoToggleEnabled)
     }
 
     override fun setEverywhere(everywhere: Boolean) {
-      updateScope(everywhere)
       isAutoToggleEnabled = false
+      updateScope(everywhere)
     }
 
     override fun canToggleEverywhere(): Boolean {

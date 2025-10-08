@@ -45,16 +45,36 @@ public class StepSequence {
     myCommonFinishingSteps.add(Pair.create(step, suitableTypesPredicate));
   }
 
+  /**
+   * @deprecated This method no longer called by the platform, use {@link #addSteps(AbstractModuleBuilder, WizardContext, ModulesProvider)}
+   */
+  @Deprecated
   public void addStepsForBuilder(@NotNull AbstractModuleBuilder builder,
                                  @NotNull WizardContext wizardContext,
                                  @NotNull ModulesProvider modulesProvider) {
+    addSteps(builder, wizardContext, modulesProvider);
+  }
+
+  public Collection<ModuleWizardStep> addSteps(@NotNull AbstractModuleBuilder builder,
+                                               @NotNull WizardContext wizardContext,
+                                               @NotNull ModulesProvider modulesProvider) {
+    List<ModuleWizardStep> result = new ArrayList<>();
+
     String id = builder.getBuilderId();
     if (!mySpecificSteps.containsKey(id)) {
-      mySpecificSteps.put(id, Arrays.asList(builder.createWizardSteps(wizardContext, modulesProvider)));
+      ModuleWizardStep[] steps = builder.createWizardSteps(wizardContext, modulesProvider);
+      result.addAll(Arrays.asList(steps));
+
+      mySpecificSteps.put(id, Arrays.asList(steps));
     }
     if (!mySpecificFinishingSteps.containsKey(id)) {
-      mySpecificFinishingSteps.put(id, Arrays.asList(builder.createFinishingSteps(wizardContext, modulesProvider)));
+      ModuleWizardStep[] steps = builder.createFinishingSteps(wizardContext, modulesProvider);
+      result.addAll(Arrays.asList(steps));
+
+      mySpecificFinishingSteps.put(id, Arrays.asList(steps));
     }
+
+    return result;
   }
 
   public void addSpecificStep(String type, ModuleWizardStep step) {

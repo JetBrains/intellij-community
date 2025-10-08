@@ -3,8 +3,8 @@ package com.intellij.java.codeserver.core
 
 import com.intellij.openapi.module.Module
 import com.intellij.openapi.module.ModuleUtilCore
-import com.intellij.openapi.roots.JdkOrderEntry
 import com.intellij.openapi.roots.ModuleRootManager
+import com.intellij.openapi.roots.ProjectFileIndex
 import com.intellij.openapi.roots.ProjectRootManager
 import com.intellij.openapi.vfs.VfsUtilCore
 import com.intellij.openapi.vfs.VirtualFile
@@ -65,7 +65,7 @@ data class JpmsModuleAccessInfo(val current: JpmsModuleInfo.CurrentModuleInfo, v
       if (current.module == null) {
         val origin = targetModule.containingFile?.virtualFile
         if (origin == null || currentJpsModule == null ||
-            ModuleRootManager.getInstance(currentJpsModule).fileIndex.getOrderEntryForFile(origin) !is JdkOrderEntry
+            ProjectFileIndex.getInstance(currentJpsModule.project).findContainingSdks(origin).isEmpty()
         ) {
           return null  // a target is not on the mandatory module path
         }
@@ -133,7 +133,7 @@ data class JpmsModuleAccessInfo(val current: JpmsModuleInfo.CurrentModuleInfo, v
         if (origin == null && targetModule is LightJavaModule) origin = targetModule.rootVirtualFile
         if (origin == null || currentJpsModule == null) return null
 
-        if (ModuleRootManager.getInstance(currentJpsModule).fileIndex.getOrderEntryForFile(origin) !is JdkOrderEntry) {
+        if (ProjectFileIndex.getInstance(currentJpsModule.project).findContainingSdks(origin).isEmpty()) {
           val searchScope = GlobalSearchScope.moduleWithDependenciesAndLibrariesScope(currentJpsModule)
           if (searchScope.contains(origin)) return null
           return JpmsModuleAccessProblem.JPS_DEPENDENCY_PROBLEM
@@ -248,10 +248,10 @@ data class JpmsModuleAccessInfo(val current: JpmsModuleInfo.CurrentModuleInfo, v
       if (target != null) {
         val useVFile = place.virtualFile
         if (useVFile != null) {
-          val index = ModuleRootManager.getInstance(module).fileIndex
-          val test = index.isInTestSourceContent(useVFile)
+          val test = ModuleRootManager.getInstance(module).fileIndex.isInTestSourceContent(useVFile)
           val dirs = target.getDirectories(module.getModuleWithDependenciesAndLibrariesScope(test))
-          return dirs.any { index.getOrderEntryForFile(it.virtualFile) !is JdkOrderEntry }
+          val projectFileIndex = ProjectFileIndex.getInstance(module.project)
+          return dirs.any { projectFileIndex.findContainingSdks(it.virtualFile).isEmpty() }
         }
       }
     }

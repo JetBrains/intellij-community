@@ -28,6 +28,12 @@ import kotlin.math.roundToInt
   1) call setter methods on `editor.colorScheme` directly - fails (c), as setting the font size resets the font family, for example;
   2) use `DelegateColorScheme` - fails (a), as everything is propagated to the delegate by default (which is mutable!);
   3) use `EditorColorsSchemeImpl` - fails (b), as it requires a read-only parent, but, again, the global scheme is not read-only.
+
+  Also, there is a problem with providing the custom default foreground color.
+  It is computed in [com.intellij.openapi.editor.colors.impl.AbstractColorsScheme.getDefaultForeground]
+  using [com.intellij.openapi.editor.HighlighterColors.TEXT] attributes.
+  But if we set custom attributes for this key, they will be still ignored,
+  because [com.intellij.openapi.editor.colors.impl.DelegateColorScheme.getDefaultForeground] do not take custom attributes into account.
 */
 internal class TerminalColorScheme : EditorColorsScheme {
   companion object {
@@ -56,9 +62,9 @@ internal class TerminalColorScheme : EditorColorsScheme {
 
   override fun getAttributes(key: TextAttributesKey?, useDefaults: Boolean): TextAttributes? = globalScheme.getAttributes(key, useDefaults)
 
-  override fun getDefaultBackground(): Color = globalScheme.defaultBackground
+  override fun getDefaultBackground(): Color = TerminalUi.defaultBackground(globalScheme)
 
-  override fun getDefaultForeground(): Color = globalScheme.defaultForeground
+  override fun getDefaultForeground(): Color = TerminalUi.defaultForeground(globalScheme)
 
   override fun getColor(key: ColorKey?): Color? = globalScheme.getColor(key)
 

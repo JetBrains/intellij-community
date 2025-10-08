@@ -67,12 +67,12 @@
     <orderEntry type="module" module-name="intellij.platform.jps.model.impl" />
     <orderEntry type="module" module-name="intellij.java.analysis.impl" exported="" />
     <orderEntry type="module" module-name="intellij.platform.externalSystem" />
-    <orderEntry type="library" name="Guava" level="project" />
+    <orderEntry type="module" module-name="intellij.libraries.guava" />
     <orderEntry type="library" name="Velocity" level="project" />
     <orderEntry type="module" module-name="intellij.java.structureView" exported="" />
     <orderEntry type="module" module-name="intellij.spellchecker" />
     <orderEntry type="module" module-name="intellij.platform.builtInServer.impl" />
-    <orderEntry type="library" name="gson" level="project" />
+    <orderEntry type="module" module-name="intellij.libraries.gson" />
     <orderEntry type="module" module-name="intellij.java.compiler" />
     <orderEntry type="library" scope="RUNTIME" name="jaxb-runtime" level="project" />
     <orderEntry type="module" module-name="intellij.platform.objectSerializer.annotations" />
@@ -100,7 +100,7 @@
     <orderEntry type="module" module-name="intellij.copyright" />
     <orderEntry type="library" name="StreamEx" level="project" />
     <orderEntry type="module" module-name="intellij.platform.statistics" exported="" />
-    <orderEntry type="library" name="fastutil-min" level="project" />
+    <orderEntry type="module" module-name="intellij.libraries.fastutil" />
     <orderEntry type="module" module-name="intellij.platform.core.ui" />
     <orderEntry type="module" module-name="intellij.platform.codeStyle.impl" />
     <orderEntry type="module" module-name="intellij.platform.ide.util.io.impl" />
@@ -111,7 +111,7 @@
     <orderEntry type="module" module-name="intellij.platform.workspace.jps" />
     <orderEntry type="module" module-name="intellij.platform.ide.internal" />
     <orderEntry type="module" module-name="intellij.platform.backend.workspace" />
-    <orderEntry type="library" name="caffeine" level="project" />
+    <orderEntry type="module" module-name="intellij.libraries.caffeine" />
     <orderEntry type="module" module-name="intellij.platform.ide.impl" />
     <orderEntry type="module" module-name="intellij.platform.markdown.utils" />
     <orderEntry type="library" name="jetbrains.markdown" level="project" />

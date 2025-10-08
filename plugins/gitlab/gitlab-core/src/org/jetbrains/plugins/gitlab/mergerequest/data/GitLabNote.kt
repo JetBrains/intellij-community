@@ -3,10 +3,11 @@ package org.jetbrains.plugins.gitlab.mergerequest.data
 
 import com.intellij.collaboration.async.Change
 import com.intellij.collaboration.async.Deleted
+import com.intellij.collaboration.async.childScope
 import com.intellij.collaboration.async.mapState
-import com.intellij.collaboration.async.modelFlow
-import com.intellij.openapi.diagnostic.logger
-import com.intellij.platform.util.coroutines.childScope
+import com.intellij.collaboration.util.CodeReviewDomainEntity
+import com.intellij.collaboration.util.ComputedResult
+import com.intellij.collaboration.util.map
 import kotlinx.coroutines.*
 import kotlinx.coroutines.flow.*
 import kotlinx.coroutines.sync.Mutex
@@ -19,6 +20,7 @@ import org.jetbrains.plugins.gitlab.api.dto.GitLabUserDTO
 import org.jetbrains.plugins.gitlab.mergerequest.api.request.*
 import java.util.*
 
+@CodeReviewDomainEntity
 interface GitLabNote {
   val id: GitLabId
   val author: GitLabUserDTO
@@ -28,6 +30,7 @@ interface GitLabNote {
   val resolved: StateFlow<Boolean>
 }
 
+@CodeReviewDomainEntity
 interface MutableGitLabNote : GitLabNote {
   val canAdmin: Boolean
 
@@ -51,16 +54,18 @@ interface MutableGitLabNote : GitLabNote {
   suspend fun submit()
 }
 
+@CodeReviewDomainEntity
 interface GitLabMergeRequestNote : GitLabNote {
   val canReact: Boolean
   val position: StateFlow<GitLabNotePosition?>
-  val positionMapping: Flow<GitLabMergeRequestNotePositionMapping?>
+  val positionMapping: StateFlow<ComputedResult<GitLabMergeRequestNotePositionMapping?>>
 
   val awardEmoji: StateFlow<List<GitLabAwardEmojiDTO>>
 
   suspend fun toggleReaction(reaction: GitLabReaction)
 }
 
+@CodeReviewDomainEntity
 interface GitLabMergeRequestDraftNote : GitLabMergeRequestNote, MutableGitLabNote {
   val discussionId: GitLabId?
   override val createdAt: Date? get() = null
@@ -68,8 +73,6 @@ interface GitLabMergeRequestDraftNote : GitLabMergeRequestNote, MutableGitLabNot
   override val canReact: Boolean get() = false
   override val resolved: StateFlow<Boolean> get() = MutableStateFlow(false)
 }
-
-private val LOG = logger<GitLabDiscussion>()
 
 class MutableGitLabMergeRequestNote(
   parentCs: CoroutineScope,
@@ -80,7 +83,7 @@ class MutableGitLabMergeRequestNote(
   noteData: GitLabNoteDTO
 ) : GitLabMergeRequestNote, MutableGitLabNote {
 
-  private val cs = parentCs.childScope(CoroutineExceptionHandler { _, e -> LOG.warn(e) })
+  private val cs = parentCs.childScope(this::class)
 
   private val operationsGuard = Mutex()
 
@@ -97,7 +100,8 @@ class MutableGitLabMergeRequestNote(
   override val position: StateFlow<GitLabNotePosition?> = data.mapState(cs) {
     it.position?.let(GitLabNotePosition::from)
   }
-  override val positionMapping: Flow<GitLabMergeRequestNotePositionMapping?> = position.mapPosition(mr).modelFlow(cs, LOG)
+  override val positionMapping: StateFlow<ComputedResult<GitLabMergeRequestNotePositionMapping?>> =
+    position.mapPosition(mr).stateIn(cs, SharingStarted.Eagerly, ComputedResult.loading())
   override fun canEdit(): Boolean = true
   override fun canSubmit(): Boolean = false
 
@@ -158,6 +162,7 @@ class MutableGitLabMergeRequestNote(
     "MutableGitLabNote(id='$id', author=$author, createdAt=$createdAt, canAdmin=$canAdmin, body=${body.value}, resolved=${resolved.value}, position=${position.value})"
 }
 
+@CodeReviewDomainEntity
 class GitLabMergeRequestDraftNoteImpl(
   parentCs: CoroutineScope,
   private val api: GitLabApi,
@@ -169,7 +174,7 @@ class GitLabMergeRequestDraftNoteImpl(
   override val author: GitLabUserDTO
 ) : GitLabMergeRequestDraftNote, MutableGitLabNote {
 
-  private val cs = parentCs.childScope(CoroutineExceptionHandler { _, e -> LOG.warn(e) })
+  private val cs = parentCs.childScope(this::class)
 
   private val operationsGuard = Mutex()
 
@@ -181,7 +186,8 @@ class GitLabMergeRequestDraftNoteImpl(
   override val awardEmoji: StateFlow<List<GitLabAwardEmojiDTO>> = MutableStateFlow(emptyList())
 
   override val position: StateFlow<GitLabNotePosition?> = data.mapState(cs) { it.position.let(GitLabNotePosition::from) }
-  override val positionMapping: Flow<GitLabMergeRequestNotePositionMapping?> = position.mapPosition(mr).modelFlow(cs, LOG)
+  override val positionMapping: StateFlow<ComputedResult<GitLabMergeRequestNotePositionMapping?>> =
+    position.mapPosition(mr).stateIn(cs, SharingStarted.Eagerly, ComputedResult.loading())
 
   override fun canEdit(): Boolean =
     glMetadata != null && GitLabVersion(15, 10) <= glMetadata.version
@@ -240,18 +246,24 @@ class GitLabMergeRequestDraftNoteImpl(
 }
 
 @OptIn(ExperimentalCoroutinesApi::class)
-private fun Flow<GitLabNotePosition?>.mapPosition(mr: GitLabMergeRequest): Flow<GitLabMergeRequestNotePositionMapping?> =
-  flatMapLatest { position ->
-    if (position == null) return@flatMapLatest flowOf(null)
-
-    mr.changes.map {
-      try {
-        val allChanges = it.getParsedChanges()
+private fun Flow<GitLabNotePosition?>.mapPosition(mr: GitLabMergeRequest): Flow<ComputedResult<GitLabMergeRequestNotePositionMapping?>> =
+  this.combineTransform(mr.changesComputationState()) { position, changesResult ->
+    if (position == null) {
+      emit(ComputedResult.success(null))
+      return@combineTransform
+    }
+    try {
+      changesResult.map { allChanges ->
         GitLabMergeRequestNotePositionMapping.map(allChanges, position)
+      }.let {
+        emit(it)
       }
-      catch (e: Exception) {
-        GitLabMergeRequestNotePositionMapping.Error(e)
-      }
+    }
+    catch (ce: CancellationException) {
+      throw ce
+    }
+    catch (e: Exception) {
+      emit(ComputedResult.failure(e))
     }
   }
 

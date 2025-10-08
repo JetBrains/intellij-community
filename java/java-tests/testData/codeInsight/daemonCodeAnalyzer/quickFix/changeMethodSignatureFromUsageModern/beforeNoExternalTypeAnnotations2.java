@@ -1,4 +1,4 @@
-// "Add 'Integer' as 1st parameter to method 'perform'" "true" 
+// "Add 'Integer' as 1st parameter to method 'perform()'" "true" 
 import java.util.concurrent.CompletableFuture;
 
 public class FutureWhenDone {

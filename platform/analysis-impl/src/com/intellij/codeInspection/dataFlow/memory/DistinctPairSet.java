@@ -193,7 +193,7 @@ public final class DistinctPairSet extends AbstractSet<DistinctPairSet.DistinctP
   private DistinctPair decode(long encoded) {
     boolean ordered = encoded < 0;
     encoded = Math.abs(encoded);
-    return new DistinctPair(low(encoded), high(encoded), ordered, myState.getEqClasses());
+    return new DistinctPair(low(encoded), high(encoded), ordered, myState.myEqClasses);
   }
 
   public void dropOrder(DistinctPair pair) {
@@ -221,9 +221,9 @@ public final class DistinctPairSet extends AbstractSet<DistinctPairSet.DistinctP
     private final int myFirst;
     private final int mySecond;
     private final boolean myOrdered;
-    private final List<EqClass> myList;
+    private final List<EqClassImpl> myList;
 
-    private DistinctPair(int first, int second, boolean ordered, List<EqClass> list) {
+    private DistinctPair(int first, int second, boolean ordered, List<EqClassImpl> list) {
       myFirst = first;
       mySecond = second;
       myOrdered = ordered;

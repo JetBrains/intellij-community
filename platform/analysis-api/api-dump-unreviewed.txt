@@ -219,24 +219,6 @@ f:com.intellij.codeInsight.completion.CompletionLocation
 - getProject():com.intellij.openapi.project.Project
 - getUserData(com.intellij.openapi.util.Key):java.lang.Object
 - putUserData(com.intellij.openapi.util.Key,java.lang.Object):V
-f:com.intellij.codeInsight.completion.CompletionParameters
-- getCompletionType():com.intellij.codeInsight.completion.CompletionType
-- getEditor():com.intellij.openapi.editor.Editor
-- getInvocationCount():I
-- getOffset():I
-- getOriginalFile():com.intellij.psi.PsiFile
-- getOriginalPosition():com.intellij.psi.PsiElement
-- getPosition():com.intellij.psi.PsiElement
-- getProcess():com.intellij.codeInsight.completion.CompletionProcess
-- isAutoPopup():Z
-- isCompleteOnlyNotImported():Z
-- isExtendedCompletion():Z
-- isTestingMode():Z
-- setCompleteOnlyNotImported(Z):V
-- setIsTestingMode(Z):V
-- withInvocationCount(I):com.intellij.codeInsight.completion.CompletionParameters
-- withPosition(com.intellij.psi.PsiElement,I):com.intellij.codeInsight.completion.CompletionParameters
-- withType(com.intellij.codeInsight.completion.CompletionType):com.intellij.codeInsight.completion.CompletionParameters
 a:com.intellij.codeInsight.completion.CompletionPreselectSkipper
 - sf:EP_NAME:com.intellij.openapi.extensions.ExtensionPointName
 - <init>():V
@@ -291,9 +273,8 @@ a:com.intellij.codeInsight.completion.CompletionService
 - p:getVariantsFromContributors(com.intellij.codeInsight.completion.CompletionParameters,com.intellij.codeInsight.completion.CompletionContributor,com.intellij.codeInsight.completion.PrefixMatcher,com.intellij.util.Consumer,com.intellij.codeInsight.completion.CompletionSorter):V
 - getVariantsFromContributors(com.intellij.codeInsight.completion.CompletionParameters,com.intellij.codeInsight.completion.CompletionContributor,com.intellij.util.Consumer):V
 - performCompletion(com.intellij.codeInsight.completion.CompletionParameters,com.intellij.util.Consumer):V
-- a:setAdvertisementText(java.lang.String):V
 - pa:suggestPrefix(com.intellij.codeInsight.completion.CompletionParameters):java.lang.String
-a:com.intellij.codeInsight.completion.CompletionSorter
+Fa:com.intellij.codeInsight.completion.CompletionSorter
 - <init>():V
 - s:defaultSorter(com.intellij.codeInsight.completion.CompletionParameters,com.intellij.codeInsight.completion.PrefixMatcher):com.intellij.codeInsight.completion.CompletionSorter
 - s:emptySorter():com.intellij.codeInsight.completion.CompletionSorter
@@ -317,7 +298,7 @@ e:com.intellij.codeInsight.completion.CompletionType
 a:com.intellij.codeInsight.completion.CompletionWeigher
 - <init>():V
 - a:weigh(com.intellij.codeInsight.lookup.LookupElement,com.intellij.codeInsight.completion.CompletionLocation):java.lang.Comparable
-c:com.intellij.codeInsight.completion.InsertionContext
+Fc:com.intellij.codeInsight.completion.InsertionContext
 - sf:TAIL_OFFSET:com.intellij.codeInsight.completion.OffsetKey
 - <init>(com.intellij.codeInsight.completion.OffsetMap,C,com.intellij.codeInsight.lookup.LookupElement[],com.intellij.psi.PsiFile,com.intellij.openapi.editor.Editor,Z):V
 - commitDocument():V
@@ -409,8 +390,6 @@ a:com.intellij.codeInsight.daemon.DaemonCodeAnalyzer
 - a:isAutohintsAvailable(com.intellij.psi.PsiFile):Z
 - a:isHighlightingAvailable(com.intellij.psi.PsiFile):Z
 - a:isImportHintsEnabled(com.intellij.psi.PsiFile):Z
-- a:restart():V
-- a:restart(com.intellij.psi.PsiFile):V
 - a:setHighlightingEnabled(com.intellij.psi.PsiFile,Z):V
 - a:setImportHintsEnabled(com.intellij.psi.PsiFile,Z):V
 - a:settingsChanged():V
@@ -1847,7 +1826,6 @@ f:com.intellij.lang.annotation.Annotation
 - getTooltip():java.lang.String
 - isAfterEndOfLine():Z
 - isFileLevelAnnotation():Z
-- registerBatchFix(com.intellij.codeInsight.intention.IntentionAction,com.intellij.codeInspection.LocalQuickFix,com.intellij.openapi.util.TextRange,com.intellij.codeInsight.daemon.HighlightDisplayKey):V
 - registerBatchFix(com.intellij.codeInsight.intention.IntentionAction,com.intellij.openapi.util.TextRange,com.intellij.codeInsight.daemon.HighlightDisplayKey):V
 - registerFix(com.intellij.codeInsight.intention.IntentionAction):V
 - registerFix(com.intellij.codeInsight.intention.IntentionAction,com.intellij.openapi.util.TextRange):V
@@ -1860,7 +1838,6 @@ f:com.intellij.lang.annotation.Annotation
 - setGutterIconRenderer(com.intellij.openapi.editor.markup.GutterIconRenderer):V
 - setHighlightType(com.intellij.codeInspection.ProblemHighlightType):V
 - setNeedsUpdateOnTyping(Z):V
-- setProblemGroup(com.intellij.lang.annotation.ProblemGroup):V
 - setTextAttributes(com.intellij.openapi.editor.colors.TextAttributesKey):V
 - setTooltip(java.lang.String):V
 f:com.intellij.lang.annotation.Annotation$QuickFixInfo
@@ -2427,13 +2404,22 @@ c:com.intellij.openapi.fileEditor.OpenFileDescriptor
 - canNavigate():Z
 - canNavigateToSource():Z
 - compareTo(com.intellij.openapi.fileEditor.OpenFileDescriptor):I
+- dispose():V
+- getColumn():I
 - getFile():com.intellij.openapi.vfs.VirtualFile
+- getLine():I
 - getOffset():I
+- getProject():com.intellij.openapi.project.Project
+- getRangeMarker():com.intellij.openapi.editor.RangeMarker
+- s:getRangeToUnfoldOnNavigation(com.intellij.openapi.editor.Editor):com.intellij.openapi.util.TextRange
 - isUseCurrentWindow():Z
 - isUsePreviewTab():Z
 - navigate(Z):V
 - navigateIn(com.intellij.openapi.editor.Editor):V
 - navigateInEditor(com.intellij.openapi.project.Project,Z):Z
+- setScrollType(com.intellij.openapi.editor.ScrollType):V
+- setUseCurrentWindow(Z):com.intellij.openapi.fileEditor.OpenFileDescriptor
+- setUsePreviewTab(Z):com.intellij.openapi.fileEditor.OpenFileDescriptor
 f:com.intellij.openapi.fileEditor.ex.FileEditorWithProvider
 - <init>(com.intellij.openapi.fileEditor.FileEditor,com.intellij.openapi.fileEditor.FileEditorProvider):V
 - f:component1():com.intellij.openapi.fileEditor.FileEditor

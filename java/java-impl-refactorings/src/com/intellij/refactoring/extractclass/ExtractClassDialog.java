@@ -88,16 +88,12 @@ class ExtractClassDialog extends RefactoringDialog implements MemberInfoChangeLi
     final MemberInfo.Filter<PsiMember> filter = new MemberInfo.Filter<>() {
       @Override
       public boolean includeMember(PsiMember element) {
-        if (element instanceof PsiMethod) {
-          return !((PsiMethod)element).isConstructor() && ((PsiMethod)element).getBody() != null;
-        }
-        else if (element instanceof PsiField) {
-          return true;
-        }
-        else if (element instanceof PsiClass) {
-          return PsiTreeUtil.isAncestor(ExtractClassDialog.this.sourceClass, element, true);
-        }
-        return false;
+        return switch (element) {
+          case PsiMethod method -> !method.isConstructor() && method.getBody() != null;
+          case PsiField ignored -> true;
+          case PsiClass aClass -> PsiTreeUtil.isAncestor(ExtractClassDialog.this.sourceClass, aClass, true);
+          default -> false;
+        };
       }
     };
     memberInfo = MemberInfo.extractClassMembers(this.sourceClass, filter, false);
@@ -422,14 +418,12 @@ class ExtractClassDialog extends RefactoringDialog implements MemberInfoChangeLi
     for (MemberInfo info : memberInfo) {
       if (info.isChecked()) {
         final PsiMember member = info.getMember();
-        if (member instanceof PsiField) {
-          fields.add((PsiField)member);
-        }
-        else if (member instanceof PsiMethod) {
-          methods.add((PsiMethod)member);
-        }
-        else if (member instanceof PsiClass) {
-          innerClasses.add((PsiClass)member);
+        switch (member) {
+          case PsiField field -> fields.add(field);
+          case PsiMethod method -> methods.add(method);
+          case PsiClass aClass -> innerClasses.add(aClass);
+          case null, default -> {
+          }
         }
       }
     }

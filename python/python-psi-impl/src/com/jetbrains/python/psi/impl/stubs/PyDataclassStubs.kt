@@ -34,10 +34,11 @@ class PyDataclassStubImpl(
   private val frozen: Boolean?,
   private val matchArgs: Boolean?,
   private val kwOnly: Boolean?,
+  private val slots: Boolean?,
 ) : PyDataclassStub {
 
   companion object {
-    val NON_PARAMETERIZED_DATACLASS_TRANSFORM_CANDIDATE_STUB = PyDataclassStubImpl(
+    val NON_PARAMETERIZED_DATACLASS_TRANSFORM_CANDIDATE_STUB: PyDataclassStub = PyDataclassStubImpl(
       type = PredefinedType.DATACLASS_TRANSFORM.name,
       decoratorName = null,
       init = null,
@@ -47,7 +48,8 @@ class PyDataclassStubImpl(
       unsafeHash = null,
       frozen = null,
       matchArgs = null,
-      kwOnly = null
+      kwOnly = null,
+      slots = null
     )
 
     fun create(cls: PyClass): PyDataclassStub? {
@@ -66,8 +68,9 @@ class PyDataclassStubImpl(
       val frozen = DataInputOutputUtil.readNullable(stream, stream::readBoolean)
       val matchArgs = DataInputOutputUtil.readNullable(stream, stream::readBoolean)
       val kwOnly = DataInputOutputUtil.readNullable(stream, stream::readBoolean)
+      val slots = DataInputOutputUtil.readNullable(stream, stream::readBoolean)
 
-      return PyDataclassStubImpl(type, decoratorName, init, repr, eq, order, unsafeHash, frozen, matchArgs, kwOnly)
+      return PyDataclassStubImpl(type, decoratorName, init, repr, eq, order, unsafeHash, frozen, matchArgs, kwOnly, slots)
     }
   }
 
@@ -84,6 +87,7 @@ class PyDataclassStubImpl(
     DataInputOutputUtil.writeNullable(stream, frozen, stream::writeBoolean)
     DataInputOutputUtil.writeNullable(stream, matchArgs, stream::writeBoolean)
     DataInputOutputUtil.writeNullable(stream, kwOnly, stream::writeBoolean)
+    DataInputOutputUtil.writeNullable(stream, slots, stream::writeBoolean)
   }
 
   override fun getType(): String = type
@@ -96,6 +100,7 @@ class PyDataclassStubImpl(
   override fun frozenValue(): Boolean? = frozen
   override fun matchArgsValue(): Boolean? = matchArgs
   override fun kwOnly(): Boolean? = kwOnly
+  override fun slotsValue(): Boolean? = slots
   
   override fun toString(): String {
     return "PyDataclassStub(" +
@@ -108,7 +113,8 @@ class PyDataclassStubImpl(
            "unsafeHash=$unsafeHash, " +
            "frozen=$frozen, " +
            "matchArgs=$matchArgs, " +
-           "kwOnly=$kwOnly" +
+           "kwOnly=$kwOnly, " +
+           "slots=$slots" +
            ")"
   }
 }

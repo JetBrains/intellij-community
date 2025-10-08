@@ -34,6 +34,10 @@ suspend fun buildCommunityStandaloneJpsBuilder(
     "intellij.platform.util.rt.java8",
     "intellij.platform.util.trove",
     "intellij.platform.util.nanoxml",
+    "intellij.libraries.hash4j",
+    "intellij.libraries.caffeine",
+    "intellij.libraries.gson",
+    "intellij.libraries.aalto.xml",
   ).map { ModuleItem(moduleName = it, relativeOutputFile = "util.jar", reason = null) })
 
   layout.withModule("intellij.platform.util.rt", "util_rt.jar")
@@ -96,18 +100,14 @@ suspend fun buildCommunityStandaloneJpsBuilder(
     "slf4j-api",
     "plexus-utils",
     "jetbrains-annotations",
-    "gson",
     "jps-javac-extension",
     "fastutil-min",
     "kotlin-stdlib",
     "kotlinx-coroutines-core",
     "commons-lang3",
     "maven-resolver-provider",
-    "aalto-xml",
-    "caffeine",
     "mvstore",
     "kotlin-metadata",
-    "hash4j"
   )) {
     layout.withProjectLibrary(it, LibraryPackMode.STANDALONE_MERGED)
   }
@@ -124,8 +124,15 @@ suspend fun buildCommunityStandaloneJpsBuilder(
   }
   try {
     JarPackager.pack(
-      layout.includedModules, tempDir, isRootDir = false, isCodesignEnabled = false, layout, platformLayout = null, ModuleOutputPatcher(),
-      dryRun, context = context
+      includedModules = layout.includedModules,
+      outputDir = tempDir,
+      isRootDir = false,
+      isCodesignEnabled = false,
+      layout = layout,
+      platformLayout = null,
+      moduleOutputPatcher = ModuleOutputPatcher(),
+      dryRun = dryRun,
+      context = context
     )
 
     val targetFile = targetDir.resolve("standalone-jps-$buildNumber.zip")
@@ -138,7 +145,7 @@ suspend fun buildCommunityStandaloneJpsBuilder(
           "intellij.platform.jps.model.serialization.tests"
         ),
         context)
-      zipWithCompression(targetFile, dirs = mapOf(tempDir to ""))
+      zipWithCompression(targetFile = targetFile, dirs = mapOf(tempDir to ""))
     }
 
     context.notifyArtifactBuilt(targetFile)

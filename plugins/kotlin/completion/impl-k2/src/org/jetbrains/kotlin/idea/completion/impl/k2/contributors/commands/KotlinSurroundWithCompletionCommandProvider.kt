@@ -15,6 +15,7 @@ import com.intellij.psi.util.findTopmostParentInFile
 import com.intellij.psi.util.parentOfType
 import org.jetbrains.kotlin.analysis.api.analyze
 import org.jetbrains.kotlin.psi.KtExpression
+import org.jetbrains.kotlin.psi.KtPackageDirective
 
 internal class KotlinSurroundWithCompletionCommandProvider : AbstractSurroundWithCompletionCommandProvider() {
     override fun isApplicable(offset: Int, psiFile: PsiFile, editor: Editor?, surrounder: Surrounder): Boolean {
@@ -28,11 +29,17 @@ internal class KotlinSurroundWithCompletionCommandProvider : AbstractSurroundWit
             currentCommandContext = PsiTreeUtil.skipWhitespacesBackward(currentCommandContext) ?: return false
             currentOffset = currentCommandContext.endOffset
         }
-        val expression = currentCommandContext.findTopmostParentInFile(withSelf = true) {
-            it is KtExpression && it.textRange.endOffset == currentOffset &&
-                    it.parentOfType<KtExpression>() != null &&
-                    analyze(it) { !it.isUsedAsExpression }
-        } ?: return false
+        val expression =
+            try {
+                currentCommandContext.findTopmostParentInFile(withSelf = true) {
+                    it is KtExpression && it.textRange.endOffset == currentOffset &&
+                            it.parentOfType<KtExpression>() != null &&
+                            it.parentOfType<KtPackageDirective>() == null &&
+                            analyze(it) { !it.isUsedAsExpression }
+                } ?: return false
+            } catch (_: Exception) {
+                return false
+            }
         val parentExpression = expression.parentOfType<KtExpression>() ?: return true
         val fileDocument = psiFile.fileDocument
         return fileDocument.getLineNumber(expression.textRange.endOffset) !=

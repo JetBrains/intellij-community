@@ -12,7 +12,7 @@ import org.jetbrains.kotlin.psi.*
 import org.jetbrains.kotlin.utils.addToStdlib.safeAs
 
 class RenameUselessCallFix(private val newName: String, private val invert: Boolean = false) : PsiUpdateModCommandQuickFix() {
-    override fun getFamilyName(): String = KotlinBundle.message("rename.useless.call.fix.text", newName)
+    override fun getFamilyName(): String = KotlinBundle.message("rename.redundant.call.fix.text", newName)
 
     override fun applyFix(project: Project, element: PsiElement, updater: ModPsiUpdater) {
         val qualifiedExpression = element as? KtQualifiedExpression ?: return

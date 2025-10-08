@@ -32,4 +32,16 @@ object GradleVersionSpecificsUtil {
   @JvmStatic
   fun isBuildSrcAddedInEditableBuilds(gradleVersion: GradleVersion): Boolean =
     GradleVersionUtil.isGradleAtLeast(gradleVersion, "7.2")
+
+  @JvmStatic
+  fun isPluginExtensionSupported(gradleVersion: GradleVersion): Boolean =
+    GradleVersionUtil.isGradleAtLeast(gradleVersion, "4.10")
+
+  @JvmStatic
+  fun isKotlinPropertyAssignmentSupported(gradleVersion: GradleVersion): Boolean =
+    GradleVersionUtil.isGradleAtLeast(gradleVersion, "8.6")
+
+  @JvmStatic
+  fun isJavaToolchainSupported(gradleVersion: GradleVersion): Boolean =
+    GradleVersionUtil.isGradleAtLeast(gradleVersion, "6.7")
 }

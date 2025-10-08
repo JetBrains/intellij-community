@@ -1,9 +1,9 @@
 // Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.plugins.gitlab.mergerequest.ui.review
 
+import com.intellij.collaboration.async.childScope
 import com.intellij.collaboration.ui.codereview.review.CodeReviewSubmitViewModel
 import com.intellij.collaboration.util.SingleCoroutineLauncher
-import com.intellij.platform.util.coroutines.childScope
 import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
@@ -54,7 +54,7 @@ internal class GitLabMergeRequestSubmitReviewViewModelImpl(
   currentReview: SubmittableReview,
   private val onDone: () -> Unit
 ) : GitLabMergeRequestSubmitReviewViewModel {
-  private val cs = parentCs.childScope(Dispatchers.Default)
+  private val cs = parentCs.childScope(this::class, Dispatchers.Default)
   private val taskLauncher = SingleCoroutineLauncher(cs)
 
   override val isBusy: StateFlow<Boolean> = taskLauncher.busy

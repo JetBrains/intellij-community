@@ -2,6 +2,8 @@
 package com.intellij.codeInsight.completion;
 
 import com.intellij.codeInsight.lookup.LookupElement;
+import com.intellij.openapi.util.Key;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -10,14 +12,25 @@ public final class CompletionResult {
   private final PrefixMatcher myMatcher;
   private final CompletionSorter mySorter;
 
-  private CompletionResult(LookupElement lookupElement, PrefixMatcher matcher, CompletionSorter sorter) {
+  /**
+   * A key for a boolean flag used internally to indicate whether matched checks should be skipped during
+   * the wrapping process in completion results.
+   */
+  @ApiStatus.Internal
+  public static final Key<Boolean> SHOULD_NOT_CHECK_WHEN_WRAP = Key.create("SHOULD_NOT_CHECK_WHEN_WRAP");
+
+
+  private CompletionResult(@NotNull LookupElement lookupElement,
+                           @NotNull PrefixMatcher matcher,
+                           @NotNull CompletionSorter sorter) {
     myLookupElement = lookupElement;
     myMatcher = matcher;
     mySorter = sorter;
   }
 
   public static @Nullable CompletionResult wrap(@NotNull LookupElement lookupElement, @NotNull PrefixMatcher matcher, @NotNull CompletionSorter sorter) {
-    if (matcher.prefixMatches(lookupElement)) {
+    Boolean shouldNotCheckWhenWrap = lookupElement.getUserData(SHOULD_NOT_CHECK_WHEN_WRAP);
+    if (shouldNotCheckWhenWrap == Boolean.TRUE || matcher.prefixMatches(lookupElement)) {
       return new CompletionResult(lookupElement, matcher, sorter);
     }
     return null;

@@ -69,7 +69,7 @@ public final class ResultOfObjectAllocationIgnoredInspection extends BaseInspect
   }
 
   @Override
-  public BaseInspectionVisitor buildVisitor() {
+  public @NotNull BaseInspectionVisitor buildVisitor() {
     return new ResultOfObjectAllocationIgnoredVisitor();
   }
 

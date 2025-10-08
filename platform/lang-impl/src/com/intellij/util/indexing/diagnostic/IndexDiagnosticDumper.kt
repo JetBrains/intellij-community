@@ -1,4 +1,4 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.util.indexing.diagnostic
 
 import com.intellij.concurrency.ConcurrentCollectionFactory
@@ -98,7 +98,7 @@ class IndexDiagnosticDumper(private val coroutineScope: CoroutineScope) : Dispos
      * Such processes have InAllThreads time and visible time, see [com.intellij.util.indexing.contentQueue.IndexUpdateRunner.indexFiles],
      * [ProjectDumbIndexingHistoryImpl.visibleTimeToAllThreadsTimeRatio], [IndexingFileSetStatistics]
      *
-     * This property allows providing more details on those times and ratio in html
+     * This property allows providing more details on those times and ratio in HTML
      */
     val shouldProvideVisibleAndAllThreadsTimeInfo: Boolean
       get() = SystemProperties.getBooleanProperty("intellij.indexes.diagnostics.should.provide.visible.and.all.threads.time.info", false)
@@ -110,6 +110,7 @@ class IndexDiagnosticDumper(private val coroutineScope: CoroutineScope) : Dispos
       SystemProperties.getBooleanProperty("intellij.indexes.diagnostics.should.dump.paths.indexed.by.infrastructure.extensions",
                                           ApplicationManagerEx.isInIntegrationTest())
 
+    @Suppress("MayBeConstant", "RedundantSuppression")
     val shouldPrintInformationAboutChangedDuringIndexingActionFilesInAggregateHtml: Boolean = false
 
     private val LOG = logger<IndexDiagnosticDumper>()
@@ -178,7 +179,7 @@ class IndexDiagnosticDumper(private val coroutineScope: CoroutineScope) : Dispos
         bufferedReader.use { reader ->
           jacksonMapper.factory.createParser(reader).use { parser ->
             while (parser.nextToken() != null) {
-              val property = parser.currentName
+              val property = parser.currentName()
               if (property == propertyName) {
                 parser.nextToken()
                 return jacksonMapper.readValue(parser, type)
@@ -208,7 +209,7 @@ class IndexDiagnosticDumper(private val coroutineScope: CoroutineScope) : Dispos
 
   fun onScanningStarted(history: ProjectScanningHistoryImpl) {
     history.scanningStarted()
-    runAllListenersSafely(projectIndexingActivityHistoryListenerEpName, indexingActivityHistoryListenerPublisher) {
+    runAllListenersSafely {
       onStartedScanning(history)
     }
   }
@@ -226,22 +227,21 @@ class IndexDiagnosticDumper(private val coroutineScope: CoroutineScope) : Dispos
       coroutineScope.launch { dumpProjectIndexingActivityHistoryToLogSubdirectory(projectScanningHistory) }
     }
      finally {
-       runAllListenersSafely(projectIndexingActivityHistoryListenerEpName, indexingActivityHistoryListenerPublisher) {
+       runAllListenersSafely {
          onFinishedScanning(projectScanningHistory)
        }
      }
   }
 
   fun onDumbIndexingStarted(history: ProjectDumbIndexingHistory) {
-    runAllListenersSafely(projectIndexingActivityHistoryListenerEpName, indexingActivityHistoryListenerPublisher) {
+    runAllListenersSafely {
       onStartedDumbIndexing(history)
     }
   }
 
   fun onDumbIndexingFinished(projectDumbIndexingHistory: ProjectDumbIndexingHistoryImpl) {
     try {
-      if ((ApplicationManager.getApplication().isUnitTestMode && !shouldDumpInUnitTestMode) ||
-          projectDumbIndexingHistory.project.isDefault) {
+      if (ApplicationManager.getApplication().isUnitTestMode && !shouldDumpInUnitTestMode || projectDumbIndexingHistory.project.isDefault) {
         return
       }
       if (projectDumbIndexingHistory.times.isCancelled && !shouldDumpDiagnosticsForInterruptedUpdaters) {
@@ -252,18 +252,18 @@ class IndexDiagnosticDumper(private val coroutineScope: CoroutineScope) : Dispos
       coroutineScope.launch { dumpProjectIndexingActivityHistoryToLogSubdirectory(projectDumbIndexingHistory) }
     }
     finally {
-      runAllListenersSafely(projectIndexingActivityHistoryListenerEpName, indexingActivityHistoryListenerPublisher) {
+      runAllListenersSafely {
         onFinishedDumbIndexing(projectDumbIndexingHistory)
       }
     }
   }
 
-  private fun <T : Any> runAllListenersSafely(extensionPointName: ExtensionPointName<T>, publisher: T, block: T.() -> Unit) {
-    val listeners = ProgressManager.getInstance().computeInNonCancelableSection<List<T>, Exception> {
-      extensionPointName.extensionList
+  private fun runAllListenersSafely(block: ProjectIndexingActivityHistoryListener.() -> Unit) {
+    val listeners = ProgressManager.getInstance().computeInNonCancelableSection<List<ProjectIndexingActivityHistoryListener>, Exception> {
+      projectIndexingActivityHistoryListenerEpName.extensionList
     }
 
-    for (listener in listeners.asSequence() + publisher) {
+    for (listener in listeners.asSequence() + indexingActivityHistoryListenerPublisher) {
       try {
         listener.block()
       }

@@ -16,7 +16,6 @@ import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.project.IndexNotReadyException;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Key;
-import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.Ref;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.psi.PsiElement;
@@ -30,13 +29,14 @@ import org.jetbrains.annotations.Nullable;
 
 import java.util.*;
 
-import static com.intellij.openapi.editor.impl.FoldingKeys.*;
+import static com.intellij.openapi.editor.impl.FoldingKeys.SELECT_REGION_ON_CARET_NEARBY;
+import static com.intellij.openapi.editor.impl.FoldingKeys.ZOMBIE_REGION_KEY;
 
 final class UpdateFoldRegionsOperation implements Runnable {
   enum ApplyDefaultStateMode { YES, EXCEPT_CARET_REGION, NO }
 
   private static final Logger LOG = Logger.getInstance(UpdateFoldRegionsOperation.class);
-  private static final Key<Boolean> CAN_BE_REMOVED_WHEN_COLLAPSED = Key.create("canBeRemovedWhenCollapsed");
+  static final Key<Boolean> CAN_BE_REMOVED_WHEN_COLLAPSED = Key.create("canBeRemovedWhenCollapsed");
   static final Key<Boolean> COLLAPSED_BY_DEFAULT = Key.create("collapsedByDefault");
   static final Key<Boolean> KEEP_EXPANDED_ON_FIRST_COLLAPSE_ALL = Key.create("keepExpandedOnFirstCollapseAll");
   static final Key<String> SIGNATURE = Key.create("signature");
@@ -346,7 +346,20 @@ final class UpdateFoldRegionsOperation implements Runnable {
       }
     }
     else {
-      return !forceKeepRegion && !(region.getUserData(SIGNATURE) == null /* 'light' region */);
+      // In the case of auto-created folding, we need to ensure that we really need to ensure that the region is safe to be removed.
+      // Otherwise, backend-originated foldings could be removed without any new foldings (which is a case for frontend-rebuilt folding)
+      if (CodeFoldingManagerImpl.isAutoCreated(region)) {
+        // for auto-created foldings, CAN_BE_REMOVED_WHEN_COLLAPSED could be only inherited from the previously alive frontend folding
+        // That previous folding is 99.9% a merge of the same foldings from backend and frontend (since they are for now placed in common modules).
+        // However, if during the reparse + folding update, those foldings (e.g., new import added) should be extended, it, first, should be removed.
+        // But due to the lack of that flag, it will not be removed and the state of the folding will be inconsistent on the back-/frontend.
+        // That lead to IJPL-198085
+        return !forceKeepRegion &&
+               Boolean.TRUE.equals(region.getUserData(CAN_BE_REMOVED_WHEN_COLLAPSED));
+      } else {
+        return !forceKeepRegion &&
+               !(region.getUserData(SIGNATURE) == null /* 'light' region */);
+      }
     }
     return false;
   }

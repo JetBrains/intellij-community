@@ -1,9 +1,9 @@
 ### auto-generated section `build intellij.python.community.impl.installer` start
-load("@rules_jvm//:jvm.bzl", "jvm_library", "jvm_resources")
+load("@rules_jvm//:jvm.bzl", "jvm_library", "resourcegroup")
 
-jvm_resources(
+resourcegroup(
   name = "installer_resources",
-  files = glob(["resources/**/*"]),
+  srcs = glob(["resources/**/*"]),
   strip_prefix = "resources"
 )
 
@@ -12,6 +12,7 @@ jvm_library(
   module_name = "intellij.python.community.impl.installer",
   visibility = ["//visibility:public"],
   srcs = glob(["src/**/*.kt", "src/**/*.java", "src/**/*.form"], allow_empty = True),
+  resources = [":installer_resources"],
   deps = [
     "@lib//:kotlin-stdlib",
     "//python/openapi:community",
@@ -20,8 +21,7 @@ jvm_library(
     "//platform/util",
     "//platform/platform-api:ide",
     "//platform/statistics",
-    "@lib//:guava",
-  ],
-  runtime_deps = [":installer_resources"]
+    "//libraries/guava",
+  ]
 )
 ### auto-generated section `build intellij.python.community.impl.installer` end

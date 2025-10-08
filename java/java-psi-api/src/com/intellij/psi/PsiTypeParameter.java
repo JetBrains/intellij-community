@@ -51,6 +51,11 @@ public interface PsiTypeParameter extends PsiClass, PsiAnnotationOwner, JvmTypeP
   }
 
   @Override
+  default boolean hasAnnotations() {
+    return PsiClass.super.hasAnnotations();
+  }
+
+  @Override
   default boolean hasAnnotation(@NotNull @NonNls String fqn) {
     return PsiClass.super.hasAnnotation(fqn);
   }

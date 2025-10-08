@@ -49,7 +49,7 @@ internal class IdeaFreezeReporter : PerformanceListener {
       throw ExtensionNotApplicableException.create()
     }
 
-    if (!DEBUG && (PluginManagerCore.isRunningFromSources() || AppMode.isDevServer()) && !ApplicationManagerEx.isInIntegrationTest()) {
+    if (!DEBUG && (PluginManagerCore.isRunningFromSources() || AppMode.isRunningFromDevBuild()) && !ApplicationManagerEx.isInIntegrationTest()) {
       throw ExtensionNotApplicableException.create()
     }
 
@@ -60,7 +60,7 @@ internal class IdeaFreezeReporter : PerformanceListener {
         }
       })
 
-      if (DEBUG || (!PluginManagerCore.isRunningFromSources() && !AppMode.isDevServer()) || ApplicationManagerEx.isInIntegrationTest()) {
+      if (DEBUG || (!PluginManagerCore.isRunningFromSources() && !AppMode.isRunningFromDevBuild()) || ApplicationManagerEx.isInIntegrationTest()) {
         reportUnfinishedFreezes()
       }
     }

@@ -1,9 +1,9 @@
 ### auto-generated section `build kotlin.base.code-insight.minimal` start
-load("@rules_jvm//:jvm.bzl", "jvm_library", "jvm_resources")
+load("@rules_jvm//:jvm.bzl", "jvm_library", "resourcegroup")
 
-jvm_resources(
+resourcegroup(
   name = "minimal_resources",
-  files = glob(["resource/**/*"]),
+  srcs = glob(["resource/**/*"]),
   strip_prefix = "resource"
 )
 
@@ -12,6 +12,7 @@ jvm_library(
   module_name = "kotlin.base.code-insight.minimal",
   visibility = ["//visibility:public"],
   srcs = glob(["src/**/*.kt", "src/**/*.java", "src/**/*.form"], allow_empty = True),
+  resources = [":minimal_resources"],
   deps = [
     "//platform/analysis-api:analysis",
     "//platform/code-style-api:codeStyle",
@@ -27,9 +28,6 @@ jvm_library(
     "//plugins/kotlin/formatter/minimal",
     "//java/java-psi-api:psi",
   ],
-  runtime_deps = [
-    ":minimal_resources",
-    "//plugins/kotlin/base/frontend-agnostic",
-  ]
+  runtime_deps = ["//plugins/kotlin/base/frontend-agnostic"]
 )
 ### auto-generated section `build kotlin.base.code-insight.minimal` end

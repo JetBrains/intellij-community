@@ -8,10 +8,6 @@
 - a:getState():kotlinx.coroutines.flow.StateFlow
 *f:com.intellij.openapi.vcs.changes.ChangesListManagerStateProvider$Companion
 - f:getInstance(com.intellij.openapi.project.Project):com.intellij.openapi.vcs.changes.ChangesListManagerStateProvider
-*:com.intellij.openapi.vcs.changes.ChangesViewNodeAction
-- sf:EP_NAME:com.intellij.openapi.extensions.ProjectExtensionPointName
-- a:createNodeHoverIcon(com.intellij.openapi.vcs.changes.ui.ChangesBrowserNode):com.intellij.openapi.vcs.changes.ui.HoverIcon
-- handleDoubleClick(com.intellij.openapi.vcs.changes.ui.ChangesBrowserNode):Z
 *:com.intellij.openapi.vcs.changes.shelf.ShelveSilentlyTitleProvider
 - *sf:Companion:com.intellij.openapi.vcs.changes.shelf.ShelveSilentlyTitleProvider$Companion
 - a:getTitle(com.intellij.openapi.project.Project,java.util.Collection,kotlin.coroutines.Continuation):java.lang.Object

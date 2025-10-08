@@ -13,9 +13,13 @@ import org.jetbrains.plugins.gitlab.api.dto.GitLabUserDTO
 import org.jetbrains.plugins.gitlab.authentication.accounts.GitLabAccount
 import org.jetbrains.plugins.gitlab.data.GitLabImageLoader
 import org.jetbrains.plugins.gitlab.mergerequest.data.GitLabLazyProject
+import org.jetbrains.plugins.gitlab.mergerequest.data.GitLabProject
 import org.jetbrains.plugins.gitlab.util.GitLabProjectMapping
 import java.util.*
 
+/**
+ * A low-level helper representing a GitLab project, to which the app was authorized to connect
+ */
 class GitLabProjectConnection(
   project: Project,
   private val scope: CoroutineScope,
@@ -30,8 +34,8 @@ class GitLabProjectConnection(
 
   val tokenRefreshFlow: Flow<Unit> = tokenState.drop(1).map { }
 
-  val projectData = GitLabLazyProject(project, scope, apiClient, glMetadata, repo, currentUser, tokenRefreshFlow)
-  val imageLoader = GitLabImageLoader(apiClient, repo.repository.serverPath)
+  val projectData: GitLabProject = GitLabLazyProject(project, scope, apiClient, glMetadata, repo, currentUser, tokenRefreshFlow)
+  val imageLoader: GitLabImageLoader = GitLabImageLoader(apiClient, repo.repository.serverPath)
 
   val serverVersion: GitLabVersion? = glMetadata?.version
 

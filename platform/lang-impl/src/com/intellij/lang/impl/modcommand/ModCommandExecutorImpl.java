@@ -256,21 +256,21 @@ public class ModCommandExecutorImpl extends ModCommandBatchExecutorImpl {
     WriteAction.run(() -> {
       TemplateBuilderImpl builder = new TemplateBuilderImpl(psiFile);
       for (ModStartTemplate.TemplateField field : template.fields()) {
-        if (field instanceof ModStartTemplate.ExpressionField expr) {
-          if (expr.varName() != null) {
-            builder.replaceElement(psiFile, expr.range(), expr.varName(), expr.expression(), true);
-          } else {
-            builder.replaceElement(psiFile, expr.range(), expr.expression());
+        switch (field) {
+          case ModStartTemplate.ExpressionField(TextRange range, String varName, Expression expression) -> {
+            if (varName != null) {
+              builder.replaceElement(psiFile, range, varName, expression, true);
+            } else {
+              builder.replaceElement(psiFile, range, expression);
+            }
           }
-        }
-        else if (field instanceof ModStartTemplate.DependantVariableField variableField) {
-          builder.replaceElement(psiFile, variableField.range(), variableField.varName(),
-                                 variableField.dependantVariableName(), variableField.alwaysStopAt());
-        }
-        else if (field instanceof ModStartTemplate.EndField endField) {
-          PsiElement leaf = psiFile.findElementAt(endField.range().getStartOffset());
-          if (leaf != null) {
-            builder.setEndVariableBefore(leaf);
+          case ModStartTemplate.DependantVariableField(TextRange range, String varName, String variableName, boolean alwaysStopAt) ->
+            builder.replaceElement(psiFile, range, varName, variableName, alwaysStopAt);
+          case ModStartTemplate.EndField(TextRange range) -> {
+            PsiElement leaf = psiFile.findElementAt(range.getStartOffset());
+            if (leaf != null) {
+              builder.setEndVariableBefore(leaf);
+            }
           }
         }
       }

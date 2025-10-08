@@ -19,6 +19,9 @@ class JbaCommunicatorProvider(cs: CoroutineScope) : SettingsSyncCommunicatorProv
       return authServiceLazy.value
     }
 
+  override val supportsMultipleAccounts: Boolean
+  get() = false
+
   override fun createCommunicator(userId: String): SettingsSyncRemoteCommunicator = lazy<CloudConfigServerCommunicator> {
     CloudConfigServerCommunicator(null, authServiceLazy.value)
   }.value

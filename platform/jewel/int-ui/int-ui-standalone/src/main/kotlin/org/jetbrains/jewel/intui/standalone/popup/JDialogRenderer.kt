@@ -1,7 +1,6 @@
 // Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.jewel.intui.standalone.popup
 
-import androidx.compose.foundation.focusable
 import androidx.compose.foundation.shape.CornerSize
 import androidx.compose.foundation.shape.ZeroCornerSize
 import androidx.compose.runtime.Composable
@@ -16,15 +15,13 @@ import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberUpdatedState
 import androidx.compose.runtime.setValue
+import androidx.compose.ui.InternalComposeUiApi
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.awt.ComposePanel
-import androidx.compose.ui.focus.FocusDirection
 import androidx.compose.ui.input.key.Key
 import androidx.compose.ui.input.key.KeyEvent
 import androidx.compose.ui.input.key.KeyEventType
 import androidx.compose.ui.input.key.key
-import androidx.compose.ui.input.key.onKeyEvent
-import androidx.compose.ui.input.key.onPreviewKeyEvent
 import androidx.compose.ui.input.key.type
 import androidx.compose.ui.layout.Layout
 import androidx.compose.ui.layout.Measurable
@@ -34,7 +31,6 @@ import androidx.compose.ui.layout.MeasureScope
 import androidx.compose.ui.layout.boundsInRoot
 import androidx.compose.ui.layout.onGloballyPositioned
 import androidx.compose.ui.platform.LocalDensity
-import androidx.compose.ui.platform.LocalFocusManager
 import androidx.compose.ui.semantics.popup
 import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.unit.Constraints
@@ -54,11 +50,18 @@ import com.jetbrains.JBR
 import java.awt.AWTEvent
 import java.awt.Color
 import java.awt.Component
+import java.awt.Container
+import java.awt.FocusTraversalPolicy
 import java.awt.Point
 import java.awt.Rectangle
 import java.awt.Toolkit
 import java.awt.Window
 import java.awt.event.AWTEventListener
+import java.awt.event.KeyEvent as AWTKeyEvent
+import java.awt.event.KeyEvent.KEY_LOCATION_STANDARD
+import java.awt.event.KeyEvent.KEY_LOCATION_UNKNOWN
+import java.awt.event.KeyEvent.KEY_PRESSED
+import java.awt.event.KeyEvent.KEY_RELEASED
 import java.awt.event.MouseEvent
 import java.awt.event.WindowEvent
 import javax.swing.JDialog
@@ -66,7 +69,6 @@ import javax.swing.SwingUtilities
 import javax.swing.UIManager
 import kotlin.math.floor
 import org.jetbrains.jewel.foundation.LocalComponent
-import org.jetbrains.jewel.foundation.modifier.thenIf
 import org.jetbrains.jewel.foundation.util.JewelLogger
 import org.jetbrains.jewel.ui.component.PopupRenderer
 
@@ -168,6 +170,8 @@ private fun JPopupImpl(
     val currentPopupPositionProvider by rememberUpdatedState(popupPositionProvider)
     val currentOnDismissRequest by rememberUpdatedState(onDismissRequest)
     val currentOnKeyEvent by rememberUpdatedState(onKeyEvent)
+    val currentOnPreviewKeyEvent by rememberUpdatedState(onPreviewKeyEvent)
+    val currentProperties by rememberUpdatedState(properties)
 
     val compositionLocalContext by rememberUpdatedState(currentCompositionLocalContext)
 
@@ -185,25 +189,8 @@ private fun JPopupImpl(
         measurePolicy = { _, _ -> layout(0, 0) {} },
     )
 
-    val overriddenOnKeyEvent =
-        if (properties.dismissOnBackPress && onDismissRequest != null) {
-            // No need to remember this lambda, as it doesn't capture any values that can change.
-            { event: KeyEvent ->
-                val consumed = currentOnKeyEvent?.invoke(event) ?: false
-                if (!consumed && event.isDismissRequest()) {
-                    currentOnDismissRequest?.invoke()
-                    true
-                } else {
-                    consumed
-                }
-            }
-        } else {
-            onKeyEvent
-        }
-
     val dialog = remember {
         JDialog(window).apply {
-            isAlwaysOnTop = true
             isUndecorated = true
             rootPane.isOpaque = false
             background = Color(0, 0, 0, 0)
@@ -218,55 +205,51 @@ private fun JPopupImpl(
             isOpaque = false
             background = Color(0, 0, 0, 0)
 
+            // Prevent focus from moving outside the popup
+            focusTraversalPolicy =
+                object : FocusTraversalPolicy() {
+                    override fun getFirstComponent(aContainer: Container?) = null
+
+                    override fun getLastComponent(aContainer: Container?) = null
+
+                    override fun getDefaultComponent(aContainer: Container?) = null
+
+                    override fun getComponentAfter(aContainer: Container?, aComponent: Component?): Component? = null
+
+                    override fun getComponentBefore(aContainer: Container?, aComponent: Component?): Component? = null
+                }
+
             setContent {
-                ProvideValuesFromOtherContext(compositionLocalContext) {
-                    val positionProvider = currentPopupPositionProvider
-                    val parentBounds = parentBoundsInRoot ?: return@ProvideValuesFromOtherContext
+                val parentBounds = parentBoundsInRoot ?: return@setContent
 
-                    Layout(
-                        content = {
-                            CompositionLocalProvider(LocalComponent provides this@apply) {
-                                currentContent()
+                Layout(
+                    content = {
+                        CompositionLocalProvider(LocalComponent provides this@apply) {
+                            ProvideValuesFromOtherContext(compositionLocalContext) { currentContent() }
+                        }
+                    },
+                    modifier = Modifier.semantics { popup() },
+                    measurePolicy =
+                        remember(currentPopupPositionProvider, parentBounds) {
+                            JPopupMeasurePolicy(dialog, currentPopupPositionProvider, parentBounds) { position, size ->
+                                popupRectangle = Rectangle(position.x, position.y, size.width, size.height)
 
-                                val focusManager = LocalFocusManager.current
-                                LaunchedEffect(Unit) {
-                                    if (properties.focusable) {
-                                        focusManager.moveFocus(FocusDirection.Enter)
-                                    }
+                                if (blendingEnabled) {
+                                    // If any of the blending logic is enabled, we don't need to use JBR APIs
+                                    // to set the rounded corners and fix the background.
+                                    return@JPopupMeasurePolicy
+                                }
+
+                                if (cornerSize != ZeroCornerSize) {
+                                    JBR.getRoundedCornersManager()
+                                        .setRoundedCorners(
+                                            dialog,
+                                            cornerSize.toPx(size.toSize(), popupDensity) / dialog.density(),
+                                        )
                                 }
                             }
                         },
-                        modifier =
-                            Modifier.focusable(properties.focusable)
-                                .semantics { popup() }
-                                .thenIf(onPreviewKeyEvent != null) {
-                                    Modifier.onPreviewKeyEvent(onPreviewKeyEvent ?: { false })
-                                }
-                                .thenIf(overriddenOnKeyEvent != null) {
-                                    Modifier.onKeyEvent(overriddenOnKeyEvent ?: { false })
-                                },
-                        measurePolicy =
-                            remember(positionProvider, parentBounds) {
-                                JPopupMeasurePolicy(dialog, popupPositionProvider, parentBounds) { position, size ->
-                                    popupRectangle = Rectangle(position.x, position.y, size.width, size.height)
-
-                                    if (blendingEnabled) {
-                                        // If any of the blending logic is enabled, we don't need to use JBR APIs
-                                        // to set the rounded corners and fix the background.
-                                        return@JPopupMeasurePolicy
-                                    }
-
-                                    if (cornerSize != ZeroCornerSize) {
-                                        JBR.getRoundedCornersManager()
-                                            .setRoundedCorners(
-                                                dialog,
-                                                cornerSize.toPx(size.toSize(), popupDensity) / dialog.density(),
-                                            )
-                                    }
-                                }
-                            },
-                    )
-                }
+                )
             }
         }
     }
@@ -274,6 +257,7 @@ private fun JPopupImpl(
     LaunchedEffect(properties) {
         dialog.isFocusable = properties.focusable
         dialog.focusableWindowState = properties.focusable
+        dialog.isAlwaysOnTop = properties.dismissOnClickOutside
     }
 
     val rectValue = popupRectangle
@@ -287,7 +271,12 @@ private fun JPopupImpl(
         val listener = AWTEventListener { event ->
             when (event) {
                 is MouseEvent -> {
-                    if (event.button != MouseEvent.NOBUTTON) {
+                    if (event.button != MouseEvent.NOBUTTON && currentProperties.dismissOnClickOutside) {
+                        if (dialog.isAncestorOf(event.component)) {
+                            // When clicking a child popup (like a submenu), skip the click outside callback
+                            return@AWTEventListener
+                        }
+
                         val mousePosition = event.locationOnScreen
                         if (!dialog.bounds.contains(mousePosition)) {
                             currentOnDismissRequest?.invoke()
@@ -296,11 +285,27 @@ private fun JPopupImpl(
                     }
                 }
                 is WindowEvent -> {
+                    // Ignore events from other windows
+                    if (event.window != dialog) return@AWTEventListener
+
                     if (
                         event.id == WindowEvent.WINDOW_LOST_FOCUS &&
-                            event.window == dialog &&
-                            !dialog.isAncestorOf(event.oppositeWindow)
+                            !dialog.isAncestorOf(event.oppositeWindow) &&
+                            currentProperties.dismissOnClickOutside
                     ) {
+                        currentOnDismissRequest?.invoke()
+                    }
+                }
+                is AWTKeyEvent -> {
+                    if (!dialog.isActive) return@AWTEventListener
+
+                    val composeEvent = event.toComposeKeyEvent()
+
+                    val consumed =
+                        currentOnPreviewKeyEvent?.invoke(composeEvent) == true ||
+                            currentOnKeyEvent?.invoke(composeEvent) == true
+
+                    if (!consumed && composeEvent.isDismissRequest()) {
                         currentOnDismissRequest?.invoke()
                     }
                 }
@@ -308,13 +313,17 @@ private fun JPopupImpl(
         }
 
         Toolkit.getDefaultToolkit()
-            .addAWTEventListener(listener, AWTEvent.MOUSE_EVENT_MASK or AWTEvent.WINDOW_EVENT_MASK)
+            .addAWTEventListener(
+                listener,
+                AWTEvent.MOUSE_EVENT_MASK or AWTEvent.WINDOW_EVENT_MASK or AWTEvent.KEY_EVENT_MASK,
+            )
         onDispose { Toolkit.getDefaultToolkit().removeAWTEventListener(listener) }
     }
 
     DisposableEffect(dialog) {
         dialog.contentPane = composePanel
 
+        dialog.isAutoRequestFocus = currentProperties.focusable
         dialog.isVisible = true
         dialog.size = composePanel.preferredSize
 
@@ -454,3 +463,24 @@ private fun KeyEvent.isDismissRequest() = type == KeyEventType.KeyDown && key ==
 
 private val <T> CompositionLocal<T>.currentOrNull
     @Composable get() = runCatching { current }.getOrNull()
+
+private val AWTKeyEvent.keyLocationForCompose
+    get() = if (keyLocation == KEY_LOCATION_UNKNOWN) KEY_LOCATION_STANDARD else keyLocation
+
+@OptIn(InternalComposeUiApi::class)
+private fun AWTKeyEvent.toComposeKeyEvent(): KeyEvent =
+    KeyEvent(
+        key = Key(nativeKeyCode = keyCode, nativeKeyLocation = keyLocationForCompose),
+        type =
+            when (id) {
+                KEY_PRESSED -> KeyEventType.KeyDown
+                KEY_RELEASED -> KeyEventType.KeyUp
+                else -> KeyEventType.Unknown
+            },
+        codePoint = keyChar.code,
+        isCtrlPressed = isControlDown,
+        isMetaPressed = isMetaDown,
+        isAltPressed = isAltDown,
+        isShiftPressed = isShiftDown,
+        nativeEvent = this,
+    )

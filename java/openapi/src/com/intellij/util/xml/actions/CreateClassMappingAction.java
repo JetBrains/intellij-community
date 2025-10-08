@@ -1,7 +1,6 @@
 // Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.util.xml.actions;
 
-import com.intellij.ide.util.ClassFilter;
 import com.intellij.ide.util.TreeClassChooser;
 import com.intellij.ide.util.TreeClassChooserFactory;
 import com.intellij.java.JavaBundle;
@@ -41,12 +40,8 @@ public abstract class CreateClassMappingAction<T extends DomElement> extends Cre
     if (!ApplicationManager.getApplication().isUnitTestMode()) {
       PsiClass baseClass = getBaseClass(context, project, myBaseClass);
       TreeClassChooser chooser = TreeClassChooserFactory.getInstance(project)
-        .createInheritanceClassChooser(getChooserTitle(), GlobalSearchScope.allScope(project), baseClass, null, new ClassFilter() {
-          @Override
-          public boolean isAccepted(PsiClass aClass) {
-            return !aClass.isInterface() && !aClass.hasModifierProperty(PsiModifier.ABSTRACT);
-          }
-        });
+        .createInheritanceClassChooser(getChooserTitle(), GlobalSearchScope.allScope(project), baseClass, null,
+                                       aClass -> !aClass.isInterface() && !aClass.hasModifierProperty(PsiModifier.ABSTRACT));
       chooser.showDialog();
       selectedClass = chooser.getSelected();
     }

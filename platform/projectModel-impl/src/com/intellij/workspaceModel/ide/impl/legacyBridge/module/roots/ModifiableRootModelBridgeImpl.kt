@@ -609,7 +609,7 @@ internal class ModifiableRootModelBridgeImpl(
       }
     }
     else {
-      if (ModifiableRootModelBridge.findSdk(jdk.name, jdk.sdkType.name) == null) {
+      if (ModifiableRootModelBridge.findSdk(project, jdk.name, jdk.sdkType.name) == null) {
         error("setSdk: sdk '${jdk.name}' type '${jdk.sdkType.name}' is not registered in ProjectJdkTable")
       }
       setInvalidSdk(jdk.name, jdk.sdkType.name)

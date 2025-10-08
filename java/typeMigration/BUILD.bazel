@@ -1,9 +1,9 @@
 ### auto-generated section `build intellij.java.typeMigration` start
-load("@rules_jvm//:jvm.bzl", "jvm_library", "jvm_resources")
+load("@rules_jvm//:jvm.bzl", "jvm_library", "resourcegroup")
 
-jvm_resources(
+resourcegroup(
   name = "typeMigration_resources",
-  files = glob(["resources/**/*"]),
+  srcs = glob(["resources/**/*"]),
   strip_prefix = "resources"
 )
 
@@ -12,6 +12,7 @@ jvm_library(
   module_name = "intellij.java.typeMigration",
   visibility = ["//visibility:public"],
   srcs = glob(["src/**/*.kt", "src/**/*.java", "src/**/*.form"], allow_empty = True),
+  resources = [":typeMigration_resources"],
   deps = [
     "//platform/analysis-api:analysis",
     "//platform/code-style-api:codeStyle",
@@ -26,8 +27,7 @@ jvm_library(
     "//java/java-impl:impl",
     "//java/java-impl-refactorings:impl-refactorings",
     "//java/codeserver/highlighting",
-  ],
-  runtime_deps = [":typeMigration_resources"]
+  ]
 )
 
 jvm_library(
@@ -54,8 +54,7 @@ jvm_library(
     "//platform/code-style-impl:codeStyle-impl",
     "//java/java-impl-refactorings:impl-refactorings",
     "//java/codeserver/highlighting",
-  ],
-  runtime_deps = [":typeMigration_resources"]
+  ]
 )
 ### auto-generated section `build intellij.java.typeMigration` end
 

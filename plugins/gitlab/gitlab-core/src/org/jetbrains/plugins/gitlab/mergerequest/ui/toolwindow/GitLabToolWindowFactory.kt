@@ -1,6 +1,7 @@
 // Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.plugins.gitlab.mergerequest.ui.toolwindow
 
+import com.intellij.collaboration.async.childScope
 import com.intellij.collaboration.ui.toolwindow.ReviewToolwindowViewModel
 import com.intellij.collaboration.ui.toolwindow.dontHideOnEmptyContent
 import com.intellij.collaboration.ui.toolwindow.manageReviewToolwindowTabs
@@ -17,7 +18,6 @@ import com.intellij.openapi.wm.ToolWindow
 import com.intellij.openapi.wm.ToolWindowFactory
 import com.intellij.openapi.wm.ToolWindowManager
 import com.intellij.openapi.wm.impl.content.ToolWindowContentUi
-import com.intellij.platform.util.coroutines.childScope
 import com.intellij.platform.util.coroutines.flow.mapStateIn
 import com.intellij.util.cancelOnDispose
 import com.intellij.util.concurrency.annotations.RequiresEdt
@@ -46,7 +46,7 @@ internal class GitLabToolWindowFactory : ToolWindowFactory, DumbAware {
 
 @Service(Service.Level.PROJECT)
 private class GitLabMergeRequestsToolWindowController(private val project: Project, parentCs: CoroutineScope) {
-  private val cs = parentCs.childScope(Dispatchers.Main)
+  private val cs = parentCs.childScope(this::class, Dispatchers.Main)
 
   suspend fun manageToolWindow(toolWindow: ToolWindow) {
     val vm = project.serviceAsync<GitLabProjectViewModel>()

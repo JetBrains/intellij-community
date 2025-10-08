@@ -1,10 +1,10 @@
 // Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.collaboration.ui.codereview.comment
 
+import com.intellij.collaboration.async.childScope
 import com.intellij.collaboration.util.ComputedResult
 import com.intellij.collaboration.util.SingleCoroutineLauncher
 import com.intellij.openapi.project.Project
-import com.intellij.platform.util.coroutines.childScope
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.channels.BufferOverflow
 import kotlinx.coroutines.channels.Channel
@@ -36,7 +36,7 @@ abstract class CodeReviewSubmittableTextViewModelBase(
   parentCs: CoroutineScope,
   initialText: String
 ) : CodeReviewSubmittableTextViewModel {
-  protected val cs = parentCs.childScope()
+  protected val cs: CoroutineScope = parentCs.childScope(this::class)
   private val taskLauncher = SingleCoroutineLauncher(cs)
 
   final override val text: MutableStateFlow<String> = MutableStateFlow(initialText)

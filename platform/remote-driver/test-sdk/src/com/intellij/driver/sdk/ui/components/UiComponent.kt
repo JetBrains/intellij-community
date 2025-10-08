@@ -81,7 +81,7 @@ open class UiComponent(private val data: ComponentData) : Finder, WithKeyboard {
    * @param timeout The maximum time to wait for the element to not be found. If not specified, the default timeout is used.
    */
   fun waitNotFound(timeout: Duration? = DEFAULT_FIND_TIMEOUT) {
-    waitFor(message = "No ${this::class.simpleName}[xpath=${data.xpath}] in ${data.parentSearchContext.contextAsString}",
+    waitFor(message = "There should be no ${this::class.simpleName}[xpath=${data.xpath}] in ${data.parentSearchContext.contextAsString}",
             timeout = timeout ?: DEFAULT_FIND_TIMEOUT,
             interval = 1.seconds) {
       !present()
@@ -425,6 +425,16 @@ open class UiComponent(private val data: ComponentData) : Finder, WithKeyboard {
     }
   }
 
+  fun strictClick(point: Point? = null, mouseButton: RemoteMouseButton = RemoteMouseButton.LEFT) {
+    LOG.info("strictClick at $this${point?.let { ": $it" } ?: ""}")
+    if (point != null) {
+      withComponent { robot.strictClick(it, point) }
+    }
+    else {
+      withComponent { robot.strictClick(it, null) }
+    }
+  }
+
   fun doubleClick(point: Point? = null) {
     LOG.info("Double click at $this${point?.let { ": $it" } ?: ""}")
     if (point != null) {
@@ -472,6 +482,24 @@ open class UiComponent(private val data: ComponentData) : Finder, WithKeyboard {
       withComponent { moveMouse(it, to) }
       releaseMouse(RemoteMouseButton.LEFT)
     }
+  }
+
+  fun mousePressAndRelease(from: Point, to: Point) {
+    with(robot) {
+      withComponent { moveMouse(it, from) }
+      pressMouse(RemoteMouseButton.LEFT)
+      releaseMouse(RemoteMouseButton.LEFT)
+    }
+  }
+
+  fun press(point: Point? = null) {
+    LOG.info("Press at $this${point?.let { ": $it" } ?: ""}")
+    withComponent { robot.moveMouseAndPress(it, point) }
+  }
+
+  fun mouseRelease() {
+    LOG.info("Release at $this")
+    withComponent { robot.releaseMouse(RemoteMouseButton.LEFT) }
   }
 
   fun getBackgroundColor(): Color {

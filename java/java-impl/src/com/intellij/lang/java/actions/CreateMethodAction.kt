@@ -9,7 +9,6 @@ import com.intellij.codeInsight.daemon.impl.quickfix.CreateFromUsageUtils.setupE
 import com.intellij.codeInsight.daemon.impl.quickfix.CreateFromUsageUtils.setupMethodBody
 import com.intellij.codeInsight.daemon.impl.quickfix.GuessTypeParameters
 import com.intellij.codeInsight.intention.preview.IntentionPreviewInfo
-import com.intellij.codeInsight.intention.preview.IntentionPreviewUtils
 import com.intellij.codeInsight.template.Template
 import com.intellij.codeInsight.template.TemplateBuilder
 import com.intellij.codeInsight.template.TemplateBuilderImpl
@@ -18,7 +17,9 @@ import com.intellij.codeInsight.template.impl.TemplateState
 import com.intellij.lang.java.request.CreateMethodFromJavaUsageRequest
 import com.intellij.lang.jvm.JvmModifier
 import com.intellij.lang.jvm.actions.*
-import com.intellij.openapi.command.WriteCommandAction
+import com.intellij.modcommand.ActionContext
+import com.intellij.modcommand.ModCommand
+import com.intellij.modcommand.ModCommandExecutor
 import com.intellij.openapi.editor.Editor
 import com.intellij.openapi.project.Project
 import com.intellij.psi.*
@@ -190,27 +191,27 @@ private class MethodTemplateListener(val project: Project, val editor: Editor, v
 
   override fun templateFinished(template: Template, brokenOff: Boolean) {
     PsiDocumentManager.getInstance(project).commitDocument(editor.document)
-    val offset = editor.caretModel.offset
-    val method = PsiTreeUtil.findElementOfClassAtOffset(file, offset - 1, PsiMethod::class.java, false) ?: return
-    if (IntentionPreviewUtils.isIntentionPreviewActive()) {
-      finishTemplate(method)
-    } else {
-      WriteCommandAction.runWriteCommandAction(project, message("create.method.body"), null, { finishTemplate(method) }, file)
-    }
-  }
-
-  private fun finishTemplate(method: PsiMethod) {
-    var vararg = false;
-    for (parameter in method.parameterList.parameters) {
-      if (vararg) {
-        parameter.delete()
+    val context = ActionContext.from(editor, file)
+    ModCommandExecutor.executeInteractively(context, message("create.method.body"), editor) {
+      val method = PsiTreeUtil.findElementOfClassAtOffset(file, context.offset - 1, PsiMethod::class.java, false) 
+                   ?: return@executeInteractively ModCommand.nop()
+      ModCommand.psiUpdate(method) { method, updater ->
+        var vararg = false;
+        for (parameter in method.parameterList.parameters) {
+          if (vararg) {
+            parameter.delete()
+          }
+          else if (parameter.isVarArgs) {
+            vararg = true
+          }
+        }
+        if (method.body == null && !method.hasModifierProperty(PsiModifier.DEFAULT)) return@psiUpdate
+        setupMethodBody(method, updater)
+        val body = method.getBody()
+        if (body != null) {
+          setupEditor(body, updater)
+        }
       }
-      else if (parameter.isVarArgs) {
-        vararg = true
-      }
     }
-    if (method.body == null && !method.hasModifierProperty(PsiModifier.DEFAULT)) return
-    setupMethodBody(method)
-    setupEditor(method, editor)
   }
 }

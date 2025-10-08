@@ -34,7 +34,7 @@ public final class SerializableRecordContainsIgnoredMembersInspection extends Ba
   }
 
   @Override
-  public BaseInspectionVisitor buildVisitor() {
+  public @NotNull BaseInspectionVisitor buildVisitor() {
     return new SerializableRecordContainsIgnoredMembersVisitor();
   }
 

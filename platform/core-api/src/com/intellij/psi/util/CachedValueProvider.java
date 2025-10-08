@@ -1,7 +1,11 @@
 // Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.psi.util;
 
+import com.intellij.lang.Language;
 import com.intellij.openapi.diagnostic.Logger;
+import com.intellij.openapi.util.ModificationTracker;
+import com.intellij.openapi.vfs.VirtualFileManager;
+import com.intellij.psi.PsiElement;
 import com.intellij.util.ArrayUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -10,8 +14,9 @@ import java.util.Collection;
 
 /**
  * A computation (typically a lambda) used by {@link CachedValue} to calculate a result and cache it.
- * The provider should not have side effects and shouldn't depend on variables that change during the CachedValue lifetime. See
- * {@link CachedValue} documentation for examples.<p></p>
+ * The provider should not have side effects and shouldn't depend on variables that change during the CachedValue lifetime.
+ * See {@link CachedValue} documentation for examples.
+ *
  * @param <T> the type of the cached value
  */
 @FunctionalInterface
@@ -20,11 +25,11 @@ public interface CachedValueProvider<T> {
   /**
    * @return result object holding the value to cache and the dependencies indicating when that value will be outdated
    */
-  @Nullable
-  Result<T> compute();
+  @Nullable Result<T> compute();
 
   /**
-   * The object holding the value to cache and the dependencies indicating when that value will be outdated
+   * The object holding the value to cache and the dependencies indicating when that value will be outdated.
+   *
    * @param <T> the type of the cached value
    */
   final class Result<T> {
@@ -54,22 +59,37 @@ public interface CachedValueProvider<T> {
     }
 
     /**
-     * Dependency items are used in cached values to remember the state of the environment as it was when the value was computed
-     * and to compare that to the state of the world when querying {@link CachedValue#getValue()}. The state is remembered as
-     * a collection of {@code long} values representing some time stamps. When changes occur, these stamps are incremented.<p/>
-     *
-     * Dependencies can be following:
+     * Dependency items are used in a {@link CachedValue cached value} to remember the state of the world as it was when the value was computed
+     * and to compare that to the state of the world when {@link CachedValue#getValue()} is called.
+     * <p>
+     * The state is remembered as a collection of {@code long} values representing some time stamps.
+     * Whenever changes to the dependencies occur, these stamps are incremented.
+     * <p>
+     * When {@link CachedValue#getValue()} is invoked, the current stamps of dependencies are queried and compared to the remembered stamps.
+     * If there is any difference, the cached value is invalidated and {@link CachedValueProvider#compute computed} again.
+     * <p>
+     * Dependencies can be the following:
      * <ul>
-     *   <li/>Instances of {@link com.intellij.openapi.util.ModificationTracker} returning stamps explicitly
-     *   <li/>Constant fields of {@link PsiModificationTracker} class, e.g. {@link PsiModificationTracker#MODIFICATION_COUNT}
-     *   <li/>{@link com.intellij.psi.PsiElement} or {@link com.intellij.openapi.vfs.VirtualFile} objects. Such cache would be dropped
-     *   on any change in the corresponding file
+     *   <li/>Constant keys like {@link PsiModificationTracker#MODIFICATION_COUNT} or {@link VirtualFileManager#VFS_STRUCTURE_MODIFICATIONS}.
+     *   <li/>Instances of {@link ModificationTracker ModificationTracker}.
+     *      Such a cache is invalidated when the stamp returned by {@link ModificationTracker#getModificationCount()} differs from the remembered stamp.
+     *   <li/>Instances of {@link com.intellij.openapi.vfs.VirtualFile VirtualFile}.
+     *      Such a cache is invalidated on any change in the file's content.
+     *   <li/>Instances of {@link com.intellij.openapi.editor.Document Document}.
+     *      Such a cache is invalidated on any change in the document's content.
+     *   <li/>Instances of {@link PsiElement}.
+     *      Such a cache is invalidated on any change in the {@link PsiElement#getContainingFile() element's containing PsiFile}.
      * </ul>
+     * <p>
+     * <h3>What to use as a dependency?</h3>
+     * If your cached value uses a document instance as an input, you should use that document as a dependency.
+     * If it uses a PSI as an input, it should use that PSI as a dependency.
      *
      * @return the dependency items
-     * @see com.intellij.openapi.util.ModificationTracker
+     * @see ModificationTracker ModificationTracker
      * @see PsiModificationTracker
-     * @see com.intellij.openapi.roots.ProjectRootModificationTracker
+     * @see com.intellij.openapi.roots.ProjectRootModificationTracker ProjectRootModificationTracker
+     * @see PsiModificationTracker#forLanguage(Language)
      */
     public Object @NotNull [] getDependencyItems() {
       return myDependencyItems;
@@ -77,6 +97,7 @@ public interface CachedValueProvider<T> {
 
     /**
      * Creates a result
+     *
      * @see #getDependencyItems()
      */
     public static @NotNull <T> Result<T> createSingleDependency(@Nullable T value, @NotNull Object dependency) {
@@ -85,6 +106,7 @@ public interface CachedValueProvider<T> {
 
     /**
      * Creates a result
+     *
      * @see #getDependencyItems()
      */
     public static @NotNull <T> Result<T> create(@Nullable T value, Object @NotNull ... dependencies) {
@@ -93,11 +115,11 @@ public interface CachedValueProvider<T> {
 
     /**
      * Creates a result
+     *
      * @see #getDependencyItems()
      */
     public static @NotNull <T> Result<T> create(@Nullable T value, @NotNull Collection<?> dependencies) {
       return new Result<>(value, ArrayUtil.toObjectArray(dependencies));
     }
-
   }
 }

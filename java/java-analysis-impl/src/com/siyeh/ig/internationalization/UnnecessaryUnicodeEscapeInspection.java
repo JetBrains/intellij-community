@@ -88,7 +88,7 @@ public final class UnnecessaryUnicodeEscapeInspection extends BaseInspection {
   }
 
   @Override
-  public BaseInspectionVisitor buildVisitor() {
+  public @NotNull BaseInspectionVisitor buildVisitor() {
     return new UnnecessaryUnicodeEscapeVisitor();
   }
 

@@ -838,7 +838,7 @@ public class JUnitConfiguration extends JavaTestConfigurationWithDiscoverySuppor
       if (TEST_PATTERN.equals(TEST_OBJECT)) {
         final int size = myPattern.size();
         if (size == 0) return JUnitBundle.message("default.junit.config.name.temp.suite");
-        String fqName = myPattern.iterator().next();
+        String fqName = myPattern.getFirst();
         String firstName =
           fqName.contains("*") ? fqName
                                : StringUtil.getShortName(fqName.contains("(") ? StringUtil.getPackageName(fqName, '(') : fqName);

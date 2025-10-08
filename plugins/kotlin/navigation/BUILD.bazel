@@ -1,6 +1,6 @@
 ### auto-generated section `build kotlin.navigation` start
 load("//build:compiler-options.bzl", "create_kotlinc_options")
-load("@rules_jvm//:jvm.bzl", "jvm_library", "jvm_resources")
+load("@rules_jvm//:jvm.bzl", "jvm_library", "resourcegroup")
 
 create_kotlinc_options(
   name = "custom_navigation",
@@ -11,9 +11,9 @@ create_kotlinc_options(
   ]
 )
 
-jvm_resources(
+resourcegroup(
   name = "navigation_resources",
-  files = glob(["resouces/**/*"]),
+  srcs = glob(["resouces/**/*"]),
   strip_prefix = "resouces"
 )
 
@@ -22,6 +22,7 @@ jvm_library(
   module_name = "kotlin.navigation",
   visibility = ["//visibility:public"],
   srcs = glob(["src/**/*.kt", "src/**/*.java", "src/**/*.form"], allow_empty = True),
+  resources = [":navigation_resources"],
   kotlinc_opts = ":custom_navigation",
   deps = [
     "@lib//:kotlin-stdlib",
@@ -36,7 +37,6 @@ jvm_library(
     "@lib//:kotlinc-analysis-api-platform-interface",
     "//platform/analysis-api:analysis",
     "//plugins/kotlin/base/project-structure",
-  ],
-  runtime_deps = [":navigation_resources"]
+  ]
 )
 ### auto-generated section `build kotlin.navigation` end

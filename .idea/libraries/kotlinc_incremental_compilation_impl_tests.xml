@@ -1,18 +1,18 @@
 <component name="libraryTable">
   <library name="kotlinc.incremental-compilation-impl-tests" type="repository">
-    <properties include-transitive-deps="false" maven-id="org.jetbrains.kotlin:incremental-compilation-impl-tests-for-ide:2.3.0-dev-5493">
+    <properties include-transitive-deps="false" maven-id="org.jetbrains.kotlin:incremental-compilation-impl-tests-for-ide:2.3.0-dev-9992">
       <verification>
-        <artifact url="file://$MAVEN_REPOSITORY$/org/jetbrains/kotlin/incremental-compilation-impl-tests-for-ide/2.3.0-dev-5493/incremental-compilation-impl-tests-for-ide-2.3.0-dev-5493.jar">
-          <sha256sum>462ff0507becb70d106b56c3f620593939b2a8d4e44762d894a36a22bbf99b09</sha256sum>
+        <artifact url="file://$MAVEN_REPOSITORY$/org/jetbrains/kotlin/incremental-compilation-impl-tests-for-ide/2.3.0-dev-9992/incremental-compilation-impl-tests-for-ide-2.3.0-dev-9992.jar">
+          <sha256sum>9d2369a7e71ff367dbed384ee50976c25743b09e4be68a58f9412ad165d8e0d7</sha256sum>
         </artifact>
       </verification>
     </properties>
     <CLASSES>
-      <root url="jar://$MAVEN_REPOSITORY$/org/jetbrains/kotlin/incremental-compilation-impl-tests-for-ide/2.3.0-dev-5493/incremental-compilation-impl-tests-for-ide-2.3.0-dev-5493.jar!/" />
+      <root url="jar://$MAVEN_REPOSITORY$/org/jetbrains/kotlin/incremental-compilation-impl-tests-for-ide/2.3.0-dev-9992/incremental-compilation-impl-tests-for-ide-2.3.0-dev-9992.jar!/" />
     </CLASSES>
     <JAVADOC />
     <SOURCES>
-      <root url="jar://$MAVEN_REPOSITORY$/org/jetbrains/kotlin/incremental-compilation-impl-tests-for-ide/2.3.0-dev-5493/incremental-compilation-impl-tests-for-ide-2.3.0-dev-5493-sources.jar!/" />
+      <root url="jar://$MAVEN_REPOSITORY$/org/jetbrains/kotlin/incremental-compilation-impl-tests-for-ide/2.3.0-dev-9992/incremental-compilation-impl-tests-for-ide-2.3.0-dev-9992-sources.jar!/" />
     </SOURCES>
   </library>
 </component>

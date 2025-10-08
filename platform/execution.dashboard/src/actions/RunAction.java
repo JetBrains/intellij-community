@@ -14,7 +14,6 @@ import org.jetbrains.annotations.NotNull;
 /**
  * @author konstantin.aleev
  */
-// fixme same as debug action - ask Lera?
 public final class RunAction extends ExecutorAction {
   @Override
   protected Executor getExecutor() {

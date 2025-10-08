@@ -36,6 +36,8 @@ import org.jetbrains.kotlin.idea.refactoring.inline.codeInliner.InlineDataKeys.U
 import org.jetbrains.kotlin.idea.refactoring.inline.codeInliner.InlineDataKeys.WAS_CONVERTED_TO_FUNCTION_KEY
 import org.jetbrains.kotlin.idea.refactoring.inline.codeInliner.InlineDataKeys.WAS_FUNCTION_LITERAL_ARGUMENT_KEY
 import org.jetbrains.kotlin.idea.references.mainReference
+import org.jetbrains.kotlin.idea.search.ExpectActualUtils.actualsForExpect
+import org.jetbrains.kotlin.idea.search.ExpectActualUtils.expectDeclarationIfAny
 import org.jetbrains.kotlin.idea.util.CommentSaver
 import org.jetbrains.kotlin.lexer.KtTokens
 import org.jetbrains.kotlin.name.FqName
@@ -358,7 +360,7 @@ class CodeInliner(
     private fun argumentForRegularParameter(
         argumentExpressionsForParameter: List<KtExpression>, parameter: KtParameter, callableDeclaration: KtDeclaration
     ): Argument? {
-        val expression = argumentExpressionsForParameter.firstOrNull() ?: parameter.defaultValue ?: return null
+        val expression = argumentExpressionsForParameter.firstOrNull() ?: getDefaultValue(parameter) ?: return null
         val parent = expression.parent
         val isNamed = (parent as? KtValueArgument)?.isNamed() == true
         var resultExpression = run {
@@ -390,7 +392,7 @@ class CodeInliner(
 
         markAsUserCode(resultExpression)
 
-        val expressionType = analyze(call) { createTypeDescription(resultExpression.expressionType) }
+        val expressionType = analyze(resultExpression) { createTypeDescription(resultExpression.expressionType) }
         if (argumentExpressionsForParameter.isEmpty() && callableDeclaration is KtFunction) {
             //encode default value
             val allParameters = callableDeclaration.valueParameters()
@@ -405,6 +407,17 @@ class CodeInliner(
         }
 
         return Argument(resultExpression, expressionType, isNamed = isNamed, argumentExpressionsForParameter.isEmpty())
+    }
+
+    private fun getDefaultValue(parameter: KtParameter): KtExpression? {
+        val ownerFunction = parameter.ownerFunction
+        val defaultValueFromExpect = ownerFunction
+            ?.expectDeclarationIfAny()
+            ?.takeIf { it != ownerFunction }
+            ?.valueParameters()
+            ?.get(parameter.parameterIndex())
+            ?.defaultValue
+        return defaultValueFromExpect ?: parameter.defaultValue
     }
 
     @OptIn(KaExperimentalApi::class)

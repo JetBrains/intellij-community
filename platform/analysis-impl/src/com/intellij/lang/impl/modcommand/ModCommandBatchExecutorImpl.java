@@ -3,12 +3,14 @@ package com.intellij.lang.impl.modcommand;
 
 import com.intellij.analysis.AnalysisBundle;
 import com.intellij.codeInsight.intention.preview.IntentionPreviewInfo;
+import com.intellij.codeInsight.intention.preview.IntentionPreviewUtils;
 import com.intellij.codeInspection.options.*;
 import com.intellij.lang.injection.InjectedLanguageManager;
 import com.intellij.modcommand.*;
 import com.intellij.modcommand.ModUpdateFileText.Fragment;
 import com.intellij.openapi.application.ReadAction;
 import com.intellij.openapi.application.WriteAction;
+import com.intellij.openapi.command.CommandProcessor;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.fileEditor.FileDocumentManager;
@@ -34,6 +36,7 @@ import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Comparator;
 import java.util.List;
+import java.util.function.Supplier;
 
 import static com.intellij.openapi.util.text.HtmlChunk.tag;
 import static com.intellij.openapi.util.text.HtmlChunk.text;
@@ -77,51 +80,43 @@ public class ModCommandBatchExecutorImpl implements ModCommandExecutor {
     if (command.isEmpty()) {
       return Result.NOTHING;
     }
-    if (command instanceof ModUpdateFileText upd) {
-      return executeUpdate(project, upd) ? Result.SUCCESS : Result.ABORT;
-    }
-    if (command instanceof ModCreateFile create) {
-      String message = executeCreate(project, create);
-      return message == null ? Result.SUCCESS : new Error(message);
-    }
-    if (command instanceof ModDeleteFile deleteFile) {
-      String message = executeDelete(deleteFile);
-      return message == null ? Result.SUCCESS : new Error(message);
-    }
-    if (command instanceof ModMoveFile moveFile) {
-      String message = executeMove(moveFile);
-      return message == null ? Result.SUCCESS : new Error(message);
-    }
-    if (command instanceof ModCompositeCommand cmp) {
-      BatchExecutionResult result = Result.NOTHING;
-      for (ModCommand subCommand : cmp.commands()) {
-        result = result.compose(doExecuteInBatch(context, subCommand));
-        if (result == Result.ABORT || result instanceof Error) break;
-      }
-      return result;
-    }
-    if (command instanceof ModChooseAction chooser) {
-      return executeChooseInBatch(context, chooser);
-    }
     if (command instanceof ModNavigate || command instanceof ModHighlight ||
         command instanceof ModCopyToClipboard || command instanceof ModStartRename ||
         command instanceof ModStartTemplate || command instanceof ModUpdateSystemOptions ||
         command instanceof ModUpdateReferences || command instanceof ModOpenUrl) {
       return Result.INTERACTIVE;
     }
-    if (command instanceof ModShowConflicts) {
-      return Result.CONFLICTS;
-    }
-    if (command instanceof ModEditOptions<?> editOptions) {
-      return bypassEditOptions(editOptions, context);
-    }
-    if (command instanceof ModDisplayMessage message) {
-      if (message.kind() == ModDisplayMessage.MessageKind.ERROR) {
-        return new Error(message.messageText());
+    return switch (command) {
+      case ModUpdateFileText upd -> executeUpdate(project, upd) ? Result.SUCCESS : Result.ABORT;
+      case ModCreateFile create -> {
+        String message = executeCreate(project, create);
+        yield message == null ? Result.SUCCESS : new Error(message);
       }
-      return Result.INTERACTIVE;
-    }
-    throw new IllegalArgumentException("Unknown command: " + command);
+      case ModDeleteFile deleteFile -> {
+        String message = executeDelete(deleteFile);
+        yield message == null ? Result.SUCCESS : new Error(message);
+      }
+      case ModMoveFile moveFile -> {
+        String message = executeMove(moveFile);
+        yield message == null ? Result.SUCCESS : new Error(message);
+      }
+      case ModCompositeCommand(var commands) -> {
+        BatchExecutionResult result = Result.NOTHING;
+        for (ModCommand subCommand : commands) {
+          result = result.compose(doExecuteInBatch(context, subCommand));
+          if (result == Result.ABORT || result instanceof Error) break;
+        }
+        yield result;
+      }
+      case ModChooseAction chooser -> executeChooseInBatch(context, chooser);
+      case ModShowConflicts ignored -> Result.CONFLICTS;
+      case ModEditOptions<?> editOptions -> bypassEditOptions(editOptions, context);
+      case ModDisplayMessage(String text, var kind) -> switch (kind) {
+        case ERROR -> new Error(text);
+        case INFORMATION -> Result.INTERACTIVE;
+      };
+      default -> throw new IllegalArgumentException("Unknown command: " + command);
+    };
   }
 
   private <T extends OptionContainer> BatchExecutionResult bypassEditOptions(@NotNull ModEditOptions<T> options, @NotNull ActionContext context) {
@@ -201,15 +196,15 @@ public class ModCommandBatchExecutorImpl implements ModCommandExecutor {
           return null;
         }
         VirtualFile newFile = parent.createChildData(this, file.getName());
-        if (create.content() instanceof ModCreateFile.Text text) {
+        if (create.content() instanceof ModCreateFile.Text(String text)) {
           PsiFile psiFile = PsiManager.getInstance(project).findFile(newFile);
           if (psiFile == null) return AnalysisBundle.message("modcommand.executor.unable.to.find.the.new.file", file.getName());
           Document document = psiFile.getViewProvider().getDocument();
-          document.setText(text.text());
+          document.setText(text);
           PsiDocumentManager.getInstance(project).commitDocument(document);
         }
-        else if (create.content() instanceof ModCreateFile.Binary binary) {
-          newFile.setBinaryContent(binary.bytes());
+        else if (create.content() instanceof ModCreateFile.Binary(byte[] bytes)) {
+          newFile.setBinaryContent(bytes);
         }
         return null;
       });
@@ -230,6 +225,30 @@ public class ModCommandBatchExecutorImpl implements ModCommandExecutor {
       }
       else if (!(cmd instanceof ModNavigate) && !(cmd instanceof ModHighlight)) {
         throw new UnsupportedOperationException("Unexpected command: " + command);
+      }
+    }
+  }
+
+  @Override
+  public void obtainAndExecuteInteractively(@NotNull ActionContext context,
+                                            @Nls String title,
+                                            @Nullable Editor editor,
+                                            @NotNull Supplier<? extends @NotNull ModCommand> commandSupplier) {
+    if (IntentionPreviewUtils.isIntentionPreviewActive()) {
+      ModCommand command = commandSupplier.get();
+      executeForFileCopy(command, context.file());
+      return;
+    }
+    ModCommand command = ProgressManager.getInstance().runProcessWithProgressSynchronously(
+      () -> ReadAction.nonBlocking(commandSupplier::get).executeSynchronously(),
+      title, true, context.project());
+    if (!command.isEmpty()) {
+      CommandProcessor commandProcessor = CommandProcessor.getInstance();
+      if (!commandProcessor.isCommandInProgress()) {
+        commandProcessor.executeCommand(context.project(),
+                                        () -> executeInteractively(context, command, editor), title, null);
+      } else {
+        executeInteractively(context, command, editor);
       }
     }
   }
@@ -302,17 +321,16 @@ public class ModCommandBatchExecutorImpl implements ModCommandExecutor {
                                                                modFile.newText(),
                                                                true));
       }
-      else if (command instanceof ModCreateFile createFile) {
-        VirtualFile vFile = createFile.file();
-        if (createFile.content() instanceof ModCreateFile.Directory) {
-          createdDirs.add(getFileNamePresentation(project, vFile));
+      else if (command instanceof ModCreateFile(FutureVirtualFile createdFile, ModCreateFile.Content content)) {
+        if (content instanceof ModCreateFile.Directory) {
+          createdDirs.add(getFileNamePresentation(project, createdFile));
         } else {
-          String content =
-            createFile.content() instanceof ModCreateFile.Text text ? text.text() : AnalysisBundle.message("preview.binary.content");
-          customDiffList.add(new IntentionPreviewInfo.CustomDiff(vFile.getFileType(),
-                                                                 getFileNamePresentation(project, vFile),
+          String contentRepresentation =
+            content instanceof ModCreateFile.Text(String text) ? text : AnalysisBundle.message("preview.binary.content");
+          customDiffList.add(new IntentionPreviewInfo.CustomDiff(createdFile.getFileType(),
+                                                                 getFileNamePresentation(project, createdFile),
                                                                  "",
-                                                                 content,
+                                                                 contentRepresentation,
                                                                  true));
         }
       }
@@ -331,31 +349,29 @@ public class ModCommandBatchExecutorImpl implements ModCommandExecutor {
       else if (command instanceof ModEditOptions<?> target) {
         return getEditOptionsPreview(context, target);
       }
-      else if (command instanceof ModDisplayMessage message) {
-        if (message.kind() == ModDisplayMessage.MessageKind.ERROR) {
+      else if (command instanceof ModDisplayMessage(String text, ModDisplayMessage.MessageKind kind)) {
+        if (kind == ModDisplayMessage.MessageKind.ERROR) {
           return new IntentionPreviewInfo.Html(new HtmlBuilder().append(
-            AnalysisBundle.message("preview.cannot.perform.action")).br().append(message.messageText()).toFragment(),
-                                               IntentionPreviewInfo.InfoKind.ERROR);
+            AnalysisBundle.message("preview.cannot.perform.action")).br().append(text).toFragment(), IntentionPreviewInfo.InfoKind.ERROR);
         }
         else if (navigateInfo == IntentionPreviewInfo.EMPTY) {
-          navigateInfo = new IntentionPreviewInfo.Html(message.messageText());
+          navigateInfo = new IntentionPreviewInfo.Html(text);
         }
       }
-      else if (command instanceof ModCopyToClipboard copy) {
+      else if (command instanceof ModCopyToClipboard(String content)) {
         navigateInfo = new IntentionPreviewInfo.Html(text(
-          AnalysisBundle.message("preview.copy.to.clipboard", StringUtil.shortenTextWithEllipsis(copy.content(), 50, 10))));
+          AnalysisBundle.message("preview.copy.to.clipboard", StringUtil.shortenTextWithEllipsis(content, 50, 10))));
       }
-      else if (command instanceof ModOpenUrl openUrl) {
+      else if (command instanceof ModOpenUrl(String url)) {
         navigateInfo = new IntentionPreviewInfo.Html(text(
-          AnalysisBundle.message("preview.open.url", StringUtil.shortenTextWithEllipsis(openUrl.url(), 50, 10))));
+          AnalysisBundle.message("preview.open.url", StringUtil.shortenTextWithEllipsis(url, 50, 10))));
       }
-      else if (command instanceof ModMoveFile moveFile) {
-        FutureVirtualFile targetFile = moveFile.targetFile();
+      else if (command instanceof ModMoveFile(VirtualFile fileToCreate, FutureVirtualFile targetFile)) {
         IntentionPreviewInfo.Html html;
-        if (targetFile.getName().equals(moveFile.file().getName())) {
-          html = (IntentionPreviewInfo.Html)IntentionPreviewInfo.moveToDirectory(moveFile.file(), targetFile.getParent());
+        if (targetFile.getName().equals(fileToCreate.getName())) {
+          html = (IntentionPreviewInfo.Html)IntentionPreviewInfo.moveToDirectory(fileToCreate, targetFile.getParent());
         } else {
-          html = (IntentionPreviewInfo.Html)IntentionPreviewInfo.rename(moveFile.file(), targetFile.getName());
+          html = (IntentionPreviewInfo.Html)IntentionPreviewInfo.rename(fileToCreate, targetFile.getName());
         }
         fsActions.add(html.content());
       }

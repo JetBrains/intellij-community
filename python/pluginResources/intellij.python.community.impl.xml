@@ -1,13 +1,24 @@
-<idea-plugin>
+<idea-plugin visibility="public">
   <dependencies>
     <module name="intellij.spellchecker"/>
     <module name="intellij.python.sdk"/>
+    <module name="intellij.python.syntax"/>
     <module name="intellij.python.community"/>
+    <module name="intellij.python.community.core.impl"/>
     <module name="intellij.python.community.helpersLocator"/>
     <module name="intellij.python.community.execService"/>
     <module name="intellij.python.community.execService.python"/>
     <module name="intellij.python.community.interpreters"/>
+    <module name="intellij.python.community.impl.poetry"/>
+    <module name="intellij.python.hatch"/>
+    <module name="intellij.python.pydev"/>
+    <module name="intellij.python.sdk.ui"/>
     <module name="intellij.regexp"/>
+    <module name="intellij.libraries.kotlinx.io"/>
+    <module name="intellij.python.pyproject"/>
+    <module name="intellij.python.community.impl.installer"/>
+    <module name="intellij.python.community.impl.venv"/>
+    <module name="intellij.python.community.services.systemPython"/>
   </dependencies>
 
   <resource-bundle>messages.PyBundle</resource-bundle>
@@ -18,7 +29,6 @@
                      key="INSP.poetry.package.versions.display.name" bundle="messages.PyBundle" groupKey="INSP.GROUP.python"
                      suppressId="PoetryPackageVersions" shortName="PoetryPackageVersionsInspection"/>
     <registryKey defaultValue="10" description="How ofter system pythons must be refreshed (minutes)" key="python.system.refresh.minutes"/>
-    <postStartupActivity implementation="com.intellij.python.community.services.systemPython.impl.SystemPythonInitialLoader"/>
     <fileType name="Requirements.txt"
               implementationClass="com.jetbrains.python.requirements.RequirementsFileType"
               fieldName="INSTANCE"
@@ -32,6 +42,18 @@
       language="Requirements"
       implementationClass="com.jetbrains.python.requirements.RequirementsSyntaxHighlighterFactory"/>
     <multiHostInjector implementation="com.jetbrains.python.requirements.injection.TomlRequirementsLanguageInjector"/>
+
+    <codeInsight.declarativeInlayProvider group="TYPES_GROUP"
+                                          bundle="messages.PyPsiBundle"
+                                          implementationClass="com.jetbrains.python.inlayHints.PyTypeInlayHintsProvider"
+                                          isEnabledByDefault="true"
+                                          language="Python"
+                                          nameKey="INLAY.type.hints"
+                                          providerId="python.type.inlays">
+      <option bundle="messages.PyPsiBundle" descriptionKey="INLAY.reveal.type" enabledByDefault="true" nameKey="INLAY.reveal.type" optionId="python.type.inlays.reveal_type" />
+      <option bundle="messages.PyPsiBundle" descriptionKey="INLAY.function.return" enabledByDefault="false" nameKey="INLAY.function.return" optionId="python.type.inlays.function.return" />
+    </codeInsight.declarativeInlayProvider>
+
 
     <!-- Requirements.txt support. Can't extract module due to circular dependency between it and community.impl (RequirementsFile inspection)-->
     <completion.contributor language="Requirements"
@@ -54,17 +76,12 @@
     <pluginSuggestionProvider order="first" implementation="com.jetbrains.python.suggestions.PycharmProSuggestionProvider"/>
     <postStartupActivity implementation="com.jetbrains.python.poetry.PoetryPyProjectTomlPostStartupActivity"/>
 
-    <!--Poetry project model-->
-    <projectOpenProcessor implementation="com.jetbrains.python.projectModel.poetry.PoetryProjectOpenProcessor"/>
-    <externalSystemUnlinkedProjectAware implementation="com.jetbrains.python.projectModel.poetry.PoetryUnlinkedProjectAware"/>
-    <postStartupActivity implementation="com.jetbrains.python.projectModel.poetry.PoetryProjectAware$PoetrySyncStartupActivity"/>
-
-    <!--uv project model-->
-    <projectOpenProcessor implementation="com.jetbrains.python.projectModel.uv.UvProjectOpenProcessor"/>
-    <externalSystemUnlinkedProjectAware implementation="com.jetbrains.python.projectModel.uv.UvUnlinkedProjectAware"/>
-    <postStartupActivity implementation="com.jetbrains.python.projectModel.uv.UvProjectAware$UvSyncStartupActivity"/>
-
     <virtualFileCustomDataProvider implementation="com.jetbrains.python.psi.PyLangLevelVirtualFileCustomDataProvider"/>
+  </extensions>
+
+  <extensions defaultExtensionNs="com.intellij.python.pyproject.model">
+    <tool implementation="com.jetbrains.python.projectModel.poetry.PoetryTool"/>
+    <tool implementation="com.jetbrains.python.projectModel.uv.UvTool"/>
   </extensions>
 
   <projectListeners>
@@ -78,10 +95,6 @@
               topic="com.jetbrains.python.packaging.common.PythonPackageManagementListener"/>
     <listener class="com.jetbrains.python.statistics.PyPackageDaemonListener"
               topic="com.intellij.codeInsight.daemon.DaemonCodeAnalyzer$DaemonListener"/>
-    <listener class="com.jetbrains.python.projectModel.poetry.PoetryProjectAware$PoetryListener"
-              topic="com.jetbrains.python.projectModel.poetry.PoetrySettingsListener"/>
-    <listener class="com.jetbrains.python.projectModel.uv.UvProjectAware$UvListener"
-              topic="com.jetbrains.python.projectModel.uv.UvSettingsListener"/>
   </projectListeners>
 
   <extensions defaultExtensionNs="com.intellij">
@@ -133,18 +146,14 @@
                     serviceImplementation="com.jetbrains.python.codeInsight.completion.DummyRemoteFilePathRetrievalService"
                     testServiceImplementation="com.jetbrains.python.codeInsight.completion.DummyRemoteFilePathRetrievalService"/>
 
-    <applicationService serviceImplementation="com.jetbrains.python.sdk.PySdkSettings"/>
     <applicationService serviceImplementation="com.jetbrains.python.packaging.pip.PypiPackageCache"/>
     <applicationService serviceImplementation="com.jetbrains.python.packaging.PyPackageService"/>
     <applicationService serviceInterface="com.jetbrains.python.module.PyModuleService"
                         serviceImplementation="com.jetbrains.python.module.PyModuleServiceImpl"/>
-    <applicationService serviceInterface="com.jetbrains.python.sdk.WinRegistryService"
-                        serviceImplementation="com.jetbrains.python.sdk.WinRegistryServiceImpl"/>
     <typedHandler implementation="com.jetbrains.python.codeInsight.PyMethodNameTypedHandler" id="pyMethodNameTypedHandler"/>
 
     <idIndexer filetype="Python" implementationClass="com.jetbrains.python.PyIdIndexer"/>
     <todoIndexer filetype="Python" implementationClass="com.jetbrains.python.PyTodoIndexer"/>
-    <indexPatternBuilder implementation="com.jetbrains.python.PyIndexPatternBuilder"/>
 
     <declarationRangeHandler key="com.jetbrains.python.psi.PyClass"
                              implementationClass="com.jetbrains.python.codeInsight.PyDeclarationRangeHandler"/>
@@ -168,8 +177,8 @@
     <configurationType implementation="com.jetbrains.python.run.FastAPILockedRunConfigurationType" order="first"/>
     <facetIgnorer implementation="com.jetbrains.python.run.DjangoFacetIgnorer"/>
 
-    <programRunner implementation="com.jetbrains.python.run.PythonRunner"/>
-    <programRunner implementation="com.jetbrains.python.debugger.PyDebugRunner"/>
+    <programRunner implementation="com.jetbrains.python.run.PythonRunner" order="before defaultRunRunner"/>
+    <programRunner implementation="com.jetbrains.python.debugger.PyDebugRunner" order="before defaultDebugRunner"/>
     <runConfigurationProducer implementation="com.jetbrains.python.run.PythonRunConfigurationProducer"/>
     <xdebugger.breakpointType implementation="com.jetbrains.python.debugger.PyLineBreakpointType"/>
     <xdebugger.breakpointType implementation="com.jetbrains.python.debugger.PyExceptionBreakpointType"/>
@@ -177,11 +186,14 @@
     <xdebugger.attachDebuggerProvider implementation="com.jetbrains.python.debugger.attach.PyLocalAttachDebuggerProvider"/>
 
     <codeInsight.containerProvider implementation="com.jetbrains.python.codeInsight.PyContainerProvider"/>
+    <codeInsight.parameterNameHints language="Python"
+                                    implementationClass="com.jetbrains.python.inlayHints.PythonInlayParameterHintsProvider"/>
     <registryKey key="python.debugger.use.dispatcher" defaultValue="false" description="Use dispatcher in Python debugger"/>
     <registryKey key="flask.new.run.config" defaultValue="true" description="Flask Server Run configurations new UI"/>
     <registryKey key="pytest.new.run.config" defaultValue="true" description="PyTest configurations new UI"/>
     <registryKey key="python.test.autodetect.new.run.config" defaultValue="true" description="Python test autodetect configuration new UI"/>
     <registryKey key="python.run.doctest.via.pytest.configuration" defaultValue="true" description="Run doctest via pytest configuration"/>
+    <registryKey key="debugger.valueTooltipAutoShow" defaultValue="false" description="Auto show tooltip on mouse over." overrides="true"/>
 
     <configurationType implementation="com.jetbrains.python.testing.PythonTestConfigurationType"/>
     <configurationType implementation="com.jetbrains.python.testing.tox.PyToxConfigurationType"/>
@@ -466,6 +478,9 @@
     <registryKey defaultValue="false" description="Use legacy system python detection method based on flavors"
                  restartRequired="false" key="python.use.system.legacy.provider"/>
 
+    <registryKey defaultValue="false" description="Save preferences what type of data view will be used: the old data view or the new one."
+                 restartRequired="false" key="python.data.view.allow.save.preferences.community.vs.powerful.data.view"/>
+
     <!-- typing -->
     <multiHostInjector implementation="com.jetbrains.python.codeInsight.typing.PyTypingAnnotationInjector"/>
 
@@ -517,19 +532,24 @@
     <statistics.counterUsagesCollector implementationClass="com.jetbrains.python.sdk.add.collector.PythonNewInterpreterAddedCollector"/>
     <statistics.counterUsagesCollector implementationClass="com.jetbrains.python.run.runAnything.PyRunAnythingCollector"/>
     <statistics.counterUsagesCollector implementationClass="com.jetbrains.python.debugger.statistics.PyDataViewerCollector"/>
-    <statistics.counterUsagesCollector implementationClass="com.intellij.python.community.impl.installer.BinaryInstallerUsagesCollector"/>
 
     <!-- Code-insight IDE bridge -->
+    <!--suppress PluginXmlRegistrationCheck -->
     <applicationService serviceInterface="com.jetbrains.python.PythonRuntimeService"
                         serviceImplementation="com.jetbrains.python.PythonRuntimeServiceImpl"/>
+    <!--suppress PluginXmlRegistrationCheck -->
     <applicationService serviceInterface="com.jetbrains.python.PythonUiService"
                         serviceImplementation="com.jetbrains.python.PythonUiServiceImpl"/>
+    <!--suppress PluginXmlRegistrationCheck -->
     <applicationService serviceInterface="com.jetbrains.python.codeInsight.imports.PyImportCollectorFactory"
                         serviceImplementation="com.jetbrains.python.codeInsight.imports.CodeStylePyImportCollectorFactory"/>
+    <!--suppress PluginXmlRegistrationCheck -->
     <applicationService serviceInterface="com.jetbrains.python.codeInsight.imports.ImportChooser"
                         serviceImplementation="com.jetbrains.python.codeInsight.imports.PyImportChooser"/>
+    <!--suppress PluginXmlRegistrationCheck -->
     <applicationService serviceInterface="com.jetbrains.python.refactoring.PyRefactoringUiService"
                         serviceImplementation="com.jetbrains.python.refactoring.PyRefactoringUiServiceImpl"/>
+    <!--suppress PluginXmlRegistrationCheck -->
     <applicationService serviceInterface="com.jetbrains.python.PythonDocumentationHighlightingService"
                         serviceImplementation="com.jetbrains.python.PythonDocumentationHighlightingServiceImpl"/>
 
@@ -552,10 +572,6 @@
 
     <!-- Targets API -->
     <registryKey key="enable.conda.on.targets" defaultValue="false" description="Enables Conda configuration on targets."/>
-    <registryKey key="python.packaging.tool.use.project.location.as.working.dir" defaultValue="false"
-                 description="Use project location as a working directory for the packaging tool execution."/>
-    <registryKey key="python.packaging.tool.upload.project" defaultValue="false"
-                 description="Upload project files and use this location as a working directory for the packaging tool execution."/>
 
     <notificationGroup id="Python Debugger" displayType="TOOL_WINDOW" toolWindowId="Debug" bundle="messages.PyBundle"
                        key="debug.notification.group"/>
@@ -655,10 +671,6 @@
     <!-- Setting up cross-module dependencies -->
     <registryKey key="python.detect.cross.module.dependencies" defaultValue="false"
                  description="Try to detect and automatically set-up module dependencies in a multi-module project"/>
-    <registryKey key="python.project.model.poetry" defaultValue="false" restartRequired="true"
-                 description="Automatically set up multi-module Poetry projects"/>
-    <registryKey key="python.project.model.uv" defaultValue="false" restartRequired="true"
-                 description="Automatically set up multi-module uv projects"/>
 
     <feedback.idleFeedbackSurvey implementation="com.jetbrains.python.statistics.feedback.PythonJobSurvey"/>
     <statistics.counterUsagesCollector implementationClass="com.jetbrains.python.statistics.feedback.PythonJobStatisticsCollector"/>
@@ -694,9 +706,6 @@
     <extensionPoint qualifiedName="Pythonid.runnableScriptFilter" interface="com.jetbrains.python.run.RunnableScriptFilter" dynamic="true"/>
     <extensionPoint qualifiedName="Pythonid.unresolvedReferenceQuickFixProvider"
                     interface="com.jetbrains.python.inspections.PyUnresolvedReferenceQuickFixProvider"
-                    dynamic="true"/>
-    <extensionPoint qualifiedName="Pythonid.documentationLinkProvider"
-                    interface="com.jetbrains.python.documentation.PythonDocumentationLinkProvider"
                     dynamic="true"/>
     <extensionPoint qualifiedName="Pythonid.runConfigurationExtension" interface="com.jetbrains.python.run.PythonRunConfigurationExtension"
                     dynamic="true"/>
@@ -915,21 +924,6 @@
 
 
     <systemPythonProvider implementation="com.jetbrains.python.sdk.uv.UvSystemPythonProvider"/>
-    <systemPythonProvider implementation="com.intellij.python.community.services.systemPython.impl.providers.LegacySystemPythonProvider"/>
-
-    <systemPythonProvider implementation="com.intellij.python.community.services.systemPython.impl.providers.BrewSystemPythonProvider"
-                          os="mac"/>
-    <systemPythonProvider implementation="com.intellij.python.community.services.systemPython.impl.providers.MacSystemPythonProvider"
-                          os="mac"/>
-
-    <systemPythonProvider implementation="com.intellij.python.community.services.systemPython.impl.providers.WindowsSystemPythonProvider"
-                          os="windows"/>
-
-    <systemPythonProvider implementation="com.intellij.python.community.services.systemPython.impl.providers.AsdfSystemPythonProvider"/>
-    <systemPythonProvider implementation="com.intellij.python.community.services.systemPython.impl.providers.PyenvSystemPythonProvider"/>
-
-    <systemPythonProvider implementation="com.intellij.python.community.services.systemPython.impl.providers.UnixSystemPythonProvider"
-                          os="unix"/>
 
     <inspectionExtension implementation="com.jetbrains.python.sdk.configuration.suppressors.PyInterpreterInspectionSuppressor"/>
     <inspectionExtension implementation="com.jetbrains.python.inspections.PyUnresolvedReferenceDefaultInspectionExtension" order="last"/>
@@ -1042,7 +1036,7 @@
     </action>
 
     <action id="StepIntoMyCode" class="com.jetbrains.python.debugger.PyStepIntoMyCodeAction"
-            icon="com.jetbrains.python.icons.PythonIcons.Python.Debug.StepIntoMyCode">
+            icon="AllIcons.Debugger.StepIntoMyCode">
       <add-to-group group-id="DebuggingActionsGroup" relative-to-action="StepInto" anchor="after"/>
       <add-to-group group-id="XDebugger.ToolWindow.TopToolbar" relative-to-action="StepInto" anchor="after"/>
       <add-to-group group-id="XDebugger.ToolWindow.TopToolbar3" relative-to-action="StepInto" anchor="after"/>
@@ -1062,12 +1056,6 @@
     <action id="MarkNamespacePackageDirectory" class="com.jetbrains.python.namespacePackages.PyMarkAsNamespacePackageAction">
       <add-to-group group-id="MarkRootGroup" anchor="after" relative-to-action="MarkSourceRoot"/>
     </action>
-
-    <action id="Python.PoetrySync" class="com.jetbrains.python.projectModel.poetry.PoetrySyncAction"/>
-    <action id="Python.PoetryLink" class="com.jetbrains.python.projectModel.poetry.PoetryLinkAction"/>
-
-    <action id="Python.UvSync" class="com.jetbrains.python.projectModel.uv.UvSyncAction"/>
-    <action id="Python.UvLink" class="com.jetbrains.python.projectModel.uv.UvLinkAction"/>
 
     <!--suppress PluginXmlI18n -->
     <group id="Internal.Python" internal="true" popup="true" text="Python">
@@ -1126,7 +1114,7 @@
 
       <action id="PipSetDefaultRequirementsAction"
               class="com.jetbrains.python.packaging.pip.actions.PipSetDefaultRequirementsAction"
-              icon="com.intellij.icons.AllIcons.General.GreenCheckmark"/>
+              icon="com.jetbrains.python.icons.PythonIcons.Python.ReferencedFile"/>
       <action id="PipUpdateEnvAction"
               class="com.jetbrains.python.packaging.pip.actions.PipUpdateEnvAction"
               icon="com.intellij.icons.AllIcons.Actions.Refresh"/>

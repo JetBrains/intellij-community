@@ -58,7 +58,7 @@ public final class OverridableMethodCallDuringObjectConstructionInspection exten
   }
 
   @Override
-  public BaseInspectionVisitor buildVisitor() {
+  public @NotNull BaseInspectionVisitor buildVisitor() {
     return new OverridableMethodCallInConstructorVisitor();
   }
 

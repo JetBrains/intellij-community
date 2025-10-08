@@ -1,9 +1,9 @@
 ### auto-generated section `build intellij.grazie.tests` start
-load("@rules_jvm//:jvm.bzl", "jvm_library", "jvm_resources")
+load("@rules_jvm//:jvm.bzl", "jvm_library", "resourcegroup")
 
-jvm_resources(
+resourcegroup(
   name = "grazie-tests_test_resources",
-  files = glob(["testResources/**/*"]),
+  srcs = glob(["testResources/**/*"]),
   strip_prefix = "testResources"
 )
 
@@ -18,15 +18,18 @@ jvm_library(
   module_name = "intellij.grazie.tests",
   visibility = ["//visibility:public"],
   srcs = glob(["kotlin/**/*.kt", "kotlin/**/*.java", "kotlin/**/*.form"], allow_empty = True),
+  resources = [":grazie-tests_test_resources"],
   deps = [
     "//platform/analysis-api:analysis",
     "//platform/core-api:core",
     "//platform/core-ui",
     "//platform/editor-ui-api:editor-ui",
     "//platform/projectModel-api:projectModel",
+    "//platform/util/jdom",
     "//spellchecker",
     "//spellchecker:spellchecker_test_lib",
     "//plugins/grazie",
+    "//plugins/grazie/src:core",
     "@lib//:kotlin-test",
     "//java/testFramework",
     "@lib//:grazie-tests-ai-grazie-spell-hunspell-de",
@@ -66,8 +69,7 @@ jvm_library(
     "@lib//:grazie-tests-ai-grazie-spell-hunspell-de",
     "@lib//:grazie-tests-ai-grazie-spell-hunspell-ru",
     "@lib//:grazie-tests-ai-grazie-spell-hunspell-uk",
-  ],
-  runtime_deps = [":grazie-tests_test_resources"]
+  ]
 )
 ### auto-generated section `build intellij.grazie.tests` end
 

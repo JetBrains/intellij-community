@@ -282,6 +282,7 @@ org.jetbrains.jewel.foundation.lazy.SelectableColumnOnKeyEvent
 - onSelectNextItem(java.util.List,org.jetbrains.jewel.foundation.lazy.SelectableLazyListState):V
 - onSelectPreviousItem(java.util.List,org.jetbrains.jewel.foundation.lazy.SelectableLazyListState):V
 f:org.jetbrains.jewel.foundation.lazy.SelectableLazyColumnKt
+- sf:SelectableLazyColumn(androidx.compose.ui.Modifier,org.jetbrains.jewel.foundation.lazy.SelectionMode,org.jetbrains.jewel.foundation.lazy.SelectableLazyListState,androidx.compose.foundation.layout.PaddingValues,Z,kotlin.jvm.functions.Function1,androidx.compose.foundation.layout.Arrangement$Vertical,androidx.compose.ui.Alignment$Horizontal,androidx.compose.foundation.gestures.FlingBehavior,org.jetbrains.jewel.foundation.lazy.tree.KeyActions,org.jetbrains.jewel.foundation.lazy.tree.PointerEventActions,androidx.compose.foundation.interaction.MutableInteractionSource,kotlin.jvm.functions.Function1,androidx.compose.runtime.Composer,I,I,I):V
 - sf:SelectableLazyColumn(androidx.compose.ui.Modifier,org.jetbrains.jewel.foundation.lazy.SelectionMode,org.jetbrains.jewel.foundation.lazy.SelectableLazyListState,androidx.compose.foundation.layout.PaddingValues,Z,kotlin.jvm.functions.Function1,androidx.compose.foundation.layout.Arrangement$Vertical,androidx.compose.ui.Alignment$Horizontal,androidx.compose.foundation.gestures.FlingBehavior,org.jetbrains.jewel.foundation.lazy.tree.KeyActions,org.jetbrains.jewel.foundation.lazy.tree.PointerEventActions,kotlin.jvm.functions.Function1,androidx.compose.runtime.Composer,I,I,I):V
 org.jetbrains.jewel.foundation.lazy.SelectableLazyItemScope
 - androidx.compose.foundation.lazy.LazyItemScope
@@ -356,6 +357,7 @@ e:org.jetbrains.jewel.foundation.lazy.SelectionMode
 - s:valueOf(java.lang.String):org.jetbrains.jewel.foundation.lazy.SelectionMode
 - s:values():org.jetbrains.jewel.foundation.lazy.SelectionMode[]
 f:org.jetbrains.jewel.foundation.lazy.tree.BasicLazyTreeKt
+- sf:BasicLazyTree-X48TzrA(org.jetbrains.jewel.foundation.lazy.tree.Tree,J,J,J,F,androidx.compose.foundation.shape.CornerSize,androidx.compose.foundation.layout.PaddingValues,androidx.compose.foundation.layout.PaddingValues,F,F,kotlin.jvm.functions.Function1,kotlin.jvm.functions.Function1,kotlin.jvm.functions.Function1,kotlin.jvm.functions.Function3,androidx.compose.ui.Modifier,org.jetbrains.jewel.foundation.lazy.SelectionMode,org.jetbrains.jewel.foundation.lazy.tree.TreeState,J,org.jetbrains.jewel.foundation.lazy.tree.KeyActions,org.jetbrains.jewel.foundation.lazy.tree.PointerEventActions,androidx.compose.foundation.interaction.MutableInteractionSource,kotlin.jvm.functions.Function4,androidx.compose.runtime.Composer,I,I,I,I):V
 - sf:BasicLazyTree-orM9XXQ(org.jetbrains.jewel.foundation.lazy.tree.Tree,org.jetbrains.jewel.foundation.lazy.SelectionMode,kotlin.jvm.functions.Function1,J,J,J,F,androidx.compose.foundation.shape.CornerSize,androidx.compose.foundation.layout.PaddingValues,androidx.compose.foundation.layout.PaddingValues,F,F,org.jetbrains.jewel.foundation.lazy.tree.TreeState,androidx.compose.ui.Modifier,kotlin.jvm.functions.Function1,kotlin.jvm.functions.Function1,J,org.jetbrains.jewel.foundation.lazy.tree.KeyActions,org.jetbrains.jewel.foundation.lazy.tree.PointerEventActions,kotlin.jvm.functions.Function3,kotlin.jvm.functions.Function4,androidx.compose.runtime.Composer,I,I,I,I):V
 f:org.jetbrains.jewel.foundation.lazy.tree.BuildTreeKt
 - sf:asTree(java.io.File,kotlin.jvm.functions.Function1):org.jetbrains.jewel.foundation.lazy.tree.Tree
@@ -621,6 +623,36 @@ f:org.jetbrains.jewel.foundation.modifier.ModifierExtensionsKt
 f:org.jetbrains.jewel.foundation.modifier.PointerModifiersKt
 - sf:onHover(androidx.compose.ui.Modifier,kotlin.jvm.functions.Function1):androidx.compose.ui.Modifier
 - sf:onMove(androidx.compose.ui.Modifier,kotlin.jvm.functions.Function1):androidx.compose.ui.Modifier
+e:org.jetbrains.jewel.foundation.search.MatchingCaseSensitivity
+- java.lang.Enum
+- sf:All:org.jetbrains.jewel.foundation.search.MatchingCaseSensitivity
+- sf:FirstLetter:org.jetbrains.jewel.foundation.search.MatchingCaseSensitivity
+- sf:None:org.jetbrains.jewel.foundation.search.MatchingCaseSensitivity
+- s:getEntries():kotlin.enums.EnumEntries
+- s:valueOf(java.lang.String):org.jetbrains.jewel.foundation.search.MatchingCaseSensitivity
+- s:values():org.jetbrains.jewel.foundation.search.MatchingCaseSensitivity[]
+org.jetbrains.jewel.foundation.search.SpeedSearchMatcher
+- sf:Companion:org.jetbrains.jewel.foundation.search.SpeedSearchMatcher$Companion
+- a:matches(java.lang.String):org.jetbrains.jewel.foundation.search.SpeedSearchMatcher$MatchResult
+f:org.jetbrains.jewel.foundation.search.SpeedSearchMatcher$Companion
+- f:exactSubstringMatcher(java.lang.String,Z):org.jetbrains.jewel.foundation.search.SpeedSearchMatcher
+- bs:exactSubstringMatcher$default(org.jetbrains.jewel.foundation.search.SpeedSearchMatcher$Companion,java.lang.String,Z,I,java.lang.Object):org.jetbrains.jewel.foundation.search.SpeedSearchMatcher
+- f:patternMatcher(java.lang.String,Z,org.jetbrains.jewel.foundation.search.MatchingCaseSensitivity,java.lang.String):org.jetbrains.jewel.foundation.search.SpeedSearchMatcher
+- bs:patternMatcher$default(org.jetbrains.jewel.foundation.search.SpeedSearchMatcher$Companion,java.lang.String,Z,org.jetbrains.jewel.foundation.search.MatchingCaseSensitivity,java.lang.String,I,java.lang.Object):org.jetbrains.jewel.foundation.search.SpeedSearchMatcher
+org.jetbrains.jewel.foundation.search.SpeedSearchMatcher$MatchResult
+- sf:Companion:org.jetbrains.jewel.foundation.search.SpeedSearchMatcher$MatchResult$Companion
+f:org.jetbrains.jewel.foundation.search.SpeedSearchMatcher$MatchResult$Companion
+f:org.jetbrains.jewel.foundation.search.SpeedSearchMatcher$MatchResult$Match
+- org.jetbrains.jewel.foundation.search.SpeedSearchMatcher$MatchResult
+- sf:$stable:I
+- <init>(java.util.List):V
+- equals(java.lang.Object):Z
+- f:getRanges():java.util.List
+- hashCode():I
+f:org.jetbrains.jewel.foundation.search.SpeedSearchMatcher$MatchResult$NoMatch
+- org.jetbrains.jewel.foundation.search.SpeedSearchMatcher$MatchResult
+- sf:$stable:I
+- sf:INSTANCE:org.jetbrains.jewel.foundation.search.SpeedSearchMatcher$MatchResult$NoMatch
 f:org.jetbrains.jewel.foundation.state.CommonStateBitMask
 - sf:$stable:I
 - sf:FIRST_AVAILABLE_OFFSET:I

@@ -26,6 +26,7 @@ import org.jetbrains.intellij.build.impl.PlatformJarNames.TEST_FRAMEWORK_JAR
 import org.jetbrains.jps.model.java.JavaSourceRootType
 import org.jetbrains.jps.model.java.JpsJavaClasspathKind
 import org.jetbrains.jps.model.java.JpsJavaExtensionService
+import org.jetbrains.jps.model.module.JpsLibraryDependency
 import org.jetbrains.jps.model.module.JpsModuleReference
 import java.nio.file.Files
 import java.nio.file.Path
@@ -122,6 +123,8 @@ suspend fun createPlatformLayout(context: BuildContext): PlatformLayout {
   )
 }
 
+const val LIB_MODULE_PREFIX: String = "intellij.libraries."
+
 internal suspend fun createPlatformLayout(projectLibrariesUsedByPlugins: SortedSet<ProjectLibraryData>, context: BuildContext): PlatformLayout {
   val frontendModuleFilter = context.getFrontendModuleFilter()
   val productLayout = context.productProperties.productLayout
@@ -164,11 +167,6 @@ internal suspend fun createPlatformLayout(projectLibrariesUsedByPlugins: SortedS
     // to ensure that package index will not report one more JAR in a search path
     "intellij.platform.bootstrap.coroutine",
   ), productLayout = productLayout, layout = layout)
-  // used by jdom - pack to the same JAR
-  layout.withProjectLibrary(libraryName = "aalto-xml", jarName = UTIL_8_JAR)
-  // Space plugin uses it and bundles into IntelliJ IDEA, but not bundles into DataGrip, so, or Space plugin should bundle this lib,
-  // or IJ Platform. As it is a small library and consistency is important across other coroutine libs, bundle to IJ Platform.
-  layout.withProjectLibrary(libraryName = "kotlinx-coroutines-slf4j", LibraryPackMode.STANDALONE_SEPARATE_WITHOUT_VERSION_NAME)
 
   // https://jetbrains.team/p/ij/reviews/67104/timeline
   // https://youtrack.jetbrains.com/issue/IDEA-179784
@@ -302,25 +300,34 @@ internal suspend fun createPlatformLayout(projectLibrariesUsedByPlugins: SortedS
       .sortedBy { it.moduleName },
   )
 
+  val libAsProductModule = collectExportedLibrariesFromLibraryModules(layout, context).keys
+  layout.libAsProductModule = libAsProductModule
+
   // sqlite - used by DB and "import settings" (temporarily)
   layout.alwaysPackToPlugin(listOf("flexmark", "sqlite"))
   for (item in projectLibrariesUsedByPlugins) {
-    if (!layout.isProjectLibraryExcluded(item.libraryName) && !layout.isLibraryAlwaysPackedIntoPlugin(item.libraryName)) {
+    val libName = item.libraryName
+    if (!libAsProductModule.contains(libName) && !layout.isProjectLibraryExcluded(libName) && !layout.isLibraryAlwaysPackedIntoPlugin(libName)) {
       layout.includedProjectLibraries.add(item)
     }
   }
-  // as a separate step, not a part of computing implicitModules, as we should collect libraries from a such implicitly included modules
+
+  // as a separate step, not a part of computing implicitModules, as we should collect libraries from such implicitly included modules
   layout.collectProjectLibrariesFromIncludedModules(context = context) { lib, module ->
-    val name = lib.name
+    val libName = lib.name
     // this module is used only when running IDE from sources, no need to include its dependencies, see IJPL-125
-    if (module.name == "intellij.platform.buildScripts.downloader" && name == "zstd-jni") {
+    if (module.name == "intellij.platform.buildScripts.downloader" && libName == "zstd-jni") {
+      return@collectProjectLibrariesFromIncludedModules
+    }
+
+    if (libAsProductModule.contains(libName)) {
       return@collectProjectLibrariesFromIncludedModules
     }
 
     layout.includedProjectLibraries
       .addOrGet(ProjectLibraryData(
-        libraryName = name,
-        packMode = PLATFORM_CUSTOM_PACK_MODE.getOrDefault(name, LibraryPackMode.MERGED),
+        libraryName = libName,
+        packMode = PLATFORM_CUSTOM_PACK_MODE.getOrDefault(libName, LibraryPackMode.MERGED),
         reason = "<- ${module.name}",
       ))
       .dependentModules.computeIfAbsent("core") { mutableListOf() }.add(module.name)
@@ -334,6 +341,50 @@ internal suspend fun createPlatformLayout(projectLibrariesUsedByPlugins: SortedS
   }
 
   return layout
+}
+
+/**
+ * Collects names of libraries that are exported by library modules (modules with prefix [LIB_MODULE_PREFIX]).
+ * 
+ * Library modules like `intellij.libraries.grpc` export one or more project libraries 
+ * (e.g., `grpc-core`, `grpc-stub`, `grpc-kotlin-stub`, `grpc-protobuf`).
+ * These exported libraries should be treated as product modules and not included separately.
+ * 
+ * Note: We cannot replace all direct library references with library modules due to:
+ * - Dual project structures (Fleet, Toolbox) that require direct library references
+ * - Modules used in both production and build scripts (e.g., `intellij.platform.buildScripts.downloader`)
+ * 
+ * @param layout the platform layout containing included modules
+ * @param context the build context
+ * @return map from library name to the library module that exports it
+ */
+fun collectExportedLibrariesFromLibraryModules(
+  layout: PlatformLayout,
+  context: BuildContext
+): Map<String, String> {
+  val javaExtensionService = JpsJavaExtensionService.getInstance()
+  val result = mutableMapOf<String, String>()
+  
+  layout.includedModules
+    .asSequence()
+    .filter { it.moduleName.startsWith(LIB_MODULE_PREFIX) }
+    .forEach { moduleItem ->
+      val module = context.findRequiredModule(moduleItem.moduleName)
+      // Get all library dependencies from the module
+      module.dependenciesList.dependencies
+        .asSequence()
+        .filterIsInstance<JpsLibraryDependency>()
+        .filter { libDep ->
+          // Check if this library is exported
+          javaExtensionService.getDependencyExtension(libDep)?.isExported == true
+        }
+        .mapNotNull { it.library?.name }
+        .forEach { libName ->
+          result[libName] = moduleItem.moduleName
+        }
+    }
+  
+  return result
 }
 
 private fun getProductModuleJarName(moduleName: String, context: BuildContext, frontendModuleFilter: FrontendModuleFilter): String {
@@ -634,7 +685,19 @@ private suspend fun collectAndEmbedProductModules(root: Element, xIncludePathRes
       continue
     }
 
-    val relativeOutFile = if (loadingRule == "embedded") getProductModuleJarName(moduleName, context, frontendModuleFilter) else "modules/$moduleName.jar"
+    val relativeOutFile = if (loadingRule == "embedded") {
+      if (isModuleCloseSource(moduleName, context = context)) {
+        if (frontendModuleFilter.isBackendModule(moduleName)) PRODUCT_BACKEND_JAR else PRODUCT_JAR
+      }
+      else {
+        // todo Change location after feature-freeze (and maybe by that time, https://youtrack.jetbrains.com/issue/IJPL-209476/extract-core-out-of-core will be ready).
+        // Using `modules` before release is not a safe option.
+        "module-$moduleName.jar"
+      }
+    }
+    else {
+      "modules/$moduleName.jar"
+    }
     result.add(ModuleItem(moduleName = moduleName, relativeOutputFile = relativeOutFile, reason = ModuleIncludeReasons.PRODUCT_MODULES))
     PRODUCT_MODULE_IMPL_COMPOSITION.get(moduleName)?.let {
       it.mapTo(result) { subModuleName ->

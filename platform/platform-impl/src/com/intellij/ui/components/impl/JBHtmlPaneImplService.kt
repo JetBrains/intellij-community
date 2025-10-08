@@ -28,6 +28,9 @@ internal class JBHtmlPaneImplService : JBHtmlPane.ImplService {
   override fun transpileHtmlPaneInput(@Nls text: String): @Nls String =
     JBHtmlPaneInputTranspiler.transpileHtmlPaneInput(text)
 
+  override val jsoupCustomTagSet: Any
+    get() = JBHtmlPaneInputTranspiler.customTagSet
+
   override fun defaultEditorCssFontResolver(): CSSFontResolver =
     EditorCssFontResolver.getGlobalInstance()
 

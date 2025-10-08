@@ -178,7 +178,7 @@ public final class SharedImplUtil {
         psi = (PsiElement)childNode;
       }
       else {
-        psi = childNode.getPsi();
+        psi = SourceTreeToPsiMap.treeToPsiNotNull(childNode);
       }
       psi.accept(visitor);
 

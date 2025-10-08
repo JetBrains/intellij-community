@@ -48,8 +48,8 @@ public class SyntheticCodeBlock implements Block, JavaBlock{
     myAlignment = alignment;
     mySettings = settings;
     myWrap = wrap;
-    myTextRange = new TextRange(mySubBlocks.get(0).getTextRange().getStartOffset(),
-                                mySubBlocks.get(mySubBlocks.size() - 1).getTextRange().getEndOffset());
+    myTextRange = new TextRange(mySubBlocks.getFirst().getTextRange().getStartOffset(),
+                                mySubBlocks.getLast().getTextRange().getEndOffset());
   }
 
   @Override
@@ -85,13 +85,13 @@ public class SyntheticCodeBlock implements Block, JavaBlock{
   @Override
   public String toString() {
     ASTNode treeNode = null;
-    Block child = mySubBlocks.get(0);
+    Block child = mySubBlocks.getFirst();
     while (treeNode == null) {
       if (child instanceof AbstractBlock) {
         treeNode = ((AbstractBlock)child).getNode();
       }
       else if (child instanceof SyntheticCodeBlock) {
-        child = ((SyntheticCodeBlock)child).mySubBlocks.get(0);
+        child = ((SyntheticCodeBlock)child).mySubBlocks.getFirst();
       }
       else {
         break;
@@ -112,7 +112,7 @@ public class SyntheticCodeBlock implements Block, JavaBlock{
 
   @Override
   public @Nullable ASTNode getFirstTreeNode() {
-    return AbstractJavaBlock.getTreeNode(mySubBlocks.get(0));
+    return AbstractJavaBlock.getTreeNode(mySubBlocks.getFirst());
   }
 
   public void setChildAttributes(final ChildAttributes childAttributes) {
@@ -160,7 +160,7 @@ public class SyntheticCodeBlock implements Block, JavaBlock{
   private static boolean isDotFirst(final Block block) {
     Block current = block;
     while (!current.getSubBlocks().isEmpty()) {
-      current = current.getSubBlocks().get(0);
+      current = current.getSubBlocks().getFirst();
     }
     ASTNode node = current instanceof LeafBlock ? ((LeafBlock)current).getNode() : null;
     return node != null && node.getElementType() == JavaTokenType.DOT;
@@ -170,8 +170,7 @@ public class SyntheticCodeBlock implements Block, JavaBlock{
     Block rightMost = null;
     List<Block> subBlocks = getSubBlocks();
     while (!subBlocks.isEmpty()) {
-      int lastIndex = subBlocks.size() - 1;
-      rightMost = subBlocks.get(lastIndex);
+      rightMost = subBlocks.getLast();
       subBlocks = rightMost.getSubBlocks();
     }
     return rightMost;
@@ -180,7 +179,7 @@ public class SyntheticCodeBlock implements Block, JavaBlock{
   @Override
   public boolean isIncomplete() {
     if (myIsIncomplete) return true;
-    return getSubBlocks().get(getSubBlocks().size() - 1).isIncomplete();
+    return getSubBlocks().getLast().isIncomplete();
   }
 
   @Override

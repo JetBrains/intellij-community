@@ -3,7 +3,6 @@ package com.intellij.util.ui;
 
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.DialogWrapper;
-import com.intellij.openapi.ui.DoNotAskOption;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -13,7 +12,7 @@ import java.awt.*;
 public abstract class OptionsDialog extends DialogWrapper {
   protected final Project myProject;
 
-  private class MyDoNotAsk implements DoNotAskOption {
+  private class MyDoNotAsk implements com.intellij.openapi.ui.DoNotAskOption {
     @Override
     public boolean isToBeShown() {
       return OptionsDialog.this.isToBeShown();

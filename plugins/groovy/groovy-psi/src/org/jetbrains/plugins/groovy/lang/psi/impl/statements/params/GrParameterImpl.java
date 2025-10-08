@@ -1,4 +1,4 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.plugins.groovy.lang.psi.impl.statements.params;
 
 import com.intellij.lang.ASTNode;
@@ -7,6 +7,7 @@ import com.intellij.psi.codeStyle.JavaCodeStyleManager;
 import com.intellij.psi.search.LocalSearchScope;
 import com.intellij.psi.search.SearchScope;
 import com.intellij.util.IncorrectOperationException;
+import com.siyeh.ig.psiutils.TypeUtils;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.plugins.groovy.lang.groovydoc.psi.api.GrDocComment;
@@ -60,6 +61,10 @@ public class GrParameterImpl extends GrVariableBaseImpl<GrParameterStub> impleme
     final PsiType declaredType = getDeclaredType();
     if (declaredType != null) return declaredType;
 
+    if (isIndexVariable()) {
+      return PsiTypes.intType();
+    }
+
     if (isVarArgs()) {
       PsiClassType type = TypesUtil.getJavaLangObject(this);
       return new PsiEllipsisType(type);
@@ -105,8 +110,14 @@ public class GrParameterImpl extends GrVariableBaseImpl<GrParameterStub> impleme
     }
   }
 
+  private boolean isIndexVariable() {
+    if (!(getParent() instanceof GrForInClause closure)) return false;
+    return closure.getIndexVariable() == this;
+  }
+
   private boolean isMainMethodFirstUntypedParameter() {
-    if (getTypeElementGroovy() != null) return false;
+    GrTypeElement typeElement = getTypeElementGroovy();
+    if (typeElement != null && !TypeUtils.isJavaLangObject(typeElement.getType())) return false;
     if (!(getParent() instanceof GrParameterList parameterList)) return false;
     if (isOptional()) return false;
 
@@ -160,6 +171,9 @@ public class GrParameterImpl extends GrVariableBaseImpl<GrParameterStub> impleme
 
   @Override
   public @NotNull SearchScope getUseScope() {
+    if (isUnnamed()) {
+      return LocalSearchScope.EMPTY;
+    }
     if (!isPhysical()) {
       final PsiFile file = getContainingFile();
       final PsiElement context = file.getContext();

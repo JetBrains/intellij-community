@@ -2,6 +2,7 @@
 package com.intellij.platform.eel.provider.utils
 
 import com.intellij.openapi.progress.runBlockingMaybeCancellable
+import com.intellij.openapi.util.io.FileTooBigException
 import com.intellij.platform.eel.EelExecApi
 import com.intellij.platform.eel.EelPlatform
 import com.intellij.platform.eel.EelResult
@@ -87,6 +88,8 @@ fun EelFsError.throwFileSystemException(): Nothing {
       -> throw IllegalArgumentException(message)
     is EelOpenedFile.Writer.WriteError.InvalidValue -> throw IllegalArgumentException(message)
     is EelFileSystemApi.DeleteError.UnresolvedLink -> throw FileSystemException(where.toString(), null, message)
+    is EelFileSystemApi.FileReaderError.FileBiggerThanRequested ->
+      throw FileSystemException(where.toString(), null, "File is too big").apply { initCause(FileTooBigException("File is too big")) }
     is EelFsError.Other -> FileSystemException(where.toString(), null, message.nullize())
   }
 }

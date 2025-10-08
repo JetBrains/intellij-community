@@ -6,7 +6,7 @@ import com.intellij.ide.IdeBundle
 import com.intellij.ide.util.PropertiesComponent
 import com.intellij.internal.statistic.eventLog.EventLogGroup
 import com.intellij.internal.statistic.service.fus.collectors.CounterUsagesCollector
-import com.intellij.openapi.application.ConfigImportHelper
+import com.intellij.openapi.application.InitialConfigImportState
 import com.intellij.openapi.util.IconLoader
 import com.intellij.openapi.wm.BannerStartPagePromoter
 import com.intellij.openapi.wm.StartPagePromoter.Companion.PRIORITY_LEVEL_NORMAL
@@ -77,7 +77,7 @@ internal class TechInsightsLabPromoter : BannerStartPagePromoter() {
     if (PropertiesComponent.getInstance().getBoolean(BUTTON_CLICKED_PROPERTY) || !PlatformUtils.isJetBrainsProduct()) {
       return false
     }
-    if (ConfigImportHelper.isFirstSession() || ConfigImportHelper.isConfigImported()) {
+    if (InitialConfigImportState.isFirstSession() || InitialConfigImportState.isConfigImported()) {
       return false
     }
     if (LicensingFacade.getInstance()?.isEvaluationLicense == true) {

@@ -20,7 +20,7 @@ jvm_library(
   kotlinc_opts = ":custom_api",
   deps = [
     "@lib//:kotlin-stdlib",
-    "@lib//:kotlin-reflect",
+    "//libraries/kotlin-reflect",
     "@lib//:kotlinc-kotlin-compiler-common",
     "@lib//:kotlinc-analysis-api",
     "//platform/analysis-api:analysis",

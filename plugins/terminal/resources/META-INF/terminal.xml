@@ -11,7 +11,8 @@
                          key="configurable.TerminalOptionsConfigurable.display.name"
                          id="terminal" instance="org.jetbrains.plugins.terminal.TerminalOptionsConfigurable"/>
 
-    <fileEditorProvider id="terminal-session-editor" implementation="org.jetbrains.plugins.terminal.vfs.TerminalSessionEditorProvider"/>
+    <fileEditorProvider id="classic-terminal-session-editor"
+                        implementation="org.jetbrains.plugins.terminal.vfs.ClassicTerminalSessionEditorProvider"/>
 
     <applicationService serviceImplementation="org.jetbrains.plugins.terminal.TerminalOptionsProvider"/>
     <applicationService serviceInterface="org.jetbrains.plugins.terminal.settings.TerminalLocalOptions"
@@ -67,13 +68,10 @@
     <registryKey key="terminal.generic.hyperlinks" defaultValue="false"
                  description="Show generic file hyperlinks in the reworked terminal. Such hyperlinks are highlighted on mouse hover.
                   Open a new terminal after enabling this option to take effect."/>
-    <registryKey key="terminal.split.hyperlinks" defaultValue="true"
-                 description="Hyperlink support split between the frontend and the backend. Only affects new sessions."/>
 
     <experimentalFeature id="terminal.shell.command.handling" percentOfUsers="100"/>
     <terminal.shellCommandHandler implementation="org.jetbrains.plugins.terminal.RunAnythingTerminalBridge"/>
     <terminal.shellCommandHandler implementation="org.jetbrains.plugins.terminal.OpenFileShellCommandHandler"/>
-    <selectInTarget implementation="org.jetbrains.plugins.terminal.view.SelectInTerminal"/>
 
     <actionPromoter implementation="org.jetbrains.plugins.terminal.action.TerminalCtrlCActionsPromoter"/>
     <editorActionHandler action="EditorEnter" implementationClass="org.jetbrains.plugins.terminal.block.prompt.TerminalEnterHandler"
@@ -105,6 +103,7 @@
              order="before stats"
              implementationClass="org.jetbrains.plugins.terminal.block.completion.ShellCommandSpecCompletionWeigher"/>
     <feedback.idleFeedbackSurvey implementation="org.jetbrains.plugins.terminal.block.feedback.ReworkedTerminalFeedbackSurvey"/>
+    <feedback.idleFeedbackSurvey implementation="org.jetbrains.plugins.terminal.block.completion.feedback.TerminalCompletionFeedbackSurvey"/>
 
     <lang.fileViewProviderFactory language="Terminal Prompt"
                                   implementationClass="org.jetbrains.plugins.terminal.block.prompt.lang.TerminalPromptFileViewProviderFactory"/>
@@ -153,10 +152,10 @@
                     interface="org.jetbrains.plugins.terminal.block.history.TerminalCommandHistoryProvider"/>
     <extensionPoint qualifiedName="org.jetbrains.plugins.terminal.exp.commandBlockHighlighterProvider"
                     interface="org.jetbrains.plugins.terminal.block.output.highlighting.TerminalCommandBlockHighlighterProvider" dynamic="true"/>
-    <extensionPoint qualifiedName="org.jetbrains.plugins.terminal.terminalWidgetProvider" dynamic="true"
-                    interface="org.jetbrains.plugins.terminal.TerminalWidgetProvider"/>
     <extensionPoint qualifiedName="org.jetbrains.plugins.terminal.terminalCloudCompletionSettingsProvider" dynamic="true"
                     interface="org.jetbrains.plugins.terminal.TerminalCloudCompletionSettingsProvider"/>
+    <extensionPoint qualifiedName="org.jetbrains.plugins.terminal.toolWindowInitializer"
+                    interface="org.jetbrains.plugins.terminal.TerminalToolWindowInitializer" dynamic="true"/>
   </extensionPoints>
 
   <applicationListeners>
@@ -170,17 +169,6 @@
   </projectListeners>
 
   <actions resource-bundle="messages.TerminalBundle">
-    <group id="TerminalToolwindowActionGroup">
-      <action id="Terminal.NewTab" class="org.jetbrains.plugins.terminal.action.TerminalNewTabAction">
-        <keyboard-shortcut first-keystroke="control shift T" keymap="$default"/>
-        <keyboard-shortcut first-keystroke="meta T" keymap="Mac OS X" replace-all="true"/>
-        <keyboard-shortcut first-keystroke="meta T" keymap="Mac OS X 10.5+" replace-all="true"/>
-        <keyboard-shortcut first-keystroke="ctrl shift BACK_QUOTE" keymap="VSCode" replace-all="true"/>
-        <keyboard-shortcut first-keystroke="ctrl shift BACK_QUOTE" keymap="VSCode OSX" replace-all="true"/>
-      </action>
-      <action id="TerminalNewPredefinedSession" class="org.jetbrains.plugins.terminal.action.TerminalNewPredefinedSessionAction"
-              icon="AllIcons.Toolbar.Expand"/>
-    </group>
     <group id="Terminal.HyperlinkContextMenu" class="org.jetbrains.plugins.terminal.hyperlinks.HyperlinkContextMenuActionGroup" />
   </actions>
 </idea-plugin>

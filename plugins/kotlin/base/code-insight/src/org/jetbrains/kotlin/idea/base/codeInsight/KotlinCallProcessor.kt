@@ -212,6 +212,8 @@ object KotlinCallProcessor {
                                 // TODO: KTIJ-34670 drop this implementation
                                 val call = object : KaSimpleVariableAccessCall {
                                     override val simpleAccess: KaSimpleVariableAccess.Read get() = withValidityAssertion { ReadAccess }
+                                    @KaExperimentalApi
+                                    override val isContextSensitive: Boolean get() = withValidityAssertion { false }
                                     override val partiallyAppliedSymbol: KaPartiallyAppliedSymbol<KaVariableSymbol, KaVariableSignature<KaVariableSymbol>> get() = withValidityAssertion { partiallyAppliedSymbol }
                                     override val typeArgumentsMapping: Map<KaTypeParameterSymbol, KaType> get() = withValidityAssertion { emptyMap() }
                                     override val token: KaLifetimeToken get() = partiallyAppliedSymbol.token

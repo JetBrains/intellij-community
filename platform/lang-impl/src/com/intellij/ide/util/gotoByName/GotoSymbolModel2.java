@@ -17,7 +17,7 @@ import java.util.Collection;
 import java.util.HashSet;
 import java.util.List;
 
-public class GotoSymbolModel2 extends FilteringGotoByModel<LanguageRef> {
+public class GotoSymbolModel2 extends DisposableGotoModelWithPersistentFilter<LanguageRef> {
   private String[] mySeparators;
   private final boolean myAllContributors;
 

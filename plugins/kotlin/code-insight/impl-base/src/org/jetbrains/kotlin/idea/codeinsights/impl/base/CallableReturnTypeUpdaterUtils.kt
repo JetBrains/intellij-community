@@ -22,17 +22,7 @@ import com.intellij.psi.util.endOffset
 import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.kotlin.analysis.api.KaExperimentalApi
 import org.jetbrains.kotlin.analysis.api.KaSession
-import org.jetbrains.kotlin.analysis.api.components.approximateToSuperPublicDenotableOrSelf
-import org.jetbrains.kotlin.analysis.api.components.directSupertypes
-import org.jetbrains.kotlin.analysis.api.components.directlyOverriddenSymbols
-import org.jetbrains.kotlin.analysis.api.components.hasFlexibleNullability
-import org.jetbrains.kotlin.analysis.api.components.isMarkedNullable
-import org.jetbrains.kotlin.analysis.api.components.isNothingType
-import org.jetbrains.kotlin.analysis.api.components.isNullable
-import org.jetbrains.kotlin.analysis.api.components.isUnitType
-import org.jetbrains.kotlin.analysis.api.components.render
-import org.jetbrains.kotlin.analysis.api.components.returnType
-import org.jetbrains.kotlin.analysis.api.components.withNullability
+import org.jetbrains.kotlin.analysis.api.components.*
 import org.jetbrains.kotlin.analysis.api.renderer.types.impl.KaTypeRendererForSource
 import org.jetbrains.kotlin.analysis.api.symbols.KaCallableSymbol
 import org.jetbrains.kotlin.analysis.api.symbols.symbol
@@ -234,15 +224,32 @@ object CallableReturnTypeUpdaterUtils {
     context(session: KaSession)
     @OptIn(KaExperimentalApi::class)
     @ApiStatus.Internal
-    fun <T> calculateAllTypes(declaration: KtCallableDeclaration, allTypesConsumer: (KaType, Sequence<KaType>, Boolean) -> T?): T? {
-        val declarationType = declaration.returnType
+    fun <T> calculateAllTypes(
+        declaration: KtCallableDeclaration,
+        useSmartCastType: Boolean = false,
+        allTypesConsumer: (KaType, Sequence<KaType>, Boolean) -> T?
+    ): T? {
+        val declarationTypes = buildList {
+            if (useSmartCastType) {
+                val smartCastInfo = (declaration as? KtProperty)?.initializer?.smartCastInfo
+                val smartCastTypes = when (val stableSmartCastType = smartCastInfo?.takeIf { it.isStable }?.smartCastType) {
+                    is KaIntersectionType -> stableSmartCastType.conjuncts
+                    is KaUsualClassType, is KaTypeParameterType -> listOf(stableSmartCastType)
+                    else -> emptyList()
+                }
+                addAll(smartCastTypes)
+            }
+            if (this.isEmpty()) {
+                add(declaration.returnType)
+            }
+        }
         val overriddenTypes = (declaration.symbol as? KaCallableSymbol)?.directlyOverriddenSymbols
             ?.map { it.returnType }
             ?.distinctBy { createTypeByKtType(it) }
             ?.toList()
             ?: emptyList()
         val cannotBeNull = overriddenTypes.any { !it.isNullable }
-        val allTypes = (listOf(declarationType) + overriddenTypes)
+        val allTypes = (declarationTypes + overriddenTypes)
             // Here we do BFS manually rather than invoke `getAllSuperTypes` because we have multiple starting points. Simply calling
             // `getAllSuperTypes` does not work because it would BFS traverse each starting point and put the result together, in which
             // case, for example, calling `getAllSuperTypes` would put `Any` at middle if one of the super type in the hierarchy has
@@ -253,24 +260,24 @@ object CallableReturnTypeUpdaterUtils {
             .let { types ->
                 when {
                     cannotBeNull -> types.map { it.withNullability(false) }.distinctBy { createTypeByKtType(it) }
-                    declarationType.hasFlexibleNullability -> types.flatMap { type ->
+                    declarationTypes.any { it.hasFlexibleNullability } -> types.flatMap { type ->
                         listOf(type.withNullability(false), type.withNullability(true))
                     }
 
                     else -> types
                 }
             }
-        return allTypesConsumer(declarationType, allTypes, cannotBeNull)
+        return allTypesConsumer(declarationTypes.first(), allTypes, cannotBeNull)
     }
 
     private fun KaClassType.isLocal(): Boolean =
         classId.isLocal
 
     context(_: KaSession)
+    @ApiStatus.Internal
     @OptIn(KaExperimentalApi::class)
-    fun getTypeInfo(declaration: KtCallableDeclaration, useTemplate: Boolean = true): TypeInfo {
-
-        val calculateAllTypes = calculateAllTypes(declaration) { declarationType, allTypes, cannotBeNull ->
+    fun getTypeInfo(declaration: KtCallableDeclaration, useSmartCastType: Boolean = false, useTemplate: Boolean = true): TypeInfo {
+        val calculateAllTypes = calculateAllTypes(declaration, useSmartCastType = useSmartCastType) { declarationType, allTypes, cannotBeNull ->
             if (isUnitTestMode()) {
                 selectForUnitTest(declaration, allTypes.toList())?.let { return@calculateAllTypes it }
             }
@@ -325,6 +332,15 @@ object CallableReturnTypeUpdaterUtils {
             val targetType = allTypes.firstOrNull { !it.isNothingType } ?: allTypes.first()
             return createByKtTypes(targetType)
         }
+        val chooseElement = declaration.containingKtFile.findDescendantOfType<PsiComment>()?.takeIf {
+            it.text.startsWith("// CHOOSE_ELEMENT:")
+        }
+        if (chooseElement != null) {
+            val index = chooseElement.text.removePrefix("// CHOOSE_ELEMENT:").trim().toIntOrNull() ?: return null
+            val targetType = allTypes[index]
+            return createByKtTypes(targetType)
+        }
+
         return null
     }
 

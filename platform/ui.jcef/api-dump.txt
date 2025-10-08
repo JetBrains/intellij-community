@@ -1,3 +1,6 @@
+a:com.intellij.ui.jcef.JBCefBrowserBase
+- runJavaScript(java.lang.String):V
+- runJavaScript(java.lang.String,java.lang.String,I):V
 com.intellij.ui.jcef.JBCefBrowserBase$ErrorPage
 - sf:DEFAULT:com.intellij.ui.jcef.JBCefBrowserBase$ErrorPage
 - a:create(org.cef.handler.CefLoadHandler$ErrorCode,java.lang.String,java.lang.String):java.lang.String

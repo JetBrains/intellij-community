@@ -24,7 +24,7 @@ interface GitBranchesPopup: TreePopup {
   fun getExpandedPathsSize(): Int
 
   companion object {
-    fun createDefaultPopup(project: Project, preferredSelection: GitRepositoryModel?): GitBranchesPopup =
-      GitDefaultBranchesPopup.create(project, preferredSelection)
+    fun createDefaultPopup(project: Project, preferredSelection: GitRepositoryModel?, repositories: List<GitRepositoryModel>): GitBranchesPopup =
+      GitDefaultBranchesPopup.create(project, preferredSelection, repositories)
   }
 }

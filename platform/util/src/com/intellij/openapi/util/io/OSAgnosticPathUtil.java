@@ -1,10 +1,12 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.util.io;
 
 import com.intellij.openapi.util.SystemInfoRt;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.util.text.Strings;
 import com.intellij.util.PathUtilRt;
+import com.intellij.util.SystemProperties;
+import org.jetbrains.annotations.Contract;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -168,5 +170,18 @@ public final class OSAgnosticPathUtil {
 
   public static boolean isDriveLetter(char c) {
     return 'A' <= c && c <= 'Z' || 'a' <= c && c <= 'z';
+  }
+
+  @Contract(pure = true)
+  public static @NotNull String expandUserHome(@NotNull String path) {
+    if (path.equals("~")) {
+      return SystemProperties.getUserHome();
+    }
+    else if (path.startsWith("~/") || path.startsWith("~\\")) {
+      return SystemProperties.getUserHome() + path.substring(1);
+    }
+    else {
+      return path;
+    }
   }
 }

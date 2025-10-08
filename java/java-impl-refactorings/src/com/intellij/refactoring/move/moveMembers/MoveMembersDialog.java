@@ -1,7 +1,6 @@
 // Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.refactoring.move.moveMembers;
 
-import com.intellij.ide.util.ClassFilter;
 import com.intellij.ide.util.PackageUtil;
 import com.intellij.ide.util.TreeClassChooser;
 import com.intellij.ide.util.TreeClassChooserFactory;
@@ -377,12 +376,8 @@ public class MoveMembersDialog extends MoveDialogBase implements MoveMembersOpti
     @Override
     public void actionPerformed(ActionEvent e) {
       TreeClassChooser chooser = TreeClassChooserFactory.getInstance(myProject).createWithInnerClassesScopeChooser(
-        RefactoringBundle.message("choose.destination.class"), GlobalSearchScope.projectScope(myProject), new ClassFilter() {
-        @Override
-        public boolean isAccepted(PsiClass aClass) {
-          return aClass.getParent() instanceof PsiFile || aClass.hasModifierProperty(PsiModifier.STATIC);
-        }
-      }, null);
+        RefactoringBundle.message("choose.destination.class"), GlobalSearchScope.projectScope(myProject),
+        aClass -> aClass.getParent() instanceof PsiFile || aClass.hasModifierProperty(PsiModifier.STATIC), null);
       final String targetClassName = getTargetClassName();
       if (targetClassName != null) {
         final PsiClass aClass = JavaPsiFacade.getInstance(myProject).findClass(targetClassName, GlobalSearchScope.allScope(myProject));

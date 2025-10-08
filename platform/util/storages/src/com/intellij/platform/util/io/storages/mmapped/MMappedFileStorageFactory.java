@@ -1,9 +1,10 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.platform.util.io.storages.mmapped;
 
 import com.intellij.openapi.diagnostic.Logger;
-import com.intellij.openapi.util.io.FileUtil;
+import com.intellij.openapi.util.io.NioFiles;
 import com.intellij.platform.util.io.storages.StorageFactory;
+import com.intellij.platform.util.io.storages.mmapped.MMappedFileStorage.RegionAllocationAtomicityLock;
 import com.intellij.util.io.IOUtil;
 import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
@@ -15,7 +16,7 @@ import java.nio.file.NoSuchFileException;
 import java.nio.file.Path;
 
 import static com.intellij.platform.util.io.storages.mmapped.MMappedFileStorageFactory.IfNotPageAligned.THROW_EXCEPTION;
-import static java.nio.file.StandardOpenOption.*;
+import static java.nio.file.StandardOpenOption.WRITE;
 
 
 @ApiStatus.Internal
@@ -89,10 +90,9 @@ public class MMappedFileStorageFactory implements StorageFactory<MMappedFileStor
 
     if (!storageFileExists) {
       checkParentDirectories(absoluteStoragePath);
-    }//if storage file does exist => parentDir definitely does exist also
+    }//if the storage file does exist => parentDir definitely does exist also
 
-    MMappedFileStorage.RegionAllocationAtomicityLock
-      regionAllocationLock = MMappedFileStorage.RegionAllocationAtomicityLock.defaultLock(absoluteStoragePath);
+    RegionAllocationAtomicityLock regionAllocationLock = RegionAllocationAtomicityLock.defaultLock(absoluteStoragePath);
 
     long fileSize = storageFileExists ? Files.size(absoluteStoragePath) : 0;
 
@@ -103,20 +103,28 @@ public class MMappedFileStorageFactory implements StorageFactory<MMappedFileStor
     return new MMappedFileStorage(absoluteStoragePath, pageSize, regionAllocationLock);
   }
 
-  private void dealWithPageUnAlignedFileSize(Path storagePath,
+  private void dealWithPageUnAlignedFileSize(@NotNull Path storagePath,
                                              long fileSize,
-                                             MMappedFileStorage.RegionAllocationAtomicityLock regionAllocationLock) throws IOException {
-    // It is generally an error to have file un-aligned with page size.
-    //    One exception is if next-page-expansion wasn't finished because of app crash -> check for it.
-    //    Another exception: we're explicitly asked to ignore that and just expand the file to page-aligned size
+                                             @NotNull RegionAllocationAtomicityLock regionAllocationLock) throws IOException {
+    // It is generally an error to have the file size unaligned with page size.
+    //    Exception #1: if next-page-expansion wasn't finished because of the app crash -> check for it.
+    //    Exception #2: we're explicitly asked to ignore that and just expand the file to page-aligned size
     //    Otherwise: fail
 
     //Maybe there was a file expansion interrupted by app crash/kill?
     long startOfSuspiciousRegion = (fileSize / pageSize) * pageSize;
-    MMappedFileStorage.RegionAllocationAtomicityLock.Region region = regionAllocationLock.region(startOfSuspiciousRegion, pageSize);
+    RegionAllocationAtomicityLock.Region region = regionAllocationLock.region(startOfSuspiciousRegion, pageSize);
     if (region.isUnfinished()) {
       //There is an 'unfinished' region -- i.e. file expansion and zeroing started, but was interrupted by app crash/kill.
-      // MMappedFileStorage will deal with it, no need to do anything here
+      // We _could_ do nothing here, and let MMappedFileStorage deal with it, but this leaves the invariant "channel.size is
+      // aligned with page size" broken for a while (until next page allocation 'fixes' it), which is undesirable.
+      // Better finish the work right now:
+      LOG.warn("mmapped file region " + region + " allocation & zeroing has been started, " +
+               "but hasn't been properly finished -- IDE was crashed/killed? -> try finishing the job");
+      try (FileChannel channel = FileChannel.open(storagePath, WRITE)) {
+        IOUtil.fillFileRegionWithZeros(channel, startOfSuspiciousRegion, startOfSuspiciousRegion + pageSize);
+      }
+      region.finish();
       return;
     }
 
@@ -129,13 +137,16 @@ public class MMappedFileStorageFactory implements StorageFactory<MMappedFileStor
         LOG.warn("[" + storagePath + "]: fileSize(=" + fileSize + " b) is not page(=" + pageSize + " b)-aligned -> expand until aligned");
         //expand (zeroes) file up to the next page:
         long fileSizeRoundedUpToPageSize = ((fileSize / pageSize) + 1) * pageSize;
+        region.start();
         try (FileChannel channel = FileChannel.open(storagePath, WRITE)) {
           IOUtil.allocateFileRegion(channel, fileSizeRoundedUpToPageSize);
         }
+        region.finish();
       }
+
       case CLEAN -> {
         LOG.warn("[" + storagePath + "]: fileSize(=" + fileSize + " b) is not page(=" + pageSize + " b)-aligned -> delete & re-create");
-        FileUtil.delete(storagePath);
+        NioFiles.deleteRecursively(storagePath);
       }
     }
   }

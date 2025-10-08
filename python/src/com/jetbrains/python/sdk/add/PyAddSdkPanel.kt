@@ -13,12 +13,12 @@ import com.intellij.openapi.util.NlsContexts
 import com.intellij.openapi.util.SystemInfo
 import com.intellij.openapi.util.UserDataHolder
 import com.intellij.util.concurrency.annotations.RequiresEdt
-import com.jetbrains.python.PySdkBundle
+import com.jetbrains.python.sdk.impl.PySdkBundle
 import com.jetbrains.python.newProject.collector.InterpreterStatisticsInfo
+import com.jetbrains.python.parser.icons.PythonParserIcons
 import com.jetbrains.python.pathValidation.PlatformAndRoot
 import com.jetbrains.python.pathValidation.ValidationRequest
 import com.jetbrains.python.pathValidation.validateEmptyDir
-import com.jetbrains.python.psi.icons.PythonPsiApiIcons
 import com.jetbrains.python.sdk.PyDetectedSdk
 import com.jetbrains.python.sdk.PySdkToInstall
 import com.jetbrains.python.sdk.configuration.findPreferredVirtualEnvBaseSdk
@@ -36,7 +36,7 @@ abstract class PyAddSdkPanel : JPanel(), PyAddSdkView {
     get() = this
 
   abstract override val panelName: String
-  override val icon: Icon = PythonPsiApiIcons.Python
+  override val icon: Icon = PythonParserIcons.PythonFile
   open val sdk: Sdk? = null
   open val nameExtensionComponent: JComponent? = null
   open var newProjectPath: String? = null

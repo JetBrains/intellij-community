@@ -31,7 +31,7 @@ public final class ApplicationNamesInfo {
     String prefix = System.getProperty(PlatformUtils.PLATFORM_PREFIX_KEY, "");
     String appInfoData = getAppInfoData();
 
-    if (AppMode.isDevServer() && appInfoData.isEmpty()) {
+    if (AppMode.isRunningFromDevBuild() && appInfoData.isEmpty()) {
       String module = null;
       if (prefix.isEmpty() || prefix.equals(PlatformUtils.IDEA_PREFIX)) {
         module = "intellij.idea.ultimate.customization";

@@ -11,7 +11,7 @@ import org.jetbrains.kotlin.idea.debugger.test.TestFiles
 import org.jetbrains.kotlin.idea.k2.debugger.test.cases.AbstractK2IdeK2CodeKotlinEvaluateExpressionTest
 import java.nio.file.Path
 
-private const val PARCELIZE_RUNTIME_MAVEN_COORDINATES = "org.jetbrains.kotlin:kotlin-parcelize-runtime:1.8.20"
+private const val PARCELIZE_RUNTIME_BAZEL_COORDINATES = "@kotlin_test_deps//:kotlin-parcelize-runtime-1.8.20.jar"
 
 abstract class AbstractK2ParcelizeDebuggerEvaluationTest : AbstractK2IdeK2CodeKotlinEvaluateExpressionTest() {
     override fun createDebuggerTestCompilerFacility(
@@ -22,7 +22,11 @@ abstract class AbstractK2ParcelizeDebuggerEvaluationTest : AbstractK2IdeK2CodeKo
         val facility = super.createDebuggerTestCompilerFacility(testFiles, jvmTarget, compileConfig)
 
         facility.addCompilerPlugin(parcelizeCompilerJars)
-        addMavenDependency(facility, "maven(${PARCELIZE_RUNTIME_MAVEN_COORDINATES})")
+        addDependenciesByLabels(
+            facility,
+            listOf("classes(${PARCELIZE_RUNTIME_BAZEL_COORDINATES})"),
+            emptyList()
+        )
 
         return facility
     }

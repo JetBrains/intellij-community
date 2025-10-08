@@ -19,7 +19,8 @@ import org.jetbrains.kotlin.name.Name
 internal class K2SuperEntryContributor : K2SimpleCompletionContributor<KotlinSuperTypeCallNameReferencePositionContext>(
     KotlinSuperTypeCallNameReferencePositionContext::class
 ) {
-    override fun KaSession.complete(context: K2CompletionSectionContext<KotlinSuperTypeCallNameReferencePositionContext>) {
+    context(_: KaSession, context: K2CompletionSectionContext<KotlinSuperTypeCallNameReferencePositionContext>)
+    override fun complete() {
         getSuperClassesAvailableForSuperCall(context.positionContext.nameExpression).forEach { superType ->
             val tailText = superType.classId?.asString()?.let { "($it)" }
             LookupElementBuilder.create(SuperLookupObject(superType.name, superType.classId), superType.name.asString())

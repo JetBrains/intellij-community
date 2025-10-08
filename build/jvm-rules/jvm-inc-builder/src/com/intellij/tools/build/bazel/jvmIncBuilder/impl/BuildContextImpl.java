@@ -33,6 +33,7 @@ public class BuildContextImpl implements BuildContext {
 
   private final @NotNull NodeSourceSnapshot mySources;
   private final @NotNull NodeSourceSnapshot myLibraries;
+  private final @NotNull Iterable<ResourceGroup> myResources;
   private final boolean myIsRebuild;
   private final BuilderOptions myBuilderOptions;
 
@@ -63,27 +64,44 @@ public class BuildContextImpl implements BuildContext {
     
     myIsRebuild = CLFlags.NON_INCREMENTAL.isFlagSet(flags);
 
-    Map<NodeSource, String> sourcesMap = new HashMap<>();
-    Map<Path, String> otherInputsMap = new HashMap<>();
+    Map<String, String> digestsMap = new HashMap<>();
     Base64.Encoder base64 = Base64.getEncoder().withoutPadding();
     for (Input input : inputs) {
-      Path inputPath = baseDir.resolve(input.path).normalize();
       String inputDigest = base64.encodeToString(input.digest);
-      if (isSourceDependency(inputPath)) {
-        sourcesMap.put(myPathMapper.toNodeSource(inputPath), inputDigest);
-      }
-      else {
-        otherInputsMap.put(inputPath, inputDigest);
-      }
+      digestsMap.put(input.path, inputDigest);
+    }
+
+    Map<NodeSource, String> sourcesMap = new HashMap<>();
+    for (String src : CLFlags.SRCS.getValue(flags)) {
+      Path inputPath = baseDir.resolve(src).normalize();
+      assert isSourceDependency(inputPath);
+      sourcesMap.put(myPathMapper.toNodeSource(inputPath), Objects.requireNonNull(digestsMap.get(src)));
     }
     mySources = new SourceSnapshotImpl(sourcesMap);
 
     Map<NodeSource, String> libsMap = new LinkedHashMap<>(); // for the classpath order is important
     for (String cpEntry : CLFlags.CP.getValue(flags)) {
       Path path = baseDir.resolve(cpEntry).normalize();
-      libsMap.put(myPathMapper.toNodeSource(path), otherInputsMap.getOrDefault(path, ""));
+      libsMap.put(myPathMapper.toNodeSource(path), Objects.requireNonNull(digestsMap.get(cpEntry)));
     }
     myLibraries = new SourceSnapshotImpl(libsMap);
+
+    List<ResourceGroup> resources = new ArrayList<>();
+    for (String resourcesEntry : CLFlags.RESOURCES.getValue(flags)) {
+      String[] parts = resourcesEntry.split(":", 3);
+      String stripPrefix = parts[0];
+      String addPrefix = parts[1];
+      Map<NodeSource, String> resourcesMap = new HashMap<>();
+      for (String file : parts[2].split(":")) {
+        Path path = baseDir.resolve(file).normalize();
+        String digest = Objects.requireNonNull(digestsMap.get(file));
+        resourcesMap.put(myPathMapper.toNodeSource(path), digest);
+      }
+      if (!resourcesMap.isEmpty()) {
+        resources.add(new ResourceGroupImpl(resourcesMap, stripPrefix, addPrefix));
+      }
+    }
+    myResources = resources;
 
     myBuilderOptions = BuilderOptions.create(buildJavaOptions(flags), buildKotlinOptions(flags, map(myLibraries.getElements(), myPathMapper::toPath)));
   }
@@ -310,6 +328,11 @@ public class BuildContextImpl implements BuildContext {
   @Override
   public NodeSourceSnapshot getBinaryDependencies() {
     return myLibraries;
+  }
+
+  @Override
+  public Iterable<ResourceGroup> getResources() {
+    return myResources;
   }
 
   @Override

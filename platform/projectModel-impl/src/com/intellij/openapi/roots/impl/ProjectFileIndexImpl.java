@@ -11,6 +11,7 @@ import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.vfs.VirtualFileFilter;
 import com.intellij.platform.backend.workspace.WorkspaceModel;
 import com.intellij.platform.workspace.jps.entities.LibraryEntity;
+import com.intellij.platform.workspace.jps.entities.SdkEntity;
 import com.intellij.platform.workspace.storage.ImmutableEntityStorage;
 import com.intellij.util.SmartList;
 import com.intellij.util.containers.ContainerUtil;
@@ -23,6 +24,7 @@ import kotlin.Pair;
 import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+import org.jetbrains.annotations.Unmodifiable;
 import org.jetbrains.jps.model.module.JpsModuleSourceRootType;
 
 import java.util.*;
@@ -76,6 +78,11 @@ public class ProjectFileIndexImpl extends FileIndexBase implements ProjectFileIn
   @Override
   public @NotNull Collection<@NotNull LibraryEntity> findContainingLibraries(@NotNull VirtualFile fileOrDir) {
     return myWorkspaceFileIndex.findContainingEntities(fileOrDir, LibraryEntity.class, true, false, false, true, true, false);
+  }
+
+  @Override
+  public @NotNull @Unmodifiable Collection<@NotNull SdkEntity> findContainingSdks(@NotNull VirtualFile fileOrDir) {
+    return myWorkspaceFileIndex.findContainingEntities(fileOrDir, SdkEntity.class, true, false, false, true, true, false);
   }
 
   @Override
@@ -281,22 +288,6 @@ public class ProjectFileIndexImpl extends FileIndexBase implements ProjectFileIn
     if (fileSet == null) return false;
     JpsModuleSourceRootType<?> type = SourceRootTypeRegistry.getInstance().findTypeById(fileSet.getData().getRootTypeId());
     return type != null && rootTypes.contains(type);
-  }
-
-  @SuppressWarnings("deprecation")
-  @Override
-  public @Nullable SourceFolder getSourceFolder(@NotNull VirtualFile fileOrDir) {
-    WorkspaceFileSetWithCustomData<ModuleSourceRootData> fileSet =
-      myWorkspaceFileIndex.findFileSetWithCustomData(fileOrDir, true, true, true, false, false, false, ModuleSourceRootData.class);
-    if (fileSet == null) return null;
-    for (ContentEntry contentEntry : ModuleRootManager.getInstance(fileSet.getData().getModule()).getContentEntries()) {
-      for (SourceFolder folder : contentEntry.getSourceFolders()) {
-        if (fileSet.getRoot().equals(folder.getFile())) {
-          return folder;
-        }
-      }
-    }
-    return null;
   }
 
   @Override

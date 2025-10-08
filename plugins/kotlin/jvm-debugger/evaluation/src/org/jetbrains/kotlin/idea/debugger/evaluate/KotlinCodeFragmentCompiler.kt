@@ -1,4 +1,4 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.kotlin.idea.debugger.evaluate
 
 import com.intellij.debugger.engine.evaluation.EvaluateException
@@ -6,6 +6,7 @@ import com.intellij.debugger.engine.evaluation.EvaluateExceptionUtil
 import com.intellij.openapi.application.runReadAction
 import com.intellij.openapi.components.service
 import com.intellij.openapi.progress.ProcessCanceledException
+import com.intellij.openapi.progress.runBlockingCancellable
 import com.intellij.openapi.project.IndexNotReadyException
 import com.intellij.psi.PsiElement
 import com.intellij.psi.PsiRecursiveElementVisitor
@@ -21,6 +22,8 @@ import org.jetbrains.kotlin.idea.base.codeInsight.compiler.KotlinCompilerIdeAllo
 import org.jetbrains.kotlin.idea.base.projectStructure.languageVersionSettings
 import org.jetbrains.kotlin.idea.base.util.module
 import org.jetbrains.kotlin.idea.debugger.base.util.evaluate.ExecutionContext
+import org.jetbrains.kotlin.idea.debugger.core.stackFrame.computeKotlinStackFrameInfos
+import org.jetbrains.kotlin.idea.debugger.core.stepping.getLineRange
 import org.jetbrains.kotlin.idea.debugger.evaluate.KotlinEvaluator.Companion.logCompilation
 import org.jetbrains.kotlin.idea.debugger.evaluate.classLoading.ClassToLoad
 import org.jetbrains.kotlin.idea.debugger.evaluate.classLoading.GENERATED_CLASS_NAME
@@ -32,10 +35,6 @@ import org.jetbrains.kotlin.name.NameUtils
 import org.jetbrains.kotlin.psi.KtCodeFragment
 import org.jetbrains.kotlin.psi.KtOperationReferenceExpression
 import java.util.concurrent.ExecutionException
-import com.intellij.openapi.progress.runBlockingCancellable
-import org.jetbrains.kotlin.idea.debugger.core.stackFrame.computeKotlinStackFrameInfos
-import org.jetbrains.kotlin.idea.debugger.core.stepping.getLineRange
-import kotlin.sequences.Sequence
 
 interface KotlinCodeFragmentCompiler {
     val compilerType: CompilerType
@@ -127,7 +126,8 @@ class K2KotlinCodeFragmentCompiler : KotlinCodeFragmentCompiler {
                         previousFrameContainingExpr,
                         context.debugProcess,
                         sourcePositionAtPreviousFrame,
-                        previousFrameContainingExprRange.first..previousFrameContainingExprRange.last
+                        previousFrameContainingExprRange.first..previousFrameContainingExprRange.last,
+                        locationAtPreviousFrame
                     )
                 val notExecuted =
                     runBlockingCancellable {

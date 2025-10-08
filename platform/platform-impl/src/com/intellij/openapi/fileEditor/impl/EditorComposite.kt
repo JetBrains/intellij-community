@@ -190,11 +190,8 @@ open class EditorComposite internal constructor(
   protected open suspend fun beforeFileOpen(scope: CoroutineScope, model: EditorCompositeModel) {}
   @Internal
   protected open suspend fun afterFileOpen(scope: CoroutineScope, model: EditorCompositeModel) {}
-  @Internal
-  protected open suspend fun onHandleModel(model: EditorCompositeModel) {}
 
   private suspend fun handleModel(model: EditorCompositeModel) {
-    onHandleModel(model)
     val fileEditorWithProviders = model.fileEditorAndProviderList
     fileEditorWithProviders.assignEditorProperties()
 
@@ -228,7 +225,7 @@ open class EditorComposite internal constructor(
       beforeFileOpen(this, model)
       // cannot be before use as fileOpenedSync by contract should be called in the same EDT event
       val (goodPublisher, deprecatedPublisher) = deferredPublishers.await()
-      span("file opening in EDT and repaint", Dispatchers.UiWithModelAccess) {
+      span("file opening in EDT and repaint", Dispatchers.EDT) {
         span("beforeFileOpened event executing") {
           computeOrLogException(
             lambda = { beforePublisher!!.beforeFileOpened(fileEditorManager, file) },
@@ -1085,8 +1082,7 @@ internal fun focusEditorOnComposite(
     }
     else {
       if (toFront) {
-        IdeFocusManager.getGlobalInstance().toFront(preferredFocusedComponent)
-        preferredFocusedComponent.requestFocus()
+        IdeFocusManager.getGlobalInstance().requestFocusInProject(preferredFocusedComponent, composite.project)
       }
       else {
         preferredFocusedComponent.requestFocusInWindow()

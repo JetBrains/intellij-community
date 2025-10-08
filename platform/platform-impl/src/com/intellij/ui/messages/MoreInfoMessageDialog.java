@@ -25,7 +25,7 @@ final class MoreInfoMessageDialog extends MessageDialog {
                         Icon icon) {
     super(project);
     myInfoText = moreInfo;
-    _init(title, message, options, defaultOptionIndex, focusedOptionIndex, icon, null, null);
+    _init(title, message, options, defaultOptionIndex, focusedOptionIndex, icon, (com.intellij.openapi.ui.DoNotAskOption)null, null);
   }
 
   @Override

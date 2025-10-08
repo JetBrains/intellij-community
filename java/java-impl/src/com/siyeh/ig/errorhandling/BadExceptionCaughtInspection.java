@@ -81,7 +81,7 @@ public final class BadExceptionCaughtInspection extends BaseInspection {
   }
 
   @Override
-  public BaseInspectionVisitor buildVisitor() {
+  public @NotNull BaseInspectionVisitor buildVisitor() {
     return new BadExceptionCaughtVisitor();
   }
 

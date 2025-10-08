@@ -102,7 +102,7 @@ public class E {
     myFixture.configureFromExistingVirtualFile(file.virtualFile)
     val expected = """//
 // Source code recreated from a .class file by IntelliJ IDEA
-// (powered by FernFlower decompiler)
+// (powered by Fernflower decompiler)
 //
 
 package java.util;

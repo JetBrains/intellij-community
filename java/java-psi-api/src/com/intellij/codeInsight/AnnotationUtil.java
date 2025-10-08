@@ -702,6 +702,7 @@ public class AnnotationUtil {
     {"NotNull", "Nullable", "NonNls", "PropertyKey", "TestOnly", "Language", "Identifier", "Pattern", "PrintFormat", "RegExp", "Subst"};
 
   /** @deprecated simple name is not enough for reliable identification */
+  @ApiStatus.Internal
   @ApiStatus.ScheduledForRemoval
   @Deprecated
   public static boolean isJetbrainsAnnotation(@NotNull String simpleName) {

@@ -1,22 +1,16 @@
 // Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package git4idea.index.actions
 
-import com.intellij.icons.AllIcons
 import com.intellij.openapi.actionSystem.ActionUpdateThread
 import com.intellij.openapi.actionSystem.AnActionEvent
 import com.intellij.openapi.project.DumbAwareToggleAction
 import com.intellij.openapi.vcs.VcsBundle
 import git4idea.index.ui.GitStageDataKeys
 import git4idea.index.ui.GitStageUiSettings
-import java.util.function.Supplier
-import javax.swing.Icon
 
 abstract class GitToggleStageSettingAction : DumbAwareToggleAction {
 
   constructor() : super()
-  constructor(dynamicText: Supplier<String>,
-              dynamicDescription: Supplier<String>,
-              icon: Icon?) : super(dynamicText, dynamicDescription, icon)
 
   abstract var GitStageUiSettings.setting: Boolean
 
@@ -36,9 +30,12 @@ abstract class GitToggleStageSettingAction : DumbAwareToggleAction {
   }
 }
 
-internal class GitToggleIgnoredFilesAction : GitToggleStageSettingAction(VcsBundle.messagePointer("changes.action.show.ignored.text"),
-                                                                VcsBundle.messagePointer("changes.action.show.ignored.description"),
-                                                                AllIcons.Actions.ToggleVisibility) {
+internal class GitToggleIgnoredFilesAction : GitToggleStageSettingAction() {
+  init {
+    templatePresentation.setText(VcsBundle.messagePointer("action.ChangesView.ShowIgnored.text"))
+    templatePresentation.setDescription(VcsBundle.messagePointer("action.ChangesView.ShowIgnored.description"))
+  }
+
   override var GitStageUiSettings.setting: Boolean
     get() = ignoredFilesShown
     set(value) { ignoredFilesShown = value }

@@ -8,6 +8,7 @@ import com.intellij.openapi.updateSettings.impl.pluginsAdvertisement.PluginAdver
 import com.intellij.openapi.updateSettings.impl.pluginsAdvertisement.PromoFeaturePage
 import com.intellij.openapi.updateSettings.impl.pluginsAdvertisement.PromoPages
 import com.intellij.openapi.util.NlsSafe
+import com.intellij.pycharm.community.ide.impl.promo.javaScriptPromoFeatureList
 import com.jetbrains.python.icons.PythonIcons
 import com.jetbrains.python.newProjectWizard.promotion.PromoProjectGenerator
 import javax.swing.Icon

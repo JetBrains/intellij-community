@@ -4,12 +4,14 @@ package com.intellij.tools.build.bazel.jvmIncBuilder.impl;
 import com.intellij.tools.build.bazel.jvmIncBuilder.ZipOutputBuilder;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+import org.jetbrains.intellij.build.io.*;
 
 import java.io.BufferedOutputStream;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
 import java.lang.ref.SoftReference;
+import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
 import java.nio.file.NoSuchFileException;
 import java.nio.file.Path;
@@ -44,6 +46,7 @@ public class ZipOutputBuilderImpl implements ZipOutputBuilder {
   private final @NotNull Path myWriteZipPath;
   private final @NotNull Path myReadZipPath;
   private final @Nullable ZipFile myReadZipFile;
+  private final boolean myCreateIndex;
 
   private final Map<String, byte[]> mySwap;
   private final Map<String, Set<String>> myDirIndex = new HashMap<>();
@@ -54,14 +57,15 @@ public class ZipOutputBuilderImpl implements ZipOutputBuilder {
   }
   
   public ZipOutputBuilderImpl(@NotNull Path readZipPath, @NotNull Path writeZipPath) throws IOException {
-    this(new HashMap<>(), readZipPath, writeZipPath);
+    this(new HashMap<>(), readZipPath, writeZipPath, false);
   }
   
-  public ZipOutputBuilderImpl(Map<String, byte[]> dataSwap, @NotNull Path readZipPath, @NotNull Path writeZipPath) throws IOException {
+  public ZipOutputBuilderImpl(Map<String, byte[]> dataSwap, @NotNull Path readZipPath, @NotNull Path writeZipPath, boolean createIndex) throws IOException {
     myReadZipPath = readZipPath;
     myWriteZipPath = writeZipPath;
     mySwap = dataSwap;
     myReadZipFile = openZipFile(readZipPath);
+    myCreateIndex = createIndex;
     if (myReadZipFile != null) {
       // load existing entries
       Enumeration<? extends ZipEntry> entries = myReadZipFile.entries();
@@ -177,32 +181,26 @@ public class ZipOutputBuilderImpl implements ZipOutputBuilder {
       else {
         boolean useTempOutput = myReadZipFile != null /*srcZip exists*/ && Files.exists(myWriteZipPath) && Files.isSameFile(myReadZipPath, myWriteZipPath);
         Path outputPath = useTempOutput? getTempOutputPath() : myWriteZipPath;
-        try (var zos = new ZipOutputStream(openOutputStream(outputPath))) {
-          zos.setMethod(ZipOutputStream.STORED);
-
-          // augment entry map with all currently present directory entries
-          for (String dirName : myDirIndex.keySet()) {
-            ZipEntry existingEntry = myExistingDirectories.get(dirName);
-            if (existingEntry == null && "/".equals(dirName)) {
-              continue; // keep root '/' entry if it were present in the original zip
-            }
-            if (existingEntry != null) {
-              myEntries.put(dirName, createEntryData(myReadZipFile, existingEntry));
-            }
-            else {
-              myEntries.put(dirName, createEntryData(dirName, EntryData.NO_DATA_BYTES));
-            }
+        try {
+          if (myCreateIndex) {
+            saveToIndexedArchive(outputPath);
           }
-
-          for (Iterator<Map.Entry<String, EntryData>> it = myEntries.entrySet().iterator(); it.hasNext(); ) {
-            EntryData data = it.next().getValue();
-            ZipEntry zipEntry = data.getZipEntry();
-            zos.putNextEntry(zipEntry);
-            if (!zipEntry.isDirectory()) {
-              // either new content or the one loaded from the previous file
-              data.transferTo(zos);
+          else {
+            // augment entry map with all currently present directory entries
+            for (String dirName : myDirIndex.keySet()) {
+              ZipEntry existingEntry = myExistingDirectories.get(dirName);
+              if (existingEntry == null && "/".equals(dirName)) {
+                continue; // keep root '/' entry if it were present in the original zip
+              }
+              if (existingEntry != null) {
+                myEntries.put(dirName, createEntryData(myReadZipFile, existingEntry));
+              }
+              else {
+                myEntries.put(dirName, createEntryData(dirName, EntryData.NO_DATA_BYTES));
+              }
             }
-            it.remove();
+
+            saveToArchive(outputPath);
           }
         }
         finally {
@@ -218,7 +216,45 @@ public class ZipOutputBuilderImpl implements ZipOutputBuilder {
     finally {
       myExistingDirectories.clear();
       myDirIndex.clear();
+      myEntries.clear();
       mySwap.clear();
+    }
+  }
+
+  private void saveToArchive(Path outputPath) throws IOException {
+    try (var zos = new ZipOutputStream(openOutputStream(outputPath))) {
+      zos.setMethod(ZipOutputStream.STORED);
+
+      for (Iterator<Map.Entry<String, EntryData>> it = myEntries.entrySet().iterator(); it.hasNext(); ) {
+        EntryData data = it.next().getValue();
+        ZipEntry zipEntry = data.getZipEntry();
+        zos.putNextEntry(zipEntry);
+        if (!zipEntry.isDirectory()) {
+          // either new content or the one loaded from the previous file
+          data.transferTo(zos);
+        }
+        it.remove();
+      }
+    }
+  }
+
+  private void saveToIndexedArchive(Path outputPath) throws IOException {
+    PackageIndexBuilder indexBuilder = new PackageIndexBuilder(AddDirEntriesMode.ALL, true);
+    try (ZipArchiveOutputStream zos = ZipArchiveOutputStreamKt.zipWriter(outputPath, indexBuilder, true)) {
+      myEntries.remove(IkvIndexBuilderKt.INDEX_FILENAME); // remove old index
+
+      for (Iterator<Map.Entry<String, EntryData>> it = myEntries.entrySet().iterator(); it.hasNext(); ) {
+        EntryData data = it.next().getValue();
+        ZipEntry zipEntry = data.getZipEntry();
+        if (!zipEntry.isDirectory()) {
+          indexBuilder.addFile(zipEntry.getName());
+          zos.uncompressedData(zipEntry.getName().getBytes(StandardCharsets.UTF_8), data.getContent(), myCrc);
+        }
+        else {
+          throw new IOException("Unexpected directory entry in archive content: " + zipEntry.getName());
+        }
+        it.remove();
+      }
     }
   }
 

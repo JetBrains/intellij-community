@@ -2,7 +2,6 @@
 package com.intellij.codeInsight;
 
 import com.intellij.core.JavaPsiBundle;
-import com.intellij.ide.util.ClassFilter;
 import com.intellij.ide.util.TreeClassChooser;
 import com.intellij.ide.util.TreeClassChooserFactory;
 import com.intellij.java.JavaBundle;
@@ -19,8 +18,10 @@ import com.intellij.ui.dsl.builder.DslComponentProperty;
 import com.intellij.ui.dsl.builder.VerticalComponentGap;
 import com.intellij.ui.table.JBTable;
 import com.intellij.util.concurrency.AppExecutorUtil;
+import com.intellij.util.ui.GridBag;
 import com.intellij.util.ui.JBDimension;
 import com.intellij.util.ui.UI;
+import com.intellij.util.ui.UIUtil;
 import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
@@ -100,7 +101,7 @@ public class NullableAnnotationsPanel {
 
       TableColumn checkColumn = new TableColumn(1, 100, new BooleanTableCellRenderer(), new BooleanTableCellEditor());
       columnModel.addColumn(checkColumn);
-      checkColumn.setHeaderValue(" Instrument ");
+      checkColumn.setHeaderValue(" " + JavaBundle.message("nullable.notnull.annotations.panel.column.instrument") + " ");
 
       TableCellRenderer headerRenderer = createHeaderRenderer();
       myTable.getTableHeader().setDefaultRenderer(headerRenderer);
@@ -168,19 +169,10 @@ public class NullableAnnotationsPanel {
 
     myComponent = new JPanel(new GridBagLayout());
     myComponent.putClientProperty(DslComponentProperty.VERTICAL_COMPONENT_GAP, VerticalComponentGap.BOTH);
-    GridBagConstraints constraints = new GridBagConstraints();
-    constraints.anchor = GridBagConstraints.WEST;
-    constraints.weightx = 1;
-    myComponent.add(new JLabel(JavaBundle.message("nullable.notnull.annotation.used.label")), constraints);
-    constraints.fill = GridBagConstraints.HORIZONTAL;
-    constraints.insets.bottom = 3;
-    constraints.gridy = 1;
-    myComponent.add(myCombo, constraints);
-    constraints.insets.bottom = 0;
-    constraints.gridy = 2;
-    constraints.fill = GridBagConstraints.BOTH;
-    constraints.weighty = 1;
-    myComponent.add(tablePanel, constraints);
+    GridBag constraints = new GridBag().setDefaultAnchor(GridBagConstraints.WEST);
+    myComponent.add(new JLabel(JavaBundle.message("nullable.notnull.annotation.used.label")), constraints.nextLine().next());
+    myComponent.add(myCombo, constraints.next().fillCellHorizontally().weightx(1).insetBottom(UIUtil.DEFAULT_VGAP));
+    myComponent.add(tablePanel, constraints.nextLine().coverLine().fillCell().weighty(1));
   }
 
   private @NotNull TableCellRenderer createHeaderRenderer() {
@@ -260,13 +252,8 @@ public class NullableAnnotationsPanel {
 
   private void chooseAnnotation(@NlsSafe String title) {
     final TreeClassChooser chooser = TreeClassChooserFactory.getInstance(myProject)
-      .createNoInnerClassesScopeChooser(JavaBundle.message("dialog.title.choose.annotation", title), GlobalSearchScope.allScope(myProject), new ClassFilter() {
-        @Override
-        public boolean isAccepted(PsiClass aClass) {
-          if (!aClass.isAnnotationType()) return false;
-          return true;
-        }
-      }, null);
+      .createNoInnerClassesScopeChooser(JavaBundle.message("dialog.title.choose.annotation", title), GlobalSearchScope.allScope(myProject),
+                                        PsiClass::isAnnotationType, null);
     chooser.showDialog();
     final PsiClass selected = chooser.getSelected();
     if (selected == null) {

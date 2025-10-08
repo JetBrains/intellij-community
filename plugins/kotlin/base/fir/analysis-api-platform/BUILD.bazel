@@ -1,6 +1,6 @@
 ### auto-generated section `build kotlin.base.fir.analysis-api-platform` start
 load("//build:compiler-options.bzl", "create_kotlinc_options")
-load("@rules_jvm//:jvm.bzl", "jvm_library", "jvm_resources")
+load("@rules_jvm//:jvm.bzl", "jvm_library", "resourcegroup")
 
 create_kotlinc_options(
   name = "custom_analysis-api-platform",
@@ -13,9 +13,9 @@ create_kotlinc_options(
   x_context_parameters = True
 )
 
-jvm_resources(
+resourcegroup(
   name = "analysis-api-platform_resources",
-  files = glob(["resources/**/*"]),
+  srcs = glob(["resources/**/*"]),
   strip_prefix = "resources"
 )
 
@@ -24,6 +24,7 @@ jvm_library(
   module_name = "kotlin.base.fir.analysis-api-platform",
   visibility = ["//visibility:public"],
   srcs = glob(["src/**/*.kt", "src/**/*.java", "src/**/*.form"], allow_empty = True),
+  resources = [":analysis-api-platform_resources"],
   kotlinc_opts = ":custom_analysis-api-platform",
   deps = [
     "//platform/analysis-api:analysis",
@@ -39,6 +40,7 @@ jvm_library(
     "@lib//:kotlinc-analysis-api",
     "@lib//:kotlinc-analysis-api-k2",
     "@lib//:kotlinc-low-level-api-fir",
+    "@lib//:kotlin-base-fir-analysis-api-platform-ehcache-sizeof",
     "//plugins/kotlin/base/util",
     "//plugins/kotlin/base/project-structure",
     "//plugins/kotlin/base/analysis",
@@ -56,8 +58,7 @@ jvm_library(
     "//plugins/kotlin/base/psi",
     "//plugins/kotlin/kotlin.searching:searching-k2",
     "//java/java-psi-impl:psi-impl",
-  ],
-  runtime_deps = [":analysis-api-platform_resources"]
+  ]
 )
 
 jvm_library(
@@ -85,7 +86,8 @@ jvm_library(
     "@lib//:kotlinc-analysis-api-k2",
     "@lib//:kotlinc-low-level-api-fir",
     "@lib//:kotlinc-kotlin-compiler-tests",
-    "@lib//:gson",
+    "@lib//:kotlin-base-fir-analysis-api-platform-ehcache-sizeof",
+    "//libraries/gson",
     "//plugins/kotlin/base/util",
     "//plugins/kotlin/base/util:util_test_lib",
     "//plugins/kotlin/base/project-structure",
@@ -119,8 +121,7 @@ jvm_library(
     "//plugins/kotlin/base/fir/project-structure:project-structure_test_lib",
     "//plugins/kotlin/base/indices",
     "//plugins/kotlin/base/indices/tests:tests_test_lib",
-  ],
-  runtime_deps = [":analysis-api-platform_resources"]
+  ]
 )
 ### auto-generated section `build kotlin.base.fir.analysis-api-platform` end
 

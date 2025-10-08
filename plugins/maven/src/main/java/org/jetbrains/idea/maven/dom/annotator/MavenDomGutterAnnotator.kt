@@ -7,6 +7,7 @@ import com.intellij.ide.util.PsiElementListCellRenderer
 import com.intellij.lang.annotation.AnnotationHolder
 import com.intellij.lang.annotation.Annotator
 import com.intellij.openapi.diagnostic.LogLevel
+import com.intellij.openapi.project.DumbAware
 import com.intellij.openapi.util.Computable
 import com.intellij.openapi.util.NlsContexts
 import com.intellij.openapi.util.text.StringUtil
@@ -26,7 +27,7 @@ import org.jetbrains.idea.maven.dom.model.*
 import org.jetbrains.idea.maven.utils.MavenLog
 import javax.swing.Icon
 
-private class MavenDomGutterAnnotator : Annotator {
+private class MavenDomGutterAnnotator : Annotator, DumbAware {
   override fun annotate(psiElement: PsiElement, holder: AnnotationHolder) {
     if (psiElement is XmlTag) {
       log { "MavenDomGutterAnnotator.annotate ${psiElement.name}" }

@@ -12,7 +12,7 @@ jvm_library(
     "//platform/util-class-loader:util-classLoader",
     "//platform/util/base",
     "//platform/util",
-    "@lib//:fastutil-min",
+    "//libraries/fastutil",
     "@lib//:kotlin-stdlib",
     "@lib//:kotlinx-coroutines-core",
     "@lib//:opentelemetry",

@@ -1,3 +1,6 @@
+c:com.intellij.openapi.roots.impl.ProjectFileIndexFacade
+- com.intellij.openapi.roots.FileIndexFacade
+- *:isIndexable(com.intellij.openapi.vfs.VirtualFile):Z
 *:com.intellij.workspaceModel.core.fileIndex.DependencyDescription
 *f:com.intellij.workspaceModel.core.fileIndex.DependencyDescription$OnArbitraryEntity
 - com.intellij.workspaceModel.core.fileIndex.DependencyDescription
@@ -34,13 +37,11 @@
 - hashCode():I
 *f:com.intellij.workspaceModel.core.fileIndex.DependencyDescription$OnReference
 - com.intellij.workspaceModel.core.fileIndex.DependencyDescription
-- <init>(java.lang.Class,java.lang.Class):V
+- <init>(java.lang.Class):V
 - f:component1():java.lang.Class
-- f:component2():java.lang.Class
-- f:copy(java.lang.Class,java.lang.Class):com.intellij.workspaceModel.core.fileIndex.DependencyDescription$OnReference
-- bs:copy$default(com.intellij.workspaceModel.core.fileIndex.DependencyDescription$OnReference,java.lang.Class,java.lang.Class,I,java.lang.Object):com.intellij.workspaceModel.core.fileIndex.DependencyDescription$OnReference
+- f:copy(java.lang.Class):com.intellij.workspaceModel.core.fileIndex.DependencyDescription$OnReference
+- bs:copy$default(com.intellij.workspaceModel.core.fileIndex.DependencyDescription$OnReference,java.lang.Class,I,java.lang.Object):com.intellij.workspaceModel.core.fileIndex.DependencyDescription$OnReference
 - equals(java.lang.Object):Z
-- f:getReferenceHolderClass():java.lang.Class
 - f:getReferenceSymbolicEntityIdClass():java.lang.Class
 - hashCode():I
 *e:com.intellij.workspaceModel.core.fileIndex.EntityStorageKind

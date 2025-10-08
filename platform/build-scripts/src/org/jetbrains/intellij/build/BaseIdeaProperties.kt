@@ -13,7 +13,6 @@ import org.jetbrains.intellij.build.kotlin.KotlinPluginBuilder
  * Default bundled plugins for all editions of IntelliJ IDEA.
  * See also [DEFAULT_BUNDLED_PLUGINS].
  */
-@Suppress("SpellCheckingInspection")
 val IDEA_BUNDLED_PLUGINS: PersistentList<String> = DEFAULT_BUNDLED_PLUGINS + sequenceOf(
   JavaPluginLayout.MAIN_MODULE_NAME,
   "intellij.java.ide.customization",
@@ -51,7 +50,6 @@ val IDEA_BUNDLED_PLUGINS: PersistentList<String> = DEFAULT_BUNDLED_PLUGINS + seq
   "intellij.sh.plugin",
   "intellij.markdown",
   "intellij.mcpserver",
-  "intellij.webp",
   "intellij.grazie",
   "intellij.featuresTrainer",
   "intellij.toml",
@@ -61,7 +59,6 @@ val IDEA_BUNDLED_PLUGINS: PersistentList<String> = DEFAULT_BUNDLED_PLUGINS + seq
   "intellij.keymap.netbeans",
   "intellij.performanceTesting",
   "intellij.compose.ide.plugin",
-  "intellij.findUsagesMl",
 )
 
 val CE_CLASS_VERSIONS: Map<String, String> = mapOf(
@@ -71,7 +68,6 @@ val CE_CLASS_VERSIONS: Map<String, String> = mapOf(
   "lib/annotations.jar" to "1.8",
   "lib/util_rt.jar" to "1.8",
   "lib/util-8.jar" to "1.8",
-  "lib/guava.jar" to "1.8",
   "lib/external-system-rt.jar" to "1.8",
   "plugins/java-coverage/lib/java-coverage-rt.jar" to "1.8",
   "plugins/junit/lib/junit-rt.jar" to "1.8",
@@ -82,12 +78,21 @@ val CE_CLASS_VERSIONS: Map<String, String> = mapOf(
   "plugins/maven/lib/maven3-server-common.jar" to "1.8",
   "plugins/maven/lib/maven3-server.jar" to "1.8",
   "plugins/maven/lib/artifact-resolver-m31.jar" to "1.8",
-  "plugins/java/lib/jshell-frontend.jar" to "9",
   "plugins/java/lib/sa-jdwp" to "",  // ignored
   "plugins/java/lib/rt/debugger-agent.jar" to "1.7",
   "plugins/Groovy/lib/groovy-rt.jar" to "1.8",
   "plugins/Groovy/lib/groovy-constants-rt.jar" to "1.8",
   "plugins/repository-search/lib/maven-model.jar" to "1.8"
+)
+
+internal val TEST_FRAMEWORK_MODULE_NAMES = linkedSetOf(
+  "intellij.platform.testFramework.common",
+  "intellij.platform.testFramework.junit5",
+  "intellij.platform.testFramework",
+  "intellij.platform.testFramework.core",
+  "intellij.platform.testFramework.impl",
+  "intellij.platform.testFramework.teamCity",
+  "intellij.tools.testsBootstrap",
 )
 
 /**
@@ -99,15 +104,7 @@ val CE_CLASS_VERSIONS: Map<String, String> = mapOf(
  */
 @ApiStatus.Obsolete
 val TEST_FRAMEWORK_LAYOUT_CUSTOMIZER: (PlatformLayout, BuildContext) -> Unit = { layout, _ ->
-  for (name in listOf(
-    "intellij.platform.testFramework.common",
-    "intellij.platform.testFramework.junit5",
-    "intellij.platform.testFramework",
-    "intellij.platform.testFramework.core",
-    "intellij.platform.testFramework.impl",
-    "intellij.platform.testFramework.teamCity",
-    "intellij.tools.testsBootstrap",
-  )) {
+  for (name in TEST_FRAMEWORK_MODULE_NAMES) {
     layout.withModule(name, TEST_FRAMEWORK_JAR)
   }
   layout.withoutProjectLibrary("JUnit4")

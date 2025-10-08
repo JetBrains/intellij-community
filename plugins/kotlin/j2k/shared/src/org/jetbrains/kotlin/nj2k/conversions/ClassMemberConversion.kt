@@ -4,24 +4,22 @@ package org.jetbrains.kotlin.nj2k.conversions
 
 import com.intellij.psi.PsiField
 import com.intellij.psi.PsiMethod
-import org.jetbrains.kotlin.analysis.api.KaSession
 import org.jetbrains.kotlin.j2k.ConverterContext
 import org.jetbrains.kotlin.j2k.Nullability.NotNull
 import org.jetbrains.kotlin.nj2k.*
 import org.jetbrains.kotlin.nj2k.externalCodeProcessing.JKFieldDataFromJava
 import org.jetbrains.kotlin.nj2k.externalCodeProcessing.JKPhysicalMethodData
 import org.jetbrains.kotlin.nj2k.tree.*
-import org.jetbrains.kotlin.nj2k.tree.Visibility.PRIVATE
-import org.jetbrains.kotlin.nj2k.tree.Mutability.*
 import org.jetbrains.kotlin.nj2k.tree.Modality.FINAL
+import org.jetbrains.kotlin.nj2k.tree.Mutability.*
 import org.jetbrains.kotlin.nj2k.tree.OtherModifier.STATIC
+import org.jetbrains.kotlin.nj2k.tree.Visibility.PRIVATE
 import org.jetbrains.kotlin.nj2k.types.JKJavaArrayType
 import org.jetbrains.kotlin.nj2k.types.arrayInnerType
 import org.jetbrains.kotlin.nj2k.types.isStringType
 import org.jetbrains.kotlin.nj2k.types.updateNullabilityRecursively
 
 class ClassMemberConversion(context: ConverterContext) : RecursiveConversion(context) {
-    context(_: KaSession)
     override fun applyToElement(element: JKTreeElement): JKTreeElement {
         when (element) {
             is JKMethodImpl -> element.convert()
@@ -30,7 +28,6 @@ class ClassMemberConversion(context: ConverterContext) : RecursiveConversion(con
         return recurse(element)
     }
 
-    context(_: KaSession)
     private fun JKMethodImpl.convert() {
         removeStaticModifierFromAnonymousClassMember()
 
@@ -80,7 +77,6 @@ class ClassMemberConversion(context: ConverterContext) : RecursiveConversion(con
         }
     }
 
-    context(_: KaSession)
     private fun JKField.convert() {
         removeStaticModifierFromAnonymousClassMember()
         val hasMutableAnnotation = annotationList.annotations.any { MUTABLE_ANNOTATIONS.contains(it.classSymbol.fqName) }

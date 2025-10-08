@@ -73,8 +73,8 @@ public interface JBAccountInfoService {
       LoginSession loginSession = startLoginSession(LoginMode.AUTO);
       loginSession.onCompleted()
         .thenAccept(result -> {
-          if (result instanceof LoginResult.LoginSuccessful successful && userIdConsumer != null) {
-            userIdConsumer.accept(successful.jbaUser().id);
+          if (result instanceof LoginResult.LoginSuccessful(JBAData user) && userIdConsumer != null) {
+            userIdConsumer.accept(user.id);
           }
           if (result instanceof LoginResult.LoginFailed && onFailure != null) {
             onFailure.run();
@@ -123,6 +123,11 @@ public interface JBAccountInfoService {
   @NotNull LoginSession startLoginSession(@NotNull LoginMode loginMode,
                                           @Nullable String authProviderId,
                                           @NotNull Map<@NotNull String, @NotNull String> clientMetadata);
+
+  /**
+   * Performs the logout action by clearing stored authentication data.
+   */
+  @NotNull CompletableFuture<LogoutResult> performLogout();
 
   /**
    * Returns the list of licenses available in the current user's account matching the specified productCode.
@@ -229,6 +234,11 @@ public interface JBAccountInfoService {
   sealed interface LoginResult permits LoginResult.LoginFailed, LoginResult.LoginSuccessful {
     record LoginSuccessful(@NotNull JBAData jbaUser) implements LoginResult { }
     record LoginFailed(@NlsSafe @NotNull String errorMessage) implements LoginResult { }
+  }
+
+  sealed interface LogoutResult permits LogoutResult.LogoutSuccessful, LogoutResult.LogoutFailed {
+    record LogoutSuccessful() implements LogoutResult { }
+    record LogoutFailed(@NlsSafe @NotNull String errorMessage) implements LogoutResult { }
   }
 
   record JbaLicense(

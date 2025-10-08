@@ -1,5 +1,5 @@
 // Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
-@file:Suppress("JavaIoSerializableObjectMustHaveReadResolve")
+@file:Suppress("JavaIoSerializableObjectMustHaveReadResolve", "AssertBetweenInconvertibleTypes")
 
 package org.jetbrains.kotlin.idea.core.script.k1
 
@@ -11,6 +11,7 @@ import org.jetbrains.kotlin.scripting.definitions.ScriptDefinition
 import org.jetbrains.kotlin.scripting.definitions.ScriptDefinitionsSource
 import org.junit.jupiter.api.Assertions.*
 import org.junit.jupiter.api.Test
+import org.junit.jupiter.api.assertNull
 import kotlin.script.experimental.api.KotlinType
 import kotlin.script.experimental.api.ScriptCompilationConfiguration
 import kotlin.script.experimental.api.ScriptEvaluationConfiguration
@@ -56,7 +57,7 @@ class ScriptDefinitionsManagerTest {
         )
 
         manager.reloadDefinitionsBy(sourceA) // DefinitionA is supposed to be cached, DefinitionB not
-        assertEquals(definitionToLoad, manager.findDefinition(script))
+        assertEquals(definitionToLoad, manager.findDefinition(script)!!)
     }
 
     @Test
@@ -66,7 +67,7 @@ class ScriptDefinitionsManagerTest {
 
         val definitionToLoad = TestDefinition("A") { true }
         manager.definitionSources = listOf(sourceA.returning(definitionToLoad)) // the same sources, but now A can load a definition
-        assertEquals(definitionToLoad, manager.findDefinition(script))
+        assertEquals(definitionToLoad, manager.findDefinition(script)!!)
     }
 
     @Test
@@ -103,7 +104,7 @@ class ScriptDefinitionsManagerTest {
 
         assertEquals(
             listOf(definitionA, definitionB, definitionC),
-            managerWithABOrder.getDefinitions()
+            managerWithABOrder.currentDefinitions.toList()
         )
 
         val managerWithBAOrder = ScriptDefinitionsManagerUnderTest(project).apply {
@@ -128,7 +129,7 @@ class ScriptDefinitionsManagerTest {
 
         assertEquals(
             listOf(definitionA, definitionB),
-            manager.getDefinitions()
+            manager.currentDefinitions.toList()
         )
 
         manager.definitionSources = listOf(
@@ -138,14 +139,14 @@ class ScriptDefinitionsManagerTest {
 
         assertEquals(
             listOf(definitionA, definitionB), /* still the same list */
-            manager.getDefinitions()
+            manager.currentDefinitions.toList()
         )
 
         manager.reloadDefinitions()
 
         assertEquals(
             listOf(definitionA, definitionB, definitionC /* now */),
-            manager.getDefinitions()
+            manager.currentDefinitions.toList()
         )
     }
 
@@ -158,7 +159,7 @@ class ScriptDefinitionsManagerTest {
 
         assertEquals(
             listOf(definitionA, definitionB, definitionC),
-            manager.getDefinitions()
+            manager.currentDefinitions.toList()
         )
 
         manager.settings = KotlinScriptingSettingsImpl(project).apply {
@@ -169,7 +170,7 @@ class ScriptDefinitionsManagerTest {
 
         assertEquals(
             listOf(definitionA, definitionB, definitionC), /* no effect */
-            manager.getDefinitions()
+            manager.currentDefinitions.toList()
         )
 
         assertEquals(
@@ -191,11 +192,6 @@ class ScriptDefinitionsManagerTest {
             setEnabled(definitionB, false)
             setEnabled(definitionC, true)
         }
-
-        assertEquals(
-            listOf(definitionA, definitionB, definitionC),
-            manager.getDefinitions()
-        )
 
         assertEquals(
             listOf(definitionA, definitionC),
@@ -295,7 +291,7 @@ class ScriptDefinitionsManagerTest {
         manager.reloadDefinitionsBy(sourceB) // def "B" becomes available
 
         // [sourceA, sourceB] order is expected to be preserved (sourceA is triggered at search)
-        val foundDefinition = manager.findDefinition(script)
+        val foundDefinition = manager.findDefinition(script)!!
         assertEquals(defA, foundDefinition)
     }
 }

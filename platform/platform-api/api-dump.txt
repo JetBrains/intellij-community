@@ -50,6 +50,16 @@ com.intellij.ide.FrameStateListener
 - onFrameActivated(com.intellij.openapi.wm.IdeFrame):V
 - onFrameDeactivated():V
 - onFrameDeactivated(com.intellij.openapi.wm.IdeFrame):V
+c:com.intellij.ide.HelpTooltip
+- p:createIsOverTipMouseListener():java.awt.event.MouseListener
+- p:shouldForceHiding():Z
+pc:com.intellij.ide.HelpTooltip$OverTipMouseListener
+- java.awt.event.MouseAdapter
+- p:<init>(com.intellij.ide.HelpTooltip):V
+- p:doEnter():V
+- p:doExit():V
+- mouseEntered(java.awt.event.MouseEvent):V
+- mouseExited(java.awt.event.MouseEvent):V
 com.intellij.ide.OccurenceNavigator
 - com.intellij.openapi.actionSystem.ActionUpdateThreadAware
 - sf:EMPTY:com.intellij.ide.OccurenceNavigator
@@ -432,6 +442,14 @@ com.intellij.openapi.ui.DialogBuilder$ActionDescriptor
 - a:getAction(com.intellij.openapi.ui.DialogWrapper):javax.swing.Action
 com.intellij.openapi.ui.DialogBuilder$CustomizableAction
 - a:setText(java.lang.String):V
+a:com.intellij.openapi.ui.DialogWrapper
+- setDoNotAskOption(com.intellij.openapi.ui.DialogWrapper$DoNotAskOption):V
+com.intellij.openapi.ui.DialogWrapper$DoNotAskOption
+- com.intellij.openapi.ui.DoNotAskOption
+a:com.intellij.openapi.ui.DialogWrapper$DoNotAskOption$Adapter
+- com.intellij.openapi.ui.DoNotAskOption$Adapter
+- com.intellij.openapi.ui.DialogWrapper$DoNotAskOption
+- <init>():V
 com.intellij.openapi.ui.DialogWrapperDialog
 - a:getDialogWrapper():com.intellij.openapi.ui.DialogWrapper
 com.intellij.openapi.ui.ErrorBorderCapable
@@ -442,20 +460,33 @@ com.intellij.openapi.ui.MasterDetailsComponent$ActionGroupWithPreselection
 - a:getActionGroup():com.intellij.openapi.actionSystem.ActionGroup
 - getDefaultIndex():I
 f:com.intellij.openapi.ui.MessageUtil
+- sf:showOkCancelDialog(java.lang.String,java.lang.String,java.lang.String,java.lang.String,javax.swing.Icon,com.intellij.openapi.ui.DialogWrapper$DoNotAskOption,com.intellij.openapi.project.Project):I
 - sf:showOkCancelDialog(java.lang.String,java.lang.String,java.lang.String,java.lang.String,javax.swing.Icon,com.intellij.openapi.ui.DoNotAskOption,com.intellij.openapi.project.Project):I
+- bs:showOkCancelDialog$default(java.lang.String,java.lang.String,java.lang.String,java.lang.String,javax.swing.Icon,com.intellij.openapi.ui.DialogWrapper$DoNotAskOption,com.intellij.openapi.project.Project,I,java.lang.Object):I
 - bs:showOkCancelDialog$default(java.lang.String,java.lang.String,java.lang.String,java.lang.String,javax.swing.Icon,com.intellij.openapi.ui.DoNotAskOption,com.intellij.openapi.project.Project,I,java.lang.Object):I
 Fc:com.intellij.openapi.ui.Messages
+- s:showDialog(com.intellij.openapi.project.Project,java.lang.String,java.lang.String,java.lang.String[],I,javax.swing.Icon,com.intellij.openapi.ui.DialogWrapper$DoNotAskOption):I
 - s:showDialog(com.intellij.openapi.project.Project,java.lang.String,java.lang.String,java.lang.String[],I,javax.swing.Icon,com.intellij.openapi.ui.DoNotAskOption):I
+- s:showDialog(java.lang.String,java.lang.String,java.lang.String[],I,I,javax.swing.Icon,com.intellij.openapi.ui.DialogWrapper$DoNotAskOption):I
+- s:showDialog(java.lang.String,java.lang.String,java.lang.String[],I,I,javax.swing.Icon,com.intellij.openapi.ui.DialogWrapper$DoNotAskOption,java.lang.String):I
 - s:showDialog(java.lang.String,java.lang.String,java.lang.String[],I,I,javax.swing.Icon,com.intellij.openapi.ui.DoNotAskOption):I
 - s:showDialog(java.lang.String,java.lang.String,java.lang.String[],I,I,javax.swing.Icon,com.intellij.openapi.ui.DoNotAskOption,java.lang.String):I
+- s:showDialog(java.lang.String,java.lang.String,java.lang.String[],I,javax.swing.Icon,com.intellij.openapi.ui.DialogWrapper$DoNotAskOption):I
 - s:showDialog(java.lang.String,java.lang.String,java.lang.String[],I,javax.swing.Icon,com.intellij.openapi.ui.DoNotAskOption):I
+- s:showIdeaMessageDialog(com.intellij.openapi.project.Project,java.lang.String,java.lang.String,java.lang.String[],I,javax.swing.Icon,com.intellij.openapi.ui.DialogWrapper$DoNotAskOption):I
 - s:showIdeaMessageDialog(com.intellij.openapi.project.Project,java.lang.String,java.lang.String,java.lang.String[],I,javax.swing.Icon,com.intellij.openapi.ui.DoNotAskOption):I
 - s:showInputDialog(java.awt.Component,java.lang.String,java.lang.String,javax.swing.Icon,java.lang.String,com.intellij.openapi.ui.InputValidator,com.intellij.openapi.util.TextRange,java.lang.String):java.lang.String
+- s:showOkCancelDialog(com.intellij.openapi.project.Project,java.lang.String,java.lang.String,java.lang.String,java.lang.String,javax.swing.Icon,com.intellij.openapi.ui.DialogWrapper$DoNotAskOption):I
 - s:showOkCancelDialog(com.intellij.openapi.project.Project,java.lang.String,java.lang.String,java.lang.String,java.lang.String,javax.swing.Icon,com.intellij.openapi.ui.DoNotAskOption):I
+- s:showOkCancelDialog(java.lang.String,java.lang.String,java.lang.String,java.lang.String,javax.swing.Icon,com.intellij.openapi.ui.DialogWrapper$DoNotAskOption):I
 - s:showOkCancelDialog(java.lang.String,java.lang.String,java.lang.String,java.lang.String,javax.swing.Icon,com.intellij.openapi.ui.DoNotAskOption):I
+- s:showYesNoCancelDialog(java.lang.String,java.lang.String,java.lang.String,java.lang.String,java.lang.String,javax.swing.Icon,com.intellij.openapi.ui.DialogWrapper$DoNotAskOption):I
 - s:showYesNoCancelDialog(java.lang.String,java.lang.String,java.lang.String,java.lang.String,java.lang.String,javax.swing.Icon,com.intellij.openapi.ui.DoNotAskOption):I
+- s:showYesNoDialog(com.intellij.openapi.project.Project,java.lang.String,java.lang.String,java.lang.String,java.lang.String,javax.swing.Icon,com.intellij.openapi.ui.DialogWrapper$DoNotAskOption):I
 - s:showYesNoDialog(com.intellij.openapi.project.Project,java.lang.String,java.lang.String,java.lang.String,java.lang.String,javax.swing.Icon,com.intellij.openapi.ui.DoNotAskOption):I
+- s:showYesNoDialog(com.intellij.openapi.project.Project,java.lang.String,java.lang.String,javax.swing.Icon,com.intellij.openapi.ui.DialogWrapper$DoNotAskOption):I
 - s:showYesNoDialog(com.intellij.openapi.project.Project,java.lang.String,java.lang.String,javax.swing.Icon,com.intellij.openapi.ui.DoNotAskOption):I
+- s:showYesNoDialog(java.lang.String,java.lang.String,java.lang.String,java.lang.String,javax.swing.Icon,com.intellij.openapi.ui.DialogWrapper$DoNotAskOption):I
 - s:showYesNoDialog(java.lang.String,java.lang.String,java.lang.String,java.lang.String,javax.swing.Icon,com.intellij.openapi.ui.DoNotAskOption):I
 com.intellij.openapi.ui.Namer
 - a:canRename(java.lang.Object):Z
@@ -493,6 +524,8 @@ com.intellij.openapi.ui.TestInputDialog
 com.intellij.openapi.ui.TreeComboBox$CustomPresentation
 - a:append(com.intellij.ui.SimpleColoredComponent,I):V
 - a:getIcon(I,I):javax.swing.Icon
+c:com.intellij.openapi.ui.messages.MessageDialog
+- p:_init(java.lang.String,java.lang.String,java.lang.String[],I,I,javax.swing.Icon,com.intellij.openapi.ui.DialogWrapper$DoNotAskOption,java.lang.String):V
 com.intellij.openapi.ui.panel.GridBagPanelBuilder
 - com.intellij.openapi.ui.panel.PanelBuilder
 - a:addToPanel(javax.swing.JPanel,java.awt.GridBagConstraints,Z):V
@@ -742,6 +775,8 @@ com.intellij.platform.ide.customization.ExternalProductResourceUrls
 com.intellij.pom.NavigatableWithText
 - com.intellij.pom.Navigatable
 - a:getNavigateActionText(Z):java.lang.String
+a:com.intellij.projectImport.ProjectOpenProcessor
+- doOpenProject(com.intellij.openapi.vfs.VirtualFile,com.intellij.openapi.project.Project,Z):com.intellij.openapi.project.Project
 com.intellij.ui.AnActionButtonRunnable
 - com.intellij.util.ParameterizedRunnable
 com.intellij.ui.AnActionButtonUpdater
@@ -906,6 +941,7 @@ com.intellij.ui.components.fields.ExtendableTextComponent
 com.intellij.ui.components.fields.ExtendableTextComponent$Extension
 - s:create(javax.swing.Icon,java.lang.String,java.lang.Runnable):com.intellij.ui.components.fields.ExtendableTextComponent$Extension
 - s:create(javax.swing.Icon,javax.swing.Icon,java.lang.String,java.lang.Runnable):com.intellij.ui.components.fields.ExtendableTextComponent$Extension
+- s:create(javax.swing.Icon,javax.swing.Icon,java.lang.String,Z,java.lang.Runnable):com.intellij.ui.components.fields.ExtendableTextComponent$Extension
 - getActionOnClick():java.lang.Runnable
 - getActionOnClick(java.awt.event.InputEvent):java.lang.Runnable
 - getAfterIconOffset():I
@@ -914,6 +950,7 @@ com.intellij.ui.components.fields.ExtendableTextComponent$Extension
 - getIconGap():I
 - getPreferredSpace():I
 - getTooltip():java.lang.String
+- isFocusable():Z
 - isIconBeforeText():Z
 - isSelected():Z
 com.intellij.ui.components.fields.valueEditors.ValueEditor

@@ -1,9 +1,9 @@
 ### auto-generated section `build intellij.devkit.git` start
-load("@rules_jvm//:jvm.bzl", "jvm_library", "jvm_provided_library", "jvm_resources")
+load("@rules_jvm//:jvm.bzl", "jvm_library", "jvm_provided_library", "resourcegroup")
 
-jvm_resources(
+resourcegroup(
   name = "git_resources",
-  files = glob(["resources/**/*"]),
+  srcs = glob(["resources/**/*"]),
   strip_prefix = "resources"
 )
 
@@ -32,6 +32,7 @@ jvm_library(
   module_name = "intellij.devkit.git",
   visibility = ["//visibility:public"],
   srcs = glob(["src/**/*.kt", "src/**/*.java", "src/**/*.form"], allow_empty = True),
+  resources = [":git_resources"],
   deps = [
     "@lib//:kotlin-stdlib",
     "//platform/util-ex",
@@ -41,12 +42,13 @@ jvm_library(
     "//platform/ide-core",
     "//plugins/devkit/devkit-core:core",
     "//platform/vcs-api/shared",
+    "//platform/vcs-log/impl",
+    "//platform/platform-api:ide",
     ":platform_vcs-api_vcs-core_provided",
     ":platform_vcs-log_vcs-log_provided",
     ":platform_vcs-dvcs-impl_provided",
     ":plugins_vcs-git_provided",
-  ],
-  runtime_deps = [":git_resources"]
+  ]
 )
 
 jvm_library(
@@ -73,8 +75,10 @@ jvm_library(
     "//platform/testFramework",
     "//platform/testFramework:testFramework_test_lib",
     "//platform/vcs-api/shared",
-  ],
-  runtime_deps = [":git_resources"]
+    "//platform/vcs-log/impl",
+    "//platform/vcs-log/impl:impl_test_lib",
+    "//platform/platform-api:ide",
+  ]
 )
 ### auto-generated section `build intellij.devkit.git` end
 

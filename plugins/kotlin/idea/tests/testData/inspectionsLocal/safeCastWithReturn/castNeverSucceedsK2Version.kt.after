@@ -1,5 +1,0 @@
-fun test(x: Int) {
-    if (x !is String //comment1
-    ) return
-}
-// IGNORE_K1

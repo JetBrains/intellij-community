@@ -134,105 +134,307 @@ public abstract class K2HighlightingMetaInfoTestGenerated extends AbstractK2High
 
     @RunWith(JUnit3RunnerWithInners.class)
     @TestMetadata("../../idea/tests/testData/highlighterMetaInfo/jvm")
-    public static class Jvm extends AbstractK2HighlightingMetaInfoTest {
-        @java.lang.Override
-        @org.jetbrains.annotations.NotNull
-        public final KotlinPluginMode getPluginMode() {
-            return KotlinPluginMode.K2;
+    public abstract static class Jvm extends AbstractK2HighlightingMetaInfoTest {
+        @RunWith(JUnit3RunnerWithInners.class)
+        @TestMetadata("../../idea/tests/testData/highlighterMetaInfo/jvm/inspections")
+        public abstract static class Inspections extends AbstractK2HighlightingMetaInfoTest {
+            @RunWith(JUnit3RunnerWithInners.class)
+            @TestMetadata("../../idea/tests/testData/highlighterMetaInfo/jvm/inspections/coroutines")
+            public abstract static class Coroutines extends AbstractK2HighlightingMetaInfoTest {
+                @RunWith(JUnit3RunnerWithInners.class)
+                @TestMetadata("../../idea/tests/testData/highlighterMetaInfo/jvm/inspections/coroutines/coroutineContextWithJob")
+                public abstract static class CoroutineContextWithJob extends AbstractK2HighlightingMetaInfoTest {
+                    @RunWith(JUnit3RunnerWithInners.class)
+                    @TestMetadata("../../idea/tests/testData/highlighterMetaInfo/jvm/inspections/coroutines/coroutineContextWithJob/flowOn")
+                    public static class FlowOn extends AbstractK2HighlightingMetaInfoTest {
+                        @java.lang.Override
+                        @org.jetbrains.annotations.NotNull
+                        public final KotlinPluginMode getPluginMode() {
+                            return KotlinPluginMode.K2;
+                        }
+
+                        private void runTest(String testDataFilePath) throws Exception {
+                            KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
+                        }
+
+                        @TestMetadata("JobConstructorCall.kt")
+                        public void testJobConstructorCall() throws Exception {
+                            runTest("../../idea/tests/testData/highlighterMetaInfo/jvm/inspections/coroutines/coroutineContextWithJob/flowOn/JobConstructorCall.kt");
+                        }
+
+                        @TestMetadata("NonCancellable.kt")
+                        public void testNonCancellable() throws Exception {
+                            runTest("../../idea/tests/testData/highlighterMetaInfo/jvm/inspections/coroutines/coroutineContextWithJob/flowOn/NonCancellable.kt");
+                        }
+                    }
+
+                    @RunWith(JUnit3RunnerWithInners.class)
+                    @TestMetadata("../../idea/tests/testData/highlighterMetaInfo/jvm/inspections/coroutines/coroutineContextWithJob/launch")
+                    public static class Launch extends AbstractK2HighlightingMetaInfoTest {
+                        @java.lang.Override
+                        @org.jetbrains.annotations.NotNull
+                        public final KotlinPluginMode getPluginMode() {
+                            return KotlinPluginMode.K2;
+                        }
+
+                        private void runTest(String testDataFilePath) throws Exception {
+                            KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
+                        }
+
+                        @TestMetadata("arbitraryCoroutineContext.kt")
+                        public void testArbitraryCoroutineContext() throws Exception {
+                            runTest("../../idea/tests/testData/highlighterMetaInfo/jvm/inspections/coroutines/coroutineContextWithJob/launch/arbitraryCoroutineContext.kt");
+                        }
+
+                        @TestMetadata("CoroutineScopeCoroutineContext.kt")
+                        public void testCoroutineScopeCoroutineContext() throws Exception {
+                            runTest("../../idea/tests/testData/highlighterMetaInfo/jvm/inspections/coroutines/coroutineContextWithJob/launch/CoroutineScopeCoroutineContext.kt");
+                        }
+
+                        @TestMetadata("CoroutineScopeCoroutineContext_minusKey_Job.kt")
+                        public void testCoroutineScopeCoroutineContext_minusKey_Job() throws Exception {
+                            runTest("../../idea/tests/testData/highlighterMetaInfo/jvm/inspections/coroutines/coroutineContextWithJob/launch/CoroutineScopeCoroutineContext_minusKey_Job.kt");
+                        }
+
+                        @TestMetadata("CoroutineScopeCoroutineContext_minusKey_NonJob.kt")
+                        public void testCoroutineScopeCoroutineContext_minusKey_NonJob() throws Exception {
+                            runTest("../../idea/tests/testData/highlighterMetaInfo/jvm/inspections/coroutines/coroutineContextWithJob/launch/CoroutineScopeCoroutineContext_minusKey_NonJob.kt");
+                        }
+
+                        @TestMetadata("currentCoroutineContext.kt")
+                        public void testCurrentCoroutineContext() throws Exception {
+                            runTest("../../idea/tests/testData/highlighterMetaInfo/jvm/inspections/coroutines/coroutineContextWithJob/launch/currentCoroutineContext.kt");
+                        }
+
+                        @TestMetadata("EmptyCoroutineContext.kt")
+                        public void testEmptyCoroutineContext() throws Exception {
+                            runTest("../../idea/tests/testData/highlighterMetaInfo/jvm/inspections/coroutines/coroutineContextWithJob/launch/EmptyCoroutineContext.kt");
+                        }
+
+                        @TestMetadata("EmptyCoroutineContext_plus_EmptyCoroutineContext.kt")
+                        public void testEmptyCoroutineContext_plus_EmptyCoroutineContext() throws Exception {
+                            runTest("../../idea/tests/testData/highlighterMetaInfo/jvm/inspections/coroutines/coroutineContextWithJob/launch/EmptyCoroutineContext_plus_EmptyCoroutineContext.kt");
+                        }
+
+                        @TestMetadata("EmptyCoroutineContext_plus_JobConstructorCall.kt")
+                        public void testEmptyCoroutineContext_plus_JobConstructorCall() throws Exception {
+                            runTest("../../idea/tests/testData/highlighterMetaInfo/jvm/inspections/coroutines/coroutineContextWithJob/launch/EmptyCoroutineContext_plus_JobConstructorCall.kt");
+                        }
+
+                        @TestMetadata("JobConstructorCall.kt")
+                        public void testJobConstructorCall() throws Exception {
+                            runTest("../../idea/tests/testData/highlighterMetaInfo/jvm/inspections/coroutines/coroutineContextWithJob/launch/JobConstructorCall.kt");
+                        }
+
+                        @TestMetadata("JobInstance.kt")
+                        public void testJobInstance() throws Exception {
+                            runTest("../../idea/tests/testData/highlighterMetaInfo/jvm/inspections/coroutines/coroutineContextWithJob/launch/JobInstance.kt");
+                        }
+
+                        @TestMetadata("JobInstance_plus_customFinalContext.kt")
+                        public void testJobInstance_plus_customFinalContext() throws Exception {
+                            runTest("../../idea/tests/testData/highlighterMetaInfo/jvm/inspections/coroutines/coroutineContextWithJob/launch/JobInstance_plus_customFinalContext.kt");
+                        }
+
+                        @TestMetadata("NonCancellable.kt")
+                        public void testNonCancellable() throws Exception {
+                            runTest("../../idea/tests/testData/highlighterMetaInfo/jvm/inspections/coroutines/coroutineContextWithJob/launch/NonCancellable.kt");
+                        }
+
+                        @TestMetadata("NonCancellable_plus_arbitraryCoroutineContext.kt")
+                        public void testNonCancellable_plus_arbitraryCoroutineContext() throws Exception {
+                            runTest("../../idea/tests/testData/highlighterMetaInfo/jvm/inspections/coroutines/coroutineContextWithJob/launch/NonCancellable_plus_arbitraryCoroutineContext.kt");
+                        }
+
+                        @TestMetadata("topLevelCoroutineContext.kt")
+                        public void testTopLevelCoroutineContext() throws Exception {
+                            runTest("../../idea/tests/testData/highlighterMetaInfo/jvm/inspections/coroutines/coroutineContextWithJob/launch/topLevelCoroutineContext.kt");
+                        }
+                    }
+
+                    @RunWith(JUnit3RunnerWithInners.class)
+                    @TestMetadata("../../idea/tests/testData/highlighterMetaInfo/jvm/inspections/coroutines/coroutineContextWithJob/produce")
+                    public static class Produce extends AbstractK2HighlightingMetaInfoTest {
+                        @java.lang.Override
+                        @org.jetbrains.annotations.NotNull
+                        public final KotlinPluginMode getPluginMode() {
+                            return KotlinPluginMode.K2;
+                        }
+
+                        private void runTest(String testDataFilePath) throws Exception {
+                            KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
+                        }
+
+                        @TestMetadata("JobConstructorCall.kt")
+                        public void testJobConstructorCall() throws Exception {
+                            runTest("../../idea/tests/testData/highlighterMetaInfo/jvm/inspections/coroutines/coroutineContextWithJob/produce/JobConstructorCall.kt");
+                        }
+                    }
+
+                    @RunWith(JUnit3RunnerWithInners.class)
+                    @TestMetadata("../../idea/tests/testData/highlighterMetaInfo/jvm/inspections/coroutines/coroutineContextWithJob/withContext")
+                    public static class WithContext extends AbstractK2HighlightingMetaInfoTest {
+                        @java.lang.Override
+                        @org.jetbrains.annotations.NotNull
+                        public final KotlinPluginMode getPluginMode() {
+                            return KotlinPluginMode.K2;
+                        }
+
+                        private void runTest(String testDataFilePath) throws Exception {
+                            KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
+                        }
+
+                        @TestMetadata("EmptyContext_plus_JobInstance_plus_NonCancellable.kt")
+                        public void testEmptyContext_plus_JobInstance_plus_NonCancellable() throws Exception {
+                            runTest("../../idea/tests/testData/highlighterMetaInfo/jvm/inspections/coroutines/coroutineContextWithJob/withContext/EmptyContext_plus_JobInstance_plus_NonCancellable.kt");
+                        }
+
+                        @TestMetadata("EmptyContext_plus_NonCancellable.kt")
+                        public void testEmptyContext_plus_NonCancellable() throws Exception {
+                            runTest("../../idea/tests/testData/highlighterMetaInfo/jvm/inspections/coroutines/coroutineContextWithJob/withContext/EmptyContext_plus_NonCancellable.kt");
+                        }
+
+                        @TestMetadata("EmptyContext_plus_NonCancellable_plus_JobInstance.kt")
+                        public void testEmptyContext_plus_NonCancellable_plus_JobInstance() throws Exception {
+                            runTest("../../idea/tests/testData/highlighterMetaInfo/jvm/inspections/coroutines/coroutineContextWithJob/withContext/EmptyContext_plus_NonCancellable_plus_JobInstance.kt");
+                        }
+
+                        @TestMetadata("JobInstance.kt")
+                        public void testJobInstance() throws Exception {
+                            runTest("../../idea/tests/testData/highlighterMetaInfo/jvm/inspections/coroutines/coroutineContextWithJob/withContext/JobInstance.kt");
+                        }
+
+                        @TestMetadata("JobInstance_plus_Dispatcher_plus_NonCancellable.kt")
+                        public void testJobInstance_plus_Dispatcher_plus_NonCancellable() throws Exception {
+                            runTest("../../idea/tests/testData/highlighterMetaInfo/jvm/inspections/coroutines/coroutineContextWithJob/withContext/JobInstance_plus_Dispatcher_plus_NonCancellable.kt");
+                        }
+
+                        @TestMetadata("NonCancellable.kt")
+                        public void testNonCancellable() throws Exception {
+                            runTest("../../idea/tests/testData/highlighterMetaInfo/jvm/inspections/coroutines/coroutineContextWithJob/withContext/NonCancellable.kt");
+                        }
+
+                        @TestMetadata("NonCancellable_plus_Dispatcher.kt")
+                        public void testNonCancellable_plus_Dispatcher() throws Exception {
+                            runTest("../../idea/tests/testData/highlighterMetaInfo/jvm/inspections/coroutines/coroutineContextWithJob/withContext/NonCancellable_plus_Dispatcher.kt");
+                        }
+
+                        @TestMetadata("NonCancellable_plus_arbitraryCoroutineContext.kt")
+                        public void testNonCancellable_plus_arbitraryCoroutineContext() throws Exception {
+                            runTest("../../idea/tests/testData/highlighterMetaInfo/jvm/inspections/coroutines/coroutineContextWithJob/withContext/NonCancellable_plus_arbitraryCoroutineContext.kt");
+                        }
+
+                        @TestMetadata("NonCancellable_plus_customFinalContext.kt")
+                        public void testNonCancellable_plus_customFinalContext() throws Exception {
+                            runTest("../../idea/tests/testData/highlighterMetaInfo/jvm/inspections/coroutines/coroutineContextWithJob/withContext/NonCancellable_plus_customFinalContext.kt");
+                        }
+                    }
+                }
+            }
         }
 
-        private void runTest(String testDataFilePath) throws Exception {
-            KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
-        }
+        @RunWith(JUnit3RunnerWithInners.class)
+        @TestMetadata("../../idea/tests/testData/highlighterMetaInfo/jvm")
+        public static class Uncategorized extends AbstractK2HighlightingMetaInfoTest {
+            @java.lang.Override
+            @org.jetbrains.annotations.NotNull
+            public final KotlinPluginMode getPluginMode() {
+                return KotlinPluginMode.K2;
+            }
 
-        @TestMetadata("JavaClassWithStaticStarImport.kt")
-        public void testJavaClassWithStaticStarImport() throws Exception {
-            runTest("../../idea/tests/testData/highlighterMetaInfo/jvm/JavaClassWithStaticStarImport.kt");
-        }
+            private void runTest(String testDataFilePath) throws Exception {
+                KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
+            }
 
-        @TestMetadata("javaFields.kt")
-        public void testJavaFields() throws Exception {
-            runTest("../../idea/tests/testData/highlighterMetaInfo/jvm/javaFields.kt");
-        }
+            @TestMetadata("JavaClassWithStaticStarImport.kt")
+            public void testJavaClassWithStaticStarImport() throws Exception {
+                runTest("../../idea/tests/testData/highlighterMetaInfo/jvm/JavaClassWithStaticStarImport.kt");
+            }
 
-        @TestMetadata("JavaIoImport.kt")
-        public void testJavaIoImport() throws Exception {
-            runTest("../../idea/tests/testData/highlighterMetaInfo/jvm/JavaIoImport.kt");
-        }
+            @TestMetadata("javaFields.kt")
+            public void testJavaFields() throws Exception {
+                runTest("../../idea/tests/testData/highlighterMetaInfo/jvm/javaFields.kt");
+            }
 
-        @TestMetadata("JavaRecord.kt")
-        public void testJavaRecord() throws Exception {
-            runTest("../../idea/tests/testData/highlighterMetaInfo/jvm/JavaRecord.kt");
-        }
+            @TestMetadata("JavaIoImport.kt")
+            public void testJavaIoImport() throws Exception {
+                runTest("../../idea/tests/testData/highlighterMetaInfo/jvm/JavaIoImport.kt");
+            }
 
-        @TestMetadata("javaStaticFields.kt")
-        public void testJavaStaticFields() throws Exception {
-            runTest("../../idea/tests/testData/highlighterMetaInfo/jvm/javaStaticFields.kt");
-        }
+            @TestMetadata("JavaRecord.kt")
+            public void testJavaRecord() throws Exception {
+                runTest("../../idea/tests/testData/highlighterMetaInfo/jvm/JavaRecord.kt");
+            }
 
-        @TestMetadata("JavaTypes.kt")
-        public void testJavaTypes() throws Exception {
-            runTest("../../idea/tests/testData/highlighterMetaInfo/jvm/JavaTypes.kt");
-        }
+            @TestMetadata("javaStaticFields.kt")
+            public void testJavaStaticFields() throws Exception {
+                runTest("../../idea/tests/testData/highlighterMetaInfo/jvm/javaStaticFields.kt");
+            }
 
-        @TestMetadata("KotlinAnnotationsInJava.kt")
-        public void testKotlinAnnotationsInJava() throws Exception {
-            runTest("../../idea/tests/testData/highlighterMetaInfo/jvm/KotlinAnnotationsInJava.kt");
-        }
+            @TestMetadata("JavaTypes.kt")
+            public void testJavaTypes() throws Exception {
+                runTest("../../idea/tests/testData/highlighterMetaInfo/jvm/JavaTypes.kt");
+            }
 
-        @TestMetadata("KotlinExtensionReceiverInjection.kt")
-        public void testKotlinExtensionReceiverInjection() throws Exception {
-            runTest("../../idea/tests/testData/highlighterMetaInfo/jvm/KotlinExtensionReceiverInjection.kt");
-        }
+            @TestMetadata("KotlinAnnotationsInJava.kt")
+            public void testKotlinAnnotationsInJava() throws Exception {
+                runTest("../../idea/tests/testData/highlighterMetaInfo/jvm/KotlinAnnotationsInJava.kt");
+            }
 
-        @TestMetadata("KotlinInfixFunctionInjection.kt")
-        public void testKotlinInfixFunctionInjection() throws Exception {
-            runTest("../../idea/tests/testData/highlighterMetaInfo/jvm/KotlinInfixFunctionInjection.kt");
-        }
+            @TestMetadata("KotlinExtensionReceiverInjection.kt")
+            public void testKotlinExtensionReceiverInjection() throws Exception {
+                runTest("../../idea/tests/testData/highlighterMetaInfo/jvm/KotlinExtensionReceiverInjection.kt");
+            }
 
-        @TestMetadata("KotlinInjection.kt")
-        public void testKotlinInjection() throws Exception {
-            runTest("../../idea/tests/testData/highlighterMetaInfo/jvm/KotlinInjection.kt");
-        }
+            @TestMetadata("KotlinInfixFunctionInjection.kt")
+            public void testKotlinInfixFunctionInjection() throws Exception {
+                runTest("../../idea/tests/testData/highlighterMetaInfo/jvm/KotlinInfixFunctionInjection.kt");
+            }
 
-        @TestMetadata("KotlinOperatorFunctionInjection.kt")
-        public void testKotlinOperatorFunctionInjection() throws Exception {
-            runTest("../../idea/tests/testData/highlighterMetaInfo/jvm/KotlinOperatorFunctionInjection.kt");
-        }
+            @TestMetadata("KotlinInjection.kt")
+            public void testKotlinInjection() throws Exception {
+                runTest("../../idea/tests/testData/highlighterMetaInfo/jvm/KotlinInjection.kt");
+            }
 
-        @TestMetadata("KotlinSimpleInjection.kt")
-        public void testKotlinSimpleInjection() throws Exception {
-            runTest("../../idea/tests/testData/highlighterMetaInfo/jvm/KotlinSimpleInjection.kt");
-        }
+            @TestMetadata("KotlinOperatorFunctionInjection.kt")
+            public void testKotlinOperatorFunctionInjection() throws Exception {
+                runTest("../../idea/tests/testData/highlighterMetaInfo/jvm/KotlinOperatorFunctionInjection.kt");
+            }
 
-        @TestMetadata("KotlinVarargsParametersInjection.kt")
-        public void testKotlinVarargsParametersInjection() throws Exception {
-            runTest("../../idea/tests/testData/highlighterMetaInfo/jvm/KotlinVarargsParametersInjection.kt");
-        }
+            @TestMetadata("KotlinSimpleInjection.kt")
+            public void testKotlinSimpleInjection() throws Exception {
+                runTest("../../idea/tests/testData/highlighterMetaInfo/jvm/KotlinSimpleInjection.kt");
+            }
 
-        @TestMetadata("LibraryVarargParameterWithFunctionalType.kt")
-        public void testLibraryVarargParameterWithFunctionalType() throws Exception {
-            runTest("../../idea/tests/testData/highlighterMetaInfo/jvm/LibraryVarargParameterWithFunctionalType.kt");
-        }
+            @TestMetadata("KotlinVarargsParametersInjection.kt")
+            public void testKotlinVarargsParametersInjection() throws Exception {
+                runTest("../../idea/tests/testData/highlighterMetaInfo/jvm/KotlinVarargsParametersInjection.kt");
+            }
 
-        @TestMetadata("NonExistingKotlinMethodFromJava.kt")
-        public void testNonExistingKotlinMethodFromJava() throws Exception {
-            runTest("../../idea/tests/testData/highlighterMetaInfo/jvm/NonExistingKotlinMethodFromJava.kt");
-        }
+            @TestMetadata("LibraryVarargParameterWithFunctionalType.kt")
+            public void testLibraryVarargParameterWithFunctionalType() throws Exception {
+                runTest("../../idea/tests/testData/highlighterMetaInfo/jvm/LibraryVarargParameterWithFunctionalType.kt");
+            }
 
-        @TestMetadata("RepeatableAnnotation.kt")
-        public void testRepeatableAnnotation() throws Exception {
-            runTest("../../idea/tests/testData/highlighterMetaInfo/jvm/RepeatableAnnotation.kt");
-        }
+            @TestMetadata("NonExistingKotlinMethodFromJava.kt")
+            public void testNonExistingKotlinMethodFromJava() throws Exception {
+                runTest("../../idea/tests/testData/highlighterMetaInfo/jvm/NonExistingKotlinMethodFromJava.kt");
+            }
 
-        @TestMetadata("RepeatableAsAliasAnnotation.kt")
-        public void testRepeatableAsAliasAnnotation() throws Exception {
-            runTest("../../idea/tests/testData/highlighterMetaInfo/jvm/RepeatableAsAliasAnnotation.kt");
-        }
+            @TestMetadata("RepeatableAnnotation.kt")
+            public void testRepeatableAnnotation() throws Exception {
+                runTest("../../idea/tests/testData/highlighterMetaInfo/jvm/RepeatableAnnotation.kt");
+            }
 
-        @TestMetadata("SyntheticExtensionProperty.kt")
-        public void testSyntheticExtensionProperty() throws Exception {
-            runTest("../../idea/tests/testData/highlighterMetaInfo/jvm/SyntheticExtensionProperty.kt");
+            @TestMetadata("RepeatableAsAliasAnnotation.kt")
+            public void testRepeatableAsAliasAnnotation() throws Exception {
+                runTest("../../idea/tests/testData/highlighterMetaInfo/jvm/RepeatableAsAliasAnnotation.kt");
+            }
+
+            @TestMetadata("SyntheticExtensionProperty.kt")
+            public void testSyntheticExtensionProperty() throws Exception {
+                runTest("../../idea/tests/testData/highlighterMetaInfo/jvm/SyntheticExtensionProperty.kt");
+            }
         }
     }
 

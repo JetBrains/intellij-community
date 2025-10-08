@@ -1,6 +1,7 @@
 // Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.xdebugger.impl
 
+import com.intellij.execution.RunContentDescriptorIdImpl
 import com.intellij.execution.configurations.RunConfiguration
 import com.intellij.execution.configurations.RunConfigurationBase
 import com.intellij.execution.configurations.RunProfile
@@ -12,6 +13,7 @@ import com.intellij.execution.rpc.toDto
 import com.intellij.execution.runners.BackendExecutionEnvironmentProxy
 import com.intellij.execution.runners.ExecutionEnvironment
 import com.intellij.execution.runners.RunTab
+import com.intellij.execution.storeGlobally
 import com.intellij.execution.ui.ConsoleView
 import com.intellij.execution.ui.ConsoleViewContentType
 import com.intellij.execution.ui.RunContentDescriptor
@@ -33,8 +35,8 @@ import com.intellij.openapi.project.Project
 import com.intellij.openapi.ui.MessageType
 import com.intellij.openapi.util.Comparing
 import com.intellij.openapi.util.Disposer
+import com.intellij.openapi.util.Ref
 import com.intellij.openapi.util.ThrowableComputable
-import com.intellij.platform.kernel.ids.storeValueGlobally
 import com.intellij.platform.util.coroutines.childScope
 import com.intellij.psi.search.GlobalSearchScope
 import com.intellij.ui.AppUIUtil.invokeLaterIfProjectAlive
@@ -69,7 +71,6 @@ import com.intellij.xdebugger.impl.inline.DebuggerInlayListener
 import com.intellij.xdebugger.impl.inline.InlineDebugRenderer
 import com.intellij.xdebugger.impl.mixedmode.XMixedModeCombinedDebugProcess
 import com.intellij.xdebugger.impl.rpc.*
-import com.intellij.xdebugger.impl.rpc.models.XDebugSessionValueIdType
 import com.intellij.xdebugger.impl.rpc.models.storeGlobally
 import com.intellij.xdebugger.impl.settings.XDebuggerSettingManagerImpl
 import com.intellij.xdebugger.impl.ui.*
@@ -101,7 +102,11 @@ class XDebugSessionImpl @JvmOverloads constructor(
 ) : XDebugSession {
   @ApiStatus.Internal
   val coroutineScope: CoroutineScope = debuggerManager.coroutineScope.childScope("XDebugSession $sessionName", EmptyCoroutineContext, true)
-  val id: XDebugSessionId = storeValueGlobally(coroutineScope, this, type = XDebugSessionValueIdType)
+
+  @ApiStatus.Internal
+  val tabCoroutineScope: CoroutineScope = debuggerManager.coroutineScope.childScope("XDebugger session tab $sessionName")
+
+  val id: XDebugSessionId = storeGlobally(coroutineScope)
 
   private var myDebugProcess: XDebugProcess? = null
   private val myRegisteredBreakpoints: MutableMap<XBreakpoint<*>?, CustomizedBreakpointPresentation?> = HashMap<XBreakpoint<*>?, CustomizedBreakpointPresentation?>()
@@ -117,13 +122,16 @@ class XDebugSessionImpl @JvmOverloads constructor(
   private var myAlternativeSourceHandler: XAlternativeSourceHandler? = null
   private var myIsTopFrame = false
 
-  private val myTopStackFrame = MutableStateFlow<XStackFrame?>(null)
   private val myPaused = MutableStateFlow(false)
   private var myValueMarkers: XValueMarkers<*, *>? = null
   private val mySessionName: @Nls String = sessionName
   private val mySessionTab = CompletableDeferred<XDebugSessionTab>()
   private var myRunContentDescriptor: RunContentDescriptor? = null
   val sessionData: XDebugSessionData
+
+  @ApiStatus.Internal
+  val sessionDataId: XDebugSessionDataId
+
   private val myActiveNonLineBreakpointAndPositionFlow = MutableStateFlow<Pair<XBreakpoint<*>, XSourcePosition?>?>(null)
   private val myPausedEvents = MutableSharedFlow<XDebugSessionPausedInfo>(replay = 1, extraBufferCapacity = 1)
   private val myDispatcher = EventDispatcher.create(XDebugSessionListener::class.java)
@@ -145,7 +153,12 @@ class XDebugSessionImpl @JvmOverloads constructor(
   val extraActions: MutableList<AnAction> = SmartList<AnAction>()
   private var myConsoleView: ConsoleView? = null
   private val myIcon: Icon? = icon
-  private val myCurrentStackFrameManager = XDebugSessionCurrentStackFrameManager()
+
+  @Volatile
+  private var currentStackFrame: XStackFrame? = null
+
+  // Ref is used to prevent StateFlow's equals checks
+  private val topStackFrame = MutableStateFlow<Ref<XStackFrame>?>(null)
 
   @get:ApiStatus.Internal
   val fileColorsComputer: FileColorsComputer = FileColorsComputer(project, coroutineScope)
@@ -160,7 +173,7 @@ class XDebugSessionImpl @JvmOverloads constructor(
   private var myUserRequestAction: String? = null
 
   private val myActiveNonLineBreakpointFlow = myActiveNonLineBreakpointAndPositionFlow
-    .combine(myTopStackFrame) { breakpointAndPosition, _ ->
+    .combine(topStackFrame) { breakpointAndPosition, _ ->
       val (breakpoint, breakpointPosition) = breakpointAndPosition ?: return@combine null
       if (breakpointPosition == null) return@combine breakpoint
       val position = topFramePosition ?: return@combine null
@@ -189,6 +202,7 @@ class XDebugSessionImpl @JvmOverloads constructor(
       oldSessionData = XDebugSessionData(myProject, currentConfigurationName)
     }
     this.sessionData = oldSessionData
+    this.sessionDataId = sessionData.storeGlobally(tabCoroutineScope, this)
   }
 
   override fun getSessionName(): String {
@@ -308,7 +322,7 @@ class XDebugSessionImpl @JvmOverloads constructor(
   }
 
   override fun getCurrentStackFrame(): XStackFrame? {
-    return myCurrentStackFrameManager.getCurrentStackFrame()
+    return currentStackFrame
   }
 
   override fun getSuspendContext(): XSuspendContext? {
@@ -320,7 +334,7 @@ class XDebugSessionImpl @JvmOverloads constructor(
   }
 
   override fun getTopFramePosition(): XSourcePosition? {
-    return getFrameSourcePosition(myTopStackFrame.value)
+    return getFrameSourcePosition(topStackFrame.value?.get())
   }
 
   fun getFrameSourcePosition(frame: XStackFrame?): XSourcePosition? {
@@ -444,14 +458,13 @@ class XDebugSessionImpl @JvmOverloads constructor(
     val defaultFramesViewKey: String? = debugProcess.getDefaultFramesViewKey()
 
     if (useFeProxy()) {
-      val tabCoroutineScope = debuggerManager.coroutineScope.childScope("ExecutionEnvironmentDto")
+      val localTabScope = tabCoroutineScope.childScope("ExecutionEnvironmentDto")
       val tabClosedChannel = Channel<Unit>(capacity = 1)
-      val additionalTabComponentManager = XDebugSessionAdditionalTabComponentManager(tabCoroutineScope)
-      val runContentDescriptorId = CompletableDeferred<RunContentDescriptorId>()
-      val executionEnvironmentId = executionEnvironment?.storeGlobally(tabCoroutineScope)
+      val additionalTabComponentManager = XDebugSessionAdditionalTabComponentManager(localTabScope)
+      val runContentDescriptorId = CompletableDeferred<RunContentDescriptorIdImpl>()
+      val executionEnvironmentId = executionEnvironment?.storeGlobally(localTabScope)
       val tabInfo = XDebuggerSessionTabInfo(myIcon?.rpcId(), forceNewDebuggerUi, withFramesCustomization, defaultFramesViewKey,
-                                            contentToReuse,
-                                            executionEnvironmentId, executionEnvironment?.toDto(tabCoroutineScope),
+                                            executionEnvironmentId, executionEnvironment?.toDto(localTabScope),
                                             additionalTabComponentManager.id, tabClosedChannel,
                                             runContentDescriptorId)
       if (myTabInitDataFlow.compareAndSet(null, tabInfo)) {
@@ -463,6 +476,9 @@ class XDebugSessionImpl @JvmOverloads constructor(
                                      "Debug", "Debug", sessionName) {
           init {
             myEnvironment = executionEnvironment
+            myUi.getContentManager().addUiDataProvider { sink ->
+              sink[XDebugSessionData.DATA_KEY] = sessionData
+            }
           }
 
           val component get() = myUi.component
@@ -472,8 +488,10 @@ class XDebugSessionImpl @JvmOverloads constructor(
                                                            sessionName, myIcon, null) {
           override fun isHiddenContent(): Boolean = true
         }
-        val descriptorId = mockDescriptor.storeGlobally(tabCoroutineScope)
+        Disposer.register(mockDescriptor, runTab)
+        val descriptorId = mockDescriptor.storeGlobally(localTabScope)
         runContentDescriptorId.complete(descriptorId)
+        mockDescriptor.id = descriptorId
         debuggerManager.coroutineScope.launch(Dispatchers.EDT) {
           tabClosedChannel.consumeEach {
             tabCoroutineScope.cancel()
@@ -484,7 +502,7 @@ class XDebugSessionImpl @JvmOverloads constructor(
         myDebugProcess!!.sessionInitialized()
       }
       else {
-        tabCoroutineScope.cancel()
+        localTabScope.cancel()
         tabClosedChannel.close()
       }
     }
@@ -757,8 +775,8 @@ class XDebugSessionImpl @JvmOverloads constructor(
     currentSuspendCoroutineScope = null
     suspendContextFlow.value = null
     this.currentExecutionStack = null
-    myCurrentStackFrameManager.setCurrentStackFrame(null)
-    myTopStackFrame.value = null
+    currentStackFrame = null
+    topStackFrame.value = null
     clearActiveNonLineBreakpoint()
     updateExecutionPosition()
   }
@@ -800,7 +818,7 @@ class XDebugSessionImpl @JvmOverloads constructor(
 
     val frameChanged = currentStackFrame !== frame
     this.currentExecutionStack = executionStack
-    myCurrentStackFrameManager.setCurrentStackFrame(frame)
+    currentStackFrame = frame
     myIsTopFrame = isTopFrame
 
     if (frameChanged) {
@@ -1048,9 +1066,9 @@ class XDebugSessionImpl @JvmOverloads constructor(
     this.currentSuspendCoroutineScope = newSuspendContext.coroutineScope ?: provideSuspendScope(this)
     this.currentExecutionStack = newSuspendContext.activeExecutionStack
     val newCurrentStackFrame = currentExecutionStack?.topFrame
-    myCurrentStackFrameManager.setCurrentStackFrame(newCurrentStackFrame)
+    currentStackFrame = newCurrentStackFrame
     myIsTopFrame = true
-    myTopStackFrame.value = newCurrentStackFrame
+    topStackFrame.value = Ref(newCurrentStackFrame)
 
     val isSteppingSuspendContext = newSuspendContext is XSteppingSuspendContext
 
@@ -1121,6 +1139,10 @@ class XDebugSessionImpl @JvmOverloads constructor(
     }
 
     coroutineScope.cancel(null)
+    if (!isTabInitialized) {
+      // Tab was not created during session running
+      tabCoroutineScope.cancel()
+    }
   }
 
   @ApiStatus.Internal

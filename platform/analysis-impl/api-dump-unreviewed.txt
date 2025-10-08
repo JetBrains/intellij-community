@@ -259,21 +259,6 @@ c:com.intellij.codeInsight.completion.CompletionContext
 - <init>(com.intellij.psi.PsiFile,com.intellij.codeInsight.completion.OffsetMap):V
 - getOffsetMap():com.intellij.codeInsight.completion.OffsetMap
 - getStartOffset():I
-c:com.intellij.codeInsight.completion.CompletionData
-- sf:LOOKUP_ELEMENT_PSI_REFERENCE:com.intellij.openapi.util.Key
-- sf:NOT_JAVA_ID:com.intellij.patterns.ObjectPattern$Capture
-- pf:myGenericVariant:com.intellij.codeInsight.completion.CompletionVariant
-- p:<init>():V
-- addKeywordVariants(java.util.Set,com.intellij.psi.PsiElement,com.intellij.psi.PsiFile):V
-- p:addLookupItem(java.util.Set,com.intellij.codeInsight.TailType,java.lang.Object,com.intellij.codeInsight.completion.CompletionVariant):V
-- p:completeReference(com.intellij.psi.PsiReference,com.intellij.psi.PsiElement,java.util.Set,com.intellij.codeInsight.TailType,com.intellij.psi.filters.ElementFilter,com.intellij.codeInsight.completion.CompletionVariant):V
-- completeReference(com.intellij.psi.PsiReference,java.util.Set,com.intellij.psi.PsiElement,com.intellij.psi.PsiFile):V
-- findPrefix(com.intellij.psi.PsiElement,I):java.lang.String
-- s:findPrefixStatic(com.intellij.psi.PsiElement,I):java.lang.String
-- findVariants(com.intellij.psi.PsiElement,com.intellij.psi.PsiFile):com.intellij.codeInsight.completion.CompletionVariant[]
-- ps:getReferences(com.intellij.psi.impl.source.resolve.reference.impl.PsiMultiReference):com.intellij.psi.PsiReference[]
-- s:objectToLookupItem(java.lang.Object):com.intellij.codeInsight.lookup.LookupElement
-- p:registerVariant(com.intellij.codeInsight.completion.CompletionVariant):V
 com.intellij.codeInsight.completion.CompletionProcessBase
 - com.intellij.codeInsight.completion.CompletionProcess
 - a:addWatchedPrefix(I,com.intellij.patterns.ElementPattern):V
@@ -291,7 +276,6 @@ f:com.intellij.codeInsight.completion.CompletionUtil
 - s:findReferenceOrAlphanumericPrefix(com.intellij.codeInsight.completion.CompletionParameters):java.lang.String
 - s:findReferencePrefix(com.intellij.codeInsight.completion.CompletionParameters):java.lang.String
 - s:findReferencePrefix(com.intellij.psi.PsiElement,I):java.lang.String
-- s:getCompletionDataByElement(com.intellij.psi.PsiElement,com.intellij.psi.PsiFile):com.intellij.codeInsight.completion.CompletionData
 - s:getOriginalElement(com.intellij.psi.PsiElement):com.intellij.psi.PsiElement
 - s:getOriginalOrSelf(com.intellij.psi.PsiElement):com.intellij.psi.PsiElement
 - s:getTargetElement(com.intellij.codeInsight.lookup.LookupElement):com.intellij.psi.PsiElement
@@ -299,19 +283,6 @@ f:com.intellij.codeInsight.completion.CompletionUtil
 - s:newContext(com.intellij.codeInsight.completion.InsertionContext,com.intellij.codeInsight.lookup.LookupElement,I,I):com.intellij.codeInsight.completion.InsertionContext
 - s:shouldShowFeature(com.intellij.codeInsight.completion.CompletionParameters,java.lang.String):Z
 - s:shouldShowFeature(com.intellij.openapi.project.Project,java.lang.String):Z
-c:com.intellij.codeInsight.completion.CompletionVariant
-- psf:DEFAULT_TAIL_TYPE:com.intellij.codeInsight.TailType
-- <init>():V
-- <init>(com.intellij.psi.filters.ElementFilter):V
-- <init>(java.lang.Class,com.intellij.psi.filters.ElementFilter):V
-- addCompletion(java.lang.String):V
-- addCompletion(java.lang.String,com.intellij.codeInsight.TailType):V
-- addCompletionFilter(com.intellij.psi.filters.ElementFilter):V
-- addCompletionFilter(com.intellij.psi.filters.ElementFilter,com.intellij.codeInsight.TailType):V
-- includeScopeClass(java.lang.Class):V
-- includeScopeClass(java.lang.Class,Z):V
-- setCaseInsensitive(Z):V
-- setInsertHandler(com.intellij.codeInsight.completion.InsertHandler):V
 c:com.intellij.codeInsight.completion.CompositeDeclarativeInsertHandler
 - com.intellij.codeInsight.completion.InsertHandler
 - sf:Companion:com.intellij.codeInsight.completion.CompositeDeclarativeInsertHandler$Companion
@@ -439,7 +410,7 @@ c:com.intellij.codeInsight.completion.impl.CamelHumpMatcher
 - matchingFragments(java.lang.String):com.intellij.util.containers.FList
 - prefixMatches(com.intellij.codeInsight.lookup.LookupElement):Z
 - prefixMatches(java.lang.String):Z
-c:com.intellij.codeInsight.completion.impl.CompletionSorterImpl
+f:com.intellij.codeInsight.completion.impl.CompletionSorterImpl
 - com.intellij.codeInsight.completion.CompletionSorter
 - buildClassifier(com.intellij.codeInsight.lookup.Classifier):com.intellij.codeInsight.lookup.Classifier
 - equals(java.lang.Object):Z
@@ -549,14 +520,11 @@ f:com.intellij.codeInsight.daemon.impl.DefaultHighlightUtil
 f:com.intellij.codeInsight.daemon.impl.FileStatusMap
 - com.intellij.openapi.Disposable
 - sf:CHANGES_NOT_ALLOWED_DURING_HIGHLIGHTING:java.lang.String
-- allDirtyScopesAreNull(com.intellij.openapi.editor.Document):Z
-- assertAllDirtyScopesAreNull(com.intellij.openapi.editor.Document):V
 - dispose():V
 - s:getDirtyTextRange(com.intellij.openapi.editor.Document,com.intellij.psi.PsiFile,I):com.intellij.openapi.util.TextRange
 - s:getDirtyTextRange(com.intellij.openapi.editor.Editor,I):com.intellij.openapi.util.TextRange
 - getFileDirtyScope(com.intellij.openapi.editor.Document,com.intellij.psi.PsiFile,I):com.intellij.openapi.util.TextRange
 - markFileUpToDate(com.intellij.openapi.editor.Document,I):V
-- setErrorFoundFlag(com.intellij.openapi.project.Project,com.intellij.openapi.editor.Document,Z):V
 - toString(com.intellij.openapi.editor.Document):java.lang.String
 Fc:com.intellij.codeInsight.daemon.impl.HighlightInfo
 - com.intellij.openapi.util.Segment
@@ -885,17 +853,14 @@ c:com.intellij.codeInsight.intention.impl.config.LazyEditor
 - xyToLogicalPosition(java.awt.Point):com.intellij.openapi.editor.LogicalPosition
 - xyToVisualPosition(java.awt.Point):com.intellij.openapi.editor.VisualPosition
 - xyToVisualPosition(java.awt.geom.Point2D):com.intellij.openapi.editor.VisualPosition
-a:com.intellij.codeInsight.lookup.Classifier
-- pf:myNext:com.intellij.codeInsight.lookup.Classifier
-- p:<init>(com.intellij.codeInsight.lookup.Classifier,java.lang.String):V
+Fa:com.intellij.codeInsight.lookup.Classifier
 - addElement(java.lang.Object,com.intellij.util.ProcessingContext):V
 - a:classify(java.lang.Iterable,com.intellij.util.ProcessingContext):java.lang.Iterable
 - f:getNext():com.intellij.codeInsight.lookup.Classifier
 - f:getPresentableName():java.lang.String
 - a:getSortingWeights(java.lang.Iterable,com.intellij.util.ProcessingContext):java.util.List
 - removeElement(java.lang.Object,com.intellij.util.ProcessingContext):V
-a:com.intellij.codeInsight.lookup.ClassifierFactory
-- p:<init>(java.lang.String):V
+Fa:com.intellij.codeInsight.lookup.ClassifierFactory
 - a:createClassifier(com.intellij.codeInsight.lookup.Classifier):com.intellij.codeInsight.lookup.Classifier
 - equals(java.lang.Object):Z
 - getId():java.lang.String
@@ -1531,7 +1496,6 @@ c:com.intellij.codeInspection.dataFlow.lang.ir.ConditionalGotoInstruction
 - <init>(com.intellij.codeInspection.dataFlow.lang.ir.ControlFlow$ControlFlowOffset,com.intellij.codeInspection.dataFlow.types.DfType,com.intellij.psi.PsiElement):V
 - accept(com.intellij.codeInspection.dataFlow.interpreter.DataFlowInterpreter,com.intellij.codeInspection.dataFlow.memory.DfaMemoryState):com.intellij.codeInspection.dataFlow.lang.ir.DfaInstructionState[]
 - getOffset():I
-- getPsiAnchor():com.intellij.psi.PsiElement
 - getSuccessorIndexes():I[]
 - isTarget(com.intellij.codeInspection.dataFlow.types.DfType,com.intellij.codeInspection.dataFlow.lang.ir.Instruction):Z
 - setOffset(I):V
@@ -1737,7 +1701,6 @@ c:com.intellij.codeInspection.dataFlow.memory.DfaMemoryStateImpl
 - getDfTypeIncludingDerived(com.intellij.codeInspection.dataFlow.value.DfaValue):com.intellij.codeInspection.dataFlow.types.DfType
 - p:getDistinctClassPairs():com.intellij.codeInspection.dataFlow.memory.DistinctPairSet
 - getEqClassIndex(com.intellij.codeInspection.dataFlow.value.DfaValue):I
-- getEqClasses():java.util.List
 - getFactory():com.intellij.codeInspection.dataFlow.value.DfaValueFactory
 - getMergeabilityKey():java.lang.Object
 - p:getNonTrivialEqClasses():java.util.LinkedHashSet
@@ -2287,7 +2250,6 @@ c:com.intellij.codeInspection.ex.InspectionProfileImpl
 - writeScheme():org.jdom.Element
 - ps:writeVersion(org.jdom.Element):V
 f:com.intellij.codeInspection.ex.InspectionProfileKt
-- sf:DEFAULT_PROFILE_NAME:java.lang.String
 - sf:createSimple(java.lang.String,com.intellij.openapi.project.Project,java.util.List):com.intellij.codeInspection.ex.InspectionProfileImpl
 - sf:getBASE_PROFILE():com.intellij.codeInspection.ex.InspectionProfileImpl
 c:com.intellij.codeInspection.ex.InspectionProfileModifiableModel

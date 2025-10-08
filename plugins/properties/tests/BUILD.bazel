@@ -34,6 +34,7 @@ jvm_library(
     "//platform/util/diff",
     "//spellchecker",
     "//spellchecker:spellchecker_test_lib",
+    "//plugins/grazie/src:core",
     "//java/openapi:java",
     "//xml/impl",
     "//plugins/properties:properties-backend",
@@ -48,7 +49,7 @@ jvm_library(
     "//tools/intellij.tools.ide.metrics.benchmark:ide-metrics-benchmark_test_lib",
     "//platform/diff-impl",
     "//xml/xml-psi-api:psi",
-    "@lib//:fastutil-min",
+    "//libraries/fastutil",
   ],
   exports = ["//plugins/properties:properties-backend"]
 )

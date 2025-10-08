@@ -525,6 +525,11 @@ public abstract class K2SafeDeleteTestGenerated extends AbstractK2SafeDeleteTest
         public void testPropertyInLocalObject2() throws Exception {
             runTest("../../idea/tests/testData/refactoring/safeDelete/deleteProperty/kotlinProperty/propertyInLocalObject2.kt");
         }
+
+        @TestMetadata("when.kt")
+        public void testWhen() throws Exception {
+            runTest("../../idea/tests/testData/refactoring/safeDelete/deleteProperty/kotlinProperty/when.kt");
+        }
     }
 
     @RunWith(JUnit3RunnerWithInners.class)

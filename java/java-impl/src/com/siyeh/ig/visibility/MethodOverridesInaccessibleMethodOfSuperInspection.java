@@ -51,7 +51,7 @@ public final class MethodOverridesInaccessibleMethodOfSuperInspection extends Ba
   }
 
   @Override
-  public BaseInspectionVisitor buildVisitor() {
+  public @NotNull BaseInspectionVisitor buildVisitor() {
     return new MethodOverridesPrivateMethodVisitor();
   }
 

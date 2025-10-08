@@ -42,7 +42,8 @@ public class XmlRearranger
       Collections.emptyList(), DEFAULT_MATCH_RULES);
   }
 
-  private static final DefaultArrangementSettingsSerializer SETTINGS_SERIALIZER = new DefaultArrangementSettingsSerializer(DEFAULT_SETTINGS);
+  private static final DefaultArrangementSettingsSerializer SETTINGS_SERIALIZER =
+    new DefaultArrangementSettingsSerializer(DEFAULT_SETTINGS);
 
   public static @NotNull StdArrangementMatchRule attrArrangementRule(@NotNull String nameFilter,
                                                                      @NotNull String namespaceFilter,
@@ -66,10 +67,10 @@ public class XmlRearranger
   @Override
   public boolean isEnabled(@NotNull ArrangementSettingsToken token, @Nullable ArrangementMatchCondition current) {
     return SUPPORTED_TYPES.contains(token)
-        || StdArrangementTokens.Regexp.NAME.equals(token)
-        || StdArrangementTokens.Regexp.XML_NAMESPACE.equals(token)
-        || KEEP.equals(token)
-        || BY_NAME.equals(token);
+           || StdArrangementTokens.Regexp.NAME.equals(token)
+           || StdArrangementTokens.Regexp.XML_NAMESPACE.equals(token)
+           || KEEP.equals(token)
+           || BY_NAME.equals(token);
   }
 
   @Override
@@ -82,17 +83,16 @@ public class XmlRearranger
                                                                                                    @Nullable Document document,
                                                                                                    @NotNull Collection<? extends TextRange> ranges,
                                                                                                    @NotNull PsiElement element,
-                                                                                                   @NotNull ArrangementSettings settings)
-  {
+                                                                                                   @NotNull ArrangementSettings settings) {
     final XmlArrangementParseInfo newEntryInfo = new XmlArrangementParseInfo();
-    element.accept(new XmlArrangementVisitor(newEntryInfo, Collections.singleton(element.getTextRange())));
+    element.accept(createVisitor(newEntryInfo, document, Collections.singleton(element.getTextRange())));
 
     if (newEntryInfo.getEntries().size() != 1) {
       return null;
     }
     final XmlElementArrangementEntry entry = newEntryInfo.getEntries().get(0);
     final XmlArrangementParseInfo existingEntriesInfo = new XmlArrangementParseInfo();
-    root.accept(new XmlArrangementVisitor(existingEntriesInfo, ranges));
+    root.accept(createVisitor(existingEntriesInfo, document, ranges));
     return Pair.create(entry, existingEntriesInfo.getEntries());
   }
 
@@ -102,7 +102,7 @@ public class XmlRearranger
                                                          @NotNull Collection<? extends TextRange> ranges,
                                                          @NotNull ArrangementSettings settings) {
     final XmlArrangementParseInfo parseInfo = new XmlArrangementParseInfo();
-    root.accept(new XmlArrangementVisitor(parseInfo, ranges));
+    root.accept(createVisitor(parseInfo, document, ranges));
     return parseInfo.getEntries();
   }
 
@@ -132,5 +132,13 @@ public class XmlRearranger
   @Override
   public @NotNull ArrangementEntryMatcher buildMatcher(@NotNull ArrangementMatchCondition condition) throws IllegalArgumentException {
     throw new IllegalArgumentException("Can't build a matcher for condition " + condition);
+  }
+
+  protected @NotNull XmlArrangementVisitor createVisitor(
+    @NotNull XmlArrangementParseInfo info,
+    @Nullable Document document,
+    @NotNull Collection<? extends TextRange> ranges
+  ) {
+    return new XmlArrangementVisitor(info, ranges);
   }
 }

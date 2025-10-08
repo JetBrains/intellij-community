@@ -31,8 +31,6 @@ import com.intellij.psi.util.PsiUtilCore;
 import com.intellij.util.SmartList;
 import com.intellij.util.concurrency.EdtExecutorService;
 import com.intellij.util.containers.ContainerUtil;
-import it.unimi.dsi.fastutil.longs.LongArrayList;
-import it.unimi.dsi.fastutil.longs.LongList;
 import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -112,70 +110,37 @@ public sealed class GeneralHighlightingPass extends ProgressableTextEditorHighli
 
     DaemonCodeAnalyzerEx daemonCodeAnalyzer = DaemonCodeAnalyzerEx.getInstanceEx(myProject);
     myHighlightVisitorRunner.createHighlightVisitorsFor(filteredVisitors->{
-      List<Divider.DividedElements> dividedElements = new ArrayList<>();
-      List<Divider.DividedElements> notVisitableElements = new ArrayList<>();
-      Divider.divideInsideAndOutsideAllRoots(getFile(), myRestrictRange, myPriorityRange, psiFile -> true,
-                                             elements -> {
-                                               if (SHOULD_HIGHLIGHT_FILTER.test(elements.psiRoot())) {
-                                                 dividedElements.add(elements);
-                                               }
-                                               else {
-                                                 notVisitableElements.add(elements);
-                                               }
-                                               return false;
-                                             });
-      List<PsiElement> allInsideElements = ContainerUtil.concat(ContainerUtil.map(dividedElements,
-                                            dividedForRoot -> {
-                                              List<? extends PsiElement> inside = dividedForRoot.inside();
-                                              PsiElement lastInside = ContainerUtil.getLastItem(inside);
-                                              return lastInside instanceof PsiFile && !(lastInside instanceof PsiCodeFragment) ? inside
-                                                .subList(0, inside.size() - 1) : inside;
-                                            }));
-
-
-      List<LongList> map = ContainerUtil.map(dividedElements,
-                                             dividedForRoot -> {
-                                               LongList insideRanges = dividedForRoot.insideRanges();
-                                               PsiElement lastInside = ContainerUtil.getLastItem(dividedForRoot.inside());
-                                               return lastInside instanceof PsiFile && !(lastInside instanceof PsiCodeFragment)
-                                                      ? insideRanges.subList(0, insideRanges.size() - 1) : insideRanges;
-                                             });
-
-      LongList allInsideRanges = ContainerUtil.reduce(map, new LongArrayList(map.isEmpty() ? 1 : map.get(0).size()), (l1, l2)->{ l1.addAll(l2); return l1;});
-
-      List<PsiElement> allOutsideElements = ContainerUtil.concat(ContainerUtil.map(dividedElements,
-                                                  dividedForRoot -> {
-                                                    List<? extends PsiElement> outside = dividedForRoot.outside();
-                                                    PsiElement lastInside = ContainerUtil.getLastItem(dividedForRoot.inside());
-                                                    return lastInside instanceof PsiFile && !(lastInside instanceof PsiCodeFragment) ? ContainerUtil.append(outside,
-                                                      lastInside) : outside;
-                                                  }));
-      List<LongList> map1 = ContainerUtil.map(dividedElements,
-                                              dividedForRoot -> {
-                                                LongList outsideRanges = dividedForRoot.outsideRanges();
-                                                PsiElement lastInside = ContainerUtil.getLastItem(dividedForRoot.inside());
-                                                long lastInsideRange = dividedForRoot.insideRanges().isEmpty() ? -1 : dividedForRoot.insideRanges().getLong(dividedForRoot.insideRanges().size()-1);
-                                                if (lastInside instanceof PsiFile && !(lastInside instanceof PsiCodeFragment) && lastInsideRange != -1) {
-                                                  LongArrayList r = new LongArrayList(outsideRanges);
-                                                  r.add(lastInsideRange);
-                                                  return r;
-                                                }
-                                                return outsideRanges;
-                                              });
-      LongList allOutsideRanges = ContainerUtil.reduce(map1, new LongArrayList(map1.isEmpty() ? 1 : map1.get(0).size()), (l1, l2)->{ l1.addAll(l2); return l1;});
-
-
-      setProgressLimit(allInsideElements.size() + allOutsideElements.size());
-
       boolean forceHighlightParents = forceHighlightParents();
 
-      // Remove obsolete infos for invalid psi elements.
-      // Unfortunately, the majority of PSI implementations are very bad at increment reparsing, meaning the smallest document change
-      // leads (non-optimally) to many unrelated PSI elements being invalidated, and then the new PSI recreated in their place with identical structure.
-      // If we removed these invalid elements eagerly, it would cause flicker because the newly created elements preempt the just removed invalid ones.
-      // Hence, we defer the removal of invalid elements till the very end, in hope that these highlighters be reused by these new elements.
-      // this optimization, however, could lead to an increased latency
       Consumer<? super ManagedHighlighterRecycler> recyclerConsumer = invalidPsiRecycler -> {
+        List<Divider.DividedElements> dividedElements = new ArrayList<>();
+        List<Divider.DividedElements> notVisitableElements = new ArrayList<>();
+        Divider.divideInsideAndOutsideAllRoots(getFile(), myRestrictRange, myPriorityRange, psiFile -> true,
+          elements -> {
+            if (SHOULD_HIGHLIGHT_FILTER.test(elements.psiRoot())) {
+              dividedElements.add(elements);
+            }
+            else {
+              notVisitableElements.add(elements);
+            }
+            return false;
+          });
+        List<PsiElement> allInsideElements = ContainerUtil.concat(ContainerUtil.map(dividedElements,
+          dividedForRoot -> {
+            List<? extends PsiElement> inside = dividedForRoot.inside();
+            PsiElement lastInside = ContainerUtil.getLastItem(inside);
+            return lastInside instanceof PsiFile && !(lastInside instanceof PsiCodeFragment) ? inside
+              .subList(0, inside.size() - 1) : inside;
+          }));
+
+        List<PsiElement> allOutsideElements = ContainerUtil.concat(ContainerUtil.map(dividedElements,
+          dividedForRoot -> {
+            List<? extends PsiElement> outside = dividedForRoot.outside();
+            PsiElement lastInside = ContainerUtil.getLastItem(dividedForRoot.inside());
+            return lastInside instanceof PsiFile && !(lastInside instanceof PsiCodeFragment) ? ContainerUtil.append(outside, lastInside) : outside;
+          }));
+        setProgressLimit(allInsideElements.size() + allOutsideElements.size());
+
         // clear highlights generated by visitors called on psi elements no longer highlightable under the current highlighting level (e.g., when the file level was changed from "All Problems" to "None")
         for (Divider.DividedElements notVisitable : notVisitableElements) {
           for (PsiElement element : ContainerUtil.concat(notVisitable.inside(), notVisitable.outside())) {
@@ -194,18 +159,21 @@ public sealed class GeneralHighlightingPass extends ProgressableTextEditorHighli
           success = true;
         }
         else {
-          success = collectHighlights(allInsideElements, allInsideRanges, allOutsideElements, allOutsideRanges, filteredVisitors,
+          success = collectHighlights(myRestrictRange, allInsideElements, allOutsideElements, filteredVisitors,
                                       forceHighlightParents, (toolId, psiElement, newInfos) -> {
-              myHighlightInfoUpdater.psiElementVisited(toolId, psiElement, newInfos, getDocument(), getFile(), myProject,
-                                                       getHighlightingSession(), invalidPsiRecycler);
-              myHighlights.addAll(newInfos);
+              myHighlightInfoUpdater.psiElementVisited(toolId, psiElement, newInfos, getDocument(), getFile(), myProject, getHighlightingSession(), invalidPsiRecycler);
               if (psiElement instanceof PsiErrorElement) {
                 myHasErrorElement = true;
               }
-              for (HighlightInfo info : newInfos) {
-                if (info.getSeverity() == HighlightSeverity.ERROR) {
-                  myHasErrorSeverity = true;
-                  break;
+              if (!newInfos.isEmpty()) {
+                int size = newInfos.size(); // size == 1 most of the time
+                for (int i = 0; i < size; i++) {
+                  myHighlights.add(newInfos.get(i));
+                  final HighlightInfo info = newInfos.get(i);
+                  if (info.getSeverity() == HighlightSeverity.ERROR) {
+                    myHasErrorSeverity = true;
+                    break;
+                  }
                 }
               }
             });
@@ -221,6 +189,12 @@ public sealed class GeneralHighlightingPass extends ProgressableTextEditorHighli
         }
       };
       if (myHighlightInfoUpdater instanceof HighlightInfoUpdaterImpl impl) {
+        // Remove obsolete infos for invalid psi elements.
+        // Unfortunately, the majority of PSI implementations are very bad at increment reparsing, meaning the smallest document change
+        // leads (non-optimally) to many unrelated PSI elements being invalidated, and then the new PSI recreated in their place with identical structure.
+        // If we removed these invalid elements eagerly, it would cause flicker because the newly created elements preempt the just removed invalid ones.
+        // Hence, we defer the removal of invalid elements till the very end, in hope that these highlighters be reused by these new elements.
+        // this optimization, however, could lead to an increased latency
         impl.runWithInvalidPsiRecycler(getHighlightingSession(), HighlightInfoUpdaterImpl.WhatTool.ANNOTATOR_OR_VISITOR, recyclerConsumer);
       }
       else {
@@ -249,19 +223,18 @@ public sealed class GeneralHighlightingPass extends ProgressableTextEditorHighli
     return myHighlights;
   }
 
-  private boolean collectHighlights(@NotNull List<? extends PsiElement> elements1,
-                                    @NotNull LongList ranges1,
+  private boolean collectHighlights(@NotNull TextRange restrictRange,
+                                    @NotNull List<? extends PsiElement> elements1,
                                     @NotNull List<? extends PsiElement> elements2,
-                                    @NotNull LongList ranges2,
                                     HighlightVisitor @NotNull [] visitors,
                                     boolean forceHighlightParents,
                                     @NotNull ResultSink resultSink) {
     int chunkSize = Math.max(1, (elements1.size()+elements2.size()) / 100); // one percent precision is enough
     ProgressManager.checkCanceled();
-    Runnable runnable = () -> myHighlightVisitorRunner.runVisitors(getFile(), myRestrictRange, elements1, ranges1, elements2, ranges2, visitors, forceHighlightParents, chunkSize,
-                                                            myUpdateAll, () -> createInfoHolder(getFile()), resultSink);
+    Runnable runnable = () -> myHighlightVisitorRunner.runVisitors(getFile(), elements1, elements2, visitors, forceHighlightParents, chunkSize,
+                                                                   myUpdateAll, () -> createInfoHolder(getFile()), resultSink);
     AnnotationSession session = AnnotationSessionImpl.create(getFile());
-    setupAnnotationSession(session, myPriorityRange, myRestrictRange,
+    setupAnnotationSession(session, myPriorityRange, restrictRange,
                            ((HighlightingSessionImpl)getHighlightingSession()).getMinimumSeverity());
     AnnotatorRunner annotatorRunner = myRunAnnotators ? new AnnotatorRunner(session, false) : null;
     if (annotatorRunner == null) {
@@ -382,6 +355,6 @@ public sealed class GeneralHighlightingPass extends ProgressableTextEditorHighli
 
   @Override
   public String toString() {
-    return super.toString() + " updateAll="+myUpdateAll+" range="+myRestrictRange;
+    return super.toString() + (myUpdateAll ? "" : "; updateAll=false")+ (myPriorityRange.equals(myRestrictRange) ? "" : "; priorityRange="+myPriorityRange);
   }
 }

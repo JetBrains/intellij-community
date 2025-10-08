@@ -7,24 +7,30 @@ import org.eclipse.aether.ConfigurationProperties;
 import org.eclipse.aether.RepositorySystemSession;
 import org.eclipse.aether.util.graph.manager.DependencyManagerUtils;
 import org.eclipse.aether.util.graph.transformer.ConflictResolver;
+import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.idea.maven.model.MavenWorkspaceMap;
 import org.jetbrains.idea.maven.server.MavenServerConsoleIndicatorImpl;
 
 import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
+import java.util.function.Consumer;
 
 public class Maven40RepositorySystemSessionFactory implements RepositorySystemSessionFactory {
   private final RepositorySystemSessionFactory mySystemSessionFactory;
   private final MavenWorkspaceMap myWorkspaceMap;
   private final MavenServerConsoleIndicatorImpl myIndicator;
+  private final Consumer<RepositorySystemSession.SessionBuilder> myModifier;
 
   public Maven40RepositorySystemSessionFactory(RepositorySystemSessionFactory systemSessionFactory,
                                                MavenWorkspaceMap map,
-                                               MavenServerConsoleIndicatorImpl indicator) {
+                                               MavenServerConsoleIndicatorImpl indicator,
+                                               @NotNull Consumer<RepositorySystemSession.SessionBuilder> builderModifier
+                                               ) {
     mySystemSessionFactory = systemSessionFactory;
     myWorkspaceMap = map;
     myIndicator = indicator;
+    myModifier = builderModifier;
   }
 
   @Override
@@ -36,6 +42,7 @@ public class Maven40RepositorySystemSessionFactory implements RepositorySystemSe
       .setConfigProperty(ConflictResolver.CONFIG_PROP_VERBOSE, true)
       .setConfigProperty(DependencyManagerUtils.CONFIG_PROP_VERBOSE, true)
       .setConfigProperty(ConfigurationProperties.USER_AGENT, getUserAgent(builder));
+    myModifier.accept(builder);
     return builder;
   }
 

@@ -1,9 +1,9 @@
 ### auto-generated section `build kotlin.project-wizard.idea` start
-load("@rules_jvm//:jvm.bzl", "jvm_library", "jvm_resources")
+load("@rules_jvm//:jvm.bzl", "jvm_library", "resourcegroup")
 
-jvm_resources(
+resourcegroup(
   name = "idea_resources",
-  files = glob(["resources/**/*"]),
+  srcs = glob(["resources/**/*"]),
   strip_prefix = "resources"
 )
 
@@ -12,6 +12,7 @@ jvm_library(
   module_name = "kotlin.project-wizard.idea",
   visibility = ["//visibility:public"],
   srcs = glob(["src/**/*.kt", "src/**/*.java", "src/**/*.form"], allow_empty = True),
+  resources = [":idea_resources"],
   deps = [
     "@lib//:kotlin-stdlib",
     "@lib//:kotlinx-collections-immutable",
@@ -54,7 +55,6 @@ jvm_library(
     "//plugins/kotlin/base/indices",
     "//platform/platform-api:ide",
     "//plugins/kotlin/code-insight/api",
-  ],
-  runtime_deps = [":idea_resources"]
+  ]
 )
 ### auto-generated section `build kotlin.project-wizard.idea` end

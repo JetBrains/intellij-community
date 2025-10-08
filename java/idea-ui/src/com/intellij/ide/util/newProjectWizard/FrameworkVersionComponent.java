@@ -63,7 +63,7 @@ public class FrameworkVersionComponent {
     }
     myVersionsPanel.setVisible(!versions.isEmpty());
     if (!versions.isEmpty()) {
-      FrameworkVersion toSelect = oldSelection != null && versions.contains(oldSelection) ? oldSelection : versions.get(versions.size() - 1);
+      FrameworkVersion toSelect = oldSelection != null && versions.contains(oldSelection) ? oldSelection : versions.getLast();
       myVersionsBox.setSelectedItem(toSelect);
       myModel.setSelectedVersion(myFrameworkOrGroupId, toSelect);
     }

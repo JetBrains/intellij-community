@@ -684,12 +684,12 @@ public class LaterInvocatorTest extends HeavyPlatformTestCase {
       
       LaterInvocator.enterModal("some object");
 
-      UIUtil.dispatchAllInvocationEvents();
+      PlatformTestUtil.dispatchAllInvocationEventsInIdeEventQueue();
       assertFalse(invoked.get());
       
       LaterInvocator.enterModal(myModalDialog);
 
-      UIUtil.dispatchAllInvocationEvents();
+      PlatformTestUtil.dispatchAllInvocationEventsInIdeEventQueue();
       assertTrue(invoked.get());
     });
   }
@@ -711,11 +711,11 @@ public class LaterInvocatorTest extends HeavyPlatformTestCase {
       ApplicationManager.getApplication().invokeLater(() -> invoked.set(true), ModalityState.nonModal());
       LaterInvocator.enterModal(myWindow1);
 
-      UIUtil.dispatchAllInvocationEvents();
+      PlatformTestUtil.dispatchAllInvocationEventsInIdeEventQueue();
       assertFalse(invoked.get());
 
       LaterInvocator.markTransparent(ModalityState.current());
-      UIUtil.dispatchAllInvocationEvents();
+      PlatformTestUtil.dispatchAllInvocationEventsInIdeEventQueue();
       assertTrue(invoked.get());
     });
   }

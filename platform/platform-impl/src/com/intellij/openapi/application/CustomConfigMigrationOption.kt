@@ -1,11 +1,10 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.application
 
 import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.util.io.NioFiles
 import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.annotations.VisibleForTesting
-import java.io.File
 import java.io.IOException
 import java.nio.file.Files
 import java.nio.file.Path
@@ -50,7 +49,7 @@ sealed class CustomConfigMigrationOption {
   }
 
   class MigrateFromCustomPlace(val location: Path) : CustomConfigMigrationOption() {
-    override fun getStringPresentation(): String = IMPORT_PREFIX + location.toString().replace(File.separatorChar, '/')
+    override fun getStringPresentation(): String = IMPORT_PREFIX + location.toString().replace('\\', '/')
   }
 
   /**
@@ -59,7 +58,7 @@ sealed class CustomConfigMigrationOption {
    * It'll be removed when the frontend process starts loading plugins from the same directory as a regular IDE (RDCT-1738).  
    */
   class MigratePluginsFromCustomPlace(val configLocation: Path) : CustomConfigMigrationOption() {
-    override fun getStringPresentation(): String = MIGRATE_PLUGINS_PREFIX + configLocation.toString().replace(File.separatorChar, '/')
+    override fun getStringPresentation(): String = MIGRATE_PLUGINS_PREFIX + configLocation.toString().replace('\\', '/')
   }
 
   class SetProperties(val properties: List<String>) : CustomConfigMigrationOption() {
@@ -83,35 +82,35 @@ sealed class CustomConfigMigrationOption {
 
       try {
         val lines = Files.readAllLines(markerFile)
-        if (lines.isEmpty()) return StartWithCleanConfig
-
-        val line = lines.first()
-        when {
-          line.isEmpty() -> return StartWithCleanConfig
+        val line = lines.firstOrNull()
+        return when {
+          line.isNullOrEmpty() -> StartWithCleanConfig
 
           line.startsWith(IMPORT_PREFIX) -> {
             val path = markerFile.fileSystem.getPath(line.removePrefix(IMPORT_PREFIX))
-            if (!Files.exists(path)) {
-              log.warn("$markerFile points to non-existent config: [$lines]")
-              return null
+            if (Files.exists(path)) {
+              MigrateFromCustomPlace(path)
             }
-            return MigrateFromCustomPlace(path)
+            else {
+              log.warn("$markerFile points to non-existent config: [$lines]")
+              null
+            }
           }
           
           line.startsWith(MIGRATE_PLUGINS_PREFIX) -> {
-            return MigratePluginsFromCustomPlace(markerFile.fileSystem.getPath(line.removePrefix(MIGRATE_PLUGINS_PREFIX)))
+            MigratePluginsFromCustomPlace(markerFile.fileSystem.getPath(line.removePrefix(MIGRATE_PLUGINS_PREFIX)))
           }
 
           line.startsWith(PROPERTIES_PREFIX) -> {
             val properties = line.removePrefix(PROPERTIES_PREFIX).split(' ')
-            return SetProperties(properties)
+            SetProperties(properties)
           }
 
-          line == MERGE_CONFIGS_COMMAND -> return MergeConfigs
+          line == MERGE_CONFIGS_COMMAND -> MergeConfigs
 
           else -> {
             log.error("Invalid format of $markerFile: $lines")
-            return null
+            null
           }
         }
       }
@@ -134,7 +133,7 @@ sealed class CustomConfigMigrationOption {
     }
 
     @VisibleForTesting
-    fun getCustomConfigMarkerFilePath(configDir: Path): Path = configDir.resolve(ConfigImportHelper.CUSTOM_MARKER_FILE_NAME)
+    fun getCustomConfigMarkerFilePath(configDir: Path): Path = configDir.resolve(InitialConfigImportState.CUSTOM_MARKER_FILE_NAME)
     
     fun doesCustomConfigMarkerExist(configDir: Path): Boolean = getCustomConfigMarkerFilePath(configDir).exists()
   }

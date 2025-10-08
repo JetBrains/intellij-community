@@ -64,7 +64,7 @@ private class MyProjectStore(project: Project) : ProjectWithModuleStoreImpl(proj
     val configurationFileManager = ConfigurationFileManager.getInstance(project)
     val node = configurationFileManager.findValueNode(configurationSchemaKey) ?: return stateGetter
     return object : StateGetter<Any> {
-      override fun getState(mergeInto: Any?): Any {
+      override suspend fun getState(mergeInto: Any?): Any {
         val state = stateGetter.getState(mergeInto) ?: ReflectionUtil.newInstance(stateClass, false)
         val affectedProperties = mutableListOf<String>()
         readIntoObject(instance = state as BaseState, nodes = node) { affectedProperties.add(it.name!!) }
@@ -107,7 +107,7 @@ private class MyProjectStore(project: Project) : ProjectWithModuleStoreImpl(proj
     }
   }
 
-  override fun reload(changedStorages: Set<StateStorage>): Collection<String>? {
+  override suspend fun reload(changedStorages: Set<StateStorage>): Collection<String>? {
     val result = super.reload(changedStorages)
     for (storage in changedStorages) {
       if (storage !is ReadOnlyStorage) {
@@ -127,7 +127,9 @@ private class MyProjectStore(project: Project) : ProjectWithModuleStoreImpl(proj
         configurationSchemaKey = storage.configurationSchemaKey,
         // todo not clear, is it ok, anyway, configuration script is used mostly for Core
         pluginId = PluginManagerCore.CORE_ID,
-      )
+      ) {
+        it()
+      }
     }
     return result
   }
@@ -165,6 +167,6 @@ private class ReadOnlyStorage(
 
   override fun createSaveSessionProducer(): SaveSessionProducer? = null
 
-  override fun analyzeExternalChangesAndUpdateIfNeeded(componentNames: MutableSet<in String>) {
+  override suspend fun analyzeExternalChangesAndUpdateIfNeeded(componentNames: MutableSet<in String>) {
   }
 }

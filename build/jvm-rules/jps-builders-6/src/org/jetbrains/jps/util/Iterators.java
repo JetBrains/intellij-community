@@ -109,7 +109,7 @@ public final class Iterators {
   @SuppressWarnings("unchecked")
   public static <T> Iterable<T> flat(final Iterable<? extends T> first, final Iterable<? extends T> second) {
     if (isEmptyCollection(first)) {
-      return isEmptyCollection(second)? Collections.<T>emptyList() : (Iterable<T>)second;
+      return isEmptyCollection(second) ? Collections.emptyList() : (Iterable<T>)second;
     }
     if (isEmptyCollection(second)) {
       return (Iterable<T>)first;
@@ -149,7 +149,7 @@ public final class Iterators {
   }
 
   public static <T> Iterable<T> flat(final Iterable<? extends Iterable<? extends T>> parts) {
-    return isEmptyCollection(parts)? Collections.<T>emptyList() : new Iterable<T>() {
+    return isEmptyCollection(parts) ? Collections.emptyList() : new Iterable<T>() {
       @NotNull
       @Override
       public Iterator<T> iterator() {
@@ -195,7 +195,7 @@ public final class Iterators {
 
   public static <I> Iterator<I> asIterator(final Iterable<? extends I> from) {
     //noinspection unchecked
-    return from == null? Collections.<I>emptyIterator() : (Iterator<I>)from.iterator();
+    return from == null ? Collections.emptyIterator() : (Iterator<I>)from.iterator();
   }
 
   public static <T> Iterable<T> asIterable(final T elem) {
@@ -209,7 +209,7 @@ public final class Iterators {
   }
 
   public static <T> Iterable<T> asIterable(final T[] elem) {
-    return elem == null? Collections.<T>emptyList() : Arrays.asList(elem);
+    return elem == null ? Collections.emptyList() : Arrays.asList(elem);
   }
 
   public static <T> Iterable<T> reverse(final List<T> list) {
@@ -254,7 +254,7 @@ public final class Iterators {
   }
 
   public static <I,O> Iterable<O> map(final Iterable<? extends I> from, final Function<? super I, ? extends O> mapper) {
-    return isEmptyCollection(from)? Collections.<O>emptyList() : new Iterable<O>() {
+    return isEmptyCollection(from) ? Collections.emptyList() : new Iterable<O>() {
       @NotNull
       @Override
       public Iterator<O> iterator() {
@@ -278,7 +278,7 @@ public final class Iterators {
   }
 
   public static <T> Iterable<T> filter(final Iterable<? extends T> it, final BooleanFunction<? super T> predicate) {
-    return isEmptyCollection(it)? Collections.<T>emptyList() : new Iterable<T>() {
+    return isEmptyCollection(it) ? Collections.emptyList() : new Iterable<T>() {
       @NotNull
       @Override
       public Iterator<T> iterator() {
@@ -333,7 +333,7 @@ public final class Iterators {
   }
 
   public static <T> Iterable<T> filterWithOrder(final Iterable<? extends T> from, final Iterable<? extends BooleanFunction<? super T>> predicates) {
-    return isEmptyCollection(predicates) || isEmptyCollection(from)? Collections.<T>emptyList() : new Iterable<T>() {
+    return isEmptyCollection(predicates) || isEmptyCollection(from) ? Collections.emptyList() : new Iterable<T>() {
       @NotNull
       @Override
       public Iterator<T> iterator() {
@@ -370,7 +370,7 @@ public final class Iterators {
   }
 
   public static <T> Iterable<T> unique(final Iterable<? extends T> it) {
-    return isEmptyCollection(it)? Collections.<T>emptyList() : new Iterable<T>() {
+    return isEmptyCollection(it) ? Collections.emptyList() : new Iterable<T>() {
       @NotNull
       @Override
       public Iterator<T> iterator() {
@@ -393,7 +393,7 @@ public final class Iterators {
   }
 
   public static <T> Iterable<T> uniqueBy(final Iterable<? extends T> it, final Provider<? extends BooleanFunction<T>> predicateFactory) {
-    return isEmptyCollection(it)? Collections.<T>emptyList() : new Iterable<T>() {
+    return isEmptyCollection(it) ? Collections.emptyList() : new Iterable<T>() {
       @NotNull
       @Override
       public Iterator<T> iterator() {

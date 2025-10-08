@@ -31,6 +31,7 @@ public final class CommonProxy extends ProxySelector {
   private static final CommonProxy ourInstance = new CommonProxy();
 
   /** @deprecated use {@link com.intellij.util.net.ProxyUtils#NO_PROXY_LIST} */
+  @ApiStatus.Internal
   @Deprecated
   public static final List<Proxy> NO_PROXY_LIST = Collections.singletonList(Proxy.NO_PROXY);
   private static final long ourErrorInterval = TimeUnit.MINUTES.toMillis(3);
@@ -123,6 +124,7 @@ public final class CommonProxy extends ProxySelector {
   /**
    * @deprecated use {@link com.intellij.util.net.JdkProxyProvider#ensureDefault()}
    */
+  @ApiStatus.Internal
   @Deprecated
   public void ensureAuthenticator() {
     if (CommonProxyCompatibility.mainAuthenticator != null) {
@@ -134,6 +136,7 @@ public final class CommonProxy extends ProxySelector {
   }
 
   /** @deprecated no replacement, existing usages are internal and are no-op since noProxy has no usages */
+  @ApiStatus.Internal
   @Deprecated
   public void removeNoProxy(final @NotNull String protocol, final @NotNull String host, final int port) { }
 
@@ -141,6 +144,7 @@ public final class CommonProxy extends ProxySelector {
    * @deprecated no replacement, only two internal usages, and the rule is never removed, logic should be implemented by other means,
    * see {@link com.intellij.util.net.ProxyAuthentication}
    */
+  @ApiStatus.Internal
   @Deprecated
   public void noAuthentication(final @NotNull String protocol, final @NotNull String host, final int port) { }
 

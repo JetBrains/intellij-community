@@ -4,11 +4,7 @@ package org.jetbrains.kotlin.idea.completion.impl.k2.contributors
 import org.jetbrains.kotlin.analysis.api.KaSession
 import org.jetbrains.kotlin.idea.completion.impl.k2.K2CompletionSectionContext
 import org.jetbrains.kotlin.idea.completion.impl.k2.K2SimpleCompletionContributor
-import org.jetbrains.kotlin.idea.completion.impl.k2.LookupElementSink
 import org.jetbrains.kotlin.idea.completion.impl.k2.contributors.keywords.ActualKeywordHandler
-import org.jetbrains.kotlin.idea.completion.weighers.WeighingContext
-import org.jetbrains.kotlin.idea.util.positionContext.KotlinCallableReferencePositionContext
-import org.jetbrains.kotlin.idea.util.positionContext.KotlinRawPositionContext
 import org.jetbrains.kotlin.idea.util.positionContext.KotlinTypeNameReferencePositionContext
 import org.jetbrains.kotlin.lexer.KtTokens
 import org.jetbrains.kotlin.psi.KtCallableDeclaration
@@ -33,7 +29,8 @@ import org.jetbrains.kotlin.psi.KtTypeReference
 internal class K2ActualDeclarationContributor : K2SimpleCompletionContributor<KotlinTypeNameReferencePositionContext>(
     KotlinTypeNameReferencePositionContext::class
 ) {
-    override fun KaSession.complete(context: K2CompletionSectionContext<KotlinTypeNameReferencePositionContext>) {
+    context(_: KaSession, context: K2CompletionSectionContext<KotlinTypeNameReferencePositionContext>)
+    override fun complete() {
         val declaration = context.positionContext.typeReference?.getDeclaration() ?: return
         if (!declaration.hasModifier(KtTokens.ACTUAL_KEYWORD)) return
 

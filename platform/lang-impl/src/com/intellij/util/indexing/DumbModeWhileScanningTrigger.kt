@@ -3,6 +3,7 @@ package com.intellij.util.indexing
 
 import com.intellij.openapi.components.Service
 import com.intellij.openapi.components.service
+import com.intellij.openapi.components.serviceAsync
 import com.intellij.openapi.project.DumbService
 import com.intellij.openapi.project.DumbServiceImpl
 import com.intellij.openapi.project.Project
@@ -14,12 +15,13 @@ import kotlinx.coroutines.flow.*
 import kotlinx.coroutines.launch
 import org.jetbrains.annotations.ApiStatus.Internal
 
-@Internal
-class DumbModeWhileScanningSubscriber : StartupActivity.RequiredForSmartMode {
+private class DumbModeWhileScanningSubscriber : StartupActivity.RequiredForSmartMode {
   override fun runActivity(project: Project) {
     project.service<DumbModeWhileScanningTrigger>().subscribe()
   }
 }
+
+private val DUMB_MODE_THRESHOLD: Int by lazy { Registry.intValue("scanning.dumb.mode.threshold", 20) }
 
 /**
  * Tracks [PerProjectIndexingQueue] state and starts dumb mode if too many dirty files in the queue.
@@ -28,32 +30,29 @@ class DumbModeWhileScanningSubscriber : StartupActivity.RequiredForSmartMode {
  */
 @Internal
 @Service(Service.Level.PROJECT)
-class DumbModeWhileScanningTrigger(private val project: Project, private val cs: CoroutineScope) {
+class DumbModeWhileScanningTrigger(private val project: Project, private val coroutineScope: CoroutineScope) {
   private val dumbModeForScanningIsActive = MutableStateFlow(false)
 
   fun isDumbModeForScanningActive(): StateFlow<Boolean> = dumbModeForScanningIsActive
 
   fun subscribe() {
-    if (DumbServiceImpl.isSynchronousTaskExecution) {
-      // in synchronous mode it will be a deadlock
-      return
-    }
+    coroutineScope.launch {
+      if (DumbServiceImpl.isSynchronousTaskExecution) {
+        // in synchronous mode it will be a deadlock
+        return@launch
+      }
 
-    val manyFilesChanged = project.service<PerProjectIndexingQueue>()
-      .estimatedFilesCount()
-      .map { it >= DUMB_MODE_THRESHOLD }
+      val manyFilesChanged = project.serviceAsync<PerProjectIndexingQueue>()
+        .estimatedFilesCount()
+        .map { it >= DUMB_MODE_THRESHOLD }
 
-    subscribe(manyFilesChanged, UnindexedFilesScannerExecutor.getInstance(project).isRunning)
-  }
-
-  private fun subscribe(manyFilesChanged: Flow<Boolean>, scanningInProgress: Flow<Boolean>) {
-    cs.launch {
+      val scanningInProgress = project.serviceAsync<UnindexedFilesScannerExecutor>().isRunning
       while (true) {
         manyFilesChanged.first { it }
         dumbModeForScanningIsActive.value = true
         try {
-          DumbService.getInstance(project).runInDumbMode("Waiting for scanning to complete") {
-            // this is kind of trigger with memory: to start dumb mode it's enough to have many changed files, but to end dumb mode
+          project.serviceAsync<DumbService>().runInDumbMode("Waiting for scanning to complete") {
+            // this is kind of trigger with memory: to start dumb mode, it's enough to have many changed files, but to end dumb mode
             // we also should wait for all the scanning tasks to finish.
             manyFilesChanged
               // also wait for all the other scanning tasks to complete before starting indexing tasks
@@ -68,9 +67,5 @@ class DumbModeWhileScanningTrigger(private val project: Project, private val cs:
         }
       }
     }
-  }
-
-  companion object {
-    private val DUMB_MODE_THRESHOLD: Int by lazy { Registry.intValue("scanning.dumb.mode.threshold", 20) }
   }
 }

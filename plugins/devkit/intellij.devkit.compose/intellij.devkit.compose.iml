@@ -14,7 +14,7 @@
           </stringArguments>
           <arrayArguments>
             <arrayArg name="pluginClasspaths">
-              <args>$MAVEN_REPOSITORY$/org/jetbrains/kotlin/kotlin-compose-compiler-plugin/2.2.20-RC/kotlin-compose-compiler-plugin-2.2.20-RC.jar</args>
+              <args>$MAVEN_REPOSITORY$/org/jetbrains/kotlin/kotlin-compose-compiler-plugin/2.2.20/kotlin-compose-compiler-plugin-2.2.20.jar</args>
             </arrayArg>
           </arrayArguments>
         </compilerArguments>
@@ -51,5 +51,10 @@
     <orderEntry type="library" scope="PROVIDED" name="kotlinc.kotlin-compiler-common" level="project" />
     <orderEntry type="library" scope="PROVIDED" name="kotlinc.analysis-api" level="project" />
     <orderEntry type="library" scope="PROVIDED" name="kotlinc.kotlin-jps-common" level="project" />
+    <orderEntry type="module" module-name="intellij.platform.lang.impl" />
+    <orderEntry type="module" module-name="intellij.platform.uast" />
+    <orderEntry type="module" module-name="intellij.java" />
+    <orderEntry type="module" module-name="intellij.java.debugger.impl" />
+    <orderEntry type="module" module-name="intellij.platform.ide.core.impl" />
   </component>
 </module>

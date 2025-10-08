@@ -1,9 +1,9 @@
 ### auto-generated section `build intellij.javaFX` start
-load("@rules_jvm//:jvm.bzl", "jvm_library", "jvm_resources")
+load("@rules_jvm//:jvm.bzl", "jvm_library", "resourcegroup")
 
-jvm_resources(
+resourcegroup(
   name = "javaFX_resources",
-  files = glob(["resources/**/*"]),
+  srcs = glob(["resources/**/*"]),
   strip_prefix = "resources"
 )
 
@@ -12,6 +12,7 @@ jvm_library(
   module_name = "intellij.javaFX",
   visibility = ["//visibility:public"],
   srcs = glob(["src/**/*.kt", "src/**/*.java", "src/**/*.form"], allow_empty = True),
+  resources = [":javaFX_resources"],
   deps = [
     "//platform/analysis-api:analysis",
     "//platform/code-style-api:codeStyle",
@@ -48,8 +49,7 @@ jvm_library(
     "//java/java-impl-refactorings:impl-refactorings",
     "//xml/xml-psi-api:psi",
     "//platform/util/jdom",
-  ],
-  runtime_deps = [":javaFX_resources"]
+  ]
 )
 
 jvm_library(
@@ -100,8 +100,7 @@ jvm_library(
     "//java/java-impl-refactorings:impl-refactorings",
     "//xml/xml-psi-api:psi",
     "//platform/util/jdom",
-  ],
-  runtime_deps = [":javaFX_resources"]
+  ]
 )
 ### auto-generated section `build intellij.javaFX` end
 
@@ -115,9 +114,9 @@ jps_test(
 ### auto-generated section `test intellij.javaFX` end
 
 ### auto-generated section `build intellij.javaFX.properties` start
-jvm_resources(
+resourcegroup(
   name = "javaFX-properties_resources",
-  files = glob(["properties/resources/**/*"]),
+  srcs = glob(["properties/resources/**/*"]),
   strip_prefix = "properties/resources"
 )
 
@@ -126,6 +125,7 @@ jvm_library(
   module_name = "intellij.javaFX.properties",
   visibility = ["//visibility:public"],
   srcs = glob(["properties/src/**/*.kt", "properties/src/**/*.java", "properties/src/**/*.form"], allow_empty = True),
+  resources = [":javaFX-properties_resources"],
   deps = [
     "//platform/core-api:core",
     "//platform/platform-impl:ide-impl",
@@ -136,7 +136,6 @@ jvm_library(
     "//plugins/javaFX",
     "//platform/analysis-api:analysis",
     "@lib//:stream_ex",
-  ],
-  runtime_deps = [":javaFX-properties_resources"]
+  ]
 )
 ### auto-generated section `build intellij.javaFX.properties` end

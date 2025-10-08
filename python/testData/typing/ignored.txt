@@ -12,7 +12,6 @@ constructors_call_new.py
 constructors_call_type.py
 constructors_callable.py
 dataclasses_order.py
-dataclasses_slots.py
 dataclasses_transform_converter.py
 dataclasses_transform_field.py
 dataclasses_transform_meta.py

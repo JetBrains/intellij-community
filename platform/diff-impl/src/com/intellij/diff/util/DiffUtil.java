@@ -1307,7 +1307,7 @@ public final class DiffUtil {
 
   public static int bound(int value, int lowerBound, int upperBound) {
     assert lowerBound <= upperBound : String.format("%s - [%s, %s]", value, lowerBound, upperBound);
-    return MathUtil.clamp(value, lowerBound, upperBound);
+    return Math.clamp(value, lowerBound, upperBound);
   }
 
   //

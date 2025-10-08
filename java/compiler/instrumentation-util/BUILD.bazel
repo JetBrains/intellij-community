@@ -7,6 +7,6 @@ jvm_library(
   visibility = ["//visibility:public"],
   srcs = glob(["src/**/*.kt", "src/**/*.java", "src/**/*.form"], allow_empty = True),
   kotlinc_opts = "@community//:k8",
-  deps = ["@lib//:asm"]
+  deps = ["//libraries/asm"]
 )
 ### auto-generated section `build intellij.java.compiler.instrumentationUtil` end

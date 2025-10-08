@@ -11,7 +11,7 @@ import com.intellij.psi.*
 import com.intellij.psi.util.PsiTreeUtil
 import com.intellij.psi.util.elementType
 
-public class JavaSafeDeleteCompletionCommandProvider : AbstractSafeDeleteCompletionCommandProvider() {
+private class JavaSafeDeleteCompletionCommandProvider : AbstractSafeDeleteCompletionCommandProvider() {
   override fun findElement(offset: Int, psiFile: PsiFile, editor: Editor?): PsiElement? {
     if (editor == null) return null
     var element = getCommandContext(offset, psiFile) ?: return null

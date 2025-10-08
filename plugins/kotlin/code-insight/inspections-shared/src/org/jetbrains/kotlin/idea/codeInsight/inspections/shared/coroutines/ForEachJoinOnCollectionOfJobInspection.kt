@@ -9,8 +9,6 @@ import com.intellij.openapi.project.Project
 import org.jetbrains.kotlin.analysis.api.KaSession
 import org.jetbrains.kotlin.idea.base.psi.imports.addImport
 import org.jetbrains.kotlin.idea.base.resources.KotlinBundle
-import org.jetbrains.kotlin.idea.codeInsight.inspections.shared.coroutines.CoroutinesIds.JOB_JOIN_ID
-import org.jetbrains.kotlin.idea.codeInsight.inspections.shared.coroutines.CoroutinesIds.JOIN_ALL_ID
 import org.jetbrains.kotlin.idea.codeinsight.api.applicable.inspections.KotlinApplicableInspectionBase
 import org.jetbrains.kotlin.idea.codeinsight.api.applicable.inspections.KotlinModCommandQuickFix
 import org.jetbrains.kotlin.idea.refactoring.singleLambdaArgumentExpression
@@ -41,7 +39,7 @@ internal class ForEachJoinOnCollectionOfJobInspection : KotlinApplicableInspecti
         val lambdaArgument = element.singleLambdaArgumentExpression() ?: return null
 
         if (!isIterableForEachFunctionCall(element)) return null
-        if (!isLambdaWithSingleReturnedCallOnSingleParameter(lambdaArgument, JOB_JOIN_ID)) return null
+        if (!isLambdaWithSingleReturnedCallOnSingleParameter(lambdaArgument, CoroutinesIds.Job.join)) return null
 
         return Unit
     }
@@ -60,13 +58,13 @@ internal class ForEachJoinOnCollectionOfJobInspection : KotlinApplicableInspecti
                 element: KtCallExpression,
                 updater: ModPsiUpdater
             ) {
-                val alreadyImportedByStarImport = isPackageImportedByStarImport(element.containingKtFile, JOIN_ALL_ID.packageName)
+                val alreadyImportedByStarImport = isPackageImportedByStarImport(element.containingKtFile, CoroutinesIds.joinAll.packageName)
 
                 if (!alreadyImportedByStarImport) {
-                    element.containingKtFile.addImport(JOIN_ALL_ID.asSingleFqName())
+                    element.containingKtFile.addImport(CoroutinesIds.joinAll.asSingleFqName())
                 }
 
-                element.replace(KtPsiFactory(project).createExpression("${JOIN_ALL_ID.callableName}()"))
+                element.replace(KtPsiFactory(project).createExpression("${CoroutinesIds.joinAll.callableName}()"))
             }
         }
     }

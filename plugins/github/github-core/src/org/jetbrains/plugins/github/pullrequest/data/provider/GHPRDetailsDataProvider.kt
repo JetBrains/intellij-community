@@ -3,6 +3,7 @@ package org.jetbrains.plugins.github.pullrequest.data.provider
 
 import com.intellij.collaboration.async.computationStateFlow
 import com.intellij.collaboration.async.withInitial
+import com.intellij.collaboration.util.CodeReviewDomainEntity
 import com.intellij.collaboration.util.CollectionDelta
 import com.intellij.collaboration.util.ComputedResult
 import kotlinx.coroutines.flow.Flow
@@ -11,6 +12,7 @@ import org.jetbrains.plugins.github.api.data.pullrequest.GHPullRequest
 import org.jetbrains.plugins.github.api.data.pullrequest.GHPullRequestRequestedReviewer
 import org.jetbrains.plugins.github.pullrequest.data.GHPRMergeabilityState
 
+@CodeReviewDomainEntity
 interface GHPRDetailsDataProvider {
   @get:ApiStatus.Internal
   val loadedDetails: GHPullRequest?

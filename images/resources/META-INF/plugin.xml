@@ -1,8 +1,10 @@
-<idea-plugin implementation-detail="true">
+<idea-plugin>
   <vendor>JetBrains</vendor>
   <name>Images</name>
   <id>com.intellij.platform.images</id>
-  <description>Adds support for image file type preview, SVG file type contents language</description>
+  <description><![CDATA[
+    Provides Image file type preview, SVG file type contents language.
+  ]]></description>
 
   <resource-bundle>messages.ImagesBundle</resource-bundle>
 
@@ -116,34 +118,22 @@
       <add-to-group group-id="Other.KeymapGroup"/>
     </group>
     <action class="org.intellij.images.scientific.action.BinarizeImageAction"
-            id="Images.BinarizeImageAction"
-            text="Binarize Image"
-            description="Binarize image">
+            id="Images.BinarizeImageAction">
     </action>
     <action class="org.intellij.images.scientific.action.ConfigureActions"
-            id="Images.ConfigureActions"
-            text="Configure Actions"
-            description="Configure debug image viewer actions.">
+            id="Images.ConfigureActions">
     </action>
     <action class="org.intellij.images.scientific.action.GrayscaleImageAction"
-            id="Images.GrayscaleImageAction"
-            text="Apply Grayscale"
-            description="Apply grayscale">
+            id="Images.GrayscaleImageAction">
     </action>
     <action class="org.intellij.images.scientific.action.InvertChannelsAction"
-            id="Images.InvertChannelsAction"
-            text="Invert Channels"
-            description="Invert image channels">
+            id="Images.InvertChannelsAction">
     </action>
     <action class="org.intellij.images.scientific.action.RestoreOriginalImageAction"
-            id="Images.RestoreOriginalImageAction"
-            text="Restore Original"
-            description="Restore original image">
+            id="Images.RestoreOriginalImageAction">
     </action>
     <action class="org.intellij.images.scientific.action.ReverseChannelsOrderAction"
-            id="Images.ReverseChannelsOrderAction"
-            text="Reverse Channels"
-            description="Reverse image channels">
+            id="Images.ReverseChannelsOrderAction">
     </action>
     <action class="org.intellij.images.scientific.action.SaveImageAction"
             id="Images.SaveImageAction"

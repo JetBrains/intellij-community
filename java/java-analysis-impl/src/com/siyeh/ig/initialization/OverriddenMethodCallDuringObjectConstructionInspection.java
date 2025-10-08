@@ -33,7 +33,7 @@ public final class OverriddenMethodCallDuringObjectConstructionInspection extend
   }
 
   @Override
-  public BaseInspectionVisitor buildVisitor() {
+  public @NotNull BaseInspectionVisitor buildVisitor() {
     return new OverriddenMethodCallInConstructorVisitor();
   }
 

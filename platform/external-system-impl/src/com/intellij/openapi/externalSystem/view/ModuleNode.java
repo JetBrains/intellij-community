@@ -80,7 +80,7 @@ public class ModuleNode extends ExternalSystemNode<ModuleData> {
   }
 
   @Override
-  public int compareTo(@NotNull ExternalSystemNode node) {
+  public int compareTo(@NotNull ExternalSystemNode<?> node) {
     return myIsRoot ? -1 : (node instanceof ModuleNode && ((ModuleNode)node).myIsRoot) ? 1 : super.compareTo(node);
   }
 

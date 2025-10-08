@@ -66,10 +66,6 @@
                     interface="com.intellij.openapi.vcs.changes.ChangesViewModifier"
                     area="IDEA_PROJECT"
                     dynamic="true"/>
-    <extensionPoint name="vcs.changes.changesViewNodeAction"
-                    interface="com.intellij.openapi.vcs.changes.ChangesViewNodeAction"
-                    area="IDEA_PROJECT"
-                    dynamic="true"/>
     <extensionPoint name="vcs.changes.changesViewConflictsBannerCustomizer"
                     interface="com.intellij.openapi.vcs.merge.ChangesViewConflictsBannerCustomizer"
                     area="IDEA_PROJECT"
@@ -267,8 +263,16 @@
                     interface="com.intellij.openapi.vcs.VcsFileListenerIgnoredFilesProvider"
                     dynamic="true"/>
 
+    <extensionPoint name="vcs.commitMessageInspection"
+                    interface="com.intellij.vcs.commit.message.BaseCommitMessageInspection"
+                    dynamic="true"/>
+
     <extensionPoint qualifiedName="com.intellij.vcs.impl.backend.treeNodeConverter"
                     interface="com.intellij.vcs.shelf.NodeToEntityConverter"
+                    dynamic="true"/>
+
+    <extensionPoint qualifiedName="com.intellij.vcs.impl.changeListDiffViewerDecorator"
+                    interface="com.intellij.openapi.vcs.changes.actions.diff.lst.ChangeListDiffViewerDecorator"
                     dynamic="true"/>
   </extensionPoints>
 </idea-plugin>

@@ -28,7 +28,7 @@ public final class DiamondCanBeReplacedWithExplicitTypeArgumentsInspection exten
   }
 
   @Override
-  public BaseInspectionVisitor buildVisitor() {
+  public @NotNull BaseInspectionVisitor buildVisitor() {
     return new DiamondTypeVisitor();
   }
 

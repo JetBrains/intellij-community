@@ -10,7 +10,7 @@ import com.intellij.openapi.extensions.PluginId;
 import com.intellij.openapi.updateSettings.impl.InternalPluginResults;
 import com.intellij.openapi.updateSettings.impl.PluginDownloader;
 import com.intellij.openapi.updateSettings.impl.PluginUpdates;
-import com.intellij.openapi.updateSettings.impl.UpdateChecker;
+import com.intellij.openapi.updateSettings.impl.UpdateCheckerFacade;
 import com.intellij.openapi.util.Condition;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.util.concurrency.NonUrgentExecutor;
@@ -277,7 +277,7 @@ public class PluginUpdatesService {
     }
 
     NonUrgentExecutor.getInstance().execute(() -> {
-      final InternalPluginResults updates = UpdateChecker.getInternalPluginUpdates();
+      final InternalPluginResults updates = ApplicationManager.getApplication().getService(UpdateCheckerFacade.class).getInternalPluginUpdates(null, null, null);
       ApplicationManager.getApplication().invokeLater(() -> {
         synchronized (ourLock) {
           ourPreparing = false;

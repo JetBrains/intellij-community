@@ -33,8 +33,8 @@
     <orderEntry type="module" module-name="intellij.driver.client" exported="" />
     <orderEntry type="library" exported="" name="jetbrains-annotations" level="project" />
     <orderEntry type="library" exported="" name="kotlin-stdlib" level="project" />
-    <orderEntry type="library" name="kotlinx-serialization-json" level="project" />
-    <orderEntry type="library" name="kotlinx-serialization-core" level="project" />
+    <orderEntry type="module" module-name="intellij.libraries.kotlinx.serialization.json" />
+    <orderEntry type="module" module-name="intellij.libraries.kotlinx.serialization.core" />
     <orderEntry type="module" module-name="intellij.driver.model" />
     <orderEntry type="module" module-name="intellij.platform.util" />
     <orderEntry type="module" module-name="intellij.platform.ui.jcef" />

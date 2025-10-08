@@ -14,7 +14,7 @@ public final class UnqualifiedFieldAccessInspection extends BaseInspection imple
   public static final String SHORT_NAME = "UnqualifiedFieldAccess"; 
 
   @Override
-  public BaseInspectionVisitor buildVisitor() {
+  public @NotNull BaseInspectionVisitor buildVisitor() {
     return new UnqualifiedFieldAccessVisitor();
   }
 

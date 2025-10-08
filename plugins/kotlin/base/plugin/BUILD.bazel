@@ -1,15 +1,15 @@
 ### auto-generated section `build kotlin.base.plugin` start
-load("@rules_jvm//:jvm.bzl", "jvm_library", "jvm_resources")
+load("@rules_jvm//:jvm.bzl", "jvm_library", "resourcegroup")
 
-jvm_resources(
+resourcegroup(
   name = "plugin_resources",
-  files = glob(["resources/**/*"]),
+  srcs = glob(["resources/**/*"]),
   strip_prefix = "resources"
 )
 
-jvm_resources(
+resourcegroup(
   name = "plugin_test_resources",
-  files = glob(["testResources/**/*"]),
+  srcs = glob(["testResources/**/*"]),
   strip_prefix = "testResources"
 )
 
@@ -18,6 +18,7 @@ jvm_library(
   module_name = "kotlin.base.plugin",
   visibility = ["//visibility:public"],
   srcs = glob(["src/**/*.kt", "src/**/*.java", "src/**/*.form"], allow_empty = True),
+  resources = [":plugin_resources"],
   deps = [
     "@lib//:jetbrains-annotations",
     "//platform/analysis-api:analysis",
@@ -27,7 +28,7 @@ jvm_library(
     "@lib//:kotlin-stdlib",
     "@lib//:kotlinc-kotlin-compiler-common",
     "@lib//:kotlinc-kotlin-jps-common",
-    "@lib//:guava",
+    "//libraries/guava",
     "//jps/model-api:model",
     "//platform/projectModel-api:projectModel",
     "//plugins/kotlin/base/frontend-agnostic",
@@ -48,16 +49,14 @@ jvm_library(
     "//platform/util",
     "//platform/lang-core",
   ],
-  runtime_deps = [
-    ":plugin_resources",
-    "//platform/util/trove",
-  ]
+  runtime_deps = ["//platform/util/trove"]
 )
 
 jvm_library(
   name = "plugin_test_lib",
   visibility = ["//visibility:public"],
   srcs = glob(["test/**/*.kt", "test/**/*.java", "test/**/*.form"], allow_empty = True),
+  resources = [":plugin_test_resources"],
   associates = [":plugin"],
   deps = [
     "@lib//:jetbrains-annotations",
@@ -69,7 +68,7 @@ jvm_library(
     "@lib//:kotlin-stdlib",
     "@lib//:kotlinc-kotlin-compiler-common",
     "@lib//:kotlinc-kotlin-jps-common",
-    "@lib//:guava",
+    "//libraries/guava",
     "@lib//:junit4",
     "//jps/model-api:model",
     "//platform/projectModel-api:projectModel",
@@ -98,10 +97,6 @@ jvm_library(
     "//platform/build-scripts/downloader",
     "//platform/lang-core",
     "//plugins/kotlin/util/project-model-updater",
-  ],
-  runtime_deps = [
-    ":plugin_resources",
-    ":plugin_test_resources",
   ]
 )
 ### auto-generated section `build kotlin.base.plugin` end

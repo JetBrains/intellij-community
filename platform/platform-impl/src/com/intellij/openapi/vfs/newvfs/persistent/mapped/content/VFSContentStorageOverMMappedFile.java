@@ -4,7 +4,7 @@ package com.intellij.openapi.vfs.newvfs.persistent.mapped.content;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.io.ByteArraySequence;
 import com.intellij.openapi.util.io.ContentTooBigException;
-import com.intellij.openapi.util.io.FileUtil;
+import com.intellij.openapi.util.io.NioFiles;
 import com.intellij.openapi.vfs.newvfs.persistent.PersistentFSContentAccessor;
 import com.intellij.platform.diagnostic.telemetry.TelemetryManager;
 import com.intellij.platform.util.io.storages.appendonlylog.AppendOnlyLog;
@@ -153,9 +153,11 @@ public class VFSContentStorageOverMMappedFile implements VFSContentStorage, Unma
         .open(storagePath);
 
       Path mapPath = storagePath.resolveSibling(storagePath.getFileName().toString() + ".hashToId");
-      if (contentStorage.isEmpty()) {
+      if (contentStorage.isEmpty()
+          || !contentStorage.wasClosedProperly()
+          || contentStorage.wasRecoveryNeeded()) {
         //ensure map is also empty
-        FileUtil.delete(mapPath);
+        NioFiles.deleteRecursively(mapPath);
       }
 
       hashToContentRecordIdMap = ExtendibleMapFactory.mediumSize()
@@ -164,7 +166,7 @@ public class VFSContentStorageOverMMappedFile implements VFSContentStorage, Unma
         .open(mapPath);
 
       if (hashToContentRecordIdMap.isEmpty() && !contentStorage.isEmpty()) {
-        LOG.warn("Content map[" + mapPath + "] is empty while content storage is not: re-building map from the storage");
+        LOG.warn("Content map[" + mapPath + "] is empty (or dropped) while content storage is not: re-building map from the storage");
         rebuildMap(contentStorage, hashToContentRecordIdMap);
       }
 

@@ -38,11 +38,11 @@
     <orderEntry type="module" module-name="intellij.platform.jps.model.impl" scope="RUNTIME" />
     <orderEntry type="module" module-name="intellij.platform.projectModel" />
     <orderEntry type="module" module-name="intellij.platform.util.jdom" />
-    <orderEntry type="library" name="fastutil-min" level="project" />
-    <orderEntry type="library" name="kotlinx-serialization-json" level="project" />
-    <orderEntry type="library" name="kotlinx-serialization-core" level="project" />
+    <orderEntry type="module" module-name="intellij.libraries.fastutil" />
+    <orderEntry type="module" module-name="intellij.libraries.kotlinx.serialization.json" />
+    <orderEntry type="module" module-name="intellij.libraries.kotlinx.serialization.core" />
     <orderEntry type="library" name="kaml" level="project" />
-    <orderEntry type="library" name="hash4j" level="project" />
+    <orderEntry type="module" module-name="intellij.libraries.hash4j" />
     <orderEntry type="module" module-name="intellij.idea.community.build.zip" />
     <orderEntry type="library" scope="RUNTIME" name="okhttp" level="project" />
     <orderEntry type="module" module-name="intellij.platform.buildScripts.downloader" />

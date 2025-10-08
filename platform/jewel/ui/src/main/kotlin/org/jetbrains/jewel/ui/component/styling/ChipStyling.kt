@@ -12,6 +12,7 @@ import androidx.compose.runtime.staticCompositionLocalOf
 import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.unit.Dp
+import androidx.compose.ui.unit.DpSize
 import org.jetbrains.jewel.foundation.GenerateDataFunctions
 import org.jetbrains.jewel.foundation.theme.JewelTheme
 import org.jetbrains.jewel.ui.component.ChipState
@@ -261,7 +262,16 @@ public class ChipMetrics(
     public val padding: PaddingValues,
     public val borderWidth: Dp,
     public val borderWidthSelected: Dp,
+    public val minSize: DpSize,
 ) {
+    @Deprecated("Use the version with 'minSize' instead")
+    public constructor(
+        cornerSize: CornerSize,
+        padding: PaddingValues,
+        borderWidth: Dp,
+        borderWidthSelected: Dp,
+    ) : this(cornerSize, padding, borderWidth, borderWidthSelected, DpSize.Zero)
+
     override fun equals(other: Any?): Boolean {
         if (this === other) return true
         if (javaClass != other?.javaClass) return false
@@ -272,6 +282,7 @@ public class ChipMetrics(
         if (padding != other.padding) return false
         if (borderWidth != other.borderWidth) return false
         if (borderWidthSelected != other.borderWidthSelected) return false
+        if (minSize != other.minSize) return false
 
         return true
     }
@@ -281,6 +292,7 @@ public class ChipMetrics(
         result = 31 * result + padding.hashCode()
         result = 31 * result + borderWidth.hashCode()
         result = 31 * result + borderWidthSelected.hashCode()
+        result = 31 * result + minSize.hashCode()
         return result
     }
 
@@ -289,7 +301,8 @@ public class ChipMetrics(
             "cornerSize=$cornerSize, " +
             "padding=$padding, " +
             "borderWidth=$borderWidth, " +
-            "borderWidthSelected=$borderWidthSelected" +
+            "borderWidthSelected=$borderWidthSelected," +
+            "minSize=$minSize" +
             ")"
     }
 

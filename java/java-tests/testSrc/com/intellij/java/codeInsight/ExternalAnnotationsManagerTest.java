@@ -174,7 +174,9 @@ public class ExternalAnnotationsManagerTest extends LightPlatformTestCase {
             else if ("org.jetbrains.annotations.Unmodifiable".equals(nameText)
                      || "org.jetbrains.annotations.UnmodifiableView".equals(nameText)) {
               PsiType type = getType(listOwner);
-              assertTrue(InheritanceUtil.isInheritor(type, "java.util.Collection") || InheritanceUtil.isInheritor(type, "java.util.Map"));
+              assertTrue(InheritanceUtil.isInheritor(type, "java.util.Collection") 
+                         || InheritanceUtil.isInheritor(type, "java.util.Map")
+                         || InheritanceUtil.isInheritor(type, "java.util.Map.Entry"));
             }
             else {
               fail(externalName + " " + nameText);

@@ -13,10 +13,11 @@ jvm_library(
     "@lib//:kotlinx-coroutines-core",
     "//platform/platform-util-io:ide-util-io",
     "//platform/core-api:core",
-    "@lib//:lz4-java",
+    "//libraries/lz4",
     "//platform/util-ex",
-    "@lib//:ktor-network-tls",
-  ],
-  runtime_deps = ["@lib//:kotlinx-io-core"]
+    "//libraries/ktor/utils",
+    "//libraries/ktor/io",
+    "//libraries/ktor/network-tls:libraries-ktor-network-tls",
+  ]
 )
 ### auto-generated section `build intellij.platform.wsl.impl` end

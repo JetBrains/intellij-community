@@ -5,8 +5,10 @@ import org.jetbrains.annotations.Nullable;
 import java.util.List;
 
 @NotNullByDefault
-class Container<T> {
-
+class Container<T extends CharSequence> {
+  <warning descr="Redundant nullability annotation: type parameter upper bound is already non-null">@NotNull</warning> T getT() {
+    return null;
+  }
 
   <L extends @Nullable Object> List<@NotNull L> get() {
     return null;

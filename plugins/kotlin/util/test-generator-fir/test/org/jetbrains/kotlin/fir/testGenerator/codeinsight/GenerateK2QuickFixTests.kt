@@ -5,6 +5,7 @@ import org.jetbrains.kotlin.idea.k2.codeinsight.fixes.AbstractHighLevelQuickFixM
 import org.jetbrains.kotlin.idea.k2.codeinsight.fixes.AbstractHighLevelQuickFixMultiModuleTest
 import org.jetbrains.kotlin.idea.k2.codeinsight.fixes.AbstractHighLevelQuickFixTest
 import org.jetbrains.kotlin.idea.k2.codeinsight.fixes.AbstractHighLevelWithPostponedQuickFixMultiModuleTest
+import org.jetbrains.kotlin.idea.k2.codeinsight.fixes.AbstractK2KDocUnresolvedReferenceTest
 import org.jetbrains.kotlin.testGenerator.model.*
 import org.jetbrains.kotlin.testGenerator.model.GroupCategory.QUICKFIXES
 import org.jetbrains.kotlin.testGenerator.model.Patterns.DIRECTORY
@@ -101,7 +102,7 @@ internal fun MutableTWorkspace.generateK2FixTests() {
             model("$idea/quickfix/insertDelegationCall", pattern = pattern)
             model("$idea/quickfix/isEnumEntry", pattern = pattern)
             model("$idea/quickfix/javaClassOnCompanion", pattern = pattern)
-            model("$idea/quickfix/kdocMissingDocumentation", pattern = pattern, isIgnored = true)
+            model("$idea/quickfix/kdocMissingDocumentation", pattern = pattern)
             model("$idea/quickfix/lateinit", pattern = pattern)
             model("$idea/quickfix/leakingThis", pattern = pattern, isIgnored = true)
             model("$idea/quickfix/libraries", pattern = pattern)
@@ -133,6 +134,7 @@ internal fun MutableTWorkspace.generateK2FixTests() {
             model("$idea/quickfix/properties", pattern = pattern)
             model("$idea/quickfix/protectedInFinal", pattern = pattern)
             model("$idea/quickfix/publicApiImplicitType", pattern = pattern)
+            model("$idea/quickfix/receiverShadowedByContextParameter", pattern = pattern)
             model("$idea/quickfix/redundantConst", pattern = pattern)
             model("$idea/quickfix/redundantFun", pattern = pattern)
             model("$idea/quickfix/redundantInline", pattern = pattern)
@@ -281,6 +283,12 @@ internal fun MutableTWorkspace.generateK2FixTests() {
 
         testClass<AbstractHighLevelWithPostponedQuickFixMultiModuleTest> {
             model("$idea/multiModuleQuickFix/addDependency", pattern = DIRECTORY, isRecursive = false)
+        }
+    }
+
+    testGroup("code-insight/fixes-k2/tests", category = QUICKFIXES, testDataPath = "../..") {
+        testClass<AbstractK2KDocUnresolvedReferenceTest> {
+            model("testData/quickFixes/kdocUnresolvedReference", pattern = KT_WITHOUT_DOTS)
         }
     }
 }

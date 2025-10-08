@@ -2,7 +2,6 @@
 
 package org.jetbrains.kotlin.nj2k.conversions
 
-import org.jetbrains.kotlin.analysis.api.KaSession
 import org.jetbrains.kotlin.j2k.ConverterContext
 import org.jetbrains.kotlin.j2k.Nullability.Nullable
 import org.jetbrains.kotlin.nj2k.RecursiveConversion
@@ -25,7 +24,6 @@ import org.jetbrains.kotlin.nj2k.types.updateNullability
  * and generates explicit initializers with default values (e.g., `null`, `0`, or `false`).
  */
 class ImplicitInitializerConversion(context: ConverterContext) : RecursiveConversion(context) {
-    context(_: KaSession)
     override fun applyToElement(element: JKTreeElement): JKTreeElement {
         if (element !is JKField) return recurse(element)
         if (element.initializer !is JKStubExpression) return recurse(element)
@@ -38,7 +36,6 @@ class ImplicitInitializerConversion(context: ConverterContext) : RecursiveConver
         return recurse(element)
     }
 
-    context(_: KaSession)
     private fun JKField.computeInitializationState(): InitializationState {
         val containingClass = parentOfType<JKClass>() ?: return NON_INITIALIZED
         val constructors = containingClass.declarationList.filterIsInstance<JKConstructor>()
@@ -84,7 +81,6 @@ class ImplicitInitializerConversion(context: ConverterContext) : RecursiveConver
         }
     }
 
-    context(_: KaSession)
     private fun JKClass.findDeclarationsWithInitializersFor(field: JKField): Set<JKDeclaration> {
         val fieldSymbol = symbolProvider.provideUniverseSymbol(field)
         val usages = field.findUsages(scope = this, context)

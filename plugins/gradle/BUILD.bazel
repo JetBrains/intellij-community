@@ -1,15 +1,15 @@
 ### auto-generated section `build intellij.gradle` start
-load("@rules_jvm//:jvm.bzl", "jvm_library", "jvm_resources")
+load("@rules_jvm//:jvm.bzl", "jvm_library", "resourcegroup")
 
-jvm_resources(
+resourcegroup(
   name = "gradle_resources",
-  files = glob(["plugin-resources/**/*"]),
+  srcs = glob(["plugin-resources/**/*"]),
   strip_prefix = "plugin-resources"
 )
 
-jvm_resources(
+resourcegroup(
   name = "gradle_resources_1",
-  files = glob(["resources/**/*"]),
+  srcs = glob(["resources/**/*"]),
   strip_prefix = "resources"
 )
 
@@ -18,6 +18,10 @@ jvm_library(
   module_name = "intellij.gradle",
   visibility = ["//visibility:public"],
   srcs = glob(["generated/**/*.kt", "generated/**/*.java", "src/**/*.kt", "src/**/*.java", "src/**/*.form", "gen/**/*.kt", "gen/**/*.java"], allow_empty = True),
+  resources = [
+    ":gradle_resources",
+    ":gradle_resources_1",
+  ],
   deps = [
     "//platform/analysis-api:analysis",
     "//platform/util/concurrency",
@@ -40,12 +44,12 @@ jvm_library(
     "@lib//:slf4j-jdk14",
     "//platform/ide-core-impl",
     "@lib//:gradle",
-    "@lib//:gson",
+    "//libraries/gson",
     "//platform/object-serializer:objectSerializer-annotations",
-    "@lib//:ion",
+    "//libraries/ion",
     "@lib//:stream_ex",
     "//platform/statistics",
-    "@lib//:fastutil-min",
+    "//libraries/fastutil",
     "@lib//:commons-cli",
     "//platform/workspace/storage",
     "//plugins/properties/properties-psi-impl:backend-psi",
@@ -67,7 +71,7 @@ jvm_library(
     "//platform/eel-provider",
     "//platform/ijent",
     "//platform/core-api:core",
-    "@lib//:guava",
+    "//libraries/guava",
     "//platform/util/trove",
   ],
   exports = [
@@ -76,10 +80,6 @@ jvm_library(
     "@lib//:slf4j-api",
     "@lib//:slf4j-jdk14",
     "@lib//:gradle",
-  ],
-  runtime_deps = [
-    ":gradle_resources",
-    ":gradle_resources_1",
   ]
 )
 ### auto-generated section `build intellij.gradle` end
@@ -95,9 +95,9 @@ jvm_library(
 ### auto-generated section `build intellij.gradle.common` end
 
 ### auto-generated section `build intellij.gradle.tests` start
-jvm_resources(
+resourcegroup(
   name = "gradle-tests_test_resources",
-  files = glob(["testData/**/*"]),
+  srcs = glob(["testData/**/*"]),
   strip_prefix = "testData"
 )
 
@@ -112,6 +112,7 @@ jvm_library(
   module_name = "intellij.gradle.tests",
   visibility = ["//visibility:public"],
   srcs = glob(["testGen/**/*.kt", "testGen/**/*.java", "testSources/**/*.kt", "testSources/**/*.java", "testSources/**/*.form"], allow_empty = True),
+  resources = [":gradle-tests_test_resources"],
   deps = [
     "@lib//:jmock",
     "@lib//:jmock-junit4",
@@ -166,16 +167,13 @@ jvm_library(
     "//platform/xdebugger-api:debugger",
     "//platform/smRunner",
     "//platform/smRunner:smRunner_test_lib",
-    "@lib//:gson",
-    "@lib//:guava",
+    "//libraries/gson",
+    "//libraries/guava",
     "//platform/eel",
     "//platform/eel-provider",
   ],
   exports = ["//platform/external-system-api/testFramework"],
-  runtime_deps = [
-    ":gradle-tests_test_resources",
-    "//platform/execution.dashboard",
-  ]
+  runtime_deps = ["//platform/execution.dashboard"]
 )
 ### auto-generated section `build intellij.gradle.tests` end
 

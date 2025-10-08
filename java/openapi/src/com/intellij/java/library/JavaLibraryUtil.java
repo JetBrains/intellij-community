@@ -91,7 +91,7 @@ public final class JavaLibraryUtil {
 
     return new MavenCoordinates(intern(parts.get(0)),
                                 intern(parts.get(1)),
-                                intern(parts.get(parts.size() - 1)));
+                                intern(parts.getLast()));
   }
 
   /**

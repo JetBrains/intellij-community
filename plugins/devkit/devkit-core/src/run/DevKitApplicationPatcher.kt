@@ -5,19 +5,13 @@ import com.intellij.compiler.options.MakeProjectStepBeforeRun
 import com.intellij.execution.JavaRunConfigurationBase
 import com.intellij.execution.RunConfigurationExtension
 import com.intellij.execution.application.ApplicationConfiguration
-import com.intellij.execution.configurations.DebuggingRunnerData
-import com.intellij.execution.configurations.JavaParameters
-import com.intellij.execution.configurations.ParametersList
-import com.intellij.execution.configurations.RunConfigurationBase
-import com.intellij.execution.configurations.RunnerSettings
+import com.intellij.execution.configurations.*
 import com.intellij.execution.scratch.JavaScratchConfiguration
 import com.intellij.openapi.application.PathManager
 import com.intellij.openapi.components.service
 import com.intellij.openapi.diagnostic.logger
-import com.intellij.openapi.module.Module
 import com.intellij.openapi.project.IntelliJProjectUtil
 import com.intellij.openapi.project.Project
-import com.intellij.openapi.roots.ModuleRootManager
 import com.intellij.openapi.util.SystemInfo
 import com.intellij.openapi.util.io.FileUtilRt
 import com.intellij.platform.eel.provider.asEelPath
@@ -68,7 +62,7 @@ private class DevKitApplicationPatcher : RunConfigurationExtension() {
 
     val isDevBuild = mainClass == "org.jetbrains.intellij.build.devServer.DevMainKt"
     val vmParametersAsList = vmParameters.list
-    if (vmParametersAsList.contains("--add-modules") || (!isDevBuild && mainClass != "com.intellij.idea.Main")) {
+    if (vmParametersAsList.contains("--add-modules") || !isDevBuild && mainClass != "com.intellij.idea.Main") {
       return
     }
 
@@ -181,36 +175,30 @@ private class DevKitApplicationPatcher : RunConfigurationExtension() {
     vmParameters.addProperty("idea.is.internal", "true")
     vmParameters.addProperty("fus.internal.test.mode", "true")
     vmParameters.addProperty("jdk.attach.allowAttachSelf")
-    if (!vmParameters.hasParameter("-Didea.initially.ask.config=never")) {
-      vmParameters.addProperty("idea.initially.ask.config", "true")
+  }
+
+  override fun isApplicableFor(configuration: RunConfigurationBase<*>): Boolean =
+    configuration is ApplicationConfiguration ||
+    configuration.factory?.id == "JetRunConfigurationType"  // to avoid a dependency on the Kotlin plugin
+
+  private fun setPropertyIfAbsent(vmParameters: ParametersList, @Suppress("SameParameterValue") name: String) {
+    if (!vmParameters.hasProperty(name)) {
+      vmParameters.addProperty(name, "true")
     }
   }
 
-  override fun isApplicableFor(configuration: RunConfigurationBase<*>): Boolean {
-    return configuration is ApplicationConfiguration
-           //use this instead of 'is KotlinRunConfiguration' to avoid having dependency on Kotlin plugin here
-           || configuration.factory?.id == "JetRunConfigurationType"
+  private fun getIdeSystemProperties(runDir: Path): Map<String, String> {
+    // see BuildContextImpl.getAdditionalJvmArguments - we should somehow deduplicate code
+    val libDir = runDir.resolve("lib")
+    return mapOf(
+      "jna.boot.library.path" to "$libDir/jna/${if (CpuArch.isArm64()) "aarch64" else "amd64"}",
+      "pty4j.preferred.native.folder" to "$libDir/pty4j",
+      // require bundled JNA dispatcher lib
+      "jna.nosys" to "true",
+      "jna.noclasspath" to "true",
+      "compose.swing.render.on.graphics" to "true",
+    )
   }
-}
-
-private fun setPropertyIfAbsent(vmParameters: ParametersList, @Suppress("SameParameterValue") name: String) {
-  if (!vmParameters.hasProperty(name)) {
-    vmParameters.addProperty(name, "true")
-  }
-}
-
-@Suppress("SpellCheckingInspection")
-private fun getIdeSystemProperties(runDir: Path): Map<String, String> {
-  // see BuildContextImpl.getAdditionalJvmArguments - we should somehow deduplicate code
-  val libDir = runDir.resolve("lib")
-  return mapOf(
-    "jna.boot.library.path" to "$libDir/jna/${if (CpuArch.isArm64()) "aarch64" else "amd64"}",
-    "pty4j.preferred.native.folder" to "$libDir/pty4j",
-    // require bundled JNA dispatcher lib
-    "jna.nosys" to "true",
-    "jna.noclasspath" to "true",
-    "compose.swing.render.on.graphics" to "true",
-  )
 }
 
 /**
@@ -318,21 +306,5 @@ internal fun enableIjentDefaultFsProvider(
     vmParameters.add("-D${IJENT_WSL_FILE_SYSTEM_REGISTRY_KEY}=$isIjentWslFsEnabled")
     vmParameters.addAll(getMultiRoutingFileSystemVmOptions_Reflective(workingDirectory))
     vmParameters.add("-Xbootclasspath/a:${workingDirectory}/out/classes/production/$IJENT_BOOT_CLASSPATH_MODULE")
-  }
-}
-
-internal fun Module.hasIjentDefaultFsProviderInClassPath(): Boolean {
-  val queue = ArrayDeque(listOf(*ModuleRootManager.getInstance(this).getModuleDependencies()))
-  val seen = hashSetOf(this)
-  while (true) {
-    val module =
-      queue.removeFirstOrNull()
-      ?: return false
-    if (module.name == IJENT_BOOT_CLASSPATH_MODULE) {
-      return true
-    }
-    if (seen.add(module)) {
-      queue.addAll(ModuleRootManager.getInstance(module).getModuleDependencies())
-    }
   }
 }

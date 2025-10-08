@@ -3,4 +3,7 @@
     <module name="intellij.python.sdk"/>
     <module name="intellij.python.community"/>
   </dependencies>
+    <extensions defaultExtensionNs="com.intellij.statistics">
+        <counterUsagesCollector implementationClass="com.intellij.python.community.impl.installer.BinaryInstallerUsagesCollector"/>
+    </extensions>
 </idea-plugin>

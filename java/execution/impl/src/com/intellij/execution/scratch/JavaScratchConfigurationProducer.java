@@ -1,7 +1,6 @@
 // Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.execution.scratch;
 
-import com.intellij.execution.JavaExecutionUtil;
 import com.intellij.execution.Location;
 import com.intellij.execution.actions.ConfigurationContext;
 import com.intellij.execution.actions.ConfigurationFromContext;
@@ -58,7 +57,7 @@ public final class JavaScratchConfigurationProducer extends AbstractApplicationC
   public boolean isConfigurationFromContext(@NotNull JavaScratchConfiguration configuration, @NotNull ConfigurationContext context) {
     final PsiElement location = context.getPsiLocation();
     final PsiClass aClass = ApplicationConfigurationType.getMainClass(location);
-    if (aClass != null && Objects.equals(JavaExecutionUtil.getRuntimeQualifiedName(aClass), configuration.getMainClassName())) {
+    if (aClass != null && Objects.equals(aClass.getQualifiedName(), configuration.getMainClassName())) {
       // for scratches it is enough to check that the configuration is associated with the same scratch file
       final VirtualFile scratchFile = configuration.getScratchVirtualFile();
       if (scratchFile != null) {

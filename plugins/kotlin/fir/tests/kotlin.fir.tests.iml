@@ -82,10 +82,11 @@
     <orderEntry type="module" module-name="intellij.java.execution.impl" scope="TEST" />
     <orderEntry type="module" module-name="kotlin.refactorings.move.k2" scope="TEST" />
     <orderEntry type="module" module-name="kotlin.completion.api" scope="TEST" />
-    <orderEntry type="library" name="kotlinx-serialization-core" level="project" />
-    <orderEntry type="library" name="kotlinx-serialization-json" level="project" />
+    <orderEntry type="module" module-name="intellij.libraries.kotlinx.serialization.core" />
+    <orderEntry type="module" module-name="intellij.libraries.kotlinx.serialization.json" />
     <orderEntry type="module" module-name="kotlin.completion.impl.k2" scope="TEST" />
     <orderEntry type="module" module-name="intellij.platform.smRunner" scope="TEST" />
     <orderEntry type="module" module-name="intellij.java.rt" scope="TEST" />
+    <orderEntry type="module" module-name="kotlin.searching.k2" scope="TEST" />
   </component>
 </module>

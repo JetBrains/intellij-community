@@ -54,11 +54,13 @@ import org.jetbrains.jewel.ui.component.styling.LocalOutlinedSplitButtonStyle
 import org.jetbrains.jewel.ui.component.styling.LocalPopupContainerStyle
 import org.jetbrains.jewel.ui.component.styling.LocalRadioButtonStyle
 import org.jetbrains.jewel.ui.component.styling.LocalScrollbarStyle
+import org.jetbrains.jewel.ui.component.styling.LocalSearchMatchStyle
 import org.jetbrains.jewel.ui.component.styling.LocalSegmentedControlButtonStyle
 import org.jetbrains.jewel.ui.component.styling.LocalSegmentedControlStyle
 import org.jetbrains.jewel.ui.component.styling.LocalSelectableLazyColumnStyle
 import org.jetbrains.jewel.ui.component.styling.LocalSimpleListItemStyleStyle
 import org.jetbrains.jewel.ui.component.styling.LocalSliderStyle
+import org.jetbrains.jewel.ui.component.styling.LocalSpeedSearchStyle
 import org.jetbrains.jewel.ui.component.styling.LocalTextAreaStyle
 import org.jetbrains.jewel.ui.component.styling.LocalTextFieldStyle
 import org.jetbrains.jewel.ui.component.styling.LocalTooltipStyle
@@ -67,11 +69,13 @@ import org.jetbrains.jewel.ui.component.styling.MenuStyle
 import org.jetbrains.jewel.ui.component.styling.PopupContainerStyle
 import org.jetbrains.jewel.ui.component.styling.RadioButtonStyle
 import org.jetbrains.jewel.ui.component.styling.ScrollbarStyle
+import org.jetbrains.jewel.ui.component.styling.SearchMatchStyle
 import org.jetbrains.jewel.ui.component.styling.SegmentedControlButtonStyle
 import org.jetbrains.jewel.ui.component.styling.SegmentedControlStyle
 import org.jetbrains.jewel.ui.component.styling.SelectableLazyColumnStyle
 import org.jetbrains.jewel.ui.component.styling.SimpleListItemStyle
 import org.jetbrains.jewel.ui.component.styling.SliderStyle
+import org.jetbrains.jewel.ui.component.styling.SpeedSearchStyle
 import org.jetbrains.jewel.ui.component.styling.SplitButtonStyle
 import org.jetbrains.jewel.ui.component.styling.TabStyle
 import org.jetbrains.jewel.ui.component.styling.TextAreaStyle
@@ -185,6 +189,12 @@ public val JewelTheme.Companion.transparentIconButtonStyle: IconButtonStyle
 
 public val JewelTheme.Companion.sliderStyle: SliderStyle
     @Composable @ReadOnlyComposable get() = LocalSliderStyle.current
+
+public val JewelTheme.Companion.speedSearchStyle: SpeedSearchStyle
+    @Composable @ReadOnlyComposable get() = LocalSpeedSearchStyle.current
+
+public val JewelTheme.Companion.searchMatchStyle: SearchMatchStyle
+    @Composable @ReadOnlyComposable get() = LocalSearchMatchStyle.current
 
 @Composable
 public fun BaseJewelTheme(theme: ThemeDefinition, styling: ComponentStyling, content: @Composable () -> Unit) {

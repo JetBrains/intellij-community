@@ -1,6 +1,6 @@
 ### auto-generated section `build kotlin.gradle.gradle-java` start
 load("//build:compiler-options.bzl", "create_kotlinc_options")
-load("@rules_jvm//:jvm.bzl", "jvm_library", "jvm_resources")
+load("@rules_jvm//:jvm.bzl", "jvm_library", "resourcegroup")
 
 create_kotlinc_options(
   name = "custom_gradle-java",
@@ -11,9 +11,9 @@ create_kotlinc_options(
   ]
 )
 
-jvm_resources(
+resourcegroup(
   name = "gradle-java_resources",
-  files = glob(["resources/**/*"]),
+  srcs = glob(["resources/**/*"]),
   strip_prefix = "resources"
 )
 
@@ -22,6 +22,7 @@ jvm_library(
   module_name = "kotlin.gradle.gradle-java",
   visibility = ["//visibility:public"],
   srcs = glob(["src/**/*.kt", "src/**/*.java", "src/**/*.form"], allow_empty = True),
+  resources = [":gradle-java_resources"],
   kotlinc_opts = ":custom_gradle-java",
   deps = [
     "@lib//:kotlin-stdlib",
@@ -39,7 +40,7 @@ jvm_library(
     "@lib//:kotlin-gradle-plugin-idea-proto",
     "@lib//:kotlin-gradle-plugin-idea",
     "@lib//:kotlinx-coroutines-core",
-    "@lib//:guava",
+    "//libraries/guava",
     "@lib//:gradle",
     "//jps/model-api:model",
     "//platform/lang-core",
@@ -88,8 +89,7 @@ jvm_library(
     "@lib//:opentelemetry",
     "@lib//:commons-lang3",
     "//plugins/kotlin/jvm-debugger/coroutines",
-  ],
-  runtime_deps = [":gradle-java_resources"]
+  ]
 )
 
 jvm_library(
@@ -114,7 +114,7 @@ jvm_library(
     "@lib//:kotlin-gradle-plugin-idea-proto",
     "@lib//:kotlin-gradle-plugin-idea",
     "@lib//:kotlinx-coroutines-core",
-    "@lib//:guava",
+    "//libraries/guava",
     "@lib//:gradle",
     "//jps/model-api:model",
     "//platform/lang-core",
@@ -173,8 +173,7 @@ jvm_library(
     "@lib//:opentelemetry",
     "@lib//:commons-lang3",
     "//plugins/kotlin/jvm-debugger/coroutines",
-  ],
-  runtime_deps = [":gradle-java_resources"]
+  ]
 )
 ### auto-generated section `build kotlin.gradle.gradle-java` end
 

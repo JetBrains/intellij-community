@@ -246,6 +246,7 @@ com.intellij.lang.SyntaxTreeBuilder
 - a:rawTokenIndex():I
 - a:rawTokenTypeStart(I):I
 - a:remapCurrentToken(com.intellij.psi.tree.IElementType):V
+- remapCurrentTokenAndRestoreOnRollback(com.intellij.psi.tree.IElementType):V
 - a:setDebugMode(Z):V
 - a:setTokenTypeRemapper(com.intellij.lang.ITokenTypeRemapper):V
 - a:setWhitespaceSkippedCallback(com.intellij.lang.WhitespaceSkippedCallback):V
@@ -384,7 +385,6 @@ com.intellij.openapi.application.AppUIExecutor
 - s:onUiThread(com.intellij.openapi.application.ModalityState):com.intellij.openapi.application.AppUIExecutor
 - s:onWriteThread():com.intellij.openapi.application.AppUIExecutor
 - s:onWriteThread(com.intellij.openapi.application.ModalityState):com.intellij.openapi.application.AppUIExecutor
-- a:withDocumentsCommitted(com.intellij.openapi.project.Project):com.intellij.openapi.application.AppUIExecutor
 com.intellij.openapi.application.Application
 - com.intellij.openapi.components.ComponentManager
 - a:acquireReadActionLock():com.intellij.openapi.application.AccessToken
@@ -841,7 +841,7 @@ com.intellij.openapi.startup.StartupActivity$DumbAware
 - com.intellij.openapi.project.DumbAware
 - com.intellij.openapi.startup.StartupActivity
 com.intellij.openapi.startup.StartupActivity$RequiredForSmartMode
-- com.intellij.openapi.startup.StartupActivity
+- a:runActivity(com.intellij.openapi.project.Project):V
 com.intellij.openapi.ui.ComponentContainer
 - com.intellij.openapi.Disposable
 - a:getComponent():javax.swing.JComponent
@@ -871,7 +871,6 @@ com.intellij.openapi.vfs.AsyncFileListener
 com.intellij.openapi.vfs.AsyncFileListener$ChangeApplier
 - afterVfsChange():V
 - beforeVfsChange():V
-com.intellij.openapi.vfs.LocalFileProvider
 com.intellij.openapi.vfs.NonPhysicalFileSystem
 com.intellij.openapi.vfs.SavingRequestor
 com.intellij.openapi.vfs.VersionManagingFileSystem
@@ -1358,6 +1357,7 @@ com.intellij.psi.PsiParserFacade
 com.intellij.psi.PsiPlainText
 - com.intellij.psi.PsiElement
 com.intellij.psi.PsiPlainTextFile
+- com.intellij.model.psi.PsiExternalReferenceHost
 - com.intellij.psi.PsiFile
 com.intellij.psi.PsiPolyVariantReference
 - com.intellij.psi.PsiReference

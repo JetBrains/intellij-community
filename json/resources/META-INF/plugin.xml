@@ -15,7 +15,7 @@
     <plugin id="com.intellij.modules.lang"/>
   </dependencies>
 
-  <content>
+  <content namespace="jetbrains">
     <module name="intellij.json.frontend.split"/>
     <module name="intellij.json" loading="embedded"/>
     <module name="intellij.json.backend"/>

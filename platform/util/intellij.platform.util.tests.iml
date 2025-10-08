@@ -29,12 +29,12 @@
     <orderEntry type="module" module-name="intellij.platform.projectModel.impl" scope="TEST" />
     <orderEntry type="library" scope="TEST" name="jetCheck" level="project" />
     <orderEntry type="library" scope="TEST" name="commons-compress" level="project" />
-    <orderEntry type="library" scope="TEST" name="Guava" level="project" />
+    <orderEntry type="module" module-name="intellij.libraries.guava" scope="TEST" />
     <orderEntry type="module" module-name="intellij.platform.testFramework" scope="TEST" />
     <orderEntry type="module" module-name="intellij.platform.testExtensions" scope="TEST" />
     <orderEntry type="library" scope="TEST" name="memoryfilesystem" level="project" />
     <orderEntry type="module" module-name="intellij.platform.util.classLoader" scope="TEST" />
-    <orderEntry type="library" scope="TEST" name="fastutil-min" level="project" />
+    <orderEntry type="module" module-name="intellij.libraries.fastutil" scope="TEST" />
     <orderEntry type="module" module-name="intellij.platform.ide.util.io" scope="TEST" />
     <orderEntry type="module" module-name="intellij.platform.util.ex" scope="TEST" />
     <orderEntry type="module" module-name="intellij.platform.util.diff" scope="TEST" />

@@ -24,6 +24,7 @@ import com.intellij.util.indexing.impl.forward.PersistentMapBasedForwardIndex;
 import com.intellij.util.io.DataExternalizer;
 import com.intellij.util.io.KeyDescriptor;
 import com.intellij.util.io.PersistentStringEnumerator;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.jps.backwardRefs.NameEnumerator;
@@ -68,7 +69,8 @@ public class CompilerReferenceIndex<Input> {
    * @deprecated Use {@link #CompilerReferenceIndex(Collection, Path, PathRelativizerService, boolean, int)}
    */
   @SuppressWarnings("IO_FILE_USAGE")
-  @Deprecated
+  @ApiStatus.Internal
+  @Deprecated(forRemoval = true)
   public CompilerReferenceIndex(Collection<? extends IndexExtension<?, ?, ? super Input>> indices,
                                 File buildDir,
                                 boolean readOnly,
@@ -238,7 +240,8 @@ public class CompilerReferenceIndex<Input> {
    * @deprecated Use {@link #removeIndexFiles(Path)}
    */
   @SuppressWarnings("IO_FILE_USAGE")
-  @Deprecated
+  @ApiStatus.Internal
+  @Deprecated(forRemoval = true)
   public static void removeIndexFiles(@NotNull File buildDir) {
     removeIndexFiles(buildDir.toPath(), null);
   }
@@ -264,7 +267,8 @@ public class CompilerReferenceIndex<Input> {
    * @deprecated Use {@link #getIndexDir()}
    */
   @SuppressWarnings("IO_FILE_USAGE")
-  @Deprecated
+  @ApiStatus.Internal
+  @Deprecated(forRemoval = true)
   public @NotNull File getIndicesDir() {
     return indexDir.toFile();
   }
@@ -336,7 +340,8 @@ public class CompilerReferenceIndex<Input> {
    * @deprecated Use {@link #exists(Path)}
    */
   @SuppressWarnings("IO_FILE_USAGE")
-  @Deprecated
+  @ApiStatus.Internal
+  @Deprecated(forRemoval = true)
   public static boolean exists(@NotNull File buildDir) {
     return exists(buildDir.toPath());
   }
@@ -396,7 +401,8 @@ public class CompilerReferenceIndex<Input> {
    * @deprecated Use {@link #versionDiffers(Path, int)}
    */
   @SuppressWarnings("IO_FILE_USAGE")
-  @Deprecated
+  @ApiStatus.Internal
+  @Deprecated(forRemoval = true)
   public static boolean versionDiffers(@NotNull File buildDir, int expectedVersion) {
     return versionDiffers(buildDir.toPath(), expectedVersion);
   }

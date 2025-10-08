@@ -1,9 +1,9 @@
 ### auto-generated section `build intellij.vcs.git.shared` start
-load("@rules_jvm//:jvm.bzl", "jvm_library", "jvm_resources")
+load("@rules_jvm//:jvm.bzl", "jvm_library", "resourcegroup")
 
-jvm_resources(
+resourcegroup(
   name = "shared_resources",
-  files = glob(["resources/**/*"]),
+  srcs = glob(["resources/**/*"]),
   strip_prefix = "resources"
 )
 
@@ -12,10 +12,11 @@ jvm_library(
   module_name = "intellij.vcs.git.shared",
   visibility = ["//visibility:public"],
   srcs = glob(["src/**/*.kt", "src/**/*.java", "src/**/*.form"], allow_empty = True),
+  resources = [":shared_resources"],
   deps = [
     "@lib//:kotlin-stdlib",
-    "@lib//:kotlinx-serialization-core",
-    "@lib//:kotlinx-serialization-json",
+    "//libraries/kotlinx/serialization/core",
+    "//libraries/kotlinx/serialization/json",
     "//platform/core-api:core",
     "//platform/projectModel-api:projectModel",
     "//platform/vcs-impl/shared",
@@ -28,13 +29,12 @@ jvm_library(
     "//platform/core-ui",
     "//platform/util/coroutines",
     "//platform/editor-ui-api:editor-ui",
-    "@lib//:caffeine",
+    "//libraries/caffeine",
     "//platform/analysis-api:analysis",
     "//platform/util/text-matching",
     "//platform/platform-impl/ui",
     "//platform/diagnostic/telemetry",
     "@lib//:opentelemetry",
-  ],
-  runtime_deps = [":shared_resources"]
+  ]
 )
 ### auto-generated section `build intellij.vcs.git.shared` end

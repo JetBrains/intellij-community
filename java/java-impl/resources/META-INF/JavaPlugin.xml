@@ -398,6 +398,7 @@
     <projectService serviceImplementation="com.intellij.jarRepository.services.MavenRepositoryServicesManager"/>
     <projectService serviceImplementation="com.intellij.codeInsight.JavaProjectCodeInsightSettings"/>
     <optionController implementation="com.intellij.codeInsight.JavaProjectCodeInsightSettings$Provider"/>
+    <optionController implementation="com.intellij.codeInsight.JavaIdeCodeInsightSettings$Provider"/>
     <optionController implementation="com.intellij.codeInsight.OrderEntryConfigurationProvider"/>
     <applicationService serviceImplementation="com.intellij.codeInsight.JavaIdeCodeInsightSettings"/>
     <projectService serviceInterface="com.intellij.testIntegration.TestFailedLineManager"
@@ -541,7 +542,6 @@
                     serviceImplementation="com.intellij.openapi.vcs.impl.ModuleVcsPathPresenter"
                     overrides="true"/>
 
-    <projectService serviceImplementation="com.intellij.compiler.impl.javaCompiler.javac.JavacConfiguration"/>
     <projectService serviceImplementation="com.intellij.compiler.impl.javaCompiler.eclipse.EclipseCompilerConfiguration"/>
     <projectService serviceImplementation="com.intellij.compiler.impl.rmiCompiler.RmicConfiguration"/>
     <pathMacroFilter implementation="com.intellij.compiler.impl.javaCompiler.javac.JavacConfigurationMacroFilter"/>
@@ -681,7 +681,7 @@
 
     <!--<expectedTypesProvider implementation="com.intellij.codeInsight.JavaExpectedTypesProvider"/>-->
 
-    <editorNotificationProvider implementation="com.intellij.execution.jshell.SnippetEditorDecorator"/>
+
 
     <projectService serviceImplementation="com.intellij.execution.testDiscovery.JavaAutoRunManager"/>
     <registryKey defaultValue="true" description="Trigger autotest on delay instead of build events" key="trigger.autotest.on.delay"/>
@@ -891,7 +891,7 @@
                          key="configurable.RemoteRepositoriesConfigurable.display.name" bundle="messages.JavaUiBundle"
                          order="last"/>
 
-    <scratch.rootType implementation="com.intellij.execution.jshell.JShellRootType"/>
+
     <scratch.creationHelper language="JAVA" implementationClass="com.intellij.ide.actions.JavaScratchFileCreationHelper"/>
 
     <intentionAction>
@@ -1029,6 +1029,7 @@
     <enterHandlerDelegate implementation="com.intellij.javadoc.JavadocSnippetEnterHandler" order="before EnterBetweenBracesHandler, before EnterInPropertiesFileHandler"/>
     <enterHandlerDelegate implementation="com.intellij.javadoc.JavaDocMarkdownEnterHandler" order="after EnterInLineCommentHandler" />
     <editorNavigation implementation="com.intellij.javadoc.JavadocNavigationDelegate"/>
+    <methodImplementor implementation="com.intellij.codeInsight.javadoc.SnippetDocTagMethodImplementor"/>
     <methodNavigationOffsetProvider implementation="com.intellij.codeInsight.navigation.JavaMethodNavigationOffsetProvider"/>
     <dom.customAnnotationChecker implementation="com.intellij.util.xml.impl.ExtendsClassChecker"/>
     <codeInsight.surroundWithRangeAdjuster implementation="com.intellij.codeInsight.generation.surroundWith.XmlSurroundWithRangeAdjuster"/>
@@ -1553,7 +1554,6 @@
     <regExpLanguageHost forClass="com.intellij.psi.impl.source.tree.java.PsiLiteralExpressionImpl"
                         implementationClass="com.intellij.psi.impl.JavaRegExpHost"/>
     <diff.DiffExtension implementation="com.intellij.refactoring.extractMethod.preview.ExtractMethodDiffViewerCustomizer"/>
-    <projectExtension id="compiler" implementation="com.intellij.openapi.roots.impl.CompilerProjectExtensionImpl$MyProjectExtension"/>
     <roots.watchedRootsProvider implementation="com.intellij.openapi.roots.impl.CompilerProjectExtensionImpl$MyWatchedRootsProvider"/>
     <orderRootType implementation="com.intellij.openapi.roots.AnnotationOrderRootType"/>
     <orderRootType implementation="com.intellij.openapi.roots.JavadocOrderRootType"/>
@@ -2697,7 +2697,6 @@
     <notificationGroup id="Clean artifact" displayType="BALLOON" hideFromSettings="true"/>
     <notificationGroup id="Compiler" displayType="NONE" bundle="messages.JavaCompilerBundle" key="notification.group.compiler"/>
     <notificationGroup id="Build Profiler" displayType="STICKY_BALLOON" hideFromSettings="true"/>
-    <notificationGroup id="JSHELL_NOTIFICATIONS" displayType="BALLOON" bundle="messages.JavaBundle" key="notification.group.jshell"/>
     <notificationGroup id="Repository" displayType="BALLOON" bundle="messages.JavaBundle" key="notification.group.repository"/>
     <notificationGroup id="Source searcher" displayType="BALLOON" bundle="messages.JavaBundle" key="notification.group.source.searcher"/>
     <notificationGroup id="Accepted language levels" displayType="STICKY_BALLOON" bundle="messages.JavaBundle"

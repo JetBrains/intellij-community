@@ -1,9 +1,9 @@
 ### auto-generated section `build kotlin.ml-completion` start
-load("@rules_jvm//:jvm.bzl", "jvm_library", "jvm_resources")
+load("@rules_jvm//:jvm.bzl", "jvm_library", "resourcegroup")
 
-jvm_resources(
+resourcegroup(
   name = "ml-completion_resources",
-  files = glob(["resources/**/*"]),
+  srcs = glob(["resources/**/*"]),
   strip_prefix = "resources"
 )
 
@@ -12,6 +12,7 @@ jvm_library(
   module_name = "kotlin.ml-completion",
   visibility = ["//visibility:public"],
   srcs = glob(["src/**/*.kt", "src/**/*.java", "src/**/*.form"], allow_empty = True),
+  resources = [":ml-completion_resources"],
   deps = [
     "@lib//:kotlin-stdlib",
     "//platform/analysis-api:analysis",
@@ -27,7 +28,6 @@ jvm_library(
     "//platform/platform-impl/internal",
     "@lib//:kotlin-ml-completion-completion-ranking-kotlin",
     "//plugins/kotlin/base/code-insight",
-  ],
-  runtime_deps = [":ml-completion_resources"]
+  ]
 )
 ### auto-generated section `build kotlin.ml-completion` end

@@ -28,8 +28,8 @@ import org.jetbrains.kotlin.psi.KtNamedFunction
 class KotlinJUnit5Framework: JUnit5Framework(), KotlinPsiBasedTestFramework {
     private val psiBasedDelegate = object : AbstractKotlinPsiBasedTestFramework() {
 
-        override val markerClassFqn: String = JUnitUtil.TEST5_ANNOTATION
-        override val disabledTestAnnotation: String = "org.junit.jupiter.api.Disabled"
+        override val markerClassFqns: Collection<String> = markerClassFQNames
+        override val disabledTestAnnotation: String = JUnitCommonClassNames.ORG_JUNIT_JUPITER_API_DISABLED
         override val allowTestMethodsInObject: Boolean = true
 
         override fun checkTestClass(declaration: KtClassOrObject): ThreeState {
@@ -83,7 +83,7 @@ class KotlinJUnit5Framework: JUnit5Framework(), KotlinPsiBasedTestFramework {
                 NO
             } else if (declaration is KtClass && declaration.isInner()) {
                 if (isAnnotated(declaration, JUnitCommonClassNames.ORG_JUNIT_JUPITER_API_NESTED)) YES else NO
-            } else if (declaration.isTopLevel() && isAnnotated(declaration, "org.junit.jupiter.api.extension.ExtendWith")) {
+            } else if (declaration.isTopLevel() && isAnnotated(declaration, JUnitCommonClassNames.ORG_JUNIT_JUPITER_API_EXTENSION_EXTEND_WITH)) {
                 YES
             } else if (findAnnotatedFunction(declaration, testableAnnotations) != null) {
                 YES
@@ -188,9 +188,9 @@ class KotlinJUnit5Framework: JUnit5Framework(), KotlinPsiBasedTestFramework {
 private val METHOD_ANNOTATION_FQN = setOf(
     JUnitUtil.TEST5_ANNOTATION,
     KotlinPsiBasedTestFramework.KOTLIN_TEST_TEST,
-    "org.junit.jupiter.params.ParameterizedTest",
-    "org.junit.jupiter.api.RepeatedTest",
-    "org.junit.jupiter.api.TestFactory",
+    JUnitCommonClassNames.ORG_JUNIT_JUPITER_PARAMS_PARAMETERIZED_TEST,
+    JUnitCommonClassNames.ORG_JUNIT_JUPITER_API_REPEATED_TEST,
+    JUnitCommonClassNames.ORG_JUNIT_JUPITER_API_TEST_FACTORY,
     "org.junit.jupiter.api.TestTemplate",
     "org.junitpioneer.jupiter.RetryingTest"
 )

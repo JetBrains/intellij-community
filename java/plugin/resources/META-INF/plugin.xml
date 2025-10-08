@@ -25,18 +25,7 @@
 
   <xi:include href="/META-INF/JavaPlugin.xml"/>
 
-  <!-- todo: these files are present in Java plugin for IDEA Ultimate only, they should be converted to content modules -->
-  <xi:include href="intellij.java.duplicates.analysis.xml">
-    <xi:fallback/>
-  </xi:include>
-  <xi:include href="intellij.java.duplicatesDetection.xml">
-    <xi:fallback/>
-  </xi:include>
-  <xi:include href="intellij.java.jam.impl.xml">
-    <xi:fallback/>
-  </xi:include>
-
-  <content>
+  <content namespace="jetbrains">
     <module name="intellij.java.structuralSearch"/>
     <module name="intellij.java.featuresTrainer"/>
     <module name="intellij.java.performancePlugin"/>
@@ -58,7 +47,9 @@
     <module name="intellij.java.psi" loading="embedded"/>
     <module name="intellij.java.langInjection"/>
     <module name="intellij.java.langInjection.jps"/>
-
+    <module name="intellij.java.duplicates.analysis"/>
+    <module name="intellij.java.duplicatesDetection"/>
+    <module name="intellij.java.jam.impl"/>
     <module name="intellij.profiler.ultimate"/>
     <module name="intellij.jvm.dfa.analysis.ui"/>
   </content>

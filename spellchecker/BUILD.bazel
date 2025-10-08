@@ -1,21 +1,21 @@
 ### auto-generated section `build intellij.spellchecker` start
-load("@rules_jvm//:jvm.bzl", "jvm_library", "jvm_resources")
+load("@rules_jvm//:jvm.bzl", "jvm_library", "resourcegroup")
 
-jvm_resources(
+resourcegroup(
   name = "spellchecker_resources",
-  files = glob(["resources/**/*"]),
+  srcs = glob(["resources/**/*"]),
   strip_prefix = "resources"
 )
 
-jvm_resources(
+resourcegroup(
   name = "spellchecker_resources_1",
-  files = glob(["compatibilityResources/**/*"]),
+  srcs = glob(["compatibilityResources/**/*"]),
   strip_prefix = "compatibilityResources"
 )
 
-jvm_resources(
+resourcegroup(
   name = "spellchecker_test_resources",
-  files = glob(["testResources/**/*"]),
+  srcs = glob(["testResources/**/*"]),
   strip_prefix = "testResources"
 )
 
@@ -24,6 +24,10 @@ jvm_library(
   module_name = "intellij.spellchecker",
   visibility = ["//visibility:public"],
   srcs = glob(["src/**/*.kt", "src/**/*.java", "src/**/*.form", "gen/**/*.kt", "gen/**/*.java"], allow_empty = True),
+  resources = [
+    ":spellchecker_resources",
+    ":spellchecker_resources_1",
+  ],
   deps = [
     "//platform/analysis-api:analysis",
     "//platform/core-api:core",
@@ -36,9 +40,8 @@ jvm_library(
     "//platform/editor-ui-ex:editor-ex",
     "//platform/projectModel-api:projectModel",
     "//platform/refactoring",
-    "@lib//:guava",
+    "//libraries/guava",
     "//platform/statistics",
-    "//libraries/ai.grazie.spell.gec.engine.local",
     "@lib//:spellchecker-java-string-similarity",
     "//platform/core-ui",
     "//libraries/lucene.common",
@@ -47,19 +50,15 @@ jvm_library(
     "//platform/util/jdom",
     "@lib//:kotlin-stdlib",
     "@lib//:kotlinx-coroutines-core",
-    "@lib//:caffeine",
   ],
-  runtime_deps = [
-    ":spellchecker_resources",
-    ":spellchecker_resources_1",
-    "//platform/backend",
-  ]
+  runtime_deps = ["//platform/backend"]
 )
 
 jvm_library(
   name = "spellchecker_test_lib",
   visibility = ["//visibility:public"],
   srcs = glob(["testSrc/**/*.kt", "testSrc/**/*.java", "testSrc/**/*.form"], allow_empty = True),
+  resources = [":spellchecker_test_resources"],
   associates = [":spellchecker"],
   deps = [
     "//platform/analysis-api:analysis",
@@ -75,10 +74,9 @@ jvm_library(
     "//platform/testFramework",
     "//platform/testFramework:testFramework_test_lib",
     "//platform/refactoring",
-    "@lib//:guava",
+    "//libraries/guava",
     "//platform/statistics",
     "//platform/statistics:statistics_test_lib",
-    "//libraries/ai.grazie.spell.gec.engine.local",
     "@lib//:spellchecker-java-string-similarity",
     "//platform/core-ui",
     "//libraries/lucene.common",
@@ -90,16 +88,10 @@ jvm_library(
     "@lib//:kotlin-test",
     "@lib//:kotlin-test-junit",
     "@lib//:kotlinx-coroutines-core",
-    "@lib//:caffeine",
     "//tools/intellij.tools.ide.metrics.benchmark:ide-metrics-benchmark",
     "//tools/intellij.tools.ide.metrics.benchmark:ide-metrics-benchmark_test_lib",
     "//xml/relaxng",
     "//xml/relaxng:relaxng_test_lib",
-  ],
-  runtime_deps = [
-    ":spellchecker_resources",
-    ":spellchecker_resources_1",
-    ":spellchecker_test_resources",
   ]
 )
 ### auto-generated section `build intellij.spellchecker` end

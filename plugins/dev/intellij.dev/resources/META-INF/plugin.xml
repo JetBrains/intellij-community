@@ -11,7 +11,7 @@
     <a href="https://plugins.jetbrains.com/docs/intellij/welcome.html?from=com.intellij.dev&utm_source=product&utm_campaign=devkit">Learn More!</a></p>
   ]]></description>
 
-  <content>
+  <content namespace="jetbrains">
     <module name="intellij.dev.psiViewer"/>
     <module name="intellij.dev.codeInsight"/>
     <module name="intellij.java.dev"/>

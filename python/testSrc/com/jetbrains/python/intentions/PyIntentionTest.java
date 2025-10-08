@@ -84,7 +84,11 @@ public class PyIntentionTest extends PyTestCase {
   }
 
   public void testReplaceExceptPart() {
-    doTest(PyPsiBundle.message("INTN.convert.except.to"));
+    runWithLanguageLevel(LanguageLevel.PYTHON35, () -> doTest(PyPsiBundle.message("INTN.convert.except.to")));
+  }
+
+  public void testExceptPartAddMissingParentheses() {
+    doTest(PyPsiBundle.message("QFIX.except.clause.missing.parens"));
   }
 
   public void testConvertBuiltins() {

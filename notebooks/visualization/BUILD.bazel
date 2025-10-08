@@ -1,6 +1,6 @@
 ### auto-generated section `build intellij.notebooks.visualization` start
 load("//build:compiler-options.bzl", "create_kotlinc_options")
-load("@rules_jvm//:jvm.bzl", "jvm_library", "jvm_resources")
+load("@rules_jvm//:jvm.bzl", "jvm_library", "resourcegroup")
 
 create_kotlinc_options(
   name = "custom_visualization",
@@ -10,9 +10,9 @@ create_kotlinc_options(
   ]
 )
 
-jvm_resources(
+resourcegroup(
   name = "visualization_resources",
-  files = glob(["resources/**/*"]),
+  srcs = glob(["resources/**/*"]),
   strip_prefix = "resources"
 )
 
@@ -21,9 +21,10 @@ jvm_library(
   module_name = "intellij.notebooks.visualization",
   visibility = ["//visibility:public"],
   srcs = glob(["src/**/*.kt", "src/**/*.java", "src/**/*.form", "gen/**/*.kt", "gen/**/*.java"], allow_empty = True),
+  resources = [":visualization_resources"],
   kotlinc_opts = ":custom_visualization",
   deps = [
-    "@lib//:gson",
+    "//libraries/gson",
     "//platform/analysis-api:analysis",
     "//platform/core-api:core",
     "//platform/editor-ui-api:editor-ui",
@@ -38,12 +39,12 @@ jvm_library(
     "//platform/editor-ui-ex:editor-ex",
     "//platform/projectModel-api:projectModel",
     "//platform/util/coroutines",
-    "@lib//:kotlinx-serialization-core",
+    "//libraries/kotlinx/serialization/core",
     "//plugins/markdown/core:markdown",
     "//platform/util",
     "//platform/util/jdom",
-  ],
-  runtime_deps = [":visualization_resources"]
+    "//jupyter:notebooks-jupyter-core",
+  ]
 )
 
 jvm_library(
@@ -53,7 +54,7 @@ jvm_library(
   kotlinc_opts = ":custom_visualization",
   associates = [":visualization"],
   deps = [
-    "@lib//:gson",
+    "//libraries/gson",
     "//platform/analysis-api:analysis",
     "//platform/core-api:core",
     "//platform/editor-ui-api:editor-ui",
@@ -71,12 +72,12 @@ jvm_library(
     "//platform/testFramework",
     "//platform/testFramework:testFramework_test_lib",
     "//platform/util/coroutines",
-    "@lib//:kotlinx-serialization-core",
+    "//libraries/kotlinx/serialization/core",
     "//plugins/markdown/core:markdown",
     "//platform/util",
     "//platform/util/jdom",
-  ],
-  runtime_deps = [":visualization_resources"]
+    "//jupyter:notebooks-jupyter-core",
+  ]
 )
 ### auto-generated section `build intellij.notebooks.visualization` end
 

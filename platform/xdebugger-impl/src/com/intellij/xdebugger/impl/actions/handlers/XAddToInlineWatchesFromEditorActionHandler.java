@@ -6,14 +6,13 @@ import com.intellij.openapi.actionSystem.DataContext;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.util.registry.Registry;
 import com.intellij.util.ui.UIUtil;
-import com.intellij.xdebugger.XDebugSession;
 import com.intellij.xdebugger.XDebuggerManager;
 import com.intellij.xdebugger.XSourcePosition;
 import com.intellij.xdebugger.impl.XDebuggerManagerImpl;
 import com.intellij.xdebugger.impl.XDebuggerUtilImpl;
 import com.intellij.xdebugger.impl.XDebuggerWatchesManager;
 import com.intellij.xdebugger.impl.breakpoints.XExpressionImpl;
-import com.intellij.xdebugger.impl.frame.XDebugSessionProxyKeeperKt;
+import com.intellij.xdebugger.impl.frame.XDebugSessionProxy;
 import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 
@@ -22,13 +21,13 @@ import static com.intellij.xdebugger.impl.actions.handlers.XAddToWatchesFromEdit
 @ApiStatus.Internal
 public class XAddToInlineWatchesFromEditorActionHandler extends XDebuggerActionHandler {
   @Override
-  protected boolean isEnabled(@NotNull XDebugSession session, @NotNull DataContext dataContext) {
+  protected boolean isEnabled(@NotNull XDebugSessionProxy session, @NotNull DataContext dataContext) {
     final Editor editor = CommonDataKeys.EDITOR.getData(dataContext);
     return editor != null && Registry.is("debugger.watches.inline.enabled");
   }
 
   @Override
-  protected void perform(@NotNull XDebugSession session, @NotNull DataContext dataContext) {
+  protected void perform(@NotNull XDebugSessionProxy session, @NotNull DataContext dataContext) {
     final Editor editor = CommonDataKeys.EDITOR.getData(dataContext);
     if (editor == null) return;
 
@@ -40,7 +39,7 @@ public class XAddToInlineWatchesFromEditorActionHandler extends XDebuggerActionH
           if (text != null) {
             watchesManager.addInlineWatchExpression(XExpressionImpl.fromText(text), -1, caretPosition, false);
           } else if (caretPosition != null) {
-            watchesManager.showInplaceEditor(caretPosition, editor, XDebugSessionProxyKeeperKt.asProxy(session), null);
+            watchesManager.showInplaceEditor(caretPosition, editor, session, null);
           }
         });
       }).onError(e -> { });

@@ -9,7 +9,7 @@ public class ClassWithData {
 
   public static class B extends A {
     public B() {
-      <error descr="Default constructor doesn't exist">super()</error>;
+      super<error descr="Expected 2 arguments but found 0">()</error>;
     }
 
     public B(int i) {

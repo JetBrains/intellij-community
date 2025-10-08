@@ -39,8 +39,5 @@ public abstract class JarFileSystem extends ArchiveFileSystem implements Virtual
     return findFileByPath(path);
   }
 
-  /** @deprecated no-op; stop using */
-  @Deprecated(forRemoval = true)
-  public void setNoCopyJarForPath(@SuppressWarnings("unused") @NotNull String pathInJar) { }
   //</editor-fold>
 }

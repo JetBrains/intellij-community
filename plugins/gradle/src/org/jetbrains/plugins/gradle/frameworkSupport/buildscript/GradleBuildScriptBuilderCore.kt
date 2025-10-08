@@ -121,16 +121,13 @@ interface GradleBuildScriptBuilderCore<out Self : GradleBuildScriptBuilderCore<S
   fun withRepository(configure: Consumer<GradleScriptTreeBuilder>): Self
 
   /**
-   * java { ... }
+   * [name] {
+   *   ...
+   * }
    */
-  fun withJava(configure: GradleScriptTreeBuilder.() -> Unit): Self
-  fun withJava(configure: Consumer<GradleScriptTreeBuilder>): Self
-
-  /**
-   * kotlin { ... }
-   */
-  fun withKotlin(configure: GradleScriptTreeBuilder.() -> Unit): Self
-  fun withKotlin(configure: Consumer<GradleScriptTreeBuilder>): Self
+  fun withExtension(name: String, configure: GradleScriptTreeBuilder.() -> Unit): Self
+  fun withExtension(name: String, configure: Consumer<GradleScriptTreeBuilder>): Self =
+    withExtension(name, configure::accept)
 
   /**
    * buildscript { ... }

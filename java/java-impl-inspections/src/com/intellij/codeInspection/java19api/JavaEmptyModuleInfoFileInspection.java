@@ -1,4 +1,4 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInspection.java19api;
 
 import com.intellij.codeInsight.daemon.impl.analysis.JavaModuleGraphUtil;
@@ -98,7 +98,9 @@ public class JavaEmptyModuleInfoFileInspection extends AbstractBaseJavaLocalInsp
   }
 
   private static boolean needRequires(@NotNull PsiJavaModule descriptor) {
-    Set<PsiJavaModule> modules = walk(descriptor, psiJavaModule -> psiJavaModule.getName().equals(descriptor.getName()));
+    Set<PsiJavaModule> modules = walk(descriptor, psiJavaModule ->
+      psiJavaModule.getName().equals(descriptor.getName()) ||
+      psiJavaModule.getName().equals(PsiJavaModule.JAVA_BASE));
     return !modules.isEmpty();
   }
 
@@ -140,6 +142,7 @@ public class JavaEmptyModuleInfoFileInspection extends AbstractBaseJavaLocalInsp
     return imports.values().stream()
       .filter(Objects::nonNull)
       .filter(m -> !m.getName().equals(descriptor.getName()))
+      .filter(m -> !m.getName().equals(PsiJavaModule.JAVA_BASE))
       .collect(Collectors.toCollection(() -> new TreeSet<>((o1, o2) -> o1.getName().compareToIgnoreCase(o2.getName()))));
   }
 

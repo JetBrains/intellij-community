@@ -1347,6 +1347,26 @@ public abstract class K2IntentionTestGenerated extends AbstractK2IntentionTest {
             runTest("../../../idea/tests/testData/intentions/specifyTypeExplicitly/publicMember.kt");
         }
 
+        @TestMetadata("smartCastIntersectionTypesCase.kt")
+        public void testSmartCastIntersectionTypesCase() throws Exception {
+            runTest("../../../idea/tests/testData/intentions/specifyTypeExplicitly/smartCastIntersectionTypesCase.kt");
+        }
+
+        @TestMetadata("smartCastParameterType.kt")
+        public void testSmartCastParameterType() throws Exception {
+            runTest("../../../idea/tests/testData/intentions/specifyTypeExplicitly/smartCastParameterType.kt");
+        }
+
+        @TestMetadata("smartCastSimpleCase.kt")
+        public void testSmartCastSimpleCase() throws Exception {
+            runTest("../../../idea/tests/testData/intentions/specifyTypeExplicitly/smartCastSimpleCase.kt");
+        }
+
+        @TestMetadata("smartCastUnstableCase.kt")
+        public void testSmartCastUnstableCase() throws Exception {
+            runTest("../../../idea/tests/testData/intentions/specifyTypeExplicitly/smartCastUnstableCase.kt");
+        }
+
         @TestMetadata("stringRedefined.kt")
         public void testStringRedefined() throws Exception {
             runTest("../../../idea/tests/testData/intentions/specifyTypeExplicitly/stringRedefined.kt");
@@ -1424,11 +1444,6 @@ public abstract class K2IntentionTestGenerated extends AbstractK2IntentionTest {
         @TestMetadata("EnumSyntheticMethods12.kt")
         public void testEnumSyntheticMethods12() throws Exception {
             runTest("../../../idea/tests/testData/intentions/importAllMembers/EnumSyntheticMethods12.kt");
-        }
-
-        @TestMetadata("EnumSyntheticMethods13.kt")
-        public void testEnumSyntheticMethods13() throws Exception {
-            runTest("../../../idea/tests/testData/intentions/importAllMembers/EnumSyntheticMethods13.kt");
         }
 
         @TestMetadata("EnumSyntheticMethods2.kt")
@@ -1514,6 +1529,21 @@ public abstract class K2IntentionTestGenerated extends AbstractK2IntentionTest {
         @TestMetadata("TypeReference2.kt")
         public void testTypeReference2() throws Exception {
             runTest("../../../idea/tests/testData/intentions/importAllMembers/TypeReference2.kt");
+        }
+
+        @TestMetadata("typeReferenceAtStart.kt")
+        public void testTypeReferenceAtStart() throws Exception {
+            runTest("../../../idea/tests/testData/intentions/importAllMembers/typeReferenceAtStart.kt");
+        }
+
+        @TestMetadata("typeReferenceLeftOfImportableSegment.kt")
+        public void testTypeReferenceLeftOfImportableSegment() throws Exception {
+            runTest("../../../idea/tests/testData/intentions/importAllMembers/typeReferenceLeftOfImportableSegment.kt");
+        }
+
+        @TestMetadata("typeReferenceOnImportableSegment.kt")
+        public void testTypeReferenceOnImportableSegment() throws Exception {
+            runTest("../../../idea/tests/testData/intentions/importAllMembers/typeReferenceOnImportableSegment.kt");
         }
 
         @TestMetadata("UnresolvedMember.kt")
@@ -1643,6 +1673,26 @@ public abstract class K2IntentionTestGenerated extends AbstractK2IntentionTest {
         @TestMetadata("TopLevelFun.kt")
         public void testTopLevelFun() throws Exception {
             runTest("../../../idea/tests/testData/intentions/importMember/TopLevelFun.kt");
+        }
+
+        @TestMetadata("typeReferenceAtStart.kt")
+        public void testTypeReferenceAtStart() throws Exception {
+            runTest("../../../idea/tests/testData/intentions/importMember/typeReferenceAtStart.kt");
+        }
+
+        @TestMetadata("typeReferenceLeftOfImportableSegment.kt")
+        public void testTypeReferenceLeftOfImportableSegment() throws Exception {
+            runTest("../../../idea/tests/testData/intentions/importMember/typeReferenceLeftOfImportableSegment.kt");
+        }
+
+        @TestMetadata("typeReferenceOnImportableSegment.kt")
+        public void testTypeReferenceOnImportableSegment() throws Exception {
+            runTest("../../../idea/tests/testData/intentions/importMember/typeReferenceOnImportableSegment.kt");
+        }
+
+        @TestMetadata("typeReferenceOnLastSegment.kt")
+        public void testTypeReferenceOnLastSegment() throws Exception {
+            runTest("../../../idea/tests/testData/intentions/importMember/typeReferenceOnLastSegment.kt");
         }
     }
 
@@ -8897,6 +8947,11 @@ public abstract class K2IntentionTestGenerated extends AbstractK2IntentionTest {
         @TestMetadata("addImportHasOtherAlias.kt")
         public void testAddImportHasOtherAlias() throws Exception {
             runTest("../../../idea/tests/testData/intentions/introduceImportAlias/addImportHasOtherAlias.kt");
+        }
+
+        @TestMetadata("addImportOnJavaClass.kt")
+        public void testAddImportOnJavaClass() throws Exception {
+            runTest("../../../idea/tests/testData/intentions/introduceImportAlias/addImportOnJavaClass.kt");
         }
 
         @TestMetadata("addImportWithDefaultClass.kt")

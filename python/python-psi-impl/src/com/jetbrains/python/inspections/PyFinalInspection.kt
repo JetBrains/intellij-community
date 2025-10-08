@@ -8,6 +8,7 @@ import com.intellij.openapi.util.NlsSafe
 import com.intellij.psi.PsiElement
 import com.intellij.psi.PsiElementVisitor
 import com.intellij.psi.util.PsiTreeUtil
+import com.intellij.util.containers.MultiMap
 import com.jetbrains.python.PyNames
 import com.jetbrains.python.PyPsiBundle
 import com.jetbrains.python.codeInsight.controlflow.ControlFlowCache
@@ -192,10 +193,10 @@ class PyFinalInspection : PyInspection() {
       val classLevelFinals = mutableMapOf<String?, PyTargetExpression>()
       cls.classAttributes.forEach { if (isFinal(it)) classLevelFinals[it.name] = it }
 
-      val initAttributes = mutableMapOf<String, PyTargetExpression>()
+      val initAttributes = MultiMap<String, PyTargetExpression>()
       cls.findMethodByName(PyNames.INIT, false, myTypeEvalContext)?.let { PyClassImpl.collectInstanceAttributes(it, initAttributes) }
 
-      return Pair(classLevelFinals, initAttributes)
+      return Pair(classLevelFinals, initAttributes.toHashMap().mapValues { it.value.first() })
     }
 
     private fun getDeclaredClassAndInstanceFinals(cls: PyClass): Pair<Map<String, PyTargetExpression>, Map<String, PyTargetExpression>> {
@@ -212,10 +213,10 @@ class PyFinalInspection : PyInspection() {
       }
 
       cls.findMethodByName(PyNames.INIT, false, myTypeEvalContext)?.let { init ->
-        val attributesInInit = mutableMapOf<String, PyTargetExpression>()
+        val attributesInInit = MultiMap<String, PyTargetExpression>()
         PyClassImpl.collectInstanceAttributes(init, attributesInInit)
-        attributesInInit.keys.removeAll(instanceFinals.keys)
-        instanceFinals += attributesInInit.filterValues { isFinal(it) }
+        attributesInInit.keySet().removeAll(instanceFinals.keys)
+        instanceFinals += attributesInInit.toHashMap().mapValues { it.value.first() }.filterValues { isFinal(it) }
       }
 
       return Pair(classFinals, instanceFinals)
@@ -281,9 +282,9 @@ class PyFinalInspection : PyInspection() {
     private fun checkInstanceFinalsOutsideInit(method: PyFunction) {
       if (PyUtil.isInitMethod(method)) return
 
-      val instanceAttributes = mutableMapOf<String, PyTargetExpression>()
+      val instanceAttributes = MultiMap<String, PyTargetExpression>()
       PyClassImpl.collectInstanceAttributes(method, instanceAttributes)
-      instanceAttributes.values.forEach {
+      instanceAttributes.values().forEach {
         if (isFinal(it)) registerProblem(it, PyPsiBundle.message("INSP.final.final.attribute.should.be.declared.in.class.body.or.init"))
       }
     }
@@ -373,9 +374,9 @@ class PyFinalInspection : PyInspection() {
       for (current in (sequenceOf(cls) + cls.getAncestorClasses(myTypeEvalContext).asSequence())) {
         val init = current.findMethodByName(PyNames.INIT, false, myTypeEvalContext)
         if (init != null) {
-          val attributesInInit = mutableMapOf<String, PyTargetExpression>()
+          val attributesInInit = MultiMap<String, PyTargetExpression>()
           PyClassImpl.collectInstanceAttributes(init, attributesInInit)
-          if (attributesInInit[name]?.let { it != target && isFinal(it) } == true) {
+          if (attributesInInit[name].any { it != target && isFinal(it) }) {
             @NlsSafe val qualifiedName = (if (cls == current) "" else "${current.name}.") + name
             registerProblem(target, PyPsiBundle.message("INSP.final.final.target.could.not.be.reassigned", qualifiedName))
             break

@@ -1,9 +1,8 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.ide.plugins;
 
 import com.intellij.externalDependencies.DependencyOnPlugin;
 import com.intellij.externalDependencies.ExternalDependenciesManager;
-import com.intellij.ide.CommandLineProcessorKt;
 import com.intellij.ide.impl.OpenProjectTaskKt;
 import com.intellij.ide.impl.ProjectUtil;
 import com.intellij.openapi.application.ApplicationStarter;
@@ -24,6 +23,7 @@ import java.util.*;
 @SuppressWarnings("UseOfSystemOutOrSystemErr")
 public class HeadlessPluginsInstaller implements ApplicationStarter {
   private static final Logger LOG = Logger.getInstance(HeadlessPluginsInstaller.class);
+  private static final String COMMAND_NAME = "installPlugins";
 
   @Override
   public int getRequiredModality() {
@@ -79,8 +79,7 @@ public class HeadlessPluginsInstaller implements ApplicationStarter {
     }
   }
 
-  private void printUsageHint() {
-    var commandName = CommandLineProcessorKt.getCommandNameFromExtension(this);
+  private static void printUsageHint() {
     System.out.printf(
       """
         Usage: %s pluginId* repository* (--for-project=<project-path>)* [--give-consent-to-use-third-party-plugins]
@@ -89,7 +88,7 @@ public class HeadlessPluginsInstaller implements ApplicationStarter {
         If `--for-project` is specified, also installs the required plugins for a project located at <project-path>.
         If `--give-consent-to-use-third-party-plugins` is specified, installed third-party plugins will be approved automatically.
         Without this option, if a third-party plugin is installed, a user will be asked to approve it when the IDE starts.%n""",
-      commandName);
+      COMMAND_NAME);
   }
 
   private static void collectProjectRequiredPlugins(Collection<PluginId> collector, List<Path> projectPaths) {

@@ -10,10 +10,11 @@ import com.intellij.openapi.ui.DialogPanel
 import com.intellij.openapi.ui.DialogWrapper
 import com.intellij.openapi.util.NlsContexts
 import com.intellij.platform.util.coroutines.childScope
-import kotlinx.coroutines.*
+import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.collectLatest
-import org.jetbrains.annotations.ApiStatus
+import kotlinx.coroutines.launch
 import java.awt.Component
 import javax.swing.JComponent
 
@@ -24,18 +25,6 @@ class TokenLoginDialog @JvmOverloads constructor(
   private val userCustomExitSignal: Flow<Unit>? = null,
   private val centerPanelSupplier: CoroutineScope.() -> DialogPanel
 ) : DialogWrapper(project, parent, false, IdeModalityType.IDE) {
-
-  @ApiStatus.ScheduledForRemoval
-  @Deprecated("A proper coroutine scope should be provided")
-  @OptIn(DelicateCoroutinesApi::class)
-  @JvmOverloads
-  constructor(
-    project: Project?, parent: Component?,
-    model: LoginModel,
-    title: @NlsContexts.DialogTitle String = CollaborationToolsBundle.message("login.dialog.title"),
-    userCustomExitSignal: Flow<Unit>? = null,
-    centerPanelSupplier: CoroutineScope.() -> DialogPanel
-  ) : this(project, GlobalScope, parent, model, title, userCustomExitSignal, centerPanelSupplier)
 
   private val uiScope = parentCs.childScope(javaClass.name, Dispatchers.EDT + ModalityState.stateForComponent(rootPane).asContextElement())
 

@@ -316,7 +316,8 @@ class MavenCentralPublication(
       check(!dryRun || type == PublishingType.USER_MANAGED) {
         "Automatic publishing is not supported in the dryRun mode"
       }
-      val deploymentName = "teamcity.build.id=${TeamCityHelper.allProperties.getValue("teamcity.build.id")}"
+      val deploymentName = "teamcity.buildType.id=${System.getProperty("teamcity.buildType.id")}," +
+                           "teamcity.build.id=${TeamCityHelper.allProperties.getValue("teamcity.build.id")}"
       val uri = "$UPLOADING_URI_BASE?name=$deploymentName&publishingType=$type"
       callSonatype(uri, builder = {
         it.post(

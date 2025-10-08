@@ -8,12 +8,12 @@ jvm_library(
   srcs = glob(["src/**/*.kt", "src/**/*.java", "src/**/*.form"], allow_empty = True),
   kotlinc_opts = "@community//:k8",
   deps = [
-    "@lib//:aalto-xml",
+    "//libraries/aalto-xml",
     "@lib//:kotlin-stdlib",
     "@lib//:jetbrains-annotations",
-    "@lib//:fastutil-min",
-    "@lib//:kotlinx-serialization-core",
-    "@lib//:kotlinx-serialization-json",
+    "//libraries/fastutil",
+    "//libraries/kotlinx/serialization/core",
+    "//libraries/kotlinx/serialization/json",
   ]
 )
 ### auto-generated section `build intellij.platform.util.xmlDom` end

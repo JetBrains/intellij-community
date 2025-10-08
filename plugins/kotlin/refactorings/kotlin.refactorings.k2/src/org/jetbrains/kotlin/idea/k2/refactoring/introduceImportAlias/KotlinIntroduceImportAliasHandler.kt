@@ -7,9 +7,11 @@ import com.intellij.openapi.actionSystem.ex.ActionUtil
 import com.intellij.openapi.application.ex.ApplicationManagerEx
 import com.intellij.openapi.editor.Editor
 import com.intellij.openapi.project.Project
+import com.intellij.psi.PsiClass
 import com.intellij.psi.PsiDocumentManager
 import com.intellij.psi.PsiElement
 import com.intellij.psi.PsiFile
+import com.intellij.psi.PsiMember
 import com.intellij.psi.SmartPsiElementPointer
 import com.intellij.psi.createSmartPointer
 import com.intellij.psi.search.searches.ReferencesSearch
@@ -44,8 +46,14 @@ object KotlinIntroduceImportAliasHandler : RefactoringActionHandler {
     @OptIn(KaImplementationDetail::class)
     fun doRefactoring(project: Project, editor: Editor, element: KtNameReferenceExpression) {
         val file = element.containingKtFile
-        val declaration = element.mainReference.resolve() as? KtNamedDeclaration ?: return
-        val fqName = ((declaration as? KtConstructor<*>)?.getContainingClassOrObject() ?: declaration).fqName ?: return
+        val declaration = element.mainReference.resolve() ?: return
+        val fqName = when (declaration) {
+            is KtConstructor<*> -> declaration.getContainingClassOrObject().fqName
+            is KtNamedDeclaration -> declaration.fqName
+            is PsiClass -> declaration.qualifiedName?.let(::FqName)
+            is PsiMember if declaration.name != null -> declaration.containingClass?.qualifiedName?.let { FqName("$it.${declaration.name}") }
+            else -> null
+        } ?: return
         val oldName = element.mainReference.value
         val namedUsages = ActionUtil.underModalProgress(project, KotlinBundle.message("perform.refactoring")) {
             val declarations = analyze(element) {
@@ -64,7 +72,7 @@ object KotlinIntroduceImportAliasHandler : RefactoringActionHandler {
                     fqName.shortName() == (symbol as? KaNamedSymbol)?.name ||
                             (symbol as? KaNamedClassSymbol)?.companionObject?.name == fqName.shortName() && fqName.parent().shortName() == symbol.name
                 }
-                    .mapNotNull { it.psi as? KtNamedDeclaration }
+                    .mapNotNull { it.psi as? KtNamedDeclaration ?: it.psi as? PsiMember }
                     .distinct()
                     .toList()
             }

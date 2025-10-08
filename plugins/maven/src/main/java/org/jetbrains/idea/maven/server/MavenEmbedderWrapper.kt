@@ -5,13 +5,11 @@ import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.progress.ProgressIndicator
 import com.intellij.openapi.progress.runBlockingMaybeCancellable
 import com.intellij.openapi.project.Project
-import com.intellij.openapi.util.NlsContexts
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.platform.diagnostic.telemetry.helpers.useWithScope
 import com.intellij.platform.diagnostic.telemetry.rt.context.TelemetryContext
 import com.intellij.platform.util.progress.RawProgressReporter
 import kotlinx.coroutines.*
-import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.annotations.TestOnly
 import org.jetbrains.idea.maven.buildtool.MavenEventHandler
 import org.jetbrains.idea.maven.buildtool.MavenLogEventHandler
@@ -23,7 +21,6 @@ import org.jetbrains.idea.maven.project.MavenProject
 import org.jetbrains.idea.maven.project.MavenProjectsManager
 import org.jetbrains.idea.maven.telemetry.tracer
 import org.jetbrains.idea.maven.utils.MavenLog
-import org.jetbrains.idea.maven.utils.MavenProgressIndicator
 import java.io.File
 import java.io.Serializable
 import java.nio.file.Path
@@ -190,20 +187,22 @@ abstract class MavenEmbedderWrapper internal constructor(private val project: Pr
     return runBlockingMaybeCancellable {
       runLongRunningTask(
         LongRunningEmbedderTask { embedder, taskInput ->
-          embedder.resolveArtifactsTransitively(taskInput, ArrayList(artifacts), ArrayList(remoteRepositories), ourToken)
+          embedder.resolveProcessorPathEntries(taskInput, ArrayList(artifacts), ArrayList(remoteRepositories), HashMap(), MavenExplicitProfiles(emptyList(), emptyList()), ourToken)
         }, null, MavenLogEventHandler)
 
     }.transform()
   }
 
-  suspend fun resolveArtifactsTransitively(
+  suspend fun resolveProcessorPathEntries(
     artifacts: List<MavenArtifactInfo>,
     remoteRepositories: List<MavenRemoteRepository>,
+    managedDeps: Map<String, MavenArtifactInfo>,
+    profiles: MavenExplicitProfiles,
   ): MavenArtifactResolveResult {
     if (artifacts.isEmpty()) return MavenArtifactResolveResult(emptyList(), null)
     return runLongRunningTask(
       LongRunningEmbedderTask { embedder, taskInput ->
-        embedder.resolveArtifactsTransitively(taskInput, ArrayList(artifacts), ArrayList(remoteRepositories), ourToken)
+        embedder.resolveProcessorPathEntries(taskInput, ArrayList(artifacts), ArrayList(remoteRepositories), HashMap(managedDeps), profiles, ourToken)
       }, null, MavenLogEventHandler)  }
 
   private fun MavenArtifact.transformPaths(transformer: RemotePathTransformerFactory.Transformer) = this.replaceFile(
@@ -252,22 +251,6 @@ abstract class MavenEmbedderWrapper internal constructor(private val project: Pr
 
   suspend fun readModel(file: File?): MavenModel? {
     return getOrCreateWrappee().readModel(file, ourToken)
-  }
-
-  @ApiStatus.ScheduledForRemoval
-  @Deprecated("use suspend method")
-  fun executeGoal(
-    requests: Collection<MavenGoalExecutionRequest>,
-    goal: String,
-    progressIndicator: MavenProgressIndicator?,
-    console: MavenConsole,
-  ): List<MavenGoalExecutionResult> {
-    val progressReporter = object : RawProgressReporter {
-      override fun text(text: @NlsContexts.ProgressText String?) {
-        progressIndicator?.indicator?.text = text
-      }
-    }
-    return runBlockingMaybeCancellable { executeGoal(requests, goal, progressReporter, console) }
   }
 
   suspend fun executeGoal(

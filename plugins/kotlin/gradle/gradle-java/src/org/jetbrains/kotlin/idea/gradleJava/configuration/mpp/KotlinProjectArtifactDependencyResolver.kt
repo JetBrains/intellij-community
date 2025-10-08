@@ -60,8 +60,8 @@ private class KotlinProjectArtifactDependencyResolverImpl : KotlinProjectArtifac
             ids.mapNotNull {
                 val sourceSetDataNode = sourceSetMap[it]?.first ?: return@mapNotNull null
                 val sourceSet = sourceSetMap[it]?.second ?: return@mapNotNull null
-                val sourceSetNames = sourceSetDataNode.kotlinSourceSetData?.sourceSetInfo?.dependsOn.orEmpty()
-                    .mapNotNull { dependsOnId -> sourceSetMap[dependsOnId]?.second?.name } + sourceSet.name
+                val sourceSetNames = listOf(sourceSet.name) + sourceSetDataNode.kotlinSourceSetData?.sourceSetInfo?.dependsOn.orEmpty()
+                    .mapNotNull { dependsOnId -> sourceSetMap[dependsOnId]?.second?.name }
                 dependency.resolved(sourceSetNames.toSet())
             }.flatten()
         }.toSet() + resolvedByExtensions

@@ -8,10 +8,7 @@ import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
 
-/**
- * @author Mikhail Golubev
- */
-public final class JqlFileType extends LanguageFileType {
+final class JqlFileType extends LanguageFileType {
   public static final LanguageFileType INSTANCE = new JqlFileType();
   public static final String DEFAULT_EXTENSION = "jql";
 

@@ -32,7 +32,6 @@ internal class PyV3NewProjectStepAction : AbstractNewProjectStep<PyV3BaseProject
         else -> ProjectSettingsStepBase(projectGenerator, callback)
       }
 
-
     override fun getActions(
       generators: List<DirectoryProjectGenerator<*>>,
       callback: AbstractCallback<PyV3BaseProjectSettings>,

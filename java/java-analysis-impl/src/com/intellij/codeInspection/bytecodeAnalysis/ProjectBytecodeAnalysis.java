@@ -81,9 +81,9 @@ public class ProjectBytecodeAnalysis {
     if (eKey == null) return null;
     EKey accessKey = myEquationProvider.adaptKey(eKey);
     for (Equations equation : myEquationProvider.getEquations(accessKey.member)) {
-      if (equation.find(direction).orElse(null) instanceof FieldAccess access) {
+      if (equation.find(direction).orElse(null) instanceof FieldAccess(String fieldName)) {
         PsiClass containingClass = accessor.getContainingClass();
-        return containingClass != null ? containingClass.findFieldByName(access.name(), false) : null;
+        return containingClass != null ? containingClass.findFieldByName(fieldName, false) : null;
       }
     }
     return null;

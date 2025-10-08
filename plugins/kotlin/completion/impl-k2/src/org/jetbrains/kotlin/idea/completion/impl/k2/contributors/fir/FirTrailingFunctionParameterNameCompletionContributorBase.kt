@@ -8,18 +8,7 @@ import com.intellij.util.containers.sequenceOfNotNull
 import org.jetbrains.kotlin.analysis.api.KaExperimentalApi
 import org.jetbrains.kotlin.analysis.api.KaImplementationDetail
 import org.jetbrains.kotlin.analysis.api.KaSession
-import org.jetbrains.kotlin.analysis.api.components.KaCompletionCandidateChecker
-import org.jetbrains.kotlin.analysis.api.components.KaCompletionExtensionCandidateChecker
-import org.jetbrains.kotlin.analysis.api.components.KaExtensionApplicabilityResult
-import org.jetbrains.kotlin.analysis.api.components.canBeAnalysed
-import org.jetbrains.kotlin.analysis.api.components.createSubstitutor
-import org.jetbrains.kotlin.analysis.api.components.expandedSymbol
-import org.jetbrains.kotlin.analysis.api.components.isSubClassOf
-import org.jetbrains.kotlin.analysis.api.components.lowerBoundIfFlexible
-import org.jetbrains.kotlin.analysis.api.components.memberScope
-import org.jetbrains.kotlin.analysis.api.components.render
-import org.jetbrains.kotlin.analysis.api.components.resolveToCallCandidates
-import org.jetbrains.kotlin.analysis.api.components.substitute
+import org.jetbrains.kotlin.analysis.api.components.*
 import org.jetbrains.kotlin.analysis.api.impl.base.components.KaBaseIllegalPsiException
 import org.jetbrains.kotlin.analysis.api.renderer.base.annotations.KaRendererAnnotationsFilter
 import org.jetbrains.kotlin.analysis.api.renderer.types.KaTypeRenderer
@@ -38,6 +27,7 @@ import org.jetbrains.kotlin.idea.codeinsight.utils.singleReturnExpressionOrNull
 import org.jetbrains.kotlin.idea.completion.impl.k2.LookupElementSink
 import org.jetbrains.kotlin.idea.completion.impl.k2.checkers.KtCompletionExtensionCandidateChecker
 import org.jetbrains.kotlin.idea.completion.impl.k2.contributors.*
+import org.jetbrains.kotlin.idea.completion.impl.k2.handlers.WithImportInsertionHandler
 import org.jetbrains.kotlin.idea.completion.impl.k2.weighers.TrailingLambdaParameterNameWeigher.isTrailingLambdaParameter
 import org.jetbrains.kotlin.idea.completion.lookups.ImportStrategy
 import org.jetbrains.kotlin.idea.completion.lookups.factories.FunctionLookupElementFactory
@@ -243,7 +233,7 @@ internal sealed class FirTrailingFunctionParameterNameCompletionContributorBase<
                 }
 
                 createCompoundLookupElement(suggestedNames, isDestructuring = true)?.withChainedInsertHandler(
-                    K2TrailingFunctionParameterNameCompletionContributorBase.WithImportInsertionHandler(fqNames)
+                    WithImportInsertionHandler(fqNames)
                 )?.let { yield(it) }
 
                 val lookupObject = classSymbol.psi
@@ -375,7 +365,7 @@ private val KaType.text: String
         position = Variance.INVARIANT,
     )
 
-context(_: KaCompletionCandidateChecker)
+context(_: KaSession)
 private fun createExtensionCandidateChecker(
     bodyExpression: KtBlockExpression,
 ): KtCompletionExtensionCandidateChecker? {

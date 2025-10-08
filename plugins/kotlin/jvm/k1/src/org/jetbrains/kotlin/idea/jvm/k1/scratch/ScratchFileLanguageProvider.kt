@@ -10,8 +10,6 @@ import com.intellij.openapi.project.Project
 import com.intellij.openapi.vfs.VirtualFile
 import org.jetbrains.kotlin.idea.jvm.shared.scratch.ScratchExecutor
 import org.jetbrains.kotlin.idea.jvm.shared.scratch.ScratchFile
-import org.jetbrains.kotlin.idea.jvm.shared.scratch.ScratchFileListener
-import org.jetbrains.kotlin.idea.jvm.shared.scratch.syncPublisherWithDisposeCheck
 
 abstract class ScratchFileLanguageProvider {
     fun newScratchFile(project: Project, file: VirtualFile): ScratchFile? {
@@ -19,8 +17,6 @@ abstract class ScratchFileLanguageProvider {
 
         scratchFile.replScratchExecutor = createReplExecutor(scratchFile)
         scratchFile.compilingScratchExecutor = createCompilingExecutor(scratchFile)
-
-        scratchFile.project.syncPublisherWithDisposeCheck(ScratchFileListener.TOPIC).fileCreated(scratchFile)
 
         return scratchFile
     }

@@ -1,4 +1,4 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.platform.util.io.storages.blobstorage;
 
 import com.intellij.openapi.diagnostic.Logger;
@@ -410,7 +410,8 @@ public final class StreamlinedBlobStorageOverMMappedFile extends StreamlinedBlob
       case RecordLayout.RECORD_TYPE_MOVED -> {
         int redirectToId = recordLayout.redirectToId(buffer, offsetOnPage);
         if (redirectToId == NULL_ID) {
-          throw new RecordAlreadyDeletedException("Can't delete record[" + recordId + "]: it was already deleted");
+          throw new RecordAlreadyDeletedException("Can't delete record[" + recordId + "]: it was already deleted, "+
+                                                  "(wasClosedProperly: " + wasClosedProperly() + ")");
         }
 
         // (redirectToId=NULL) <=> 'record deleted' ('moved nowhere')

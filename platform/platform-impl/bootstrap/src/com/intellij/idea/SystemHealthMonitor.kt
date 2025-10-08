@@ -26,7 +26,6 @@ import com.intellij.openapi.ui.Messages
 import com.intellij.openapi.updateSettings.impl.ExternalUpdateManager
 import com.intellij.openapi.util.NlsContexts
 import com.intellij.openapi.util.SystemInfo
-import com.intellij.openapi.util.SystemInfoRt
 import com.intellij.openapi.util.io.NioFiles
 import com.intellij.platform.ide.CoreUiCoroutineScopeHolder
 import com.intellij.platform.ide.bootstrap.eel.MultiRoutingFileSystemVmOptionsSetter
@@ -38,6 +37,7 @@ import com.intellij.platform.ide.progress.runWithModalProgressBlocking
 import com.intellij.util.SystemProperties
 import com.intellij.util.currentJavaVersion
 import com.intellij.util.system.CpuArch
+import com.intellij.util.system.OS
 import com.intellij.util.ui.IoErrorText
 import kotlinx.coroutines.*
 import kotlinx.coroutines.future.asDeferred
@@ -85,12 +85,12 @@ internal object SystemHealthMonitor {
   }
 
   private fun checkInstallationIntegrity() {
-    if (!SystemInfo.isUnix || SystemInfo.isMac) {
+    if (!OS.isGenericUnix()) {
       return
     }
 
     try {
-      Files.list(Path.of(PathManager.getLibPath())).use { stream ->
+      Files.list(PathManager.getLibDir()).use { stream ->
         // see `LinuxDistributionBuilder#generateVersionMarker`
         val markers = stream.filter { it.fileName.toString().startsWith("build-marker-") }.count()
         if (markers > 1) {
@@ -107,7 +107,7 @@ internal object SystemHealthMonitor {
     if (System.getProperty("jb.vmOptionsFile.corrupted").toBoolean()) {
       val file = VMOptions.getUserOptionsFile()
       if (file != null) {
-        showNotification("vm.options.file.corrupted", suppressable = false, editVmOptionsAction(), shorten(file.toString()))
+        showNotification("vm.options.file.corrupted", suppressable = false, editVmOptionsAction(), shorten(file))
       }
     }
   }
@@ -115,23 +115,22 @@ internal object SystemHealthMonitor {
   private fun checkIdeDirectories() {
     if (System.getProperty(PathManager.PROPERTY_PATHS_SELECTOR) != null) {
       if (System.getProperty(PathManager.PROPERTY_CONFIG_PATH) != null && System.getProperty(PathManager.PROPERTY_PLUGINS_PATH) == null) {
-        showNotification("implicit.plugin.directory.path", suppressable = true, action = null, shorten(PathManager.getPluginsPath()))
+        showNotification("implicit.plugin.directory.path", suppressable = true, action = null, shorten(PathManager.getPluginsDir()))
       }
       if (System.getProperty(PathManager.PROPERTY_SYSTEM_PATH) != null && System.getProperty(PathManager.PROPERTY_LOG_PATH) == null) {
-        showNotification("implicit.log.directory.path", suppressable = true, action = null, shorten(PathManager.getLogPath()))
+        showNotification("implicit.log.directory.path", suppressable = true, action = null, shorten(PathManager.getLogDir()))
       }
     }
   }
 
-  private fun shorten(pathStr: String): String {
-    val path = Path.of(pathStr).toAbsolutePath()
+  private fun shorten(path: Path): String {
     val userHome = Path.of(SystemProperties.getUserHome())
     return if (path.startsWith(userHome)) {
       val relative = userHome.relativize(path)
-      if (SystemInfo.isWindows) "%USERPROFILE%\\${relative}" else "~/${relative}"
+      if (OS.CURRENT == OS.Windows) "%USERPROFILE%\\${relative}" else "~/${relative}"
     }
     else {
-      pathStr
+      path.toString()
     }
   }
 
@@ -147,7 +146,7 @@ internal object SystemHealthMonitor {
           BrowserUtil.browse(downloadPageUrl.toExternalForm())
         }
       }
-      val key = if (SystemInfo.isMac) "bundled.jre.arch.mismatch.mac" else "bundled.jre.arch.mismatch.win"
+      val key = if (OS.CURRENT == OS.macOS) "bundled.jre.arch.mismatch.mac" else "bundled.jre.arch.mismatch.win"
       showNotification(key, suppressable = true, downloadAction, ApplicationNamesInfo.getInstance().fullProductName)
     }
   }
@@ -161,8 +160,8 @@ internal object SystemHealthMonitor {
     // boot JRE is non-bundled and is either non-JB or older than bundled
     var switchAction: NotificationAction? = null
     val directory = PathManager.getCustomOptionsDirectory()
-    if (directory != null && (SystemInfo.isWindows || SystemInfo.isMac || SystemInfo.isLinux) && isJbrOperational()) {
-      val configName = "${ApplicationNamesInfo.getInstance().scriptName}${if (SystemInfo.isWindows) "64.exe" else ""}.jdk"
+    if (directory != null && OS.CURRENT in listOf(OS.Windows, OS.macOS, OS.Linux) && isJbrOperational()) {
+      val configName = "${ApplicationNamesInfo.getInstance().scriptName}${if (OS.CURRENT == OS.Windows) "64.exe" else ""}.jdk"
       val configFile = Path.of(directory, configName)
       if (Files.isRegularFile(configFile)) {
         switchAction = NotificationAction.createSimpleExpiring(IdeBundle.message("action.SwitchToJBR.text")) {
@@ -180,9 +179,10 @@ internal object SystemHealthMonitor {
         }
       }
     }
+
     showNotification(
       "bundled.jre.version.message", suppressable = false, switchAction,
-      currentJavaVersion(), System.getProperty("java.vendor"), shorten(jreHome.removeSuffix("/Contents/Home"))
+      currentJavaVersion(), System.getProperty("java.vendor"), shorten(Path.of(jreHome.removeSuffix("/Contents/Home")))
     )
   }
 
@@ -192,13 +192,13 @@ internal object SystemHealthMonitor {
     }
 
     // when can't detect a JBR version, give a user the benefit of the doubt
-    val jbrVersion = JdkVersionDetector.getInstance().detectJdkVersionInfo(PathManager.getBundledRuntimePath())
+    val jbrVersion = JdkVersionDetector.getInstance().detectJdkVersionInfo(PathManager.getBundledRuntimeDir().toString())
     return jbrVersion == null || currentJavaVersion() >= jbrVersion.version
   }
 
   private suspend fun isJbrOperational(): Boolean {
-    val bin = Path.of(PathManager.getBundledRuntimePath(), if (SystemInfo.isWindows) "bin/java.exe" else "bin/java")
-    if (Files.isRegularFile(bin) && (SystemInfo.isWindows || Files.isExecutable(bin))) {
+    val bin = PathManager.getBundledRuntimeDir().resolve(if (OS.CURRENT == OS.Windows) "bin\\java.exe" else "bin/java")
+    if (Files.isRegularFile(bin) && (OS.CURRENT == OS.Windows || Files.isExecutable(bin))) {
       try {
         return withTimeout(30.seconds) {
           @Suppress("UsePlatformProcessAwaitExit")
@@ -255,14 +255,14 @@ internal object SystemHealthMonitor {
 
   private fun checkLauncher() {
     if (
-      (SystemInfoRt.isWindows || SystemInfoRt.isLinux) &&
+      (OS.CURRENT == OS.Windows || OS.CURRENT == OS.Linux) &&
       System.getProperty("ide.native.launcher") == null &&
       !ExternalUpdateManager.isCreatingDesktopEntries()
     ) {
       val baseName = ApplicationNamesInfo.getInstance().scriptName
-      val binName = baseName + if (SystemInfo.isWindows) "64.exe" else ""
-      val scriptName = baseName + if (SystemInfo.isWindows) ".bat" else ".sh"
-      if (Files.isRegularFile(Path.of(PathManager.getBinPath(), binName))) {
+      val binName = baseName + if (OS.CURRENT == OS.Windows) "64.exe" else ""
+      val scriptName = baseName + if (OS.CURRENT == OS.Windows) ".bat" else ".sh"
+      if (Files.isRegularFile(PathManager.getBinDir().resolve(binName))) {
         @Suppress("IO_FILE_USAGE") val prefix = "bin" + java.io.File.separatorChar
         val action = NotificationAction.createSimpleExpiring(IdeBundle.message("shell.env.loading.learn.more")) { BrowserUtil.browse("https://intellij.com/launcher") }
         showNotification("ide.script.launcher.used", suppressable = true, action, prefix + scriptName, prefix + binName)
@@ -271,22 +271,22 @@ internal object SystemHealthMonitor {
   }
 
   private fun checkTempDirSanity() {
-    if (SystemInfo.isUnix && !SystemInfo.isMac) {
+    if (OS.isGenericUnix()) {
       try {
-        val probe = Files.createTempFile(Path.of(PathManager.getTempPath()), "ij-exec-check-", ".sh")
+        val probe = Files.createTempFile(PathManager.getTempDir(), "ij-exec-check-", ".sh")
         NioFiles.setExecutable(probe)
         val process = ProcessBuilder(probe.toString()).start()
         if (!process.waitFor(1, TimeUnit.MINUTES)) throw IOException("${probe} timed out")
         if (process.exitValue() != 0) throw IOException("${probe} returned ${process.exitValue()}")
       }
       catch (_: Exception) {
-        showNotification("temp.dir.exec.failed", suppressable = false, action = null, shorten(PathManager.getTempPath()))
+        showNotification("temp.dir.exec.failed", suppressable = false, action = null, shorten(PathManager.getTempDir()))
       }
     }
   }
 
   private fun checkTempDirEnvVars() {
-    val envVars = if (SystemInfo.isWindows) sequenceOf("TMP", "TEMP") else sequenceOf("TMPDIR")
+    val envVars = if (OS.CURRENT == OS.Windows) sequenceOf("TMP", "TEMP") else sequenceOf("TMPDIR")
     for (name in envVars) {
       val value = System.getenv(name) ?: continue
       try {
@@ -302,8 +302,9 @@ internal object SystemHealthMonitor {
   }
 
   private fun checkAncientOs() {
-    if (SystemInfoRt.isWindows) {
-      val buildNumber = SystemInfo.getWinBuildNumber()
+    val osInfo = OS.CURRENT.osInfo
+    if (osInfo is OS.WindowsInfo) {
+      val buildNumber = osInfo.buildNumber
       if (buildNumber != null && buildNumber < 10000) {  // 10 1507 = 10240, Server 2016 = 14393
         showNotification("unsupported.windows", suppressable = true, action = null)
       }
@@ -318,7 +319,7 @@ internal object SystemHealthMonitor {
     when {
       changedOptions.isEmpty() -> Unit
       
-      PluginManagerCore.isRunningFromSources() || AppMode.isDevServer() -> {
+      PluginManagerCore.isRunningFromSources() || AppMode.isRunningFromDevBuild() -> {
         logger<MultiRoutingFileSystemVmOptionsSetter>().warn(
           changedOptions.joinToString(
             prefix = "This message is seen only in Dev Mode/Run from sources.\n" +
@@ -395,7 +396,7 @@ internal object SystemHealthMonitor {
     }
 
     val (dir, store) = runCatching {
-      val dir = Path.of(PathManager.getSystemPath())
+      val dir = PathManager.getSystemDir()
       val store = Files.getFileStore(dir)
       dir to store
     }.getOrElse {

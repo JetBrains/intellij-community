@@ -17,13 +17,13 @@ com.intellij.codeInspection.uncheckedWarnings.UncheckedWarningLocalInspection
 com.intellij.codeInspection.unusedSymbol.UnusedSymbolLocalInspection
 com.intellij.codeInspection.varScopeCanBeNarrowed.FieldCanBeLocalInspection
 com.intellij.codeInspection.visibility.VisibilityInspection
+com.intellij.grazie.spellcheck.GrazieSpellCheckingInspection
 com.intellij.lang.javascript.inspections.JSMismatchedCollectionQueryUpdateInspection
 com.intellij.lang.javascript.inspections.JSPotentiallyInvalidConstructorUsageInspection
 com.intellij.lang.javascript.inspections.JSSuspiciousNameCombinationInspection
 com.intellij.lang.javascript.inspections.UnterminatedStatementJSInspection
 com.intellij.psi.css.inspections.CssUnknownPropertyInspection
 com.intellij.restructuredtext.python.inspections.RestRoleInspection
-com.intellij.spellchecker.inspections.SpellCheckingInspection
 com.jetbrains.php.lang.inspections.PhpUndefinedClassInspection
 com.jetbrains.php.lang.inspections.PhpUndefinedVariableInspection
 com.jetbrains.php.lang.inspections.PhpUnusedParameterInspection

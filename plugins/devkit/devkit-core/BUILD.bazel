@@ -1,6 +1,6 @@
 ### auto-generated section `build intellij.devkit.core` start
 load("//build:compiler-options.bzl", "create_kotlinc_options")
-load("@rules_jvm//:jvm.bzl", "jvm_library", "jvm_resources")
+load("@rules_jvm//:jvm.bzl", "jvm_library", "resourcegroup")
 
 create_kotlinc_options(
   name = "custom_core",
@@ -10,9 +10,9 @@ create_kotlinc_options(
   ]
 )
 
-jvm_resources(
+resourcegroup(
   name = "core_resources",
-  files = glob(["resources/**/*"]),
+  srcs = glob(["resources/**/*"]),
   strip_prefix = "resources"
 )
 
@@ -21,6 +21,7 @@ jvm_library(
   module_name = "intellij.devkit.core",
   visibility = ["//visibility:public"],
   srcs = glob(["src/**/*.kt", "src/**/*.java", "src/**/*.form", "gen/**/*.kt", "gen/**/*.java"], allow_empty = True),
+  resources = [":core_resources"],
   kotlinc_opts = ":custom_core",
   deps = [
     "@lib//:jetbrains-annotations",
@@ -48,7 +49,7 @@ jvm_library(
     "//plugins/properties:properties-backend",
     "//xml/impl",
     "//java/openapi:java",
-    "@lib//:guava",
+    "//libraries/guava",
     "//platform/observable",
     "//spellchecker",
     "//plugins/properties/properties-psi-api:psi",
@@ -72,7 +73,7 @@ jvm_library(
     "//platform/util-class-loader:util-classLoader",
     "@lib//:netty-buffer",
     "//platform/core-ui",
-    "@lib//:fastutil-min",
+    "//libraries/fastutil",
     "//plugins/properties/properties-psi-impl:backend-psi",
     "//platform/platform-util-io:ide-util-io",
     "//platform/platform-util-netty:ide-util-netty",
@@ -82,12 +83,12 @@ jvm_library(
     "//platform/platform-impl:ide-impl",
     "//platform/backend/workspace",
     "//platform/ide-core-impl",
-    "@lib//:kotlinx-serialization-core",
-    "@lib//:kotlinx-serialization-json",
+    "//libraries/kotlinx/serialization/core",
+    "//libraries/kotlinx/serialization/json",
     "//json/backend",
     "@lib//:kotlinx-serialization-protobuf",
     "//platform/built-in-server-api:builtInServer",
-    "@lib//:caffeine",
+    "//libraries/caffeine",
     "//platform/editor-ui-ex:editor-ex",
     "//platform/ijent/buildConstants",
     "//platform/markdown-utils",
@@ -95,7 +96,6 @@ jvm_library(
     "//platform/eel-provider",
     "//libraries/xerces",
     "//platform/usageView-impl",
-  ],
-  runtime_deps = [":core_resources"]
+  ]
 )
 ### auto-generated section `build intellij.devkit.core` end

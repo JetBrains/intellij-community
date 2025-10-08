@@ -60,7 +60,7 @@ public final class ExceptionFromCatchWhichDoesntWrapInspection extends BaseInspe
   }
 
   @Override
-  public BaseInspectionVisitor buildVisitor() {
+  public @NotNull BaseInspectionVisitor buildVisitor() {
     return new ExceptionFromCatchWhichDoesntWrapVisitor();
   }
 

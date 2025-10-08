@@ -17,7 +17,7 @@ import kotlinx.coroutines.*
 import kotlinx.coroutines.flow.map
 import org.jetbrains.plugins.terminal.JBTerminalSystemSettingsProvider
 import org.jetbrains.plugins.terminal.block.output.TerminalOutputEditorInputMethodSupport
-import org.jetbrains.plugins.terminal.block.reworked.TerminalOutputModelImpl
+import org.jetbrains.plugins.terminal.block.reworked.MutableTerminalOutputModelImpl
 import org.jetbrains.plugins.terminal.block.ui.TerminalUiUtils
 import org.junit.Test
 import org.junit.runner.RunWith
@@ -46,10 +46,10 @@ internal class TerminalInputMethodSupportTest : BasePlatformTestCase() {
       editor,
       coroutineScope,
       getCaretPosition = {
-        val offset = model.cursorOffsetState.value.toRelative()
+        val offset = (model.cursorOffset - model.startOffset).toInt()
         editor.offsetToLogicalPosition(offset)
       },
-      cursorOffsetFlow = model.cursorOffsetState.map { it.toRelative() },
+      cursorOffsetFlow = model.cursorOffsetState.map { (it - model.startOffset).toInt() },
       sendInputString = echoer::echo,
     )
   }
@@ -128,7 +128,7 @@ internal class TerminalInputMethodSupportTest : BasePlatformTestCase() {
 
 }
 
-private class InputTextEchoer(val outputModel: TerminalOutputModelImpl, val coroutineScope: CoroutineScope) {
+private class InputTextEchoer(val outputModel: MutableTerminalOutputModelImpl, val coroutineScope: CoroutineScope) {
 
   private val lineBuffer: StringBuilder = StringBuilder()
   private val jobs: MutableList<Job> = CopyOnWriteArrayList()

@@ -300,7 +300,7 @@ internal class SdkOrderEntryBridge(
   override fun getJdk(): Sdk? {
     val sdkType = sdkDependencyItem.sdk.type
     val sdkName = sdkDependencyItem.sdk.name
-    val sdk = ModifiableRootModelBridge.findSdk(sdkName, sdkType)
+    val sdk = ModifiableRootModelBridge.findSdk(ownerModuleBridge.project, sdkName, sdkType)
     return getRootModel().accessor.getSdk(sdk, sdkName)
   }
 

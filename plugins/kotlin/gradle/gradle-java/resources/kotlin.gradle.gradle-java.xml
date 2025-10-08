@@ -92,6 +92,10 @@
                               id="kotlinGradleTaskRunLineMarkerProvider" language="kotlin"/>
     <runConfigurationProducer implementation="org.jetbrains.kotlin.idea.gradleJava.testing.js.KotlinMultiplatformJsTestClassGradleConfigurationProducer"/>
     <runConfigurationProducer implementation="org.jetbrains.kotlin.idea.gradleJava.testing.js.KotlinMultiplatformJsTestMethodGradleConfigurationProducer"/>
+    <runConfigurationProducer implementation="org.jetbrains.kotlin.idea.gradleJava.testing.wasm.KotlinMultiplatformWasmJsTestClassGradleConfigurationProducer"/>
+    <runConfigurationProducer implementation="org.jetbrains.kotlin.idea.gradleJava.testing.wasm.KotlinMultiplatformWasmJsTestMethodGradleConfigurationProducer"/>
+    <runConfigurationProducer implementation="org.jetbrains.kotlin.idea.gradleJava.testing.wasm.KotlinMultiplatformWasmWasiTestClassGradleConfigurationProducer"/>
+    <runConfigurationProducer implementation="org.jetbrains.kotlin.idea.gradleJava.testing.wasm.KotlinMultiplatformWasmWasiTestMethodGradleConfigurationProducer"/>
     <runConfigurationProducer implementation="org.jetbrains.kotlin.idea.gradleJava.testing.native.KotlinMultiplatformNativeTestClassGradleConfigurationProducer"/>
     <runConfigurationProducer implementation="org.jetbrains.kotlin.idea.gradleJava.testing.native.KotlinMultiplatformNativeTestMethodGradleConfigurationProducer"/>
     <runConfigurationProducer implementation="org.jetbrains.kotlin.idea.gradleJava.testing.common.KotlinMultiplatformCommonTestClassGradleConfigurationProducer"/>
@@ -114,6 +118,7 @@
 
   <extensions defaultExtensionNs="org.jetbrains.kotlin">
     <projectConfigurator implementation="org.jetbrains.kotlin.idea.gradleJava.configuration.KotlinGradleModuleConfigurator"/>
+    <compilerPluginConfigurator implementation="org.jetbrains.kotlin.idea.gradleJava.configuration.SpringGradleKotlinCompilerPluginProjectConfigurator"/>
     <gradleModelFacade implementation="org.jetbrains.kotlin.idea.gradleJava.inspections.DefaultGradleModelFacade"/>
     <kotlinCompilerVersionProvider implementation="org.jetbrains.kotlin.idea.gradleJava.GradleKotlinCompilerVersionProvider"/>
   </extensions>

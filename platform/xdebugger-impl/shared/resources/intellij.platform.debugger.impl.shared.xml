@@ -1,4 +1,4 @@
-<idea-plugin>
+<idea-plugin visibility="public">
   <extensionPoints>
     <extensionPoint name="xdebugger.consoleViewDataConverter"
                     interface="com.intellij.platform.debugger.impl.rpc.XDebuggerConsoleViewConverter"

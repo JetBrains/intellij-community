@@ -9,6 +9,7 @@ import com.intellij.openapi.actionSystem.*
 import com.intellij.openapi.actionSystem.ex.ActionUtil
 import com.intellij.openapi.actionSystem.impl.SimpleDataContext
 import com.intellij.openapi.application.ApplicationManager
+import com.intellij.openapi.diagnostic.debug
 import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.diff.impl.DiffUtil
 import com.intellij.openapi.editor.Document
@@ -147,14 +148,14 @@ class XLineBreakpointManager(private val project: Project, coroutineScope: Corou
       updateBreakpointNow(breakpoint)
     }
     val fileUrl = breakpoint.getFile()?.url ?: breakpoint.getFileUrl()
-    log.info("Register line breakpoint ${breakpoint.id} ${breakpoint.javaClass.simpleName}: $fileUrl")
+    log.debug { "Register line breakpoint ${breakpoint.id} ${breakpoint.javaClass.simpleName}: $fileUrl" }
     myBreakpoints.putValue(fileUrl, breakpoint)
   }
 
   fun unregisterBreakpoint(breakpoint: XLineBreakpointProxy) {
     val fileUrl = breakpoint.getFile()?.url ?: breakpoint.getFileUrl()
     val removed = myBreakpoints.remove(fileUrl, breakpoint)
-    log.info("Unregister line breakpoint ${breakpoint.id} [removed=$removed] ${breakpoint.javaClass.simpleName}: $fileUrl")
+    log.debug { "Unregister line breakpoint ${breakpoint.id} [removed=$removed] ${breakpoint.javaClass.simpleName}: $fileUrl" }
   }
 
   fun getDocumentBreakpointProxies(document: Document): Collection<XLineBreakpointProxy> {
@@ -308,6 +309,8 @@ class XLineBreakpointManager(private val project: Project, coroutineScope: Corou
       val document = e.document
       val breakpoints = getDocumentBreakpointProxies(document)
       if (!breakpoints.isEmpty()) {
+        // Update position immediately to avoid races with doUpdateUI
+        breakpoints.forEach { it.fastUpdatePosition() }
         scheduleDocumentUpdate(document)
 
         InlineBreakpointInlayManager.getInstance(project).redrawDocument(e)

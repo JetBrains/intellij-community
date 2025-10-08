@@ -78,7 +78,12 @@
     <completion.contributor language="Lombok.Config"
                             implementationClass="de.plushnikov.intellij.plugin.language.LombokConfigCompletionContributor"/>
 
-    <completion.contributor language="JAVA" implementationClass="de.plushnikov.intellij.plugin.completion.LombokOnXCompletionContributorFilter" order="first"/>
+    <completion.contributor language="JAVA"
+                            implementationClass="de.plushnikov.intellij.plugin.extension.LombokBuilderCompletionContributor" />
+
+    <completion.contributor language="JAVA"
+                            implementationClass="de.plushnikov.intellij.plugin.completion.LombokOnXCompletionContributorFilter"
+                            order="first"/>
     <lang.commenter language="Lombok.Config"
                     implementationClass="de.plushnikov.intellij.plugin.language.LombokConfigCommentor"/>
     <fileBasedIndex implementation="de.plushnikov.intellij.plugin.lombokconfig.LombokConfigIndex"/>
@@ -244,6 +249,18 @@
     <intentionAction>
       <language>JAVA</language>
       <className>de.plushnikov.intellij.plugin.intention.ReplaceSynchronizedWithLombokAction</className>
+      <bundleName>messages.LombokBundle</bundleName>
+      <categoryKey>intention.category.lombok</categoryKey>
+    </intentionAction>
+    <intentionAction>
+      <language>JAVA</language>
+      <className>de.plushnikov.intellij.plugin.intention.AddAllLombokBuilderMethodsAction</className>
+      <bundleName>messages.LombokBundle</bundleName>
+      <categoryKey>intention.category.lombok</categoryKey>
+    </intentionAction>
+    <intentionAction>
+      <language>JAVA</language>
+      <className>de.plushnikov.intellij.plugin.intention.AddRequiredLombokBuilderMethodsAction</className>
       <bundleName>messages.LombokBundle</bundleName>
       <categoryKey>intention.category.lombok</categoryKey>
     </intentionAction>

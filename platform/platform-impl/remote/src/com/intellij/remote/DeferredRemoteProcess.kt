@@ -2,6 +2,7 @@
 package com.intellij.remote
 
 import com.google.common.net.HostAndPort
+import com.intellij.execution.process.PtyBasedProcess
 import com.intellij.openapi.diagnostic.logger
 import org.jetbrains.concurrency.Promise
 import org.jetbrains.concurrency.isPending
@@ -20,7 +21,7 @@ import kotlin.system.measureNanoTime
  * look to users like underlying process not started, not like it started and died silently (see IDEA-265188). It would help a lot with
  * future troubleshooting, reporting and investigation.
  */
-class DeferredRemoteProcess(private val promise: Promise<RemoteProcess>) : RemoteProcess() {
+class DeferredRemoteProcess(private val promise: Promise<RemoteProcess>) : RemoteProcess(), PtyBasedProcess {
   override fun getOutputStream(): OutputStream = DeferredOutputStream()
 
   override fun getInputStream(): InputStream = DeferredInputStream { it.inputStream }
@@ -62,9 +63,15 @@ class DeferredRemoteProcess(private val promise: Promise<RemoteProcess>) : Remot
   override fun getLocalTunnel(remotePort: Int): HostAndPort? =
     get().getLocalTunnel(remotePort)
 
+  override fun hasPty(): Boolean = get().let {
+    it is PtyBasedProcess && it.hasPty()
+  }
+
   override fun setWindowSize(columns: Int, rows: Int) {
     runNowOrSchedule {
-      get().setWindowSize(columns, rows)
+      if (it is PtyBasedProcess) {
+        it.setWindowSize(columns, rows)
+      }
     }
   }
 

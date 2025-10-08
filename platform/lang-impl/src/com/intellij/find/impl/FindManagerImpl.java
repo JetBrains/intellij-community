@@ -17,7 +17,6 @@ import com.intellij.lang.ParserDefinition;
 import com.intellij.lexer.LayeredLexer;
 import com.intellij.lexer.Lexer;
 import com.intellij.navigation.NavigationItem;
-import com.intellij.notification.NotificationGroup;
 import com.intellij.notification.NotificationGroupManager;
 import com.intellij.notification.NotificationType;
 import com.intellij.notification.impl.NotificationsConfigurationImpl;
@@ -81,7 +80,6 @@ public final class FindManagerImpl extends FindManager {
   private static final Key<Boolean> HIGHLIGHTER_WAS_NOT_FOUND_KEY =
     Key.create("com.intellij.find.impl.FindManagerImpl.HighlighterNotFoundKey");
 
-  private static final NotificationGroup GROUP = NotificationGroupManager.getInstance().getNotificationGroup("Find Problems");
   private static final FindResultImpl NOT_FOUND_RESULT = new FindResultImpl();
   private static final IntObjectMap<Boolean> ourReportedPatterns = ConcurrentCollectionFactory.createConcurrentIntObjectMap();
 
@@ -732,7 +730,8 @@ public final class FindManagerImpl extends FindManager {
         String content = FindBundle.message("notification.content.regular.expression.soe", stringToFind, file.getPresentableUrl());
         LOG.info(content);
         String message = FindBundle.message("notification.title.regular.expression.failed.to.match");
-        GROUP.createNotification(message, content, NotificationType.ERROR).notify(myProject);
+        NotificationGroupManager.getInstance().getNotificationGroup("Find Problems")
+          .createNotification(message, content, NotificationType.ERROR).notify(myProject);
       }
       return NOT_FOUND_RESULT;
     }

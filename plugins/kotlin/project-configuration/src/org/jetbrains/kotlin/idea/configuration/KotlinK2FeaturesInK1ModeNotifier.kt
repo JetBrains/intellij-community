@@ -2,11 +2,8 @@
 
 package org.jetbrains.kotlin.idea.configuration
 
-import com.intellij.diagnostic.VMOptions
 import com.intellij.ide.util.PropertiesComponent
 import com.intellij.openapi.fileEditor.FileEditor
-import com.intellij.openapi.options.ConfigurableWithId
-import com.intellij.openapi.options.ShowSettingsUtil
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.psi.PsiManager
@@ -59,14 +56,6 @@ class KotlinK2FeaturesInK1ModeNotifier : EditorNotificationProvider {
 
         return EditorNotificationPanel(fileEditor, EditorNotificationPanel.Status.Warning).apply {
             text = KotlinProjectConfigurationBundle.message("k1.mode.does.not.support.features.0", featureNames)
-            if (VMOptions.canWriteOptions()) {
-                createActionLabel(KotlinProjectConfigurationBundle.message("enable.k2.mode")) {
-                    ShowSettingsUtil.getInstance().showSettingsDialog(project, { configurable ->
-                        // KotlinLanguageConfiguration#ID, hardcoded because of a circular dependency
-                        (configurable as? ConfigurableWithId)?.id == "preferences.language.Kotlin"
-                    }, null)
-                }
-            }
             createActionLabel(KotlinProjectConfigurationBundle.message("k1.does.not.support.features.ignore")) {
                 PropertiesComponent.getInstance().setValue(KOTLIN_K2_FEATURES_IN_K1_MODE_NOTIFICATION_DISABLED, true)
                 EditorNotifications.getInstance(project).updateNotifications(fileEditor.file)

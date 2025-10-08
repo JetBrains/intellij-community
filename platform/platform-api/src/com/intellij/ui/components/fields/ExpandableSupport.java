@@ -186,6 +186,7 @@ public abstract class ExpandableSupport<Source extends JComponent> implements Ex
     return Extension.create(AllIcons.General.CollapseComponent,
                             AllIcons.General.CollapseComponentHover,
                             createTooltipText(IdeBundle.message("action.collapse"), "CollapseExpandableComponent"),
+                            true,
                             this::collapse);
   }
 
@@ -193,6 +194,7 @@ public abstract class ExpandableSupport<Source extends JComponent> implements Ex
     return Extension.create(AllIcons.General.ExpandComponent,
                             AllIcons.General.ExpandComponentHover,
                             createTooltipText(IdeBundle.message("action.expand"), "ExpandExpandableComponent"),
+                            true,
                             this::expand);
   }
 

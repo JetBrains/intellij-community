@@ -163,6 +163,11 @@ abstract class AbstractCompletionDummyIdentifierProviderService : CompletionDumm
 
     private fun isInClassHeader(tokenBefore: PsiElement): Boolean {
         val classOrObject = tokenBefore.parents.firstIsInstanceOrNull<KtClassOrObject>() ?: return false
+
+        // Lambda parameters passed to super constructors or similar, we do not count as the class header
+        val lambdaParent = tokenBefore.parents.firstOrNull { it is KtFunctionLiteral }
+        if (lambdaParent?.parents?.contains(classOrObject) == true) return false
+
         val name = classOrObject.nameIdentifier ?: return false
         val headerEnd = classOrObject.body?.startOffset ?: classOrObject.endOffset
         val offset = tokenBefore.startOffset

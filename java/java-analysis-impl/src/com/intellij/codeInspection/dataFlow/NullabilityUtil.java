@@ -1,9 +1,7 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInspection.dataFlow;
 
-import com.intellij.codeInsight.JavaPsiEquivalenceUtil;
-import com.intellij.codeInsight.Nullability;
-import com.intellij.codeInsight.NullableNotNullManager;
+import com.intellij.codeInsight.*;
 import com.intellij.codeInsight.daemon.ImplicitUsageProvider;
 import com.intellij.openapi.project.DumbService;
 import com.intellij.openapi.project.Project;
@@ -143,12 +141,12 @@ public final class NullabilityUtil {
         // only initial nullability
         if (block == null || !ControlFlowUtil.isEffectivelyFinal((PsiVariable)target, block)) return Nullability.UNKNOWN;
       }
-      return DfaPsiUtil.getElementNullabilityIgnoringParameterInference(expression.getType(), (PsiModifierListOwner)target);
+      return DfaPsiUtil.getElementNullabilityForRead(expression.getType(), (PsiModifierListOwner)target);
     }
     if (expression instanceof PsiMethodCallExpression || expression instanceof PsiTemplateExpression) {
       if (dumb) return Nullability.UNKNOWN;
       PsiMethod method = ((PsiCall)expression).resolveMethod();
-      return method != null ? DfaPsiUtil.getElementNullability(expression.getType(), method) : Nullability.UNKNOWN;
+      return method != null ? DfaPsiUtil.getElementNullabilityForRead(expression.getType(), method) : Nullability.UNKNOWN;
     }
     return Nullability.UNKNOWN;
   }

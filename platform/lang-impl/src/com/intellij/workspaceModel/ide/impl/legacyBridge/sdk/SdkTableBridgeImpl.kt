@@ -1,7 +1,6 @@
 // Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.workspaceModel.ide.impl.legacyBridge.sdk
 
-import com.intellij.concurrency.resetThreadContext
 import com.intellij.openapi.components.serviceAsync
 import com.intellij.openapi.projectRoots.Sdk
 import com.intellij.openapi.projectRoots.SdkTypeId
@@ -21,6 +20,7 @@ import com.intellij.workspaceModel.ide.impl.jps.serialization.JpsGlobalModelSync
 import com.intellij.workspaceModel.ide.impl.legacyBridge.sdk.SdkBridgeImpl.Companion.mutableSdkMap
 import com.intellij.workspaceModel.ide.impl.legacyBridge.sdk.SdkBridgeImpl.Companion.sdkMap
 import com.intellij.workspaceModel.ide.legacyBridge.sdk.SdkTableImplementationDelegate
+import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.runBlocking
 import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.annotations.TestOnly
@@ -127,10 +127,8 @@ class SdkTableBridgeImpl: SdkTableImplementationDelegate {
   @TestOnly
   @Suppress("RAW_RUN_BLOCKING")
   override fun saveOnDisk() {
-    runBlocking {
-      resetThreadContext().use {
-        (serviceAsync<JpsGlobalModelSynchronizer>() as JpsGlobalModelSynchronizerImpl).saveSdkEntities()
-      }
+    runBlocking(Dispatchers.Default) {
+      (serviceAsync<JpsGlobalModelSynchronizer>() as JpsGlobalModelSynchronizerImpl).saveSdkEntities()
     }
   }
 }

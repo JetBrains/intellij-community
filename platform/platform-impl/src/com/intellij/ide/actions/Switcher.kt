@@ -359,7 +359,7 @@ object Switcher : BaseSwitcherAction(null) {
         .setModalContext(false)
         .setFocusable(true)
         .setRequestFocus(true)
-        .setCancelOnWindowDeactivation(true)
+        .setCancelOnWindowDeactivation(!pinned || !StartupUiUtil.isWaylandToolkit())
         .setCancelOnOtherWindowOpen(true)
         .setMovable(pinned)
         .setDimensionServiceKey(if (pinned) project else null, if (pinned) "SwitcherDM" else null, false)

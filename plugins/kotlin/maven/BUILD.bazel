@@ -1,9 +1,9 @@
 ### auto-generated section `build kotlin.maven` start
-load("@rules_jvm//:jvm.bzl", "jvm_library", "jvm_resources")
+load("@rules_jvm//:jvm.bzl", "jvm_library", "resourcegroup")
 
-jvm_resources(
+resourcegroup(
   name = "maven_resources",
-  files = glob(["resources/**/*"]),
+  srcs = glob(["resources/**/*"]),
   strip_prefix = "resources"
 )
 
@@ -12,11 +12,12 @@ jvm_library(
   module_name = "kotlin.maven",
   visibility = ["//visibility:public"],
   srcs = glob(["src/**/*.kt", "src/**/*.java", "src/**/*.form"], allow_empty = True),
+  resources = [":maven_resources"],
   deps = [
     "@lib//:kotlin-stdlib",
     "@lib//:kotlinc-kotlin-compiler-common",
     "@lib//:kotlinc-kotlin-jps-common",
-    "@lib//:gson",
+    "//libraries/gson",
     "//platform/analysis-api:analysis",
     "//platform/editor-ui-api:editor-ui",
     "//platform/indexing-api:indexing",
@@ -50,7 +51,8 @@ jvm_library(
     "//platform/core-api:core",
     "//platform/workspace/jps",
     "//platform/backend/observation",
-  ],
-  runtime_deps = [":maven_resources"]
+    "//platform/util/progress",
+    "//platform/vcs-api/vcs-api-core:vcs-core",
+  ]
 )
 ### auto-generated section `build kotlin.maven` end

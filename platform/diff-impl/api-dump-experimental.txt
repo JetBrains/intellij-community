@@ -34,7 +34,7 @@
 - java.util.EventListener
 - a:onCurrentChanged(com.intellij.diff.tools.combined.CombinedBlockId,com.intellij.diff.tools.combined.CombinedBlockId):V
 *:com.intellij.diff.tools.combined.CombinedBlockId
-*f:com.intellij.diff.tools.combined.CombinedBlockProducer
+*c:com.intellij.diff.tools.combined.CombinedBlockProducer
 - <init>(com.intellij.diff.tools.combined.CombinedBlockId,com.intellij.diff.chains.DiffRequestProducer):V
 - f:getId():com.intellij.diff.tools.combined.CombinedBlockId
 - f:getProducer():com.intellij.diff.chains.DiffRequestProducer
@@ -69,6 +69,7 @@
 - com.intellij.diff.impl.DiffEditorViewer
 - a:cleanBlocks():V
 - a:getBlocks():java.util.List
+- a:getCurrentBlock():com.intellij.diff.tools.combined.CombinedBlockProducer
 - a:setBlocks(java.util.List):V
 f:com.intellij.diff.tools.combined.CombinedDiffKeysKt
 - *sf:getCOMBINED_DIFF_MAIN_UI():com.intellij.openapi.util.Key

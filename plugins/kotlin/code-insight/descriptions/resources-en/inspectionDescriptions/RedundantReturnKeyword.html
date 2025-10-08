@@ -1,0 +1,32 @@
+<html>
+<body>
+<p>
+    Reports redundant <code>return</code> keywords in expressions that appear as the last expression of an <code>if</code>
+    or <code>when</code> branch when the entire <code>if</code>/<code>when</code> expression is itself returned.
+</p>
+<p>These keywords add no value and only clutter the code.</p>
+<p>The quick-fix removes the redundant <code>return</code> keyword, leaving only the expression.</p>
+<!-- tooltip end -->
+<p>Example:</p>
+<pre><code>
+fun foo(flag: Boolean): String {
+  return if (flag) {
+    "foo"
+  } else {
+    return "bar"  // redundant 'return' keyword
+  }
+}
+</code></pre>
+<p>After the quick-fix is applied:</p>
+<pre><code>
+fun foo(flag: Boolean): String {
+  return if (flag) {
+    "foo"
+  } else {
+    "bar"
+  }
+}
+</code></pre>
+<p><small>New in 2025.3</small></p>
+</body>
+</html>

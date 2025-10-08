@@ -1,6 +1,6 @@
 ### auto-generated section `build intellij.grid.impl` start
 load("//build:compiler-options.bzl", "create_kotlinc_options")
-load("@rules_jvm//:jvm.bzl", "jvm_library", "jvm_resources", "kt_javac_options")
+load("@rules_jvm//:jvm.bzl", "jvm_library", "kt_javac_options", "resourcegroup")
 
 create_kotlinc_options(
   name = "custom_impl",
@@ -18,9 +18,9 @@ kt_javac_options(
   no_proc = True
 )
 
-jvm_resources(
+resourcegroup(
   name = "impl_resources",
-  files = glob(["resources/**/*"]),
+  srcs = glob(["resources/**/*"]),
   strip_prefix = "resources"
 )
 
@@ -29,10 +29,11 @@ jvm_library(
   module_name = "intellij.grid.impl",
   visibility = ["//visibility:public"],
   srcs = glob(["src/**/*.kt", "src/**/*.java", "src/**/*.form"], allow_empty = True),
+  resources = [":impl_resources"],
   javac_opts = ":custom-javac-options",
   kotlinc_opts = ":custom_impl",
   deps = [
-    "@lib//:kotlinx-serialization-core",
+    "//libraries/kotlinx/serialization/core",
     "//grid/core-impl",
     "//grid/csv:csv-core-impl",
     "//grid/types",
@@ -46,7 +47,7 @@ jvm_library(
     "//platform/lang-core",
     "//platform/lang-impl",
     "//platform/core-ui",
-    "@lib//:fastutil-min",
+    "//libraries/fastutil",
     "//platform/diff-api:diff",
     "//platform/projectModel-api:projectModel",
     "//platform/structure-view-impl:structureView-impl",
@@ -64,7 +65,6 @@ jvm_library(
     "//libraries/microba",
     "//platform/platform-impl/ui",
     "@lib//:kotlinx-html-jvm",
-  ],
-  runtime_deps = [":impl_resources"]
+  ]
 )
 ### auto-generated section `build intellij.grid.impl` end

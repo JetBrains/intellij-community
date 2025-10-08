@@ -1,4 +1,4 @@
-<idea-plugin>
+<idea-plugin visibility="public">
   <dependencies>
     <plugin id="com.intellij.modules.lang"/>
     <plugin id="Git4Idea"/>
@@ -95,6 +95,12 @@
     <registryKey defaultValue="30"
                  description="Seconds between checking the ETag for the PR list"
                  key="github.pr.list.automatic.refresh.seconds"/>
+    <advancedSetting
+      id="show.review.threads.with.increased.margins"
+      default="true"
+      bundle="messages.CollaborationToolsBundle"
+      groupKey="advanced.settings.collab.tools"
+    />
 
     <vcs.github.gistContentsCollector
       implementation="org.jetbrains.plugins.github.DefaultGithubGistContentsCollector"

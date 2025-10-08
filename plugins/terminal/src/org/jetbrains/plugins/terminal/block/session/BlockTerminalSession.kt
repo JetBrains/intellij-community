@@ -17,7 +17,6 @@ import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.plugins.terminal.TerminalUtil
 import org.jetbrains.plugins.terminal.block.output.TerminalAlarmManager
 import org.jetbrains.plugins.terminal.block.session.util.FutureTerminalOutputStream
-import org.jetbrains.plugins.terminal.shell_integration.CommandBlockIntegration
 import org.jetbrains.plugins.terminal.util.STOP_EMULATOR_TIMEOUT
 import org.jetbrains.plugins.terminal.util.ShellIntegration
 import org.jetbrains.plugins.terminal.util.waitFor
@@ -62,7 +61,6 @@ class BlockTerminalSession(
   val commandExecutionManager: ShellCommandExecutionManager
   private val typeAheadManager: TerminalTypeAheadManager
   private val terminationListeners: MutableList<Runnable> = CopyOnWriteArrayList()
-  val commandBlockIntegration: CommandBlockIntegration = shellIntegration.commandBlockIntegration!!
 
   init {
     val styleState = StyleState()

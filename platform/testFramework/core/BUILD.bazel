@@ -1,9 +1,9 @@
 ### auto-generated section `build intellij.platform.testFramework.core` start
-load("@rules_jvm//:jvm.bzl", "jvm_library", "jvm_provided_library", "jvm_resources")
+load("@rules_jvm//:jvm.bzl", "jvm_library", "jvm_provided_library", "resourcegroup")
 
-jvm_resources(
+resourcegroup(
   name = "core_resources",
-  files = glob(["resources/**/*"]),
+  srcs = glob(["resources/**/*"]),
   strip_prefix = "resources"
 )
 
@@ -17,6 +17,7 @@ jvm_library(
   module_name = "intellij.platform.testFramework.core",
   visibility = ["//visibility:public"],
   srcs = glob(["src/**/*.kt", "src/**/*.java", "src/**/*.form"], allow_empty = True),
+  resources = [":core_resources"],
   deps = [
     "//platform/util",
     "//platform/util-class-loader:util-classLoader",
@@ -27,15 +28,14 @@ jvm_library(
     "//java/java-runtime:rt",
     "@lib//:kotlin-stdlib",
     "@lib//:kotlinx-coroutines-core",
-    "@lib//:jackson",
-    "@lib//:jackson-databind",
-    "@lib//:jackson-module-kotlin",
+    "//libraries/jackson/jackson",
+    "//libraries/jackson/databind",
+    "//libraries/jackson/module-kotlin:libraries-jackson-module-kotlin",
     "@lib//:http-client",
     "@lib//:kotlinx-collections-immutable",
     "//platform/testFramework/teamCity",
     "@lib//:hamcrest",
     ":libraries_junit4_provided",
-  ],
-  runtime_deps = [":core_resources"]
+  ]
 )
 ### auto-generated section `build intellij.platform.testFramework.core` end

@@ -234,7 +234,7 @@ open class FlatWelcomeFrame @JvmOverloads constructor(
       minimumSize = defaultSize
     }
     else {
-      val width = if (RecentProjectListActionProvider.getInstance().getActions(addClearListItem = false).isEmpty()) {
+      val width = if (RecentProjectListActionProvider.getInstance().getActionsWithoutGroups().isEmpty()) {
         666
       }
       else {

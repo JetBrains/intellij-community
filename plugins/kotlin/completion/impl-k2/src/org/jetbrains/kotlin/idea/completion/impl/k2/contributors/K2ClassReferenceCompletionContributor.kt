@@ -11,7 +11,8 @@ import org.jetbrains.kotlin.platform.jvm.isJvm
 internal class K2ClassReferenceCompletionContributor : K2SimpleCompletionContributor<KotlinCallableReferencePositionContext>(
     KotlinCallableReferencePositionContext::class
 ) {
-    override fun KaSession.complete(context: K2CompletionSectionContext<KotlinCallableReferencePositionContext>) {
+    context(_: KaSession, context: K2CompletionSectionContext<KotlinCallableReferencePositionContext>)
+    override fun complete() {
         if (context.positionContext.explicitReceiver == null) return
         context.addElement(createKeywordElement("class"))
         if (context.completionContext.targetPlatform.isJvm()) {

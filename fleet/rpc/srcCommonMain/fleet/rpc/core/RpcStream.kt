@@ -3,9 +3,7 @@ package fleet.rpc.core
 
 import fleet.util.UID
 import fleet.util.async.coroutineNameAppended
-import fleet.util.getAndUpdate
 import fleet.util.logging.logger
-import fleet.util.updateAndGet
 import kotlinx.coroutines.*
 import kotlinx.coroutines.channels.Channel
 import kotlinx.coroutines.channels.ReceiveChannel
@@ -13,6 +11,8 @@ import kotlinx.coroutines.channels.SendChannel
 import kotlinx.coroutines.channels.consumeEach
 import kotlinx.serialization.KSerializer
 import kotlin.concurrent.atomics.AtomicReference
+import kotlin.concurrent.atomics.fetchAndUpdate
+import kotlin.concurrent.atomics.updateAndFetch
 import kotlin.coroutines.CoroutineContext
 import kotlin.coroutines.resumeWithException
 import kotlin.math.max
@@ -54,12 +54,12 @@ class Budget(initial: Int) {
   private data class State(val cancellation: CancellationException?, val budget: Int, val continuation: CancellableContinuation<Unit>?)
 
   private fun withdraw(): Boolean {
-    return state.getAndUpdate { it.copy(budget = max(0, it.budget - 1)) }.budget > 0
+    return state.fetchAndUpdate { it.copy(budget = max(0, it.budget - 1)) }.budget > 0
   }
 
   private suspend fun await() {
     suspendCancellableCoroutine { continuation ->
-      val r = state.updateAndGet {
+      val r = state.updateAndFetch {
         require(it.continuation == null) { "Budget is not intended to use by several producers" }
         when {
           it.budget > 0 -> it
@@ -82,14 +82,14 @@ class Budget(initial: Int) {
 
   fun refill(quantity: Int) {
     require(quantity > 0)
-    val r = state.getAndUpdate {
+    val r = state.fetchAndUpdate {
       it.copy(budget = it.budget + quantity, continuation = null)
     }
     r.continuation?.resumeWith(Result.success(Unit))
   }
 
   internal fun cancel(cause: CancellationException) {
-    val was = state.getAndUpdate {
+    val was = state.fetchAndUpdate {
       if (it.cancellation == null) {
         it.copy(cancellation = cause, continuation = null)
       }

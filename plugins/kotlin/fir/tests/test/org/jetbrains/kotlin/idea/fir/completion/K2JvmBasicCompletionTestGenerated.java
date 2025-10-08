@@ -3187,6 +3187,21 @@ public abstract class K2JvmBasicCompletionTestGenerated extends AbstractK2JvmBas
                 runTest("../../completion/testData/basic/common/AfterIntSeparatedWithComments.kt");
             }
 
+            @TestMetadata("AlwaysCompleteNonSubPackages.kt")
+            public void testAlwaysCompleteNonSubPackages() throws Exception {
+                runTest("../../completion/testData/basic/common/AlwaysCompleteNonSubPackages.kt");
+            }
+
+            @TestMetadata("AlwaysCompleteTopLevelPackagesInImport.kt")
+            public void testAlwaysCompleteTopLevelPackagesInImport() throws Exception {
+                runTest("../../completion/testData/basic/common/AlwaysCompleteTopLevelPackagesInImport.kt");
+            }
+
+            @TestMetadata("AlwaysCompleteTopLevelPackagesInPackageStatement.kt")
+            public void testAlwaysCompleteTopLevelPackagesInPackageStatement() throws Exception {
+                runTest("../../completion/testData/basic/common/AlwaysCompleteTopLevelPackagesInPackageStatement.kt");
+            }
+
             @TestMetadata("ambiguousSuperMethod.kt")
             public void testAmbiguousSuperMethod() throws Exception {
                 runTest("../../completion/testData/basic/common/ambiguousSuperMethod.kt");
@@ -3265,6 +3280,11 @@ public abstract class K2JvmBasicCompletionTestGenerated extends AbstractK2JvmBas
             @TestMetadata("ConsiderExtensionType.kt")
             public void testConsiderExtensionType() throws Exception {
                 runTest("../../completion/testData/basic/common/ConsiderExtensionType.kt");
+            }
+
+            @TestMetadata("ContextParameter.kt")
+            public void testContextParameter() throws Exception {
+                runTest("../../completion/testData/basic/common/ContextParameter.kt");
             }
 
             @TestMetadata("CoroutineContextReleaseCoroutines.kt")
@@ -3892,6 +3912,11 @@ public abstract class K2JvmBasicCompletionTestGenerated extends AbstractK2JvmBas
                 runTest("../../completion/testData/basic/common/NoTopLevelCompletionInQualifiedUserTypes.kt");
             }
 
+            @TestMetadata("NoTopLevelPackagesIfDisabled.kt")
+            public void testNoTopLevelPackagesIfDisabled() throws Exception {
+                runTest("../../completion/testData/basic/common/NoTopLevelPackagesIfDisabled.kt");
+            }
+
             @TestMetadata("ObjectInTypePosition.kt")
             public void testObjectInTypePosition() throws Exception {
                 runTest("../../completion/testData/basic/common/ObjectInTypePosition.kt");
@@ -3920,6 +3945,11 @@ public abstract class K2JvmBasicCompletionTestGenerated extends AbstractK2JvmBas
             @TestMetadata("parameterDefaultValueInFunction.kt")
             public void testParameterDefaultValueInFunction() throws Exception {
                 runTest("../../completion/testData/basic/common/parameterDefaultValueInFunction.kt");
+            }
+
+            @TestMetadata("PreferExceptionsInCatch.kt")
+            public void testPreferExceptionsInCatch() throws Exception {
+                runTest("../../completion/testData/basic/common/PreferExceptionsInCatch.kt");
             }
 
             @TestMetadata("PreferLessParameters.kt")
@@ -4649,6 +4679,16 @@ public abstract class K2JvmBasicCompletionTestGenerated extends AbstractK2JvmBas
 
             private void runTest(String testDataFilePath) throws Exception {
                 KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
+            }
+
+            @TestMetadata("AliasedJavaClassFirstInvocation.kt")
+            public void testAliasedJavaClassFirstInvocation() throws Exception {
+                runTest("../../completion/testData/basic/java/AliasedJavaClassFirstInvocation.kt");
+            }
+
+            @TestMetadata("AliasedJavaClassSecondInvocation.kt")
+            public void testAliasedJavaClassSecondInvocation() throws Exception {
+                runTest("../../completion/testData/basic/java/AliasedJavaClassSecondInvocation.kt");
             }
 
             @TestMetadata("AutoForceCompletion.kt")

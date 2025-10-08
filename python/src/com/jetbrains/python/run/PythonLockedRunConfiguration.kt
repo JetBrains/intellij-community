@@ -169,8 +169,8 @@ private open class PythonLockedRunConfigurationTypeBase(val theId: String, @Nls 
 
 private class DjangoServerLockedRunConfigurationType : PythonLockedRunConfigurationTypeBase("Python.DjangoServer", PyBundle.message("python.run.configuration.django.name"))
 private class FlaskServerLockedRunConfigurationType : PythonLockedRunConfigurationTypeBase("Python.FlaskServer", PyBundle.message("flask.name"))
-private class DbtRunLockedConfigurationType : PythonLockedRunConfigurationTypeBase("DbtRunConfiguration", "dbt")
-private class FastAPILockedRunConfigurationType : PythonLockedRunConfigurationTypeBase("Python.FastAPI", "FastAPI")
+private class DbtRunLockedConfigurationType : PythonLockedRunConfigurationTypeBase("DbtRunConfiguration", PyBundle.message("python.run.configuration.dbt.name"))
+private class FastAPILockedRunConfigurationType : PythonLockedRunConfigurationTypeBase("Python.FastAPI", PyBundle.message("python.run.configuration.fastapi.name"))
 
 private class DjangoFacetIgnorer : FacetIgnorer {
   override fun isIgnored(facet: InvalidFacet): Boolean = facet.name == "Django"

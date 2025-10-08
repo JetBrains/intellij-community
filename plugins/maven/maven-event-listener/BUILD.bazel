@@ -1,9 +1,9 @@
 ### auto-generated section `build intellij.maven.server.eventListener` start
-load("@rules_jvm//:jvm.bzl", "jvm_library", "jvm_resources")
+load("@rules_jvm//:jvm.bzl", "jvm_library", "resourcegroup")
 
-jvm_resources(
+resourcegroup(
   name = "server-eventListener_resources",
-  files = glob(["src/main/resources/**/*"]),
+  srcs = glob(["src/main/resources/**/*"]),
   strip_prefix = "src/main/resources"
 )
 
@@ -12,12 +12,12 @@ jvm_library(
   module_name = "intellij.maven.server.eventListener",
   visibility = ["//visibility:public"],
   srcs = glob(["src/main/java/**/*.kt", "src/main/java/**/*.java", "src/main/java/**/*.form"], allow_empty = True),
+  resources = [":server-eventListener_resources"],
   kotlinc_opts = "@community//:k8",
   deps = [
     "@lib//:maven-server-event_listener-org-apache-maven-maven-core-3-3-9-provided",
     "@lib//:maven-server-event_listener-com-google-inject-guice-no_aop-4-0-provided",
-  ],
-  runtime_deps = [":server-eventListener_resources"]
+  ]
 )
 
 jvm_library(
@@ -30,8 +30,7 @@ jvm_library(
     "@lib//:maven-server-event_listener-org-apache-maven-maven-core-3-3-9-provided",
     "@lib//:maven-server-event_listener-com-google-inject-guice-no_aop-4-0-provided",
     "@lib//:junit5",
-  ],
-  runtime_deps = [":server-eventListener_resources"]
+  ]
 )
 ### auto-generated section `build intellij.maven.server.eventListener` end
 

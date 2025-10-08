@@ -20,8 +20,7 @@ class BlockTerminalColorPalette : TerminalColorPalette() {
 
   override val defaultForeground: Color
     get() {
-      val foregroundColor = colorsScheme.getColor(BlockTerminalColors.DEFAULT_FOREGROUND)
-      return AwtTransformers.fromAwtColor(foregroundColor ?: colorsScheme.defaultForeground)!!
+      return AwtTransformers.fromAwtColor(TerminalUi.defaultForeground())!!
     }
   override val defaultBackground: Color
     get() {

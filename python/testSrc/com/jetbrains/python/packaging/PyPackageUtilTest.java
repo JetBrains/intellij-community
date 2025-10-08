@@ -226,7 +226,7 @@ public class PyPackageUtilTest extends PyTestCase {
   }
 
   private static void checkRequirements(@Nullable List<PyRequirement> actual, int fromIndex, List<PyRequirement> expected) {
-    assertEquals(expected.subList(fromIndex, expected.size()), actual);
+    assertSameElements(expected.subList(fromIndex, expected.size()), actual);
   }
 
   private void doTestSetupPyRequiresIntroduction(@NotNull String keyword) {
@@ -264,7 +264,7 @@ public class PyPackageUtilTest extends PyTestCase {
 
     final List<PyRequirement> actual = PyPackageUtil.findSetupPyRequires(module);
     final List<PyRequirement> expected = PyRequirementParser.fromText("NewDjango==1.3.1\nMarkdown\nnumpy\nmynose");
-    assertEquals(expected, actual);
+    assertSameElements(expected, actual);
   }
 
   private static void checkSetupArgumentText(@NotNull Module module, @NotNull String keyword, @Nullable String text) {

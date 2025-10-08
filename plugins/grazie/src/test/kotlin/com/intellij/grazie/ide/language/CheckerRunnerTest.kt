@@ -1,5 +1,6 @@
 package com.intellij.grazie.ide.language
 
+import ai.grazie.nlp.langs.Language
 import com.intellij.grazie.text.*
 import com.intellij.openapi.application.runReadAction
 import com.intellij.openapi.extensions.ExtensionPointName
@@ -24,7 +25,7 @@ class CheckerRunnerTest: BasePlatformTestCase() {
   fun `test async cancellability`() {
     val indicator = ProgressIndicatorBase()
     val checker = object: ExternalTextChecker() {
-      override suspend fun checkExternally(content: TextContent): Collection<TextProblem> {
+      override suspend fun checkExternally(context: ProofreadingContext): Collection<TextProblem> {
         indicator.cancel()
 
         repeat(10) {
@@ -41,7 +42,7 @@ class CheckerRunnerTest: BasePlatformTestCase() {
     ProgressManager.getInstance().runProcess(
       {
         assertThrows(ProcessCanceledException::class.java) {
-          CheckerRunner(someText()).run()
+          CheckerRunner(someContent()).run()
         }
       }, indicator)
   }
@@ -67,7 +68,7 @@ class CheckerRunnerTest: BasePlatformTestCase() {
     ProgressManager.getInstance().runProcess(
       {
         assertThrows(ProcessCanceledException::class.java) {
-          CheckerRunner(someText()).run()
+          CheckerRunner(someContent()).run()
         }
       }, indicator)
   }
@@ -110,7 +111,7 @@ class CheckerRunnerTest: BasePlatformTestCase() {
   }
 
   private fun createFakeProblem(text: TextContent, range: TextRange): TextProblem {
-    val rule = object: Rule("fake.global.id", "Fake rule", "Fake category") {
+    val rule = object : Rule("fake.global.id", Language.UNKNOWN, "Fake rule", "Fake category") {
       override fun getDescription(): String {
         return "Fake rule description"
       }
@@ -129,7 +130,7 @@ class CheckerRunnerTest: BasePlatformTestCase() {
   private fun makeHugeSingleLineText(): TextContent {
     val content = buildString {
       repeat(100000) {
-        append("aaabbbcccddd")
+        append("This is some text")
       }
       append(".\n")
     }
@@ -137,8 +138,8 @@ class CheckerRunnerTest: BasePlatformTestCase() {
     return TextExtractor.findTextAt(file, 0, TextContent.TextDomain.ALL)!!
   }
 
-  private fun someText(): TextContent {
-    val file = myFixture.configureByText("a.txt", "aaabbbccc")
+  private fun someContent(): TextContent {
+    val file = myFixture.configureByText("a.txt", "This is some context")
     return TextExtractor.findTextAt(file, 0, TextContent.TextDomain.ALL)!!
   }
 

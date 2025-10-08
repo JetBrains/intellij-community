@@ -25,8 +25,8 @@ import java.util.function.Supplier;
 import static org.jetbrains.idea.svn.SvnBundle.message;
 
 public abstract class SvnConfigurable extends ConfigurableBase<ConfigurableUi<SvnConfiguration>, SvnConfiguration> {
-  private static final @NonNls String ID = "vcs.Subversion";
-  private static final @NonNls String HELP_ID = "project.propSubversion";
+  static final @NonNls String ID = "vcs.Subversion";
+  static final @NonNls String HELP_ID = "project.propSubversion";
 
   private final @NotNull Project myProject;
   private final @NotNull Supplier<? extends ConfigurableUi<SvnConfiguration>> myUiSupplier;
@@ -60,24 +60,6 @@ public abstract class SvnConfigurable extends ConfigurableBase<ConfigurableUi<Sv
   @Override
   protected @NotNull SvnConfiguration getSettings() {
     return SvnConfiguration.getInstance(myProject);
-  }
-
-  public static class General extends SvnConfigurable {
-    public General(@NotNull Project project) {
-      super(project, ID, getGroupDisplayName(), () -> new GeneralSettingsPanel(project), HELP_ID);
-    }
-  }
-
-  public static class Presentation extends SvnConfigurable {
-    public Presentation(@NotNull Project project) {
-      super(project, "Presentation", message("configurable.name.svn.presentation"), () -> new PresentationSettingsPanel(project));
-    }
-  }
-
-  public static class Network extends SvnConfigurable {
-    public Network(@NotNull Project project) {
-      super(project, "Network", message("configurable.name.svn.network"), () -> new NetworkSettingsPanel(project));
-    }
   }
 
   public static class Ssh extends SvnConfigurable {

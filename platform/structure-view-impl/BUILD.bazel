@@ -1,9 +1,9 @@
 ### auto-generated section `build intellij.platform.structureView.impl` start
-load("@rules_jvm//:jvm.bzl", "jvm_library", "jvm_resources")
+load("@rules_jvm//:jvm.bzl", "jvm_library", "resourcegroup")
 
-jvm_resources(
+resourcegroup(
   name = "structureView-impl_resources",
-  files = glob(["resources/**/*"]),
+  srcs = glob(["resources/**/*"]),
   strip_prefix = "resources"
 )
 
@@ -12,6 +12,7 @@ jvm_library(
   module_name = "intellij.platform.structureView.impl",
   visibility = ["//visibility:public"],
   srcs = glob(["src/**/*.kt", "src/**/*.java", "src/**/*.form"], allow_empty = True),
+  resources = [":structureView-impl_resources"],
   deps = [
     "//platform/editor-ui-api:editor-ui",
     "//platform/util",
@@ -24,11 +25,10 @@ jvm_library(
     "//platform/core-impl",
     "//platform/analysis-api:analysis",
     "//platform/util:util-ui",
-    "@lib//:fastutil-min",
+    "//libraries/fastutil",
     "//platform/core-ui",
     "//platform/statistics",
   ],
-  exports = ["//platform/util"],
-  runtime_deps = [":structureView-impl_resources"]
+  exports = ["//platform/util"]
 )
 ### auto-generated section `build intellij.platform.structureView.impl` end

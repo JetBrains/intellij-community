@@ -11,6 +11,7 @@ import com.intellij.openapi.ui.*
 import com.intellij.openapi.util.NlsContexts
 import com.intellij.openapi.util.NlsSafe
 import com.intellij.openapi.util.io.FileUtil
+import com.intellij.openapi.util.io.OSAgnosticPathUtil
 import com.intellij.openapi.util.registry.Registry
 import com.intellij.platform.eel.EelApi
 import com.intellij.ui.CollectionComboBoxModel
@@ -45,8 +46,7 @@ class JdkDownloaderModel(
 
 @Internal
 class JdkVersionItem(
-  @NlsSafe
-  val jdkVersion: String,
+  val jdkVersion: @NlsSafe String,
   /* we should prefer the default selected item from the JDKs.json feed,
    * the list below is sorted by vendor, and default item is not necessarily first
    */
@@ -366,7 +366,7 @@ internal class JdkDownloadDialog(
 
   private fun onTargetPathChanged(path: String) {
     @Suppress("NAME_SHADOWING")
-    val path = FileUtil.expandUserHome(path)
+    val path = OSAgnosticPathUtil.expandUserHome(path)
     selectedPath = path
 
     setModel(WslPath.isWslUncPath(path))

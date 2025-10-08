@@ -8,8 +8,6 @@ import org.jetbrains.annotations.ApiStatus
 
 interface SaveSession : StorageManagerFileWriteRequestor {
   suspend fun save(events: MutableList<VFileEvent>?)
-
-  fun saveBlocking()
 }
 
 interface SaveSessionProducer : StorageManagerFileWriteRequestor {

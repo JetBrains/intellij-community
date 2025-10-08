@@ -249,7 +249,7 @@ internal open class StoreReloadManagerImpl(protected val project: Project, corou
 }
 
 @ApiStatus.Internal
-fun reloadAppStore(changes: Set<StateStorage>): Boolean {
+suspend fun reloadAppStore(changes: Set<StateStorage>): Boolean {
   val status = reloadStore(changes, ApplicationManager.getApplication().stateStore as ComponentStoreImpl)
   if (status == ReloadComponentStoreStatus.RESTART_AGREED) {
     ApplicationManagerEx.getApplicationEx().restart(true)
@@ -260,7 +260,7 @@ fun reloadAppStore(changes: Set<StateStorage>): Boolean {
   }
 }
 
-private fun reloadStore(changedStorages: Set<StateStorage>, store: ComponentStoreImpl): ReloadComponentStoreStatus {
+private suspend fun reloadStore(changedStorages: Set<StateStorage>, store: ComponentStoreImpl): ReloadComponentStoreStatus {
   val notReloadableComponents: Collection<String>?
   var willBeReloaded = false
   try {
@@ -279,7 +279,7 @@ private fun reloadStore(changedStorages: Set<StateStorage>, store: ComponentStor
       return ReloadComponentStoreStatus.SUCCESS
     }
 
-    willBeReloaded = askToRestart(store, notReloadableComponents, changedStorages, store.project == null)
+    willBeReloaded = askToRestart(store = store, notReloadableComponents = notReloadableComponents, changedStorages = changedStorages, isApp = store.project == null)
     return if (willBeReloaded) ReloadComponentStoreStatus.RESTART_AGREED else ReloadComponentStoreStatus.RESTART_CANCELLED
   }
   finally {
@@ -297,7 +297,7 @@ private fun reloadStore(changedStorages: Set<StateStorage>, store: ComponentStor
 @ApiStatus.Internal
 fun askToRestart(store: IComponentStore, notReloadableComponents: Collection<String>, changedStorages: Set<StateStorage>?, isApp: Boolean): Boolean {
   val firstMessage = if (store is IProjectStore) {
-    ConfigurationStoreBundle.message("configuration.project.files.changed.message.start", store.projectName)
+    ConfigurationStoreBundle.message("configuration.project.files.changed.message.start", store.storeDescriptor.projectName)
   }
   else {
     ConfigurationStoreBundle.message("configuration.application.files.changed.message.start")
@@ -334,7 +334,7 @@ fun askToRestart(store: IComponentStore, notReloadableComponents: Collection<Str
   """.trimIndent()
 
   val title = if (store is IProjectStore)
-    ConfigurationStoreBundle.message("configuration.project.files.changed.restart.prompt.title", store.projectName)
+    ConfigurationStoreBundle.message("configuration.project.files.changed.restart.prompt.title", store.storeDescriptor.projectName)
     else ConfigurationStoreBundle.message("configuration.application.files.changed.restart.prompt.title")
 
   if (Messages.showYesNoDialog(message, title, Messages.getQuestionIcon()) != Messages.YES) {

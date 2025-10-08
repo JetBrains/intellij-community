@@ -12,7 +12,7 @@ import org.jetbrains.kotlin.psi.psiUtil.forEachDescendantOfType
 import org.jetbrains.kotlin.utils.addToStdlib.safeAs
 
 class RenameUselessCallFix(private val newName: String, private val invert: Boolean = false) : LocalQuickFix {
-    override fun getName() = KotlinBundle.message("rename.useless.call.fix.text", newName)
+    override fun getName() = KotlinBundle.message("rename.redundant.call.fix.text", newName)
 
     override fun getFamilyName() = name
 

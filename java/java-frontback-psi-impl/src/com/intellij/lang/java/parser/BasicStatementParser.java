@@ -27,7 +27,10 @@ import static com.intellij.psi.impl.source.BasicElementTypes.BASIC_JAVA_COMMENT_
 /**
  * @deprecated Use the new Java syntax library instead.
  *             See {@link com.intellij.java.syntax.parser.JavaParser}
+ *             This class is planned to be removed.
+ *             As a temporary solution, use {@link StatementParser}.
  */
+@ApiStatus.ScheduledForRemoval
 @Deprecated
 public class BasicStatementParser {
   private static final TokenSet YIELD_STMT_INDICATOR_TOKENS = TokenSet.create(

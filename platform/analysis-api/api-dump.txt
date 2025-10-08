@@ -2,6 +2,27 @@ com.intellij.codeInsight.completion.BatchConsumer
 - com.intellij.util.Consumer
 - endBatch():V
 - startBatch():V
+f:com.intellij.codeInsight.completion.CompletionConfidenceEP
+- com.intellij.lang.LanguageExtensionPoint
+- <init>():V
+f:com.intellij.codeInsight.completion.CompletionParameters
+- getCompletionType():com.intellij.codeInsight.completion.CompletionType
+- getEditor():com.intellij.openapi.editor.Editor
+- getInvocationCount():I
+- getOffset():I
+- getOriginalFile():com.intellij.psi.PsiFile
+- getOriginalPosition():com.intellij.psi.PsiElement
+- getPosition():com.intellij.psi.PsiElement
+- getProcess():com.intellij.codeInsight.completion.CompletionProcess
+- isAutoPopup():Z
+- isCompleteOnlyNotImported():Z
+- isExtendedCompletion():Z
+- isTestingMode():Z
+- setCompleteOnlyNotImported(Z):V
+- setTestingMode(Z):V
+- withInvocationCount(I):com.intellij.codeInsight.completion.CompletionParameters
+- withPosition(com.intellij.psi.PsiElement,I):com.intellij.codeInsight.completion.CompletionParameters
+- withType(com.intellij.codeInsight.completion.CompletionType):com.intellij.codeInsight.completion.CompletionParameters
 com.intellij.codeInsight.completion.CompletionProcess
 - a:isAutopopupCompletion():Z
 a:com.intellij.codeInsight.completion.CompletionService
@@ -22,6 +43,11 @@ a:com.intellij.codeInsight.completion.PrefixMatcher
 - getMatchingFragments(java.lang.String):java.util.List
 com.intellij.codeInsight.daemon.ChangeLocalityDetector
 - a:getChangeHighlightingDirtyScopeFor(com.intellij.psi.PsiElement):com.intellij.psi.PsiElement
+a:com.intellij.codeInsight.daemon.DaemonCodeAnalyzer
+- restart():V
+- restart(com.intellij.psi.PsiFile):V
+- restart(com.intellij.psi.PsiFile,java.lang.Object):V
+- restart(java.lang.Object):V
 com.intellij.codeInsight.daemon.DaemonCodeAnalyzer$DaemonListener
 - daemonCancelEventOccurred(java.lang.String):V
 - daemonCanceled(java.lang.String,java.util.Collection):V
@@ -128,6 +154,7 @@ com.intellij.codeInsight.intention.preview.IntentionPreviewInfo
 - s:moveToDirectory(com.intellij.openapi.vfs.VirtualFile,com.intellij.openapi.vfs.VirtualFile):com.intellij.codeInsight.intention.preview.IntentionPreviewInfo
 - s:navigate(com.intellij.psi.NavigatablePsiElement):com.intellij.codeInsight.intention.preview.IntentionPreviewInfo
 - s:navigate(com.intellij.psi.PsiFile,I):com.intellij.codeInsight.intention.preview.IntentionPreviewInfo$Html
+- s:navigatePreviewHtmlChunk(com.intellij.psi.PsiFile,I):com.intellij.openapi.util.text.HtmlChunk
 - s:rename(com.intellij.openapi.vfs.VirtualFile,java.lang.String):com.intellij.codeInsight.intention.preview.IntentionPreviewInfo
 - s:rename(com.intellij.psi.PsiFile,java.lang.String):com.intellij.codeInsight.intention.preview.IntentionPreviewInfo
 com.intellij.codeInsight.lookup.Lookup
@@ -598,6 +625,7 @@ com.intellij.modcommand.ModCommandExecutor
 - a:executeForFileCopy(com.intellij.modcommand.ModCommand,com.intellij.psi.PsiFile):V
 - a:executeInBatch(com.intellij.modcommand.ActionContext,com.intellij.modcommand.ModCommand):com.intellij.modcommand.ModCommandExecutor$BatchExecutionResult
 - a:executeInteractively(com.intellij.modcommand.ActionContext,com.intellij.modcommand.ModCommand,com.intellij.openapi.editor.Editor):V
+- s:executeInteractively(com.intellij.modcommand.ActionContext,java.lang.String,com.intellij.openapi.editor.Editor,java.util.function.Supplier):V
 - s:getInstance():com.intellij.modcommand.ModCommandExecutor
 - a:getPreview(com.intellij.modcommand.ModCommand,com.intellij.modcommand.ActionContext):com.intellij.codeInsight.intention.preview.IntentionPreviewInfo
 com.intellij.modcommand.ModCommandService
@@ -702,20 +730,6 @@ com.intellij.openapi.fileEditor.FileOpenedSyncListener
 - sf:Companion:com.intellij.openapi.fileEditor.FileOpenedSyncListener$Companion
 - sf:TOPIC:com.intellij.util.messages.Topic
 - fileOpenedSync(com.intellij.openapi.fileEditor.FileEditorManager,com.intellij.openapi.vfs.VirtualFile,java.util.List):V
-c:com.intellij.openapi.fileEditor.OpenFileDescriptor
-- com.intellij.pom.AsyncNavigatable
-- sf:Companion:com.intellij.openapi.fileEditor.OpenFileDescriptor$Companion
-- f:dispose():V
-- f:getColumn():I
-- f:getLine():I
-- f:getProject():com.intellij.openapi.project.Project
-- f:getRangeMarker():com.intellij.openapi.editor.RangeMarker
-- sf:getRangeToUnfoldOnNavigation(com.intellij.openapi.editor.Editor):com.intellij.openapi.util.TextRange
-- f:setScrollType(com.intellij.openapi.editor.ScrollType):V
-- f:setUseCurrentWindow(Z):com.intellij.openapi.fileEditor.OpenFileDescriptor
-- f:setUsePreviewTab(Z):com.intellij.openapi.fileEditor.OpenFileDescriptor
-f:com.intellij.openapi.fileEditor.OpenFileDescriptor$Companion
-- f:getRangeToUnfoldOnNavigation(com.intellij.openapi.editor.Editor):com.intellij.openapi.util.TextRange
 com.intellij.openapi.ui.InputValidatorEx
 - com.intellij.openapi.ui.InputValidator
 - canClose(java.lang.String):Z

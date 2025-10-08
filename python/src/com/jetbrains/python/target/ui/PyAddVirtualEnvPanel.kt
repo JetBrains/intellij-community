@@ -21,7 +21,7 @@ import com.intellij.ui.layout.not
 import com.intellij.util.PathUtil
 import com.intellij.util.concurrency.annotations.RequiresEdt
 import com.jetbrains.python.PyBundle
-import com.jetbrains.python.PySdkBundle
+import com.jetbrains.python.sdk.impl.PySdkBundle
 import com.jetbrains.python.getOrThrow
 import com.jetbrains.python.icons.PythonIcons
 import com.jetbrains.python.pathValidation.PlatformAndRoot.Companion.getPlatformAndRoot

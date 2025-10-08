@@ -33,6 +33,6 @@ abstract class AbstractGoToSuperMethodCompletionCommandProvider :
 
 
   override fun createCommand(context: CommandCompletionProviderContext): ActionCompletionCommand? {
-    return createCommandWithNameIdentifier(context)
+    return createCommandWithNameIdentifierAndLastAdjusted(context)
   }
 }

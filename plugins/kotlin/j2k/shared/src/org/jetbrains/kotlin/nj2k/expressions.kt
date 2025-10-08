@@ -4,7 +4,6 @@ package org.jetbrains.kotlin.nj2k
 
 import com.intellij.psi.PsiElement
 import com.intellij.psi.tree.TokenSet
-import org.jetbrains.kotlin.analysis.api.KaSession
 import org.jetbrains.kotlin.config.AnalysisFlags
 import org.jetbrains.kotlin.config.ApiVersion
 import org.jetbrains.kotlin.config.LanguageVersion
@@ -38,7 +37,6 @@ private val equalsOperators: TokenSet =
         KtTokens.EXCLEQ
     )
 
-context(_: KaSession)
 fun untilToExpression(
     from: JKExpression,
     to: JKExpression,
@@ -53,7 +51,6 @@ fun untilToExpression(
     )
 }
 
-context(_: KaSession)
 fun downToExpression(
     from: JKExpression,
     to: JKExpression,
@@ -78,7 +75,6 @@ fun JKBinaryExpression.parenthesizedWithFormatting(): JKParenthesizedExpression 
         JKBinaryExpression(::left.detached(), ::right.detached(), operator)
     ).withFormattingFrom(this)
 
-context(_: KaSession)
 fun rangeExpression(
     from: JKExpression,
     to: JKExpression,
@@ -143,12 +139,10 @@ fun annotationArgumentStringLiteral(content: String): JKExpression {
     return JKLiteralExpression(string, LiteralType.STRING)
 }
 
-context(_: KaSession)
 fun JKVariable.findUsages(scope: JKTreeElement, context: ConverterContext): List<JKFieldAccessExpression> {
     val symbol = context.symbolProvider.provideUniverseSymbol(this)
     val usages = mutableListOf<JKFieldAccessExpression>()
     val searcher = object : RecursiveConversion(context) {
-        context(_: KaSession)
         override fun applyToElement(element: JKTreeElement): JKTreeElement {
             if (element is JKExpression) {
                 element.unboxFieldReference()?.also {
@@ -185,7 +179,6 @@ fun JKFieldAccessExpression.isInDecrementOrIncrement(): Boolean =
         else -> false
     }
 
-context(_: KaSession)
 fun JKVariable.hasUsages(scope: JKTreeElement, context: ConverterContext): Boolean =
     findUsages(scope, context).isNotEmpty()
 
@@ -285,7 +278,7 @@ fun JKExpression.asLiteralTextWithPrefix(): String? = when {
     this is JKPrefixExpression
             && (operator.token == JKOperatorToken.MINUS || operator.token == JKOperatorToken.PLUS)
             && expression is JKLiteralExpression
-    -> operator.token.text + expression.cast<JKLiteralExpression>().literal
+        -> operator.token.text + expression.cast<JKLiteralExpression>().literal
 
     this is JKLiteralExpression -> literal
     else -> null

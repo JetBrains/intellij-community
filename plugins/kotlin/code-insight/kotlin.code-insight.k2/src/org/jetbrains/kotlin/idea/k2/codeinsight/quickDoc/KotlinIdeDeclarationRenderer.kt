@@ -765,8 +765,10 @@ internal class KotlinIdeDeclarationRenderer(
                     printer.append(highlight("enum entry") { asKeyword })
                     printer.append(" ")
                 }
-                printer.append(highlight(name.renderName()) {
-                    when (symbol) {
+                printer.append(highlight(name.render(stipSpecialMarkers = true)) {
+                    if (name.isSpecial && (symbol is KaParameterSymbol || symbol is KaLocalVariableSymbol)) {
+                        asInfo
+                    } else when (symbol) {
                         is KaClassSymbol -> {
                             if (symbol.classKind.isObject) {
                                 asObjectName
@@ -782,6 +784,7 @@ internal class KotlinIdeDeclarationRenderer(
                         is KaTypeParameterSymbol -> asTypeParameterName
                         is KaTypeAliasSymbol -> asTypeAlias
                         is KaPropertySymbol -> asInstanceProperty
+                        is KaLocalVariableSymbol -> asLocalVarOrVal
                         else -> asFunDeclaration
                     }
                 })

@@ -51,7 +51,7 @@ import java.util.Objects;
 public abstract class BreakpointWithHighlighter<P extends JavaBreakpointProperties> extends Breakpoint<P> {
   private static final Logger LOG = Logger.getInstance(BreakpointWithHighlighter.class);
 
-  private @Nullable SourcePosition mySourcePosition;
+  private volatile @Nullable SourcePosition mySourcePosition;
 
   private boolean myVisible = true;
   private volatile Icon myIcon = getSetIcon(false);
@@ -202,15 +202,6 @@ public abstract class BreakpointWithHighlighter<P extends JavaBreakpointProperti
 
   public @Nullable SourcePosition getSourcePosition() {
     return mySourcePosition;
-  }
-
-  /**
-   * @see #getDisplayName()
-   * @deprecated better use {@link Breakpoint#getDisplayName()}
-   */
-  @Deprecated(forRemoval = true)
-  public @NotNull @Nls String getDescription() {
-    return getDisplayName();
   }
 
   /**

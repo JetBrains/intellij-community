@@ -13,11 +13,11 @@ import com.intellij.execution.runToolbar.RunToolbarProcessData;
 import com.intellij.execution.runners.ExecutionEnvironment;
 import com.intellij.execution.runners.ProgramRunner;
 import com.intellij.execution.ui.RunContentDescriptor;
-import com.intellij.execution.ui.RunContentManagerImpl;
 import com.intellij.openapi.actionSystem.ActionUpdateThread;
 import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.actionSystem.DataContext;
 import com.intellij.openapi.actionSystem.Presentation;
+import com.intellij.openapi.actionSystem.remoting.ActionRemoteBehaviorSpecification;
 import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.project.DumbAwareAction;
 import com.intellij.openapi.project.DumbService;
@@ -25,9 +25,9 @@ import com.intellij.openapi.project.IndexNotReadyException;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Key;
 import com.intellij.openapi.util.NlsActions;
-import com.intellij.ui.content.Content;
 import com.intellij.util.SmartList;
 import com.intellij.util.containers.ContainerUtil;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -36,11 +36,12 @@ import java.util.List;
 import java.util.function.Consumer;
 
 import static com.intellij.execution.dashboard.actions.RunDashboardActionUtils.getLeafTargets;
+import static com.intellij.openapi.actionSystem.LangDataKeys.RUN_CONTENT_DESCRIPTOR;
 
 /**
  * @author konstantin.aleev
  */
-public abstract class ExecutorAction extends DumbAwareAction {
+public abstract class ExecutorAction extends DumbAwareAction implements ActionRemoteBehaviorSpecification.FrontendOtherwiseBackend {
   private static final Key<List<Integer>> RUNNABLE_LEAVES_KEY =
     Key.create("RUNNABLE_LEAVES_KEY");
 
@@ -64,12 +65,10 @@ public abstract class ExecutorAction extends DumbAwareAction {
       return;
     }
     List<RunDashboardRunConfigurationNode> targetNodes = getLeafTargets(e).toList();
-    boolean running = ContainerUtil.find(targetNodes, node -> {
-      Content content = node.getContent();
-      return content != null && !RunContentManagerImpl.isTerminated(content);
-    }) != null;
+
+    boolean running = isAnythingRunningInSelection(e, targetNodes) | isContextualDescriptorNotTerminated(e);
     update(e, running);
-    List<Integer> runnableLeaves = getRunnableLeaves(targetNodes);
+    List<Integer> runnableLeaves = getRunnableLeaves(targetNodes, project);
     Presentation presentation = e.getPresentation();
     if (!runnableLeaves.isEmpty()) {
       presentation.putClientProperty(RUNNABLE_LEAVES_KEY, runnableLeaves);
@@ -81,32 +80,56 @@ public abstract class ExecutorAction extends DumbAwareAction {
     presentation.setVisible(!targetNodes.isEmpty());
   }
 
-  private List<Integer> getRunnableLeaves(List<RunDashboardRunConfigurationNode> targetNodes) {
+  private static boolean isAnythingRunningInSelection(@NotNull AnActionEvent e, List<RunDashboardRunConfigurationNode> targetNodes) {
+    return ContainerUtil.find(targetNodes, node -> {
+      return isRunning(node);
+    }) != null;
+  }
+
+  private static boolean isContextualDescriptorNotTerminated(@NotNull AnActionEvent e) {
+    var descriptor = e.getData(RUN_CONTENT_DESCRIPTOR);
+    ProcessHandler processHandler = descriptor == null ? null : descriptor.getProcessHandler();
+    return processHandler != null && !processHandler.isProcessTerminated();
+  }
+
+  @ApiStatus.Internal
+  public static boolean isRunning(@Nullable RunDashboardRunConfigurationNode node) {
+    if (node == null) return false;
+    var contentDescriptor = node.getDescriptor();
+    if (contentDescriptor == null) {
+      return false;
+    }
+    ProcessHandler processHandler = contentDescriptor.getProcessHandler();
+    return processHandler != null && !processHandler.isProcessTerminated();
+  }
+
+  private List<Integer> getRunnableLeaves(List<RunDashboardRunConfigurationNode> targetNodes, @NotNull Project project) {
     List<Integer> runnableLeaves = new SmartList<>();
     for (int i = 0; i < targetNodes.size(); i++) {
       RunDashboardRunConfigurationNode node = targetNodes.get(i);
-      if (canRun(node)) {
+      if (canRun(node, project)) {
         runnableLeaves.add(i);
       }
     }
     return runnableLeaves;
   }
 
-  private boolean canRun(@NotNull RunDashboardRunConfigurationNode node) {
+  private boolean canRun(@NotNull RunDashboardRunConfigurationNode node, @NotNull Project project) {
     ProgressManager.checkCanceled();
-
-    Project project = node.getProject();
     return canRun(node.getConfigurationSettings(),
                   null,
-                  DumbService.isDumb(project));
+                  DumbService.isDumb(project),
+                  getExecutor());
   }
 
-  private boolean canRun(@NotNull RunnerAndConfigurationSettings settings,
-                         @Nullable ExecutionTarget target,
-                         boolean isDumb) {
+  @ApiStatus.Internal
+  public static boolean canRun(@NotNull RunnerAndConfigurationSettings settings,
+                               @Nullable ExecutionTarget target,
+                               boolean isDumb,
+                               @NotNull Executor executor) {
     if (isDumb && !settings.getType().isDumbAware()) return false;
 
-    String executorId = getExecutor().getId();
+    String executorId = executor.getId();
     RunConfiguration configuration = settings.getConfiguration();
     Project project = configuration.getProject();
     if (configuration instanceof CompoundRunConfiguration comp) {
@@ -118,7 +141,7 @@ public abstract class ExecutorAction extends DumbAwareAction {
       RunManager runManager = RunManager.getInstance(project);
       for (SettingsAndEffectiveTarget subConfiguration : subConfigurations) {
         RunnerAndConfigurationSettings subSettings = runManager.findSettings(subConfiguration.getConfiguration());
-        if (subSettings == null || !canRun(subSettings, subConfiguration.getTarget(), isDumb)) {
+        if (subSettings == null || !canRun(subSettings, subConfiguration.getTarget(), isDumb, executor)) {
           return false;
         }
       }
@@ -165,25 +188,33 @@ public abstract class ExecutorAction extends DumbAwareAction {
       // We try to recalculate it because in the backend + frontend case update & perform are 2 different
       // requests to backend, and for now this client property won't be saved between them.
       // We won't count leaves twice in case they are empty because in that case update will disable the action.
-      runnableLeaves = getRunnableLeaves(targetNodes);
+      runnableLeaves = getRunnableLeaves(targetNodes, project);
       if (runnableLeaves.isEmpty()) return;
     }
 
-    for (int i: runnableLeaves) {
+    for (int i : runnableLeaves) {
       if (targetNodes.size() > i) {
         RunDashboardRunConfigurationNode node = targetNodes.get(i);
-        run(node.getConfigurationSettings(), node.getDescriptor(), e.getDataContext());
+        run(node.getConfigurationSettings(), node.getDescriptor(), e.getDataContext(), getExecutor());
       }
     }
   }
 
-  private void run(RunnerAndConfigurationSettings settings, RunContentDescriptor descriptor, @NotNull DataContext context) {
+  @ApiStatus.Internal
+  public static void run(RunnerAndConfigurationSettings settings,
+                         RunContentDescriptor descriptor,
+                         @NotNull DataContext context,
+                         @NotNull Executor executor) {
     runSubProcess(settings, null, descriptor, RunToolbarProcessData.prepareBaseSettingCustomization(settings, environment -> {
       environment.setDataContext(context);
-    }));
+    }), executor);
   }
 
-  private void runSubProcess(RunnerAndConfigurationSettings settings, ExecutionTarget target, RunContentDescriptor descriptor, @Nullable Consumer<ExecutionEnvironment> envCustomization) {
+  private static void runSubProcess(RunnerAndConfigurationSettings settings,
+                                    ExecutionTarget target,
+                                    RunContentDescriptor descriptor,
+                                    @Nullable Consumer<ExecutionEnvironment> envCustomization,
+                                    @NotNull Executor executor) {
     RunConfiguration configuration = settings.getConfiguration();
     Project project = configuration.getProject();
     RunManager runManager = RunManager.getInstance(project);
@@ -193,7 +224,7 @@ public abstract class ExecutorAction extends DumbAwareAction {
       for (SettingsAndEffectiveTarget subConfiguration : subConfigurations) {
         RunnerAndConfigurationSettings subSettings = runManager.findSettings(subConfiguration.getConfiguration());
         if (subSettings != null) {
-          runSubProcess(subSettings, subConfiguration.getTarget(), null, envCustomization);
+          runSubProcess(subSettings, subConfiguration.getTarget(), null, envCustomization, executor);
         }
       }
     }
@@ -204,7 +235,9 @@ public abstract class ExecutorAction extends DumbAwareAction {
       }
       ProcessHandler processHandler = descriptor == null ? null : descriptor.getProcessHandler();
 
-      ExecutionManager.getInstance(project).restartRunProfile(project, getExecutor(), target, settings, processHandler, RunToolbarProcessData.prepareSuppressMainSlotCustomization(project, envCustomization));
+      ExecutionManager.getInstance(project).restartRunProfile(project, executor, target, settings, processHandler,
+                                                              RunToolbarProcessData.prepareSuppressMainSlotCustomization(project,
+                                                                                                                         envCustomization));
     }
   }
 

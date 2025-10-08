@@ -1,8 +1,11 @@
-<idea-plugin package="com.intellij.pycharm.community.ide.impl">
+<idea-plugin visibility="internal">
   <!--Customization code for both Community and Pro PyCharms-->
   <dependencies>
-    <plugin id="PythonCore"/>
+    <plugin id="com.intellij.modules.python"/>
+    <module name="intellij.python.common"/>
     <module name="intellij.platform.whatsNew"/>
+    <module name="intellij.platform.ide.nonModalWelcomeScreen"/>
+    <module name="intellij.platform.ide.nonModalWelcomeScreen.backend"/>
   </dependencies>
 
   <projectListeners>
@@ -20,6 +23,12 @@
     <projectService serviceInterface="com.intellij.psi.search.ProjectScopeBuilder"
                     serviceImplementation="com.intellij.pycharm.community.ide.impl.PyProjectScopeBuilder"
                     overrides="true"/>
+    <welcomeScreenProjectProvider implementation="com.intellij.pycharm.community.ide.impl.welcomeScreen.PyCharmWelcomeScreenProjectProvider" order="first"/>
+    <platform.ide.welcomeScreenFeatureBackend implementation="com.intellij.pycharm.community.ide.impl.newProjectWizard.welcome.PyNewScriptWelcomeScreenFeature"/>
+    <platform.ide.welcomeScreenFeatureBackend implementation="com.intellij.pycharm.community.ide.impl.newProjectWizard.welcome.PyNewNotebookWelcomeScreenFeature"/>
+    <platform.ide.welcomeScreenFeatureBackend implementation="com.intellij.pycharm.community.ide.impl.newProjectWizard.welcome.PyLearnWelcomeScreenFeature"/>
+    <platform.ide.welcomeScreenFeatureBackend implementation="com.intellij.pycharm.community.ide.impl.newProjectWizard.welcome.PyImportFileWelcomeScreenFeature"/>
+    <platform.ide.welcomeScreenFeatureBackend implementation="com.intellij.pycharm.community.ide.impl.newProjectWizard.welcome.PyPluginsWelcomeScreenFeature"/>
 
     <statistics.validation.customValidationRule
       implementation="com.intellij.pycharm.community.ide.impl.miscProject.impl.MiscProjectUsageCollectorValidationRule"/>
@@ -118,7 +127,6 @@
 
     <statistics.counterUsagesCollector
       implementationClass="com.intellij.pycharm.community.ide.impl.configuration.PySdkConfigurationCollector"/>
-    <defaultToolWindowLayout implementation="com.intellij.pycharm.community.ide.impl.PyToolWindowLayoutProvider" order="last"/>
 
     <codeInsight.codeVision.settings.defaults implementation="com.intellij.pycharm.community.ide.impl.PyCharmCodeVisionSettingsDefaults"/>
     <statistics.counterUsagesCollector implementationClass="com.intellij.pycharm.community.ide.impl.configuration.ui.PyAddNewEnvCollector"/>
@@ -134,7 +142,7 @@
     <projectSdkConfigurationExtension implementation="com.intellij.pycharm.community.ide.impl.configuration.PyPipfileSdkConfiguration"
                                       id="pipfile" order="before requirementsTxtOrSetupPy"/>
     <projectSdkConfigurationExtension implementation="com.intellij.pycharm.community.ide.impl.configuration.PyPoetrySdkConfiguration"
-                                      id="poetry"/>
+                                      id="poetry"/>"/>
     <projectSdkConfigurationExtension implementation="com.intellij.pycharm.community.ide.impl.configuration.PyHatchSdkConfiguration"
                                       id="hatch" order="after poetry"/>
     <projectSdkConfigurationExtension implementation="com.intellij.pycharm.community.ide.impl.configuration.PyUvSdkConfiguration"
@@ -142,6 +150,11 @@
     <projectSdkConfigurationExtension implementation="com.intellij.pycharm.community.ide.impl.configuration.PyVenvSdkConfiguration"
                                       id="venv" order="before requirementsTxtOrSetupPy"/>
   </extensions>
+
+  <applicationListeners>
+    <listener class="com.intellij.pycharm.community.ide.impl.welcomeScreen.PyWelcomeScreenNewUsersTracker"
+              topic="com.intellij.ide.AppLifecycleListener"/>
+  </applicationListeners>
 
   <actions resource-bundle="messages.ActionsBundle">
     <action id="PySwitchSdkAction" class="com.intellij.pycharm.community.ide.impl.configuration.PySwitchSdkAction"/>
@@ -158,6 +171,12 @@
 
       <add-to-group group-id="WelcomeScreen.QuickStart" anchor="first"/>
     </group>
+
+    <!--Non Modal Welcome Screen customization-->
+    <action id="welcome.screen.left.tab.new.py.script"
+            class="com.intellij.pycharm.community.ide.impl.miscProject.impl.PyNewMiscScriptAction">
+      <add-to-group group-id="NonModalWelcomeScreen.LeftTabActions.New"/>
+    </action>
   </actions>
 
 </idea-plugin>

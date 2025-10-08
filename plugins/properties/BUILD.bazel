@@ -1,9 +1,9 @@
 ### auto-generated section `build intellij.properties.backend` start
-load("@rules_jvm//:jvm.bzl", "jvm_library", "jvm_resources")
+load("@rules_jvm//:jvm.bzl", "jvm_library", "resourcegroup")
 
-jvm_resources(
+resourcegroup(
   name = "properties-backend_resources",
-  files = glob(["resources/**/*"]),
+  srcs = glob(["resources/**/*"]),
   strip_prefix = "resources"
 )
 
@@ -12,6 +12,7 @@ jvm_library(
   module_name = "intellij.properties.backend",
   visibility = ["//visibility:public"],
   srcs = glob(["src/**/*.kt", "src/**/*.java", "src/**/*.form"], allow_empty = True),
+  resources = [":properties-backend_resources"],
   deps = [
     "//platform/analysis-api:analysis",
     "//platform/core-api:core",
@@ -38,9 +39,6 @@ jvm_library(
     "//plugins/properties/properties-common:properties",
     "//platform/diff-impl",
   ],
-  runtime_deps = [
-    ":properties-backend_resources",
-    "//platform/backend",
-  ]
+  runtime_deps = ["//platform/backend"]
 )
 ### auto-generated section `build intellij.properties.backend` end

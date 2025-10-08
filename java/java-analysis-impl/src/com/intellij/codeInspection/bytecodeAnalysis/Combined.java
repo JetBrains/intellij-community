@@ -587,7 +587,7 @@ final class CombinedInterpreter extends BasicInterpreter {
     boolean stable = opCode == INVOKESTATIC || opCode == INVOKESPECIAL;
     boolean thisCall = false;
     if (opCode != INVOKESTATIC) {
-      BasicValue receiver = values.remove(0);
+      BasicValue receiver = values.removeFirst();
       if (receiver instanceof NthParamValue) {
         dereferencedParams[((NthParamValue)receiver).n] = true;
       }

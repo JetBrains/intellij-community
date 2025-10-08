@@ -12,8 +12,8 @@ public final class ExtractMethodDiffViewerCustomizer extends DiffExtension {
   @RequiresEdt
   @Override
   public void onViewerCreated(@NotNull FrameDiffTool.DiffViewer viewer, @NotNull DiffContext context, @NotNull DiffRequest request) {
-    if (request instanceof PreviewDiffRequest) {
-      ((PreviewDiffRequest)request).setViewer(viewer);
+    if (request instanceof PreviewDiffRequest previewDiffRequest) {
+      previewDiffRequest.setViewer(viewer);
     }
   }
 }

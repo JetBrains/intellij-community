@@ -106,7 +106,7 @@ class PluginDto(
 
   companion object {
     @JvmStatic
-    fun fromModel(model: PluginUiModel, ignoreDescriptionForNotLoadedPluigns: Boolean = false): PluginDto {
+    fun fromModel(model: PluginUiModel, ignoreDescriptionForNotLoadedPlugins: Boolean = false): PluginDto {
       if (model is PluginDto) {
         return model
       }
@@ -160,7 +160,7 @@ class PluginDto(
         repositoryName = model.repositoryName
         channel = model.channel
         installSource = model.installSource
-        if (!ignoreDescriptionForNotLoadedPluigns || PluginManagerCore.isLoaded(model.pluginId)) {
+        if (!ignoreDescriptionForNotLoadedPlugins || PluginManagerCore.isLoaded(model.pluginId)) {
           description = model.description
         }
         category = model.category

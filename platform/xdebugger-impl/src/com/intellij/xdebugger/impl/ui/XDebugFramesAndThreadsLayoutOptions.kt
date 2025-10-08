@@ -45,7 +45,7 @@ internal class ThreadsTreeLayoutOption(
 abstract class SideBySideLayoutOptionBase(private val options: XDebugTabLayoutSettings.XDebugFramesAndThreadsLayoutOptions,
                                           private val areThreadsVisible: Boolean) : FramesAndThreadsLayoutOptionBase(options) {
 
-  override fun createView(sessionProxy: XDebugSessionProxy): XThreadsFramesView = XThreadsFramesView(options.debugTab).apply {
+  override fun createView(sessionProxy: XDebugSessionProxy): XThreadsFramesView = XThreadsFramesView(options.debugTab, sessionProxy).apply {
     this.setThreadsVisible(areThreadsVisible)
   }
 }

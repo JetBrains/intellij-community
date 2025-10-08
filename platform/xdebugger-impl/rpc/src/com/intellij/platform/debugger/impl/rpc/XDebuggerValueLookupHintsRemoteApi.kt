@@ -6,8 +6,6 @@ import com.intellij.platform.project.ProjectId
 import com.intellij.platform.rpc.Id
 import com.intellij.platform.rpc.RemoteApiProviderService
 import com.intellij.platform.rpc.UID
-import com.intellij.platform.rpc.topics.RemoteTopic
-import com.intellij.platform.rpc.topics.ApplicationRemoteTopic
 import com.intellij.platform.rpc.topics.ProjectRemoteTopic
 import com.intellij.xdebugger.evaluation.ExpressionInfo
 import com.intellij.xdebugger.impl.evaluate.quick.common.ValueHintType
@@ -21,7 +19,7 @@ import org.jetbrains.annotations.ApiStatus
 @ApiStatus.Internal
 @Rpc
 interface XDebuggerValueLookupHintsRemoteApi : RemoteApi<Unit> {
-  suspend fun adjustOffset(projectId: ProjectId, editorId: EditorId, offset: Int): Int
+  suspend fun adjustOffset(projectId: ProjectId, editorId: EditorId, offset: Int): Int?
 
   suspend fun getExpressionInfo(projectId: ProjectId, editorId: EditorId, offset: Int, hintType: ValueHintType): ExpressionInfo?
 
@@ -30,6 +28,8 @@ interface XDebuggerValueLookupHintsRemoteApi : RemoteApi<Unit> {
   suspend fun showHint(hintId: RemoteValueHintId): Flow<Unit>
 
   suspend fun removeHint(hintId: RemoteValueHintId, force: Boolean)
+
+  suspend fun getValueLookupListeningFlow(projectId: ProjectId): Flow<Boolean>
 
   companion object {
     @JvmStatic
@@ -49,9 +49,6 @@ val LOOKUP_HINTS_EVENTS_REMOTE_TOPIC: ProjectRemoteTopic<ValueHintEvent> = Proje
 @ApiStatus.Internal
 @Serializable
 sealed interface ValueHintEvent {
-  @Serializable
-  data object StartListening : ValueHintEvent
-
   @Serializable
   data object HideHint : ValueHintEvent
 }

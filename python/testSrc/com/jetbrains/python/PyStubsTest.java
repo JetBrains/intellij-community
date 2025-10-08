@@ -419,6 +419,15 @@ public class PyStubsTest extends PyTestCase {
     assertEquals("Foo docstring.", docString);
   }
 
+  public void testTargetExpressionArgument() {
+    final PyFile file = getTestFile();
+    final PyFunction function = file.findTopLevelFunction("f");
+    assertNotNull(function);
+    final PyTargetExpressionStub targetExpressionStub = (PyTargetExpressionStub)function.getStub().findChildStubByElementType(PyStubElementTypes.TARGET_EXPRESSION);
+    assertNotNull(targetExpressionStub);
+    assertEquals("number", targetExpressionStub.getName());
+  }
+
   public void testMetaClass() {
     runWithLanguageLevel(LanguageLevel.PYTHON27, () -> {
       final PyFile file = getTestFile();
@@ -1125,6 +1134,17 @@ public class PyStubsTest extends PyTestCase {
     assertNull(cls.findClassAttribute("bar1", false, null).getStub().getCustomStub(PyDataclassFieldStub.class).kwOnly());
     assertTrue(cls.findClassAttribute("bar2", false, null).getStub().getCustomStub(PyDataclassFieldStub.class).kwOnly());
     assertFalse(cls.findClassAttribute("bar3", false, null).getStub().getCustomStub(PyDataclassFieldStub.class).kwOnly());
+
+    assertNotParsed(file);
+  }
+
+  // PY-76811
+  public void testDataclassSlotsOnClass() {
+    final PyFile file = getTestFile();
+
+    assertTrue(file.findTopLevelClass("Foo1").getStub().getCustomStub(PyDataclassStub.class).slotsValue());
+    assertFalse(file.findTopLevelClass("Foo2").getStub().getCustomStub(PyDataclassStub.class).slotsValue());
+    assertNull(file.findTopLevelClass("Foo3").getStub().getCustomStub(PyDataclassStub.class).slotsValue());
 
     assertNotParsed(file);
   }

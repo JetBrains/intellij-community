@@ -1,6 +1,6 @@
 ### auto-generated section `build kotlin.gradle.scripting.k2` start
 load("//build:compiler-options.bzl", "create_kotlinc_options")
-load("@rules_jvm//:jvm.bzl", "jvm_library", "jvm_resources")
+load("@rules_jvm//:jvm.bzl", "jvm_library", "resourcegroup")
 
 create_kotlinc_options(
   name = "custom_kotlin-gradle-scripting-k2",
@@ -13,15 +13,15 @@ create_kotlinc_options(
   x_context_parameters = True
 )
 
-jvm_resources(
+resourcegroup(
   name = "kotlin-gradle-scripting-k2_resources",
-  files = glob(["resources/**/*"]),
+  srcs = glob(["resources/**/*"]),
   strip_prefix = "resources"
 )
 
-jvm_resources(
+resourcegroup(
   name = "kotlin-gradle-scripting-k2_resources_1",
-  files = glob(["resources-en/**/*"]),
+  srcs = glob(["resources-en/**/*"]),
   strip_prefix = "resources-en"
 )
 
@@ -30,6 +30,10 @@ jvm_library(
   module_name = "kotlin.gradle.scripting.k2",
   visibility = ["//visibility:public"],
   srcs = glob(["src/**/*.kt", "src/**/*.java", "src/**/*.form"], allow_empty = True),
+  resources = [
+    ":kotlin-gradle-scripting-k2_resources",
+    ":kotlin-gradle-scripting-k2_resources_1",
+  ],
   kotlinc_opts = ":custom_kotlin-gradle-scripting-k2",
   deps = [
     "@lib//:kotlin-stdlib",
@@ -68,10 +72,7 @@ jvm_library(
     "//plugins/kotlin/base/scripting/scripting.shared",
     "//java/openapi:java",
     "//platform/platform-impl:ide-impl",
-  ],
-  runtime_deps = [
-    ":kotlin-gradle-scripting-k2_resources",
-    ":kotlin-gradle-scripting-k2_resources_1",
+    "//plugins/kotlin/gradle/gradle-tooling/impl",
   ]
 )
 
@@ -95,6 +96,7 @@ jvm_library(
     "//plugins/kotlin/base/util",
     "//plugins/kotlin/base/util:util_test_lib",
     "//plugins/kotlin/base/scripting/scripting.k2",
+    "//plugins/kotlin/base/scripting/scripting.k2:scripting.k2_test_lib",
     "@lib//:kotlinc-kotlin-scripting-jvm",
     "@lib//:kotlinc-kotlin-scripting-compiler-impl",
     "@lib//:kotlinc-kotlin-scripting-common",
@@ -145,10 +147,8 @@ jvm_library(
     "//plugins/kotlin/base/scripting/scripting.shared",
     "//java/openapi:java",
     "//platform/platform-impl:ide-impl",
-  ],
-  runtime_deps = [
-    ":kotlin-gradle-scripting-k2_resources",
-    ":kotlin-gradle-scripting-k2_resources_1",
+    "//plugins/kotlin/gradle/gradle-tooling/impl",
+    "//plugins/kotlin/gradle/gradle-tooling/impl:impl_test_lib",
   ]
 )
 ### auto-generated section `build kotlin.gradle.scripting.k2` end

@@ -11,7 +11,7 @@ import java.awt.Point
 import java.awt.Rectangle
 
 @ApiStatus.Internal
-class BlockCodeVisionInlayRenderer : CodeVisionInlayRendererBase(){
+open class BlockCodeVisionInlayRenderer : CodeVisionInlayRendererBase(){
   override fun calculateCodeVisionEntryBounds(element: CodeVisionEntry): Rectangle? {
     val hoveredEntryBounds = painter.hoveredEntryBounds(inlay.editor, inlayState(inlay), inlay.getUserData(CodeVisionListData.KEY), element)
                              ?: return null
@@ -27,6 +27,10 @@ class BlockCodeVisionInlayRenderer : CodeVisionInlayRendererBase(){
 
     val painterPosition = painterPosition(inlay)
     return painter.size(inlay.editor, inlayState(inlay), inlay.getUserData(CodeVisionListData.KEY)).width + painterPosition
+  }
+
+  override fun calcHeightInPixels(inlay: Inlay<*>): Int {
+    return painter.inlayHeightInPixels(inlay.editor) ?: super.calcHeightInPixels(inlay)
   }
 
   private fun painterPosition(inlay: Inlay<*>): Int {

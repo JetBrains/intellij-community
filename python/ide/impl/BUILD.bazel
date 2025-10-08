@@ -1,10 +1,16 @@
 ### auto-generated section `build intellij.pycharm.community.ide.impl` start
-load("@rules_jvm//:jvm.bzl", "jvm_library", "jvm_resources")
+load("@rules_jvm//:jvm.bzl", "jvm_library", "resourcegroup")
 
-jvm_resources(
+resourcegroup(
   name = "impl_resources",
-  files = glob(["resources/**/*"]),
+  srcs = glob(["resources/**/*"]),
   strip_prefix = "resources"
+)
+
+resourcegroup(
+  name = "impl_test_resources",
+  srcs = glob(["testResources/**/*"]),
+  strip_prefix = "testResources"
 )
 
 jvm_library(
@@ -12,8 +18,10 @@ jvm_library(
   module_name = "intellij.pycharm.community.ide.impl",
   visibility = ["//visibility:public"],
   srcs = glob(["src/**/*.kt", "src/**/*.java", "src/**/*.form"], allow_empty = True),
+  resources = [":impl_resources"],
   deps = [
     "//platform/analysis-api:analysis",
+    "//platform/compose",
     "//platform/code-style-api:codeStyle",
     "//platform/core-api:core",
     "//platform/editor-ui-api:editor-ui",
@@ -28,7 +36,7 @@ jvm_library(
     "//platform/lang-impl",
     "//platform/execution-impl",
     "//platform/diff-api:diff",
-    "@lib//:guava",
+    "//libraries/guava",
     "@lib//:stream_ex",
     "//platform/xdebugger-api:debugger",
     "//platform/usageView",
@@ -46,27 +54,32 @@ jvm_library(
     "@lib//:jna",
     "//python/services/system-python",
     "//platform/eel",
+    "//platform/eel-provider",
     "//python/services/shared",
     "//python/poetry",
     "//python/python-venv:community-impl-venv",
     "@lib//:jetbrains-annotations",
     "//python/python-pyproject:pyproject",
     "//python/python-hatch:hatch",
-    "@lib//:io-github-z4kn4fein-semver-jvm",
+    "@lib//:io-github-z4kn4fein-semver-jvm-provided",
+    "//platform/non-modal-welcome-screen",
+    "//python/common",
+    "//platform/non-modal-welcome-screen/backend",
   ],
-  runtime_deps = [
-    ":impl_resources",
-    "//python/python-features-trainer:featuresTrainer",
-  ]
+  runtime_deps = ["//python/python-features-trainer:featuresTrainer"],
+  plugins = ["@lib//:compose-plugin"]
 )
 
 jvm_library(
   name = "impl_test_lib",
   visibility = ["//visibility:public"],
   srcs = glob(["tests/**/*.kt", "tests/**/*.java", "tests/**/*.form"], allow_empty = True),
+  resources = [":impl_test_resources"],
   associates = [":impl"],
   deps = [
     "//platform/analysis-api:analysis",
+    "//platform/compose",
+    "//platform/compose:compose_test_lib",
     "//platform/code-style-api:codeStyle",
     "//platform/core-api:core",
     "//platform/editor-ui-api:editor-ui",
@@ -81,7 +94,7 @@ jvm_library(
     "//platform/lang-impl",
     "//platform/execution-impl",
     "//platform/diff-api:diff",
-    "@lib//:guava",
+    "//libraries/guava",
     "@lib//:stream_ex",
     "//platform/xdebugger-api:debugger",
     "//platform/usageView",
@@ -100,10 +113,12 @@ jvm_library(
     "//platform/whatsNew:whatsNew_test_lib",
     "//platform/util/coroutines",
     "//platform/experiment",
+    "//platform/experiment:experiment_test_lib",
     "@lib//:jna",
     "//python/services/system-python",
     "//python/services/system-python:system-python_test_lib",
     "//platform/eel",
+    "//platform/eel-provider",
     "//python/services/shared",
     "//python/services/shared:shared_test_lib",
     "//python/poetry",
@@ -116,9 +131,12 @@ jvm_library(
     "//platform/testFramework/junit5",
     "//platform/testFramework/junit5:junit5_test_lib",
     "@lib//:junit5",
-    "@lib//:io-github-z4kn4fein-semver-jvm",
+    "@lib//:io-github-z4kn4fein-semver-jvm-provided",
+    "//platform/non-modal-welcome-screen",
+    "//python/common",
+    "//platform/non-modal-welcome-screen/backend",
   ],
-  runtime_deps = [":impl_resources"]
+  plugins = ["@lib//:compose-plugin"]
 )
 ### auto-generated section `build intellij.pycharm.community.ide.impl` end
 

@@ -27,7 +27,7 @@ interface XmlInterner {
   fun name(value: String): String
 
   /**
-   * [name] is interned.
+   * [value] is interned unless attribute name passed as [name] indicates that the value is most probably unique and shouldn't be interned.
    */
   fun value(name: String, value: String): String
 }

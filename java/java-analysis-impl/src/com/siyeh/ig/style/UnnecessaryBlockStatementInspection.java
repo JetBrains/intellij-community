@@ -54,7 +54,7 @@ public final class UnnecessaryBlockStatementInspection extends BaseInspection im
   }
 
   @Override
-  public BaseInspectionVisitor buildVisitor() {
+  public @NotNull BaseInspectionVisitor buildVisitor() {
     return new UnnecessaryBlockStatementVisitor();
   }
 

@@ -6,6 +6,7 @@ package com.intellij.ui
 import com.intellij.openapi.util.IconLoader.getDarkIcon
 import com.intellij.ui.icons.IconReplacer
 import com.intellij.ui.icons.IconWithToolTip
+import com.intellij.ui.icons.deferredMask
 import com.intellij.ui.scale.ScaleType
 import com.intellij.ui.scale.UserScaleContext
 import com.intellij.util.IconUtil.copy
@@ -24,6 +25,7 @@ open class RowIcon : JBCachingScalableIcon<RowIcon>, com.intellij.ui.icons.RowIc
   private var scaledIcons: Array<Icon?>?
 
   private var sizeIsDirty = true
+  private var deferredMask = 0
 
   init {
     scaleContext.addUpdateListener(UserScaleContext.UpdateListener { updateSize() })
@@ -92,7 +94,7 @@ open class RowIcon : JBCachingScalableIcon<RowIcon>, com.intellij.ui.icons.RowIc
   @Suppress("LocalVariableName")
   override fun paintIcon(c: Component?, g: Graphics, x: Int, y: Int) {
     scaleContext.update()
-    if (sizeIsDirty) {
+    if (isSizeDirty()) {
       updateSize()
     }
     var _x = x
@@ -113,9 +115,18 @@ open class RowIcon : JBCachingScalableIcon<RowIcon>, com.intellij.ui.icons.RowIc
     }
   }
 
+  private fun isSizeDirty(): Boolean {
+    if (sizeIsDirty) return true
+    if (deferredMask(this) != deferredMask) {
+      sizeIsDirty = true
+      return true
+    }
+    return false
+  }
+
   override fun getIconWidth(): Int {
     scaleContext.update()
-    if (sizeIsDirty) {
+    if (isSizeDirty()) {
       updateSize()
     }
     return ceil(scaleVal(width.toDouble(), ScaleType.OBJ_SCALE)).toInt()
@@ -123,7 +134,7 @@ open class RowIcon : JBCachingScalableIcon<RowIcon>, com.intellij.ui.icons.RowIc
 
   override fun getIconHeight(): Int {
     scaleContext.update()
-    if (sizeIsDirty) {
+    if (isSizeDirty()) {
       updateSize()
     }
     return ceil(scaleVal(height.toDouble(), ScaleType.OBJ_SCALE)).toInt()
@@ -131,6 +142,7 @@ open class RowIcon : JBCachingScalableIcon<RowIcon>, com.intellij.ui.icons.RowIc
 
   private fun updateSize() {
     sizeIsDirty = false
+    deferredMask = deferredMask(this)
 
     var width = 0
     var height = 0

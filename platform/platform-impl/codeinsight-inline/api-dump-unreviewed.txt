@@ -38,14 +38,12 @@ f:com.intellij.codeInsight.inline.completion.InlineCompletionEvent$LookupCancell
 f:com.intellij.codeInsight.inline.completion.InlineCompletionEvent$LookupChange
 - com.intellij.codeInsight.inline.completion.InlineCompletionEvent
 - com.intellij.codeInsight.inline.completion.InlineCompletionEvent$InlineLookupEvent
-- <init>(com.intellij.codeInsight.lookup.LookupEvent):V
 - getEvent():com.intellij.codeInsight.lookup.LookupEvent
 - toRequest():com.intellij.codeInsight.inline.completion.InlineCompletionRequest
 a:com.intellij.codeInsight.inline.completion.InlineCompletionEventType
 f:com.intellij.codeInsight.inline.completion.InlineCompletionEventType$Change
 - com.intellij.codeInsight.inline.completion.InlineCompletionEventType$PerVariantEventType
 - f:getLengthChange():I
-- f:getOvertypedLength():I
 - getVariantIndex():I
 f:com.intellij.codeInsight.inline.completion.InlineCompletionEventType$Completion
 - com.intellij.codeInsight.inline.completion.InlineCompletionEventType
@@ -114,8 +112,6 @@ Fa:com.intellij.codeInsight.inline.completion.InlineCompletionHandler
 - bs:hide$default(com.intellij.codeInsight.inline.completion.InlineCompletionHandler,com.intellij.codeInsight.inline.completion.session.InlineCompletionContext,com.intellij.codeInsight.inline.completion.logs.InlineCompletionUsageTracker$ShownEvents$FinishType,I,java.lang.Object):V
 - f:insert():V
 - f:invoke(com.intellij.codeInsight.inline.completion.InlineCompletionEvent$DirectCall):V
-- f:invoke(com.intellij.codeInsight.inline.completion.InlineCompletionEvent$LookupCancelled):V
-- f:invoke(com.intellij.codeInsight.inline.completion.InlineCompletionEvent$LookupChange):V
 - f:invokeEvent(com.intellij.codeInsight.inline.completion.InlineCompletionEvent):V
 - f:removeEventListener(com.intellij.codeInsight.inline.completion.InlineCompletionEventListener):V
 f:com.intellij.codeInsight.inline.completion.InlineCompletionHandler$Companion
@@ -124,7 +120,6 @@ f:com.intellij.codeInsight.inline.completion.InlineCompletionHandler$Companion
 - f:unRegisterTestHandler():V
 f:com.intellij.codeInsight.inline.completion.InlineCompletionInsertEnvironment
 - com.intellij.openapi.util.UserDataHolderBase
-- <init>(com.intellij.openapi.editor.Editor,com.intellij.psi.PsiFile,com.intellij.openapi.util.TextRange):V
 - f:getEditor():com.intellij.openapi.editor.Editor
 - f:getFile():com.intellij.psi.PsiFile
 - f:getInsertedRange():com.intellij.openapi.util.TextRange
@@ -173,7 +168,6 @@ a:com.intellij.codeInsight.inline.completion.InlineCompletionSuggestion
 - a:getSuggestionFlow():kotlinx.coroutines.flow.Flow
 - f:getVariant(kotlin.coroutines.Continuation):java.lang.Object
 f:com.intellij.codeInsight.inline.completion.InlineCompletionSuggestion$Companion
-- f:empty():com.intellij.codeInsight.inline.completion.InlineCompletionSuggestion
 - f:withFlow(kotlin.jvm.functions.Function2):com.intellij.codeInsight.inline.completion.InlineCompletionSuggestion
 f:com.intellij.codeInsight.inline.completion.InlineCompletionSuggestion$Default
 - com.intellij.codeInsight.inline.completion.InlineCompletionSuggestion

@@ -4,6 +4,8 @@ package com.intellij.openapi.diff.impl.patch;
 
 import org.jetbrains.annotations.NotNull;
 
+import java.util.Objects;
+
 public class PatchLine {
   public enum Type {CONTEXT, ADD, REMOVE}
   public static final int UNKNOWN_PATCH_FILE_LINE_NUMBER = -1;
@@ -41,6 +43,20 @@ public class PatchLine {
 
   public int getPatchFileLineNumber() {
     return myPatchFileLineNumber;
+  }
+
+  @Override
+  public boolean equals(Object o) {
+    if (!(o instanceof PatchLine line)) return false;
+    return mySuppressNewLine == line.mySuppressNewLine &&
+           myPatchFileLineNumber == line.myPatchFileLineNumber &&
+           myType == line.myType &&
+           Objects.equals(myText, line.myText);
+  }
+
+  @Override
+  public int hashCode() {
+    return Objects.hash(myType, myText, mySuppressNewLine, myPatchFileLineNumber);
   }
 
   @Override

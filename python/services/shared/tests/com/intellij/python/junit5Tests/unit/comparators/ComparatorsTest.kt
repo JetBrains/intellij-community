@@ -3,7 +3,7 @@ package com.intellij.python.junit5Tests.unit.comparators
 
 import com.intellij.python.community.services.shared.LanguageLevelHolder
 import com.intellij.python.community.services.shared.LanguageLevelWithUiComparator
-import com.intellij.python.community.services.shared.UICustomization
+import com.jetbrains.python.PyToolUIInfo
 import com.intellij.python.community.services.shared.UiHolder
 import com.jetbrains.python.psi.LanguageLevel
 import org.hamcrest.MatcherAssert
@@ -18,9 +18,9 @@ class ComparatorsTest {
     val mocks = arrayOf(
       MockLevel(LanguageLevel.PYTHON314),
       MockLevel(LanguageLevel.PYTHON310),
-      MockLevel(LanguageLevel.PYTHON310, ui = UICustomization("A")),
-      MockLevel(LanguageLevel.PYTHON310, ui = UICustomization("Z")),
-      MockLevel(LanguageLevel.PYTHON310, ui = UICustomization("B")),
+      MockLevel(LanguageLevel.PYTHON310, ui = PyToolUIInfo("A")),
+      MockLevel(LanguageLevel.PYTHON310, ui = PyToolUIInfo("Z")),
+      MockLevel(LanguageLevel.PYTHON310, ui = PyToolUIInfo("B")),
       MockLevel(LanguageLevel.PYTHON27),
       MockLevel(LanguageLevel.PYTHON313),
     )
@@ -30,9 +30,9 @@ class ComparatorsTest {
       MockLevel(LanguageLevel.PYTHON314),
       MockLevel(LanguageLevel.PYTHON313),
       MockLevel(LanguageLevel.PYTHON310),
-      MockLevel(LanguageLevel.PYTHON310, ui = UICustomization("A")),
-      MockLevel(LanguageLevel.PYTHON310, ui = UICustomization("B")),
-      MockLevel(LanguageLevel.PYTHON310, ui = UICustomization("Z")),
+      MockLevel(LanguageLevel.PYTHON310, ui = PyToolUIInfo("A")),
+      MockLevel(LanguageLevel.PYTHON310, ui = PyToolUIInfo("B")),
+      MockLevel(LanguageLevel.PYTHON310, ui = PyToolUIInfo("Z")),
       MockLevel(LanguageLevel.PYTHON27)
     ))
   }
@@ -40,5 +40,5 @@ class ComparatorsTest {
 
 private data class MockLevel(
   override val languageLevel: LanguageLevel,
-  override val ui: UICustomization? = null,
+  override val ui: PyToolUIInfo? = null,
 ) : LanguageLevelHolder, UiHolder

@@ -35,7 +35,8 @@ import org.jetbrains.kotlin.psi.KtTypeReference
 internal class K2DeclarationFromOverridableMembersContributor : K2SimpleCompletionContributor<KotlinRawPositionContext>(
     KotlinRawPositionContext::class
 ) {
-    override fun KaSession.complete(context: K2CompletionSectionContext<KotlinRawPositionContext>) {
+    context(_: KaSession, context: K2CompletionSectionContext<KotlinRawPositionContext>)
+    override fun complete() {
         val positionContext = context.positionContext
         val declaration = when (positionContext) {
             is KotlinValueParameterPositionContext -> positionContext.ktParameter

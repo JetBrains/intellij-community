@@ -1,0 +1,68 @@
+package org.example;
+
+import java.util.List;
+import org.jetbrains.annotations.Nullable;
+
+public class TestAnnotationExtendWildcard {
+   public static void main(String[] args) {
+   }// 10
+
+   List<? extends Object> getA() {
+      return null;// 13
+   }
+
+   List<?> getA5() {
+      return null;// 17
+   }
+
+   List<? extends String> getA3() {
+      return null;// 21
+   }
+
+   List<? extends @Nullable Object> getA2() {
+      return null;// 25
+   }
+
+   List<? extends @Nullable String> getA4() {
+      return null;// 29
+   }
+}
+
+class 'org/example/TestAnnotationExtendWildcard' {
+   method 'main ([Ljava/lang/String;)V' {
+      0      7
+   }
+
+   method 'getA ()Ljava/util/List;' {
+      0      10
+      1      10
+   }
+
+   method 'getA5 ()Ljava/util/List;' {
+      0      14
+      1      14
+   }
+
+   method 'getA3 ()Ljava/util/List;' {
+      0      18
+      1      18
+   }
+
+   method 'getA2 ()Ljava/util/List;' {
+      0      22
+      1      22
+   }
+
+   method 'getA4 ()Ljava/util/List;' {
+      0      26
+      1      26
+   }
+}
+
+Lines mapping:
+10 <-> 8
+13 <-> 11
+17 <-> 15
+21 <-> 19
+25 <-> 23
+29 <-> 27

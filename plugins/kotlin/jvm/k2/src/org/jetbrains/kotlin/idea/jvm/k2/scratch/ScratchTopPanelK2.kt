@@ -2,9 +2,6 @@
 package org.jetbrains.kotlin.idea.jvm.k2.scratch
 
 import com.intellij.openapi.actionSystem.*
-import com.intellij.openapi.progress.runBlockingCancellable
-import com.intellij.platform.ide.progress.withBackgroundProgress
-import com.intellij.util.application
 import org.jetbrains.kotlin.idea.jvm.shared.KotlinJvmBundle
 import org.jetbrains.kotlin.idea.jvm.shared.scratch.ScratchFile
 import org.jetbrains.kotlin.idea.jvm.shared.scratch.ScratchFileAutoRunner
@@ -16,18 +13,21 @@ import org.jetbrains.kotlin.idea.jvm.shared.scratch.ui.SmallBorderCheckboxAction
 import org.jetbrains.kotlin.idea.jvm.shared.scratch.updateToolbar
 
 class ScratchTopPanelK2(val scratchFile: K2KotlinScratchFile) {
-    private val moduleChooserAction: ModulesComboBoxAction = ModulesComboBoxAction(scratchFile)
     val actionsToolbar: ActionToolbar
 
     init {
         setupTopPanelUpdateHandlers()
+
+        val modulesComboBoxAction = ModulesComboBoxAction(scratchFile) {
+            actionsToolbar.updateToolbar()
+        }
 
         val toolbarGroup = DefaultActionGroup().apply {
             addAction(RunScratchActionK2())
             addSeparator()
             addAction(ClearScratchAction())
             addSeparator()
-            addAction(moduleChooserAction)
+            addAction(modulesComboBoxAction)
             addAction(IsMakeBeforeRunAction(scratchFile))
             addSeparator()
             addAction(IsInteractiveCheckboxAction())
@@ -58,8 +58,6 @@ class ScratchTopPanelK2(val scratchFile: K2KotlinScratchFile) {
     }
 
     private fun setupTopPanelUpdateHandlers() {
-        scratchFile.addModuleListener { _, _ -> actionsToolbar.updateToolbar() }
-
         val toolbarHandler = createUpdateToolbarHandler()
         scratchFile.executor.addOutputHandler(toolbarHandler)
     }

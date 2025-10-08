@@ -21,7 +21,7 @@ from _pydevd_bundle.pydevd_repr_utils import get_value_repr
 from _pydevd_bundle.pydevd_user_type_renderers_utils import \
     try_get_type_renderer_for_var
 from _pydevd_bundle.pydevd_utils import is_string, should_evaluate_full_value, \
-    should_evaluate_shape, is_safe_to_access, is_container_with_shape_dtype
+    should_evaluate_shape, has_attribute_safe
 
 try:
     import types
@@ -344,10 +344,10 @@ def var_to_xml(val, name, do_trim=True, additional_in_xml='', evaluate_full_valu
     # shape to xml
     xml_shape = ''
     try:
-        if should_evaluate_shape() and is_container_with_shape_dtype(type_qualifier, typeName, v):
-            if hasattr(v, 'shape') and not callable(v.shape):
+        if should_evaluate_shape():
+            if has_attribute_safe(v, 'shape') and not callable(v.shape):
                 xml_shape = ' shape="%s"' % make_valid_xml_value(str(tuple(v.shape)))
-            elif hasattr(v, '__len__') and not is_string(v):
+            elif has_attribute_safe(v, '__len__') and not is_string(v):
                 xml_shape = ' shape="%s"' % make_valid_xml_value("%s" % str(len(v)))
     except:
         pass
@@ -356,7 +356,7 @@ def var_to_xml(val, name, do_trim=True, additional_in_xml='', evaluate_full_valu
     # we use it for view as image
     xml_data_type = ''
     try:
-        if is_container_with_shape_dtype(type_qualifier, typeName, v):
+        if has_attribute_safe(v, "dtype"):
             xml_data_type = ' arrayElementType="%s"' % make_valid_xml_value(str(v.dtype))
     except:
         pass

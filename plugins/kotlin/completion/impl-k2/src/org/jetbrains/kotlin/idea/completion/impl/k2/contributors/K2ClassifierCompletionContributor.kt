@@ -49,9 +49,8 @@ internal open class K2ClassifierCompletionContributor : K2CompletionContributor<
     KotlinNameReferencePositionContext::class
 ), K2ChainCompletionContributor {
 
-    context(_: KaSession)
+    context(_: KaSession, context: K2CompletionSectionContext<KotlinNameReferencePositionContext>)
     private fun filterClassifiers(
-        context: K2CompletionSectionContext<KotlinNameReferencePositionContext>,
         classifierSymbol: KaClassifierSymbol
     ): Boolean {
         if (context.positionContext !is KotlinAnnotationTypeNameReferencePositionContext) return true
@@ -63,13 +62,13 @@ internal open class K2ClassifierCompletionContributor : K2CompletionContributor<
                 KaClassKind.ENUM_CLASS -> false
                 KaClassKind.ANONYMOUS_OBJECT -> false
                 KaClassKind.CLASS, KaClassKind.OBJECT, KaClassKind.COMPANION_OBJECT, KaClassKind.INTERFACE -> {
-                    classifierSymbol.staticDeclaredMemberScope.classifiers.any { filterClassifiers(context, it) }
+                    classifierSymbol.staticDeclaredMemberScope.classifiers.any { filterClassifiers(it) }
                 }
             }
 
             is KaTypeAliasSymbol -> {
                 val expendedClass = (classifierSymbol.expandedType as? KaClassType)?.symbol
-                expendedClass?.let { filterClassifiers(context, it) } == true
+                expendedClass?.let { filterClassifiers(it) } == true
             }
         }
     }
@@ -96,36 +95,34 @@ internal open class K2ClassifierCompletionContributor : K2CompletionContributor<
         val explicitReceiver = position.explicitReceiver
         if (explicitReceiver != null) {
             completion("With Receiver") {
-                completeWithReceiver(explicitReceiver, it)
+                completeWithReceiver(explicitReceiver)
             }
         } else {
             completion("Without Receiver") {
-                completeWithoutReceiverFromScopes(it)
+                completeWithoutReceiverFromScopes()
             }
 
             completion("Without Receiver From index", priority = K2ContributorSectionPriority.FROM_INDEX) {
-                completeWithoutReceiverFromIndex(it)
+                completeWithoutReceiverFromIndex()
             }
         }
     }
 
-    override fun KaSession.shouldExecute(context: K2CompletionSectionContext<KotlinNameReferencePositionContext>): Boolean {
+    context(_: KaSession, context: K2CompletionSectionContext<KotlinNameReferencePositionContext>)
+    override fun shouldExecute(): Boolean {
         return !context.positionContext.isAfterRangeOperator() && !context.positionContext.allowsOnlyNamedArguments()
     }
 
-    context(_: KaSession)
+    context(_: KaSession, context: K2CompletionSectionContext<KotlinNameReferencePositionContext>)
     private fun KaScopeWithKind.completeClassifiers(
-        context: K2CompletionSectionContext<KotlinNameReferencePositionContext>,
         visibilityChecker: CompletionVisibilityChecker,
     ): Sequence<KaClassifierSymbol> = scope
         .classifiers(context.completionContext.scopeNameFilter)
-        .filter { filterClassifiers(context, it) }
+        .filter { filterClassifiers(it) }
         .filter { visibilityChecker.isVisible(it, context.positionContext) }
 
-    context(_: KaSession)
-    private fun completeWithoutReceiverFromScopes(
-        sectionContext: K2CompletionSectionContext<KotlinNameReferencePositionContext>
-    ) {
+    context(_: KaSession, sectionContext: K2CompletionSectionContext<KotlinNameReferencePositionContext>)
+    private fun completeWithoutReceiverFromScopes() {
         val context = sectionContext.weighingContext
         val positionContext = sectionContext.positionContext
         // TODO: Find solution for potentially deduplicating classifiers in index completion
@@ -151,7 +148,7 @@ internal open class K2ClassifierCompletionContributor : K2CompletionContributor<
                     visibilityChecker = sectionContext.visibilityChecker
                 )
             }
-            .filter { classifier -> filterClassifiers(sectionContext, classifier.symbol) }
+            .filter { classifier -> filterClassifiers(classifier.symbol) }
             .flatMap { symbolWithOrigin ->
                 val aliasName = sectionContext.parameters.completionFile.getAliasNameIfExists(symbolWithOrigin.symbol)
 
@@ -173,17 +170,15 @@ internal open class K2ClassifierCompletionContributor : K2CompletionContributor<
                     positionContext = positionContext,
                     visibilityChecker = sectionContext.visibilityChecker,
                 ).map {
-                    it.applyWeighs(context, symbolWithOrigin)
+                    it.applyWeighs(symbolWithOrigin)
                 }
             }
 
         scopeClassifiers.forEach { sectionContext.addElement(it) }
     }
 
-    context(_: KaSession)
-    private fun completeWithoutReceiverFromIndex(
-        sectionContext: K2CompletionSectionContext<KotlinNameReferencePositionContext>
-    ) {
+    context(_: KaSession, sectionContext: K2CompletionSectionContext<KotlinNameReferencePositionContext>)
+    private fun completeWithoutReceiverFromIndex() {
         val weighingContext = sectionContext.weighingContext
         val indexClassifiers = if (sectionContext.prefixMatcher.prefix.isNotEmpty()) {
             getAvailableClassifiersFromIndex(
@@ -192,7 +187,7 @@ internal open class K2ClassifierCompletionContributor : K2CompletionContributor<
                 symbolProvider = sectionContext.symbolFromIndexProvider,
                 scopeNameFilter = sectionContext.completionContext.getIndexNameFilter(),
                 visibilityChecker = sectionContext.visibilityChecker,
-            ).filter { filterClassifiers(sectionContext, it) }
+            ).filter { filterClassifiers(it) }
                 // TODO: We need to find a solution to maybe block index elements we already have available from scope if duplicates arise
                 .flatMap { classifierSymbol ->
                     createClassifierLookupElement(
@@ -207,7 +202,6 @@ internal open class K2ClassifierCompletionContributor : K2CompletionContributor<
                         visibilityChecker = sectionContext.visibilityChecker,
                     ).map {
                         it.applyWeighs(
-                            context = weighingContext,
                             symbolWithOrigin = KtSymbolWithOrigin(classifierSymbol),
                         )
                     }
@@ -219,11 +213,8 @@ internal open class K2ClassifierCompletionContributor : K2CompletionContributor<
         indexClassifiers.forEach { sectionContext.addElement(it) }
     }
 
-    context(_: KaSession)
-    private fun completeWithReceiver(
-        explicitReceiver: KtElement,
-        sectionContext: K2CompletionSectionContext<KotlinNameReferencePositionContext>
-    ) {
+    context(_: KaSession, sectionContext: K2CompletionSectionContext<KotlinNameReferencePositionContext>)
+    private fun completeWithReceiver(explicitReceiver: KtElement) {
         val reference = explicitReceiver.reference()
             ?: return
 
@@ -232,7 +223,7 @@ internal open class K2ClassifierCompletionContributor : K2CompletionContributor<
             symbols.asSequence()
                 .mapNotNull { it.staticScope }
                 .flatMap { scopeWithKind ->
-                    scopeWithKind.completeClassifiers(sectionContext, sectionContext.visibilityChecker)
+                    scopeWithKind.completeClassifiers(sectionContext.visibilityChecker)
                         .map { KtSymbolWithOrigin(it, scopeWithKind.kind) }
                 }.flatMap { symbolWithOrigin ->
                     createClassifierLookupElement(
@@ -240,18 +231,17 @@ internal open class K2ClassifierCompletionContributor : K2CompletionContributor<
                         expectedType = sectionContext.weighingContext.expectedType,
                         positionContext = sectionContext.positionContext,
                         visibilityChecker = sectionContext.visibilityChecker,
-                    ).map { it.applyWeighs(sectionContext.weighingContext, symbolWithOrigin) }
+                    ).map { it.applyWeighs(symbolWithOrigin) }
                 }.forEach { sectionContext.addElement(it) }
         } else {
             sectionContext.sink.registerChainContributor(this)
         }
     }
 
-    context(_: KaSession)
+    context(_: KaSession, context: K2CompletionSectionContext<KotlinExpressionNameReferencePositionContext>)
     override fun createChainedLookupElements(
-        context: K2CompletionSectionContext<KotlinExpressionNameReferencePositionContext>,
         receiverExpression: KtDotQualifiedExpression,
-        importingStrategy: ImportStrategy
+        nameToImport: FqName,
     ): Sequence<LookupElement> {
         val selectorExpression = receiverExpression.selectorExpression ?: return emptySequence()
 
@@ -260,12 +250,12 @@ internal open class K2ClassifierCompletionContributor : K2CompletionContributor<
         return reference.resolveToSymbols()
             .asSequence()
             .mapNotNull { it.staticScope }
-            .flatMap { it.completeClassifiers(context, context.visibilityChecker) }
+            .flatMap { it.completeClassifiers(context.visibilityChecker) }
             .flatMap {
                 createClassifierLookupElement(
                     classifierSymbol = it,
                     expectedType = context.weighingContext.expectedType,
-                    importingStrategy = importingStrategy,
+                    importingStrategy = ImportStrategy.AddImport(nameToImport),
                     positionContext = context.positionContext,
                     visibilityChecker = context.visibilityChecker
                 )

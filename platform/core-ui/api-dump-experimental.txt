@@ -13,5 +13,7 @@
 - getToolTip(Z):java.lang.String
 - hashCode():I
 - paintIcon(java.awt.Component,java.awt.Graphics,I,I):V
+f:com.intellij.ui.SimpleTextAttributes
+- *s:fromMarkupTextKind(com.intellij.openapi.util.text.MarkupText$Kind):com.intellij.ui.SimpleTextAttributes
 f:com.intellij.util.IconUtil
 - *sf:downscaleIconToSize(javax.swing.Icon,I,I):javax.swing.Icon

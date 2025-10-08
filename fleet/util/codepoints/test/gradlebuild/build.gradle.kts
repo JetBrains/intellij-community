@@ -1,6 +1,6 @@
 // IMPORT__MARKER_START
-import fleet.buildtool.jps.module.plugin.configureAtMostOneJvmTargetOrThrow
-import fleet.buildtool.jps.module.plugin.withJavaSourceSet
+import fleet.buildtool.conventions.configureAtMostOneJvmTargetOrThrow
+import fleet.buildtool.conventions.withJavaSourceSet
 // IMPORT__MARKER_END
 plugins {
   alias(libs.plugins.kotlin.multiplatform)
@@ -9,24 +9,16 @@ plugins {
   id("fleet.module-publishing-conventions")
   id("fleet.sdk-repositories-publishing-conventions")
   id("fleet.open-source-module-conventions")
-  id("fleet-build-jps-module-plugin")
-  id("fleet-module")
   alias(libs.plugins.dokka)
   // GRADLE_PLUGINS__MARKER_START
+  id("fleet-module")
   // GRADLE_PLUGINS__MARKER_END
-}
-
-val jpsModuleName = "fleet.util.codepoints.test"
-
-jpsModule {
-  location {
-    moduleName = jpsModuleName
-  }
 }
 
 fleetModule {
   module {
-    name = jpsModuleName
+    name = "fleet.util.codepoints.test"
+    importedFromJps {}
     test {}
   }
 }
@@ -43,20 +35,18 @@ kotlin {
     "-XXLanguage:+AllowEagerSupertypeAccessibilityChecks",
   )
   jvm {}
-  pluginManager.withPlugin("fleet-build-jps-module-plugin") {
-    sourceSets.jvmTest.configure { kotlin.srcDir(layout.projectDirectory.dir("../src")) }
-    configureAtMostOneJvmTargetOrThrow { compilations.named("test") { withJavaSourceSet { javaSourceSet -> javaSourceSet.java.srcDir(layout.projectDirectory.dir("../src")) } } }
-    sourceSets.commonMain.configure { kotlin.srcDir(layout.projectDirectory.dir("../srcCommonMain")) }
-    sourceSets.commonMain.configure { resources.srcDir(layout.projectDirectory.dir("../resourcesCommonMain")) }
-    sourceSets.commonTest.configure { kotlin.srcDir(layout.projectDirectory.dir("../testCommonTest")) }
-    sourceSets.commonTest.configure { resources.srcDir(layout.projectDirectory.dir("../testResourcesCommonTest")) }
-    sourceSets.jvmMain.configure { kotlin.srcDir(layout.projectDirectory.dir("../srcJvmMain")) }
-    configureAtMostOneJvmTargetOrThrow { compilations.named("main") { withJavaSourceSet { javaSourceSet -> javaSourceSet.java.srcDir(layout.projectDirectory.dir("../srcJvmMain")) } } }
-    sourceSets.jvmMain.configure { resources.srcDir(layout.projectDirectory.dir("../resourcesJvmMain")) }
-    sourceSets.jvmTest.configure { kotlin.srcDir(layout.projectDirectory.dir("../testJvmTest")) }
-    configureAtMostOneJvmTargetOrThrow { compilations.named("test") { withJavaSourceSet { javaSourceSet -> javaSourceSet.java.srcDir(layout.projectDirectory.dir("../testJvmTest")) } } }
-    sourceSets.jvmTest.configure { resources.srcDir(layout.projectDirectory.dir("../testResourcesJvmTest")) }
-  }
+  sourceSets.jvmTest.configure { kotlin.srcDir(layout.projectDirectory.dir("../src")) }
+  configureAtMostOneJvmTargetOrThrow { compilations.named("test") { withJavaSourceSet { javaSourceSet -> javaSourceSet.java.srcDir(layout.projectDirectory.dir("../src")) } } }
+  sourceSets.commonMain.configure { kotlin.srcDir(layout.projectDirectory.dir("../srcCommonMain")) }
+  sourceSets.commonMain.configure { resources.srcDir(layout.projectDirectory.dir("../resourcesCommonMain")) }
+  sourceSets.commonTest.configure { kotlin.srcDir(layout.projectDirectory.dir("../srcCommonTest")) }
+  sourceSets.commonTest.configure { resources.srcDir(layout.projectDirectory.dir("../resourcesCommonTest")) }
+  sourceSets.jvmMain.configure { kotlin.srcDir(layout.projectDirectory.dir("../srcJvmMain")) }
+  configureAtMostOneJvmTargetOrThrow { compilations.named("main") { withJavaSourceSet { javaSourceSet -> javaSourceSet.java.srcDir(layout.projectDirectory.dir("../srcJvmMain")) } } }
+  sourceSets.jvmMain.configure { resources.srcDir(layout.projectDirectory.dir("../resourcesJvmMain")) }
+  sourceSets.jvmTest.configure { kotlin.srcDir(layout.projectDirectory.dir("../srcJvmTest")) }
+  configureAtMostOneJvmTargetOrThrow { compilations.named("test") { withJavaSourceSet { javaSourceSet -> javaSourceSet.java.srcDir(layout.projectDirectory.dir("../srcJvmTest")) } } }
+  sourceSets.jvmTest.configure { resources.srcDir(layout.projectDirectory.dir("../resourcesJvmTest")) }
   sourceSets.commonTest.dependencies {
     implementation(jps.org.jetbrains.kotlin.kotlin.stdlib1993400674.get().let { "${it.group}:${it.name}:${it.version}" }) {
       exclude(group = "org.jetbrains", module = "annotations")
@@ -65,6 +55,8 @@ kotlin {
       exclude(group = "org.jetbrains.kotlin", module = "kotlin-stdlib")
     }
     implementation(project(":fleet.util.codepoints"))
+  }
+  sourceSets.jvmTest.dependencies {
     implementation(project(":fleet.junit4"))
   }
   // KOTLIN__MARKER_END

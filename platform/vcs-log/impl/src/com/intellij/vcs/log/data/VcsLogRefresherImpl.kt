@@ -21,6 +21,9 @@ import com.intellij.vcs.log.graph.GraphCommitImpl
 import com.intellij.vcs.log.impl.RequirementsImpl
 import kotlinx.coroutines.*
 import kotlinx.coroutines.channels.Channel
+import kotlinx.coroutines.channels.onClosed
+import kotlinx.coroutines.channels.onFailure
+import kotlinx.coroutines.channels.onSuccess
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.first
@@ -195,15 +198,17 @@ internal class VcsLogRefresherImpl(
 
   @Synchronized
   override fun refresh(rootsToRefresh: Collection<VirtualFile>, optimized: Boolean) {
+    if (rootsToRefresh.isEmpty()) return
+
     refresherJob.start()
-    if (!rootsToRefresh.isEmpty()) {
-      val sent = refreshRequests.trySend(RefreshRequest.RefreshRoots(rootsToRefresh.toSet(), optimized))
-      if (sent.isSuccess) {
-        _isBusy.value = true
-      }
-      else {
-        LOG.error("Failed to send a refresh request")
-      }
+    refreshRequests.trySend(
+      RefreshRequest.RefreshRoots(rootsToRefresh.toSet(), optimized)
+    ).onSuccess {
+      _isBusy.value = true
+    }.onClosed {
+      LOG.warn("Log refresher is already shut down. Refresh will not be performed", it)
+    }.onFailure {
+      LOG.error("Failed to send a VCS log refresh request", it)
     }
   }
 

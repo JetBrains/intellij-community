@@ -5,8 +5,7 @@ import com.intellij.openapi.actionSystem.AnAction
 import com.intellij.openapi.actionSystem.AnActionEvent
 import com.intellij.openapi.extensions.ExtensionPointName
 import com.intellij.openapi.project.Project
-import com.intellij.platform.searchEverywhere.SeSessionEntity
-import fleet.kernel.DurableRef
+import com.intellij.platform.searchEverywhere.SeSession
 import kotlinx.coroutines.CoroutineScope
 import org.jetbrains.annotations.ApiStatus
 
@@ -14,7 +13,8 @@ import org.jetbrains.annotations.ApiStatus
 @ApiStatus.Internal
 interface SeTabFactory {
   val id: String
-  suspend fun getTab(scope: CoroutineScope, project: Project?, sessionRef: DurableRef<SeSessionEntity>, initEvent: AnActionEvent, registerShortcut: (AnAction) -> Unit): SeTab? = null
+
+  suspend fun getTab(scope: CoroutineScope, project: Project?, session: SeSession, initEvent: AnActionEvent, registerShortcut: (AnAction) -> Unit): SeTab? = null
 
   companion object {
     @ApiStatus.Internal

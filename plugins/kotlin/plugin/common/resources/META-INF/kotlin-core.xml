@@ -19,6 +19,10 @@
             interface="org.jetbrains.kotlin.idea.configuration.KotlinProjectConfigurator"
             dynamic="true"/>
     <extensionPoint
+            qualifiedName="org.jetbrains.kotlin.compilerPluginConfigurator"
+            interface="org.jetbrains.kotlin.idea.configuration.KotlinCompilerPluginProjectConfigurator"
+            dynamic="true"/>
+    <extensionPoint
             qualifiedName="org.jetbrains.kotlin.kotlinCompilerVersionProvider"
             interface="org.jetbrains.kotlin.idea.base.plugin.KotlinCompilerVersionProvider"
             dynamic="true"/>
@@ -130,6 +134,9 @@
     <applicationService serviceImplementation="org.jetbrains.kotlin.idea.editor.KotlinEditorOptions"/>
     <applicationActivity implementation="org.jetbrains.kotlin.idea.macros.ApplicationWideKotlinBundledPathMacroCleaner"/>
 
+    <applicationService serviceInterface="com.siyeh.ig.dependency.KotlinExtensionMemberChecker"
+                        serviceImplementation="org.jetbrains.uast.kotlin.internal.KotlinExtensionMemberCheckerImpl"/>
+
     <projectService
             serviceInterface="org.jetbrains.kotlin.idea.facet.KotlinFacetEditorProviderService"
             serviceImplementation="org.jetbrains.kotlin.idea.base.compilerPreferences.KotlinFacetEditorProviderServiceImpl"/>
@@ -145,7 +152,6 @@
             key="kotlin.language.configurable"
             id="preferences.language.Kotlin"
             instance="org.jetbrains.kotlin.idea.configuration.KotlinLanguageConfiguration"/>
-    <search.optionContributor implementation="org.jetbrains.kotlin.idea.configuration.KotlinPluginSwitchSearchOptionContributor"/>
 
     <projectConfigurable
             instance="org.jetbrains.kotlin.idea.base.compilerPreferences.configuration.KotlinCompilerConfigurableTab"
@@ -228,11 +234,6 @@
             key="kotlin.code-vision.inheritors"
             description="Enable Code-Vision inheritors search"
             defaultValue="false"
-            restartRequired="false"/>
-    <registryKey
-            key="kotlin.experimental.new.j2k"
-            description="Enable new Java to Kotlin converter"
-            defaultValue="true"
             restartRequired="false"/>
     <registryKey
             key="kotlin.disable.auto.completion.inside.expression"
@@ -422,7 +423,6 @@
     <editorFileSwapper implementation="org.jetbrains.kotlin.idea.editor.KotlinEditorFileSwapper"/>
 
     <copyPastePreProcessor implementation="org.jetbrains.kotlin.idea.editor.KDocCopyPastePreProcessor"/>
-    <copyPastePreProcessor implementation="org.jetbrains.kotlin.idea.editor.KotlinLiteralCopyPasteProcessor"/>
 
     <registryKey
             key="kotlin.enable.inlay.hint.for.lambda.return.type"

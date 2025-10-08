@@ -22,6 +22,7 @@ import com.intellij.psi.impl.source.resolve.reference.impl.PsiMultiReference;
 import com.intellij.psi.meta.PsiMetaData;
 import com.intellij.psi.util.PsiUtilCore;
 import com.intellij.util.containers.ContainerUtil;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -32,6 +33,7 @@ import static com.intellij.patterns.StandardPatterns.not;
 /**
  * @deprecated see {@link CompletionContributor}
  */
+@ApiStatus.Internal
 @Deprecated(forRemoval = true)
 public class CompletionData {
   private static final Logger LOG = Logger.getInstance(CompletionData.class);
@@ -54,6 +56,7 @@ public class CompletionData {
   /**
    * @deprecated see {@link CompletionContributor}
    */
+  @ApiStatus.Internal
   @Deprecated(forRemoval = true)
   protected void registerVariant(CompletionVariant variant){
     myCompletionVariants.add(variant);
@@ -145,6 +148,7 @@ public class CompletionData {
   /**
    * @deprecated Use {@link CompletionUtil} methods instead
    */
+  @ApiStatus.Internal
   @Deprecated(forRemoval = true)
   public static @NotNull String findPrefixStatic(final PsiElement insertedElement, final int offsetInFile) {
     return findPrefixStatic(insertedElement, offsetInFile, NOT_JAVA_ID);

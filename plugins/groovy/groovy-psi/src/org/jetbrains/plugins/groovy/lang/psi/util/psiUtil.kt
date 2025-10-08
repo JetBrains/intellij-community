@@ -1,4 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.plugins.groovy.lang.psi.util
 
 import com.intellij.lang.jvm.types.JvmArrayType
@@ -42,7 +42,7 @@ import org.jetbrains.plugins.groovy.lang.psi.util.GroovyCommonClassNames.GROOVY_
 fun modifierListMayBeEmpty(owner: PsiElement?): Boolean = when (owner) {
   is GrParameter -> owner.parent.let {
     if (it is GrParameterList) return true
-    if (it is GrForInClause && it.delimiter.node.elementType == kIN) return true
+    if (it is GrForInClause && it.delimiter?.node?.elementType == kIN) return true
     return owner.typeElementGroovy != null
   }
   is GrMethod -> owner.isConstructor || owner.returnTypeElementGroovy != null && !owner.hasTypeParameters()

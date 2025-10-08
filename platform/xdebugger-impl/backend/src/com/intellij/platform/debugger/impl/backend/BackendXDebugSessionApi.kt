@@ -12,6 +12,7 @@ import com.intellij.openapi.application.EDT
 import com.intellij.openapi.application.readAction
 import com.intellij.openapi.editor.event.DocumentEvent
 import com.intellij.openapi.editor.event.DocumentListener
+import com.intellij.openapi.project.IndexNotReadyException
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.NlsContexts
 import com.intellij.platform.debugger.impl.rpc.*
@@ -27,6 +28,7 @@ import com.intellij.xdebugger.impl.XDebugSessionImpl
 import com.intellij.xdebugger.impl.XSteppingSuspendContext
 import com.intellij.xdebugger.impl.frame.ColorState
 import com.intellij.xdebugger.impl.frame.XDebuggerFramesList
+import com.intellij.xdebugger.impl.rpc.XDebugSessionDataId
 import com.intellij.xdebugger.impl.rpc.XDebugSessionId
 import com.intellij.xdebugger.impl.rpc.XExecutionStackId
 import com.intellij.xdebugger.impl.rpc.XStackFrameId
@@ -42,10 +44,7 @@ import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.channels.BufferOverflow
 import kotlinx.coroutines.channels.Channel
 import kotlinx.coroutines.channels.awaitClose
-import kotlinx.coroutines.flow.Flow
-import kotlinx.coroutines.flow.buffer
-import kotlinx.coroutines.flow.channelFlow
-import kotlinx.coroutines.flow.emptyFlow
+import kotlinx.coroutines.flow.*
 import kotlinx.coroutines.future.asDeferred
 import kotlinx.coroutines.withContext
 import org.jetbrains.concurrency.await
@@ -134,13 +133,18 @@ internal class BackendXDebugSessionApi : XDebugSessionApi {
     val scope = session.currentSuspendCoroutineScope ?: return emptyList()
     val handler = session.debugProcess.smartStepIntoHandler ?: return emptyList()
     val sourcePosition = session.topFramePosition ?: return emptyList()
-    return computeVariants(handler, sourcePosition).map { variant ->
-      val id = variant.storeGlobally(scope, session)
-      readAction {
-        val textRange = variant.highlightRange?.let { it.startOffset to it.endOffset }
-        val forced = variant is ForceSmartStepIntoSource && variant.needForceSmartStepInto()
-        XSmartStepIntoTargetDto(id, variant.icon?.rpcId(), variant.text, variant.description, textRange, forced)
+    try {
+      return computeVariants(handler, sourcePosition).map { variant ->
+        val id = variant.storeGlobally(scope, session)
+        readAction {
+          val textRange = variant.highlightRange?.let { it.startOffset to it.endOffset }
+          val forced = variant is ForceSmartStepIntoSource && variant.needForceSmartStepInto()
+          XSmartStepIntoTargetDto(id, variant.icon?.rpcId(), variant.text, variant.description, textRange, forced)
+        }
       }
+    }
+    catch (_: IndexNotReadyException) {
+      return emptyList()
     }
   }
 
@@ -233,8 +237,8 @@ internal class BackendXDebugSessionApi : XDebugSessionApi {
     }
   }
 
-  override suspend fun muteBreakpoints(sessionId: XDebugSessionId, muted: Boolean) {
-    val session = sessionId.findValue() ?: return
+  override suspend fun muteBreakpoints(sessionDataId: XDebugSessionDataId, muted: Boolean) {
+    val session = sessionDataId.findValue()?.session ?: return
     withContext(Dispatchers.EDT) {
       session.setBreakpointMuted(muted)
     }
@@ -254,14 +258,19 @@ internal suspend fun createBackendDocument(
     val backendDocument = editorsProvider.createDocument(project, originalExpression, sourcePosition?.sourcePosition(), evaluationMode)
     val backendDocumentId = backendDocument.bindToFrontend(frontendDocumentId, project)
     val expressionFlow = channelFlow {
+      val changedFlow = MutableSharedFlow<Unit>(1, 1, BufferOverflow.DROP_OLDEST)
       backendDocument.addDocumentListener(object : DocumentListener {
         override fun documentChanged(event: DocumentEvent) {
-          val updatedExpression = editorsProvider.createExpression(project, backendDocument, originalExpression.language, evaluationMode)
-          trySend(updatedExpression.toRpc())
+          changedFlow.tryEmit(Unit)
         }
       }, this.asDisposable())
-      awaitClose()
-    }.buffer(1, BufferOverflow.DROP_OLDEST)
+      changedFlow.collectLatest {
+        // Some implementations might rely on PSI
+        backendDocument.awaitCommited(project)
+        val updatedExpression = editorsProvider.createExpression(project, backendDocument, originalExpression.language, evaluationMode)
+        send(updatedExpression.toRpc())
+      }
+    }
     XExpressionDocumentDto(backendDocumentId, expressionFlow.toRpc())
   }
 }

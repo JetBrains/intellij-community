@@ -16,7 +16,6 @@ import org.jetbrains.kotlin.executeOnPooledThreadInReadAction
 import org.jetbrains.kotlin.idea.KotlinLanguage
 import org.jetbrains.kotlin.idea.base.test.IgnoreTests
 import org.jetbrains.kotlin.idea.base.test.InTextDirectivesUtils
-import org.jetbrains.kotlin.idea.base.util.registryFlag
 import org.jetbrains.kotlin.idea.test.*
 import org.jetbrains.kotlin.idea.test.util.slashedPath
 import org.jetbrains.kotlin.psi.KtFile
@@ -27,7 +26,7 @@ abstract class AbstractParameterInfoTest : KotlinLightCodeInsightFixtureTestCase
     private var mockLibraryFacility: MockLibraryFacility? = null
     override fun getProjectDescriptor(): LightProjectDescriptor = ProjectDescriptorWithStdlibSources.getInstanceWithStdlibSources()
 
-    protected var isMultiline by registryFlag("kotlin.multiline.function.parameters.info")
+    protected open val isMultiline: Boolean = false
 
     override fun setUp() {
         super.setUp()
@@ -72,66 +71,68 @@ abstract class AbstractParameterInfoTest : KotlinLightCodeInsightFixtureTestCase
 
         val originalFileText = file.text
         withCustomCompilerOptions(originalFileText, project, myFixture.module) {
+            withRegistry("kotlin.multiline.function.parameters.info", isMultiline, testRootDisposable) {
+                val context = ShowParameterInfoContext(editor, project, file, editor.caretModel.offset, -1, true)
 
-            val context = ShowParameterInfoContext(editor, project, file, editor.caretModel.offset, -1, true)
+                lateinit var handler: ParameterInfoHandler<PsiElement, Any>
+                lateinit var mockCreateParameterInfoContext: MockCreateParameterInfoContext
+                lateinit var parameterOwner: PsiElement
+                executeOnPooledThreadInReadAction {
+                    if (file is KtFile) {
+                        val handlers =
+                            ShowParameterInfoHandler.getHandlers(project, KotlinLanguage.INSTANCE)
+                        @Suppress("UNCHECKED_CAST")
+                        handler =
+                            handlers.firstOrNull { it.findElementForParameterInfo(context) != null } as? ParameterInfoHandler<PsiElement, Any>
+                                ?: error("Could not find parameter info handler")
+                    } else {
+                        val handlers =
+                            ShowParameterInfoHandler.getHandlers(project, JavaLanguage.INSTANCE)
+                        handler =
+                            handlers.firstOrNull { it.findElementForParameterInfo(context) != null } as? ParameterInfoHandler<PsiElement, Any>
+                                ?: error("Could not find parameter info handler")
+                    }
 
-            lateinit var handler: ParameterInfoHandler<PsiElement, Any>
-            lateinit var mockCreateParameterInfoContext: MockCreateParameterInfoContext
-            lateinit var parameterOwner: PsiElement
-            executeOnPooledThreadInReadAction {
-                if (file is KtFile) {
-                    val handlers =
-                        ShowParameterInfoHandler.getHandlers(project, KotlinLanguage.INSTANCE)
-                    @Suppress("UNCHECKED_CAST")
-                    handler =
-                        handlers.firstOrNull { it.findElementForParameterInfo(context) != null } as? ParameterInfoHandler<PsiElement, Any>
-                            ?: error("Could not find parameter info handler")
-                } else {
-                    val handlers =
-                        ShowParameterInfoHandler.getHandlers(project, JavaLanguage.INSTANCE)
-                    handler = handlers.firstOrNull { it.findElementForParameterInfo(context) != null } as? ParameterInfoHandler<PsiElement, Any>
-                        ?: error("Could not find parameter info handler")
+                    mockCreateParameterInfoContext = MockCreateParameterInfoContext(file, myFixture)
+                    parameterOwner = handler.findElementForParameterInfo(mockCreateParameterInfoContext) as PsiElement
                 }
 
-                mockCreateParameterInfoContext = MockCreateParameterInfoContext(file, myFixture)
-                parameterOwner = handler.findElementForParameterInfo(mockCreateParameterInfoContext) as PsiElement
-            }
-
-            val textToType = InTextDirectivesUtils.findStringWithPrefixes(originalFileText, "// TYPE:")
-            if (textToType != null) {
-                myFixture.type(textToType)
-                PsiDocumentManager.getInstance(project).commitAllDocuments()
-            }
-
-            lateinit var parameterInfoUIContext: MockParameterInfoUIContext
-            executeOnPooledThreadInReadAction {
-                //to update current parameter index
-                val updateContext = MockUpdateParameterInfoContext(file, myFixture, mockCreateParameterInfoContext)
-                val elementForUpdating = handler.findElementForUpdatingParameterInfo(updateContext)
-                if (elementForUpdating != null) {
-                    handler.updateParameterInfo(elementForUpdating, updateContext)
+                val textToType = InTextDirectivesUtils.findStringWithPrefixes(originalFileText, "// TYPE:")
+                if (textToType != null) {
+                    myFixture.type(textToType)
+                    PsiDocumentManager.getInstance(project).commitAllDocuments()
                 }
-                parameterInfoUIContext = MockParameterInfoUIContext(parameterOwner, updateContext.currentParameter)
-            }
 
-
-            mockCreateParameterInfoContext.itemsToShow?.forEach {
-                handler.updateUI(it, parameterInfoUIContext)
-            }
-
-
-            val actual = parameterInfoUIContext.resultText
-
-            val expectedFile = run {
-                val extension = when {
-                    isFirPlugin && !isMultiline -> "k2.txt"
-                    isFirPlugin && isMultiline -> "k2_multiline.txt"
-                    else -> "k1.txt"
+                lateinit var parameterInfoUIContext: MockParameterInfoUIContext
+                executeOnPooledThreadInReadAction {
+                    //to update current parameter index
+                    val updateContext = MockUpdateParameterInfoContext(file, myFixture, mockCreateParameterInfoContext)
+                    val elementForUpdating = handler.findElementForUpdatingParameterInfo(updateContext)
+                    if (elementForUpdating != null) {
+                        handler.updateParameterInfo(elementForUpdating, updateContext)
+                    }
+                    parameterInfoUIContext = MockParameterInfoUIContext(parameterOwner, updateContext.currentParameter)
                 }
-                mainFile.toPath().resolveSibling("${mainFile.nameWithoutExtension}.${extension}")
-            }
 
-            KotlinTestUtils.assertEqualsToFile(expectedFile, actual)
+
+                mockCreateParameterInfoContext.itemsToShow?.forEach {
+                    handler.updateUI(it, parameterInfoUIContext)
+                }
+
+
+                val actual = parameterInfoUIContext.resultText
+
+                val expectedFile = run {
+                    val extension = when {
+                        isFirPlugin && !isMultiline -> "k2.txt"
+                        isFirPlugin && isMultiline -> "k2_multiline.txt"
+                        else -> "k1.txt"
+                    }
+                    mainFile.toPath().resolveSibling("${mainFile.nameWithoutExtension}.${extension}")
+                }
+
+                KotlinTestUtils.assertEqualsToFile(expectedFile, actual)
+            }
         }
     }
 }

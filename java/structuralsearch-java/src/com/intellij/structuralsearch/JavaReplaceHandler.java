@@ -534,7 +534,7 @@ public class JavaReplaceHandler extends StructuralReplaceHandler {
         if (replacement instanceof PsiTryStatement tryStatement) {
           final List<? extends PsiElement> unmatchedElements = elementToReplace.getUserData(GlobalMatchingVisitor.UNMATCHED_ELEMENTS_KEY);
           if (unmatchedElements != null && !unmatchedElements.isEmpty()) {
-            final PsiElement firstElement = unmatchedElements.get(0);
+            final PsiElement firstElement = unmatchedElements.getFirst();
             if (firstElement instanceof PsiResourceList) addElementAfterAnchor(tryStatement, firstElement, tryStatement.getFirstChild());
             outer:
             for (final PsiElement element : unmatchedElements) {
@@ -558,7 +558,7 @@ public class JavaReplaceHandler extends StructuralReplaceHandler {
                 }
               }
             }
-            final PsiElement lastElement = unmatchedElements.get(unmatchedElements.size() - 1);
+            final PsiElement lastElement = unmatchedElements.getLast();
             if (lastElement instanceof PsiCodeBlock) {
               final PsiElement finallyKeyword = PsiTreeUtil.skipWhitespacesBackward(lastElement);
               assert finallyKeyword != null;

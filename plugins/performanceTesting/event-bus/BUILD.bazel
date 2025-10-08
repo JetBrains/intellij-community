@@ -1,9 +1,9 @@
 ### auto-generated section `build intellij.tools.ide.starter.bus` start
-load("@rules_jvm//:jvm.bzl", "jvm_library", "jvm_resources")
+load("@rules_jvm//:jvm.bzl", "jvm_library", "resourcegroup")
 
-jvm_resources(
+resourcegroup(
   name = "tools-ide-starter-bus_resources",
-  files = glob(["resources/**/*"]),
+  srcs = glob(["resources/**/*"]),
   strip_prefix = "resources"
 )
 
@@ -12,15 +12,15 @@ jvm_library(
   module_name = "intellij.tools.ide.starter.bus",
   visibility = ["//visibility:public"],
   srcs = glob(["src/**/*.kt", "src/**/*.java", "src/**/*.form"], allow_empty = True),
+  resources = [":tools-ide-starter-bus_resources"],
   deps = [
     "@lib//:kotlin-stdlib",
     "@lib//:kotlinx-coroutines-core",
-    "@lib//:jackson",
-    "@lib//:jackson-module-kotlin",
-    "@lib//:jackson-databind",
-    "@lib//:kotlin-reflect",
-  ],
-  runtime_deps = [":tools-ide-starter-bus_resources"]
+    "//libraries/jackson/jackson",
+    "//libraries/jackson/module-kotlin:libraries-jackson-module-kotlin",
+    "//libraries/jackson/databind",
+    "//libraries/kotlin-reflect",
+  ]
 )
 
 jvm_library(
@@ -32,12 +32,11 @@ jvm_library(
     "@lib//:kotlin-stdlib",
     "@lib//:kotlinx-coroutines-core",
     "@lib//:junit5",
-    "@lib//:jackson",
-    "@lib//:jackson-module-kotlin",
-    "@lib//:jackson-databind",
-    "@lib//:kotlin-reflect",
-  ],
-  runtime_deps = [":tools-ide-starter-bus_resources"]
+    "//libraries/jackson/jackson",
+    "//libraries/jackson/module-kotlin:libraries-jackson-module-kotlin",
+    "//libraries/jackson/databind",
+    "//libraries/kotlin-reflect",
+  ]
 )
 ### auto-generated section `build intellij.tools.ide.starter.bus` end
 

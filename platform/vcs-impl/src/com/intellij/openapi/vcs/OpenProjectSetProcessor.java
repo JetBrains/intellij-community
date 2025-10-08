@@ -37,7 +37,7 @@ final class OpenProjectSetProcessor extends ProjectSetProcessor {
     // no "project" entry
     VirtualFile dir = LocalFileSystem.getInstance().refreshAndFindFileByPath(root);
     if (dir != null) {
-      Project project = PlatformProjectOpenProcessor.getInstance().doOpenProject(dir, null, false);
+      Project project = PlatformProjectOpenProcessor.openProjectLegacyJavaApi(dir, null, false);
       if (project != null) {
         runNext.run();
       }

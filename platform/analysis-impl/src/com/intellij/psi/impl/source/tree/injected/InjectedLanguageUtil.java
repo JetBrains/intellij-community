@@ -10,7 +10,6 @@ import com.intellij.lang.ASTNode;
 import com.intellij.lang.Language;
 import com.intellij.lang.injection.InjectedLanguageManager;
 import com.intellij.lang.injection.MultiHostRegistrar;
-import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.editor.Caret;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.editor.Editor;
@@ -352,7 +351,7 @@ public final class InjectedLanguageUtil extends InjectedLanguageUtilBase {
                (DocumentEx)hostDocument,
                indicator, oldRoot, newRoot, documentManager);
     if (runnable == null) {
-      ApplicationManager.getApplication().getService(InjectedEditorWindowTracker.class).disposeEditorFor(injectedDocument);
+      InjectedEditorWindowTracker.getInstance().disposeEditorFor(injectedDocument);
     }
     return runnable;
   }

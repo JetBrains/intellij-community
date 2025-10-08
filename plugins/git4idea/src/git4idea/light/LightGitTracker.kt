@@ -35,7 +35,7 @@ import java.util.*
 private val LOG = Logger.getInstance("#git4idea.light.LightGitTracker")
 
 @Service
-class LightGitTracker : Disposable {
+internal class LightGitTracker : Disposable {
   private val disposableFlag = Disposer.newCheckedDisposable()
   private val lightEditService = LightEditService.getInstance()
   private val lightEditorManager = lightEditService.editorManager
@@ -71,8 +71,7 @@ class LightGitTracker : Disposable {
 
     singleTaskController.request(Request.CheckGit)
     runInEdt(disposableFlag) {
-      singleTaskController.sendRequests(locationRequest(lightEditService.selectedFile),
-                                        statusRequest(lightEditorManager.openFiles))
+      singleTaskController.sendRequests(locationRequest(lightEditService.getSelectedFile()), statusRequest(lightEditorManager.openFiles))
     }
   }
 
@@ -155,7 +154,7 @@ class LightGitTracker : Disposable {
   private inner class MyFrameStateListener : ApplicationActivationListener {
     override fun applicationActivated(ideFrame: IdeFrame) {
       singleTaskController.sendRequests(Request.CheckGit,
-                                        locationRequest(lightEditService.selectedFile),
+                                        locationRequest(lightEditService.getSelectedFile()),
                                         statusRequest(lightEditorManager.openFiles))
     }
   }

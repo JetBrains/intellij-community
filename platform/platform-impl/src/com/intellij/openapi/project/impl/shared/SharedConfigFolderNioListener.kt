@@ -1,19 +1,30 @@
 // Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+@file:Suppress("ReplaceGetOrSet")
+
 package com.intellij.openapi.project.impl.shared
 
 import com.intellij.diagnostic.LoadingState
-import com.intellij.execution.process.ProcessIOExecutorService
 import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.application.PathManager
+import com.intellij.openapi.components.impl.stores.ComponentStoreOwner
 import com.intellij.openapi.diagnostic.debug
 import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.diagnostic.trace
-import com.intellij.util.containers.ContainerUtil
-import com.intellij.util.io.createDirectories
+import com.intellij.openapi.util.io.NioFiles
+import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.coroutineScope
+import kotlinx.coroutines.delay
+import kotlinx.coroutines.ensureActive
+import kotlinx.coroutines.launch
+import kotlinx.coroutines.runInterruptible
+import kotlinx.coroutines.sync.Semaphore
+import kotlinx.coroutines.sync.withPermit
+import kotlinx.coroutines.withContext
 import java.io.IOException
 import java.nio.file.*
 import java.nio.file.attribute.BasicFileAttributes
-import java.util.concurrent.CompletableFuture
+import java.util.concurrent.TimeUnit
 import kotlin.io.path.invariantSeparatorsPathString
 import kotlin.io.path.isDirectory
 import kotlin.io.path.listDirectoryEntries
@@ -21,52 +32,78 @@ import kotlin.io.path.listDirectoryEntries
 /**
  * @param root $ROOT_CONFIG$ to watch (aka <config>, idea.config.path)
  */
-internal class SharedConfigFolderNioListener(private val root: Path, private val configFilesUpdatedByThisProcess: ConfigFilesUpdatedByThisProcess) {
+internal class SharedConfigFolderNioListener(
+  private val root: Path,
+  private val configFilesUpdatedByThisProcess: ConfigFilesUpdatedByThisProcess,
+) {
   private val watcher = FileSystems.getDefault().newWatchService()
-  private val keys = mutableMapOf<WatchKey, Path>()
+  private val keys = HashMap<WatchKey, Path>()
 
-  fun init() {
-    root.createDirectories()
-    watchPath(root)
-    root.listDirectoryEntries().forEach { subRoot ->
-      if (subRoot.isDirectory() && subRoot.fileName.toString() in namesOfConfigSubDirectories) {
-        walkDirectory(subRoot) { path, isDirectory ->
-          if (isDirectory) watchPath(path)
+  suspend fun init() {
+    withContext(Dispatchers.IO) {
+      NioFiles.createDirectories(root)
+      watchPath(root)
+      for (subRoot in root.listDirectoryEntries()) {
+        if (subRoot.fileName.toString() in namesOfConfigSubDirectories && subRoot.isDirectory()) {
+          walkDirectory(subRoot) { path, isDirectory ->
+            if (isDirectory) {
+              watchPath(path)
+            }
+          }
         }
       }
     }
 
-    CompletableFuture.runAsync(
-      {
-        val modified = mutableSetOf<String>()
-        val deleted = mutableSetOf<String>()
-        while (true) {
-          try {
-            val watchKey = watcher.take()
-            val path = keys[watchKey] ?: continue
+    coroutineScope {
+      val reloadSemaphore = Semaphore(1)
+      val modified = mutableSetOf<String>()
+      val deleted = mutableSetOf<String>()
+      while (true) {
+        ensureActive()
+        try {
+          val watchKey = runInterruptible(Dispatchers.IO) { 
+            watcher.poll(10, TimeUnit.SECONDS)
+          }
+          if (watchKey == null) {
+            // non-blocking delay between polls
+            delay(50)
+            continue
+          }
+          
+          val path = keys.get(watchKey) ?: continue
 
-            val events = watchKey.pollEvents()
-            val valid = watchKey.reset()
-            if (!valid) {
-              keys.remove(watchKey)
-            }
+          val events = watchKey.pollEvents()
+          val valid = watchKey.reset()
+          if (!valid) {
+            keys.remove(watchKey)
+          }
 
-            processEvents(path, events, modified, deleted)
-          }
-          catch (ignored: InterruptedException) {
-          }
-          catch (e: ClosedWatchServiceException) {
-            break
-          }
+          processEvents(
+            path = path,
+            events = events,
+            modified = modified,
+            deleted = deleted,
+            reloadScope = this@coroutineScope,
+            reloadSemaphore = reloadSemaphore,
+          )
         }
-      }, ProcessIOExecutorService.INSTANCE)
-      .exceptionally { t: Throwable ->
-        logger<SharedConfigFolderNioListener>().error(t)
-        null
+        catch (_: InterruptedException) {
+        }
+        catch (_: ClosedWatchServiceException) {
+          break
+        }
       }
+    }
   }
 
-  private fun processEvents(path: Path, events: MutableList<WatchEvent<*>>, modified: MutableSet<String>, deleted: MutableSet<String>) {
+  private fun processEvents(
+    path: Path,
+    events: MutableList<WatchEvent<*>>,
+    modified: MutableSet<String>,
+    deleted: MutableSet<String>,
+    reloadScope: CoroutineScope,
+    reloadSemaphore: Semaphore,
+  ) {
     for (event in events) {
       val kind = event.kind()
       val fileName = event.context() as? Path ?: continue
@@ -109,7 +146,9 @@ internal class SharedConfigFolderNioListener(private val root: Path, private val
                   watchPath(path)
                 }
                 else {
-                  ContainerUtil.addIfNotNull(modified, getSpecFor(path))
+                  getSpecFor(path)?.let {
+                    modified.add(it)
+                  }
                 }
               }
             }
@@ -118,7 +157,7 @@ internal class SharedConfigFolderNioListener(private val root: Path, private val
             }
           }
         }
-        catch (ignore: IOException) {
+        catch (_: IOException) {
         }
       }
     }
@@ -128,12 +167,18 @@ internal class SharedConfigFolderNioListener(private val root: Path, private val
       val deletedToReload = LinkedHashSet(deleted)
       modified.clear()
       deleted.clear()
-      ApplicationManager.getApplication()?.invokeLater {
-        SharedConfigFolderUtil.reloadComponents(modifiedToReload, deletedToReload)
+      reloadScope.launch {
+        val componentStore = (ApplicationManager.getApplication() as ComponentStoreOwner).componentStore
+        reloadSemaphore.withPermit {
+          SharedConfigFolderUtil.reloadComponents(
+            changedFileSpecs = modifiedToReload,
+            deletedFileSpecs = deletedToReload,
+            componentStore = componentStore,
+          )
+        }
       }
     }
   }
-
 
   private fun watchPath(path: Path) {
     try {

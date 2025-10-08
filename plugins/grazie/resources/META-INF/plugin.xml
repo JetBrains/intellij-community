@@ -25,41 +25,58 @@
 
   <dependencies>
     <module name="intellij.libraries.lucene.common"/>
-    <module name="intellij.libraries.ai.grazie.spell.gec.engine.local"/>
     <module name="intellij.spellchecker"/>
     <module name="intellij.platform.vcs.impl"/>
+    <module name="intellij.libraries.grpc"/>
   </dependencies>
 
-  <content>
+  <content namespace="jetbrains">
     <module name="intellij.grazie.java"/>
     <module name="intellij.grazie.json"/>
     <module name="intellij.grazie.markdown"/>
     <module name="intellij.grazie.properties"/>
     <module name="intellij.grazie.xml"/>
     <module name="intellij.grazie.yaml"/>
+    <module name="intellij.libraries.ai.grazie.spell.gec.engine.local" loading="embedded"/>
   </content>
 
   <extensions defaultExtensionNs="com.intellij">
-    <applicationConfigurable
-      parentId="proofread"
-      instance="com.intellij.grazie.ide.ui.configurable.StyleConfigurable"
-      key="grazie.settings.style.configurable.name"
-      bundle="messages.GrazieBundle"
-      id="reference.settings.grazie"/>
+    <projectConfigurable parentId="proofread" instance="com.intellij.grazie.spellcheck.settings.SpellCheckerSettingsManager"
+                         id="reference.settings.ide.settings.spelling"
+                         key="spelling"
+                         bundle="messages.SpellCheckerBundle" />
 
     <applicationService serviceImplementation="com.intellij.grazie.GrazieConfig"/>
 
     <backgroundPostStartupActivity implementation="com.intellij.grazie.ide.notification.GrazieNotificationComponent"/>
+    <postStartupActivity implementation="com.intellij.grazie.spellcheck.engine.GrazieSpellCheckerEngine$SpellerLoadActivity"/>
 
     <!-- getDisplayName is overridden in GrazieInspection itself! Placeholder is required to suppress validation. -->
-    <localInspection bundle="messages.GrazieBundle" groupKey="grazie.group.name" enabledByDefault="true" shortName="GrazieInspection"
+    <localInspection bundle="messages.GrazieBundle" groupKey="grazie.group.name" enabledByDefault="true" shortName="GrazieInspectionRunner"
                      implementationClass="com.intellij.grazie.ide.inspection.grammar.GrazieInspection"
+                     level="NON_SWITCHABLE_WARNING" key="grazie.grammar.inspection.grammar.text" language=""/>
+
+    <localInspection bundle="messages.GrazieBundle" groupKey="grazie.group.name" enabledByDefault="true" shortName="GrazieInspection"
+                     implementationClass="com.intellij.grazie.ide.inspection.grammar.GrazieInspection$Grammar"
                      level="GRAMMAR_ERROR" key="grazie.grammar.inspection.grammar.text" language=""/>
+
+    <localInspection groupKey="grazie.group.name" enabledByDefault="true" shortName="GrazieStyle"
+                     implementationClass="com.intellij.grazie.ide.inspection.grammar.GrazieInspection$Style"
+                     level="STYLE_SUGGESTION" key="grazie.style.inspection.display.name" language=""
+                     bundle="messages.GrazieBundle"/>
 
     <localInspection bundle="messages.GrazieBundle" groupKey="grazie.group.name" enabledByDefault="true"
                      shortName="LanguageDetectionInspection"
                      implementationClass="com.intellij.grazie.ide.inspection.detection.LanguageDetectionInspection"
                      level="WEAK WARNING" key="grazie.detection.inspection.text" language=""/>
+
+    <localInspection shortName="SpellCheckingInspection" bundle="messages.SpellCheckerBundle"
+                     key="spellchecking.inspection.name" groupKey="proofread" enabledByDefault="true" level="TYPO"
+                     language=""
+                     implementationClass="com.intellij.grazie.spellcheck.GrazieSpellCheckingInspection"/>
+
+    <projectService serviceImplementation="com.intellij.grazie.spellcheck.engine.GrazieSpellCheckerEngine"
+                    serviceInterface="com.intellij.spellchecker.engine.SpellCheckerEngine"/>
 
     <applicationConfigurable parentId="editor" instance="com.intellij.grazie.ide.ui.proofreading.ProofreadConfigurable" id="proofread"
                              key="configurable.group.proofread.settings.display.name" bundle="messages.OptionsBundle"/>
@@ -75,6 +92,7 @@
     <statistics.notificationIdsHolder implementation="com.intellij.grazie.ide.notification.GrazieNotificationIds"/>
 
     <spellchecker.dictionary.runtimeDictionaryProvider implementation="com.intellij.grazie.spellcheck.GrazieDictionaryProvider"/>
+    <spellchecker.dictionary.customDictionaryProvider implementation="com.intellij.grazie.spellcheck.hunspell.HunspellDictionaryProvider"/>
     <notificationGroup id="Proofreading missing languages information" displayType="STICKY_BALLOON" bundle="messages.GrazieBundle"
                        key="grazie.notification.missing-languages.group"/>
 
@@ -90,23 +108,19 @@
 
     <severitiesProvider implementation="com.intellij.grazie.ide.TextProblemSeverities"/>
     <spellchecker.lifecycle implementation="com.intellij.grazie.spellcheck.GrazieSpellcheckerLifecycle"/>
-    <spellchecker.extension implementation="com.intellij.grazie.spellcheck.GrazieSpellcheckingExtension"/>
+    <nameSuggestionProvider id="SpellcheckingSuggestionProvider" implementation="com.intellij.grazie.spellcheck.suggestion.SpellcheckingNameSuggestionProvider" order="first"/>
 
     <registryKey key="spellchecker.grazie.enabled" defaultValue="true" description="Enables Grazie text-level spellchecking"/>
     <registryKey key="grazie.skip.precommit.checks"
                  defaultValue="true"
                  description="Controls whether expensive linguistic checks should be performed during pre-commit code analysis"/>
-    <localInspection groupKey="grazie.group.name" enabledByDefault="true" shortName="GrazieStyle"
-                     implementationClass="com.intellij.grazie.style.StyleInspection"
-                     level="STYLE_SUGGESTION" key="grazie.style.inspection.display.name" language=""
-                     bundle="messages.GrazieBundle"/>
 
-    <grazie.textChecker implementation="com.intellij.grazie.text.AsyncTreeRuleChecker$Grammar" id="treeRules"
-                        order="before languageTool"/>
-    <grazie.textChecker implementation="com.intellij.grazie.text.AsyncTreeRuleChecker$GrammarLowPriority" id="grammarLowPriority"
-                        order="after languageTool"/>
-    <grazie.textChecker implementation="com.intellij.grazie.text.AsyncTreeRuleChecker$Style" id="styleTreeRules"
-                        order="after languageTool"/>
+    <!-- Order matters here, please do not change it until it's on purpose -->
+    <grazie.textChecker implementation="com.intellij.grazie.text.AsyncTreeRuleChecker$Grammar" id="treeRules"/>
+    <grazie.textChecker implementation="com.intellij.grazie.grammar.LanguageToolChecker" id="languageTool"/>
+    <grazie.textChecker implementation="com.intellij.grazie.mlec.MlecChecker" id="mlec"/>
+    <grazie.textChecker implementation="com.intellij.grazie.text.AsyncTreeRuleChecker$GrammarLowPriority" id="grammarLowPriority"/>
+    <grazie.textChecker implementation="com.intellij.grazie.text.AsyncTreeRuleChecker$Style" id="styleTreeRules"/>
 
     <grazie.problemFilter language="" implementationClass="com.intellij.grazie.text.TreeRuleChecker$DocProblemFilter"/>
 
@@ -120,8 +134,6 @@
   </extensions>
 
   <extensions defaultExtensionNs="com.intellij.grazie">
-    <textChecker implementation="com.intellij.grazie.grammar.LanguageToolChecker" id="languageTool"/>
-
     <textExtractor language="TEXT" implementationClass="com.intellij.grazie.text.PlainTextExtractor"/>
 
     <problemFilter language="" implementationClass="com.intellij.grazie.text.CodeProblemFilter"/>

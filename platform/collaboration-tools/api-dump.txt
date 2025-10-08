@@ -49,7 +49,9 @@ c:com.intellij.collaboration.api.dto.GraphQLNodesDTO
 - b:<init>(java.util.List,I,kotlin.jvm.internal.DefaultConstructorMarker):V
 - <init>(java.util.List,java.lang.Integer):V
 - b:<init>(java.util.List,java.lang.Integer,I,kotlin.jvm.internal.DefaultConstructorMarker):V
+- equals(java.lang.Object):Z
 - f:getNodes():java.util.List
+- hashCode():I
 com.intellij.collaboration.api.dto.GraphQLPagedResponseDataDTO
 - a:getNodes():java.util.List
 - a:getPageInfo():com.intellij.collaboration.api.dto.GraphQLCursorPageInfoDTO
@@ -143,18 +145,6 @@ f:com.intellij.collaboration.api.page.ApiPageUtil
 f:com.intellij.collaboration.api.page.ApiPageUtilKt
 - sf:foldToList(kotlinx.coroutines.flow.Flow,kotlin.coroutines.Continuation):java.lang.Object
 - sf:foldToList(kotlinx.coroutines.flow.Flow,kotlin.jvm.functions.Function1,kotlin.coroutines.Continuation):java.lang.Object
-com.intellij.collaboration.api.page.SequentialListLoader
-- a:loadNext(kotlin.coroutines.Continuation):java.lang.Object
-f:com.intellij.collaboration.api.page.SequentialListLoader$ListBatch
-- <init>(java.util.List,Z):V
-- f:component1():java.util.List
-- f:component2():Z
-- f:copy(java.util.List,Z):com.intellij.collaboration.api.page.SequentialListLoader$ListBatch
-- bs:copy$default(com.intellij.collaboration.api.page.SequentialListLoader$ListBatch,java.util.List,Z,I,java.lang.Object):com.intellij.collaboration.api.page.SequentialListLoader$ListBatch
-- equals(java.lang.Object):Z
-- f:getData():java.util.List
-- f:getHasMore():Z
-- hashCode():I
 f:com.intellij.collaboration.api.util.LinkHttpHeaderValue
 - sf:Companion:com.intellij.collaboration.api.util.LinkHttpHeaderValue$Companion
 - sf:HEADER_NAME:java.lang.String
@@ -363,8 +353,6 @@ com.intellij.collaboration.ui.codereview.diff.viewer.DiffMapped
 - a:getLocation():kotlinx.coroutines.flow.Flow
 - a:isVisible():kotlinx.coroutines.flow.Flow
 f:com.intellij.collaboration.ui.codereview.diff.viewer.DiffViewerUtilKt
-- sf:buildChangeContext(com.intellij.collaboration.util.RefComparisonChange):java.util.Map
-- sf:controlReviewIn(com.intellij.diff.tools.util.base.DiffViewerBase,kotlinx.coroutines.CoroutineScope,kotlin.jvm.functions.Function3,com.intellij.openapi.util.Key,kotlin.jvm.functions.Function2):V
 f:com.intellij.collaboration.ui.codereview.editor.action.CodeReviewEditorShowFileDiffAction
 - com.intellij.openapi.project.DumbAwareAction
 - <init>():V

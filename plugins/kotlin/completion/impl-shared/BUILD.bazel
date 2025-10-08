@@ -25,7 +25,7 @@ jvm_library(
     "//platform/core-api:core",
     "//platform/platform-impl:ide-impl",
     "@lib//:kotlinc-analysis-api",
-    "@lib//:guava",
+    "//libraries/guava",
     "//platform/projectModel-api:projectModel",
     "//plugins/kotlin/base/frontend-agnostic",
     "//plugins/kotlin/base/project-structure",
@@ -42,8 +42,8 @@ jvm_library(
     "//plugins/kotlin/code-insight/impl-base",
     "//plugins/kotlin/base/resources:kotlin-base-resources",
     "//plugins/kotlin/code-insight/utils",
-    "@lib//:kotlinx-serialization-core",
-    "@lib//:kotlinx-serialization-json",
+    "//libraries/kotlinx/serialization/core",
+    "//libraries/kotlinx/serialization/json",
     "//plugins/kotlin/base/kotlin.base.serialization:kotlin-base-serialization",
   ]
 )

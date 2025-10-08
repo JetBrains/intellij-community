@@ -1,21 +1,21 @@
 ### auto-generated section `build intellij.vcs.gitlab` start
-load("@rules_jvm//:jvm.bzl", "jvm_library", "jvm_resources")
+load("@rules_jvm//:jvm.bzl", "jvm_library", "resourcegroup")
 
-jvm_resources(
+resourcegroup(
   name = "vcs-gitlab_resources",
-  files = glob(["resources/**/*"]),
+  srcs = glob(["resources/**/*"]),
   strip_prefix = "resources"
 )
 
-jvm_resources(
+resourcegroup(
   name = "vcs-gitlab_resources_1",
-  files = glob(["gen-resources/**/*"]),
+  srcs = glob(["gen-resources/**/*"]),
   strip_prefix = "gen-resources"
 )
 
-jvm_resources(
+resourcegroup(
   name = "vcs-gitlab_test_resources",
-  files = glob(["testResources/**/*"]),
+  srcs = glob(["testResources/**/*"]),
   strip_prefix = "testResources"
 )
 
@@ -24,6 +24,10 @@ jvm_library(
   module_name = "intellij.vcs.gitlab",
   visibility = ["//visibility:public"],
   srcs = glob(["gen/**/*.kt", "gen/**/*.java", "src/**/*.kt", "src/**/*.java", "src/**/*.form"], allow_empty = True),
+  resources = [
+    ":vcs-gitlab_resources",
+    ":vcs-gitlab_resources_1",
+  ],
   deps = [
     "//platform/analysis-api:analysis",
     "//platform/core-api:core",
@@ -41,21 +45,21 @@ jvm_library(
     "//platform/collaboration-tools",
     "@lib//:kotlin-stdlib",
     "@lib//:kotlinx-coroutines-core",
-    "@lib//:kotlinx-serialization-core",
-    "@lib//:kotlinx-serialization-json",
+    "//libraries/kotlinx/serialization/core",
+    "//libraries/kotlinx/serialization/json",
     "@lib//:kotlinc-kotlinx-serialization-compiler-plugin-provided",
-    "@lib//:jackson",
-    "@lib//:jackson-module-kotlin",
+    "//libraries/jackson/jackson",
+    "//libraries/jackson/module-kotlin:libraries-jackson-module-kotlin",
     "//platform/dvcs-impl:vcs-dvcs-impl",
-    "@lib//:jackson-databind",
+    "//libraries/jackson/databind",
     "//plugins/git4idea:vcs-git",
     "//plugins/git4idea/shared",
     "//platform/vcs-log/impl",
     "//platform/vcs-impl",
     "@lib//:jetbrains-markdown",
     "//platform/markdown-utils",
-    "@lib//:miglayout-swing",
-    "@lib//:caffeine",
+    "//libraries/miglayout-swing",
+    "//libraries/caffeine",
     "//platform/diff-impl",
     "//platform/lang-impl",
     "//platform/statistics",
@@ -65,10 +69,6 @@ jvm_library(
     "//platform/dvcs-impl/shared",
     "//platform/ide-core-impl",
     "//platform/vcs-impl/shared",
-  ],
-  runtime_deps = [
-    ":vcs-gitlab_resources",
-    ":vcs-gitlab_resources_1",
   ]
 )
 
@@ -76,6 +76,7 @@ jvm_library(
   name = "vcs-gitlab_test_lib",
   visibility = ["//visibility:public"],
   srcs = glob(["test/**/*.kt", "test/**/*.java", "test/**/*.form", "testApi/**/*.kt", "testApi/**/*.java", "testApi/**/*.form"], allow_empty = True),
+  resources = [":vcs-gitlab_test_resources"],
   associates = [":vcs-gitlab"],
   deps = [
     "//platform/analysis-api:analysis",
@@ -95,14 +96,14 @@ jvm_library(
     "//platform/collaboration-tools:collaboration-tools_test_lib",
     "@lib//:kotlin-stdlib",
     "@lib//:kotlinx-coroutines-core",
-    "@lib//:kotlinx-serialization-core",
-    "@lib//:kotlinx-serialization-json",
+    "//libraries/kotlinx/serialization/core",
+    "//libraries/kotlinx/serialization/json",
     "@lib//:kotlinc-kotlinx-serialization-compiler-plugin-provided",
-    "@lib//:jackson",
-    "@lib//:jackson-module-kotlin",
+    "//libraries/jackson/jackson",
+    "//libraries/jackson/module-kotlin:libraries-jackson-module-kotlin",
     "//platform/dvcs-impl:vcs-dvcs-impl",
     "//platform/dvcs-impl:vcs-dvcs-impl_test_lib",
-    "@lib//:jackson-databind",
+    "//libraries/jackson/databind",
     "@lib//:junit4",
     "@lib//:kotlinx-coroutines-test",
     "@lib//:assert_j",
@@ -118,8 +119,8 @@ jvm_library(
     "@lib//:jetbrains-markdown",
     "//platform/markdown-utils",
     "//platform/markdown-utils:markdown-utils_test_lib",
-    "@lib//:miglayout-swing",
-    "@lib//:caffeine",
+    "//libraries/miglayout-swing",
+    "//libraries/caffeine",
     "//platform/diff-impl",
     "//platform/lang-impl",
     "//platform/statistics",
@@ -135,11 +136,6 @@ jvm_library(
     "//platform/dvcs-impl/shared",
     "//platform/ide-core-impl",
     "//platform/vcs-impl/shared",
-  ],
-  runtime_deps = [
-    ":vcs-gitlab_resources",
-    ":vcs-gitlab_resources_1",
-    ":vcs-gitlab_test_resources",
   ]
 )
 ### auto-generated section `build intellij.vcs.gitlab` end

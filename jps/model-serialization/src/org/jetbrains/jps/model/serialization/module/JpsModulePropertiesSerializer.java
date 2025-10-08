@@ -2,7 +2,6 @@
 package org.jetbrains.jps.model.serialization.module;
 
 import org.jdom.Element;
-import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.jps.model.JpsElement;
 import org.jetbrains.jps.model.module.JpsModuleType;
@@ -21,11 +20,4 @@ public abstract class JpsModulePropertiesSerializer<P extends JpsElement> extend
   }
 
   public abstract P loadProperties(@Nullable Element componentElement);
-
-  /**
-   * @deprecated the build process doesn't save project configuration so there is no need to implement this method, it isn't called by the platform
-   */
-  @Deprecated(forRemoval = true)
-  public void saveProperties(@NotNull P properties, @NotNull Element componentElement) {
-  }
 }

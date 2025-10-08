@@ -1,9 +1,9 @@
 ### auto-generated section `build intellij.platform.execution.impl` start
-load("@rules_jvm//:jvm.bzl", "jvm_library", "jvm_resources")
+load("@rules_jvm//:jvm.bzl", "jvm_library", "resourcegroup")
 
-jvm_resources(
+resourcegroup(
   name = "execution-impl_resources",
-  files = glob(["resources/**/*"]),
+  srcs = glob(["resources/**/*"]),
   strip_prefix = "resources"
 )
 
@@ -12,6 +12,7 @@ jvm_library(
   module_name = "intellij.platform.execution.impl",
   visibility = ["//visibility:public"],
   srcs = glob(["src/**/*.kt", "src/**/*.java", "src/**/*.form"], allow_empty = True),
+  resources = [":execution-impl_resources"],
   deps = [
     "@lib//:kotlin-stdlib",
     "//platform/analysis-api:analysis",
@@ -30,8 +31,8 @@ jvm_library(
     "//platform/statistics",
     "//platform/platform-impl:ide-impl",
     "//platform/macro",
-    "@lib//:miglayout-swing",
-    "@lib//:guava",
+    "//libraries/miglayout-swing",
+    "//libraries/guava",
     "//platform/refactoring",
     "//platform/ide-core-impl",
     "//platform/ide-core/plugins",
@@ -40,7 +41,7 @@ jvm_library(
     "//platform/observable",
     "//platform/util-ex",
     "//platform/projectModel-impl",
-    "@lib//:fastutil-min",
+    "//libraries/fastutil",
     "//platform/core-ui",
     "//platform/platform-util-io-impl:ide-util-io-impl",
     "@lib//:jediterm-core",
@@ -52,7 +53,7 @@ jvm_library(
     "//platform/workspace/storage",
     "@lib//:kotlinx-coroutines-core",
     "@lib//:jna",
-    "@lib//:hash4j",
+    "//libraries/hash4j",
     "//platform/workspace/jps",
     "//platform/backend/workspace",
     "//platform/diagnostic",
@@ -62,13 +63,12 @@ jvm_library(
     "//platform/rd-platform-community:rd-community",
     "//platform/util/coroutines",
     "//platform/eel-provider",
-    "@lib//:kotlinx-serialization-core",
-    "@lib//:kotlinx-serialization-json",
+    "//libraries/kotlinx/serialization/core",
+    "//libraries/kotlinx/serialization/json",
     "//platform/kernel/shared:kernel",
     "//platform/project/shared:project",
     "//platform/platform-impl/rpc",
-  ],
-  runtime_deps = [":execution-impl_resources"]
+  ]
 )
 ### auto-generated section `build intellij.platform.execution.impl` end
 

@@ -30,7 +30,7 @@ public final class OptionalContainsCollectionInspection extends BaseInspection {
   }
 
   @Override
-  public BaseInspectionVisitor buildVisitor() {
+  public @NotNull BaseInspectionVisitor buildVisitor() {
     return new OptionalContainsCollectionVisitor();
   }
 

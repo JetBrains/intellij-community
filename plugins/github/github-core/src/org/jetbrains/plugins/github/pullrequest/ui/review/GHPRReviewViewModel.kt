@@ -1,11 +1,11 @@
 // Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.plugins.github.pullrequest.ui.review
 
+import com.intellij.collaboration.async.childScope
 import com.intellij.collaboration.async.stateInNow
 import com.intellij.collaboration.util.ComputedResult
 import com.intellij.openapi.actionSystem.DataKey
 import com.intellij.openapi.diagnostic.logger
-import com.intellij.platform.util.coroutines.childScope
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.cancel
 import kotlinx.coroutines.currentCoroutineContext
@@ -50,7 +50,7 @@ internal class DelegatingGHPRReviewViewModel(private val helper: GHPRReviewViewM
 }
 
 internal class GHPRReviewViewModelHelper(parentCs: CoroutineScope, private val dataProvider: GHPRDataProvider) {
-  private val cs = parentCs.childScope()
+  private val cs = parentCs.childScope(this::class)
   private val reviewData = dataProvider.reviewData
 
   val pendingReviewState: StateFlow<ComputedResult<GHPullRequestPendingReview?>> =

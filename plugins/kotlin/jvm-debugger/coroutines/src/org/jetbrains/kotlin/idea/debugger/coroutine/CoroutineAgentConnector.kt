@@ -55,6 +55,8 @@ object CoroutineAgentConnector {
     }
 
     private fun getKotlinxCoroutinesJarsFromClasspath(project: Project, configuration: RunConfigurationBase<*>?): List<String> {
+        // This logic of attaching coroutine debug agent is only applicable to ModuleBasedConfigurations, see IDEA-378969
+        if (configuration !is ModuleBasedConfiguration<*, *>) return emptyList()
         // First, check if any of the modules corresponding to the given run configuration has
         // the class with the debug probes from kotlinx-coroutines-core in their classpath (kotlinx.coroutines.debug.internal.DebugProbesImpl),
         // if none, then the coroutines debug agent should not be applied.
@@ -62,18 +64,14 @@ object CoroutineAgentConnector {
         // though when a Java run configuration is chosen, the coroutine agent should not be applied.
         // In case no run configuration is provided or if it's not module-based, search the whole project for the package.
         val psiFacade = JavaPsiFacade.getInstance(project)
-        return if (configuration != null && configuration is ModuleBasedConfiguration<*, *>) {
-            configuration.modules.flatMap { module ->
-                val moduleScope = GlobalSearchScope.union(
-                    listOf(
-                        GlobalSearchScope.moduleWithDependenciesAndLibrariesScope(module),
-                        module.getModuleRuntimeScope(true),
-                    )
+        return configuration.modules.flatMap { module ->
+            val moduleScope = GlobalSearchScope.union(
+                listOf(
+                    GlobalSearchScope.moduleWithDependenciesAndLibrariesScope(module),
+                    module.getModuleRuntimeScope(true),
                 )
-                psiFacade.findClasses(KOTLINX_COROUTINES_DEBUG_PROBES_IMPL_FQN, moduleScope).asList()
-            }
-        } else {
-            psiFacade.findClasses(KOTLINX_COROUTINES_DEBUG_PROBES_IMPL_FQN, GlobalSearchScope.allScope(project)).asList()
+            )
+            psiFacade.findClasses(KOTLINX_COROUTINES_DEBUG_PROBES_IMPL_FQN, moduleScope).asList()
         }.map { it.containingFile.virtualFile.path.substringBeforeLast(JarFileSystem.JAR_SEPARATOR) }
     }
 

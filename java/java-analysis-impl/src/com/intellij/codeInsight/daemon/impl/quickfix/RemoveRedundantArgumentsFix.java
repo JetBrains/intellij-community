@@ -1,4 +1,4 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInsight.daemon.impl.quickfix;
 
 import com.intellij.codeInsight.daemon.QuickFixBundle;
@@ -39,10 +39,13 @@ public final class RemoveRedundantArgumentsFix extends PsiUpdateModCommandAction
   protected @Nullable Presentation getPresentation(@NotNull ActionContext context, @NotNull PsiExpressionList args) {
     if (!myTargetMethod.isValid() || myTargetMethod.getContainingClass() == null) return null;
     if (!mySubstitutor.isValid()) return null;
-    if (findRedundantArgument(args.getExpressions(), myTargetMethod.getParameterList().getParameters(), mySubstitutor) == null) {
+    PsiExpression[] redundant =
+      findRedundantArgument(args.getExpressions(), myTargetMethod.getParameterList().getParameters(), mySubstitutor);
+    if (redundant == null) {
       return null;
     }
-    return Presentation.of(QuickFixBundle.message("remove.redundant.arguments.text", JavaHighlightUtil.formatMethod(myTargetMethod)));
+    return Presentation.of(QuickFixBundle.message("remove.redundant.arguments.text", JavaHighlightUtil.formatMethod(myTargetMethod), 
+                                                  redundant.length));
   }
 
   private static PsiExpression @Nullable [] findRedundantArgument(PsiExpression @NotNull [] arguments,
@@ -85,13 +88,6 @@ public final class RemoveRedundantArgumentsFix extends PsiUpdateModCommandAction
     }
   }
 
-  public static void registerIntentions(@NotNull PsiExpressionList arguments,
-                                        @NotNull Consumer<? super CommonIntentionAction> info) {
-    if (!arguments.isEmpty()) {
-      info.accept(new ForImplicitConstructorAction(arguments));
-    }
-  }
-
   private static void registerIntention(@NotNull PsiExpressionList arguments,
                                         @NotNull Consumer<? super CommonIntentionAction> info,
                                         @NotNull JavaResolveResult candidate) {
@@ -106,28 +102,5 @@ public final class RemoveRedundantArgumentsFix extends PsiUpdateModCommandAction
       return;
     }
     info.accept(new RemoveRedundantArgumentsFix(method, arguments, substitutor));
-  }
-
-  private static class ForImplicitConstructorAction extends PsiUpdateModCommandAction<PsiExpressionList> {
-    ForImplicitConstructorAction(@NotNull PsiExpressionList list) { 
-      super(list);
-    }
-
-    @Override
-    public @NotNull String getFamilyName() {
-      return QuickFixBundle.message("remove.redundant.arguments.family");
-    }
-
-    @Override
-    protected @Nullable Presentation getPresentation(@NotNull ActionContext context, @NotNull PsiExpressionList args) {
-      return args.isEmpty() ? null : Presentation.of(getFamilyName());
-    }
-
-    @Override
-    protected void invoke(@NotNull ActionContext context, @NotNull PsiExpressionList args, @NotNull ModPsiUpdater updater) {
-      PsiExpression[] expressions = args.getExpressions();
-      if (expressions.length == 0) return;
-      args.deleteChildRange(expressions[0], expressions[expressions.length - 1]);
-    }
   }
 }

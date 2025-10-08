@@ -157,7 +157,7 @@ public final class StringBufferReplaceableByStringBuilderInspection extends Base
   }
 
   @Override
-  public BaseInspectionVisitor buildVisitor() {
+  public @NotNull BaseInspectionVisitor buildVisitor() {
     return new StringBufferReplaceableByStringBuilderVisitor();
   }
 

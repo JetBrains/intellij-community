@@ -14,12 +14,7 @@ import it.unimi.dsi.fastutil.objects.ObjectOpenCustomHashSet
 import kotlinx.serialization.Serializable
 import org.jetbrains.kotlin.analysis.api.KaExperimentalApi
 import org.jetbrains.kotlin.analysis.api.KaSession
-import org.jetbrains.kotlin.analysis.api.components.KaScopeKind
-import org.jetbrains.kotlin.analysis.api.components.isNullable
-import org.jetbrains.kotlin.analysis.api.components.resolveToSymbol
-import org.jetbrains.kotlin.analysis.api.components.scopeContext
-import org.jetbrains.kotlin.analysis.api.components.sealedClassInheritors
-import org.jetbrains.kotlin.analysis.api.components.staticDeclaredMemberScope
+import org.jetbrains.kotlin.analysis.api.components.*
 import org.jetbrains.kotlin.analysis.api.symbols.*
 import org.jetbrains.kotlin.analysis.api.symbols.markers.KaNamedSymbol
 import org.jetbrains.kotlin.analysis.api.types.KaClassType
@@ -44,7 +39,6 @@ import org.jetbrains.kotlin.idea.completion.impl.k2.K2SimpleCompletionContributo
 import org.jetbrains.kotlin.idea.completion.lookups.KotlinLookupObject
 import org.jetbrains.kotlin.idea.completion.reference
 import org.jetbrains.kotlin.idea.completion.weighers.Weighers.applyWeighs
-import org.jetbrains.kotlin.idea.completion.weighers.WeighingContext
 import org.jetbrains.kotlin.idea.util.positionContext.KotlinWithSubjectEntryPositionContext
 import org.jetbrains.kotlin.lexer.KtTokens
 import org.jetbrains.kotlin.name.ClassId
@@ -77,7 +71,8 @@ internal class K2WhenWithSubjectConditionContributor : K2SimpleCompletionContrib
         return { name -> !name.isSpecial && startOnlyMatcher.prefixMatches(name.identifier) }
     }
 
-    internal fun getIndexNameFilter(prefixMatcher: PrefixMatcher, context: K2CompletionSectionContext<*>): (Name) -> Boolean {
+    context(context: K2CompletionSectionContext<*>)
+    internal fun getIndexNameFilter(prefixMatcher: PrefixMatcher): (Name) -> Boolean {
         return if (context.parameters.invocationCount >= 2 || prefixMatcher.prefix.length > 3) {
             getScopeNameFilter(prefixMatcher)
         } else {
@@ -85,9 +80,9 @@ internal class K2WhenWithSubjectConditionContributor : K2SimpleCompletionContrib
         }
     }
 
-    override fun KaSession.complete(context: K2CompletionSectionContext<KotlinWithSubjectEntryPositionContext>) {
+    context(_: KaSession, context: K2CompletionSectionContext<KotlinWithSubjectEntryPositionContext>)
+    override fun complete() {
         val positionContext = context.positionContext
-        val weighingContext = context.weighingContext
         val whenCondition = positionContext.whenCondition
         val whenExpression = whenCondition.parentOfType<KtWhenExpression>() ?: return
         val subject = whenExpression.subjectExpression ?: return
@@ -96,15 +91,14 @@ internal class K2WhenWithSubjectConditionContributor : K2SimpleCompletionContrib
         val classSymbol = getClassSymbol(subjectType)
         val isSingleCondition = whenCondition.isSingleConditionInEntry()
 
-        createNullBranchLookupElement(weighingContext, subjectType)
+        createNullBranchLookupElement(subjectType)
             ?.let { context.addElement(it) }
-        createElseBranchLookupElement(weighingContext, whenCondition)
+        createElseBranchLookupElement(whenCondition)
             ?.let { context.addElement(it) }
 
         when {
             classSymbol?.classKind == KaClassKind.ENUM_CLASS -> {
                 completeEnumEntries(
-                    context = context,
                     classSymbol = classSymbol,
                     conditions = allConditionsExceptCurrent,
                     isSingleCondition = isSingleCondition,
@@ -113,7 +107,6 @@ internal class K2WhenWithSubjectConditionContributor : K2SimpleCompletionContrib
 
             classSymbol?.modality == KaSymbolModality.SEALED -> {
                 completeSubClassesOfSealedClass(
-                    context = context,
                     classSymbol = classSymbol,
                     conditions = allConditionsExceptCurrent,
                     whenCondition = whenCondition,
@@ -122,7 +115,6 @@ internal class K2WhenWithSubjectConditionContributor : K2SimpleCompletionContrib
             }
 
             else -> completeAllTypes(
-                context = context,
                 whenCondition = whenCondition,
                 isSingleCondition = isSingleCondition,
             )
@@ -135,20 +127,18 @@ internal class K2WhenWithSubjectConditionContributor : K2SimpleCompletionContrib
         return classType?.symbol as? KaNamedClassSymbol
     }
 
-    context(_: KaSession)
+    context(_: KaSession, _: K2CompletionSectionContext<KotlinWithSubjectEntryPositionContext>)
     private fun createNullBranchLookupElement(
-        context: WeighingContext,
         type: KaType?,
     ): LookupElement? {
         if (type?.isNullable != true) return null
 
         return createKeywordElement(keyword = KtTokens.NULL_KEYWORD.value)
-            .applyWeighs(context)
+            .applyWeighs()
     }
 
-    context(_: KaSession)
+    context(_: KaSession, context: K2CompletionSectionContext<KotlinWithSubjectEntryPositionContext>)
     private fun completeAllTypes(
-        context: K2CompletionSectionContext<KotlinWithSubjectEntryPositionContext>,
         whenCondition: KtWhenCondition,
         isSingleCondition: Boolean,
     ) {
@@ -167,7 +157,6 @@ internal class K2WhenWithSubjectConditionContributor : K2SimpleCompletionContrib
                 availableFromScope += classifier
 
                 createLookupElement(
-                    context = context,
                     lookupString = classifier.name.asString(),
                     symbol = classifier,
                     scopeKind = classifierWithScopeKind.scopeKind,
@@ -177,18 +166,18 @@ internal class K2WhenWithSubjectConditionContributor : K2SimpleCompletionContrib
             }.forEach { context.addElement(it) }
 
         if (prefixMatcher.prefix.isNotEmpty()) {
-            context.completeLaterInSameSession("Index", priority = K2ContributorSectionPriority.FROM_INDEX) { innerContext ->
+            context.completeLaterInSameSession("Index", priority = K2ContributorSectionPriority.FROM_INDEX) {
+                val innerContext = contextOf<K2CompletionSectionContext<KotlinWithSubjectEntryPositionContext>>()
                 getAvailableClassifiersFromIndex(
                     positionContext = positionContext,
                     parameters = innerContext.parameters,
                     symbolProvider = innerContext.symbolFromIndexProvider,
-                    scopeNameFilter = getIndexNameFilter(prefixMatcher, innerContext),
+                    scopeNameFilter = getIndexNameFilter(prefixMatcher),
                     visibilityChecker = innerContext.visibilityChecker,
                 ).filterNot { it in availableFromScope }
                     .filterIsInstance<KaNamedSymbol>()
                     .map { classifier ->
                         createLookupElement(
-                            context = innerContext,
                             lookupString = classifier.name.asString(),
                             symbol = classifier,
                             fqName = (classifier as? KaNamedClassSymbol)?.classId?.asSingleFqName(),
@@ -199,13 +188,13 @@ internal class K2WhenWithSubjectConditionContributor : K2SimpleCompletionContrib
         }
     }
 
-    context(_: KaSession)
-    private fun isPrefixNeeded(context: K2CompletionSectionContext<*>, symbol: KaNamedSymbol): Boolean {
+    context(_: KaSession, context: K2CompletionSectionContext<KotlinWithSubjectEntryPositionContext>)
+    private fun isPrefixNeeded(symbol: KaNamedSymbol): Boolean {
         return when (symbol) {
             is KaAnonymousObjectSymbol -> return false
             is KaNamedClassSymbol -> isTypingIsKeyword(context) || !symbol.classKind.isObject
             is KaTypeAliasSymbol -> {
-                (symbol.expandedType as? KaClassType)?.symbol?.let { it is KaNamedSymbol && isPrefixNeeded(context, it) } == true
+                (symbol.expandedType as? KaClassType)?.symbol?.let { it is KaNamedSymbol && isPrefixNeeded(it) } == true
             }
 
             is KaTypeParameterSymbol -> true
@@ -213,9 +202,8 @@ internal class K2WhenWithSubjectConditionContributor : K2SimpleCompletionContrib
         }
     }
 
-    context(_: KaSession)
+    context(_: KaSession, context: K2CompletionSectionContext<KotlinWithSubjectEntryPositionContext>)
     private fun completeSubClassesOfSealedClass(
-        context: K2CompletionSectionContext<KotlinWithSubjectEntryPositionContext>,
         classSymbol: KaNamedClassSymbol,
         conditions: List<KtWhenCondition>,
         whenCondition: KtWhenCondition,
@@ -234,7 +222,6 @@ internal class K2WhenWithSubjectConditionContributor : K2SimpleCompletionContrib
                     ?: return@mapNotNull null
 
                 createLookupElement(
-                    context = context,
                     lookupString = classId.relativeClassName.asString(),
                     symbol = inheritor,
                     fqName = classId.asSingleFqName(),
@@ -244,7 +231,6 @@ internal class K2WhenWithSubjectConditionContributor : K2SimpleCompletionContrib
 
         if (getAllSealedInheritors(classSymbol).any { it.modality == KaSymbolModality.ABSTRACT }) {
             completeAllTypes(
-                context = context,
                 whenCondition = whenCondition,
                 isSingleCondition = isSingleCondition,
             )
@@ -282,9 +268,8 @@ internal class K2WhenWithSubjectConditionContributor : K2SimpleCompletionContrib
             .apply { getAllSealedInheritorsTo(classSymbol, this) }
     }
 
-    context(_: KaSession)
+    context(_: KaSession, _: K2CompletionSectionContext<KotlinWithSubjectEntryPositionContext>)
     private fun createElseBranchLookupElement(
-        context: WeighingContext,
         whenCondition: KtWhenCondition,
     ): LookupElement? {
         val whenEntry = whenCondition.parent as? KtWhenEntry
@@ -294,13 +279,12 @@ internal class K2WhenWithSubjectConditionContributor : K2SimpleCompletionContrib
         return createKeywordElement(
             keyword = KtTokens.ELSE_KEYWORD.value,
             tail = " -> ",
-        ).applyWeighs(context)
+        ).applyWeighs()
     }
 
 
-    context(_: KaSession)
+    context(_: KaSession, context: K2CompletionSectionContext<KotlinWithSubjectEntryPositionContext>)
     private fun completeEnumEntries(
-        context: K2CompletionSectionContext<KotlinWithSubjectEntryPositionContext>,
         classSymbol: KaNamedClassSymbol,
         conditions: List<KtWhenCondition>,
         isSingleCondition: Boolean,
@@ -318,7 +302,6 @@ internal class K2WhenWithSubjectConditionContributor : K2SimpleCompletionContrib
             .filter { context.visibilityChecker.isVisible(it, context.positionContext) }
             .map { entry ->
                 createLookupElement(
-                    context = context,
                     lookupString = "${classSymbol.name.asString()}.${entry.name.asString()}",
                     symbol = entry,
                     fqName = entry.callableId?.asSingleFqName(),
@@ -332,16 +315,15 @@ internal class K2WhenWithSubjectConditionContributor : K2SimpleCompletionContrib
         return entry.conditions.size == 1
     }
 
-    context(_: KaSession)
+    context(_: KaSession, context: K2CompletionSectionContext<KotlinWithSubjectEntryPositionContext>)
     private fun createLookupElement(
-        context: K2CompletionSectionContext<*>,
         lookupString: String,
         symbol: KaNamedSymbol,
         fqName: FqName?,
         isSingleCondition: Boolean,
         scopeKind: KaScopeKind? = null,
     ): LookupElement {
-        val isPrefixNeeded = isPrefixNeeded(context, symbol)
+        val isPrefixNeeded = isPrefixNeeded(symbol)
 
         @OptIn(KaExperimentalApi::class)
         val typeArgumentsCount = (symbol as? KaDeclarationSymbol)?.typeParameters?.size ?: 0
@@ -353,7 +335,7 @@ internal class K2WhenWithSubjectConditionContributor : K2SimpleCompletionContrib
             .withInsertHandler(WhenConditionInsertionHandler)
             .withTailText(createStarTypeArgumentsList(typeArgumentsCount), /*grayed*/true)
             .letIf(isSingleCondition) { it.appendTailText(" -> ",  /*grayed*/true) }
-            .applyWeighs(context.weighingContext, KtSymbolWithOrigin(symbol, scopeKind))
+            .applyWeighs(KtSymbolWithOrigin(symbol, scopeKind))
     }
 }
 

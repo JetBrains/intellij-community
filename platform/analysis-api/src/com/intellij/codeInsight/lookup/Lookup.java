@@ -77,10 +77,15 @@ public interface Lookup {
   @Nullable
   PsiFile getPsiFile();
 
+  /**
+   * Returns {@code true} if this lookup is used in completion mode, meaning that it's created as a result of completion action or autocompletion.
+   * Lookup can be shown by other clients as well, e.g., refactorings, templates, etc. In this case, this method returns {@code false}.
+   * @return {@code true} if this lookup is shown in completion mode, {@code false} otherwise.
+   */
   boolean isCompletion();
 
   @Unmodifiable
-  List<LookupElement> getItems();
+  @NotNull List<LookupElement> getItems();
 
   boolean isFocused();
 

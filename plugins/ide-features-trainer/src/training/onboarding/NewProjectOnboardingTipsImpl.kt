@@ -48,7 +48,6 @@ var Project.filePathWithOnboardingTips: String?
   @ApiStatus.Internal
   set(value) { PropertiesComponent.getInstance(this).setValue("onboarding.tips.debug.path", value) }
 
-
 val renderedOnboardingTipsEnabled: Boolean
   @ApiStatus.Internal
   get() = Registry.`is`("doc.onboarding.tips.render")
@@ -61,7 +60,7 @@ internal val promotedActions = listOf(IdeActions.ACTION_SEARCH_EVERYWHERE,
                                       "DebugClass",
                                       IdeActions.ACTION_TOGGLE_LINE_BREAKPOINT)
 
-// The presence of this data means that we need to install onboarding tips on the first editor in the new created project
+// The presence of this data means that we need to install onboarding tips on the first editor in the newly created project
 private val onboardingTipsInstallationInfoKey = Key<OnboardingTipsInstallationInfo>("onboardingTipsInstallationInfo")
 
 private class NewProjectOnboardingTipsImpl : NewProjectOnboardingTips {
@@ -74,7 +73,7 @@ private class NewProjectOnboardingTipsImpl : NewProjectOnboardingTips {
 private fun installTipsInFirstEditor(editor: Editor, project: Project, info: OnboardingTipsInstallationInfo) {
   OnboardingTipsStatistics.logOnboardingTipsInstalled(project, onboardingGenerationNumber)
 
-  // Set this option explicitly, because its default depends on the number of empty projects.
+  // Set this option explicitly because its default depends on the number of empty projects.
   PropertiesComponent.getInstance().setValue(NewProjectWizardStep.GENERATE_ONBOARDING_TIPS_NAME, true)
 
   val file = editor.virtualFile ?: return
@@ -139,8 +138,8 @@ private fun installActionListener(project: Project, pathToRunningFile: @NonNls S
       val reported = actionsMapReported.get(actionId) ?: return
       if (!reported) {
         actionsMapReported.put(actionId, true)
-        // usage count increased in the beforeActionPerformed listener,
-        // so here we use afterActionPerformed event to avoid question about listeners order
+        // the usage count increased in the beforeActionPerformed listener,
+        // so here we use the "afterActionPerformed" event to avoid question about listener order
         val usageCount = service<ActionsLocalSummary>().getActionStatsById(actionId)?.usageCount ?: return
         OnboardingTipsStatistics.logPromotedActionUsedEvent(project, actionId, onboardingGenerationNumber, usageCount == 1)
       }

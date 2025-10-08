@@ -25,6 +25,9 @@
     <projectService
             serviceInterface="org.jetbrains.kotlin.analysis.api.platform.projectStructure.KotlinModuleInformationProvider"
             serviceImplementation="org.jetbrains.kotlin.idea.base.fir.analysisApiPlatform.K2IdeKotlinModuleInformationProvider"/>
+    <projectService
+            serviceInterface="org.jetbrains.kotlin.analysis.api.platform.statistics.KotlinObjectSizeCalculator"
+            serviceImplementation="org.jetbrains.kotlin.idea.base.fir.analysisApiPlatform.statistics.K2IdeKotlinObjectSizeCalculator"/>
 
     <psi.treeChangePreprocessor
             implementation="org.jetbrains.kotlin.idea.base.fir.analysisApiPlatform.FirIdeOutOfBlockPsiTreeChangePreprocessor"/>

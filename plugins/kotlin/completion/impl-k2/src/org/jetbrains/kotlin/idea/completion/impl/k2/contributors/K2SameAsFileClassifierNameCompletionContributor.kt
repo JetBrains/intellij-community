@@ -14,7 +14,8 @@ internal class K2SameAsFileClassifierNameCompletionContributor : K2SimpleComplet
     KotlinClassifierNamePositionContext::class
 ) {
 
-    override fun KaSession.complete(context: K2CompletionSectionContext<KotlinClassifierNamePositionContext>) {
+    context(_: KaSession, context: K2CompletionSectionContext<KotlinClassifierNamePositionContext>)
+    override fun complete() {
         (context.positionContext.classLikeDeclaration as? KtClassOrObject)?.let { context.completeTopLevelClassName(it) }
     }
 

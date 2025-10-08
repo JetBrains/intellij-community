@@ -5,6 +5,7 @@ import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.progress.ProcessCanceledException;
 import com.intellij.util.ExceptionUtil;
 import com.intellij.util.ThrowableRunnable;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 
 /**
@@ -17,6 +18,7 @@ public final class RunResult<T> extends Result<T> {
 
   private RunResult() { }
 
+  @ApiStatus.Internal
   public RunResult(@NotNull BaseActionRunnable<T> action) {
     myActionRunnable = action;
   }

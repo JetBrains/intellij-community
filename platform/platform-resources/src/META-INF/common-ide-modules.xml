@@ -1,7 +1,7 @@
 <idea-plugin xmlns:xi="http://www.w3.org/2001/XInclude">
   <xi:include href="/META-INF/essential-modules.xml"/>
 
-  <content>
+  <content namespace="jetbrains">
     <module name="intellij.platform.lvcs.impl"/>
     <module name="intellij.platform.smRunner.vcs"/>
     <module name="intellij.platform.collaborationTools"/>
@@ -13,11 +13,12 @@
     <module name="intellij.platform.scriptDebugger.backend"/>
     <module name="intellij.platform.scriptDebugger.protocolReaderRuntime"/>
     <module name="intellij.platform.ml.impl"/>
-    <module name="intellij.platform.ml.logs"/>
     <module name="intellij.libraries.microba"/>
+    <module name="intellij.charts"/>
+
+    <!-- Compose UI Modules -->
     <module name="intellij.libraries.skiko"/>
     <module name="intellij.libraries.coil"/>
-    <module name="intellij.charts"/>
     <module name="intellij.platform.compose"/>
     <module name="intellij.platform.compose.markdown"/>
     <module name="intellij.platform.jewel.foundation"/>
@@ -32,6 +33,8 @@
     <module name="intellij.platform.jewel.markdown.extensions.gfmStrikethrough"/>
     <module name="intellij.platform.jewel.markdown.extensions.images"/>
     <module name="intellij.platform.jewel.markdown.core"/>
+    <!-- -->
+
     <module name="intellij.platform.diagnostic.freezeAnalyzer"/>
     <module name="intellij.platform.diagnostic.freezes"/>
     <module name="intellij.platform.warmup"/>
@@ -39,7 +42,6 @@
     <module name="intellij.settingsSync.core"/>
     
     <module name="intellij.libraries.lucene.common"/>
-    <module name="intellij.libraries.ai.grazie.spell.gec.engine.local"/>
     <module name="intellij.spellchecker"/>
     <module name="intellij.spellchecker.xml"/>
 
@@ -56,6 +58,9 @@
 
     <module name="intellij.platform.langInjection"/>
     <module name="intellij.platform.langInjection.backend"/>
+
+    <module name="intellij.libraries.grpc"/>
+    <module name="intellij.libraries.grpc.netty.shaded"/>
   </content>
 
   <xi:include href="/META-INF/grid-core-modules.xml"/>

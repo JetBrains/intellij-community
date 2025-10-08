@@ -13,7 +13,7 @@
     <plugin id="com.intellij.modules.lang"/>
   </dependencies>
 
-  <content>
+  <content namespace="jetbrains">
     <module name="intellij.textmate" loading="required"/>
     <module name="intellij.textmate.common" loading="required"/>
     <module name="intellij.textmate.core" loading="required"/>

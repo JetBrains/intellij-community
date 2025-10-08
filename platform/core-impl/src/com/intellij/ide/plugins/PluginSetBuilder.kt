@@ -4,15 +4,12 @@
 package com.intellij.ide.plugins
 
 import com.intellij.core.CoreBundle
-import com.intellij.ide.plugins.PluginModuleId.Companion.asPluginId
-import com.intellij.ide.plugins.PluginModuleId.Companion.asPluginModuleId
 import com.intellij.openapi.extensions.PluginId
+import com.intellij.openapi.util.text.HtmlChunk
 import com.intellij.util.containers.Java11Shim
 import com.intellij.util.graph.DFSTBuilder
 import it.unimi.dsi.fastutil.objects.Object2IntOpenHashMap
 import org.jetbrains.annotations.ApiStatus
-import org.jetbrains.annotations.Nls
-import org.jetbrains.annotations.PropertyKey
 import java.util.*
 import java.util.function.Supplier
 
@@ -34,7 +31,7 @@ class PluginSetBuilder(@JvmField val unsortedPlugins: Set<PluginMainDescriptor>)
   private val enabledPluginIds = HashMap<PluginId, PluginModuleDescriptor>(unsortedPlugins.size)
   private val enabledModuleV2Ids = HashMap<PluginModuleId, PluginModuleDescriptor>(unsortedPlugins.size * 2)
 
-  internal fun checkPluginCycles(errors: MutableList<Supplier<String>>) {
+  internal fun checkPluginCycles(errors: MutableList<PluginLoadingError>) {
     if (builder.isAcyclic) {
       return
     }
@@ -49,7 +46,14 @@ class PluginSetBuilder(@JvmField val unsortedPlugins: Set<PluginMainDescriptor>)
       }
 
       val pluginString = component.joinToString(separator = ", ") { "'${it.name}'" }
-      errors.add(message("plugin.loading.error.plugins.cannot.be.loaded.because.they.form.a.dependency.cycle", pluginString))
+      errors.add(PluginLoadingError(
+        reason = null,
+        htmlMessageSupplier = Supplier {
+          val message = CoreBundle.message("plugin.loading.error.plugins.cannot.be.loaded.because.they.form.a.dependency.cycle", pluginString)
+          HtmlChunk.text(message)
+        },
+        error = null,
+      ))
       val detailedMessage = StringBuilder()
       val pluginToString: (IdeaPluginDescriptorImpl) -> String = { "id = ${it.pluginId.idString}@${it.contentModuleId} (${it.name})" }
       detailedMessage.append("Detected plugin dependencies cycle details (only related dependencies are included):\n")
@@ -103,21 +107,29 @@ class PluginSetBuilder(@JvmField val unsortedPlugins: Set<PluginMainDescriptor>)
     }
     val moduleIncompatibleWithCurrentMode = getModuleIncompatibleWithCurrentProductMode(currentProductModeEvaluator)
     val usedPackagePrefixes = HashMap<String, IdeaPluginDescriptorImpl>()
-    val isDisabledDueToPackagePrefixConflict = HashMap<String, IdeaPluginDescriptorImpl>()
+    val isDisabledDueToPackagePrefixConflict = HashMap<PluginModuleId, IdeaPluginDescriptorImpl>()
 
     fun registerLoadingError(plugin: IdeaPluginDescriptorImpl, disabledModule: ContentModuleDescriptor) {
       loadingErrors.add(createCannotLoadError(
         descriptor = plugin,
         dependencyPluginId = disabledModuleToProblematicPlugin.get(disabledModule.moduleId)
-                             ?: disabledModule.moduleId.asPluginId(),
+                             ?: disabledModule.parent.pluginId,
         errors = emptyMap(),
         isNotifyUser = !plugin.isImplementationDetail))
+    }
+    fun markRequiredModulesAsDisabled(plugin: PluginMainDescriptor) {
+      for (module in plugin.contentModules) {
+        if (module.moduleLoadingRule.required && enabledRequiredContentModules.remove(module.moduleId) != null) {
+          module.isMarkedForLoading = false
+          logMessages.add("Module ${module.moduleId.id} is disabled because the containing plugin ${plugin.pluginId} won't be loaded")
+        }
+      }
     }
 
     m@ for (module in sortedModulesWithDependencies.modules) {
       if (module is ContentModuleDescriptor && module.moduleId == moduleIncompatibleWithCurrentMode) {
         module.isMarkedForLoading = false
-        logMessages.add("Module ${module.moduleId} is disabled because it is not compatible with the current product mode")
+        logMessages.add("Module ${module.moduleId.id} is disabled because it is not compatible with the current product mode")
         continue
       }
 
@@ -127,22 +139,28 @@ class PluginSetBuilder(@JvmField val unsortedPlugins: Set<PluginMainDescriptor>)
         continue@m
       }
 
-      if (module !is ContentModuleDescriptor) {
-        if (module.pluginId != PluginManagerCore.CORE_ID && (!module.isMarkedForLoading || (disabler != null && disabler(module, disabledModuleToProblematicPlugin)))) {
-          continue
+      when (module) {
+        is PluginMainDescriptor -> {
+          if (module.pluginId != PluginManagerCore.CORE_ID && (!module.isMarkedForLoading || (disabler != null && disabler(module, disabledModuleToProblematicPlugin)))) {
+            markRequiredModulesAsDisabled(module)
+            continue
+          }
         }
-      }
-      else if (!module.isRequiredContentModule && !enabledPluginIds.containsKey(module.pluginId)) {
-        disabledModuleToProblematicPlugin.put(module.moduleId, module.pluginId)
-        continue
+        is ContentModuleDescriptor -> {
+          if (!module.isRequiredContentModule && !enabledPluginIds.containsKey(module.pluginId)) {
+            disabledModuleToProblematicPlugin.put(module.moduleId, module.pluginId)
+            continue
+          }
+        }
       }
 
       for (ref in module.moduleDependencies.modules) {
         if (!enabledModuleV2Ids.containsKey(ref) && !enabledRequiredContentModules.containsKey(ref)) {
           logMessages.add("Module ${module.contentModuleId ?: module.pluginId} is not enabled because dependency ${ref.id} is not available")
-          if (module is ContentModuleDescriptor) {
-            disabledModuleToProblematicPlugin.put(module.moduleId, disabledModuleToProblematicPlugin.get(ref)
-                                                                   ?: PluginId.getId(ref.id))
+          when (module) {
+            is ContentModuleDescriptor -> disabledModuleToProblematicPlugin.put(module.moduleId, disabledModuleToProblematicPlugin.get(ref)
+                                                                                                 ?: PluginId.getId(ref.id))
+            is PluginMainDescriptor -> markRequiredModulesAsDisabled(module)
           }
           continue@m
         }
@@ -150,8 +168,9 @@ class PluginSetBuilder(@JvmField val unsortedPlugins: Set<PluginMainDescriptor>)
       for (ref in module.moduleDependencies.plugins) {
         if (!enabledPluginIds.containsKey(ref)) {
           logMessages.add("Module ${module.contentModuleId ?: module.pluginId} is not enabled because dependency ${ref} is not available")
-          if (module is ContentModuleDescriptor) {
-            disabledModuleToProblematicPlugin.put(module.moduleId, ref)
+          when (module) {
+            is ContentModuleDescriptor -> disabledModuleToProblematicPlugin.put(module.moduleId, ref)
+            is PluginMainDescriptor -> markRequiredModulesAsDisabled(module)
           }
           continue@m
         }
@@ -162,7 +181,9 @@ class PluginSetBuilder(@JvmField val unsortedPlugins: Set<PluginMainDescriptor>)
         val alreadyRegistered = usedPackagePrefixes.putIfAbsent(module.packagePrefix, module)
         if (alreadyRegistered != null) {
           module.isMarkedForLoading = false
-          isDisabledDueToPackagePrefixConflict.put(module.contentModuleId ?: module.pluginId.idString, alreadyRegistered)
+          if (module is ContentModuleDescriptor) {
+            isDisabledDueToPackagePrefixConflict.put(module.moduleId, alreadyRegistered)
+          }
           logMessages.add("Module ${module.contentModuleId ?: module.pluginId} is not enabled because package prefix ${module.packagePrefix} is already used by " +
                           "${alreadyRegistered.contentModuleId ?: alreadyRegistered.pluginId}")
           loadingErrors.add(PluginPackagePrefixConflict(module, module, alreadyRegistered))
@@ -176,12 +197,13 @@ class PluginSetBuilder(@JvmField val unsortedPlugins: Set<PluginMainDescriptor>)
             for (contentModule in module.contentModules) {
               if (contentModule.moduleLoadingRule.required && !enabledRequiredContentModules.containsKey(contentModule.moduleId)) {
                 module.isMarkedForLoading = false
-                if (isDisabledDueToPackagePrefixConflict.containsKey(contentModule.moduleId.id)) {
-                  val alreadyRegistered = isDisabledDueToPackagePrefixConflict[contentModule.moduleId.id]!!
+                if (isDisabledDueToPackagePrefixConflict.containsKey(contentModule.moduleId)) {
+                  val alreadyRegistered = isDisabledDueToPackagePrefixConflict[contentModule.moduleId]!!
                   loadingErrors.add(PluginPackagePrefixConflict(module, contentModule, alreadyRegistered))
                 } else {
                   registerLoadingError(module, contentModule)
                 }
+                markRequiredModulesAsDisabled(module)
                 continue@m
               }
             }
@@ -190,9 +212,6 @@ class PluginSetBuilder(@JvmField val unsortedPlugins: Set<PluginMainDescriptor>)
           enabledPluginIds.put(module.pluginId, module)
           for (pluginAlias in module.pluginAliases) {
             enabledPluginIds.put(pluginAlias, module)
-          }
-          if (module.packagePrefix != null) {
-            enabledModuleV2Ids.put(module.pluginId.asPluginModuleId(), module)
           }
           if (module.pluginId != PluginManagerCore.CORE_ID) {
             for (contentModule in module.contentModules) {
@@ -341,10 +360,6 @@ private fun createCannotLoadError(
   } else {
     PluginDependencyIsNotInstalled(descriptor, dependencyIdString, isNotifyUser)
   }
-}
-
-private fun message(key: @PropertyKey(resourceBundle = CoreBundle.BUNDLE) String, vararg params: Any): @Nls Supplier<String> {
-  return Supplier { CoreBundle.message(key, *params) }
 }
 
 private fun getAllPluginDependencies(plugin: IdeaPluginDescriptorImpl): Sequence<PluginId> {

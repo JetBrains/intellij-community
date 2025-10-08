@@ -96,7 +96,7 @@ public final class AbstractMethodOverridesAbstractMethodInspection extends BaseI
   }
 
   @Override
-  public BaseInspectionVisitor buildVisitor() {
+  public @NotNull BaseInspectionVisitor buildVisitor() {
     return new AbstractMethodOverridesAbstractMethodVisitor();
   }
 
@@ -194,15 +194,6 @@ public final class AbstractMethodOverridesAbstractMethodInspection extends BaseI
 
   public static boolean haveSameReturnTypes(PsiMethod method1, PsiMethod method2) {
     return areTypesEqual(method1.getReturnType(), method2.getReturnType());
-  }
-
-  public static boolean haveSameParameterTypes(PsiMethod method1, PsiMethod method2){
-    PsiParameter[] parameters1 = method1.getParameterList().getParameters();
-    PsiParameter[] parameters2 = method2.getParameterList().getParameters();
-    for (int i = 0; i < parameters1.length; i++) {
-      if (!areTypesEqual(parameters1[i].getType(), parameters2[i].getType())) return false;
-    }
-    return true;
   }
 
   private static boolean areTypesEqual(@Nullable PsiType type, @Nullable PsiType bound){

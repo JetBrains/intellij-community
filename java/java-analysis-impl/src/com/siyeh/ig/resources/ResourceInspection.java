@@ -65,7 +65,7 @@ public abstract class ResourceInspection extends BaseInspection {
   }
 
   @Override
-  public BaseInspectionVisitor buildVisitor() {
+  public @NotNull BaseInspectionVisitor buildVisitor() {
     return new ResourceVisitor();
   }
 
@@ -130,16 +130,29 @@ public abstract class ResourceInspection extends BaseInspection {
         return null;
       }
       final PsiElement referent = referenceExpression.resolve();
-      if (!(referent instanceof PsiVariable)) {
+      if (!(referent instanceof PsiVariable variable)) {
         return null;
       }
-      return (PsiVariable)referent;
+      return variable;
     }
-    if (parent instanceof PsiVariable) {
-      return (PsiVariable)parent;
+    if (parent instanceof PsiVariable variable) {
+      return variable;
     }
-    if (parent instanceof PsiConditionalExpression) {
-      return getVariable((PsiExpression)parent);
+    if (parent instanceof PsiConditionalExpression conditionalExpression) {
+      return getVariable(conditionalExpression);
+    }
+    if (parent instanceof PsiExpressionStatement expressionStatement &&
+        expressionStatement.getParent() instanceof PsiSwitchLabeledRuleStatement switchLabeledRuleStatement &&
+        PsiTreeUtil.isAncestor(switchLabeledRuleStatement.getBody(), expressionStatement, false) &&
+        switchLabeledRuleStatement.getParent() instanceof PsiCodeBlock codeBlock &&
+        codeBlock.getParent() instanceof PsiSwitchExpression switchExpression) {
+      return getVariable(switchExpression);
+    }
+    if (parent instanceof PsiYieldStatement yieldStatement) {
+      PsiSwitchExpression switchExpression = yieldStatement.findEnclosingExpression();
+      if (switchExpression != null) {
+        return getVariable(switchExpression);
+      }
     }
     return null;
   }

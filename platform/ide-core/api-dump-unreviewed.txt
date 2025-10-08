@@ -9,7 +9,6 @@ f:com.intellij.CommonBundle
 - s:getLoadingTreeNodeText():java.lang.String
 - s:getNoButtonText():java.lang.String
 - s:getOkButtonText():java.lang.String
-- s:getWarningTitle():java.lang.String
 - s:getYesButtonText():java.lang.String
 - s:getYesForAllButtonText():java.lang.String
 - s:message(java.lang.String,java.lang.Object[]):java.lang.String
@@ -583,7 +582,6 @@ f:com.intellij.notification.NotificationGroup
 - f:setParentId(java.lang.String):com.intellij.notification.NotificationGroup
 - sf:toolWindowGroup(java.lang.String,java.lang.String):com.intellij.notification.NotificationGroup
 - sf:toolWindowGroup(java.lang.String,java.lang.String,Z):com.intellij.notification.NotificationGroup
-- sf:toolWindowGroup(java.lang.String,java.lang.String,Z,com.intellij.openapi.extensions.PluginId):com.intellij.notification.NotificationGroup
 f:com.intellij.notification.NotificationGroup$Companion
 - f:balloonGroup(java.lang.String):com.intellij.notification.NotificationGroup
 - f:balloonGroup(java.lang.String,java.lang.String):com.intellij.notification.NotificationGroup
@@ -597,7 +595,6 @@ f:com.intellij.notification.NotificationGroup$Companion
 - f:logOnlyGroup(java.lang.String,java.lang.String):com.intellij.notification.NotificationGroup
 - f:toolWindowGroup(java.lang.String,java.lang.String):com.intellij.notification.NotificationGroup
 - f:toolWindowGroup(java.lang.String,java.lang.String,Z):com.intellij.notification.NotificationGroup
-- f:toolWindowGroup(java.lang.String,java.lang.String,Z,com.intellij.openapi.extensions.PluginId):com.intellij.notification.NotificationGroup
 - bs:toolWindowGroup$default(com.intellij.notification.NotificationGroup$Companion,java.lang.String,java.lang.String,Z,I,java.lang.Object):com.intellij.notification.NotificationGroup
 a:com.intellij.notification.NotificationListener$Adapter
 - com.intellij.notification.NotificationListener
@@ -1269,7 +1266,6 @@ f:com.intellij.openapi.project.ProjectUtil
 - bs:getProjectCachePath$default(com.intellij.openapi.project.Project,java.lang.String,Z,java.lang.String,I,java.lang.Object):java.nio.file.Path
 - bs:getProjectCachePath$default(com.intellij.openapi.project.Project,java.nio.file.Path,Z,java.lang.String,I,java.lang.Object):java.nio.file.Path
 - sf:getProjectDataPath(com.intellij.openapi.project.Project,java.lang.String):java.nio.file.Path
-- sf:getProjectsDataDir():java.nio.file.Path
 - sf:getRootManager(com.intellij.openapi.module.Module):com.intellij.openapi.roots.ModuleRootManager
 - sf:guessCurrentProject(javax.swing.JComponent):com.intellij.openapi.project.Project
 - sf:guessModuleDir(com.intellij.openapi.module.Module):com.intellij.openapi.vfs.VirtualFile
@@ -1488,7 +1484,6 @@ a:com.intellij.openapi.vfs.JarFileSystem
 - getJarRootForLocalFile(com.intellij.openapi.vfs.VirtualFile):com.intellij.openapi.vfs.VirtualFile
 - getLocalVirtualFileFor(com.intellij.openapi.vfs.VirtualFile):com.intellij.openapi.vfs.VirtualFile
 - getVirtualFileForJar(com.intellij.openapi.vfs.VirtualFile):com.intellij.openapi.vfs.VirtualFile
-- setNoCopyJarForPath(java.lang.String):V
 f:com.intellij.openapi.vfs.newvfs.impl.NullVirtualFile
 - com.intellij.openapi.vfs.newvfs.impl.StubVirtualFile
 - sf:INSTANCE:com.intellij.openapi.vfs.newvfs.impl.NullVirtualFile
@@ -1910,6 +1905,7 @@ a:com.intellij.util.io.RequestBuilder
 - a:connect(com.intellij.util.io.HttpRequests$RequestProcessor):java.lang.Object
 - connect(com.intellij.util.io.HttpRequests$RequestProcessor,java.lang.Object,com.intellij.openapi.diagnostic.Logger):java.lang.Object
 - a:connectTimeout(I):com.intellij.util.io.RequestBuilder
+- a:followRedirects(Z):com.intellij.util.io.RequestBuilder
 - a:forceHttps(Z):com.intellij.util.io.RequestBuilder
 - a:gzip(Z):com.intellij.util.io.RequestBuilder
 - a:hostNameVerifier(javax.net.ssl.HostnameVerifier):com.intellij.util.io.RequestBuilder
@@ -1934,17 +1930,13 @@ a:com.intellij.util.io.RequestBuilder
 - write(B[]):V
 f:com.intellij.util.proxy.CommonProxy
 - java.net.ProxySelector
-- sf:NO_PROXY_LIST:java.util.List
 - connectFailed(java.net.URI,java.net.SocketAddress,java.io.IOException):V
-- ensureAuthenticator():V
 - getAuthenticator():java.net.Authenticator
 - s:getHostNameReliably(java.lang.String,java.net.InetAddress,java.net.URL):java.lang.String
 - s:getInstance():com.intellij.util.proxy.CommonProxy
 - s:isInstalledAssertion():V
-- noAuthentication(java.lang.String,java.lang.String,I):V
 - removeCustom(java.lang.String):V
 - removeCustomAuth(java.lang.String):V
-- removeNoProxy(java.lang.String,java.lang.String,I):V
 - select(java.net.URI):java.util.List
 - select(java.net.URL):java.util.List
 - setCustomAuth(java.lang.String,com.intellij.util.proxy.NonStaticAuthenticator):V
@@ -2057,7 +2049,6 @@ c:com.intellij.util.ui.update.UiNotifyConnector
 - java.awt.event.HierarchyListener
 - sf:Companion:com.intellij.util.ui.update.UiNotifyConnector$Companion
 - <init>(java.awt.Component,com.intellij.util.ui.update.Activatable):V
-- <init>(java.awt.Component,com.intellij.util.ui.update.Activatable,Z):V
 - p:<init>(java.awt.Component,com.intellij.util.ui.update.Activatable,Z,java.lang.Object):V
 - dispose():V
 - sf:doWhenFirstShown(java.awt.Component,java.lang.Runnable):V

@@ -60,30 +60,46 @@ class CodeAnalysisCommand(text: String, line: Int) : AbstractCommand(text, line)
               }
             }
             "WARNINGS_ANALYSIS" -> {
-              val warningsOnHighlighting = DaemonCodeAnalyzerImpl.getHighlights(editor.document, HighlightSeverity.WARNING, project)
-              if (warningsOnHighlighting.size > 0) {
-                val warnings = StringBuilder("Highlighting detected some warnings: " + warningsOnHighlighting.size)
-                for (warning in warningsOnHighlighting) {
-                  warnings.append("\n").append(warning.description)
-                }
-                LOG.info(warnings.toString())
-                val args = when (commandArgs.size > 1) {
-                  true -> commandArgs[1].split(",")
-                  false -> listOf()
-                }
-                if (args.isNotEmpty()) {
-                  args.forEach {
-                    var found = false
-                    for (warning in warningsOnHighlighting) {
-                      if (warning.description.contains(it)) {
-                        found = true
-                        break
-                      }
-                    }
-                    if (!found) {
-                      actionCallback.reject("Highlighting did not detect the warning $it")
+              val actualWarnings = DaemonCodeAnalyzerImpl
+                .getHighlights(editor.document, HighlightSeverity.WARNING, project)
+                .map { "[${it.startOffset}-${it.endOffset}] ${it.description}" }
+                .toList()
+
+              if (actualWarnings.isNotEmpty()) {
+                // log warnings
+                val logMessage = StringBuilder("Highlighting detected some warnings: " + actualWarnings.size)
+                actualWarnings.forEach { logMessage.appendLine().append(it)}
+                LOG.info(logMessage.toString())
+
+                // Find and report duplicate warnings
+                actualWarnings
+                  .groupingBy { it }
+                  .eachCount()
+                  .filter { it.value > 1 }
+                  .forEach {
+                    actionCallback.reject("Duplicate warning detected ${it.value} times: ${it.key}")
+                  }
+
+                // Check expected warnings
+                val expectedWarnings = if (commandArgs.size > 1) commandArgs[1].split(",") else listOf()
+
+                if (expectedWarnings.isNotEmpty()) {
+                  // report expected but missed warnings
+                  expectedWarnings.forEach { expectedWarning ->
+                    if (!actualWarnings.any { actualWarning -> actualWarning.contains(expectedWarning) }) {
+                      actionCallback.reject("Highlighting did not detect the warning '$expectedWarning'")
                     }
                   }
+
+                  // report unexpected warnings
+                  actualWarnings
+                    .distinct()
+                    .filterNot { actualWarning ->
+                      expectedWarnings.any { expectedWarning -> actualWarning.contains(expectedWarning) }
+                    }
+                    .forEach { actualWarning ->
+                      actionCallback.reject("Highlighting detected unexpected warning '$actualWarning'")
+                    }
                 }
                 if (!actionCallback.isRejected) {
                   actionCallback.setDone()
@@ -102,7 +118,7 @@ class CodeAnalysisCommand(text: String, line: Int) : AbstractCommand(text, line)
     DumbService.getInstance(project).smartInvokeLater {
       PsiManager.getInstance(project).dropPsiCaches()
       context.message("Code highlighting started", line)
-      DaemonCodeAnalyzer.getInstance(project).restart()
+      DaemonCodeAnalyzer.getInstance(project).restart(this)
     }
     return actionCallback.toPromise()
   }

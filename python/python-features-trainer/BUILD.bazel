@@ -1,10 +1,16 @@
 ### auto-generated section `build intellij.python.featuresTrainer` start
-load("@rules_jvm//:jvm.bzl", "jvm_library", "jvm_resources")
+load("@rules_jvm//:jvm.bzl", "jvm_library", "resourcegroup")
 
-jvm_resources(
+resourcegroup(
   name = "featuresTrainer_resources",
-  files = glob(["resources/**/*"]),
+  srcs = glob(["resources/**/*"]),
   strip_prefix = "resources"
+)
+
+resourcegroup(
+  name = "featuresTrainer_test_resources",
+  srcs = glob(["testResources/**/*"]),
+  strip_prefix = "testResources"
 )
 
 jvm_library(
@@ -12,6 +18,7 @@ jvm_library(
   module_name = "intellij.python.featuresTrainer",
   visibility = ["//visibility:public"],
   srcs = glob(["src/**/*.kt", "src/**/*.java", "src/**/*.form"], allow_empty = True),
+  resources = [":featuresTrainer_resources"],
   deps = [
     "@lib//:kotlin-stdlib",
     "//platform/analysis-api:analysis",
@@ -30,18 +37,18 @@ jvm_library(
     "//python/python-sdk:sdk",
     "//platform/core-ui",
     "//platform/execution-impl",
-    "@lib//:kotlinx-serialization-core",
-    "@lib//:kotlinx-serialization-json",
+    "//libraries/kotlinx/serialization/core",
+    "//libraries/kotlinx/serialization/json",
     "//python/services/system-python",
     "@lib//:stream_ex",
-  ],
-  runtime_deps = [":featuresTrainer_resources"]
+  ]
 )
 
 jvm_library(
   name = "featuresTrainer_test_lib",
   visibility = ["//visibility:public"],
   srcs = glob(["testSrc/**/*.kt", "testSrc/**/*.java", "testSrc/**/*.form"], allow_empty = True),
+  resources = [":featuresTrainer_test_resources"],
   associates = [":featuresTrainer"],
   deps = [
     "@lib//:kotlin-stdlib",
@@ -63,8 +70,8 @@ jvm_library(
     "//python/python-sdk:sdk_test_lib",
     "//platform/core-ui",
     "//platform/execution-impl",
-    "@lib//:kotlinx-serialization-core",
-    "@lib//:kotlinx-serialization-json",
+    "//libraries/kotlinx/serialization/core",
+    "//libraries/kotlinx/serialization/json",
     "//platform/testFramework",
     "//platform/testFramework:testFramework_test_lib",
     "//python:pycharm-community",
@@ -79,8 +86,7 @@ jvm_library(
     "//python/services/internal-impl:python-community-services-internal-impl_test_lib",
     "//python/pluginCore:community-plugin",
     "@lib//:stream_ex",
-  ],
-  runtime_deps = [":featuresTrainer_resources"]
+  ]
 )
 ### auto-generated section `build intellij.python.featuresTrainer` end
 

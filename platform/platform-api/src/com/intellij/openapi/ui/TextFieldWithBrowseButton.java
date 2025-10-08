@@ -1,4 +1,4 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.ui;
 
 import com.intellij.openapi.Disposable;
@@ -10,7 +10,7 @@ import com.intellij.openapi.fileChooser.FileChooserFactory;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.NlsContexts;
 import com.intellij.openapi.util.NlsSafe;
-import com.intellij.openapi.util.io.FileUtil;
+import com.intellij.openapi.util.io.OSAgnosticPathUtil;
 import com.intellij.openapi.util.text.Strings;
 import com.intellij.ui.TextAccessor;
 import com.intellij.ui.components.JBTextField;
@@ -102,7 +102,7 @@ public class TextFieldWithBrowseButton extends ComponentWithBrowseButton<JTextFi
   public @NotNull String getText() {
     var text = Strings.notNullize(getTextField().getText());
     if (!(this instanceof NoPathCompletion)) {
-      text = FileUtil.expandUserHome(text);
+      text = OSAgnosticPathUtil.expandUserHome(text);
     }
     return text;
   }

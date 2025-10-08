@@ -1,9 +1,9 @@
 ### auto-generated section `build intellij.platform.vcs.log.impl` start
-load("@rules_jvm//:jvm.bzl", "jvm_library", "jvm_resources")
+load("@rules_jvm//:jvm.bzl", "jvm_library", "resourcegroup")
 
-jvm_resources(
+resourcegroup(
   name = "impl_resources",
-  files = glob(["resources/**/*"]),
+  srcs = glob(["resources/**/*"]),
   strip_prefix = "resources"
 )
 
@@ -12,6 +12,7 @@ jvm_library(
   module_name = "intellij.platform.vcs.log.impl",
   visibility = ["//visibility:public"],
   srcs = glob(["src/**/*.kt", "src/**/*.java", "src/**/*.form", "gen/**/*.kt", "gen/**/*.java"], allow_empty = True),
+  resources = [":impl_resources"],
   deps = [
     "//platform/analysis-api:analysis",
     "//platform/util/concurrency",
@@ -29,18 +30,18 @@ jvm_library(
     "//platform/ide-core-impl",
     "//platform/analysis-impl",
     "//platform/vcs-impl",
-    "@lib//:guava",
+    "//libraries/guava",
     "//platform/lang-impl",
     "//platform/vcs-log/graph-api:vcs-log-graph",
     "@lib//:kotlin-stdlib",
     "//platform/util",
-    "@lib//:miglayout-swing",
+    "//libraries/miglayout-swing",
     "//platform/diff-impl",
     "//platform/statistics",
-    "@lib//:fastutil-min",
+    "//libraries/fastutil",
     "//platform/core-ui",
-    "@lib//:gson",
-    "@lib//:caffeine",
+    "//libraries/gson",
+    "//libraries/caffeine",
     "@lib//:kotlinx-coroutines-core",
     "@lib//:kotlinx-coroutines-guava",
     "//platform/diagnostic/telemetry",
@@ -53,8 +54,7 @@ jvm_library(
     "//platform/util/storages",
     "//platform/vcs-impl/shared",
     "//platform/bookmarks",
-  ],
-  runtime_deps = [":impl_resources"]
+  ]
 )
 
 jvm_library(
@@ -82,7 +82,7 @@ jvm_library(
     "//platform/analysis-impl",
     "//platform/vcs-impl",
     "//platform/vcs-impl:vcs-impl_test_lib",
-    "@lib//:guava",
+    "//libraries/guava",
     "@lib//:junit4",
     "//platform/lang-impl",
     "//platform/vcs-log/graph-api:vcs-log-graph",
@@ -93,14 +93,14 @@ jvm_library(
     "//platform/vcs-tests:vcs-testFramework",
     "//platform/util",
     "@lib//:assert_j",
-    "@lib//:miglayout-swing",
+    "//libraries/miglayout-swing",
     "//platform/diff-impl",
     "//platform/statistics",
     "//platform/statistics:statistics_test_lib",
-    "@lib//:fastutil-min",
+    "//libraries/fastutil",
     "//platform/core-ui",
-    "@lib//:gson",
-    "@lib//:caffeine",
+    "//libraries/gson",
+    "//libraries/caffeine",
     "@lib//:kotlinx-coroutines-core",
     "@lib//:kotlinx-coroutines-guava",
     "//platform/diagnostic/telemetry",
@@ -117,8 +117,7 @@ jvm_library(
     "//platform/vcs-impl/shared",
     "//libraries/mockito",
     "//platform/bookmarks",
-  ],
-  runtime_deps = [":impl_resources"]
+  ]
 )
 ### auto-generated section `build intellij.platform.vcs.log.impl` end
 

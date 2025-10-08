@@ -1,11 +1,16 @@
 // Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.kotlin.idea.completion.impl.k2.contributors
 
+import com.intellij.codeInsight.completion.InsertionContext
 import com.intellij.codeInsight.completion.PrefixMatcher
 import com.intellij.codeInsight.lookup.LookupElement
 import com.intellij.codeInsight.lookup.LookupElementBuilder
 import com.intellij.codeInsight.lookup.LookupElementPresentation
 import com.intellij.openapi.util.NlsSafe
+import com.intellij.psi.PsiDocumentManager
+import kotlinx.serialization.Serializable
+import org.jetbrains.kotlin.analysis.api.KaExperimentalApi
+import org.jetbrains.kotlin.analysis.api.KaImplementationDetail
 import org.jetbrains.kotlin.analysis.api.KaSession
 import org.jetbrains.kotlin.analysis.api.components.KaScopeKind
 import org.jetbrains.kotlin.analysis.api.components.containingDeclaration
@@ -16,11 +21,19 @@ import org.jetbrains.kotlin.analysis.api.symbols.KaNamedClassSymbol
 import org.jetbrains.kotlin.analysis.api.symbols.KaNamedFunctionSymbol
 import org.jetbrains.kotlin.analysis.api.symbols.KaVariableSymbol
 import org.jetbrains.kotlin.analysis.api.symbols.markers.KaNamedSymbol
+import org.jetbrains.kotlin.analysis.api.types.KaType
+import org.jetbrains.kotlin.analysis.api.types.abbreviationOrSelf
+import org.jetbrains.kotlin.analysis.api.types.symbol
+import org.jetbrains.kotlin.idea.base.analysis.api.utils.buildClassTypeWithStarProjections
+import org.jetbrains.kotlin.idea.codeinsight.utils.addTypeArguments
 import org.jetbrains.kotlin.idea.completion.KOTLIN_CAST_REQUIRED_COLOR
 import org.jetbrains.kotlin.idea.completion.KotlinFirCompletionParameters
+import org.jetbrains.kotlin.idea.completion.api.serialization.SerializableInsertHandler
 import org.jetbrains.kotlin.idea.completion.api.serialization.ensureSerializable
 import org.jetbrains.kotlin.idea.completion.contributors.helpers.CallableMetadataProvider
 import org.jetbrains.kotlin.idea.completion.contributors.helpers.KtSymbolWithOrigin
+import org.jetbrains.kotlin.idea.completion.impl.k2.K2CompletionSectionContext
+import org.jetbrains.kotlin.idea.completion.impl.k2.argList
 import org.jetbrains.kotlin.idea.completion.impl.k2.contributors.FirCompletionContributorBase.AdaptToExplicitReceiverInsertionHandler
 import org.jetbrains.kotlin.idea.completion.impl.k2.hasNoExplicitReceiver
 import org.jetbrains.kotlin.idea.completion.lookups.CallableInsertionOptions
@@ -30,16 +43,15 @@ import org.jetbrains.kotlin.idea.completion.lookups.factories.KotlinFirLookupEle
 import org.jetbrains.kotlin.idea.completion.weighers.CallableWeigher.callableWeight
 import org.jetbrains.kotlin.idea.completion.weighers.Weighers.applyWeighs
 import org.jetbrains.kotlin.idea.completion.weighers.WeighingContext
+import org.jetbrains.kotlin.idea.debugger.evaluate.util.KotlinK2CodeFragmentUtils
 import org.jetbrains.kotlin.idea.util.positionContext.KotlinTypeNameReferencePositionContext
 import org.jetbrains.kotlin.name.Name
-import org.jetbrains.kotlin.psi.KtDotQualifiedExpression
-import org.jetbrains.kotlin.psi.KtElement
+import org.jetbrains.kotlin.psi.*
+import org.jetbrains.kotlin.psi.psiUtil.collectDescendantsOfType
 import org.jetbrains.kotlin.util.OperatorNameConventions
 
-context(_: KaSession)
+context(_: KaSession, context: K2CompletionSectionContext<*>)
 internal fun createCallableLookupElements(
-    context: WeighingContext,
-    parameters: KotlinFirCompletionParameters,
     signature: KaCallableSignature<*>,
     options: CallableInsertionOptions,
     scopeKind: KaScopeKind? = null,
@@ -62,7 +74,7 @@ internal fun createCallableLookupElements(
             name = shortName,
             signature = signature,
             options = options,
-            expectedType = context.expectedType,
+            expectedType = context.weighingContext.expectedType,
             aliasName = aliasName,
         ).let { yield(it) }
 
@@ -78,26 +90,55 @@ internal fun createCallableLookupElements(
         if (namedSymbol is KaNamedFunctionSymbol &&
             signature is KaFunctionSignature<*> &&
             // Only offer bracket operators after dot, not for safe access or implicit receivers
-            parameters.position.parent?.parent is KtDotQualifiedExpression
+            context.parameters.position.parent?.parent is KtDotQualifiedExpression
         ) {
-            createOperatorLookupElement(context, signature, options, namedSymbol)?.let { yield(it) }
+            createOperatorLookupElement(context.weighingContext, signature, options, namedSymbol)?.let { yield(it) }
         }
     }.map { builder ->
         if (presentableText == null) builder
         else builder.withPresentableText(presentableText)
     }.map { lookup ->
-        if (!context.isPositionInsideImportOrPackageDirective) {
+        if (!context.weighingContext.isPositionInsideImportOrPackageDirective) {
             lookup.callableWeight = CallableMetadataProvider.getCallableMetadata(
                 signature = signature,
                 scopeKind = scopeKind,
-                actualReceiverTypes = context.actualReceiverTypes,
+                actualReceiverTypes = context.weighingContext.actualReceiverTypes,
                 isFunctionalVariableCall = callableSymbol is KaVariableSymbol
                         && lookup.`object` is FunctionCallLookupObject,
             )
         }
 
-        lookup.applyWeighs(context, symbolWithOrigin)
-        lookup.applyKindToPresentation()
+        lookup.applyWeighs(symbolWithOrigin)
+        val newLookup = context.positionContext.position.argList?.let { argList ->
+            lookup.withChainedInsertHandler(InsertRequiredTypeArgumentsInsertHandler( argList.args.text, argList.offset))
+        } ?: lookup
+        newLookup.applyKindToPresentation()
+    }
+}
+
+/**
+ * Inserts the [typeArgs] at the [exprOffset] for expressions that require type arguments
+ * after a chained dot call.
+ */
+@Serializable
+internal class InsertRequiredTypeArgumentsInsertHandler(
+    private val typeArgs: String,
+    private val exprOffset: Int,
+): SerializableInsertHandler {
+    override fun handleInsert(
+        context: InsertionContext,
+        item: LookupElement
+    ) {
+        val beforeCaret = context.file.findElementAt(exprOffset) ?: return
+        val callExpr = when (val beforeCaretExpr = beforeCaret.prevSibling) {
+            is KtCallExpression -> beforeCaretExpr
+            is KtDotQualifiedExpression -> beforeCaretExpr.collectDescendantsOfType<KtCallExpression>().lastOrNull()
+            else -> null
+        } ?: return
+
+        addTypeArguments(callExpr, typeArgs, callExpr.project)
+        // Need to commit the PSI changes to the document for potential following insert handlers that modify the document
+        PsiDocumentManager.getInstance(context.project).doPostponedOperationsAndUnblockDocument(context.document)
     }
 }
 
@@ -163,3 +204,17 @@ internal fun LookupElementBuilder.adaptToExplicitReceiver(
         typeText = typeText,
     )
 )
+@OptIn(KaExperimentalApi::class, KaImplementationDetail::class)
+context(kaSession: KaSession)
+internal fun KtExpression.evaluateRuntimeKaType(): KaType? {
+    val expr = this
+    val containingFile = containingFile as? KtCodeFragment
+    val runtimeTypeEvaluator = containingFile?.getCopyableUserData(KotlinK2CodeFragmentUtils.RUNTIME_TYPE_EVALUATOR_K2)
+    return runtimeTypeEvaluator?.invoke(expr)?.restore(kaSession)
+}
+
+// See KTIJ-35541
+@OptIn(KaExperimentalApi::class)
+context(_: KaSession)
+internal fun KaType.replaceTypeParametersWithStarProjections(): KaType? =
+    abbreviationOrSelf.symbol?.let { buildClassTypeWithStarProjections(it) }

@@ -1,9 +1,9 @@
 ### auto-generated section `build intellij.performanceTesting` start
-load("@rules_jvm//:jvm.bzl", "jvm_library", "jvm_resources")
+load("@rules_jvm//:jvm.bzl", "jvm_library", "resourcegroup")
 
-jvm_resources(
+resourcegroup(
   name = "performanceTesting_resources",
-  files = glob(["resources/**/*"]),
+  srcs = glob(["resources/**/*"]),
   strip_prefix = "resources"
 )
 
@@ -12,6 +12,7 @@ jvm_library(
   module_name = "intellij.performanceTesting",
   visibility = ["//visibility:public"],
   srcs = glob(["src/**/*.kt", "src/**/*.java", "src/**/*.form"], allow_empty = True),
+  resources = [":performanceTesting_resources"],
   deps = [
     "@lib//:kotlin-stdlib",
     "//platform/remote-driver/model",
@@ -29,11 +30,11 @@ jvm_library(
     "//platform/projectModel-api:projectModel",
     "//platform/platform-impl/concurrency",
     "//platform/usageView",
-    "@lib//:jackson",
-    "@lib//:jackson-module-kotlin",
+    "//libraries/jackson/jackson",
+    "//libraries/jackson/module-kotlin:libraries-jackson-module-kotlin",
     "//platform/refactoring",
     "//platform/analysis-impl",
-    "@lib//:jackson-databind",
+    "//libraries/jackson/databind",
     "//platform/editor-ui-ex:editor-ex",
     "//platform/ide-core-impl",
     "//platform/core-ui",
@@ -47,10 +48,10 @@ jvm_library(
     "@lib//:kotlinx-coroutines-core",
     "//platform/diagnostic/telemetry",
     "//platform/platform-impl:ide-impl",
-    "@lib//:fastutil-min",
+    "//libraries/fastutil",
     "//platform/xdebugger-api:debugger",
     "//platform/xdebugger-impl:debugger-impl",
-    "@lib//:caffeine",
+    "//libraries/caffeine",
     "//platform/remote-driver/core:driver-impl",
     "@lib//:netty-codec-http",
     "@lib//:netty-buffer",
@@ -61,8 +62,7 @@ jvm_library(
     "//plugins/performanceTesting/event-bus:tools-ide-starter-bus",
     "//platform/eel-provider",
     "@lib//:jbr-api",
-  ],
-  runtime_deps = [":performanceTesting_resources"]
+  ]
 )
 
 jvm_library(
@@ -90,11 +90,11 @@ jvm_library(
     "//platform/testFramework",
     "//platform/testFramework:testFramework_test_lib",
     "//platform/usageView",
-    "@lib//:jackson",
-    "@lib//:jackson-module-kotlin",
+    "//libraries/jackson/jackson",
+    "//libraries/jackson/module-kotlin:libraries-jackson-module-kotlin",
     "//platform/refactoring",
     "//platform/analysis-impl",
-    "@lib//:jackson-databind",
+    "//libraries/jackson/databind",
     "//platform/editor-ui-ex:editor-ex",
     "//platform/ide-core-impl",
     "//platform/core-ui",
@@ -110,11 +110,11 @@ jvm_library(
     "//platform/diagnostic/telemetry",
     "//platform/diagnostic/telemetry:telemetry_test_lib",
     "//platform/platform-impl:ide-impl",
-    "@lib//:fastutil-min",
+    "//libraries/fastutil",
     "//platform/xdebugger-api:debugger",
     "//platform/xdebugger-impl:debugger-impl",
     "//platform/xdebugger-impl:debugger-impl_test_lib",
-    "@lib//:caffeine",
+    "//libraries/caffeine",
     "//platform/remote-driver/core:driver-impl",
     "@lib//:netty-codec-http",
     "@lib//:netty-buffer",
@@ -127,8 +127,7 @@ jvm_library(
     "//plugins/performanceTesting/event-bus:tools-ide-starter-bus_test_lib",
     "//platform/eel-provider",
     "@lib//:jbr-api",
-  ],
-  runtime_deps = [":performanceTesting_resources"]
+  ]
 )
 ### auto-generated section `build intellij.performanceTesting` end
 

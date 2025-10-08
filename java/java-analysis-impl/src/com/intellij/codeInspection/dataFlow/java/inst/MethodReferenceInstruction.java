@@ -74,7 +74,7 @@ public class MethodReferenceInstruction extends ExpressionPushingInstruction {
         dfType = DfTypes.NOT_NULL_OBJECT;
       }
     } else {
-      dfType = typedObject(returnType, DfaPsiUtil.getElementNullability(returnType, method));
+      dfType = typedObject(returnType, DfaPsiUtil.getElementNullabilityForRead(returnType, method));
     }
     DfaValue defaultResult = interpreter.getFactory().fromDfType(dfType);
     PsiType type = LambdaUtil.getFunctionalInterfaceReturnType(methodRef);
@@ -138,7 +138,7 @@ public class MethodReferenceInstruction extends ExpressionPushingInstruction {
         if (idx >= arguments.length) break;
         PsiType parameterType = parameters[idx].getType();
         if (!(parameterType instanceof PsiEllipsisType)) {
-          Nullability nullability = DfaPsiUtil.getElementNullability(substitutor.substitute(parameterType), parameters[idx]);
+          Nullability nullability = DfaPsiUtil.getElementNullabilityForWrite(substitutor.substitute(parameterType), parameters[idx]);
           arguments[idx] = adaptMethodRefArgument(interpreter, state, value, methodRef, parameters[idx], nullability);
         }
       }

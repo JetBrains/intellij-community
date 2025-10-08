@@ -546,6 +546,36 @@ class KotlinSuggestedRefactoringAvailabilityTest : BaseSuggestedRefactoringAvail
         }
     }
 
+    fun testAddNameForFunctionalTypeParameter() {
+        doTest(
+            """
+                fun sayHello(name: String) {}
+                
+                fun main() {
+                    val greeter: (<caret>String) -> Unit = ::sayHello
+                }
+            """.trimIndent(),
+            expectedAvailability = Availability.NotAvailable,
+        ) {
+            type("name: ")
+        }
+    }
+
+    fun testRemoveNameForFunctionalTypeParameter() {
+        doTest(
+            """
+                fun sayHello(name: String) {}
+                
+                fun main() {
+                    val greeter: (name: <caret>String) -> Unit = ::sayHello
+                }
+            """.trimIndent(),
+            expectedAvailability = Availability.NotAvailable,
+        ) {
+            deleteTextBeforeCaret("name: ")
+        }
+    }
+
     fun testExpectedFunction() {
         ignoreErrors = true
         doTest(

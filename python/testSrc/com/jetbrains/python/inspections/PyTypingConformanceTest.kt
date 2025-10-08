@@ -11,6 +11,7 @@ import com.intellij.util.io.URLUtil
 import com.jetbrains.python.PythonTestUtil
 import com.jetbrains.python.fixtures.PyTestCase
 import com.jetbrains.python.inspections.unresolvedReference.PyUnresolvedReferencesInspection
+import com.jetbrains.python.psi.LanguageLevel
 import com.jetbrains.python.psi.PyRecursiveElementVisitor
 import org.junit.AfterClass
 import org.junit.Test
@@ -30,6 +31,7 @@ private val inspections
     PyCallingNonCallableInspection(),
     PyClassVarInspection(),
     PyDataclassInspection(),
+    PyDunderSlotsInspection(),
     PyEnumInspection(),
     PyFinalInspection(),
     //PyInitNewSignatureInspection(), // False negative constructors_consistency.py
@@ -51,7 +53,12 @@ class PyTypingConformanceTest(private val testFileName: String) : PyTestCase() {
   fun test() {
     myFixture.configureByFiles(*getFilePaths())
     myFixture.enableInspections(*inspections)
-    checkHighlighting()
+    // The test suite has not been updated for 3.14 by default.
+    // In particular, forward references are not enabled by default
+    // and require an explicit `from __future__ import annotations`.
+    runWithLanguageLevel(LanguageLevel.PYTHON313, {
+      checkHighlighting()
+    })
   }
 
   private fun getFilePaths(): Array<String> {

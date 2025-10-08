@@ -1,9 +1,9 @@
 ### auto-generated section `build intellij.grid.core.impl` start
-load("@rules_jvm//:jvm.bzl", "jvm_library", "jvm_resources")
+load("@rules_jvm//:jvm.bzl", "jvm_library", "resourcegroup")
 
-jvm_resources(
+resourcegroup(
   name = "core-impl_resources",
-  files = glob(["resources/**/*"]),
+  srcs = glob(["resources/**/*"]),
   strip_prefix = "resources"
 )
 
@@ -12,6 +12,7 @@ jvm_library(
   module_name = "intellij.grid.core.impl",
   visibility = ["//visibility:public"],
   srcs = glob(["gen/**/*.kt", "gen/**/*.java", "src/**/*.kt", "src/**/*.java", "src/**/*.form"], allow_empty = True),
+  resources = [":core-impl_resources"],
   deps = [
     "//grid/types",
     "//grid/csv:csv-core-impl",
@@ -29,8 +30,7 @@ jvm_library(
     "//platform/editor-ui-api:editor-ui",
     "//platform/projectModel-api:projectModel",
     "//platform/analysis-api:analysis",
-    "@lib//:fastutil-min",
-  ],
-  runtime_deps = [":core-impl_resources"]
+    "//libraries/fastutil",
+  ]
 )
 ### auto-generated section `build intellij.grid.core.impl` end

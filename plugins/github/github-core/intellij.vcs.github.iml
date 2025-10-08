@@ -47,7 +47,7 @@
     <orderEntry type="module" module-name="intellij.platform.vcs.impl" />
     <orderEntry type="module" module-name="intellij.platform.ide.impl" />
     <orderEntry type="module" module-name="intellij.platform.util" />
-    <orderEntry type="library" name="jackson" level="project" />
+    <orderEntry type="module" module-name="intellij.libraries.jackson" />
     <orderEntry type="module" module-name="intellij.platform.vcs.dvcs.impl" />
     <orderEntry type="module" module-name="intellij.platform.vcs.dvcs" />
     <orderEntry type="module" module-name="intellij.platform.testFramework" scope="TEST" />
@@ -57,12 +57,12 @@
     <orderEntry type="module" module-name="intellij.platform.util.progress" />
     <orderEntry type="module" module-name="intellij.tasks.jira" scope="TEST" />
     <orderEntry type="module" module-name="intellij.platform.vcs.tests" scope="TEST" />
-    <orderEntry type="library" name="Guava" level="project" />
+    <orderEntry type="module" module-name="intellij.libraries.guava" />
     <orderEntry type="module" module-name="intellij.platform.credentialStore.ui" />
     <orderEntry type="module" module-name="intellij.platform.lang.impl" />
-    <orderEntry type="library" name="miglayout-swing" level="project" />
-    <orderEntry type="library" name="jackson-databind" level="project" />
-    <orderEntry type="library" name="jackson-module-kotlin" level="project" />
+    <orderEntry type="module" module-name="intellij.libraries.miglayout.swing" />
+    <orderEntry type="module" module-name="intellij.libraries.jackson.databind" />
+    <orderEntry type="module" module-name="intellij.libraries.jackson.module.kotlin" />
     <orderEntry type="module" module-name="intellij.platform.editor.ui" />
     <orderEntry type="module" module-name="intellij.platform.diff.impl" />
     <orderEntry type="module" module-name="intellij.platform.statistics" />
@@ -71,18 +71,18 @@
     <orderEntry type="module" module-name="intellij.platform.collaborationTools" />
     <orderEntry type="library" name="netty-buffer" level="project" />
     <orderEntry type="module" module-name="intellij.platform.core.ui" />
-    <orderEntry type="library" name="fastutil-min" level="project" />
+    <orderEntry type="module" module-name="intellij.libraries.fastutil" />
     <orderEntry type="module" module-name="intellij.platform.ide.util.io" />
     <orderEntry type="module" module-name="intellij.platform.ide.util.netty" />
-    <orderEntry type="library" name="caffeine" level="project" />
+    <orderEntry type="module" module-name="intellij.libraries.caffeine" />
     <orderEntry type="module" module-name="intellij.platform.collaborationTools.auth" />
     <orderEntry type="module" module-name="intellij.platform.collaborationTools.auth.base" />
     <orderEntry type="module" module-name="intellij.platform.markdown.utils" />
     <orderEntry type="library" name="kotlinx-coroutines-core" level="project" />
     <orderEntry type="library" name="jetbrains.markdown" level="project" />
     <orderEntry type="module" module-name="intellij.platform.util.jdom" scope="TEST" />
-    <orderEntry type="library" name="kotlinx-serialization-core" level="project" />
-    <orderEntry type="library" name="kotlinx-serialization-json" level="project" />
+    <orderEntry type="module" module-name="intellij.libraries.kotlinx.serialization.core" />
+    <orderEntry type="module" module-name="intellij.libraries.kotlinx.serialization.json" />
     <orderEntry type="library" scope="PROVIDED" name="kotlinc.kotlinx-serialization-compiler-plugin" level="project" />
     <orderEntry type="module" module-name="intellij.platform.util.coroutines" />
     <orderEntry type="library" scope="TEST" name="JUnit4" level="project" />
@@ -90,10 +90,10 @@
     <orderEntry type="library" scope="TEST" name="io.mockk" level="project" />
     <orderEntry type="library" scope="TEST" name="io.mockk.jvm" level="project" />
     <orderEntry type="module" module-name="intellij.platform.ide.ui" />
-    <orderEntry type="library" name="gson" level="project" />
+    <orderEntry type="module" module-name="intellij.libraries.gson" />
     <orderEntry type="library" scope="TEST" name="classgraph" level="project" />
     <orderEntry type="library" scope="TEST" name="assertJ" level="project" />
-    <orderEntry type="library" scope="TEST" name="kotlin-reflect" level="project" />
+    <orderEntry type="module" module-name="intellij.libraries.kotlin.reflect" scope="TEST" />
     <orderEntry type="module-library" scope="TEST">
       <library name="apollographql.apollo.ast.jvm" type="repository">
         <properties maven-id="com.apollographql.apollo:apollo-ast-jvm:4.0.0">

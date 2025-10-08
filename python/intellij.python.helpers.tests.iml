@@ -2,14 +2,14 @@
 <module type="JAVA_MODULE" version="4">
   <component name="NewModuleRootManager" inherit-compiler-output="true">
     <exclude-output />
-    <content url="file://$MODULE_DIR$/helpers/testResources">
-      <sourceFolder url="file://$MODULE_DIR$/helpers/testResources" type="java-test-resource" />
+    <content url="file://$MODULE_DIR$/helpersTestResources">
+      <sourceFolder url="file://$MODULE_DIR$/helpersTestResources" type="java-test-resource" />
     </content>
-    <content url="file://$MODULE_DIR$/helpers/tests">
-      <sourceFolder url="file://$MODULE_DIR$/helpers/tests" isTestSource="true" />
-      <excludeFolder url="file://$MODULE_DIR$/helpers/tests/.gradle" />
-      <excludeFolder url="file://$MODULE_DIR$/helpers/tests/.tox" />
-      <excludeFolder url="file://$MODULE_DIR$/helpers/tests/build" />
+    <content url="file://$MODULE_DIR$/helpersTests">
+      <sourceFolder url="file://$MODULE_DIR$/helpersTests" isTestSource="true" />
+      <excludeFolder url="file://$MODULE_DIR$/helpersTests/.gradle" />
+      <excludeFolder url="file://$MODULE_DIR$/helpersTests/.tox" />
+      <excludeFolder url="file://$MODULE_DIR$/helpersTests/build" />
     </content>
     <orderEntry type="inheritedJdk" />
     <orderEntry type="sourceFolder" forTests="false" />

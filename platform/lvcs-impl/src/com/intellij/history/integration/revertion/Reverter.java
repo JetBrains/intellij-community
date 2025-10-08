@@ -32,14 +32,6 @@ public abstract class Reverter {
     myCommandName = commandName;
   }
 
-  /**
-   * @deprecated always returns empty list
-   */
-  @Deprecated(forRemoval = true)
-  public List<String> askUserForProceeding() throws IOException {
-    return Collections.emptyList();
-  }
-
   public List<String> checkCanRevert() throws IOException {
     if (!askForReadOnlyStatusClearing()) {
       return Collections.singletonList(LocalHistoryBundle.message("revert.error.files.are.read.only"));

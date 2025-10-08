@@ -300,7 +300,7 @@ class GitSingleRepoRebaseTest : GitRebaseBaseTest() {
     val testChangelist2 = changeListManager.addChangeList("TEST_2", null)
 
     val file = LocalFileSystem.getInstance().refreshAndFindFileByIoFile(Executor.child("file.txt"))!!
-    withPartialTracker(file, "1A\n2\n3A\n4\n5A\n") { document, tracker ->
+    withPartialTracker(file, "1A\n2\n3A\n4\n5A\n") { _, tracker ->
       val ranges = tracker.getRanges()!!
       TestCase.assertEquals(3, ranges.size)
       tracker.moveToChangelist(ranges[1], testChangelist1)
@@ -317,7 +317,7 @@ class GitSingleRepoRebaseTest : GitRebaseBaseTest() {
 
     `do nothing on merge`()
     dialogManager.onMessage { message ->
-      TestCase.assertTrue(message.contains("Abort rebase in"))
+      assertTrue(message.contains("Abort rebase in"))
       Messages.YES
     }
 
@@ -355,7 +355,7 @@ class GitSingleRepoRebaseTest : GitRebaseBaseTest() {
     val testChangelist2 = changeListManager.addChangeList("TEST_2", null)
 
     val file = LocalFileSystem.getInstance().refreshAndFindFileByIoFile(Executor.child("file.txt"))!!
-    withPartialTracker(file, "1A\n2\n3A\n4\n5A\n") { document, tracker ->
+    withPartialTracker(file, "1A\n2\n3A\n4\n5A\n") { _, tracker ->
       val ranges = tracker.getRanges()!!
       TestCase.assertEquals(3, ranges.size)
       tracker.moveToChangelist(ranges[1], testChangelist1)
@@ -396,7 +396,7 @@ class GitSingleRepoRebaseTest : GitRebaseBaseTest() {
     val testChangelist2 = changeListManager.addChangeList("TEST_2", null)
 
     val file = LocalFileSystem.getInstance().refreshAndFindFileByIoFile(Executor.child("file.txt"))!!
-    withPartialTracker(file, "1A\n2\n3A\n4\n5A\n") { document, tracker ->
+    withPartialTracker(file, "1A\n2\n3A\n4\n5A\n") { _, tracker ->
       val ranges = tracker.getRanges()!!
       TestCase.assertEquals(3, ranges.size)
       tracker.moveToChangelist(ranges[1], testChangelist1)
@@ -745,10 +745,6 @@ class GitSingleRepoRebaseTest : GitRebaseBaseTest() {
     assertTrue(File(repo.root.path, "2.txt").exists())
   }
 
-  private fun rebaseInteractively(revision: String = "master") {
-    GitTestingRebaseProcess(project, GitRebaseParams(vcs.version, null, null, revision, true, false), repo).rebase()
-  }
-
   fun `test checkout with rebase`() {
     repo.`diverge feature and master`()
     checkCheckoutAndRebase {
@@ -777,6 +773,70 @@ class GitSingleRepoRebaseTest : GitRebaseBaseTest() {
     rebaseInteractively()
 
     assertErrorNotification("Rebase failed", errorMessage)
+  }
+
+  // IJPL-73981: Verify that --autosquash orders squash! and fixup! commits after their target
+  fun `test autosquash orders fixup and squash commits`() {
+    build {
+      master {
+        0("base.txt", "base")
+      }
+      feature(0) {
+        1("b.txt", "B", "Commit B")
+        2("a.txt", "A", "Commit A")
+        3("b.txt", "\nfix", "fixup! Commit B")
+        4("b.txt", "\nsq", "squash! Commit B")
+      }
+    }
+    refresh()
+    updateChangeListManager()
+
+    var capturedTodo: String? = null
+    git.setInteractiveRebaseEditor(
+      TestGitImpl.InteractiveRebaseEditor(
+        { text ->
+          capturedTodo = text
+          text
+        },
+        { it }
+      )
+    )
+
+    val params = GitRebaseParams(vcs.version, null, null, "master", setOf(GitRebaseOption.INTERACTIVE, GitRebaseOption.AUTOSQUASH))
+    GitTestingRebaseProcess(project, params, repo).rebase()
+    val capturedTodoList = capturedTodo ?: error("Interactive rebase todo list was not captured")
+    val lines = capturedTodoList.parseRebaseTodoList()
+
+    val indexB = lines.indexOfFirst { it.startsWith("pick ") && it.contains("Commit B") }
+    val indexA = lines.indexOfFirst { it.startsWith("pick ") && it.contains("Commit A") }
+    val indexSquash = lines.indexOfFirst { (it.startsWith("squash ") || it.startsWith("s ")) && it.contains("squash! Commit B") }
+    val indexFixup = lines.indexOfFirst { (it.startsWith("fixup ") || it.startsWith("f ")) && it.contains("fixup! Commit B") }
+
+    assertTrue("'pick Commit B' should be present in rebase todo", indexB >= 0)
+    assertTrue("'pick Commit A' should be present in rebase todo", indexA >= 0)
+    assertTrue("'squash squash! Commit B' should be present in rebase todo", indexSquash >= 0)
+    assertTrue("'fixup fixup! Commit B' should be present in rebase todo", indexFixup >= 0)
+
+    // Both 'squash!' and 'fixup!' commits should be placed immediately after the target commit
+    assertTrue("Rebase todo should contain at least two lines after 'pick Commit B'", indexB + 2 < lines.size)
+    assertTrue("squash should immediately follow 'pick Commit B'", indexSquash == indexB + 1 || indexSquash == indexB + 2)
+    assertTrue("fixup should immediately follow 'pick Commit B'", indexFixup == indexB + 1 || indexFixup == indexB + 2)
+
+    val afterB1 = lines[indexB + 1]
+    val afterB2 = lines[indexB + 2]
+    val commandsAfterB = setOf(afterB1.substringBefore(" "), afterB2.substringBefore(" "))
+    assertTrue("Expected the two lines after 'pick Commit B' to be 'squash' and 'fixup' (in any order). Actual: $commandsAfterB", commandsAfterB == setOf("squash", "fixup") || commandsAfterB == setOf("s", "f"))
+
+    // Verify Commit A appears after the squash/fixup commits
+    assertTrue("'pick Commit A' should appear after the squash/fixup commits for Commit B", indexA > indexB + 2)
+  }
+
+  private fun String.parseRebaseTodoList(): List<String> {
+    return lines().filter { it.isNotBlank() && !it.trimStart().startsWith("#") }
+  }
+
+  private fun rebaseInteractively(revision: String = "master") {
+    GitTestingRebaseProcess(project, GitRebaseParams(vcs.version, null, null, revision, true, false), repo).rebase()
   }
 
   private fun checkCheckoutAndRebase(expectedNotification: () -> String) {
@@ -808,5 +868,5 @@ class GitSingleRepoRebaseTest : GitRebaseBaseTest() {
     return GitRebaseParams(vcs.version, newBase)
   }
 
-  internal fun file(path: String) = repo.file(path)
+  private fun file(path: String) = repo.file(path)
 }

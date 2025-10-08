@@ -2,16 +2,17 @@
 
 package org.jetbrains.kotlin.idea.configuration
 
-import com.intellij.ide.ui.search.SearchableOptionContributor
-import com.intellij.ide.ui.search.SearchableOptionProcessor
+import com.intellij.ide.DataManager
 import com.intellij.openapi.options.Configurable
 import com.intellij.openapi.options.SearchableConfigurable
-import com.intellij.ui.dsl.builder.BottomGap
-import com.intellij.ui.dsl.builder.TopGap
+import com.intellij.openapi.options.ex.Settings
+import com.intellij.ui.HyperlinkAdapter
+import com.intellij.ui.HyperlinkLabel
 import com.intellij.ui.dsl.builder.panel
-import org.jetbrains.kotlin.idea.configuration.ui.KotlinPluginKindSwitcherController
+import org.jetbrains.kotlin.idea.core.script.shared.KOTLIN_SCRIPTING_SETTINGS_ID
 import org.jetbrains.kotlin.idea.preferences.KotlinPreferencesBundle
 import javax.swing.JComponent
+import javax.swing.event.HyperlinkEvent
 
 internal class KotlinLanguageConfiguration : SearchableConfigurable, Configurable.NoScroll {
     companion object {
@@ -27,42 +28,23 @@ internal class KotlinLanguageConfiguration : SearchableConfigurable, Configurabl
 
     private val experimentalFeaturesPanel: ExperimentalFeaturesPanel? = ExperimentalFeaturesPanel.createPanelIfShouldBeShown()
 
-    private val kotlinPluginKindSwitcherController: KotlinPluginKindSwitcherController =
-        KotlinPluginKindSwitcherController.createIfPluginSwitchIsPossible()
-
     override fun getId(): String = ID
 
     override fun getDisplayName(): String = KotlinPreferencesBundle.message("configuration.name.kotlin")
 
 
     override fun isModified() =
-        experimentalFeaturesPanel?.isModified() == true ||
-                kotlinPluginKindSwitcherController?.isModified() == true
-
-    override fun reset() {
-        super.reset()
-        kotlinPluginKindSwitcherController?.reset()
-    }
+        experimentalFeaturesPanel?.isModified() == true
 
     override fun apply() {
         // Selected channel is now saved automatically
 
         experimentalFeaturesPanel?.applySelectedChanges()
-        kotlinPluginKindSwitcherController?.applyChanges()
     }
 
     override fun createComponent(): JComponent {
+        val kotlinScriptingSettingsLink = createKotlinScriptingSettingsHyperlink()
         return panel {
-            kotlinPluginKindSwitcherController?.let { kotlinPluginKindSwitcherController ->
-                row {
-                    cell(kotlinPluginKindSwitcherController.createComponent())
-                }
-
-                separator()
-                    .topGap(TopGap.SMALL)
-                    .bottomGap(BottomGap.SMALL)
-            }
-
             experimentalFeaturesPanel?.let { experimentalFeaturesPanel ->
                 group(KotlinPreferencesBundle.message("experimental.features")) {
                     row {
@@ -70,20 +52,23 @@ internal class KotlinLanguageConfiguration : SearchableConfigurable, Configurabl
                     }
                 }
             }
+            row {
+                cell(kotlinScriptingSettingsLink)
+            }
         }
     }
-}
 
-class KotlinPluginSwitchSearchOptionContributor : SearchableOptionContributor() {
-    override fun processOptions(processor: SearchableOptionProcessor) {
-        val displayName = KotlinPreferencesBundle.message("kotlin.language.configurable")
-        processor.addOptions(
-            KotlinPreferencesBundle.message("checkbox.enable.k2.based.kotlin.plugin"),
-            null,
-            KotlinPreferencesBundle.message("checkbox.enable.k2.based.kotlin.plugin"),
-            KotlinLanguageConfiguration.ID,
-            displayName,
-            false
-        )
+    private fun createKotlinScriptingSettingsHyperlink(): JComponent {
+        @Suppress("DialogTitleCapitalization") // It is properly capitalized
+        val scriptingLink = HyperlinkLabel(KotlinPreferencesBundle.message("kotlin.scripting.configurable"))
+        scriptingLink.addHyperlinkListener(object : HyperlinkAdapter() {
+            override fun hyperlinkActivated(e: HyperlinkEvent) {
+                val dataContext = DataManager.getInstance().getDataContext(scriptingLink)
+                val settings = Settings.KEY.getData(dataContext) ?: return
+                val kotlinScriptingConfigurable = settings.find(KOTLIN_SCRIPTING_SETTINGS_ID)
+                settings.select(kotlinScriptingConfigurable)
+            }
+        })
+        return scriptingLink
     }
 }

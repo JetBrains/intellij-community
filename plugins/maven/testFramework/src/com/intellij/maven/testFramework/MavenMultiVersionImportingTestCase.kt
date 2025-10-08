@@ -475,6 +475,8 @@ abstract class MavenMultiVersionImportingTestCase : MavenImportingTestCase() {
       if (version == "4") {
         return MAVEN_4_VERSION
       }
+      val index = version.indexOf("/")
+      if (index >= 0) return version.substring(0, index)
       return version
     }
   }

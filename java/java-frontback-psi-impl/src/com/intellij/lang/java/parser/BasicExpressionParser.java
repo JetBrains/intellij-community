@@ -7,6 +7,7 @@ import com.intellij.openapi.util.registry.Registry;
 import com.intellij.psi.JavaTokenType;
 import com.intellij.psi.tree.IElementType;
 import com.intellij.psi.tree.TokenSet;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.annotations.PropertyKey;
@@ -15,8 +16,11 @@ import java.util.function.Function;
 
 /**
  * @deprecated Use the new Java syntax library instead.
- *             See {@link com.intellij.java.syntax.parser.JavaParser}
+ *             See {@link com.intellij.java.syntax.parser.JavaParser}.
+ *             This class is planned to be removed.
+ *             As a temporary solution, use {@link ExpressionParser}.
  */
+@ApiStatus.ScheduledForRemoval
 @Deprecated
 public class BasicExpressionParser {
   private static final boolean useNewImplementation = Registry.is("pratt.java.expression.parser", true);

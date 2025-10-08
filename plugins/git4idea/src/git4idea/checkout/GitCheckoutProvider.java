@@ -11,7 +11,6 @@ import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.NlsSafe;
-import com.intellij.openapi.util.io.FileUtilRt;
 import com.intellij.openapi.util.text.HtmlBuilder;
 import com.intellij.openapi.util.text.HtmlChunk;
 import com.intellij.openapi.util.text.StringUtil;
@@ -37,6 +36,7 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.io.File;
+import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.util.Arrays;
 import java.util.Collections;
@@ -98,8 +98,7 @@ public final class GitCheckoutProvider extends CheckoutProviderEx {
                            final String directoryName,
                            final String parentDirectory,
                            final GitShallowCloneOptions shallowCloneOptions) {
-    String projectAbsolutePath = Paths.get(parentDirectory, directoryName).toAbsolutePath().toString();
-    String projectPath = FileUtilRt.toSystemIndependentName(projectAbsolutePath);
+    Path projectPath = Paths.get(parentDirectory, directoryName).toAbsolutePath();
 
     CloneTask cloneTask = new CloneTask() {
 

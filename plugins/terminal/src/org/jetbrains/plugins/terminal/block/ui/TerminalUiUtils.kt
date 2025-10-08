@@ -40,6 +40,7 @@ import com.intellij.openapi.util.Key
 import com.intellij.openapi.util.SystemInfoRt
 import com.intellij.terminal.JBTerminalSystemSettingsProviderBase
 import com.intellij.terminal.TerminalColorPalette
+import com.intellij.ui.ColorUtil
 import com.intellij.ui.components.JBLayeredPane
 import com.intellij.ui.scale.JBUIScale
 import com.intellij.util.Alarm
@@ -51,7 +52,6 @@ import com.intellij.util.concurrency.annotations.RequiresBlockingContext
 import com.intellij.util.concurrency.annotations.RequiresEdt
 import com.intellij.util.ui.JBUI
 import com.intellij.util.ui.UIUtil
-import com.jediterm.core.util.TermSize
 import com.jediterm.terminal.TerminalColor
 import com.jediterm.terminal.TextStyle
 import com.jediterm.terminal.model.CharBuffer
@@ -66,6 +66,7 @@ import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.plugins.terminal.block.output.TextAttributesProvider
 import org.jetbrains.plugins.terminal.block.output.TextStyleAdapter
 import org.jetbrains.plugins.terminal.block.session.TerminalModel
+import org.jetbrains.plugins.terminal.session.TerminalGridSize
 import java.awt.Color
 import java.awt.Component
 import java.awt.Dimension
@@ -85,6 +86,7 @@ import javax.swing.JScrollPane
 import javax.swing.KeyStroke
 import javax.swing.event.ChangeEvent
 import javax.swing.event.ChangeListener
+import kotlin.math.ceil
 import kotlin.math.max
 
 @ApiStatus.Internal
@@ -120,10 +122,11 @@ object TerminalUiUtils {
     val editorDisposable = Disposer.newDisposable()
     EditorUtil.disposeWithEditor(editor, editorDisposable)
     ApplicationManager.getApplication().messageBus.connect(editorDisposable).run {
-      subscribe(EditorColorsManager.TOPIC, EditorColorsListener { scheme ->
-        if (scheme != null) {
-          terminalColorScheme.globalScheme = scheme
-        }
+      subscribe(EditorColorsManager.TOPIC, EditorColorsListener {
+        // Get the new scheme from the manager rather than taking the one provided by the listener.
+        // Because the one from the listener might be a read-only bundled scheme,
+        // but we need an editable scheme that contains all user changes.
+        terminalColorScheme.globalScheme = EditorColorsManager.getInstance().globalScheme
       })
     }
 
@@ -187,10 +190,10 @@ object TerminalUiUtils {
     return CustomShortcutSet(keyStroke)
   }
 
-  fun calculateTerminalSize(componentSize: Dimension, charSize: Dimension2D): TermSize {
+  fun calculateTerminalSize(componentSize: Dimension, charSize: Dimension2D): TerminalGridSize {
     val width = componentSize.width / charSize.width
     val height = componentSize.height / charSize.height
-    return ensureTermMinimumSize(TermSize(width.toInt(), height.toInt()))
+    return ensureTermMinimumSize(TerminalGridSize(width.toInt(), height.toInt()))
   }
 
   @RequiresEdt
@@ -237,13 +240,13 @@ object TerminalUiUtils {
   fun toFloatAndScale(value: Int): Float = JBUIScale.scale(value.toFloat())
 
   @ApiStatus.Internal
-  fun TextStyle.toTextAttributes(palette: TerminalColorPalette): TextAttributes {
+  fun TextStyle.toTextAttributes(palette: TerminalColorPalette, requiredContrast: TerminalContrastRatio): TextAttributes {
     return TextAttributes().also { attr ->
       // [TerminalColorPalette.getDefaultBackground] is not applied to [TextAttributes].
       // It's passed to [EditorEx.setBackgroundColor] / [JComponent.setBackground] to
       // paint the background uniformly.
       attr.backgroundColor = getEffectiveBackgroundNoDefault(this, palette)
-      attr.foregroundColor = getResultForeground(this, palette)
+      attr.foregroundColor = getResultForeground(this, palette, requiredContrast)
       if (hasOption(TextStyle.Option.BOLD)) {
         attr.fontType = attr.fontType or Font.BOLD
       }
@@ -264,17 +267,40 @@ object TerminalUiUtils {
     return AwtTransformers.toAwtColor(color)!!
   }
 
-  private fun getResultForeground(style: TextStyle, palette: TerminalColorPalette): Color {
-    val foreground = getEffectiveForegroundOrDefault(style, palette)
-    return if (style.hasOption(TextStyle.Option.DIM)) {
-      val background = getEffectiveBackgroundOrDefault(style, palette)
+  private fun getResultForeground(style: TextStyle, palette: TerminalColorPalette, requiredContrast: TerminalContrastRatio): Color {
+    val bg = getEffectiveBackgroundOrDefault(style, palette)
+    val fg = getEffectiveForegroundOrDefault(style, palette)
+    val dimmedFg = if (style.hasOption(TextStyle.Option.DIM)) {
       @Suppress("UseJBColor")
-      Color((foreground.red + background.red) / 2,
-            (foreground.green + background.green) / 2,
-            (foreground.blue + background.blue) / 2,
-            foreground.alpha)
+      Color((fg.red + bg.red) / 2,
+            (fg.green + bg.green) / 2,
+            (fg.blue + bg.blue) / 2,
+            fg.alpha)
     }
-    else foreground
+    else fg
+
+    val contrast = style.getEffectiveContrastRatio(requiredContrast)
+    return if (contrast == TerminalContrastRatio.MIN_VALUE) {
+      return dimmedFg
+    }
+    else ensureContrastRatio(bg, dimmedFg, contrast.value)
+  }
+
+  private fun TextStyle.getEffectiveContrastRatio(base: TerminalContrastRatio): TerminalContrastRatio {
+    val effectiveFg = if (hasOption(TextStyle.Option.INVERSE)) background else foreground
+    val effectiveBg = if (hasOption(TextStyle.Option.INVERSE)) foreground else background
+    return when {
+      effectiveFg?.isIndexed == false && effectiveBg?.isIndexed == false -> {
+        // Do not adjust the foreground color if both foreground and background are specified in RGB format.
+        // Assume that if colors are specified absolutely, their contrast ratio is enough.
+        TerminalContrastRatio.MIN_VALUE
+      }
+      hasOption(TextStyle.Option.DIM) -> {
+        // Allow dimmed foreground to be less contrast, otherwise, it might be indistinguishable from the non-dimmed foreground.
+        TerminalContrastRatio.ofFloat(base.value / 2)
+      }
+      else -> base
+    }
   }
 
   private fun getEffectiveForegroundOrDefault(style: TextStyle, palette: TerminalColorPalette): Color {
@@ -306,6 +332,88 @@ object TerminalUiUtils {
 
   fun plainAttributesProvider(foregroundColorIndex: Int, palette: TerminalColorPalette): TextAttributesProvider {
     return TextStyleAdapter(TextStyle(TerminalColor(foregroundColorIndex), null), palette)
+  }
+
+  /**
+   * Tries to find a foreground color that has the [requiredContrast] with the provided [bgColor].
+   * If provided [fgColor] is already enough contrast, it is just returned.
+   *
+   * Similar to https://github.com/xtermjs/xterm.js/blob/47409f39f684c417717d885b2cba56dd918d591a/src/common/Color.ts#L288
+   */
+  fun ensureContrastRatio(bgColor: Color, fgColor: Color, requiredContrast: Float): Color {
+    val current = ColorUtil.getContrast(fgColor, bgColor)
+    if (current >= requiredContrast) return fgColor
+
+    val bgLuminance = ColorUtil.getLuminance(bgColor)
+    val fgLuminance = ColorUtil.getLuminance(fgColor)
+    return if (fgLuminance < bgLuminance) {
+      val reducedColor = reduceLuminance(bgColor, fgColor, requiredContrast)
+      val reducedColorRatio = ColorUtil.getContrast(reducedColor, bgColor)
+      if (reducedColorRatio < requiredContrast) {
+        val increasedColor = increaseLuminance(bgColor, fgColor, requiredContrast)
+        val increasedColorRatio = ColorUtil.getContrast(increasedColor, bgColor)
+        if (reducedColorRatio > increasedColorRatio) reducedColor else increasedColor
+      }
+      else reducedColor
+    }
+    else {
+      val increasedColor = increaseLuminance(bgColor, fgColor, requiredContrast)
+      val increasedColorRatio = ColorUtil.getContrast(increasedColor, bgColor)
+      if (increasedColorRatio < requiredContrast) {
+        val reducedColor = reduceLuminance(bgColor, fgColor, requiredContrast)
+        val reducedColorRatio = ColorUtil.getContrast(reducedColor, bgColor)
+        if (increasedColorRatio > reducedColorRatio) increasedColor else reducedColor
+      }
+      else increasedColor
+    }
+  }
+
+  /**
+   * Tries to find less luminous foreground color than [fgColor] that has the required contrast with the provided [bgColor].
+   * Note that the alpha channel is ignored.
+   */
+  @Suppress("UseJBColor")
+  fun reduceLuminance(bgColor: Color, fgColor: Color, requiredContrast: Float): Color {
+    var contrast = ColorUtil.getContrast(fgColor, bgColor)
+    var fgRed = fgColor.red
+    var fgGreen = fgColor.green
+    var fgBlue = fgColor.blue
+    while (contrast < requiredContrast && (fgRed > 0 || fgGreen > 0 || fgBlue > 0)) {
+      fgRed -= ceil(fgRed * 0.1).toInt()
+      fgGreen -= ceil(fgGreen * 0.1).toInt()
+      fgBlue -= ceil(fgBlue * 0.1).toInt()
+      val color = Color(fgRed, fgGreen, fgBlue)
+      contrast = ColorUtil.getContrast(color, bgColor)
+    }
+    return Color(fgRed, fgGreen, fgBlue)
+  }
+
+  /**
+   * Tries to find more luminous foreground color than [fgColor] that has the required contrast with the provided [bgColor].
+   * Note that the alpha channel is ignored.
+   */
+  @Suppress("UseJBColor")
+  fun increaseLuminance(bgColor: Color, fgColor: Color, requiredContrast: Float): Color {
+    var contrast = ColorUtil.getContrast(fgColor, bgColor)
+    var fgRed = fgColor.red
+    var fgGreen = fgColor.green
+    var fgBlue = fgColor.blue
+    while (contrast < requiredContrast && (fgRed < 255 || fgGreen < 255 || fgBlue < 255)) {
+      fgRed += ceil((255 - fgRed) * 0.1).toInt()
+      fgGreen += ceil((255 - fgGreen) * 0.1).toInt()
+      fgBlue += ceil((255 - fgBlue) * 0.1).toInt()
+      val color = Color(fgRed, fgGreen, fgBlue)
+      contrast = ColorUtil.getContrast(color, bgColor)
+    }
+    return Color(fgRed, fgGreen, fgBlue)
+  }
+
+  fun shouldIgnoreContrastAdjustment(char: Char): Boolean {
+    return when (char.code) {
+      in 0xE0A4..0xE0D6 -> true   // Powerline symbols for those we shouldn't change foreground
+      in 0x2500..0x259F -> true   // Box or block glyphs
+      else -> false
+    }
   }
 
   const val NEW_TERMINAL_OUTPUT_CAPACITY_KB: String = "new.terminal.output.capacity.kb"
@@ -365,17 +473,17 @@ internal fun Editor.getCharSize(): Dimension2D {
   return Dimension2DDouble(width.toDouble() * columnSpacing, lineHeight.toDouble())
 }
 
-fun Editor.calculateTerminalSize(): TermSize? {
+fun Editor.calculateTerminalSize(): TerminalGridSize? {
   val grid = (this as? EditorImpl)?.characterGrid ?: return null
   return if (grid.rows > 0 && grid.columns > 0) {
-    ensureTermMinimumSize(TermSize(grid.columns, grid.rows))
+    ensureTermMinimumSize(TerminalGridSize(grid.columns, grid.rows))
   } else {
     null
   }
 }
 
-private fun ensureTermMinimumSize(size: TermSize): TermSize {
-  return TermSize(max(TerminalModel.MIN_WIDTH, size.columns), max(TerminalModel.MIN_HEIGHT, size.rows))
+private fun ensureTermMinimumSize(size: TerminalGridSize): TerminalGridSize {
+  return TerminalGridSize(max(TerminalModel.MIN_WIDTH, size.columns), max(TerminalModel.MIN_HEIGHT, size.rows))
 }
 
 private class Dimension2DDouble(private var width: Double, private var height: Double) : Dimension2D() {

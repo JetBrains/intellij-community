@@ -3,6 +3,7 @@
 package com.intellij.java.refactoring;
 
 import com.intellij.JavaTestUtil;
+import com.intellij.idea.TestFor;
 import com.intellij.openapi.projectRoots.JavaSdkVersion;
 import com.intellij.openapi.util.registry.Registry;
 import com.intellij.psi.JavaCodeFragment;
@@ -338,6 +339,21 @@ public class ExtractMethodObject4DebuggerTest extends LightRefactoringTestCase {
              class Test {
                      public int invoke() {
                          return foo();
+                     }
+                 }""");
+  }
+
+  @TestFor(issues = "IDEA-370817")
+  public void testOnWithComment() throws Exception {
+    doTest("""
+             //
+             System.out.println("abc");
+             """, "Test.invoke();",
+
+           """
+             static class Test {
+                     static void invoke() {
+                         System.out.println("abc");
                      }
                  }""");
   }

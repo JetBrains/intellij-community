@@ -24,7 +24,7 @@ import java.util.List;
 public final class RunAnythingRecentProjectProvider extends RunAnythingAnActionProvider<AnAction> {
   @Override
   public @NotNull Collection<AnAction> getValues(@NotNull DataContext dataContext, @NotNull String pattern) {
-    return RecentProjectListActionProvider.getInstance().getActions(false);
+    return RecentProjectListActionProvider.getInstance().getActionsWithoutGroups(false);
   }
 
   @Override

@@ -1,9 +1,9 @@
 ### auto-generated section `build intellij.platform.compose.markdown` start
-load("@rules_jvm//:jvm.bzl", "jvm_library", "jvm_resources")
+load("@rules_jvm//:jvm.bzl", "jvm_library", "resourcegroup")
 
-jvm_resources(
+resourcegroup(
   name = "markdown_resources",
-  files = glob(["resources/**/*"]),
+  srcs = glob(["resources/**/*"]),
   strip_prefix = "resources"
 )
 
@@ -11,6 +11,7 @@ jvm_library(
   name = "markdown",
   visibility = ["//visibility:public"],
   srcs = glob([], allow_empty = True),
+  resources = [":markdown_resources"],
   exports = [
     "//platform/compose",
     "//platform/jewel/markdown/core",
@@ -22,7 +23,6 @@ jvm_library(
     "//platform/jewel/markdown/ide-laf-bridge-styling",
   ],
   runtime_deps = [
-    ":markdown_resources",
     "//platform/compose",
     "//platform/jewel/markdown/core",
     "//platform/jewel/markdown/extensions/autolink",

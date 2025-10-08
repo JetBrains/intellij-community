@@ -25,12 +25,15 @@ import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.annotations.VisibleForTesting
 
 @ApiStatus.Internal
-class StatisticsUpdate
-    private constructor(private val myInfo: StatisticsInfo) : Disposable {
+class StatisticsUpdate private constructor(
+  private val myInfo: StatisticsInfo
+) : Disposable {
+
   private var mySpared: Int = 0
 
   override fun dispose() {}
 
+  /** reports how many chars the user was able NOT to type manually because of the completion */
   fun addSparedChars(lookup: Lookup, item: LookupElement, context: InsertionContext) {
     val textInserted: String
     if (context.offsetMap.containsOffset(CompletionInitializationContext.START_OFFSET) &&

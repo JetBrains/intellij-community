@@ -63,7 +63,7 @@ public final class FieldAccessedSynchronizedAndUnsynchronizedInspection extends 
   }
 
   @Override
-  public BaseInspectionVisitor buildVisitor() {
+  public @NotNull BaseInspectionVisitor buildVisitor() {
     return new FieldAccessedSynchronizedAndUnsynchronizedVisitor();
   }
 

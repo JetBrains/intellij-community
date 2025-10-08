@@ -19,6 +19,7 @@ import org.jetbrains.kotlin.analysis.api.symbols.*
 import org.jetbrains.kotlin.analysis.api.types.symbol
 import org.jetbrains.kotlin.idea.base.psi.copied
 import org.jetbrains.kotlin.idea.base.psi.getSamConstructorValueArgument
+import org.jetbrains.kotlin.name.CallableId
 import org.jetbrains.kotlin.name.Name
 import org.jetbrains.kotlin.psi.*
 import org.jetbrains.kotlin.psi.psiUtil.anyDescendantOfType
@@ -44,6 +45,12 @@ val KaCallableSymbol.allOverriddenSymbolsWithSelf: Sequence<KaCallableSymbol>
             yieldAll(originalSymbol.allOverriddenSymbols)
         }
     }
+
+context(_: KaSession)
+@ApiStatus.Internal
+fun KaCallableSymbol.hasOrOverridesCallableId(callableId: CallableId): Boolean {
+    return allOverriddenSymbolsWithSelf.any { it.callableId == callableId }
+}
 
 context(_: KaSession)
 fun KaNamedClassSymbol.findSamSymbolOrNull(useDeclaredMemberScope: Boolean = true): KaNamedFunctionSymbol? {

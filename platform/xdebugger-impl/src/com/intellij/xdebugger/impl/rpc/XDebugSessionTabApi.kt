@@ -1,8 +1,8 @@
 // Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.xdebugger.impl.rpc
 
+import com.intellij.execution.RunContentDescriptorIdImpl
 import com.intellij.execution.rpc.ExecutionEnvironmentProxyDto
-import com.intellij.execution.ui.RunContentDescriptor
 import com.intellij.ide.ui.icons.IconId
 import com.intellij.platform.debugger.impl.rpc.XDebuggerSessionAdditionalTabEvent
 import com.intellij.platform.rpc.Id
@@ -27,7 +27,7 @@ import org.jetbrains.annotations.ApiStatus
 @Rpc
 interface XDebugSessionTabApi : RemoteApi<Unit> {
 
-  suspend fun sessionTabInfo(sessionId: XDebugSessionId): Flow<XDebuggerSessionTabDto>
+  suspend fun sessionTabInfo(sessionDataId: XDebugSessionDataId): Flow<XDebuggerSessionTabDto>
   suspend fun onTabInitialized(sessionId: XDebugSessionId, tabInfo: XDebuggerSessionTabInfoCallback)
 
   suspend fun additionalTabEvents(tabComponentsManagerId: XDebugSessionAdditionalTabComponentManagerId): Flow<XDebuggerSessionAdditionalTabEvent>
@@ -75,23 +75,16 @@ data class XDebuggerSessionTabInfo(
   val forceNewDebuggerUi: Boolean,
   val withFramesCustomization: Boolean,
   val defaultFramesViewKey: String?,
-  // TODO pass to frontend
-  @Transient val contentToReuse: RunContentDescriptor? = null,
   val executionEnvironmentId: ExecutionEnvironmentId?,
   val executionEnvironmentProxyDto: ExecutionEnvironmentProxyDto?,
   val additionalTabsComponentManagerId: XDebugSessionAdditionalTabComponentManagerId,
   @Serializable(with = SendChannelSerializer::class) val tabClosedCallback: SendChannel<Unit>,
-  @Serializable(with = DeferredSerializer::class) val backendRunContendDescriptorId: Deferred<RunContentDescriptorId>,
+  @Serializable(with = DeferredSerializer::class) val backendRunContendDescriptorId: Deferred<RunContentDescriptorIdImpl>,
 ) : XDebuggerSessionTabAbstractInfo
 
 @ApiStatus.Internal
 @Serializable
 data class ExecutionEnvironmentId(override val uid: UID) : Id
-
-
-@ApiStatus.Internal
-@Serializable
-data class RunContentDescriptorId(override val uid: UID) : Id
 
 @ApiStatus.Internal
 @Serializable

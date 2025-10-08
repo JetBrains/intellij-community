@@ -10,8 +10,8 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.vcs.FilePath;
 import com.intellij.openapi.vcs.changes.Change;
 import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.platform.vcs.VcsSharedDataKeys;
 import com.intellij.platform.vcs.VcsUtil;
-import com.intellij.platform.vcs.changes.ChangesDataKeys;
 import com.intellij.platform.vcs.changes.ChangesUtil;
 import com.intellij.util.ObjectUtils;
 import com.intellij.util.containers.ContainerUtil;
@@ -291,15 +291,15 @@ public abstract class VcsTreeModelData {
     sink.set(CommonDataKeys.PROJECT, project);
 
     Change[] changes = mapToChange(selected(tree)).toArray(Change.EMPTY_CHANGE_ARRAY);
-    sink.set(ChangesDataKeys.CHANGES,
+    sink.set(VcsSharedDataKeys.CHANGES,
              changes.length != 0 ? changes : mapToChange(all(tree)).toArray(Change.EMPTY_CHANGE_ARRAY));
-    sink.set(ChangesDataKeys.SELECTED_CHANGES, changes);
-    sink.set(ChangesDataKeys.SELECTED_CHANGES_IN_DETAILS, changes);
-    sink.set(ChangesDataKeys.CHANGES_SELECTION,
+    sink.set(VcsSharedDataKeys.SELECTED_CHANGES, changes);
+    sink.set(VcsSharedDataKeys.SELECTED_CHANGES_IN_DETAILS, changes);
+    sink.set(VcsSharedDataKeys.CHANGES_SELECTION,
              getListSelectionOrAll(tree).map(entry -> ObjectUtils.tryCast(entry, Change.class)));
-    sink.set(ChangesDataKeys.CHANGE_LEAD_SELECTION,
+    sink.set(VcsSharedDataKeys.CHANGE_LEAD_SELECTION,
              mapToChange(exactlySelected(tree)).toArray(Change.EMPTY_CHANGE_ARRAY));
-    sink.set(ChangesDataKeys.FILE_PATHS, mapToFilePath(selected(tree)));
+    sink.set(VcsSharedDataKeys.FILE_PATHS, mapToFilePath(selected(tree)));
 
     VcsTreeModelData treeSelection = selected(tree);
     VcsTreeModelData exactSelection = exactlySelected(tree);
@@ -309,7 +309,7 @@ public abstract class VcsTreeModelData {
       if (file == null) return null;
       return new FileSelectInContext(project, file, null);
     });
-    sink.lazy(ChangesDataKeys.VIRTUAL_FILES, () -> {
+    sink.lazy(VcsSharedDataKeys.VIRTUAL_FILES, () -> {
       return mapToVirtualFile(treeSelection);
     });
     sink.lazy(CommonDataKeys.VIRTUAL_FILE, () -> {

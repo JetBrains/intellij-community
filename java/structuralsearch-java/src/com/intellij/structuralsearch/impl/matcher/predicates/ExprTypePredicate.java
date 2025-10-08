@@ -182,7 +182,7 @@ public class ExprTypePredicate extends MatchPredicate {
     if (lt >= 0) {
       result.add(typeText.substring(0, lt) + suffix);
     }
-    else if (result.isEmpty() || !result.get(result.size() - 1).equals(typeText)) {
+    else if (result.isEmpty() || !result.getLast().equals(typeText)) {
       result.add(typeText);
     }
   }

@@ -95,7 +95,7 @@ class NotebookTableOutputUi(data: ComponentData) : UiComponent(data) {
     ) {
       button.waitFound(30.seconds)
     }
-    button.click()
+    button.strictClick()
     waitFor("expect the cell [0,0] doesn't contain '$textBefore' anymore") {
       tableView.getValueAt(0, 0) != textBefore
     }

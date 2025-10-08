@@ -15,7 +15,6 @@ import com.intellij.codeInsight.lookup.*;
 import com.intellij.codeInsight.lookup.impl.LookupImpl;
 import com.intellij.codeWithMe.ClientId;
 import com.intellij.featureStatistics.FeatureUsageTracker;
-import com.intellij.icons.AllIcons;
 import com.intellij.ide.IdeBundle;
 import com.intellij.ide.lightEdit.LightEdit;
 import com.intellij.ide.lightEdit.LightEditUtil;
@@ -54,6 +53,7 @@ import com.intellij.psi.PsiReference;
 import com.intellij.psi.ReferenceRange;
 import com.intellij.psi.util.PsiUtilCore;
 import com.intellij.testFramework.TestModeFlags;
+import com.intellij.ui.AnimatedIcon;
 import com.intellij.ui.HintHint;
 import com.intellij.ui.LightweightHint;
 import com.intellij.util.ModalityUiUtil;
@@ -185,7 +185,8 @@ public final class CompletionProgressIndicator extends ProgressIndicatorBase imp
 
     myAdvertiserChanges.offer(() -> this.lookup.getAdvertiser().clearAdvertisements());
 
-    myArranger = GroupedCompletionContributor.isGroupEnabledInApp() ? new GroupCompletionLookupArrangerImpl(this) : new CompletionLookupArrangerImpl(this);
+    myArranger = GroupedCompletionContributor.isGroupEnabledInApp() ? new GroupCompletionLookupArrangerImpl(this)
+                                                                    : new CompletionLookupArrangerImpl(this);
     this.lookup.setArranger(myArranger);
 
     this.lookup.addLookupListener(myLookupListener);
@@ -281,7 +282,7 @@ public final class CompletionProgressIndicator extends ProgressIndicatorBase imp
 
   private void addDefaultAdvertisements(@NotNull CompletionParameters parameters) {
     if (DumbService.isDumb(getProject())) {
-      addAdvertisement(IdeBundle.message("dumb.mode.results.might.be.incomplete"), AllIcons.General.Warning);
+      addAdvertisement(IdeBundle.message("dumb.mode.results.might.be.incomplete"), AnimatedIcon.Default.INSTANCE);
       return;
     }
 
@@ -427,6 +428,17 @@ public final class CompletionProgressIndicator extends ProgressIndicatorBase imp
    */
   public void showLookupAsSoonAsPossible() {
     myLookupAppearancePolicy = LookupAppearancePolicy.ON_FIRST_POSSIBILITY;
+    openLookupLater();
+  }
+
+  /**
+   * Unfreezes the completion process and ensures that the lookup window is shown as soon as possible with the first element
+   * This is an internal method used to manage the behavior of completion and lookup display timing.
+   */
+  @ApiStatus.Internal
+  public void unfreezeAndShowLookupAsSoonAsPossible() {
+    myLookupAppearancePolicy = LookupAppearancePolicy.ON_FIRST_POSSIBILITY;
+    freezeSemaphore.up();
     openLookupLater();
   }
 
@@ -864,7 +876,7 @@ public final class CompletionProgressIndicator extends ProgressIndicatorBase imp
       PsiDocumentManager.getInstance(getProject()).commitAllDocuments();
       String customId = myEditor.getUserData(CUSTOM_CODE_COMPLETION_ACTION_ID);
       if (customId == null) {
-        customId = "CodeCompletion";
+        customId = IdeActions.ACTION_CODE_COMPLETION;
       }
       CodeCompletionHandlerBase handler = CodeCompletionHandlerBase.createHandler(myCompletionType, false, false, true, customId);
       handler.invokeCompletion(getProject(), myEditor, myInvocationCount);
@@ -1012,6 +1024,7 @@ public final class CompletionProgressIndicator extends ProgressIndicatorBase imp
     ourInsertSingleItemTimeSpan = timeSpan;
   }
 
+  @ApiStatus.Internal
   @Deprecated(forRemoval = true)
   public static void setAutopopupTriggerTime(int timeSpan) {
     ourShowPopupGroupingTime = timeSpan;

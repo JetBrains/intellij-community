@@ -1,4 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.nastradamus
 
 import com.fasterxml.jackson.databind.JsonNode
@@ -38,9 +38,9 @@ class NastradamusClient(
                                             ?.findValue("property")
                                             ?.elements()?.asSequence()?.toList() ?: listOf()
 
-    val bucketId: Int = buildProperties.firstOrNull { (it.findValue("name")?.asText() ?: "") == "system.pass.idea.test.runner.index" }
+    val bucketId: Int = buildProperties.firstOrNull { it.findValue("name")?.asText() == "system.pass.idea.test.runner.index" }
                           ?.findValue("value")?.asInt() ?: 0
-    val bucketsNumber: Int = buildProperties.firstOrNull { (it.findValue("name")?.asText() ?: "") == "system.pass.idea.test.runners.count" }
+    val bucketsNumber: Int = buildProperties.firstOrNull { it.findValue("name")?.asText() == "system.pass.idea.test.runners.count" }
                                ?.findValue("value")?.asInt() ?: 0
 
     val testResultEntities = mutableMapOf<String, TestClassResultEntity>()
@@ -163,7 +163,7 @@ class NastradamusClient(
         }
 
         try {
-          jsonTree.fields().asSequence()
+          jsonTree.properties()
             .single { it.key == "sorted_tests" }.value
             .get(currentBucketIndex.toString())
             .map {
@@ -176,27 +176,6 @@ class NastradamusClient(
       },
       fallbackOnThresholdReached = { throw RuntimeException("Couldn't get sorted test classes from Nastradamus") }
     )
-  }
-
-  /**
-   * Download changeset patches (not to be confused with simple change)
-   * Patch - cumulative document (VCS change author + File affected + VCS diff)
-   */
-  private fun getTeamCityChangesetPatch(): List<String> {
-    println("Fetching changesets patches from TeamCity ...")
-
-    @Suppress("RAW_RUN_BLOCKING")
-    val changesets = runBlocking {
-      teamCityClient.getChanges().mapConcurrently(maxConcurrency = 5) { change ->
-        val modificationId = change.findValue("id").asText()
-        val isPersonal = change.findValue("personal")?.asBoolean(false) ?: false
-        teamCityClient.downloadChangesPatch(modificationId = modificationId, isPersonal = isPersonal)
-      }
-    }
-
-    println("Fetching changesets patches completed")
-
-    return changesets
   }
 
   fun getTeamCityChangesDetails(): List<ChangeEntity> {
@@ -270,7 +249,7 @@ class NastradamusClient(
         fallbackOnThresholdReached = { fallback() }
       )
     }
-    catch (e: Throwable) {
+    catch (_: Throwable) {
       // fallback in case of any failure (just to get aggregator running)
       System.err.println("Failure during sorting test classes via Nastradamus. Fallback to simple natural sorting.")
       allSortedClasses = fallback()

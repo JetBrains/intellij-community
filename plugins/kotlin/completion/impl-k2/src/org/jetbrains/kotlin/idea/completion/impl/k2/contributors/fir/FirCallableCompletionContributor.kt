@@ -23,6 +23,7 @@ import org.jetbrains.kotlin.analysis.api.signatures.KaVariableSignature
 import org.jetbrains.kotlin.analysis.api.symbols.*
 import org.jetbrains.kotlin.analysis.api.types.KaErrorType
 import org.jetbrains.kotlin.analysis.api.types.KaType
+import org.jetbrains.kotlin.analysis.api.types.abbreviationOrSelf
 import org.jetbrains.kotlin.analysis.api.types.symbol
 import org.jetbrains.kotlin.idea.base.analysis.api.utils.*
 import org.jetbrains.kotlin.idea.base.psi.isInsideAnnotationEntryArgumentList
@@ -43,6 +44,7 @@ import org.jetbrains.kotlin.idea.completion.reference
 import org.jetbrains.kotlin.idea.completion.weighers.CallableWeigher.callableWeight
 import org.jetbrains.kotlin.idea.completion.weighers.WeighingContext
 import org.jetbrains.kotlin.idea.core.NotPropertiesService
+import org.jetbrains.kotlin.idea.debugger.evaluate.util.KotlinK2CodeFragmentUtils
 import org.jetbrains.kotlin.idea.references.mainReference
 import org.jetbrains.kotlin.idea.util.positionContext.KotlinNameReferencePositionContext
 import org.jetbrains.kotlin.idea.util.positionContext.KotlinSimpleNameReferencePositionContext
@@ -130,21 +132,11 @@ internal open class FirCallableCompletionContributor(
         weighingContext: WeighingContext,
     ) {
         val scopeContext = weighingContext.scopeContext
-
-        val extensionChecker = (positionContext as? KotlinSimpleNameReferencePositionContext)?.let {
-            // FIXME: KTIJ-34285
-            @OptIn(KaImplementationDetail::class)
-            KaBaseIllegalPsiException.allowIllegalPsiAccess {
-                KtCompletionExtensionCandidateChecker.create(
-                    originalFile = originalKtFile,
-                    nameExpression = it.nameExpression,
-                    explicitReceiver = it.explicitReceiver
-                )
-            }
-        }
-
         val receiver = positionContext.explicitReceiver
         val expectedType = weighingContext.expectedType
+        val extensionChecker = (positionContext as? KotlinSimpleNameReferencePositionContext)?.let {
+            createExtensionCandidateChecker(it.explicitReceiver, it.nameExpression)
+        }
         when (receiver) {
             null -> completeWithoutReceiver(positionContext, scopeContext, expectedType, extensionChecker)
 
@@ -170,12 +162,50 @@ internal open class FirCallableCompletionContributor(
                     val explicitReceiverTypeHint = callableWithMetadata.explicitReceiverTypeHint
                         ?: return@map builder
 
+                    val typeWithStarProjections = explicitReceiverTypeHint.replaceTypeParametersWithStarProjections()
+                        ?: return@map builder
+
                     builder.adaptToExplicitReceiver(
                         receiver = receiver,
-                        typeText = @OptIn(KaExperimentalApi::class) explicitReceiverTypeHint.render(position = Variance.INVARIANT),
+                        typeText =
+                            @OptIn(KaExperimentalApi::class)
+                            typeWithStarProjections.render(position = Variance.INVARIANT),
                     )
                 }
             }.forEach(sink::addElement)
+    }
+
+    // See KTIJ-35541
+    @OptIn(KaExperimentalApi::class)
+    context(_: KaSession)
+    private fun KaType.replaceTypeParametersWithStarProjections(): KaType? =
+        abbreviationOrSelf.symbol?.let { buildClassTypeWithStarProjections(it) }
+
+    @OptIn(KaExperimentalApi::class)
+    context(_: KaSession)
+    private fun createExtensionCandidateChecker(
+        receiver: KtExpression?,
+        nameExpression: KtSimpleNameExpression
+    ): KtCompletionExtensionCandidateChecker {
+        val runtimeType = receiver?.evaluateRuntimeKaType()
+        val runtimeTypeWithErasedTypeParameters = runtimeType?.replaceTypeParametersWithStarProjections()?.render(position = Variance.INVARIANT)
+        val runtimeTypeClassId = runtimeType?.symbol?.classId
+        val castedReceiver = if (runtimeTypeWithErasedTypeParameters == null || runtimeTypeClassId == receiver.expressionType?.symbol?.classId) {
+            receiver
+        } else {
+            // FIXME: check extensions applicable to the runtime type properly KTIJ-35532
+            val codeFragment = "(${receiver.text} as $runtimeTypeWithErasedTypeParameters)"
+            KtPsiFactory.contextual(receiver).createExpression(codeFragment)
+        }
+        // FIXME: KTIJ-34285
+        @OptIn(KaImplementationDetail::class)
+        return KaBaseIllegalPsiException.allowIllegalPsiAccess {
+            KtCompletionExtensionCandidateChecker.create(
+                originalFile = originalKtFile,
+                nameExpression = nameExpression,
+                explicitReceiver = castedReceiver
+            )
+        }
     }
 
     context(_: KaSession)
@@ -457,11 +487,16 @@ internal open class FirCallableCompletionContributor(
         extensionChecker: KaCompletionExtensionCandidateChecker?,
     ): Sequence<CallableWithMetadataForCompletion> = sequence {
         val receiverType = explicitReceiver.expressionType ?: return@sequence
+        // Collect completions for the receiver's runtime type
+        // TODO: evaluate expression runtime type once KTIJ-35525
+        val runtimeType = explicitReceiver.evaluateRuntimeKaType()
+
         val callablesWithMetadata = collectDotCompletionForCallableReceiver(
             positionContext = positionContext,
-            typesOfPossibleReceiver = listOf(receiverType),
+            typesOfPossibleReceiver = listOfNotNull(receiverType, runtimeType),
             scopeContext = scopeContext,
             extensionChecker = extensionChecker,
+            explicitReceiverTypeHint = runtimeType,
         )
         yieldAll(callablesWithMetadata)
 
@@ -488,12 +523,22 @@ internal open class FirCallableCompletionContributor(
         yieldAll(callablesWithMetadataFromUnstableSmartCast)
     }
 
+    @OptIn(KaExperimentalApi::class, KaImplementationDetail::class)
+    context(kaSession: KaSession)
+    private fun KtExpression.evaluateRuntimeKaType(): KaType? {
+        val expr = this
+        val containingFile = containingFile as? KtCodeFragment
+        val runtimeTypeEvaluator = containingFile?.getCopyableUserData(KotlinK2CodeFragmentUtils.RUNTIME_TYPE_EVALUATOR_K2)
+        return runtimeTypeEvaluator?.invoke(expr)?.restore(kaSession)
+    }
+
     context(_: KaSession)
     protected fun collectDotCompletionForCallableReceiver(
         positionContext: KotlinNameReferencePositionContext,
         typesOfPossibleReceiver: List<KaType>,
         scopeContext: KaScopeContext,
         extensionChecker: KaCompletionExtensionCandidateChecker?,
+        explicitReceiverTypeHint: KaType? = null,
     ): Sequence<CallableWithMetadataForCompletion> = sequence {
         val nonExtensionMembers = typesOfPossibleReceiver.flatMap { typeOfPossibleReceiver ->
             collectNonExtensionsForType(
@@ -507,6 +552,7 @@ internal open class FirCallableCompletionContributor(
                 it.createCallableWithMetadata(
                     scopeKind = KtOutsideTowerScopeKinds.TypeScope,
                     isImportDefinitelyNotRequired = true,
+                    explicitReceiverTypeHint = explicitReceiverTypeHint,
                 )
             }
         }
@@ -515,6 +561,7 @@ internal open class FirCallableCompletionContributor(
             scopeContext = scopeContext,
             extensionChecker = extensionChecker,
             explicitReceiverTypes = typesOfPossibleReceiver,
+            explicitReceiverTypeHint = explicitReceiverTypeHint,
         )
 
         yieldAll(nonExtensionMembers)
@@ -524,6 +571,7 @@ internal open class FirCallableCompletionContributor(
             positionContext = positionContext,
             receiverTypes = typesOfPossibleReceiver,
             extensionChecker = extensionChecker,
+            explicitReceiverTypeHint = explicitReceiverTypeHint,
         ).filter { filter(it.signature.symbol) }
         yieldAll(extensionDescriptors)
     }
@@ -562,6 +610,7 @@ internal open class FirCallableCompletionContributor(
         positionContext: KotlinNameReferencePositionContext,
         receiverTypes: List<KaType>,
         extensionChecker: KaCompletionExtensionCandidateChecker?,
+        explicitReceiverTypeHint: KaType? = null,
     ): Collection<CallableWithMetadataForCompletion> {
         if (receiverTypes.isEmpty()) return emptyList()
 
@@ -580,6 +629,7 @@ internal open class FirCallableCompletionContributor(
                 CallableWithMetadataForCompletion(
                     _signature = applicableExtension.signature,
                     options = applicableExtension.insertionOptions,
+                    _explicitReceiverTypeHint = explicitReceiverTypeHint
                 )
             }
     }
@@ -590,6 +640,7 @@ internal open class FirCallableCompletionContributor(
         scopeContext: KaScopeContext,
         extensionChecker: KaCompletionExtensionCandidateChecker?,
         explicitReceiverTypes: List<KaType>? = null,
+        explicitReceiverTypeHint: KaType? = null
     ): Sequence<CallableWithMetadataForCompletion> {
         val receiverTypes = (explicitReceiverTypes
             ?: scopeContext.implicitReceivers.map { it.type })
@@ -613,6 +664,7 @@ internal open class FirCallableCompletionContributor(
                             options = extension.insertionOptions,
                             scopeKind = scopeWithKind.kind,
                             aliasName = aliasName,
+                            _explicitReceiverTypeHint = explicitReceiverTypeHint,
                         )
                     }
             }
@@ -703,6 +755,7 @@ internal open class FirCallableCompletionContributor(
         isImportDefinitelyNotRequired: Boolean = false,
         options: CallableInsertionOptions = getOptions(this, isImportDefinitelyNotRequired),
         aliasName: Name? = null,
+        explicitReceiverTypeHint: KaType? = null
     ): CallableWithMetadataForCompletion {
         val javaGetterIfNotProperty = this.getJavaGetterSignatureIfNotProperty()
         val optionsToUse = if (javaGetterIfNotProperty != null && options.insertionStrategy == CallableInsertionStrategy.AsIdentifier) {
@@ -714,7 +767,8 @@ internal open class FirCallableCompletionContributor(
             _signature = javaGetterIfNotProperty ?: this,
             options = optionsToUse,
             scopeKind = scopeKind,
-            aliasName = aliasName
+            aliasName = aliasName,
+            _explicitReceiverTypeHint = explicitReceiverTypeHint,
         )
     }
 

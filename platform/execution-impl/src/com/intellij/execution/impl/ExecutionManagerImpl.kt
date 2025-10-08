@@ -45,7 +45,6 @@ import com.intellij.openapi.project.DumbService
 import com.intellij.openapi.project.IndexNotReadyException
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.project.ProjectCloseListener
-import com.intellij.openapi.ui.DialogWrapper
 import com.intellij.openapi.ui.DoNotAskOption
 import com.intellij.openapi.ui.Messages
 import com.intellij.openapi.util.Condition
@@ -82,7 +81,7 @@ import javax.swing.JPanel
 import javax.swing.SwingUtilities
 import kotlin.coroutines.CoroutineContext
 
-open class ExecutionManagerImpl(private val project: Project, coroutineScope: CoroutineScope) : ExecutionManager(), Disposable {
+open class ExecutionManagerImpl(private val project: Project, private val coroutineScope: CoroutineScope) : ExecutionManager(), Disposable {
   companion object {
     val LOG = logger<ExecutionManagerImpl>()
     private val EMPTY_PROCESS_HANDLERS = emptyArray<ProcessHandler>()
@@ -312,10 +311,24 @@ open class ExecutionManagerImpl(private val project: Project, coroutineScope: Co
               }
 
               val entry = RunningConfigurationEntry(descriptor, environment, executor)
+              if (descriptor.id == null) {
+                // Assign tool window id on the happy execution path in the monolith,
+                // which is used by the Services tool window.
+                // In the split mode this id is assigned on the backend side when the mock run content descriptor is created.
+                descriptor.id = descriptor.storeGlobally(coroutineScope)
+              }
+              descriptor.runConfigurationName = environment.runProfile.name
+              descriptor.runConfigurationTypeId = (environment.runProfile as? RunConfiguration)?.type?.id
+
               runningConfigurations.add(entry)
               Disposer.register(descriptor, Disposable { runningConfigurations.remove(entry) })
+
+              project.getMessageBus()
+                .syncPublisher(RUN_CONTENT_DESCRIPTOR_LIFECYCLE_TOPIC).beforeContentShown(descriptor, executor)
               if (!descriptor.isHiddenContent && !environment.isHeadless) {
                 RunContentManager.getInstance(project).showRunContent(executor, descriptor, environment.contentToReuse)
+                project.getMessageBus()
+                  .syncPublisher(RUN_CONTENT_DESCRIPTOR_LIFECYCLE_TOPIC).afterContentShown(descriptor, executor)
               }
               activity?.stageStarted(UI_SHOWN_STAGE)
               environment.contentToReuse = descriptor

@@ -174,9 +174,6 @@ c:com.intellij.execution.process.AnsiEscapeDecoder
 - <init>():V
 - escapeText(java.lang.String,com.intellij.openapi.util.Key,com.intellij.execution.process.AnsiEscapeDecoder$ColoredTextAcceptor):V
 - p:getCurrentOutputAttributes(com.intellij.openapi.util.Key):com.intellij.openapi.util.Key
-com.intellij.execution.process.AnsiEscapeDecoder$ColoredChunksAcceptor
-- com.intellij.execution.process.AnsiEscapeDecoder$ColoredTextAcceptor
-- a:coloredChunksAvailable(java.util.List):V
 com.intellij.execution.process.AnsiEscapeDecoder$ColoredTextAcceptor
 - a:coloredTextAvailable(java.lang.String,com.intellij.openapi.util.Key):V
 c:com.intellij.execution.process.CapturingProcessAdapter
@@ -259,7 +256,6 @@ c:com.intellij.execution.process.KillableProcessHandler
 - shouldKillProcessSoftly():Z
 f:com.intellij.execution.process.LocalPtyOptions
 - sf:Companion:com.intellij.execution.process.LocalPtyOptions$Companion
-- sf:DEFAULT:com.intellij.execution.process.LocalPtyOptions
 - f:builder():com.intellij.execution.process.LocalPtyOptions$Builder
 - sf:defaults():com.intellij.execution.process.LocalPtyOptions
 - f:getConsoleMode():Z

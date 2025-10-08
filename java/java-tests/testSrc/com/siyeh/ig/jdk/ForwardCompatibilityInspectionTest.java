@@ -1,11 +1,9 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.siyeh.ig.jdk;
 
 import com.intellij.codeInsight.daemon.impl.HighlightInfo;
 import com.intellij.codeInspection.InspectionProfileEntry;
 import com.intellij.lang.annotation.HighlightSeverity;
-import com.intellij.openapi.module.LanguageLevelUtil;
-import com.intellij.openapi.module.Module;
 import com.intellij.pom.java.LanguageLevel;
 import com.intellij.testFramework.IdeaTestUtil;
 import com.intellij.testFramework.LightProjectDescriptor;
@@ -36,17 +34,17 @@ public class ForwardCompatibilityInspectionTest extends LightJavaInspectionTestC
   }
 
   public void testAssert() {
-    withLevel(LanguageLevel.JDK_1_3, this::doTest);
+    IdeaTestUtil.withLevel(myFixture.getModule(), LanguageLevel.JDK_1_3, this::doTest);
   }
 
   public void testEnum() {
-    withLevel(LanguageLevel.JDK_1_3, this::doTest);
+    IdeaTestUtil.withLevel(myFixture.getModule(), LanguageLevel.JDK_1_3, this::doTest);
   }
 
   public void testUnqualifiedYield() { doTest(); }
 
   public void testQualifiedYieldWithUnexpectedToken() {
-    withLevel(LanguageLevel.JDK_1_8, () -> {
+    IdeaTestUtil.withLevel(myFixture.getModule(), LanguageLevel.JDK_1_8, () -> {
       myFixture.configureByFile(getTestName(false) + ".java");
       List<HighlightInfo> list = ContainerUtil.filter(myFixture.doHighlighting(HighlightSeverity.WARNING), it -> it.getSeverity().equals(HighlightSeverity.WARNING));
       assertEquals(1, list.size());
@@ -65,24 +63,12 @@ public class ForwardCompatibilityInspectionTest extends LightJavaInspectionTestC
 
   public void testRestrictedKeywordWarning() { doTest(); }
 
-  public void testLoneSemicolon() { withLevel(LanguageLevel.JDK_20, this::doTest); }
+  public void testLoneSemicolon() { IdeaTestUtil.withLevel(myFixture.getModule(), LanguageLevel.JDK_20, this::doTest); }
 
   public void testModuleInfoWarning() {
-    withLevel(LanguageLevel.JDK_1_9, () -> {
+    IdeaTestUtil.withLevel(myFixture.getModule(), LanguageLevel.JDK_1_9, () -> {
       myFixture.configureByFile("module-info.java");
       myFixture.testHighlighting(true, false, false);
     });
-  }
-
-  public void withLevel(LanguageLevel languageLevel, Runnable runnable) {
-    Module module = getModule();
-    LanguageLevel prev = LanguageLevelUtil.getCustomLanguageLevel(module);
-    IdeaTestUtil.setModuleLanguageLevel(module, languageLevel);
-    try {
-      runnable.run();
-    }
-    finally {
-      IdeaTestUtil.setModuleLanguageLevel(module, prev);
-    }
   }
 }

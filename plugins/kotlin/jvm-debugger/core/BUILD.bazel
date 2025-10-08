@@ -1,6 +1,6 @@
 ### auto-generated section `build kotlin.jvm-debugger.core` start
 load("//build:compiler-options.bzl", "create_kotlinc_options")
-load("@rules_jvm//:jvm.bzl", "jvm_library", "jvm_resources")
+load("@rules_jvm//:jvm.bzl", "jvm_library", "resourcegroup")
 
 create_kotlinc_options(
   name = "custom_core",
@@ -11,9 +11,9 @@ create_kotlinc_options(
   x_context_parameters = True
 )
 
-jvm_resources(
+resourcegroup(
   name = "core_resources",
-  files = glob(["resources/**/*"]),
+  srcs = glob(["resources/**/*"]),
   strip_prefix = "resources"
 )
 
@@ -22,13 +22,14 @@ jvm_library(
   module_name = "kotlin.jvm-debugger.core",
   visibility = ["//visibility:public"],
   srcs = glob(["src/**/*.kt", "src/**/*.java", "src/**/*.form"], allow_empty = True),
+  resources = [":core_resources"],
   kotlinc_opts = ":custom_core",
   deps = [
     "@lib//:kotlin-stdlib",
     "@lib//:kotlinc-kotlin-compiler-common",
     "@lib//:kotlinc-analysis-api",
     "@lib//:kotlinc-analysis-api-impl-base",
-    "@lib//:asm",
+    "//libraries/asm",
     "@lib//:jb-jdi",
     "//platform/analysis-api:analysis",
     "//platform/util/concurrency",
@@ -64,12 +65,11 @@ jvm_library(
     "//platform/statistics",
     "//platform/util",
     "//plugins/kotlin/base/resources:kotlin-base-resources",
-    "@lib//:gson",
+    "//libraries/gson",
     "//java/debugger/shared",
     "//platform/util/jdom",
     "//java/java-runtime:rt",
     "@lib//:kotlin-metadata",
-  ],
-  runtime_deps = [":core_resources"]
+  ]
 )
 ### auto-generated section `build kotlin.jvm-debugger.core` end

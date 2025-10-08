@@ -1,6 +1,7 @@
 // Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.plugins.github.pullrequest.ui.details.model.impl
 
+import com.intellij.collaboration.async.childScope
 import com.intellij.collaboration.async.modelFlow
 import com.intellij.collaboration.messages.CollaborationToolsBundle
 import com.intellij.collaboration.ui.codereview.action.ReviewMergeCommitMessageDialog
@@ -18,7 +19,6 @@ import com.intellij.openapi.diagnostic.Logger
 import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.text.StringUtil
-import com.intellij.platform.util.coroutines.childScope
 import com.intellij.ui.awt.RelativePoint
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
@@ -61,7 +61,7 @@ class GHPRReviewFlowViewModelImpl internal constructor(
   private val changesData: GHPRChangesDataProvider,
   private val reviewVmHelper: GHPRReviewViewModelHelper
 ) : GHPRReviewFlowViewModel {
-  private val cs = parentCs.childScope()
+  private val cs = parentCs.childScope(this::class)
 
   private val taskLauncher = SingleCoroutineLauncher(cs)
 

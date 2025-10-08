@@ -21,16 +21,11 @@ public class LombokGetterMayBeUsedInspectionTest extends LightDaemonAnalyzerTest
 
   @Override
   protected @NotNull String getTestDataPath() {
-    return PathManager.getCommunityHomePath() + "/plugins/lombok/testData";
-  }
-
-  @NotNull
-  private String getFilePath() {
-    return "/inspection/lombokGetterMayBeUsed/" + getTestName(false) + ".java";
+    return PathManager.getCommunityHomePath() + "/plugins/lombok/testData/inspection/lombokGetterMayBeUsed/";
   }
 
   private void doTest() {
-    doTest(getFilePath(), true, false);
+    doTest(getTestName(false) + ".java", true, false);
   }
 
   public void testFieldsWithGetter() {
@@ -46,6 +41,10 @@ public class LombokGetterMayBeUsedInspectionTest extends LightDaemonAnalyzerTest
   }
 
   public void testRecord() {
+    doTest();
+  }
+
+  public void testCompactSourceFile() {
     doTest();
   }
 }

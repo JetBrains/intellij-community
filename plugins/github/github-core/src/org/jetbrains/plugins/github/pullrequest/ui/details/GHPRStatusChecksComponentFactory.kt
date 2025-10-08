@@ -1,6 +1,7 @@
 // Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.plugins.github.pullrequest.ui.details
 
+import com.intellij.collaboration.async.childScope
 import com.intellij.collaboration.messages.CollaborationToolsBundle
 import com.intellij.collaboration.ui.VerticalListPanel
 import com.intellij.collaboration.ui.codereview.avatar.CodeReviewAvatarUtils
@@ -13,7 +14,6 @@ import com.intellij.collaboration.ui.util.toAnAction
 import com.intellij.icons.AllIcons
 import com.intellij.openapi.actionSystem.DefaultActionGroup
 import com.intellij.openapi.project.Project
-import com.intellij.platform.util.coroutines.childScope
 import com.intellij.ui.ExperimentalUI
 import com.intellij.ui.ScrollPaneFactory
 import com.intellij.ui.components.panels.Wrapper
@@ -45,7 +45,7 @@ object GHPRStatusChecksComponentFactory {
     project: Project,
     detailsVm: GHPRDetailsViewModel,
   ): JComponent {
-    val scope = parentScope.childScope(Dispatchers.Main.immediate)
+    val scope = parentScope.childScope(this::class, Dispatchers.Main.immediate)
 
     val reviewStatusVm = detailsVm.statusVm
     val reviewFlowVm = detailsVm.reviewFlowVm

@@ -1,8 +1,7 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.application
 
 import com.intellij.openapi.diagnostic.logger
-import com.intellij.openapi.util.io.FileUtil
 import com.intellij.openapi.util.io.NioFiles
 import com.intellij.util.io.delete
 import org.jetbrains.annotations.ApiStatus
@@ -26,17 +25,17 @@ class ConfigBackup(private val configDir: Path) {
 
     val backupPath = getNextBackupPath(configDir)
     LOG.info("Move backup from $dirToMove to $backupPath")
-    FileUtil.copyDir(dirToMove.toFile(), backupPath.toFile())
+    NioFiles.copyRecursively(dirToMove, backupPath)
     NioFiles.deleteRecursively(dirToMove)
   }
 
   private fun migratePreviousBackupIfExists(backupDir: Path) {
-    if (ConfigImportHelper.isConfigDirectory(backupDir)) {
+    if (InitialConfigImportState.isConfigDirectory(backupDir)) {
       try {
         val oldBackup = backupDir.resolve("1970-01-01-00-00").createDirectory()
         for (file in backupDir.listDirectoryEntries()) {
           if (!file.isDirectory() || !file.name.looksLikeDate()) {
-            FileUtil.copyDir(file.toFile(), oldBackup.resolve(file.name).toFile())
+            NioFiles.copyRecursively(file, oldBackup.resolve(file.name))
             NioFiles.deleteRecursively(file)
           }
         }

@@ -291,7 +291,7 @@ public class JUnitConfigurationModel {
 
       if (myProject.isDefault() ||
           JUnitUtil.isJUnit5(searchScope, myProject) ||
-          TestObject.hasJUnit5EnginesAPI(searchScope, JavaPsiFacade.getInstance(myProject))) {
+          TestObject.hasJupiterEnginesAPI(searchScope, JavaPsiFacade.getInstance(myProject))) {
         aModel.addElement(UNIQUE_ID);
         aModel.addElement(TAGS);
       }

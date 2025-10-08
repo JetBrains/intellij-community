@@ -3,10 +3,7 @@ package com.intellij.codeInspection;
 
 import com.intellij.codeInsight.daemon.impl.analysis.AbstractJavaErrorFixProvider;
 import com.intellij.codeInsight.daemon.impl.analysis.HighlightFixUtil;
-import com.intellij.codeInsight.daemon.impl.quickfix.AddExceptionToCatchFix;
-import com.intellij.codeInsight.daemon.impl.quickfix.AddFinallyFix;
-import com.intellij.codeInsight.daemon.impl.quickfix.InsertMissingTokenFix;
-import com.intellij.codeInsight.daemon.impl.quickfix.VariableAccessFromInnerClassJava10Fix;
+import com.intellij.codeInsight.daemon.impl.quickfix.*;
 import com.intellij.codeInsight.intention.CommonIntentionAction;
 import com.intellij.codeInspection.streamMigration.SimplifyForEachInspection;
 import com.intellij.core.JavaPsiBundle;
@@ -17,6 +14,8 @@ import org.jetbrains.annotations.NotNull;
 
 import java.util.function.Consumer;
 
+import static com.intellij.java.codeserver.highlighting.errors.JavaErrorKinds.UNDERSCORE_IDENTIFIER_UNNAMED;
+
 /**
  * Some quick-fixes not accessible from the java.analysis module are registered here.
  */
@@ -26,6 +25,9 @@ public final class AdditionalJavaErrorFixProvider extends AbstractJavaErrorFixPr
     fix(JavaErrorKinds.VARIABLE_MUST_BE_EFFECTIVELY_FINAL_LAMBDA, error -> new VariableAccessFromInnerClassJava10Fix(error.psi()));
     fix(JavaErrorKinds.VARIABLE_MUST_BE_EFFECTIVELY_FINAL_GUARD, error -> new VariableAccessFromInnerClassJava10Fix(error.psi()));
     fixes(JavaErrorKinds.SYNTAX_ERROR, (error, info) -> registerErrorElementFixes(info, error.psi()));
+    fix(UNDERSCORE_IDENTIFIER_UNNAMED, error -> error.psi().getParent() instanceof PsiReferenceExpression ref &&
+                                                "_".equals(ref.getReferenceName()) ?
+                                                new RenameUnderscoreFix(ref) : null);
   }
 
   private static void registerErrorElementFixes(@NotNull Consumer<? super CommonIntentionAction> info,

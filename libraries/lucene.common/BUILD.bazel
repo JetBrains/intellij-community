@@ -1,9 +1,9 @@
 ### auto-generated section `build intellij.libraries.lucene.common` start
-load("@rules_jvm//:jvm.bzl", "jvm_library", "jvm_resources")
+load("@rules_jvm//:jvm.bzl", "jvm_library", "resourcegroup")
 
-jvm_resources(
+resourcegroup(
   name = "lucene.common_resources",
-  files = glob(["resources/**/*"]),
+  srcs = glob(["resources/**/*"]),
   strip_prefix = "resources"
 )
 
@@ -11,12 +11,12 @@ jvm_library(
   name = "lucene.common",
   visibility = ["//visibility:public"],
   srcs = glob([], allow_empty = True),
+  resources = [":lucene.common_resources"],
   exports = [
     "@lib//:lucene-analysis-common",
     "@lib//:lucene-core",
   ],
   runtime_deps = [
-    ":lucene.common_resources",
     "@lib//:lucene-analysis-common",
     "@lib//:lucene-core",
   ]

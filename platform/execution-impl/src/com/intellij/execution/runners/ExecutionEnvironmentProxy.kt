@@ -15,7 +15,11 @@ import javax.swing.Icon
 interface ExecutionEnvironmentProxy {
   fun isShowInDashboard(): Boolean
 
+  fun getContentDescriptorToolWindowId(): String?
+
   fun getRunProfileName(): @NlsSafe String
+
+  fun getRunConfigurationTypeId(): String
 
   fun getIcon(): Icon
 

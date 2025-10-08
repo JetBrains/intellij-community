@@ -33,7 +33,6 @@ class GithubCreateGistDialog(
   private val descriptionField = JBTextArea().apply { lineWrap = true }
   private val secretCheckBox = JBCheckBox(message("create.gist.dialog.secret"), secret)
   private val browserCheckBox = JBCheckBox(message("create.gist.dialog.open.browser"), openInBrowser)
-  private val copyLinkCheckBox = JBCheckBox(message("create.gist.dialog.copy.url"), copyLink)
 
   private val accounts = GHAccountsUtil.accounts
 
@@ -46,7 +45,7 @@ class GithubCreateGistDialog(
   val description: String get() = descriptionField.text
   val isSecret: Boolean get() = secretCheckBox.isSelected
   val isOpenInBrowser: Boolean get() = browserCheckBox.isSelected
-  val isCopyURL: Boolean get() = copyLinkCheckBox.isSelected
+  var isCopyURL: Boolean = copyLink
   val account: GithubAccount? get() = accountsModel.selected
   var pathMode: PathHandlingMode? = PathHandlingMode.RelativePaths
 
@@ -57,21 +56,21 @@ class GithubCreateGistDialog(
 
   override fun createCenterPanel(): DialogPanel = panel {
     fileNameField?.let {
-      row(message("create.gist.dialog.filename.field")) {
+      row(message("create.gist.dialog.filename.field")) {}
+      row {
         cell(it).align(AlignX.FILL)
-      }
+      }.bottomGap(BottomGap.SMALL)
     }
 
+    row(message("create.gist.dialog.description.field")) {}
     row {
-      label(message("create.gist.dialog.description.field"))
-        .align(AlignY.TOP)
-      scrollCell(descriptionField)
+      textArea()
+        .rows(4)
         .align(Align.FILL)
-        .columns(60)
-        .resizableColumn()
-    }.layout(RowLayout.LABEL_ALIGNED).resizableRow()
+    }.bottomGap(BottomGap.SMALL).resizableRow()
 
-    row(CollaborationToolsBundle.message("snippet.create.path-mode")) {
+    row(CollaborationToolsBundle.message("snippet.create.path-mode")) {}
+    row {
       comboBox(PathHandlingMode.entries,
                ListCellRenderer { _, value, _, _, _ ->
                  val selectable = value in PathHandlingMode.entries
@@ -88,16 +87,17 @@ class GithubCreateGistDialog(
       }
         .align(Align.FILL)
         .bindItem(::pathMode)
-    }
+    }.bottomGap(BottomGap.SMALL)
 
-    row("") {
+    row {
       cell(secretCheckBox)
       cell(browserCheckBox)
-      cell(copyLinkCheckBox)
-    }
+      checkBox(message("create.gist.dialog.copy.url")).bindSelected(::isCopyURL)
+    }.bottomGap(BottomGap.SMALL)
 
     if (accountsModel.size != 1) {
-      row(message("create.gist.dialog.create.for.field")) {
+      row(message("create.gist.dialog.create.for.field")) {}
+      row {
         comboBox(accountsModel)
           .align(AlignX.FILL)
           .validationOnApply { if (accountsModel.selected == null) error(message("dialog.message.account.cannot.be.empty")) else null }

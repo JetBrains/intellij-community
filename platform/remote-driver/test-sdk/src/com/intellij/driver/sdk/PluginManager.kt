@@ -29,6 +29,8 @@ fun Driver.getEnabledPluginsIds(): Set<String> {
     .toSet()
 }
 
+fun Driver.arePluginsInitialized(): Boolean = utility<PluginManagerCore>().arePluginsInitialized()
+
 @Remote("com.intellij.openapi.extensions.PluginId")
 interface PluginId {
   fun getId(id: String): PluginId
@@ -39,6 +41,7 @@ interface PluginId {
 interface PluginManagerCore {
   fun getPlugin(pluginId: PluginId): PluginDescriptor?
   fun getLoadedPlugins(): Array<PluginDescriptor>
+  fun arePluginsInitialized(): Boolean
 }
 
 @Remote("com.intellij.openapi.extensions.PluginDescriptor")
@@ -47,4 +50,5 @@ interface PluginDescriptor {
   fun isBundled(): Boolean
   fun isEnabled(): Boolean
   fun getName(): String
+  fun getVersion(): String
 }

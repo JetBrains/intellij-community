@@ -1,8 +1,6 @@
 // Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.vfs.newvfs
 
-import com.intellij.openapi.vfs.newvfs.events.VFileEvent
-import com.intellij.util.concurrency.annotations.RequiresWriteLock
 import org.jetbrains.annotations.ApiStatus
 
 /**
@@ -27,13 +25,4 @@ import org.jetbrains.annotations.ApiStatus
  * [com.intellij.openapi.roots.FileIndex.isInContent]
  */
 @ApiStatus.Experimental
-interface BulkFileListenerBackgroundable {
-
-  @RequiresWriteLock
-  // can be invoked on any thread
-  fun before(events: List<VFileEvent>) {}
-
-  @RequiresWriteLock
-  // can be invoked on any thread
-  fun after(events: List<VFileEvent>) {}
-}
+interface BulkFileListenerBackgroundable : BulkFileListener

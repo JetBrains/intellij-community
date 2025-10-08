@@ -1,6 +1,6 @@
 ### auto-generated section `build kotlin.base.resources` start
 load("//build:compiler-options.bzl", "create_kotlinc_options")
-load("@rules_jvm//:jvm.bzl", "jvm_library", "jvm_resources")
+load("@rules_jvm//:jvm.bzl", "jvm_library", "resourcegroup")
 
 create_kotlinc_options(
   name = "custom_kotlin-base-resources",
@@ -11,15 +11,15 @@ create_kotlinc_options(
   x_context_parameters = True
 )
 
-jvm_resources(
+resourcegroup(
   name = "kotlin-base-resources_resources",
-  files = glob(["resources/**/*"]),
+  srcs = glob(["resources/**/*"]),
   strip_prefix = "resources"
 )
 
-jvm_resources(
+resourcegroup(
   name = "kotlin-base-resources_resources_1",
-  files = glob(["resources-en/**/*"]),
+  srcs = glob(["resources-en/**/*"]),
   strip_prefix = "resources-en"
 )
 
@@ -28,6 +28,10 @@ jvm_library(
   module_name = "kotlin.base.resources",
   visibility = ["//visibility:public"],
   srcs = glob(["src/**/*.kt", "src/**/*.java", "src/**/*.form"], allow_empty = True),
+  resources = [
+    ":kotlin-base-resources_resources",
+    ":kotlin-base-resources_resources_1",
+  ],
   kotlinc_opts = ":custom_kotlin-base-resources",
   deps = [
     "@lib//:kotlin-stdlib",
@@ -39,10 +43,6 @@ jvm_library(
     "//platform/util:util-ui",
     "//platform/core-ui",
     "//java/java-frontback-psi-api:frontback-psi",
-  ],
-  runtime_deps = [
-    ":kotlin-base-resources_resources",
-    ":kotlin-base-resources_resources_1",
   ]
 )
 ### auto-generated section `build kotlin.base.resources` end

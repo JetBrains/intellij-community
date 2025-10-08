@@ -157,7 +157,6 @@ a:com.intellij.remote.RemoteProcess
 - a:isDisconnected():Z
 - a:killProcessTree():Z
 - pid():J
-- a:setWindowSize(I,I):V
 com.intellij.remote.RemoteSdkAdditionalData
 - com.intellij.openapi.projectRoots.SdkAdditionalData
 - com.intellij.remote.RemoteSdkProperties

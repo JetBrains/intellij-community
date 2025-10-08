@@ -2,9 +2,12 @@
 package com.intellij.codeInsight.documentation
 
 import com.intellij.lang.documentation.DocumentationMarkup.*
+import com.intellij.openapi.application.ApplicationManager
+import com.intellij.openapi.components.service
 import com.intellij.openapi.module.ModuleTypeManager
 import com.intellij.openapi.module.UnknownModuleType
 import com.intellij.ui.ColorUtil
+import com.intellij.ui.components.JBHtmlPane
 import com.intellij.ui.components.JBHtmlPaneStyleConfiguration
 import com.intellij.ui.scale.JBUIScale
 import com.intellij.util.SmartList
@@ -12,7 +15,11 @@ import com.intellij.util.ui.JBUI
 import com.intellij.util.ui.StyleSheetUtil
 import org.intellij.lang.annotations.Language
 import org.jetbrains.annotations.ApiStatus
+import org.jetbrains.annotations.Nls
+import org.jsoup.Jsoup
 import org.jsoup.nodes.*
+import org.jsoup.parser.Parser
+import org.jsoup.parser.TagSet
 import org.jsoup.select.QueryParser
 import java.util.*
 import java.util.function.Function
@@ -75,6 +82,11 @@ object DocumentationHtmlUtil {
       .takeIf { it !is UnknownModuleType }
       ?.icon
   }
+
+  @JvmStatic
+  fun parseHtml(@Nls html: String): Document =
+    Jsoup.parse(html, Parser.htmlParser().tagSet(ApplicationManager.getApplication().service<JBHtmlPane.ImplService>().jsoupCustomTagSet as TagSet))
+
   @JvmStatic
   fun getDocumentationPaneAdditionalCssRules(): StyleSheet =
     getDocumentationPaneAdditionalCssRules { JBUIScale.scale(it) }
@@ -113,8 +125,8 @@ object DocumentationHtmlUtil {
         .$CLASS_SECTIONS { padding: 0 ${contentInnerPadding - 2}px 0 ${contentInnerPadding - 2}px 0; border-spacing: 0; }
         .$CLASS_SECTION { color: $sectionColor; padding-right: 4px; white-space: nowrap; }
       """.trimIndent() + DocumentationCssProvider.EP_NAME.extensionList.joinToString(separator = "\n", prefix = "\n") {
-        it.generateCss(scaleFunction, false)
-      }
+      it.generateCss(scaleFunction, false)
+    }
     return StyleSheetUtil.loadStyleSheet(result)
   }
 

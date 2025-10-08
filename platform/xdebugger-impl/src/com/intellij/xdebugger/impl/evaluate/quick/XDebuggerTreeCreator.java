@@ -33,10 +33,7 @@ public class XDebuggerTreeCreator implements DebuggerTreeCreator<Pair<XValue,Str
 
   @Override
   public @NotNull Tree createTree(@NotNull Pair<XValue, String> descriptor) {
-    String treePopupGroup = areFrontendDebuggerActionsEnabled()
-                            ? XDebuggerActions.INSPECT_TREE_POPUP_GROUP_FRONTEND
-                            : XDebuggerActions.INSPECT_TREE_POPUP_GROUP;
-
+    String treePopupGroup = XDebuggerActions.INSPECT_TREE_POPUP_GROUP;
     final XDebuggerTree tree = new XDebuggerTree(myProject, myProvider, myPosition, treePopupGroup, myMarkers);
     final XValueNodeImpl root = new XValueNodeImpl(tree, null, descriptor.getSecond(), descriptor.getFirst());
     tree.setRoot(root, true);

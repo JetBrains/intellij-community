@@ -52,7 +52,7 @@ public final class BooleanConstructorInspection extends BaseInspection implement
   }
 
   @Override
-  public BaseInspectionVisitor buildVisitor() {
+  public @NotNull BaseInspectionVisitor buildVisitor() {
     return new BooleanConstructorVisitor();
   }
 

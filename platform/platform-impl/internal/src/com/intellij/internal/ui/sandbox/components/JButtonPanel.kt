@@ -9,6 +9,8 @@ import com.intellij.openapi.Disposable
 import com.intellij.openapi.util.NlsContexts
 import com.intellij.ui.dsl.builder.Panel
 import com.intellij.ui.dsl.builder.panel
+import com.intellij.ui.icons.toStrokeIcon
+import com.intellij.util.ui.JBUI
 import javax.swing.JButton
 import javax.swing.JComponent
 
@@ -56,6 +58,9 @@ internal class JButtonPanel : UISandboxPanel {
           .applyToComponent {
             putClientProperty(DarculaButtonUI.DEFAULT_STYLE_KEY, true)
             applyToComponent()
+            if (icon != null) {
+              icon = toStrokeIcon(icon, JBUI.CurrentTheme.Button.defaultButtonForeground())
+            }
           }.applyStateText()
       }
     }

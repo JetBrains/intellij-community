@@ -107,8 +107,6 @@ class GradleScriptProjectStructureTest : AbstractGradleCodeInsightTest() {
         val files = testDataFiles.map { getFile(it.path).getPsiFile(project) }
         val modules = files.map { it.getKaModule(project, useSiteModule = null) }
         return modules.computeDependenciesClosure()
-            // should not be here empty, mitigation of KT-74010
-            .filter { it !is KaBuiltinsModule }
     }
 
     private fun Collection<KaModule>.computeDependenciesClosure(): List<KaModule> {

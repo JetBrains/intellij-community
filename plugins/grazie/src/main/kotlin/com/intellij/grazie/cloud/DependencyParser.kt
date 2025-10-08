@@ -11,9 +11,11 @@ import ai.grazie.rules.uk.UkrainianTreeSupport
 import ai.grazie.text.exclusions.SentenceWithExclusions
 import com.intellij.grazie.GrazieBundle
 import com.intellij.grazie.GrazieConfig
+import com.intellij.grazie.jlanguage.LazyCachingConcurrentDisambiguator
 import com.intellij.grazie.rule.CloudOrLocalBatchParser
 import com.intellij.grazie.rule.SentenceBatcher
 import com.intellij.grazie.rule.SentenceBatcher.AsyncBatchParser
+import com.intellij.grazie.text.TextChecker.ProofreadingContext
 import com.intellij.grazie.text.TextContent
 import com.intellij.grazie.utils.HighlightingUtil
 import com.intellij.grazie.utils.HunspellUtil
@@ -22,12 +24,11 @@ import com.intellij.openapi.Disposable
 import com.intellij.openapi.components.Service
 import com.intellij.openapi.components.service
 import com.intellij.openapi.diagnostic.Logger
+import com.intellij.openapi.progress.Cancellation.ensureActive
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.Disposer
-import com.intellij.openapi.util.Key
 import com.intellij.platform.util.progress.RawProgressReporter
 import com.intellij.psi.PsiFile
-import com.intellij.util.ConcurrencyUtil
 import com.intellij.util.application
 import com.intellij.util.containers.ContainerUtil
 import com.intellij.util.containers.ContainerUtil.createConcurrentSoftKeySoftValueMap
@@ -38,17 +39,23 @@ import org.languagetool.language.English
 
 object DependencyParser {
   private val LOG = Logger.getInstance(DependencyParser::class.java)
-  private val cachedTreesKey = Key.create<MutableMap<String, Tree>>("DependencyParser tree cache")
+  private val cachedTrees: MutableMap<String, Tree> = createConcurrentSoftKeySoftValueMap()
+
+  @JvmStatic
+  fun getParser(context: ProofreadingContext, minimal: Boolean): AsyncBatchParser<Tree>? {
+    if (context.language == Language.UNKNOWN) return null
+    return getParser(context.language, context.text.containingFile, minimal)
+  }
 
   @JvmStatic
   fun getParser(text: TextContent, minimal: Boolean): AsyncBatchParser<Tree>? {
     val stripPrefixLength = HighlightingUtil.stripPrefix(text)
     val language = getLanguageIfAvailable(text.toString().substring(stripPrefixLength)) ?: return null
-    val file = text.containingFile
+    return getParser(language, text.containingFile, minimal)
+  }
 
-    if (!GrazieCloudConnector.seemsCloudConnected()) {
-      return getLocalParser(file, language)
-    }
+  private fun getParser(language: Language, file: PsiFile, minimal: Boolean): AsyncBatchParser<Tree>? {
+    if (!GrazieCloudConnector.seemsCloudConnected()) return getLocalParser(language)
     val batcher = getBatcher(language) ?: return null
     val cloud = when {
       minimal -> batcher.minimal(file.project)
@@ -57,19 +64,21 @@ object DependencyParser {
     return CloudOrLocalBatchParser(
       project = file.project,
       cloud = cloud,
-      local = { getLocalParser(file, language) }
+      local = { getLocalParser(language) }
     )
   }
 
-  private fun getLocalParser(psiFile: PsiFile, language: Language): AsyncBatchParser<Tree> {
+  private fun getLocalParser(language: Language): AsyncBatchParser<Tree> {
     return object : AsyncBatchParser<Tree> {
       override suspend fun parseAsync(sentences: List<SentenceWithExclusions>): LinkedHashMap<SentenceWithExclusions, Tree?> {
         val support = obtainSupport(language)
         if (support != null) {
+          val ltLanguage = SentenceBatcher.findInstalledLTLanguage(language)
+          (ltLanguage?.disambiguator as? LazyCachingConcurrentDisambiguator)?.ensureInitializedAsync()
           @Suppress("UNCHECKED_CAST")
           return sentences.associateWith {
-            val cachedTrees = ConcurrencyUtil.computeIfAbsent(psiFile, cachedTreesKey) { createConcurrentSoftKeySoftValueMap() }
             cachedTrees.getOrPut(it.sentence) {
+              ensureActive()
               Tree.createFlatTree(support, it.sentence)
             }
           } as LinkedHashMap<SentenceWithExclusions, Tree?>

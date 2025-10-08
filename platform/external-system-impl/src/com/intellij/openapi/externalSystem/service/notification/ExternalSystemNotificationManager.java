@@ -112,22 +112,6 @@ public final class ExternalSystemNotificationManager implements Disposable {
     );
   }
 
-  /**
-   * @deprecated use {@link #createNotification(String, Throwable, ProjectSystemId, Project, String, DataContext)} instead
-   */
-  @Deprecated(forRemoval = true)
-  public @Nullable NotificationData createNotification(
-    @NotNull @NotificationTitle String title,
-    @NotNull Throwable error,
-    @NotNull ProjectSystemId externalSystemId,
-    @NotNull Project project,
-    @NotNull DataContext dataContext
-  ) {
-    return doCreateNotification(title, error, externalSystemId, project, dataContext, (extension, notificationData) ->
-      extension.customize(notificationData, project, error)
-    );
-  }
-
   private static @Nullable NotificationData doCreateNotification(
     @NotNull @NotificationTitle String title,
     @NotNull Throwable error,

@@ -79,6 +79,7 @@ public final class ScopeEditorPanel implements Disposable {
   private final Marker myTreeMarker;
   private PackageSet myCurrentScope = null;
   private boolean myIsInUpdate = false;
+  private @Nls String myStatusMessage = "";
   private @Nls String myErrorMessage;
   private Future<?> myUpdateAlarm = CompletableFuture.completedFuture(null);
 
@@ -242,13 +243,13 @@ public final class ScopeEditorPanel implements Disposable {
       }
       catch (Exception e) {
         myErrorMessage = e.getMessage();
-        showErrorMessage();
       }
       rebuild(false);
     }
-    else if (!invalidScopeInside(myCurrentScope)){
+    else if (!invalidScopeInside(myCurrentScope)) {
       myErrorMessage = null;
     }
+    updateStatusMessage();
   }
 
   private void createUIComponents() {
@@ -267,10 +268,17 @@ public final class ScopeEditorPanel implements Disposable {
     return false;
   }
 
-  private void showErrorMessage() {
-    myMatchingCountLabel.setText(StringUtil.capitalize(myErrorMessage));
-    myMatchingCountLabel.setForeground(JBColor.red);
-    myMatchingCountLabel.setToolTipText(myErrorMessage);
+  private void updateStatusMessage() {
+    if (myErrorMessage == null) {
+      myMatchingCountLabel.setText(myStatusMessage);
+      myMatchingCountLabel.setForeground(new JLabel().getForeground());
+      myMatchingCountLabel.setToolTipText(null);
+    }
+    else {
+      myMatchingCountLabel.setText(StringUtil.capitalize(myErrorMessage));
+      myMatchingCountLabel.setForeground(JBColor.red);
+      myMatchingCountLabel.setToolTipText(myErrorMessage);
+    }
   }
 
   private JComponent createActionsPanel() {
@@ -571,7 +579,7 @@ public final class ScopeEditorPanel implements Disposable {
 
   private void updateTreeModel(final boolean requestFocus, PanelProgressIndicator progress) throws ProcessCanceledException {
     Runnable updateModel = () -> {
-      final ProcessCanceledException [] ex = new ProcessCanceledException[1];
+      final ProcessCanceledException[] ex = new ProcessCanceledException[1];
       ApplicationManager.getApplication().runReadAction(() -> {
         if (myProject.isDisposed()) return;
         try {
@@ -579,33 +587,33 @@ public final class ScopeEditorPanel implements Disposable {
           TreeModel model = Objects.requireNonNull(PatternDialectProvider.getInstance(DependencyUISettings.getInstance().SCOPE_TYPE))
             .createTreeModel(myProject, myTreeMarker);
           ((PackageDependenciesNode)model.getRoot()).updateAndSortChildren();
-          if (myErrorMessage == null) {
-            String message = IdeBundle.message("label.scope.contains.files", model.getMarkedFileCount(), model.getTotalFileCount());
-            myMatchingCountLabel.setText(message);
-            myMatchingCountLabel.setForeground(new JLabel().getForeground());
-          }
-          else {
-            showErrorMessage();
-          }
 
           SwingUtilities.invokeLater(() -> { //not under progress
             if (myIsDisposed) return;
+
             var backgroundModel = new BackgroundTreeModel(() -> model, true);
             myPackageTreeInvoker = backgroundModel.getInvoker();
             var asyncModel = new AsyncTreeModel(backgroundModel, this);
             var oldModel = myPackageTree.getModel();
             myPackageTree.setModel(asyncModel);
+
+            myStatusMessage = IdeBundle.message("label.scope.contains.files", model.getMarkedFileCount(), model.getTotalFileCount());
+            updateStatusMessage();
+
             if (oldModel instanceof Disposable disposable) {
               Disposer.dispose(disposable);
             }
             myTreeExpansionMonitor.restoreAsync();
             TreeUtil.ensureSelection(myPackageTree);
           });
-        } catch (ProcessCanceledException e) {
+        }
+        catch (ProcessCanceledException e) {
           ex[0] = e;
         }
         finally {
-          SwingUtilities.invokeLater(() -> setToComponent(myMatchingCountLabel, requestFocus));
+          SwingUtilities.invokeLater(() -> {
+            setToComponent(myMatchingCountLabel, requestFocus);
+          });
         }
       });
       if (ex[0] != null) {

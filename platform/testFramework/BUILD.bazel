@@ -1,21 +1,21 @@
 ### auto-generated section `build intellij.platform.testFramework` start
-load("@rules_jvm//:jvm.bzl", "jvm_library", "jvm_provided_library", "jvm_resources")
+load("@rules_jvm//:jvm.bzl", "jvm_library", "jvm_provided_library", "resourcegroup")
 
-jvm_resources(
+resourcegroup(
   name = "testFramework_resources",
-  files = glob(["resources/**/*"]),
+  srcs = glob(["resources/**/*"]),
   strip_prefix = "resources"
 )
 
-jvm_resources(
+resourcegroup(
   name = "testFramework_test_resources",
-  files = glob(["testData/**/*"]),
+  srcs = glob(["testData/**/*"]),
   strip_prefix = "testData"
 )
 
-jvm_resources(
+resourcegroup(
   name = "testFramework_test_resources_1",
-  files = glob(["testResources/**/*"]),
+  srcs = glob(["testResources/**/*"]),
   strip_prefix = "testResources"
 )
 
@@ -34,6 +34,7 @@ jvm_library(
   module_name = "intellij.platform.testFramework",
   visibility = ["//visibility:public"],
   srcs = glob(["src/**/*.kt", "src/**/*.java", "src/**/*.form"], allow_empty = True),
+  resources = [":testFramework_resources"],
   deps = [
     "@lib//:jet_check",
     "@lib//:junit5-provided",
@@ -105,7 +106,6 @@ jvm_library(
     "//platform/testFramework/core",
   ],
   runtime_deps = [
-    ":testFramework_resources",
     "//resources-en:java-resources-en",
     "//images",
     "//RegExpSupport:regexp",
@@ -117,6 +117,10 @@ jvm_library(
   name = "testFramework_test_lib",
   visibility = ["//visibility:public"],
   srcs = glob(["testSrc/**/*.kt", "testSrc/**/*.java", "testSrc/**/*.form"], allow_empty = True),
+  resources = [
+    ":testFramework_test_resources",
+    ":testFramework_test_resources_1",
+  ],
   associates = [":testFramework"],
   deps = [
     "@lib//:jet_check",
@@ -125,11 +129,11 @@ jvm_library(
     "@lib//:assert_j",
     "@lib//:kotlin-stdlib",
     "@lib//:kotlinx-coroutines-core",
-    "@lib//:kotlinx-coroutines-slf4j",
+    "//libraries/kotlinx/coroutines/slf4j",
     "@lib//:http-client",
-    "@lib//:jackson",
-    "@lib//:jackson-databind",
-    "@lib//:jackson-module-kotlin",
+    "//libraries/jackson/jackson",
+    "//libraries/jackson/databind",
+    "//libraries/jackson/module-kotlin:libraries-jackson-module-kotlin",
     "@lib//:okhttp",
     "//java/java-runtime:rt",
     "//libraries/junit4",
@@ -201,11 +205,6 @@ jvm_library(
     "//platform/platform-impl:ide-impl",
     "//platform/testFramework/common",
     "//platform/testFramework/core",
-  ],
-  runtime_deps = [
-    ":testFramework_resources",
-    ":testFramework_test_resources",
-    ":testFramework_test_resources_1",
   ]
 )
 ### auto-generated section `build intellij.platform.testFramework` end

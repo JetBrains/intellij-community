@@ -29,7 +29,8 @@ import java.awt.*;
 import java.util.Map;
 import java.util.function.Supplier;
 
-abstract class SEResultsListFactory {
+@ApiStatus.Internal
+public abstract class SEResultsListFactory {
 
   private static final JBInsets RENDERER_INSETS = new JBInsets(1, 8, 1, 2);
   private static final JBInsets TOGGLE_BUTTON_RENDERER_INSETS =
@@ -112,10 +113,23 @@ abstract class SEResultsListFactory {
       SearchEverywhereClassifier.EP_Manager.getListCellRendererComponent(list, value, index, false, hasFocus));
     Component component = detachParent(SearchEverywhereClassifier.EP_Manager.getListCellRendererComponent(
       list, value, index, selected, hasFocus));
-    if (component == null) {
+
+    return getNonMoreElementRenderer(unselectedBackground, component, list, value, index, selected, () -> {
       SearchEverywhereContributor<Object> contributor = searchListModel.getContributorForIndex(index);
       assert contributor != null : "Null contributor is not allowed here";
-      ListCellRenderer<? super Object> renderer = renderersCache.computeIfAbsent(contributor.getSearchProviderId(), s -> contributor.getElementsRenderer());
+      return renderersCache.computeIfAbsent(contributor.getSearchProviderId(), s -> contributor.getElementsRenderer());
+    });
+  }
+
+  @ApiStatus.Internal
+  public static Component getNonMoreElementRenderer(@Nullable Color unselectedBackgroundFromClassifier, @Nullable Component componentFromClassifier,
+                                                    @NotNull JList<?> list, Object value, int index, boolean selected,
+                                                    Computable<? extends ListCellRenderer<? super Object>> rendererProvider) {
+    Component component = componentFromClassifier;
+    Color unselectedBackground = unselectedBackgroundFromClassifier;
+
+    if (component == null) {
+      ListCellRenderer<? super Object> renderer = rendererProvider.compute();
       try (AccessToken ignore = SlowOperations.knownIssue("IDEA-326652, EA-826545; IDEA-260958, EA-831915")) {
         unselectedBackground = extractUnselectedBackground(selected, () ->
           detachParent(renderer.getListCellRendererComponent(list, value, index, false, true)));

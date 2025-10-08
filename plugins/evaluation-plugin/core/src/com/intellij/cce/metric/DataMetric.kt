@@ -9,10 +9,10 @@ class DataMetric<T>(
   private val data: EvalDataDescription<*, T>,
   private val f: (T, DataProps) -> Double,
   override val name: String = data.name,
+  override val showByDefault: Boolean = true,
 ) : Metric {
   private val sample = Sample()
   override val description: String = data.description ?: ""
-  override val showByDefault: Boolean = true
 
   override val valueType: MetricValueType = MetricValueType.DOUBLE
   override val value: Double get() = sample.mean()

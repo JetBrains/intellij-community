@@ -26,6 +26,7 @@ interface PolySymbolCodeCompletionItem {
   val icon: Icon?
   val typeText: String?
   val tailText: String?
+  val caseSensitive: Boolean
 
   @get:JvmName("isCompleteAfterInsert")
   val completeAfterInsert: Boolean
@@ -75,6 +76,8 @@ interface PolySymbolCodeCompletionItem {
   fun withTypeText(typeTextProvider: () -> String?): PolySymbolCodeCompletionItem
 
   fun withTailText(tailText: String?): PolySymbolCodeCompletionItem
+
+  fun withCaseSensitive(value: Boolean): PolySymbolCodeCompletionItem
 
   fun withCompleteAfterChar(char: Char): PolySymbolCodeCompletionItem
 

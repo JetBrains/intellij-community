@@ -3,9 +3,6 @@
 package org.jetbrains.kotlin.idea.jvm.shared.scratch.ui
 
 import com.intellij.openapi.components.Service
-import com.intellij.openapi.components.service
-import com.intellij.openapi.project.Project
-import com.intellij.openapi.vfs.VirtualFile
 import org.jetbrains.kotlin.idea.core.script.v1.AbstractFileGistService
 
 @Service(Service.Level.PROJECT)
@@ -22,6 +19,6 @@ class ScratchFileOptionsByFile: AbstractFileGistService<ScratchFileOptions>(
 
 data class ScratchFileOptions(
     val isRepl: Boolean = false,
-    val isMakeBeforeRun: Boolean = false,
-    val isInteractiveMode: Boolean = true
+    val isMakeBeforeRun: Boolean = true,
+    val isInteractiveMode: Boolean = false
 )

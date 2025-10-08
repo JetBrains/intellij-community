@@ -1,10 +1,9 @@
 // Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+@file:Suppress("ReplaceGetOrSet")
+
 package com.intellij.configurationStore
 
-import com.intellij.openapi.application.ApplicationManager
-import com.intellij.openapi.application.edtWriteAction
 import com.intellij.openapi.components.StateStorage
-import com.intellij.openapi.progress.ProcessCanceledException
 import com.intellij.openapi.vfs.LocalFileSystem
 import com.intellij.openapi.vfs.newvfs.RefreshQueue
 import com.intellij.openapi.vfs.newvfs.events.VFileEvent
@@ -14,11 +13,11 @@ import kotlinx.coroutines.CancellationException
 import java.nio.file.AccessDeniedException
 import java.util.*
 
-internal open class SaveSessionProducerManager(private val isUseVfsForWrite: Boolean, private val collectVfsEvents: Boolean) {
+internal open class SaveSessionProducerManager {
   private val producers = Collections.synchronizedMap(LinkedHashMap<StateStorage, SaveSessionProducer>())
 
   fun getProducer(storage: StateStorage): SaveSessionProducer? {
-    var producer = producers[storage]
+    var producer = producers.get(storage)
     if (producer == null) {
       producer = storage.createSaveSessionProducer() ?: return null
       val prev = producers.put(storage, producer)
@@ -33,91 +32,54 @@ internal open class SaveSessionProducerManager(private val isUseVfsForWrite: Boo
     }
   }
 
-  suspend fun save(saveResult: SaveResult) {
+  suspend fun save(saveResult: SaveResult, collectVfsEvents: Boolean) {
     if (producers.isNotEmpty()) {
       val saveSessions = ArrayList<SaveSession>()
       collectSaveSessions(saveSessions)
       if (saveSessions.isNotEmpty()) {
-        saveSessions(saveSessions, saveResult)
+        saveSessions(saveSessions = saveSessions, saveResult = saveResult, collectVfsEvents = collectVfsEvents)
       }
     }
   }
+}
 
-  protected suspend fun saveSessions(saveSessions: Collection<SaveSession>, saveResult: SaveResult) {
-    if (isUseVfsForWrite) {
-      edtWriteAction {
-        for (saveSession in saveSessions) {
-          saveSessionBlocking(saveSession, saveResult)
-        }
-      }
-    }
-    else if (EDT.isCurrentThreadEdt()) {
-      @Suppress("ForbiddenInSuspectContextMethod")
-      ApplicationManager.getApplication().runWriteAction {
-        for (saveSession in saveSessions) {
-          saveSessionBlocking(saveSession, saveResult)
-        }
-      }
-    }
-    else {
-      val events = if (collectVfsEvents) ArrayList<VFileEvent>() else null
-      val syncList = if (events == null) null else Collections.synchronizedList(events)
-      for (saveSession in saveSessions) {
-        saveSession(saveSession, syncList, saveResult)
-      }
-      if (!events.isNullOrEmpty()) {
-        RefreshQueue.getInstance().processEvents(events)
-      }
-    }
+internal suspend fun saveSessions(saveSessions: Collection<SaveSession>, saveResult: SaveResult, collectVfsEvents: Boolean) {
+  if (EDT.isCurrentThreadEdt()) {
+    LOG.error("saveSessions can't be used on EDT")
   }
 
-  private fun saveSessionBlocking(saveSession: SaveSession, saveResult: SaveResult) {
-    try {
-      saveSession.saveBlocking()
-    }
-    catch (e: ReadOnlyModificationException) {
-      LOG.warn(e)
-      saveResult.addReadOnlyFile(SaveSessionAndFile(e.session ?: saveSession, e.file))
-    }
-    catch (e: ProcessCanceledException) { throw e }
-    catch (e: CancellationException) { throw e }
-    catch (e: Exception) {
-      val sessionAndFile = processAccessDeniedException(saveSession, e)
-      if (sessionAndFile != null) {
-        saveResult.addReadOnlyFile(sessionAndFile)
-      }
-      else {
-        saveResult.addError(e)
-      }
-    }
-  }
-
-  private suspend fun saveSession(saveSession: SaveSession, events: MutableList<VFileEvent>?, saveResult: SaveResult) {
+  val threadUnsafeEventList = if (collectVfsEvents) ArrayList<VFileEvent>() else null
+  val events = if (threadUnsafeEventList == null) null else Collections.synchronizedList(threadUnsafeEventList)
+  for (saveSession in saveSessions) {
     try {
       saveSession.save(events)
     }
     catch (e: ReadOnlyModificationException) {
       LOG.warn(e)
-      saveResult.addReadOnlyFile(SaveSessionAndFile(e.session ?: saveSession, e.file))
+      saveResult.addReadOnlyFile(SaveSessionAndFile(session = e.session ?: saveSession, file = e.file))
     }
-    catch (e: ProcessCanceledException) { throw e }
-    catch (e: CancellationException) { throw e }
+    catch (e: CancellationException) {
+      throw e
+    }
     catch (e: Exception) {
       val sessionAndFile = processAccessDeniedException(saveSession, e)
-      if (sessionAndFile != null) {
-        saveResult.addReadOnlyFile(sessionAndFile)
+      if (sessionAndFile == null) {
+        saveResult.addError(e)
       }
       else {
-        saveResult.addError(e)
+        saveResult.addReadOnlyFile(sessionAndFile)
       }
     }
   }
 
-  private fun processAccessDeniedException(saveSession: SaveSession, e: Exception): SaveSessionAndFile? {
-    val accessDeniedException = e as? AccessDeniedException ?: ExceptionUtil.findCause(e, AccessDeniedException::class.java) ?: return null
-    val filePath = accessDeniedException.file ?: return null
-    val file = LocalFileSystem.getInstance().findFileByPath(filePath) ?: return null
-
-    return SaveSessionAndFile(saveSession, file)
+  if (!threadUnsafeEventList.isNullOrEmpty()) {
+    RefreshQueue.getInstance().processEvents(threadUnsafeEventList)
   }
+}
+
+private fun processAccessDeniedException(saveSession: SaveSession, e: Exception): SaveSessionAndFile? {
+  val accessDeniedException = e as? AccessDeniedException ?: ExceptionUtil.findCause(e, AccessDeniedException::class.java) ?: return null
+  val filePath = accessDeniedException.file ?: return null
+  val file = LocalFileSystem.getInstance().findFileByPath(filePath) ?: return null
+  return SaveSessionAndFile(saveSession, file)
 }

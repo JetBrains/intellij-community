@@ -25,6 +25,7 @@ import org.jetbrains.annotations.VisibleForTesting
 import java.nio.file.Path
 import java.time.ZoneOffset
 import java.util.*
+import com.intellij.platform.plugins.parser.impl.elements.ModuleVisibility as ModuleVisibilityElement
 
 private val LOG: Logger
   get() = PluginManagerCore.logger
@@ -200,9 +201,9 @@ sealed class IdeaPluginDescriptorImpl(
       LOG.warnInProduction(PluginException(buildString {
         append("Plugin descriptor for ")
         when (this@logUnexpectedElement) {
-          is ContentModuleDescriptor -> append("content module '${moduleId}' of plugin '${pluginId}'")
+          is ContentModuleDescriptor -> append("content module '${moduleId.id}' of plugin '${pluginId}'")
           is DependsSubDescriptor -> append("'depends' sub-descriptor '${descriptorPath}' of plugin '${pluginId}'")
-          is PluginMainDescriptor -> error("not intended")
+          is PluginMainDescriptor -> append("plugin '${pluginId}'")
         }
         append(" has declared element '$elementName' which has no effect there")
         append("\n in ${this@logUnexpectedElement}")
@@ -308,8 +309,17 @@ class PluginMainDescriptor(
     raw.contentModules.takeIf { it.isNotEmpty() }?.let { PluginContentDescriptor(convertContentModules(it)) }
     ?: PluginContentDescriptor.EMPTY
 
+  /**
+   * Specifies namespace for content modules of the plugin
+   */
+  val namespace: String? = raw.namespace
+
   val contentModules: List<ContentModuleDescriptor>
     get() = content.modules.map { it.descriptor }
+
+  init {
+    reportMainDescriptorUnexpectedElements(raw) { logUnexpectedElement(it) }
+  }
 
   override fun getPluginId(): PluginId = id
 
@@ -465,6 +475,13 @@ class PluginMainDescriptor(
         add(PluginId.getId("com.intellij.platform.experimental.monolith"))
       }
     }
+
+    @VisibleForTesting
+    fun reportMainDescriptorUnexpectedElements(raw: RawPluginDescriptor, reporter: (elementName: String) -> Unit) {
+      if (raw.moduleVisibility != ModuleVisibilityElement.PRIVATE) {
+        reporter(PluginXmlConst.CONTENT_MODULE_VISIBILITY_ATTR)
+      }
+    }
   }
 }
 
@@ -548,6 +565,7 @@ class ContentModuleDescriptor(
 ): PluginModuleDescriptor(raw) {
   val moduleId: PluginModuleId = moduleId
   val moduleLoadingRule: ModuleLoadingRule = moduleLoadingRule
+  val visibility: ModuleVisibility = raw.moduleVisibility.convert()
 
   override val useCoreClassLoader: Boolean
     get() = parent.useCoreClassLoader
@@ -564,10 +582,10 @@ class ContentModuleDescriptor(
   override fun getResourceBundleBaseName(): String? = resourceBundleBaseName
 
   override fun toString(): String =
-    "ContentModuleDescriptor(id=${this@ContentModuleDescriptor.moduleId}" +
+    "ContentModuleDescriptor(id=${this@ContentModuleDescriptor.moduleId.id}" +
     (if (moduleLoadingRule == ModuleLoadingRule.OPTIONAL) "" else ", loadingRule=$moduleLoadingRule") +
     (if (packagePrefix == null) "" else ", package=$packagePrefix") +
-    (if (descriptorPath == "${this@ContentModuleDescriptor.moduleId}.xml") "" else ", descriptorPath=$descriptorPath") +
+    (if (descriptorPath == "${this@ContentModuleDescriptor.moduleId.id}.xml") "" else ", descriptorPath=$descriptorPath") +
     ") <- $parent"
 
   init {

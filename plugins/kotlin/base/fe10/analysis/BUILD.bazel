@@ -26,7 +26,7 @@ jvm_library(
     "@lib//:kotlinc-kotlin-scripting-compiler-impl",
     "@lib//:kotlinc-analysis-api",
     "@lib//:kotlinc-analysis-api-fe10",
-    "@lib//:guava",
+    "//libraries/guava",
     "@lib//:vavr",
     "@lib//:javax-inject",
     "//java/java-indexing-api:indexing",

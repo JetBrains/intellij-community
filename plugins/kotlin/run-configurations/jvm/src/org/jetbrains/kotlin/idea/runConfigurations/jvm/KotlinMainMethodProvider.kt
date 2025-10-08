@@ -61,6 +61,7 @@ class KotlinMainMethodProvider : JavaMainMethodProvider {
     }
   }
 
+  @Deprecated("Deprecated in Java")
   @RequiresReadLock
   override fun getMainClassName(clazz: PsiClass): String? {
     return when (clazz) {
@@ -72,6 +73,19 @@ class KotlinMainMethodProvider : JavaMainMethodProvider {
       else -> null
     }
   }
+
+  @RequiresReadLock
+  override fun getMainClassQualifiedName(clazz: PsiClass): String? {
+    return when (clazz) {
+      is KtLightClassForFacade -> clazz.facadeClassFqName.asString()
+      is KtExtensibleLightClass -> {
+        val classOrObject = clazz.kotlinOrigin ?: return null
+        KotlinRunConfigurationProducer.getMainClassQualifiedName(classOrObject)
+      }
+      else -> null
+    }
+  }
+
 
   @RequiresReadLock
   override fun isMain(psiElement: PsiElement): Boolean {

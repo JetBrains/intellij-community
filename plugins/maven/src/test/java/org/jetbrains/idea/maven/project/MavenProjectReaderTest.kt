@@ -967,6 +967,7 @@ class MavenProjectReaderTest : MavenProjectReaderTestCase() {
 
   @Test
   fun testPropertiesFromParentInParentSection() = runBlocking {
+    assumeModel_4_0_0("4.1.0 model does not allow such case: - [FATAL] 'groupId' contains an expression but should be a constant")
     createProjectPom("""
                        <groupId>${'$'}{groupProp}</groupId>
                        <artifactId>parent</artifactId>

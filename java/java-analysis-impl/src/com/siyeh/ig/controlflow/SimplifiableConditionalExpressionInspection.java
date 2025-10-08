@@ -73,7 +73,7 @@ public final class SimplifiableConditionalExpressionInspection extends BaseInspe
   }
 
   @Override
-  public BaseInspectionVisitor buildVisitor() {
+  public @NotNull BaseInspectionVisitor buildVisitor() {
     return new SimplifiableConditionalExpressionVisitor();
   }
 

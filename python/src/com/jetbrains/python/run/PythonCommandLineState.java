@@ -650,20 +650,11 @@ public abstract class PythonCommandLineState extends CommandLineState {
    */
   protected static void initEnvironment(Project project,
                                         SdkAdditionalData data,
-                                        GeneralCommandLine commandLine,
-                                        PythonRunParams runParams,
+                                        @NotNull GeneralCommandLine commandLine,
+                                        @NotNull PythonRunParams runParams,
                                         boolean isDebug) {
-    Map<String, String> env = Maps.newHashMap();
-
+    final Map<String, String> env = prepareEnv(project, runParams, true);
     setupEncodingEnvs(env, commandLine.getCharset());
-
-    if (runParams.getEnvs() != null) {
-      env.putAll(runParams.getEnvs());
-    }
-    addCommonEnvironmentVariables(getInterpreterPath(project, runParams), env, true);
-
-    setupVirtualEnvVariables(runParams, env, runParams.getSdkHome());
-
     commandLine.getEnvironment().clear();
     commandLine.getEnvironment().putAll(env);
     commandLine.withParentEnvironmentType(runParams.isPassParentEnvs() ? ParentEnvironmentType.CONSOLE : ParentEnvironmentType.NONE);
@@ -695,19 +686,13 @@ public abstract class PythonCommandLineState extends CommandLineState {
                                       boolean isDebug,
                                       @NotNull HelpersAwareTargetEnvironmentRequest helpersAwareTargetRequest,
                                       @Nullable Sdk sdk) {
-    Map<String, String> env = Maps.newHashMap();
-    var envParameters = configureEnvsFromFiles(runParams, true);
-    env.putAll(envParameters);
-    if (runParams.getEnvs() != null) {
-      env.putAll(runParams.getEnvs());
-    }
     boolean addPyCharmHosted = true;
     if (sdk != null && !CondaPythonExecKt.getUsePythonForLocalConda()) {
       addPyCharmHosted = PySdkExtKt.getOrCreateAdditionalData(sdk).getFlavor().providePyCharmHosted();
     }
-    addCommonEnvironmentVariables(getInterpreterPath(project, runParams), env, addPyCharmHosted);
+    final Map<String, String> env = prepareEnv(project, runParams, addPyCharmHosted);
 
-    setupVirtualEnvVariables(runParams, env, runParams.getSdkHome());
+    setupEncodingEnvs(commandLine, commandLine.getCharset());
 
     // Carefully patch environment variables
     Map<String, Function<TargetEnvironment, String>> map =
@@ -715,13 +700,25 @@ public abstract class PythonCommandLineState extends CommandLineState {
     TargetEnvironmentRequest targetEnvironmentRequest = helpersAwareTargetRequest.getTargetEnvironmentRequest();
     PythonScripts.extendEnvs(commandLine, map, targetEnvironmentRequest.getTargetPlatform());
 
-    setupEncodingEnvs(commandLine, commandLine.getCharset());
-
     buildPythonPath(project, commandLine, runParams, pathMapper, isDebug, targetEnvironmentRequest);
 
     for (PythonCommandLineTargetEnvironmentProvider envProvider : PythonCommandLineTargetEnvironmentProvider.EP_NAME.getExtensionList()) {
       envProvider.extendTargetEnvironment(project, helpersAwareTargetRequest, commandLine, runParams);
     }
+  }
+
+  private static Map<String, String> prepareEnv(@NotNull Project project,
+                                                @NotNull PythonRunParams runParams,
+                                                boolean addPyCharmHosted) {
+    Map<String, String> env = Maps.newHashMap();
+    env.putAll(configureEnvsFromFiles(runParams, true));
+    if (runParams.getEnvs() != null) {
+      env.putAll(runParams.getEnvs());
+    }
+    addCommonEnvironmentVariables(getInterpreterPath(project, runParams), env, addPyCharmHosted);
+
+    setupVirtualEnvVariables(runParams, env, runParams.getSdkHome());
+    return env;
   }
 
   private static void setupVirtualEnvVariables(PythonRunParams myConfig, Map<String, String> env, String sdkHome) {

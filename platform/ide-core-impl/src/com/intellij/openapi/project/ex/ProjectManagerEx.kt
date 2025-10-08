@@ -74,7 +74,7 @@ abstract class ProjectManagerEx : ProjectManager() {
 
   abstract fun openProject(projectStoreBaseDir: Path, options: OpenProjectTask): Project?
 
-  abstract suspend fun openProjectAsync(projectStoreBaseDir: Path, options: OpenProjectTask = OpenProjectTask()): Project?
+  abstract suspend fun openProjectAsync(projectIdentityFile: Path, options: OpenProjectTask = OpenProjectTask()): Project?
 
   @Internal
   abstract fun loadProject(path: Path): Project
@@ -90,9 +90,10 @@ abstract class ProjectManagerEx : ProjectManager() {
    * The project and the app settings will be not saved.
    */
   @Internal
-  fun forceCloseProject(project: Project): Boolean =
+  fun forceCloseProject(project: Project): Boolean {
     @Suppress("TestOnlyProblems")
-    forceCloseProject(project, save = false)
+    return forceCloseProject(project = project, save = false)
+  }
 
   @TestOnly
   abstract fun forceCloseProject(project: Project, save: Boolean): Boolean
@@ -101,9 +102,10 @@ abstract class ProjectManagerEx : ProjectManager() {
   abstract suspend fun forceCloseProjectAsync(project: Project, save: Boolean = false): Boolean
 
   @Internal
-  fun saveAndForceCloseProject(project: Project): Boolean =
+  fun saveAndForceCloseProject(project: Project): Boolean {
     @Suppress("TestOnlyProblems")
-    forceCloseProject(project, save = true)
+    return forceCloseProject(project = project, save = true)
+  }
 
   // return true if successful
   abstract fun closeAndDisposeAllProjects(checkCanClose: Boolean): Boolean

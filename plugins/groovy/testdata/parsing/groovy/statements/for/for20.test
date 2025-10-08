@@ -1,0 +1,105 @@
+for(int i, int j) {}
+
+for(int i, int j= 1) {}
+
+for(int i=1, int j) {}
+-----
+Groovy script
+  For statement
+    PsiElement(for)('for')
+    PsiElement(()('(')
+    In clause
+      Parameter
+        Modifiers
+          <empty list>
+        Built in type
+          PsiElement(int)('int')
+        PsiWhiteSpace(' ')
+        PsiElement(identifier)('i')
+      PsiElement(,)(',')
+      PsiWhiteSpace(' ')
+      Parameter
+        Modifiers
+          <empty list>
+        Built in type
+          PsiElement(int)('int')
+        PsiWhiteSpace(' ')
+        PsiElement(identifier)('j')
+      PsiErrorElement:')' unexpected
+        <empty list>
+    PsiElement())(')')
+    PsiWhiteSpace(' ')
+    Block statement
+      Open block
+        PsiElement({)('{')
+        PsiElement(})('}')
+  PsiElement(new line)('\n\n')
+  For statement
+    PsiElement(for)('for')
+    PsiElement(()('(')
+    Traditional FOR clause
+      Variable definitions
+        Modifiers
+          <empty list>
+        Built in type
+          PsiElement(int)('int')
+        PsiWhiteSpace(' ')
+        Variable
+          PsiElement(identifier)('i')
+        PsiElement(,)(',')
+        PsiErrorElement:identifier expected, got 'int'
+          <empty list>
+      PsiWhiteSpace(' ')
+      builtin type class expression
+        PsiElement(int)('int')
+      PsiErrorElement:';' expected, got 'j'
+        <empty list>
+      PsiWhiteSpace(' ')
+      Expression list
+        Assignment expression
+          Reference expression
+            PsiElement(identifier)('j')
+          PsiElement(=)('=')
+          PsiWhiteSpace(' ')
+          Literal
+            PsiElement(Integer)('1')
+    PsiElement())(')')
+    PsiWhiteSpace(' ')
+    Block statement
+      Open block
+        PsiElement({)('{')
+        PsiElement(})('}')
+  PsiElement(new line)('\n\n')
+  For statement
+    PsiElement(for)('for')
+    PsiElement(()('(')
+    Traditional FOR clause
+      Variable definitions
+        Modifiers
+          <empty list>
+        Built in type
+          PsiElement(int)('int')
+        PsiWhiteSpace(' ')
+        Variable
+          PsiElement(identifier)('i')
+          PsiElement(=)('=')
+          Literal
+            PsiElement(Integer)('1')
+        PsiElement(,)(',')
+        PsiErrorElement:identifier expected, got 'int'
+          <empty list>
+      PsiWhiteSpace(' ')
+      builtin type class expression
+        PsiElement(int)('int')
+      PsiErrorElement:';' expected, got 'j'
+        <empty list>
+      PsiWhiteSpace(' ')
+      Expression list
+        Reference expression
+          PsiElement(identifier)('j')
+    PsiElement())(')')
+    PsiWhiteSpace(' ')
+    Block statement
+      Open block
+        PsiElement({)('{')
+        PsiElement(})('}')

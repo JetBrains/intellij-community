@@ -39,7 +39,7 @@ public abstract class AbstractExternalSystemToolWindowFactory implements ToolWin
     contentManager.addContent(new ContentImpl(createInitializingLabel(), "", false));
 
     ExternalProjectsManager.getInstance(project).runWhenInitialized(() -> {
-      ExternalProjectsViewImpl projectView = new ExternalProjectsViewImpl(project, (ToolWindowEx)toolWindow, externalSystemId);
+      ExternalProjectsViewImpl projectView = new ExternalProjectsViewImpl(toolWindow.getDisposable(), project, (ToolWindowEx)toolWindow, externalSystemId);
       ExternalProjectsManagerImpl.getInstance(project).registerView(projectView);
       ContentImpl taskContent = new ContentImpl(projectView, "", true);
       contentManager.removeAllContents(true);

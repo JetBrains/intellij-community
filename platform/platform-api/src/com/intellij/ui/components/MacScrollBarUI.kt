@@ -114,6 +114,9 @@ internal open class MacScrollBarUI : DefaultScrollBarUI {
   }
 
   override fun createBaseAnimationBehavior(state: DefaultScrollbarUiInstalledState): ScrollBarAnimationBehavior {
+    if (!SystemInfoRt.isMac) {
+      return super.createBaseAnimationBehavior(state)
+    }
     return MacScrollBarAnimationBehavior(
       state.coroutineScope,
       scrollBarComputable = { state.scrollBar },
@@ -122,25 +125,41 @@ internal open class MacScrollBarUI : DefaultScrollBarUI {
     )
   }
 
-  override fun isAbsolutePositioning(event: MouseEvent): Boolean = Behavior.JumpToSpot == Behavior.CURRENT_BEHAVIOR()
+  override fun isAbsolutePositioning(event: MouseEvent): Boolean {
+    if (!SystemInfoRt.isMac) {
+      return super.isAbsolutePositioning(event)
+    }
+    return Behavior.JumpToSpot == Behavior.CURRENT_BEHAVIOR()
+  }
 
   override fun isTrackClickable(): Boolean {
+    if (!SystemInfoRt.isMac) {
+      return super.isTrackClickable()
+    }
     val state = installedState ?: return false
     return isOpaque(state.scrollBar) || (state.animationBehavior.trackFrame > 0 && state.animationBehavior.thumbFrame > 0)
   }
 
   override val isTrackExpandable: Boolean
-    get() = !isOpaque(installedState!!.scrollBar)
+    get() {
+      if (!SystemInfoRt.isMac) {
+        return super.isTrackExpandable
+      }
+      return !isOpaque(installedState!!.scrollBar)
+    }
 
   override fun paintTrack(g: Graphics2D, c: JComponent) {
     val animationBehavior = installedState!!.animationBehavior
-    if (animationBehavior.trackFrame > 0 && animationBehavior.thumbFrame > 0 || isOpaque(c)) {
+    if (animationBehavior.trackFrame > 0 && animationBehavior.thumbFrame > 0 || isOpaque(c) || !SystemInfoRt.isMac) {
       super.paintTrack(g, c)
     }
   }
 
   override fun paintThumb(g: Graphics2D, c: JComponent, state: DefaultScrollbarUiInstalledState) {
-    if (isOpaque(c)) {
+    if (!SystemInfoRt.isMac) {
+      super.paintThumb(g, c, state)
+    }
+    else if (isOpaque(c)) {
       paint(p = state.thumb, g = g, c = c, small = true)
     }
     else if (state.animationBehavior.thumbFrame > 0) {

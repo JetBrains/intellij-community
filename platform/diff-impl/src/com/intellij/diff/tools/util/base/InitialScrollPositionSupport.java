@@ -4,18 +4,23 @@ package com.intellij.diff.tools.util.base;
 import com.intellij.diff.requests.DiffRequest;
 import com.intellij.diff.util.*;
 import com.intellij.diff.util.DiffUserDataKeysEx.ScrollToPolicy;
+import com.intellij.ide.IdeEventQueue;
+import com.intellij.openapi.Disposable;
 import com.intellij.openapi.diff.DiffNavigationContext;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.editor.LogicalPosition;
+import com.intellij.openapi.progress.impl.PlatformTaskSupportKt;
 import com.intellij.openapi.util.Key;
 import com.intellij.openapi.util.Pair;
 import com.intellij.ui.ComponentUtil;
 import com.intellij.util.concurrency.annotations.RequiresEdt;
 import com.intellij.util.containers.ContainerUtil;
+import kotlin.jvm.functions.Function0;
 import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
+import javax.swing.*;
 import java.awt.*;
 import java.util.List;
 import java.util.Set;
@@ -123,6 +128,13 @@ public final class InitialScrollPositionSupport {
     public void onRediff() {
       if (wasScrolled(getEditors())) myShouldScroll = false;
 
+      if (myShouldScroll) {
+        new DelayedScrollDispatcher(() -> performDelayedSyncScroll()).schedule();
+      }
+    }
+
+    private void performDelayedSyncScroll() {
+      if (wasScrolled(getEditors())) myShouldScroll = false;
       ensureEditorSizeIsUpToDate(getEditors());
       if (myShouldScroll) myShouldScroll = !doScrollToChange();
       if (myShouldScroll) myShouldScroll = !doScrollToLine(false);
@@ -172,6 +184,13 @@ public final class InitialScrollPositionSupport {
     public void onRediff() {
       if (wasScrolled(getEditors())) myShouldScroll = false;
 
+      if (myShouldScroll) {
+        new DelayedScrollDispatcher(() -> performDelayedSyncScroll()).schedule();
+      }
+    }
+
+    private void performDelayedSyncScroll() {
+      if (wasScrolled(getEditors())) myShouldScroll = false;
       ensureEditorSizeIsUpToDate(getEditors());
       if (myShouldScroll) myShouldScroll = !doScrollToChange();
       if (myShouldScroll) myShouldScroll = !doScrollToLine();
@@ -237,6 +256,7 @@ public final class InitialScrollPositionSupport {
   public static boolean wasScrolled(@NotNull List<? extends Editor> editors) {
     for (Editor editor : editors) {
       if (editor == null) continue;
+      if (editor.isDisposed()) return true;
       if (editor.getCaretModel().getOffset() != 0) return true;
       if (editor.getScrollingModel().getVerticalScrollOffset() != 0) return true;
       if (editor.getScrollingModel().getHorizontalScrollOffset() != 0) return true;
@@ -274,6 +294,42 @@ public final class InitialScrollPositionSupport {
         if (!caretPosition[i].equals(myCaretPosition[i])) return false;
       }
       return true;
+    }
+  }
+
+  /**
+   * {@link #onRediff()} can be called synchronously from {@link JComponent#addNotify()} when creating the Diff viewer
+   * to reduce UI flicker - see the {@link DiffViewerBase#init()}.
+   * <p>
+   * To scroll the diff properly, its component and Editors inside need to have correct sizes.
+   * <p>
+   * {@link #ensureEditorSizeIsUpToDate} tries to ensure the sizes are correct, but doing so inside the `addNotify` callback
+   * does not work well, because {@link LayoutManager} constraints are being updated only after the `addNotify` event in {@link Container#addImpl}.
+   * For example, a component added as {@link BorderLayout#CENTER} can report `isValid == true` afterwards but have size (0, 0).
+   * <p>
+   * To ensure correct initial scrolling, we delay it until the end of the current AWT event using an {@link IdeEventQueue} postprocessor.
+   * By then, layout can be performed safely. Thus, we achieve a 'delayed but effectively synchronous' scrolling.
+   * <p>
+   * The callback may be triggered by another AWT event (e.g., while someone is pumping events synchronously), which is acceptable
+   * for this purpose. {@link PlatformTaskSupportKt#pumpEventsForHierarchy(IdeEventQueue, Function0)}
+   */
+  private static class DelayedScrollDispatcher implements IdeEventQueue.EventDispatcher {
+    @NotNull private final Runnable myScrollTask;
+
+    private DelayedScrollDispatcher(@NotNull Runnable scrollTask) {
+      myScrollTask = scrollTask;
+    }
+
+    @Override
+    public boolean dispatch(@NotNull AWTEvent e) {
+      IdeEventQueue.getInstance().removePostprocessor(this);
+      myScrollTask.run();
+
+      return false;
+    }
+
+    public void schedule() {
+      IdeEventQueue.getInstance().addPostprocessor(this, (Disposable)null);
     }
   }
 }

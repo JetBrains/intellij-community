@@ -201,13 +201,6 @@ interface InlineCompletionEvent {
     override val event: LookupEvent,
   ) : InlineLookupEvent, Builtin {
 
-    @Deprecated("It should not be created outside of the platform.")
-    @ApiStatus.ScheduledForRemoval
-    constructor(event: LookupEvent) : this(
-      runReadAction { event.lookup!!.editor },
-      event
-    )
-
     override fun toRequest(): InlineCompletionRequest? {
       return super.toRequest()?.takeIf { it.lookupElement != null }
     }
@@ -364,7 +357,8 @@ private inline fun getRequest(
   crossinline getLookupElement: () -> LookupElement? = { null },
 ): InlineCompletionRequest? {
   return runReadAction {
-    if (editor.caretModel.caretCount != 1) {
+    if (editor.caretModel.caretCount != 1 ||
+        editor.document.isInBulkUpdate /* caret position is not valid */ ) {
       return@runReadAction null
     }
     val caret = specificCaret ?: editor.caretModel.currentCaret

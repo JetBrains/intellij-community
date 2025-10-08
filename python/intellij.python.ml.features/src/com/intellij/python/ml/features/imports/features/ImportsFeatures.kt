@@ -6,22 +6,21 @@ import com.intellij.openapi.fileEditor.FileEditorManager
 import com.intellij.psi.PsiFile
 import com.intellij.psi.PsiManager
 import com.intellij.psi.util.QualifiedName
-import com.jetbrains.ml.api.feature.*
+import com.jetbrains.mlapi.feature.Feature
+import com.jetbrains.mlapi.feature.FeatureContainer
+import com.jetbrains.mlapi.feature.FeatureDeclaration
+import com.jetbrains.mlapi.feature.FeatureSet
 import com.jetbrains.python.psi.PyFile
 import com.jetbrains.python.psi.PyFromImportStatement
 import com.jetbrains.python.psi.PyImportElement
 
-object ImportsFeatures : ImportCandidateFeatures() {
-  object Features {
+object ImportsFeatures : ImportCandidateFeatures(Features) {
+  object Features : FeatureContainer {
     val EXISTING_IMPORT_FROM_PREFIX: FeatureDeclaration<Int?> = FeatureDeclaration.int("existing_import_from_prefix") { "A maximal prefix for which there exists some import from" }.nullable()
     val EXISTING_IMPORT_PREFIX: FeatureDeclaration<Int?> = FeatureDeclaration.int("existing_import_prefix") { "A maximal prefix for which there exists some import" }.nullable()
     val NEEDED_IMPORT_FROM_PREFIX: FeatureDeclaration<Int?> = FeatureDeclaration.int("needed_import_from_prefix") { "COMPONENT_COUNT - EXISTING_IMPORT_FROM_PREFIX" }.nullable()
     val NEEDED_IMPORT_PREFIX: FeatureDeclaration<Int?> = FeatureDeclaration.int("needed_import_prefix") { "COMPONENT_COUNT - EXISTING_IMPORT_PREFIX" }.nullable()
   }
-
-  override val featureComputationPolicy: FeatureComputationPolicy = FeatureComputationPolicy(true, true)
-
-  override val namespaceFeatureDeclarations: List<FeatureDeclaration<*>> = extractFeatureDeclarations(Features)
 
   override suspend fun computeNamespaceFeatures(instance: ImportCandidateContext, filter: FeatureSet): List<Feature> = buildList {
     val importCandidate = instance.candidate

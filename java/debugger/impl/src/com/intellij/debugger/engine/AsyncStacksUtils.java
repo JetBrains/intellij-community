@@ -4,7 +4,6 @@ package com.intellij.debugger.engine;
 import com.intellij.debugger.engine.evaluation.EvaluateException;
 import com.intellij.debugger.engine.evaluation.EvaluationContextImpl;
 import com.intellij.debugger.engine.requests.RequestManagerImpl;
-import com.intellij.debugger.impl.DebuggerManagerImpl;
 import com.intellij.debugger.impl.DebuggerUtilsEx;
 import com.intellij.debugger.impl.DebuggerUtilsImpl;
 import com.intellij.debugger.jdi.StackFrameProxyImpl;
@@ -19,6 +18,7 @@ import com.intellij.execution.JavaExecutionUtil;
 import com.intellij.execution.configurations.JavaParameters;
 import com.intellij.execution.configurations.ParametersList;
 import com.intellij.ide.plugins.PluginManagerCore;
+import com.intellij.ide.plugins.PluginManagerCoreKt;
 import com.intellij.idea.AppMode;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.application.AccessToken;
@@ -34,11 +34,9 @@ import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.io.FileUtilRt;
 import com.intellij.openapi.util.registry.Registry;
 import com.intellij.platform.eel.EelDescriptor;
-import com.intellij.platform.eel.annotations.NativePath;
 import com.intellij.platform.eel.provider.EelProviderUtil;
 import com.intellij.platform.eel.provider.LocalEelDescriptor;
 import com.intellij.platform.eel.provider.utils.EelPathUtils;
-import com.intellij.util.PathUtil;
 import com.intellij.util.SlowOperations;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.xdebugger.impl.XDebugSessionImpl;
@@ -306,6 +304,14 @@ public final class AsyncStacksUtils {
                                       @Nullable Project project,
                                       boolean checkJdkVersion,
                                       @Nullable Disposable disposable) {
+    addDebuggerAgent(parameters, project, checkJdkVersion, disposable, false);
+  }
+
+  public static void addDebuggerAgent(JavaParameters parameters,
+                                      @Nullable Project project,
+                                      boolean checkJdkVersion,
+                                      @Nullable Disposable disposable,
+                                      boolean matchWithExecutionTarget) {
     if (isAgentEnabled()) {
       String prefix = "-javaagent:";
       ParametersList parametersList = parameters.getVMParametersList();
@@ -320,7 +326,7 @@ public final class AsyncStacksUtils {
           return;
         }
 
-        extendParametersForAgent(project, disposable, parametersList, prefix);
+        extendParametersForAgent(project, disposable, parametersList, prefix, matchWithExecutionTarget);
       }
     }
   }
@@ -328,31 +334,33 @@ public final class AsyncStacksUtils {
   private static void extendParametersForAgent(@Nullable Project project,
                                                @Nullable Disposable disposable,
                                                @NotNull ParametersList parametersList,
-                                               @NotNull String prefix) {
-    String agentPath = getAgentArtifactPath(project, disposable);
-    if (agentPath != null) {
-      try (AccessToken ignore = SlowOperations.knownIssue("IDEA-307303, EA-835503")) {
-        parametersList.prepend(prefix + agentPath + generateAgentSettings(project));
+                                               @NotNull String prefix,
+                                               boolean targetedPath) {
+    Path agentNativePath = getAgentArtifactPath(project, disposable);
+    if (agentNativePath == null) {
+      // errors are reported by getAgentArtifactPath
+      return;
+    }
+    String agentPath = targetedPath ? asEelPath(agentNativePath).toString() : agentNativePath.toString();
+
+    try (AccessToken ignore = SlowOperations.knownIssue("IDEA-307303, EA-835503")) {
+      parametersList.prepend(prefix + agentPath + generateAgentSettings(project));
+    }
+    if (Registry.is("debugger.async.stacks.coroutines", false)) {
+      parametersList.addProperty("kotlinx.coroutines.debug.enable.creation.stack.trace", "false");
+      parametersList.addProperty("debugger.agent.enable.coroutines", "true");
+      if (Registry.is("debugger.async.stacks.flows", false)) {
+        parametersList.addProperty("kotlinx.coroutines.debug.enable.flows.stack.trace", "true");
       }
-      if (Registry.is("debugger.async.stacks.coroutines", false)) {
-        parametersList.addProperty("kotlinx.coroutines.debug.enable.creation.stack.trace", "false");
-        parametersList.addProperty("debugger.agent.enable.coroutines", "true");
-        if (Registry.is("debugger.async.stacks.flows", false)) {
-          parametersList.addProperty("kotlinx.coroutines.debug.enable.flows.stack.trace", "true");
-        }
-        if (Registry.is("debugger.async.stacks.state.flows", false)) {
-          parametersList.addProperty("kotlinx.coroutines.debug.enable.mutable.state.flows.stack.trace", "true");
-        }
-      }
-      if (!Registry.is("debugger.async.stack.trace.for.exceptions.printing", false)) {
-        parametersList.addProperty("debugger.agent.support.throwable", "false");
-      }
-      if (Registry.is("debugger.async.stack.trace.for.all.threads")) {
-        parametersList.addProperty("debugger.async.stack.trace.for.all.threads", "true");
+      if (Registry.is("debugger.async.stacks.state.flows", false)) {
+        parametersList.addProperty("kotlinx.coroutines.debug.enable.mutable.state.flows.stack.trace", "true");
       }
     }
-    else {
-      LOG.error("Capture agent not found: " + agentPath);
+    if (!Registry.is("debugger.async.stack.trace.for.exceptions.printing", false)) {
+      parametersList.addProperty("debugger.agent.support.throwable", "false");
+    }
+    if (Registry.is("debugger.async.stack.trace.for.all.threads")) {
+      parametersList.addProperty("debugger.async.stack.trace.for.all.threads", "true");
     }
   }
 
@@ -363,19 +371,16 @@ public final class AsyncStacksUtils {
     return System.getenv("TEST_SRCDIR") != null && System.getenv("TEST_UNDECLARED_OUTPUTS_DIR") != null;
   }
 
-  @NativePath
-  private static @Nullable String getAgentArtifactPath(@Nullable Project project, @Nullable Disposable disposable) {
-    if (PluginManagerCore.isRunningFromSources() && !AppMode.isDevServer()) {
+  private static @Nullable Path getAgentArtifactPath(@Nullable Project project, @Nullable Disposable disposable) {
+    if (PluginManagerCore.isRunningFromSources() && !AppMode.isRunningFromDevBuild()) {
       return getArtifactPathForDownloadedAgent(project, disposable);
     }
     else {
-      Path classesRoot = Path.of(PathUtil.getJarPathForClass(DebuggerManagerImpl.class));
-      return getArtifactPathForBundledAgent(classesRoot, project, disposable);
+      return getArtifactPathForBundledAgent(project, disposable);
     }
   }
 
-  @NativePath
-  private static @NotNull String getArtifactPathForDownloadedAgent(@Nullable Project project, @Nullable Disposable disposable) {
+  private static @NotNull Path getArtifactPathForDownloadedAgent(@Nullable Project project, @Nullable Disposable disposable) {
     // Code runs from IDEA run configuration (code from .class file in out/ directory)
     try {
       Path agentArtifactPath = createTemporaryAgentPath(project, disposable);
@@ -416,32 +421,41 @@ public final class AsyncStacksUtils {
       // The copy operation is used as the rename operation.
       // toRealPath is required because EEL does not support copying of symbolic links
       Files.copy(downloadedAgent.toRealPath(), agentArtifactPath);
-
-      return asEelPath(agentArtifactPath).toString();
+      return agentArtifactPath;
     }
     catch (IOException e) {
       throw new RuntimeException(e);
     }
   }
 
-  @NativePath
-  private static @Nullable String getArtifactPathForBundledAgent(
-    @NotNull Path classesRoot,
+  private static @Nullable Path getArtifactPathForBundledAgent(
     @Nullable Project project,
     @Nullable Disposable disposable
   ) {
-    Path bundledAgentPath = classesRoot.resolveSibling("rt").resolve(AGENT_JAR_NAME);
-    if (!Files.exists(bundledAgentPath)) {
+    Path pluginDistDir = PluginManagerCoreKt.getPluginDistDirByClass(AsyncStacksUtils.class);
+    if (pluginDistDir == null || !Files.isDirectory(pluginDistDir)) {
+      LOG.error("Unable to find the (java) plugin distribution directory by class AsyncStacksUtils");
       return null;
     }
+
+    Path bundledAgentPath = pluginDistDir.resolve("lib").resolve("rt").resolve(AGENT_JAR_NAME);
+    if (!Files.exists(bundledAgentPath)) {
+      LOG.error("Unable to find bundled debugger agent under the (java) plugin directory: " + bundledAgentPath);
+      return null;
+    }
+
     EelDescriptor projectEelDescriptor = project == null ? null : EelProviderUtil.getEelDescriptor(project);
     if (project == null || LocalEelDescriptor.INSTANCE.equals(projectEelDescriptor)) {
-      return JavaExecutionUtil.handleSpacesInAgentPath(
+      String processedAgentPath = JavaExecutionUtil.handleSpacesInAgentPath(
         bundledAgentPath.toAbsolutePath().toString(),
         "captureAgent",
         null,
         f -> f.getName().startsWith("debugger-agent")
       );
+      if (processedAgentPath != null) {
+        return Path.of(processedAgentPath);
+      }
+      return null;
     }
     Path temporaryAgentPath = createTemporaryAgentPath(project, disposable);
     try {
@@ -454,7 +468,7 @@ public final class AsyncStacksUtils {
       LOG.error(String.format("Unable to copy the java-debugger agent file from %s to %s", bundledAgentPath, temporaryAgentPath), e);
       return null;
     }
-    return asEelPath(temporaryAgentPath).toString();
+    return temporaryAgentPath;
   }
 
   private static @NotNull Path createTemporaryAgentPath(@Nullable Project project, @Nullable Disposable disposable) {

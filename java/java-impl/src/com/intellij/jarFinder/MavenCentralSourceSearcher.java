@@ -22,23 +22,22 @@ public class MavenCentralSourceSearcher extends SourceSearcher {
                               @NotNull String version,
                               @NotNull VirtualFile classesJar) throws SourceSearchException {
     try {
-      indicator.setText(IdeCoreBundle.message("progress.message.connecting.to", "https://search.maven.org"));
+      indicator.setText(IdeCoreBundle.message("progress.message.connecting.to", "https://central.sonatype.com"));
 
       indicator.checkCanceled();
 
-      String url = "https://search.maven.org/solrsearch/select?rows=3&wt=xml&q=";
+      String url = "https://central.sonatype.com/solrsearch/select?rows=3&wt=xml&q=";
       final String groupId = findMavenGroupId(classesJar, artifactId);
       if (groupId != null) {
-        url += "g:%22" + groupId + "%22%20AND%20";
+        url += "g:" + groupId + "%20AND%20";
       }
-      url += "a:%22" + artifactId + "%22%20AND%20v:%22" + version + "%22%20AND%20l:%22sources%22";
-      List<Element> artifactList = findElements("./result/doc/str[@name='g']", readElementCancelable(indicator, url));
+      url += "a:" + artifactId + "%20AND%20v:" + version + "%20AND%20l:sources";
+      final List<Element> artifactList = findElements("./response/docs/docs/g", readElementCancelable(indicator, url));
       if (artifactList.isEmpty()) {
         return null;
       }
-
       if (artifactList.size() == 1) {
-        return "https://search.maven.org/remotecontent?filepath=" +
+        return "https://repo1.maven.org/maven2/" +
                artifactList.get(0).getValue().replace('.', '/') + '/' +
                artifactId + '/' +
                version + '/' +

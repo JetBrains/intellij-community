@@ -14,17 +14,15 @@ jvm_library(
     "@lib//:zstd-jni",
     "@lib//:commons-io",
     "@lib//:kotlin-stdlib",
-    "@lib//:ktor-client-auth",
-    "@lib//:ktor-client-encoding",
     "@lib//:kotlinx-coroutines-core",
     "@lib//:opentelemetry",
     "@lib//:opentelemetry-semconv",
     "@lib//:opentelemetry-extension-kotlin",
     "@lib//:ktor-client-okhttp",
     "@lib//:okhttp",
-    "@lib//:ktor-client-core",
-    "@lib//:hash4j",
-  ],
-  runtime_deps = ["@lib//:kotlinx-io-core"]
+    "//libraries/hash4j",
+    "//libraries/ktor/client",
+    "//libraries/ktor/io",
+  ]
 )
 ### auto-generated section `build intellij.platform.buildScripts.downloader` end

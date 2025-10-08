@@ -4,7 +4,6 @@ package com.intellij.codeInspection.util;
 
 import com.intellij.codeInspection.ui.InspectionOptionsPanel;
 import com.intellij.ide.DataManager;
-import com.intellij.ide.util.ClassFilter;
 import com.intellij.ide.util.TreeClassChooser;
 import com.intellij.ide.util.TreeClassChooserFactory;
 import com.intellij.java.JavaBundle;
@@ -99,12 +98,7 @@ public final class SpecialAnnotationsUtil {
           if (project == null) project = ProjectManager.getInstance().getDefaultProject();
           TreeClassChooser chooser = TreeClassChooserFactory.getInstance(project)
             .createWithInnerClassesScopeChooser(JavaBundle.message("special.annotations.list.annotation.class"),
-                                                GlobalSearchScope.allScope(project), new ClassFilter() {
-              @Override
-              public boolean isAccepted(PsiClass aClass) {
-                return isApplicable.test(aClass);
-              }
-            }, null);
+                                                GlobalSearchScope.allScope(project), isApplicable::test, null);
           chooser.showDialog();
           final PsiClass selected = chooser.getSelected();
           if (selected != null) {

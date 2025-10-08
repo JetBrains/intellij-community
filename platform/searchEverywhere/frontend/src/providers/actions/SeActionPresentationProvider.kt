@@ -21,6 +21,7 @@ import com.intellij.openapi.keymap.KeymapUtil
 import com.intellij.openapi.util.NlsSafe
 import com.intellij.openapi.util.text.StringUtil
 import com.intellij.platform.searchEverywhere.SeActionItemPresentation
+import com.intellij.platform.searchEverywhere.SeExtendedInfo
 import com.intellij.platform.searchEverywhere.SeItemPresentation
 import com.intellij.platform.searchEverywhere.SeOptionActionItemPresentation
 import com.intellij.platform.searchEverywhere.SeRunnableActionItemPresentation
@@ -34,10 +35,10 @@ import org.jetbrains.annotations.ApiStatus
 
 @ApiStatus.Internal
 object SeActionPresentationProvider {
-  suspend fun get(matchedValue: GotoActionModel.MatchedValue, extendedDescription: String?, isMultiSelectionSupported: Boolean): SeItemPresentation {
+  suspend fun get(matchedValue: GotoActionModel.MatchedValue, extendedInfo: SeExtendedInfo?, isMultiSelectionSupported: Boolean): SeItemPresentation {
     val value = matchedValue.value
     if (value is GotoActionModel.ActionWrapper) {
-      var presentation = SeRunnableActionItemPresentation(commonData = SeActionItemPresentation.Common(text = "", extendedDescription = extendedDescription), isMultiSelectionSupported = isMultiSelectionSupported)
+      var presentation = SeRunnableActionItemPresentation(commonData = SeActionItemPresentation.Common(text = "", extendedInfo = extendedInfo), isMultiSelectionSupported = isMultiSelectionSupported)
 
       val anAction = value.action
       val actionPresentation = value.presentation
@@ -95,7 +96,7 @@ object SeActionPresentationProvider {
       val hit = GotoActionModel.GotoActionListCellRenderer.calcHit(value)
       val displayText = if (hit.startsWith("<html>")) StringUtil.removeHtmlTags(hit) else hit
 
-      var presentation = SeOptionActionItemPresentation(commonData = SeActionItemPresentation.Common(text = displayText, extendedDescription = extendedDescription), isMultiSelectionSupported = isMultiSelectionSupported)
+      var presentation = SeOptionActionItemPresentation(commonData = SeActionItemPresentation.Common(text = displayText, extendedInfo = extendedInfo), isMultiSelectionSupported = isMultiSelectionSupported)
 
       (value as? BooleanOptionDescription)?.isOptionEnabled.let {
         presentation = presentation.run {

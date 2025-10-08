@@ -82,6 +82,10 @@ public interface IdeaPlugin extends DomElement {
   @NotNull GenericAttributeValue<Boolean> getRequireRestart();
 
   @Stubbed
+  @Attribute("visibility")
+  @NotNull GenericAttributeValue<ContentModuleVisibility> getContentModuleVisibility();
+
+  @Stubbed
   @Convert(IdeaPluginPackageConverter.class)
   @NotNull GenericAttributeValue<PsiPackage> getPackage();
 

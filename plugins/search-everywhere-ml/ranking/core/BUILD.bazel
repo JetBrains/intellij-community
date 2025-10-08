@@ -1,9 +1,9 @@
 ### auto-generated section `build intellij.searchEverywhereMl.ranking.core` start
-load("@rules_jvm//:jvm.bzl", "jvm_library", "jvm_resources")
+load("@rules_jvm//:jvm.bzl", "jvm_library", "resourcegroup")
 
-jvm_resources(
+resourcegroup(
   name = "core_resources",
-  files = glob(["resources/**/*"]),
+  srcs = glob(["resources/**/*"]),
   strip_prefix = "resources"
 )
 
@@ -12,17 +12,18 @@ jvm_library(
   module_name = "intellij.searchEverywhereMl.ranking.core",
   visibility = ["//visibility:public"],
   srcs = glob(["src/**/*.kt", "src/**/*.java", "src/**/*.form"], allow_empty = True),
+  resources = [":core_resources"],
   deps = [
     "@lib//:kotlin-stdlib",
-    "@lib//:jackson",
-    "@lib//:jackson-databind",
-    "@lib//:jackson-module-kotlin",
+    "//libraries/jackson/jackson",
+    "//libraries/jackson/databind",
+    "//libraries/jackson/module-kotlin:libraries-jackson-module-kotlin",
     "//platform/analysis-api:analysis",
     "//platform/util/concurrency",
     "//platform/core-api:core",
     "//platform/editor-ui-api:editor-ui",
     "//platform/platform-impl:ide-impl",
-    "@lib//:caffeine",
+    "//libraries/caffeine",
     "//platform/indexing-api:indexing",
     "//jps/model-api:model",
     "//platform/lang-impl",
@@ -46,8 +47,7 @@ jvm_library(
     "//plugins/search-everywhere-ml/ranking/ext",
     "//plugins/search-everywhere-ml",
   ],
-  exports = ["//platform/statistics"],
-  runtime_deps = [":core_resources"]
+  exports = ["//platform/statistics"]
 )
 
 jvm_library(
@@ -57,16 +57,16 @@ jvm_library(
   associates = [":core"],
   deps = [
     "@lib//:kotlin-stdlib",
-    "@lib//:jackson",
-    "@lib//:jackson-databind",
-    "@lib//:jackson-module-kotlin",
+    "//libraries/jackson/jackson",
+    "//libraries/jackson/databind",
+    "//libraries/jackson/module-kotlin:libraries-jackson-module-kotlin",
     "//platform/analysis-api:analysis",
     "//platform/util/concurrency",
     "//platform/util/concurrency:concurrency_test_lib",
     "//platform/core-api:core",
     "//platform/editor-ui-api:editor-ui",
     "//platform/platform-impl:ide-impl",
-    "@lib//:caffeine",
+    "//libraries/caffeine",
     "//platform/indexing-api:indexing",
     "//jps/model-api:model",
     "//platform/lang-core",
@@ -101,8 +101,7 @@ jvm_library(
   exports = [
     "//platform/statistics",
     "//platform/statistics:statistics_test_lib",
-  ],
-  runtime_deps = [":core_resources"]
+  ]
 )
 ### auto-generated section `build intellij.searchEverywhereMl.ranking.core` end
 

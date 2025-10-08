@@ -2,9 +2,9 @@
 package org.jetbrains.plugins.terminal.block.reworked
 
 import com.intellij.openapi.util.Key
-import com.intellij.terminal.session.TerminalState
 import kotlinx.coroutines.flow.StateFlow
 import org.jetbrains.annotations.ApiStatus
+import org.jetbrains.plugins.terminal.session.TerminalState
 
 @ApiStatus.Internal
 interface TerminalSessionModel {

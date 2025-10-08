@@ -4,7 +4,6 @@ package org.jetbrains.kotlin.nj2k.conversions
 
 import com.intellij.psi.search.GlobalSearchScope
 import com.intellij.psi.search.ProjectScope
-import org.jetbrains.kotlin.analysis.api.KaSession
 import org.jetbrains.kotlin.config.ApiVersion.Companion.KOTLIN_1_6
 import org.jetbrains.kotlin.idea.stubindex.KotlinTopLevelTypeAliasFqNameIndex
 import org.jetbrains.kotlin.j2k.ConverterContext
@@ -16,7 +15,6 @@ import org.jetbrains.kotlin.utils.addToStdlib.safeAs
 import org.jetbrains.kotlin.utils.ifEmpty
 
 class JavaAnnotationsConversion(context: ConverterContext) : RecursiveConversion(context) {
-    context(_: KaSession)
     override fun applyToElement(element: JKTreeElement): JKTreeElement {
         if (element !is JKAnnotationList) return recurse(element)
         element.annotations.forEach {

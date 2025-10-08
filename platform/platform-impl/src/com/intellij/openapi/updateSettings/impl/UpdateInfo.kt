@@ -7,7 +7,7 @@ import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.util.*
 import org.jdom.Element
 import org.jdom.JDOMException
-import org.jetbrains.annotations.ApiStatus
+import org.jetbrains.annotations.ApiStatus.Internal
 import java.io.IOException
 import java.text.ParseException
 import java.text.SimpleDateFormat
@@ -32,7 +32,7 @@ class Product internal constructor(node: Element, private val productCode: Strin
   override fun toString(): String = productCode
 }
 
-class UpdateChannel internal constructor(node: Element, productCode: String) {
+class UpdateChannel @Internal constructor(node: Element, productCode: String) {
   enum class Licensing { EAP, RELEASE; }
 
   val id: String = node.getMandatoryAttributeValue("id")
@@ -66,7 +66,7 @@ class BuildInfo internal constructor(node: Element, productCode: String) {
     else try {
       SimpleDateFormat("yyyyMMdd", Locale.US).parse(value)  // same as the 'majorReleaseDate' in ApplicationInfo.xml
     }
-    catch (e: ParseException) {
+    catch (_: ParseException) {
       logger<BuildInfo>().info("invalid build release date: ${value}")
       null
     }
@@ -74,10 +74,10 @@ class BuildInfo internal constructor(node: Element, productCode: String) {
   override fun toString(): String = "${number}/${version}"
 }
 
-@ApiStatus.Internal
+@Internal
 class PatchInfo internal constructor(node: Element) {
   companion object {
-    val OS_SUFFIX: String = if (SystemInfo.isWindows) "win" else if (SystemInfo.isMac) "mac" else if (SystemInfo.isUnix) "unix" else "unknown"
+    val OS_SUFFIX: String = if (SystemInfoRt.isWindows) "win" else if (SystemInfoRt.isMac) "mac" else if (SystemInfo.isUnix) "unix" else "unknown"
   }
 
   val fromBuild: BuildNumber = BuildNumber.fromString(node.getMandatoryAttributeValue("fullFrom", "from"))!!

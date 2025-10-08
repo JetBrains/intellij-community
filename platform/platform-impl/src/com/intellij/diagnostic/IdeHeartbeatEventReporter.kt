@@ -136,7 +136,7 @@ private class IdeHeartbeatEventReporterService(cs: CoroutineScope) {
 }
 
 internal object UILatencyLogger : CounterUsagesCollector() {
-  private val GROUP = EventLogGroup("performance", 80)
+  private val GROUP = EventLogGroup("performance", 81)
 
   internal val SYSTEM_CPU_LOAD: IntEventField = Int("system_cpu_load")
   internal val SWAP_LOAD: IntEventField = Int("swap_load")
@@ -169,23 +169,6 @@ internal object UILatencyLogger : CounterUsagesCollector() {
 
   @JvmField
   val LAGGING: EventId2<Long, Boolean> = GROUP.registerEvent("ui.lagging", EventFields.DurationMs, Boolean("during_indexing"))
-
-  val FREEZE_CHAIN_DURATION_US: LongEventField = LongEventField("duration_us", description = "Total duration of freeze chain in microseconds.")
-  val FREEZE_CHAIN_READING_DURATION_US: LongEventField = LongEventField("reading_duration_us", description = "Total duration of reading (read and write-intent) operations in microseconds.")
-  val FREEZE_CHAIN_WRITING_DURATION_US: LongEventField = LongEventField("writing_duration_us", description = "Total duration of writing operations in microseconds.")
-  val FREEZE_CHAIN_READING_OPERATIONS: IntEventField = Int("reading_operations", description = "Number of read operations during the freeze chain")
-  val FREEZE_CHAIN_WRITING_OPERATIONS: IntEventField = Int("writing_operations", description = "Number of write operations during the freeze chain")
-
-  @JvmField
-  val FREEZE_CHAIN: VarargEventId = GROUP.registerVarargEvent(
-    eventId = "ui.freeze.chain",
-    description = "Description of continuous lagging period on EDT (a freeze chain)",
-    FREEZE_CHAIN_DURATION_US,
-    FREEZE_CHAIN_READING_DURATION_US,
-    FREEZE_CHAIN_WRITING_DURATION_US,
-    FREEZE_CHAIN_READING_OPERATIONS,
-    FREEZE_CHAIN_WRITING_OPERATIONS)
-
 
   @JvmField
   val COLD_START: BooleanEventField = Boolean("cold_start")
@@ -432,17 +415,6 @@ internal object UILatencyLogger : CounterUsagesCollector() {
   }
 
   @JvmStatic
-  fun reportFreezeChain(totalDuration: Duration, readingDuration: Duration, writingDuration: Duration, readingOperations: Int, writingOperations: Int) {
-    FREEZE_CHAIN.log(
-      FREEZE_CHAIN_DURATION_US.with(totalDuration.inWholeMicroseconds),
-      FREEZE_CHAIN_READING_DURATION_US.with(readingDuration.inWholeMicroseconds),
-      FREEZE_CHAIN_WRITING_DURATION_US.with(writingDuration.inWholeMicroseconds),
-      FREEZE_CHAIN_READING_OPERATIONS.with(readingOperations),
-      FREEZE_CHAIN_WRITING_OPERATIONS.with(writingOperations)
-    )
-  }
-
-  @JvmStatic
   fun lowMemory(
     kind: MemoryKind,
     currentXmxMegabytes: Int,
@@ -500,7 +472,7 @@ internal object UILatencyLogger : CounterUsagesCollector() {
 }
 
 /** Converts accumulated value into diff-value */
-internal class LongDiffer(var previousAccumulatedValue: Long = 0) {
+internal class LongDiffer(var previousAccumulatedValue: Long = 0){
 
   /** @return diff between newAccumulatedValue and previous accumulated value, and updates the previous accumulated value */
   fun toDiff(newAccumulatedValue: Long): Long {

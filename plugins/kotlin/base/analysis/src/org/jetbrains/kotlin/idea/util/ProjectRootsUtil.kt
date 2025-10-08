@@ -6,12 +6,11 @@ import com.intellij.openapi.module.Module
 import com.intellij.openapi.module.ModulePointerManager
 import com.intellij.openapi.module.ModuleUtilCore
 import com.intellij.openapi.project.Project
-import com.intellij.openapi.roots.ModuleRootManager
+import com.intellij.openapi.project.rootManager
 import com.intellij.openapi.roots.ProjectRootManager
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.psi.PsiElement
 import com.intellij.psi.PsiFileSystemItem
-import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.kotlin.idea.base.util.module as newModule
 
 fun VirtualFile.getSourceRoot(project: Project): VirtualFile? = ProjectRootManager.getInstance(project).fileIndex.getSourceRootForFile(this)
@@ -19,21 +18,8 @@ fun VirtualFile.getSourceRoot(project: Project): VirtualFile? = ProjectRootManag
 val PsiFileSystemItem.sourceRoot: VirtualFile?
     get() = virtualFile?.getSourceRoot(project)
 
-@get:ApiStatus.ScheduledForRemoval
-@get:Deprecated(
-    "Use 'com.intellij.openapi.project.rootManager' instead.",
-    ReplaceWith("rootManager", imports = ["com.intellij.openapi.project.rootManager"])
-)
-@Deprecated(
-    "Use 'com.intellij.openapi.project.rootManager' instead.",
-    ReplaceWith("rootManager", imports = ["com.intellij.openapi.project.rootManager"])
-)
-val Module.rootManager: ModuleRootManager
-    get() = ModuleRootManager.getInstance(this)
-
 val Module.sourceRoots: Array<VirtualFile>
     get() {
-        @Suppress("DEPRECATION")
         return rootManager.sourceRoots
     }
 

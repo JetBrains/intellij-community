@@ -92,7 +92,7 @@ public final class ReturnNullInspection extends BaseInspection {
   }
 
   @Override
-  public BaseInspectionVisitor buildVisitor() {
+  public @NotNull BaseInspectionVisitor buildVisitor() {
     return new ReturnNullVisitor();
   }
 

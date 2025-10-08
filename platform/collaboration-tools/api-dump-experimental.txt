@@ -31,32 +31,17 @@ f:com.intellij.collaboration.api.json.JsonHttpApiHelperKt
 - *sf:JsonHttpApiHelper(com.intellij.openapi.diagnostic.Logger,com.intellij.collaboration.api.HttpApiHelper,com.intellij.collaboration.api.json.JsonDataSerializer,com.intellij.collaboration.api.json.JsonDataDeserializer):com.intellij.collaboration.api.json.JsonHttpApiHelper
 *f:com.intellij.collaboration.async.CompletableFutureUtil
 - sf:INSTANCE:com.intellij.collaboration.async.CompletableFutureUtil
-- f:cancellationOnEdt(java.util.concurrent.CompletableFuture,com.intellij.openapi.application.ModalityState,kotlin.jvm.functions.Function1):java.util.concurrent.CompletableFuture
-- bs:cancellationOnEdt$default(com.intellij.collaboration.async.CompletableFutureUtil,java.util.concurrent.CompletableFuture,com.intellij.openapi.application.ModalityState,kotlin.jvm.functions.Function1,I,java.lang.Object):java.util.concurrent.CompletableFuture
-- f:completionOnEdt(java.util.concurrent.CompletableFuture,com.intellij.openapi.application.ModalityState,kotlin.jvm.functions.Function0):java.util.concurrent.CompletableFuture
-- bs:completionOnEdt$default(com.intellij.collaboration.async.CompletableFutureUtil,java.util.concurrent.CompletableFuture,com.intellij.openapi.application.ModalityState,kotlin.jvm.functions.Function0,I,java.lang.Object):java.util.concurrent.CompletableFuture
 - f:errorOnEdt(java.util.concurrent.CompletableFuture,com.intellij.openapi.application.ModalityState,kotlin.jvm.functions.Function1):java.util.concurrent.CompletableFuture
 - bs:errorOnEdt$default(com.intellij.collaboration.async.CompletableFutureUtil,java.util.concurrent.CompletableFuture,com.intellij.openapi.application.ModalityState,kotlin.jvm.functions.Function1,I,java.lang.Object):java.util.concurrent.CompletableFuture
 - f:extractError(java.lang.Throwable):java.lang.Throwable
-- f:handleOnEdt(java.util.concurrent.CompletableFuture,com.intellij.openapi.Disposable,kotlin.jvm.functions.Function2):java.util.concurrent.CompletableFuture
-- f:handleOnEdt(java.util.concurrent.CompletableFuture,com.intellij.openapi.application.ModalityState,kotlin.jvm.functions.Function2):java.util.concurrent.CompletableFuture
-- bs:handleOnEdt$default(com.intellij.collaboration.async.CompletableFutureUtil,java.util.concurrent.CompletableFuture,com.intellij.openapi.application.ModalityState,kotlin.jvm.functions.Function2,I,java.lang.Object):java.util.concurrent.CompletableFuture
 - f:isCancellation(java.lang.Throwable):Z
 - f:submitIOTask(com.intellij.openapi.progress.ProgressManager,com.intellij.collaboration.util.ProgressIndicatorsProvider,kotlin.jvm.functions.Function1):java.util.concurrent.CompletableFuture
-- f:submitIOTask(com.intellij.openapi.progress.ProgressManager,com.intellij.collaboration.util.ProgressIndicatorsProvider,Z,kotlin.jvm.functions.Function1):java.util.concurrent.CompletableFuture
 - f:submitIOTask(com.intellij.openapi.progress.ProgressManager,com.intellij.openapi.progress.ProgressIndicator,kotlin.jvm.functions.Function1):java.util.concurrent.CompletableFuture
-- f:submitIOTask(com.intellij.openapi.progress.ProgressManager,com.intellij.openapi.progress.ProgressIndicator,Z,kotlin.jvm.functions.Function1):java.util.concurrent.CompletableFuture
-- bs:submitIOTask$default(com.intellij.collaboration.async.CompletableFutureUtil,com.intellij.openapi.progress.ProgressManager,com.intellij.collaboration.util.ProgressIndicatorsProvider,Z,kotlin.jvm.functions.Function1,I,java.lang.Object):java.util.concurrent.CompletableFuture
-- bs:submitIOTask$default(com.intellij.collaboration.async.CompletableFutureUtil,com.intellij.openapi.progress.ProgressManager,com.intellij.openapi.progress.ProgressIndicator,Z,kotlin.jvm.functions.Function1,I,java.lang.Object):java.util.concurrent.CompletableFuture
 - f:successOnEdt(java.util.concurrent.CompletableFuture,com.intellij.openapi.application.ModalityState,kotlin.jvm.functions.Function1):java.util.concurrent.CompletableFuture
 - bs:successOnEdt$default(com.intellij.collaboration.async.CompletableFutureUtil,java.util.concurrent.CompletableFuture,com.intellij.openapi.application.ModalityState,kotlin.jvm.functions.Function1,I,java.lang.Object):java.util.concurrent.CompletableFuture
 *f:com.intellij.collaboration.async.CoroutineUtilKt
 - sf:DisposingMainScope(com.intellij.openapi.Disposable):kotlinx.coroutines.CoroutineScope
 - sf:asResultFlow(kotlinx.coroutines.flow.Flow):kotlinx.coroutines.flow.Flow
-- sf:associateCachingBy(kotlinx.coroutines.flow.Flow,kotlin.jvm.functions.Function1,com.intellij.util.containers.HashingStrategy,kotlin.jvm.functions.Function2,kotlin.jvm.functions.Function2,kotlin.jvm.functions.Function3):kotlinx.coroutines.flow.Flow
-- sf:associateCachingBy(kotlinx.coroutines.flow.Flow,kotlin.jvm.functions.Function1,com.intellij.util.containers.HashingStrategy,kotlin.jvm.functions.Function2,kotlin.jvm.functions.Function3):kotlinx.coroutines.flow.Flow
-- bs:associateCachingBy$default(kotlinx.coroutines.flow.Flow,kotlin.jvm.functions.Function1,com.intellij.util.containers.HashingStrategy,kotlin.jvm.functions.Function2,kotlin.jvm.functions.Function2,kotlin.jvm.functions.Function3,I,java.lang.Object):kotlinx.coroutines.flow.Flow
-- bs:associateCachingBy$default(kotlinx.coroutines.flow.Flow,kotlin.jvm.functions.Function1,com.intellij.util.containers.HashingStrategy,kotlin.jvm.functions.Function2,kotlin.jvm.functions.Function3,I,java.lang.Object):kotlinx.coroutines.flow.Flow
 - sf:awaitCancelling(kotlinx.coroutines.Deferred,kotlin.coroutines.Continuation):java.lang.Object
 - sf:cancelAndJoinSilently(kotlinx.coroutines.CoroutineScope,kotlin.coroutines.Continuation):java.lang.Object
 - sf:cancelAndJoinSilently(kotlinx.coroutines.Job,kotlin.coroutines.Continuation):java.lang.Object
@@ -79,9 +64,7 @@ f:com.intellij.collaboration.api.json.JsonHttpApiHelperKt
 - sf:launchNowIn(kotlinx.coroutines.flow.Flow,kotlinx.coroutines.CoroutineScope,kotlin.coroutines.CoroutineContext):kotlinx.coroutines.Job
 - bs:launchNowIn$default(kotlinx.coroutines.flow.Flow,kotlinx.coroutines.CoroutineScope,kotlin.coroutines.CoroutineContext,I,java.lang.Object):kotlinx.coroutines.Job
 - sf:mapCatching(kotlinx.coroutines.flow.Flow,kotlin.jvm.functions.Function2):kotlinx.coroutines.flow.Flow
-- sf:mapDataToModel(kotlinx.coroutines.flow.Flow,kotlin.jvm.functions.Function1,kotlin.jvm.functions.Function2,kotlin.jvm.functions.Function3):kotlinx.coroutines.flow.Flow
 - sf:mapFiltered(kotlinx.coroutines.flow.Flow,kotlin.jvm.functions.Function1):kotlinx.coroutines.flow.Flow
-- sf:mapModelsToViewModels(kotlinx.coroutines.flow.Flow,kotlin.jvm.functions.Function2):kotlinx.coroutines.flow.Flow
 - *sf:mapNullableScoped(kotlinx.coroutines.flow.Flow,kotlin.jvm.functions.Function2):kotlinx.coroutines.flow.Flow
 - *sf:mapScoped(kotlinx.coroutines.flow.Flow,kotlin.jvm.functions.Function2):kotlinx.coroutines.flow.Flow
 - *sf:mapScoped(kotlinx.coroutines.flow.Flow,Z,kotlin.jvm.functions.Function2):kotlinx.coroutines.flow.Flow
@@ -93,6 +76,13 @@ f:com.intellij.collaboration.api.json.JsonHttpApiHelperKt
 - sf:stateInNow(kotlinx.coroutines.flow.Flow,kotlinx.coroutines.CoroutineScope,java.lang.Object):kotlinx.coroutines.flow.StateFlow
 - sf:throwFailure(kotlinx.coroutines.flow.Flow):kotlinx.coroutines.flow.Flow
 - *sf:withInitial(kotlinx.coroutines.flow.Flow,java.lang.Object):kotlinx.coroutines.flow.Flow
+*f:com.intellij.collaboration.async.MappingScopedItemsContainerKt
+- sf:associateCachingBy(kotlinx.coroutines.flow.Flow,kotlin.jvm.functions.Function1,com.intellij.util.containers.HashingStrategy,kotlin.jvm.functions.Function2,kotlin.jvm.functions.Function3):kotlinx.coroutines.flow.Flow
+- bs:associateCachingBy$default(kotlinx.coroutines.flow.Flow,kotlin.jvm.functions.Function1,com.intellij.util.containers.HashingStrategy,kotlin.jvm.functions.Function2,kotlin.jvm.functions.Function3,I,java.lang.Object):kotlinx.coroutines.flow.Flow
+- sf:associateCachingWith(kotlinx.coroutines.flow.Flow,com.intellij.util.containers.HashingStrategy,kotlin.jvm.functions.Function2,kotlin.jvm.functions.Function3):kotlinx.coroutines.flow.Flow
+- bs:associateCachingWith$default(kotlinx.coroutines.flow.Flow,com.intellij.util.containers.HashingStrategy,kotlin.jvm.functions.Function2,kotlin.jvm.functions.Function3,I,java.lang.Object):kotlinx.coroutines.flow.Flow
+- sf:mapDataToModel(kotlinx.coroutines.flow.Flow,kotlin.jvm.functions.Function1,kotlin.jvm.functions.Function2,kotlin.jvm.functions.Function3):kotlinx.coroutines.flow.Flow
+- sf:mapStatefulToStateful(kotlinx.coroutines.flow.Flow,kotlin.jvm.functions.Function2):kotlinx.coroutines.flow.Flow
 *:com.intellij.collaboration.auth.ui.AccountsListModel
 - a:clearNewCredentials():V
 - a:getAccounts():java.util.Set
@@ -230,10 +220,6 @@ f:com.intellij.collaboration.api.json.JsonHttpApiHelperKt
 - a:generateToken(java.lang.String):V
 *f:com.intellij.collaboration.auth.ui.login.TokenLoginDialog
 - com.intellij.openapi.ui.DialogWrapper
-- <init>(com.intellij.openapi.project.Project,java.awt.Component,com.intellij.collaboration.auth.ui.login.LoginModel,java.lang.String,kotlin.jvm.functions.Function1):V
-- <init>(com.intellij.openapi.project.Project,java.awt.Component,com.intellij.collaboration.auth.ui.login.LoginModel,java.lang.String,kotlinx.coroutines.flow.Flow,kotlin.jvm.functions.Function1):V
-- b:<init>(com.intellij.openapi.project.Project,java.awt.Component,com.intellij.collaboration.auth.ui.login.LoginModel,java.lang.String,kotlinx.coroutines.flow.Flow,kotlin.jvm.functions.Function1,I,kotlin.jvm.internal.DefaultConstructorMarker):V
-- <init>(com.intellij.openapi.project.Project,java.awt.Component,com.intellij.collaboration.auth.ui.login.LoginModel,kotlin.jvm.functions.Function1):V
 - <init>(com.intellij.openapi.project.Project,kotlinx.coroutines.CoroutineScope,java.awt.Component,com.intellij.collaboration.auth.ui.login.LoginModel,java.lang.String,kotlin.jvm.functions.Function1):V
 - <init>(com.intellij.openapi.project.Project,kotlinx.coroutines.CoroutineScope,java.awt.Component,com.intellij.collaboration.auth.ui.login.LoginModel,java.lang.String,kotlinx.coroutines.flow.Flow,kotlin.jvm.functions.Function1):V
 - b:<init>(com.intellij.openapi.project.Project,kotlinx.coroutines.CoroutineScope,java.awt.Component,com.intellij.collaboration.auth.ui.login.LoginModel,java.lang.String,kotlinx.coroutines.flow.Flow,kotlin.jvm.functions.Function1,I,kotlin.jvm.internal.DefaultConstructorMarker):V
@@ -241,12 +227,9 @@ f:com.intellij.collaboration.api.json.JsonHttpApiHelperKt
 *f:com.intellij.collaboration.auth.ui.login.TokenLoginInputPanelFactory
 - *sf:Companion:com.intellij.collaboration.auth.ui.login.TokenLoginInputPanelFactory$Companion
 - <init>(com.intellij.collaboration.auth.ui.login.TokenLoginPanelModel):V
-- f:createIn(kotlinx.coroutines.CoroutineScope,Z,java.lang.String):com.intellij.openapi.ui.DialogPanel
 - f:createIn(kotlinx.coroutines.CoroutineScope,Z,java.lang.String,com.intellij.collaboration.ui.codereview.list.error.ErrorStatusPresenter):com.intellij.openapi.ui.DialogPanel
 - f:createIn(kotlinx.coroutines.CoroutineScope,Z,java.lang.String,com.intellij.collaboration.ui.codereview.list.error.ErrorStatusPresenter,kotlin.jvm.functions.Function1):com.intellij.openapi.ui.DialogPanel
-- f:createIn(kotlinx.coroutines.CoroutineScope,Z,java.lang.String,kotlin.jvm.functions.Function1):com.intellij.openapi.ui.DialogPanel
 - bs:createIn$default(com.intellij.collaboration.auth.ui.login.TokenLoginInputPanelFactory,kotlinx.coroutines.CoroutineScope,Z,java.lang.String,com.intellij.collaboration.ui.codereview.list.error.ErrorStatusPresenter,kotlin.jvm.functions.Function1,I,java.lang.Object):com.intellij.openapi.ui.DialogPanel
-- bs:createIn$default(com.intellij.collaboration.auth.ui.login.TokenLoginInputPanelFactory,kotlinx.coroutines.CoroutineScope,Z,java.lang.String,kotlin.jvm.functions.Function1,I,java.lang.Object):com.intellij.openapi.ui.DialogPanel
 *f:com.intellij.collaboration.auth.ui.login.TokenLoginInputPanelFactory$Companion
 *:com.intellij.collaboration.auth.ui.login.TokenLoginPanelModel
 - com.intellij.collaboration.auth.ui.login.LoginModel
@@ -396,6 +379,7 @@ f:com.intellij.collaboration.api.json.JsonHttpApiHelperKt
 - f:isCombinedDiffEnabled():Z
 *f:com.intellij.collaboration.ui.codereview.CodeReviewChatItemUIUtil
 - sf:INSTANCE:com.intellij.collaboration.ui.codereview.CodeReviewChatItemUIUtil
+- sf:THREAD_TOP_MARGIN:I
 - f:actionsVisibleOnHover(javax.swing.JComponent,javax.swing.JComponent):V
 - f:build(com.intellij.collaboration.ui.codereview.CodeReviewChatItemUIUtil$ComponentType,kotlin.jvm.functions.Function1,javax.swing.JComponent,kotlin.jvm.functions.Function1):javax.swing.JComponent
 - f:buildDynamic(com.intellij.collaboration.ui.codereview.CodeReviewChatItemUIUtil$ComponentType,kotlin.jvm.functions.Function1,javax.swing.JComponent,kotlin.jvm.functions.Function1):javax.swing.JComponent
@@ -736,7 +720,6 @@ f:com.intellij.collaboration.api.json.JsonHttpApiHelperKt
 - f:getACTIONS_GAPS():java.awt.Insets
 - f:getCOMMIT_INFO_GAPS():java.awt.Insets
 - f:getCOMMIT_POPUP_BRANCHES_GAPS():java.awt.Insets
-- f:getDESCRIPTION_GAPS():java.awt.Insets
 - f:getRequestStateText(com.intellij.collaboration.ui.codereview.details.data.ReviewRequestState):java.lang.String
 - f:getReviewStateIcon(com.intellij.collaboration.ui.codereview.details.data.ReviewState):javax.swing.Icon
 - f:getReviewStateIconBorder(com.intellij.collaboration.ui.codereview.details.data.ReviewState):java.awt.Color
@@ -886,13 +869,6 @@ f:com.intellij.collaboration.api.json.JsonHttpApiHelperKt
 - sf:INSTANCE:com.intellij.collaboration.ui.codereview.diff.AsyncDiffRequestProcessorFactory
 - f:createCombinedIn(kotlinx.coroutines.CoroutineScope,com.intellij.openapi.project.Project,kotlinx.coroutines.flow.Flow,kotlin.jvm.functions.Function1,kotlin.jvm.functions.Function1):com.intellij.diff.tools.combined.CombinedDiffComponentProcessor
 - f:createIn(kotlinx.coroutines.CoroutineScope,com.intellij.openapi.project.Project,kotlinx.coroutines.flow.Flow,kotlin.jvm.functions.Function1,kotlin.jvm.functions.Function1):com.intellij.diff.impl.DiffRequestProcessor
-*a:com.intellij.collaboration.ui.codereview.diff.CreateDiffCommentAction
-- com.intellij.openapi.project.DumbAwareAction
-- <init>():V
-- actionPerformed(com.intellij.openapi.actionSystem.AnActionEvent):V
-- getActionUpdateThread():com.intellij.openapi.actionSystem.ActionUpdateThread
-- pa:isActive(com.intellij.openapi.actionSystem.AnActionEvent):Z
-- update(com.intellij.openapi.actionSystem.AnActionEvent):V
 *:com.intellij.collaboration.ui.codereview.diff.DiffEditorGutterIconRendererFactory
 - a:createCommentRenderer(I):com.intellij.collaboration.ui.codereview.diff.AddCommentGutterIconRenderer
 *e:com.intellij.collaboration.ui.codereview.diff.DiscussionsViewOption
@@ -1005,7 +981,6 @@ f:com.intellij.collaboration.ui.codereview.diff.viewer.DiffViewerUtilKt
 - b:<init>(com.intellij.collaboration.ui.codereview.editor.CodeReviewEditorGutterActionableChangesModel,com.intellij.openapi.editor.Editor,com.intellij.openapi.Disposable,com.intellij.openapi.diff.LineStatusMarkerColorScheme,I,kotlin.jvm.internal.DefaultConstructorMarker):V
 *f:com.intellij.collaboration.ui.codereview.editor.CodeReviewEditorGutterChangesRenderer$Companion
 - f:render(com.intellij.collaboration.ui.codereview.editor.CodeReviewEditorGutterActionableChangesModel,com.intellij.openapi.editor.Editor,kotlin.coroutines.Continuation):java.lang.Object
-- f:setupIn(kotlinx.coroutines.CoroutineScope,com.intellij.collaboration.ui.codereview.editor.CodeReviewEditorGutterActionableChangesModel,com.intellij.openapi.editor.Editor):V
 *:com.intellij.collaboration.ui.codereview.editor.CodeReviewEditorGutterControlsModel
 - com.intellij.collaboration.ui.codereview.editor.CodeReviewCommentableEditorModel
 - canCreateComment(I):Z
@@ -1017,6 +992,7 @@ f:com.intellij.collaboration.ui.codereview.diff.viewer.DiffViewerUtilKt
 - a:isLineCommentable(I):Z
 *:com.intellij.collaboration.ui.codereview.editor.CodeReviewEditorGutterControlsModel$WithMultilineComments
 - com.intellij.collaboration.ui.codereview.editor.CodeReviewCommentableEditorModel$WithMultilineComments
+- a:updateCommentLines(com.intellij.diff.util.LineRange,com.intellij.diff.util.LineRange):V
 *f:com.intellij.collaboration.ui.codereview.editor.CodeReviewEditorGutterControlsRenderer
 - com.intellij.openapi.Disposable
 - com.intellij.openapi.editor.markup.ActiveGutterRenderer
@@ -1030,7 +1006,6 @@ f:com.intellij.collaboration.ui.codereview.diff.viewer.DiffViewerUtilKt
 - paint(com.intellij.openapi.editor.Editor,java.awt.Graphics,java.awt.Rectangle):V
 *f:com.intellij.collaboration.ui.codereview.editor.CodeReviewEditorGutterControlsRenderer$Companion
 - f:render(com.intellij.collaboration.ui.codereview.editor.CodeReviewEditorGutterControlsModel,com.intellij.openapi.editor.ex.EditorEx,kotlin.coroutines.Continuation):java.lang.Object
-- f:setupIn(kotlinx.coroutines.CoroutineScope,com.intellij.collaboration.ui.codereview.editor.CodeReviewEditorGutterControlsModel,com.intellij.openapi.editor.ex.EditorEx):V
 *:com.intellij.collaboration.ui.codereview.editor.CodeReviewEditorInlaysModel
 - a:getInlays():kotlinx.coroutines.flow.StateFlow
 *:com.intellij.collaboration.ui.codereview.editor.CodeReviewEditorModel

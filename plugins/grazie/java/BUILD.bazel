@@ -1,9 +1,9 @@
 ### auto-generated section `build intellij.grazie.java` start
-load("@rules_jvm//:jvm.bzl", "jvm_library", "jvm_resources")
+load("@rules_jvm//:jvm.bzl", "jvm_library", "resourcegroup")
 
-jvm_resources(
+resourcegroup(
   name = "java_resources",
-  files = glob(["src/main/resources/**/*"]),
+  srcs = glob(["src/main/resources/**/*"]),
   strip_prefix = "src/main/resources"
 )
 
@@ -12,6 +12,7 @@ jvm_library(
   module_name = "intellij.grazie.java",
   visibility = ["//visibility:public"],
   srcs = glob(["src/main/kotlin/**/*.kt", "src/main/kotlin/**/*.java", "src/main/kotlin/**/*.form"], allow_empty = True),
+  resources = [":java_resources"],
   deps = [
     "@lib//:kotlin-stdlib",
     "//plugins/grazie/src:core",
@@ -24,7 +25,6 @@ jvm_library(
     "//platform/util-ex",
     "//platform/analysis-api:analysis",
     "//spellchecker",
-  ],
-  runtime_deps = [":java_resources"]
+  ]
 )
 ### auto-generated section `build intellij.grazie.java` end

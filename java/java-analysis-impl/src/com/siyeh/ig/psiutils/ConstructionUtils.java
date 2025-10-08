@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.siyeh.ig.psiutils;
 
 import com.intellij.openapi.util.text.StringUtil;
@@ -201,13 +201,10 @@ public final class ConstructionUtils {
     final PsiExpression[] dimensions = newExpression.getArrayDimensions();
     if (dimensions.length == 0) {
       final PsiArrayInitializerExpression arrayInitializer = newExpression.getArrayInitializer();
-      if (arrayInitializer == null) return false;
-      final PsiExpression[] initializers = arrayInitializer.getInitializers();
-      return initializers.length == 0;
+      return arrayInitializer != null && arrayInitializer.isEmpty();
     }
     for (PsiExpression dimension : dimensions) {
-      final String dimensionText = dimension.getText();
-      if (!"0".equals(dimensionText)) return false;
+      if (!ExpressionUtils.isZero(dimension)) return false;
     }
     return true;
   }

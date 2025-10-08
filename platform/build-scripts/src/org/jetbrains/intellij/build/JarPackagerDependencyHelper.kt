@@ -46,6 +46,11 @@ internal class JarPackagerDependencyHelper(private val context: CompilationConte
       return true
     }
 
+    // modules containing tests only as per https://youtrack.jetbrains.com/articles/IJPL-A-62
+    if (moduleName.endsWith(".tests")) {
+      return true
+    }
+
     if (moduleName.contains(".test.")) {
       if (module?.sourceRoots?.none { it.rootType.isForTests } == true) {
         return false
@@ -124,6 +129,10 @@ internal class JarPackagerDependencyHelper(private val context: CompilationConte
   }
 
   fun getLibraryDependencies(module: JpsModule, withTests: Boolean): List<JpsLibraryDependency> {
+    //TODO Please write some sane code here, caching is broken, a proper caching crashes dev build
+    if (module.name == "intellij.python.pyproject" && withTests) {
+      return java.util.List.of()
+    }
     return libraryCache.computeIfAbsent(module) {
       val result = mutableListOf<JpsLibraryDependency>()
       for (element in module.dependenciesList.dependencies) {

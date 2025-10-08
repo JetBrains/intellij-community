@@ -43,6 +43,14 @@ public final class JavaQualifierAsArgumentContributor extends CompletionContribu
 
   @Override
   public void fillCompletionVariants(@NotNull CompletionParameters parameters, final @NotNull CompletionResultSet result) {
+    if ((parameters.getCompletionType() != CompletionType.BASIC && parameters.getCompletionType() != CompletionType.SMART) ||
+        parameters.getInvocationCount() < 3) {
+      return;
+    }
+    PsiElement position = parameters.getPosition();
+    if (!(JavaKeywordCompletion.AFTER_DOT.accepts(position))) {
+      return;
+    }
     result.runRemainingContributors(parameters, true);
     fillQualifierAsArgumentContributor(parameters, result);
   }

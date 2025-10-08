@@ -44,7 +44,7 @@ public final class SimplifiableAssertionInspection extends BaseInspection implem
   }
 
   @Override
-  public BaseInspectionVisitor buildVisitor() {
+  public @NotNull BaseInspectionVisitor buildVisitor() {
     return new SimplifiableJUnitAssertionVisitor();
   }
 

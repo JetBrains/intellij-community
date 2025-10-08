@@ -8,9 +8,9 @@ import com.intellij.driver.sdk.invokeAction
 import com.intellij.driver.sdk.step
 import com.intellij.driver.sdk.ui.Finder
 import com.intellij.driver.sdk.ui.components.ComponentData
-import com.intellij.driver.sdk.ui.components.UiComponent
 import com.intellij.driver.sdk.ui.components.common.toolwindows.ToolWindowLeftToolbarUi
 import com.intellij.driver.sdk.ui.components.common.toolwindows.ToolWindowRightToolbarUi
+import com.intellij.driver.sdk.ui.components.elements.WindowUiComponent
 import com.intellij.driver.sdk.ui.remote.Component
 import com.intellij.driver.sdk.ui.remote.Window
 import com.intellij.driver.sdk.ui.ui
@@ -37,7 +37,7 @@ fun Driver.projectIdeFrame(projectName: String, action: IdeaFrameUI.() -> Unit) 
   this.ui.projectIdeFrame(projectName, action)
 }
 
-open class IdeaFrameUI(data: ComponentData) : UiComponent(data) {
+open class IdeaFrameUI(data: ComponentData) : WindowUiComponent(data) {
   private val ideaFrameComponent by lazy { driver.cast(component, IdeFrameImpl::class) }
 
   val project: Project?
@@ -69,8 +69,8 @@ open class IdeaFrameUI(data: ComponentData) : UiComponent(data) {
 
   fun openSettingsDialog() = driver.invokeAction("ShowSettings", now = false)
 
-  fun toFront() {
-    ideaFrameComponent.toFront()
+  override fun toFront() {
+    super.toFront()
     mainToolbar.click()
   }
 

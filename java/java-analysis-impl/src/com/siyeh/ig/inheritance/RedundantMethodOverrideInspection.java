@@ -13,10 +13,7 @@ import com.intellij.psi.javadoc.PsiDocComment;
 import com.intellij.psi.search.PackageScope;
 import com.intellij.psi.search.PsiSearchHelper;
 import com.intellij.psi.search.searches.ReferencesSearch;
-import com.intellij.psi.util.PsiTreeUtil;
-import com.intellij.psi.util.PsiTypesUtil;
-import com.intellij.psi.util.PsiUtil;
-import com.intellij.psi.util.TypeConversionUtil;
+import com.intellij.psi.util.*;
 import com.intellij.util.Query;
 import com.intellij.util.containers.ContainerUtil;
 import com.siyeh.InspectionGadgetsBundle;
@@ -147,7 +144,7 @@ public final class RedundantMethodOverrideInspection extends BaseInspection {
   }
 
   @Override
-  public BaseInspectionVisitor buildVisitor() {
+  public @NotNull BaseInspectionVisitor buildVisitor() {
     return new RedundantMethodOverrideVisitor();
   }
 
@@ -187,7 +184,8 @@ public final class RedundantMethodOverrideInspection extends BaseInspection {
       if (superMethod.hasModifierProperty(PsiModifier.DEFAULT) && !PsiUtil.isAvailable(JavaFeature.EXTENSION_METHODS, method)) {
         return;
       }
-      boolean canBeRemoved = AbstractMethodOverridesAbstractMethodInspection.haveSameParameterTypes(method, superMethod);
+      boolean canBeRemoved = MethodSignatureUtil.areErasedParametersEqual(method.getSignature(PsiSubstitutor.EMPTY),
+                                                                          superMethod.getSignature(PsiSubstitutor.EMPTY));
       boolean isDelegate = isSuperCallWithSameArguments(body, method, superMethod);
       if (isDelegate) {
         if (!ignoreDelegates && canBeRemoved) {

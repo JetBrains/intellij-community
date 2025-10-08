@@ -201,8 +201,8 @@ public class TextExtractionTest extends BasePlatformTestCase {
           ""\"; }""";
     int offset = text.indexOf("def");
     TextContent content = extractText("a.java", text, offset);
-    assertEquals("abc        def\n  ghi", content.toString());
-    assertEquals(offset, content.textOffsetToFile("abc        ".length()));
+    assertEquals("abc         def\n  ghi", content.toString());
+    assertEquals(offset, content.textOffsetToFile("abc         ".length()));
   }
 
   public void testNoExtractionInInjectedFragments() {

@@ -166,6 +166,35 @@ public abstract class JsOptimizeImportsTestGenerated extends AbstractJsOptimizeI
         }
 
         @RunWith(JUnit3RunnerWithInners.class)
+        @TestMetadata("testData/editor/optimizeImports/common/contextSensitiveResolution")
+        public static class ContextSensitiveResolution extends AbstractJsOptimizeImportsTest {
+            @java.lang.Override
+            @org.jetbrains.annotations.NotNull
+            public final KotlinPluginMode getPluginMode() {
+                return KotlinPluginMode.K1;
+            }
+
+            private void runTest(String testDataFilePath) throws Exception {
+                KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
+            }
+
+            @TestMetadata("EnumConstants.kt")
+            public void testEnumConstants() throws Exception {
+                runTest("testData/editor/optimizeImports/common/contextSensitiveResolution/EnumConstants.kt");
+            }
+
+            @TestMetadata("FromCompanionObject.kt")
+            public void testFromCompanionObject() throws Exception {
+                runTest("testData/editor/optimizeImports/common/contextSensitiveResolution/FromCompanionObject.kt");
+            }
+
+            @TestMetadata("SealedHierarchy.kt")
+            public void testSealedHierarchy() throws Exception {
+                runTest("testData/editor/optimizeImports/common/contextSensitiveResolution/SealedHierarchy.kt");
+            }
+        }
+
+        @RunWith(JUnit3RunnerWithInners.class)
         @TestMetadata("testData/editor/optimizeImports/common/kDoc")
         public static class KDoc extends AbstractJsOptimizeImportsTest {
             @java.lang.Override

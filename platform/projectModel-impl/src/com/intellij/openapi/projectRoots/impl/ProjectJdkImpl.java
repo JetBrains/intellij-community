@@ -101,10 +101,6 @@ public class ProjectJdkImpl extends UserDataHolderBase implements SdkBridge, Sdk
     }
   }
 
-  public final void resetVersionString() {
-    LOG.error("Function is unsupported for the new implementation of SDK");
-  }
-
   @Override
   public String getHomePath() {
     if (modificator != null) {

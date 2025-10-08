@@ -1,11 +1,9 @@
 // Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.plugins.terminal.block.reworked
 
-import com.intellij.openapi.editor.Document
+import com.intellij.openapi.Disposable
 import com.intellij.openapi.editor.event.DocumentEvent
 import com.intellij.openapi.editor.event.DocumentListener
-import com.intellij.terminal.session.TerminalBlocksModelState
-import com.intellij.terminal.session.TerminalOutputBlock
 import com.intellij.util.concurrency.annotations.RequiresEdt
 import kotlinx.coroutines.channels.BufferOverflow
 import kotlinx.coroutines.flow.MutableSharedFlow
@@ -13,10 +11,11 @@ import kotlinx.coroutines.flow.SharedFlow
 import kotlinx.coroutines.flow.asSharedFlow
 import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.annotations.VisibleForTesting
-import kotlin.math.max
+import org.jetbrains.plugins.terminal.session.TerminalBlocksModelState
+import org.jetbrains.plugins.terminal.session.TerminalOutputBlock
 
 @ApiStatus.Internal
-class TerminalBlocksModelImpl(private val document: Document) : TerminalBlocksModel {
+class TerminalBlocksModelImpl(private val outputModel: TerminalOutputModel, parentDisposable: Disposable) : TerminalBlocksModel {
   @VisibleForTesting
   var blockIdCounter: Int = 0
 
@@ -27,26 +26,23 @@ class TerminalBlocksModelImpl(private val document: Document) : TerminalBlocksMo
   override val events: SharedFlow<TerminalBlocksModelEvent> = mutableEventsFlow.asSharedFlow()
 
   init {
-    document.addDocumentListener(object : DocumentListener {
+    (outputModel as MutableTerminalOutputModelImpl).document.addDocumentListener(object : DocumentListener {
       override fun documentChanged(event: DocumentEvent) {
-        if (event.offset == 0 && event.newLength == 0) {
-          // The start of the output was trimmed, so we need to remove blocks that became out of bounds.
-          // And adjust offsets of the other blocks.
-          trimBlocksBefore(offset = event.oldLength)
-        }
-        else {
-          // It can be either an update of the last block or full replace (in case of clear).
-          trimBlocksAfter(offset = event.offset)
+        // first, clean up stuff that's out of bounds now
+        trimBlocksBefore(outputModel.startOffset)
+        trimBlocksAfter(outputModel.endOffset)
+        if (event.offset > 0 || event.newLength > 0) { // check that it's not trimming
+          trimBlocksAfter(outputModel.startOffset + event.offset.toLong())
         }
       }
-    })
+    }, parentDisposable)
 
-    val newBlock = createNewBlock(startOffset = 0)
+    val newBlock = createNewBlock(startOffset = outputModel.startOffset)
     blocks.add(newBlock)
     mutableEventsFlow.tryEmit(TerminalBlockStartedEvent(newBlock))
   }
 
-  override fun promptStarted(offset: Int) {
+  override fun promptStarted(offset: TerminalOffset) {
     val lastBlock = blocks.last()
     if (offset == lastBlock.startOffset) {
       blocks.removeLast()
@@ -63,12 +59,12 @@ class TerminalBlocksModelImpl(private val document: Document) : TerminalBlocksMo
     mutableEventsFlow.tryEmit(TerminalBlockStartedEvent(newBlock))
   }
 
-  override fun promptFinished(offset: Int) {
+  override fun promptFinished(offset: TerminalOffset) {
     val curBlock = blocks.last()
     blocks[blocks.lastIndex] = curBlock.copy(commandStartOffset = offset)
   }
 
-  override fun commandStarted(offset: Int) {
+  override fun commandStarted(offset: TerminalOffset) {
     val curBlock = blocks.last()
     blocks[blocks.lastIndex] = curBlock.copy(outputStartOffset = offset)
   }
@@ -110,22 +106,23 @@ class TerminalBlocksModelImpl(private val document: Document) : TerminalBlocksMo
   /**
    * Removes all blocks that end before the [offset] (inclusive), and adjusts all left blocks offsets.
    */
-  private fun trimBlocksBefore(offset: Int) {
-    val firstNotRemovedBlockIndex = blocks.indexOfFirst { it.endOffset > offset }
+  private fun trimBlocksBefore(offset: TerminalOffset) {
+    val firstNotRemovedBlockIndex = blocks.indexOfFirst { it.endOffset > offset || (it.startOffset == it.endOffset && it.endOffset == offset) }
     if (firstNotRemovedBlockIndex != -1) {
       repeat(firstNotRemovedBlockIndex) {
         val block = blocks.removeFirst()
         mutableEventsFlow.tryEmit(TerminalBlockRemovedEvent(block))
       }
 
+      val newMinimumOffset = outputModel.startOffset
       for (ind in blocks.indices) {
         val block = blocks[ind]
         blocks[ind] = TerminalOutputBlock(
           id = block.id,
-          startOffset = max(block.startOffset - offset, 0),
-          commandStartOffset = if (block.commandStartOffset != -1) max(block.commandStartOffset - offset, 0) else -1,
-          outputStartOffset = if (block.outputStartOffset != -1) max(block.outputStartOffset - offset, 0) else -1,
-          endOffset = max(block.endOffset - offset, 0),
+          startOffset = block.startOffset.coerceAtLeast(newMinimumOffset),
+          commandStartOffset = block.commandStartOffset?.coerceAtLeast(newMinimumOffset),
+          outputStartOffset = block.outputStartOffset?.coerceAtLeast(newMinimumOffset),
+          endOffset = block.endOffset.coerceAtLeast(newMinimumOffset),
           exitCode = block.exitCode
         )
       }
@@ -137,7 +134,7 @@ class TerminalBlocksModelImpl(private val document: Document) : TerminalBlocksMo
       }
       blocks.clear()
 
-      val newBlock = createNewBlock(startOffset = 0)
+      val newBlock = createNewBlock(startOffset = outputModel.startOffset)
       blocks.add(newBlock)
       mutableEventsFlow.tryEmit(TerminalBlockStartedEvent(newBlock))
     }
@@ -146,7 +143,7 @@ class TerminalBlocksModelImpl(private val document: Document) : TerminalBlocksMo
   /**
    * Removes all blocks that start after [offset] and adjusts the end offset of the last block.
    */
-  private fun trimBlocksAfter(offset: Int) {
+  private fun trimBlocksAfter(offset: TerminalOffset) {
     val firstBlockToRemoveIndex = blocks.indexOfFirst { it.startOffset > offset }
     if (firstBlockToRemoveIndex != -1) {
       repeat(blocks.size - firstBlockToRemoveIndex) {
@@ -156,16 +153,16 @@ class TerminalBlocksModelImpl(private val document: Document) : TerminalBlocksMo
     }
 
     val lastBlock = blocks.last()
-    blocks[blocks.lastIndex] = lastBlock.copy(endOffset = document.textLength)
+    blocks[blocks.lastIndex] = lastBlock.copy(endOffset = outputModel.endOffset)
   }
 
-  private fun createNewBlock(startOffset: Int): TerminalOutputBlock {
+  private fun createNewBlock(startOffset: TerminalOffset): TerminalOutputBlock {
     return TerminalOutputBlock(
       id = blockIdCounter++,
       startOffset = startOffset,
-      commandStartOffset = -1,
-      outputStartOffset = -1,
-      endOffset = document.textLength,
+      commandStartOffset = null,
+      outputStartOffset = null,
+      endOffset = outputModel.endOffset,
       exitCode = null
     )
   }
@@ -186,5 +183,5 @@ fun TerminalBlocksModel.isCommandTypingMode(): Boolean {
   // If it's not there yet, it means the user can't type a command yet.
   // The output start offset is -1 until the command starts executing.
   // Once that happens, it means the user can't type anymore.
-  return lastBlock.commandStartOffset >= 0 && lastBlock.outputStartOffset == -1
+  return lastBlock.commandStartOffset != null && lastBlock.outputStartOffset == null
 }

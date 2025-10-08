@@ -5,13 +5,12 @@ package com.intellij.configurationStore
 
 import com.intellij.ide.highlighter.ModuleFileType
 import com.intellij.openapi.components.*
-import com.intellij.openapi.diagnostic.getOrLogException
 import com.intellij.openapi.module.Module
 import com.intellij.openapi.module.impl.ModuleEx
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.project.isExternalStorageEnabled
 import com.intellij.openapi.vfs.newvfs.events.VFileEvent
-import com.intellij.project.isDirectoryBased
+import com.intellij.project.ProjectStoreOwner
 import com.intellij.workspaceModel.ide.legacyBridge.ModuleStore
 import org.jdom.Element
 import java.io.IOException
@@ -19,53 +18,33 @@ import java.nio.file.Path
 import kotlin.concurrent.write
 import kotlin.io.path.invariantSeparatorsPathString
 
-private val MODULE_FILE_STORAGE_ANNOTATION = FileStorageAnnotation(StoragePathMacros.MODULE_FILE, false)
-
 internal class ModuleStoreImpl(module: Module, private val pathMacroManager: PathMacroManager) : ComponentStoreImpl(), ModuleStore {
   override val project: Project = module.project
 
   override val storageManager: StateStorageManagerImpl = ModuleStateStorageManager(TrackingPathMacroSubstitutorImpl(pathMacroManager), module)
 
-  override fun createSaveSessionProducerManager(): SaveSessionProducerManager {
-    return SaveSessionProducerManager(isUseVfsForWrite = storageManager.isUseVfsForWrite, collectVfsEvents = true)
-  }
+  override val collectVfsEventsDuringSave: Boolean
+    get() = true
 
   override fun isReportStatisticAllowed(stateSpec: State, storageSpec: Storage): Boolean = false
 
   override fun getPathMacroManagerForDefaults(): PathMacroManager = pathMacroManager
 
-  override fun <T> getStorageSpecs(
+  override fun <T : Any> getStorageSpecs(
     component: PersistentStateComponent<T>,
     stateSpec: State,
     operation: StateStorageOperation,
   ): List<Storage> {
-    val result = if (stateSpec.storages.isEmpty()) {
-      listOf(MODULE_FILE_STORAGE_ANNOTATION)
-    }
-    else {
-      super.getStorageSpecs(component = component, stateSpec = stateSpec, operation = operation)
-    }
-
-    if (project.isDirectoryBased) {
-      for (provider in StreamProviderFactory.EP_NAME.getExtensions(project)) {
-        runCatching {
-          provider.customizeStorageSpecs(
-            component = component,
-            storageManager = storageManager,
-            stateSpec = stateSpec,
-            storages = result,
-            operation = operation,
-          )
-        }.getOrLogException(LOG)?.let {
-          return it
-        }
-      }
-    }
-
-    return result
+    return (project as ProjectStoreOwner).componentStore.storeDescriptor.getModuleStorageSpecs(
+      component = component,
+      stateSpec = stateSpec,
+      operation = operation,
+      storageManager = storageManager,
+      project = project,
+    )
   }
 
-  override fun reloadStates(componentNames: Set<String>) {
+  override suspend fun reloadStates(componentNames: Set<String>) {
     batchReloadStates(componentNames, project.messageBus)
   }
 
@@ -95,7 +74,9 @@ internal class ModuleStoreImpl(module: Module, private val pathMacroManager: Pat
         else {
           storageManager.updatePath(spec = StoragePathMacros.MODULE_FILE, newPath = path)
         }
-      })
+      },
+      usePathMacroManager = true,
+    )
   }
 }
 
@@ -115,7 +96,7 @@ private class ModuleStateStorageManager(macroSubstitutor: TrackingPathMacroSubst
 
   override fun rename(newName: String) {
     storageLock.write {
-      val storage = getOrCreateStorage(collapsedPath = StoragePathMacros.MODULE_FILE, roamingType = RoamingType.DEFAULT) as FileBasedStorage
+      val storage = getOrCreateStorage(collapsedPath = StoragePathMacros.MODULE_FILE, roamingType = RoamingType.DEFAULT, usePathMacroManager = true) as FileBasedStorage
       val file = storage.getVirtualFile()
       try {
         if (file != null) {
@@ -181,10 +162,14 @@ private class ModuleStateStorageManager(macroSubstitutor: TrackingPathMacroSubst
   }
 
   override val isExternalSystemStorageEnabled: Boolean
-    get() = (componentManager as Module?)?.project?.isExternalStorageEnabled == true
-
-  override val isUseVfsForWrite: Boolean
-    get() = !useBackgroundSave()
+    get() {
+      val project = (componentManager as Module?)?.project ?: return false
+      if (project !is ProjectStoreOwner) {
+        return false
+      }
+      // isExternalStorageEnabled located in API module, where we cannot check isExternalStorageSupported directly
+      return project.componentStore.storeDescriptor.isExternalStorageSupported && project.isExternalStorageEnabled
+    }
 
   override fun createFileBasedStorage(
     file: Path,

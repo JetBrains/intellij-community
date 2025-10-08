@@ -3,7 +3,9 @@
   <name>Java Bytecode Decompiler</name>
   <category>JVM Tools</category>
   <description>
-    Extends standard .class file viewer with the FernFlower Java decompiler
+    <![CDATA[
+      Extends the standard <code>.class</code> file viewer with the Fernflower Java decompiler.
+    ]]>
   </description>
   <vendor>JetBrains</vendor>
 
@@ -42,7 +44,11 @@
 
   <actions>
     <group id="idea.java.decompiler.action.group">
-      <action id="ByteCodeDecompiler" class="org.jetbrains.java.decompiler.ShowDecompiledClassAction"/>
+      <action 
+        id="ByteCodeDecompiler"
+        class="org.jetbrains.java.decompiler.ShowDecompiledClassAction"
+        icon="AllIcons.FileTypes.JavaClass"
+      />
       <add-to-group group-id="QuickActions" anchor="after" relative-to-action="QuickJavaDoc"/>
     </group>
   </actions>

@@ -28,6 +28,7 @@ import com.intellij.psi.impl.source.tree.ICodeFragmentElementType;
 import com.intellij.psi.tree.*;
 import com.intellij.psi.tree.java.IJavaElementType;
 import com.intellij.util.diff.FlyweightCapableTreeStructure;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -38,10 +39,15 @@ import java.util.function.Function;
 import java.util.function.Supplier;
 
 
-//todo remove and merge with standard
 /**
- * @see com.intellij.java.syntax.element.JavaSyntaxElementType
+ * @deprecated Use the new Java syntax library instead.
+ *             See {@link com.intellij.java.syntax.parser.JavaParser}
+ *             This class is planned to be removed.
+ *             As a temporary solution, use {@link com.intellij.psi.impl.java.stubs.JavaStubElementTypes} and
+ *             {@link com.intellij.psi.impl.source.tree.JavaElementType}.
  */
+@Deprecated
+@ApiStatus.ScheduledForRemoval
 public interface BasicJavaElementType {
 
   IElementType BASIC_CLASS = new IJavaElementType("CLASS");
@@ -229,6 +235,14 @@ public interface BasicJavaElementType {
                                                               BASIC_TYPE_PARAMETER);
 
 
+  /**
+   * @deprecated Use the new Java syntax library instead.
+   *             See {@link com.intellij.java.syntax.parser.JavaParser}
+   *             This class is planned to be removed.
+   *             As a temporary solution, use {@link com.intellij.psi.impl.source.tree.JavaElementType.JavaCompositeElementType}.
+   */
+  @Deprecated
+  @ApiStatus.ScheduledForRemoval
   class JavaCompositeElementType extends IJavaElementType implements ICompositeElementType, ParentProviderElementType {
     private final Supplier<? extends ASTNode> myConstructor;
     private final Set<IElementType> myParentElementTypes;
@@ -259,6 +273,7 @@ public interface BasicJavaElementType {
     }
   }
 
+  @ApiStatus.Internal
   final class JavaDummyElementType extends ILazyParseableElementType implements ICompositeElementType, ParentProviderElementType {
     private static final Set<IElementType> PARENT_ELEMENT_TYPES = Collections.singleton(BASIC_DUMMY_ELEMENT);
 

@@ -7,7 +7,6 @@ import com.intellij.lang.xml.XMLLanguage;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.openapi.util.text.StringUtil;
-import com.intellij.psi.PsiElement;
 import com.intellij.psi.codeStyle.arrangement.*;
 import com.intellij.psi.codeStyle.arrangement.match.StdArrangementEntryMatcher;
 import com.intellij.psi.codeStyle.arrangement.match.StdArrangementMatchRule;
@@ -52,25 +51,36 @@ public class HtmlRearranger extends XmlRearranger {
   }
 
   @Override
-  public @NotNull List<XmlElementArrangementEntry> parse(@NotNull PsiElement root,
-                                                         @Nullable Document document,
-                                                         @NotNull Collection<? extends TextRange> ranges,
-                                                         @NotNull ArrangementSettings settings) {
-    final XmlArrangementParseInfo parseInfo = new XmlArrangementParseInfo();
-    root.accept(new XmlArrangementVisitor(parseInfo, ranges) {
-      @Override
-      protected void postProcessTag(@NotNull XmlTag xmlTag, @NotNull XmlElementArrangementEntry xmlTagEntry) {
-        addEntriesForEmbeddedContent(xmlTag, xmlTagEntry, document, ranges);
-      }
-    });
-    return parseInfo.getEntries();
+  protected @NotNull XmlArrangementVisitor createVisitor(
+    @NotNull XmlArrangementParseInfo info,
+    @Nullable Document document,
+    @NotNull Collection<? extends TextRange> ranges
+  ) {
+    return new HtmlArrangementVisitor(info, document, ranges);
+  }
+
+  protected static class HtmlArrangementVisitor extends XmlArrangementVisitor {
+    @Nullable private final Document myDocument;
+
+    public HtmlArrangementVisitor(@NotNull XmlArrangementParseInfo info,
+                                  @Nullable Document document,
+                                  @NotNull Collection<? extends TextRange> ranges) {
+      super(info, ranges);
+      myDocument = document;
+    }
+
+    @Override
+    protected void postProcessTag(@NotNull XmlTag xmlTag, @NotNull XmlElementArrangementEntry xmlTagEntry) {
+      addEntriesForEmbeddedContent(xmlTag, xmlTagEntry, myDocument, myRanges);
+    }
   }
 
   private static void addEntriesForEmbeddedContent(@NotNull XmlTag xmlTag,
                                                    @NotNull XmlElementArrangementEntry xmlTagEntry,
                                                    @Nullable Document document,
                                                    @NotNull Collection<? extends TextRange> ranges) {
-    if (!StringUtil.equals(xmlTag.getName(), BasicHtmlUtil.SCRIPT_TAG_NAME) && !StringUtil.equals(xmlTag.getName(), BasicHtmlUtil.STYLE_TAG_NAME)) {
+    if (!StringUtil.equals(xmlTag.getName(), BasicHtmlUtil.SCRIPT_TAG_NAME) &&
+        !StringUtil.equals(xmlTag.getName(), BasicHtmlUtil.STYLE_TAG_NAME)) {
       return;
     }
     for (XmlTagChild child : xmlTag.getValue().getChildren()) {

@@ -56,7 +56,7 @@ public final class NonSerializableWithSerializationMethodsInspection extends Bas
   }
 
   @Override
-  public BaseInspectionVisitor buildVisitor() {
+  public @NotNull BaseInspectionVisitor buildVisitor() {
     return new NonSerializableWithSerializationMethodsVisitor();
   }
 

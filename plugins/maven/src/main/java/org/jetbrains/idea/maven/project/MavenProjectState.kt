@@ -11,9 +11,6 @@ import java.util.*
 @ApiStatus.Experimental
 data class MavenPluginWithArtifact(val plugin: MavenPlugin, val artifact: MavenArtifact?) : Serializable
 
-@ApiStatus.Experimental
-data class GroupAndArtifact(val groupId: String, val artifactId: String) : Serializable
-
 @ApiStatus.Internal
 data class MavenProjectState(
   val lastReadStamp: Long = 0,
@@ -35,7 +32,7 @@ data class MavenProjectState(
   val remoteRepositories: List<MavenRemoteRepository> = emptyList(),
   val remotePluginRepositories: List<MavenRemoteRepository> = emptyList(),
   val annotationProcessors: List<MavenArtifact> = emptyList(),
-  val managedDependencies: Map<GroupAndArtifact, String> = emptyMap(),
+  val managedDependencies: Map<String, MavenArtifactInfo> = emptyMap(),
   val modulesPathsAndNames: Map<String, String> = emptyMap(),
   val modelMap: Map<String, String> = emptyMap(),
   val profilesIds: Collection<String> = emptySet(),

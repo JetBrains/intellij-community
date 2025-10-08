@@ -13,6 +13,7 @@ import com.intellij.psi.impl.source.tree.java.PsiSwitchLabeledRuleStatementImpl;
 import com.intellij.psi.tree.IElementType;
 import com.intellij.psi.tree.TokenSet;
 import com.intellij.util.containers.ContainerUtil;
+import one.util.streamex.StreamEx;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -259,8 +260,7 @@ class MethodReturnInferenceVisitor {
     }
     if (tokenType == DECLARATION_STATEMENT) {
       List<LighterASTNode> declaredElements = tree.getChildren(statement);
-      for (int i = declaredElements.size() - 1; i >= 0; i--) {
-        LighterASTNode declared = declaredElements.get(i);
+      for (LighterASTNode declared : declaredElements.reversed()) {
         if (declared.getTokenType() != LOCAL_VARIABLE) continue;
         LighterASTNode initializer = findExpressionChild(tree, declared);
         if (declared.equals(target)) {
@@ -276,12 +276,8 @@ class MethodReturnInferenceVisitor {
       LighterASTNode block = firstChildOfType(tree, statement, CODE_BLOCK);
       if (block != null) {
         List<LighterASTNode> children = getChildrenOfType(tree, block, ElementType.JAVA_STATEMENT_BIT_SET);
-        for (int i = children.size() - 1; i >= 0; i--) {
-          ReturnValue value = findValueInStatement(children.get(i), target);
-          if (value != null) {
-            return value;
-          }
-        }
+        return StreamEx.ofReversed(children).map(node -> findValueInStatement(node, target))
+          .nonNull().findFirst().orElse(null);
       }
       return null;
     }

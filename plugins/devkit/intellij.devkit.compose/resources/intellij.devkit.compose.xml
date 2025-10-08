@@ -9,6 +9,7 @@
     <module name="intellij.platform.compose.markdown"/>
     <module name="intellij.platform.jewel.markdown.extensions.images"/>
 
+    <plugin id="com.intellij.java"/>
     <plugin id="org.jetbrains.kotlin"/>
   </dependencies>
 
@@ -28,6 +29,16 @@
                  description="Enable example Settings page implemented with Compose UI"/>
 
     <editorNotificationProvider implementation="com.intellij.devkit.compose.hotreload.ComposeHotReloadSuggester"/>
+    <lang.documentationProvider language="kotlin" implementationClass="com.intellij.devkit.compose.hotreload.ComposeHotReloadTips"/>
+    <editorFactoryListener implementation="com.intellij.devkit.compose.hotreload.ToggleComposeSandboxTipsEditorListener"/>
+
+    <registryKey key="devkit.compose.desktop.preview" defaultValue="true"
+                 restartRequired="true" description="Enables Compose UI previews tool window"/>
+    <library.toolWindow id="ComposeUIPreview" anchor="right"
+                        factoryClass="com.intellij.devkit.compose.preview.ComposePreviewToolWindowFactory"
+                        icon="org.jetbrains.idea.devkit.DevKitIcons.ComposeToolWindow"
+                        librarySearchClass="com.intellij.devkit.compose.preview.ComposePreviewSearcher"/>
+    <implicitUsageProvider implementation="com.intellij.devkit.compose.preview.ComposePreviewImplicitUsageProvider"/>
   </extensions>
 
   <actions>
@@ -49,5 +60,18 @@
     <!-- Legacy actions, only available from Search Everywhere -->
     <action id="ComposeShowcase" class="com.intellij.devkit.compose.showcase.ComposeShowcaseAction"/>
     <action id="JewelActionSystemTest" class="com.intellij.devkit.compose.demo.ActionSystemTestAction"/>
+
+    <group id="ComposePreviewActions.Title" searchable="false">
+      <action id="ComposePreviewRefresh"
+              class="com.intellij.devkit.compose.preview.ComposePreviewRefreshAction"
+              icon="AllIcons.General.Refresh">
+        <override-text place="GoToAction"/>
+      </action>
+      <action id="ComposePreviewRefreshAuto"
+              class="com.intellij.devkit.compose.preview.ComposePreviewRefreshAutoAction"
+              icon="AllIcons.General.RefreshAuto">
+        <override-text place="GoToAction"/>
+      </action>
+    </group>
   </actions>
 </idea-plugin>

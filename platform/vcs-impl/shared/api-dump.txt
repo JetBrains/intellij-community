@@ -104,6 +104,14 @@ c:com.intellij.openapi.vcs.changes.LocalChangeListImpl$Builder
 - setDefault(Z):com.intellij.openapi.vcs.changes.LocalChangeListImpl$Builder
 - setId(java.lang.String):com.intellij.openapi.vcs.changes.LocalChangeListImpl$Builder
 - setReadOnly(Z):com.intellij.openapi.vcs.changes.LocalChangeListImpl$Builder
+a:com.intellij.openapi.vcs.changes.actions.SetChangesGroupingAction
+- com.intellij.openapi.project.DumbAwareToggleAction
+- <init>():V
+- getActionUpdateThread():com.intellij.openapi.actionSystem.ActionUpdateThread
+- a:getGroupingKey():java.lang.String
+- isSelected(com.intellij.openapi.actionSystem.AnActionEvent):Z
+- setSelected(com.intellij.openapi.actionSystem.AnActionEvent,Z):V
+- update(com.intellij.openapi.actionSystem.AnActionEvent):V
 c:com.intellij.openapi.vcs.changes.issueLinks.IssueLinkRenderer
 - <init>(com.intellij.openapi.project.Project,com.intellij.ui.SimpleColoredComponent):V
 - appendTextWithLinks(java.lang.String):java.util.List
@@ -368,6 +376,44 @@ f:com.intellij.openapi.vcs.changes.ui.ChangesGroupingSupport$Disabled
 - com.intellij.openapi.vcs.changes.ui.ChangesGroupingSupport
 - <init>(com.intellij.openapi.project.Project,java.lang.Object):V
 - isAvailable(java.lang.String):Z
+a:com.intellij.openapi.vcs.changes.ui.ChangesListView
+- com.intellij.openapi.vcs.changes.ui.ChangesTree
+- com.intellij.ide.dnd.DnDAware
+- sf:DATA_KEY:com.intellij.openapi.actionSystem.DataKey
+- sf:EXACTLY_SELECTED_FILES_DATA_KEY:com.intellij.openapi.actionSystem.DataKey
+- sf:HELP_ID:java.lang.String
+- sf:IGNORED_FILE_PATHS_DATA_KEY:com.intellij.openapi.actionSystem.DataKey
+- sf:LOCALLY_DELETED_CHANGES:com.intellij.openapi.actionSystem.DataKey
+- sf:MISSING_FILES_DATA_KEY:com.intellij.openapi.actionSystem.DataKey
+- sf:MODIFIED_WITHOUT_EDITING_DATA_KEY:com.intellij.openapi.actionSystem.DataKey
+- sf:UNVERSIONED_FILE_PATHS_DATA_KEY:com.intellij.openapi.actionSystem.DataKey
+- <init>(com.intellij.openapi.project.Project,Z):V
+- dropSelectionButUnderPoint(java.awt.Point):V
+- expandSafe(javax.swing.tree.DefaultMutableTreeNode):V
+- findNodeInTree(java.lang.Object):com.intellij.openapi.vcs.changes.ui.ChangesBrowserNode
+- findNodeInTree(java.lang.Object,java.lang.Object):com.intellij.openapi.vcs.changes.ui.ChangesBrowserNode
+- findNodePathInTree(java.lang.Object):javax.swing.tree.TreePath
+- findNodePathInTree(java.lang.Object,java.lang.Object):javax.swing.tree.TreePath
+- getAllChangesFromSameAmendNode(com.intellij.openapi.vcs.changes.Change):java.util.List
+- getAllChangesFromSameChangelist(com.intellij.openapi.vcs.changes.Change):java.util.List
+- getChangesNodes():com.intellij.util.containers.JBIterable
+- getComponent():javax.swing.JComponent
+- getModel():javax.swing.tree.DefaultTreeModel
+- getSelectedChanges():com.intellij.util.containers.JBIterable
+- getSelectedChangesNodes():com.intellij.util.containers.JBIterable
+- getSelectedUnversionedFiles():com.intellij.util.containers.JBIterable
+- getToggleClickCount():I
+- getUnversionedFiles():com.intellij.util.containers.JBIterable
+- installPopupHandler(com.intellij.openapi.actionSystem.ActionGroup):V
+- p:isEmptyTextVisible():Z
+- p:isIncludable(com.intellij.openapi.vcs.changes.ui.ChangesBrowserNode):Z
+- p:isInclusionVisible(com.intellij.openapi.vcs.changes.ui.ChangesBrowserNode):Z
+- isOverSelection(java.awt.Point):Z
+- processMouseEvent(java.awt.event.MouseEvent):V
+- rebuildTree():V
+- setPaintBusy(Z):V
+- s:toHijackedChange(com.intellij.openapi.project.Project,com.intellij.openapi.vfs.VirtualFile):com.intellij.openapi.vcs.changes.Change
+- uiDataSnapshot(com.intellij.openapi.actionSystem.DataSink):V
 a:com.intellij.openapi.vcs.changes.ui.ChangesTree
 - com.intellij.ui.treeStructure.Tree
 - com.intellij.openapi.actionSystem.UiCompatibleDataProvider
@@ -387,8 +433,6 @@ a:com.intellij.openapi.vcs.changes.ui.ChangesTree
 - addGroupingChangeListener(java.beans.PropertyChangeListener):V
 - addSelectionListener(java.lang.Runnable):V
 - addSelectionListener(java.lang.Runnable,com.intellij.openapi.Disposable):V
-- createCollapseAllAction(Z):com.intellij.openapi.actionSystem.AnAction
-- createExpandAllAction(Z):com.intellij.openapi.actionSystem.AnAction
 - excludeChange(java.lang.Object):V
 - excludeChanges(java.util.Collection):V
 - expandAll():V
@@ -484,6 +528,21 @@ f:com.intellij.openapi.vcs.changes.ui.DefaultInclusionModel
 - removeInclusion(java.util.Collection):V
 - retainInclusion(java.util.Collection):V
 - setInclusion(java.util.Collection):V
+a:com.intellij.openapi.vcs.changes.ui.HoverChangesTree
+- sf:Companion:com.intellij.openapi.vcs.changes.ui.HoverChangesTree$Companion
+- <init>(com.intellij.openapi.vcs.changes.ui.ChangesTree):V
+- a:getHoverIcon(com.intellij.openapi.vcs.changes.ui.ChangesBrowserNode):com.intellij.openapi.vcs.changes.ui.HoverIcon
+- f:getTree():com.intellij.openapi.vcs.changes.ui.ChangesTree
+- f:install():V
+f:com.intellij.openapi.vcs.changes.ui.HoverChangesTree$Companion
+- f:getBackground(com.intellij.ui.treeStructure.Tree,I,Z):java.awt.Color
+- f:getRowHeight(com.intellij.openapi.vcs.changes.ui.ChangesTree,com.intellij.openapi.vcs.changes.ui.ChangesTreeCellRenderer):I
+- f:getTransparentScrollbarWidth(java.awt.Component):I
+a:com.intellij.openapi.vcs.changes.ui.HoverIcon
+- <init>(javax.swing.Icon,java.lang.String):V
+- f:getIcon():javax.swing.Icon
+- f:getTooltip():java.lang.String
+- a:invokeAction(com.intellij.openapi.vcs.changes.ui.ChangesBrowserNode):V
 f:com.intellij.openapi.vcs.changes.ui.NoneChangesGroupingFactory
 - com.intellij.openapi.vcs.changes.ui.ChangesGroupingPolicyFactory
 - sf:INSTANCE:com.intellij.openapi.vcs.changes.ui.NoneChangesGroupingFactory

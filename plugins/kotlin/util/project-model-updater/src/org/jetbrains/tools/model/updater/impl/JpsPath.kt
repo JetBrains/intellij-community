@@ -1,17 +1,18 @@
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.tools.model.updater.impl
 
 sealed class JpsPath(private val root: String) {
-    class ProjectDir(path: String, isCommunity: Boolean) : JpsPath("\$PROJECT_DIR\$") {
-        override val relativePath = if (isCommunity || path.startsWith("..")) path else "community/$path"
+    class ProjectDir(path: String, isCommunity: Boolean) : JpsPath($$"$PROJECT_DIR$") {
+        override val relativePath: String = if (isCommunity || path.startsWith("..")) path else "community/$path"
     }
 
-    class MavenRepository(mavenId: MavenId, classifier: String? = null) : JpsPath("\$MAVEN_REPOSITORY\$") {
-        override val relativePath = mavenId.toJarPath(classifier)
+    class MavenRepository(mavenId: MavenId, classifier: String? = null) : JpsPath($$"$MAVEN_REPOSITORY$") {
+        override val relativePath: String = mavenId.toJarPath(classifier)
     }
 
     abstract val relativePath: String
 
-    override fun toString() = "$root/$relativePath"
+    override fun toString(): String = "$root/$relativePath"
 }
 
 sealed class JpsUrl(val path: JpsPath) {

@@ -14,7 +14,7 @@ import org.junit.jupiter.api.parallel.Execution
 import org.junit.jupiter.api.parallel.ExecutionMode
 import java.nio.file.Path
 
-// The system property `idea.kotlin.plugin.use.k2` is changed so tests should be sequential
+// The system property `idea.kotlin.plugin.use.k1` is changed so tests should be sequential
 @Execution(ExecutionMode.SAME_THREAD)
 class KotlinK1andK2ModesTest {
   @Rule
@@ -91,17 +91,17 @@ private fun getSinglePlugin(rootDir: Path): IdeaPluginDescriptorImpl {
 }
 
 private inline fun withKotlinPluginMode(isK2: Boolean, action: () -> Unit) {
-  val current = System.getProperty("idea.kotlin.plugin.use.k2")
-  System.setProperty("idea.kotlin.plugin.use.k2", isK2.toString())
+  val current = System.getProperty("idea.kotlin.plugin.use.k1")
+  System.setProperty("idea.kotlin.plugin.use.k1", (!isK2).toString())
   try {
     action()
   }
   finally {
     if (current == null) {
-      System.clearProperty("idea.kotlin.plugin.use.k2")
+      System.clearProperty("idea.kotlin.plugin.use.k1")
     }
     else {
-      System.setProperty("idea.kotlin.plugin.use.k2", current)
+      System.setProperty("idea.kotlin.plugin.use.k1", current)
     }
   }
 }

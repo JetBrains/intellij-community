@@ -6,6 +6,7 @@ import com.intellij.openapi.vcs.FilePath;
 import com.intellij.openapi.vcs.changes.Change;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.util.concurrency.ThreadingAssertions;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 
 import javax.swing.tree.DefaultTreeModel;
@@ -16,6 +17,7 @@ import java.util.List;
 /**
  * @deprecated Prefer using {@link AsyncChangesTreeImpl} instead.
  */
+@ApiStatus.Internal
 @Deprecated
 public abstract class ChangesTreeImpl<T> extends ChangesTree {
   private final @NotNull List<T> myChanges = new ArrayList<>();

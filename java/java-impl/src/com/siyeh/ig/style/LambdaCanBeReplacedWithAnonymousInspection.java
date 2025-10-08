@@ -43,7 +43,7 @@ public final class LambdaCanBeReplacedWithAnonymousInspection extends BaseInspec
   }
 
   @Override
-  public BaseInspectionVisitor buildVisitor() {
+  public @NotNull BaseInspectionVisitor buildVisitor() {
     return new LambdaToAnonymousVisitor();
   }
 

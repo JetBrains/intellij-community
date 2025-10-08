@@ -8,6 +8,8 @@ import com.intellij.codeInsight.daemon.impl.analysis.HighlightingLevelManager
 import com.intellij.codeInsight.hints.presentation.PresentationFactory
 import com.intellij.concurrency.ConcurrentCollectionFactory
 import com.intellij.concurrency.JobLauncher
+import com.intellij.diff.tools.util.base.DiffViewerBase
+import com.intellij.openapi.diagnostic.Logger
 import com.intellij.openapi.editor.Editor
 import com.intellij.openapi.editor.Inlay
 import com.intellij.openapi.editor.InlayModel
@@ -36,7 +38,6 @@ class InlayHintsPass(
   private val priorityRange: ProperTextRange,
   private val sharedSink: InlayHintsSinkImpl,
 ) : EditorBoundHighlightingPass(editor, rootElement.containingFile, true), DumbAware {
-
   override fun doCollectInformation(progress: ProgressIndicator) {
     if (!HighlightingLevelManager.getInstance(myFile.project).shouldHighlight(myFile)) return
     if (enabledCollectors.isEmpty()) return
@@ -53,7 +54,7 @@ class InlayHintsPass(
     val skippedCollectors = ConcurrentCollectionFactory.createConcurrentSet<Int>()
 
     if (!JobLauncher.getInstance().invokeConcurrentlyUnderProgress(
-        (elementsInside + elementsOutside),
+        elementsInside + elementsOutside,
         progress,
         true,
         false,
@@ -67,6 +68,10 @@ class InlayHintsPass(
               }
             }
             catch (_: IndexNotReadyException) {
+            }
+            catch (e: Throwable) {
+              if (Logger.shouldRethrow(e)) throw e
+              LOG.error(e)
             }
             progress.checkCanceled()
           }
@@ -89,6 +94,7 @@ class InlayHintsPass(
   }
 
   companion object {
+    val LOG: Logger = Logger.getInstance(DiffViewerBase::class.java)
     private const val BULK_CHANGE_THRESHOLD = 1000
     private val MANAGED_KEY = Key.create<Boolean>("managed.inlay")
     private val PLACEHOLDER_KEY = Key.create<Boolean>("inlay.placeholder")
@@ -156,7 +162,7 @@ class InlayHintsPass(
       inlayModel: InlayModel,
       map: ConcurrentIntObjectMap<MutableList<ConstrainedPresentation<*, BlockConstraints>>>,
       showAbove: Boolean,
-      isPlaceholder: Boolean
+      isPlaceholder: Boolean,
     ) {
       for (entry in map.entrySet()) {
         val presentations = entry.value
@@ -172,10 +178,12 @@ class InlayHintsPass(
       }
     }
 
-    private fun shouldBeBulk(hints: HintsBuffer?,
-                             existingInlineInlays: MutableList<Inlay<out InlineInlayRenderer>>,
-                             existingBlockAboveInlays: MutableList<Inlay<out PresentationContainerRenderer<*>>>,
-                             existingBlockBelowInlays: MutableList<Inlay<out PresentationContainerRenderer<*>>>): Boolean {
+    private fun shouldBeBulk(
+      hints: HintsBuffer?,
+      existingInlineInlays: MutableList<Inlay<out InlineInlayRenderer>>,
+      existingBlockAboveInlays: MutableList<Inlay<out PresentationContainerRenderer<*>>>,
+      existingBlockBelowInlays: MutableList<Inlay<out PresentationContainerRenderer<*>>>,
+    ): Boolean {
       val totalChangesCount = when {
         hints != null -> estimateChangesCountForPlacement(existingInlineInlays.offsets(), hints, Inlay.Placement.INLINE) +
                          estimateChangesCountForPlacement(existingBlockAboveInlays.offsets(), hints, Inlay.Placement.ABOVE_LINE) +
@@ -187,11 +195,12 @@ class InlayHintsPass(
 
     private fun List<Inlay<*>>.offsets(): IntStream = stream().mapToInt { it.offset }
 
-    private fun updateOrDispose(existing: List<Inlay<out PresentationContainerRenderer<*>>>,
-                                hints: HintsBuffer?,
-                                placement: Inlay.Placement,
-                                factory: InlayPresentationFactory,
-                                editor: Editor
+    private fun updateOrDispose(
+      existing: List<Inlay<out PresentationContainerRenderer<*>>>,
+      hints: HintsBuffer?,
+      placement: Inlay.Placement,
+      factory: InlayPresentationFactory,
+      editor: Editor,
     ) {
       for (inlay in existing) {
         val managed = inlay.getUserData(MANAGED_KEY) ?: continue
@@ -233,7 +242,7 @@ class InlayHintsPass(
       new: List<ConstrainedPresentation<*, *>>,
       factory: InlayPresentationFactory,
       placement: Inlay.Placement,
-      editor: Editor
+      editor: Editor,
     ) {
       if (!isAcceptablePlacement(placement)) {
         throw IllegalArgumentException()

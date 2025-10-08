@@ -36,9 +36,6 @@ public abstract class DaemonCodeAnalyzerEx extends DaemonCodeAnalyzer {
     return (DaemonCodeAnalyzerEx)getInstance(project);
   }
 
-  @ApiStatus.Internal
-  public abstract void restart(@NotNull Object reason);
-
   // todo IJPL-339 mark deprecated
   /**
    * Do not perform any meaningful work inside the processor because iteration is performed under MarkupModel lock
@@ -72,7 +69,7 @@ public abstract class DaemonCodeAnalyzerEx extends DaemonCodeAnalyzer {
       HighlightInfo info = HighlightInfo.fromRangeHighlighter(marker);
       if (info == null) return true;
       return minSeverity != null && severityRegistrar.compare(info.getSeverity(), minSeverity) < 0
-             || info.getHighlighter() == null
+             || info.getHighlighter() != marker
              || !CodeInsightContextHighlightingUtil.acceptRangeHighlighter(context, marker)
              || processor.process(info);
     });
@@ -103,7 +100,7 @@ public abstract class DaemonCodeAnalyzerEx extends DaemonCodeAnalyzer {
     return model.processRangeHighlightersOutside(startOffset, endOffset, marker -> {
       HighlightInfo info = HighlightInfo.fromRangeHighlighter(marker);
       return info == null ||
-             info.getHighlighter() == null ||
+             info.getHighlighter() != marker ||
              !CodeInsightContextHighlightingUtil.acceptRangeHighlighter(context, marker) ||
              processor.process(info);
     });
@@ -112,6 +109,7 @@ public abstract class DaemonCodeAnalyzerEx extends DaemonCodeAnalyzer {
   public abstract boolean hasVisibleLightBulbOrPopup();
 
   @ApiStatus.Internal
+  @RequiresBackgroundThread
   public abstract @NotNull List<HighlightInfo> runMainPasses(@NotNull PsiFile psiFile,
                                                              @NotNull Document document,
                                                              @NotNull ProgressIndicator progress);

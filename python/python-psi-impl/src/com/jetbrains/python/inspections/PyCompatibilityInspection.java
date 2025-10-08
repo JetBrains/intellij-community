@@ -29,6 +29,7 @@ import com.intellij.openapi.roots.ProjectRootManager;
 import com.intellij.openapi.util.JDOMExternalizableStringList;
 import com.intellij.openapi.util.NlsSafe;
 import com.intellij.openapi.util.TextRange;
+import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.profile.codeInspection.InspectionProjectProfileManager;
 import com.intellij.psi.*;
@@ -39,6 +40,7 @@ import com.intellij.util.containers.ContainerUtil;
 import com.jetbrains.python.PyNames;
 import com.jetbrains.python.PyPsiBundle;
 import com.jetbrains.python.PythonUiService;
+import com.jetbrains.python.inspections.quickfix.WrapExceptTupleInParenthesesQuickFix;
 import com.jetbrains.python.psi.*;
 import com.jetbrains.python.psi.impl.PyBuiltinCache;
 import com.jetbrains.python.psi.types.PyClassType;
@@ -279,7 +281,7 @@ public final class PyCompatibilityInspection extends PyInspection {
     public void visitPyArgumentList(final @NotNull PyArgumentList node) { //PY-5588
       if (node.getParent() instanceof PyClass) {
         final boolean isPython2 = LanguageLevel.forElement(node).isPython2();
-        if (isPython2 || myVersionsToProcess.stream().anyMatch(LanguageLevel::isPython2)) {
+        if (isPython2 || ContainerUtil.exists(myVersionsToProcess, LanguageLevel::isPython2)) {
           Arrays
             .stream(node.getArguments())
             .filter(PyKeywordArgument.class::isInstance)
@@ -296,7 +298,7 @@ public final class PyCompatibilityInspection extends PyInspection {
     public void visitPyReferenceExpression(@NotNull PyReferenceExpression node) {
       super.visitPyElement(node);
 
-      if (myVersionsToProcess.stream().anyMatch(LanguageLevel::isPy3K)) {
+      if (ContainerUtil.exists(myVersionsToProcess, LanguageLevel::isPy3K)) {
         final String nodeText = node.getText();
 
         if (nodeText.endsWith("iteritems") || nodeText.endsWith("iterkeys") || nodeText.endsWith("itervalues")) {
@@ -327,6 +329,42 @@ public final class PyCompatibilityInspection extends PyInspection {
               //noinspection DialogTitleCapitalization
               registerProblem(node, PyPsiBundle.message("INSP.compatibility.basestring.type.not.available.in.py3"));
             }
+          }
+        }
+      }
+    }
+
+    @Override
+    public void visitPyExceptBlock(@NotNull PyExceptPart exceptExpr) {
+      super.visitPyExceptBlock(exceptExpr);
+
+      // TreeSet is used to sort versions
+      TreeSet<LanguageLevel> allVersions = new TreeSet<>(myVersionsToProcess); // compatible-with versions
+      allVersions.add(LanguageLevel.forElement(exceptExpr)); // dev version
+
+      boolean hasBelow300 = ContainerUtil.exists(allVersions, level -> level.isOlderThan(LanguageLevel.PYTHON30));
+      boolean hasBelow314 = ContainerUtil.exists(allVersions, level -> level.isOlderThan(LanguageLevel.PYTHON314));
+      String allVersionsStr = StringUtil.join(allVersions, LanguageLevel::toString, ", ");
+
+      PyExpression exceptClass = exceptExpr.getExceptClass();
+      PyExpression target = exceptExpr.getTarget();
+      if (exceptClass == null) return;
+
+      if (LanguageLevel.forElement(exceptExpr).isAtLeast(LanguageLevel.PYTHON314)) { // see #StatementParsing.parseExceptPart()
+        if (exceptClass instanceof PyTupleExpression tuple && tuple.getElements().length > 1) {
+          if (target != null) {
+            // see INSP.except.clause.missing.parens
+          }
+          else if (hasBelow300) {
+            // different semantics in versions <300 vs. >=314
+            registerProblem(exceptClass, PyPsiBundle.message("INSP.compatibility.except.clause.different.semantics", allVersionsStr));
+          }
+          else if (hasBelow314) {
+            // we have: `except expr1, expr2`
+            // versions <314 require parentheses, versions >=314 not (only if the target is specified, but irrelevant here)
+            LocalQuickFix quickFix = LocalQuickFix.from(new WrapExceptTupleInParenthesesQuickFix(tuple));
+            registerForAllMatchingVersions(level -> level.isAtLeast(LanguageLevel.PYTHON30) && level.isOlderThan(LanguageLevel.PYTHON314),
+                                           PyPsiBundle.message("INSP.compatibility.except.clause.missing.parens"), exceptClass, quickFix);
           }
         }
       }

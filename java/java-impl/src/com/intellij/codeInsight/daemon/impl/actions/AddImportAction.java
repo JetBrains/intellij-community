@@ -27,6 +27,7 @@ import com.intellij.openapi.ui.popup.JBPopup;
 import com.intellij.openapi.ui.popup.JBPopupFactory;
 import com.intellij.openapi.ui.popup.PopupStep;
 import com.intellij.openapi.ui.popup.util.BaseListPopupStep;
+import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.*;
 import com.intellij.psi.search.GlobalSearchScope;
@@ -45,10 +46,8 @@ import javax.accessibility.AccessibleContext;
 import javax.swing.*;
 import java.awt.*;
 import java.util.ArrayList;
-import java.util.Arrays;
 import java.util.List;
 import java.util.Map;
-import java.util.stream.Collectors;
 
 public class AddImportAction implements QuestionAction {
   private static final Logger LOG = Logger.getInstance(AddImportAction.class);
@@ -118,12 +117,9 @@ public class AddImportAction implements QuestionAction {
 
     Maps maps = ReadAction.compute(() -> {
       try (AccessToken ignore = SlowOperations.knownIssue("IDEA-346760, EA-1028089")) {
-        return new Maps(
-          Arrays.stream(myTargetClasses)
-            .collect(Collectors.toMap(o -> o, t -> StringUtil.notNullize(t.getQualifiedName()))),
-          Arrays.stream(myTargetClasses)
-            .collect(Collectors.toMap(o -> o, t -> t.getIcon(0)))
-        );
+        Map<PsiClass, String> names = ContainerUtil.map2Map(myTargetClasses, t->Pair.create(t, StringUtil.notNullize(t.getQualifiedName())));
+        Map<PsiClass, Icon> icons = ContainerUtil.map2Map(myTargetClasses,t->Pair.create(t, t.getIcon(0)));
+        return new Maps(names, icons);
       }
     });
 

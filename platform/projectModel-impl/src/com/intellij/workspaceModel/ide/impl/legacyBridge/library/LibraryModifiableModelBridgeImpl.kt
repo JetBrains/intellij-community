@@ -194,6 +194,7 @@ internal class LibraryModifiableModelBridgeImpl(
     assertModelIsLive()
 
     val rootTypeId = rootType.toLibraryRootType()
+
     val virtualFileUrl = virtualFileManager.getOrCreateFromUrl(url)
     val inclusionOptions = if (recursive) LibraryRoot.InclusionOptions.ARCHIVES_UNDER_ROOT_RECURSIVELY else LibraryRoot.InclusionOptions.ARCHIVES_UNDER_ROOT
 

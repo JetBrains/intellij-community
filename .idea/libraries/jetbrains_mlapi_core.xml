@@ -1,0 +1,20 @@
+<component name="libraryTable">
+  <library name="jetbrains.mlapi.core" type="repository">
+    <properties include-transitive-deps="false" maven-id="com.jetbrains.mlapi:mlapi-core:0.2.0">
+      <verification>
+        <artifact url="file://$MAVEN_REPOSITORY$/com/jetbrains/mlapi/mlapi-core/0.2.0/mlapi-core-0.2.0.jar">
+          <sha256sum>6e07a48c74982f31a55b5099791e45b6af42a8e540c591732a10f8493abb56fe</sha256sum>
+        </artifact>
+      </verification>
+    </properties>
+    <CLASSES>
+      <root url="jar://$MAVEN_REPOSITORY$/com/jetbrains/mlapi/mlapi-core/0.2.0/mlapi-core-0.2.0.jar!/" />
+    </CLASSES>
+    <JAVADOC>
+      <root url="jar://$MAVEN_REPOSITORY$/com/jetbrains/mlapi/mlapi-core/0.2.0/mlapi-core-0.2.0-javadoc.jar!/" />
+    </JAVADOC>
+    <SOURCES>
+      <root url="jar://$MAVEN_REPOSITORY$/com/jetbrains/mlapi/mlapi-core/0.2.0/mlapi-core-0.2.0-sources.jar!/" />
+    </SOURCES>
+  </library>
+</component>

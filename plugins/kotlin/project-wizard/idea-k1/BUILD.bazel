@@ -1,9 +1,9 @@
 ### auto-generated section `build kotlin.project-wizard.idea.k1` start
-load("@rules_jvm//:jvm.bzl", "jvm_library", "jvm_resources")
+load("@rules_jvm//:jvm.bzl", "jvm_library", "resourcegroup")
 
-jvm_resources(
+resourcegroup(
   name = "kotlin-project-wizard-idea-k1_resources",
-  files = glob(["resources/**/*"]),
+  srcs = glob(["resources/**/*"]),
   strip_prefix = "resources"
 )
 
@@ -12,6 +12,7 @@ jvm_library(
   module_name = "kotlin.project-wizard.idea.k1",
   visibility = ["//visibility:public"],
   srcs = glob(["src/**/*.kt", "src/**/*.java", "src/**/*.form"], allow_empty = True),
+  resources = [":kotlin-project-wizard-idea-k1_resources"],
   deps = [
     "//platform/analysis-api:analysis",
     "//platform/core-api:core",
@@ -22,7 +23,6 @@ jvm_library(
     "//plugins/kotlin/code-insight/api",
     "//platform/lang-impl",
     "//plugins/kotlin/code-insight/inspections-shared:kotlin-code-insight-inspections-shared",
-  ],
-  runtime_deps = [":kotlin-project-wizard-idea-k1_resources"]
+  ]
 )
 ### auto-generated section `build kotlin.project-wizard.idea.k1` end

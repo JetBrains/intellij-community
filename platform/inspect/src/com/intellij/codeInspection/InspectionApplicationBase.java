@@ -699,7 +699,7 @@ public class InspectionApplicationBase implements CommandLineInspectionProgressR
                                 @NotNull AnalysisScope scope,
                                 @NotNull Path resultsDataPath,
                                 @NotNull List<? super Path> inspectionsResults) {
-    Task.Backgroundable task = new Task.Backgroundable(project, "") {
+    Task.Backgroundable task = new Task.Backgroundable(project, InspectionsBundle.message("inspection.display.name")) {
       @Override
       public void run(@NotNull ProgressIndicator indicator) {
         configureProject(projectPath, project, scope);

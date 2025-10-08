@@ -430,14 +430,20 @@ class PresentationFactory(private val editor: Editor) : InlayPresentationFactory
   private fun isControlDown(e: MouseEvent): Boolean = (ClientSystemInfo.isMac() && e.isMetaDown) || e.isControlDown
 
   @Contract(pure = true)
-  fun withTooltip(@NlsContexts.HintText tooltip: String, base: InlayPresentation): InlayPresentation = when {
+  fun withTooltip(@NlsContexts.HintText tooltip: String, base: InlayPresentation): InlayPresentation =
+    withTooltip(tooltip, base, showAbove = true)
+
+
+
+  @ApiStatus.Internal
+  fun withTooltip(@NlsContexts.HintText tooltip: String, base: InlayPresentation, showAbove: Boolean): InlayPresentation = when {
     tooltip.isEmpty() -> base
     else -> {
       var hint: LightweightHint? = null
       onHover(base, object : HoverListener {
         override fun onHover(event: MouseEvent, translated: Point) {
           if (hint?.isVisible != true && editor.contentComponent.isShowing) {
-            hint = showTooltip(event, tooltip)
+            hint = showTooltip(event, tooltip, showAbove)
           }
         }
 
@@ -448,14 +454,20 @@ class PresentationFactory(private val editor: Editor) : InlayPresentationFactory
       })
     }
   }
-  fun showTooltip(e: MouseEvent, @NlsContexts.HintText text: String): LightweightHint {
+
+
+  fun showTooltip(e: MouseEvent, @NlsContexts.HintText text: String): LightweightHint =
+    showTooltip(e, text, showAbove = true)
+
+  @ApiStatus.Internal
+  fun showTooltip(e: MouseEvent, @NlsContexts.HintText text: String, showAbove: Boolean): LightweightHint {
     val hint = run {
       val label = HintUtil.createInformationLabel(text)
       label.border = JBUI.Borders.empty(6, 6, 5, 6)
       LightweightHint(label)
     }
 
-    val constraint = HintManager.ABOVE
+    val constraint = if (showAbove) HintManager.ABOVE else HintManager.UNDER
 
     val point = run {
       val pointOnEditor = locationAt(e, editor.contentComponent)

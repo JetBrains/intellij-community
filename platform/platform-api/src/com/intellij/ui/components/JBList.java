@@ -1,9 +1,7 @@
 // Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.ui.components;
 
-import com.intellij.ide.DataManager;
 import com.intellij.openapi.actionSystem.ActionManager;
-import com.intellij.openapi.actionSystem.DataProvider;
 import com.intellij.openapi.ide.CopyPasteManager;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.Key;
@@ -380,13 +378,6 @@ public class JBList<E> extends JList<E> implements ComponentWithEmptyText, Compo
   @SuppressWarnings({"LambdaUnfriendlyMethodOverload", "UnnecessaryFullyQualifiedName", "UsagesOfObsoleteApi"})
   public void installCellRenderer(@NotNull com.intellij.util.NotNullFunction<? super E, ? extends JComponent> fun) {
     installCellRenderer((Function<? super E, ? extends @NotNull JComponent>)fun);
-  }
-
-  /** @deprecated Implement {@link com.intellij.openapi.actionSystem.UiDataProvider} instead */
-  @Deprecated(forRemoval = true)
-  @SuppressWarnings("UsagesOfObsoleteApi")
-  public void setDataProvider(@NotNull DataProvider provider) {
-    DataManager.registerDataProvider(this, provider);
   }
 
   public void disableEmptyText() {

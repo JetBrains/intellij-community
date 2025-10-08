@@ -5,12 +5,16 @@ import com.intellij.icons.AllIcons
 import com.intellij.openapi.updateSettings.impl.pluginsAdvertisement.*
 import com.intellij.openapi.util.NlsContexts
 import com.intellij.pycharm.community.ide.impl.PyCharmCommunityCustomizationBundle
+import com.intellij.pycharm.community.ide.impl.promo.djangoPromoFeatureList
+import com.intellij.pycharm.community.ide.impl.promo.javaScriptPromoFeatureList
 import com.jetbrains.python.icons.PythonIcons
 import javax.swing.JComponent
 
-private fun featurePage(@NlsContexts.Label title: String, items: List<PromoFeatureListItem>,
-                        source: PromoEventSource,
-                        topic: PromoTopic): JComponent {
+private fun featurePage(
+  @NlsContexts.Label title: String, items: List<PromoFeatureListItem>,
+  source: PromoEventSource,
+  topic: PromoTopic,
+): JComponent {
   val page = PromoFeaturePage(
     productIcon = PythonIcons.Python.Pycharm,
     suggestedIde = PluginAdvertiserService.pyCharmProfessional,
@@ -39,7 +43,6 @@ internal fun databaseFeatures(source: PromoEventSource): JComponent = featurePag
 )
 
 internal fun javascriptFeatures(source: PromoEventSource, promoTopic: PromoTopic): JComponent {
-  @Suppress("DialogTitleCapitalization")
   return featurePage(
     FeaturePromoBundle.message("feature.javascript.description.html",
                                "https://www.jetbrains.com/help/pycharm/javascript-specific-guidelines.html"),
@@ -58,7 +61,6 @@ internal fun djangoFeatures(source: PromoEventSource): JComponent {
     PromoTopic.Django
   )
 }
-
 
 internal fun jupyterFeatures(source: PromoEventSource): JComponent {
   return featurePage(
@@ -88,15 +90,3 @@ internal fun sshFeatures(source: PromoEventSource): JComponent {
     PromoTopic.RemoteSSH
   )
 }
-
-internal val djangoPromoFeatureList = listOf(
-  PromoFeatureListItem(AllIcons.Actions.ReformatCode, PyCharmCommunityCustomizationBundle.message("feature.django.code")),
-  PromoFeatureListItem(AllIcons.FileTypes.Html, PyCharmCommunityCustomizationBundle.message("feature.django.djangoTemplates")),
-  PromoFeatureListItem(AllIcons.General.Web, PyCharmCommunityCustomizationBundle.message("feature.django.endpoints"))
-)
-
-internal val javaScriptPromoFeatureList = listOf(
-  PromoFeatureListItem(AllIcons.Actions.ReformatCode, FeaturePromoBundle.message("feature.javascript.code")),
-  PromoFeatureListItem(AllIcons.Actions.SuggestedRefactoringBulb, FeaturePromoBundle.message("feature.javascript.refactor")),
-  PromoFeatureListItem(AllIcons.FileTypes.UiForm, FeaturePromoBundle.message("feature.javascript.frameworks"))
-)

@@ -1,4 +1,4 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.dvcs.ui;
 
 import com.intellij.dvcs.DvcsRememberedInputs;
@@ -16,7 +16,7 @@ import com.intellij.openapi.ui.ValidationInfo;
 import com.intellij.openapi.ui.popup.Balloon;
 import com.intellij.openapi.ui.popup.JBPopupFactory;
 import com.intellij.openapi.util.Disposer;
-import com.intellij.openapi.util.io.FileUtil;
+import com.intellij.openapi.util.io.OSAgnosticPathUtil;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.ui.*;
 import com.intellij.ui.awt.RelativePoint;
@@ -231,7 +231,7 @@ public abstract class CloneDvcsDialog extends DialogWrapper {
   }
 
   private @NotNull String getCurrentUrlText() {
-    return FileUtil.expandUserHome(myRepositoryUrlField.getText().trim());
+    return OSAgnosticPathUtil.expandUserHome(myRepositoryUrlField.getText().trim());
   }
 
   /**

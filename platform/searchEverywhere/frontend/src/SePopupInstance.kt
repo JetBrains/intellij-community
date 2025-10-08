@@ -79,6 +79,10 @@ class SePopupInstance(private val popupVm: SePopupVm,
     TODO("Not yet implemented")
   }
 
+  fun saveSearchText() {
+    popupVm.saveSearchText()
+  }
+
   private val currentTabSearchEverywhereToggleAction: SearchEverywhereToggleAction?
     get() = popupVm.currentTab.filterEditor.getValueOrNull()?.getHeaderActions()?.firstOrNull {
       it is SearchEverywhereToggleAction

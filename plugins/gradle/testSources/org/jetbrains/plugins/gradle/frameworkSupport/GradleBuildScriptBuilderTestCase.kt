@@ -12,7 +12,15 @@ abstract class GradleBuildScriptBuilderTestCase {
     vararg cases: Pair<GradleVersion, Pair<String, String>>,
     configure: GradleBuildScriptBuilder<*>.() -> Unit
   ) {
-    for ((gradleVersion, expectedScripts) in cases) {
+    val casesForSupportedGradleVersions = VersionMatcherRule.SUPPORTED_GRADLE_VERSIONS
+      .mapNotNull {
+        val gradleVersion = GradleVersion.version(it)
+        cases.asSequence()
+          .filter { (version, _) -> version <= gradleVersion }
+          .maxByOrNull { (version, _) -> version }
+          ?.let { (_, case) -> gradleVersion to case }
+      }
+    for ((gradleVersion, expectedScripts) in casesForSupportedGradleVersions + cases) {
       val (expectedGroovyScript, expectedKotlinScript) = expectedScripts
       val actualGroovyScript = GradleBuildScriptBuilder.create(gradleVersion, useKotlinDsl = false).apply(configure).generate()
       val actualKotlinScript = GradleBuildScriptBuilder.create(gradleVersion, useKotlinDsl = true).apply(configure).generate()
@@ -30,8 +38,7 @@ abstract class GradleBuildScriptBuilderTestCase {
     kotlinScript: String,
     configure: GradleBuildScriptBuilder<*>.() -> Unit
   ) {
-    val cases = VersionMatcherRule.SUPPORTED_GRADLE_VERSIONS
-      .map { GradleVersion.version(it) to (groovyScript to kotlinScript) }
-    assertBuildScript(*cases.toTypedArray(), configure = configure)
+    val gradleVersion = GradleVersion.version(VersionMatcherRule.SUPPORTED_GRADLE_VERSIONS.first())
+    assertBuildScript(gradleVersion to (groovyScript to kotlinScript), configure = configure)
   }
 }

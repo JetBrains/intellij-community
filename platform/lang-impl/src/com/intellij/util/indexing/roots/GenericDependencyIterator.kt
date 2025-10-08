@@ -2,12 +2,15 @@
 package com.intellij.util.indexing.roots
 
 import com.intellij.openapi.project.Project
+import com.intellij.openapi.projectRoots.SdkType
+import com.intellij.openapi.projectRoots.SdkTypeId
 import com.intellij.openapi.roots.ContentIterator
 import com.intellij.openapi.util.NlsContexts
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.openapi.vfs.VirtualFileFilter
 import com.intellij.util.indexing.IndexingBundle
 import com.intellij.util.indexing.roots.kind.IndexableSetOrigin
+import com.intellij.util.indexing.roots.origin.SdkOriginImpl
 import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.annotations.NonNls
 import org.jetbrains.annotations.Unmodifiable
@@ -56,6 +59,16 @@ class GenericDependencyIterator(
                                        indexingProgressText = IndexingBundle.message("indexable.files.provider.indexing.library.name", libraryName),
                                        rootsScanningProgressText = IndexingBundle.message("indexable.files.provider.scanning.library.name", libraryName),
                                        debugName = "Library ${libraryName} $debugMessage")
+    }
+
+    fun forSdkEntity(sdkName: String, sdkType: SdkTypeId?, sdkHome: String?, root: VirtualFile): IndexableFilesIterator {
+      val sdkPresentableName: String = (sdkType as? SdkType)?.presentableName.takeUnless { it.isNullOrEmpty() } ?: IndexingBundle.message("indexable.files.provider.indexing.sdk.unnamed")
+
+      return GenericDependencyIterator(SdkOriginImpl(listOf(root)),
+                                       root,
+                                      indexingProgressText = IndexingBundle.message("indexable.files.provider.indexing.sdk", sdkPresentableName, sdkName),
+                                      rootsScanningProgressText = IndexingBundle.message("indexable.files.provider.scanning.sdk", sdkPresentableName, sdkName),
+                                      debugName = "$sdkPresentableName ${sdkName} ${sdkHome} (${root.name})")
     }
   }
 }

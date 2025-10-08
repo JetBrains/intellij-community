@@ -1,9 +1,9 @@
 ### auto-generated section `build intellij.platform.searchEverywhere` start
-load("@rules_jvm//:jvm.bzl", "jvm_library", "jvm_resources")
+load("@rules_jvm//:jvm.bzl", "jvm_library", "resourcegroup")
 
-jvm_resources(
+resourcegroup(
   name = "searchEverywhere_resources",
-  files = glob(["resources/**/*"]),
+  srcs = glob(["resources/**/*"]),
   strip_prefix = "resources"
 )
 
@@ -12,6 +12,7 @@ jvm_library(
   module_name = "intellij.platform.searchEverywhere",
   visibility = ["//visibility:public"],
   srcs = glob(["src/**/*.kt", "src/**/*.java", "src/**/*.form"], allow_empty = True),
+  resources = [":searchEverywhere_resources"],
   deps = [
     "@lib//:jetbrains-annotations",
     "@lib//:kotlin-stdlib",
@@ -19,7 +20,7 @@ jvm_library(
     "//platform/core-api:core",
     "//platform/project/shared:project",
     "//platform/kernel/shared:kernel",
-    "@lib//:kotlinx-serialization-core",
+    "//libraries/kotlinx/serialization/core",
     "//platform/platform-api:ide",
     "//platform/lang-impl",
     "//platform/platform-impl:ide-impl",
@@ -35,7 +36,6 @@ jvm_library(
   exports = [
     "//platform/lang-impl",
     "//platform/statistics",
-  ],
-  runtime_deps = [":searchEverywhere_resources"]
+  ]
 )
 ### auto-generated section `build intellij.platform.searchEverywhere` end

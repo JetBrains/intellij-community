@@ -14,7 +14,7 @@ import com.jetbrains.python.PythonModuleTypeBase
 import com.jetbrains.python.errorProcessing.PyResult
 import com.jetbrains.python.icons.PythonIcons
 import com.jetbrains.python.packaging.common.PythonOutdatedPackage
-import com.jetbrains.python.resolvePythonBinary
+import com.jetbrains.python.sdk.impl.resolvePythonBinary
 import com.jetbrains.python.sdk.PythonSdkUtil
 import com.jetbrains.python.sdk.createSdk
 import com.jetbrains.python.sdk.getOrCreateAdditionalData

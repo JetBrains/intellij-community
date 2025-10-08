@@ -13,7 +13,6 @@ import com.intellij.codeInsight.hints.declarative.*
 import com.intellij.openapi.editor.Editor
 import com.intellij.openapi.editor.EditorFactory
 import com.intellij.openapi.project.DumbAware
-import com.intellij.openapi.project.DumbService
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.Key
 import com.intellij.openapi.util.registry.Registry
@@ -37,14 +36,8 @@ class DeclarativeInlayHintsPassFactory : TextEditorHighlightingPassFactory, Text
       return DeclarativeInlayHintsPass(file, editor, listOf(InlayProviderPassInfo(provider, providerId, optionsToEnabled)), isPreview = true, isProviderDisabled = isDisabled)
     }
 
-    fun getSuitableToFileProviders(file: PsiFile): List<InlayProviderInfo> {
-      val infos = InlayHintsProviderFactory.getProvidersForLanguage(file.language)
-      if (!DumbService.isDumb(file.project)) {
-        return infos
-      }
-
-      return infos.filter { DumbService.isDumbAware(it.provider) }
-    }
+    fun getSuitableToFileProviders(file: PsiFile): List<InlayProviderInfo> =
+      InlayHintsProviderFactory.getProvidersForLanguage(file.language)
 
     private val PSI_MODIFICATION_STAMP: Key<Long> = Key<Long>("declarative.inlays.psi.modification.stamp")
 

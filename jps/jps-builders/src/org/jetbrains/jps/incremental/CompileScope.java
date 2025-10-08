@@ -1,6 +1,7 @@
 // Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.jps.incremental;
 
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.jps.builders.BuildTarget;
 import org.jetbrains.jps.builders.BuildTargetType;
@@ -32,7 +33,8 @@ public abstract class CompileScope {
    * @deprecated Use {@link #isAffected(BuildTarget, Path)}
    */
   @SuppressWarnings("IO_FILE_USAGE")
-  @Deprecated
+  @ApiStatus.Internal
+  @Deprecated(forRemoval = true)
   public final boolean isAffected(BuildTarget<?> target, @NotNull File file) {
     return isAffected(target, file.toPath());
   }

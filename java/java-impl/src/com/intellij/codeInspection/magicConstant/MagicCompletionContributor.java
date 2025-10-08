@@ -153,11 +153,11 @@ public final class MagicCompletionContributor extends CompletionContributor impl
       PsiReturnStatement statement = PsiTreeUtil.getParentOfType(pos, PsiReturnStatement.class);
       PsiExpression l = statement == null ? null : statement.getReturnValue();
       PsiElement element = PsiTreeUtil.getParentOfType(l, PsiMethod.class, PsiLambdaExpression.class);
-      if (element instanceof PsiMethod) {
-        result.add(Pair.create((PsiModifierListOwner)element, ((PsiMethod)element).getReturnType()));
+      if (element instanceof PsiMethod method) {
+        result.add(Pair.create(method, method.getReturnType()));
       }
-      else if (element instanceof PsiLambdaExpression) {
-        final PsiType interfaceType = ((PsiLambdaExpression)element).getFunctionalInterfaceType();
+      else if (element instanceof PsiLambdaExpression lambda) {
+        final PsiType interfaceType = lambda.getFunctionalInterfaceType();
         final PsiMethod interfaceMethod = LambdaUtil.getFunctionalInterfaceMethod(interfaceType);
         if (interfaceMethod != null) {
           result.add(Pair.create(interfaceMethod, LambdaUtil.getFunctionalInterfaceReturnType(interfaceType)));

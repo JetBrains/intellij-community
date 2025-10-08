@@ -773,11 +773,13 @@ public final class ListPluginComponent extends JPanel {
     }
   }
 
-  public void hideProgress(boolean success, boolean restartRequired, PluginUiModel installedPlugin) {
+  public void hideProgress() {
     if (succesefullyFinishedOnce) return;
     myIndicator = null;
     myLayout.removeProgressComponent();
+  }
 
+  public void pluginInstalled(boolean success, boolean restartRequired, PluginUiModel installedPlugin) {
     if (success) {
       succesefullyFinishedOnce = true;
       if (restartRequired) {

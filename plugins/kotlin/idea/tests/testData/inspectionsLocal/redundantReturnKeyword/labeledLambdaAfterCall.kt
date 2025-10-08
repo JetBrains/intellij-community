@@ -1,0 +1,17 @@
+// FIX: Remove 'return' keyword
+
+fun foo(flag: Boolean): (Int) -> Boolean {
+    return if (flag) {
+        print(42)
+        ret<caret>urn bar@{ _: Int ->
+            return@predicate true
+        }
+    } else {
+        bar@{ _: Int ->
+            return@predicate true
+        }
+    }
+}
+
+// IGNORE_K1
+// IGNORE_K2

@@ -115,8 +115,4 @@ public final class HighlightingUtil {
       return CachedValueProvider.Result.create(contents, vp.getAllFiles().get(0), grazieConfigTracker());
     });
   }
-
-  public static TextRange toIdeaRange(ai.grazie.rules.tree.TextRange reported) {
-    return new TextRange(reported.start(), reported.end());
-  }
 }

@@ -1,9 +1,9 @@
 ### auto-generated section `build intellij.platform.ide.impl.wsl` start
-load("@rules_jvm//:jvm.bzl", "jvm_library", "jvm_resources")
+load("@rules_jvm//:jvm.bzl", "jvm_library", "resourcegroup")
 
-jvm_resources(
+resourcegroup(
   name = "ide-impl-wsl_resources",
-  files = glob(["resources/**/*"]),
+  srcs = glob(["resources/**/*"]),
   strip_prefix = "resources"
 )
 
@@ -12,6 +12,7 @@ jvm_library(
   module_name = "intellij.platform.ide.impl.wsl",
   visibility = ["//visibility:public"],
   srcs = glob(["src/**/*.kt", "src/**/*.java", "src/**/*.form"], allow_empty = True),
+  resources = [":ide-impl-wsl_resources"],
   deps = [
     "@lib//:jetbrains-annotations",
     "@lib//:kotlin-stdlib",
@@ -29,7 +30,6 @@ jvm_library(
     "//platform/util/coroutines",
     "//platform/eel-impl",
     "//platform/projectModel-api:projectModel",
-  ],
-  runtime_deps = [":ide-impl-wsl_resources"]
+  ]
 )
 ### auto-generated section `build intellij.platform.ide.impl.wsl` end

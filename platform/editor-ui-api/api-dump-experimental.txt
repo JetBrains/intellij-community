@@ -30,6 +30,7 @@
 - getAdditionalContexts():java.util.Set
 - getMainContext():com.intellij.codeInsight.multiverse.CodeInsightContext
 *:com.intellij.ide.lightEdit.LightEditService
+- *sf:Companion:com.intellij.ide.lightEdit.LightEditService$Companion
 - a:closeEditorWindow():Z
 - a:createNewDocument(java.nio.file.Path):com.intellij.ide.lightEdit.LightEditorInfo
 - a:getEditorManager():com.intellij.ide.lightEdit.LightEditorManager
@@ -37,7 +38,6 @@
 - a:getProject():com.intellij.openapi.project.Project
 - a:getSelectedFile():com.intellij.openapi.vfs.VirtualFile
 - a:getSelectedFileEditor():com.intellij.openapi.fileEditor.FileEditor
-- s:getWindowName():java.lang.String
 - a:isAutosaveMode():Z
 - a:isForceOpenInLightEditMode():Z
 - a:isLightEditEnabled():Z
@@ -51,6 +51,9 @@
 - a:setAutosaveMode(Z):V
 - a:showEditorWindow():V
 - a:updateFileStatus(java.util.Collection):V
+*f:com.intellij.ide.lightEdit.LightEditService$Companion
+- f:getInstance():com.intellij.ide.lightEdit.LightEditService
+- f:getWindowName():java.lang.String
 *:com.intellij.ide.lightEdit.LightEditServiceListener
 - lightEditWindowClosed(com.intellij.openapi.project.Project):V
 - lightEditWindowOpened(com.intellij.openapi.project.Project):V

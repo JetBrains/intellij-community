@@ -112,6 +112,29 @@ class KotlinMppMiscCasesImportingTests : AbstractKotlinMppGradleImportingTest() 
     }
 
     @Test
+    @PluginTargetVersions(pluginVersion = "1.9.20+")
+    fun testSourceSetsOrderRespectsDependsOnHierarchy() {
+        doTest {
+            onlyCheckers(OrderEntriesChecker)
+
+            excludeModules(".*producer.*")
+            sortDependencies = false
+        }
+    }
+
+    @Test
+    @PluginTargetVersions(pluginVersion = "1.9.20+")
+    fun testSourceSetsOrderRespectsSourceSetHierarchy() {
+        doTest {
+            onlyCheckers(OrderEntriesChecker)
+
+            excludeDependencies(".*consumer.*")
+            excludeModules(".*producer.*")
+            sortDependencies = false
+        }
+    }
+
+    @Test
     fun testMismatchedAttributesDependencyBinary() {
         // NB: Variant-mismatch error is printed verbatim in stderr
         doTest {

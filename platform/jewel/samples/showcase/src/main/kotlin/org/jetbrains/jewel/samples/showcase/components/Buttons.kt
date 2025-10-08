@@ -307,12 +307,20 @@ private fun SplitButtons() {
 
                         separator()
 
-                        items(
-                            10,
-                            isSelected = { false },
-                            onItemClick = { JewelLogger.getInstance("Jewel").warn("Item clicked: $it") },
-                            content = { Text("Other Item ${it + 1}") },
-                        )
+                        repeat(10) {
+                            val number = it + 1
+                            val itemStr = "${stackStr}other.$number"
+
+                            selectableItem(
+                                selected = selected == itemStr,
+                                onClick = {
+                                    selected = itemStr
+                                    JewelLogger.getInstance("Jewel").warn("Item clicked: $itemStr")
+                                },
+                            ) {
+                                Text("Other Item ${it + 1}")
+                            }
+                        }
                     }
 
                     buildSubmenus(emptyList())

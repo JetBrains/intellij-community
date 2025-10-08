@@ -3,8 +3,8 @@ package com.intellij.grazie.ide.language
 
 import com.intellij.grazie.GrazieTestBase
 import com.intellij.grazie.jlanguage.Lang
+import com.intellij.grazie.spellcheck.engine.GrazieSpellCheckerEngine
 import com.intellij.openapi.components.service
-import com.intellij.spellchecker.grazie.GrazieSpellCheckerEngine
 import com.intellij.tools.ide.metrics.benchmark.Benchmark
 
 class JSONSupportTest : GrazieTestBase() {
@@ -21,7 +21,7 @@ class JSONSupportTest : GrazieTestBase() {
       runHighlightTestForFile("ide/language/json/i18n.json")
     }.setup {
       psiManager.dropPsiCaches()
-      project.service<GrazieSpellCheckerEngine>().dropSuggestionCache()
+      GrazieSpellCheckerEngine.getInstance(project).dropSuggestionCache()
     }.start()
   }
 }

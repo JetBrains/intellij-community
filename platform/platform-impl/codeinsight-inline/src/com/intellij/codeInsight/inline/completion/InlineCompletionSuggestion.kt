@@ -7,7 +7,6 @@ import com.intellij.codeInsight.inline.completion.suggestion.InlineCompletionVar
 import com.intellij.openapi.util.UserDataHolderBase
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.FlowCollector
-import kotlinx.coroutines.flow.emptyFlow
 import kotlinx.coroutines.flow.flow
 import org.jetbrains.annotations.ApiStatus.ScheduledForRemoval
 
@@ -40,17 +39,6 @@ abstract class InlineCompletionSuggestion : UserDataHolderBase(), InlineCompleti
   class Default(override val suggestionFlow: Flow<InlineCompletionElement>) : InlineCompletionSuggestion()
 
   companion object {
-
-    @Deprecated(
-      message = "Use com.intellij.codeInsight.inline.completion.suggestion.InlineCompletionSuggestion.Empty",
-      replaceWith = ReplaceWith(
-        "com.intellij.codeInsight.inline.completion.suggestion.InlineCompletionSuggestion.Empty",
-        "com.intellij.codeInsight.inline.completion.suggestion.InlineCompletionSuggestion"
-      ),
-      level = DeprecationLevel.WARNING
-    )
-    @ScheduledForRemoval
-    fun empty(): InlineCompletionSuggestion = Default(emptyFlow())
 
     @Deprecated(
       message = "Use InlineCompletionSingleSuggestion.build",

@@ -1,4 +1,4 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.platform.diagnostic.telemetry.exporters.meters
 
 import com.fasterxml.jackson.core.JsonParser
@@ -50,7 +50,7 @@ internal class MetricDataDeserializer : JsonDeserializer<MetricData>() {
     private fun getValue(dataPointNode: JsonNode): JsonNode = dataPointNode.get("value")
 
     private fun getAttributes(dataPointNode: JsonNode): Attributes = Attributes.builder().apply {
-      dataPointNode.get("attributes").fields().forEach { this.put(it.key.toString(), it.value.toString()) }
+      dataPointNode.get("attributes").properties().forEach { this.put(it.key.toString(), it.value.toString()) }
     }.build()
 
     private fun getLongPointsData(pointsNode: JsonNode): List<LongPointData> = pointsNode.map { dataPoint ->

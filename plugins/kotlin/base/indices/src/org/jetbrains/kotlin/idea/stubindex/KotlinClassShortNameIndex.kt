@@ -5,16 +5,10 @@ import com.intellij.openapi.project.Project
 import com.intellij.psi.search.GlobalSearchScope
 import com.intellij.psi.stubs.StringStubIndexExtension
 import com.intellij.psi.stubs.StubIndexKey
-import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.kotlin.psi.KtClassOrObject
 
 class KotlinClassShortNameIndex internal constructor() : StringStubIndexExtension<KtClassOrObject>() {
     companion object Helper : KotlinStringStubIndexHelper<KtClassOrObject>(KtClassOrObject::class.java) {
-        @JvmField
-        @ApiStatus.ScheduledForRemoval
-        @Deprecated("Use the Helper object instead", level = DeprecationLevel.ERROR)
-        val INSTANCE: KotlinClassShortNameIndex = KotlinClassShortNameIndex()
-
         override val indexKey: StubIndexKey<String, KtClassOrObject> =
             StubIndexKey.createIndexKey("org.jetbrains.kotlin.idea.stubindex.KotlinClassShortNameIndex")
     }

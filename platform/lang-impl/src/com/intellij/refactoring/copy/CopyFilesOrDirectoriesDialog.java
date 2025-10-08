@@ -35,6 +35,7 @@ import com.intellij.util.PathUtil;
 import com.intellij.util.PathUtilRt;
 import com.intellij.util.ui.FormBuilder;
 import com.intellij.util.ui.UIUtil;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -60,6 +61,7 @@ public class CopyFilesOrDirectoriesDialog extends RefactoringDialog implements D
    *
    * @deprecated use {@link RefactoringDialog#RefactoringDialog(Project, boolean, boolean)} instead
    */
+  @ApiStatus.Internal
   @Deprecated(forRemoval = true)
   public static JCheckBox createOpenInEditorCB() {
     JCheckBox checkBox = new JCheckBox(RefactoringBundle.message("open.copy.in.editor"), PropertiesComponent.getInstance().getBoolean(COPY_OPEN_IN_EDITOR, true));
@@ -71,6 +73,7 @@ public class CopyFilesOrDirectoriesDialog extends RefactoringDialog implements D
    *
    * @deprecated use {@link RefactoringDialog#RefactoringDialog(Project, boolean, boolean)} instead
    */
+  @ApiStatus.Internal
   @Deprecated(forRemoval = true)
   public static void saveOpenInEditorState(boolean selected) {
     PropertiesComponent.getInstance().setValue(COPY_OPEN_IN_EDITOR, String.valueOf(selected));

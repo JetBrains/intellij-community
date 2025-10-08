@@ -1,9 +1,9 @@
 ### auto-generated section `build intellij.maven` start
-load("@rules_jvm//:jvm.bzl", "jvm_library", "jvm_provided_library", "jvm_resources")
+load("@rules_jvm//:jvm.bzl", "jvm_library", "jvm_provided_library", "resourcegroup")
 
-jvm_resources(
+resourcegroup(
   name = "maven_resources",
-  files = glob(["src/main/resources/**/*"]),
+  srcs = glob(["src/main/resources/**/*"]),
   strip_prefix = "src/main/resources"
 )
 
@@ -22,6 +22,7 @@ jvm_library(
   module_name = "intellij.maven",
   visibility = ["//visibility:public"],
   srcs = glob(["src/main/java/**/*.kt", "src/main/java/**/*.java", "src/main/java/**/*.form", "src/main/gen/**/*.kt", "src/main/gen/**/*.java"], allow_empty = True),
+  resources = [":maven_resources"],
   deps = [
     "//platform/analysis-api:analysis",
     "//platform/code-style-api:codeStyle",
@@ -54,13 +55,14 @@ jvm_library(
     "//java/debugger/impl",
     "//java/idea-ui:ui",
     "@lib//:jgoodies-forms",
-    "@lib//:gson",
+    "//libraries/gson",
     "//plugins/groovy",
-    "@lib//:guava",
+    "//libraries/guava",
     "//platform/lang-impl",
     "//jps/model-impl",
     "//plugins/maven/jps-plugin:jps",
     "//spellchecker",
+    "//plugins/grazie/src:core",
     "//platform/vcs-api:vcs",
     "//plugins/properties/properties-psi-api:psi",
     "@lib//:maven-plexus-archiver",
@@ -82,7 +84,7 @@ jvm_library(
     "//platform/external-system-api/dependency-updater",
     "//plugins/properties/properties-psi-impl:backend-psi",
     "//platform/util/concurrency",
-    "@lib//:fastutil-min",
+    "//libraries/fastutil",
     "@lib//:kotlinx-coroutines-core",
     "//platform/platform-util-io:ide-util-io",
     "//build/deps:dependencies",
@@ -100,7 +102,7 @@ jvm_library(
     "//platform/diagnostic/telemetry",
     "//platform/diagnostic/telemetry-impl",
     "//plugins/maven/maven-server-telemetry:server-telemetry",
-    "@lib//:asm",
+    "//libraries/asm",
     "//platform/eel-provider",
     "//platform/ijent",
     "//platform/eel-impl",
@@ -126,7 +128,6 @@ jvm_library(
     "//platform/external-system-api:externalSystem",
     "//platform/external-system-impl:externalSystem-impl",
     "//plugins/maven-model",
-  ],
-  runtime_deps = [":maven_resources"]
+  ]
 )
 ### auto-generated section `build intellij.maven` end

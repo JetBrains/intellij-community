@@ -18,7 +18,7 @@ jvm_library(
     "@lib//:kotlinc-kotlin-compiler-common",
     "@lib//:kotlinc-kotlin-compiler-tests",
     "//java/testFramework",
-    "@lib//:asm",
+    "//libraries/asm",
     "//plugins/kotlin/uast/uast-kotlin-base",
     "//plugins/kotlin/uast/uast-kotlin-base/tests:tests_test_lib",
     "//plugins/kotlin/uast/uast-kotlin-fir:kotlin-uast-uast-kotlin-k2",

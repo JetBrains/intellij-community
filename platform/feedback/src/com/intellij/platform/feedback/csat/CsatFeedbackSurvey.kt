@@ -5,7 +5,7 @@ import com.intellij.ide.util.PropertiesComponent
 import com.intellij.idea.AppMode
 import com.intellij.internal.statistic.eventLog.fus.MachineIdManager
 import com.intellij.openapi.application.ApplicationInfo
-import com.intellij.openapi.application.ConfigImportHelper
+import com.intellij.openapi.application.InitialConfigImportState
 import com.intellij.openapi.client.ClientKind
 import com.intellij.openapi.client.currentSessionOrNull
 import com.intellij.openapi.client.sessions
@@ -68,7 +68,7 @@ internal class CsatFeedbackSurveyConfig : InIdeFeedbackSurveyConfig {
       return false
     }
 
-    if (ConfigImportHelper.isFirstSession()) {
+    if (InitialConfigImportState.isFirstSession()) {
       LOG.debug("It's a first user session, skip the survey")
       return false
     }

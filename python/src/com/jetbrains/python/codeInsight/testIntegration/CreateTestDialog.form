@@ -9,6 +9,9 @@
       <minimumSize width="400" height="400"/>
       <preferredSize width="400" height="400"/>
     </properties>
+    <clientProperties>
+      <BorderFactoryClass class="java.lang.String" value="com.intellij.ui.IdeBorderFactory$PlainSmallWithIndent"/>
+    </clientProperties>
     <border type="none" title=""/>
     <children>
       <component id="b9f0d" class="com.intellij.openapi.ui.TextFieldWithBrowseButton" binding="myTargetDir">

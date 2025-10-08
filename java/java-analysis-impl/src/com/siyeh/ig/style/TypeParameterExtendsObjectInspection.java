@@ -108,7 +108,7 @@ public final class TypeParameterExtendsObjectInspection extends BaseInspection {
   }
 
   @Override
-  public BaseInspectionVisitor buildVisitor() {
+  public @NotNull BaseInspectionVisitor buildVisitor() {
     return new ExtendsObjectVisitor();
   }
 
@@ -125,7 +125,7 @@ public final class TypeParameterExtendsObjectInspection extends BaseInspection {
       if (!extendsType.equalsToText(CommonClassNames.JAVA_LANG_OBJECT)) {
         return;
       }
-      if (ignoreAnnotatedObject && extendsType.getAnnotations().length > 0) {
+      if (ignoreAnnotatedObject && extendsType.hasAnnotations()) {
         return;
       }
       final PsiIdentifier nameIdentifier = parameter.getNameIdentifier();
@@ -151,7 +151,7 @@ public final class TypeParameterExtendsObjectInspection extends BaseInspection {
         return;
       }
       final PsiTypeElement extendsBound = (PsiTypeElement)typeElement.getLastChild();
-      if ((ignoreAnnotatedObject && extendsBound.getAnnotations().length > 0) || !TypeUtils.isJavaLangObject(extendsBound.getType())) {
+      if ((ignoreAnnotatedObject && extendsBound.hasAnnotations()) || !TypeUtils.isJavaLangObject(extendsBound.getType())) {
         return;
       }
       final PsiElement firstChild = typeElement.getFirstChild();

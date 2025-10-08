@@ -9,6 +9,7 @@ import com.intellij.psi.impl.source.AbstractBasicJavaDocElementTypeFactory;
 import com.intellij.psi.tree.IElementType;
 import com.intellij.util.text.CharArrayUtil;
 import it.unimi.dsi.fastutil.ints.IntArrayList;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -17,8 +18,11 @@ import java.io.IOException;
 /**
  * @deprecated Use the new Java syntax library instead.
  *             See {@link com.intellij.java.syntax.parser.JavaParser}
+ *             This class is planned to be removed.
+ *             As a temporary solution, use {@link com.intellij.lang.java.lexer.JavaLexer}.
  */
 @Deprecated
+@ApiStatus.ScheduledForRemoval
 public class BasicJavaLexer extends LexerBase {
 
   private static final int STATE_DEFAULT = 0;

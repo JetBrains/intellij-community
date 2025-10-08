@@ -24,7 +24,7 @@ internal class XDebuggerStepIntoHandler : XDebuggerSmartStepIntoHandler() {
       }
     }
     if (targets.size < 2) {
-      XDebugSessionApi.getInstance().stepInto(session.id)
+      session.stepInto(ignoreBreakpoints = false)
       return true
     }
     return false

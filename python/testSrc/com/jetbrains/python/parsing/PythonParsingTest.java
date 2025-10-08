@@ -82,6 +82,30 @@ public class PythonParsingTest extends ParsingTestCase {
     doTest();
   }
 
+  public void testTryExceptAs() {   // PY-293
+    doTest();
+  }
+
+  // PY-52930
+  public void testTryExceptStarNoExpression() {
+    doTest();
+  }
+
+  // PY-84077
+  public void testTryExceptMultipleNoParensPre314() {
+    doTest(LanguageLevel.PYTHON26);
+  }
+
+  // PY-84077
+  public void testTryExceptMultipleNoParensPost314() {
+    doTest(LanguageLevel.PYTHON314);
+  }
+
+  // PY-84077
+  public void testTryExceptMultipleWithParens() {
+    doTest();
+  }
+
   public void testTryFinally() {
     doTest();
   }
@@ -109,15 +133,6 @@ public class PythonParsingTest extends ParsingTestCase {
   }
 
   public void testDecoratedFunction() {
-    doTest();
-  }
-
-  public void testTryExceptAs() {   // PY-293
-    doTest();
-  }
-
-  // PY-52930
-  public void testTryExceptStarNoExpression() {
     doTest();
   }
 

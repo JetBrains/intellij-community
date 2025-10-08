@@ -4,7 +4,7 @@ package com.intellij.python.junit5Tests.env.systemPython.impl
 import com.intellij.openapi.Disposable
 import com.intellij.openapi.application.ApplicationManager
 import com.intellij.python.community.impl.venv.createVenv
-import com.intellij.python.community.services.shared.UICustomization
+import com.jetbrains.python.PyToolUIInfo
 import com.intellij.python.community.services.systemPython.SystemPythonProvider
 import com.intellij.python.community.services.systemPython.SystemPythonService
 import com.intellij.python.junit5Tests.framework.env.PyEnvTestCase
@@ -15,14 +15,12 @@ import com.intellij.testFramework.registerExtension
 import com.jetbrains.python.PythonBinary
 import com.jetbrains.python.Result
 import com.jetbrains.python.getOrThrow
-import io.mockk.coEvery
-import io.mockk.mockk
 import org.hamcrest.MatcherAssert.assertThat
 import org.hamcrest.Matchers
-import org.junit.jupiter.api.Assertions.assertEquals
 import org.junit.jupiter.api.Assertions.assertTrue
 import org.junit.jupiter.api.Test
 import org.junit.jupiter.api.io.TempDir
+import com.intellij.platform.eel.EelApi
 import java.nio.file.Path
 
 @PyEnvTestCase
@@ -49,12 +47,17 @@ class EnvProviderTest {
     @TempDir venvDir: Path,
   ): Unit = timeoutRunBlocking {
     val venvPython = createVenv(python, venvDir).getOrThrow()
-    val ui = UICustomization("myui")
-    val provider = mockk<SystemPythonProvider>()
-    coEvery { provider.findSystemPythons(any()) } returns Result.success(setOf(venvPython))
-    coEvery { provider.uiCustomization } returns ui
+    val ui = PyToolUIInfo("myui")
+    val provider = InlineTestProvider(setOf(venvPython), ui)
     ApplicationManager.getApplication().registerExtension(SystemPythonProvider.EP, provider, disposable)
     val python = SystemPythonService().findSystemPythons(forceRefresh = true).first { it.pythonBinary == venvPython }
-    assertEquals(ui, python.ui, "Wrong UI")
+    assertTrue(ui == python.ui, "Wrong UI")
+  }
+
+  private class InlineTestProvider(
+    private val pythons: Set<PythonBinary>,
+    override val uiCustomization: PyToolUIInfo?
+  ) : SystemPythonProvider {
+    override suspend fun findSystemPythons(eelApi: EelApi) = Result.success(pythons)
   }
 }

@@ -37,7 +37,7 @@ jvm_library(
     "//platform/ide-core-impl",
     "@lib//:stream_ex",
     "//platform/code-style-impl:codeStyle-impl",
-    "@lib//:fastutil-min",
+    "//libraries/fastutil",
     "//platform/diff-impl",
     "//platform/usageView-impl",
     "//platform/util/diff",

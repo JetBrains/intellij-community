@@ -3,8 +3,16 @@ package org.jetbrains.kotlin.idea.actions
 
 import com.intellij.ide.fileTemplates.impl.CustomFileTemplate
 import com.intellij.testFramework.fixtures.BasePlatformTestCase
+import org.jetbrains.kotlin.idea.base.plugin.KotlinPluginMode
+import org.jetbrains.kotlin.idea.test.ExpectedPluginModeProvider
+import org.jetbrains.kotlin.idea.test.setUpWithKotlinPlugin
 
-class NewKotlinFileActionTest : BasePlatformTestCase() {
+class NewKotlinFileActionTest : BasePlatformTestCase(), ExpectedPluginModeProvider {
+    override val pluginMode: KotlinPluginMode = KotlinPluginMode.K1
+    override fun setUp() {
+        setUpWithKotlinPlugin { super.setUp() }
+    }
+
     private val testTemplate = CustomFileTemplate("test template", "kt").apply {
         text = """
         #if (${'$'}{PACKAGE_NAME} && ${'$'}{PACKAGE_NAME} != "")package ${'$'}{PACKAGE_NAME}

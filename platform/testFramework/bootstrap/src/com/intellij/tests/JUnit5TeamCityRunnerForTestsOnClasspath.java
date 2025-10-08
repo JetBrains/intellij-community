@@ -1,8 +1,7 @@
 // Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.tests;
 
-import jetbrains.buildServer.messages.serviceMessages.Message;
-import jetbrains.buildServer.messages.serviceMessages.ServiceMessage;
+import jetbrains.buildServer.messages.serviceMessages.*;
 import org.junit.platform.engine.*;
 import org.junit.platform.engine.discovery.ClassNameFilter;
 import org.junit.platform.engine.discovery.DiscoverySelectors;
@@ -15,8 +14,6 @@ import org.junit.platform.launcher.core.LauncherFactory;
 import org.junit.vintage.engine.descriptor.VintageTestDescriptor;
 
 import java.io.IOException;
-import java.io.StringWriter;
-import java.io.PrintWriter;
 import java.lang.invoke.MethodHandle;
 import java.lang.invoke.MethodHandles;
 import java.lang.invoke.MethodType;
@@ -25,28 +22,22 @@ import java.nio.file.Path;
 import java.util.*;
 import java.util.stream.Collectors;
 
-import static jetbrains.buildServer.messages.serviceMessages.ServiceMessageTypes.BUILD_PORBLEM;
-
 // Used to run JUnit 5 tests via JUnit 5 runtime
 @SuppressWarnings({"UseOfSystemOutOrSystemErr", "CallToPrintStackTrace"})
 public final class JUnit5TeamCityRunnerForTestsOnClasspath {
-  public static void reportFailureAsBuildProblem(Throwable e) {
-    int messageSplitThreshold = 4_000;
-    StringWriter sw = new StringWriter();
-    PrintWriter pw = new PrintWriter(sw);
-    e.printStackTrace(pw);
-    String stackTrace = sw.toString();
-    for (int i = 0; i < stackTrace.length(); i += messageSplitThreshold) {
-      int endIndex = Math.min(i + messageSplitThreshold, stackTrace.length());
-      String chunk = stackTrace.substring(i, endIndex);
-      System.out.println(new Message(chunk, "FAILURE", null).asString());
-    }
-
-    System.out.println(ServiceMessage.asString(BUILD_PORBLEM,
-                                               Collections.singletonMap("description", stackTrace.substring(0, messageSplitThreshold))));
-  }
-
   private static final String ourCollectTestsFile = System.getProperty("intellij.build.test.list.classes");
+
+  public static void assertNoUnhandledExceptions(String kind, Throwable e) {
+    String runConfigurationName = System.getProperty("intellij.build.run.configuration.name");
+    final String testName =
+      kind + ".assertNoUnhandledExceptions" + (runConfigurationName == null ? "" : ("(" + runConfigurationName + ")"));
+
+    System.out.println(new TestStarted(testName, true, null));
+    if (e != null) {
+      System.out.println(new TestFailed(testName, e));
+    }
+    System.out.println(new TestFinished(testName, 0));
+  }
 
   public static void main(String[] args) {
     try {
@@ -100,10 +91,11 @@ public final class JUnit5TeamCityRunnerForTestsOnClasspath {
       }
     }
     catch (Throwable e) {
-      reportFailureAsBuildProblem(e);
+      assertNoUnhandledExceptions("JUnit5TeamCityRunnerForTestsOnClasspath", e);
       System.exit(1);
     }
     finally {
+      assertNoUnhandledExceptions("JUnit5TeamCityRunnerForTestsOnClasspath", null);
       System.exit(0);
     }
   }

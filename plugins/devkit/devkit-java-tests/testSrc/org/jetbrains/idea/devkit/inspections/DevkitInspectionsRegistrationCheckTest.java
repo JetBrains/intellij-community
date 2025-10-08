@@ -12,14 +12,13 @@ import java.util.stream.Stream;
 
 public class DevkitInspectionsRegistrationCheckTest extends BasePlatformTestCase {
 
-  private static final int EXPECTED_INSPECTIONS_NUMBER = 84;
+  private static final int EXPECTED_INSPECTIONS_NUMBER = 85;
 
   /**
    * Inspections that are finished and intentionally disabled.
    */
   private static final List<String> DISABLED_INSPECTIONS =
     Stream.of(
-      "ModuleNotRegisteredAsPluginContent",
       "SerializableCtor",
       "StatisticsCollectorNotRegistered"
     ).sorted().toList();

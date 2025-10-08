@@ -11,6 +11,7 @@ import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.wm.IdeFrame;
 import com.intellij.openapi.wm.WindowManager;
 import com.intellij.openapi.wm.impl.IdeFrameImpl;
+import com.intellij.openapi.wm.impl.IdeGlassPaneImplKt;
 import com.intellij.openapi.wm.impl.ProjectFrameHelper;
 import com.intellij.platform.jbr.JdkEx;
 import com.intellij.ui.ExperimentalUI;
@@ -32,8 +33,6 @@ import org.jetbrains.annotations.Nullable;
 import javax.swing.*;
 import java.awt.*;
 import java.lang.reflect.Method;
-
-import static com.intellij.openapi.wm.impl.IdeGlassPaneImplKt.executeOnCancelInEdt;
 
 /**
  * @author Alexander Lobas
@@ -89,7 +88,7 @@ public class MacWinTabsHandler {
     if (allowed) {
       Foundation.invoke("NSWindow", "setAllowsAutomaticWindowTabbing:", true);
 
-      executeOnCancelInEdt(coroutineScope, () -> {
+      IdeGlassPaneImplKt.executeOnCancelInEdt(coroutineScope, () -> {
         updateTabBars(null);
         return Unit.INSTANCE;
       });
@@ -380,14 +379,10 @@ public class MacWinTabsHandler {
     }
 
     RecentProjectsManagerBase manager = RecentProjectsManagerBase.getInstanceEx();
-
     for (IdeFrame frame : orderedFrames) {
       Project project = frame.getProject();
       if (project != null) {
-        String path = manager.getProjectPath(project);
-        if (path != null) {
-          manager.markPathRecent(path, project);
-        }
+        manager.markPathRecent(project);
       }
     }
   }

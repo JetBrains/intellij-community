@@ -20,23 +20,14 @@ import kotlinx.coroutines.CoroutineScope
 class ProjectRootManagerBridge(project: Project, coroutineScope: CoroutineScope) : ProjectRootManagerComponent(project, coroutineScope) {
   init {
     if (!project.isDefault) {
-      moduleDependencyIndex.addListener(ModuleDependencyListenerImpl())
+      if (!Registry.`is`("use.workspace.file.index.for.partial.scanning")) {
+        moduleDependencyIndex.addListener(ModuleDependencyListenerImpl())
+      }
     }
   }
 
   private val moduleDependencyIndex
     get() = ModuleDependencyIndex.getInstance(project)
-
-  override val actionToRunWhenProjectJdkChanges: Runnable
-    get() {
-      return Runnable {
-        super.actionToRunWhenProjectJdkChanges.run()
-        if (!useWsm && moduleDependencyIndex.hasProjectSdkDependency()) {
-          val info = BuildableRootsChangeRescanningInfo.newInstance().addInheritedSdk().buildInfo()
-          fireRootsChanged(info)
-        }
-      }
-    }
 
   override fun getOrderRootsCache(project: Project): OrderRootsCache {
     return OrderRootsCacheBridge(project, project)
@@ -56,14 +47,12 @@ class ProjectRootManagerBridge(project: Project, coroutineScope: CoroutineScope)
     private var insideRootsChange = false
 
     override fun referencedLibraryAdded(library: Library) {
-      if (Registry.`is`("use.workspace.file.index.for.partial.scanning")) return
       if (shouldListen(library)) {
         fireRootsChanged(BuildableRootsChangeRescanningInfo.newInstance().addLibrary(library).buildInfo())
       }
     }
 
     override fun referencedLibraryChanged(library: Library) {
-      if (Registry.`is`("use.workspace.file.index.for.partial.scanning")) return
       if (insideRootsChange || !shouldListen(library)) return
       insideRootsChange = true
       try {

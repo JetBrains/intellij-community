@@ -64,6 +64,9 @@ interface GHPRReviewFileEditorViewModel {
   fun requestNewComment(lineIdx: Int, focus: Boolean)
   fun cancelNewComment(lineIdx: Int)
 
+  fun requestNewComment(lineRange: LineRange, focus: Boolean)
+  fun updateCommentLines(oldLineRange: LineRange, newLineRange: LineRange)
+
   fun showDiff(lineIdx: Int?)
 
   val isViewedState: StateFlow<ComputedResult<Boolean>>
@@ -126,7 +129,7 @@ internal class GHPRReviewFileEditorViewModelImpl(
     allMappedThreads.mapState { map -> map.filterValues { it.change == change } }
 
   override val threads: StateFlow<Collection<GHPRReviewFileEditorThreadViewModel>> =
-    threadsVm.compactThreads.mapModelsToViewModels { sharedVm ->
+    threadsVm.compactThreads.mapStatefulToStateful { sharedVm ->
       MappedGHPRReviewEditorThreadViewModel(this, sharedVm, mappedThreads.mapNotNull { it[sharedVm.id] })
     }.stateInNow(cs, emptyList())
 
@@ -137,7 +140,7 @@ internal class GHPRReviewFileEditorViewModelImpl(
 
   private val newCommentsContainer =
     MappingScopedItemsContainer.byIdentity<GHPRReviewNewCommentEditorViewModel, GHPRReviewFileEditorNewCommentViewModel>(cs) {
-      GHPRReviewFileEditorNewCommentViewModelImpl(it.position.location, it)
+      GHPRReviewFileEditorNewCommentViewModelImpl(it.position, it)
     }
   override val newComments: StateFlow<Collection<GHPRReviewFileEditorNewCommentViewModel>> =
     newCommentsContainer.mappingState.mapState { it.values }
@@ -145,7 +148,7 @@ internal class GHPRReviewFileEditorViewModelImpl(
   init {
     cs.launchNow {
       threadsVm.newComments.collect { comments ->
-        val commentsForChange = comments.values.filter { it.position.change == change && it.position.location.side == Side.RIGHT }
+        val commentsForChange = comments.filter { it.position.value.change == change && it.position.value.location.side == Side.RIGHT }
         newCommentsContainer.update(commentsForChange)
       }
     }
@@ -192,10 +195,28 @@ internal class GHPRReviewFileEditorViewModelImpl(
     }
   }
 
-  override fun cancelNewComment(lineIdx: Int) {
-    val position = GHPRReviewCommentPosition(change, GHPRReviewCommentLocation.SingleLine(Side.RIGHT, lineIdx))
-    threadsVm.cancelNewComment(position)
+  override fun requestNewComment(lineRange: LineRange, focus: Boolean) {
+    val position = GHPRReviewCommentPosition(change, GHPRReviewCommentLocation.MultiLine(Side.RIGHT, lineRange.start, lineRange.end))
+    val sharedVm = threadsVm.requestNewComment(position)
+    if (focus) {
+      cs.launchNow {
+        newCommentsContainer.addIfAbsent(sharedVm).requestFocus()
+      }
+    }
   }
+
+  override fun updateCommentLines(oldLineRange: LineRange, newLineRange: LineRange) =
+    threadsVm.newComments.value.firstOrNull {
+      when (val loc = it.position.value.location) {
+        is GHPRReviewCommentLocation.SingleLine -> loc.lineIdx == oldLineRange.end
+        is GHPRReviewCommentLocation.MultiLine -> loc.startLineIdx == oldLineRange.start && loc.lineIdx == oldLineRange.end
+      }
+    }?.updateLineRange(newLineRange) ?: Unit
+
+
+  override fun cancelNewComment(lineIdx: Int) =
+    threadsVm.cancelNewComment(change, Side.RIGHT, lineIdx)
+
 
   override fun showDiff(lineIdx: Int?) {
     showDiff(change, lineIdx)

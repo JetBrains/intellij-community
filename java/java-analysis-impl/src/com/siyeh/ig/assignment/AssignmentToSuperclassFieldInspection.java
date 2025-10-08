@@ -23,7 +23,7 @@ public final class AssignmentToSuperclassFieldInspection extends BaseInspection 
   }
 
   @Override
-  public BaseInspectionVisitor buildVisitor() {
+  public @NotNull BaseInspectionVisitor buildVisitor() {
     return new AssignmentToSuperclassFieldVisitor();
   }
 

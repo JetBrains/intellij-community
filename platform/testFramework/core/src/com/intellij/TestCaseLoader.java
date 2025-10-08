@@ -5,8 +5,7 @@ import com.intellij.idea.ExcludeFromTestDiscovery;
 import com.intellij.idea.IJIgnore;
 import com.intellij.idea.IgnoreJUnit3;
 import com.intellij.nastradamus.NastradamusClient;
-import com.intellij.openapi.application.PathManager;
-import com.intellij.openapi.util.io.FileUtilRt;
+import com.intellij.openapi.application.ArchivedCompilationContextUtil;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.testFramework.*;
 import com.intellij.testFramework.bucketing.*;
@@ -138,22 +137,6 @@ public class TestCaseLoader {
     }
     return scheme;
   });
-
-  /**
-   * @deprecated use `TestCaseLoader.Builder.defaults().withTestGroupsResourcePath(classFilterName).build();` instead
-   */
-  @Deprecated(forRemoval = true)
-  public TestCaseLoader(String classFilterName) {
-    this(classFilterName, false);
-  }
-
-  /**
-   * @deprecated use `TestCaseLoader.Builder.defaults().withTestGroupsResourcePath(classFilterName).withForceLoadPerformanceTests(flag).build();` instead
-   */
-  @Deprecated(forRemoval = true)
-  public TestCaseLoader(String classFilterName, boolean forceLoadPerformanceTests) {
-    this(getFilter(getTestPatterns(), classFilterName, getTestGroups(), false), forceLoadPerformanceTests);
-  }
 
   private TestCaseLoader(TestClassesFilter filter, boolean forceLoadPerformanceTests) {
     myForceLoadPerformanceTests = forceLoadPerformanceTests;
@@ -620,19 +603,7 @@ public class TestCaseLoader {
     if (myGetClassesCalled) {
       throw new IllegalStateException("Cannot fill more classes after 'getClasses' was already called");
     }
-
-    String relevantJarsRoot = System.getProperty("intellij.test.jars.location");
-
-    Path currentJarPath = PathManager.getJarForClass(getClass());
-    if (relevantJarsRoot == null && currentJarPath != null) {
-      String bazelOutSubstring = "out/bazel-out";
-      int bazelOutPathIndex = FileUtilRt.toSystemIndependentName(currentJarPath.toString()).indexOf(bazelOutSubstring);
-      if (bazelOutPathIndex > 0) {
-        // Was compiled by Bazel, let's set a relevant compilation root if it was not set yet
-        relevantJarsRoot = currentJarPath.toString().substring(0, bazelOutPathIndex + 1 + bazelOutSubstring.length());
-      }
-    }
-
+    String relevantJarsRoot = ArchivedCompilationContextUtil.getArchivedCompiledClassesLocation();
     boolean noRelevantJarsRoot = StringUtil.isEmptyOrSpaces(relevantJarsRoot);
     long t = System.nanoTime();
 

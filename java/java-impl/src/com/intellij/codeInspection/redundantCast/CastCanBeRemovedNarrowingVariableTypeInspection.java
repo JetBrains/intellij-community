@@ -27,7 +27,7 @@ public final class CastCanBeRemovedNarrowingVariableTypeInspection extends Abstr
       @Override
       public void visitTypeCastExpression(@NotNull PsiTypeCastExpression cast) {
         PsiTypeElement castTypeElement = cast.getCastType();
-        if (castTypeElement == null || castTypeElement.getAnnotations().length > 0) return;
+        if (castTypeElement == null || castTypeElement.hasAnnotations()) return;
         PsiType castType = GenericsUtil.getVariableTypeByExpressionType(cast.getType());
         if (!(castType instanceof PsiClassType) || ((PsiClassType)castType).isRaw()) return;
         PsiReferenceExpression ref = tryCast(PsiUtil.skipParenthesizedExprDown(cast.getOperand()), PsiReferenceExpression.class);

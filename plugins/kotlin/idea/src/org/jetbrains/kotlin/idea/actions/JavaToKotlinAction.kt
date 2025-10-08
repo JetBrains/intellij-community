@@ -38,7 +38,6 @@ import org.jetbrains.kotlin.idea.base.plugin.KotlinPluginModeProvider.Companion.
 import org.jetbrains.kotlin.idea.base.resources.KotlinBundle
 import org.jetbrains.kotlin.idea.base.util.KotlinPlatformUtils
 import org.jetbrains.kotlin.idea.codeinsight.utils.commitAndUnblockDocument
-import org.jetbrains.kotlin.idea.configuration.ExperimentalFeatures.NewJ2k
 import org.jetbrains.kotlin.idea.core.util.toPsiDirectory
 import org.jetbrains.kotlin.idea.core.util.toPsiFile
 import org.jetbrains.kotlin.idea.statistics.ConversionType
@@ -336,6 +335,6 @@ class JavaToKotlinAction : AnAction() {
 
 private fun getJ2kKind(forceUsingOldJ2k: Boolean = false): J2kConverterExtension.Kind = when {
     isK2Mode() -> K2
-    forceUsingOldJ2k || !NewJ2k.isEnabled -> K1_OLD
+    forceUsingOldJ2k -> K1_OLD
     else -> K1_NEW
 }

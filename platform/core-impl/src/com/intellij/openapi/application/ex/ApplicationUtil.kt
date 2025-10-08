@@ -137,6 +137,7 @@ object ApplicationUtil {
     }
   }
 
+  @ApiStatus.Internal
   @Suppress("DeprecatedCallableAddReplaceWith")
   @Deprecated(message = "Use withContext with proper dispatcher, or readAndWriteAction for read followed by write")
   @JvmStatic
@@ -148,6 +149,7 @@ object ApplicationUtil {
     }
   }
 
+  @ApiStatus.Internal
   @Deprecated(message = "Use withContext with proper dispatcher, or readAndWriteAction for read followed by write")
   @JvmStatic
   fun invokeAndWaitSomewhere(thread: EdtReplacementThread, modalityState: ModalityState, r: Runnable) {

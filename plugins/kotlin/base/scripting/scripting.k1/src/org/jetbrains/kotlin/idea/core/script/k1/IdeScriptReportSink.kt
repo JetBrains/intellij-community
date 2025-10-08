@@ -27,7 +27,7 @@ class IdeScriptReportSink(
         coroutineScope.launch {
           readAction {
             PsiManager.getInstance(project).findFile(scriptFile)?.let {
-              DaemonCodeAnalyzer.getInstance(project).restart(it)
+              DaemonCodeAnalyzer.getInstance(project).restart(it, this)
             }
 
             EditorNotifications.getInstance(project).updateAllNotifications()

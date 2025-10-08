@@ -2,14 +2,14 @@
 package com.intellij.platform.execution.dashboard.actions;
 
 import com.intellij.execution.dashboard.RunDashboardRunConfigurationNode;
+import com.intellij.execution.dashboard.actions.ExecutorAction;
 import com.intellij.execution.impl.ExecutionManagerImpl;
-import com.intellij.execution.ui.RunContentManagerImpl;
 import com.intellij.openapi.actionSystem.ActionUpdateThread;
 import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.actionSystem.Presentation;
+import com.intellij.openapi.actionSystem.remoting.ActionRemoteBehaviorSpecification;
 import com.intellij.openapi.project.DumbAwareAction;
 import com.intellij.openapi.project.Project;
-import com.intellij.ui.content.Content;
 import com.intellij.util.containers.JBIterable;
 import org.jetbrains.annotations.NotNull;
 
@@ -18,8 +18,8 @@ import static com.intellij.execution.dashboard.actions.RunDashboardActionUtils.g
 /**
  * @author konstantin.aleev
  */
-// fixme again executor action - ask Lera?
-final class StopAction extends DumbAwareAction {
+final class StopAction extends DumbAwareAction
+  implements ActionRemoteBehaviorSpecification.FrontendOtherwiseBackend {
 
   @Override
   public @NotNull ActionUpdateThread getActionUpdateThread() {
@@ -37,8 +37,7 @@ final class StopAction extends DumbAwareAction {
 
     JBIterable<RunDashboardRunConfigurationNode> targetNodes = getLeafTargets(e);
     boolean enabled = targetNodes.filter(node -> {
-      Content content = node.getContent();
-      return content != null && !RunContentManagerImpl.isTerminated(content);
+      return ExecutorAction.isRunning(node);
     }).isNotEmpty();
     presentation.setEnabled(enabled);
     presentation.setVisible(enabled || !e.isFromContextMenu());

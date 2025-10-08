@@ -3,7 +3,7 @@ package org.jetbrains.kotlin.idea.completion.impl.k2.checkers
 
 import org.jetbrains.kotlin.analysis.api.KaExperimentalApi
 import org.jetbrains.kotlin.analysis.api.KaImplementationDetail
-import org.jetbrains.kotlin.analysis.api.components.KaCompletionCandidateChecker
+import org.jetbrains.kotlin.analysis.api.KaSession
 import org.jetbrains.kotlin.analysis.api.components.KaCompletionExtensionCandidateChecker
 import org.jetbrains.kotlin.analysis.api.components.KaExtensionApplicabilityResult
 import org.jetbrains.kotlin.analysis.api.components.createExtensionCandidateChecker
@@ -41,8 +41,7 @@ internal class KtCompletionExtensionCandidateChecker private constructor(
         }
 
     companion object {
-
-        context(_: KaCompletionCandidateChecker)
+        context(_: KaSession)
         fun create(
             originalFile: KtFile,
             nameExpression: KtSimpleNameExpression,

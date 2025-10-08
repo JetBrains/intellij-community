@@ -1,6 +1,7 @@
 // Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.plugins.gradle.frameworkSupport.buildscript
 
+import com.intellij.gradle.toolingExtension.util.GradleVersionSpecificsUtil
 import com.intellij.gradle.toolingExtension.util.GradleVersionUtil
 import com.intellij.openapi.util.text.StringUtil
 import org.gradle.util.GradleVersion
@@ -73,8 +74,14 @@ abstract class AbstractGradleBuildScriptBuilder<Self : GradleBuildScriptBuilder<
       }
     }
 
-  override fun configureTestTask(configure: GradleScriptTreeBuilder.() -> Unit): Self =
+  override fun test(configure: GradleScriptTreeBuilder.() -> Unit): Self =
     configureTask("test", "Test", configure)
+
+  override fun compileJava(configure: GradleScriptTreeBuilder.() -> Unit): Self =
+    configureTask("compileJava", "JavaCompile", configure)
+
+  override fun compileTestJava(configure: GradleScriptTreeBuilder.() -> Unit): Self =
+    configureTask("compileTestJava", "JavaCompile", configure)
 
   override fun addDependency(scope: String, dependency: String, sourceSet: String?): Self =
     addDependency(scope, string(dependency), sourceSet)
@@ -150,11 +157,35 @@ abstract class AbstractGradleBuildScriptBuilder<Self : GradleBuildScriptBuilder<
       }
     }
 
+  override fun withJava(configure: GradleScriptTreeBuilder.() -> Unit): Self =
+    withExtension("java", configure)
+
   override fun withJavaPlugin(): Self =
     withPlugin("java")
 
   override fun withJavaLibraryPlugin(): Self =
     withPlugin("java-library")
+
+  override fun withJavaToolchain(languageVersion: Int): Self = apply {
+    assert(GradleVersionSpecificsUtil.isJavaToolchainSupported(gradleVersion)) {
+      "$gradleVersion doesn't support Java toolchains"
+    }
+    withJava {
+      call("toolchain") {
+        when (gradleDsl) {
+          GradleDsl.GROOVY -> {
+            assign("languageVersion", call("JavaLanguageVersion.of", int(languageVersion)))
+          }
+          GradleDsl.KOTLIN -> {
+            when (GradleVersionSpecificsUtil.isKotlinPropertyAssignmentSupported(gradleVersion)) {
+              true -> assign("languageVersion", call("JavaLanguageVersion.of", int(languageVersion)))
+              else -> call("languageVersion.set", call("JavaLanguageVersion.of", int(languageVersion)))
+            }
+          }
+        }
+      }
+    }
+  }
 
   override fun withIdeaPlugin(): Self =
     withPlugin("idea")
@@ -180,6 +211,9 @@ abstract class AbstractGradleBuildScriptBuilder<Self : GradleBuildScriptBuilder<
 
   override fun withKotlinMultiplatformPlugin(): Self =
     withPlugin("org.jetbrains.kotlin.multiplatform", kotlinVersion)
+
+  override fun withKotlin(configure: GradleScriptTreeBuilder.() -> Unit): Self =
+    withExtension("kotlin", configure)
 
   override fun withKotlinJvmToolchain(jvmTarget: Int): Self =
     withKotlin {
@@ -208,20 +242,24 @@ abstract class AbstractGradleBuildScriptBuilder<Self : GradleBuildScriptBuilder<
     }
   }
 
+  override fun withApplicationPlugin(): Self =
+    withPlugin("application")
+
+  override fun withApplication(configure: GradleScriptTreeBuilder.() -> Unit): Self =
+    withExtension("application", configure)
+
   override fun withApplicationPlugin(
     mainClass: String?,
     mainModule: String?,
     executableDir: String?,
     defaultJvmArgs: List<String>?,
   ): Self = apply {
-    withPlugin("application")
-    withPostfix {
-      callIfNotEmpty("application") {
-        assignIfNotNull("mainModule", mainModule)
-        assignIfNotNull("mainClass", mainClass)
-        assignIfNotNull("executableDir", executableDir)
-        assignIfNotNull("applicationDefaultJvmArgs", defaultJvmArgs?.toTypedArray()?.let { list(*it) })
-      }
+    withApplicationPlugin()
+    withApplication {
+      assignIfNotNull("mainModule", mainModule)
+      assignIfNotNull("mainClass", mainClass)
+      assignIfNotNull("executableDir", executableDir)
+      assignIfNotNull("applicationDefaultJvmArgs", defaultJvmArgs?.toTypedArray()?.let { list(*it) })
     }
   }
 
@@ -231,14 +269,14 @@ abstract class AbstractGradleBuildScriptBuilder<Self : GradleBuildScriptBuilder<
         withMavenCentral()
         // The kotlin-test dependency version is inherited from the Kotlin plugin
         addTestImplementationDependency("org.jetbrains.kotlin:kotlin-test")
-        configureTestTask {
+        test {
           call("useJUnitPlatform")
         }
       }
       GradleDsl.KOTLIN -> {
         withMavenCentral()
         addTestImplementationDependency(call("kotlin", "test"))
-        configureTestTask {
+        test {
           call("useJUnitPlatform")
         }
       }
@@ -274,7 +312,7 @@ abstract class AbstractGradleBuildScriptBuilder<Self : GradleBuildScriptBuilder<
         addTestRuntimeOnlyDependency("org.junit.jupiter:junit-jupiter-engine:$junit5Version")
       }
     }
-    configureTestTask {
+    test {
       call("useJUnitPlatform")
     }
   }
@@ -350,7 +388,6 @@ abstract class AbstractGradleBuildScriptBuilder<Self : GradleBuildScriptBuilder<
         }
       }
       GradleDsl.KOTLIN -> {
-
         call("mavenLocal") {
           assign("url", call("uri", url))
         }

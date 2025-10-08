@@ -237,14 +237,6 @@ class MavenSyncConsole(private val myProject: Project) : MavenEventHandler, Mave
   }
 
   @Synchronized
-  @ApiStatus.ScheduledForRemoval
-  @ApiStatus.Internal
-  @Deprecated("use {@link #addException(Throwable)}", ReplaceWith("addException(e)"))
-  fun addException(e: Throwable, ignoredProgressListener: BuildProgressListener) {
-    addException(e)
-  }
-
-  @Synchronized
   @ApiStatus.Internal
   fun addException(e: Throwable) {
     if (started && !finished) {

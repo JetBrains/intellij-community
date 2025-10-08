@@ -15,11 +15,12 @@ import com.intellij.openapi.editor.impl.DocumentMarkupModel;
 import com.intellij.openapi.editor.markup.HighlighterLayer;
 import com.intellij.openapi.editor.markup.MarkupModel;
 import com.intellij.openapi.editor.markup.RangeHighlighter;
-import com.intellij.openapi.fileEditor.FileDocumentManager;
-import com.intellij.openapi.fileEditor.FileEditorManager;
-import com.intellij.openapi.fileEditor.TextEditor;
+import com.intellij.openapi.fileEditor.*;
+import com.intellij.openapi.fileEditor.ex.FileEditorManagerEx;
 import com.intellij.openapi.fileEditor.impl.FileEditorManagerImpl;
+import com.intellij.openapi.project.Project;
 import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.platform.ide.progress.TasksKt;
 import com.intellij.psi.PsiComment;
 import com.intellij.psi.PsiElement;
 import com.intellij.testFramework.CoroutineKt;
@@ -35,7 +36,6 @@ import java.util.List;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicBoolean;
 
-import static com.intellij.codeInsight.daemon.impl.HelperKt.openTextEditorForDaemonTest;
 import static com.intellij.openapi.fileEditor.impl.EditorHistoryManagerTestKt.overrideFileEditorManagerImplementation;
 
 public class HighlightingMarkupGraveTest extends DaemonAnalyzerTestCase {
@@ -129,7 +129,7 @@ public class HighlightingMarkupGraveTest extends DaemonAnalyzerTestCase {
       CoroutineKt.executeSomeCoroutineTasksAndDispatchAllInvocationEvents(myProject);
       LaterInvocator.purgeExpiredItems();
       LaterInvocator.dispatchPendingFlushes();
-      DaemonCodeAnalyzer.getInstance(getProject()).restart();
+      DaemonCodeAnalyzer.getInstance(getProject()).restart(this);
     }
     try {
       GCWatcher.tracking(FileDocumentManager.getInstance().getDocument(virtualFile)).ensureCollected();
@@ -177,6 +177,12 @@ public class HighlightingMarkupGraveTest extends DaemonAnalyzerTestCase {
         }
       });
     });
+  }
+
+  private TextEditor openTextEditorForDaemonTest(Project project, VirtualFile file) {
+    List<FileEditor> editors = TasksKt.runWithModalProgressBlocking(project, "", (_1, _2) ->
+      FileEditorManagerEx.getInstanceEx(project).openFile(file));
+    return ContainerUtil.findInstance(editors, TextEditor.class);
   }
 }
 

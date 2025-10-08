@@ -19,8 +19,8 @@ jvm_library(
     "//plugins/kotlin/plugin/k2",
     "//java/testFramework",
     "@lib//:kotlin-stdlib",
-    "@lib//:kotlin-reflect",
-    "@lib//:gson",
+    "//libraries/kotlin-reflect",
+    "//libraries/gson",
     "@lib//:kotlinc-analysis-api",
     "@lib//:kotlinc-kotlin-compiler-tests",
     "//plugins/kotlin/base/util",
@@ -58,6 +58,7 @@ jvm_library(
     "//plugins/kotlin/gradle/gradle-java",
     "//plugins/kotlin/gradle/gradle-java:gradle-java_test_lib",
     "//plugins/kotlin/base/scripting/scripting.k2",
+    "//plugins/kotlin/base/scripting/scripting.k2:scripting.k2_test_lib",
     "//plugins/kotlin/base/scripting/scripting.shared",
   ]
 )

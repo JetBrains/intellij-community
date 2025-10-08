@@ -1,12 +1,16 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.psi.search;
 
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.util.Ref;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.PsiFileSystemItem;
 import com.intellij.psi.PsiManager;
-import com.intellij.util.*;
+import com.intellij.util.ArrayUtilRt;
+import com.intellij.util.Processor;
+import com.intellij.util.Processors;
+import com.intellij.util.SmartList;
 import com.intellij.util.containers.CollectionFactory;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.HashingStrategy;
@@ -66,7 +70,13 @@ public final class FilenameIndex {
     return getVirtualFilesByName(name, scope);
   }
 
-  public static @NotNull @Unmodifiable Collection<VirtualFile> getVirtualFilesByName(@NotNull String name, @NotNull GlobalSearchScope scope) {
+  /**
+   * BEWARE: if you use this method to check if _any_ matching file exist, or to get the _first_ file -- consider using
+   * {@link #hasVirtualFileWithName(String, boolean, GlobalSearchScope, IdFilter)} or {@link #firstVirtualFileWithName(String, boolean, GlobalSearchScope, IdFilter)}
+   * methods instead
+   */
+  public static @NotNull @Unmodifiable Collection<VirtualFile> getVirtualFilesByName(@NotNull String name,
+                                                                                     @NotNull GlobalSearchScope scope) {
     return getVirtualFilesByNames(Set.of(name), scope, null);
   }
 
@@ -126,6 +136,10 @@ public final class FilenameIndex {
     return result[0];
   }
 
+  /**
+   * @param caseSensitively BEWARE: <b>case-insensitive lookup is quite expensive</b>, it involves full-scan over index!
+   * @return true if all the matching files were scanned, false if scanning was stopped early because the processor returns false
+   */
   public static boolean processFilesByName(@NotNull String name,
                                            boolean caseSensitively,
                                            @NotNull GlobalSearchScope scope,
@@ -133,15 +147,27 @@ public final class FilenameIndex {
     return processFilesByNames(Set.of(name), caseSensitively, scope, null, processor);
   }
 
+  /**
+   * @param caseSensitively BEWARE: <b>case-insensitive lookup is quite expensive</b>, it involves full-scan over index!
+   * @return true if all the matching files were scanned, false if scanning was stopped early because the processor returns false
+   */
   public static boolean processFilesByNames(@NotNull Set<String> names,
                                             boolean caseSensitively,
                                             @NotNull GlobalSearchScope scope,
                                             @Nullable IdFilter idFilter,
                                             @NotNull Processor<? super VirtualFile> processor) {
     if (names.isEmpty()) return true;
-    Collection<VirtualFile> files = caseSensitively ? getVirtualFilesByNames(names, scope, idFilter) :
-                                    getVirtualFilesByNamesIgnoringCase(names, scope, idFilter);
-    return ContainerUtil.process(files, processor);
+
+    if (caseSensitively) {
+      return FileBasedIndex.getInstance().processFilesContainingAnyKey(
+        NAME, names, scope, idFilter, /*valueChecker: */null,
+        new ProcessorWithThrottledCancellationCheck<>(processor)
+      );
+    }
+    else {
+      Collection<VirtualFile> files = getVirtualFilesByNamesIgnoringCase(names, scope, idFilter);
+      return ContainerUtil.process(files, processor);
+    }
   }
 
   private static @NotNull @Unmodifiable Set<VirtualFile> getVirtualFilesByNamesIgnoringCase(@NotNull Set<String> names,
@@ -221,5 +247,28 @@ public final class FilenameIndex {
       })
     );
     return files;
+  }
+
+  /** @param caseSensitively BEWARE: <b>case-insensitive lookup is quite expensive</b>, it involves full-scan over index! */
+  @ApiStatus.Experimental
+  public static boolean hasVirtualFileWithName(@NotNull String name,
+                                               boolean caseSensitively,
+                                               @NotNull GlobalSearchScope scope,
+                                               @Nullable IdFilter filter) {
+    return !processFilesByNames(Set.of(name), caseSensitively, scope, filter, file -> false);
+  }
+
+  /** @param caseSensitively BEWARE: <b>case-insensitive lookup is quite expensive</b>, it involves full-scan over index! */
+  @ApiStatus.Experimental
+  public static @Nullable VirtualFile firstVirtualFileWithName(@NotNull String name,
+                                                               boolean caseSensitively,
+                                                               @NotNull GlobalSearchScope scope,
+                                                               @Nullable IdFilter filter) {
+    Ref<VirtualFile> found = new Ref<>(null);
+    processFilesByNames(Set.of(name), caseSensitively, scope, filter, file -> {
+      found.set(file);
+      return false;
+    });
+    return found.get();
   }
 }

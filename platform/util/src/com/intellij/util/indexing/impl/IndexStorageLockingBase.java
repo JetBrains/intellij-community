@@ -34,9 +34,21 @@ public abstract class IndexStorageLockingBase {
    */
   public static final boolean MAKE_INDEX_LOOKUP_CANCELLABLE = getBooleanProperty("intellij.index.cancellable-lookup", true);
 
+  private final ThreadLocal<Integer> readLockCount = new ThreadLocal<>();
   private final ReentrantReadWriteLock lock = new ReentrantReadWriteLock();
   //cache the handles to avoid allocations on fast path:
-  private transient final LockStamp readLockUnlockHandle = lock.readLock()::unlock;
+  private transient final LockStamp readLockUnlockHandle = () -> {
+    Integer count = readLockCount.get();
+    if (count != null) {
+      if (count <= 1) {
+        readLockCount.remove();
+      }
+      else {
+        readLockCount.set(count - 1);
+      }
+    }
+    lock.readLock().unlock();
+  };
   private transient final LockStamp writeLockUnlockHandle = lock.writeLock()::unlock;
 
   protected IndexStorageLockingBase() {
@@ -50,7 +62,7 @@ public abstract class IndexStorageLockingBase {
     else {
       readLock.lock();
     }
-
+    readLockCount.set(readLockCount.get() == null ? 1 : readLockCount.get() + 1);
     return readLockUnlockHandle;
   }
 
@@ -77,7 +89,16 @@ public abstract class IndexStorageLockingBase {
     }
   }
 
+  @ApiStatus.Internal
+  public boolean isReadLockHeldByCurrentThread() {
+    Integer count = readLockCount.get();
+    return count != null && count > 0;
+  }
+
   protected @NotNull LockStamp lockForWrite() {
+    if (isReadLockHeldByCurrentThread()) {
+      throw new IllegalStateException("Cannot acquire write lock while read lock is held");
+    }
     ReentrantReadWriteLock.WriteLock writeLock = lock.writeLock();
     writeLock.lock();
     return writeLockUnlockHandle;

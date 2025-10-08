@@ -79,7 +79,7 @@ public final class ExtendsClassChecker extends DomCustomAnnotationChecker<Extend
     Set<PsiClass> toExtend =
       Arrays.stream(names)
         .filter(Objects::nonNull)
-        .map(name -> findClass(project, name))
+        .map(name -> findClass(name, value.getResolveScope(), project))
         .filter(Objects::nonNull)
         .collect(Collectors.toSet());
 
@@ -141,10 +141,9 @@ public final class ExtendsClassChecker extends DomCustomAnnotationChecker<Extend
     return list;
   }
 
-  private static @Nullable PsiClass findClass(Project project, String qualifiedName) {
+  private static @Nullable PsiClass findClass(String qualifiedName, GlobalSearchScope searchScope, Project project) {
     JavaPsiFacade javaPsiFacade = JavaPsiFacade.getInstance(project);
-    // prioritize project scope:
-    PsiClass aClass = javaPsiFacade.findClass(qualifiedName, GlobalSearchScope.projectScope(project));
+    PsiClass aClass = javaPsiFacade.findClass(qualifiedName, searchScope);
     if (aClass != null) return aClass;
     // fall back to all scope:
     return javaPsiFacade.findClass(qualifiedName, GlobalSearchScope.allScope(project));

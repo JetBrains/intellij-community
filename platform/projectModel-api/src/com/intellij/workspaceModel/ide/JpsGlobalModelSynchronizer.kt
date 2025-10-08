@@ -2,17 +2,18 @@
 package com.intellij.workspaceModel.ide
 
 import com.intellij.openapi.components.service
-import com.intellij.platform.backend.workspace.GlobalWorkspaceModelCache
+import com.intellij.platform.backend.workspace.InternalEnvironmentName
 import com.intellij.platform.workspace.storage.MutableEntityStorage
 import com.intellij.platform.workspace.storage.VersionedEntityStorage
 import com.intellij.platform.workspace.storage.url.VirtualFileUrlManager
+import com.intellij.util.concurrency.annotations.RequiresBlockingContext
 import kotlinx.coroutines.Job
 import org.jetbrains.annotations.ApiStatus
 
 @ApiStatus.Internal
 interface JpsGlobalModelSynchronizer {
   fun loadInitialState(
-    environmentName: GlobalWorkspaceModelCache.InternalEnvironmentName,
+    environmentName: InternalEnvironmentName,
     mutableStorage: MutableEntityStorage,
     initialEntityStorage: VersionedEntityStorage,
     loadedFromCache: Boolean,
@@ -36,7 +37,11 @@ interface JpsGlobalModelSynchronizer {
 
   fun setVirtualFileUrlManager(vfuManager: VirtualFileUrlManager)
 
+  suspend fun saveGlobalEntities() {
+  }
+
   companion object {
+    @RequiresBlockingContext
     fun getInstance(): JpsGlobalModelSynchronizer = service()
   }
 }

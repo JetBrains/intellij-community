@@ -1,4 +1,4 @@
-<idea-plugin>
+<idea-plugin visibility="public">
   <dependencies>
     <module name="intellij.platform.vcs.impl"/>
     <module name="intellij.platform.vcs.log"/>
@@ -100,7 +100,7 @@
 
     <virtualFileSystem key="vcs-log" implementationClass="com.intellij.vcs.log.ui.editor.VcsLogVirtualFileSystem"/>
     <fileIconProvider implementation="com.intellij.vcs.log.ui.editor.VcsLogIconProvider"/>
-    <fileEditorProvider id="VcsLogEditor" implementation="com.intellij.vcs.log.ui.editor.VcsLogEditorProvider" fileType="VcsLog"/>
+    <fileEditorProvider id="VcsLogEditor" implementation="com.intellij.vcs.log.ui.editor.VcsLogEditorProvider"/>
     <editorTabTitleProvider implementation="com.intellij.vcs.log.ui.editor.DefaultVcsLogFileTabTitleProvider"/>
     <openTelemetryExporterProvider implementation="com.intellij.vcs.log.statistics.VcsLogTelemetryExporter"/>
 

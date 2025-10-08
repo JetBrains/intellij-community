@@ -45,77 +45,71 @@ public final class JavaDfaValueFactory {
   private JavaDfaValueFactory() {
   }
 
+  /**
+   * @param factory value factory
+   * @param expression expression to compute its {@link DfaValue}
+   * @return the best guess of {@link DfaValue} for a given expression (analyzing its type, called method annotations, etc.);
+   * null if unable to provide any reasonable value.
+   */
   @Contract("_, null -> null")
   public static @Nullable DfaValue getExpressionDfaValue(@NotNull DfaValueFactory factory, @Nullable PsiExpression expression) {
-    if (expression == null) return null;
-
-    if (expression instanceof PsiParenthesizedExpression) {
-      return getExpressionDfaValue(factory, ((PsiParenthesizedExpression)expression).getExpression());
-    }
-
-    if (expression instanceof PsiArrayAccessExpression) {
-      PsiExpression arrayExpression = ((PsiArrayAccessExpression)expression).getArrayExpression();
-      DfaValue qualifier = getQualifierValue(factory, arrayExpression);
-      if (qualifier != null) {
-        Object index = ExpressionUtils.computeConstantExpression(((PsiArrayAccessExpression)expression).getIndexExpression());
-        if (index instanceof Integer) {
-          DfaValue arrayElementValue = ArrayElementDescriptor.getArrayElementValue(factory, qualifier, (Integer)index);
-          if (arrayElementValue != null) {
-            return arrayElementValue;
+    return switch (expression) {
+      case null -> null;
+      case PsiParenthesizedExpression parens -> getExpressionDfaValue(factory, parens.getExpression());
+      case PsiArrayAccessExpression arrayAccess -> {
+        PsiExpression arrayExpression = arrayAccess.getArrayExpression();
+        DfaValue qualifier = getQualifierValue(factory, arrayExpression);
+        if (qualifier != null) {
+          Object index = ExpressionUtils.computeConstantExpression(arrayAccess.getIndexExpression());
+          if (index instanceof Integer) {
+            DfaValue arrayElementValue = ArrayElementDescriptor.getArrayElementValue(factory, qualifier, (Integer)index);
+            if (arrayElementValue != null) {
+              yield arrayElementValue;
+            }
           }
         }
+        PsiType type = expression.getType();
+        if (type != null) {
+          yield factory.fromDfType(DfTypes.typedObject(type, DfaPsiUtil.getElementNullabilityForRead(type, null)));
+        }
+        yield null;
       }
-      PsiType type = expression.getType();
-      if (type != null) {
-        return factory.fromDfType(DfTypes.typedObject(type, DfaPsiUtil.getElementNullability(type, null)));
+      case PsiMethodCallExpression call -> createReferenceValue(factory, call.getMethodExpression());
+      case PsiReferenceExpression ref -> createReferenceValue(factory, ref);
+      case PsiLiteralExpression literal -> factory.fromDfType(DfaPsiUtil.fromLiteral(literal));
+      case PsiNewExpression newExpression -> {
+        PsiType psiType = newExpression.getType();
+        DfType dfType = psiType == null ? DfType.TOP : TypeConstraints.exact(psiType).asDfType();
+        yield factory.fromDfType(dfType.meet(DfTypes.NOT_NULL_OBJECT));
       }
-    }
-
-    if (expression instanceof PsiMethodCallExpression) {
-      return createReferenceValue(factory, ((PsiMethodCallExpression)expression).getMethodExpression());
-    }
-
-    if (expression instanceof PsiReferenceExpression) {
-      return createReferenceValue(factory, (PsiReferenceExpression)expression);
-    }
-
-    if (expression instanceof PsiLiteralExpression) {
-      return factory.fromDfType(DfaPsiUtil.fromLiteral((PsiLiteralExpression)expression));
-    }
-
-    if (expression instanceof PsiNewExpression) {
-      PsiType psiType = expression.getType();
-      DfType dfType = psiType == null ? DfType.TOP : TypeConstraints.exact(psiType).asDfType();
-      return factory.fromDfType(dfType.meet(DfTypes.NOT_NULL_OBJECT));
-    }
-
-    if (expression instanceof PsiLambdaExpression) {
-      DfType dfType = JavaDfaHelpers.getFunctionDfType((PsiFunctionalExpression)expression);
-      return factory.fromDfType(dfType.meet(DfTypes.NOT_NULL_OBJECT));
-    }
-
-    final Object value = JavaConstantExpressionEvaluator.computeConstantExpression(expression, false);
-    if (value != null) {
-      PsiType type = expression.getType();
-      if (type != null) {
-        return factory.fromDfType(DfTypes.constant(value, type));
+      case PsiLambdaExpression lambda -> {
+        DfType dfType = JavaDfaHelpers.getFunctionDfType(lambda);
+        yield factory.fromDfType(dfType.meet(DfTypes.NOT_NULL_OBJECT));
       }
-    }
-
-    if (expression instanceof PsiQualifiedExpression) {
-      PsiJavaCodeReferenceElement qualifier = ((PsiQualifiedExpression)expression).getQualifier();
-      PsiClass target;
-      if (qualifier != null) {
-        target = tryCast(qualifier.resolve(), PsiClass.class);
+      case PsiQualifiedExpression qualified -> {
+        PsiJavaCodeReferenceElement qualifier = qualified.getQualifier();
+        PsiClass target;
+        if (qualifier != null) {
+          target = tryCast(qualifier.resolve(), PsiClass.class);
+        }
+        else {
+          target = PsiUtil.getContainingClass(expression);
+        }
+        yield target == null
+               ? factory.fromDfType(DfTypes.typedObject(expression.getType(), Nullability.NOT_NULL))
+               : ThisDescriptor.createThisValue(factory, target);
       }
-      else {
-        target = PsiUtil.getContainingClass(expression);
+      default -> {
+        final Object value = JavaConstantExpressionEvaluator.computeConstantExpression(expression, false);
+        if (value != null) {
+          PsiType type = expression.getType();
+          if (type != null) {
+            yield factory.fromDfType(DfTypes.constant(value, type));
+          }
+        }
+        yield null;
       }
-      return target == null
-             ? factory.fromDfType(DfTypes.typedObject(expression.getType(), Nullability.NOT_NULL))
-             : ThisDescriptor.createThisValue(factory, target);
-    }
-    return null;
+    };
   }
 
   private static DfaValue createReferenceValue(DfaValueFactory factory, @NotNull PsiReferenceExpression refExpr) {

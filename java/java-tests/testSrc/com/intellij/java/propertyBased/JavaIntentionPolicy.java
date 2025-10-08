@@ -164,9 +164,9 @@ class JavaGreenIntentionPolicy extends JavaIntentionPolicy {
 
   @Override
   public @Nullable String validateCommand(@NotNull ModCommand modCommand) {
-    if (modCommand instanceof ModShowConflicts conflicts) {
+    if (modCommand instanceof ModShowConflicts(var conflicts)) {
       return "Conflict; may break compilation: " +
-             conflicts.conflicts().values().stream().flatMap(c -> c.messages().stream()).distinct().collect(Collectors.joining("; "));
+             conflicts.values().stream().flatMap(c -> c.messages().stream()).distinct().collect(Collectors.joining("; "));
     }
     return super.validateCommand(modCommand);
   }

@@ -34,6 +34,7 @@ jvm_library(
     "//plugins/kotlin/base/util",
     "//plugins/kotlin/base/util:util_test_lib",
     "@lib//:junit4",
+    "//plugins/kotlin/base/test:test_test_lib",
   ]
 )
 ### auto-generated section `build kotlin.base.analysis.tests` end

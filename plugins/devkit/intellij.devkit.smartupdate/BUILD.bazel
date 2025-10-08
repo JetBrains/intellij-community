@@ -1,9 +1,9 @@
 ### auto-generated section `build intellij.devkit.smartupdate` start
-load("@rules_jvm//:jvm.bzl", "jvm_library", "jvm_resources")
+load("@rules_jvm//:jvm.bzl", "jvm_library", "resourcegroup")
 
-jvm_resources(
+resourcegroup(
   name = "smartupdate_resources",
-  files = glob(["resources/**/*"]),
+  srcs = glob(["resources/**/*"]),
   strip_prefix = "resources"
 )
 
@@ -12,6 +12,7 @@ jvm_library(
   module_name = "intellij.devkit.smartupdate",
   visibility = ["//visibility:public"],
   srcs = glob(["src/**/*.kt", "src/**/*.java", "src/**/*.form"], allow_empty = True),
+  resources = [":smartupdate_resources"],
   deps = [
     "@lib//:kotlin-stdlib",
     "//platform/projectModel-api:projectModel",
@@ -21,7 +22,6 @@ jvm_library(
     "//platform/ide-core",
     "//platform/core-api:core",
     "//platform/platform-impl:ide-impl",
-  ],
-  runtime_deps = [":smartupdate_resources"]
+  ]
 )
 ### auto-generated section `build intellij.devkit.smartupdate` end

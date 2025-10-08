@@ -44,6 +44,7 @@ import com.intellij.openapi.editor.impl.event.MarkupModelListener;
 import com.intellij.openapi.editor.impl.stickyLines.StickyLinesManager;
 import com.intellij.openapi.editor.impl.stickyLines.StickyLinesModel;
 import com.intellij.openapi.editor.impl.stickyLines.VisualStickyLines;
+import com.intellij.openapi.editor.impl.stickyLines.ui.StickyLineShadowBorder;
 import com.intellij.openapi.editor.impl.stickyLines.ui.StickyLineShadowPainter;
 import com.intellij.openapi.editor.impl.stickyLines.ui.StickyLinesPanel;
 import com.intellij.openapi.editor.impl.view.CharacterGrid;
@@ -794,7 +795,7 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
   }
 
   private void moveCaretIntoViewIfCoveredByToolWindowBelow(@NotNull VisibleAreaEvent e) {
-    ReadAction.run(() -> {
+    EditorThreading.run(() -> {
       Rectangle oldRectangle = e.getOldRectangle();
       Rectangle newRectangle = e.getNewRectangle();
       if (!myScrollingToCaret &&
@@ -859,12 +860,12 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
 
   @Override
   public int getPrefixTextWidthInPixels() {
-    return ReadAction.compute(() -> myView.getPrefixTextWidthInPixels()).intValue();
+    return EditorThreading.compute(() -> myView.getPrefixTextWidthInPixels()).intValue();
   }
 
   @Override
   public void setPrefixTextAndAttributes(@Nullable String prefixText, @Nullable TextAttributes attributes) {
-    ReadAction.run(() -> {
+    EditorThreading.run(() -> {
       mySoftWrapModel.recalculate();
       myView.setPrefix(prefixText, attributes);
       if (myAdView != null) myAdView.setPrefix(prefixText, attributes);
@@ -921,7 +922,7 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
   @Override
   public int getExpectedCaretOffset() {
     int expectedCaretOffset = myExpectedCaretOffset;
-    return ReadAction.compute(() -> expectedCaretOffset == -1 ? getCaretModel().getOffset() : expectedCaretOffset);
+    return EditorThreading.compute(() -> expectedCaretOffset == -1 ? getCaretModel().getOffset() : expectedCaretOffset);
   }
 
   @Override
@@ -972,7 +973,7 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
 
   @Override
   public void setCustomCursor(@NotNull Object requestor, @Nullable Cursor cursor) {
-    ReadAction.run(() -> {
+    EditorThreading.run(() -> {
       if (cursor == null) {
         myCustomCursors.remove(requestor);
       }
@@ -1119,7 +1120,7 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
       myIgnoreMouseEventsConsecutiveToInitial = true;
     }
 
-    ReadAction.run(() -> {
+    EditorThreading.run(() -> {
       myCaretModel.updateVisualPosition();
       // make sure carets won't appear at invalid positions (e.g., on Tab width change)
       getCaretModel().doWithCaretMerging(() -> myCaretModel.getAllCarets().forEach(caret -> caret.moveToOffset(caret.getOffset())));
@@ -1339,17 +1340,17 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
 
   @Override
   public void setFontSize(int fontSize) {
-    ReadAction.run(() -> setFontSizeImpl(fontSize, null, false));
+    EditorThreading.run(() -> setFontSizeImpl(fontSize, null, false));
   }
 
   @Override
   public void setFontSize(float fontSize) {
-    ReadAction.run(() -> setFontSizeImpl(fontSize, null, false));
+    EditorThreading.run(() -> setFontSizeImpl(fontSize, null, false));
   }
 
   @ApiStatus.Internal
   public void setFontSize(float fontSize, @Nullable Point zoomCenter, boolean validateImmediately) {
-    ReadAction.run(() -> setFontSizeImpl(fontSize, zoomCenter, validateImmediately));
+    EditorThreading.run(() -> setFontSizeImpl(fontSize, zoomCenter, validateImmediately));
   }
 
   /**
@@ -1559,7 +1560,7 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
   @Override
   public void setInsertMode(boolean mode) {
     assertIsDispatchThread();
-    ReadAction.run(() -> myState.setInsertMode(mode));
+    EditorThreading.run(() -> myState.setInsertMode(mode));
   }
 
   private void isInsertModeChanged(ObservableStateListener.PropertyChangeEvent event) {
@@ -1579,7 +1580,7 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
   @Override
   public void setColumnMode(boolean mode) {
     assertIsDispatchThread();
-    ReadAction.run(() -> myState.setColumnMode(mode));
+    EditorThreading.run(() -> myState.setColumnMode(mode));
   }
 
   private void isColumnModeChanged(ObservableStateListener.PropertyChangeEvent event) {
@@ -1601,12 +1602,12 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
 
   @Override
   public @NotNull VisualPosition xyToVisualPosition(@NotNull Point p) {
-    return ReadAction.compute(() -> myView.xyToVisualPosition(p));
+    return EditorThreading.compute(() -> myView.xyToVisualPosition(p));
   }
 
   @Override
   public @NotNull VisualPosition xyToVisualPosition(@NotNull Point2D p) {
-    return ReadAction.compute(() -> myView.xyToVisualPosition(p));
+    return EditorThreading.compute(() -> myView.xyToVisualPosition(p));
   }
 
   @Override
@@ -4442,7 +4443,7 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
 
       EditorMouseEventArea eventArea = getMouseEventArea(e);
       myMousePressArea = eventArea;
-      if (eventArea == EditorMouseEventArea.FOLDING_OUTLINE_AREA) {
+      if (eventArea == EditorMouseEventArea.FOLDING_OUTLINE_AREA && e.getButton() == MouseEvent.BUTTON1) {
         FoldRegion range = myGutterComponent.findFoldingAnchorAt(x, y);
         if (range != null) {
           boolean expansion = !range.isExpanded();
@@ -5452,9 +5453,11 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
       StickyLinesModel stickyModel = StickyLinesModel.getModel(myEditorFilteringMarkupModel.getDelegate());
       VisualStickyLines visualStickyLines = new VisualStickyLines(this, stickyModel);
       StickyLineShadowPainter shadowPainter = new StickyLineShadowPainter();
-      StickyLinesPanel stickyPanel = new StickyLinesPanel(this, shadowPainter, visualStickyLines);
+      StickyLineShadowBorder border = new StickyLineShadowBorder(this, shadowPainter);
+      StickyLinesPanel stickyPanel = new StickyLinesPanel(this, visualStickyLines, border);
       StickyLinesManager stickyManager = new StickyLinesManager(
-        this, stickyModel,
+        this,
+        stickyModel,
         stickyPanel,
         shadowPainter,
         visualStickyLines,

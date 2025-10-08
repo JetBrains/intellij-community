@@ -19,7 +19,8 @@ public final class BuildDataPathsImpl implements BuildDataPaths {
    * @deprecated Use {@link #BuildDataPathsImpl(Path)}
    */
   @SuppressWarnings("IO_FILE_USAGE")
-  @Deprecated
+  @ApiStatus.Internal
+  @Deprecated(forRemoval = true)
   public BuildDataPathsImpl(@NotNull File dataStorageRoot) {
     dir = dataStorageRoot.toPath();
   }

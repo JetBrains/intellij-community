@@ -42,10 +42,10 @@ private class RepositoryLibrarySynchronizer : ProjectActivity {
     val synchronizationQueue = project.serviceAsync<LibraryIdSynchronizationQueue>()
     val synchronizer = ChangedRepositoryLibraryIdSynchronizer(synchronizationQueue)
     val globalLibSynchronizer = GlobalChangedRepositoryLibraryIdSynchronizer(synchronizationQueue, disposable)
-    for (libraryTable in getGlobalAndCustomLibraryTables()) {
+    for (libraryTable in getGlobalAndCustomLibraryTables(project)) {
       libraryTable.addListener(globalLibSynchronizer, disposable)
     }
-    installOnExistingLibraries(globalLibSynchronizer, disposable)
+    installOnExistingLibraries(project, globalLibSynchronizer, disposable)
     project.messageBus.connect(disposable).subscribe(WorkspaceModelTopics.CHANGED, synchronizer)
     synchronizationQueue.requestAllLibrariesSynchronization()
   }

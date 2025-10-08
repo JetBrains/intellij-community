@@ -31,9 +31,9 @@
     <orderEntry type="module" module-name="intellij.platform.externalSystem.rt" />
     <orderEntry type="module" module-name="intellij.gradle.toolingExtension" />
     <orderEntry type="library" name="Gradle" level="project" />
-    <orderEntry type="library" name="gson" level="project" />
+    <orderEntry type="module" module-name="intellij.libraries.gson" />
     <orderEntry type="module" module-name="intellij.platform.objectSerializer.annotations" />
-    <orderEntry type="library" name="ion" level="project" />
+    <orderEntry type="module" module-name="intellij.libraries.ion" />
     <orderEntry type="module" module-name="intellij.platform.util.rt" />
     <orderEntry type="library" exported="" name="slf4j-api" level="project" />
     <orderEntry type="library" exported="" name="slf4j-jdk14" level="project" />
@@ -42,7 +42,7 @@
     <orderEntry type="module" module-name="intellij.platform.diagnostic.telemetry.rt" />
     <orderEntry type="library" name="commons-lang3" level="project" />
     <orderEntry type="library" name="commons-io" level="project" />
-    <orderEntry type="library" name="Guava" level="project" />
+    <orderEntry type="module" module-name="intellij.libraries.guava" />
     <orderEntry type="module" module-name="intellij.platform.util.trove" />
   </component>
 </module>

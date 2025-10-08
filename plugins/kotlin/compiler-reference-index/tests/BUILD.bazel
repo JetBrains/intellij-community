@@ -14,10 +14,10 @@ jvm_library(
   srcs = glob(["test/**/*.kt", "test/**/*.java", "test/**/*.form"], allow_empty = True),
   deps = [
     "@lib//:kotlin-stdlib",
-    "@lib//:kotlin-reflect",
+    "//libraries/kotlin-reflect",
     "@lib//:kotlinc-kotlin-compiler-common",
     "@lib//:kotlinc-kotlin-compiler-tests",
-    "@lib//:gson",
+    "//libraries/gson",
     "@lib//:junit4",
     "//java/java-indexing-api:indexing",
     "//jps/model-api:model",

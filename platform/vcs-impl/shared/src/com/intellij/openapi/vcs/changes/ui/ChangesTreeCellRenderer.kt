@@ -52,7 +52,9 @@ open class ChangesTreeCellRenderer(protected val textRenderer: ChangesBrowserNod
       background = null
       isOpaque = false
 
+      val hideCheckbox = value.getUserData(ChangesBrowserNodeKeys.HIDE_INCLUSION_CHECKBOX) == true
       isVisible = tree.isShowCheckboxes &&
+                  !hideCheckbox &&
                   (value is FixedHeightSampleChangesBrowserNode || // assume checkbox is visible for the sample node
                    tree.isInclusionVisible(value))
       if (isVisible) {

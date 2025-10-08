@@ -302,6 +302,7 @@ final class SearchForUsagesRunnable implements Runnable {
       ReadAction.run(() -> UsageViewStatisticsCollector.logSearchStarted(myProject, usageView, CodeNavigateSource.FindToolWindow, element,
                                                                          mySearchFor.length));
       usageView.associateProgress(indicator);
+      usageView.setSearchInProgress(true);
       if (myProcessPresentation.isShowFindOptionsPrompt()) {
         openView(usageView);
       }

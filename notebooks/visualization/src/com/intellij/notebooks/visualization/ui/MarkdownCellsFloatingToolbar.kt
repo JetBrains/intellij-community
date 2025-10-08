@@ -2,6 +2,7 @@
 package com.intellij.notebooks.visualization.ui
 
 import com.intellij.ide.ui.customization.CustomActionsSchema
+import com.intellij.notebooks.jupyter.core.jupyter.CellType
 import com.intellij.notebooks.visualization.NotebookCellLines
 import com.intellij.notebooks.visualization.getCells
 import com.intellij.notebooks.visualization.getSelectionLines
@@ -17,7 +18,7 @@ class MarkdownCellsFloatingToolbar(
   override fun isEnabled(): Boolean {
     val selectedCells = getSelectedCells()
     if (selectedCells.isEmpty() || selectedCells.size > 1) return false
-    return selectedCells.first().type == NotebookCellLines.CellType.MARKDOWN
+    return selectedCells.first().type == CellType.MARKDOWN
   }
 
   private fun getSelectedCells(): List<NotebookCellLines.Interval> {

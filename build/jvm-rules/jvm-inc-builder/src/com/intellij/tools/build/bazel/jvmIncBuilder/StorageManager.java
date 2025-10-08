@@ -122,7 +122,7 @@ public class StorageManager implements CloseableExt {
     if (builder == null) {
       Path output = myContext.getOutputZip();
       Path previousOutput = DataPaths.getJarBackupStoreFile(myContext, output);
-      myOutputBuilder = builder = new ZipOutputBuilderImpl(createOffHeapMap(output.getFileName().toString()), previousOutput, output);
+      myOutputBuilder = builder = new ZipOutputBuilderImpl(createOffHeapMap(output.getFileName().toString()), previousOutput, output, true);
     }
     return builder;
   }
@@ -134,7 +134,7 @@ public class StorageManager implements CloseableExt {
       Path abiOutputPath = myContext.getAbiOutputZip();
       if (abiOutputPath != null) {
         Path previousAbiOutput = DataPaths.getJarBackupStoreFile(myContext, abiOutputPath);
-        myAbiOutputBuilder = builder = new ZipOutputBuilderImpl(createOffHeapMap(abiOutputPath.getFileName().toString()), previousAbiOutput, abiOutputPath);
+        myAbiOutputBuilder = builder = new ZipOutputBuilderImpl(createOffHeapMap(abiOutputPath.getFileName().toString()), previousAbiOutput, abiOutputPath, false);
       }
     }
     return builder;
@@ -178,6 +178,7 @@ public class StorageManager implements CloseableExt {
       closeDataStorages(saveChanges);
     }
     finally {
+      myDataSwapStore.rollback();
       if (myDataSwapStore.getFileStore() instanceof OffHeapStore store) {
         store.truncate(0); // forcibly clean byte buffers
       }

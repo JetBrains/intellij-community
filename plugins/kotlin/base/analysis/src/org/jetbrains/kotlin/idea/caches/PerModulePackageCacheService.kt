@@ -76,6 +76,7 @@ class KotlinPackageStatementPsiTreeChangePreprocessor(private val project: Proje
         }
 
         val file = eFile as? KtFile ?: return
+        if (eFile.isCompiled) return
 
         when (event.code) {
             PsiTreeChangeEventImpl.PsiEventType.CHILD_ADDED,

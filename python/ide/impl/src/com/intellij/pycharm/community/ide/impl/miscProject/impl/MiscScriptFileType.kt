@@ -9,13 +9,17 @@ import com.intellij.pycharm.community.ide.impl.PyCharmCommunityCustomizationBund
 import com.intellij.pycharm.community.ide.impl.miscProject.MiscFileType
 import com.intellij.pycharm.community.ide.impl.miscProject.TemplateFileName
 import com.intellij.pycharm.community.ide.impl.newProjectWizard.welcome.PyWelcome
+import com.jetbrains.python.parser.icons.PythonParserIcons
 import com.jetbrains.python.psi.icons.PythonPsiApiIcons
+import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.annotations.NonNls
 import javax.swing.Icon
 
+@ApiStatus.Internal
 object MiscScriptFileType : MiscFileType {
+  override val id: String = "newScript"
   override val title: @NlsActions.ActionText String = PyCharmCommunityCustomizationBundle.message("misc.script.text")
-  override val icon: Icon = PythonPsiApiIcons.Python_32x32
+  override val icon: Icon = PythonParserIcons.PythonFile
   override val fileName: TemplateFileName = TemplateFileName.parse("script.py")
   override val technicalNameForStatistics: @NonNls String = "script"
 

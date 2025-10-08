@@ -139,7 +139,7 @@ constructor(
             val functionSymbol = original.restoreSymbol() ?: return
             for (annoApp in functionSymbol.annotations) {
                 annotations.add(
-                    UastFakeDeserializedSymbolAnnotation(original, annoApp.classId, context)
+                    UastFakeDeserializedSymbolAnnotation(original, annoApp.classId, context, annoApp.psi)
                 )
             }
         }

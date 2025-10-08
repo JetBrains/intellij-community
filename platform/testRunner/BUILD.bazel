@@ -1,9 +1,9 @@
 ### auto-generated section `build intellij.platform.testRunner` start
-load("@rules_jvm//:jvm.bzl", "jvm_library", "jvm_resources")
+load("@rules_jvm//:jvm.bzl", "jvm_library", "resourcegroup")
 
-jvm_resources(
+resourcegroup(
   name = "testRunner_resources",
-  files = glob(["resources/**/*"]),
+  srcs = glob(["resources/**/*"]),
   strip_prefix = "resources"
 )
 
@@ -12,6 +12,7 @@ jvm_library(
   module_name = "intellij.platform.testRunner",
   visibility = ["//visibility:public"],
   srcs = glob(["src/**/*.kt", "src/**/*.java", "src/**/*.form"], allow_empty = True),
+  resources = [":testRunner_resources"],
   deps = [
     "//platform/analysis-api:analysis",
     "//platform/core-api:core",
@@ -24,7 +25,7 @@ jvm_library(
     "//platform/platform-impl:ide-impl",
     "//platform/xdebugger-api:debugger",
     "//platform/diff-impl",
-    "@lib//:fastutil-min",
+    "//libraries/fastutil",
     "//platform/core-ui",
     "//platform/platform-util-io:ide-util-io",
     "//platform/ide-core-impl",
@@ -32,8 +33,7 @@ jvm_library(
     "//platform/util/jdom",
     "//platform/analysis-impl",
     "//platform/xdebugger-impl:debugger-impl",
-  ],
-  runtime_deps = [":testRunner_resources"]
+  ]
 )
 
 jvm_library(
@@ -53,7 +53,7 @@ jvm_library(
     "//platform/platform-impl:ide-impl",
     "//platform/xdebugger-api:debugger",
     "//platform/diff-impl",
-    "@lib//:fastutil-min",
+    "//libraries/fastutil",
     "@lib//:junit4",
     "//platform/core-ui",
     "//platform/platform-util-io:ide-util-io",
@@ -65,8 +65,7 @@ jvm_library(
     "//platform/testFramework:testFramework_test_lib",
     "//platform/xdebugger-impl:debugger-impl",
     "//platform/xdebugger-impl:debugger-impl_test_lib",
-  ],
-  runtime_deps = [":testRunner_resources"]
+  ]
 )
 ### auto-generated section `build intellij.platform.testRunner` end
 

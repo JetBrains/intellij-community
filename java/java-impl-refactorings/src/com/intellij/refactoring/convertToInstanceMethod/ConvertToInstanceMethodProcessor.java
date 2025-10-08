@@ -303,19 +303,14 @@ public final class ConvertToInstanceMethodProcessor extends BaseRefactoringProce
     final PsiModifierList modifierList = method.getModifierList();
     if (VisibilityUtil.ESCALATE_VISIBILITY.equals(myNewVisibility)) {
       for (UsageInfo usage : usages) {
-        PsiElement place = null;
-        if (usage instanceof MethodCallUsageInfo) {
-          place = usage.getElement();
-        }
-        else if (usage instanceof MethodReferenceUsageInfo) {
-          PsiMethodReferenceExpression expression = ((MethodReferenceUsageInfo)usage).getExpression();
-          if (expression != null && expression.isValid()) {
-            place = expression;
+        PsiElement place = switch (usage) {
+          case MethodCallUsageInfo info -> info.getElement();
+          case MethodReferenceUsageInfo info -> {
+            PsiMethodReferenceExpression expression = info.getExpression();
+            yield expression != null && expression.isValid() ? expression : info.getReplacement();
           }
-          else {
-            place = ((MethodReferenceUsageInfo)usage).getReplacement();
-          }
-        }
+          default -> null;
+        };
         if (place != null) {
           VisibilityUtil.escalateVisibility(method, place);
         }

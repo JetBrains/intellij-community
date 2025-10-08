@@ -11,6 +11,7 @@ import com.intellij.codeInsight.daemon.QuickFixBundle
 import com.intellij.codeInsight.intention.impl.ShowIntentionActionsHandler
 import com.intellij.lang.java.actions.CreateMethodAction
 import com.intellij.lang.java.request.generateActions
+import com.intellij.lang.jvm.actions.JvmClassIntentionActionGroup
 import com.intellij.openapi.application.WriteAction
 import com.intellij.openapi.application.readAction
 import com.intellij.openapi.editor.Editor
@@ -21,6 +22,7 @@ import com.intellij.psi.impl.source.tree.injected.InjectedLanguageEditorUtil
 import com.intellij.psi.util.PsiTreeUtil
 import com.intellij.psi.util.PsiUtil
 import com.intellij.psi.util.parentOfType
+import com.intellij.util.SlowOperations
 import org.jetbrains.annotations.Nls
 
 
@@ -79,10 +81,14 @@ internal class JavaCreateFromUsagesCompletionCommand(val psiClass: PsiClass) : C
     val action =
       runWithModalProgressBlocking(psiFile.project, message("scanning.scope.progress.title")) {
         readAction {
-          generateActions(expression).firstOrNull { it is CreateMethodAction }
+          generateActions(expression).firstOrNull {
+            it is CreateMethodAction || it is JvmClassIntentionActionGroup}
         }
       }?: return
-    ShowIntentionActionsHandler.chooseActionAndInvoke(psiFile, editor, action, presentableName)
+
+    SlowOperations.startSection(SlowOperations.ACTION_PERFORM).use { _ ->
+      ShowIntentionActionsHandler.chooseActionAndInvoke(psiFile, editor, action, presentableName)
+    }
   }
 
   override fun customPrefixMatcher(prefix: String): PrefixMatcher {

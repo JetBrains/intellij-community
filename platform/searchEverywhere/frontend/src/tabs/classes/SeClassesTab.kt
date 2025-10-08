@@ -5,10 +5,11 @@ import com.intellij.ide.actions.GotoClassPresentationUpdater
 import com.intellij.openapi.actionSystem.AnActionEvent
 import com.intellij.openapi.actionSystem.DataContext
 import com.intellij.openapi.util.Disposer
+import com.intellij.platform.searchEverywhere.SePreviewInfo
 import com.intellij.platform.searchEverywhere.SeItemData
 import com.intellij.platform.searchEverywhere.SeParams
 import com.intellij.platform.searchEverywhere.SeResultEvent
-import com.intellij.platform.searchEverywhere.SeSessionEntity
+import com.intellij.platform.searchEverywhere.SeSession
 import com.intellij.platform.searchEverywhere.frontend.SeEmptyResultInfo
 import com.intellij.platform.searchEverywhere.frontend.SeEmptyResultInfoProvider
 import com.intellij.platform.searchEverywhere.frontend.SeFilterEditor
@@ -17,14 +18,12 @@ import com.intellij.platform.searchEverywhere.frontend.resultsProcessing.SeTabDe
 import com.intellij.platform.searchEverywhere.frontend.tabs.target.SeTargetsFilterEditor
 import com.intellij.platform.searchEverywhere.utils.SuspendLazyProperty
 import com.intellij.platform.searchEverywhere.utils.initAsync
-import fleet.kernel.DurableRef
 import kotlinx.coroutines.flow.Flow
 import org.jetbrains.annotations.ApiStatus
 
 @ApiStatus.Internal
 class SeClassesTab(private val delegate: SeTabDelegate) : SeTab {
-  override val name: String get() = GotoClassPresentationUpdater.getTabTitlePluralized()
-  override val shortName: String get() = name
+  override val name: String get() = NAME
   override val id: String get() = ID
   override val isIndexingDependent: Boolean get() = true
 
@@ -50,8 +49,20 @@ class SeClassesTab(private val delegate: SeTabDelegate) : SeTab {
     return delegate.canBeShownInFindResults()
   }
 
-  override suspend fun openInFindToolWindow(sessionRef: DurableRef<SeSessionEntity>, params: SeParams, initEvent: AnActionEvent): Boolean {
-    return delegate.openInFindToolWindow(sessionRef, params, initEvent, false)
+  override suspend fun openInFindToolWindow(session: SeSession, params: SeParams, initEvent: AnActionEvent): Boolean {
+    return delegate.openInFindToolWindow(session, params, initEvent, false)
+  }
+
+  override suspend fun performExtendedAction(item: SeItemData): Boolean {
+    return delegate.performExtendedAction(item)
+  }
+
+  override suspend fun isPreviewEnabled(): Boolean {
+    return delegate.isPreviewEnabled()
+  }
+
+  override suspend fun getPreviewInfo(itemData: SeItemData): SePreviewInfo? {
+    return delegate.getPreviewInfo(itemData, false)
   }
 
   override fun dispose() {
@@ -61,5 +72,8 @@ class SeClassesTab(private val delegate: SeTabDelegate) : SeTab {
   companion object {
     @ApiStatus.Internal
     const val ID: String = "ClassSearchEverywhereContributor"
+
+    val NAME: String
+    @ApiStatus.Internal get() = GotoClassPresentationUpdater.getTabTitlePluralized()
   }
 }

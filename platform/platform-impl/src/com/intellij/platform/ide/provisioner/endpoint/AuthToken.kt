@@ -1,5 +1,7 @@
 package com.intellij.platform.ide.provisioner.endpoint
 
+import org.jetbrains.annotations.ApiStatus
+
 data class AuthToken(
   /**
    * The map of HTTP request headers required for authenticating with the corresponding [ServiceEndpoint].
@@ -7,6 +9,8 @@ data class AuthToken(
    */
   val requestHeaders: Map<String, String>,
 ) {
+  @ApiStatus.Internal
+  @ApiStatus.ScheduledForRemoval
   @Deprecated("For backward compatibility, until TBE plugin is updated")
   @Suppress("unused")
   constructor(

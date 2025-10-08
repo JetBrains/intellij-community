@@ -56,4 +56,7 @@ public interface SearchEverywhereManager {
 
   @ApiStatus.Internal
   boolean isSplit();
+
+  @ApiStatus.Internal
+  boolean isPreviewEnabled();
 }

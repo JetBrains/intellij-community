@@ -1,4 +1,4 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInspection.logging
 
 import com.intellij.openapi.util.TextRange
@@ -16,9 +16,12 @@ import org.jetbrains.uast.*
 import org.jetbrains.uast.UastBinaryOperator.Companion.ASSIGN
 import org.jetbrains.uast.visitor.AbstractUastVisitor
 
-const val MAX_BUILDER_LENGTH = 20
-const val ADD_ARGUMENT_METHOD_NAME = "addArgument"
-const val SET_MESSAGE_METHOD_NAME = "setMessage"
+internal const val MAX_BUILDER_LENGTH = 20
+
+private const val ADD_ARGUMENT_METHOD_NAME = "addArgument"
+
+private const val SET_MESSAGE_METHOD_NAME = "setMessage"
+
 private val knownNames = setOf(ADD_ARGUMENT_METHOD_NAME, SET_MESSAGE_METHOD_NAME)
 
 internal interface LoggerTypeSearcher {
@@ -34,15 +37,14 @@ private val SLF4J_HOLDER = object : LoggerTypeSearcher {
   }
 }
 
-
 internal val LOG4J_LOG_BUILDER_HOLDER = object : LoggerTypeSearcher {
   override fun findType(expression: UCallExpression, context: LoggerContext): PlaceholderLoggerType? {
     var initializers: List<UExpression?>?
     var qualifierExpression = getImmediateLoggerQualifier(expression)
     if (qualifierExpression is UReferenceExpression) {
-      val target: UVariable = qualifierExpression.resolveToUElement() as? UVariable ?: return null
+      val target = qualifierExpression.resolveToUElement() as? UVariable ?: return null
       if (!target.isFinal) {
-        return PlaceholderLoggerType.LOG4J_EQUAL_PLACEHOLDERS //formatted builder is really rare
+        return PlaceholderLoggerType.LOG4J_EQUAL_PLACEHOLDERS // formatted builder is really rare
       }
       qualifierExpression = target.uastInitializer
       if (qualifierExpression == null) {
@@ -56,7 +58,7 @@ internal val LOG4J_LOG_BUILDER_HOLDER = object : LoggerTypeSearcher {
       initializers = listOf(qualifierExpression)
     }
     if (initializers == null) return null
-    return initializers.map {
+    return initializers.asSequence().map {
       it?.skipParenthesizedExprDown()
     }.map {
       if (it is UQualifiedReferenceExpression) {
@@ -143,7 +145,7 @@ private val LOG4J_HOLDER = object : LoggerTypeSearcher {
       initializers = listOf(qualifierExpression)
     }
     if (initializers == null || initializers.isEmpty()) return null
-    return initializers.map {
+    return initializers.asSequence().map {
       it.skipParenthesizedExprDown()
     }.map {
       if (it is UQualifiedReferenceExpression) {
@@ -311,10 +313,10 @@ internal fun findMessageSetterStringArg(node: UCallExpression,
     return null
   }
   var currentCall = node.receiver
-  for (ignore in 0..MAX_BUILDER_LENGTH) {
+  (0..MAX_BUILDER_LENGTH).forEach { _ ->
     if (currentCall is UQualifiedReferenceExpression) {
       currentCall = currentCall.selector
-      continue
+      return@forEach
     }
     if (currentCall !is UCallExpression) {
       return null
@@ -329,7 +331,7 @@ internal fun findMessageSetterStringArg(node: UCallExpression,
     }
     if (BUILDER_CHAIN.contains(methodName) || methodName == ADD_ARGUMENT_METHOD_NAME) {
       currentCall = currentCall.receiver
-      continue
+      return@forEach
     }
     return null
   }
@@ -353,7 +355,7 @@ internal fun findAdditionalArguments(node: UCallExpression,
     return emptyList()
   }
   var currentCall = node.receiver
-  for (ignore in 0..MAX_BUILDER_LENGTH) {
+  (0..MAX_BUILDER_LENGTH).forEach { _ ->
     if (currentCall is UQualifiedReferenceExpression) {
       currentCall = currentCall.selector
     }
@@ -363,14 +365,14 @@ internal fun findAdditionalArguments(node: UCallExpression,
         val argument = currentCall.valueArguments.firstOrNull() ?: return null
         uExpressions.add(argument)
         currentCall = currentCall.receiver
-        continue
+        return@forEach
       }
       if (methodName.startsWith("at") && LoggingUtil.getLoggerLevel(currentCall) != null) {
         return uExpressions
       }
       if (BUILDER_CHAIN.contains(methodName) || (allowIntermediateMessage && methodName == SET_MESSAGE_METHOD_NAME)) {
         currentCall = currentCall.receiver
-        continue
+        return@forEach
       }
       return null
     }
@@ -430,7 +432,7 @@ private fun countFormattedBasedPlaceholders(holders: List<LoggingStringPartEvalu
       FormatDecode.decodePrefix(formatString, argumentCount)
     }
   }
-  catch (e: FormatDecode.IllegalFormatException) {
+  catch (_: FormatDecode.IllegalFormatException) {
     return PlaceholderCountResult(emptyList(), PlaceholdersStatus.ERROR_TO_PARSE_STRING)
   }
 

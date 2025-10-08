@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.kotlin.idea.base.indices.names
 
 import com.intellij.ide.highlighter.JavaClassFileType
@@ -82,7 +82,7 @@ class KotlinBinaryRootToPackageIndex : FileBasedIndexExtension<String, String>()
             when (fileType) {
                 JavaClassFileType.INSTANCE -> fileContent.toKotlinJvmBinaryClass()?.packageName
                 KotlinBuiltInFileType -> (readKotlinMetadataDefinition(fileContent) as? BuiltInDefinitionFile)?.packageFqName
-                KlibMetaFileType -> fileContent.toCompatibleFileWithMetadata()?.packageFqName
+                KlibMetaFileType -> fileContent.toKlibMetadataCompatibleFileWithMetadata()?.packageFqName
                 else -> null
             }
 

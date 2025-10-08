@@ -74,23 +74,20 @@ public final class IntroduceParameterUtil {
     List<UsageInfo> methodUsages = new ArrayList<>();
 
     for (UsageInfo usage : usages) {
-      if (usage instanceof InternalUsageInfo) continue;
-
-      if (usage instanceof DefaultConstructorImplicitUsageInfo) {
-        addSuperCall(usage, usages, data);
-      }
-      else if (usage instanceof NoConstructorClassUsageInfo) {
-        addDefaultConstructor(usage, usages, data);
-      }
-      else {
-        PsiElement element = usage.getElement();
-        if (element instanceof PsiMethod) {
-          if (!manager.areElementsEquivalent(element, data.getMethodToReplaceIn())) {
-            methodUsages.add(usage);
+      switch (usage) {
+        case InternalUsageInfo info -> {}
+        case DefaultConstructorImplicitUsageInfo info -> addSuperCall(info, usages, data);
+        case NoConstructorClassUsageInfo info -> addDefaultConstructor(info, usages, data);
+        default -> {
+          PsiElement element = usage.getElement();
+          if (element instanceof PsiMethod) {
+            if (!manager.areElementsEquivalent(element, data.getMethodToReplaceIn())) {
+              methodUsages.add(usage);
+            }
           }
-        }
-        else if (!data.isGenerateDelegate()) {
-          changeExternalUsage(usage, usages, data);
+          else if (!data.isGenerateDelegate()) {
+            changeExternalUsage(usage, usages, data);
+          }
         }
       }
     }

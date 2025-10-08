@@ -1,5 +1,4 @@
 <idea-plugin package="com.intellij.compilation.charts">
-  <module value="intellij.java.compiler.charts" />
   <extensions defaultExtensionNs="com.intellij">
     <postStartupActivity implementation="com.intellij.compilation.charts.jps.CompilationChartsProjectActivity"/>
     <compileServer.plugin classpath="jps/compilation-charts-jps.jar"/>

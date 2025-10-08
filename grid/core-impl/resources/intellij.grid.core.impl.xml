@@ -1,4 +1,4 @@
-<idea-plugin>
+<idea-plugin visibility="public">
   <dependencies>
     <module name="intellij.grid"/>
     <module name="intellij.grid.types"/>

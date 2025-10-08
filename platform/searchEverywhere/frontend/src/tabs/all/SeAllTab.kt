@@ -19,7 +19,6 @@ import com.intellij.platform.searchEverywhere.providers.SeEverywhereFilter
 import com.intellij.platform.searchEverywhere.utils.SuspendLazyProperty
 import com.intellij.platform.searchEverywhere.utils.initAsync
 import com.intellij.ui.IdeUICustomization
-import fleet.kernel.DurableRef
 import kotlinx.coroutines.flow.Flow
 import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.annotations.Nls
@@ -27,11 +26,7 @@ import java.util.function.Function
 
 @ApiStatus.Internal
 class SeAllTab(private val delegate: SeTabDelegate) : SeTab {
-  override val name: String
-    get() = IdeBundle.message("searcheverywhere.all.elements.tab.name")
-
-  override val shortName: String
-    get() = name
+  override val name: String get() = NAME
 
   override val isIndexingDependent: Boolean get() = true
 
@@ -63,13 +58,23 @@ class SeAllTab(private val delegate: SeTabDelegate) : SeTab {
     return delegate.canBeShownInFindResults()
   }
 
-  override suspend fun openInFindToolWindow(sessionRef: DurableRef<SeSessionEntity>, params: SeParams, initEvent: AnActionEvent): Boolean {
+  override suspend fun openInFindToolWindow(session: SeSession, params: SeParams, initEvent: AnActionEvent): Boolean {
     val allTabFilter = SeEverywhereFilter.from(params.filter)
-    return delegate.openInFindToolWindow(sessionRef, params, initEvent, true,allTabFilter.disabledProviderIds)
+    return delegate.openInFindToolWindow(session, params, initEvent, true, allTabFilter.disabledProviderIds)
   }
 
   override suspend fun getUpdatedPresentation(item: SeItemData): SeItemPresentation? {
     return delegate.getUpdatedPresentation(item)
+  }
+
+  override suspend fun performExtendedAction(item: SeItemData): Boolean {
+    return delegate.performExtendedAction(item)
+  }
+
+  override suspend fun isPreviewEnabled(): Boolean = true
+
+  override suspend fun getPreviewInfo(itemData: SeItemData): SePreviewInfo? {
+    return delegate.getPreviewInfo(itemData, true)
   }
 
   override fun dispose() {
@@ -79,6 +84,8 @@ class SeAllTab(private val delegate: SeTabDelegate) : SeTab {
   companion object {
     @ApiStatus.Internal
     const val ID: String = SearchEverywhereManagerImpl.ALL_CONTRIBUTORS_GROUP_ID
+    @ApiStatus.Internal
+    val NAME: String = IdeBundle.message("searcheverywhere.all.elements.tab.name")
   }
 }
 

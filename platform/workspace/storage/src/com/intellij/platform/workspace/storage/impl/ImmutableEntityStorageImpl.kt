@@ -197,12 +197,10 @@ internal class MutableEntityStorageImpl(
       .map { entityDataByIdOrDie(it).createEntity(this) as R }
   }
 
-  override fun <E : WorkspaceEntityWithSymbolicId, R : WorkspaceEntity> hasReferrers(
+  override fun <E : WorkspaceEntityWithSymbolicId> hasReferrers(
     id: SymbolicEntityId<E>,
-    entityClass: Class<R>,
   ): Boolean = hasReferrersTimeMs.addMeasuredTime {
-    val classId = entityClass.toClassId()
-    return indexes.softLinks.getIdsByEntry(id).any { it.clazz == classId }
+    return indexes.softLinks.getIdsByEntry(id).isNotEmpty()
   }
 
   @Suppress("UNCHECKED_CAST")
@@ -410,17 +408,15 @@ internal class MutableEntityStorageImpl(
     }
   }
 
-  override fun collectSymbolicEntityIdsChanges(): Map<Class<*>, Set<ReferenceChange<*>>> {
-    val result = mutableMapOf<Class<*>, MutableSet<ReferenceChange<*>>>()
+  override fun collectSymbolicEntityIdsChanges(): Set<ReferenceChange<*>> {
+    val result: MutableSet<ReferenceChange<*>> = mutableSetOf()
 
-    for (entry in changeLog.addedSymbolicIds) {
-      val addedIds = entry.value.map { ReferenceChange.Added(it) }
-      result.computeIfAbsent(entry.key) { HashSet() }.addAll(addedIds)
+    for (entry in changeLog.addedSymbolicIds()) {
+      result.add(ReferenceChange.Added(entry))
     }
 
-    for (entry in changeLog.removedSymbolicIds) {
-      val removedIds = entry.value.map { ReferenceChange.Removed(it) }
-      result.computeIfAbsent(entry.key) { HashSet() }.addAll(removedIds)
+    for (entry in changeLog.removedSymbolicIds()) {
+      result.add(ReferenceChange.Removed(entry))
     }
 
     return result
@@ -914,12 +910,8 @@ internal class MutableEntityStorageImpl(
   }
 
   internal fun trackChangedSoftLinks() {
-    indexes.softLinks.addedValues().forEach { (k, v) ->
-      changeLog.addAddedIds(k.clazz.findWorkspaceEntity(), v)
-    }
-    indexes.softLinks.removedValues().forEach { (k, v) ->
-      changeLog.addRemovedIds(k.clazz.findWorkspaceEntity(), v)
-    }
+    changeLog.addAddedIds(indexes.softLinks.addedValues())
+    changeLog.addRemovedIds(indexes.softLinks.removedValues())
     indexes.softLinks.clearTrackedValues()
   }
 
@@ -1044,9 +1036,8 @@ internal sealed class AbstractEntityStorage : EntityStorageInstrumentation {
       .map { entityDataByIdOrDie(it).createEntity(this) as R }
   }
 
-  override fun <E : WorkspaceEntityWithSymbolicId, R : WorkspaceEntity> hasReferrers(id: SymbolicEntityId<E>, entityClass: Class<R>): Boolean {
-    val classId = entityClass.toClassId()
-    return indexes.softLinks.getIdsByEntry(id).any { it.clazz == classId }
+  override fun <E : WorkspaceEntityWithSymbolicId> hasReferrers(id: SymbolicEntityId<E>): Boolean {
+    return indexes.softLinks.getIdsByEntry(id).isNotEmpty()
   }
 
   override fun <E : WorkspaceEntityWithSymbolicId> resolve(id: SymbolicEntityId<E>): E? {

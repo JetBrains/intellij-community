@@ -61,7 +61,7 @@ internal class ActionTracker(
   }
 
   fun ignoreCurrentDocumentChange() {
-    if (CommandProcessor.getInstance().currentCommand == null) {
+    if (!CommandProcessor.getInstance().isCommandInProgress) {
       return
     }
 

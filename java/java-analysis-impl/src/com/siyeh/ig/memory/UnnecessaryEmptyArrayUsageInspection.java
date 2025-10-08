@@ -30,7 +30,7 @@ public final class UnnecessaryEmptyArrayUsageInspection extends BaseInspection i
   }
 
   @Override
-  public BaseInspectionVisitor buildVisitor() {
+  public @NotNull BaseInspectionVisitor buildVisitor() {
     return new BaseInspectionVisitor() {
       @Override
       public void visitNewExpression(@NotNull PsiNewExpression expression) {

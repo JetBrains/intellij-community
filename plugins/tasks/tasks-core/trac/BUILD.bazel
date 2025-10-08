@@ -1,0 +1,27 @@
+### auto-generated section `build intellij.tasks.trac` start
+load("@rules_jvm//:jvm.bzl", "jvm_library", "resourcegroup")
+
+resourcegroup(
+  name = "trac_resources",
+  srcs = glob(["resources/**/*"]),
+  strip_prefix = "resources"
+)
+
+jvm_library(
+  name = "trac",
+  module_name = "intellij.tasks.trac",
+  visibility = ["//visibility:public"],
+  srcs = glob(["src/**/*.kt", "src/**/*.java", "src/**/*.form"], allow_empty = True),
+  resources = [":trac_resources"],
+  deps = [
+    "//plugins/tasks/tasks-api:tasks",
+    "//platform/platform-api:ide",
+    "//plugins/tasks/tasks-core:core",
+    "//plugins/tasks/tasks-compatibility:compatibility",
+    "//platform/core-api:core",
+    "//platform/tasks-platform-impl:tasks-impl",
+    "//platform/platform-impl:ide-impl",
+    "//libraries/xml-rpc",
+  ]
+)
+### auto-generated section `build intellij.tasks.trac` end

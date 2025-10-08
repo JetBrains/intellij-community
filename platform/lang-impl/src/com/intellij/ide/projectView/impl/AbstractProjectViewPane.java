@@ -289,6 +289,7 @@ public abstract class AbstractProjectViewPane implements UiCompatibleDataProvide
   }
 
   /** @deprecated Use {@link #getSelectionPaths()} */
+  @ApiStatus.Internal
   @Deprecated(forRemoval = true)
   protected @NotNull <T extends NodeDescriptor<?>> List<T> getSelectedNodes(@NotNull Class<T> nodeClass) {
     TreePath[] paths = getSelectionPaths();

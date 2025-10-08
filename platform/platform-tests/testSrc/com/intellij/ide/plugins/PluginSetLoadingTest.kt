@@ -242,7 +242,7 @@ class PluginSetLoadingTest {
     assertThat(pluginSet).hasExactlyEnabledPlugins("foo")
     val errors = PluginManagerCore.getAndClearPluginLoadingErrors()
     assertThat(errors).hasSizeGreaterThan(0)
-    assertThat(errors[0].get().toString()).contains("conflicts with", "bar.module", "foo.module", "package prefix")
+    assertThat(errors[0].htmlMessage.toString()).contains("conflicts with", "bar.module", "foo.module", "package prefix")
   }
   
   @Test
@@ -274,7 +274,7 @@ class PluginSetLoadingTest {
     assertThat(pluginSet).doesNotHaveEnabledPlugins()
     val errors = PluginManagerCore.getAndClearPluginLoadingErrors()
     assertThat(errors).hasSizeGreaterThan(0)
-    assertThat(errors[0].get().toString()).contains("conflicts with", "foo.module", "package prefix")
+    assertThat(errors[0].htmlMessage.toString()).contains("conflicts with", "foo.module", "package prefix")
   }
 
   @Test
@@ -295,7 +295,7 @@ class PluginSetLoadingTest {
     assertThat(pluginSet).hasExactlyEnabledModulesWithoutMainDescriptors("foo.module")
     val errors = PluginManagerCore.getAndClearPluginLoadingErrors()
     assertThat(errors).isNotEmpty()
-    assertThat(errors[0].get().toString()).contains("conflicts with", "bar", "foo.module", "package prefix")
+    assertThat(errors[0].htmlMessage.toString()).contains("conflicts with", "bar", "foo.module", "package prefix")
   }
 
   @Test
@@ -441,7 +441,94 @@ class PluginSetLoadingTest {
     assertThat(pluginSet).doesNotHaveEnabledPlugins()
     val errors = PluginManagerCore.getAndClearPluginLoadingErrors()
     assertThat(errors).hasSizeGreaterThan(0)
-    assertThat(errors[0].get().toString()).contains("foo", "duplicate", "content module")
+    assertThat(errors[0].htmlMessage.toString()).contains("foo", "duplicate", "content module")
+  }
+
+  @Test
+  fun `test a module graph take into account aliases and sort them correctly`() {
+    val aPath = pluginsDirPath.resolve("a")
+    val bPath = pluginsDirPath.resolve("b")
+    val dPath = pluginsDirPath.resolve("d")
+    plugin("d") {
+      content {
+        module("d.a", loadingRule = ModuleLoadingRule.REQUIRED) {
+          dependencies {
+            plugin("BBB")
+          }
+        }
+      }
+    }.buildDir(dPath)
+
+    plugin("a") {
+      content {
+        module("a.a", loadingRule = ModuleLoadingRule.REQUIRED) {
+          dependencies {
+            plugin("BBB")
+          }
+        }
+      }
+    }.buildDir(aPath)
+
+    plugin("b") {
+      content {
+        module("b1", loadingRule = ModuleLoadingRule.REQUIRED) {}
+        module("b2", loadingRule = ModuleLoadingRule.REQUIRED) {
+          pluginAlias("BBB")
+          dependencies {
+            module("b1")
+          }
+        }
+      }
+    }.buildDir(bPath)
+
+    val pluginSet = buildPluginSet()
+    assertThat(pluginSet).hasExactlyEnabledPlugins("a", "b", "d")
+  }
+
+  @Test
+  fun `test a fail of one required module leads to not loading of all plugins`() {
+    val aPath = pluginsDirPath.resolve("a")
+    val bPath = pluginsDirPath.resolve("b")
+    val dPath = pluginsDirPath.resolve("d")
+    plugin("d") {
+      content {
+        module("d.a", loadingRule = ModuleLoadingRule.REQUIRED) {
+          dependencies {
+            plugin("BBB")
+          }
+        }
+      }
+    }.buildDir(dPath)
+
+    plugin("a") {
+      content {
+        module("a.a", loadingRule = ModuleLoadingRule.REQUIRED) {
+          dependencies {
+            plugin("BBB")
+          }
+        }
+      }
+    }.buildDir(aPath)
+
+    plugin("b") {
+      content {
+        module("b1", loadingRule = ModuleLoadingRule.REQUIRED) {}
+        module("b2", loadingRule = ModuleLoadingRule.REQUIRED) {
+          pluginAlias("BBB")
+          dependencies {
+            module("b1")
+          }
+        }
+        module("b0", loadingRule = ModuleLoadingRule.REQUIRED) {
+          dependencies {
+            module("unresolved")
+          }
+        }
+      }
+    }.buildDir(bPath)
+
+    val pluginSet = buildPluginSet()
+    assertThat(pluginSet).hasExactlyEnabledPlugins()
   }
 
   @Test

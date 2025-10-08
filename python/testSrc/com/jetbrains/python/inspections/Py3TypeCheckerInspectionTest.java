@@ -568,8 +568,8 @@ public class Py3TypeCheckerInspectionTest extends PyInspectionTestCase {
                    
                    class Color(Enum):
                        R = 1
-                       G == 2
-                       B == 3
+                       G = 2
+                       B = 3
                        RED = R
                        BLUE = B
                    

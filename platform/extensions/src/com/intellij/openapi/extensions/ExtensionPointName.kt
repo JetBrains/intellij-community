@@ -186,12 +186,6 @@ class ExtensionPointName<T : Any>(name: @NonNls String) : BaseExtensionPointName
 
   @ApiStatus.ScheduledForRemoval
   @Deprecated("Pass CoroutineScope to addChangeListener")
-  fun removeExtensionPointListener(listener: ExtensionPointListener<T>) {
-    getRootPoint().removeExtensionPointListener(listener)
-  }
-
-  @ApiStatus.ScheduledForRemoval
-  @Deprecated("Pass CoroutineScope to addChangeListener")
   fun addChangeListener(listener: Runnable, parentDisposable: Disposable?) {
     getRootPoint().addChangeListener(listener = listener, parentDisposable = parentDisposable)
   }

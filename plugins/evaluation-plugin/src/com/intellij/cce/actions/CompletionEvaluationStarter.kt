@@ -18,13 +18,13 @@ import com.intellij.cce.evaluation.BackgroundStepFactory
 import com.intellij.cce.evaluation.EvaluationProcess
 import com.intellij.cce.evaluation.FinishEvaluationStep
 import com.intellij.cce.evaluation.allPreliminarySteps
+import com.intellij.cce.evaluation.step.ReportGenerationStep
 import com.intellij.cce.evaluation.step.SetupStatsCollectorStep
 import com.intellij.cce.evaluation.step.runInIntellij
 import com.intellij.cce.util.ExceptionsUtil.stackTraceToString
 import com.intellij.cce.workspace.Config
 import com.intellij.cce.workspace.ConfigFactory
 import com.intellij.cce.workspace.EvaluationWorkspace
-import com.intellij.ide.commandNameFromExtension
 import com.intellij.openapi.application.ApplicationStarter
 import com.intellij.openapi.application.ex.ApplicationEx.FORCE_EXIT
 import com.intellij.openapi.application.ex.ApplicationManagerEx
@@ -40,8 +40,7 @@ internal class CompletionEvaluationStarter : ApplicationStarter {
     get() = ApplicationStarter.NOT_IN_EDT
 
   override fun main(args: List<String>) {
-
-    fun run() = MainEvaluationCommand()
+    fun run() = MainEvaluationCommand("ml-evaluate")
       .subcommands(
         FullCommand(),
         GenerateActionsCommand(),
@@ -57,7 +56,6 @@ internal class CompletionEvaluationStarter : ApplicationStarter {
         }
       }
       .main(args.toList().subList(1, args.size))
-
 
     val startTimestamp = System.currentTimeMillis()
     try {
@@ -101,7 +99,7 @@ internal class CompletionEvaluationStarter : ApplicationStarter {
     }
   }
 
-  inner class MainEvaluationCommand : EvaluationCommand(commandNameFromExtension!!, "Evaluate code completion quality in headless mode") {
+  class MainEvaluationCommand(name: String) : EvaluationCommand(name, "Evaluate code completion quality in headless mode") {
     override fun run() = Unit
   }
 
@@ -216,7 +214,6 @@ internal class CompletionEvaluationStarter : ApplicationStarter {
         feature.getStrategySerializer()
       )
       val outputWorkspace = EvaluationWorkspace.create(config, SetupStatsCollectorStep.statsCollectorLogsDirectory)
-      val datasetContext = DatasetContext(outputWorkspace, null, null)
       for (workspacePath in workspacesToMerge) {
         val workspace = EvaluationWorkspace.open(workspacePath, SetupStatsCollectorStep.statsCollectorLogsDirectory)
         workspace.readAdditionalStats(LAYOUT_NAME)?.let {
@@ -228,13 +225,16 @@ internal class CompletionEvaluationStarter : ApplicationStarter {
         }
       }
       outputWorkspace.saveMetadata()
-      feature.prepareEnvironment(config, outputWorkspace).use { environment ->
-        val stepFactory = BackgroundStepFactory(feature, config, environment, null, datasetContext)
-        val process = EvaluationProcess.build(environment, stepFactory) {
-          shouldGenerateReports = true
-        }
-        process.start(outputWorkspace)
-      }
+
+      val step = ReportGenerationStep(
+        null,
+        config.reports.sessionsFilters,
+        config.reports.comparisonFilters,
+        config.reports.lookupFilters,
+        feature,
+      )
+
+      step.runInIntellij(null, outputWorkspace)
     }
 
     /**
@@ -245,7 +245,7 @@ internal class CompletionEvaluationStarter : ApplicationStarter {
       try {
         sessionsStorage.getSessionFiles()
       }
-      catch (e: Throwable) {
+      catch (_: Throwable) {
         logger.warn("Failed to get session files from workspace ${this.path()}. Probably some evaluation builds failed")
         emptyList()
       }

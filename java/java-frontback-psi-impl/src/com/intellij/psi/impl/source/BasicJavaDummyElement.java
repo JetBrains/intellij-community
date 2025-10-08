@@ -6,13 +6,18 @@ import com.intellij.lang.java.parser.BasicJavaParserUtil;
 import com.intellij.pom.java.LanguageLevel;
 import com.intellij.psi.impl.source.tree.FileElement;
 import com.intellij.psi.impl.source.tree.TreeElement;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 /**
  * Dummy file element for using together with DummyHolder.
  * See {@link com.intellij.psi.impl.PsiJavaParserFacadeImpl} for details.
+
+ * @deprecated Use {@link com.intellij.psi.impl.source.JavaDummyElement}.
  */
+@Deprecated
+@ApiStatus.ScheduledForRemoval
 public class BasicJavaDummyElement extends FileElement {
   private final BasicJavaParserUtil.ParserWrapper myParser;
   private final LanguageLevel myLanguageLevel;

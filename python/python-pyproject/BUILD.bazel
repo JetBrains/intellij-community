@@ -1,17 +1,24 @@
 ### auto-generated section `build intellij.python.pyproject` start
-load("@rules_jvm//:jvm.bzl", "jvm_library", "jvm_resources")
+load("@rules_jvm//:jvm.bzl", "jvm_library", "resourcegroup")
 
-jvm_resources(
+resourcegroup(
   name = "pyproject_resources",
-  files = glob(["resources/**/*"]),
+  srcs = glob(["resources/**/*"]),
   strip_prefix = "resources"
+)
+
+resourcegroup(
+  name = "pyproject_test_resources",
+  srcs = glob(["testResources/**/*"]),
+  strip_prefix = "testResources"
 )
 
 jvm_library(
   name = "pyproject",
   module_name = "intellij.python.pyproject",
   visibility = ["//visibility:public"],
-  srcs = glob(["src/**/*.kt", "src/**/*.java", "src/**/*.form"], allow_empty = True),
+  srcs = glob(["src/**/*.kt", "src/**/*.java", "src/**/*.form", "gen/**/*.kt", "gen/**/*.java"], allow_empty = True),
+  resources = [":pyproject_resources"],
   deps = [
     "@lib//:kotlin-stdlib",
     "//python/openapi:community",
@@ -21,14 +28,25 @@ jvm_library(
     "//platform/util",
     "//plugins/toml/core",
     "@lib//:tuweni-toml",
+    "//platform/external-system-api:externalSystem",
+    "//platform/ide-core",
+    "//platform/progress/shared:ide-progress",
+    "//platform/backend/workspace",
+    "//platform/workspace/storage",
+    "//platform/external-system-impl:externalSystem-impl",
+    "//platform/platform-impl:ide-impl",
+    "//platform/workspace/jps",
+    "//platform/projectModel-impl",
+    "//platform/projectModel-api:projectModel",
   ],
-  runtime_deps = [":pyproject_resources"]
+  exports = ["@lib//:tuweni-toml"]
 )
 
 jvm_library(
   name = "pyproject_test_lib",
   visibility = ["//visibility:public"],
   srcs = glob(["test/**/*.kt", "test/**/*.java", "test/**/*.form"], allow_empty = True),
+  resources = [":pyproject_test_resources"],
   associates = [":pyproject"],
   deps = [
     "@lib//:kotlin-stdlib",
@@ -43,8 +61,18 @@ jvm_library(
     "@lib//:tuweni-toml",
     "@lib//:junit5",
     "@lib//:junit5Params",
+    "//platform/external-system-api:externalSystem",
+    "//platform/ide-core",
+    "//platform/progress/shared:ide-progress",
+    "//platform/backend/workspace",
+    "//platform/workspace/storage",
+    "//platform/external-system-impl:externalSystem-impl",
+    "//platform/platform-impl:ide-impl",
+    "//platform/workspace/jps",
+    "//platform/projectModel-impl",
+    "//platform/projectModel-api:projectModel",
   ],
-  runtime_deps = [":pyproject_resources"]
+  exports = ["@lib//:tuweni-toml"]
 )
 ### auto-generated section `build intellij.python.pyproject` end
 

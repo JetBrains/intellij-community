@@ -1,9 +1,9 @@
 ### auto-generated section `build intellij.tasks.jira` start
-load("@rules_jvm//:jvm.bzl", "jvm_library", "jvm_resources")
+load("@rules_jvm//:jvm.bzl", "jvm_library", "resourcegroup")
 
-jvm_resources(
+resourcegroup(
   name = "jira_resources",
-  files = glob(["resources/**/*"]),
+  srcs = glob(["resources/**/*"]),
   strip_prefix = "resources"
 )
 
@@ -12,6 +12,7 @@ jvm_library(
   module_name = "intellij.tasks.jira",
   visibility = ["//visibility:public"],
   srcs = glob(["src/**/*.kt", "src/**/*.java", "src/**/*.form", "gen/**/*.kt", "gen/**/*.java"], allow_empty = True),
+  resources = [":jira_resources"],
   deps = [
     "//platform/analysis-api:analysis",
     "//platform/core-api:core",
@@ -23,11 +24,10 @@ jvm_library(
     "//platform/lang-impl",
     "//platform/tasks-platform-impl:tasks-impl",
     "//plugins/tasks/tasks-api:tasks",
-    "@lib//:xml_r_p_c",
-    "@lib//:gson",
+    "//libraries/xml-rpc",
+    "//libraries/gson",
     "//platform/core-ui",
     "//platform/util/jdom",
-  ],
-  runtime_deps = [":jira_resources"]
+  ]
 )
 ### auto-generated section `build intellij.tasks.jira` end

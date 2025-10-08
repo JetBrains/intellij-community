@@ -1,6 +1,7 @@
 // Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.platform
 
+import com.intellij.configurationStore.ProjectStorePathManager
 import com.intellij.ide.GeneralLocalSettings
 import com.intellij.ide.GeneralSettings
 import com.intellij.ide.IdeBundle
@@ -14,7 +15,6 @@ import com.intellij.openapi.components.service
 import com.intellij.openapi.fileChooser.FileChooser
 import com.intellij.openapi.project.DumbAware
 import com.intellij.openapi.project.Project
-import com.intellij.openapi.project.ProjectStorePathManager
 import com.intellij.openapi.ui.Messages
 import com.intellij.openapi.util.Key
 import com.intellij.openapi.util.io.FileUtil

@@ -1,28 +1,16 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package git4idea.config;
 
-import com.intellij.execution.ExecutableValidator;
-import com.intellij.execution.ExecutionException;
-import com.intellij.execution.configurations.GeneralCommandLine;
-import com.intellij.execution.process.CapturingProcessHandler;
-import com.intellij.execution.process.ProcessOutput;
 import com.intellij.openapi.diagnostic.Logger;
-import com.intellij.openapi.progress.ProcessCanceledException;
-import com.intellij.openapi.progress.ProgressIndicator;
-import com.intellij.openapi.progress.ProgressManager;
-import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.SystemInfo;
 import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.util.text.StringUtil;
-import com.intellij.openapi.vfs.CharsetToolkit;
-import git4idea.i18n.GitBundle;
 import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.text.ParseException;
 import java.util.Objects;
-import java.util.concurrent.TimeoutException;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
@@ -161,40 +149,6 @@ public final class GitVersion implements Comparable<GitVersion> {
     return match.trim();
   }
 
-  /**
-   * @deprecated use {@link GitExecutableManager#identifyVersion(String)} with appropriate {@link ProgressIndicator}
-   * or {@link GitExecutableManager#getVersion(Project)}
-   */
-  @Deprecated(forRemoval = true)
-  public static @NotNull GitVersion identifyVersion(@NotNull String gitExecutable) throws TimeoutException, ExecutionException, ParseException {
-    GeneralCommandLine commandLine = new GeneralCommandLine();
-    commandLine.setExePath(gitExecutable);
-    commandLine.addParameter("--version");
-    commandLine.setCharset(CharsetToolkit.getDefaultSystemCharset());
-    CapturingProcessHandler handler = new CapturingProcessHandler(commandLine);
-    ProgressIndicator indicator = ProgressManager.getInstance().getProgressIndicator();
-    ProcessOutput result = indicator == null ?
-                           handler.runProcess(ExecutableValidator.TIMEOUT_MS) :
-                           handler.runProcessWithProgressIndicator(indicator);
-    if (result.isTimeout()) {
-      throw new TimeoutException("Couldn't identify the version of Git - stopped by timeout.");
-    }
-    else if (result.isCancelled()) {
-      LOG.info("Cancelled by user. exitCode=" + result.getExitCode());
-      throw new ProcessCanceledException();
-    }
-    else if (result.getExitCode() != 0 || !result.getStderr().isEmpty()) {
-      LOG.info("getVersion exitCode=" + result.getExitCode() + " errors: " + result.getStderr());
-      // anyway trying to parse
-      try {
-        parse(result.getStdout());
-      } catch (ParseException pe) {
-        throw new ExecutionException(GitBundle.message("error.git.version.check.failed", result.getExitCode(), result.getStderr()), pe);
-      }
-    }
-    return parse(result.getStdout());
-  }
-
   @ApiStatus.Internal
   public static boolean isUnsupportedWslVersion(@NotNull Type type) {
     return !Registry.is("git.allow.wsl1.executables") && type == Type.WSL1;
@@ -303,12 +257,4 @@ public final class GitVersion implements Comparable<GitVersion> {
   public boolean isNull() {
     return getType() == Type.NULL;
   }
-
-  public boolean isWSL() {
-    return switch (getType()) {
-      case WSL1, WSL2 -> true;
-      default -> false;
-    };
-  }
-
 }

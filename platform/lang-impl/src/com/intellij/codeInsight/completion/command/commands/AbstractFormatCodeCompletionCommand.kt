@@ -23,6 +23,9 @@ import java.util.Locale.getDefault
  */
 abstract class AbstractFormatCodeCompletionCommandProvider :
   CommandProvider {
+
+  override fun supportNewLineCompletion(): Boolean = true
+
   override fun getCommands(context: CommandCompletionProviderContext): List<CompletionCommand> {
     val element = createCommand(context) ?: return emptyList()
     return listOf(element)

@@ -43,7 +43,7 @@
     <plugin id="com.intellij.modules.lang"/>
   </dependencies>
 
-  <content>
+  <content namespace="jetbrains">
     <module name="intellij.terminal.backend"/>
     <module name="intellij.terminal.frontend"/>
     <module name="intellij.terminal.frontend.split"/>
@@ -62,12 +62,6 @@
       <add-to-group group-id="TouchBarDefault_alt" anchor="last"/>
     </action>
     <action id="Terminal.CloseTab" class="org.jetbrains.plugins.terminal.action.TerminalCloseTabAction" use-shortcut-of="CloseContent"/>
-    <action id="Terminal.RenameSession" class="org.jetbrains.plugins.terminal.action.RenameTerminalSessionAction">
-      <add-to-group group-id="ToolWindowContextMenu" anchor="last"/>
-    </action>
-    <action id="Terminal.MoveToEditor" class="org.jetbrains.plugins.terminal.action.MoveTerminalSessionToEditorAction">
-      <add-to-group group-id="ToolWindowContextMenu" anchor="last"/>
-    </action>
     <action id="Terminal.MoveToolWindowTabLeft" class="org.jetbrains.plugins.terminal.action.MoveTerminalToolWindowTabLeftAction"/>
     <action id="Terminal.MoveToolWindowTabRight" class="org.jetbrains.plugins.terminal.action.MoveTerminalToolWindowTabRightAction"/>
     <action id="Terminal.SwitchFocusToEditor" class="com.intellij.openapi.actionSystem.EmptyAction">
@@ -176,6 +170,8 @@
 
     <action id="Terminal.ShowFeedbackNotification" internal="true"
             class="org.jetbrains.plugins.terminal.block.feedback.ShowReworkedTerminalFeedbackNotificationAction"/>
+    <action id="Terminal.Completion.ShowFeedbackNotification" internal="true"
+            class="org.jetbrains.plugins.terminal.block.completion.feedback.ShowTerminalCompletionFeedbackNotificationAction"/>
   </actions>
 
 </idea-plugin>

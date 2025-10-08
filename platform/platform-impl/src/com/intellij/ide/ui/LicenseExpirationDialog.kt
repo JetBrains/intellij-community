@@ -13,29 +13,22 @@ import com.intellij.ui.components.JBLabel
 import com.intellij.ui.components.labels.LinkLabel
 import com.intellij.ui.components.labels.LinkListener
 import com.intellij.ui.components.panels.HorizontalLayout
-import com.intellij.ui.icons.HiDPIImage
-import com.intellij.util.ui.JBImageIcon
+import com.intellij.util.ImageLoader
 import com.intellij.util.ui.JBUI
+import com.intellij.util.ui.StartupUiUtil
 import com.intellij.util.ui.UIUtil
 import org.jetbrains.annotations.ApiStatus.Internal
 import org.jetbrains.annotations.Nls
-import java.awt.BorderLayout
-import java.awt.Image
-import java.awt.Point
+import java.awt.*
 import java.awt.event.MouseEvent
-import javax.imageio.ImageIO
 import javax.swing.*
 
 /**
  * @author Alexander Lobas
  */
 @Internal
-abstract class LicenseExpirationDialog(
-  project: Project?,
-  private val imagePath: String,
-  private val imageWidth: Int,
-  private val imageHeight: Int,
-) : DialogWrapper(project, null, false, IdeModalityType.IDE, false) {
+abstract class LicenseExpirationDialog(project: Project?, private val imagePath: String) :
+  DialogWrapper(project, null, false, IdeModalityType.IDE, false) {
 
   protected fun initDialog(@NlsContexts.DialogTitle title: String) {
     this.title = title
@@ -105,9 +98,6 @@ abstract class LicenseExpirationDialog(
     val panel = JPanel(BorderLayout())
     panel.isOpaque = false
 
-    val label = JBLabel(JBImageIcon(loadImage()!!))
-    panel.add(label, BorderLayout.NORTH)
-
     panel.add(createAndConfigurePanel())
 
     val buttons = JPanel(HorizontalLayout(17, SwingConstants.CENTER))
@@ -117,12 +107,42 @@ abstract class LicenseExpirationDialog(
     updateOKActionText()
     buttons.add(createJButtonForAction(myOKAction).also { it.isOpaque = false })
 
-    val listener = LinkListener<Any> { aSource, aLinkData -> doCancelAction() }
+    val listener = LinkListener<Any> { _, _ -> doCancelAction() }
     buttons.add(LinkLabel(getCancelActionText(), null, listener))
 
     panel.add(buttons, BorderLayout.SOUTH)
 
+    val label = object : JBLabel() {
+      val image = loadImage()!!
+      var scaleImage: Image? = null
+      var imageWidth = 0
+      var imageHeight = 0
+
+      override fun paintComponent(g: Graphics) {
+        val newWidth = width
+        val newHeight = height
+
+        if (scaleImage == null || imageWidth != newWidth || imageHeight != newHeight) {
+          imageWidth = newWidth
+          imageHeight = newHeight
+          scaleImage = ImageLoader.scaleImage(image, newWidth, newHeight)
+        }
+        StartupUiUtil.drawImage(g, scaleImage!!, Rectangle(0, 0, newWidth, newHeight), this)
+      }
+    }
+    configureHeader(label)
+
+    val contentWidth = panel.preferredSize.width
+    val contentSize = Dimension(contentWidth, (contentWidth / 1.8).toInt())
+    label.isOpaque = false
+    label.preferredSize = contentSize
+
+    panel.add(label, BorderLayout.NORTH)
+
     return panel
+  }
+
+  protected open fun configureHeader(header: JComponent) {
   }
 
   protected open fun createAndConfigurePanel(): JComponent {
@@ -146,11 +166,7 @@ abstract class LicenseExpirationDialog(
 
   private fun loadImage(): Image? {
     try {
-      val image = ImageIO.read(javaClass.getResourceAsStream(imagePath))
-      val width = JBUI.scale(imageWidth).coerceAtLeast(imageWidth)
-      val height = JBUI.scale(imageHeight).coerceAtLeast(imageHeight)
-
-      return HiDPIImage(image, width, height, image.type)
+      return ImageLoader.loadFromStream(javaClass.getResourceAsStream(imagePath)!!)
     }
     catch (e: Exception) {
       logger<InProductNotificationDialog>().error("Image $imagePath is not loaded: $e")

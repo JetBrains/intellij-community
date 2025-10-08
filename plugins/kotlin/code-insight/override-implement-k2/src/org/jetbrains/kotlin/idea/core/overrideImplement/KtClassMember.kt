@@ -12,6 +12,7 @@ import com.intellij.openapi.util.NlsContexts
 import com.intellij.openapi.util.NlsSafe
 import com.intellij.psi.PsiDocCommentOwner
 import com.intellij.psi.tree.TokenSet
+import com.intellij.ui.SimpleTextAttributes
 import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.kotlin.analysis.api.KaExperimentalApi
 import org.jetbrains.kotlin.analysis.api.KaImplementationDetail
@@ -19,14 +20,7 @@ import org.jetbrains.kotlin.analysis.api.KaSession
 import org.jetbrains.kotlin.analysis.api.annotations.KaAnnotation
 import org.jetbrains.kotlin.analysis.api.base.KaContextReceiver
 import org.jetbrains.kotlin.analysis.api.base.KaContextReceiversOwner
-import org.jetbrains.kotlin.analysis.api.components.combinedDeclaredMemberScope
-import org.jetbrains.kotlin.analysis.api.components.containingSymbol
-import org.jetbrains.kotlin.analysis.api.components.declaredMemberScope
-import org.jetbrains.kotlin.analysis.api.components.fakeOverrideOriginal
-import org.jetbrains.kotlin.analysis.api.components.getExpectsForActual
-import org.jetbrains.kotlin.analysis.api.components.isSubClassOf
-import org.jetbrains.kotlin.analysis.api.components.isUnitType
-import org.jetbrains.kotlin.analysis.api.components.render
+import org.jetbrains.kotlin.analysis.api.components.*
 import org.jetbrains.kotlin.analysis.api.renderer.base.annotations.KaRendererAnnotationsFilter
 import org.jetbrains.kotlin.analysis.api.renderer.base.contextReceivers.KaContextReceiversRenderer
 import org.jetbrains.kotlin.analysis.api.renderer.base.contextReceivers.renderers.KaContextReceiverLabelRenderer
@@ -52,11 +46,7 @@ import org.jetbrains.kotlin.lexer.KtModifierKeywordToken
 import org.jetbrains.kotlin.lexer.KtTokens
 import org.jetbrains.kotlin.psi.*
 import org.jetbrains.kotlin.psi.findDocComment.findDocComment
-import org.jetbrains.kotlin.psi.psiUtil.forEachDescendantOfType
-import org.jetbrains.kotlin.psi.psiUtil.hasActualModifier
-import org.jetbrains.kotlin.psi.psiUtil.hasExpectModifier
-import org.jetbrains.kotlin.psi.psiUtil.hasValueModifier
-import org.jetbrains.kotlin.psi.psiUtil.isPropertyParameter
+import org.jetbrains.kotlin.psi.psiUtil.*
 import org.jetbrains.kotlin.renderer.render
 import org.jetbrains.kotlin.types.Variance
 import org.jetbrains.kotlin.utils.addIfNotNull
@@ -70,6 +60,7 @@ data class KtClassMemberInfo(
     val containingSymbolText: @NlsContexts.Label String?,
     val containingSymbolIcon: Icon?,
     val isProperty: Boolean,
+    val isDeprecated: Boolean,
 ) {
     companion object {
         context(_: KaSession)
@@ -86,6 +77,7 @@ data class KtClassMemberInfo(
             containingSymbolText = containingSymbolText,
             containingSymbolIcon = containingSymbolIcon,
             isProperty = symbol is KaPropertySymbol,
+            isDeprecated = (symbol.psi as? KtModifierListOwner)?.let(KtPsiUtil::isDeprecated) ?: false,
         )
     }
 }
@@ -99,12 +91,17 @@ data class KtClassMember(
     memberInfo.memberText,
     memberInfo.memberIcon,
 ), ClassMember {
+    private val isDeprecated: Boolean = memberInfo.isDeprecated
+
     override fun getParentNodeDelegate(): MemberChooserObject? = memberInfo.containingSymbolText?.let {
         KaClassOrObjectSymbolChooserObject(
             memberInfo.containingSymbolText,
             memberInfo.containingSymbolIcon
         )
     }
+
+    override fun getTextStyle(): Int =
+        if (isDeprecated) SimpleTextAttributes.STYLE_STRIKEOUT else SimpleTextAttributes.STYLE_PLAIN
 }
 
 data class KaClassOrObjectSymbolChooserObject(

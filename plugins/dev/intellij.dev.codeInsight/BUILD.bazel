@@ -1,9 +1,9 @@
 ### auto-generated section `build intellij.dev.codeInsight` start
-load("@rules_jvm//:jvm.bzl", "jvm_library", "jvm_resources")
+load("@rules_jvm//:jvm.bzl", "jvm_library", "resourcegroup")
 
-jvm_resources(
+resourcegroup(
   name = "codeInsight_resources",
-  files = glob(["resources/**/*"]),
+  srcs = glob(["resources/**/*"]),
   strip_prefix = "resources"
 )
 
@@ -12,14 +12,12 @@ jvm_library(
   module_name = "intellij.dev.codeInsight",
   visibility = ["//visibility:public"],
   srcs = glob(["src/**/*.kt", "src/**/*.java", "src/**/*.form"], allow_empty = True),
+  resources = [":codeInsight_resources"],
   deps = [
     "//platform/core-api:core",
     "//platform/util",
     "//platform/analysis-api:analysis",
   ],
-  runtime_deps = [
-    ":codeInsight_resources",
-    "//platform/backend",
-  ]
+  runtime_deps = ["//platform/backend"]
 )
 ### auto-generated section `build intellij.dev.codeInsight` end

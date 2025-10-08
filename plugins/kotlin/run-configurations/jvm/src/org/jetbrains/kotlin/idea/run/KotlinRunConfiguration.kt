@@ -57,7 +57,7 @@ import org.jetbrains.kotlin.idea.base.codeInsight.findMainOwner
 import org.jetbrains.kotlin.idea.base.projectStructure.getKotlinSourceRootType
 import org.jetbrains.kotlin.idea.base.psi.KotlinPsiHeuristics
 import org.jetbrains.kotlin.idea.base.util.runReadActionInSmartMode
-import org.jetbrains.kotlin.idea.run.KotlinRunConfigurationProducer.Companion.getMainClassJvmName
+import org.jetbrains.kotlin.idea.run.KotlinRunConfigurationProducer.Companion.getMainClassQualifiedName
 import org.jetbrains.kotlin.idea.stubindex.KotlinFileFacadeFqNameIndex
 import org.jetbrains.kotlin.idea.stubindex.KotlinFullClassNameIndex
 import org.jetbrains.kotlin.psi.*
@@ -148,10 +148,21 @@ open class KotlinRunConfiguration(name: String?, runConfigurationModule: JavaRun
         options.env = envs.toMutableMap()
     }
 
+    var mainClassName: String?
+        get() = options.mainClassName
+        set(value) {
+            options.mainClassName = value
+        }
+
     override fun getRunClass(): String? {
-        return options.mainClassName
+        val mainClass = DumbService.getInstance(project).computeWithAlternativeResolveEnabled<PsiClass?, Throwable> {
+            configurationModule.findClass(options.mainClassName)
+        } ?: return null
+        val binaryName = JavaExecutionUtil.getRuntimeQualifiedName(mainClass)
+        return binaryName
     }
 
+    @Deprecated("Run class is inferred from the main class.", ReplaceWith("setMainClassName(value)"))
     fun setRunClass(value: String?) {
         options.mainClassName = value
     }
@@ -207,7 +218,7 @@ open class KotlinRunConfiguration(name: String?, runConfigurationModule: JavaRun
 
     override fun getRefactoringElementListener(element: PsiElement): RefactoringElementListener? {
         val fqNameBeingChanged: String? = when (element) {
-            is KtDeclarationContainer -> getMainClassJvmName(element as KtDeclarationContainer)
+            is KtDeclarationContainer -> getMainClassQualifiedName(element as KtDeclarationContainer)
             is PsiPackage -> element.qualifiedName
             is KtNamedFunction -> {
                 if (PsiOnlyKotlinMainFunctionDetector.isMain(element)) {
@@ -247,23 +258,23 @@ open class KotlinRunConfiguration(name: String?, runConfigurationModule: JavaRun
 
     private fun updateMainClassName(element: PsiElement) {
         val mainOwner = KotlinMainFunctionDetector.getInstanceDumbAware(element.project).findMainOwner(element) ?: return
-        runClass = getMainClassJvmName(mainOwner) ?: return
+        mainClassName = getMainClassQualifiedName(mainOwner) ?: return
     }
 
     private fun updateMainClassNameWithSuffix(element: PsiElement, suffix: String) {
         if (element is PsiPackage) {
-            runClass = element.qualifiedName + suffix
+            mainClassName = element.qualifiedName + suffix
         }
     }
 
     override fun suggestedName(): String? {
-        val runClass = runClass
-        if (StringUtil.isEmpty(runClass)) {
+        val mainClassName = mainClassName
+        if (StringUtil.isEmpty(mainClassName)) {
             return null
         }
-        val parts = StringUtil.split(runClass!!, ".")
+        val parts = StringUtil.split(mainClassName!!, ".")
         return if (parts.isEmpty()) {
-            runClass
+            mainClassName
         } else parts[parts.size - 1]
     }
 
@@ -315,7 +326,7 @@ open class KotlinRunConfiguration(name: String?, runConfigurationModule: JavaRun
             runReadAction { JavaParametersUtil.configureModule(module, params, classPathType, jreHome) }
             setupJavaParameters(params)
             params.setShortenCommandLine(myConfiguration.shortenCommandLine, module.project)
-            params.mainClass = myConfiguration.runClass
+            runReadAction { params.mainClass = myConfiguration.runClass }
             runReadAction { setupModulePath(params, module) }
             return params
         }

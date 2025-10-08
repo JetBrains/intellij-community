@@ -1298,9 +1298,9 @@ public final class TypeConversionUtil {
     PRIMITIVE_TYPES.add(PsiTypes.booleanType().getName());
   }
 
-  private static final Set<String> PRIMITIVE_WRAPPER_FQNS = Collections.unmodifiableSet(new HashSet<>(Arrays.asList(
-    JAVA_LANG_BYTE, JAVA_LANG_CHARACTER, JAVA_LANG_DOUBLE, JAVA_LANG_FLOAT, JAVA_LANG_LONG, JAVA_LANG_INTEGER, JAVA_LANG_SHORT,
-    JAVA_LANG_BOOLEAN)));
+  private static final Set<String> PRIMITIVE_WRAPPER_FQNS = Collections.unmodifiableSet(
+    ContainerUtil.newHashSet(JAVA_LANG_BYTE, JAVA_LANG_CHARACTER, JAVA_LANG_DOUBLE, JAVA_LANG_FLOAT, JAVA_LANG_LONG, JAVA_LANG_INTEGER,
+                             JAVA_LANG_SHORT, JAVA_LANG_BOOLEAN));
 
   private static final Set<String> PRIMITIVE_WRAPPER_SIMPLE_NAMES =
     ContainerUtil.map2Set(PRIMITIVE_WRAPPER_FQNS, StringUtil::getShortName);

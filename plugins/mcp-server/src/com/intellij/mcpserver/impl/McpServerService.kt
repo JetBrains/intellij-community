@@ -38,6 +38,7 @@ import io.ktor.server.cio.CIOApplicationEngine
 import io.ktor.server.engine.EmbeddedServer
 import io.ktor.server.engine.embeddedServer
 import io.ktor.server.response.respond
+import io.ktor.util.toMap
 import io.modelcontextprotocol.kotlin.sdk.*
 import io.modelcontextprotocol.kotlin.sdk.server.RegisteredTool
 import io.modelcontextprotocol.kotlin.sdk.server.Server
@@ -266,40 +267,41 @@ class McpServerService(val cs: CoroutineScope) {
     }
   }
 
-private fun McpTool.mcpToolToRegisteredTool(server: Server, projectPathFromInitialRequest: String?): RegisteredTool {
-  val tool = toSdkTool()
-  return RegisteredTool(tool) { request ->
-    val httpRequest = currentCoroutineContext().httpRequestOrNull
-    val projectPathFromHeaders = httpRequest?.headers?.get(IJ_MCP_SERVER_PROJECT_PATH) ?: (request._meta[IJ_MCP_SERVER_PROJECT_PATH] as? JsonPrimitive)?.content ?: projectPathFromInitialRequest
-    val projectPathFromMcpRequest = (request.arguments[projectPathParameterName] as? JsonPrimitive)?.content
-    val project = try {
-      if (!projectPathFromMcpRequest.isNullOrBlank()) {
-        logger.trace { "Project path specified in MCP request: $projectPathFromMcpRequest" }
-        // prefer a project from mcp argument first
-        findMostRelevantProject(Path(projectPathFromMcpRequest)) ?: throw noSuitableProjectError("`$projectPathParameterName`=`$projectPathFromMcpRequest` doesn't correspond to any open project.")
+  private fun McpTool.mcpToolToRegisteredTool(server: Server, projectPathFromInitialRequest: String?): RegisteredTool {
+    val tool = toSdkTool()
+    return RegisteredTool(tool) { request ->
+      val httpRequest = currentCoroutineContext().httpRequestOrNull
+      val projectPathFromHeaders = httpRequest?.headers?.get(IJ_MCP_SERVER_PROJECT_PATH) ?: (request._meta[IJ_MCP_SERVER_PROJECT_PATH] as? JsonPrimitive)?.content ?: projectPathFromInitialRequest
+      val projectPathFromMcpRequest = (request.arguments[projectPathParameterName] as? JsonPrimitive)?.content
+      val project = try {
+        if (!projectPathFromMcpRequest.isNullOrBlank()) {
+          logger.trace { "Project path specified in MCP request: $projectPathFromMcpRequest" }
+          // prefer a project from mcp argument first
+          findMostRelevantProject(Path(projectPathFromMcpRequest)) ?: throw noSuitableProjectError("`$projectPathParameterName`=`$projectPathFromMcpRequest` doesn't correspond to any open project.")
+        }
+        else if (!projectPathFromHeaders.isNullOrBlank()) {
+          logger.trace { "Project path specified in MCP request headers: $projectPathFromHeaders" }
+          // then from headers
+          findMostRelevantProject(Path(projectPathFromHeaders)) ?: throw noSuitableProjectError("Project path specified via header variable `$IJ_MCP_SERVER_PROJECT_PATH`=`$projectPathFromHeaders` doesn't correspond to any open project.")
+        }
+        else {
+          null
+        }
       }
-      else if (!projectPathFromHeaders.isNullOrBlank()) {
-        logger.trace { "Project path specified in MCP request headers: $projectPathFromHeaders" }
-        // then from headers
-        findMostRelevantProject(Path(projectPathFromHeaders)) ?: throw noSuitableProjectError("Project path specified via header variable `$IJ_MCP_SERVER_PROJECT_PATH`=`$projectPathFromHeaders` doesn't correspond to any open project.")
+      catch (mcpError: McpExpectedError) {
+        return@RegisteredTool McpToolCallResult.error(errorMessage = mcpError.mcpErrorText, structuredContent = mcpError.mcpErrorStructureContent).toSdkToolCallResult()
       }
-      else {
-        null
+      catch (e: Throwable) {
+        logger.error("Failed to determine project for MCP tool call by provided arguments", e)
+        return@RegisteredTool McpToolCallResult.error(errorMessage = e.message ?: "Unknown error", structuredContent = null).toSdkToolCallResult()
       }
-    }
-    catch (mcpError: McpExpectedError) {
-      return@RegisteredTool McpToolCallResult.error(errorMessage = mcpError.mcpErrorText, structuredContent = mcpError.mcpErrorStructureContent).toSdkToolCallResult()
-    }
-    catch (e: Throwable) {
-      logger.error("Failed to determine project for MCP tool call by provided arguments", e)
-      return@RegisteredTool McpToolCallResult.error(errorMessage = e.message ?: "Unknown error", structuredContent = null).toSdkToolCallResult()
-    }
 
-    val authToken = httpRequest?.headers[IJ_MCP_AUTH_TOKEN]
+      val authToken = httpRequest?.headers[IJ_MCP_AUTH_TOKEN]
+      val headersWithoutAuthToken = httpRequest?.headers?.toMap()?.let { it - IJ_MCP_AUTH_TOKEN }
 
-    val sessionOptions = getSessionOptions(authToken)
+      val sessionOptions = getSessionOptions(authToken)
 
-    val vfsEvent = CopyOnWriteArrayList<VFileEvent>()
+      val vfsEvent = CopyOnWriteArrayList<VFileEvent>()
       val initialDocumentContents = ConcurrentHashMap<Document, String>()
       val clientVersion = server.clientVersion ?: Implementation("Unknown MCP client", "Unknown version")
 
@@ -310,7 +312,8 @@ private fun McpTool.mcpToolToRegisteredTool(server: Server, projectPathFromIniti
         mcpToolDescriptor = descriptor,
         rawArguments = request.arguments,
         meta = request._meta,
-        mcpSessionOptions = sessionOptions
+        mcpSessionOptions = sessionOptions,
+        headers = headersWithoutAuthToken ?: emptyMap(),
       )
 
       val callResult = coroutineScope {
@@ -369,14 +372,24 @@ private fun McpTool.mcpToolToRegisteredTool(server: Server, projectPathFromIniti
                   }
                   is VFileCreateEvent -> {
                     val virtualFile = event.file ?: continue
-                    val newContent = readAction { FileDocumentManager.getInstance().getDocument(virtualFile)?.text } ?: continue
-                    sideEffectEvents.add(FileCreatedEvent(virtualFile, newContent))
+                    if (event.isDirectory) {
+                      sideEffectEvents.add(DirectoryCreatedEvent(virtualFile))
+                    }
+                    else {
+                      val newContent = readAction { FileDocumentManager.getInstance().getDocument(virtualFile)?.text } ?: continue
+                      sideEffectEvents.add(FileCreatedEvent(virtualFile, newContent))
+                    }
                   }
                   is VFileDeleteEvent -> {
                     val virtualFile = event.file
-                    val document = readAction { FileDocumentManager.getInstance().getDocument(virtualFile) } ?: continue
-                    val oldContent = initialDocumentContents[document]
-                    sideEffectEvents.add(FileDeletedEvent(virtualFile, oldContent))
+                    if (virtualFile.isDirectory) {
+                      sideEffectEvents.add(DirectoryDeletedEvent(virtualFile))
+                    }
+                    else {
+                      val document = readAction { FileDocumentManager.getInstance().getDocument(virtualFile) } ?: continue
+                      val oldContent = initialDocumentContents[document]
+                      sideEffectEvents.add(FileDeletedEvent(virtualFile, oldContent))
+                    }
                   }
                   is VFileCopyEvent -> {
                     val createdFile = event.findCreatedFile() ?: continue
@@ -434,11 +447,11 @@ private fun McpTool.mcpToolToRegisteredTool(server: Server, projectPathFromIniti
             McpServerCounterUsagesCollector.reportMcpCall(descriptor)
           }
         }
-    }
+      }
 
-    val callToolResult = callResult.toSdkToolCallResult()
-    return@RegisteredTool callToolResult
-  }
+      val callToolResult = callResult.toSdkToolCallResult()
+      return@RegisteredTool callToolResult
+    }
   }
 }
 

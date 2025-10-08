@@ -1,9 +1,9 @@
 ### auto-generated section `build intellij.json.backend` start
-load("@rules_jvm//:jvm.bzl", "jvm_library", "jvm_resources")
+load("@rules_jvm//:jvm.bzl", "jvm_library", "resourcegroup")
 
-jvm_resources(
+resourcegroup(
   name = "backend_resources",
-  files = glob(["resources/**/*"]),
+  srcs = glob(["resources/**/*"]),
   strip_prefix = "resources"
 )
 
@@ -12,6 +12,7 @@ jvm_library(
   module_name = "intellij.json.backend",
   visibility = ["//visibility:public"],
   srcs = glob(["src/**/*.kt", "src/**/*.java", "src/**/*.form"], allow_empty = True),
+  resources = [":backend_resources"],
   deps = [
     "//platform/analysis-api:analysis",
     "//platform/code-style-api:codeStyle",
@@ -26,37 +27,34 @@ jvm_library(
     "//platform/projectModel-api:projectModel",
     "//platform/structure-view-impl:structureView-impl",
     "//spellchecker",
-    "@lib//:guava",
+    "//libraries/guava",
     "//platform/analysis-impl",
     "//platform/platform-impl:ide-impl",
     "//platform/ide-core-impl",
-    "@lib//:gson",
+    "//libraries/gson",
     "//platform/indexing-impl",
     "//platform/refactoring",
     "//platform/statistics",
-    "@lib//:fastutil-min",
+    "//libraries/fastutil",
     "//platform/core-ui",
     "//platform/code-style-impl:codeStyle-impl",
     "@lib//:kotlin-stdlib",
     "//platform/platform-util-io:ide-util-io",
     "@lib//:kotlinx-coroutines-core",
-    "@lib//:jackson-databind",
-    "@lib//:jackson",
+    "//libraries/jackson/databind",
+    "//libraries/jackson/jackson",
     "@lib//:jackson-dataformat-yaml",
     "@lib//:jetbrains-markdown",
-    "@lib//:caffeine",
+    "//libraries/caffeine",
     "@lib//:stream_ex",
     "@lib//:kotlinx-collections-immutable",
     "//json",
-    "@lib//:jackson-module-kotlin",
+    "//libraries/jackson/module-kotlin:libraries-jackson-module-kotlin",
     "//json/syntax",
     "//platform/syntax/syntax-psi:psi",
     "//platform/syntax/syntax-util:util",
   ],
   exports = ["//json"],
-  runtime_deps = [
-    ":backend_resources",
-    "//platform/backend",
-  ]
+  runtime_deps = ["//platform/backend"]
 )
 ### auto-generated section `build intellij.json.backend` end

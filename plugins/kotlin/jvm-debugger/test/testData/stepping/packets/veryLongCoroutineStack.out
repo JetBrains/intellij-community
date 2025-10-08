@@ -3,11 +3,19 @@ Run Java
 Connected to the target VM
 veryLongCoroutineStack.kt:21
 veryLongCoroutineStack.kt:11
-Packets sent: 25, methods called: 2
+Packets sent: 23, methods called: 2
+veryLongCoroutineStack.kt:14
+Packets sent: 15, methods called: 2
+veryLongCoroutineStack.kt:11
+Packets sent: 18, methods called: 2
+veryLongCoroutineStack.kt:14
+Packets sent: 16, methods called: 2
+veryLongCoroutineStack.kt:11
+Packets sent: 18, methods called: 2
 veryLongCoroutineStack.kt:14
 Packets sent: 17, methods called: 2
 veryLongCoroutineStack.kt:11
-Packets sent: 20, methods called: 2
+Packets sent: 19, methods called: 2
 veryLongCoroutineStack.kt:14
 Packets sent: 18, methods called: 2
 veryLongCoroutineStack.kt:11
@@ -26,10 +34,6 @@ veryLongCoroutineStack.kt:11
 Packets sent: 23, methods called: 2
 veryLongCoroutineStack.kt:14
 Packets sent: 22, methods called: 2
-veryLongCoroutineStack.kt:11
-Packets sent: 24, methods called: 2
-veryLongCoroutineStack.kt:14
-Packets sent: 23, methods called: 2
 veryLongCoroutineStack.kt:11
 Packets sent: 25, methods called: 2
 veryLongCoroutineStack.kt:14
@@ -80,28 +84,16 @@ veryLongCoroutineStack.kt:14
 Packets sent: 46, methods called: 2
 veryLongCoroutineStack.kt:11
 Packets sent: 49, methods called: 2
-veryLongCoroutineStack.kt:14
+veryLongCoroutineStack.kt:12
 Packets sent: 48, methods called: 2
-veryLongCoroutineStack.kt:11
-Packets sent: 51, methods called: 2
 veryLongCoroutineStack.kt:12
-Packets sent: 50, methods called: 2
-veryLongCoroutineStack.kt:12
-Packets sent: 57, methods called: 3
-veryLongCoroutineStack.kt:16
-Packets sent: 38, methods called: 2
-veryLongCoroutineStack.kt:17
-Packets sent: 38, methods called: 2
-veryLongCoroutineStack.kt:16
-Packets sent: 38, methods called: 2
-veryLongCoroutineStack.kt:17
-Packets sent: 37, methods called: 2
+Packets sent: 54, methods called: 3
 veryLongCoroutineStack.kt:16
 Packets sent: 36, methods called: 2
 veryLongCoroutineStack.kt:17
 Packets sent: 36, methods called: 2
 veryLongCoroutineStack.kt:16
-Packets sent: 35, methods called: 2
+Packets sent: 36, methods called: 2
 veryLongCoroutineStack.kt:17
 Packets sent: 35, methods called: 2
 veryLongCoroutineStack.kt:16
@@ -172,10 +164,18 @@ veryLongCoroutineStack.kt:16
 Packets sent: 18, methods called: 2
 veryLongCoroutineStack.kt:17
 Packets sent: 18, methods called: 2
+veryLongCoroutineStack.kt:16
+Packets sent: 17, methods called: 2
+veryLongCoroutineStack.kt:17
+Packets sent: 17, methods called: 2
+veryLongCoroutineStack.kt:16
+Packets sent: 16, methods called: 2
+veryLongCoroutineStack.kt:17
+Packets sent: 16, methods called: 2
 veryLongCoroutineStack.kt:22
-Packets sent: 26, methods called: 4
+Packets sent: 23, methods called: 4
 veryLongCoroutineStack.kt:19
-Packets sent: 4, methods called: 1
+Packets sent: 3, methods called: 1
 veryLongCoroutineStack.kt:22
 Packets sent: 0, methods called: 0
 Disconnected from the target VM

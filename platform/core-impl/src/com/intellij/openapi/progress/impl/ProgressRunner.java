@@ -505,7 +505,9 @@ public final class ProgressRunner<R> {
         }
         catch (Throwable e) {
           // Any exception from runnable or from context job should complete resultFuture exceptionally and should be handled by the caller.
-          if (!resultFuture.isCompletedExceptionally()) {
+          // Due to a race, it is possible that the runnable has already finished (normally or exceptionally),
+          // but only here do we catch an exception from the context job.
+          if (!resultFuture.isDone()) {
             LOG.error(e);
           }
         }

@@ -1,5 +1,7 @@
 package org.jetbrains.tools.model.updater.impl
 
+import org.jetbrains.tools.model.updater.KotlinTestsDependenciesUtil
+
 data class JpsLibrary(
     val name: String,
     val type: LibraryType,
@@ -25,10 +27,14 @@ data class JpsLibrary(
                     xml("properties", *properties) {
                         if (jpsResolverSettings.sha256ChecksumsEnabled) {
                             xml("verification") {
-                                computeSha256Checksums(classes, type.remoteRepository).forEach {
-                                    xml("artifact", "url" to it.url) {
+                                for (clazz in classes) {
+                                    val jpsPath = clazz.path
+                                    val fileUrl = JpsUrl.File(jpsPath)
+                                    xml("artifact", "url" to fileUrl.url) {
                                         xml("sha256sum") {
-                                            raw(it.sha256Checksum)
+                                            val url = "${type.remoteRepository.url}/${jpsPath.relativePath}"
+                                            val sha256checksum = KotlinTestsDependenciesUtil.sha256SumForUrl(url)
+                                            raw(sha256checksum)
                                         }
                                     }
                                 }
@@ -65,10 +71,6 @@ data class JpsLibrary(
             val excludes: List<MavenId> = emptyList(),
             val includeTransitive: Boolean = true,
             val remoteRepository: JpsRemoteRepository
-        ) : LibraryType() {
-            companion object {
-                data class ArtifactVerificationEntry(val url: String, val sha256Checksum: String)
-            }
-        }
+        ) : LibraryType()
     }
 }

@@ -183,7 +183,9 @@ open class IdeErrorsDialog @ApiStatus.Internal @JvmOverloads constructor(
       }
     }
     val toolbar = ActionManager.getInstance().createActionToolbar(
-      ActionPlaces.TOOLBAR_DECORATOR_TOOLBAR, DefaultActionGroup(BackAction(), ForwardAction()), true)
+      ActionPlaces.TOOLBAR_DECORATOR_TOOLBAR,
+      DefaultActionGroup(BackAction(), ForwardAction(), GoToLastAction()),
+      true)
     toolbar.layoutStrategy = ToolbarLayoutStrategy.NOWRAP_STRATEGY
     toolbar.component.border = JBUI.Borders.empty()
     (toolbar as ActionToolbarImpl).setForceMinimumSize(true)
@@ -612,6 +614,20 @@ open class IdeErrorsDialog @ApiStatus.Internal @JvmOverloads constructor(
 
     override fun actionPerformed(e: AnActionEvent) {
       myLastIndex = myIndex++
+      updateControls()
+    }
+  }
+
+  private inner class GoToLastAction : AnAction(IdeBundle.message("button.last"), null, AllIcons.Actions.Play_last), DumbAware, LightEditCompatible {
+    override fun getActionUpdateThread(): ActionUpdateThread = ActionUpdateThread.EDT
+
+    override fun update(e: AnActionEvent) {
+      e.presentation.isEnabled = myIndex != myMessageClusters.size - 1
+    }
+
+    override fun actionPerformed(e: AnActionEvent) {
+      myLastIndex = myIndex
+      myIndex = myMessageClusters.size - 1
       updateControls()
     }
   }

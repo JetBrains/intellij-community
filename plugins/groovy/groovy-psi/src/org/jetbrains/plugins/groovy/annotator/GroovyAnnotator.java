@@ -1,4 +1,4 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.plugins.groovy.annotator;
 
 import com.intellij.codeInsight.AnnotationUtil;
@@ -770,11 +770,13 @@ public final class GroovyAnnotator extends GroovyElementVisitor {
 
   @Override
   public void visitVariable(@NotNull GrVariable variable) {
+    if (variable.isUnnamed()) return;
     checkName(variable);
 
     PsiElement parent = variable.getParent();
     if (parent instanceof GrForInClause) {
       PsiElement delimiter = ((GrForInClause)parent).getDelimiter();
+      if (delimiter == null) return;
       if (delimiter.getNode().getElementType() == GroovyTokenTypes.mCOLON) {
         GrTypeElement typeElement = variable.getTypeElementGroovy();
         GrModifierList modifierList = variable.getModifierList();

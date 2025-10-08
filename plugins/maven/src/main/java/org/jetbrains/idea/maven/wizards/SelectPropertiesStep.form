@@ -23,6 +23,9 @@
           </grid>
         </constraints>
         <properties/>
+        <clientProperties>
+          <BorderFactoryClass class="java.lang.String" value="com.intellij.ui.IdeBorderFactory$PlainSmallWithIndent"/>
+        </clientProperties>
         <border type="etched" title-resource-bundle="messages/MavenWizardBundle" title-key="maven.structure.wizard.properties"/>
         <children/>
       </grid>

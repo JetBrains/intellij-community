@@ -39,11 +39,12 @@ jvm_library(
     "//platform/platform-impl/bootstrap/kernel",
     "//platform/util/jdom",
     "@lib//:jna",
-    "@lib//:hash4j",
+    "//libraries/hash4j",
     "@lib//:jbr-api",
     "@lib//:googlecode-plist-dd",
     "@lib//:netty-codec-http",
     "//platform/eel-impl",
+    "//platform/platform-impl/initial-config-import",
     "//platform/eel-provider",
   ]
 )

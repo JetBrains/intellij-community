@@ -2,7 +2,7 @@ package com.intellij.database.datagrid;
 
 import com.intellij.database.DataGridBundle;
 import com.intellij.database.datagrid.DataGrid.ActiveGridListener;
-import com.intellij.database.editor.TableEditorBase;
+import com.intellij.database.editor.DataGridContainer;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.fileEditor.FileEditor;
 import com.intellij.openapi.fileEditor.FileEditorManagerEvent;
@@ -128,7 +128,7 @@ public abstract class GridWidget implements StatusBarWidget, CustomStatusBarWidg
   private @Nullable DataGrid getDataGrid(@NotNull StatusBar bar) {
     if (myProject.isDisposed()) return null;
     FileEditor fileEditor = StatusBarUtil.getCurrentFileEditor(bar);
-    return fileEditor instanceof TableEditorBase ? ((TableEditorBase)fileEditor).getDataGrid() : null;
+    return fileEditor instanceof DataGridContainer ? ((DataGridContainer)fileEditor).getDataGrid() : null;
   }
 
   protected void set(@Nullable DataGrid grid, @NotNull StatusBar statusBar) {

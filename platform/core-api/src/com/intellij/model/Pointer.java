@@ -28,7 +28,7 @@ import java.util.function.Function;
  * that some {@linkplain Application#runWriteAction write action} might be run in between these short read actions,
  * which could potentially change the model of the element (reference model, PSI model, framework model or whatever model).
  * </p>
- * <pre>
+ * <pre>{@code
  * val pointer = readAction {
  *   val instance = obtainSomeInstanceWhichIsValidWithinAReadAction()
  *   return@readAction instance.createPointer()
@@ -49,7 +49,7 @@ import java.util.function.Function;
  *   val restoredInstance = pointer.dereference()
  *   ...
  * }
- * </pre>
+ * }</pre>
  *
  * <h3>Example 2</h3>
  * <p>

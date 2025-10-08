@@ -40,7 +40,7 @@ public class JavaOutOfClassDefinitionPropertyTest extends LightJavaCodeInsightFi
       Supplier<MadTestingAction> fileAction =
         MadTestingUtil.performOnFileContents(myFixture, PathManager.getHomePath(), f -> f.getName().endsWith(".java"),
                                              this::doTestMoveMethodOutOfClassAndBack);
-      PropertyChecker.customized()
+      PropertyChecker
         .checkScenarios(fileAction);
     });
   }
@@ -52,8 +52,8 @@ public class JavaOutOfClassDefinitionPropertyTest extends LightJavaCodeInsightFi
     PsiJavaFile psiJavaFile = ObjectUtils.tryCast(myFixture.getFile(), PsiJavaFile.class);
     if (psiJavaFile == null) return;
     PsiClass psiClass = findClass(file, psiJavaFile);
-    // enum and annotation fields are not supported
-    if (psiClass == null || psiClass.isEnum() || psiClass.isAnnotationType()) return;
+    // enum, implicit classes and annotation fields are not supported
+    if (psiClass == null || psiClass.isEnum() || psiClass.isAnnotationType() || psiClass instanceof PsiImplicitClass) return;
     List<PsiMember> members = findMembers(psiClass);
     int nMembers = members.size();
     if (nMembers == 0) return;

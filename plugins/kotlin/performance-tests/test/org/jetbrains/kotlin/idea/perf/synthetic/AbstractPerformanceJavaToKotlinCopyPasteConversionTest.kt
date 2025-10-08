@@ -9,7 +9,6 @@ import com.intellij.psi.PsiDocumentManager
 import com.intellij.testFramework.RunAll
 import com.intellij.util.ThrowableRunnable
 import org.jetbrains.kotlin.idea.KotlinFileType
-import org.jetbrains.kotlin.idea.configuration.ExperimentalFeatures
 import org.jetbrains.kotlin.j2k.AbstractJavaToKotlinCopyPasteConversionTest
 import org.jetbrains.kotlin.j2k.copyPaste.ConvertJavaCopyPasteProcessor
 import org.jetbrains.kotlin.idea.testFramework.Stats
@@ -35,7 +34,6 @@ abstract class AbstractPerformanceJavaToKotlinCopyPasteConversionTest(private va
     override fun setUp() {
         super.setUp()
 
-        ExperimentalFeatures.NewJ2k.isEnabled = newJ2K
         val index = j2kIndex()
 
         if (!warmedUp[index]) {

@@ -1,9 +1,9 @@
 ### auto-generated section `build intellij.platform.jps.build` start
-load("@rules_jvm//:jvm.bzl", "jvm_library", "jvm_resources")
+load("@rules_jvm//:jvm.bzl", "jvm_library", "resourcegroup")
 
-jvm_resources(
+resourcegroup(
   name = "build_resources",
-  files = glob(["resources/**/*"]),
+  srcs = glob(["resources/**/*"]),
   strip_prefix = "resources"
 )
 
@@ -12,6 +12,7 @@ jvm_library(
   module_name = "intellij.platform.jps.build",
   visibility = ["//visibility:public"],
   srcs = glob(["src/**/*.kt", "src/**/*.java", "src/**/*.form", "gen/**/*.kt", "gen/**/*.java"], allow_empty = True),
+  resources = [":build_resources"],
   kotlinc_opts = "@community//:k11",
   deps = [
     "//platform/util",
@@ -19,7 +20,7 @@ jvm_library(
     "//java/compiler/forms-compiler:java-guiForms-compiler",
     "//java/compiler/instrumentation-util",
     "//aether-dependency-resolver",
-    "@lib//:asm",
+    "//libraries/asm",
     "//platform/util/jdom",
     "//platform/util/nanoxml",
     "@lib//:jgoodies-forms",
@@ -29,18 +30,18 @@ jvm_library(
     "//jps/model-impl",
     "@lib//:javax-annotation-api",
     "@lib//:platform-jps-build-qdox-java-parser",
-    "@lib//:gson",
-    "@lib//:fastutil-min",
+    "//libraries/gson",
+    "//libraries/fastutil",
     "@lib//:jps-javac-extension",
     "@community//build:build-javac-rt",
     "//platform/tracing:tracing-rt",
     "//platform/util/zip",
     "@community//build:dependency-graph",
-    "@lib//:caffeine",
+    "//libraries/caffeine",
     "@lib//:kotlin-stdlib-provided",
-    "@lib//:hash4j",
+    "//libraries/hash4j",
     "@lib//:jetbrains-annotations",
-    "@lib//:mvstore",
+    "//libraries/mvstore",
     "@lib//:netty-jps-provided",
     "@lib//:maven-resolver-provider",
     "@lib//:http-client",
@@ -52,7 +53,6 @@ jvm_library(
     "@lib//:http-client",
   ],
   runtime_deps = [
-    ":build_resources",
     "//java/compiler/instrumentation-util-8:java-compiler-instrumentationUtil-java8",
     "//java/java-runtime:rt",
   ]
@@ -60,9 +60,9 @@ jvm_library(
 ### auto-generated section `build intellij.platform.jps.build` end
 
 ### auto-generated section `build intellij.platform.jps.build.tests` start
-jvm_resources(
+resourcegroup(
   name = "build-tests_test_resources",
-  files = glob(["testResources/**/*"]),
+  srcs = glob(["testResources/**/*"]),
   strip_prefix = "testResources"
 )
 
@@ -77,6 +77,7 @@ jvm_library(
   module_name = "intellij.platform.jps.build.tests",
   visibility = ["//visibility:public"],
   srcs = glob(["testSrc/**/*.kt", "testSrc/**/*.java", "testSrc/**/*.form"], allow_empty = True),
+  resources = [":build-tests_test_resources"],
   deps = [
     "//platform/core-api:core",
     "//jps/jps-builders:build",
@@ -91,20 +92,19 @@ jvm_library(
     "//java/compiler/instrumentation-util",
     "@lib//:ecj-4-25",
     "@lib//:kotlin-stdlib",
-    "@lib//:asm",
+    "//libraries/asm",
     "//jps/model-impl",
-    "@lib//:fastutil-min",
-    "@lib//:gson",
+    "//libraries/fastutil",
+    "//libraries/gson",
     "@community//build:build-javac-rt",
     "//platform/platform-util-io:ide-util-io",
     "@lib//:assert_j",
-    "@lib//:hash4j",
+    "//libraries/hash4j",
     "@lib//:platform-jps-build-tests-jqwik",
-    "@lib//:mvstore",
+    "//libraries/mvstore",
     "@lib//:memoryfilesystem",
     "//jps/model-test-framework:model-testFramework",
-  ],
-  runtime_deps = [":build-tests_test_resources"]
+  ]
 )
 ### auto-generated section `build intellij.platform.jps.build.tests` end
 

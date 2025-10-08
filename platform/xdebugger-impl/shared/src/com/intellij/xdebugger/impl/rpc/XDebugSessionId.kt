@@ -13,3 +13,7 @@ import org.jetbrains.annotations.ApiStatus
 @ApiStatus.Internal
 @Serializable
 data class XDebugSessionId(override val uid: UID) : Id
+
+@ApiStatus.Internal
+@Serializable
+data class XDebugSessionDataId(override val uid: UID) : Id

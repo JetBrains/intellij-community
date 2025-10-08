@@ -5,6 +5,7 @@
 
   <extensions defaultExtensionNs="org.jetbrains.kotlin">
     <projectConfigurator id="kotlinJavaMavenConfigurator" implementation="org.jetbrains.kotlin.idea.maven.configuration.KotlinJavaMavenConfigurator"/>
+    <compilerPluginConfigurator implementation="org.jetbrains.kotlin.idea.maven.configuration.SpringMavenKotlinCompilerPluginProjectConfigurator"/>
     <buildSystemTypeDetector implementation="org.jetbrains.kotlin.idea.maven.MavenDetector"/>
 
     <failedToDownloadJpsMavenArtifactSuggestedSolutionsContributor
@@ -113,6 +114,12 @@
             key="notification.text.kotlin.js.compiler.maven.notification.group.name"
             bundle="messages.KotlinMavenBundle"
     />
+
+    <registryKey
+            key="kotlin.configuration.maven.autoConfig.enabled"
+            description="Whether auto-configuration is enabled for Maven projects when adding a Kotlin file"
+            defaultValue="true"
+            restartRequired="false"/>
   </extensions>
   <projectListeners>
     <listener class="org.jetbrains.kotlin.idea.maven.KotlinMavenImportListener"

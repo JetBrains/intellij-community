@@ -4,8 +4,8 @@ class X {
   }
 
   void test(Object obj) {
-    if (obj instanceof Point(int x, int y)) {
-        System.out.println(x + y);
+    if (obj instanceof Point(int l, int m)) {
+        System.out.println(l + m);
     }
   }
 }

@@ -1,6 +1,6 @@
 ### auto-generated section `build kotlin.base.project-structure` start
 load("//build:compiler-options.bzl", "create_kotlinc_options")
-load("@rules_jvm//:jvm.bzl", "jvm_library", "jvm_resources")
+load("@rules_jvm//:jvm.bzl", "jvm_library", "resourcegroup")
 
 create_kotlinc_options(
   name = "custom_project-structure",
@@ -14,9 +14,9 @@ create_kotlinc_options(
   ]
 )
 
-jvm_resources(
+resourcegroup(
   name = "project-structure_resources",
-  files = glob(["resources/**/*"]),
+  srcs = glob(["resources/**/*"]),
   strip_prefix = "resources"
 )
 
@@ -25,6 +25,7 @@ jvm_library(
   module_name = "kotlin.base.project-structure",
   visibility = ["//visibility:public"],
   srcs = glob(["src/**/*.kt", "src/**/*.java", "src/**/*.form", "gen/**/*.kt", "gen/**/*.java"], allow_empty = True),
+  resources = [":project-structure_resources"],
   kotlinc_opts = ":custom_project-structure",
   deps = [
     "@lib//:kotlin-stdlib",
@@ -60,13 +61,12 @@ jvm_library(
     "//java/idea-ui:ui",
     "//platform/workspace/jps",
     "//platform/backend/workspace",
-    "@lib//:caffeine",
+    "//libraries/caffeine",
     "//platform/util/jdom",
     "//java/java-impl:impl",
     "@lib//:kotlinc-analysis-api-impl-base",
-    "@lib//:fastutil-min",
-  ],
-  runtime_deps = [":project-structure_resources"]
+    "//libraries/fastutil",
+  ]
 )
 
 jvm_library(
@@ -111,14 +111,13 @@ jvm_library(
     "//java/idea-ui:ui",
     "//platform/workspace/jps",
     "//platform/backend/workspace",
-    "@lib//:caffeine",
+    "//libraries/caffeine",
     "//platform/util/jdom",
     "//java/java-impl:impl",
     "@lib//:junit4",
     "@lib//:kotlinc-analysis-api-impl-base",
-    "@lib//:fastutil-min",
-  ],
-  runtime_deps = [":project-structure_resources"]
+    "//libraries/fastutil",
+  ]
 )
 ### auto-generated section `build kotlin.base.project-structure` end
 

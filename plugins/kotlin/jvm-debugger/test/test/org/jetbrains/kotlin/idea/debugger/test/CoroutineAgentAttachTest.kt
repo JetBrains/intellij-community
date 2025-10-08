@@ -1,12 +1,23 @@
 // Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.kotlin.idea.debugger.test
 
+import com.intellij.execution.RunManager
 import com.intellij.execution.RunManager.Companion.getInstance
 import com.intellij.execution.configurations.JavaParameters
+import com.intellij.execution.configurations.ModuleBasedConfiguration
 import com.intellij.execution.configurations.RunConfigurationBase
+import com.intellij.openapi.application.runWriteAction
+import com.intellij.openapi.module.Module
+import com.intellij.openapi.roots.ModifiableRootModel
+import com.intellij.openapi.roots.ModuleRootManager
+import com.intellij.openapi.roots.OrderRootType
 import com.intellij.testFramework.JavaModuleTestCase
+import org.jetbrains.kotlin.idea.artifacts.TestKotlinArtifacts
 import org.jetbrains.kotlin.idea.debugger.coroutine.DebuggerConnection
+import org.jetbrains.kotlin.idea.test.ConfigLibraryUtil
+import org.jetbrains.kotlin.idea.test.addRoot
 import java.nio.file.Path
+import kotlin.collections.forEach
 import kotlin.io.path.Path
 
 abstract class AbstractCoroutineAgentAttachTest : JavaModuleTestCase() {
@@ -14,6 +25,57 @@ abstract class AbstractCoroutineAgentAttachTest : JavaModuleTestCase() {
     abstract val projectName: String
 
     override fun getProjectDirOrFile(isDirectoryBasedProject: Boolean): Path = Path(TEST_PROJECTS_ROOT_DIR).resolve(projectName)
+
+    // Attach library dependencies to modules manually using bazel labels
+    // to prevent loading dependencies from mavenLocal repo because it's prone to corruption.
+    abstract fun attachLibraries(module: Module)
+
+    override fun setUpProject() {
+        super.setUpProject()
+        RunManager.getInstance(project).allConfigurationsList
+            .filterIsInstance<ModuleBasedConfiguration<*, *>>()
+            .forEach { configuration ->
+                configuration.modules.forEach(::attachLibraries)
+            }
+    }
+
+    private fun attachLibrary(model: ModifiableRootModel, libraryName: String, classes: List<Path>) {
+        ConfigLibraryUtil.addLibrary(model, libraryName) {
+            classes.forEach { addRoot(it, OrderRootType.CLASSES) }
+        }
+    }
+
+    protected fun Module.attachLibrary(libraryName: String, classes: List<Path>) {
+        runWriteAction {
+            val model = ModuleRootManager.getInstance(this).modifiableModel
+            try {
+                attachLibrary(model, libraryName, classes)
+            }
+            finally {
+                model.commit()
+            }
+        }
+    }
+
+    protected fun Module.attachKotlinStdlib() =
+        attachLibrary(
+            KOTLIN_LIBRARY_NAME,
+            listOf(
+                TestKotlinArtifacts.kotlinStdlibJdk8_2_1_21,
+                TestKotlinArtifacts.kotlinStdlib_2_1_21,
+                TestKotlinArtifacts.annotations13
+            )
+        )
+
+    protected fun Module.attachKotlinxCoroutines() =
+        attachLibrary(
+            KOTLINX_COROUTINES_LIBRARY_NAME,
+            listOf(
+                TestKotlinArtifacts.kotlinxCoroutinesCore_1_10_2,
+                TestKotlinArtifacts.kotlinxCoroutinesCoreJvm_1_10_2,
+            )
+        )
+
 
     fun connectDebuggerAndCheckVmParams(runConfig: RunConfigurationBase<*>, coroutineAgentShouldBeAttached: Boolean) {
         val params = JavaParameters()
@@ -42,12 +104,25 @@ abstract class AbstractCoroutineAgentAttachTest : JavaModuleTestCase() {
 
     companion object {
         private val TEST_PROJECTS_ROOT_DIR = "$DEBUGGER_TESTDATA_PATH_BASE/projects/"
+        private val KOTLINX_COROUTINES_LIBRARY_NAME = "jetbrains.kotlinx.coroutines.core"
     }
 }
 
 class CoroutineAgentAttachImlProjectTest : AbstractCoroutineAgentAttachTest() {
 
     override val projectName = "attachCoroutineAgentTest_iml"
+
+    override fun attachLibraries(module: Module) {
+        when(module.name) {
+            "module1" -> {
+                module.attachKotlinStdlib()
+                module.attachKotlinxCoroutines()
+            }
+            "module2" -> {
+                module.attachKotlinStdlib()
+            }
+        }
+    }
 
     fun testDebugKotlinModuleWithCoroutineDependency() {
         connectDebuggerAndCheckVmParams(

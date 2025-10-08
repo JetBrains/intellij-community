@@ -1,9 +1,9 @@
 ### auto-generated section `build intellij.execution.process.mediator.common` start
-load("@rules_jvm//:jvm.bzl", "jvm_library", "jvm_resources")
+load("@rules_jvm//:jvm.bzl", "jvm_library", "resourcegroup")
 
-jvm_resources(
+resourcegroup(
   name = "common_resources",
-  files = glob(["resources/**/*"]),
+  srcs = glob(["resources/**/*"]),
   strip_prefix = "resources"
 )
 
@@ -12,16 +12,16 @@ jvm_library(
   module_name = "intellij.execution.process.mediator.common",
   visibility = ["//visibility:public"],
   srcs = glob(["gen/**/*.kt", "gen/**/*.java", "src/**/*.kt", "src/**/*.java", "src/**/*.form"], allow_empty = True),
+  resources = [":common_resources"],
   deps = [
     "@lib//:kotlin-stdlib",
     "@lib//:kotlinx-coroutines-core",
     "@lib//:jetbrains-annotations",
-    "@lib//:guava",
+    "//libraries/guava",
     "@lib//:protobuf",
     "@lib//:javax-annotation-api",
     "//libraries/grpc",
-  ],
-  runtime_deps = [":common_resources"]
+  ]
 )
 
 jvm_library(
@@ -33,14 +33,13 @@ jvm_library(
     "@lib//:kotlin-stdlib",
     "@lib//:kotlinx-coroutines-core",
     "@lib//:jetbrains-annotations",
-    "@lib//:guava",
+    "//libraries/guava",
     "@lib//:protobuf",
     "@lib//:javax-annotation-api",
     "@lib//:junit5",
     "@lib//:execution-process-mediator-common-com-willowtreeapps-assertk-assertk-jvm",
     "//libraries/grpc",
-  ],
-  runtime_deps = [":common_resources"]
+  ]
 )
 ### auto-generated section `build intellij.execution.process.mediator.common` end
 

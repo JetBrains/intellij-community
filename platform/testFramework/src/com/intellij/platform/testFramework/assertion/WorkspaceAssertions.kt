@@ -13,8 +13,16 @@ object WorkspaceAssertions {
 
   inline fun <reified T : WorkspaceEntityWithSymbolicId> assertEntities(
     project: Project,
+    vararg expectedIds: SymbolicEntityId<T>,
+    noinline messageSupplier: (() -> String)? = getAssertEntitiesDefaultMessage<T>(),
+  ) {
+    assertEntities(project, expectedIds.toList(), messageSupplier)
+  }
+
+  inline fun <reified T : WorkspaceEntityWithSymbolicId> assertEntities(
+    project: Project,
     expectedIds: List<SymbolicEntityId<T>>,
-    noinline messageSupplier: (() -> String)? = null,
+    noinline messageSupplier: (() -> String)? = getAssertEntitiesDefaultMessage<T>(),
   ) {
     assertEntities(project.workspaceModel.currentSnapshot, expectedIds, messageSupplier)
   }
@@ -22,9 +30,13 @@ object WorkspaceAssertions {
   inline fun <reified T : WorkspaceEntityWithSymbolicId> assertEntities(
     storage: EntityStorage,
     expectedIds: List<SymbolicEntityId<T>>,
-    noinline messageSupplier: (() -> String)? = null,
+    noinline messageSupplier: (() -> String)? = getAssertEntitiesDefaultMessage<T>(),
   ) {
     val actualIds = storage.entities<T>().map { it.symbolicId }.toList()
     CollectionAssertions.assertEqualsUnordered(expectedIds, actualIds, messageSupplier)
+  }
+
+  inline fun <reified T: Any> getAssertEntitiesDefaultMessage() : (() -> String) = {
+    "The Workspace storage must contain all of the following <${T::class.simpleName}> entities in any order, and no others:"
   }
 }

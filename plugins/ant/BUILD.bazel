@@ -1,9 +1,9 @@
 ### auto-generated section `build intellij.ant` start
-load("@rules_jvm//:jvm.bzl", "jvm_library", "jvm_resources")
+load("@rules_jvm//:jvm.bzl", "jvm_library", "resourcegroup")
 
-jvm_resources(
+resourcegroup(
   name = "ant_resources",
-  files = glob(["resources/**/*"]),
+  srcs = glob(["resources/**/*"]),
   strip_prefix = "resources"
 )
 
@@ -12,6 +12,7 @@ jvm_library(
   module_name = "intellij.ant",
   visibility = ["//visibility:public"],
   srcs = glob(["src/**/*.kt", "src/**/*.java", "src/**/*.form"], allow_empty = True),
+  resources = [":ant_resources"],
   deps = [
     "//java/openapi:java",
     "@lib//ant/lib:ant-antlr",
@@ -45,7 +46,7 @@ jvm_library(
     "//platform/util/nanoxml",
     "@lib//:stream_ex",
     "//platform/statistics",
-    "@lib//:fastutil-min",
+    "//libraries/fastutil",
     "//platform/external-system-api:externalSystem",
     "//platform/util-class-loader:util-classLoader",
     "//platform/core-ui",
@@ -53,8 +54,7 @@ jvm_library(
     "//platform/platform-util-io:ide-util-io",
     "//platform/util/jdom",
     "//xml/xml-psi-api:psi",
-  ],
-  runtime_deps = [":ant_resources"]
+  ]
 )
 
 jvm_library(
@@ -100,7 +100,7 @@ jvm_library(
     "@lib//:stream_ex",
     "//platform/statistics",
     "//platform/statistics:statistics_test_lib",
-    "@lib//:fastutil-min",
+    "//libraries/fastutil",
     "//platform/external-system-api:externalSystem",
     "//platform/util-class-loader:util-classLoader",
     "//platform/core-ui",
@@ -111,8 +111,7 @@ jvm_library(
     "//tools/intellij.tools.ide.metrics.benchmark:ide-metrics-benchmark_test_lib",
     "//xml/xml-psi-api:psi",
     "//xml/testFramework",
-  ],
-  runtime_deps = [":ant_resources"]
+  ]
 )
 ### auto-generated section `build intellij.ant` end
 

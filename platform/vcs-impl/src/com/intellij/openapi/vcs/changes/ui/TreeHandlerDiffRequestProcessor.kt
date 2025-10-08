@@ -12,6 +12,7 @@ import com.intellij.openapi.vcs.changes.Change
 import com.intellij.openapi.vcs.changes.ChangeViewDiffRequestProcessor
 import com.intellij.openapi.vcs.changes.ChangeViewDiffRequestProcessor.Wrapper
 import com.intellij.openapi.vcs.changes.ChangesTreeEditorDiffPreview
+import com.intellij.openapi.vcs.changes.actions.diff.WrapperCombinedBlockProducer
 import com.intellij.openapi.vcs.changes.actions.diff.prepareCombinedBlocksFromWrappers
 import com.intellij.util.containers.JBIterable
 import com.intellij.util.ui.UIUtil
@@ -20,6 +21,7 @@ import com.intellij.util.ui.update.Activatable
 import com.intellij.util.ui.update.MergingUpdateQueue
 import com.intellij.util.ui.update.Update
 import org.jetbrains.annotations.ApiStatus
+import org.jetbrains.annotations.CalledInAny
 import java.awt.event.FocusAdapter
 import java.awt.event.FocusEvent
 import java.beans.PropertyChangeListener
@@ -212,12 +214,13 @@ abstract class TreeHandlerEditorDiffPreview(
   final override fun getEditorTabName(processor: DiffEditorViewer?): String? {
     val wrapper: Wrapper? = when (processor) {
       is ChangeViewDiffRequestProcessor -> processor.currentChange
-      is CombinedDiffComponentProcessor -> getCurrentSelectionInCombinedDiffProcessor(tree, processor, handler)
+      is CombinedDiffComponentProcessor -> (processor.currentBlock as? WrapperCombinedBlockProducer)?.wrapper
       else -> null
     }
     return getEditorTabName(wrapper)
   }
 
+  @CalledInAny
   abstract fun getEditorTabName(wrapper: Wrapper?): String?
 
   companion object {
@@ -308,18 +311,6 @@ private fun refreshCombinedDiffProcessor(tree: ChangesTree,
       processor.setBlocks(prepareCombinedBlocksFromWrappers(tree.project, changes))
     }
   }
-}
-
-private fun getCurrentSelectionInCombinedDiffProcessor(tree: ChangesTree,
-                                                       processor: CombinedDiffComponentProcessor,
-                                                       handler: ChangesTreeDiffPreviewHandler): Wrapper? {
-  val combinedDiffViewer = processor.context.getUserData(COMBINED_DIFF_VIEWER_KEY)
-
-  val prevSelectedBlockId = combinedDiffViewer?.getCurrentBlockId() as? CombinedPathBlockId
-  if (prevSelectedBlockId != null) {
-    return handler.iterateSelectedChanges(tree).find { it.toCombinedPathBlockId() == prevSelectedBlockId }
-  }
-  return null
 }
 
 private fun Wrapper.toCombinedPathBlockId() = CombinedPathBlockId(filePath, fileStatus, tag)

@@ -29,6 +29,8 @@ class ToolWindowLeftToolbarUi(data: ComponentData) : ToolWindowToolbarUi(data) {
   val debugButton = stripeButton("Debug")
   val findButton = stripeButton("Find")
   val cmakeButton = stripeButton("CMake")
+  val jpaButton = stripeButton("JPA Console")
+  val persistenceButton = stripeButton("Persistence")
 
   fun IdeaFrameUI.openMoreToolWindow(name: String) {
     moreButton.click()

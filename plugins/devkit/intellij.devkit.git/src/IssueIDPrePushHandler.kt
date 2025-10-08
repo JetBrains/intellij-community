@@ -8,6 +8,7 @@ import com.intellij.openapi.project.Project
 import com.intellij.openapi.ui.MessageDialogBuilder
 import com.intellij.util.concurrency.annotations.RequiresBackgroundThread
 import com.intellij.vcs.log.VcsFullCommitDetails
+import com.intellij.vcs.log.impl.VcsProjectLog
 import org.jetbrains.annotations.VisibleForTesting
 import java.nio.file.Path
 
@@ -20,9 +21,10 @@ internal abstract class IssueIDPrePushHandler : AbstractIntelliJProjectPrePushHa
 
   protected open val paths: List<String> = listOf()
   protected open val pathsToIgnore: List<String> = listOf("/test/", "/testData/")
+  protected open val validateCommitsOnlyFromCurrentUser: Boolean = false
 
   final override fun validate(project: Project, info: PushInfo, indicator: ProgressIndicator): PushInfoValidationResult {
-    val commitsToWarnAbout = info.commits.filterNot(::isCommitValid)
+    val commitsToWarnAbout = info.commits.filterNot { isCommitValid(project, it) }
     if (commitsToWarnAbout.isEmpty()) {
       return PushInfoValidationResult.VALID
     }
@@ -33,7 +35,15 @@ internal abstract class IssueIDPrePushHandler : AbstractIntelliJProjectPrePushHa
     return PushInfoValidationResult.INVALID
   }
 
-  private fun isCommitValid(commit: VcsFullCommitDetails): Boolean {
+  private fun isCommitValid(project: Project, commit: VcsFullCommitDetails): Boolean {
+    if (validateCommitsOnlyFromCurrentUser) {
+      val currentUsers = VcsProjectLog.getInstance(project).dataManager?.userNameResolver?.resolveCurrentUser(commit.root)
+      val committer = commit.committer
+      // allow commits from other people:
+      if (currentUsers != null && committer.email !in currentUsers.map { it.email }) {
+        return true
+      }
+    }
     val commitPaths = commit.changes.asSequence().flatMap { change ->
       sequenceOf(change.beforeRevision?.path, change.afterRevision?.path).filterNotNull()
     }

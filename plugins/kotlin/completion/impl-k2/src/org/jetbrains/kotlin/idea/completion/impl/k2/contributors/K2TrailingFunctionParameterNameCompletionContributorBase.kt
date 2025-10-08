@@ -8,24 +8,11 @@ import com.intellij.openapi.util.NlsSafe
 import com.intellij.psi.util.parentOfType
 import com.intellij.psi.util.startOffset
 import com.intellij.util.containers.sequenceOfNotNull
-import kotlinx.serialization.KSerializer
 import kotlinx.serialization.Serializable
-import kotlinx.serialization.builtins.ListSerializer
 import org.jetbrains.kotlin.analysis.api.KaExperimentalApi
 import org.jetbrains.kotlin.analysis.api.KaImplementationDetail
 import org.jetbrains.kotlin.analysis.api.KaSession
-import org.jetbrains.kotlin.analysis.api.components.KaCompletionCandidateChecker
-import org.jetbrains.kotlin.analysis.api.components.KaCompletionExtensionCandidateChecker
-import org.jetbrains.kotlin.analysis.api.components.KaExtensionApplicabilityResult
-import org.jetbrains.kotlin.analysis.api.components.canBeAnalysed
-import org.jetbrains.kotlin.analysis.api.components.createSubstitutor
-import org.jetbrains.kotlin.analysis.api.components.expandedSymbol
-import org.jetbrains.kotlin.analysis.api.components.isSubClassOf
-import org.jetbrains.kotlin.analysis.api.components.lowerBoundIfFlexible
-import org.jetbrains.kotlin.analysis.api.components.memberScope
-import org.jetbrains.kotlin.analysis.api.components.render
-import org.jetbrains.kotlin.analysis.api.components.resolveToCallCandidates
-import org.jetbrains.kotlin.analysis.api.components.substitute
+import org.jetbrains.kotlin.analysis.api.components.*
 import org.jetbrains.kotlin.analysis.api.impl.base.components.KaBaseIllegalPsiException
 import org.jetbrains.kotlin.analysis.api.renderer.base.annotations.KaRendererAnnotationsFilter
 import org.jetbrains.kotlin.analysis.api.renderer.types.KaTypeRenderer
@@ -40,25 +27,22 @@ import org.jetbrains.kotlin.analysis.api.types.KaClassType
 import org.jetbrains.kotlin.analysis.api.types.KaType
 import org.jetbrains.kotlin.builtins.StandardNames
 import org.jetbrains.kotlin.idea.base.codeInsight.KotlinNameSuggester
-import org.jetbrains.kotlin.idea.base.serialization.names.KotlinFqNameSerializer
 import org.jetbrains.kotlin.idea.codeinsight.utils.singleReturnExpressionOrNull
 import org.jetbrains.kotlin.idea.completion.api.serialization.SerializableInsertHandler
 import org.jetbrains.kotlin.idea.completion.api.serialization.ensureSerializable
-import org.jetbrains.kotlin.idea.completion.doPostponedOperationsAndUnblockDocument
 import org.jetbrains.kotlin.idea.completion.impl.k2.K2CompletionSectionContext
 import org.jetbrains.kotlin.idea.completion.impl.k2.K2SimpleCompletionContributor
 import org.jetbrains.kotlin.idea.completion.impl.k2.checkers.KtCompletionExtensionCandidateChecker
+import org.jetbrains.kotlin.idea.completion.impl.k2.handlers.WithImportInsertionHandler
 import org.jetbrains.kotlin.idea.completion.impl.k2.isAfterRangeOperator
 import org.jetbrains.kotlin.idea.completion.impl.k2.weighers.TrailingLambdaParameterNameWeigher.isTrailingLambdaParameter
 import org.jetbrains.kotlin.idea.completion.lookups.ImportStrategy
-import org.jetbrains.kotlin.idea.completion.lookups.addImportIfRequired
 import org.jetbrains.kotlin.idea.completion.lookups.factories.FunctionLookupElementFactory
 import org.jetbrains.kotlin.idea.completion.lookups.factories.TrailingFunctionDescriptor
 import org.jetbrains.kotlin.idea.completion.weighers.Weighers.applyWeighs
 import org.jetbrains.kotlin.idea.util.positionContext.KotlinExpressionNameReferencePositionContext
 import org.jetbrains.kotlin.idea.util.positionContext.KotlinRawPositionContext
 import org.jetbrains.kotlin.idea.util.positionContext.KotlinSimpleParameterPositionContext
-import org.jetbrains.kotlin.name.FqName
 import org.jetbrains.kotlin.name.Name
 import org.jetbrains.kotlin.name.StandardClassIds
 import org.jetbrains.kotlin.psi.*
@@ -75,9 +59,8 @@ internal sealed class K2TrailingFunctionParameterNameCompletionContributorBase<P
     class All : K2TrailingFunctionParameterNameCompletionContributorBase<KotlinExpressionNameReferencePositionContext>(
         KotlinExpressionNameReferencePositionContext::class
     ) {
-        override fun KaSession.complete(
-            context: K2CompletionSectionContext<KotlinExpressionNameReferencePositionContext>,
-        ) {
+        context(_: KaSession, context: K2CompletionSectionContext<KotlinExpressionNameReferencePositionContext>)
+        override fun complete() {
             val positionContext = context.positionContext
             if (positionContext.isAfterRangeOperator()) return
             if (positionContext.explicitReceiver != null) return
@@ -89,7 +72,6 @@ internal sealed class K2TrailingFunctionParameterNameCompletionContributorBase<P
             if (functionLiteral.bodyExpression?.firstStatement != nameExpression) return
 
             super.complete(
-                context = context,
                 position = nameExpression,
                 existingParameterNames = emptySet(),
             )
@@ -99,9 +81,8 @@ internal sealed class K2TrailingFunctionParameterNameCompletionContributorBase<P
     class Missing : K2TrailingFunctionParameterNameCompletionContributorBase<KotlinSimpleParameterPositionContext>(
         KotlinSimpleParameterPositionContext::class
     ) {
-        override fun KaSession.complete(
-            context: K2CompletionSectionContext<KotlinSimpleParameterPositionContext>,
-        ) {
+        context(_: KaSession, context: K2CompletionSectionContext<KotlinSimpleParameterPositionContext>)
+        override fun complete() {
             val parameter = context.positionContext.ktParameter
 
             val parameterList = parameter.parent
@@ -114,17 +95,15 @@ internal sealed class K2TrailingFunctionParameterNameCompletionContributorBase<P
                 .toSet()
 
             super.complete(
-                context = context,
                 position = parameter,
                 existingParameterNames = existingParameterNames,
             )
         }
     }
 
-    context(_: KaSession)
+    context(_: KaSession, context: K2CompletionSectionContext<P>)
     protected fun complete(
         position: KtElement,
-        context: K2CompletionSectionContext<P>,
         existingParameterNames: Set<String>,
     ) {
         val functionLiteral = context.completionContext.originalFile.findElementAt(position.startOffset)
@@ -151,17 +130,16 @@ internal sealed class K2TrailingFunctionParameterNameCompletionContributorBase<P
             .mapNotNull { FunctionLookupElementFactory.getTrailingFunctionSignature(it, checkDefaultValues = false) }
             .mapNotNull { FunctionLookupElementFactory.createTrailingFunctionDescriptor(it) }
             .filterNot { it.functionType.hasReceiver }
-            .flatMap { createLookupElements(context, it, candidateChecker, existingParameterNames) }
+            .flatMap { createLookupElements(it, candidateChecker, existingParameterNames) }
             .map { elementBuilder ->
                 elementBuilder
                     .apply { isTrailingLambdaParameter = true }
-                    .applyWeighs(context.weighingContext)
+                    .applyWeighs()
             }.forEach { context.addElement(it) }
     }
 
-    context(_: KaSession)
+    context(_: KaSession, context: K2CompletionSectionContext<P>)
     private fun createLookupElements(
-        context: K2CompletionSectionContext<*>,
         trailingFunctionDescriptor: TrailingFunctionDescriptor,
         candidateChecker: KaCompletionExtensionCandidateChecker,
         existingParameterNames: Set<String>,
@@ -170,7 +148,6 @@ internal sealed class K2TrailingFunctionParameterNameCompletionContributorBase<P
         val typeNames = mutableMapOf<KaType, MutableSet<String>>()
 
         return createLookupElements(
-            context = context,
             trailingFunctionDescriptor = trailingFunctionDescriptor,
             candidateChecker = candidateChecker,
             fromIndex = existingParameterNames.size,
@@ -188,9 +165,8 @@ internal sealed class K2TrailingFunctionParameterNameCompletionContributorBase<P
         }
     }
 
-    context(_: KaSession)
+    context(_: KaSession, context: K2CompletionSectionContext<P>)
     private fun createLookupElements(
-        context: K2CompletionSectionContext<*>,
         trailingFunctionDescriptor: TrailingFunctionDescriptor,
         candidateChecker: KaCompletionExtensionCandidateChecker,
         fromIndex: Int = 0,
@@ -225,7 +201,7 @@ internal sealed class K2TrailingFunctionParameterNameCompletionContributorBase<P
                 val classSymbol = parameterType.expandedSymbol as? KaNamedClassSymbol
                     ?: return@sequence
 
-                val signatures = classSymbol.getSignatures(context, candidateChecker, parameterType)
+                val signatures = classSymbol.getSignatures(candidateChecker, parameterType)
                 val suggestedNames = signatures.map { functionSignature ->
                     val name = when (val member = functionSignature.symbol.psi?.navigationElement) {
                         is KtNamedFunction -> {
@@ -271,36 +247,14 @@ internal sealed class K2TrailingFunctionParameterNameCompletionContributorBase<P
         }
     }
 
-    @Serializable
-    internal data class WithImportInsertionHandler(
-        @Serializable(with = FqNameListSerializer::class) val namesToImport: List<FqName>,
-    ): SerializableInsertHandler {
-        override fun handleInsert(
-            context: InsertionContext,
-            item: LookupElement
-        ) {
-            val targetFile = context.file
-            if (targetFile !is KtFile) throw IllegalStateException("Target file '${targetFile.name}' is not a Kotlin file")
-
-            for (nameToImport in namesToImport) {
-                addImportIfRequired(context, nameToImport)
-            }
-            context.commitDocument()
-            context.doPostponedOperationsAndUnblockDocument()
-        }
-
-        object FqNameListSerializer : KSerializer<List<FqName>> by ListSerializer(KotlinFqNameSerializer)
-    }
-
-    context(_: KaSession)
+    context(_: KaSession, context: K2CompletionSectionContext<P>)
     @OptIn(KaExperimentalApi::class)
     private fun KaNamedClassSymbol.getSignatures(
-        context: K2CompletionSectionContext<*>,
         candidateChecker: KaCompletionExtensionCandidateChecker,
         parameterType: KaClassType,
         receiverTypes: List<KaClassType> = listOf(parameterType), // todo all receiver types
     ): List<KaFunctionSignature<KaNamedFunctionSymbol>> {
-        val components = getComponents(context, receiverTypes)
+        val components = getComponents(receiverTypes)
         if (components.isEmpty()) return emptyList()
 
         val defaultSubstitutor = typeParameters
@@ -325,9 +279,8 @@ internal sealed class K2TrailingFunctionParameterNameCompletionContributorBase<P
         else emptyList()
     }
 
-    context(_: KaSession)
+    context(_: KaSession, context: K2CompletionSectionContext<P>)
     private fun KaNamedClassSymbol.getComponents(
-        context: K2CompletionSectionContext<*>,
         receiverTypes: List<KaClassType>,
     ): Collection<KaNamedFunctionSymbol> {
         if (receiverTypes.isEmpty()) return emptyList()
@@ -454,7 +407,7 @@ private val KaType.text: String
         position = Variance.INVARIANT,
     )
 
-context(_: KaCompletionCandidateChecker)
+context(_: KaSession)
 private fun createExtensionCandidateChecker(
     bodyExpression: KtBlockExpression,
 ): KtCompletionExtensionCandidateChecker? {

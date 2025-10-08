@@ -1,4 +1,4 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.plugins.groovy.intentions.closure;
 
 import com.intellij.modcommand.ActionContext;
@@ -6,8 +6,10 @@ import com.intellij.modcommand.ModPsiUpdater;
 import com.intellij.openapi.util.Ref;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.PsiElement;
+import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.plugins.groovy.intentions.GroovyIntentionsBundle;
 import org.jetbrains.plugins.groovy.intentions.base.GrPsiUpdateIntention;
 import org.jetbrains.plugins.groovy.intentions.base.PsiElementPredicate;
 import org.jetbrains.plugins.groovy.lang.psi.GroovyPsiElementFactory;
@@ -51,15 +53,6 @@ public final class EachToForIntention extends GrPsiUpdateIntention {
     final GrParameterList parameterList = block.getParameterList();
     final GrParameter[] parameters = parameterList.getParameters();
 
-    String var;
-    if (parameters.length == 1) {
-      var = parameters[0].getText();
-      var = StringUtil.replace(var, GrModifier.DEF, "");
-    }
-    else {
-      var = "it";
-    }
-
     final GrExpression invokedExpression = expression.getInvokedExpression();
     GrExpression qualifier = ((GrReferenceExpression)invokedExpression).getQualifierExpression();
     final GroovyPsiElementFactory elementFactory = GroovyPsiElementFactory.getInstance(element.getProject());
@@ -68,7 +61,7 @@ public final class EachToForIntention extends GrPsiUpdateIntention {
     }
 
     StringBuilder builder = new StringBuilder();
-    builder.append("for (").append(var).append(" in ").append(qualifier.getText()).append(") {\n");
+    builder.append("for (").append(constructTextForVariables(parameters)).append(" in ").append(qualifier.getText()).append(") {\n");
     String text = block.getText();
     final PsiElement blockArrow = block.getArrow();
     int index;
@@ -93,6 +86,21 @@ public final class EachToForIntention extends GrPsiUpdateIntention {
     }
 
     updateReturnStatements(forStatement);
+  }
+
+  private static @NotNull String constructTextForVariables(GrParameter[] parameters) {
+    if (parameters.length == 2) {
+      return convertParameter(parameters[1]) + ", " + convertParameter(parameters[0]);
+    } else if (parameters.length == 1) {
+      return convertParameter(parameters[0]);
+    }
+    else {
+      return "it";
+    }
+  }
+
+  private static String convertParameter(@NotNull GrParameter parameter) {
+    return StringUtil.replace(parameter.getText(), GrModifier.DEF, "");
   }
 
   private static void updateReturnStatements(GrForStatement forStatement) {
@@ -205,15 +213,16 @@ public final class EachToForIntention extends GrPsiUpdateIntention {
 
         final GrExpression invokedExpression = expression.getInvokedExpression();
         if (invokedExpression instanceof GrReferenceExpression referenceExpression) {
-          if ("each".equals(referenceExpression.getReferenceName())) {
+          String referenceName = referenceExpression.getReferenceName();
+          if ("each".equals(referenceName) || "eachWithIndex".equals(referenceName)) {
             final GrArgumentList argumentList = expression.getArgumentList();
             if (PsiImplUtil.hasExpressionArguments(argumentList)) return false;
             if (PsiImplUtil.hasNamedArguments(argumentList)) return false;
             final GrClosableBlock[] closureArguments = expression.getClosureArguments();
             if (closureArguments.length != 1) return false;
             final GrParameter[] parameters = closureArguments[0].getParameterList().getParameters();
-            if (parameters.length > 1) return false;
-            return true;
+            return "each".equals(referenceName) && parameters.length <= 1 ||
+                   "eachWithIndex".equals(referenceName) && parameters.length == 2;
           }
         }
       }

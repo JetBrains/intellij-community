@@ -1,6 +1,7 @@
 // Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.platform.searchEverywhere.frontend.vm
 
+import com.intellij.ide.actions.searcheverywhere.SearchEverywhereContributor
 import com.intellij.ide.actions.searcheverywhere.SearchEverywhereToggleAction
 import com.intellij.ide.actions.searcheverywhere.statistics.SearchEverywhereUsageTriggerCollector
 import com.intellij.ide.rpc.ThrottledItems
@@ -21,10 +22,11 @@ import com.intellij.platform.searchEverywhere.frontend.AutoToggleAction
 import com.intellij.platform.searchEverywhere.frontend.SeEmptyResultInfo
 import com.intellij.platform.searchEverywhere.frontend.SeFilterEditor
 import com.intellij.platform.searchEverywhere.frontend.SeTab
+import com.intellij.platform.searchEverywhere.providers.SeAdaptedItem
 import com.intellij.platform.searchEverywhere.providers.SeLog
 import com.intellij.platform.searchEverywhere.utils.SuspendLazyProperty
 import com.intellij.platform.searchEverywhere.utils.initAsync
-import fleet.kernel.DurableRef
+import com.intellij.platform.searchEverywhere.utils.suspendLazy
 import kotlinx.coroutines.*
 import kotlinx.coroutines.flow.*
 import org.jetbrains.annotations.ApiStatus
@@ -39,6 +41,7 @@ class SeTabVm(
   coroutineScope: CoroutineScope,
   private val tab: SeTab,
   private val searchPattern: StateFlow<String>,
+  private val availableLegacyContributors: Map<SeProviderId, SearchEverywhereContributor<Any>>,
 ) {
   val searchResults: StateFlow<SeSearchContext?> get() = _searchResults.asStateFlow()
   val name: String get() = tab.name
@@ -49,6 +52,7 @@ class SeTabVm(
     else SearchEverywhereUsageTriggerCollector.NOT_REPORTABLE_ID
 
   val isIndexingDependent: Boolean get() = tab.isIndexingDependent
+  val isPreviewEnabled: SuspendLazyProperty<Boolean> get() = suspendLazy { tab.isPreviewEnabled() }
 
   private val shouldLoadMoreFlow: MutableStateFlow<Boolean> = MutableStateFlow(false)
   var shouldLoadMore: Boolean
@@ -113,13 +117,17 @@ class SeTabVm(
           val params = SeParams(searchPattern, filterData)
           val searchId = UUID.randomUUID().toString()
 
-          val resultsFlow = tab.getItems(params).let {
+          val resultsFlow = tab.getItems(params).let { resultsFlow ->
+            val resultsFlowWithAdaptedPresentations = resultsFlow.mapNotNull {
+              checkAndAddMissingPresentationIfPossible(it)
+            }
+
             val essential = tab.essentialProviderIds()
             if (essential.isEmpty()) {
-              if (shouldThrottle.load()) it.throttledWithAccumulation(shouldPassItem = { item -> item !is SeResultEndEvent })
-              else it.map { event -> ThrottledOneItem(event) }
+              if (shouldThrottle.load()) resultsFlowWithAdaptedPresentations.throttledWithAccumulation(shouldPassItem = { item -> item !is SeResultEndEvent })
+              else resultsFlowWithAdaptedPresentations.map { event -> ThrottledOneItem(event) }
             }
-            else it.throttleUntilEssentialsArrive(essential)
+            else resultsFlowWithAdaptedPresentations.throttleUntilEssentialsArrive(essential)
           }.map { item ->
             if (!shouldLoadMoreFlow.value) _resultsHitBackPressureFlow.emit(searchId to true)
             shouldLoadMoreFlow.first { it }
@@ -176,6 +184,28 @@ class SeTabVm(
     SearchEverywhereUsageTriggerCollector.CONTRIBUTOR_ITEM_SELECTED.log(project, data)
   }
 
+  private fun checkAndAddMissingPresentationIfPossible(resultEvent: SeResultEvent): SeResultEvent? {
+    val itemData = resultEvent.itemDataOrNull() ?: return resultEvent
+
+    return if (itemData.presentation is SeAdaptedItemEmptyPresentation) {
+      availableLegacyContributors[itemData.providerId]?.let { contributor ->
+        val fetchedItem = itemData.fetchItemIfExists() as? SeAdaptedItem ?: return null
+        val newItemData = itemData.withPresentation(SeAdaptedItemPresentation(itemData.presentation.isMultiSelectionSupported, fetchedItem.rawObject) {
+          contributor.elementsRenderer
+        })
+
+        when (resultEvent) {
+          is SeResultEndEvent -> resultEvent
+          is SeResultAddedEvent -> SeResultAddedEvent(newItemData)
+          is SeResultReplacedEvent -> SeResultReplacedEvent(resultEvent.uuidsToReplace, newItemData)
+        }
+      }
+    }
+    else {
+      resultEvent
+    }
+  }
+
   suspend fun getEmptyResultInfo(context: DataContext): SeEmptyResultInfo? {
     return tab.getEmptyResultInfo(context)
   }
@@ -184,10 +214,10 @@ class SeTabVm(
     return tab.canBeShownInFindResults()
   }
 
-  suspend fun openInFindWindow(sessionRef: DurableRef<SeSessionEntity>, initEvent: AnActionEvent): Boolean {
+  suspend fun openInFindWindow(session: SeSession, initEvent: AnActionEvent): Boolean {
     val params = SeParams(searchPattern.value,
-                          (filterEditor.getValue()?.resultFlow?.value ?: SeFilterState.Empty))
-    return tab.openInFindToolWindow(sessionRef, params, initEvent)
+                          filterEditor.getValue()?.resultFlow?.value ?: SeFilterState.Empty)
+    return tab.openInFindToolWindow(session, params, initEvent)
   }
 
   suspend fun getSearchEverywhereToggleAction(): SearchEverywhereToggleAction? {
@@ -197,8 +227,18 @@ class SeTabVm(
   }
 
   suspend fun getUpdatedPresentation(item: SeItemData): SeItemPresentation? {
+    if (item.presentation is SeAdaptedItemPresentation) return null
     return tab.getUpdatedPresentation(item)
   }
+
+  /**
+   * @return true if the popup should be closed, false otherwise
+   */
+  suspend fun performExtendedAction(item: SeItemData): Boolean {
+    return tab.performExtendedAction(item)
+  }
+
+  suspend fun getPreviewInfo(itemData: SeItemData): SePreviewInfo? = tab.getPreviewInfo(itemData)
 }
 
 private const val ESSENTIALS_THROTTLE_DELAY: Long = 100
@@ -209,7 +249,7 @@ private fun Flow<SeResultEvent>.throttleUntilEssentialsArrive(essentialProviderI
   val essentialProvidersCounts = essentialProviderIds.associateWith { 0 }.toMutableMap()
   val essentialWaitingTimeout: Long = AdvancedSettings.getInt("search.everywhere.contributors.wait.timeout").toLong()
 
-  SeLog.log(SeLog.THROTTLING) { "Will start throttle with essential providers: $essentialProviderIds"}
+  SeLog.log(SeLog.THROTTLING) { "Will start throttle with essential providers: $essentialProviderIds" }
 
   return throttledWithAccumulation(
     resultThrottlingMs = essentialWaitingTimeout,
@@ -233,12 +273,10 @@ private fun Flow<SeResultEvent>.throttleUntilEssentialsArrive(essentialProviderI
       }
     }
 
-    return@throttledWithAccumulation (
-      if (essentialProvidersCounts.isEmpty()) 0
-      else if (essentialProvidersCounts.values.all { it >= ESSENTIALS_ENOUGH_COUNT }) 0
-      else if (essentialProvidersCounts.values.all { it > 0 }) ESSENTIALS_THROTTLE_DELAY
-      else null
-    )
+    return@throttledWithAccumulation if (essentialProvidersCounts.isEmpty()) 0
+    else if (essentialProvidersCounts.values.all { it >= ESSENTIALS_ENOUGH_COUNT }) 0
+    else if (essentialProvidersCounts.values.all { it > 0 }) ESSENTIALS_THROTTLE_DELAY
+    else null
   }
 }
 
@@ -248,8 +286,14 @@ private fun SeResultEvent.providerId() = when (this) {
   is SeResultEndEvent -> providerId
 }
 
+private fun SeResultEvent.itemDataOrNull(): SeItemData? = when (this) {
+  is SeResultAddedEvent -> itemData
+  is SeResultReplacedEvent -> newItemData
+  is SeResultEndEvent -> null
+}
+
 private fun SeProviderId.shouldIgnoreThrottling(): Boolean =
-  AdvancedSettings.getBoolean("search.everywhere.recent.at.top") && (this.value == SeProviderIdUtils.RECENT_FILES_ID)
+  AdvancedSettings.getBoolean("search.everywhere.recent.at.top") && this.value == SeProviderIdUtils.RECENT_FILES_ID
 
 @ApiStatus.Internal
 class SeSearchContext(val searchId: String, val tabId: String, val searchPattern: String, val resultsFlow: Flow<ThrottledItems<SeResultEvent>>)

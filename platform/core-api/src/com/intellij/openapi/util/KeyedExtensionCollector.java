@@ -150,7 +150,7 @@ public class KeyedExtensionCollector<T, KeyT> implements ModificationTracker {
   }
 
   final @NotNull @Unmodifiable List<T> buildExtensionsFromExtensionPoint(@NotNull Predicate<? super KeyedLazyInstance<T>> isMyBean,
-                                                           @NotNull List<? extends KeyedLazyInstance<T>> extensions) {
+                                                                         @NotNull List<? extends KeyedLazyInstance<T>> extensions) {
     List<T> result = null;
     T r1 = null;
     T r2 = null;

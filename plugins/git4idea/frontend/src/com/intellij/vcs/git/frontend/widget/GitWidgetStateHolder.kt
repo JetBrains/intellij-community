@@ -10,6 +10,7 @@ import com.intellij.openapi.project.Project
 import com.intellij.platform.project.projectIdOrNull
 import com.intellij.vcs.git.rpc.GitWidgetApi
 import com.intellij.vcs.git.rpc.GitWidgetState
+import fleet.rpc.client.durable
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.flow.*
@@ -22,7 +23,9 @@ internal class GitWidgetStateHolder(private val project: Project, cs: CoroutineS
     emitAll(manager.selectedEditorFlow)
   }.flatMapLatest { selectedEditor ->
     val projectId = project.projectIdOrNull() ?: return@flatMapLatest flowOf(GitWidgetState.DoNotShow)
-    GitWidgetApi.getInstance().getWidgetState(projectId, selectedEditor?.file?.rpcId())
+    durable {
+      GitWidgetApi.getInstance().getWidgetState(projectId, selectedEditor?.file?.rpcId())
+    }
   }.stateIn(cs, SharingStarted.Eagerly, GitWidgetState.DoNotShow)
 
   companion object {

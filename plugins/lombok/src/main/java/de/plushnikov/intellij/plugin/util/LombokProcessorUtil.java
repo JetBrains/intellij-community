@@ -39,22 +39,28 @@ public final class LombokProcessorUtil {
 
   @PsiModifier.ModifierConstant
   public static @Nullable String getMethodModifier(@NotNull PsiAnnotation psiAnnotation) {
-    return getLevelVisibility(psiAnnotation, "value");
+    return getLevelVisibility(psiAnnotation, "value", ACCESS_LEVEL_PUBLIC);
   }
 
   @PsiModifier.ModifierConstant
   public static @Nullable String getAccessVisibility(@NotNull PsiAnnotation psiAnnotation) {
-    return getLevelVisibility(psiAnnotation, "access");
+    return getLevelVisibility(psiAnnotation, "access", ACCESS_LEVEL_PUBLIC);
+  }
+
+  @PsiModifier.ModifierConstant
+  public static @Nullable String getAccessVisibilityPrivateDefault(@NotNull PsiAnnotation psiAnnotation) {
+    return getLevelVisibility(psiAnnotation, "access", ACCESS_LEVEL_PRIVATE);
   }
 
   @PsiModifier.ModifierConstant
   public static @Nullable String getLevelVisibility(@NotNull PsiAnnotation psiAnnotation) {
-    return getLevelVisibility(psiAnnotation, "level");
+    return getLevelVisibility(psiAnnotation, "level", ACCESS_LEVEL_PUBLIC);
   }
 
   @PsiModifier.ModifierConstant
-  private static @Nullable String getLevelVisibility(@NotNull PsiAnnotation psiAnnotation, @NotNull String parameter) {
-    return convertAccessLevelToJavaModifier(PsiAnnotationUtil.getEnumAnnotationValue(psiAnnotation, parameter, ACCESS_LEVEL_PUBLIC));
+  private static @Nullable String getLevelVisibility(@NotNull PsiAnnotation psiAnnotation, @NotNull String parameter,
+                                                     @NonNls String defaultValue) {
+    return convertAccessLevelToJavaModifier(PsiAnnotationUtil.getEnumAnnotationValue(psiAnnotation, parameter, defaultValue));
   }
 
   public static @Nullable String getAccessLevel(@NotNull PsiAnnotation psiAnnotation, @NotNull String parameter) {

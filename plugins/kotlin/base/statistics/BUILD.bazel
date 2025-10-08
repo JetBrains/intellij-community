@@ -23,7 +23,8 @@ jvm_library(
     "//java/java-impl:impl",
     "//platform/external-system-api:externalSystem",
     "//plugins/kotlin/base/compiler-configuration",
-    "@lib//:kotlinx-serialization-core",
+    "//libraries/kotlinx/serialization/core",
+    "//libraries/kotlinx/serialization/json",
   ]
 )
 ### auto-generated section `build kotlin.base.statistics` end

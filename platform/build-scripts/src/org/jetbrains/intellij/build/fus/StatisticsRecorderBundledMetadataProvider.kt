@@ -95,8 +95,11 @@ private suspend fun serviceUri(featureUsageStatisticsProperties: FeatureUsageSta
   return configurationClient
 }
 
-private suspend fun metadataServiceUri(featureUsageStatisticsProperties: FeatureUsageStatisticsProperties, context: BuildContext): String
-  = serviceUri(featureUsageStatisticsProperties, context).provideMetadataProductUrl()!!
+private suspend fun metadataServiceUri(featureUsageStatisticsProperties: FeatureUsageStatisticsProperties, context: BuildContext): String {
+  val appInfo = context.applicationInfo
+  val metadataVersion = (appInfo.majorVersion.substring(2,4) + appInfo.minorVersion).toInt()
+  return serviceUri(featureUsageStatisticsProperties, context).provideMetadataProductUrl(metadataVersion)!!
+}
 
 private suspend fun dictionaryServiceUri(featureUsageStatisticsProperties: FeatureUsageStatisticsProperties, context: BuildContext, fileName: String): String
   = "${serviceUri(featureUsageStatisticsProperties, context).provideDictionaryEndpoint()!!}${featureUsageStatisticsProperties.recorderId}/$fileName"

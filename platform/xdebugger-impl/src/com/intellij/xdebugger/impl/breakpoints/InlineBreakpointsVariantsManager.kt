@@ -27,18 +27,18 @@ import org.jetbrains.concurrency.asDeferred
 
 @ApiStatus.Internal
 data class InlineVariantWithMatchingBreakpointProxy(
-  val breakpoint: XLineBreakpointProxy?,
   val variant: XLineBreakpointInlineVariantProxy?,
+  val lightBreakpoint: InlineLightBreakpoint?,
 ) {
   init {
-    require(breakpoint != null || variant != null) { "Both breakpoint and variant are null" }
+    require(lightBreakpoint != null || variant != null) { "Both breakpoint and variant are null" }
   }
 }
 
 @ApiStatus.Internal
 data class InlineVariantWithMatchingBreakpoint(
-  val breakpoint: XLineBreakpointImpl<*>?,
   val variant: XLineBreakpointType<*>.XLineBreakpointVariant?,
+  val breakpoint: XLineBreakpointImpl<*>?,
 ) {
   init {
     require(breakpoint != null || variant != null) { "Both breakpoint and variant are null" }
@@ -52,19 +52,13 @@ class InlineBreakpointsVariantsManager(private val project: Project) {
 
   suspend fun calculateBreakpointsVariants(
     document: Document,
-    onlyLine: Int?,
+    lines: Set<Int>,
   ): Map<Int, List<InlineVariantWithMatchingBreakpoint>> {
-    val lineToBreakpoints = readAction {
-      if (onlyLine != null) {
-        val breakpoints = allBreakpointsIn(document).filter { it.line == onlyLine }
-        if (breakpoints.isEmpty()) return@readAction emptyMap()
-        mapOf(onlyLine to breakpoints)
-      }
-      else {
-        allBreakpointsIn(document).groupBy { it.line }
-      }
-    }
-    val variants = calculateBreakpointsVariants(document, lineToBreakpoints.keys)
+    val variants = calculateBreakpointsVariantsInternal(document, lines)
+    if (variants.isEmpty()) return emptyMap()
+    val lineToBreakpoints = allBreakpointsIn(document)
+      .filter { it.line in variants }
+      .groupBy { it.line }
     return readAction {
       variants.mapValues { (line, variants) ->
         val lineBreakpoints = lineToBreakpoints[line] ?: return@mapValues emptyList()
@@ -73,7 +67,7 @@ class InlineBreakpointsVariantsManager(private val project: Project) {
     }
   }
 
-  private suspend fun calculateBreakpointsVariants(document: Document, lines: Set<Int>): Map<Int, List<XLineBreakpointType<*>.XLineBreakpointVariant>> {
+  private suspend fun calculateBreakpointsVariantsInternal(document: Document, lines: Set<Int>): Map<Int, List<XLineBreakpointType<*>.XLineBreakpointVariant>> {
     return withSemaphorePermit {
       val lineToVariants = readAction {
         val file = FileDocumentManager.getInstance().getFile(document) ?: return@readAction emptyMap()
@@ -124,7 +118,7 @@ class InlineBreakpointsVariantsManager(private val project: Project) {
         val matchingBreakpoints = breakpoints.filter { variant.isMatching(it) }
         if (matchingBreakpoints.isEmpty()) {
           // Easy case: just draw this inlay as a variant.
-          add(InlineVariantWithMatchingBreakpoint(null, variant))
+          add(InlineVariantWithMatchingBreakpoint(variant, breakpoint = null))
         }
         else {
           // We might have multiple breakpoints for a single variant, bad luck. Still draw them.
@@ -136,7 +130,7 @@ class InlineBreakpointsVariantsManager(private val project: Project) {
               val singleLineBreakpoint = breakpoints.size == 1 && breakpointHasTheBiggestRange(breakpoint, variants)
 
               if (!singleLineBreakpoint || shouldAlwaysShowAllInlays()) {
-                add(InlineVariantWithMatchingBreakpoint(breakpoint, variant))
+                add(InlineVariantWithMatchingBreakpoint(variant, breakpoint))
               }
             }
             else {
@@ -150,7 +144,7 @@ class InlineBreakpointsVariantsManager(private val project: Project) {
       for (breakpoint in remainingBreakpoints) {
         // We have some breakpoints without matched variants.
         // Draw them.
-        add(InlineVariantWithMatchingBreakpoint(breakpoint, null))
+        add(InlineVariantWithMatchingBreakpoint(variant = null, breakpoint))
       }
     }
   }

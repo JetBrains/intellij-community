@@ -2,6 +2,11 @@
 package com.intellij.spellchecker.xml;
 
 import com.intellij.codeInspection.SuppressQuickFix;
+import com.intellij.lang.Language;
+import com.intellij.lang.dtd.DTDLanguage;
+import com.intellij.lang.html.HTMLLanguage;
+import com.intellij.lang.xhtml.XHTMLLanguage;
+import com.intellij.lang.xml.XMLLanguage;
 import com.intellij.openapi.project.DumbAware;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.openapi.util.registry.Registry;
@@ -19,6 +24,7 @@ import com.intellij.spellchecker.tokenizer.TokenConsumer;
 import com.intellij.spellchecker.tokenizer.Tokenizer;
 import com.intellij.util.SmartList;
 import com.intellij.util.containers.ContainerUtil;
+import com.intellij.util.io.URLUtil;
 import com.intellij.util.xml.DomElement;
 import com.intellij.util.xml.DomUtil;
 import com.intellij.xml.util.XmlEnumeratedValueReference;
@@ -26,6 +32,7 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.List;
+import java.util.Set;
 
 import static java.util.Collections.emptyList;
 import static java.util.Collections.singletonList;
@@ -36,13 +43,17 @@ public class XmlSpellcheckingStrategy extends SuppressibleSpellcheckingStrategy 
   private final Tokenizer<? extends PsiElement> myXmlCommentTokenizer = createCommentTokenizer();
   private final Tokenizer<? extends PsiElement> myXmlAttributeTokenizer = createAttributeValueTokenizer();
 
+  private static final Set<Class<? extends Language>> TEXT_LEVEL_SUPPORTED_DIALECTS =
+    Set.of(XMLLanguage.class, XHTMLLanguage.class, DTDLanguage.class, HTMLLanguage.class);
+
   @Override
   public @NotNull Tokenizer getTokenizer(PsiElement element) {
-    if (element instanceof XmlText) {
-      return myXmlTextTokenizer;
+    if (hasForeignLanguageChildren(element)) return EMPTY_TOKENIZER;
+    if (element instanceof XmlText text) {
+      return (shouldTextLevelSpellcheckingBeUsed(element) || text.getText().isBlank()) ? EMPTY_TOKENIZER : myXmlTextTokenizer;
     }
     if (isXmlComment(element)) {
-      return myXmlCommentTokenizer;
+      return shouldTextLevelSpellcheckingBeUsed(element) ? EMPTY_TOKENIZER : myXmlCommentTokenizer;
     }
     if (element instanceof XmlToken
         && ((XmlToken)element).getTokenType() == XmlTokenType.XML_DATA_CHARACTERS
@@ -50,10 +61,18 @@ public class XmlSpellcheckingStrategy extends SuppressibleSpellcheckingStrategy 
       // Special case for all other XML_DATA_CHARACTERS, which are not handled through parent PSI
       return isInTemplateLanguageFile(element) ? EMPTY_TOKENIZER : TEXT_TOKENIZER;
     }
-    if (element instanceof XmlAttributeValue) {
-      return myXmlAttributeTokenizer;
+    if (element instanceof XmlAttributeValue attribute) {
+      return (shouldTextLevelSpellcheckingBeUsed(element) || attribute.getValue().isEmpty()) ? EMPTY_TOKENIZER : myXmlAttributeTokenizer;
     }
     return super.getTokenizer(element);
+  }
+
+  private static boolean hasForeignLanguageChildren(PsiElement element) {
+    for (PsiElement child : element.getChildren()) {
+      if (child.getLanguage().isKindOf(XMLLanguage.INSTANCE)) continue;
+      if (child.getLanguage() != element.getLanguage()) return true;
+    }
+    return false;
   }
 
   @Override
@@ -97,7 +116,11 @@ public class XmlSpellcheckingStrategy extends SuppressibleSpellcheckingStrategy 
 
   @Override
   public boolean useTextLevelSpellchecking() {
-    return Registry.is("spellchecker.grazie.enabled");
+    return Registry.is("spellchecker.grazie.enabled", false);
+  }
+
+  private boolean shouldTextLevelSpellcheckingBeUsed(@NotNull PsiElement element) {
+    return useTextLevelSpellchecking() && TEXT_LEVEL_SUPPORTED_DIALECTS.contains(element.getLanguage().getClass());
   }
 
   @Override
@@ -225,6 +248,11 @@ public class XmlSpellcheckingStrategy extends SuppressibleSpellcheckingStrategy 
       final String valueTextTrimmed = element.getValue().trim();
       // do not inspect colors like #00aaFF
       if (valueTextTrimmed.startsWith("#") && valueTextTrimmed.length() <= 9 && isHexString(valueTextTrimmed.substring(1))) {
+        return;
+      }
+
+      // Do not inspect data URIs
+      if (URLUtil.isDataUri(ElementManipulators.getValueText(element))) {
         return;
       }
 

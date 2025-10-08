@@ -16,7 +16,7 @@ interface Child extends Parent<@NotNull String> {
 
 class JavaMain {
   void test(Child child) {
-      for (@Anno String s : child.getList()) {
+      for (String s : child.getList()) {
 
       }
   }

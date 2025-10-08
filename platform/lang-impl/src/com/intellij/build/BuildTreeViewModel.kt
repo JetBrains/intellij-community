@@ -6,7 +6,6 @@ import com.intellij.ide.ui.icons.rpcId
 import com.intellij.openapi.application.EDT
 import com.intellij.openapi.diagnostic.debug
 import com.intellij.openapi.diagnostic.fileLogger
-import com.intellij.ui.split.SplitComponentModel
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.*
@@ -18,7 +17,7 @@ import java.util.concurrent.atomic.AtomicInteger
 private val LOG = fileLogger()
 
 @ApiStatus.Internal
-class BuildTreeViewModel(private val consoleView: BuildTreeConsoleView, private val scope: CoroutineScope) : SplitComponentModel {
+class BuildTreeViewModel(private val consoleView: BuildTreeConsoleView, private val scope: CoroutineScope) {
   // sequential execution ensures consistent snapshot construction
   private val sequentialDispatcher = Dispatchers.Default.limitedParallelism(1)
   // buffering is important to ensure proper ordering between events emission and 'onSubscription' execution
@@ -28,11 +27,12 @@ class BuildTreeViewModel(private val consoleView: BuildTreeConsoleView, private 
   private val node2Id = mutableMapOf<ExecutionNode, Int>() // accessed only via sequentialDispatcher
   private val nodeStates = mutableMapOf<Int, BuildTreeNode>() // accessed only via sequentialDispatcher
   private val exposeRequests = mutableListOf<BuildTreeExposeRequest>() // accessed only via sequentialDispatcher
+  private var filteringState = BuildTreeFilteringState(false, false) // accessed only via sequentialDispatcher
   private val id2Node = ConcurrentHashMap<Int, ExecutionNode>()
 
   private val navigationFlow = MutableSharedFlow<BuildTreeNavigationRequest>(extraBufferCapacity = Int.MAX_VALUE)
-  private val filteringStateFlow = MutableStateFlow(BuildTreeFilteringState(false, false))
-  private val isDisposed = MutableStateFlow(false)
+
+  val id: BuildViewId = this.storeGlobally(scope)
 
   @Volatile
   private var hasSelection = false
@@ -45,11 +45,13 @@ class BuildTreeViewModel(private val consoleView: BuildTreeConsoleView, private 
   @Volatile
   private var clearingSelection = false
 
-  override val providerId: String = "BuildTree"
-
   fun getTreeEventsFlow(): Flow<BuildTreeEvent> {
     return flow {
       nodesFlow.onSubscription {
+        val initialFilteringState = filteringState
+        LOG.debug { "Sending initial filtering state: $initialFilteringState" }
+        emit(initialFilteringState)
+
         val toSend = nodeStates.values.toList()
         if (toSend.isEmpty()) {
           LOG.debug("No nodes initially available")
@@ -58,6 +60,7 @@ class BuildTreeViewModel(private val consoleView: BuildTreeConsoleView, private 
           LOG.debug { "Sending snapshot: ${toSend.map { it.id }}" }
           emit(BuildNodesUpdate(System.currentTimeMillis(), toSend))
         }
+
         exposeRequests.forEach {
           LOG.debug { "Replaying expose request: node id=${it.nodeId}, alsoSelect=${it.alsoSelect}" }
           emit(it)
@@ -138,6 +141,14 @@ class BuildTreeViewModel(private val consoleView: BuildTreeConsoleView, private 
         }
         nodesFlow.emit(request)
       }
+    }
+  }
+
+  private fun updateFilteringState() {
+    val newState = BuildTreeFilteringState(showingSuccessful, showingWarnings)
+    scope.launch(sequentialDispatcher) {
+      filteringState = newState
+      nodesFlow.emit(newState)
     }
   }
 
@@ -230,14 +241,6 @@ class BuildTreeViewModel(private val consoleView: BuildTreeConsoleView, private 
     return navigationFlow.asSharedFlow()
   }
 
-  fun getFilteringStateFlow(): Flow<BuildTreeFilteringState> {
-    return filteringStateFlow.asStateFlow()
-  }
-
-  fun getShutdownStateFlow(): Flow<Boolean> {
-    return isDisposed.asStateFlow()
-  }
-
   fun canNavigate(forward: Boolean): Boolean {
     return if (clearingSelection) forward && hasAnyNode else if (forward) hasNextNode else hasPrevNode
   }
@@ -247,21 +250,21 @@ class BuildTreeViewModel(private val consoleView: BuildTreeConsoleView, private 
     navigationFlow.tryEmit(BuildTreeNavigationRequest(forward))
   }
 
-  var showingSuccessful: Boolean
-    get() = filteringStateFlow.value.showSuccessful
+  var showingSuccessful: Boolean = false
     set(value) {
-      LOG.debug { "Showing successful set to $value" }
-      filteringStateFlow.value = filteringStateFlow.value.copy(showSuccessful = value)
+      if (field != value) {
+        field = value
+        LOG.debug { "Showing successful set to $value" }
+        updateFilteringState()
+      }
     }
 
-  var showingWarnings: Boolean
-    get() = filteringStateFlow.value.showWarnings
+  var showingWarnings: Boolean = false
     set(value) {
-      LOG.debug { "Showing warnings set to $value" }
-      filteringStateFlow.value = filteringStateFlow.value.copy(showWarnings = value)
+      if (field != value) {
+        field = value
+        LOG.debug { "Showing warnings set to $value" }
+        updateFilteringState()
+      }
     }
-
-   override fun dispose() {
-    isDisposed.value = true
-  }
 }

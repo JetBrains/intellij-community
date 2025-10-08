@@ -20,7 +20,26 @@ interface Robot {
   fun click(component: Component, point: Point, button: RemoteMouseButton, times: Int)
   fun pressAndReleaseKey(keyCode: Int, vararg modifiers: Int)
   fun pressModifiers(modifierMask: Int)
+  /**
+   * Performs a strict click in the context of SmoothRobot by repeating the full
+   * mouse cycle until a `mouseClicked` event is observed.
+   *
+   * How it differs from `clickWithRetry`:
+   * - `clickWithRetry` treats any of `mousePressed`/`mouseReleased`/`mouseClicked` as success
+   *   and stops retrying once any of these events fires.
+   * - `strictClickWithRetry` is stricter: it only considers `mouseClicked` as success and
+   *   will keep retrying the full press→release sequence until that event is received
+   *   (or attempts are exhausted).
+   *
+   * Why this is needed: some components trigger their action only when the release happens
+   * within the same target. If we stop on `pressed` or `released` alone, the intended action may not
+   * happen.
+   *
+   * !!! Don't use strictClick if the component should disappear after mouse release.
+   */
+  fun strictClick(component: Component, point: Point?)
 
+  fun moveMouseAndPress(component: Component, where: Point?)
   fun pressMouse(mouseButton: RemoteMouseButton)
   fun pressMouse(component: Component, point: Point)
 

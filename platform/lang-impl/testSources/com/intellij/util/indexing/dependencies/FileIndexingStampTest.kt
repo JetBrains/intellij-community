@@ -8,26 +8,26 @@ import org.junit.Test
 class FileIndexingStampTest {
   @Test
   fun `test WriteOnlyFileIndexingStampImpl is not equal to any other int`() {
-    assertThat(WriteOnlyFileIndexingStampImpl(0).isFileChanged(0)).isEqualTo(IsFileChangedResult.UNKNOWN)
-    assertThat(WriteOnlyFileIndexingStampImpl(0, true).isFileChanged(0)).isEqualTo(IsFileChangedResult.NO)
-    assertThat(WriteOnlyFileIndexingStampImpl(0, true).isFileChanged(42)).isEqualTo(IsFileChangedResult.YES)
-    assertThat(WriteOnlyFileIndexingStampImpl(42.withIndexingRequestId(0), true).isFileChanged(0)).isEqualTo(IsFileChangedResult.YES)
-    assertThat(WriteOnlyFileIndexingStampImpl(0.withIndexingRequestId(42), true).isFileChanged(0)).isEqualTo(IsFileChangedResult.NO)
+    assertThat(WriteOnlyFileIndexingStampImpl(1).isFileChanged(1)).isEqualTo(IsFileChangedResult.UNKNOWN)
+    assertThat(WriteOnlyFileIndexingStampImpl(1, true).isFileChanged(1)).isEqualTo(IsFileChangedResult.NO)
+    assertThat(WriteOnlyFileIndexingStampImpl(1, true).isFileChanged(42)).isEqualTo(IsFileChangedResult.YES)
+    assertThat(WriteOnlyFileIndexingStampImpl(42.withIndexingRequestId(1), true).isFileChanged(1.withIndexingRequestId(1))).isEqualTo(IsFileChangedResult.YES)
+    assertThat(WriteOnlyFileIndexingStampImpl(1.withIndexingRequestId(42), true).isFileChanged(1.withIndexingRequestId(42))).isEqualTo(IsFileChangedResult.NO)
 
-    Assert.assertEquals(WriteOnlyFileIndexingStampImpl(0), WriteOnlyFileIndexingStampImpl(0))
+    Assert.assertEquals(WriteOnlyFileIndexingStampImpl(1), WriteOnlyFileIndexingStampImpl(1))
     Assert.assertEquals(WriteOnlyFileIndexingStampImpl(42), WriteOnlyFileIndexingStampImpl(42))
     Assert.assertNotEquals(WriteOnlyFileIndexingStampImpl(41), WriteOnlyFileIndexingStampImpl(42))
   }
 
   @Test
   fun `test ReadWriteFileIndexingStampImpl`() {
-    assertThat(ReadWriteFileIndexingStampImpl(0).isFileChanged(0)).isEqualTo(IsFileChangedResult.UNKNOWN)
-    assertThat(ReadWriteFileIndexingStampImpl(0, true).isFileChanged(0)).isEqualTo(IsFileChangedResult.NO)
-    assertThat(ReadWriteFileIndexingStampImpl(0, true).isFileChanged(42)).isEqualTo(IsFileChangedResult.YES)
-    assertThat(ReadWriteFileIndexingStampImpl(42.withIndexingRequestId(0), true).isFileChanged(0)).isEqualTo(IsFileChangedResult.YES)
-    assertThat(ReadWriteFileIndexingStampImpl(0.withIndexingRequestId(42), true).isFileChanged(0)).isEqualTo(IsFileChangedResult.NO)
+    assertThat(ReadWriteFileIndexingStampImpl(1).isFileChanged(1)).isEqualTo(IsFileChangedResult.UNKNOWN)
+    assertThat(ReadWriteFileIndexingStampImpl(1, true).isFileChanged(1)).isEqualTo(IsFileChangedResult.NO)
+    assertThat(ReadWriteFileIndexingStampImpl(1, true).isFileChanged(42)).isEqualTo(IsFileChangedResult.YES)
+    assertThat(ReadWriteFileIndexingStampImpl(42.withIndexingRequestId(1), true).isFileChanged(1.withIndexingRequestId(1))).isEqualTo(IsFileChangedResult.YES)
+    assertThat(ReadWriteFileIndexingStampImpl(1.withIndexingRequestId(42), true).isFileChanged(1.withIndexingRequestId(42))).isEqualTo(IsFileChangedResult.NO)
 
-    Assert.assertEquals(ReadWriteFileIndexingStampImpl(0), ReadWriteFileIndexingStampImpl(0));
+    Assert.assertEquals(ReadWriteFileIndexingStampImpl(1), ReadWriteFileIndexingStampImpl(1));
     Assert.assertEquals(ReadWriteFileIndexingStampImpl(42), ReadWriteFileIndexingStampImpl(42))
     Assert.assertNotEquals(ReadWriteFileIndexingStampImpl(41), ReadWriteFileIndexingStampImpl(42))
   }

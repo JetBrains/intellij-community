@@ -86,7 +86,6 @@ open class TestTasksChooser {
     testTasks: Map<TestName, T>,
     consumer: (List<T>) -> Unit
   ) {
-    assert(!ApplicationManager.getApplication().isCommandLine)
     JBPopupFactory.getInstance()
       .createPopupChooserBuilder(
         testTasks.keys.toList()

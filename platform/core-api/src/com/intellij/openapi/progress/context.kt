@@ -16,6 +16,7 @@ import org.jetbrains.annotations.ApiStatus.Internal
 import kotlin.coroutines.CoroutineContext
 import kotlin.coroutines.EmptyCoroutineContext
 
+@Internal
 @ApiStatus.ScheduledForRemoval
 @Deprecated(
   "This function is deprecated because it replaces the whole context. " +

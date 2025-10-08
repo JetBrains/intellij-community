@@ -89,7 +89,7 @@ internal class K1ScratchFileEditorProvider : KtScratchFileEditorProvider() {
                     if (!file.project.isDisposed) {
                         val scratch = file.getPsiFile()
                         if (scratch?.isValid == true) {
-                            DaemonCodeAnalyzer.getInstance(project).restart(scratch)
+                            DaemonCodeAnalyzer.getInstance(project).restart(scratch, this)
                         }
                     }
                 }

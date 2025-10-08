@@ -20,50 +20,27 @@
     <orderEntry type="library" scope="TEST" name="kotlin-stdlib" level="project" />
     <orderEntry type="library" scope="TEST" name="testcontainers-junit-jupiter" level="project" />
     <orderEntry type="module" module-name="intellij.community.wintools" scope="TEST" />
+    <orderEntry type="module" module-name="intellij.libraries.system.stubs.jupiter" exported="" scope="TEST" />
     <orderEntry type="module" module-name="intellij.libraries.testcontainers" scope="TEST" />
     <orderEntry type="module" module-name="intellij.platform.analysis" scope="TEST" />
+    <orderEntry type="module" module-name="intellij.platform.analysis.impl" scope="TEST" />
     <orderEntry type="module" module-name="intellij.platform.core" scope="TEST" />
+    <orderEntry type="module" module-name="intellij.platform.editor.ex" scope="TEST" />
+    <orderEntry type="module" module-name="intellij.platform.editor.ui" scope="TEST" />
     <orderEntry type="module" module-name="intellij.platform.eel.provider" scope="TEST" />
     <orderEntry type="module" module-name="intellij.platform.execution" scope="TEST" />
     <orderEntry type="module" module-name="intellij.platform.execution.impl" scope="TEST" />
     <orderEntry type="module" module-name="intellij.platform.ide.core" scope="TEST" />
     <orderEntry type="module" module-name="intellij.platform.ide.impl" scope="TEST" />
     <orderEntry type="module" module-name="intellij.platform.projectModel" scope="TEST" />
+    <orderEntry type="module" module-name="intellij.platform.testFramework" scope="TEST" />
     <orderEntry type="module" module-name="intellij.platform.testFramework.junit5" scope="TEST" />
     <orderEntry type="module" module-name="intellij.platform.util" scope="TEST" />
+    <orderEntry type="module" module-name="intellij.platform.util.coroutines" scope="TEST" />
     <orderEntry type="module" module-name="intellij.python.community" scope="TEST" />
     <orderEntry type="module" module-name="intellij.python.community.impl.poetry" scope="TEST" />
     <orderEntry type="module" module-name="intellij.python.community.plugin" scope="RUNTIME" />
     <orderEntry type="module" module-name="intellij.python.community.testFramework.testEnv" exported="" scope="TEST" />
     <orderEntry type="module" module-name="intellij.python.sdk" scope="TEST" />
-    <orderEntry type="module-library" exported="" scope="TEST">
-      <library name="uk.webcompere.system.stubs.jupiter" type="repository">
-        <properties maven-id="uk.org.webcompere:system-stubs-jupiter:2.1.8">
-          <verification>
-            <artifact url="file://$MAVEN_REPOSITORY$/uk/org/webcompere/system-stubs-jupiter/2.1.8/system-stubs-jupiter-2.1.8.jar">
-              <sha256sum>9a24867a51f5d22db67d9052a06bc5dd2e9a3e273bc2ee9814620f2d9f25d0a8</sha256sum>
-            </artifact>
-            <artifact url="file://$MAVEN_REPOSITORY$/uk/org/webcompere/system-stubs-core/2.1.8/system-stubs-core-2.1.8.jar">
-              <sha256sum>9c27322cfc7043c75384ad444007b0880ca18fe7231d69bfa69616bc773cafe1</sha256sum>
-            </artifact>
-          </verification>
-          <exclude>
-            <dependency maven-id="net.bytebuddy:byte-buddy" />
-            <dependency maven-id="net.bytebuddy:byte-buddy-agent" />
-          </exclude>
-        </properties>
-        <CLASSES>
-          <root url="jar://$MAVEN_REPOSITORY$/uk/org/webcompere/system-stubs-jupiter/2.1.8/system-stubs-jupiter-2.1.8.jar!/" />
-          <root url="jar://$MAVEN_REPOSITORY$/uk/org/webcompere/system-stubs-core/2.1.8/system-stubs-core-2.1.8.jar!/" />
-        </CLASSES>
-        <JAVADOC />
-        <SOURCES>
-          <root url="jar://$MAVEN_REPOSITORY$/uk/org/webcompere/system-stubs-jupiter/2.1.8/system-stubs-jupiter-2.1.8-sources.jar!/" />
-          <root url="jar://$MAVEN_REPOSITORY$/uk/org/webcompere/system-stubs-core/2.1.8/system-stubs-core-2.1.8-sources.jar!/" />
-        </SOURCES>
-      </library>
-    </orderEntry>
-    <orderEntry type="module" module-name="intellij.platform.util.coroutines" scope="TEST" />
-    <orderEntry type="library" scope="TEST" name="byte-buddy" level="project" />
   </component>
 </module>

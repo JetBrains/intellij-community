@@ -11,7 +11,7 @@ jvm_library(
     "@lib//:kotlin-stdlib",
     "@lib//:kotlinx-coroutines-core",
     "@lib//:jetbrains-annotations",
-    "@lib//:fastutil-min",
+    "//libraries/fastutil",
   ]
 )
 ### auto-generated section `build intellij.platform.diagnostic` end

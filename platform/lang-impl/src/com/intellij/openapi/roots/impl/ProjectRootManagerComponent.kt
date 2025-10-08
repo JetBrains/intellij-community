@@ -187,15 +187,13 @@ open class ProjectRootManagerComponent(
     }
     AdditionalLibraryRootsProvider.EP_NAME.addChangeListener(coroutineScope, rootsExtensionPointListener)
     OrderEnumerationHandler.EP_NAME.addChangeListener(coroutineScope, rootsExtensionPointListener)
-    if (useWsm) {
-      connection.subscribe(WorkspaceModelTopics.CHANGED, object : WorkspaceModelChangeListener {
-        override fun changed(event: VersionedStorageChange) {
-          if (event.getChanges(ProjectSettingsEntity::class.java).isNotEmpty()) {
-            projectJdkChanged()
-          }
+    connection.subscribe(WorkspaceModelTopics.CHANGED, object : WorkspaceModelChangeListener {
+      override fun changed(event: VersionedStorageChange) {
+        if (event.getChanges(ProjectSettingsEntity::class.java).isNotEmpty()) {
+          projectJdkChanged()
         }
-      })
-    }
+      }
+    })
   }
 
   protected open fun projectClosed() {
@@ -398,6 +396,9 @@ open class ProjectRootManagerComponent(
       register(roots.sourceRoots, "external source roots")
       register(roots.nonRecursiveRoots, "non-recursive external roots")
       register(roots.nonRecursiveSourceRoots, "non-recursive external source roots")
+    }
+    builder.forEachNonIndexableRoots { roots ->
+      register(roots, "non-indexable roots")
     }
   }
 

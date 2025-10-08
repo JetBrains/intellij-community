@@ -11,13 +11,13 @@ import org.jetbrains.annotations.ApiStatus
 val useBackgroundWriteAction: Boolean = System.getProperty("idea.background.write.action.enabled", "true").toBoolean()
 
 /**
- * - `false` means some high-level Swing code will not use write-intent lock defensively for execution of user's code
- * - `true` means that write-intent lock will be inserted in more places
+ * - `true` means some high-level Swing code will not use write-intent lock defensively for execution of user's code
+ * - `false` means that write-intent lock will be inserted in more places
  *
  * See IJPL-199557
  */
 @ApiStatus.Internal
-val doNotWrapHighLevelActionsInWriteIntent: Boolean = System.getProperty("idea.do.not.wrap.high.level.functions.in.write.intent", "false").toBoolean()
+val wrapHighLevelFunctionsInWriteIntent: Boolean = System.getProperty("idea.wrap.high.level.functions.in.write.intent", "true").toBoolean()
 
 /**
  * - `false` means that [backgroundWriteAction] will block the thread during lock acquisition
@@ -40,6 +40,13 @@ val installSuvorovProgress: Boolean = System.getProperty("ide.install.suvorov.pr
 
 @get:ApiStatus.Internal
 val useDebouncedDrawingInSuvorovProgress: Boolean = System.getProperty("ide.suvorov.progress.debounced.drawing", "true").toBoolean()
+
+/**
+ * - `true` means that EDT runnables that require write-intent lock will acquire it in a non-blocking way
+ * - `false` means that the write-intent lock will be acquired in a blocking way
+ */
+@get:ApiStatus.Internal
+val useNonBlockingFlushQueue: Boolean = System.getProperty("ide.use.non.blocking.flush.queue", "true").toBoolean()
 
 /**
  * Represents the deadline before blocking read lock acquisition starts compensating parallelism for coroutine worker threads

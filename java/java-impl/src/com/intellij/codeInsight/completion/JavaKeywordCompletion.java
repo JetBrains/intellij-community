@@ -114,13 +114,6 @@ public class JavaKeywordCompletion {
         not(START_SWITCH),
         not(JavaMemberNameCompletionContributor.INSIDE_TYPE_PARAMS_PATTERN));
 
-  static final Set<String> PRIMITIVE_TYPES = ContainerUtil.newLinkedHashSet(
-    JavaKeywords.SHORT, JavaKeywords.BOOLEAN,
-    JavaKeywords.DOUBLE, JavaKeywords.LONG,
-    JavaKeywords.INT, JavaKeywords.FLOAT,
-    JavaKeywords.CHAR, JavaKeywords.BYTE
-  );
-
   static final PsiElementPattern<PsiElement, ?> START_FOR = psiElement().afterLeaf(psiElement().withText("(").afterLeaf("for"));
   private static final ElementPattern<PsiElement> CLASS_REFERENCE =
     psiElement().withParent(psiReferenceExpression().referencing(psiClass().andNot(psiElement(PsiTypeParameter.class))));
@@ -343,7 +336,7 @@ public class JavaKeywordCompletion {
     if (switchBlock == null) return;
     List<PsiSwitchLabelStatementBase> allBranches =
       PsiTreeUtil.getChildrenOfTypeAsList(switchBlock.getBody(), PsiSwitchLabelStatementBase.class);
-    if (allBranches.isEmpty() || allBranches.get(allBranches.size() - 1).getCaseLabelElementList() != labels) {
+    if (allBranches.isEmpty() || allBranches.getLast().getCaseLabelElementList() != labels) {
       return;
     }
     if (JavaPsiSwitchUtil.findDefaultElement(switchBlock) != null) {
@@ -1222,7 +1215,7 @@ public class JavaKeywordCompletion {
       boolean addAll = expected.isEmpty() || ContainerUtil.exists(expected, t ->
         t.equalsToText(CommonClassNames.JAVA_LANG_OBJECT) || t.equalsToText(CommonClassNames.JAVA_IO_SERIALIZABLE));
       PsiElementFactory factory = JavaPsiFacade.getElementFactory(position.getProject());
-      for (String primitiveType : PRIMITIVE_TYPES) {
+      for (String primitiveType : PsiTypes.primitiveTypeNames()) {
         PsiType array = factory.createTypeFromText(primitiveType + "[]", null);
         if (addAll || expected.contains(array)) {
           result.consume(PsiTypeLookupItem.createLookupItem(array, null));
@@ -1245,7 +1238,7 @@ public class JavaKeywordCompletion {
         declaration ||
         typeFragment ||
         expressionPosition) && primitivesAreExpected(position)) {
-      for (String primitiveType : PRIMITIVE_TYPES) {
+      for (String primitiveType : PsiTypes.primitiveTypeNames()) {
         if (!session.isKeywordAlreadyProcessed(primitiveType)) {
           result.consume(BasicExpressionCompletionContributor.createKeywordLookupItem(position, primitiveType));
         }

@@ -5,11 +5,9 @@ import com.intellij.codeInsight.highlighting.BraceHighlightingHandler
 import com.intellij.codeInsight.highlighting.HighlightHandlerBase
 import com.intellij.codeInsight.multiverse.CodeInsightContext
 import com.intellij.openapi.application.ApplicationManager
-import com.intellij.openapi.editor.Document
 import com.intellij.openapi.editor.Editor
 import com.intellij.openapi.editor.ex.EditorEx
 import com.intellij.openapi.editor.ex.util.EditorUtil
-import com.intellij.openapi.editor.impl.DocumentMarkupModel
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.Pair
 import com.intellij.openapi.util.ProperTextRange
@@ -117,8 +115,8 @@ class IdentifierHighlighterUpdater(
   }
 
   companion object {
-    fun clearMyHighlights(document: Document, project: Project) {
-      val markupModel = DocumentMarkupModel.forDocument(document, project, true)
+    fun clearMyHighlights(editor: Editor) {
+      val markupModel = editor.markupModel
       for (highlighter in markupModel.getAllHighlighters()) {
         val info = HighlightInfo.fromRangeHighlighter(highlighter)
         if (info != null &&

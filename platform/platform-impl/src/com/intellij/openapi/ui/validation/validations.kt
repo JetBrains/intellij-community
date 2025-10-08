@@ -8,6 +8,7 @@ import com.intellij.openapi.project.rootManager
 import com.intellij.ui.UIBundle
 import kotlin.io.path.exists
 import kotlin.io.path.isDirectory
+import kotlin.io.path.isReadable
 import kotlin.io.path.isWritable
 import kotlin.io.path.listDirectoryEntries
 import kotlin.io.path.name
@@ -40,6 +41,15 @@ val CHECK_DIRECTORY: DialogValidation.WithParameter<() -> String> = validationPa
   when {
     !path.exists() -> null
     !path.isWritable() -> UIBundle.message("label.project.wizard.new.project.directory.not.writable.error", path.name)
+    !path.isDirectory() -> UIBundle.message("label.project.wizard.new.project.file.not.directory.error", path.name)
+    else -> null
+  }
+}
+
+val CHECK_READABLE_DIRECTORY: DialogValidation.WithParameter<() -> String> = validationPathErrorFor { path ->
+  when {
+    !path.exists() -> null
+    !path.isReadable() -> UIBundle.message("label.project.wizard.new.project.directory.not.readable.error", path.name)
     !path.isDirectory() -> UIBundle.message("label.project.wizard.new.project.file.not.directory.error", path.name)
     else -> null
   }

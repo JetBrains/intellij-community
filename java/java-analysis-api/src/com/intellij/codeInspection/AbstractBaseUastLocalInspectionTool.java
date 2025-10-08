@@ -20,7 +20,7 @@ public abstract class AbstractBaseUastLocalInspectionTool extends LocalInspectio
   private final Class<? extends UElement>[] myUElementsTypesHint;
 
   protected AbstractBaseUastLocalInspectionTool() {
-    this(UFile.class, UClass.class, UField.class, UMethod.class);
+    this(UFile.class, UClass.class, UField.class, UMethod.class, UParameter.class);
   }
 
   @SafeVarargs
@@ -64,6 +64,18 @@ public abstract class AbstractBaseUastLocalInspectionTool extends LocalInspectio
     return null;
   }
 
+  /**
+   * Override this to report problems at parameter level.
+   *
+   * @param parameter      to check.
+   * @param manager    InspectionManager to ask for ProblemDescriptors from.
+   * @param isOnTheFly true if called during on the fly editor highlighting. Called from Inspect Code action otherwise.
+   * @return {@code null} if no problems found or not applicable at parameter level.
+   */
+  public ProblemDescriptor @Nullable [] checkParameter(@NotNull UParameter parameter, @NotNull InspectionManager manager, boolean isOnTheFly) {
+    return null;
+  }
+
   @Override
   public @NotNull PsiElementVisitor buildVisitor(final @NotNull ProblemsHolder holder, final boolean isOnTheFly) {
     return UastHintedVisitorAdapter.create(holder.getFile().getLanguage(), new AbstractUastNonRecursiveVisitor() {
@@ -88,6 +100,12 @@ public abstract class AbstractBaseUastLocalInspectionTool extends LocalInspectio
       @Override
       public boolean visitFile(@NotNull UFile node) {
         addDescriptors(checkFile(node.getPsi(), holder.getManager(), isOnTheFly));
+        return true;
+      }
+
+      @Override
+      public boolean visitParameter(@NotNull UParameter node) {
+        addDescriptors(checkParameter(node, holder.getManager(), isOnTheFly));
         return true;
       }
 

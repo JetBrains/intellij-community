@@ -5,7 +5,6 @@ import com.intellij.build.*
 import com.intellij.ide.IdeBundle
 import com.intellij.ide.OccurenceNavigatorSupport
 import com.intellij.ide.actions.OccurenceNavigatorActionBase
-import com.intellij.ide.impl.ProjectUtil
 import com.intellij.ide.nls.NlsMessages
 import com.intellij.ide.rpc.NavigatableId
 import com.intellij.ide.rpc.navigatable
@@ -23,21 +22,21 @@ import com.intellij.openapi.application.UI
 import com.intellij.openapi.application.asContextElement
 import com.intellij.openapi.diagnostic.debug
 import com.intellij.openapi.diagnostic.fileLogger
+import com.intellij.openapi.project.Project
 import com.intellij.openapi.ui.ComponentContainer
 import com.intellij.openapi.util.Disposer
 import com.intellij.openapi.util.registry.Registry
-import com.intellij.platform.buildView.BuildTreeApi
 import com.intellij.platform.util.coroutines.childScope
 import com.intellij.pom.Navigatable
 import com.intellij.ui.*
 import com.intellij.ui.ExperimentalUI.Companion.isNewUI
 import com.intellij.ui.render.RenderingHelper
-import com.intellij.ui.split.SplitComponentId
 import com.intellij.ui.tree.TreePathUtil
 import com.intellij.ui.tree.ui.DefaultTreeUI
 import com.intellij.ui.treeStructure.Tree
 import com.intellij.util.EditSourceOnDoubleClickHandler
 import com.intellij.util.EditSourceOnEnterKeyHandler
+import com.intellij.util.disposeOnCompletion
 import com.intellij.util.ui.JBUI
 import com.intellij.util.ui.UIUtil
 import com.intellij.util.ui.tree.TreeUtil
@@ -57,9 +56,10 @@ import javax.swing.tree.*
 
 private val LOG = fileLogger()
 
-internal class BuildTreeView(parentScope: CoroutineScope, private val buildViewId: SplitComponentId)
+internal class BuildTreeView(private val project: Project, parentScope: CoroutineScope, private val buildViewId: BuildViewId)
   : JPanel(), UiDataProvider, ComponentContainer {
   private val uiScope = parentScope.childScope("BuildTreeView", Dispatchers.UI + ModalityState.any().asContextElement())
+  private val model = BuildTreeViewModelProxy.getInstance(buildViewId)
 
   private val rootNode = MyNode(
     BuildTreeNode(BuildTreeNode.ROOT_ID, BuildTreeNode.NO_ID,
@@ -91,41 +91,22 @@ internal class BuildTreeView(parentScope: CoroutineScope, private val buildViewI
 
   init {
     LOG.debug { "Creating BuildTreeView(id=$buildViewId)" }
+    this.disposeOnCompletion(uiScope)
     uiScope.launch {
       val nodeMap = mutableMapOf(buildProgressRootNode.id to buildProgressRootNode)
-      BuildTreeApi.getInstance().getTreeEventsFlow(buildViewId).collect { event ->
+      model.getTreeEventsFlow().collect { event ->
         handleTreeEvent(event, nodeMap)
       }
     }
-    uiScope.launch {
-      BuildTreeApi.getInstance().getFilteringStateFlow(buildViewId).collect {
-        handleFilteringStateChange(it)
-      }
-    }
     uiScope.launch(Dispatchers.EDT /* Navigatable-s might expect WIL to be taken */) {
-      BuildTreeApi.getInstance().getNavigationFlow(buildViewId).collect {
+      model.getNavigationFlow().collect {
         handleNavigation(it.forward)
       }
     }
     uiScope.launch {
       navigationContext.collect {
         LOG.debug { "Navigation context: $it" }
-        BuildTreeApi.getInstance().onNavigationContextChange(buildViewId, it)
-      }
-    }
-    uiScope.launch {
-      try {
-        BuildTreeApi.getInstance().getShutdownStateFlow(buildViewId).collect {
-          if (it) {
-            LOG.debug { "Disposing BuildTreeView(id=$buildViewId)" }
-            Disposer.dispose(this@BuildTreeView)
-          }
-        }
-      }
-      finally {
-        // on application shutdown the scope is canceled before we receive the shutdown event
-        LOG.debug { "Disposing BuildTreeView(id=$buildViewId) on shutdown" }
-        Disposer.dispose(this@BuildTreeView)
+        model.onNavigationContextChange(it)
       }
     }
   }
@@ -248,6 +229,9 @@ internal class BuildTreeView(parentScope: CoroutineScope, private val buildViewI
           }
         }
       }
+      is BuildTreeFilteringState -> {
+        handleFilteringStateChange(event)
+      }
     }
   }
 
@@ -257,8 +241,12 @@ internal class BuildTreeView(parentScope: CoroutineScope, private val buildViewI
     }
     else {
       LOG.debug { "Filtering state update: $filteringState" }
+      val treeWasEmpty = buildProgressRootNode.childCount == 0
       this.filteringState = filteringState
       rootNode.reload()
+      if (treeWasEmpty) {
+        tree.expandRow(0)
+      }
       updateNavigationContext()
     }
   }
@@ -278,13 +266,7 @@ internal class BuildTreeView(parentScope: CoroutineScope, private val buildViewI
         LOG.debug { "Navigation target not available: $navigatable" }
       }
 
-      val project = ProjectUtil.getProjectForComponent(this)
-      if (project == null) {
-        LOG.warn("Project not found for BuildTreeView(id=$buildViewId)")
-      }
-      else {
-        OccurenceNavigatorActionBase.displayOccurrencesInfoInStatusBar(project, info.occurenceNumber, info.occurencesCount)
-      }
+      OccurenceNavigatorActionBase.displayOccurrencesInfoInStatusBar(project, info.occurenceNumber, info.occurencesCount)
     }
   }
 
@@ -294,7 +276,7 @@ internal class BuildTreeView(parentScope: CoroutineScope, private val buildViewI
       val selectedNodeId = selectedNode?.id
       uiScope.launch {
         LOG.debug { "Selection change: $selectedNodeId" }
-        BuildTreeApi.getInstance().onSelectionChange(buildViewId, selectedNodeId)
+        model.onSelectionChange(selectedNodeId)
       }
       updateNavigationContext()
     }

@@ -43,8 +43,7 @@ e:com.intellij.openapi.util.io.FileAttributes$CaseSensitivity
 - *:toBooleanOrFail():Z
 - *:toBooleanWithDefault(Z):Z
 f:com.intellij.openapi.util.io.NioFiles
-- *s:copyRecursively(java.nio.file.Path,java.nio.file.Path):V
-- *s:copyRecursively(java.nio.file.Path,java.nio.file.Path,java.util.function.Consumer):V
+- *s:copyRecursively(java.nio.file.Path,java.nio.file.Path,java.util.function.Predicate):V
 - *s:deleteQuietly(java.nio.file.Path):V
 - *s:deleteQuietly(java.nio.file.Path,java.util.function.Consumer):V
 c:com.intellij.openapi.util.registry.RegistryValue
@@ -66,6 +65,43 @@ f:com.intellij.openapi.util.text.HtmlChunkUtilKt
 - *sf:buildHtml(kotlin.jvm.functions.Function1):java.lang.String
 - *sf:buildHtmlChunk(kotlin.jvm.functions.Function1):com.intellij.openapi.util.text.HtmlChunk
 - *sf:plus(com.intellij.openapi.util.text.HtmlChunk,com.intellij.openapi.util.text.HtmlChunk):com.intellij.openapi.util.text.HtmlChunk
+*f:com.intellij.openapi.util.text.MarkupText
+- s:builder():com.intellij.openapi.util.text.MarkupText$MarkupTextBuilder
+- concat(com.intellij.openapi.util.text.MarkupText):com.intellij.openapi.util.text.MarkupText
+- concat(java.lang.String,com.intellij.openapi.util.text.MarkupText$Kind):com.intellij.openapi.util.text.MarkupText
+- equals(java.lang.Object):Z
+- fragments():java.util.List
+- hashCode():I
+- highlightRange(I,I,com.intellij.openapi.util.text.MarkupText$Kind):com.intellij.openapi.util.text.MarkupText
+- isEmpty():Z
+- length():I
+- s:plainText(java.lang.String):com.intellij.openapi.util.text.MarkupText
+- toHtmlChunk():com.intellij.openapi.util.text.HtmlChunk
+- toText():java.lang.String
+*f:com.intellij.openapi.util.text.MarkupText$Fragment
+- <init>(java.lang.String,com.intellij.openapi.util.text.MarkupText$Kind):V
+- equals(java.lang.Object):Z
+- hashCode():I
+- kind():com.intellij.openapi.util.text.MarkupText$Kind
+- text():java.lang.String
+- toHtmlChunk():com.intellij.openapi.util.text.HtmlChunk
+*e:com.intellij.openapi.util.text.MarkupText$Kind
+- java.lang.Enum
+- sf:EMPHASIZED:com.intellij.openapi.util.text.MarkupText$Kind
+- sf:ERROR:com.intellij.openapi.util.text.MarkupText$Kind
+- sf:GRAYED:com.intellij.openapi.util.text.MarkupText$Kind
+- sf:NORMAL:com.intellij.openapi.util.text.MarkupText$Kind
+- sf:STRIKEOUT:com.intellij.openapi.util.text.MarkupText$Kind
+- sf:STRONG:com.intellij.openapi.util.text.MarkupText$Kind
+- sf:UNDERLINED:com.intellij.openapi.util.text.MarkupText$Kind
+- s:valueOf(java.lang.String):com.intellij.openapi.util.text.MarkupText$Kind
+- s:values():com.intellij.openapi.util.text.MarkupText$Kind[]
+*f:com.intellij.openapi.util.text.MarkupText$MarkupTextBuilder
+- append(com.intellij.openapi.util.text.MarkupText$Fragment):com.intellij.openapi.util.text.MarkupText$MarkupTextBuilder
+- append(com.intellij.openapi.util.text.MarkupText):com.intellij.openapi.util.text.MarkupText$MarkupTextBuilder
+- append(java.lang.String):com.intellij.openapi.util.text.MarkupText$MarkupTextBuilder
+- append(java.lang.String,com.intellij.openapi.util.text.MarkupText$Kind):com.intellij.openapi.util.text.MarkupText$MarkupTextBuilder
+- build():com.intellij.openapi.util.text.MarkupText
 com.intellij.ui.IconManager
 - *:colorizedIcon(javax.swing.Icon,kotlin.jvm.functions.Function0):javax.swing.Icon
 *f:com.intellij.util.JavaCoroutines

@@ -75,6 +75,8 @@ public final class ExtractMethodRecommenderInspection extends AbstractBaseJavaLo
         else {
           maxCount = statements.length;
         }
+        // max number of statements to extract to avoid spending too much time
+        maxCount = Math.min(maxCount, 50);
         PsiElement fragment = ControlFlowUtil.findCodeFragment(block);
         for (int count = maxCount; count > 1; count--) {
           for (int from = 0; from < statements.length - count; from++) {
@@ -85,13 +87,11 @@ public final class ExtractMethodRecommenderInspection extends AbstractBaseJavaLo
             if (nextDeclaration == -1 || nextDeclaration >= to) continue;
             PsiStatement[] range = Arrays.copyOfRange(statements, from, to);
             if (ContainerUtil.exists(range, e -> e instanceof PsiSwitchLabelStatementBase)) continue;
-            TextRange textRange = getRange(range);
             int length = range[range.length - 1].getTextRange().getEndOffset() - range[0].getTextRange().getStartOffset();
-            if (length < minLength || textRange.getLength() > maxLength) continue;
+            if (length < minLength || length > maxLength) continue;
             try {
               ControlFlowWrapper wrapper = new ControlFlowWrapper(fragment, range);
-              Collection<PsiStatement> exitStatements = wrapper.prepareExitStatements(range);
-              if (!exitStatements.isEmpty()) continue;
+              if (!wrapper.prepareExitStatements(range).isEmpty()) continue;
               if (wrapper.isGenerateConditionalExit() || wrapper.isReturnPresentBetween()) continue;
               PsiVariable[] variables = wrapper.getOutputVariables(2);
               if (variables.length != 1) continue;
@@ -108,10 +108,10 @@ public final class ExtractMethodRecommenderInspection extends AbstractBaseJavaLo
               if (voidPrefix(fragment, range, output)) continue;
               if (!outputUsedInLastStatement(range, output)) continue;
               wrapper.checkExitStatements(range, fragment);
+              TextRange textRange = getRange(range);
               if (to < statements.length) {
                 PsiStatement nextStatement = statements[to];
-                if (nextStatement instanceof PsiReturnStatement ret && 
-                    ExpressionUtils.isReferenceTo(ret.getReturnValue(), output)) {
+                if (nextStatement instanceof PsiReturnStatement ret && ExpressionUtils.isReferenceTo(ret.getReturnValue(), output)) {
                   textRange = textRange.union(ret.getTextRangeInParent());
                 }
               }

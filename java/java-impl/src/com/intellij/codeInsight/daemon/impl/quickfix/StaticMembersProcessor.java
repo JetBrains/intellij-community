@@ -163,10 +163,10 @@ abstract class StaticMembersProcessor<T extends PsiMember & PsiDocCommentOwner> 
 
       ApplicableType type = isApplicable(member, myPlace);
       if (!list.isEmpty()) {
-        Pair<T, ApplicableType> previousPair = list.get(list.size() - 1);
+        Pair<T, ApplicableType> previousPair = list.getLast();
         if (previousPair.getFirst().getContainingClass() == containingClass &&
             previousPair.getSecond().ordinal() < type.ordinal()) {
-          list.remove(list.size() - 1);
+          list.removeLast();
           list.add(new Pair<>(member, type));
         }
       }

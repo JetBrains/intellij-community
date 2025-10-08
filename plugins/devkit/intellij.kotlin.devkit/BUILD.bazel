@@ -1,6 +1,6 @@
 ### auto-generated section `build intellij.kotlin.devkit` start
 load("//build:compiler-options.bzl", "create_kotlinc_options")
-load("@rules_jvm//:jvm.bzl", "jvm_library", "jvm_resources")
+load("@rules_jvm//:jvm.bzl", "jvm_library", "resourcegroup")
 
 create_kotlinc_options(
   name = "custom_kotlin-devkit",
@@ -9,12 +9,12 @@ create_kotlinc_options(
     "org.jetbrains.kotlin.utils.addToStdlib.UnsafeCastFunction",
     "org.jetbrains.kotlin.analysis.api.permissions.KaAllowProhibitedAnalyzeFromWriteAction",
   ],
-  x_context_receivers = True
+  x_context_parameters = True
 )
 
-jvm_resources(
+resourcegroup(
   name = "kotlin-devkit_resources",
-  files = glob(["resources/**/*"]),
+  srcs = glob(["resources/**/*"]),
   strip_prefix = "resources"
 )
 
@@ -23,6 +23,7 @@ jvm_library(
   module_name = "intellij.kotlin.devkit",
   visibility = ["//visibility:public"],
   srcs = glob(["src/**/*.kt", "src/**/*.java", "src/**/*.form"], allow_empty = True),
+  resources = [":kotlin-devkit_resources"],
   kotlinc_opts = ":custom_kotlin-devkit",
   deps = [
     "@lib//:kotlin-stdlib",
@@ -56,7 +57,6 @@ jvm_library(
     "//platform/lang-impl",
     "//plugins/kotlin/code-insight/impl-base",
     "//platform/eel",
-  ],
-  runtime_deps = [":kotlin-devkit_resources"]
+  ]
 )
 ### auto-generated section `build intellij.kotlin.devkit` end

@@ -19,8 +19,8 @@ import org.jetbrains.kotlin.idea.AbstractSmartSelectionTest
 import org.jetbrains.kotlin.idea.AbstractWorkSelectionTest
 import org.jetbrains.kotlin.idea.actions.AbstractGotoTestOrCodeActionTest
 import org.jetbrains.kotlin.idea.actions.AbstractK1AddImportActionTest
-import org.jetbrains.kotlin.idea.base.plugin.KotlinPluginMode
 import org.jetbrains.kotlin.idea.artifacts.TestKotlinArtifacts
+import org.jetbrains.kotlin.idea.base.plugin.KotlinPluginMode
 import org.jetbrains.kotlin.idea.caches.resolve.AbstractMultiModuleLineMarkerTest
 import org.jetbrains.kotlin.idea.caches.resolve.AbstractMultiPlatformHighlightingTest
 import org.jetbrains.kotlin.idea.caches.resolve.AbstractMultiplatformAnalysisTest
@@ -162,7 +162,6 @@ fun assembleK1Workspace(): TWorkspace = assembleWorkspace()
 
 fun generateK1Tests(isUpToDateCheck: Boolean = false) {
     System.setProperty("java.awt.headless", "true")
-    TestGenerator.writeLibrariesVersion(isUpToDateCheck)
     TestGenerator.write(assembleWorkspace(), isUpToDateCheck)
 }
 
@@ -474,6 +473,7 @@ private fun assembleWorkspace(): TWorkspace = workspace(KotlinPluginMode.K1) {
                     "unsupportedFeature", // K2-related features only
                     "namedLambdaContextParameter",
                     "useWithIndex", // Intention-based inspection in K1, covered by the intention tests
+                    "receiverShadowedByContextParameter",
                 )
             )
         }

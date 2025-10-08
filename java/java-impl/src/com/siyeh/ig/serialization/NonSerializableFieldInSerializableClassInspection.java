@@ -58,7 +58,7 @@ public final class NonSerializableFieldInSerializableClassInspection extends Ser
   }
 
   @Override
-  public BaseInspectionVisitor buildVisitor() {
+  public @NotNull BaseInspectionVisitor buildVisitor() {
     return new NonSerializableFieldInSerializableClassVisitor();
   }
 

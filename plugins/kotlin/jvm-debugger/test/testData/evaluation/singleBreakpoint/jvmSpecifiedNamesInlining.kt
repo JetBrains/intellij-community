@@ -36,3 +36,5 @@ fun main() {
 
 // EXPRESSION: func6()
 // RESULT: 6: I
+
+// SKIP_WRONG_DIRECTIVE_CHECK

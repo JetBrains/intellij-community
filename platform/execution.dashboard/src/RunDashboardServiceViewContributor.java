@@ -1,58 +1,42 @@
 // Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.platform.execution.dashboard;
 
-import com.intellij.execution.*;
 import com.intellij.execution.actions.StopAction;
 import com.intellij.execution.configurations.ConfigurationType;
-import com.intellij.execution.configurations.RunConfiguration;
 import com.intellij.execution.dashboard.*;
 import com.intellij.execution.dashboard.actions.ExecutorAction;
 import com.intellij.execution.dashboard.actions.RunDashboardGroupNode;
-import com.intellij.execution.executors.DefaultRunExecutor;
-import com.intellij.execution.impl.RunManagerImpl;
-import com.intellij.execution.process.ProcessHandler;
 import com.intellij.execution.runners.FakeRerunAction;
-import com.intellij.execution.runners.ProgramRunner;
 import com.intellij.execution.services.*;
 import com.intellij.execution.ui.RunContentDescriptor;
 import com.intellij.execution.ui.layout.impl.RunnerLayoutUiImpl;
 import com.intellij.icons.AllIcons;
-import com.intellij.ide.DataManager;
 import com.intellij.ide.dnd.DnDEvent;
 import com.intellij.ide.impl.DataManagerImpl;
 import com.intellij.ide.projectView.PresentationData;
+import com.intellij.ide.ui.icons.IconId;
 import com.intellij.ide.util.treeView.AbstractTreeNode;
-import com.intellij.ide.util.treeView.PresentableNodeDescriptor;
 import com.intellij.ide.util.treeView.WeighedItem;
 import com.intellij.navigation.ItemPresentation;
 import com.intellij.openapi.actionSystem.*;
-import com.intellij.openapi.application.ModalityState;
-import com.intellij.openapi.application.ReadAction;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.NlsSafe;
-import com.intellij.openapi.util.NullableLazyValue;
-import com.intellij.openapi.util.text.StringUtil;
-import com.intellij.openapi.vfs.VirtualFile;
-import com.intellij.openapi.wm.ToolWindowId;
 import com.intellij.platform.execution.dashboard.actions.RunDashboardDoubleClickRunAction;
-import com.intellij.platform.execution.dashboard.tree.FolderDashboardGroupingRule.FolderDashboardGroup;
-import com.intellij.platform.execution.dashboard.tree.GroupingNode;
-import com.intellij.platform.execution.dashboard.tree.RunConfigurationNode;
-import com.intellij.platform.execution.dashboard.tree.RunDashboardGroupImpl;
-import com.intellij.platform.execution.dashboard.tree.RunDashboardStatusFilter;
+import com.intellij.platform.execution.dashboard.splitApi.CustomLinkDto;
+import com.intellij.platform.execution.dashboard.splitApi.RunDashboardServiceDto;
+import com.intellij.platform.execution.dashboard.splitApi.ServiceCustomizationDto;
+import com.intellij.platform.execution.dashboard.splitApi.frontend.*;
+import com.intellij.platform.execution.dashboard.splitApi.frontend.tree.FolderDashboardGroupingRule.FolderDashboardGroup;
+import com.intellij.platform.execution.dashboard.splitApi.frontend.tree.FrontendRunConfigurationNode;
+import com.intellij.platform.execution.dashboard.splitApi.frontend.tree.GroupingNode;
+import com.intellij.platform.execution.dashboard.splitApi.frontend.tree.RunDashboardGroupImpl;
+import com.intellij.platform.execution.dashboard.splitApi.frontend.tree.RunDashboardStatusFilter;
 import com.intellij.platform.execution.serviceView.ServiceViewManagerImpl;
 import com.intellij.pom.Navigatable;
-import com.intellij.psi.PsiElement;
-import com.intellij.psi.util.PsiUtilCore;
 import com.intellij.ui.content.Content;
 import com.intellij.ui.content.ContentManager;
 import com.intellij.util.ObjectUtils;
-import com.intellij.util.PsiNavigateUtil;
-import com.intellij.util.concurrency.AppExecutorUtil;
 import com.intellij.util.containers.ContainerUtil;
-import it.unimi.dsi.fastutil.objects.Object2IntMap;
-import it.unimi.dsi.fastutil.objects.Object2IntOpenHashMap;
-import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.annotations.Unmodifiable;
@@ -63,13 +47,15 @@ import java.awt.event.MouseEvent;
 import java.io.IOException;
 import java.util.*;
 
+import static com.intellij.execution.RunContentDescriptorIdImplKt.RUN_CONTENT_DESCRIPTOR_ID;
+import static com.intellij.execution.dashboard.RunDashboardServiceIdKt.SELECTED_DASHBOARD_SERVICE_ID;
+import static com.intellij.ide.ui.icons.IconIdKt.icon;
+import static com.intellij.platform.execution.dashboard.RunDashboardServiceViewContributorHelper.*;
 import static com.intellij.platform.execution.serviceView.ServiceViewImplementationChooserKt.shouldEnableServicesViewInCurrentEnvironment;
 
 public final class RunDashboardServiceViewContributor
-  implements ServiceViewGroupingContributor<RunDashboardServiceViewContributor.RunConfigurationContributor, GroupingNode>,
+  implements ServiceViewGroupingContributor<FrontendRunConfigurationNode, GroupingNode>,
              RunDashboardGroupNode {
-
-  static final @NonNls String RUN_DASHBOARD_CONTENT_TOOLBAR = "RunDashboardContentToolbar";
 
   private static final DataProvider TREE_EXPANDER_HIDE_PROVIDER =
     id -> PlatformDataKeys.TREE_EXPANDER_HIDE_ACTIONS_IF_NO_EXPANDER.is(id) ? true : null;
@@ -80,36 +66,32 @@ public final class RunDashboardServiceViewContributor
   }
 
   @Override
-  public @NotNull @Unmodifiable List<RunConfigurationContributor> getServices(@NotNull Project project) {
+  public @NotNull @Unmodifiable List<FrontendRunConfigurationNode> getServices(@NotNull Project project) {
     if (!shouldEnableServicesViewInCurrentEnvironment()) return Collections.emptyList();
 
-    RunDashboardManagerImpl runDashboardManager = (RunDashboardManagerImpl)RunDashboardManager.getInstance(project);
-    return ContainerUtil.map(runDashboardManager.getRunConfigurations(),
-                             value -> new RunConfigurationContributor(
-                               new RunConfigurationNode(project, value,
-                                                        RunDashboardManagerImpl.getCustomizers(value.getSettings(),
-                                                                                               value.getDescriptor()))));
+    return ContainerUtil.map(FrontendRunDashboardManager.getInstance(project).getServicePresentations(),
+                             value -> new FrontendRunConfigurationNode(project, value));
   }
 
   @Override
-  public @NotNull ServiceViewDescriptor getServiceDescriptor(@NotNull Project project, @NotNull RunConfigurationContributor contributor) {
-    return contributor.getViewDescriptor(project);
+  public @NotNull ServiceViewDescriptor getServiceDescriptor(@NotNull Project project, @NotNull FrontendRunConfigurationNode node) {
+    return new RunConfigurationServiceViewDescriptor(node);
   }
 
   @Override
-  public @NotNull List<GroupingNode> getGroups(@NotNull RunConfigurationContributor contributor) {
+  public @NotNull List<GroupingNode> getGroups(@NotNull FrontendRunConfigurationNode node) {
     if (!shouldEnableServicesViewInCurrentEnvironment()) return Collections.emptyList();
 
     List<GroupingNode> result = new ArrayList<>();
     GroupingNode parentGroupNode = null;
-    for (RunDashboardGroupingRule groupingRule : RunDashboardManagerImpl.GROUPING_RULE_EP_NAME.getExtensions()) {
-      RunDashboardGroup group = groupingRule.getGroup(contributor.asService());
+    for (RunDashboardGroupingRule groupingRule : RunDashboardGroupingRule.GROUPING_RULE_EP_NAME.getExtensions()) {
+      RunDashboardGroup group = groupingRule.getGroup(node);
       if (group != null) {
-        GroupingNode node = new GroupingNode(contributor.asService().getProject(),
-                                             parentGroupNode == null ? null : parentGroupNode.getGroup(), group);
-        node.setParent(parentGroupNode);
-        result.add(node);
-        parentGroupNode = node;
+        GroupingNode groupingNode = new GroupingNode(node.getProject(),
+                                                     parentGroupNode == null ? null : parentGroupNode.getGroup(), group);
+        groupingNode.setParent(parentGroupNode);
+        result.add(groupingNode);
+        parentGroupNode = groupingNode;
       }
     }
     return result;
@@ -149,15 +131,15 @@ public final class RunDashboardServiceViewContributor
       }
     };
     DefaultActionGroup result = new DefaultActionGroup();
-    result.add(ActionManager.getInstance().getAction(RUN_DASHBOARD_CONTENT_TOOLBAR));
+    result.add(ActionManager.getInstance().getAction(RunDashboardUiUtils.RUN_DASHBOARD_CONTENT_TOOLBAR));
     result.add(actionGroup);
 
-    RunnerLayoutUiImpl ui = RunDashboardManagerImpl.getRunnerLayoutUi(descriptor);
+    RunnerLayoutUiImpl ui = RunDashboardUiUtils.getRunnerLayoutUi(descriptor);
     if (ui != null) {
       actionGroup.addAll(ui.getContentUI().getActions(true));
     }
     else {
-      ActionToolbar toolbar = RunDashboardManagerImpl.findActionToolbar(descriptor);
+      ActionToolbar toolbar = RunDashboardUiUtils.findActionToolbar(descriptor);
       if (toolbar != null) {
         actionGroup.add(toolbar.getActionGroup());
       }
@@ -168,20 +150,20 @@ public final class RunDashboardServiceViewContributor
   private static ActionGroup getPopupActions() {
     DefaultActionGroup actions = new DefaultActionGroup();
     ActionManager actionManager = ActionManager.getInstance();
-    actions.add(actionManager.getAction(RUN_DASHBOARD_CONTENT_TOOLBAR));
+    actions.add(actionManager.getAction(RunDashboardUiUtils.RUN_DASHBOARD_CONTENT_TOOLBAR));
     actions.addSeparator();
     actions.add(actionManager.getAction(ActionPlaces.RUN_DASHBOARD_POPUP));
     return actions;
   }
 
-  private static @Nullable RunDashboardRunConfigurationNode getRunConfigurationNode(@NotNull DnDEvent event, @NotNull Project project) {
+  private static @Nullable FrontendRunConfigurationNode getRunConfigurationNode(@NotNull DnDEvent event, @NotNull Project project) {
     try {
       List<?> items = (List<?>)event.getTransferData(ServiceViewDnDDescriptor.LIST_DATA_FLAVOR);
       Object item = ContainerUtil.getOnlyItem(items);
       if (item == null) return null;
 
-      RunDashboardRunConfigurationNode node = ObjectUtils.tryCast(item, RunDashboardRunConfigurationNode.class);
-      if (node != null && !node.getConfigurationSettings().getConfiguration().getProject().equals(project)) return null;
+      FrontendRunConfigurationNode node = ObjectUtils.tryCast(item, FrontendRunConfigurationNode.class);
+      if (node != null && !node.getProject().equals(project)) return null;
 
       return node;
     }
@@ -191,43 +173,46 @@ public final class RunDashboardServiceViewContributor
   }
 
   private static final class RunConfigurationServiceViewDescriptor implements ServiceViewDescriptor,
-                                                                              ServiceViewLocatableDescriptor,
-                                                                              ServiceViewDnDDescriptor {
-    private final RunConfigurationNode myNode;
+                                                                              ServiceViewDnDDescriptor, UiDataProvider {
+    private final FrontendRunConfigurationNode myNode;
 
-    RunConfigurationServiceViewDescriptor(RunConfigurationNode node) {
+    RunConfigurationServiceViewDescriptor(FrontendRunConfigurationNode node) {
       myNode = node;
     }
 
     @Override
     public String getId() {
-      RunConfiguration configuration = myNode.getConfigurationSettings().getConfiguration();
-      return configuration.getType().getId() + "/" + configuration.getName();
+      return myNode.getService().getServiceViewId();
     }
 
     @Override
     public JComponent getContentComponent() {
-      RunDashboardManagerImpl manager = ((RunDashboardManagerImpl)RunDashboardManager.getInstance(myNode.getProject()));
-      RunDashboardComponentWrapper wrapper = manager.getContentWrapper();
+      Project project = myNode.getProject();
+
+      var luxedComponent = getLuxedComponentIfRegistered();
+      if (luxedComponent != null) {
+        luxedComponent.bind();
+        return luxedComponent;
+      }
+
+      var uiManager = RunDashboardUiManagerImpl.getInstance(project);
+      RunDashboardComponentWrapper wrapper = uiManager.getContentWrapper();
       Content content = myNode.getContent();
-      if (content == null || content.getManager() != manager.getDashboardContentManager()) {
-        wrapper.setContent(manager.getEmptyContent());
-        wrapper.setContentId(null);
+      if (content == null || content.getManager() != uiManager.getDashboardContentManager()) {
+        wrapper.setContent(uiManager.getEmptyContent());
       }
       else {
         ContentManager contentManager = content.getManager();
         if (contentManager == null) return null;
 
         wrapper.setContent(contentManager.getComponent());
-        wrapper.setContentId(getContentId());
       }
       return wrapper;
     }
 
-    private Integer getContentId() {
-      RunContentDescriptor descriptor = myNode.getDescriptor();
-      ProcessHandler handler = descriptor == null ? null : descriptor.getProcessHandler();
-      return handler == null ? null : handler.hashCode();
+    private @Nullable FrontendDashboardLuxComponent getLuxedComponentIfRegistered() {
+      var id = myNode.getValue().getRunDashboardServiceDto().getUuid();
+      return FrontendRunDashboardLuxHolder.getInstance(myNode.getProject()).getComponentOrNull(id);
     }
 
     @Override
@@ -237,8 +222,10 @@ public final class RunDashboardServiceViewContributor
         return new PresentationData(content.getDisplayName(), null, content.getIcon(), null);
       }
       else {
-        RunConfiguration configuration = myNode.getConfigurationSettings().getConfiguration();
-        return new PresentationData(configuration.getName(), null, configuration.getIcon(), null);
+        RunDashboardServiceDto service = myNode.getService();
+        IconId iconId = service.getIconId();
+        Icon icon = iconId == null ? null : icon(iconId);
+        return new PresentationData(service.getName(), null, icon, null);
       }
     }
 
@@ -276,38 +263,45 @@ public final class RunDashboardServiceViewContributor
 
     @Override
     public void onNodeSelected(List<Object> selectedServices) {
+      if (selectedServices.size() != 1) return;
+
+      FrontendDashboardLuxComponent luxedComponent = getLuxedComponentIfRegistered();
+      if (luxedComponent != null) {
+        luxedComponent.bind();
+        return;
+      }
+
       Content content = myNode.getContent();
       if (content == null) return;
 
-      ((RunDashboardManagerImpl)RunDashboardManager.getInstance(myNode.getProject())).setSelectedContent(content);
+      RunDashboardUiManager.getInstance(myNode.getProject()).setSelectedContent(content);
     }
 
     @Override
     public void onNodeUnselected() {
+      FrontendDashboardLuxComponent luxedComponent = getLuxedComponentIfRegistered();
+      if (luxedComponent != null) {
+        luxedComponent.unbind();
+        return;
+      }
+
       Content content = myNode.getContent();
       if (content == null) return;
 
-      ((RunDashboardManagerImpl)RunDashboardManager.getInstance(myNode.getProject())).removeFromSelection(content);
+      RunDashboardUiManager.getInstance(myNode.getProject()).removeFromSelection(content);
     }
 
     @Override
     public Navigatable getNavigatable() {
-      NullableLazyValue<PsiElement> value = NullableLazyValue.lazyNullable(() -> {
-        for (RunDashboardCustomizer customizer : myNode.getCustomizers()) {
-          PsiElement psiElement = customizer.getPsiElement(myNode);
-          if (psiElement != null) return psiElement;
-        }
-        return null;
-      });
       return new Navigatable() {
         @Override
         public void navigate(boolean requestFocus) {
-          PsiNavigateUtil.navigate(value.getValue(), requestFocus);
+          scheduleNavigateToService(myNode.getProject(), myNode.getValue(), requestFocus);
         }
 
         @Override
         public boolean canNavigate() {
-          return value.getValue() != null;
+          return true;
         }
 
         @Override
@@ -318,40 +312,41 @@ public final class RunDashboardServiceViewContributor
     }
 
     @Override
-    public @Nullable VirtualFile getVirtualFile() {
-      return ReadAction.compute(() -> {
-        for (RunDashboardCustomizer customizer : myNode.getCustomizers()) {
-          PsiElement psiElement = customizer.getPsiElement(myNode);
-          if (psiElement != null) {
-            return PsiUtilCore.getVirtualFile(psiElement);
-          }
-        }
-        return null;
-      });
-    }
-
-    @Override
     public @Nullable Object getPresentationTag(Object fragment) {
-      Map<Object, Object> links = myNode.getUserData(RunDashboardCustomizer.NODE_LINKS);
-      return links == null ? null : links.get(fragment);
+      if (fragment instanceof String stringFragment) {
+        RunDashboardServiceId uuid = myNode.getValue().getRunDashboardServiceDto().getUuid();
+        ServiceCustomizationDto customization = FrontendRunDashboardManager.getInstance(myNode.getProject()).getCustomizationById(uuid);
+        if (customization == null) return null;
+
+        CustomLinkDto tagDto = ContainerUtil.find(customization.getLinks(), it -> it.getPresentableText().equals(stringFragment));
+        if (tagDto == null) {
+          return null;
+        }
+        else {
+          return (Runnable)() -> {
+            scheduleNodeLinkNavigation(myNode.getProject(), tagDto.getPresentableText(), myNode);
+          };
+        }
+      }
+      return null;
     }
 
     @Override
     public @Nullable Runnable getRemover() {
-      RunnerAndConfigurationSettings settings = myNode.getConfigurationSettings();
-      RunManager runManager = RunManager.getInstance(settings.getConfiguration().getProject());
-      return runManager.hasSettings(settings) ? () -> runManager.removeConfiguration(settings) : null;
+      if (myNode.getValue().getRunDashboardServiceDto().isRemovable()) {
+        return () -> {
+          scheduleRemoveService(myNode.getProject(), myNode.getValue());
+        };
+      }
+      else {
+        return null;
+      }
     }
 
     @Override
     public boolean canDrop(@NotNull DnDEvent event, @NotNull Position position) {
       if (position != Position.INTO) {
-        return getRunConfigurationNode(event, myNode.getConfigurationSettings().getConfiguration().getProject()) != null;
-      }
-      for (RunDashboardCustomizer customizer : myNode.getCustomizers()) {
-        if (customizer.canDrop(myNode, event)) {
-          return true;
-        }
+        return getRunConfigurationNode(event, myNode.getProject()) != null;
       }
       return false;
     }
@@ -359,57 +354,22 @@ public final class RunDashboardServiceViewContributor
     @Override
     public void drop(@NotNull DnDEvent event, @NotNull Position position) {
       if (position != Position.INTO) {
-        Project project = myNode.getConfigurationSettings().getConfiguration().getProject();
-        RunDashboardRunConfigurationNode node = getRunConfigurationNode(event, project);
+        Project project = myNode.getProject();
+        FrontendRunConfigurationNode node = getRunConfigurationNode(event, project);
         if (node != null) {
           reorderConfigurations(project, node, position);
-        }
-        return;
-      }
-      for (RunDashboardCustomizer customizer : myNode.getCustomizers()) {
-        if (customizer.canDrop(myNode, event)) {
-          customizer.drop(myNode, event);
-          return;
         }
       }
     }
 
-    private void reorderConfigurations(Project project, RunDashboardRunConfigurationNode node, Position position) {
-      RunManagerImpl runManager = RunManagerImpl.getInstanceImpl(project);
-      runManager.fireBeginUpdate();
-      try {
-        node.getConfigurationSettings().setFolderName(myNode.getConfigurationSettings().getFolderName());
-
-        Object2IntMap<RunnerAndConfigurationSettings> indices = new Object2IntOpenHashMap<>();
-        int i = 0;
-        for (RunnerAndConfigurationSettings each : runManager.getAllSettings()) {
-          if (each.equals(node.getConfigurationSettings())) continue;
-
-          if (each.equals(myNode.getConfigurationSettings())) {
-            if (position == Position.ABOVE) {
-              indices.put(node.getConfigurationSettings(), i++);
-              indices.put(myNode.getConfigurationSettings(), i++);
-            }
-            else if (position == Position.BELOW) {
-              indices.put(myNode.getConfigurationSettings(), i++);
-              indices.put(node.getConfigurationSettings(), i++);
-            }
-          }
-          else {
-            indices.put(each, i++);
-          }
-        }
-        runManager.setOrder(Comparator.comparingInt(indices::getInt));
-      }
-      finally {
-        runManager.fireEndUpdate();
-      }
+    private void reorderConfigurations(Project project, FrontendRunConfigurationNode node, Position position) {
+      scheduleReorderConfigurations(project, myNode, node, position);
     }
 
     @Override
     public boolean isVisible() {
       RunDashboardStatusFilter statusFilter =
-        ((RunDashboardManagerImpl)RunDashboardManager.getInstance(myNode.getProject())).getStatusFilter();
+        FrontendRunDashboardManager.getInstance(myNode.getProject()).getStatusFilter();
       return statusFilter.isVisible(myNode);
     }
 
@@ -419,62 +379,15 @@ public final class RunDashboardServiceViewContributor
         return ServiceViewDescriptor.super.handleDoubleClick(event);
       }
 
-      Executor executor = getExecutor();
-      if (executor == null) return true;
-
-      DataContext dataContext = DataManager.getInstance().getDataContext(event.getComponent());
-      AnAction action = new ExecutorAction() {
-        @Override
-        protected Executor getExecutor() {
-          return executor;
-        }
-
-        @Override
-        protected void update(@NotNull AnActionEvent e, boolean running) {
-        }
-      };
-      Project project = myNode.getProject();
-      Presentation presentation = new Presentation();
-      AnActionEvent actionEvent =
-        AnActionEvent.createEvent(dataContext, presentation, ActionPlaces.SERVICES_POPUP, ActionUiKind.POPUP, event);
-      ReadAction.nonBlocking(() -> {
-          action.update(actionEvent);
-          return presentation.isEnabled();
-        })
-        .coalesceBy(RunDashboardManager.getInstance(project))
-        .expireWith(project)
-        .finishOnUiThread(ModalityState.current(), enabled -> {
-          if (enabled) {
-            action.actionPerformed(actionEvent);
-          }
-        })
-        .submit(AppExecutorUtil.getAppExecutorService());
-
+      scheduleRerunConfiguration(myNode.getProject(), myNode.getValue());
       return true;
     }
 
-    private Executor getExecutor() {
-      RunContentDescriptor descriptor = myNode.getDescriptor();
-      if (descriptor != null) {
-        Set<Executor> executors = ExecutionManager.getInstance(myNode.getProject()).getExecutors(descriptor);
-        Executor executor = ContainerUtil.getFirstItem(executors);
-        if (executor != null) return executor;
-      }
-      RunConfiguration configuration = myNode.getConfigurationSettings().getConfiguration();
-      Executor runExecutor = DefaultRunExecutor.getRunExecutorInstance();
-
-      ProgramRunner<?> runner = ProgramRunner.getRunner(runExecutor.getId(), configuration);
-      if (runner != null) {
-        return runExecutor;
-      }
-
-      Executor debugExecutor = ExecutorRegistry.getInstance().getExecutorById(ToolWindowId.DEBUG);
-      if (debugExecutor != null &&
-          ProgramRunner.getRunner(ToolWindowId.DEBUG, configuration) != null) {
-        return debugExecutor;
-      }
-
-      return null;
+    @Override
+    public void uiDataSnapshot(@NotNull DataSink sink) {
+      sink.set(CommonDataKeys.PROJECT,  myNode.getProject());
+      sink.set(SELECTED_DASHBOARD_SERVICE_ID, myNode.getValue().getRunDashboardServiceDto().getUuid());
+      sink.set(RUN_CONTENT_DESCRIPTOR_ID, myNode.getValue().getRunDashboardServiceDto().getContentId());
     }
   }
 
@@ -525,7 +438,7 @@ public final class RunDashboardServiceViewContributor
       ConfigurationType type = ObjectUtils.tryCast(((RunDashboardGroupImpl<?>)myGroup).getValue(), ConfigurationType.class);
       if (type != null) {
         return () -> {
-          RunDashboardManager runDashboardManager = RunDashboardManager.getInstance(myNode.getProject());
+          RunDashboardManager runDashboardManager = RunDashboardManagerProxy.getInstance(myNode.getProject());
           Set<String> types = new HashSet<>(runDashboardManager.getTypes());
           types.remove(type.getId());
           runDashboardManager.setTypes(types);
@@ -535,8 +448,8 @@ public final class RunDashboardServiceViewContributor
     }
 
     @Override
-    public @Nullable JComponent getContentComponent() {
-      return ((RunDashboardManagerImpl)RunDashboardManager.getInstance(myNode.getProject())).getEmptyContent();
+    public @NotNull JComponent getContentComponent() {
+      return RunDashboardUiManagerImpl.getInstance(myNode.getProject()).getEmptyContent();
     }
 
     private static String getId(GroupingNode node) {
@@ -572,23 +485,7 @@ public final class RunDashboardServiceViewContributor
     @Override
     public Runnable getRemover() {
       return () -> {
-        String groupName = myGroup.getName();
-        Project project = ((FolderDashboardGroup)myGroup).getProject();
-        List<RunDashboardManager.RunDashboardService> services = RunDashboardManager.getInstance(project).getRunConfigurations();
-
-        final RunManagerImpl runManager = RunManagerImpl.getInstanceImpl(project);
-        runManager.fireBeginUpdate();
-        try {
-          for (RunDashboardManager.RunDashboardService service : services) {
-            RunnerAndConfigurationSettings settings = service.getSettings();
-            if (groupName.equals(settings.getFolderName())) {
-              settings.setFolderName(null);
-            }
-          }
-        }
-        finally {
-          runManager.fireEndUpdate();
-        }
+        scheduleRemoveFolderGroup(myNode.getProject(), myNode.getValue().second.getName());
       };
     }
 
@@ -600,17 +497,9 @@ public final class RunDashboardServiceViewContributor
     @Override
     public void drop(@NotNull DnDEvent event, @NotNull ServiceViewDnDDescriptor.Position position) {
       Project project = ((FolderDashboardGroup)myGroup).getProject();
-      RunDashboardRunConfigurationNode node = getRunConfigurationNode(event, project);
+      FrontendRunConfigurationNode node = getRunConfigurationNode(event, project);
       if (node == null) return;
-
-      RunManagerImpl runManager = RunManagerImpl.getInstanceImpl(project);
-      runManager.fireBeginUpdate();
-      try {
-        node.getConfigurationSettings().setFolderName(myGroup.getName());
-      }
-      finally {
-        runManager.fireEndUpdate();
-      }
+      scheduleDropRunConfigurationNodeOnFolderNode(project, node.getValue(), myGroup);
     }
   }
 
@@ -624,17 +513,17 @@ public final class RunDashboardServiceViewContributor
 
     @Override
     public void onNodeSelected(List<Object> selectedServices) {
-      ((RunDashboardManagerImpl)RunDashboardManager.getInstance(myNode.getProject())).getTypeContent().setType(myType);
+      RunDashboardUiManagerImpl.getInstance(myNode.getProject()).getTypeContent().setType(myType);
     }
 
     @Override
     public void onNodeUnselected() {
-      ((RunDashboardManagerImpl)RunDashboardManager.getInstance(myNode.getProject())).getTypeContent().setType(null);
+      RunDashboardUiManagerImpl.getInstance(myNode.getProject()).getTypeContent().setType(null);
     }
 
     @Override
-    public @Nullable JComponent getContentComponent() {
-      return ((RunDashboardManagerImpl)RunDashboardManager.getInstance(myNode.getProject())).getTypeContent();
+    public @NotNull JComponent getContentComponent() {
+      return RunDashboardUiManagerImpl.getInstance(myNode.getProject()).getTypeContent();
     }
 
     @Override
@@ -642,88 +531,10 @@ public final class RunDashboardServiceViewContributor
       return dataId -> {
         if (PlatformDataKeys.TREE_EXPANDER.is(dataId)) {
           RunDashboardTypePanel typeContent =
-            ((RunDashboardManagerImpl)RunDashboardManager.getInstance(myNode.getProject())).getTypeContent();
+            RunDashboardUiManagerImpl.getInstance(myNode.getProject()).getTypeContent();
           return typeContent.getTreeExpander();
         }
         return TREE_EXPANDER_HIDE_PROVIDER.getData(dataId);
-      };
-    }
-  }
-
-  static final class RunConfigurationContributor implements ServiceViewProvidingContributor<AbstractTreeNode<?>, RunConfigurationNode> {
-    private final RunConfigurationNode myNode;
-
-    RunConfigurationContributor(@NotNull RunConfigurationNode node) {
-      myNode = node;
-    }
-
-    @Override
-    public @NotNull RunConfigurationNode asService() {
-      return myNode;
-    }
-
-    @Override
-    public @NotNull ServiceViewDescriptor getViewDescriptor(@NotNull Project project) {
-      return new RunConfigurationServiceViewDescriptor(myNode);
-    }
-
-    @Override
-    public @NotNull List<AbstractTreeNode<?>> getServices(@NotNull Project project) {
-      return new ArrayList<>(myNode.getChildren());
-    }
-
-    @Override
-    public @NotNull ServiceViewDescriptor getServiceDescriptor(@NotNull Project project, @NotNull AbstractTreeNode service) {
-      return new ServiceViewDescriptor() {
-        @Override
-        public ActionGroup getToolbarActions() {
-          return RunDashboardServiceViewContributor.getToolbarActions(null);
-        }
-
-        @Override
-        public ActionGroup getPopupActions() {
-          return RunDashboardServiceViewContributor.getPopupActions();
-        }
-
-        @Override
-        public @NotNull ItemPresentation getPresentation() {
-          return service.getPresentation();
-        }
-
-        @Override
-        public @Nullable String getId() {
-          ItemPresentation presentation = getPresentation();
-          String text = presentation.getPresentableText();
-          if (!StringUtil.isEmpty(text)) {
-            return text;
-          }
-          if (presentation instanceof PresentationData) {
-            List<PresentableNodeDescriptor.ColoredFragment> fragments = ((PresentationData)presentation).getColoredText();
-            if (!fragments.isEmpty()) {
-              StringBuilder result = new StringBuilder();
-              for (PresentableNodeDescriptor.ColoredFragment fragment : fragments) {
-                result.append(fragment.getText());
-              }
-              return result.toString();
-            }
-          }
-          return null;
-        }
-
-        @Override
-        public @Nullable Runnable getRemover() {
-          return service instanceof RunDashboardNode ? ((RunDashboardNode)service).getRemover() : null;
-        }
-
-        @Override
-        public @Nullable JComponent getContentComponent() {
-          return ((RunDashboardManagerImpl)RunDashboardManager.getInstance(myNode.getProject())).getEmptyContent();
-        }
-
-        @Override
-        public @NotNull DataProvider getDataProvider() {
-          return TREE_EXPANDER_HIDE_PROVIDER;
-        }
       };
     }
   }
@@ -755,8 +566,8 @@ public final class RunDashboardServiceViewContributor
     }
 
     @Override
-    public @Nullable JComponent getContentComponent() {
-      return ((RunDashboardManagerImpl)RunDashboardManager.getInstance(myProject)).getEmptyContent();
+    public @NotNull JComponent getContentComponent() {
+      return RunDashboardUiManagerImpl.getInstance(myProject).getEmptyContent();
     }
 
     @Override

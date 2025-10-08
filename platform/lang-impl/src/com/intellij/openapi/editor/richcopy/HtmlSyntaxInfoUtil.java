@@ -48,14 +48,6 @@ public final class HtmlSyntaxInfoUtil {
     return appendStyledSpan(new StringBuilder(), attributesKey, value, saturationFactor).toString();
   }
 
-  /**
-   * @deprecated Use {@link QuickDocHighlightingHelper} for adding highlighted HTML to documentation
-   */
-  @Deprecated(forRemoval = true)
-  public static @NotNull String getStyledSpan(@NotNull TextAttributes attributes, @Nullable String value, float saturationFactor) {
-    return appendStyledSpan(new StringBuilder(), attributes, value, saturationFactor).toString();
-  }
-
   public static @NotNull StringBuilder appendStyledSpan(
     @NotNull StringBuilder buffer,
     @Nullable String value,

@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInsight.daemon.impl.quickfix;
 
 import com.intellij.codeInsight.daemon.QuickFixBundle;
@@ -33,8 +33,8 @@ public class MergeDuplicateAttributesFix extends PsiUpdateModCommandAction<PsiNa
       PsiAnnotationMemberValue value = attribute.getValue();
       if (value == null) continue;
       CommentTracker ct = new CommentTracker();
-      if (value instanceof PsiArrayInitializerMemberValue) {
-        if (((PsiArrayInitializerMemberValue)value).getInitializers().length != 0) {
+      if (value instanceof PsiArrayInitializerMemberValue memberValue) {
+        if (!memberValue.isEmpty()) {
           PsiElement lBrace = value.getFirstChild();
           PsiElement rBrace = value.getLastChild();
           PsiElement maybeTrailingComma = PsiTreeUtil.skipWhitespacesAndCommentsBackward(rBrace);

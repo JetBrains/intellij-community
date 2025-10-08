@@ -19,6 +19,8 @@ import com.intellij.ui.JreHiDpiUtil
 import com.intellij.ui.NewUiValue
 import com.intellij.ui.scale.JBUIScale
 import com.intellij.util.ComponentTreeEventDispatcher
+import com.intellij.util.concurrency.ThreadingAssertions
+import com.intellij.util.ui.EDT
 import com.intellij.util.ui.GraphicsUtil
 import com.intellij.util.ui.UIUtil
 import com.intellij.util.xmlb.annotations.Transient
@@ -29,6 +31,7 @@ import java.awt.Graphics2D
 import java.awt.RenderingHints
 import javax.swing.JComponent
 import javax.swing.SwingConstants
+import javax.swing.SwingUtilities
 
 private val LOG = logger<UISettings>()
 
@@ -121,6 +124,8 @@ class UISettings @NonInjectable constructor(private val notRoamableOptions: NotR
       state.dndWithPressedAltOnly = value
     }
 
+  @get:Internal
+  @set:Internal
   var mainMenuDisplayMode: MainMenuDisplayMode
     get() = MainMenuDisplayMode.valueOf(state.mainMenuDisplayMode)
     set(value) {
@@ -570,6 +575,14 @@ class UISettings @NonInjectable constructor(private val notRoamableOptions: NotR
       state.showPreviewInSearchEverywhere = value
     }
 
+  @get:Internal
+  @set:Internal
+  var useSimplifiedSplashImage: Boolean
+    get() = state.useSimplifiedSplashImage
+    set(value) {
+      state.useSimplifiedSplashImage = value
+    }
+
   companion object {
     init {
       if (JBUIScale.SCALE_VERBOSE) {
@@ -757,6 +770,14 @@ class UISettings @NonInjectable constructor(private val notRoamableOptions: NotR
    * Notifies all registered listeners that UI settings have been changed.
    */
   fun fireUISettingsChanged() {
+    if (!EDT.isCurrentThreadEdt()) {
+      LOG.error(Throwable("UISettings should only be changed on the EDT"))
+      // Fall back to invokeLater. It doesn't matter which invokeLater we use here, as this is something that shouldn't happen either way.
+      SwingUtilities.invokeLater {
+        fireUISettingsChanged()
+      }
+      return
+    }
     updateDeprecatedProperties()
 
     // todo remove when all old properties will be converted
@@ -781,13 +802,16 @@ class UISettings @NonInjectable constructor(private val notRoamableOptions: NotR
     EDITOR_TAB_LIMIT = editorTabLimit
   }
 
+  @Internal
   override fun getState(): UISettingsState = state
 
+  @Internal
   override fun noStateLoaded() {
     migrateFontParameters()
     migrateSearchEverywherePreview()
   }
 
+  @Internal
   override fun loadState(state: UISettingsState) {
     this.state = state
     updateDeprecatedProperties()
@@ -818,7 +842,9 @@ class UISettings @NonInjectable constructor(private val notRoamableOptions: NotR
     }
 
     if (LoadingState.APP_READY.isOccurred) {
-      fireUISettingsChanged()
+      SwingUtilities.invokeLater {
+        fireUISettingsChanged()
+      }
     }
   }
 

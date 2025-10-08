@@ -1,4 +1,4 @@
-// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.ide.projectView.impl.nodes
 
 import com.intellij.codeInsight.navigation.openFileWithPsiElementAsync
@@ -27,16 +27,14 @@ import com.intellij.openapi.vfs.JarFileSystem
 import com.intellij.openapi.vfs.VFileProperty
 import com.intellij.openapi.vfs.VfsUtil
 import com.intellij.openapi.vfs.VirtualFile
-import com.intellij.pom.AsyncNavigatable
 import com.intellij.pom.NavigatableWithText
 import com.intellij.psi.PsiFile
 import com.intellij.psi.PsiManager
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
-import org.jetbrains.annotations.ApiStatus
 
 open class PsiFileNode(project: Project?, value: PsiFile, viewSettings: ViewSettings?)
-  : BasePsiNode<PsiFile>(project, value, viewSettings), NavigatableWithText, AsyncNavigatable {
+  : BasePsiNode<PsiFile>(project, value, viewSettings), NavigatableWithText {
   public override fun getChildrenImpl(): Collection<AbstractTreeNode<*>>? {
     val project = project
     val jarRoot = jarRoot
@@ -110,8 +108,7 @@ open class PsiFileNode(project: Project?, value: PsiFile, viewSettings: ViewSett
     super<BasePsiNode>.navigate(requestFocus)
   }
 
-  @ApiStatus.Experimental
-  override suspend fun navigateAsync(requestFocus: Boolean) {
+  internal suspend fun navigateAsync(requestFocus: Boolean) {
     val jarRoot = jarRoot
     val project = project
     if (requestFocus && jarRoot != null && project != null) {

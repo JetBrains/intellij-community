@@ -7,10 +7,10 @@ import com.intellij.ide.projectView.impl.ProjectRootsUtil;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.module.ModuleUtilCore;
 import com.intellij.openapi.roots.FileIndexFacade;
-import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.PsiDirectory;
 import com.intellij.psi.PsiElement;
+import com.intellij.python.pyproject.model.internal.PlatformToolsKt;
 import com.jetbrains.python.psi.PyUtil;
 import org.jetbrains.annotations.NotNull;
 
@@ -21,7 +21,7 @@ public final class PyDirectoryIconProvider extends IconProvider {
   @Override
   public Icon getIcon(@NotNull PsiElement element, int flags) {
     if (element instanceof PsiDirectory directory) {
-      if (isMultimoduleProjectDetectionEnabled()) {
+      if (PlatformToolsKt.getProjectModelEnabled()) {
         if (ProjectRootsUtil.isModuleContentRoot(directory.getVirtualFile(), directory.getProject())) {
           return AllIcons.Nodes.Module;
         }
@@ -35,9 +35,6 @@ public final class PyDirectoryIconProvider extends IconProvider {
     return null;
   }
 
-  private static boolean isMultimoduleProjectDetectionEnabled() {
-    return Registry.is("python.project.model.uv") || Registry.is("python.project.model.poetry");
-  }
 
   private static boolean isSpecialDirectory(@NotNull PsiDirectory directory) {
     final VirtualFile vFile = directory.getVirtualFile();

@@ -10,7 +10,7 @@ jvm_library(
   deps = [
     "//platform/util/jdom",
     "//platform/forms_rt:java-guiForms-rt",
-    "@lib//:asm",
+    "//libraries/asm",
     "@lib//:jgoodies-forms",
     "//java/compiler/instrumentation-util",
     "@lib//:jetbrains-annotations",
@@ -27,7 +27,7 @@ jvm_library(
   deps = [
     "//platform/util/jdom",
     "//platform/forms_rt:java-guiForms-rt",
-    "@lib//:asm",
+    "//libraries/asm",
     "@lib//:jgoodies-forms",
     "//java/compiler/instrumentation-util",
     "//platform/util",

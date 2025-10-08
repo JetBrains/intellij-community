@@ -323,25 +323,6 @@ public final class GitRebaseUtils {
     }
   }
 
-  public static boolean areConsecutiveCommits(@NotNull Collection<@NotNull VcsCommitMetadata> commits) {
-    if (commits.isEmpty()) {
-      return true;
-    }
-
-    var iterator = commits.iterator();
-    VcsCommitMetadata prevCommit = iterator.next();
-
-    while (iterator.hasNext()) {
-      VcsCommitMetadata currentCommit = iterator.next();
-      if (prevCommit.getParents().isEmpty() || !prevCommit.getParents().get(0).equals(currentCommit.getId())) {
-        return false;
-      }
-      prevCommit = currentCommit;
-    }
-
-    return true;
-  }
-
   private static @NotNull Hash readHashFromFile(
     @NotNull Project project,
     @NotNull VirtualFile root,

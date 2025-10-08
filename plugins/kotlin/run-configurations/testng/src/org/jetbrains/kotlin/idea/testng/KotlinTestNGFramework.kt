@@ -30,7 +30,7 @@ import org.jetbrains.kotlin.utils.addToStdlib.safeAs
 
 class KotlinTestNGFramework: TestNGFramework(), KotlinPsiBasedTestFramework {
     private val psiBasedDelegate = object : AbstractKotlinPsiBasedTestFramework() {
-        override val markerClassFqn: String = TestNGUtil.TEST_ANNOTATION_FQN
+        override val markerClassFqns: Collection<String> = listOf(TestNGUtil.TEST_ANNOTATION_FQN)
         override val disabledTestAnnotation: String
             get() = throw UnsupportedOperationException("TestNG does not support Ignore methods")
         override val allowTestMethodsInObject: Boolean = false

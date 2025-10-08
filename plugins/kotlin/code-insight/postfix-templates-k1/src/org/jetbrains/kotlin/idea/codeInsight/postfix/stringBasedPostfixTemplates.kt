@@ -12,20 +12,11 @@ import com.intellij.openapi.project.DumbAware
 import com.intellij.psi.PsiElement
 import com.intellij.psi.util.elementType
 import org.jetbrains.kotlin.KtNodeTypes
-import org.jetbrains.kotlin.builtins.KotlinBuiltIns
-import org.jetbrains.kotlin.idea.caches.resolve.getResolutionFacade
-import org.jetbrains.kotlin.idea.core.IterableTypesDetection
+import org.jetbrains.kotlin.idea.codeinsight.utils.canBeIterated
 import org.jetbrains.kotlin.idea.liveTemplates.k1.macro.Fe10SuggestVariableNameMacro
-import org.jetbrains.kotlin.idea.resolve.ideService
-import org.jetbrains.kotlin.idea.util.getResolutionScope
 import org.jetbrains.kotlin.psi.KtExpression
 import org.jetbrains.kotlin.psi.KtReturnExpression
 import org.jetbrains.kotlin.psi.KtThrowExpression
-import org.jetbrains.kotlin.resolve.BindingContext
-import org.jetbrains.kotlin.resolve.calls.util.getType
-import org.jetbrains.kotlin.types.KotlinType
-import org.jetbrains.kotlin.types.typeUtil.isBoolean
-import org.jetbrains.kotlin.types.typeUtil.isInt
 
 internal abstract class ConstantStringBasedPostfixTemplate(
     name: String,
@@ -39,7 +30,7 @@ internal abstract class ConstantStringBasedPostfixTemplate(
     override fun getElementToRemove(expr: PsiElement?): PsiElement? = expr
 }
 
-internal abstract class KtWrapWithCallPostfixTemplate(private val functionName: String, provider: PostfixTemplateProvider) :
+internal abstract class KtWrapWithCallPostfixTemplate(functionName: String, provider: PostfixTemplateProvider) :
     ConstantStringBasedPostfixTemplate(
         functionName,
         "$functionName(expr)",
@@ -62,7 +53,11 @@ internal abstract class AbstractKtForEachPostfixTemplate(
     name,
     desc,
     template,
-    createExpressionSelectorWithComplexFilter(statementsOnly = true, predicate = KtExpression::hasIterableType),
+    createExpressionSelectorWithComplexFilter(statementsOnly = true, predicate = convertToTypePredicate { _, type, session ->
+        with(session) {
+            canBeIterated(type)
+        }
+    }),
     provider
 ) {
     override fun setVariables(template: Template, element: PsiElement) {
@@ -97,7 +92,11 @@ internal class KtForWithIndexPostfixTemplate(
     name,
     "for ((index, name) in expr.withIndex())",
     "for ((\$index$, \$name$) in \$expr$.withIndex()) {\n    \$END$\n}",
-    createExpressionSelectorWithComplexFilter(statementsOnly = true, predicate = KtExpression::hasIterableType),
+    createExpressionSelectorWithComplexFilter(statementsOnly = true, predicate = convertToTypePredicate { _: KtExpression, type, session ->
+        with(session) {
+            canBeIterated(type)
+        }
+    }),
     provider
 ) {
     override fun setVariables(template: Template, element: PsiElement) {
@@ -117,9 +116,11 @@ internal abstract class AbstractKtForLoopNumbersPostfixTemplate(
     name = name,
     desc = desc,
     template = template,
-    selector = createExpressionSelectorWithComplexFilter(statementsOnly = true) { expression, bindingContext ->
-        expression.elementType == KtNodeTypes.INTEGER_CONSTANT || bindingContext.getType(expression)?.isInt() == true
-    },
+    selector = createExpressionSelectorWithComplexFilter(statementsOnly = true, predicate = convertToTypePredicate { expression, type, session ->
+        expression.elementType == KtNodeTypes.INTEGER_CONSTANT || with(session) {
+            type.isIntType
+        }
+    }),
     provider = provider
 ) {
     override fun setVariables(template: Template, element: PsiElement) {
@@ -148,26 +149,18 @@ internal class KtForLoopReverseNumbersPostfixTemplate(
     provider
 )
 
-private fun KtExpression.hasIterableType(bindingContext: BindingContext): Boolean {
-    val resolutionFacade = getResolutionFacade()
-    val type = getType(bindingContext) ?: return false
-    val scope = getResolutionScope(bindingContext, resolutionFacade)
-    val detector = resolutionFacade.ideService<IterableTypesDetection>().createDetector(scope)
-    return detector.isIterable(type)
-}
-
 internal class KtAssertPostfixTemplate(provider: PostfixTemplateProvider) : ConstantStringBasedPostfixTemplate(
     "assert",
     "assert(expr) { \"\" }",
     "assert(\$expr$) { \"\$END$\" }",
-    createExpressionSelector(statementsOnly = true, typePredicate = KotlinType::isBoolean),
+    createPostfixExpressionSelector(statementsOnly = true, typePredicate = createBooleanTypePredicate()),
     provider
 )
 
 internal class KtParenthesizedPostfixTemplate(provider: PostfixTemplateProvider) : ConstantStringBasedPostfixTemplate(
     "par", "(expr)",
     "(\$expr$)\$END$",
-    createExpressionSelector(),
+    createPostfixExpressionSelector(),
     provider
 ), DumbAware
 
@@ -175,7 +168,7 @@ internal class KtSoutPostfixTemplate(provider: PostfixTemplateProvider) : Consta
     "sout",
     "println(expr)",
     "println(\$expr$)\$END$",
-    createExpressionSelector(statementsOnly = true),
+    createPostfixExpressionSelector(statementsOnly = true),
     provider
 ), DumbAware
 
@@ -183,7 +176,7 @@ internal class KtReturnPostfixTemplate(provider: PostfixTemplateProvider) : Cons
     "return",
     "return expr",
     "return \$expr$\$END$",
-    createExpressionSelector(statementsOnly = true),
+    createPostfixExpressionSelector(statementsOnly = true),
     provider
 ), DumbAware
 
@@ -191,7 +184,7 @@ internal class KtWhilePostfixTemplate(provider: PostfixTemplateProvider) : Const
     "while",
     "while (expr) {}",
     "while (\$expr$) {\n\$END$\n}",
-    createExpressionSelector(statementsOnly = true, typePredicate = KotlinType::isBoolean),
+    createPostfixExpressionSelector(statementsOnly = true, typePredicate = createBooleanTypePredicate()),
     provider
 )
 
@@ -199,7 +192,11 @@ internal class KtSpreadPostfixTemplate(provider: PostfixTemplateProvider) : Cons
     "spread",
     "*expr",
     "*\$expr$\$END$",
-    createExpressionSelector(typePredicate = { KotlinBuiltIns.isArray(it) || KotlinBuiltIns.isPrimitiveArray(it) }),
+    createPostfixExpressionSelector(typePredicate = { _: KtExpression, type, session ->
+        with(session) {
+            type.isArrayOrPrimitiveArray
+        }
+    }),
     provider
 )
 
@@ -219,6 +216,6 @@ internal class KtWithPostfixTemplate(provider: PostfixTemplateProvider) : Consta
     "with",
     "with(expr) {}",
     "with(\$expr$) {\n\$END$\n}",
-    createExpressionSelector(),
+    createPostfixExpressionSelector(),
     provider
 ), DumbAware

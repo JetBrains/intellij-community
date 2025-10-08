@@ -56,7 +56,7 @@ final class ScratchImplUtil {
                                          @Nullable VirtualFile file,
                                          @NotNull LanguageItem item) throws IOException {
     ApplicationManager.getApplication().assertWriteAccessAllowed();
-    if (CommandProcessor.getInstance().getCurrentCommand() == null) {
+    if (!CommandProcessor.getInstance().isCommandInProgress()) {
       throw new AssertionError("command required");
     }
 

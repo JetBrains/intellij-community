@@ -43,7 +43,7 @@ public final class SafeLockInspection extends BaseInspection { // todo extend Re
   }
 
   @Override
-  public BaseInspectionVisitor buildVisitor() {
+  public @NotNull BaseInspectionVisitor buildVisitor() {
     return new SafeLockVisitor();
   }
 

@@ -7,7 +7,7 @@ import com.intellij.ui.scale.JBUIScale
 import com.intellij.util.ui.AvatarUtils.generateColoredAvatar
 import com.intellij.util.ui.ImageUtil.applyQualityRenderingHints
 import org.jetbrains.annotations.ApiStatus.Internal
-import org.jetbrains.annotations.TestOnly
+import org.jetbrains.annotations.VisibleForTesting
 import java.awt.*
 import java.awt.font.TextAttribute
 import java.awt.geom.Area
@@ -16,11 +16,19 @@ import java.awt.image.BufferedImage
 import kotlin.math.abs
 
 
-class AvatarIcon(val targetSize: Int,
-                 val arcRatio: Double,
-                 val gradientSeed: String,
-                 val avatarName: String,
-                 val palette: ColorPalette = AvatarPalette) : JBCachingScalableIcon<AvatarIcon>() {
+class AvatarIcon(
+  val targetSize: Int,
+  val arcRatio: Double,
+  val presentation: AvatarPresentation,
+) : JBCachingScalableIcon<AvatarIcon>() {
+  constructor(
+    targetSize: Int,
+    arcRatio: Double,
+    gradientSeed: String,
+    avatarName: String,
+    palette: ColorPalette = AvatarPalette,
+  ) : this(targetSize, arcRatio, PaletteAvatarPresentation(avatarName, gradientSeed, palette))
+
   private var cachedImage: BufferedImage? = null
   private var cachedImageSysScale: Float? = null
   private var cachedImagePixScale: Float? = null
@@ -31,7 +39,7 @@ class AvatarIcon(val targetSize: Int,
     val iconSize = getIconSize()
     val sysScale = JBUIScale.sysScale(g)
     val pixScale = JBUI.pixScale(g.deviceConfiguration)
-    val imageColor = palette.gradient(gradientSeed).first
+    val imageColor = presentation.color1
     if (sysScale != cachedImageSysScale
         || pixScale != cachedImagePixScale
         || imageColor != cachedImageColor) {
@@ -43,13 +51,11 @@ class AvatarIcon(val targetSize: Int,
       cachedImage = generateColoredAvatar(gc = g.deviceConfiguration,
                                           size = iconSize,
                                           arcRatio = arcRatio,
-                                          gradientSeed = gradientSeed,
-                                          name = avatarName,
-                                          palette = palette)
+                                          presentation = presentation)
       this.cachedImage = cachedImage
       cachedImageSysScale = sysScale
       cachedImagePixScale = pixScale
-      cachedImageColor = palette.gradient(gradientSeed).first
+      cachedImageColor = presentation.color1
     }
 
     withTxAndClipAligned(g, x, y, cachedImage.width, cachedImage.height) { gg ->
@@ -64,7 +70,7 @@ class AvatarIcon(val targetSize: Int,
   override fun getIconHeight(): Int = getIconSize()
 
   override fun copy(): AvatarIcon {
-    val copy = AvatarIcon(targetSize, arcRatio, gradientSeed, avatarName, palette)
+    val copy = AvatarIcon(targetSize, arcRatio, presentation)
     copy.updateContextFrom(this)
     return copy
   }
@@ -76,23 +82,21 @@ object AvatarUtils {
                             size: Int = 64,
                             arcRatio: Double = 0.0,
                             palette: ColorPalette = AvatarPalette): BufferedImage {
-    return generateColoredAvatar(null, size, arcRatio, gradientSeed, name, palette)
+    val presentation = PaletteAvatarPresentation(name, gradientSeed, palette)
+    return generateColoredAvatar(null, size, arcRatio, presentation)
   }
 
-  internal fun generateColoredAvatar(gc: GraphicsConfiguration?,
-                                     size: Int,
-                                     arcRatio: Double,
-                                     gradientSeed: String,
-                                     name: String,
-                                     palette: ColorPalette = AvatarPalette): BufferedImage {
-    val (color1, color2) = palette.gradient(gradientSeed)
-
-    val shortName = initials(name)
+  internal fun generateColoredAvatar(
+    gc: GraphicsConfiguration?,
+    size: Int,
+    arcRatio: Double,
+    presentation: AvatarPresentation,
+  ): BufferedImage {
     val image = ImageUtil.createImage(gc, size, size, BufferedImage.TYPE_INT_ARGB)
     val g2 = image.createGraphics()
     applyQualityRenderingHints(g2)
-    g2.paint = GradientPaint(0.0f, size.toFloat(), color2,
-                             size.toFloat(), 0.0f, color1)
+    g2.paint = GradientPaint(0.0f, size.toFloat(), presentation.color2,
+                             size.toFloat(), 0.0f, presentation.color1)
 
     val arcSize = arcRatio * size
     val avatarOvalArea = Area(RoundRectangle2D.Double(0.0, 0.0,
@@ -100,9 +104,10 @@ object AvatarUtils {
                                                       arcSize, arcSize))
     g2.fill(avatarOvalArea)
 
+    @Suppress("UseJBColor")
     g2.paint = Color.WHITE // JBColor.WHITE paints black color ¯\_(ツ)_/¯
     g2.font = getFont(size)
-    UIUtil.drawCenteredString(g2, Rectangle(0, 0, size, size), shortName)
+    UIUtil.drawCenteredString(g2, Rectangle(0, 0, size, size), presentation.shortName)
     g2.dispose()
 
     return image
@@ -131,7 +136,7 @@ object AvatarUtils {
   // "John-Smith-Harris" -> "JH"
   // "MyProject" -> "MP"
   // "My-Project" -> "MP"
-  @TestOnly
+  @VisibleForTesting
   @Internal
   fun initials(text: String): String {
     val filtered = text
@@ -139,7 +144,7 @@ object AvatarUtils {
       .trim()
 
     val camelCaseInitials = generateFromCamelCase(text)
-    if (camelCaseInitials.length ==  2) return camelCaseInitials
+    if (camelCaseInitials.length == 2) return camelCaseInitials
 
     val words = (filtered.splitAtLeast2NonEmpty(' ')
                  ?: filtered.splitAtLeast2NonEmpty(',')
@@ -147,13 +152,13 @@ object AvatarUtils {
                  ?: filtered.splitAtLeast2NonEmpty('_')
                  ?: filtered.splitAtLeast2NonEmpty('.')
                  ?: filtered.splitAtLeast2NonEmpty('`', '\'', '\"'))
-        ?.let { listOf(it.first(), it.last()) }
+      ?.let { listOf(it.first(), it.last()) }
 
     if (words == null) {
       return camelCaseInitials
     }
     return words.map { it.first() }
-        .joinToString("").uppercase()
+      .joinToString("").uppercase()
   }
 
   private fun String.splitAtLeast2NonEmpty(vararg delimiters: Char) = split(*delimiters).map { string ->
@@ -220,4 +225,18 @@ object AvatarPalette : ColorPalette {
         Color(0xFF7500) to Color(0xFFCA00)
       )
     }
+}
+
+interface AvatarPresentation {
+  val shortName: String
+  val color1: Color
+  val color2: Color
+}
+
+data class PaletteAvatarPresentation(val name: String, val gradientSeed: String, val palette: ColorPalette) : AvatarPresentation {
+  private val colors = palette.gradient(gradientSeed)
+
+  override val shortName: String = AvatarUtils.initials(name)
+  override val color1: Color get() = colors.first
+  override val color2: Color get() = colors.second
 }

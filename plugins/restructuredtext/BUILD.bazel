@@ -1,15 +1,15 @@
 ### auto-generated section `build intellij.restructuredtext` start
-load("@rules_jvm//:jvm.bzl", "jvm_library", "jvm_provided_library", "jvm_resources")
+load("@rules_jvm//:jvm.bzl", "jvm_library", "jvm_provided_library", "resourcegroup")
 
-jvm_resources(
+resourcegroup(
   name = "restructuredtext_resources",
-  files = glob(["resources/**/*"]),
+  srcs = glob(["resources/**/*"]),
   strip_prefix = "resources"
 )
 
-jvm_resources(
+resourcegroup(
   name = "restructuredtext_test_resources",
-  files = glob(["testData/**/*"]),
+  srcs = glob(["testData/**/*"]),
   strip_prefix = "testData"
 )
 
@@ -38,12 +38,13 @@ jvm_library(
   module_name = "intellij.restructuredtext",
   visibility = ["//visibility:public"],
   srcs = glob(["gen/**/*.kt", "gen/**/*.java", "src/**/*.kt", "src/**/*.java", "src/**/*.form"], allow_empty = True),
+  resources = [":restructuredtext_resources"],
   deps = [
     "//platform/analysis-api:analysis",
     "//platform/code-style-api:codeStyle",
     "//platform/core-api:core",
     "//platform/editor-ui-api:editor-ui",
-    "@lib//:guava",
+    "//libraries/guava",
     "//platform/projectModel-api:projectModel",
     "//platform/structure-view-impl:structureView-impl",
     "//platform/editor-ui-ex:editor-ex",
@@ -57,7 +58,14 @@ jvm_library(
     ":platform_execution-impl_provided",
     ":platform_core-ui_provided",
     ":spellchecker_provided",
-  ],
-  runtime_deps = [":restructuredtext_resources"]
+  ]
+)
+
+jvm_library(
+  name = "restructuredtext_test_lib",
+  module_name = "intellij.restructuredtext",
+  visibility = ["//visibility:public"],
+  srcs = glob([], allow_empty = True),
+  resources = [":restructuredtext_test_resources"]
 )
 ### auto-generated section `build intellij.restructuredtext` end

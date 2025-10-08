@@ -78,7 +78,7 @@ public final class EvaluationContextImpl extends UserDataHolderBase implements E
     return getSuspendContext().getDebugProcess();
   }
 
-  public DebuggerManagerThreadImpl getManagerThread() {
+  public @NotNull DebuggerManagerThreadImpl getManagerThread() {
     return getSuspendContext().getManagerThread();
   }
 

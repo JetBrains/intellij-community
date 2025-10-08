@@ -7,7 +7,7 @@ import com.intellij.ide.util.frameworkSupport.FrameworkSupportModel;
 import com.intellij.ide.util.frameworkSupport.FrameworkSupportProvider;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.module.ModuleType;
-import com.jetbrains.python.psi.icons.PythonPsiApiIcons;
+import com.jetbrains.python.parser.icons.PythonParserIcons;
 import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
@@ -20,7 +20,7 @@ final class PythonFrameworkSupportProvider extends FrameworkSupportProvider {
 
   @Override
   public Icon getIcon() {
-    return  PythonPsiApiIcons.Python;
+    return PythonParserIcons.PythonFile;
   }
 
   @Override

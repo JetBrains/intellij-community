@@ -541,7 +541,7 @@ public final class GroovyPropertyUtils {
     PsiModifierList modifierList = generated.getModifierList();
     if (modifierList != null && modifierList.hasExplicitModifier(GrModifier.DEF)) {
       LOG.assertTrue(modifierList instanceof GrModifierList);
-      if (modifierList.getAnnotations().length > 0 || ((GrModifierList)modifierList).getModifiers().length > 1) {
+      if (modifierList.hasAnnotations() || ((GrModifierList)modifierList).getModifiers().length > 1) {
         modifierList.setModifierProperty(GrModifier.DEF, false);
       }
     }

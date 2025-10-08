@@ -66,7 +66,7 @@ class PropertiesFiled(project: Project, info: PropertiesInfo) : ExtendableTextFi
     val keystrokeText = KeymapUtil.getKeystrokeText(keyStroke)
     val tooltip = info.dialogTooltip + " ($keystrokeText)"
     val browseExtension = ExtendableTextComponent.Extension.create(
-      AllIcons.General.InlineVariables, AllIcons.General.InlineVariablesHover, tooltip, action)
+      AllIcons.General.InlineVariables, AllIcons.General.InlineVariablesHover, tooltip, true, action)
     addExtension(browseExtension)
   }
 }

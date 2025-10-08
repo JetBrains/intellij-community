@@ -1,6 +1,6 @@
 ### auto-generated section `build intellij.platform.workspace.jps` start
 load("//build:compiler-options.bzl", "create_kotlinc_options")
-load("@rules_jvm//:jvm.bzl", "jvm_library", "jvm_resources")
+load("@rules_jvm//:jvm.bzl", "jvm_library", "resourcegroup")
 
 create_kotlinc_options(
   name = "custom_jps",
@@ -11,9 +11,9 @@ create_kotlinc_options(
   ]
 )
 
-jvm_resources(
+resourcegroup(
   name = "jps_resources",
-  files = glob(["resources/**/*"]),
+  srcs = glob(["resources/**/*"]),
   strip_prefix = "resources"
 )
 
@@ -22,6 +22,7 @@ jvm_library(
   module_name = "intellij.platform.workspace.jps",
   visibility = ["//visibility:public"],
   srcs = glob(["gen/**/*.kt", "gen/**/*.java", "src/**/*.kt", "src/**/*.java", "src/**/*.form"], allow_empty = True),
+  resources = [":jps_resources"],
   kotlinc_opts = ":custom_jps",
   deps = [
     "@lib//:kotlin-stdlib",
@@ -30,7 +31,7 @@ jvm_library(
     "//jps/model-impl",
     "//jps/model-serialization",
     "//platform/util",
-    "@lib//:fastutil-min",
+    "//libraries/fastutil",
     "//platform/util/jdom",
     "@lib//:kryo5",
     "@lib//:kotlinx-coroutines-core",
@@ -38,7 +39,6 @@ jvm_library(
     "@lib//:opentelemetry-semconv",
     "//platform/diagnostic/telemetry",
     "//platform/util/coroutines",
-  ],
-  runtime_deps = [":jps_resources"]
+  ]
 )
 ### auto-generated section `build intellij.platform.workspace.jps` end

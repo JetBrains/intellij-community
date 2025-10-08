@@ -3,77 +3,89 @@ package com.intellij.ui.split
 
 import com.intellij.ide.IdeBundle
 import com.intellij.openapi.diagnostic.fileLogger
-import com.intellij.openapi.extensions.RequiredElement
-import com.intellij.openapi.ui.ComponentContainer
-import com.intellij.openapi.util.Disposer
-import com.intellij.openapi.util.KeyedExtensionCollector
-import com.intellij.serviceContainer.BaseKeyedLazyInstance
+import com.intellij.openapi.extensions.ExtensionPointName
+import com.intellij.openapi.project.Project
+import com.intellij.platform.rpc.Id
+import com.intellij.platform.rpc.UID
 import com.intellij.ui.components.JBLabel
-import com.intellij.util.KeyedLazyInstance
+import com.intellij.ui.split.SplitComponentProvider.Companion.createComponent
 import com.intellij.util.concurrency.annotations.RequiresEdt
-import com.intellij.util.xmlb.annotations.Attribute
+import kotlinx.coroutines.CoroutineScope
 import org.jetbrains.annotations.ApiStatus
+import javax.swing.JComponent
 
 /**
- * Creates a UI component, that receives its data from a [SplitComponentModel] object. Provider should be registered in XML with id
- * matching the corresponding model's one. 'Attached' model can be obtained on the backend side using [SplitComponentFactory.getModel].
+ * Creates a frontend's UI component that is going to be inserted into LUX/BeControls.
+ * Its content is based on the backend's model which id (of type [T]) is provided in the [createComponent] function.
+ *
+ * To make the binding between frontend and the backend type-safe [binding] should be provided.
+ * Typically, it should be a global object shared between frontend and backend.
+ *
+ * @see SplitComponentBinding.createComponent
  */
-@ApiStatus.Experimental
-interface SplitComponentProvider {
+@ApiStatus.Internal
+interface SplitComponentProvider<T : Id> {
+  val binding: SplitComponentBinding<T>
+
+  /**
+   * Creates frontend's UI component based on the backend model with id: [modelId]
+   *
+   * @param scope that is going to be canceled when [CoroutineScope] passed to [SplitComponentFactory.createComponent] is canceled.
+   */
+  @RequiresEdt
+  fun createComponent(project: Project, scope: CoroutineScope, modelId: T): JComponent?
+
   companion object {
-    private val EP = KeyedExtensionCollector<SplitComponentProvider, String>("com.intellij.frontend.splitComponentProvider")
+    private val EP = ExtensionPointName<SplitComponentProvider<*>>("com.intellij.frontend.splitComponentProvider")
 
     @ApiStatus.Internal
-    fun createComponent(id: SplitComponentIdWithProvider) : ComponentContainer {
-      val provider = EP.findSingle(id.providerId)
+    fun createComponent(project: Project, cs: CoroutineScope, placeId: String, modelUid: UID): JComponent {
+      return createComponent(placeId, modelUid) { provider ->
+        provider.createComponentByUid(project, cs, modelUid)
+      }
+    }
+
+    // The separate method with [binding] is needed for the local case when modelId won't be serialized/deserialized by Rd models
+    internal fun <T : Id> createComponent(project: Project, cs: CoroutineScope, binding: SplitComponentBinding<T>, modelId: T): JComponent {
+      return createComponent(binding.placeId, modelId.uid) { provider ->
+        // provider should have generic of type T because it has the same binding as the passed one
+        @Suppress("UNCHECKED_CAST")
+        (provider as SplitComponentProvider<T>).createComponent(project, cs, modelId)
+      }
+    }
+
+    private fun <T : Id> SplitComponentProvider<T>.createComponentByUid(
+      project: Project,
+      cs: CoroutineScope,
+      modelUId: UID,
+    ): JComponent? {
+      return createComponent(project, cs, binding.deserializeModelId(modelUId))
+    }
+
+    private fun createComponent(
+      placeId: String,
+      modelUid: UID,
+      componentFactory: (SplitComponentProvider<*>) -> JComponent?,
+    ): JComponent {
+      val extensions = EP.extensionList.filter { it.binding.placeId == placeId }
+      val provider = extensions.firstOrNull()
+      if (extensions.size > 1) {
+        fileLogger().warn("Multiple provider for place: $placeId are registered. First one ($provider) is used")
+      }
       if (provider != null) {
-        val container = provider.createComponent(id.componentId)
-        if (container != null) {
-          return container
+        val component = componentFactory(provider)
+        if (component != null) {
+          return component
         }
         else {
-          fileLogger().warn("Provider ($provider) couldn't create component for id=$id")
+          fileLogger().warn("Provider ($provider) couldn't create component for id ${modelUid}")
         }
       }
       else {
-        fileLogger().warn("Couldn't find provider for id=$id")
+        fileLogger().warn("Couldn't find provider for place: $placeId")
       }
-      val component = JBLabel(IdeBundle.message("split.component.missing", id))
-      return object : ComponentContainer {
-        override fun getComponent() = component
-        override fun getPreferredFocusableComponent() = null
-        override fun dispose() {}
-      }.apply {
-        Disposer.dispose(this)
-      }
+      val component = JBLabel(IdeBundle.message("split.component.missing", "$placeId/$modelUid"))
+      return component
     }
-  }
-
-  /**
-   * [ComponentContainer.getPreferredFocusableComponent] in the result is not used currently in rem-dev scenarios. It can only be useful
-   * in monolith mode now.
-   *
-   * NOTE. The returned object should take care about its disposal itself. Frontend will keep the returned component cached until its
-   * disposal. Supposedly, the disposal should happen when the associated modal signals it (e.g. when it's disposed itself).
-   */
-  @RequiresEdt
-  fun createComponent(id: SplitComponentId) : ComponentContainer?
-}
-
-private class SplitComponentProviderBean : BaseKeyedLazyInstance<SplitComponentProvider>(), KeyedLazyInstance<SplitComponentProvider> {
-  @Attribute("id")
-  @RequiredElement
-  var id : String = ""
-
-  @Attribute("implementation")
-  @RequiredElement
-  var implementation: String = ""
-
-  override fun getKey(): String {
-    return id
-  }
-
-  override fun getImplementationClassName(): String {
-    return implementation
   }
 }

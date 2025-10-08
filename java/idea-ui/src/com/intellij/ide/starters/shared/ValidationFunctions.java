@@ -1,9 +1,10 @@
-// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.ide.starters.shared;
 
 import com.intellij.ide.starters.JavaStartersBundle;
 import com.intellij.openapi.observable.properties.GraphProperty;
 import com.intellij.openapi.util.io.FileUtil;
+import com.intellij.openapi.util.io.OSAgnosticPathUtil;
 import com.intellij.psi.impl.PsiNameHelperImpl;
 
 import java.io.File;
@@ -116,7 +117,7 @@ public final class ValidationFunctions {
   public static TextValidationFunction createLocationWarningValidator(GraphProperty<String> locationProperty) {
     return fieldText -> {
       try {
-        File file = Paths.get(FileUtil.expandUserHome(FileUtil.join(locationProperty.get(), fieldText))).toFile();
+        File file = Paths.get(OSAgnosticPathUtil.expandUserHome(FileUtil.join(locationProperty.get(), fieldText))).toFile();
         if (file.exists()) {
           String[] children = file.list();
           if (children != null && children.length > 0) {
@@ -133,7 +134,7 @@ public final class ValidationFunctions {
   public static final TextValidationFunction CHECK_LOCATION_FOR_ERROR = fieldText -> {
     Path locationPath;
     try {
-      locationPath = Paths.get(FileUtil.expandUserHome(fieldText));
+      locationPath = Paths.get(OSAgnosticPathUtil.expandUserHome(fieldText));
     } catch (InvalidPathException e) {
       return JavaStartersBundle.message("message.specified.path.is.illegal");
     }

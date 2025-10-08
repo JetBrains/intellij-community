@@ -33,6 +33,17 @@ public interface CommonJavaRunConfigurationParameters extends CommonProgramRunCo
 
   void setAlternativeJrePath(@Nullable String path);
 
+  /**
+   * Returns the binary name of the class to run (see JLS 13.1).
+   * <p>
+   * This binary name is <i>usually</i> the same as the fully qualified name of the main class
+   * (returned from {@link SingleClassConfiguration#getMainClass()}, which is usually used by implementations of this method).
+   * <p>
+   * For nested classes, the fully qualified class name differs from the binary class name. See JLS 13.1.
+   * To know if the main class returned from {@link SingleClassConfiguration#getMainClass()} is nested or not, we need to resolve it,
+   * and because of that, implementations of this method <i>usually</i> require read lock.
+   * @see com.intellij.psi.util.ClassUtil#getBinaryClassName
+   */
   @Nullable
   String getRunClass();
 

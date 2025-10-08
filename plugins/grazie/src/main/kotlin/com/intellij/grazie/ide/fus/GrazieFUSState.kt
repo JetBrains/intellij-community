@@ -18,7 +18,7 @@ import com.intellij.internal.statistic.service.fus.collectors.ApplicationUsagesC
 import com.intellij.internal.statistic.utils.getPluginInfo
 
 internal class GrazieFUSState : ApplicationUsagesCollector() {
-  private val GROUP = EventLogGroup("grazie.state", 9)
+  private val GROUP = EventLogGroup("grazie.state", 11)
   private val ENABLE_LANGUAGE = GROUP.registerEvent(
     "enabled.language",
     EventFields.Enum("value", LanguageISO::class.java) { it.name.lowercase() }
@@ -27,7 +27,7 @@ internal class GrazieFUSState : ApplicationUsagesCollector() {
   private val RULE = GROUP.registerEvent(
     "rule",
     EventFields.PluginInfo,
-    EventFields.StringValidatedByEnum("id", "grazie_rule_long_ids"),
+    EventFields.StringValidatedByDictionary("id", "grazie_rule_long_ids.ndjson"),
     EventFields.Enabled
   )
 
@@ -100,7 +100,7 @@ internal class GrazieFUSState : ApplicationUsagesCollector() {
     val connectionType = GrazieCloudConnector.EP_NAME.extensionList.firstNotNullOfOrNull { it.connectionType() } ?: Processing.Local
     metrics.add(PROCESSING.metric(connectionType))
     if (state.styleProfile != DEFAULT_STATE.styleProfile) {
-      metrics.add(WRITING_STYLE.metric(state.textStyle.id.uppercase()))
+      metrics.add(WRITING_STYLE.metric(state.getTextStyle().id.uppercase()))
     }
     if (state.autoFix != DEFAULT_STATE.autoFix) {
       metrics.add(AUTO_FIX.metric(state.autoFix))

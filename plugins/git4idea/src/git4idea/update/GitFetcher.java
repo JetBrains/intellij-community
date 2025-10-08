@@ -10,7 +10,6 @@ import com.intellij.openapi.util.Key;
 import com.intellij.openapi.util.NlsContexts;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vcs.VcsNotifier;
-import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.util.ArrayUtilRt;
 import git4idea.GitLocalBranch;
 import git4idea.GitRemoteBranch;
@@ -74,34 +73,12 @@ public class GitFetcher {
    * @deprecated Use {@link GitFetchSupport}
    */
   @Deprecated(forRemoval = true)
-  public GitFetchResult fetch(@NotNull GitRepository repository) {
+  private GitFetchResult fetch(@NotNull GitRepository repository) {
     // TODO need to have a fair compound result here
     GitFetchResult fetchResult = myFetchAll ? fetchAll(repository) : fetchCurrentRemote(repository);
     repository.update();
     repository.getRepositoryFiles().refreshTagsFiles();
     return fetchResult;
-  }
-
-  /**
-   * @deprecated Use {@link GitFetchSupport}
-   */
-  @Deprecated(forRemoval = true)
-  public @NotNull GitFetchResult fetch(@NotNull VirtualFile root, @NotNull String remoteName, @Nullable String branch) {
-    GitRepository repository = myRepositoryManager.getRepositoryForRoot(root);
-    if (repository == null) {
-      return logError("Repository can't be null for " + root, myRepositoryManager.toString());
-    }
-    GitRemote remote = GitUtil.findRemoteByName(repository, remoteName);
-    if (remote == null) {
-      return logError("Couldn't find remote with the name " + remoteName, null);
-    }
-    return fetchRemote(repository, remote, branch);
-  }
-
-  private static GitFetchResult logError(@NotNull String message, @Nullable String additionalInfo) {
-    String addInfo = additionalInfo != null ? "\n" + additionalInfo : "";
-    LOG.error(message + addInfo);
-    return GitFetchResult.error(message);
   }
 
   private static @NotNull GitFetchResult fetchCurrentRemote(@NotNull GitRepository repository) {

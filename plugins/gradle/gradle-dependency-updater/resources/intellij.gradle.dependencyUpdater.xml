@@ -1,4 +1,4 @@
-<idea-plugin>
+<idea-plugin visibility="internal">
   <dependencies>
     <plugin id="com.intellij.gradle"/>
     <plugin id="org.jetbrains.idea.gradle.dsl"/>

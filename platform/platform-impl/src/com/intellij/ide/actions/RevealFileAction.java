@@ -16,13 +16,7 @@ import com.intellij.openapi.actionSystem.remoting.ActionRemoteBehaviorSpecificat
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.ex.util.EditorUtil;
 import com.intellij.openapi.project.DumbAwareAction;
-import com.intellij.openapi.project.Project;
-import com.intellij.openapi.ui.DialogWrapper;
-import com.intellij.openapi.ui.DoNotAskOption;
-import com.intellij.openapi.ui.MessageDialogBuilder;
-import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.util.NlsActions.ActionText;
-import com.intellij.openapi.util.NlsContexts;
 import com.intellij.openapi.util.NlsSafe;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.vfs.newvfs.ArchiveFileSystem;
@@ -361,25 +355,4 @@ public class RevealFileAction extends DumbAwareAction implements LightEditCompat
       return value.split(" ")[0];
     }
   }
-
-  //<editor-fold desc="Deprecated stuff.">
-  /** @deprecated trivial to implement, just inline */
-  @Deprecated(forRemoval = true)
-  public static void showDialog(
-    Project project,
-    @NlsContexts.DialogMessage String message,
-    @NlsContexts.DialogTitle String title,
-    @SuppressWarnings({"UnnecessaryFullyQualifiedName", "IO_FILE_USAGE"}) @NotNull java.io.File file,
-    @Nullable DoNotAskOption option
-  ) {
-    if (MessageDialogBuilder.okCancel(title, message)
-      .yesText(getActionName(null))
-      .noText(IdeBundle.message("action.close"))
-      .icon(Messages.getInformationIcon())
-      .doNotAsk(option)
-      .ask(project)) {
-      openFile(file);
-    }
-  }
-  //</editor-fold>
 }

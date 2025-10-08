@@ -2,6 +2,7 @@
 package com.intellij.collaboration.ui.toolwindow
 
 import com.intellij.collaboration.async.cancelledWith
+import com.intellij.collaboration.async.childScope
 import com.intellij.collaboration.async.launchNow
 import com.intellij.openapi.application.EDT
 import com.intellij.openapi.util.Disposer
@@ -49,7 +50,7 @@ private class ReviewToolwindowTabsManager<
 ) {
   private val contentManager = toolwindow.contentManager
   private val projectVm = reviewToolwindowViewModel.projectVm
-  private val cs = parentCs.childScope(Dispatchers.EDT)
+  private val cs = parentCs.childScope(this::class, Dispatchers.EDT)
 
   init {
     contentManager.addUiDataProvider { sink ->

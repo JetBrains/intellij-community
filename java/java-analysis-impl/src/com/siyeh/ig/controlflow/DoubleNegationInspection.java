@@ -83,7 +83,7 @@ public final class DoubleNegationInspection extends BaseInspection implements Cl
   }
 
   @Override
-  public BaseInspectionVisitor buildVisitor() {
+  public @NotNull BaseInspectionVisitor buildVisitor() {
     return new DoubleNegationVisitor();
   }
 

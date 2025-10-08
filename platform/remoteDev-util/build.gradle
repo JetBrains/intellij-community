@@ -25,6 +25,13 @@ rdgen {
     namespace = "com.intellij.remoteDev.tests.modelGenerated"
     directory = "$projectDir/modelGenerated"
   }
+  generator {
+    language = "kotlin"
+    transform = "symmetric"
+    root = "com.intellij.remoteDev.tests.modelSources.LambdaTestRoot"
+    namespace = "com.intellij.remoteDev.tests.modelGenerated"
+    directory = "$projectDir/modelGenerated"
+  }
 }
 
 tasks.named("rdgen", RdGenTask) {

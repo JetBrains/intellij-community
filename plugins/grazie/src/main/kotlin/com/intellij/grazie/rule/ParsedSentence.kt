@@ -6,12 +6,16 @@ import com.intellij.grazie.cloud.DependencyParser
 import com.intellij.grazie.rule.ParsedSentence.Companion.findSentenceASAP
 import com.intellij.grazie.rule.ParsedSentence.Companion.findSentenceInFile
 import com.intellij.grazie.rule.ParsedSentence.Companion.getSentences
+import com.intellij.grazie.rule.SentenceBatcher.AsyncBatchParser
+import com.intellij.grazie.text.TextChecker
+import com.intellij.grazie.text.TextChecker.ProofreadingContext
 import com.intellij.grazie.text.TextContent
 import com.intellij.grazie.text.TextExtractor
 import com.intellij.grazie.utils.HighlightingUtil
 import com.intellij.grazie.utils.NaturalTextDetector
 import com.intellij.openapi.progress.runBlockingCancellable
 import com.intellij.openapi.util.TextRange
+import com.intellij.psi.FileViewProvider
 import com.intellij.psi.PsiFile
 import java.util.*
 
@@ -34,7 +38,13 @@ class ParsedSentence private constructor(
   @JvmField val extractedText: TextContent,
 
   /** The dependency tree for the sentence  */
-  @JvmField val tree: Tree
+  @JvmField val tree: Tree,
+
+  /**
+   * The range of the sentence in [extractedText] as reported by the sentence tokenizer,
+   * including leading or trailing space
+   */
+  @JvmField val untrimmedRange: TextRange,
 ) {
 
   fun textOffsetToFile(textOffset: Int): Int {
@@ -81,19 +91,36 @@ class ParsedSentence private constructor(
       return runBlockingCancellable { getSentencesAsync(content) }
     }
 
+    @JvmStatic
+    fun getAllCheckedSentences(viewProvider: FileViewProvider): Map<TextContent, List<ParsedSentence>> {
+      val contents = HighlightingUtil.getCheckedFileTexts(viewProvider).filterNot { HighlightingUtil.isTooLargeText(listOf(it)) }
+      if (contents.isEmpty()) return emptyMap()
+
+      return runBlockingCancellable {
+        contents.associateWith { getSentencesAsync(it) }
+      }
+    }
+
     suspend fun getSentencesAsync(content: TextContent): List<ParsedSentence> {
       return getSentences(content, content.commonParent.textRange, minimal = false)
     }
 
-    private suspend fun getSentences(content: TextContent, rangeInFile: TextRange,
-                                     minimal: Boolean): List<ParsedSentence> {
+    suspend fun getSentencesAsync(context: ProofreadingContext): List<ParsedSentence> {
+      if (HighlightingUtil.isTooLargeText(listOf(context.text))) return emptyList()
+      val parser = DependencyParser.getParser(context, false) ?: return emptyList()
+      return getSentences(context.text, context.text.commonParent.textRange, parser)
+    }
+
+    private suspend fun getSentences(content: TextContent, rangeInFile: TextRange, minimal: Boolean): List<ParsedSentence> {
       if (HighlightingUtil.isTooLargeText(listOf(content)) ||
           !NaturalTextDetector.seemsNatural(content.toString())) {
         return emptyList()
       }
-
       val parser = DependencyParser.getParser(content, minimal) ?: return emptyList()
+      return getSentences(content, rangeInFile, parser)
+    }
 
+    private suspend fun getSentences(content: TextContent, rangeInFile: TextRange, parser: AsyncBatchParser<Tree>): List<ParsedSentence> {
       val out = ArrayList<ParsedSentence>()
       val intersectingSentences =
         SentenceTokenizer.tokenize(content).filter { token ->
@@ -107,10 +134,10 @@ class ParsedSentence private constructor(
           var tree = trees[sentence.swe()]
           if (tree != null) {
             val start = sentence.start
-            tree = tree.withStartOffset(start)!!
+            tree = tree.withStartOffset(start)
             val stubbed = trees[sentence.stubbedSwe()]
-            if (stubbed != null) tree = tree.withStubbed(StubbedSentence(sentence.swe(), stubbed.withStartOffset(start)))!!
-            out.add(ParsedSentence(tree.startOffset(), tree.text(), content, tree))
+            if (stubbed != null) tree = tree.withStubbed(StubbedSentence(sentence.swe(), stubbed.withStartOffset(start)))
+            out.add(ParsedSentence(tree.startOffset(), tree.text(), content, tree, TextRange(sentence.start, sentence.end())))
           }
         }
       }

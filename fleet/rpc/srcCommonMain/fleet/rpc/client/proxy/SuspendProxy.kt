@@ -9,13 +9,14 @@ import fleet.rpc.RemoteApiDescriptor
 import fleet.rpc.RemoteKind
 import fleet.rpc.core.AssumptionsViolatedException
 import fleet.rpc.core.RemoteObject
+import fleet.rpc.core.RemoteResource
+import fleet.util.async.Resource
 import fleet.util.async.catching
+import fleet.util.async.resource
 import fleet.util.async.use
+import fleet.util.async.useOn
 import fleet.util.causeOfType
-import kotlinx.coroutines.CancellationException
-import kotlinx.coroutines.CoroutineScope
-import kotlinx.coroutines.Job
-import kotlinx.coroutines.async
+import kotlinx.coroutines.*
 import kotlinx.coroutines.channels.Channel
 import kotlinx.coroutines.channels.consume
 import kotlinx.coroutines.channels.onFailure
@@ -23,7 +24,6 @@ import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.consumeAsFlow
 import kotlinx.coroutines.flow.flowOn
 import kotlinx.coroutines.flow.produceIn
-import kotlinx.coroutines.yield
 import kotlin.coroutines.CoroutineContext
 
 /**
@@ -118,6 +118,27 @@ fun SuspendInvocationHandler.outOfScope(
                   is Flow<*> -> {
                     @Suppress("UNCHECKED_CAST")
                     (res as Flow<Any>).produceIn(calleeScope).consumeAsFlow()
+                  }
+                  is Resource<*> -> {
+                    val descriptor = remoteApiDescriptor.getSignature(method).returnType as RemoteKind.Resource
+                    resource { cc ->
+                      val r = CompletableDeferred<Any?>()
+                      calleeScope.launch {
+                        r.complete(res.useOn(this).await())
+                      }.apply {
+                        invokeOnCompletion { r.completeExceptionally(it ?: RuntimeException("unreacable")) }
+                      }.use {
+                        cc(suspendProxy(
+                          remoteApiDescriptor = descriptor.descriptor,
+                          handler = delegatingHandler((r.await() as RemoteResource))
+                            .outOfScope(
+                              callerContext = callerContext,
+                              hotScope = hotScope,
+                              calleeScope = calleeScope,
+                            ))
+                        )
+                      }
+                    }
                   }
                   else -> res
                 }

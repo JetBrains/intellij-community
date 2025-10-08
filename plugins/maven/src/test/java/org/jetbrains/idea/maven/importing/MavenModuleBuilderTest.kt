@@ -135,17 +135,17 @@ class MavenModuleBuilderTest : MavenMultiVersionImportingTestCase() {
 
     assertEquals("""
       <?xml version="1.0"?>
-      <project xmlns="http://maven.apache.org/POM/4.0.0"
+      <project xmlns="http://maven.apache.org/POM/$modelVersion"
                xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
-               xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
-        <modelVersion>4.0.0</modelVersion>
+               xsi:schemaLocation="http://maven.apache.org/POM/$modelVersion http://maven.apache.org/xsd/maven-$modelVersion.xsd">
+        <modelVersion>$modelVersion</modelVersion>
       <groupId>test</groupId>
       <artifactId>project</artifactId>
       <version>1</version>
           <packaging>pom</packaging>
-          <modules>
-              <module>module</module>
-          </modules>
+          <$modulesTag>
+              <$moduleTag>module</$moduleTag>
+          </$modulesTag>
       </project>
     """.trimIndent(),
                  StringUtil.convertLineSeparators(VfsUtil.loadText(projectPom)))

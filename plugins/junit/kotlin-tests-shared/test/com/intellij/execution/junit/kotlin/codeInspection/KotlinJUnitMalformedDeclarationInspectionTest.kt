@@ -1,42 +1,9 @@
 // Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.execution.junit.kotlin.codeInspection
 
-import com.intellij.junit.testFramework.JUnitMalformedDeclarationInspectionTestBase
 import com.intellij.jvm.analysis.testFramework.JvmLanguage
-import org.jetbrains.kotlin.idea.test.ConfigLibraryUtil
-import org.jetbrains.kotlin.idea.test.ExpectedPluginModeProvider
-import org.jetbrains.kotlin.idea.test.setUpWithKotlinPlugin
 
-abstract class KotlinJUnitMalformedDeclarationInspectionTestBase(
-  junit5Version: String,
-) : JUnitMalformedDeclarationInspectionTestBase(junit5Version), ExpectedPluginModeProvider {
-  override fun setUp() {
-    setUpWithKotlinPlugin(testRootDisposable) { super.setUp() }
-    ConfigLibraryUtil.configureKotlinRuntime(myFixture.module)
-  }
-}
-
-abstract class KotlinJUnitMalformedDeclarationInspectionTestV57 : KotlinJUnitMalformedDeclarationInspectionTestBase(JUNIT5_7_0) {
-  fun `test malformed extension make public quickfix`() {
-    myFixture.testQuickFix(
-      JvmLanguage.KOTLIN, """
-      class A {
-        @org.junit.jupiter.api.extension.RegisterExtension
-        val myRule<caret>5 = Rule5()
-        class Rule5 { }
-      }
-    """.trimIndent(), """
-      class A {
-        @JvmField
-        @org.junit.jupiter.api.extension.RegisterExtension
-        val myRule5 = Rule5()
-        class Rule5 { }
-      }
-    """.trimIndent(), "Fix 'myRule5' field signature", testPreview = true)
-  }
-}
-
-abstract class KotlinJUnitMalformedDeclarationInspectionTestLatest : KotlinJUnitMalformedDeclarationInspectionTestBase(JUNIT5_LATEST) {
+abstract class KotlinJUnitMalformedDeclarationInspectionTest : KotlinJUnitMalformedDeclarationInspectionTestBase(JUNIT5_LATEST) {
   abstract val pluginVersion: String
 
   /* Malformed extensions */
@@ -1430,6 +1397,24 @@ abstract class KotlinJUnitMalformedDeclarationInspectionTestLatest : KotlinJUnit
       
       @CustomTestAnnotation
       class MetaParameterResolver {
+        companion object {
+          @JvmStatic
+          @org.junit.jupiter.api.BeforeAll
+          fun beforeAll(foo: String) { println(foo) }
+        }
+      }
+      
+      @org.junit.jupiter.api.extension.ExtendWith(MyTest.MyCallback::class)
+      @CustomTestAnnotation
+      annotation class MyTest {
+          class MyCallback : org.junit.jupiter.api.extension.AfterEachCallback {
+              override fun afterEach(context: org.junit.jupiter.api.extension.ExtensionContext) {
+              }
+          }
+      }
+
+      @MyTest
+      class MultipleMetaParameterResolver {
         companion object {
           @JvmStatic
           @org.junit.jupiter.api.BeforeAll

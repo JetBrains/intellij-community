@@ -1,4 +1,4 @@
-<idea-plugin>
+<idea-plugin visibility="public">
   <dependencies>
     <module name="intellij.grid.core.impl"/>
     <module name="intellij.platform.navbar.frontend"/>
@@ -14,7 +14,7 @@
   </extensionPoints>
 
   <extensions defaultExtensionNs="com.intellij">
-    <fileEditorProvider id="csv-data-editor" implementation="com.intellij.database.editor.CsvTableFileEditorProvider" fileType="CSV/TSV" isDocumentRequired="true"/>
+    <fileEditorProvider id="csv-data-editor" implementation="com.intellij.database.editor.CsvTableFileEditorProvider" isDocumentRequired="true"/>
     <editorActionHandler action="EditorEscape" implementationClass="com.intellij.database.actions.EscapeEditMaximizedHandler"/>
     <statusBarWidgetFactory id="GridAggregator" implementation="com.intellij.database.datagrid.AggregatorWidget$Factory" order="before Position"/>
     <statusBarWidgetFactory id="GridPosition" implementation="com.intellij.database.datagrid.GridPositionWidget$Factory" order="before Position"/>

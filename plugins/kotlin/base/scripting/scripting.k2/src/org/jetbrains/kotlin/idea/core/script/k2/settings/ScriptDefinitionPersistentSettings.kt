@@ -4,7 +4,9 @@ package org.jetbrains.kotlin.idea.core.script.k2.settings
 import com.intellij.openapi.components.*
 import com.intellij.openapi.project.Project
 import com.intellij.util.xmlb.annotations.Attribute
-import org.jetbrains.kotlin.idea.core.script.k2.definitions.ScriptDefinitionProviderImpl
+import com.intellij.util.xmlb.annotations.Tag
+import com.intellij.util.xmlb.annotations.XCollection
+import org.jetbrains.kotlin.idea.core.script.k2.definitions.ScriptDefinitionsModificationTracker
 import org.jetbrains.kotlin.idea.core.script.v1.settings.KotlinScriptingSettingsStorage
 import org.jetbrains.kotlin.scripting.definitions.ScriptDefinition
 
@@ -14,39 +16,20 @@ import org.jetbrains.kotlin.scripting.definitions.ScriptDefinition
 class ScriptDefinitionPersistentSettings(val project: Project) :
     SerializablePersistentStateComponent<ScriptDefinitionPersistentSettings.State>(State()), KotlinScriptingSettingsStorage {
 
-    fun getIndexedSettingsPerDefinition(): Map<String?, IndexedSetting> = state.settings.mapIndexedTo(mutableListOf()) { index, it ->
-        it.definitionId to IndexedSetting(index, it)
-    }.toMap()
-
     fun setSettings(settings: List<ScriptDefinitionSetting>) {
         updateState {
             it.copy(settings = settings)
         }
-        ScriptDefinitionProviderImpl.getInstance(project).notifyDefinitionsChanged()
-    }
-
-    override fun autoReloadConfigurations(scriptDefinition: ScriptDefinition): Boolean = true
-    override fun setAutoReloadConfigurations(scriptDefinition: ScriptDefinition, autoReloadScriptDependencies: Boolean): Unit = Unit
-
-    override fun setOrder(scriptDefinition: ScriptDefinition, order: Int) {
-        val settings = state.settings.toMutableList()
-        if (settings[order].definitionId == scriptDefinition.definitionId) return
-
-        settings.removeIf { it.definitionId == scriptDefinition.definitionId }
-        settings[order] = ScriptDefinitionSetting(scriptDefinition.definitionId, true)
-
-        updateState {
-            it.copy(settings = settings)
-        }
+        ScriptDefinitionsModificationTracker.getInstance(project).incModificationCount()
     }
 
     override fun isScriptDefinitionEnabled(scriptDefinition: ScriptDefinition): Boolean {
-        return state.settings.firstOrNull { it.definitionId == scriptDefinition.definitionId }?.enabled ?: true
+        return state.settings.firstOrNull { it.matches(scriptDefinition) }?.enabled ?: true
     }
 
     override fun getScriptDefinitionOrder(scriptDefinition: ScriptDefinition): Int {
-        val order = state.settings.indexOfFirst { it.definitionId == scriptDefinition.definitionId }
-        return if (order == -1) Integer.MAX_VALUE else order
+        val index = state.settings.indexOfFirst { it.matches(scriptDefinition) }
+        return if (index == -1) scriptDefinition.order else index
     }
 
     companion object {
@@ -55,13 +38,35 @@ class ScriptDefinitionPersistentSettings(val project: Project) :
     }
 
     data class State(
-        @Attribute @JvmField var settings: List<ScriptDefinitionSetting> = listOf()
+        @JvmField @XCollection(
+            propertyElementName = "settings", elementName = "definition"
+        ) val settings: List<ScriptDefinitionSetting> = listOf()
     )
 
-    data class ScriptDefinitionSetting(
-        @Attribute @JvmField val definitionId: String? = null,
-        @Attribute @JvmField val enabled: Boolean = true,
-    )
+    @Tag("definition")
+    class ScriptDefinitionSetting(
+        @JvmField @Attribute val name: String? = null,
+        @JvmField @Attribute val definitionId: String? = null,
+        @JvmField @Attribute val enabled: Boolean = true
+    ) {
+        override fun equals(other: Any?): Boolean {
+            if (this === other) return true
+            if (javaClass != other?.javaClass) return false
 
-    class IndexedSetting(val index: Int, val setting: ScriptDefinitionSetting)
+            other as ScriptDefinitionSetting
+
+            if (name != other.name) return false
+            if (definitionId != other.definitionId) return false
+
+            return true
+        }
+
+        override fun hashCode(): Int {
+            var result = name?.hashCode() ?: 0
+            result = 31 * result + (definitionId?.hashCode() ?: 0)
+            return result
+        }
+
+        fun matches(definition: ScriptDefinition): Boolean = name == definition.name && definitionId == definition.definitionId
+    }
 }

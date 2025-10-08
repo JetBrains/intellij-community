@@ -3,8 +3,8 @@ package org.jetbrains.plugins.terminal.block.reworked.hyperlinks
 
 import com.intellij.ide.CustomDataContextSerializer
 import com.intellij.openapi.actionSystem.DataKey
-import com.intellij.terminal.session.TerminalHyperlinkId
 import kotlinx.serialization.KSerializer
+import org.jetbrains.plugins.terminal.session.TerminalHyperlinkId
 
 internal class HyperlinkIdDataContextSerializer : CustomDataContextSerializer<TerminalHyperlinkId> {
   override val key: DataKey<TerminalHyperlinkId>

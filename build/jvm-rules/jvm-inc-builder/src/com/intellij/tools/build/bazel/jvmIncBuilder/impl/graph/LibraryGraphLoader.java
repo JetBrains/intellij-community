@@ -23,7 +23,7 @@ import java.nio.file.Path;
 import java.util.*;
 
 public final class LibraryGraphLoader {
-  private static final int CACHE_SIZE = 512; // todo: make configurable
+  private static final int CACHE_SIZE = 1024; // todo: make configurable
 
   private static final LoadingCache<LibDescriptor, Pair<NodeSourceSnapshot, Graph>> ourCache = Caffeine
     .newBuilder()

@@ -10,9 +10,11 @@ import com.intellij.openapi.project.Project
 import com.intellij.openapi.project.ProjectManager
 import com.intellij.openapi.project.guessProjectForContentFile
 import com.intellij.openapi.util.io.FileUtil
+import com.intellij.openapi.util.io.OSAgnosticPathUtil
 import com.intellij.openapi.util.text.StringUtilRt
 import com.intellij.openapi.vfs.LocalFileSystem
 import com.intellij.openapi.vfs.VirtualFile
+import com.intellij.util.PathUtil
 import com.intellij.util.PathUtilRt
 import io.netty.channel.ChannelHandlerContext
 import io.netty.handler.codec.http.*
@@ -93,12 +95,12 @@ internal class OpenFileHttpService : RestService() {
     if (requestedFile == null) {
       return parameterMissedErrorMessage("file")
     }
-    if (PathUtilRt.startsWithSeparatorSeparator(FileUtil.toSystemIndependentName(requestedFile))) {
+    if (PathUtilRt.startsWithSeparatorSeparator(PathUtil.toSystemIndependentName(requestedFile))) {
       return "UNC paths are not supported"
     }
 
-    val vfsPath = FileUtil.toSystemIndependentName(FileUtil.expandUserHome(requestedFile))
-    val file = Path.of(FileUtil.toSystemDependentName(vfsPath))
+    val vfsPath = PathUtil.toSystemIndependentName(OSAgnosticPathUtil.expandUserHome(requestedFile))
+    val file = Path.of(PathUtil.toSystemDependentName(vfsPath))
     val fileAndProject = if (!file.isAbsolute) {
       findByRelativePath(FileUtil.toCanonicalPath(vfsPath, '/'))
     }

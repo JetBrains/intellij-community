@@ -7,10 +7,9 @@ import com.intellij.openapi.actionSystem.CommonDataKeys
 import com.intellij.openapi.actionSystem.remoting.ActionRemoteBehaviorSpecification
 import com.intellij.openapi.project.DumbAwareAction
 import com.intellij.openapi.vfs.VirtualFile
+import com.intellij.terminal.frontend.toolwindow.impl.createTerminalTab
 import org.jetbrains.plugins.terminal.TerminalEngine
 import org.jetbrains.plugins.terminal.TerminalOptionsProvider
-import org.jetbrains.plugins.terminal.TerminalTabState
-import org.jetbrains.plugins.terminal.TerminalToolWindowManager
 
 /**
  * Copy of [org.jetbrains.plugins.terminal.action.RevealFileInTerminalAction], but frontend-only.
@@ -27,14 +26,7 @@ internal class RevealFileInReworkedTerminalAction : DumbAwareAction(), ActionRem
   override fun actionPerformed(e: AnActionEvent) {
     val project = e.project ?: return
     val file = getSelectedFile(e) ?: return
-    val tabState = TerminalTabState()
-    tabState.myWorkingDirectory = file.path
-    TerminalToolWindowManager.getInstance(project).createNewTab(
-      TerminalEngine.REWORKED,
-      null,
-      tabState,
-      null,
-    )
+    createTerminalTab(project, workingDirectory = file.path)
   }
 
   override fun update(e: AnActionEvent) {

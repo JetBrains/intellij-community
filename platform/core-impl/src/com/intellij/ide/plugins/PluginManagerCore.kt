@@ -12,9 +12,9 @@ import com.intellij.ide.plugins.PluginManagerCore.isDisabled
 import com.intellij.ide.plugins.PluginManagerCore.loadedPlugins
 import com.intellij.ide.plugins.PluginManagerCore.processAllNonOptionalDependencies
 import com.intellij.ide.plugins.cl.PluginAwareClassLoader
-import com.intellij.ide.plugins.cl.PluginClassLoader
 import com.intellij.idea.AppMode
 import com.intellij.openapi.application.ApplicationInfo
+import com.intellij.openapi.application.ArchivedCompilationContextUtil
 import com.intellij.openapi.application.PathManager
 import com.intellij.openapi.application.impl.ApplicationInfoImpl
 import com.intellij.openapi.diagnostic.Logger
@@ -71,7 +71,8 @@ object PluginManagerCore {
 
   @JvmField val CORE_ID: PluginId = PluginId.getId(CORE_PLUGIN_ID)
   @JvmField val JAVA_PLUGIN_ID: PluginId = PluginId.getId("com.intellij.java")
-  @JvmField val JAVA_MODULE_ID: PluginId = PluginId.getId("com.intellij.modules.java")
+  @ApiStatus.Internal
+  @JvmField val JAVA_PLUGIN_ALIAS_ID: PluginId = PluginId.getId("com.intellij.modules.java")
   @JvmField val ALL_MODULES_MARKER: PluginId = PluginId.getId("com.intellij.modules.all")
   @JvmField val SPECIAL_IDEA_PLUGIN_ID: PluginId = PluginId.getId("IDEA CORE")
   @ApiStatus.Internal
@@ -90,7 +91,7 @@ object PluginManagerCore {
   @Volatile
   private var nullablePluginSet: PluginSet? = null
   private var pluginLoadingErrors: Map<PluginId, PluginNonLoadReason>? = null
-  private val pluginErrors = ArrayList<Supplier<HtmlChunk>>()
+  private val pluginErrors = ArrayList<PluginLoadingError>()
   private var pluginsToDisable: Set<PluginId>? = null
   private var pluginsToEnable: Set<PluginId>? = null
 
@@ -109,6 +110,13 @@ object PluginManagerCore {
   @Volatile
   private var thirdPartyPluginsNoteAccepted: Boolean? = null
 
+  /**
+   * Returns `true` if the IDE is running from source code **without using 'dev build'**.
+   * In this mode a single classloader is used to load all modules and plugins, and the actual layout of class-files and resources differs from the real production layout.
+   * The IDE can be started in this mode from source code using a run configuration without the 'dev build' suffix. Also, tests are often started in this mode.
+   *
+   * See also [AppMode.isRunningFromDevBuild].
+   */
   @JvmStatic
   fun isRunningFromSources(): Boolean {
     var result = isRunningFromSources
@@ -161,7 +169,7 @@ object PluginManagerCore {
   fun isLoaded(plugin: PluginDescriptor): Boolean = (plugin as? IdeaPluginDescriptorImpl)?.pluginClassLoader != null
 
   @ApiStatus.Internal
-  fun getAndClearPluginLoadingErrors(): List<Supplier<HtmlChunk>> {
+fun getAndClearPluginLoadingErrors(): List<PluginLoadingError> {
     synchronized(pluginErrors) {
       if (pluginErrors.isEmpty()) {
         return emptyList()
@@ -246,10 +254,24 @@ object PluginManagerCore {
     isDevelopedByJetBrains(plugin.organization)
 
   @JvmStatic
-  fun isDevelopedByJetBrains(vendorString: String?): Boolean = when {
+  @ApiStatus.Internal
+  fun isDevelopedExclusivelyByJetBrains(plugin: PluginDescriptor): Boolean =
+    CORE_ID == plugin.getPluginId() || SPECIAL_IDEA_PLUGIN_ID == plugin.getPluginId() ||
+    isDevelopedExclusivelyByJetBrains(plugin.getVendor()) ||
+    isDevelopedExclusivelyByJetBrains(plugin.organization)
+
+  @JvmStatic
+  fun isDevelopedByJetBrains(vendorString: String?): Boolean = isDevelopedByJetBrains(vendorString, false)
+
+  @JvmStatic
+  @ApiStatus.Internal
+  fun isDevelopedExclusivelyByJetBrains(vendorString: String?): Boolean = isDevelopedByJetBrains(vendorString, true)
+
+  @JvmStatic
+  private fun isDevelopedByJetBrains(vendorString: String?, exclusively: Boolean): Boolean = when {
     vendorString == null -> false
     isVendorJetBrains(vendorString) -> true
-    else -> vendorString.splitToSequence(',').any { isVendorJetBrains(it.trim()) }
+    else -> vendorString.splitToSequence(',').run { if (exclusively) all { isVendorJetBrains(it.trim()) } else any { isVendorJetBrains(it.trim()) } }
   }
 
   @JvmStatic
@@ -269,16 +291,17 @@ object PluginManagerCore {
   }
 
   @Suppress("LoggingSimilarMessage")
-  private fun preparePluginErrors(globalErrorsSuppliers: List<Supplier<@Nls String>>): List<Supplier<HtmlChunk>> {
+  private fun preparePluginErrors(globalErrors: List<PluginLoadingError>): List<PluginLoadingError> {
     val pluginLoadingErrors = pluginLoadingErrors ?: emptyMap()
-    if (pluginLoadingErrors.isEmpty() && globalErrorsSuppliers.isEmpty()) {
+    if (pluginLoadingErrors.isEmpty() && globalErrors.isEmpty()) {
       return emptyList()
     }
+
     // the log includes all messages, not only those which need to be reported to the user
     val loadingErrors = pluginLoadingErrors.values
     val logMessage =
       "Problems found loading plugins:\n  " +
-      (globalErrorsSuppliers.asSequence().map { it.get() } + loadingErrors.asSequence().map { it.logMessage })
+      (globalErrors.asSequence().map { it.htmlMessage.toString() } + loadingErrors.asSequence().map { it.logMessage })
         .joinToString(separator = "\n  ")
     if (isUnitTestMode || !GraphicsEnvironment.isHeadless()) {
       if (!isUnitTestMode) {
@@ -287,10 +310,10 @@ object PluginManagerCore {
       else {
         logger.info(logMessage)
       }
-      @Suppress("HardCodedStringLiteral") // drop after KTIJ-32161
-      return (globalErrorsSuppliers.asSequence() + loadingErrors.asSequence().filter { it.shouldNotifyUser }.map { Supplier { it.detailedMessage } })
-        .map { Supplier { HtmlChunk.text(it.get()) } }
-        .toList()
+      val mappedLoadingErrors = loadingErrors.asSequence()
+        .filter { it.shouldNotifyUser }
+        .map { reason -> PluginLoadingError(reason = reason, htmlMessageSupplier = { HtmlChunk.text(reason.detailedMessage) }, error = null) }
+      return (globalErrors.asSequence() + mappedLoadingErrors).toList()
     }
     else if (PlatformUtils.isFleetBackend()) {
       logger.warn(logMessage)
@@ -469,7 +492,7 @@ object PluginManagerCore {
 
   @ApiStatus.Internal
   fun initializePlugins(
-    descriptorLoadingErrors: List<Supplier<@Nls String>>,
+    descriptorLoadingErrors: List<PluginLoadingError>,
     initContext: PluginInitializationContext,
     loadingResult: PluginLoadingResult,
     coreLoader: ClassLoader,
@@ -479,11 +502,15 @@ object PluginManagerCore {
     val globalErrors = descriptorLoadingErrors.toMutableList()
     if (loadingResult.duplicateModuleMap != null) {
       for ((key, value) in loadingResult.duplicateModuleMap!!) {
-        globalErrors.add(Supplier {
-          CoreBundle.message("plugin.loading.error.module.declared.by.multiple.plugins",
-                             key,
-                             value.joinToString(separator = ("\n  ")) { it.toString() })
-        })
+        globalErrors.add(PluginLoadingError(
+          reason = null,
+          htmlMessageSupplier = Supplier {
+            HtmlChunk.text(CoreBundle.message("plugin.loading.error.module.declared.by.multiple.plugins",
+                                              key,
+                                              value.joinToString(separator = ("\n  ")) { it.toString() }))
+          },
+          error = null,
+        ))
       }
     }
 
@@ -548,7 +575,7 @@ object PluginManagerCore {
     if (!errorList.isEmpty()) {
       synchronized(pluginErrors) {
         pluginErrors.addAll(errorList)
-        pluginErrors.addAll(actions)
+        pluginErrors.addAll(actions.map { PluginLoadingError(reason = null, htmlMessageSupplier = it, error = null) })
       }
     }
 
@@ -721,7 +748,7 @@ object PluginManagerCore {
   }
 
   internal suspend fun initializeAndSetPlugins(
-    descriptorLoadingErrors: List<Supplier<@Nls String>>,
+    descriptorLoadingErrors: List<PluginLoadingError>,
     initContext: PluginInitializationContext,
     loadingResult: PluginLoadingResult,
   ): PluginSet {
@@ -875,7 +902,7 @@ object PluginManagerCore {
   @ApiStatus.Internal
   @Synchronized
   @JvmStatic
-  fun isUpdatedBundledPlugin(plugin: PluginDescriptor): Boolean = shadowedBundledPlugins.contains(plugin.getPluginId())
+  fun isUpdatedBundledPlugin(plugin: PluginDescriptor): Boolean = !plugin.isBundled && shadowedBundledPlugins.contains(plugin.getPluginId())
 
   private fun prepareActions(pluginNamesToDisable: Collection<String>, pluginNamesToEnable: Collection<String>): List<Supplier<HtmlChunk>> {
     if (pluginNamesToDisable.isEmpty()) {
@@ -964,6 +991,9 @@ object PluginManagerCore {
 
 
   //<editor-fold desc="Deprecated stuff.">
+  @Deprecated("The platform code should use [JAVA_PLUGIN_ALIAS_ID] instead, plugins aren't supposed to use this")
+  @JvmField val JAVA_MODULE_ID: PluginId = JAVA_PLUGIN_ALIAS_ID
+
   @ApiStatus.ScheduledForRemoval
   @Deprecated("Use {@link PluginManager#getPluginByClass}.")
   @JvmStatic
@@ -999,14 +1029,14 @@ object PluginManagerCore {
 
 @ApiStatus.Internal
 fun getPluginDistDirByClass(aClass: Class<*>): Path? {
-  val pluginDir = (aClass.classLoader as? PluginClassLoader)?.pluginDescriptor?.pluginPath
+  val pluginDir = (aClass.classLoader as? PluginAwareClassLoader)?.pluginDescriptor?.pluginPath
   if (pluginDir != null) {
     return pluginDir
   }
 
   val jarInsideLib = PathManager.getJarForClass(aClass) ?: error("Can't find plugin dist home for ${aClass.simpleName}")
   if (jarInsideLib.fileName.toString().endsWith("jar", ignoreCase = true)) {
-    PathManager.getArchivedCompliedClassesLocation()?.let {
+    ArchivedCompilationContextUtil.archivedCompiledClassesLocation?.let {
       if (jarInsideLib.startsWith(it)) return null
     }
     return jarInsideLib
@@ -1065,14 +1095,18 @@ fun pluginRequiresUltimatePlugin(rootDescriptor: IdeaPluginDescriptorImpl,
   }
 }
 
+/**
+ * Checks if the class is a part of the platform or included to a built-in plugin provided by JetBrains vendor.
+ */
 @ApiStatus.Internal
 @IntellijInternalApi
-fun isPlatformOrJetBrainsBundled(aClass: Class<*>): Boolean {
+fun isPlatformOrJetBrainsDistributionPlugin(aClass: Class<*>): Boolean {
   val classLoader = aClass.classLoader
   when {
     classLoader is PluginAwareClassLoader -> {
       val plugin = classLoader.pluginDescriptor
-      return plugin.isBundled && PluginManagerCore.isDevelopedByJetBrains(plugin)
+      return (plugin.isBundled || PluginManagerCore.isUpdatedBundledPlugin(plugin))
+             && PluginManagerCore.isDevelopedByJetBrains(plugin)
     }
     PluginManagerCore.isRunningFromSources() -> {
       return true

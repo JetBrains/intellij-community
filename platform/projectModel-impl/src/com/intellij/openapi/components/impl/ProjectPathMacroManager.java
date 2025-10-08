@@ -6,6 +6,8 @@ import com.intellij.openapi.application.PathMacros;
 import com.intellij.openapi.components.ExpandMacroToPathMap;
 import com.intellij.openapi.components.PathMacroManager;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.util.io.FileUtilRt;
+import com.intellij.project.ProjectStoreOwner;
 import com.intellij.serviceContainer.NonInjectable;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -16,15 +18,23 @@ import java.util.Map;
 import java.util.function.Supplier;
 
 public class ProjectPathMacroManager extends PathMacroManager {
-  private final @NotNull Supplier<@Nullable @SystemIndependent String> myProjectFilePathPointer;
-  private final @NotNull Supplier<@Nullable @SystemIndependent String> myBasePathPointer;
-  private final @Nullable Supplier<@NotNull @SystemIndependent String> myNamePointer;
+  private final @NotNull Supplier<@Nullable @SystemIndependent String> projectFilePathPointer;
+  private final @NotNull Supplier<@Nullable @SystemIndependent String> basePathPointer;
+  private final @Nullable Supplier<@NotNull @SystemIndependent String> namePointer;
 
   public ProjectPathMacroManager(@NotNull Project project) {
     super(PathMacros.getInstance());
-    myProjectFilePathPointer = project::getProjectFilePath;
-    myBasePathPointer = project::getBasePath;
-    myNamePointer = !project.isDefault() ? project::getName : null;
+
+    projectFilePathPointer = project::getProjectFilePath;
+    basePathPointer = () -> {
+      if (project instanceof ProjectStoreOwner projectStoreOwner) {
+        return FileUtilRt.toSystemIndependentName(projectStoreOwner.getComponentStore().getStoreDescriptor().getHistoricalProjectBasePath().toString());
+      }
+      else {
+        return project.getBasePath();
+      }
+    };
+    namePointer = project.isDefault() ? null : project::getName;
   }
 
   @NonInjectable
@@ -32,19 +42,19 @@ public class ProjectPathMacroManager extends PathMacroManager {
                                   @NotNull Supplier<@Nullable @SystemIndependent String> basePathPointer,
                                   @Nullable Supplier<@NotNull @SystemIndependent String> namePointer) {
     super(PathMacros.getInstance());
-    myProjectFilePathPointer = projectFilePathPointer;
-    myBasePathPointer = basePathPointer;
-    myNamePointer = namePointer;
+    this.projectFilePathPointer = projectFilePathPointer;
+    this.basePathPointer = basePathPointer;
+    this.namePointer = namePointer;
   }
 
   @Override
   public @NotNull ExpandMacroToPathMap getExpandMacroMap() {
     ExpandMacroToPathMap result = super.getExpandMacroMap();
-    addFileHierarchyReplacements(result, PathMacroUtil.PROJECT_DIR_MACRO_NAME, myBasePathPointer.get());
-    if (myNamePointer != null) {
-      result.addMacroExpand(PathMacroUtil.PROJECT_NAME_MACRO_NAME, myNamePointer.get());
+    addFileHierarchyReplacements(result, PathMacroUtil.PROJECT_DIR_MACRO_NAME, basePathPointer.get());
+    if (namePointer != null) {
+      result.addMacroExpand(PathMacroUtil.PROJECT_NAME_MACRO_NAME, namePointer.get());
     }
-    String projectFile = myProjectFilePathPointer.get();
+    String projectFile = projectFilePathPointer.get();
     if (projectFile != null) {
       for (Map.Entry<String, String> entry : ProjectWidePathMacroContributor.getAllMacros(projectFile).entrySet()) {
         result.addMacroExpand(entry.getKey(), entry.getValue());
@@ -56,8 +66,8 @@ public class ProjectPathMacroManager extends PathMacroManager {
   @Override
   protected @NotNull ReplacePathToMacroMap computeReplacePathMap() {
     ReplacePathToMacroMap result = super.computeReplacePathMap();
-    addFileHierarchyReplacements(result, PathMacroUtil.PROJECT_DIR_MACRO_NAME, myBasePathPointer.get(), null);
-    String projectFile = myProjectFilePathPointer.get();
+    addFileHierarchyReplacements(result, PathMacroUtil.PROJECT_DIR_MACRO_NAME, basePathPointer.get(), null);
+    String projectFile = projectFilePathPointer.get();
     if (projectFile != null) {
       for (Map.Entry<String, String> entry : ProjectWidePathMacroContributor.getAllMacros(projectFile).entrySet()) {
         result.addMacroReplacement(entry.getValue(), entry.getKey());

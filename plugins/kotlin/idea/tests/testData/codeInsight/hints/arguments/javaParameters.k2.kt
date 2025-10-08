@@ -14,7 +14,7 @@ fun javaParameters() {
     some.doNotInvokeMe(/* index= */ 0, /* ...args= */ "a", "b")
     some.doNotInvokeMe(/* index = */ 0, /* ...names = */ /*<# …|[javaParameters.dependency.java:136]args| = #>*/"a", "b")
 
-    some.singleParamDslWithSameParamName(/*<# [javaParameters.dependency.java:207]singleParamDslWithSameParamNam…| = #>*/"no hint param name equals method name")
-    some.sameFirstParamNameAndVararg(/*<# [javaParameters.dependency.java:301]sameFirstParamNameAndVararg| = #>*/"no hint param name equals method name")
-    some.sameFirstParamNameAndVararg(/*<# [javaParameters.dependency.java:301]sameFirstParamNameAndVararg| = #>*/"no hint param name equals method name", /*<# …|[javaParameters.dependency.java:340]variables| = #>*/123)
+    some.singleParamDslWithSameParamName("no hint param name equals method name")
+    some.sameFirstParamNameAndVararg(/*<# [javaParameters.dependency.java:274]name| = #>*/"no hint param name equals method name")
+    some.sameFirstParamNameAndVararg(/*<# [javaParameters.dependency.java:274]name| = #>*/"no hint param name equals method name", /*<# …|[javaParameters.dependency.java:290]variables| = #>*/123)
 }

@@ -6,9 +6,11 @@ import com.intellij.openapi.progress.ProcessCanceledException;
 import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.vfs.VirtualFileWithId;
+import com.intellij.serviceContainer.AlreadyDisposedException;
 import com.intellij.util.containers.ConcurrentIntObjectMap;
 import com.intellij.util.containers.ContainerUtil;
-import com.intellij.util.indexing.*;
+import com.intellij.util.indexing.FileBasedIndex;
+import com.intellij.util.indexing.FileBasedIndexEx;
 import org.intellij.lang.annotations.MagicConstant;
 import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.ApiStatus.Internal;
@@ -100,7 +102,14 @@ public final class VfsEventsMerger {
               return false;
             }
           }
-          catch (ProcessCanceledException pce) { // todo remove (IJPL-9805)
+          catch (AlreadyDisposedException e) {
+            throw e;
+          }
+          catch (ProcessCanceledException pce) {
+            //TODO: IJPL-9805 states it should be no PCE here, but it is strange:
+            // 1) .checkCanceled() just a few lines above
+            // 2) ADE is unavoidable (e.g. VFS is closed by ShutDownTracker)
+            //Maybe drop this try-catch at all, and rely on general catch(Throwable) below?
             ((FileBasedIndexEx)FileBasedIndex.getInstance()).getLogger().error(new RuntimeException(pce));
             assert false;
           }

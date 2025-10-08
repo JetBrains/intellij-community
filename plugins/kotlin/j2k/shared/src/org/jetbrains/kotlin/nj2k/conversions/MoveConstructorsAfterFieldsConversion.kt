@@ -2,14 +2,15 @@
 
 package org.jetbrains.kotlin.nj2k.conversions
 
-import org.jetbrains.kotlin.analysis.api.KaSession
 import org.jetbrains.kotlin.j2k.ConverterContext
-import org.jetbrains.kotlin.nj2k.*
+import org.jetbrains.kotlin.nj2k.RecursiveConversion
+import org.jetbrains.kotlin.nj2k.assignmentStatement
+import org.jetbrains.kotlin.nj2k.forEachDescendantOfType
 import org.jetbrains.kotlin.nj2k.symbols.JKUniverseFieldSymbol
 import org.jetbrains.kotlin.nj2k.tree.*
+import org.jetbrains.kotlin.nj2k.unboxFieldReference
 
 class MoveConstructorsAfterFieldsConversion(context: ConverterContext) : RecursiveConversion(context) {
-    context(_: KaSession)
     override fun applyToElement(element: JKTreeElement): JKTreeElement {
         if (element !is JKClassBody) return recurse(element)
         if (element.declarations.none { it is JKInitDeclaration }) return recurse(element)

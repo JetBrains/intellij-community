@@ -41,7 +41,7 @@ public final class MapReplaceableByEnumMapInspection extends BaseInspection {
   }
 
   @Override
-  public BaseInspectionVisitor buildVisitor() {
+  public @NotNull BaseInspectionVisitor buildVisitor() {
     return new MapReplaceableByEnumMapVisitor();
   }
 

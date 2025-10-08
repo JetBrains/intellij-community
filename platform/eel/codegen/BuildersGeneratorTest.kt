@@ -474,11 +474,33 @@ private fun findBuilders(psiFile: PsiFile, methods: MutableList<BuilderRequest>)
         element is KtImportDirective -> {
           imports += element.text
         }
-        element is KtAnnotationEntry && element.typeReference?.renderWithFqnTypes() == "com.intellij.platform.eel.GeneratedBuilder" -> {
+        element is KtAnnotationEntry && element.typeReference?.renderWithFqnTypes()?.contains("GeneratedBuilder") ?: false -> {
           val valueParameter = element.parent.parent as? KtParameter ?: return
+
+          // Resolves the fully qualified type name for a value parameter by analyzing annotation arguments.
+          // First attempts to extract the type from a class literal expression in the annotation's first argument,
+          // then falls back to the value parameter's declared type if no annotation type is found.
+          // Filters out the GeneratedBuilder type and ensures type compatibility before returning the FQN.
           val typeFqn = analyze(valueParameter) {
-            valueParameter.typeReference?.type?.toString()?.replace("/", ".") ?: return
+            val valueParameterType = valueParameter.typeReference?.type ?: error("Parameter type is null")
+            val valueParameterTypeFqn = valueParameterType.toString().replace("/", ".")
+
+            val annotationParameterExpression = (element.valueArguments.firstOrNull() as KtValueArgument?)?.getArgumentExpression() as KtClassLiteralExpression?
+            if (annotationParameterExpression == null) return@analyze valueParameterTypeFqn
+
+            return@analyze analyze(annotationParameterExpression) {
+              val annotationParameterType = annotationParameterExpression.receiverType ?: return@analyze null
+              val annotationParameterTypeFqn = annotationParameterType.toString().replace("/", ".").takeIf {
+                it != "com.intellij.platform.eel.GeneratedBuilder"
+              }
+              if (annotationParameterTypeFqn == null) return@analyze null
+
+              assert(annotationParameterType.isSubtypeOf(valueParameterType)) { "Specified type $this is not a subtype of the value parameter type $valueParameterType" }
+
+              return@analyze annotationParameterTypeFqn
+            } ?: valueParameterTypeFqn
           }
+
           val fn = valueParameter.parent.parent as? KtNamedFunction ?: return
           val methodName = fn.name ?: return
           val methodCls = valueParameter.containingClass()?.fqName ?: return

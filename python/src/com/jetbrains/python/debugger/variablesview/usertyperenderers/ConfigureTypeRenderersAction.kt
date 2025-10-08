@@ -6,14 +6,15 @@ import com.intellij.openapi.actionSystem.AnActionEvent
 import com.intellij.openapi.options.ShowSettingsUtil
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.project.ProjectManager
+import com.intellij.openapi.util.NlsSafe
 import com.intellij.psi.search.GlobalSearchScope
 import com.intellij.ui.SimpleTextAttributes
 import com.intellij.util.ui.JBUI
 import com.intellij.xdebugger.frame.XDebuggerTreeNodeHyperlink
+import com.intellij.xdebugger.frame.XValue
 import com.intellij.xdebugger.frame.XValueChildrenList
 import com.intellij.xdebugger.impl.ui.DebuggerUIUtil
-import com.intellij.xdebugger.impl.ui.tree.actions.XDebuggerTreeActionBase
-import com.intellij.xdebugger.impl.ui.tree.nodes.XValueNodeImpl
+import com.intellij.xdebugger.impl.ui.tree.actions.XDebuggerTreeBackendOnlyActionBase
 import com.jetbrains.python.PyBundle
 import com.jetbrains.python.debugger.PyDebugProcess
 import com.jetbrains.python.debugger.PyDebugValue
@@ -71,7 +72,7 @@ fun loadTypeRendererChildren(frameAccessor: PyFrameAccessor,
   return childrenList
 }
 
-class ConfigureTypeRenderersAction : XDebuggerTreeActionBase() {
+class ConfigureTypeRenderersAction : XDebuggerTreeBackendOnlyActionBase() {
   init {
     templatePresentation.text = PyBundle.message("action.PyDebugger.CustomizeDataView.text")
   }
@@ -80,12 +81,12 @@ class ConfigureTypeRenderersAction : XDebuggerTreeActionBase() {
 
   override fun update(e: AnActionEvent) {
     e.presentation.isEnabledAndVisible = DebuggerUIUtil.getSession(e)?.debugProcess is PyDebugProcess &&
-                                         getSelectedNodes(e.dataContext).size == 1
+                                         getSelectedValues(e.dataContext).size == 1
   }
 
-  override fun perform(node: XValueNodeImpl, nodeName: String, e: AnActionEvent) {
+  override fun perform(value: XValue, nodeName: @NlsSafe String, e: AnActionEvent) {
     val project = e.project ?: ProjectManager.getInstance().defaultProject
-    val debugValue = node.valueContainer as? PyDebugValue ?: return
+    val debugValue = value as? PyDebugValue ?: return
     val typeRendererId = debugValue.typeRendererId
     if (typeRendererId == null) {
       showSettingsWithNewRenderer(project, debugValue)

@@ -70,7 +70,7 @@ public class JavaFeatureSpecificSanityTest extends LightJavaCodeInsightFixtureTe
   }
 
   private void enableInspections() {
-    MadTestingUtil.enableAllInspections(getProject(), JavaLanguage.INSTANCE, "GrazieInspection");
+    MadTestingUtil.enableAllInspections(getProject(), JavaLanguage.INSTANCE, "GrazieInspection", "GrazieStyle");
     RecursionManager.disableMissedCacheAssertions(getTestRootDisposable()); // https://youtrack.jetbrains.com/issue/IDEA-228814
   }
 

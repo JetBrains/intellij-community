@@ -21,7 +21,7 @@
   <depends optional="true" config-file="gradle-toml-integration.xml">org.toml.lang</depends>
   <depends optional="true" config-file="gradle-performance-plugin-support.xml">com.jetbrains.performancePlugin</depends>
 
-  <content>
+  <content namespace="jetbrains">
     <module name="intellij.gradle.profiler"/>
     <module name="intellij.gradle.java.maven"/>
     <module name="intellij.gradle.analysis"/>
@@ -57,12 +57,15 @@
     <projectResolve implementation="org.jetbrains.plugins.gradle.service.project.MavenRepositoriesProjectResolver"/>
     <projectResolve implementation="org.jetbrains.plugins.gradle.service.project.JavaGradleManifestResolver"/>
     <projectResolve implementation="org.jetbrains.plugins.gradle.service.project.ProjectRepositoriesResolver"/>
+    <executionEnvironmentProvider implementation="org.jetbrains.plugins.gradle.execution.build.GroovyGradleApplicationEnvironmentProvider"/>
     <executionEnvironmentProvider implementation="org.jetbrains.plugins.gradle.execution.build.GradleApplicationEnvironmentProvider"/>
 
     <settingsControlProvider implementation="org.jetbrains.plugins.gradle.service.settings.JavaGradleSettingsControlProvider"/>
     <frameworkSupport implementation="org.jetbrains.plugins.gradle.frameworkSupport.GradleJavaFrameworkSupportProvider"/>
     <kotlinDslFrameworkSupport implementation="org.jetbrains.plugins.gradle.frameworkSupport.KotlinDslGradleJavaFrameworkSupportProvider" />
     <targetEnvironmentAware implementation="org.jetbrains.plugins.gradle.execution.target.GradleServerDebugAware" />
+
+    <externallyHandledExtensions implementation="org.jetbrains.plugins.gradle.service.resolve.GradleWsmVersionCatalogHandler" order="first"/>
   </extensions>
 
   <extensions defaultExtensionNs="com.intellij">

@@ -254,11 +254,11 @@ class PluginHasDuplicateContentModuleDeclaration(
   val moduleId: PluginModuleId,
 ): PluginNonLoadReason {
   override val detailedMessage: @NlsContexts.DetailedDescription String
-    get() = CoreBundle.message("plugin.loading.error.long.content.modules.are.invalid.duplicate.module", plugin.name, moduleId)
+    get() = CoreBundle.message("plugin.loading.error.long.content.modules.are.invalid.duplicate.module", plugin.name, moduleId.id)
   override val shortMessage: @NlsContexts.Label String
     get() = CoreBundle.message("plugin.loading.error.short.content.modules.are.invalid.duplicate.module", plugin.name)
   override val logMessage: @NonNls String
-    get() = "Plugin '${plugin.name}' (${plugin.pluginId}) has duplicate declaration of content module '$moduleId'"
+    get() = "Plugin '${plugin.name}' (${plugin.pluginId}) has duplicate declaration of content module '${moduleId.id}'"
   override val shouldNotifyUser: Boolean
     get() = true
 }

@@ -1,8 +1,9 @@
 // Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.xdebugger.impl.frame
 
+import com.intellij.openapi.Disposable
 import com.intellij.xdebugger.frame.XExecutionStack
-import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.Deferred
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.async
@@ -17,16 +18,19 @@ import org.jetbrains.annotations.Nls
  */
 @ApiStatus.Internal
 @ApiStatus.Experimental
-open class XDebuggerExecutionStackDescriptionService(private val coroutineScope: CoroutineScope) {
+open class XDebuggerExecutionStackDescriptionService() {
 
   protected open suspend fun doGetExecutionStackDescription(stack: XExecutionStack, sessionProxy: XDebugSessionProxy): XDebuggerExecutionStackDescription = throw IllegalStateException("Not supposed to call this method")
 
   @Nls
   fun getExecutionStackDescription(stack: XExecutionStack, sessionProxy: XDebugSessionProxy): Deferred<XDebuggerExecutionStackDescription> {
-    return coroutineScope.async(Dispatchers.Default) {
+    val currentSuspendContextCoroutineScope = sessionProxy.currentSuspendContextCoroutineScope ?: throw CancellationException()
+    return currentSuspendContextCoroutineScope.async(Dispatchers.Default) {
       doGetExecutionStackDescription(stack, sessionProxy)
     }
   }
+
+  open fun getLoadDescriptionComponent(sessionProxy: XDebugSessionProxy, viewDisposable: Disposable) : XDebuggerDescriptionComponentProvider? = null
 
   open fun isAvailable(): Boolean = false
 }

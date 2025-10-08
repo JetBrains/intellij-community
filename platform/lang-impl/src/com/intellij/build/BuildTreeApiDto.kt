@@ -25,6 +25,11 @@ data class BuildNodesUpdate(
 @Serializable
 data class BuildTreeExposeRequest(val nodeId: Int?, val alsoSelect: Boolean) : BuildTreeEvent
 
+
+@Internal
+@Serializable
+data class BuildTreeFilteringState(val showSuccessful: Boolean, val showWarnings: Boolean) : BuildTreeEvent
+
 @Internal
 @Serializable
 data class BuildTreeNode(
@@ -89,10 +94,6 @@ sealed interface BuildDuration {
   @Serializable
   data class InProgress(val startTimestamp: Long) : BuildDuration
 }
-
-@Internal
-@Serializable
-data class BuildTreeFilteringState(val showSuccessful: Boolean, val showWarnings: Boolean)
 
 @Internal
 @Serializable

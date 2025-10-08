@@ -132,7 +132,7 @@ object ReplaceWithAnnotationAnalyzer {
         module: ModuleDescriptor
     ): List<ImportingScope> {
         val allDefaultImports =
-            resolutionFacade.frontendService<TargetPlatform>().findAnalyzerServices(resolutionFacade.project)
+            resolutionFacade.frontendService<TargetPlatform>().findAnalyzerServices(resolutionFacade.project).defaultImportsProvider
                 .getDefaultImports(includeLowPriorityImports = true)
         val (allUnderImports, aliasImports) = allDefaultImports.partition { it.isAllUnder }
         // this solution doesn't support aliased default imports with a different alias

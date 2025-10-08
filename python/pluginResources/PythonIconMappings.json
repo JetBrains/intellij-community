@@ -7,7 +7,7 @@
             "expui": {
               "debug": {
                 "specialVar.svg": "icons/com/jetbrains/pythonCore/python/debug/specialVar.svg",
-                "stepIntoMyCode.svg": "icons/com/jetbrains/pythonCore/python/debug/StepIntoMyCode.svg"
+                "stepIntoMyCode.svg": "icons/com/jetbrains/pythonCore/python/debug/stepIntoMyCode.svg"
               },
               "anaconda.svg": "icons/com/jetbrains/pythonCore/python/anaconda.svg",
               "attachDebugger.svg": "icons/com/jetbrains/pythonCore/python/attachDebugger.svg",
@@ -25,7 +25,8 @@
               "ssh.svg": "icons/com/jetbrains/pythonCore/python/ssh.svg",
               "templateRoot.svg": "icons/com/jetbrains/pythonCore/python/templateRoot.svg",
               "vagrant.svg": "icons/com/jetbrains/pythonCore/python/vagrant.svg",
-              "virtualEnv.svg": "icons/com/jetbrains/pythonCore/python/virtualenv.svg"
+              "virtualEnv.svg": "icons/com/jetbrains/pythonCore/python/virtualenv.svg",
+              "viewAsImage.svg": "icons/com/jetbrains/pythonCore/python/viewAsImage.svg"
             }
           }
         }

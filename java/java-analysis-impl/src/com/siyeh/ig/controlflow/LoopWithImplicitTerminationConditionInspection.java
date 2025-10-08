@@ -123,7 +123,7 @@ public final class LoopWithImplicitTerminationConditionInspection
   }
 
   @Override
-  public BaseInspectionVisitor buildVisitor() {
+  public @NotNull BaseInspectionVisitor buildVisitor() {
     return new LoopWithImplicitTerminationConditionVisitor();
   }
 

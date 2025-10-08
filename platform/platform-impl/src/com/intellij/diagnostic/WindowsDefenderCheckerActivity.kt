@@ -19,6 +19,8 @@ import com.intellij.openapi.project.guessProjectDir
 import com.intellij.openapi.startup.ProjectActivity
 import com.intellij.openapi.util.IntellijInternalApi
 import com.intellij.openapi.util.registry.Registry
+import com.intellij.platform.eel.isWindows
+import com.intellij.platform.eel.provider.utils.JEelUtils
 import com.intellij.platform.ide.CoreUiCoroutineScopeHolder
 import com.intellij.platform.ide.progress.withBackgroundProgress
 import com.intellij.util.io.computeDetached
@@ -107,6 +109,9 @@ internal class WindowsDefenderCheckerActivity : ProjectActivity {
     }
 
     val projectDir = project.guessProjectDir()?.let { it.fileSystem.getNioPath(it) }
+    if (isOnWindows(projectDir) == false) {
+      return
+    }
     if (projectDir != null && checker.isUntrustworthyLocation(projectDir)) {
       LOG.info("untrustworthy location: ${projectDir}")
       return
@@ -133,6 +138,9 @@ internal class WindowsDefenderCheckerActivity : ProjectActivity {
       .apply { collapseDirection = Notification.CollapseActionsDirection.KEEP_LEFTMOST }
       .notify(project)
   }
+
+  private fun isOnWindows(projectDir: Path?): Boolean? =
+    projectDir?.let{JEelUtils.toEelPath(it)?.descriptor?.osFamily?.isWindows}
 
   private fun updateDefenderConfig(checker: WindowsDefenderChecker, project: Project, paths: List<Path>) {
     runAndNotify(project) { checker.excludeProjectPaths(project, paths) }

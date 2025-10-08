@@ -118,7 +118,7 @@ public final class ConvertClosureToMethodIntention extends Intention {
     final GrClosableBlock block = (GrClosableBlock)field.getInitializerGroovy();
 
     final GrModifierList modifierList = field.getModifierList();
-    if (modifierList.getModifiers().length > 0 || modifierList.getAnnotations().length > 0) {
+    if (modifierList.getModifiers().length > 0 || modifierList.hasAnnotations()) {
       builder.append(modifierList.getText());
     }
     else {

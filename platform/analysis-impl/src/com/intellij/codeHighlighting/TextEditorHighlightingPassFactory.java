@@ -4,6 +4,7 @@ package com.intellij.codeHighlighting;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.project.PossiblyDumbAware;
 import com.intellij.psi.PsiFile;
+import com.intellij.util.concurrency.annotations.RequiresBackgroundThread;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -20,5 +21,6 @@ public interface TextEditorHighlightingPassFactory extends PossiblyDumbAware {
    * For example, read action should be acquired before accessing PSI.
    */
   @Nullable
+  @RequiresBackgroundThread
   TextEditorHighlightingPass createHighlightingPass(@NotNull PsiFile psiFile, @NotNull Editor editor);
 }

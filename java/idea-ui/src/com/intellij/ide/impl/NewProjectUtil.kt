@@ -268,7 +268,7 @@ suspend fun createProjectFromWizardImpl(wizard: AbstractProjectWizard, projectFi
       }
 
       serviceAsync<TrustedPaths>().setProjectPathTrusted(projectDir, true)
-      (serviceAsync<ProjectManager>() as ProjectManagerEx).openProjectAsync(projectStoreBaseDir = projectDir, options = options)
+      (serviceAsync<ProjectManager>() as ProjectManagerEx).openProjectAsync(projectIdentityFile = projectDir, options = options)
     }
     if (!ApplicationManager.getApplication().isUnitTestMode) {
       serviceAsync<SaveAndSyncHandler>().scheduleProjectSave(newProject)

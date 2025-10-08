@@ -1,0 +1,18 @@
+### auto-generated section `build intellij.libraries.kotlinx.coroutines.slf4j` start
+load("@rules_jvm//:jvm.bzl", "jvm_library", "resourcegroup")
+
+resourcegroup(
+  name = "slf4j_resources",
+  srcs = glob(["resources/**/*"]),
+  strip_prefix = "resources"
+)
+
+jvm_library(
+  name = "slf4j",
+  visibility = ["//visibility:public"],
+  srcs = glob([], allow_empty = True),
+  resources = [":slf4j_resources"],
+  exports = ["@lib//:kotlinx-coroutines-slf4j"],
+  runtime_deps = ["@lib//:kotlinx-coroutines-slf4j"]
+)
+### auto-generated section `build intellij.libraries.kotlinx.coroutines.slf4j` end

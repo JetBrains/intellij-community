@@ -59,10 +59,6 @@ class DummyChangesView implements ChangesViewEx {
   }
 
   @Override
-  public void refreshImmediately() {
-  }
-
-  @Override
   public @NotNull Promise<?> promiseRefresh(@NotNull ModalityState modalityState) {
     return resolvedPromise();
   }

@@ -1,6 +1,7 @@
 // Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.plugins.terminal.block.output
 
+import com.intellij.find.EditorSearchSession
 import com.intellij.find.SearchReplaceComponent
 import com.intellij.openapi.Disposable
 import com.intellij.openapi.actionSystem.CommonDataKeys
@@ -16,7 +17,6 @@ import com.intellij.util.concurrency.annotations.RequiresEdt
 import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.plugins.terminal.block.TerminalFocusModel
 import org.jetbrains.plugins.terminal.block.session.BlockTerminalSession
-import org.jetbrains.plugins.terminal.block.ui.TerminalUi.useTerminalDefaultBackground
 import org.jetbrains.plugins.terminal.block.ui.TerminalUiUtils
 import org.jetbrains.plugins.terminal.block.ui.stickScrollBarToBottom
 import java.awt.Component
@@ -69,7 +69,6 @@ class TerminalOutputView(
     val document = DocumentImpl("", true)
     val editor = TerminalUiUtils.createOutputEditor(document, project, settings, installContextMenu = true)
     editor.settings.isUseSoftWraps = true
-    editor.useTerminalDefaultBackground(this)
     stickScrollBarToBottom(editor.scrollPane.verticalScrollBar)
     return editor
   }
@@ -93,10 +92,12 @@ class TerminalOutputView(
     }
 
     override fun doLayout() {
+      val searchReplaceComponent = EditorSearchSession.getSearchReplaceComponent(editor)
+
       for (component in components) {
         when (component) {
           editor.component -> layoutEditor(component)
-          is SearchReplaceComponent -> layoutSearchComponent(component)
+          searchReplaceComponent -> layoutSearchComponent(component)
         }
       }
     }

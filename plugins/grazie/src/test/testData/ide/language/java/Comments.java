@@ -45,7 +45,7 @@ class ForMultiLanguageSupport {
 
   // We don't use the PHP php_strip_whitespace() function
 
-  // If Content-Type is set to text/html, or is unset -> <GRAMMAR_ERROR descr="FILE_EXTENSIONS_CASE">html</GRAMMAR_ERROR>
+  // If Content-Type is set to text/html, or is unset -> <GRAMMAR_ERROR descr="Grazie.RuleEngine.En.Spelling.PROPER_NAMES">html</GRAMMAR_ERROR>
 
   /*
   for(;;)

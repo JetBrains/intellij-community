@@ -1,7 +1,7 @@
 package com.intellij.tools.launch.ide
 
 import com.intellij.execution.CommandLineWrapperUtil
-import com.intellij.openapi.application.PathManager
+import com.intellij.openapi.application.ArchivedCompilationContextUtil
 import com.intellij.openapi.util.io.FileUtil
 import com.intellij.tools.launch.PathsProvider
 import com.intellij.util.SystemProperties
@@ -66,7 +66,7 @@ class ClassPathBuilder(private val paths: PathsProvider, private val modulesToSc
     JpsProjectLoader.loadProject(model.project, pathVariables, paths.sourcesRootFolder.toPath())
 
     val productionOutput = paths.outputRootFolder.resolve("production")
-    if (!productionOutput.isDirectory && PathManager.getArchivedCompiledClassesMapping() == null) {
+    if (!productionOutput.isDirectory && ArchivedCompilationContextUtil.archivedCompiledClassesMapping == null) {
       error("Production classes output directory is missing: $productionOutput")
     }
 
@@ -113,7 +113,7 @@ class ClassPathBuilder(private val paths: PathsProvider, private val modulesToSc
   }
 
   private fun Collection<Path>.replaceWithArchivedIfNeeded(): Collection<Path> {
-    val mapping = PathManager.getArchivedCompiledClassesMapping() ?: return this
+    val mapping = ArchivedCompilationContextUtil.archivedCompiledClassesMapping ?: return this
     return map { path ->
       if (Files.isRegularFile(path)) path
       // path is absolute, mapping contains only the last two path elements

@@ -2,7 +2,7 @@
 assertJ = "3.26.3"
 coil = "3.2.0"
 commonmark = "0.24.0"
-composeDesktop = "1.9.0-beta03"
+composeDesktop = "1.10.0-alpha01"
 detekt = "1.23.8"
 dokka = "2.0.0"
 filepicker = "3.1.0"
@@ -33,7 +33,6 @@ commonmark-ext-gfm-tables = { module = "org.commonmark:commonmark-ext-gfm-tables
 detekt-api = { module = "io.gitlab.arturbosch.detekt:detekt-api", version.ref = "detekt" }
 detekt-core = { module = "io.gitlab.arturbosch.detekt:detekt-core", version.ref = "detekt" }
 detekt-test = { module = "io.gitlab.arturbosch.detekt:detekt-test", version.ref = "detekt" }
-filePicker = { module = "com.darkrockstudios:mpfilepicker", version.ref = "filepicker" }
 intellijPlatform-icons = { module = "com.jetbrains.intellij.platform:icons", version.ref = "intelliJPlatformBuild" }
 intellijPlatform-util-ui = { module = "com.jetbrains.intellij.platform:util-ui", version.ref = "intelliJPlatformBuild" }
 jbr-api = { module = "org.jetbrains.runtime:jbr-api", version.ref = "jbr" }

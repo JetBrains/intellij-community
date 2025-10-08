@@ -16,7 +16,6 @@ import com.intellij.openapi.application.ModalityState
 import com.intellij.openapi.command.impl.DummyProject
 import com.intellij.openapi.command.impl.UndoManagerImpl
 import com.intellij.openapi.command.undo.UndoManager
-import com.intellij.openapi.components.StorageScheme
 import com.intellij.openapi.components.serviceIfCreated
 import com.intellij.openapi.progress.ProcessCanceledException
 import com.intellij.openapi.project.Project
@@ -98,9 +97,9 @@ open class TestProjectManager : ProjectManagerImpl() {
       }
     }
 
-    val store = if (project is ProjectStoreOwner) (project as ProjectStoreOwner).componentStore else null
+    val store = (project as? ProjectStoreOwner)?.componentStore
     if (store != null) {
-      val projectFilePath = if (store.storageScheme == StorageScheme.DIRECTORY_BASED) store.directoryStorePath!! else store.projectFilePath
+      val projectFilePath = store.directoryStorePath ?: store.projectFilePath
       for (p in openProjects) {
         if (ProjectUtil.isSameProject(projectFilePath, p)) {
           ModalityUiUtil.invokeLaterIfNeeded(ModalityState.nonModal()) { ProjectUtil.focusProjectWindow(p, false) }
@@ -115,7 +114,7 @@ open class TestProjectManager : ProjectManagerImpl() {
 
     val app = ApplicationManager.getApplication()
     try {
-      runUnderModalProgressIfIsEdt {
+      runUnderModalProgressIfIsEdt(project) {
         coroutineScope {
           runInitProjectActivities(project = project)
         }
@@ -124,7 +123,7 @@ open class TestProjectManager : ProjectManagerImpl() {
         }
       }
     }
-    catch (e: ProcessCanceledException) {
+    catch (_: ProcessCanceledException) {
       app.invokeAndWait { closeProject(project, saveProject = false, checkCanClose = false) }
       app.messageBus.syncPublisher(AppLifecycleListener.TOPIC).projectOpenFailed()
       return false
@@ -149,8 +148,8 @@ open class TestProjectManager : ProjectManagerImpl() {
     }
   }
 
-  override suspend fun instantiateProject(projectStoreBaseDir: Path, projectName: String?, beforeInit: ((Project) -> Unit)?): ProjectImpl {
-    val project = super.instantiateProject(projectStoreBaseDir, projectName, beforeInit)
+  override suspend fun instantiateProject(identityFle: Path, projectName: String?, beforeInit: ((Project) -> Unit)?): ProjectImpl {
+    val project = super.instantiateProject(identityFle, projectName, beforeInit)
     totalCreatedProjectCount++
     trackProject(project)
     return project

@@ -1,9 +1,9 @@
 ### auto-generated section `build kotlin.code-insight.k1` start
-load("@rules_jvm//:jvm.bzl", "jvm_library", "jvm_resources")
+load("@rules_jvm//:jvm.bzl", "jvm_library", "resourcegroup")
 
-jvm_resources(
+resourcegroup(
   name = "kotlin-code-insight-k1_resources",
-  files = glob(["resources/**/*"]),
+  srcs = glob(["resources/**/*"]),
   strip_prefix = "resources"
 )
 
@@ -12,6 +12,7 @@ jvm_library(
   module_name = "kotlin.code-insight.k1",
   visibility = ["//visibility:public"],
   srcs = glob(["src/**/*.kt", "src/**/*.java", "src/**/*.form"], allow_empty = True),
+  resources = [":kotlin-code-insight-k1_resources"],
   deps = [
     "@lib//:kotlin-stdlib",
     "@lib//:kotlinc-kotlin-compiler-common",
@@ -24,8 +25,8 @@ jvm_library(
     "@lib//:kotlinc-kotlin-compiler-fe10",
     "//java/java-psi-api:psi",
     "//platform/lang-impl",
-  ],
-  runtime_deps = [":kotlin-code-insight-k1_resources"]
+    "//plugins/kotlin/kotlin.ide:ide",
+  ]
 )
 
 jvm_library(
@@ -56,8 +57,8 @@ jvm_library(
     "//plugins/kotlin/tests-common:tests-common_test_lib",
     "//plugins/kotlin/plugin/k1",
     "//platform/lang-impl",
-  ],
-  runtime_deps = [":kotlin-code-insight-k1_resources"]
+    "//plugins/kotlin/kotlin.ide:ide",
+  ]
 )
 ### auto-generated section `build kotlin.code-insight.k1` end
 

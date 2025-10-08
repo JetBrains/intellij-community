@@ -1,9 +1,9 @@
 ### auto-generated section `build intellij.platform.resources` start
-load("@rules_jvm//:jvm.bzl", "jvm_library", "jvm_resources")
+load("@rules_jvm//:jvm.bzl", "jvm_library", "resourcegroup")
 
-jvm_resources(
+resourcegroup(
   name = "resources_resources",
-  files = glob(["src/**/*"]),
+  srcs = glob(["src/**/*"]),
   strip_prefix = "src"
 )
 
@@ -11,9 +11,7 @@ jvm_library(
   name = "resources",
   visibility = ["//visibility:public"],
   srcs = glob([], allow_empty = True),
-  runtime_deps = [
-    ":resources_resources",
-    "//platform/platform-impl/concurrency",
-  ]
+  resources = [":resources_resources"],
+  runtime_deps = ["//platform/platform-impl/concurrency"]
 )
 ### auto-generated section `build intellij.platform.resources` end

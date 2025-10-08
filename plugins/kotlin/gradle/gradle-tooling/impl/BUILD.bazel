@@ -1,9 +1,9 @@
 ### auto-generated section `build kotlin.gradle.gradle-tooling.impl` start
-load("@rules_jvm//:jvm.bzl", "jvm_library", "jvm_provided_library", "jvm_resources")
+load("@rules_jvm//:jvm.bzl", "jvm_library", "jvm_provided_library", "resourcegroup")
 
-jvm_resources(
+resourcegroup(
   name = "impl_resources",
-  files = glob(["resources/**/*"]),
+  srcs = glob(["resources/**/*"]),
   strip_prefix = "resources"
 )
 
@@ -17,10 +17,11 @@ jvm_library(
   module_name = "kotlin.gradle.gradle-tooling.impl",
   visibility = ["//visibility:public"],
   srcs = glob(["src/**/*.kt", "src/**/*.java", "src/**/*.form"], allow_empty = True),
+  resources = [":impl_resources"],
   kotlinc_opts = "@community//:k8",
   deps = [
     "@lib//:kotlin-stdlib",
-    "@lib//:kotlin-reflect",
+    "//libraries/kotlin-reflect",
     "@lib//:kotlin-tooling-core",
     "@lib//:kotlin-gradle-plugin-idea-proto",
     "@lib//:kotlin-gradle-plugin-idea",
@@ -30,8 +31,7 @@ jvm_library(
     "//plugins/gradle/tooling-extension-api:toolingExtension",
     "//plugins/gradle/tooling-extension-impl:toolingExtension-impl",
     ":platform_extensions_provided",
-  ],
-  runtime_deps = [":impl_resources"]
+  ]
 )
 
 jvm_library(
@@ -42,7 +42,7 @@ jvm_library(
   associates = [":impl"],
   deps = [
     "@lib//:kotlin-stdlib",
-    "@lib//:kotlin-reflect",
+    "//libraries/kotlin-reflect",
     "@lib//:kotlin-tooling-core",
     "@lib//:kotlin-gradle-plugin-idea-proto",
     "@lib//:kotlin-gradle-plugin-idea",
@@ -55,8 +55,7 @@ jvm_library(
     "@lib//:kotlin-test-junit",
     "@lib//:kotlin-test",
     "//platform/extensions",
-  ],
-  runtime_deps = [":impl_resources"]
+  ]
 )
 ### auto-generated section `build kotlin.gradle.gradle-tooling.impl` end
 

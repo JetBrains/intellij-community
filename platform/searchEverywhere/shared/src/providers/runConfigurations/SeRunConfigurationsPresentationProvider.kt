@@ -7,6 +7,7 @@ import com.intellij.execution.executors.DefaultRunExecutor
 import com.intellij.ide.ui.icons.rpcId
 import com.intellij.openapi.keymap.KeymapUtil
 import com.intellij.openapi.wm.ToolWindowId
+import com.intellij.platform.searchEverywhere.SeExtendedInfo
 import com.intellij.platform.searchEverywhere.SeItemPresentation
 import com.intellij.platform.searchEverywhere.SeSimpleItemPresentation
 import org.jetbrains.annotations.ApiStatus
@@ -16,7 +17,7 @@ import javax.swing.KeyStroke
 
 @ApiStatus.Internal
 object SeRunConfigurationsPresentationProvider {
-  fun getPresentation(item: ChooseRunConfigurationPopup.ItemWrapper<*>, extendedDescription: String?, isMultiSelectionSupported: Boolean): SeItemPresentation {
+  fun getPresentation(item: ChooseRunConfigurationPopup.ItemWrapper<*>, extendedInfo: SeExtendedInfo?, isMultiSelectionSupported: Boolean): SeItemPresentation {
     val debugExecutor = ExecutorRegistry.getInstance().getExecutorById(ToolWindowId.DEBUG)
     val runExecutor = DefaultRunExecutor.getRunExecutorInstance()
     val enterStroke = KeyStroke.getKeyStroke(KeyEvent.VK_ENTER, 0)
@@ -41,7 +42,7 @@ object SeRunConfigurationsPresentationProvider {
     return SeSimpleItemPresentation(iconId = item.icon?.rpcId(),
                                     text = item.text,
                                     description = descriptionText.toString(),
-                                    extendedDescription = extendedDescription,
+                                    extendedInfo = extendedInfo,
                                     isMultiSelectionSupported = isMultiSelectionSupported)
   }
 }

@@ -1,7 +1,13 @@
 // Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.grazie.utils
 
+import ai.grazie.rules.RuleClient
+import ai.grazie.rules.settings.TextStyle
+import com.intellij.grazie.text.TextContent
+import com.intellij.grazie.text.TextContent.TextDomain
+import com.intellij.grazie.utils.TextStyleDomain.*
 import com.intellij.openapi.util.TextRange
+import com.intellij.openapi.vcs.ui.CommitMessage
 import java.util.regex.Matcher
 import java.util.regex.Pattern
 
@@ -79,7 +85,8 @@ object Text {
           inToken = true
           textTokens++
         }
-      } else {
+      }
+      else {
         inToken = false
         if ("(){}[]<>=+-*/%|&!;,.:\\@$#^".contains(c)) {
           codeChars++
@@ -137,4 +144,41 @@ object Text {
     while (end < text.length && shouldSkip(text[end])) end++
     return TextRange(start, end)
   }
+}
+
+enum class TextStyleDomain {
+  Commit, AIPrompt, CodeDocumentation, CodeComment, Other;
+
+  val textStyle: TextStyle
+    get() = when (this) {
+      Commit -> TextStyle.Commit
+      CodeComment -> TextStyle.CodeComment
+      CodeDocumentation -> TextStyle.CodeDocumentation
+      AIPrompt -> TextStyle.AIPrompt
+      else -> throw IllegalArgumentException("TextStyle can't be defined by '$this'")
+    }
+}
+
+fun TextStyle.getTextDomain(): TextStyleDomain = TextStyleDomain.entries.find { id == it.name } ?: Other
+
+fun TextContent.getTextDomain(): TextStyleDomain {
+  val style = when (this.domain) {
+    TextDomain.COMMENTS -> CodeComment
+    TextDomain.DOCUMENTATION -> CodeDocumentation
+    else -> null
+  }
+  if (style != null) return style
+  val file = this.containingFile
+  if (CommitMessage.isCommitMessage(file)) return Commit
+  if ("ChatInput" == file.getLanguage().id) return AIPrompt
+  return Other
+}
+
+fun getOtherDomainStyles(): List<TextStyle> {
+  val client = object : RuleClient {
+    override fun showIdeStyles(): Boolean {
+      return false
+    }
+  }
+  return TextStyle.styles(client)
 }

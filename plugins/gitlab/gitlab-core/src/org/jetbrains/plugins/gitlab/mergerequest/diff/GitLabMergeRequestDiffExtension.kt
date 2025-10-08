@@ -99,9 +99,9 @@ private class DiffEditorModel(
 ) : CodeReviewEditorModel<GitLabMergeRequestEditorMappedComponentModel> {
 
   override val inlays: StateFlow<Collection<GitLabMergeRequestEditorMappedComponentModel>> = combine(
-    diffVm.discussions.mapModelsToViewModels { MappedDiscussion(it) },
-    diffVm.draftDiscussions.mapModelsToViewModels { MappedDraftNote(it) },
-    diffVm.newDiscussions.mapModelsToViewModels { MappedNewDiscussion(it) }
+    diffVm.discussions.mapStatefulToStateful { MappedDiscussion(it) },
+    diffVm.draftDiscussions.mapStatefulToStateful { MappedDraftNote(it) },
+    diffVm.newDiscussions.mapStatefulToStateful { MappedNewDiscussion(it) }
   ) { discussions, drafts, new ->
     discussions + drafts + new
   }.stateInNow(cs, emptyList())

@@ -22,7 +22,7 @@ class CommentedCodeFrameRenderer(
   override fun paint(editor: Editor, highlighter: RangeHighlighter, g: Graphics) { // editor part
     val (startVisLine, endVisLine) = getVisualLines(editor)
     var x = 0f
-    var width = (editor.contentComponent.width).toFloat()
+    var width = editor.contentComponent.width.toFloat()
     val (y, height) = getYAxisValues(startVisLine, endVisLine, editor)
     if (editorSide == Side.LEFT) {
       x += scrollbarPadding
@@ -61,13 +61,13 @@ class CommentedCodeFrameRenderer(
   private fun getVisualLines(editor: Editor): Pair<Int, Int> {
     val doc = editor.document
     val startVisLine = editor.offsetToVisualPosition(doc.getLineStartOffset(startLine)).line
-    val endVisLine = editor.offsetToVisualPosition(doc.getLineEndOffset(endLine)).line
+    val endVisLine = editor.offsetToVisualPosition(doc.getLineEndOffset(endLine.coerceAtMost(editor.document.lineCount - 1))).line
     return Pair(startVisLine, endVisLine)
   }
 
   private fun getYAxisValues(startVisLine: Int, endVisLine: Int, editor: Editor): Pair<Float, Float> {
     val y = editor.visualLineToY(startVisLine).toFloat()
-    val height = (editor.lineHeight).toFloat() * (endVisLine - startVisLine + 1) + getInlaysHeightInRange(editor, startLine..<endLine)
+    val height = editor.lineHeight.toFloat() * (endVisLine - startVisLine + 1) + getInlaysHeightInRange(editor, startLine..endLine)
     return Pair(y, height)
   }
 
@@ -94,8 +94,9 @@ class CommentedCodeFrameRenderer(
   }
 
   private fun getInlaysHeightInRange(editor: Editor, range: IntRange): Int {
+    if (range.last == 0) return 0
     val startOffset = editor.document.getLineStartOffset(range.first)
-    val endOffset = editor.document.getLineEndOffset(range.last)
+    val endOffset = editor.document.getLineEndOffset(range.last - 1)
     val inlays = editor.inlayModel.getBlockElementsInRange(startOffset, endOffset)
     return inlays.sumOf { it.bounds?.height ?: 0 }
   }

@@ -59,6 +59,7 @@ public data class AsdfReleaseData(val name: String, val vendor: String, val vers
 }
 
 private const val TOOL_VERSIONS = ".tool-versions"
+private val JAVA_PATTERN: Regex = Regex("^java (.*)$", RegexOption.MULTILINE)
 
 public class ToolVersionsConfigurationProvider : ExternalJavaConfigurationProvider<AsdfReleaseData> {
   override fun isConfigurationFile(fileName: String): Boolean = fileName == TOOL_VERSIONS
@@ -74,7 +75,7 @@ public class ToolVersionsConfigurationProvider : ExternalJavaConfigurationProvid
 
   override fun getReleaseDataOffset(text: String): TextRange? {
     val releaseData = getReleaseData(text) ?: return null
-    val range = Regex("^java (.*)$", RegexOption.MULTILINE)
+    val range = JAVA_PATTERN
                   .findAll(text)
                   .firstOrNull { it.groupValues.getOrNull(1)?.contains(releaseData.name) == true }
                   ?.range ?: return null

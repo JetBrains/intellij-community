@@ -68,7 +68,7 @@ jvm_library(
     "//platform/diff-impl",
     "@lib//:assert_j",
     "//platform/core-ui",
-    "@lib//:fastutil-min",
+    "//libraries/fastutil",
     "//platform/util/jdom",
     "//xml/xml-psi-api:psi",
     "//tools/intellij.tools.ide.metrics.benchmark:ide-metrics-benchmark",

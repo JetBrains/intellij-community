@@ -57,7 +57,7 @@ public class DiffEditorHighlighterUpdater extends EditorHighlighterUpdater {
    * @see com.intellij.codeInsight.daemon.impl.EditorTrackerImpl#activeWindow
    * @see com.intellij.openapi.fileEditor.FileEditorWithTextEditors
    */
-  private static void restartHighlighterFor(@Nullable Project project, @NotNull Editor editor) {
+  private void restartHighlighterFor(@Nullable Project project, @NotNull Editor editor) {
     if (project == null) return;
 
     // Rely on com.intellij.codeInsight.daemon.impl.EditorTracker and EditorTrackerListener.TOPIC in a focused window
@@ -76,7 +76,7 @@ public class DiffEditorHighlighterUpdater extends EditorHighlighterUpdater {
       .submit(NonUrgentExecutor.getInstance())
       .onSuccess(psiFile -> {
         if (psiFile != null) {
-          DaemonCodeAnalyzer.getInstance(project).restart(psiFile);
+          DaemonCodeAnalyzer.getInstance(project).restart(psiFile, this);
         }
       });
   }

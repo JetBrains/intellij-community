@@ -1,4 +1,4 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInsight.daemon.impl.analysis;
 
 import com.intellij.codeInsight.daemon.QuickFixBundle;
@@ -333,7 +333,7 @@ public final class HighlightFixUtil {
   public static void registerFixesForExpressionStatement(@NotNull Consumer<? super CommonIntentionAction> info,
                                                          @NotNull PsiElement statement) {
     if (!(statement instanceof PsiExpressionStatement)) return;
-    if (!(statement.getParent() instanceof PsiCodeBlock block)) return; 
+    if (!(statement.getParent() instanceof PsiCodeBlock block)) return;
     PsiExpression expression = ((PsiExpressionStatement)statement).getExpression();
     if (expression instanceof PsiAssignmentExpression) return;
     PsiType type = expression.getType();
@@ -437,7 +437,7 @@ public final class HighlightFixUtil {
     }
 
     PsiResolveHelper resolveHelper = PsiResolveHelper.getInstance(methodCall.getProject());
-    CandidateInfo[] methodCandidates = resolveHelper.getReferencedMethodCandidates(methodCall, false);
+    CandidateInfo[] methodCandidates = resolveHelper.getReferencedMethodCandidates(methodCall, true);
     IntentionAction action2 = QuickFixFactory.getInstance().createSurroundWithArrayFix(methodCall, null);
     info.accept(action2);
 
@@ -846,6 +846,17 @@ public final class HighlightFixUtil {
         }
       }
     }
+    if (anchor instanceof PsiNewExpression newExpression) {
+      PsiJavaCodeReferenceElement classReference = newExpression.getClassOrAnonymousClassReference();
+      factory.createReplaceTypeWithWrongImportFixes(classReference).forEach(sink);
+    }
+    if (anchor.getParent() instanceof PsiVariable variable && variable.getTypeElement() != null &&
+        !variable.getTypeElement().isInferredType()) {
+      PsiTypeElement typeElement = variable.getTypeElement();
+      if (typeElement != null) {
+        factory.createReplaceTypeWithWrongImportFixes(typeElement.getInnermostComponentReferenceElement()).forEach(sink);
+      }
+    }
     registerChangeParameterClassFix(sink, lType, rType);
   }
 
@@ -969,7 +980,7 @@ public final class HighlightFixUtil {
    * @return true if type parameters of a class are potentially compatible with type arguments in the list
    * (that is: number of parameters is the same, and argument types are within bounds)
    */
-  private static boolean isPotentiallyCompatible(@NotNull PsiClass psiClass, @NotNull PsiReferenceParameterList referenceParameterList) {
+  public static boolean isPotentiallyCompatible(@NotNull PsiClass psiClass, @NotNull PsiReferenceParameterList referenceParameterList) {
     PsiTypeElement[] referenceElements = referenceParameterList.getTypeParameterElements();
 
     PsiTypeParameter[] typeParameters = psiClass.getTypeParameters();

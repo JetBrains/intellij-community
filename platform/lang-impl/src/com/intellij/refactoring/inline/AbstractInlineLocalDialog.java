@@ -3,7 +3,6 @@ package com.intellij.refactoring.inline;
 
 import com.intellij.openapi.editor.ex.EditorSettingsExternalizable;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.ui.DoNotAskOption;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiReference;
 import com.intellij.ui.UIBundle;
@@ -13,7 +12,7 @@ public abstract class AbstractInlineLocalDialog extends InlineOptionsDialog {
   public AbstractInlineLocalDialog(Project project, PsiElement variable, final PsiReference ref, int occurrencesCount) {
     super(project, true, variable);
     if (ref == null || occurrencesCount == 1) {
-      setDoNotAskOption(new DoNotAskOption() {
+      setDoNotAskOption(new com.intellij.openapi.ui.DoNotAskOption() {
         @Override
         public boolean isToBeShown() {
           return EditorSettingsExternalizable.getInstance().isShowInlineLocalDialog();

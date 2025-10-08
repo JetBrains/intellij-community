@@ -3,9 +3,7 @@
 
 package org.jetbrains.intellij.build
 
-import com.intellij.platform.ijent.community.buildConstants.isMultiRoutingFileSystemEnabledForProduct
 import com.intellij.platform.util.putMoreLikelyPluginJarsFirst
-import io.opentelemetry.api.common.AttributeKey
 import org.jetbrains.intellij.build.impl.ModuleOutputPatcher
 import org.jetbrains.intellij.build.impl.PlatformJarNames
 import org.jetbrains.intellij.build.impl.PlatformJarNames.APP_BACKEND_JAR
@@ -15,45 +13,57 @@ import org.jetbrains.intellij.build.impl.PlatformJarNames.PRODUCT_BACKEND_JAR
 import org.jetbrains.intellij.build.impl.PluginLayout
 import org.jetbrains.intellij.build.impl.projectStructureMapping.CustomAssetEntry
 import org.jetbrains.intellij.build.impl.projectStructureMapping.DistributionFileEntry
+import org.jetbrains.intellij.build.impl.projectStructureMapping.ModuleOutputEntry
 import org.jetbrains.intellij.build.io.ZipEntryProcessorResult
 import org.jetbrains.intellij.build.io.readZipFile
-import org.jetbrains.intellij.build.telemetry.TraceManager.spanBuilder
-import org.jetbrains.intellij.build.telemetry.use
 import java.io.ByteArrayOutputStream
 import java.io.DataOutputStream
-import java.nio.file.Files
 import java.nio.file.Path
 import kotlin.io.path.invariantSeparatorsPathString
 import kotlin.io.path.relativeToOrSelf
 
-internal fun excludedLibJars(context: BuildContext): Set<String> {
-  return java.util.Set.of(PlatformJarNames.TEST_FRAMEWORK_JAR) +
-         if (isMultiRoutingFileSystemEnabledForProduct(context.productProperties.platformPrefix)) java.util.Set.of(PLATFORM_CORE_NIO_FS) else java.util.Set.of()
-}
+internal fun generateClassPathByLayoutReport(libDir: Path, entries: List<DistributionFileEntry>, skipNioFs: Boolean): Set<Path> {
+  val classPath = LinkedHashSet<Path>()
+  for (entry in entries) {
+    val file = entry.path
 
-internal suspend fun generateClasspath(context: BuildContext): List<String> {
-  val homeDir = context.paths.distAllDir
-  val libDir = homeDir.resolve("lib")
-  return spanBuilder("generate classpath")
-    .setAttribute("dir", homeDir.toString())
-    .use { span ->
-      val excluded = excludedLibJars(context)
-      val existing = HashSet<Path>()
-      Files.newDirectoryStream(libDir).use { stream ->
-        stream.filterTo(existing) { it.toString().endsWith(".jar") && !excluded.contains(it.fileName.toString()) }
-      }
-      val result = computeAppClassPath(libDir, existing).map { libDir.relativize(it).toString() }
-      span.setAttribute(AttributeKey.stringArrayKey("result"), result)
-      result
+    // exclude files like ext/platform-main.jar - if a file in lib, take only direct children in an account
+    if ((entry.relativeOutputFile ?: "").contains('/')) {
+      continue
     }
-}
 
-internal fun computeAppClassPath(libDir: Path, existing: Set<Path>): LinkedHashSet<Path> {
-  val result = LinkedHashSet<Path>(existing.size + 4)
+    if (entry is ModuleOutputEntry) {
+      if (TEST_FRAMEWORK_MODULE_NAMES.contains(entry.moduleName) || entry.moduleName.startsWith("intellij.platform.unitTestMode")) {
+        continue
+      }
+      if (skipNioFs && entry.moduleName == "intellij.platform.core.nio.fs") {
+        continue
+      }
+    }
+
+    val parent = file.parent
+    if (parent == libDir) {
+      val fileName = file.fileName.toString()
+      if (fileName == PlatformJarNames.TEST_FRAMEWORK_JAR) {
+        continue
+      }
+
+      // This code excludes `PLATFORM_CORE_NIO_FS` because this JAR is supposed to be loaded with the boot classloader.
+      // Without this code, it's possible that classes from nio-fs.jar are loaded twice, leading to sporadic `ClassCastException`.
+      // nio-fs.jar added via -Xbootclasspath/a
+      if (skipNioFs && fileName == PLATFORM_CORE_NIO_FS) {
+        continue
+      }
+    }
+
+    classPath.add(file)
+  }
+
+  val result = LinkedHashSet<Path>(classPath.size + 4)
   // add first - should be listed first
-  sequenceOf(PLATFORM_LOADER_JAR, UTIL_8_JAR, APP_JAR, UTIL_JAR, PRODUCT_BACKEND_JAR, APP_BACKEND_JAR).map(libDir::resolve).filterTo(result, existing::contains)
+  sequenceOf(PLATFORM_LOADER_JAR, UTIL_8_JAR, APP_JAR, UTIL_JAR, PRODUCT_BACKEND_JAR, APP_BACKEND_JAR).map(libDir::resolve).filterTo(result, classPath::contains)
   // sorted to ensure stable performance results
-  result.addAll(if (isWindows) existing.sortedBy(Path::toString) else existing.sorted())
+  result.addAll(if (isWindows) classPath.sortedBy(Path::toString) else classPath.sorted())
   return result
 }
 

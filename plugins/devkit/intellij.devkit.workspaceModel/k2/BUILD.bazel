@@ -1,6 +1,6 @@
 ### auto-generated section `build intellij.devkit.workspaceModel.k2` start
 load("//build:compiler-options.bzl", "create_kotlinc_options")
-load("@rules_jvm//:jvm.bzl", "jvm_library", "jvm_resources")
+load("@rules_jvm//:jvm.bzl", "jvm_library", "resourcegroup")
 
 create_kotlinc_options(
   name = "custom_k2",
@@ -13,9 +13,9 @@ create_kotlinc_options(
   ]
 )
 
-jvm_resources(
+resourcegroup(
   name = "k2_resources",
-  files = glob(["resources/**/*"]),
+  srcs = glob(["resources/**/*"]),
   strip_prefix = "resources"
 )
 
@@ -24,6 +24,7 @@ jvm_library(
   module_name = "intellij.devkit.workspaceModel.k2",
   visibility = ["//visibility:public"],
   srcs = glob(["src/**/*.kt", "src/**/*.java", "src/**/*.form"], allow_empty = True),
+  resources = [":k2_resources"],
   kotlinc_opts = ":custom_k2",
   deps = [
     "//plugins/devkit/intellij.devkit.workspaceModel:workspaceModel",
@@ -40,8 +41,7 @@ jvm_library(
     "//platform/core-impl",
     "//java/openapi:java",
     "//plugins/kotlin/base/psi",
-  ],
-  runtime_deps = [":k2_resources"]
+  ]
 )
 
 jvm_library(
@@ -75,8 +75,7 @@ jvm_library(
     "//platform/testFramework",
     "//platform/testFramework:testFramework_test_lib",
     "//plugins/kotlin/base/test:test_test_lib",
-  ],
-  runtime_deps = [":k2_resources"]
+  ]
 )
 ### auto-generated section `build intellij.devkit.workspaceModel.k2` end
 

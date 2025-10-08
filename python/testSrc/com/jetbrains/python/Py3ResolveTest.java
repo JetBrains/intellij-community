@@ -805,7 +805,7 @@ public class Py3ResolveTest extends PyResolveTestCase {
   public void testInstanceAttrOtherMethodAndAbove() {
     final PyTargetExpression target = assertResolvesTo(PyTargetExpression.class, "foo");
     final PyFunction function = assertInstanceOf(ScopeUtil.getScopeOwner(target), PyFunction.class);
-    assertEquals("f", function.getName());
+    assertEquals("g", function.getName());
   }
 
   public void testInstanceAttrBelowAndOtherMethodAbove() {

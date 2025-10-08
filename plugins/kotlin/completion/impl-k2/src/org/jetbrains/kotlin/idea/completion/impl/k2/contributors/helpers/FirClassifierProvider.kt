@@ -11,6 +11,8 @@ import org.jetbrains.kotlin.analysis.api.symbols.KaClassLikeSymbol
 import org.jetbrains.kotlin.analysis.api.symbols.KaClassifierSymbol
 import org.jetbrains.kotlin.analysis.api.symbols.KaNamedClassSymbol
 import org.jetbrains.kotlin.idea.base.analysis.api.utils.KtSymbolFromIndexProvider
+import org.jetbrains.kotlin.idea.base.psi.kotlinFqName
+import org.jetbrains.kotlin.idea.base.util.isJavaClassWithKotlinTypeAlias
 import org.jetbrains.kotlin.idea.completion.KotlinFirCompletionParameters
 import org.jetbrains.kotlin.idea.completion.checkers.CompletionVisibilityChecker
 import org.jetbrains.kotlin.idea.util.positionContext.KotlinRawPositionContext
@@ -66,7 +68,11 @@ private fun completeJavaClasses(
 ): Sequence<KaNamedClassSymbol> = symbolProvider.getJavaClassesByNameFilter(scopeNameFilter) { psiClass ->
     val filterOutPossiblyPossiblyInvisibleClasses = parameters.invocationCount < 2
     if (filterOutPossiblyPossiblyInvisibleClasses) {
-        if (PsiReferenceExpressionImpl.seemsScrambled(psiClass) || JavaCompletionProcessor.seemsInternal(psiClass)) {
+        if (
+            PsiReferenceExpressionImpl.seemsScrambled(psiClass) ||
+            JavaCompletionProcessor.seemsInternal(psiClass) ||
+            psiClass.kotlinFqName?.isJavaClassWithKotlinTypeAlias() == true
+        ) {
             return@getJavaClassesByNameFilter false
         }
     }

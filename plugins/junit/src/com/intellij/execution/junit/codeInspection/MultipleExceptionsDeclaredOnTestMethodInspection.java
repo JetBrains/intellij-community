@@ -59,7 +59,7 @@ public final class MultipleExceptionsDeclaredOnTestMethodInspection extends Base
   }
 
   @Override
-  public BaseInspectionVisitor buildVisitor() {
+  public @NotNull BaseInspectionVisitor buildVisitor() {
     return new RedundantExceptionDeclarationVisitor();
   }
 

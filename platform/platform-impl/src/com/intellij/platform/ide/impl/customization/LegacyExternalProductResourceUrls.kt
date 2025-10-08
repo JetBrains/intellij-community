@@ -3,6 +3,7 @@ package com.intellij.platform.ide.impl.customization
 
 import com.intellij.openapi.application.ApplicationInfo
 import com.intellij.openapi.application.ex.ApplicationInfoEx
+import com.intellij.openapi.diagnostic.thisLogger
 import com.intellij.openapi.updateSettings.impl.UpdateRequestParametersProvider
 import com.intellij.openapi.util.BuildNumber
 import com.intellij.openapi.util.SystemInfo
@@ -18,6 +19,15 @@ import java.util.regex.Pattern
 @ApiStatus.Internal
 @Suppress("DEPRECATION")
 class LegacyExternalProductResourceUrls : ExternalProductResourceUrls {
+  init {
+    thisLogger().warn("""
+      |The default implementation LegacyExternalProductResourceUrls is deprecated and will be removed in the future;
+      |Provide your own implementation of ExternalProductResourceUrls using data which is currently stored in 
+      |<idea.platform.prefix>ApplicationInfo.xml file and register it as the service override.
+      |IDEs developed by JetBrains should use BaseJetBrainsExternalProductResourceUrls as a superclass for their implementation.
+      |""".trimMargin())
+  }
+
   override val updateMetadataUrl: Url?
     get() {
       val customUrl = System.getProperty("idea.updates.url")

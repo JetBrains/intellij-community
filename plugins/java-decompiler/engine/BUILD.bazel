@@ -1,9 +1,9 @@
 ### auto-generated section `build intellij.java.decompiler.engine` start
-load("@rules_jvm//:jvm.bzl", "jvm_library", "jvm_resources")
+load("@rules_jvm//:jvm.bzl", "jvm_library", "resourcegroup")
 
-jvm_resources(
+resourcegroup(
   name = "engine_resources",
-  files = glob(["resources/**/*"]),
+  srcs = glob(["resources/**/*"]),
   strip_prefix = "resources"
 )
 
@@ -12,8 +12,8 @@ jvm_library(
   module_name = "intellij.java.decompiler.engine",
   visibility = ["//visibility:public"],
   srcs = glob(["src/**/*.kt", "src/**/*.java", "src/**/*.form"], allow_empty = True),
-  deps = ["@lib//:jetbrains-annotations"],
-  runtime_deps = [":engine_resources"]
+  resources = [":engine_resources"],
+  deps = ["@lib//:jetbrains-annotations"]
 )
 
 jvm_library(
@@ -25,8 +25,8 @@ jvm_library(
     "@lib//:junit4",
     "@lib//:assert_j",
     "@lib//:jetbrains-annotations",
-  ],
-  runtime_deps = [":engine_resources"]
+    "@lib//:hamcrest",
+  ]
 )
 ### auto-generated section `build intellij.java.decompiler.engine` end
 

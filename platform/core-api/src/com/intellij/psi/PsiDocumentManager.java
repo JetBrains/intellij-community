@@ -8,6 +8,7 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Computable;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.util.concurrency.annotations.RequiresBackgroundThread;
+import com.intellij.util.concurrency.annotations.RequiresEdt;
 import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -87,6 +88,7 @@ public abstract class PsiDocumentManager {
    * <p>
    * Should be called on EDT in a write-safe context (see {@link com.intellij.openapi.application.TransactionGuard})
    */
+  @RequiresEdt
   public abstract void commitAllDocuments();
 
   /**

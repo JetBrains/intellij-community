@@ -37,6 +37,14 @@ import java.util.function.Predicate;
 
 import static com.intellij.platform.syntax.lexer.TokenListUtil.tokenListLexer;
 
+/**
+ * @deprecated Use the new Java syntax library instead.
+ *             See {@link com.intellij.java.syntax.parser.JavaParser}
+ *             This class is planned to be removed.
+ *             As a temporary solution, use {@link JavaParserUtil}.
+ */
+@ApiStatus.ScheduledForRemoval
+@Deprecated
 @ApiStatus.Experimental
 public final class BasicJavaParserUtil {
   private static final Key<LanguageLevel> LANG_LEVEL_KEY = Key.create("JavaParserUtil.LanguageLevel");

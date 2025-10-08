@@ -7,11 +7,15 @@ import com.intellij.tools.build.bazel.jvmIncBuilder.impl.graph.DeltaView;
 import com.intellij.tools.build.bazel.jvmIncBuilder.impl.graph.LibraryGraphLoader;
 import com.intellij.tools.build.bazel.jvmIncBuilder.runner.CompilerRunner;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 import org.jetbrains.jps.dependency.*;
 import org.jetbrains.jps.dependency.java.JVMClassNode;
 import org.jetbrains.jps.util.Pair;
+import org.jetbrains.jps.util.SystemInfo;
 
+import java.io.ByteArrayOutputStream;
 import java.io.IOException;
+import java.io.InputStream;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.*;
@@ -33,6 +37,7 @@ public class BazelIncBuilder {
 
     DiagnosticSink diagnostic = context;
     NodeSourceSnapshotDelta srcSnapshotDelta = null;
+    ResourcesSnapshotDelta resourcesDelta = null;
     Iterable<NodeSource> modifiedLibraries = List.of();
     Iterable<NodeSource> deletedLibraries = List.of();
 
@@ -50,9 +55,10 @@ public class BazelIncBuilder {
         }
         else {
           ConfigurationState pastState = ConfigurationState.loadSavedState(context);
-          ConfigurationState presentState = new ConfigurationState(context.getPathMapper(), context.getSources(), context.getBinaryDependencies(), context.getFlags());
+          ConfigurationState presentState = new ConfigurationState(context.getPathMapper(), context.getSources(), context.getResources(), context.getBinaryDependencies(), context.getFlags());
 
-          srcSnapshotDelta = new SnapshotDeltaImpl(pastState.getSources(), context.getSources());
+          srcSnapshotDelta = new SnapshotDeltaImpl(pastState.getSources(), presentState.getSources());
+
           if (shouldRecompileAll(srcSnapshotDelta) || pastState.getFlagsDigest() != presentState.getFlagsDigest() || pastState.getClasspathStructureDigest() != presentState.getClasspathStructureDigest()) {
             int changedPercent = srcSnapshotDelta.getChangedPercent();
             LOG.info(() -> "Marking whole target for recompilation [" + context.getTargetName() + "]. Changed sources: " + changedPercent + "% (threshold " + RECOMPILE_CHANGED_RATIO_PERCENT + "%) ");
@@ -96,6 +102,16 @@ public class BazelIncBuilder {
               }
 
               if (!changedLibNodeSources.isEmpty() || !deletedLibNodeSources.isEmpty()) {
+
+                // Add to 'pastLibGraphs' all previously available graph parts, even if they are not changed. Reason: need full nodes info for graph node traversals
+                for (NodeSource lib : libsSnapshotDelta.getBaseSnapshot().getElements()) {
+                  if (!contains(libsSnapshotDelta.getModified(), lib)) {
+                    pastLibGraphs.add(
+                      LibraryGraphLoader.getLibraryGraph(lib, presentState.getLibraries().getDigest(lib), context.getPathMapper().toPath(lib)).second
+                    );
+                  }
+                }
+
                 try {
                   Delta libDelta = new DeltaView(changedLibNodeSources, deletedLibNodeSources, CompositeGraph.create(presentLibGraphs));
                   srcSnapshotDelta = graphUpdater.updateBeforeCompilation(storageManager.getGraph(), srcSnapshotDelta, libDelta, pastLibGraphs);
@@ -131,6 +147,10 @@ public class BazelIncBuilder {
               }
             }
           }
+
+          if (!srcSnapshotDelta.isRecompileAll()) {
+            resourcesDelta = new ResourcesSnapshotDelta(pastState.getResources(), presentState.getResources());
+          }
         }
 
         List<CompilerRunner> roundCompilers = collect(map(RunnerRegistry.getRoundCompilers(), f -> f.create(context, storageManager)), new ArrayList<>());
@@ -153,6 +173,21 @@ public class BazelIncBuilder {
           OutputSinkImpl outSink = new OutputSinkImpl(storageManager);
 
           if (isInitialRound) {
+
+            // processing resources
+            ZipOutputBuilder out = storageManager.getOutputBuilder();
+            if (resourcesDelta == null || srcSnapshotDelta.isRecompileAll()) {
+              // copy everything
+              for (ResourceGroup group : context.getResources()) {
+                copyResources(group, context.getPathMapper(), out);
+              }
+            }
+            else {
+              // only copy modified and remove deleted
+              deleteResources(resourcesDelta.getPastResources(), flat(resourcesDelta.getDeleted(), resourcesDelta.getChanged()), out);
+              copyResources(resourcesDelta.getPresentResources(), resourcesDelta.getModified(), context.getPathMapper(), out);
+            }
+
             // processing deleted sources makes sense on inintial round only
             if (!srcSnapshotDelta.isRecompileAll() && !isEmpty(srcSnapshotDelta.getDeleted())) {
               // clean outputs that correspond to deleted sources, no matter of source type
@@ -160,6 +195,15 @@ public class BazelIncBuilder {
                 storageManager.getGraph(), srcSnapshotDelta.getDeleted(), storageManager.getCompositeOutputBuilder(), new ArrayList<>()
               );
               logDeletedPaths(context, cleaned);
+            }
+          }
+          else {
+            if (srcSnapshotDelta.isRecompileAll()) {
+              // After several rounds, the IC logic can decide to recompile everything
+              ZipOutputBuilder out = storageManager.getOutputBuilder();
+              for (ResourceGroup group : context.getResources()) {
+                copyResources(group, context.getPathMapper(), out);
+              }
             }
           }
 
@@ -241,21 +285,107 @@ public class BazelIncBuilder {
       return ExitCode.OK;
     }
     finally {
-      saveBuildState(context, srcSnapshotDelta, modifiedLibraries, deletedLibraries);
+      NodeSourceSnapshot sourcesState = srcSnapshotDelta != null? srcSnapshotDelta.asSnapshot() : null;
+      saveBuildState(
+        context, sourcesState, context.getResources(), modifiedLibraries, deletedLibraries
+      );
     }
   }
 
-  public void saveBuildState(
-    BuildContext context, NodeSourceSnapshotDelta srcSnapshotDelta, Iterable<NodeSource> modifiedLibraries, Iterable<NodeSource> deletedLibraries
-  ) {
+  private static void deleteResources(Iterable<ResourceGroup> resGroups, Iterable<NodeSource> resources, ZipOutputBuilder out) {
+    if (count(resGroups) == 1) {
+      // optimization
+      ResourceGroup resourceGroup = resGroups.iterator().next();
+      for (NodeSource res : resources) {
+        deleteResource(resourceGroup, res, out);
+      }
+    }
+    else {
+      for (NodeSource res : resources) {
+        for (ResourceGroup resourceGroup : filter(resGroups, gr -> contains(gr.getElements(), res))) {
+          deleteResource(resourceGroup, res, out);
+        }
+      }
+    }
+  }
 
-    if (srcSnapshotDelta != null) {
-      if (context.hasErrors()) {
-        ConfigurationState pastState = ConfigurationState.loadSavedState(context);
-        new ConfigurationState(context.getPathMapper(), srcSnapshotDelta.asSnapshot(), pastState.getLibraries(), context.getFlags()).save(context);
+  private static void deleteResource(ResourceGroup resourceGroup, NodeSource res, ZipOutputBuilder out) {
+    String destPath = getResourceDestinationPath(resourceGroup, res);
+    if (destPath != null) {
+      out.deleteEntry(destPath);
+    }
+  }
+
+  private static void copyResources(Iterable<ResourceGroup> resGroups, Iterable<NodeSource> resources, NodeSourcePathMapper pathMapper, ZipOutputBuilder out) throws IOException {
+    if (count(resGroups) == 1) {
+      // optimization
+      ResourceGroup resourceGroup = resGroups.iterator().next();
+      for (NodeSource res : resources) {
+        copyResource(resourceGroup, res, pathMapper, out);
+      }
+    }
+    else {
+      for (NodeSource res : resources) {
+        for (ResourceGroup resourceGroup : filter(resGroups, gr -> contains(gr.getElements(), res))) {
+          copyResource(resourceGroup, res, pathMapper, out);
+        }
+      }
+    }
+  }
+
+  private static void copyResources(ResourceGroup resourceGroup, NodeSourcePathMapper pathMapper, ZipOutputBuilder out) throws IOException {
+    for (NodeSource res : resourceGroup.getElements()) {
+      copyResource(resourceGroup, res, pathMapper, out);
+    }
+  }
+
+  private static void copyResource(ResourceGroup resourceGroup, NodeSource res, NodeSourcePathMapper pathMapper, ZipOutputBuilder out) throws IOException {
+    String destPath = getResourceDestinationPath(resourceGroup, res);
+    if (destPath != null) {
+      Path from = pathMapper.toPath(res);
+      try (InputStream in = Files.newInputStream(from)) {
+        ByteArrayOutputStream bytes = new ByteArrayOutputStream();
+        in.transferTo(bytes);
+        out.putEntry(destPath, bytes.toByteArray());
+      }
+    }
+  }
+
+  private static @Nullable String getResourceDestinationPath(ResourceGroup group, NodeSource source) {
+    String destPath = source.toString();
+
+    String stripPrefix = group.getStripPrefix();
+    if (!stripPrefix.isEmpty()) {
+      if (destPath.length() > stripPrefix.length() && destPath.regionMatches(!SystemInfo.isFileSystemCaseSensitive, 0, stripPrefix, 0, stripPrefix.length()) && destPath.charAt(stripPrefix.length()) == '/' ) {
+        destPath = destPath.substring(stripPrefix.length() + 1);
       }
       else {
-        new ConfigurationState(context.getPathMapper(), srcSnapshotDelta.asSnapshot(), context.getBinaryDependencies(), context.getFlags()).save(context);
+        return null; // todo: emit error
+      }
+    }
+
+    String addPrefix = group.getAddPrefix();
+    if (!addPrefix.isEmpty()) {
+      destPath = addPrefix + "/" + destPath;
+    }
+
+    return destPath;
+  }
+
+
+  public void saveBuildState(
+    BuildContext context,
+    NodeSourceSnapshot sourcesState, Iterable<ResourceGroup> resourcesState,
+    Iterable<NodeSource> modifiedLibraries, Iterable<NodeSource> deletedLibraries
+  ) {
+
+    if (sourcesState != null) {
+      if (context.hasErrors()) {
+        ConfigurationState pastState = ConfigurationState.loadSavedState(context);
+        new ConfigurationState(context.getPathMapper(), sourcesState, resourcesState, pastState.getLibraries(), context.getFlags()).save(context);
+      }
+      else {
+        new ConfigurationState(context.getPathMapper(), sourcesState, resourcesState, context.getBinaryDependencies(), context.getFlags()).save(context);
       }
     }
 

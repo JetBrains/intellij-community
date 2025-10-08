@@ -1,9 +1,10 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.debugger.engine;
 
 import com.intellij.debugger.engine.evaluation.EvaluationListener;
 import com.intellij.debugger.engine.events.DebuggerCommandImpl;
 import com.intellij.debugger.engine.events.SuspendContextCommandImpl;
+import com.intellij.debugger.impl.DebuggerUtilsAsync;
 import com.intellij.debugger.settings.DebuggerSettings;
 import com.intellij.debugger.ui.breakpoints.FilteredRequestor;
 import com.intellij.openapi.diagnostic.Logger;
@@ -143,7 +144,7 @@ public class SuspendOtherThreadsRequestor implements FilteredRequestor {
     var request = process.getRequestsManager().createMethodEntryRequest(requestor);
 
     request.setSuspendPolicy(EventRequest.SUSPEND_ALL);
-    request.setEnabled(true);
+    DebuggerUtilsAsync.setEnabled(request, true);
   }
 
   private static @NotNull EvaluationListener addFinishEvaluationListener(@NotNull DebugProcessImpl process) {

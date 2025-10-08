@@ -40,6 +40,8 @@ import java.util.function.Supplier;
 @ApiStatus.Internal
 public class DefaultProjectResolverContext extends GradleExecutionContextImpl implements ProjectResolverContext {
 
+  private final @NotNull String myExternalProjectPath;
+
   private final @NotNull GradleProjectResolverIndicator myProjectResolverIndicator;
   private @Nullable GradleIdeaModelHolder myModels;
   private File myGradleUserHome;
@@ -55,6 +57,7 @@ public class DefaultProjectResolverContext extends GradleExecutionContextImpl im
   private static final Logger LOG = Logger.getInstance(DefaultProjectResolverContext.class);
 
   public DefaultProjectResolverContext(
+    @NotNull String externalProjectPath,
     @NotNull ExternalSystemTaskId externalSystemTaskId,
     @NotNull String projectPath,
     @NotNull GradleExecutionSettings settings,
@@ -64,6 +67,7 @@ public class DefaultProjectResolverContext extends GradleExecutionContextImpl im
     boolean isBuildSrcProject
   ) {
     super(projectPath, externalSystemTaskId, settings, listener, projectResolverIndicator.token());
+    myExternalProjectPath = externalProjectPath;
     myPolicy = resolverPolicy;
     myProjectResolverIndicator = projectResolverIndicator;
     myBuildSrcProject = isBuildSrcProject;
@@ -76,10 +80,16 @@ public class DefaultProjectResolverContext extends GradleExecutionContextImpl im
     boolean isBuildSrcProject
   ) {
     super(resolverContext, projectPath, settings);
+    myExternalProjectPath = resolverContext.myExternalProjectPath;
     myPolicy = resolverContext.myPolicy;
     myProjectResolverIndicator = resolverContext.myProjectResolverIndicator;
     myBuildSrcProject = isBuildSrcProject;
     resolverContext.copyUserDataTo(this);
+  }
+
+  @Override
+  public @NotNull String getExternalProjectPath() {
+    return myExternalProjectPath;
   }
 
   @Override

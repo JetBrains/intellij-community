@@ -17,6 +17,7 @@ import java.util.stream.Collectors;
 
 @State(name = "UnknownFeatures", storages = @Storage(StoragePathMacros.WORKSPACE_FILE))
 @Service(Service.Level.PROJECT)
+@ApiStatus.Internal
 public final class UnknownFeaturesCollector implements PersistentStateComponent<Element> {
 
   private static final @NonNls String FEATURE_ID = "featureType";
@@ -29,12 +30,10 @@ public final class UnknownFeaturesCollector implements PersistentStateComponent<
     return project.getService(UnknownFeaturesCollector.class);
   }
 
-  @ApiStatus.Internal
   public boolean registerUnknownFeature(@NotNull UnknownFeature feature) {
     return !isIgnored(feature) && myUnknownFeatures.add(feature);
   }
 
-  @ApiStatus.Experimental
   public boolean unregisterUnknownFeature(@NotNull UnknownFeature feature) {
     return myUnknownFeatures.remove(feature);
   }
@@ -51,7 +50,6 @@ public final class UnknownFeaturesCollector implements PersistentStateComponent<
     return Collections.unmodifiableSet(myUnknownFeatures);
   }
 
-  @ApiStatus.Experimental
   public @NotNull Set<UnknownFeature> getUnknownFeaturesOfType(@NotNull @NonNls String featureType) {
     return myUnknownFeatures.stream()
       .filter(feature -> feature.getFeatureType().equals(featureType))

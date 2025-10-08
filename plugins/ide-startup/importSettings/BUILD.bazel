@@ -1,9 +1,9 @@
 ### auto-generated section `build intellij.ide.startup.importSettings` start
-load("@rules_jvm//:jvm.bzl", "jvm_library", "jvm_resources")
+load("@rules_jvm//:jvm.bzl", "jvm_library", "resourcegroup")
 
-jvm_resources(
+resourcegroup(
   name = "importSettings_resources",
-  files = glob(["resources/**/*"]),
+  srcs = glob(["resources/**/*"]),
   strip_prefix = "resources"
 )
 
@@ -12,6 +12,7 @@ jvm_library(
   module_name = "intellij.ide.startup.importSettings",
   visibility = ["//visibility:public"],
   srcs = glob(["src/**/*.kt", "src/**/*.java", "src/**/*.form"], allow_empty = True),
+  resources = [":importSettings_resources"],
   deps = [
     "@lib//:kotlin-stdlib",
     "//platform/analysis-api:analysis",
@@ -32,12 +33,12 @@ jvm_library(
     "//platform/util-class-loader:util-classLoader",
     "//platform/util/jdom",
     "//platform/statistics",
-    "@lib//:jackson-databind",
-    "@lib//:jackson",
+    "//libraries/jackson/databind",
+    "//libraries/jackson/jackson",
     "//platform/observable",
-    "@lib//:miglayout-swing",
-    "@lib//:kotlinx-serialization-json",
-    "@lib//:kotlinx-serialization-core",
+    "//libraries/miglayout-swing",
+    "//libraries/kotlinx/serialization/json",
+    "//libraries/kotlinx/serialization/core",
     "@lib//:jna",
     "@lib//:sqlite",
     "@lib//:classgraph",
@@ -45,9 +46,9 @@ jvm_library(
     "//platform/lang-impl",
     "//platform/util/progress",
     "//platform/platform-impl/ui",
+    "//platform/platform-impl/initial-config-import",
     "//platform/plugins/parser/impl",
-  ],
-  runtime_deps = [":importSettings_resources"]
+  ]
 )
 
 jvm_library(
@@ -77,12 +78,12 @@ jvm_library(
     "//platform/util/jdom",
     "//platform/statistics",
     "//platform/statistics:statistics_test_lib",
-    "@lib//:jackson-databind",
-    "@lib//:jackson",
+    "//libraries/jackson/databind",
+    "//libraries/jackson/jackson",
     "//platform/observable",
-    "@lib//:miglayout-swing",
-    "@lib//:kotlinx-serialization-json",
-    "@lib//:kotlinx-serialization-core",
+    "//libraries/miglayout-swing",
+    "//libraries/kotlinx/serialization/json",
+    "//libraries/kotlinx/serialization/core",
     "@lib//:jna",
     "@lib//:sqlite",
     "@lib//:classgraph",
@@ -94,9 +95,9 @@ jvm_library(
     "//platform/lang-impl",
     "//platform/util/progress",
     "//platform/platform-impl/ui",
+    "//platform/platform-impl/initial-config-import",
     "//platform/plugins/parser/impl",
-  ],
-  runtime_deps = [":importSettings_resources"]
+  ]
 )
 ### auto-generated section `build intellij.ide.startup.importSettings` end
 

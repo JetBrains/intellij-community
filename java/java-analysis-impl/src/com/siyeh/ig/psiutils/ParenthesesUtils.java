@@ -1,5 +1,5 @@
 /*
- * Copyright 2003-2020 Dave Griffith, Bas Leijdekkers
+ * Copyright 2003-2025 Dave Griffith, Bas Leijdekkers
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -242,8 +242,7 @@ public final class ParenthesesUtils {
 
   private static void removeParensFromArrayInitializerExpression(@NotNull PsiArrayInitializerExpression arrayInitializerExpression,
                                                                  boolean ignoreClarifyingParentheses) {
-    final PsiExpression[] initializers = arrayInitializerExpression.getInitializers();
-    for (final PsiExpression initializer : initializers) {
+    for (PsiExpression initializer : arrayInitializerExpression.getInitializers()) {
       removeParentheses(initializer, ignoreClarifyingParentheses);
     }
   }
@@ -286,7 +285,7 @@ public final class ParenthesesUtils {
     final PsiExpressionList argumentList = methodCallExpression.getArgumentList();
     final PsiExpression[] arguments = argumentList.getExpressions();
     removeParentheses(target, ignoreClarifyingParentheses);
-    for (final PsiExpression argument : arguments) {
+    for (PsiExpression argument : arguments) {
       removeParentheses(argument, ignoreClarifyingParentheses);
     }
   }

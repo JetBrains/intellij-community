@@ -19,7 +19,6 @@ import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.profile.codeInspection.InspectionProjectProfileManager;
 import com.intellij.psi.*;
-import com.intellij.psi.impl.PsiClassImplUtil;
 import com.intellij.psi.search.searches.OverridingMethodsSearch;
 import com.intellij.psi.search.searches.SuperMethodsSearch;
 import com.intellij.util.containers.ContainerUtil;
@@ -42,6 +41,7 @@ import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.GrTypeDefini
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.members.GrAccessorMethod;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.members.GrMethod;
 import org.jetbrains.plugins.groovy.lang.psi.api.toplevel.imports.GrImportStatement;
+import org.jetbrains.plugins.groovy.util.GroovyMainMethodSearcher;
 
 import java.util.*;
 
@@ -192,8 +192,7 @@ public class GroovyPostHighlightingPass extends TextEditorHighlightingPass {
          method.hasModifierProperty(PsiModifier.STATIC) ||
          !method.hasModifierProperty(PsiModifier.ABSTRACT) && !isOverriddenOrOverrides(method)) &&
         !method.hasModifierProperty(PsiModifier.NATIVE) &&
-        !JavaHighlightUtil.isSerializationRelatedMethod(method, method.getContainingClass()) &&
-        !PsiClassImplUtil.isMainOrPremainMethod(method);
+        !JavaHighlightUtil.isSerializationRelatedMethod(method, method.getContainingClass());
   }
 
   private static boolean isFieldUnused(GrField field, GlobalUsageHelper usageHelper) {
@@ -261,6 +260,13 @@ public class GroovyPostHighlightingPass extends TextEditorHighlightingPass {
     return new TextRange(start, range.getEndOffset());
   }
 
+  private static boolean isMainMethod(@NotNull PsiElement element) {
+    if (!(element instanceof GrMethod method)) {
+      return false;
+    }
+    return method.getName().equals("main") && GroovyMainMethodSearcher.INSTANCE.isMainMethod(method);
+  }
+
   private static class GroovyUsageHelper extends GlobalUsageHelper {
     private boolean shouldCheckContributors = true;
     private final UnusedDeclarationInspectionBase deadCodeInspection;
@@ -280,13 +286,13 @@ public class GroovyPostHighlightingPass extends TextEditorHighlightingPass {
     @Override
     public boolean shouldCheckUsages(@NotNull PsiMember member) {
       if (shouldCheckContributors) {
+        if (isMainMethod(member)) {
+          return false;
+        }
         return deadCodeInspection == null || !deadCodeInspection.isEntryPoint(member);
       } else {
         return true;
       }
     }
   }
-
-
-
 }

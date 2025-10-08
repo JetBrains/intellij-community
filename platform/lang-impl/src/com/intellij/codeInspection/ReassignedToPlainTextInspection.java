@@ -12,6 +12,7 @@ import com.intellij.openapi.options.Configurable;
 import com.intellij.openapi.options.SearchableConfigurable;
 import com.intellij.openapi.options.ShowSettingsUtil;
 import com.intellij.openapi.options.ex.ConfigurableWrapper;
+import com.intellij.openapi.project.DumbAware;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.FileViewProvider;
@@ -20,7 +21,7 @@ import org.jetbrains.annotations.*;
 
 // this file is assigned to "Plain text" file type even though there's a plugin supporting this specific extension/file pattern
 @ApiStatus.Internal
-public final class ReassignedToPlainTextInspection extends LocalInspectionTool {
+public final class ReassignedToPlainTextInspection extends LocalInspectionTool implements DumbAware {
   @Override
   public @NonNls @NotNull String getShortName() {
     return "ReassignedToPlainText";

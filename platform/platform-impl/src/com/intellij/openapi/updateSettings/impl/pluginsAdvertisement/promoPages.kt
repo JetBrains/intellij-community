@@ -130,7 +130,7 @@ object PromoPages {
       page = page,
       openLearnMore = { openLearnMore?.invoke(it) ?: source.learnMoreAndLog(project, it, pluginId) },
       openDownloadLink = { dialog ->
-        tryUltimate(pluginId, page.suggestedIde, project, source, openDownloadLink)
+        tryUltimate(pluginId = pluginId, suggestedIde = page.suggestedIde, project = project, fusEventSource = source, fallback = openDownloadLink)
         dialog?.close(DialogWrapper.CLOSE_EXIT_CODE)
       }
     )

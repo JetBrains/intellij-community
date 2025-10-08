@@ -5,7 +5,7 @@ package runToCursorWithinUndispatchedCoroutine
 
 import kotlinx.coroutines.*
 
-fun main() = runBlocking {
+fun main() = runBlocking(Dispatchers.Default) {
     launch(start = CoroutineStart.UNDISPATCHED) {
         //Breakpoint!
         val a = 5

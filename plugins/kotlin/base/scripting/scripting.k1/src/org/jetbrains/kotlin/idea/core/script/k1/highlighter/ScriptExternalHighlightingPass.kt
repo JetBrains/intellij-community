@@ -104,7 +104,7 @@ private class ScriptExternalHighlightingPass(
         }
     }
 
-    class Factory : TextEditorHighlightingPassFactory {
+    class Factory : TextEditorHighlightingPassFactory, DumbAware {
         override fun createHighlightingPass(psiFile: PsiFile, editor: Editor): TextEditorHighlightingPass? {
             if (psiFile !is KtFile) return null
             return ScriptExternalHighlightingPass(psiFile, editor.document)

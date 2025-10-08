@@ -3,6 +3,10 @@ package org.jetbrains.kotlin.idea.artifacts
 
 import com.intellij.openapi.application.PathManager
 import com.intellij.openapi.diagnostic.logger
+import com.intellij.openapi.roots.OrderRootType
+import com.intellij.openapi.roots.libraries.ui.OrderRoot
+import com.intellij.openapi.vfs.VfsUtil
+import com.intellij.openapi.vfs.VirtualFileManager
 import com.intellij.testFramework.common.BazelTestUtil
 import com.intellij.testFramework.common.BazelTestUtil.getFileFromBazelRuntime
 import com.intellij.testFramework.common.bazel.BazelLabel
@@ -65,7 +69,7 @@ object TestKotlinArtifacts {
 
     @JvmStatic
     val kotlinDistForIdeUnpackedForIncrementalCompilation: Path by lazy {
-        val artifact = getKotlinDepsByLabel("@kotlin_test_deps//:kotlin-dist-for-ide-increment-compilation-2.2.0.jar")
+        val artifact = getKotlinDepsByLabel("@kotlin_test_deps//:kotlin-dist-for-ide-increment-compilation.jar")
         val targetDirectory = KotlinArtifactConstants.KOTLIN_DIST_LOCATION_PREFIX.toPath().resolve(artifact.nameWithoutExtension)
         runBlocking(Dispatchers.IO) {
             extractFile(artifact, targetDirectory, communityRoot)
@@ -86,8 +90,6 @@ object TestKotlinArtifacts {
             ?: error("Unable to find URL for '${label.asLabel}'")
     }
 
-    private val cooperativeRepoRoot = PathManager.getHomeDir().parent.resolve("build/repo")
-
     private fun downloadFile(label: BazelLabel): Path {
         val downloadFile = findDownloadFile(label)
         val labelUrl = URI(downloadFile.url)
@@ -98,10 +100,10 @@ object TestKotlinArtifacts {
         // https://github.com/JetBrains/intellij-community/blob/master/plugins/kotlin/docs/cooperative-development/environment-setup.md
         val fileInCache = if (labelUrl.toString().contains("255-dev-255")) {
             val relativePath = labelUrl.path.substringAfter("/intellij-dependencies/")
-            val file = cooperativeRepoRoot.resolve(relativePath)
+            val file = KotlinTestsDependenciesUtil.kotlinCompilerSnapshotPath.resolve(relativePath)
             if (!Files.exists(file)) {
-                error("File $file doesn't exist in cooperative repo $cooperativeRepoRoot. " +
-                              "Please run 'Kotlin Coop: Publish compiler-for-ide JARs' run configuration in IntelliJ.")
+                error("File $file doesn't exist in cooperative repo ${KotlinTestsDependenciesUtil.kotlinCompilerSnapshotPath}. " +
+                              "Please run 'Kotlin Coop: Publish Compiler JARs' run configuration in IntelliJ.")
             }
             file
         } else {
@@ -129,6 +131,20 @@ object TestKotlinArtifacts {
             Files.copy(fileInCache, target, StandardCopyOption.REPLACE_EXISTING)
         }
         return target
+    }
+
+    @JvmStatic
+    fun loadDependency(
+        label: String,
+        type: OrderRootType
+    ): OrderRoot {
+        val libFile = getKotlinDepsByLabel(label)
+
+        val manager = VirtualFileManager.getInstance()
+        val url: String = VfsUtil.getUrlForLibraryRoot(libFile)
+        val file = manager.refreshAndFindFileByUrl(url) ?: error("Cannot find $url")
+
+        return OrderRoot(file, type)
     }
 
     // @kotlin_test_deps//:kotlin-stdlib.jar
@@ -264,6 +280,17 @@ object TestKotlinArtifacts {
     val composeCompilerPluginForIde: Path by lazy { getKotlinDepsByLabel("@kotlin_test_deps//:compose-compiler-plugin-for-ide.jar") }
 
     @JvmStatic
+    val kotlinStdlibJdk8_2_1_21: Path by lazy { getKotlinDepsByLabel("@kotlin_test_deps//:kotlin-stdlib-jdk8-2.1.21.jar") }
+    @JvmStatic
+    val kotlinStdlib_2_1_21: Path by lazy { getKotlinDepsByLabel("@kotlin_test_deps//:kotlin-stdlib-2.1.21.jar") }
+    @JvmStatic
+    val annotations13: Path by lazy { getKotlinDepsByLabel("@kotlin_test_deps//:annotations-13.0.jar") }
+    @JvmStatic
+    val kotlinxCoroutinesCore_1_10_2: Path by lazy { getKotlinDepsByLabel("@kotlin_test_deps//:kotlinx-coroutines-core-1.10.2.jar") }
+    @JvmStatic
+    val kotlinxCoroutinesCoreJvm_1_10_2: Path by lazy { getKotlinDepsByLabel("@kotlin_test_deps//:kotlinx-coroutines-core-jvm-1.10.2.jar") }
+
+    @JvmStatic
     val kotlinJvmDebuggerTestData: Path by lazy { getKotlinDepsByLabel("@community//plugins/kotlin/jvm-debugger/test:testData") }
     @JvmStatic
     val kotlinIdeaTestData: Path by lazy { getKotlinDepsByLabel("@community//plugins/kotlin/idea/tests:testData") }
@@ -291,6 +318,8 @@ object TestKotlinArtifacts {
     val trove4j: Path by lazy {
         PathManager.getJarForClass(TestKotlinArtifacts::class.java.classLoader.loadClass("gnu.trove.THashMap"))!!
     }
+    @JvmStatic
+    val jetbrainsAnnotationsJava5: Path by lazy { getKotlinDepsByLabel("@kotlin_test_deps//:annotations-java5-24.0.0.jar") }
     @JvmStatic
     val jetbrainsAnnotations: Path by lazy { getKotlinDepsByLabel("@kotlin_test_deps//:annotations.jar") }
     @JvmStatic

@@ -1,9 +1,9 @@
 ### auto-generated section `build kotlin.fir.frontend-independent` start
-load("@rules_jvm//:jvm.bzl", "jvm_library", "jvm_resources")
+load("@rules_jvm//:jvm.bzl", "jvm_library", "resourcegroup")
 
-jvm_resources(
+resourcegroup(
   name = "frontend-independent_resources",
-  files = glob(["resources-en/**/*"]),
+  srcs = glob(["resources-en/**/*"]),
   strip_prefix = "resources-en"
 )
 
@@ -12,6 +12,7 @@ jvm_library(
   module_name = "kotlin.fir.frontend-independent",
   visibility = ["//visibility:public"],
   srcs = glob(["src/**/*.kt", "src/**/*.java", "src/**/*.form"], allow_empty = True),
+  resources = [":frontend-independent_resources"],
   deps = [
     "@lib//:kotlin-stdlib",
     "//java/java-indexing-api:indexing",
@@ -19,11 +20,11 @@ jvm_library(
     "//platform/core-api:core",
     "//platform/editor-ui-api:editor-ui",
     "//platform/ide-core-impl",
-    "@lib//:kotlin-reflect",
+    "//libraries/kotlin-reflect",
     "@lib//:kotlinc-kotlin-compiler-common",
     "@lib//:kotlinc-kotlin-jps-common",
     "@lib//:kotlinc-analysis-api-platform-interface",
-    "@lib//:guava",
+    "//libraries/guava",
     "//platform/indexing-api:indexing",
     "//jps/model-api:model",
     "//platform/lang-core",
@@ -54,7 +55,6 @@ jvm_library(
     "//plugins/kotlin/base/project-structure",
     "//plugins/kotlin/project-configuration",
     "//plugins/kotlin/refactorings/kotlin.refactorings.common:kotlin-refactorings-common",
-  ],
-  runtime_deps = [":frontend-independent_resources"]
+  ]
 )
 ### auto-generated section `build kotlin.fir.frontend-independent` end

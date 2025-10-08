@@ -19,6 +19,7 @@ import kotlinx.coroutines.channels.Channel
 import kotlinx.coroutines.channels.consumeEach
 import kotlinx.coroutines.future.await
 import kotlinx.coroutines.launch
+import java.util.concurrent.CompletableFuture
 import kotlin.coroutines.cancellation.CancellationException
 
 /**
@@ -91,7 +92,13 @@ inline fun <T : Any, R> computeSafeIfAny(ep: ExtensionPointName<T>, processor: (
 // TODO: move into VirtualMachineProxyImpl when converted to kotlin
 fun preloadAllClasses(vm: VirtualMachine) {
   DebuggerManagerThreadImpl.assertIsManagerThread()
-  val allClasses = DebuggerUtilsAsync.allCLasses(vm)
+  val allClasses =
+  if (Registry.`is`("debugger.preload.types.async", true)) {
+    DebuggerUtilsAsync.allCLasses(vm)
+  }
+  else {
+    CompletableFuture.completedFuture(vm.allClasses())
+  }
   if (!Registry.`is`("debugger.preload.types.hierarchy", true) || DebuggerUtils.isAndroidVM(vm)) return
 
   val channel = Channel<ReferenceType>(capacity = Channel.UNLIMITED)

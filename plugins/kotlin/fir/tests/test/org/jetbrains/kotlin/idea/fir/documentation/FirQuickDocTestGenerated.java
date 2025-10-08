@@ -506,6 +506,11 @@ public abstract class FirQuickDocTestGenerated extends AbstractFirQuickDocTest {
         public void testUnresolvedAnnotation() throws Exception {
             runTest("../../idea/tests/testData/editor/quickDoc/UnresolvedAnnotation.kt");
         }
+
+        @TestMetadata("UnusedVariable.kt")
+        public void testUnusedVariable() throws Exception {
+            runTest("../../idea/tests/testData/editor/quickDoc/UnusedVariable.kt");
+        }
     }
 
     @RunWith(JUnit3RunnerWithInners.class)

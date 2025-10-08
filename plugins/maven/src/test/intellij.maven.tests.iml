@@ -31,6 +31,8 @@
     <orderEntry type="module" module-name="intellij.platform.externalSystem.tests" scope="TEST" />
     <orderEntry type="module" module-name="intellij.properties.psi" scope="TEST" />
     <orderEntry type="module" module-name="intellij.spellchecker" scope="TEST" />
+    <orderEntry type="module" module-name="intellij.grazie.core" scope="TEST" />
+    <orderEntry type="module" module-name="intellij.grazie.tests" scope="TEST" />
     <orderEntry type="module" module-name="intellij.platform.vcs" />
     <orderEntry type="module" module-name="intellij.groovy" scope="TEST" />
     <orderEntry type="module" module-name="intellij.groovy.jps" scope="TEST" />
@@ -38,7 +40,7 @@
     <orderEntry type="module" module-name="intellij.platform.jps.model.impl" scope="TEST" />
     <orderEntry type="module" module-name="intellij.platform.util.progress" />
     <orderEntry type="module" module-name="intellij.platform.workspace.jps" scope="TEST" />
-    <orderEntry type="library" scope="TEST" name="Guava" level="project" />
+    <orderEntry type="module" module-name="intellij.libraries.guava" scope="TEST" />
     <orderEntry type="module" module-name="intellij.maven.artifactResolver.common" scope="TEST" />
     <orderEntry type="module" module-name="intellij.libraries.mockito" scope="TEST" />
     <orderEntry type="module" module-name="intellij.maven.jps" scope="TEST" />
@@ -50,9 +52,9 @@
     <orderEntry type="module" module-name="intellij.platform.backend.workspace" scope="TEST" />
     <orderEntry type="module" module-name="intellij.java.impl" scope="TEST" />
     <orderEntry type="module" module-name="intellij.platform.backend.observation" scope="TEST" />
-    <orderEntry type="library" scope="TEST" name="hash4j" level="project" />
-    <orderEntry type="library" scope="TEST" name="kotlin-reflect" level="project" />
-    <orderEntry type="library" scope="TEST" name="kotlinx-serialization-core" level="project" />
+    <orderEntry type="module" module-name="intellij.libraries.hash4j" scope="TEST" />
+    <orderEntry type="module" module-name="intellij.libraries.kotlin.reflect" scope="TEST" />
+    <orderEntry type="module" module-name="intellij.libraries.kotlinx.serialization.core" scope="TEST" />
     <orderEntry type="module" module-name="intellij.platform.statistics.testFramework" scope="TEST" />
     <orderEntry type="module" module-name="intellij.xml.psi" scope="TEST" />
     <orderEntry type="module" module-name="intellij.platform.debugger" scope="TEST" />

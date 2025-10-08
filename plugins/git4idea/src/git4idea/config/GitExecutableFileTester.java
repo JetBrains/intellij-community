@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package git4idea.config;
 
 import com.intellij.execution.wsl.WSLDistribution;
@@ -11,7 +11,10 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Ref;
 import com.intellij.openapi.util.SystemInfo;
 import com.intellij.platform.eel.EelApi;
+import com.intellij.platform.eel.EelOsFamily;
 import com.intellij.platform.eel.provider.EelNioBridgeServiceKt;
+import com.intellij.platform.eel.provider.LocalEelDescriptor;
+import com.intellij.platform.ide.impl.wsl.WslEelDescriptor;
 import com.intellij.util.concurrency.AppJavaExecutorUtil;
 import git4idea.commands.Git;
 import git4idea.commands.GitCommand;
@@ -149,6 +152,13 @@ class GitExecutableFileTester {
       workingDirectory = Path.of(distribution.getWindowsPath("/"));
     } else if (executable instanceof GitExecutable.Eel) {
       EelApi eelApi = ((GitExecutable.Eel)executable).getEel();
+      if (eelApi.getDescriptor() instanceof WslEelDescriptor) {
+        WSLDistribution distribution = ((WslEelDescriptor) eelApi.getDescriptor()).getDistribution();
+        type = distribution.getVersion() == 1 ? GitVersion.Type.WSL1 : GitVersion.Type.WSL2;
+      }
+      else if (eelApi.getDescriptor() instanceof LocalEelDescriptor && eelApi.getPlatform().getOsFamily().equals(EelOsFamily.Posix)) {
+        type = GitVersion.Type.UNIX;
+      }
       workingDirectory = EelNioBridgeServiceKt.asNioPath(eelApi.getUserInfo().getHome());
     }
 

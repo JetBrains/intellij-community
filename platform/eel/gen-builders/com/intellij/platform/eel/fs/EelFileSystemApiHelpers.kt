@@ -7,6 +7,7 @@ package com.intellij.platform.eel.fs
 import com.intellij.platform.eel.EelResult
 import com.intellij.platform.eel.GeneratedBuilder
 import com.intellij.platform.eel.OwnedBuilder
+import com.intellij.platform.eel.channels.EelDelicateApi
 import com.intellij.platform.eel.fs.EelFileInfo.Permissions
 import com.intellij.platform.eel.fs.EelFileSystemApi.FileChangeType
 import com.intellij.platform.eel.fs.EelFileSystemApi.FileWriterCreationMode
@@ -15,11 +16,15 @@ import com.intellij.platform.eel.fs.EelFileSystemApi.StatError
 import com.intellij.platform.eel.fs.EelFileSystemApi.SymlinkPolicy
 import com.intellij.platform.eel.fs.EelFileSystemApi.TimeSinceEpoch
 import com.intellij.platform.eel.fs.EelFileSystemApi.UnwatchOptions
+import com.intellij.platform.eel.fs.EelFileSystemApi.WalkDirectoryOptions.WalkDirectoryEntryOrder
+import com.intellij.platform.eel.fs.EelFileSystemApi.WalkDirectoryOptions.WalkDirectoryTraversalOrder
 import com.intellij.platform.eel.fs.EelFileSystemApi.WatchOptions
 import com.intellij.platform.eel.fs.EelFileSystemApi.WatchedPath
 import com.intellij.platform.eel.path.EelPath
+import kotlinx.coroutines.flow.Flow
 import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.annotations.CheckReturnValue
+import java.nio.ByteBuffer
 
 
 @GeneratedBuilder.Result
@@ -62,7 +67,7 @@ fun EelFileSystemApi.createTemporaryFile(): EelFileSystemApiHelpers.CreateTempor
  * Returns names of files in a directory and the attributes of the corresponding files.
  * If [path] is a symlink, it will be resolved regardless of [symlinkPolicy].
  *  TODO Is it an expected behaviour?
- *
+ * 
  * [symlinkPolicy] controls resolution of symlinks among children.
  *  TODO The behaviour is different from resolveSymlinks in [stat]. To be fixed.
  */
@@ -89,6 +94,39 @@ fun EelFileSystemApi.move(
   )
 
 /**
+ * Opens the file only for reading.
+ * 
+ * In many cases [readFile] suits better than [openForReading].
+ */
+@GeneratedBuilder.Result
+@ApiStatus.Internal
+fun EelFileSystemApi.openForReading(
+  path: EelPath,
+): EelFileSystemApiHelpers.OpenForReading =
+  EelFileSystemApiHelpers.OpenForReading(
+    owner = this,
+    path = path,
+  )
+
+/**
+ * Fully or partially reads the file.
+ * 
+ * Although it's possible to implement file reading with [openForReading],
+ * this function is optimized and covered with tests.
+ * 
+ * The returned [ReadFileResult.bytes] is prepared for reading.
+ */
+@GeneratedBuilder.Result
+@ApiStatus.Internal
+fun EelFileSystemApi.readFile(
+  path: EelPath,
+): EelFileSystemApiHelpers.ReadFile =
+  EelFileSystemApiHelpers.ReadFile(
+    owner = this,
+    path = path,
+  )
+
+/**
  * Similar to stat(2) and lstat(2). [symlinkPolicy] has an impact only on [EelFileInfo.type] if [path] points on a symlink.
  */
 @GeneratedBuilder.Result
@@ -103,10 +141,10 @@ fun EelFileSystemApi.stat(
 
 /**
  * Unregisters a previously watched path.
- *
+ * 
  * @param unwatchOptions The options specifying the path to be unwatched. See [UnwatchOptions].
  * @return True if the operation was successful. False if the path hadn't been previously watched or unwatch failed.
- *
+ * 
  * @throws UnsupportedOperationException if the method isn't implemented for the file system.
  */
 @GeneratedBuilder.Result
@@ -120,8 +158,26 @@ fun EelFileSystemApi.unwatch(
   )
 
 /**
+ * Traverses given directory, yielding directory entries, including the target directory.
+ * 
+ * Default walkDirectory options are to traverse in a DFS manner, yield entries in a random order, yielding all file types, and to not
+ * yield metadata and file hash.
+ * 
+ * @param path Path to the directory that is to be traversed. If the path is not a directory, WalkDirectory will still yield just the file itself.
+ */
+@GeneratedBuilder.Result
+@ApiStatus.Internal
+fun EelFileSystemApi.walkDirectory(
+  path: EelPath,
+): EelFileSystemApiHelpers.WalkDirectory =
+  EelFileSystemApiHelpers.WalkDirectory(
+    owner = this,
+    path = path,
+  )
+
+/**
  * Adds the watched paths from the specified set of file paths. A path is watched till [unwatch] method is explicitly called for it.
- *
+ * 
  * Use [WatchOptionsBuilder] to construct the watch configuration. Example:
  * ```
  * val flow = eel.fs.addWatchRoots(
@@ -130,7 +186,7 @@ fun EelFileSystemApi.unwatch(
  *         .paths(setOf(eelPath))
  *         .build())
  * ```
- *
+ * 
  * @param watchOptions The options to use for file watching. See [WatchOptions]
  * @return True if the operation was successful.
  */
@@ -474,6 +530,156 @@ object EelFileSystemApiHelpers {
   }
 
   /**
+   * Create it via [com.intellij.platform.eel.fs.EelFileSystemApi.openForReading].
+   */
+  @GeneratedBuilder.Result
+  @ApiStatus.Internal
+  class OpenForReading(
+    private val owner: EelFileSystemApi,
+    private var path: EelPath,
+  ) : OwnedBuilder<EelResult<EelOpenedFile.Reader, EelFileSystemApi.FileReaderError>> {
+    private var autoCloseAfterLastChunk: Boolean = false
+
+    private var closeImmediatelyIfFileBiggerThan: Long? = null
+
+    private var readFirstChunkInto: ByteBuffer? = null
+
+    /**
+     * When specified, the implementation closes its internal file descriptor
+     * as soon as it internally reaches the end of the file.
+     *
+     * There are two ways to figure out if the file is closed after calling [openForReading] or [EelOpenedFile.Reader.read]
+     * * By calling [EelOpenedFile.Reader.read], which implies an additional system call or an RPC call.
+     * * By checking inexpensive but unreliable [EelOpenedFile.isClosed].
+     */
+    @EelDelicateApi
+    fun autoCloseAfterLastChunk(arg: Boolean): OpenForReading = apply {
+      this.autoCloseAfterLastChunk = arg
+    }
+
+    /**
+     * An optimization suitable for reading into memory.
+     * It allows aborting the reading fast if the whole file content
+     * won't fit into some buffer.
+     *
+     * If it happens, [readFile] returns [FileReaderError.FileBiggerThanRequested].
+     */
+    @EelDelicateApi
+    fun closeImmediatelyIfFileBiggerThan(arg: Long?): OpenForReading = apply {
+      this.closeImmediatelyIfFileBiggerThan = arg
+    }
+
+    fun path(arg: EelPath): OpenForReading = apply {
+      this.path = arg
+    }
+
+    /**
+     * When specified, data from the file MAY be written into this buffer.
+     * [ByteBuffer.position] and [ByteBuffer.limit] are always changed.
+     * The buffer is prepared for reading after the call,
+     * so the caller SHOULD NOT call [ByteBuffer.flip] after calling [openForReading].
+     *
+     * If some data is written into this buffer,
+     * the first call of [EelOpenedFile.Reader.read] reads the data following this buffer.
+     */
+    @EelDelicateApi
+    fun readFirstChunkInto(arg: ByteBuffer?): OpenForReading = apply {
+      this.readFirstChunkInto = arg
+    }
+
+    /**
+     * Complete the builder and call [com.intellij.platform.eel.fs.EelFileSystemApi.openForReading]
+     * with an instance of [com.intellij.platform.eel.fs.EelFileSystemApi.OpenForReadingArgs].
+     */
+    @CheckReturnValue
+    override suspend fun eelIt(): EelResult<EelOpenedFile.Reader, EelFileSystemApi.FileReaderError> =
+      owner.openForReading(
+        OpenForReadingArgsImpl(
+          autoCloseAfterLastChunk = autoCloseAfterLastChunk,
+          closeImmediatelyIfFileBiggerThan = closeImmediatelyIfFileBiggerThan,
+          path = path,
+          readFirstChunkInto = readFirstChunkInto,
+        )
+      )
+  }
+
+  /**
+   * Create it via [com.intellij.platform.eel.fs.EelFileSystemApi.readFile].
+   */
+  @GeneratedBuilder.Result
+  @ApiStatus.Internal
+  class ReadFile(
+    private val owner: EelFileSystemApi,
+    private var path: EelPath,
+  ) : OwnedBuilder<EelResult<EelFileSystemApi.ReadFileResult, EelFileSystemApi.FileReaderError>> {
+    private var buffer: ByteBuffer? = null
+
+    private var failFastIfBeyondLimit: Boolean = false
+
+    private var limit: Int? = null
+
+    private var mayReturnSameBuffer: Boolean = true
+
+    /**
+     * Use some specific buffer for reading files instead of creating a temporary buffer.
+     *
+     * The implementation MAY use only a fraction of this buffer for invoking a single system or RPC call.
+     *
+     * The buffer is ready for reading, no need to call `flip`.
+     */
+    @EelDelicateApi
+    fun buffer(arg: ByteBuffer?): ReadFile = apply {
+      this.buffer = arg
+    }
+
+    /**
+     * If this flag is set, the implementation checks the file size before trying to read data,
+     * and if the file is certainly bigger than [limit], no data is read.
+     */
+    @EelDelicateApi
+    fun failFastIfBeyondLimit(arg: Boolean): ReadFile = apply {
+      this.failFastIfBeyondLimit = arg
+    }
+
+    /**
+     * Maximal number of bytes to read.
+     */
+    fun limit(arg: Int?): ReadFile = apply {
+      this.limit = arg
+    }
+
+    /**
+     * If this flag is set and [buffer] is specified, the implementation reads the whole
+     * file into [buffer] and [ReadFileResult.bytes] contains a reference to [buffer]. However, if the file size is greater than the capacity of the buffer, the implementation returns a different buffer.
+     *
+     * If [buffer] is not specified, the value of the flag is ignored.
+     */
+    @EelDelicateApi
+    fun mayReturnSameBuffer(arg: Boolean): ReadFile = apply {
+      this.mayReturnSameBuffer = arg
+    }
+
+    fun path(arg: EelPath): ReadFile = apply {
+      this.path = arg
+    }
+
+    /**
+     * Complete the builder and call [com.intellij.platform.eel.fs.EelFileSystemApi.readFile]
+     * with an instance of [com.intellij.platform.eel.fs.EelFileSystemApi.ReadFileArgs].
+     */
+    override suspend fun eelIt(): EelResult<EelFileSystemApi.ReadFileResult, EelFileSystemApi.FileReaderError> =
+      owner.readFile(
+        ReadFileArgsImpl(
+          buffer = buffer,
+          failFastIfBeyondLimit = failFastIfBeyondLimit,
+          limit = limit,
+          mayReturnSameBuffer = mayReturnSameBuffer,
+          path = path,
+        )
+      )
+  }
+
+  /**
    * Create it via [com.intellij.platform.eel.fs.EelFileSystemApi.stat].
    */
   @GeneratedBuilder.Result
@@ -539,6 +745,153 @@ object EelFileSystemApiHelpers {
       owner.unwatch(
         UnwatchOptionsImpl(
           path = path,
+        )
+      )
+  }
+
+  /**
+   * Create it via [com.intellij.platform.eel.fs.EelFileSystemApi.walkDirectory].
+   */
+  @GeneratedBuilder.Result
+  @ApiStatus.Internal
+  class WalkDirectory(
+    private val owner: EelFileSystemApi,
+    private var path: EelPath,
+  ) : OwnedBuilder<Flow<WalkDirectoryEntryResult>> {
+    private var entryOrder: WalkDirectoryEntryOrder = WalkDirectoryEntryOrder.RANDOM
+
+    private var fileContentsHash: Boolean = false
+
+    private var maxDepth: Int = -1
+
+    private var readMetadata: Boolean = false
+
+    private var traversalOrder: WalkDirectoryTraversalOrder = WalkDirectoryTraversalOrder.DFS
+
+    private var yieldDirectories: Boolean = true
+
+    private var yieldOtherFileTypes: Boolean = true
+
+    private var yieldRegularFiles: Boolean = true
+
+    private var yieldSymlinks: Boolean = true
+
+    /**
+     * The default is RANDOM.
+     */
+    fun entryOrder(arg: WalkDirectoryEntryOrder): WalkDirectory = apply {
+      this.entryOrder = arg
+    }
+
+    fun alphabetical(): WalkDirectory =
+      entryOrder(WalkDirectoryEntryOrder.ALPHABETICAL)
+
+    fun random(): WalkDirectory =
+      entryOrder(WalkDirectoryEntryOrder.RANDOM)
+
+    /**
+     * Yield hash of the regular file's contents. Contents are hashed using xxHash. Default is false.
+     */
+    fun fileContentsHash(arg: Boolean): WalkDirectory = apply {
+      this.fileContentsHash = arg
+    }
+
+    /**
+     * maxDepth parameter specifies how many levels deep to traverse within the given directory. A negative depth (the default is -1) means
+     * the entire directory will be traversed without any depth limit. Depth of 0 will just return the directory itself.
+     *
+     * Example for depth = 1:
+     * ```
+     * a/
+     * |- b/
+     * |  |- c
+     * |  |- d
+     * |- e
+     * ```
+     * Returned:
+     * ```
+     * a
+     * a/b
+     * a/e
+     * ```
+     */
+    fun maxDepth(arg: Int): WalkDirectory = apply {
+      this.maxDepth = arg
+    }
+
+    /**
+     * Path to the directory that is to be traversed. If the path is not a directory, WalkDirectory will still yield just the file itself.
+     */
+    fun path(arg: EelPath): WalkDirectory = apply {
+      this.path = arg
+    }
+
+    /**
+     * Yield permissions and timestamps. Default is false.
+     */
+    fun readMetadata(arg: Boolean): WalkDirectory = apply {
+      this.readMetadata = arg
+    }
+
+    /**
+     * The default is DFS.
+     */
+    fun traversalOrder(arg: WalkDirectoryTraversalOrder): WalkDirectory = apply {
+      this.traversalOrder = arg
+    }
+
+    fun bfs(): WalkDirectory =
+      traversalOrder(WalkDirectoryTraversalOrder.BFS)
+
+    fun dfs(): WalkDirectory =
+      traversalOrder(WalkDirectoryTraversalOrder.DFS)
+
+    /**
+     * Default is true.
+     */
+    fun yieldDirectories(arg: Boolean): WalkDirectory = apply {
+      this.yieldDirectories = arg
+    }
+
+    /**
+     * Default is true.
+     */
+    fun yieldOtherFileTypes(arg: Boolean): WalkDirectory = apply {
+      this.yieldOtherFileTypes = arg
+    }
+
+    /**
+     * Default is true.
+     */
+    fun yieldRegularFiles(arg: Boolean): WalkDirectory = apply {
+      this.yieldRegularFiles = arg
+    }
+
+    /**
+     * Default is true.
+     */
+    fun yieldSymlinks(arg: Boolean): WalkDirectory = apply {
+      this.yieldSymlinks = arg
+    }
+
+    /**
+     * Complete the builder and call [com.intellij.platform.eel.fs.EelFileSystemApi.walkDirectory]
+     * with an instance of [com.intellij.platform.eel.fs.EelFileSystemApi.WalkDirectoryOptions].
+     */
+    @CheckReturnValue
+    override suspend fun eelIt(): Flow<WalkDirectoryEntryResult> =
+      owner.walkDirectory(
+        WalkDirectoryOptionsImpl(
+          entryOrder = entryOrder,
+          fileContentsHash = fileContentsHash,
+          maxDepth = maxDepth,
+          path = path,
+          readMetadata = readMetadata,
+          traversalOrder = traversalOrder,
+          yieldDirectories = yieldDirectories,
+          yieldOtherFileTypes = yieldOtherFileTypes,
+          yieldRegularFiles = yieldRegularFiles,
+          yieldSymlinks = yieldSymlinks,
         )
       )
   }

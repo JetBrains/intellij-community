@@ -3,9 +3,9 @@ package com.intellij.grazie.ide.language
 
 import com.intellij.grazie.GrazieTestBase
 import com.intellij.grazie.jlanguage.Lang
+import com.intellij.grazie.spellcheck.engine.GrazieSpellCheckerEngine
 import com.intellij.openapi.components.service
 import com.intellij.openapi.vfs.encoding.EncodingProjectManager
-import com.intellij.spellchecker.grazie.GrazieSpellCheckerEngine
 import com.intellij.tools.ide.metrics.benchmark.Benchmark
 import java.nio.charset.StandardCharsets
 
@@ -34,7 +34,7 @@ class PropertiesSupportTest : GrazieTestBase() {
         ru.text.err2=А <GRAMMAR_ERROR descr="grammar_vse_li_noun">все ли ошибка</GRAMMAR_ERROR> найдены?
         ru.text.err3=Это случилось <GRAMMAR_ERROR descr="INVALID_DATE">31 ноября</GRAMMAR_ERROR> 2014 г.
         ru.text.err4=За весь вечер она <GRAMMAR_ERROR descr="ne_proronila_ni">не проронила и слово</GRAMMAR_ERROR>.
-        ru.text.err5=Собрание состоится в <GRAMMAR_ERROR descr="Стандартное написание – «конференц-зале»">конференц зале</GRAMMAR_ERROR>.
+        ru.text.err5=Собрание состоится в <GRAMMAR_ERROR descr="Grazie.RuleEngine.Ru.Spelling.MULTI_WORD">конференц зале</GRAMMAR_ERROR>.
         ru.text.err6=<GRAMMAR_ERROR descr="WORD_REPEAT_RULE">Он он</GRAMMAR_ERROR> здесь ошибка в тексте.
         ru.with.newline=Не удалось авторизоваться.\nПопробуйте ещё раз.
 
@@ -56,7 +56,7 @@ class PropertiesSupportTest : GrazieTestBase() {
       runHighlightTestForFile("ide/language/properties/i18n.properties")
     }.setup {
       psiManager.dropPsiCaches()
-      project.service<GrazieSpellCheckerEngine>().dropSuggestionCache()
+      GrazieSpellCheckerEngine.getInstance(project).dropSuggestionCache()
     }.start()
   }
 }

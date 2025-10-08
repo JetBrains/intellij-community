@@ -212,7 +212,7 @@ final class PerFileElementTypeStubModificationTracker implements StubIndexImpl.F
     while (!probablyExpensiveUpdates.isEmpty()) {
       FileInfo info = probablyExpensiveUpdates.remove();
       if (wereModificationsInCurrentBatch(info.type) || info.project.isDisposed()) continue;
-      FileBasedIndexImpl.markFileIndexed(info.file, null);
+      FileBasedIndexImpl.markFileBeingIndexed(info.file, null);
       try {
         var diffBuilder = (StubCumulativeInputDiffBuilder)index.getForwardIndexAccessor()
           .getDiffBuilder(

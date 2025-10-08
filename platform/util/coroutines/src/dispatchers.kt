@@ -1,4 +1,4 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 @file:ApiStatus.Internal
 
 package com.intellij.platform.util.coroutines
@@ -7,7 +7,6 @@ import kotlinx.coroutines.CoroutineDispatcher
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.InternalCoroutinesApi
 import kotlinx.coroutines.Runnable
-import kotlinx.coroutines.internal.intellij.IntellijCoroutines
 import org.jetbrains.annotations.ApiStatus
 import kotlin.coroutines.CoroutineContext
 
@@ -29,7 +28,7 @@ import kotlin.coroutines.CoroutineContext
 @ExperimentalCoroutinesApi
 fun CoroutineDispatcher.softLimitedParallelism(parallelism: Int, name: String?): CoroutineDispatcher {
   @OptIn(InternalCoroutinesApi::class)
-  with(IntellijCoroutines) {
+  with(kotlinx.coroutines.internal.intellij.IntellijCoroutines) {
     return softLimitedParallelism(parallelism, name)
   }
 }

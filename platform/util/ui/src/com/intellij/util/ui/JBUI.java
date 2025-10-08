@@ -1053,10 +1053,6 @@ public final class JBUI {
           return "StatusBar.Breadcrumbs.navBarInsets";
         }
       }
-
-      public interface Progresses {
-        Color COUNTER = JBColor.namedColor("ProgressBar.counterColor", new JBColor(0x3574F0, 0x3574F0));
-      }
     }
 
     public static final class TextField {
@@ -1713,6 +1709,18 @@ public final class JBUI {
     }
 
     public static final class BigPopup {
+      public static @NotNull Border headerBorder() {
+        String key = "SearchEverywhere.Header.insets";
+        JBInsets insets = insets(key, ComplexPopup.headerInsets());
+
+        if (UIManager.getInsets(key) == null) {
+          //noinspection UseDPIAwareBorders
+          return new EmptyBorder(0, insets.left, 0, insets.right);
+        }
+
+        return new EmptyBorder(insets);
+      }
+
       public static @NotNull Color headerBackground() {
         return JBColor.namedColor("SearchEverywhere.Header.background", 0xf2f2f2);
       }
@@ -2605,6 +2613,15 @@ public final class JBUI {
         public static final Color HOVER_BACKGROUND = JBColor.namedColor("TrialWidget.Expiring.hoverBackground");
         public static final Color HOVER_BORDER_COLOR = JBColor.namedColor("TrialWidget.Expiring.hoverBorderColor");
       }
+
+      public static final class Progress {
+        public static final Color FOREGROUND = JBColor.namedColor("TrialWidget.Progress.foreground");
+        public static final Color BACKGROUND = JBColor.namedColor("TrialWidget.Progress.background");
+        public static final Color BORDER_COLOR = JBColor.namedColor("TrialWidget.Progress.borderColor");
+        public static final Color HOVER_FOREGROUND = JBColor.namedColor("TrialWidget.Progress.hoverForeground");
+        public static final Color HOVER_BACKGROUND = JBColor.namedColor("TrialWidget.Progress.hoverBackground");
+        public static final Color HOVER_BORDER_COLOR = JBColor.namedColor("TrialWidget.Progress.hoverBorderColor");
+      }
     }
 
     public static final class MainWindow {
@@ -2661,6 +2678,11 @@ public final class JBUI {
       private static final @NotNull Color SEPARATOR_COLOR =
         JBColor.namedColor("LicenseDialog.separatorColor", 0xEBECF0, 0x393B40);
 
+      private static final @NotNull Color FREE_BADGE_FOREGROUND =
+        JBColor.namedColor("LicenseDialog.freeBadgeForeground", 0xFFFFFF, 0x1E1F22);
+      private static final @NotNull Color FREE_BADGE_BACKGROUND =
+        JBColor.namedColor("LicenseDialog.freeBadgeBackground", 0x208A3C, 0x57965C);
+
       public static @NotNull Color getTermsAndConditionsForeground() {
         return TERMS_AND_CONDITIONS_COLOR;
       }
@@ -2671,6 +2693,14 @@ public final class JBUI {
 
       public static @NotNull Color getSeparatorColor() {
         return SEPARATOR_COLOR;
+      }
+
+      public static @NotNull Color getFreeBadgeForeground() {
+        return FREE_BADGE_FOREGROUND;
+      }
+
+      public static @NotNull Color getFreeBadgeBackground() {
+        return FREE_BADGE_BACKGROUND;
       }
 
       public static final class LicenseList {

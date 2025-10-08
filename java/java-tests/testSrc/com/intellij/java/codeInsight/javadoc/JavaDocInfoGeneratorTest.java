@@ -215,6 +215,7 @@ public class JavaDocInfoGeneratorTest extends JavaCodeInsightTestCase {
   public void testLinkInParamDescriptionMarkdown() { doTestAtCaret(); }
   public void testAllTags() { doTestAtCaret(); }
   public void testAllTagsMarkdown() { doTestAtCaret(); }
+  public void testFragmentReference()  { doTestClass(); }
 
   public void testRepeatableAnnotations() {
     useJava8();

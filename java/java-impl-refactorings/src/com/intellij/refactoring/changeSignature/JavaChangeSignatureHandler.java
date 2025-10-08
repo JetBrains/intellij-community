@@ -222,10 +222,7 @@ public class JavaChangeSignatureHandler implements ChangeSignatureHandler {
         PsiTreeUtil.getParentOfType(referenceParameterList, PsiJavaCodeReferenceElement.class);
       if (referenceElement != null) {
         final PsiElement resolved = referenceElement.resolve();
-        if (resolved instanceof PsiClass) {
-          return resolved;
-        }
-        else if (resolved instanceof PsiMethod) {
+        if (resolved instanceof PsiClass || resolved instanceof PsiMethod) {
           return resolved;
         }
       }

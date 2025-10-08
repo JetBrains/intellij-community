@@ -2,7 +2,9 @@
 package com.intellij.devkit.compose.hotreload
 
 import com.intellij.devkit.compose.DevkitComposeBundle
+import com.intellij.devkit.compose.hasCompose
 import com.intellij.facet.FacetManager
+import com.intellij.icons.AllIcons
 import com.intellij.openapi.fileEditor.FileEditor
 import com.intellij.openapi.module.ModuleUtilCore
 import com.intellij.openapi.project.DumbAware
@@ -15,7 +17,6 @@ import com.intellij.psi.PsiManager
 import com.intellij.ui.EditorNotificationPanel
 import com.intellij.ui.EditorNotificationProvider
 import com.intellij.ui.EditorNotifications
-import org.jetbrains.idea.devkit.util.PsiUtil
 import org.jetbrains.kotlin.idea.facet.KotlinFacetType
 import org.jetbrains.kotlin.psi.KtFile
 import org.jetbrains.kotlin.psi.KtImportDirective
@@ -30,7 +31,7 @@ internal class ComposeHotReloadSuggester : EditorNotificationProvider, DumbAware
 
   override fun collectNotificationData(project: Project, file: VirtualFile): Function<in FileEditor, out JComponent?>? {
     if (Registry.`is`(REGISTRY_KEY)) return null
-    if (!PsiUtil.isPluginProject(project)) return null
+    if (!hasCompose(project)) return null
 
     if (isSuggestionDismissed(file)) return null
     if (!isComposeUiFile(project, file)) return null
@@ -66,10 +67,11 @@ internal class ComposeHotReloadSuggester : EditorNotificationProvider, DumbAware
            && segments[2].identifier == "runtime"
   }
 
-  private inner class Banner(val project: Project, val file: VirtualFile) : EditorNotificationPanel(Status.Info) {
+  private inner class Banner(val project: Project, val file: VirtualFile) : EditorNotificationPanel(Status.Success) {
     init {
       @Suppress("DialogTitleCapitalization")
       text = DevkitComposeBundle.message("label.compose.hot.reload.available.banner")
+      icon(AllIcons.Debugger.DebuggerSync)
 
       @Suppress("DialogTitleCapitalization")
       createActionLabel(DevkitComposeBundle.message("link.label.enable.hot.reload")) {

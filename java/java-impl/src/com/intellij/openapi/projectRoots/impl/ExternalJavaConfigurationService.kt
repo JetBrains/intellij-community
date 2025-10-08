@@ -26,6 +26,9 @@ import com.intellij.openapi.projectRoots.Sdk
 import com.intellij.openapi.roots.ProjectRootManager
 import com.intellij.openapi.util.SystemInfo
 import com.intellij.openapi.vfs.VirtualFileManager
+import com.intellij.platform.backend.workspace.workspaceModel
+import com.intellij.platform.workspace.jps.entities.ContentRootEntity
+import com.intellij.platform.workspace.jps.entities.SdkEntity
 import com.intellij.terminal.ui.TerminalWidget
 import com.intellij.util.asDisposable
 import kotlinx.coroutines.CoroutineScope
@@ -179,6 +182,17 @@ public class ExternalJavaConfigurationService(public val project: Project, priva
         updateFromConfig(extension)
       }
     })
+
+    scope.launch {
+      project.workspaceModel.eventLog.collect { event ->
+        if (event.getChanges(SdkEntity::class.java).any() || event.getChanges(ContentRootEntity::class.java).any()) {
+          ExternalJavaConfigurationProvider.EP_NAME.forEachExtensionSafe { extension ->
+            updateFromConfig(extension)
+          }
+        }
+      }
+    }
+
   }
 
   public fun <T> addTerminationCallback(session: TerminalWidget, configProvider: ExternalJavaConfigurationProvider<T>) {

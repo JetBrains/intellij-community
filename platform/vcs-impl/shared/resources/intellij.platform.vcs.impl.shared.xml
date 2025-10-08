@@ -1,4 +1,4 @@
-<idea-plugin>
+<idea-plugin visibility="public">
   <dependencies>
     <module name="intellij.platform.vcs.core"/>
     <module name="intellij.platform.vcs.shared"/>
@@ -15,17 +15,55 @@
     <registryKey key="vcs.rd.local.changes.enabled" defaultValue="false" restartRequired="true"
                  description="RD-friendly local changes view"/>
 
+    <projectService serviceInterface="com.intellij.platform.vcs.impl.shared.changes.ChangesViewSettings"
+                    serviceImplementation="com.intellij.platform.vcs.impl.shared.changes.ChangesViewSettingsImpl"/>
+
     <projectService serviceImplementation="com.intellij.openapi.vcs.IssueNavigationConfiguration"/>
     <projectSettings service="com.intellij.openapi.vcs.IssueNavigationConfiguration"/>
     <rdct.remoteSettingProvider implementation="com.intellij.platform.vcs.impl.shared.VcsRemoteSettingsInfoProvider"/>
+
+    <remote.customDataContextSerializer
+      implementation="com.intellij.platform.vcs.impl.shared.actions.ChangesViewSelectionDataContextSerializer"/>
 
     <changesGroupingPolicy key="directory" id="directory" weight="10"
                            implementationClass="com.intellij.openapi.vcs.changes.ui.DirectoryChangesGroupingPolicy$Factory"/>
   </extensions>
 
   <extensionPoints>
-    <extensionPoint name="changesGroupingPolicy" beanClass="com.intellij.openapi.vcs.changes.ui.ChangesGroupingPolicyFactoryEPBean" dynamic="true">
+    <extensionPoint name="changesGroupingPolicy" beanClass="com.intellij.openapi.vcs.changes.ui.ChangesGroupingPolicyFactoryEPBean"
+                    dynamic="true">
       <with attribute="implementationClass" implements="com.intellij.openapi.vcs.changes.ui.ChangesGroupingPolicyFactory"/>
     </extensionPoint>
+
+    <extensionPoint name="vcs.changes.changesViewNodeAction"
+                    interface="com.intellij.openapi.vcs.changes.ChangesViewNodeAction"
+                    area="IDEA_PROJECT"
+                    dynamic="true"/>
+    <extensionPoint name="vcs.changes.changesTreeNodeFactory"
+                    interface="com.intellij.platform.vcs.impl.shared.changes.ChangesTreeNodeFactory"
+                    dynamic="true"/>
   </extensionPoints>
+
+  <actions>
+    <!-- TODO IJPL-173924 Temporary way to register ChangesViewPopupMenu in shared code -->
+    <group id="ChangesViewPopupMenuShared"/>
+
+    <group id="ChangesView.GroupBy" icon="AllIcons.Actions.GroupBy" popup="true"
+           class="com.intellij.openapi.vcs.changes.actions.SelectChangesGroupingActionGroup">
+      <separator key="group.ChangesView.GroupBy.text"/>
+      <action id="ChangesView.GroupBy.Directory"
+              class="com.intellij.openapi.vcs.changes.actions.SetDirectoryChangesGroupingAction"/>
+      <add-to-group group-id="Vcs.KeymapGroup"/>
+    </group>
+  </actions>
+
+  <actions resource-bundle="messages.VcsBundle">
+    <group id="ChangesView.ViewOptions" icon="AllIcons.Actions.Show" popup="true">
+      <reference ref="ChangesView.GroupBy"/>
+      <separator key="action.vcs.log.show.separator"/>
+      <action id="ChangesView.ShowIgnored"
+              class="com.intellij.platform.vcs.impl.shared.changes.ToggleShowIgnoredAction"
+              icon="AllIcons.Actions.ToggleVisibility"/>
+    </group>
+  </actions>
 </idea-plugin>

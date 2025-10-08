@@ -3,6 +3,7 @@ load("@rules_kotlin//kotlin/internal:defs.bzl", "KtPluginConfiguration", _KtComp
 load("//:rules/common-attrs.bzl", "add_dicts", "common_attr", "common_outputs", "common_toolchains")
 load("//:rules/impl/compile.bzl", "kt_jvm_produce_jar_actions")
 load("//:rules/impl/transitions.bzl", "jvm_platform_transition")
+load("//:rules/resource.bzl", "ResourceGroupInfo")
 
 visibility("private")
 
@@ -28,7 +29,7 @@ def _jvm_library(ctx):
     ]
 
 jvm_library = rule(
-    doc = """This rule compiles and links Kotlin and Java sources into a .jar file.""",
+    doc = """This rule compiles and links Kotlin and Java sources, and packages the resources into a .jar file.""",
     attrs = add_dicts(common_attr, {
         "srcs": attr.label_list(
             doc = """The list of source files that are processed to create the target, this can contain both Java and Kotlin
@@ -36,6 +37,11 @@ jvm_library = rule(
             default = [],
             allow_files = [".kt", ".java", ".form"],
             mandatory = True,
+        ),
+        "resources": attr.label_list(
+            doc = """The list of resource groups to create the target.""",
+            default = [],
+            providers = [ResourceGroupInfo],
         ),
         "exported_compiler_plugins": attr.label_list(
             doc = """\

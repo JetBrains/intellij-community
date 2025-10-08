@@ -26,6 +26,7 @@ class ActionInvokingInterpreter(private val invokersFactory: InvokersFactory,
     var currentSessionId: SessionId? = null
     var isCanceled = false
     val actions = fileActions.actions.reorder(order)
+      //.filter { it.sessionId.id == "1fcd6539-e40f-48a6-96b7-739f84f80969" }
     for (action in actions) {
       if (currentSessionId != action.sessionId) {
         fileOpener.closeOpenedFiles()

@@ -22,7 +22,7 @@ jvm_library(
     "//platform/platform-impl/ui",
     "//platform/lang-api:lang",
     "//fleet/util/core",
-    "@lib//:kotlinx-serialization-core",
+    "//libraries/kotlinx/serialization/core",
   ]
 )
 ### auto-generated section `build intellij.platform.ide.codeinsight.inline` end

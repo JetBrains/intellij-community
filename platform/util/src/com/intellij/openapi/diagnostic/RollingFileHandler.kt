@@ -55,7 +55,7 @@ class RollingFileHandler @JvmOverloads constructor(
 
   private fun open(append: Boolean) {
     Files.createDirectories(logPath.parent)
-    val delegate = BufferedOutputStream(Files.newOutputStream(logPath, StandardOpenOption.CREATE, StandardOpenOption.APPEND))
+    val delegate = BufferedOutputStream(Files.newOutputStream(logPath, StandardOpenOption.CREATE, if (append) StandardOpenOption.APPEND else StandardOpenOption.TRUNCATE_EXISTING))
     meter = MeteredOutputStream(delegate, if (append) Files.size(logPath) else 0)
     setOutputStream(meter)
   }
@@ -100,7 +100,8 @@ class RollingFileHandler @JvmOverloads constructor(
       e
     }
 
-    open(false)
+    // Truncate log if we successfully created .1 file
+    open(e != null)
 
     if (e == null) {
       rotateFailed = false

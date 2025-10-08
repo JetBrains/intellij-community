@@ -1,9 +1,9 @@
 ### auto-generated section `build intellij.platform.vcs.dvcs.impl` start
-load("@rules_jvm//:jvm.bzl", "jvm_library", "jvm_resources")
+load("@rules_jvm//:jvm.bzl", "jvm_library", "resourcegroup")
 
-jvm_resources(
+resourcegroup(
   name = "vcs-dvcs-impl_resources",
-  files = glob(["resources/**/*"]),
+  srcs = glob(["resources/**/*"]),
   strip_prefix = "resources"
 )
 
@@ -12,6 +12,7 @@ jvm_library(
   module_name = "intellij.platform.vcs.dvcs.impl",
   visibility = ["//visibility:public"],
   srcs = glob(["src/**/*.kt", "src/**/*.java", "src/**/*.form"], allow_empty = True),
+  resources = [":vcs-dvcs-impl_resources"],
   deps = [
     "//platform/analysis-api:analysis",
     "//platform/util/concurrency",
@@ -32,7 +33,7 @@ jvm_library(
     "//platform/vcs-api:vcs",
     "//platform/ide-core-impl",
     "//platform/dvcs-api:vcs-dvcs",
-    "@lib//:miglayout-swing",
+    "//libraries/miglayout-swing",
     "@lib//:stream_ex",
     "//platform/util/jdom",
     "//platform/util:util-ui",
@@ -43,8 +44,7 @@ jvm_library(
     "//platform/util/coroutines",
     "//platform/workspace/storage",
     "//platform/dvcs-impl/shared",
-  ],
-  runtime_deps = [":vcs-dvcs-impl_resources"]
+  ]
 )
 
 jvm_library(
@@ -79,7 +79,7 @@ jvm_library(
     "//platform/testFramework:testFramework_test_lib",
     "//libraries/mockito",
     "//platform/vcs-tests:vcs-testFramework",
-    "@lib//:miglayout-swing",
+    "//libraries/miglayout-swing",
     "@lib//:stream_ex",
     "//platform/util/jdom",
     "//platform/util:util-ui",
@@ -90,8 +90,7 @@ jvm_library(
     "//platform/util/coroutines",
     "//platform/workspace/storage",
     "//platform/dvcs-impl/shared",
-  ],
-  runtime_deps = [":vcs-dvcs-impl_resources"]
+  ]
 )
 ### auto-generated section `build intellij.platform.vcs.dvcs.impl` end
 

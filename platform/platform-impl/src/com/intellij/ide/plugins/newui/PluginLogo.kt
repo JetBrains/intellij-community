@@ -28,6 +28,7 @@ import com.intellij.util.io.URLUtil
 import com.intellij.util.io.sanitizeFileName
 import com.intellij.util.ui.JBImageIcon
 import kotlinx.coroutines.*
+import org.jetbrains.annotations.ApiStatus.Internal
 import java.awt.GraphicsEnvironment
 import java.io.File
 import java.io.IOException
@@ -138,7 +139,8 @@ object PluginLogo {
   fun width(): Int = PLUGIN_ICON_SIZE
 }
 
-internal fun reloadPluginIcon(icon: Icon, width: Int, height: Int): Icon {
+@Internal
+fun reloadPluginIcon(icon: Icon, width: Int, height: Int): Icon {
   if (icon is CachedImageIcon) {
     assert(width == height)
     return icon.scale(width.toFloat() / icon.getIconWidth())
@@ -314,7 +316,7 @@ private fun downloadOrCheckUpdateFile(idPlugin: String, file: Path, theme: Strin
               URLUtil.encodeURIComponent(idPlugin) + theme
     MarketplaceRequests.readOrUpdateFile(file, url, null, "", InputStream::close)
   }
-  catch (ignore: HttpRequests.HttpStatusException) {
+  catch (_: HttpRequests.HttpStatusException) {
   }
   catch (e: IOException) {
     LOG.debug(e)
@@ -363,7 +365,7 @@ private fun tryLoadIcon(iconFile: Path): PluginLogoIconProvider? {
     val data = Files.readAllBytes(iconFile)
     return if (data.isEmpty()) null else loadFileIcon(data)
   }
-  catch (ignore: NoSuchFileException) {
+  catch (_: NoSuchFileException) {
   }
   catch (e: CancellationException) {
     throw e
@@ -406,7 +408,7 @@ private class PluginLogoLoader(private val coroutineScope: CoroutineScope) {
           if (path == null) {
             loadPluginIconsFromUrl(idPlugin = idPlugin, lazyIcon = info.second, coroutineContext = coroutineContext)
           }
-          else if (AppMode.isDevServer()) {
+          else if (AppMode.isRunningFromDevBuild()) {
             val descriptor = info.first as? IdeaPluginDescriptorImpl
             loadPluginIconsFromExploded(paths = descriptor?.jarFiles ?: listOf(path), idPlugin = idPlugin, lazyIcon = info.second)
           }

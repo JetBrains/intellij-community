@@ -5,7 +5,15 @@ import com.intellij.psi.tree.IElementType;
 import com.intellij.psi.tree.ILazyParseableElementType;
 import org.jetbrains.annotations.ApiStatus;
 
-@ApiStatus.Experimental
+/**
+ * @deprecated Use the new Java syntax library instead.
+ *             See {@link com.intellij.java.syntax.parser.JavaParser}
+ *             This class is planned to be removed.
+ *             Use {@link com.intellij.psi.impl.source.tree.JavaDocElementType} directly.
+ */
+@Deprecated
+@ApiStatus.ScheduledForRemoval
+@ApiStatus.Internal
 public abstract class AbstractBasicJavaElementTypeFactory {
 
   public static class JavaElementTypeContainer {

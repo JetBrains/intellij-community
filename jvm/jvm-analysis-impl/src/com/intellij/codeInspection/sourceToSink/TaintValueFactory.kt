@@ -177,11 +177,11 @@ class TaintValueFactory(private val myConfiguration: UntaintedConfiguration) {
       return TaintValue.UNKNOWN
     }
     val annotationsManager = ExternalAnnotationsManager.getInstance(owner.project)
-    val annotations: Array<out PsiAnnotation>? = annotationsManager.findExternalAnnotations(owner)
-    return annotations?.asSequence()
-             ?.map { fromAnnotation(it) }
-             ?.filterNotNull()
-             ?.firstOrNull() ?: TaintValue.UNKNOWN
+    val annotations = annotationsManager.findExternalAnnotations(owner)
+    return annotations.asSequence()
+             .map { fromAnnotation(it) }
+             .filterNotNull()
+             .firstOrNull() ?: TaintValue.UNKNOWN
   }
 
   private fun of(annotationOwner: PsiModifierListOwner): TaintValue {

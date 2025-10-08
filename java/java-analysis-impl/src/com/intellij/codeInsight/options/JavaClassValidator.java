@@ -2,7 +2,6 @@
 package com.intellij.codeInsight.options;
 
 import com.intellij.codeInspection.ui.StringValidatorWithSwingSelector;
-import com.intellij.ide.util.ClassFilter;
 import com.intellij.ide.util.TreeClassChooser;
 import com.intellij.ide.util.TreeClassChooserFactory;
 import com.intellij.java.JavaBundle;
@@ -111,12 +110,7 @@ public class JavaClassValidator implements StringValidatorWithSwingSelector {
                    JavaBundle.message("special.annotations.list.annotation.class") :
                    JavaBundle.message("dialog.title.choose.class");
     TreeClassChooser chooser = TreeClassChooserFactory.getInstance(project)
-      .createWithInnerClassesScopeChooser(title, GlobalSearchScope.allScope(project), new ClassFilter() {
-        @Override
-        public boolean isAccepted(PsiClass aClass) {
-          return checkClass(aClass) == null;
-        }
-      }, null);
+      .createWithInnerClassesScopeChooser(title, GlobalSearchScope.allScope(project), aClass -> checkClass(aClass) == null, null);
     chooser.showDialog();
     final PsiClass selected = chooser.getSelected();
     return selected == null ? null : selected.getQualifiedName();

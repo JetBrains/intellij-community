@@ -166,20 +166,6 @@ abstract class MavenServerConnectorBase(project: Project?,
     return support != null && !support.activeConfigurations.isEmpty()
   }
 
-  override fun pingBlocking(): Boolean {
-    try {
-      val pinged = getServerBlocking().ping(MavenRemoteObjectWrapper.ourToken)
-      if (MavenLog.LOG.isTraceEnabled) {
-        MavenLog.LOG.trace("maven server ping: $pinged")
-      }
-      return pinged
-    }
-    catch (e: RemoteException) {
-      MavenLog.LOG.warn("maven server ping error", e)
-      return false
-    }
-  }
-
   override suspend fun ping(): Boolean {
     try {
       val pinged = getServer().ping(MavenRemoteObjectWrapper.ourToken)

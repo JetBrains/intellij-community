@@ -27,14 +27,31 @@ class JavaCommandCompletionFactory implements CommandCompletionFactory, DumbAwar
     if (!(psiFile instanceof PsiJavaFile)) return false;
     //Doesn't work well. Disable for now
     if (psiFile instanceof PsiJShellFile) return false;
-    PsiElement elementAt = psiFile.findElementAt(offset);
-    if (elementAt == null) return true;
-    if (!(elementAt.getParent() instanceof PsiParameterList)) return true;
-    PsiElement prevLeaf = PsiTreeUtil.prevLeaf(elementAt, true);
-    if (!(prevLeaf instanceof PsiJavaToken javaToken && javaToken.textMatches("."))) return true;
-    PsiElement prevPrevLeaf = PsiTreeUtil.prevLeaf(prevLeaf, true);
-    if (PsiTreeUtil.getParentOfType(prevPrevLeaf, PsiTypeElement.class) != null) return false;
+    if (isInsideParameterList(psiFile, offset)) return false;
+    if (isInsideStringLiteral(psiFile, offset)) return false;
     return true;
+  }
+
+  private static boolean isInsideStringLiteral(@NotNull PsiFile file, int offset) {
+    PsiElement elementAt = file.findElementAt(offset);
+    if (!(elementAt instanceof PsiJavaToken psiJavaToken &&
+          (psiJavaToken.getTokenType() == JavaTokenType.STRING_LITERAL ||
+           psiJavaToken.getTokenType() == JavaTokenType.TEXT_BLOCK_LITERAL
+          ))) {
+      return false;
+    }
+
+    return psiJavaToken.getTextRange().containsOffset(offset);
+  }
+
+  private static boolean isInsideParameterList(@NotNull PsiFile psiFile, int offset) {
+    PsiElement elementAt = psiFile.findElementAt(offset);
+    if (elementAt == null) return false;
+    if (!(elementAt.getParent() instanceof PsiParameterList)) return false;
+    PsiElement prevLeaf = PsiTreeUtil.prevLeaf(elementAt, true);
+    if (!(prevLeaf instanceof PsiJavaToken javaToken && javaToken.textMatches("."))) return false;
+    PsiElement prevPrevLeaf = PsiTreeUtil.prevLeaf(prevLeaf, true);
+    return PsiTreeUtil.getParentOfType(prevPrevLeaf, PsiTypeElement.class) != null;
   }
 
   static class JavaIntentionCommandSkipper implements IntentionCommandSkipper {

@@ -49,7 +49,7 @@ public class GotoNextErrorHandler implements CodeInsightActionHandler {
   @Override
   public void invoke(@NotNull Project project, @NotNull Editor editor, @NotNull PsiFile psiFile) {
     int caretOffset = editor.getCaretModel().getOffset();
-    gotoNextError(project, editor, psiFile, caretOffset);
+    gotoNextError(project, psiFile, editor, caretOffset);
   }
 
   @Override
@@ -57,7 +57,7 @@ public class GotoNextErrorHandler implements CodeInsightActionHandler {
     return false;
   }
 
-  private void gotoNextError(Project project, Editor editor, PsiFile psiFile, int caretOffset) {
+  private void gotoNextError(@NotNull Project project, @NotNull PsiFile psiFile, @NotNull Editor editor, int caretOffset) {
     SeverityRegistrar severityRegistrar = SeverityRegistrar.getSeverityRegistrar(project);
     DaemonCodeAnalyzerSettings settings = DaemonCodeAnalyzerSettings.getInstance();
     int maxSeverity = settings.isNextErrorActionGoesToErrorsFirst() ? severityRegistrar.getSeveritiesCount() - 1
@@ -109,7 +109,7 @@ public class GotoNextErrorHandler implements CodeInsightActionHandler {
     return infoToGo[0][0];
   }
 
-  private HighlightInfo getBetterInfoThan(HighlightInfo infoToGo, int caretOffset, int startOffset, HighlightInfo info) {
+  private HighlightInfo getBetterInfoThan(HighlightInfo infoToGo, int caretOffset, int startOffset, @NotNull HighlightInfo info) {
     if (isBetterThan(infoToGo, caretOffset, startOffset)) {
       infoToGo = info;
     }
@@ -127,7 +127,7 @@ public class GotoNextErrorHandler implements CodeInsightActionHandler {
     }
   }
 
-  private void showMessageWhenNoHighlights(Project project, PsiFile psiFile, Editor editor, int caretOffset) {
+  private void showMessageWhenNoHighlights(@NotNull Project project, @NotNull PsiFile psiFile, @NotNull Editor editor, int caretOffset) {
     DaemonCodeAnalyzerImpl codeHighlighter = (DaemonCodeAnalyzerImpl)DaemonCodeAnalyzer.getInstance(project);
     HintManagerImpl hintManager = HintManagerImpl.getInstanceImpl();
     if (codeHighlighter.isErrorAnalyzingFinished(psiFile)) {
@@ -142,16 +142,14 @@ public class GotoNextErrorHandler implements CodeInsightActionHandler {
 
     Disposable hintDisposable = Disposer.newDisposable("GotoNextErrorHandler.showMessageWhenNoHighlights");
     Disposer.register(project, hintDisposable);
-    hint.addHintListener((eventObject) -> {
-      Disposer.dispose(hintDisposable);
-    });
+    hint.addHintListener(__ -> Disposer.dispose(hintDisposable));
 
     MessageBusConnection busConnection = project.getMessageBus().connect(hintDisposable);
     busConnection.subscribe(DaemonCodeAnalyzer.DAEMON_EVENT_TOPIC, new DaemonCodeAnalyzer.DaemonListener() {
       @Override
       public void daemonFinished() {
         hint.hide();
-        gotoNextError(project, editor, psiFile, caretOffset);
+        gotoNextError(project, psiFile, editor, caretOffset);
       }
     });
 
@@ -195,7 +193,7 @@ public class GotoNextErrorHandler implements CodeInsightActionHandler {
     if (highlighter != null) ProblemsView.selectHighlighterIfVisible(project, highlighter);
   }
 
-  private static int getNavigationPositionFor(HighlightInfo info, Document document) {
+  private static int getNavigationPositionFor(@NotNull HighlightInfo info, @NotNull Document document) {
     int start = info.getActualStartOffset();
     int textLength = document.getTextLength();
     if (start >= textLength) return textLength;

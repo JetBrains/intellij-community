@@ -1,9 +1,9 @@
 ### auto-generated section `build intellij.libraries.cglib` start
-load("@rules_jvm//:jvm.bzl", "jvm_library", "jvm_resources")
+load("@rules_jvm//:jvm.bzl", "jvm_library", "resourcegroup")
 
-jvm_resources(
+resourcegroup(
   name = "cglib_resources",
-  files = glob(["resources/**/*"]),
+  srcs = glob(["resources/**/*"]),
   strip_prefix = "resources"
 )
 
@@ -12,6 +12,7 @@ jvm_library(
   module_name = "intellij.libraries.cglib",
   visibility = ["//visibility:public"],
   srcs = glob(["src/**/*.kt", "src/**/*.java", "src/**/*.form"], allow_empty = True),
+  resources = [":cglib_resources"],
   deps = [
     "@lib//:libraries-cglib-cglib",
     "//platform/util/base",
@@ -19,10 +20,9 @@ jvm_library(
     "//platform/util",
     "//platform/core-api:core",
     "//platform/core-impl",
-    "@lib//:fastutil-min",
+    "//libraries/fastutil",
     "//platform/util-class-loader:util-classLoader",
   ],
-  exports = ["@lib//:libraries-cglib-cglib"],
-  runtime_deps = [":cglib_resources"]
+  exports = ["@lib//:libraries-cglib-cglib"]
 )
 ### auto-generated section `build intellij.libraries.cglib` end

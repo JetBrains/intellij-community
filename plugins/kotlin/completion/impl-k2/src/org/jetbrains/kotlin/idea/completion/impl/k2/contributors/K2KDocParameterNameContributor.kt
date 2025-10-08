@@ -12,6 +12,7 @@ import org.jetbrains.kotlin.analysis.api.symbols.KaNamedClassSymbol
 import org.jetbrains.kotlin.analysis.api.symbols.KaTypeParameterSymbol
 import org.jetbrains.kotlin.analysis.api.symbols.KaValueParameterSymbol
 import org.jetbrains.kotlin.analysis.api.symbols.markers.KaNamedSymbol
+import org.jetbrains.kotlin.analysis.api.symbols.symbol
 import org.jetbrains.kotlin.analysis.api.symbols.typeParameters
 import org.jetbrains.kotlin.idea.completion.contributors.helpers.KtOutsideTowerScopeKinds
 import org.jetbrains.kotlin.idea.completion.contributors.helpers.KtSymbolWithOrigin
@@ -22,7 +23,6 @@ import org.jetbrains.kotlin.idea.completion.lookups.CallableInsertionStrategy
 import org.jetbrains.kotlin.idea.completion.lookups.ImportStrategy
 import org.jetbrains.kotlin.idea.completion.lookups.factories.TypeParameterLookupElementFactory
 import org.jetbrains.kotlin.idea.completion.weighers.Weighers.applyWeighs
-import org.jetbrains.kotlin.idea.completion.weighers.WeighingContext
 import org.jetbrains.kotlin.idea.util.positionContext.KDocNameReferencePositionContext
 import kotlin.collections.orEmpty
 import kotlin.sequences.forEach
@@ -30,9 +30,9 @@ import kotlin.sequences.forEach
 internal class K2KDocParameterNameContributor : K2SimpleCompletionContributor<KDocNameReferencePositionContext>(
     KDocNameReferencePositionContext::class
 ) {
-    override fun KaSession.complete(context: K2CompletionSectionContext<KDocNameReferencePositionContext>) {
+    context(_: KaSession, context: K2CompletionSectionContext<KDocNameReferencePositionContext>)
+    override fun complete() {
         val positionContext = context.positionContext
-        val weighingContext = context.weighingContext
         if (positionContext.explicitReceiver != null) return
 
         val section = positionContext.nameExpression.getContainingSection()
@@ -42,19 +42,16 @@ internal class K2KDocParameterNameContributor : K2SimpleCompletionContributor<KD
 
         getParametersForKDoc(ownerDeclaration.symbol)
             .filter { (it as KaNamedSymbol).name.asString() !in alreadyDocumentedParameters }
-            .flatMap { createLookupElements(context, it,  weighingContext) }
+            .flatMap { createLookupElements(it) }
             .forEach { context.addElement(it) }
     }
 
-    context(_: KaSession)
+    context(_: KaSession, context: K2CompletionSectionContext<KDocNameReferencePositionContext>)
     private fun createLookupElements(
-        context: K2CompletionSectionContext<KDocNameReferencePositionContext>,
         declarationSymbol: KaDeclarationSymbol,
-        weighingContext: WeighingContext,
     ): Sequence<LookupElement> = when (declarationSymbol) {
         is KaTypeParameterSymbol -> TypeParameterLookupElementFactory.createLookup(declarationSymbol)
             .applyWeighs(
-                context = weighingContext,
                 symbolWithOrigin = KtSymbolWithOrigin(
                     _symbol = declarationSymbol,
                     scopeKind = KtOutsideTowerScopeKinds.LocalScope,
@@ -62,8 +59,6 @@ internal class K2KDocParameterNameContributor : K2SimpleCompletionContributor<KD
             ).let { sequenceOf(it) }
 
         is KaValueParameterSymbol -> createCallableLookupElements(
-            context = weighingContext,
-            parameters = context.parameters,
             signature = @OptIn(KaExperimentalApi::class) (declarationSymbol.asSignature()),
             options = CallableInsertionOptions(ImportStrategy.DoNothing, CallableInsertionStrategy.AsIdentifier),
             scopeKind = KtOutsideTowerScopeKinds.LocalScope,

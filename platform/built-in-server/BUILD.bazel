@@ -1,9 +1,9 @@
 ### auto-generated section `build intellij.platform.builtInServer.impl` start
-load("@rules_jvm//:jvm.bzl", "jvm_library", "jvm_resources")
+load("@rules_jvm//:jvm.bzl", "jvm_library", "resourcegroup")
 
-jvm_resources(
+resourcegroup(
   name = "builtInServer-impl_resources",
-  files = glob(["resources/**/*"]),
+  srcs = glob(["resources/**/*"]),
   strip_prefix = "resources"
 )
 
@@ -12,6 +12,7 @@ jvm_library(
   module_name = "intellij.platform.builtInServer.impl",
   visibility = ["//visibility:public"],
   srcs = glob(["src/**/*.kt", "src/**/*.java", "src/**/*.form"], allow_empty = True),
+  resources = [":builtInServer-impl_resources"],
   deps = [
     "//platform/analysis-api:analysis",
     "//platform/code-style-api:codeStyle",
@@ -24,18 +25,18 @@ jvm_library(
     "//platform/platform-impl:ide-impl",
     "//platform/ide-core/plugins",
     "//platform/xdebugger-api:debugger",
-    "@lib//:guava",
-    "@lib//:gson",
+    "//libraries/guava",
+    "//libraries/gson",
     "@lib//:commons-imaging",
     "//platform/built-in-server-api:builtInServer",
     "//platform/diff-api:diff",
     "@lib//:kotlin-stdlib",
     "@lib//:netty-codec-http",
-    "@lib//:fastutil-min",
-    "@lib//:jackson",
-    "@lib//:jackson-jr-objects",
+    "//libraries/fastutil",
+    "//libraries/jackson/jackson",
+    "//libraries/jackson/jr-objects:libraries-jackson-jr-objects",
     "@lib//:netty-buffer",
-    "@lib//:caffeine",
+    "//libraries/caffeine",
     "//platform/util/concurrency",
     "//platform/core-ui",
     "//platform/platform-util-io-impl:ide-util-io-impl",
@@ -44,15 +45,14 @@ jvm_library(
     "@lib//:kotlinx-coroutines-core",
     "@lib//:netty-codec-compression",
   ],
-  exports = ["//platform/built-in-server-api:builtInServer"],
-  runtime_deps = [":builtInServer-impl_resources"]
+  exports = ["//platform/built-in-server-api:builtInServer"]
 )
 ### auto-generated section `build intellij.platform.builtInServer.impl` end
 
 ### auto-generated section `build intellij.platform.builtInServer.tests` start
-jvm_resources(
+resourcegroup(
   name = "builtInServer-tests_test_resources",
-  files = glob(["testResources/**/*"]),
+  srcs = glob(["testResources/**/*"]),
   strip_prefix = "testResources"
 )
 
@@ -67,6 +67,7 @@ jvm_library(
   module_name = "intellij.platform.builtInServer.tests",
   visibility = ["//visibility:public"],
   srcs = glob(["testSrc/**/*.kt", "testSrc/**/*.java", "testSrc/**/*.form"], allow_empty = True),
+  resources = [":builtInServer-tests_test_resources"],
   deps = [
     "//platform/analysis-api:analysis",
     "//platform/util/concurrency",
@@ -81,8 +82,8 @@ jvm_library(
     "//platform/platform-impl:ide-impl",
     "//platform/lang-impl",
     "//platform/xdebugger-api:debugger",
-    "@lib//:guava",
-    "@lib//:gson",
+    "//libraries/guava",
+    "//libraries/gson",
     "@lib//:commons-imaging",
     "//platform/testFramework",
     "//platform/testFramework:testFramework_test_lib",
@@ -97,8 +98,7 @@ jvm_library(
     "//platform/core-ui",
     "//platform/platform-util-io:ide-util-io",
     "//platform/platform-util-netty:ide-util-netty",
-  ],
-  runtime_deps = [":builtInServer-tests_test_resources"]
+  ]
 )
 ### auto-generated section `build intellij.platform.builtInServer.tests` end
 

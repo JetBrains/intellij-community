@@ -15,7 +15,9 @@ import org.jetbrains.annotations.ApiStatus.Internal
 @Internal
 class SeTargetsFilterEditor(private val scopesInfo: SearchScopesInfo?,
                             typeVisibilityStates: List<SeTypeVisibilityStatePresentation>?) : SeFilterEditorBase<SeTargetsFilter>(
-  SeTargetsFilter(scopesInfo?.selectedScopeId, hiddenTypes(typeVisibilityStates))
+  SeTargetsFilter(scopesInfo?.selectedScopeId,
+                  scopesInfo?.selectedScopeId != scopesInfo?.everywhereScopeId,
+                  hiddenTypes(typeVisibilityStates))
 ) {
   private val updateFilterValueWithVisibilityStates = {
     filterValue = filterValue.cloneWith(hiddenTypes(visibilityStateHolder?.elements))
@@ -27,8 +29,8 @@ class SeTargetsFilterEditor(private val scopesInfo: SearchScopesInfo?,
     }
 
   private val scopeFilterAction: AnAction? = scopesInfo?.let {
-    SeScopeChooserActionProvider(scopesInfo) {
-      filterValue = filterValue.cloneWith(it)
+    SeScopeChooserActionProvider(scopesInfo) { scopeId, isAutoToggleEnabled ->
+      filterValue = filterValue.cloneWith(scopeId, isAutoToggleEnabled)
     }.getAction()
   }
 

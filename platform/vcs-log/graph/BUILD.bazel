@@ -1,9 +1,9 @@
 ### auto-generated section `build intellij.platform.vcs.log.graph.impl` start
-load("@rules_jvm//:jvm.bzl", "jvm_library", "jvm_resources")
+load("@rules_jvm//:jvm.bzl", "jvm_library", "resourcegroup")
 
-jvm_resources(
+resourcegroup(
   name = "vcs-log-graph-impl_resources",
-  files = glob(["resources/**/*"]),
+  srcs = glob(["resources/**/*"]),
   strip_prefix = "resources"
 )
 
@@ -12,18 +12,18 @@ jvm_library(
   module_name = "intellij.platform.vcs.log.graph.impl",
   visibility = ["//visibility:public"],
   srcs = glob(["src/**/*.kt", "src/**/*.java", "src/**/*.form"], allow_empty = True),
+  resources = [":vcs-log-graph-impl_resources"],
   deps = [
     "//platform/util",
     "//platform/vcs-log/graph-api:vcs-log-graph",
     "@lib//:kotlin-stdlib",
-    "@lib//:guava",
-    "@lib//:fastutil-min",
+    "//libraries/guava",
+    "//libraries/fastutil",
   ],
   exports = [
     "//platform/util",
     "//platform/vcs-log/graph-api:vcs-log-graph",
-  ],
-  runtime_deps = [":vcs-log-graph-impl_resources"]
+  ]
 )
 
 jvm_library(
@@ -38,16 +38,15 @@ jvm_library(
     "//platform/testFramework:testFramework_test_lib",
     "@lib//:junit4",
     "@lib//:kotlin-stdlib",
-    "@lib//:guava",
-    "@lib//:fastutil-min",
+    "//libraries/guava",
+    "//libraries/fastutil",
     "@lib//:assert_j",
     "@lib//:kotlin-test",
   ],
   exports = [
     "//platform/util",
     "//platform/vcs-log/graph-api:vcs-log-graph",
-  ],
-  runtime_deps = [":vcs-log-graph-impl_resources"]
+  ]
 )
 ### auto-generated section `build intellij.platform.vcs.log.graph.impl` end
 

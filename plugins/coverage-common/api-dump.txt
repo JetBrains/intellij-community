@@ -23,7 +23,6 @@ a:com.intellij.coverage.BaseCoverageSuite
 - com.intellij.coverage.CoverageSuite
 - com.intellij.openapi.util.JDOMExternalizable
 - p:<init>():V
-- <init>(java.lang.String,com.intellij.coverage.CoverageFileProvider,J,Z,Z,Z,com.intellij.coverage.CoverageRunner):V
 - <init>(java.lang.String,com.intellij.coverage.CoverageFileProvider,J,Z,Z,Z,com.intellij.coverage.CoverageRunner,com.intellij.openapi.project.Project):V
 - <init>(java.lang.String,com.intellij.openapi.project.Project,com.intellij.coverage.CoverageRunner,com.intellij.coverage.CoverageFileProvider,J):V
 - equals(java.lang.Object):Z
@@ -44,7 +43,6 @@ a:com.intellij.coverage.BaseCoverageSuite
 - readExternal(org.jdom.Element):V
 - setConfiguration(com.intellij.execution.configurations.RunConfigurationBase):V
 - setCoverageData(com.intellij.rt.coverage.data.ProjectData):V
-- p:setRunner(com.intellij.coverage.CoverageRunner):V
 - writeExternal(org.jdom.Element):V
 com.intellij.coverage.CoverageAnnotator
 - getDirCoverageInformationString(com.intellij.openapi.project.Project,com.intellij.openapi.vfs.VirtualFile,com.intellij.coverage.CoverageSuitesBundle,com.intellij.coverage.CoverageDataManager):java.lang.String
@@ -61,7 +59,6 @@ a:com.intellij.coverage.CoverageDataManager
 - a:addCoverageSuite(com.intellij.execution.configurations.coverage.CoverageEnabledConfiguration):com.intellij.coverage.CoverageSuite
 - a:addCoverageSuite(java.lang.String,com.intellij.coverage.CoverageFileProvider,java.lang.String[],J,java.lang.String,com.intellij.coverage.CoverageRunner,Z,Z):com.intellij.coverage.CoverageSuite
 - f:addExternalCoverageSuite(java.io.File,com.intellij.coverage.CoverageRunner):com.intellij.coverage.CoverageSuite
-- a:addExternalCoverageSuite(java.lang.String,J,com.intellij.coverage.CoverageRunner,com.intellij.coverage.CoverageFileProvider):com.intellij.coverage.CoverageSuite
 - a:addSuiteListener(com.intellij.coverage.CoverageSuiteListener,com.intellij.openapi.Disposable):V
 - a:attachToProcess(com.intellij.execution.process.ProcessHandler,com.intellij.execution.configurations.RunConfigurationBase,com.intellij.execution.configurations.RunnerSettings):V
 - a:chooseSuitesBundle(com.intellij.coverage.CoverageSuitesBundle):V
@@ -83,7 +80,6 @@ a:com.intellij.coverage.CoverageEngine
 - coverageEditorHighlightingApplicableTo(com.intellij.psi.PsiFile):Z
 - a:createCoverageEnabledConfiguration(com.intellij.execution.configurations.RunConfigurationBase):com.intellij.execution.configurations.coverage.CoverageEnabledConfiguration
 - createCoverageSuite(com.intellij.coverage.CoverageRunner,java.lang.String,com.intellij.coverage.CoverageFileProvider,com.intellij.execution.configurations.coverage.CoverageEnabledConfiguration):com.intellij.coverage.CoverageSuite
-- createCoverageSuite(com.intellij.coverage.CoverageRunner,java.lang.String,com.intellij.coverage.CoverageFileProvider,java.lang.String[],J,java.lang.String,Z,Z,Z):com.intellij.coverage.CoverageSuite
 - createCoverageSuite(com.intellij.coverage.CoverageRunner,java.lang.String,com.intellij.coverage.CoverageFileProvider,java.lang.String[],J,java.lang.String,Z,Z,Z,com.intellij.openapi.project.Project):com.intellij.coverage.CoverageSuite
 - F:createCoverageSuite(com.intellij.execution.configurations.coverage.CoverageEnabledConfiguration):com.intellij.coverage.CoverageSuite
 - createCoverageSuite(java.lang.String,com.intellij.openapi.project.Project,com.intellij.coverage.CoverageRunner,com.intellij.coverage.CoverageFileProvider,J):com.intellij.coverage.CoverageSuite
@@ -308,7 +304,6 @@ f:com.intellij.coverage.view.CoverageViewManager
 - f:activateToolwindow(com.intellij.coverage.view.CoverageView):V
 - f:activateToolwindow(com.intellij.coverage.view.CoverageView,Z):V
 - f:closeView(com.intellij.coverage.CoverageSuitesBundle):V
-- f:createToolWindow(com.intellij.coverage.CoverageSuitesBundle,Z):V
 - f:createView(com.intellij.coverage.CoverageSuitesBundle,Z):V
 - sf:getInstance(com.intellij.openapi.project.Project):com.intellij.coverage.view.CoverageViewManager
 - sf:getInstanceIfCreated(com.intellij.openapi.project.Project):com.intellij.coverage.view.CoverageViewManager
@@ -349,7 +344,6 @@ a:com.intellij.execution.configurations.coverage.CoverageEnabledConfiguration
 - sf:COVERAGE_KEY:com.intellij.openapi.util.Key
 - <init>(com.intellij.execution.configurations.RunConfigurationBase):V
 - <init>(com.intellij.execution.configurations.RunConfigurationBase,com.intellij.coverage.CoverageRunner):V
-- canHavePerTestCoverage():Z
 - p:coverageFileNameSeparator():java.lang.String
 - p:createCoverageFile():java.lang.String
 - createFileProvider():com.intellij.coverage.CoverageFileProvider

@@ -116,7 +116,7 @@ internal class TerminalBlockCornersRenderer private constructor(
     val g2d = g.create() as Graphics2D
     try {
       g2d.setRenderingHint(RenderingHints.KEY_ANTIALIASING, RenderingHints.VALUE_ANTIALIAS_ON)
-      g2d.color = TerminalUi.defaultBackground(editor)
+      g2d.color = editor.colorsScheme.defaultBackground
       // override the selection with the default terminal background
       g2d.fill(topRect)
       g2d.fill(bottomRect)

@@ -1,10 +1,4 @@
-load("@rules_jvm//:jvm.bzl", "jvm_library", "jvm_resources")
-
-# fake intellij.platform.jps.build.dependencyGraph resources; //plugins/monorepo-devkit:check_all_output_jars_are_present check requires dependency-graph_resources.jar to be present next to :dependency-graph
-jvm_resources(
-  name = "dependency-graph_resources",
-  files = glob([], allow_empty = True),
-)
+load("@rules_jvm//:jvm.bzl", "jvm_library")
 
 # production intellij.platform.jps.build.dependencyGraph; cannot use @rules_jvm//dependency-graph:dependency-graph directly because it's mainly
 # used to bootstrap jvm_library rule (from rules_jvm) via kt_jvm_library rule (from rules_kotlin) and @rules_jvm//:rules_jvm_bootstrap_kotlinc_options flags
@@ -13,6 +7,7 @@ jvm_library(
   module_name = "intellij.platform.jps.build.dependencyGraph",
   visibility = ["//visibility:public"],
   srcs = ["@rules_jvm//dependency-graph:dependency-graph_sources"],
+  resources = ["@rules_jvm//dependency-graph:dependency-graph_resources"],
   kotlinc_opts = "@community//:k11",
   deps = [
     ":build-javac-rt",
@@ -20,17 +15,10 @@ jvm_library(
     "@lib//:kotlin-metadata",
     "@lib//:caffeine",
     "@lib//:asm",
-    "@lib//:hash4j",
+    "@community//libraries/hash4j:hash4j",
     "@lib//:fastutil-min",
     "@lib//:kotlin-stdlib-provided",
-  ],
-  runtime_deps = ["@rules_jvm//dependency-graph:dependency-graph_resources"]
-)
-
-# fake intellij.platform.jps.build.javac.rt resources; //plugins/monorepo-devkit:check_all_output_jars_are_present check requires build-javac-rt_resources.jar to be present next to :build-javac-rt
-jvm_resources(
-  name = "build-javac-rt_resources",
-  files = glob([], allow_empty = True),
+  ]
 )
 
 # production intellij.platform.jps.build.javac.rt; cannot use @rules_jvm//jps-builders-6:build-javac-rt directly because it's mainly
@@ -40,6 +28,7 @@ jvm_library(
   module_name = "intellij.platform.jps.build.javac.rt",
   visibility = ["//visibility:public"],
   srcs = ["@rules_jvm//jps-builders-6:build-javac-rt_sources"],
+  resources = ["@rules_jvm//jps-builders-6:build-javac-rt_resources"],
   kotlinc_opts = "@community//:k8",
   deps = [
     "@lib//:jetbrains-annotations",
@@ -47,8 +36,7 @@ jvm_library(
     "@lib//:jps-javac-extension",
     "@lib//:protobuf",
     "@lib//:netty-jps-provided",
-  ],
-  runtime_deps = ["@rules_jvm//jps-builders-6:build-javac-rt_resources"]
+  ]
 )
 
 # production intellij.idea.community.build.zip; cannot use @rules_jvm//zip:zip directly because it's mainly
@@ -62,7 +50,7 @@ jvm_library(
     "@lib//:kotlin-stdlib",
     "@lib//:netty-buffer",
     "@lib//:fastutil-min",
-    "@lib//:hash4j",
+    "@community//libraries/hash4j:hash4j",
   ]
 )
 

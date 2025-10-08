@@ -31,6 +31,7 @@ public class RemoteConnectionBuilder {
   private boolean myQuiet;
   private boolean mySuspend = true;
   private Project myProject;
+  private boolean myMatchWithExecutionTarget = false;
 
   public RemoteConnectionBuilder(boolean server, int transport, String address) {
     myTransport = transport;
@@ -60,6 +61,15 @@ public class RemoteConnectionBuilder {
 
   public RemoteConnectionBuilder suspend(boolean suspend) {
     mySuspend = suspend;
+    return this;
+  }
+
+  /**
+   * The created set of JavaParameters would be prepared for execution on a target that match to the project.
+   * All used paths would be mapped for the correct execution target via EEL Api based on the location of the project.
+   */
+  public RemoteConnectionBuilder matchWithExecutionTarget() {
+    myMatchWithExecutionTarget = true;
     return this;
   }
 
@@ -110,7 +120,7 @@ public class RemoteConnectionBuilder {
       addRtJar(parameters.getClassPath());
 
       if (myAsyncAgent) {
-        AsyncStacksUtils.addDebuggerAgent(parameters, myProject, true);
+        AsyncStacksUtils.addDebuggerAgent(parameters, myProject, true, null, myMatchWithExecutionTarget);
       }
 
       parameters.getVMParametersList().replaceOrPrepend("-Xrunjdwp:", "");

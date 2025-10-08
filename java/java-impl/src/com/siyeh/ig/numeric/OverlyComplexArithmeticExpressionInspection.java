@@ -64,7 +64,7 @@ public final class OverlyComplexArithmeticExpressionInspection extends BaseInspe
   }
 
   @Override
-  public BaseInspectionVisitor buildVisitor() {
+  public @NotNull BaseInspectionVisitor buildVisitor() {
     return new OverlyComplexArithmeticExpressionVisitor();
   }
 

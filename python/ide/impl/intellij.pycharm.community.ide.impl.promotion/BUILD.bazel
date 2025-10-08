@@ -1,9 +1,9 @@
 ### auto-generated section `build intellij.pycharm.community.ide.impl.promotion` start
-load("@rules_jvm//:jvm.bzl", "jvm_library", "jvm_resources")
+load("@rules_jvm//:jvm.bzl", "jvm_library", "resourcegroup")
 
-jvm_resources(
+resourcegroup(
   name = "pycharm-community-ide-impl-promotion_resources",
-  files = glob(["resources/**/*"]),
+  srcs = glob(["resources/**/*"]),
   strip_prefix = "resources"
 )
 
@@ -12,6 +12,7 @@ jvm_library(
   module_name = "intellij.pycharm.community.ide.impl.promotion",
   visibility = ["//visibility:public"],
   srcs = glob(["src/**/*.kt", "src/**/*.java", "src/**/*.form"], allow_empty = True),
+  resources = [":pycharm-community-ide-impl-promotion_resources"],
   deps = [
     "//platform/core-api:core",
     "//platform/editor-ui-api:editor-ui",
@@ -25,7 +26,7 @@ jvm_library(
     "//platform/statistics",
     "@lib//:http-client",
     "//platform/core-ui",
-  ],
-  runtime_deps = [":pycharm-community-ide-impl-promotion_resources"]
+    "//python/ide/customization.shared",
+  ]
 )
 ### auto-generated section `build intellij.pycharm.community.ide.impl.promotion` end

@@ -1,11 +1,15 @@
 // Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.platform.debugger.impl.rpc
 
+import com.intellij.ide.rpc.DocumentPatchVersion
 import com.intellij.ide.ui.icons.IconId
+import com.intellij.ide.rpc.util.TextRangeId
 import com.intellij.ide.vfs.VirtualFileId
 import com.intellij.openapi.editor.impl.EditorId
 import com.intellij.platform.project.ProjectId
+import com.intellij.platform.rpc.Id
 import com.intellij.platform.rpc.RemoteApiProviderService
+import com.intellij.platform.rpc.UID
 import com.intellij.xdebugger.breakpoints.SuspendPolicy
 import com.intellij.xdebugger.breakpoints.XBreakpointType
 import com.intellij.xdebugger.impl.rpc.XBreakpointId
@@ -46,8 +50,13 @@ interface XBreakpointTypeApi : RemoteApi<Unit> {
 
   suspend fun copyLineBreakpoint(breakpointId: XBreakpointId, fileId: VirtualFileId, line: Int)
 
-  suspend fun computeInlineBreakpointVariants(projectId: ProjectId, fileId: VirtualFileId, onlyLine: Int?): List<InlineBreakpointVariantsOnLine>
-  suspend fun createVariantBreakpoint(projectId: ProjectId, fileId: VirtualFileId, line: Int, variantIndex: Int)
+  /**
+   * Computes inline breakpoint variants.
+   *
+   * @return `null` if the request should be retried later due to version mismatch, or inline variants for the lines in the file.
+   */
+  suspend fun computeInlineBreakpointVariants(projectId: ProjectId, fileId: VirtualFileId, lines: Set<Int>, documentPatchVersion: DocumentPatchVersion?): List<InlineBreakpointVariantsOnLine>?
+  suspend fun createVariantBreakpoint(projectId: ProjectId, fileId: VirtualFileId, line: Int, variantId: XInlineBreakpointVariantId)
 }
 
 @ApiStatus.Internal
@@ -129,7 +138,7 @@ data class XLineBreakpointInstallationRequest(
 data class XLineBreakpointVariantDto(
   val text: String,
   val icon: IconId?,
-  val highlightRange: XLineBreakpointTextRange?,
+  val highlightRange: TextRangeId?,
   val priority: Int,
   val useAsInline: Boolean,
 )
@@ -157,8 +166,13 @@ data class InlineBreakpointVariantWithMatchingBreakpointDto(
 
 @ApiStatus.Internal
 @Serializable
+data class XInlineBreakpointVariantId(override val uid: UID) : Id
+
+@ApiStatus.Internal
+@Serializable
 data class XInlineBreakpointVariantDto(
-  val highlightRange: XLineBreakpointTextRange?,
+  val id: XInlineBreakpointVariantId,
+  val highlightRange: TextRangeId?,
   val icon: IconId,
   val tooltipDescription: String,
 )

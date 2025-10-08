@@ -1,6 +1,6 @@
 ### auto-generated section `build kotlin.code-insight.fixes.k2` start
 load("//build:compiler-options.bzl", "create_kotlinc_options")
-load("@rules_jvm//:jvm.bzl", "jvm_library", "jvm_resources")
+load("@rules_jvm//:jvm.bzl", "jvm_library", "resourcegroup")
 
 create_kotlinc_options(
   name = "custom_kotlin-code-insight-fixes-k2",
@@ -14,9 +14,9 @@ create_kotlinc_options(
   x_context_parameters = True
 )
 
-jvm_resources(
+resourcegroup(
   name = "kotlin-code-insight-fixes-k2_resources",
-  files = glob(["resources/**/*"]),
+  srcs = glob(["resources/**/*"]),
   strip_prefix = "resources"
 )
 
@@ -25,6 +25,7 @@ jvm_library(
   module_name = "kotlin.code-insight.fixes.k2",
   visibility = ["//visibility:public"],
   srcs = glob(["src/**/*.kt", "src/**/*.java", "src/**/*.form"], allow_empty = True),
+  resources = [":kotlin-code-insight-fixes-k2_resources"],
   kotlinc_opts = ":custom_kotlin-code-insight-fixes-k2",
   deps = [
     "@lib//:kotlin-stdlib",
@@ -33,7 +34,7 @@ jvm_library(
     "@lib//:kotlinc-analysis-api",
     "@lib//:kotlinc-analysis-api-k2",
     "@lib//:kotlinc-analysis-api-impl-base",
-    "@lib//:guava",
+    "//libraries/guava",
     "//platform/core-api:core",
     "//platform/editor-ui-api:editor-ui",
     "//platform/analysis-api:analysis",
@@ -67,7 +68,6 @@ jvm_library(
     "//plugins/kotlin/code-insight/kotlin.code-insight.k2:kotlin-code-insight-k2",
     "//java/java-impl:impl",
     "//plugins/kotlin/kotlin.searching:searching-k2",
-  ],
-  runtime_deps = [":kotlin-code-insight-fixes-k2_resources"]
+  ]
 )
 ### auto-generated section `build kotlin.code-insight.fixes.k2` end

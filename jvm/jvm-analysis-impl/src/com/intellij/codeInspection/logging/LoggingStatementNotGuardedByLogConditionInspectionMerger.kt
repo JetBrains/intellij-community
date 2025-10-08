@@ -1,4 +1,4 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInspection.logging
 
 import com.intellij.codeInspection.ex.InspectionElementsMergerBase
@@ -9,7 +9,6 @@ class LoggingStatementNotGuardedByLogConditionInspectionMerger : InspectionEleme
   override fun getMergedToolName(): String = "LogStatementNotGuardedByLogCondition"
 
   override fun getSourceToolNames(): Array<String> = arrayOf("LogStatementGuardedByLogCondition")
-
 
   override fun transformElement(sourceToolName: String, sourceElement: Element, toolElement: Element): Element {
     val inspection = LoggingStatementNotGuardedByLogConditionInspection()

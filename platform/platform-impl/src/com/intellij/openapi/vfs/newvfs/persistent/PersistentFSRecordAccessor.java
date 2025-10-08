@@ -124,7 +124,7 @@ public final class PersistentFSRecordAccessor {
         "attributeId=" + attributeRecordId + ", contentId=" + contentId + ", " +
         "length=" + length + ", timestamp=" + timestamp + ", " +
         "modCount=" + modCount + " (globalModCount: " + records.getGlobalModCount() + "), " +
-        "wasClosedProperly=" + records.wasClosedProperly()
+        "status={" + connection.describeConsistencyStatus() + "}"
       );
 
       //IJPL-1016: statistical analysis shows that it is quite likely an OS crash is responsible for most (if not all) of
@@ -136,7 +136,7 @@ public final class PersistentFSRecordAccessor {
       //              already used somewhere (i.e. in a children list), so we mark VFS as corrupted anyway, because
       //              these cases are definitely a failure of VFS recovery procedure.
 
-      if (records.wasClosedProperly()) {
+      if (records.wasAlwaysClosedProperly()) {
         FSRecords.LOG.error(exception);
       }
       else {
@@ -145,7 +145,6 @@ public final class PersistentFSRecordAccessor {
       connection.markAsCorruptedAndScheduleRebuild(exception);
 
       records.cleanRecord(newRecordId);
-
     }
   }
 

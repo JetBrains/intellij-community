@@ -27,6 +27,7 @@ import org.junit.jupiter.api.assertThrows
 import org.junit.jupiter.params.ParameterizedTest
 import org.junit.jupiter.params.provider.Arguments
 import org.junit.jupiter.params.provider.MethodSource
+import java.util.concurrent.atomic.AtomicBoolean
 import java.util.concurrent.atomic.AtomicInteger
 import kotlin.coroutines.CoroutineContext
 import kotlin.math.min
@@ -382,8 +383,8 @@ class EdtCoroutineDispatcherTest {
         }
       }
       finally {
-        assertThat(application.isReadAccessAllowed).isTrue
-        assertThat(application.isWriteIntentLockAcquired).isTrue
+        assertThat(application.isReadAccessAllowed).isEqualTo(!useNonBlockingFlushQueue)
+        assertThat(application.isWriteIntentLockAcquired).isEqualTo(!useNonBlockingFlushQueue)
         assertThat(application.isWriteAccessAllowed).isFalse
       }
     }
@@ -525,6 +526,26 @@ class EdtCoroutineDispatcherTest {
           .doesNotContain("Dispatchers.Main")
       }
     }
+  }
+
+  @Test
+  fun `UI coroutine can be executed earlier then EDT coroutine`(): Unit = timeoutRunBlocking {
+    Assumptions.assumeTrue { useNonBlockingFlushQueue }
+    val uiExecuted = AtomicBoolean()
+    val edtExecuted = AtomicBoolean()
+    backgroundWriteAction {
+      launch(Dispatchers.EDT) {
+        assertTrue { uiExecuted.get() }
+        edtExecuted.set(true)
+      }
+      launch(Dispatchers.UI) {
+        uiExecuted.set(true)
+      }
+      Thread.sleep(50)
+    }
+    delay(10)
+    assertTrue { edtExecuted.get() }
+    assertTrue { uiExecuted.get() }
   }
 
 }

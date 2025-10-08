@@ -19,5 +19,4 @@ public interface PomNamedTarget extends PomTarget {
   PomNamedTarget[] EMPTY_ARRAY = new PomNamedTarget[0];
 
   String getName();
-
 }

@@ -63,7 +63,7 @@ public class Messages {
     Dimension preferredSize =
       new Dimension(Math.min(prefDim.width, maxDim.width) + barWidth,
                     Math.min(prefDim.height, maxDim.height) + barWidth);
-    if (prefDim.width > maxDim.width) { //Too wide single-line message should be wrapped
+    if (prefDim.width > maxDim.width) { //Too wide a single-line message should be wrapped
       preferredSize.height = Math.max(preferredSize.height, (int)(lines * fontSize) + barWidth);
     }
     scrollPane.setPreferredSize(preferredSize);
@@ -142,9 +142,9 @@ public class Messages {
   }
 
   /**
-   * Please, use {@link MessageDialogBuilder#yesNo} or {@link MessageDialogBuilder#yesNoCancel} if possible (these dialogs implements native OS behavior)!
+   * Please, use {@link MessageDialogBuilder#yesNo} or {@link MessageDialogBuilder#yesNoCancel} if possible (these dialogs implement native OS behavior)!
    *
-   * @return number of button pressed: from 0 up to options.length-1 inclusive, or -1 for Cancel
+   * @return number of the button pressed: from 0 up to options.length-1 inclusive, or -1 for Cancel
    */
   public static int showDialog(@Nullable Project project,
                                @DialogMessage String message,
@@ -179,9 +179,9 @@ public class Messages {
   }
 
   /**
-   * Please use {@link #showOkCancelDialog} or {@link #showYesNoCancelDialog} if possible (these dialogs implements native OS behavior)!
+   * Please use {@link #showOkCancelDialog} or {@link #showYesNoCancelDialog} if possible (these dialogs implement native OS behavior)!
    *
-   * @return number of button pressed: from 0 up to options.length-1 inclusive, or -1 for Cancel
+   * @return number of the button pressed: from 0 up to options.length-1 inclusive, or -1 for Cancel
    */
   public static int showDialog(@Nullable Project project,
                                @DialogMessage String message,
@@ -194,8 +194,20 @@ public class Messages {
       .showMessageDialog(project, null, message, title, options, defaultOptionIndex, -1, icon, doNotAskOption, false, null);
   }
 
+  @Deprecated(forRemoval = true)
+  public static int showDialog(@Nullable Project project,
+                               @DialogMessage String message,
+                               @NotNull @DialogTitle String title,
+                               String @NotNull @NlsContexts.Button [] options,
+                               int defaultOptionIndex,
+                               @Nullable Icon icon,
+                               @Nullable DialogWrapper.DoNotAskOption doNotAskOption) {
+    return MessagesService.getInstance()
+      .showMessageDialog(project, null, message, title, options, defaultOptionIndex, -1, icon, doNotAskOption, false, null);
+  }
+
   /**
-   * @return number of button pressed: from 0 up to options.length-1 inclusive, or -1 for Cancel
+   * @return number of the button pressed: from 0 up to options.length-1 inclusive, or -1 for Cancel
    */
   public static int showIdeaMessageDialog(@Nullable Project project,
                                           @DialogMessage String message,
@@ -204,6 +216,21 @@ public class Messages {
                                           int defaultOptionIndex,
                                           @Nullable Icon icon,
                                           @Nullable DoNotAskOption doNotAskOption) {
+    return MessagesService.getInstance()
+      .showMessageDialog(project, null, message, title, options, defaultOptionIndex, -1, icon, doNotAskOption, true, null);
+  }
+
+  /**
+   * @return number of the button pressed: from 0 up to options.length-1 inclusive, or -1 for Cancel
+   */
+  @Deprecated(forRemoval = true)
+  public static int showIdeaMessageDialog(@Nullable Project project,
+                                          @DialogMessage String message,
+                                          @DialogTitle String title,
+                                          String @NotNull @NlsContexts.Button [] options,
+                                          int defaultOptionIndex,
+                                          @Nullable Icon icon,
+                                          @Nullable DialogWrapper.DoNotAskOption doNotAskOption) {
     return MessagesService.getInstance()
       .showMessageDialog(project, null, message, title, options, defaultOptionIndex, -1, icon, doNotAskOption, true, null);
   }
@@ -221,7 +248,7 @@ public class Messages {
   }
 
   /**
-   * @return number of button pressed: from 0 up to options.length-1 inclusive, or -1 for Cancel
+   * @return number of the button pressed: from 0 up to options.length-1 inclusive, or -1 for Cancel
    */
   public static int showDialog(Project project,
                                @DialogMessage String message,
@@ -236,7 +263,7 @@ public class Messages {
   }
 
   /**
-   * @return number of button pressed: from 0 up to options.length-1 inclusive, or -1 for Cancel
+   * @return number of the button pressed: from 0 up to options.length-1 inclusive, or -1 for Cancel
    */
   public static int showDialog(@NotNull Component parent,
                                @DialogMessage String message,
@@ -249,9 +276,9 @@ public class Messages {
   }
 
   /**
-   * Use this method only if you do not know project or component
+   * Use this method only if you do not know a project or component
    *
-   * @return number of button pressed: from 0 up to options.length-1 inclusive, or -1 for Cancel
+   * @return number of the button pressed: from 0 up to options.length-1 inclusive, or -1 for Cancel
    * @see #showDialog(Project, String, String, String[], int, Icon, DoNotAskOption)
    * @see #showDialog(Component, String, String, String[], int, Icon)
    */
@@ -267,9 +294,24 @@ public class Messages {
   }
 
   /**
-   * Use this method only if you do not know project or component
+   * @deprecated Use overload with {@link DoNotAskOption} parameter.
+   */
+  @Deprecated(forRemoval = true)
+  public static int showDialog(@DialogMessage String message,
+                               @NotNull @DialogTitle String title,
+                               String @NotNull @NlsContexts.Button [] options,
+                               int defaultOptionIndex,
+                               int focusedOptionIndex,
+                               @Nullable Icon icon,
+                               @Nullable DialogWrapper.DoNotAskOption doNotAskOption) {
+    return MessagesService.getInstance()
+      .showMessageDialog(null, null, message, title, options, defaultOptionIndex, focusedOptionIndex, icon, doNotAskOption, false, null);
+  }
+
+  /**
+   * Use this method only if you do not know the project or component.
    *
-   * @return number of button pressed: from 0 up to options.length-1 inclusive, or -1 for Cancel
+   * @return number of the button pressed: from 0 up to options.length-1 inclusive, or -1 for Cancel
    * @see #showDialog(Project, String, String, String[], int, Icon, DoNotAskOption)
    * @see #showDialog(Component, String, String, String[], int, Icon)
    */
@@ -287,9 +329,26 @@ public class Messages {
   }
 
   /**
-   * Use this method only if you do not know project or component
+   * @deprecated Use overload with {@link DoNotAskOption} parameter.
+   */
+  @Deprecated(forRemoval = true)
+  public static int showDialog(@DialogMessage String message,
+                               @NotNull @DialogTitle String title,
+                               String @NotNull @NlsContexts.Button [] options,
+                               int defaultOptionIndex,
+                               int focusedOptionIndex,
+                               @Nullable Icon icon,
+                               @Nullable DialogWrapper.DoNotAskOption doNotAskOption,
+                               @Nullable String invocationPlace) {
+    return MessagesService.getInstance()
+      .showMessageDialog(null, null, message, title, options, defaultOptionIndex, focusedOptionIndex, icon, doNotAskOption, false, null,
+                         invocationPlace, new ExitActionType[0]);
+  }
+
+  /**
+   * Use this method only if you do not know a project or component
    *
-   * @return number of button pressed: from 0 up to options.length-1 inclusive, or -1 for Cancel
+   * @return number of the button pressed: from 0 up to options.length-1 inclusive, or -1 for Cancel
    * @see #showDialog(Project, String, String, String[], int, Icon)
    * @see #showDialog(Component, String, String, String[], int, Icon)
    */
@@ -302,10 +361,20 @@ public class Messages {
     return showDialog(message, title, options, defaultOptionIndex, -1, icon, doNotAskOption);
   }
 
+  @Deprecated(forRemoval = true)
+  public static int showDialog(@DialogMessage String message,
+                               @DialogTitle String title,
+                               String @NotNull @NlsContexts.Button [] options,
+                               int defaultOptionIndex,
+                               @Nullable Icon icon,
+                               @Nullable DialogWrapper.DoNotAskOption doNotAskOption) {
+    return showDialog(message, title, options, defaultOptionIndex, -1, icon, doNotAskOption);
+  }
+
   /**
-   * Use this method only if you do not know project or component
+   * Use this method only if you do not know a project or component
    *
-   * @return number of button pressed: from 0 up to options.length-1 inclusive, or -1 for Cancel
+   * @return number of the button pressed: from 0 up to options.length-1 inclusive, or -1 for Cancel
    * @see #showDialog(Project, String, String, String[], int, Icon)
    * @see #showDialog(Component, String, String, String[], int, Icon)
    */
@@ -335,7 +404,7 @@ public class Messages {
   }
 
   /**
-   * Use this method only if you do not know project or component
+   * Use this method only if you do not know a project or component
    *
    * @see #showMessageDialog(Project, String, String, Icon)
    * @see #showMessageDialog(Component, String, String, Icon)
@@ -391,6 +460,23 @@ public class Messages {
       .ask(project) ? YES : NO;
   }
 
+  /** @deprecated Use {@link MessageDialogBuilder#yesNo} */
+  @Deprecated(forRemoval = true)
+  public static int showYesNoDialog(@Nullable Project project,
+                                    @DialogMessage String message,
+                                    @NotNull @DialogTitle String title,
+                                    @NotNull @NlsContexts.Button String yesText,
+                                    @NotNull @NlsContexts.Button String noText,
+                                    @Nullable Icon icon,
+                                    @Nullable DialogWrapper.DoNotAskOption doNotAskOption) {
+    return MessageDialogBuilder.yesNo(title, message)
+             .icon(icon)
+             .doNotAsk(doNotAskOption)
+             .yesText(yesText)
+             .noText(noText)
+             .ask(project) ? YES : NO;
+  }
+
   /** Use {@link MessageDialogBuilder#yesNo} */
   @YesNoResult
   public static int showYesNoDialog(@Nullable Project project,
@@ -411,6 +497,19 @@ public class Messages {
       .icon(icon)
       .doNotAsk(doNotAskOption)
       .ask(project) ? YES : NO;
+  }
+
+  /** @deprecated Use {@link MessageDialogBuilder#yesNo} */
+  @Deprecated
+  public static int showYesNoDialog(@Nullable Project project,
+                                    @DialogMessage String message,
+                                    @NotNull @DialogTitle String title,
+                                    @Nullable Icon icon,
+                                    @Nullable DialogWrapper.DoNotAskOption doNotAskOption) {
+    return MessageDialogBuilder.yesNo(title, message)
+             .icon(icon)
+             .doNotAsk(doNotAskOption)
+             .ask(project) ? YES : NO;
   }
 
   /** Use {@link MessageDialogBuilder#yesNo} */
@@ -438,6 +537,22 @@ public class Messages {
       .guessWindowAndAsk() ? YES : NO;
   }
 
+  /** @deprecated Use {@link MessageDialogBuilder#yesNo} */
+  @Deprecated
+  public static int showYesNoDialog(@DialogMessage String message,
+                                    @NotNull @DialogTitle String title,
+                                    @Nls @NotNull @NlsContexts.Button String yesText,
+                                    @Nls @NotNull @NlsContexts.Button String noText,
+                                    @Nullable Icon icon,
+                                    @Nullable DialogWrapper.DoNotAskOption doNotAskOption) {
+    return MessageDialogBuilder.yesNo(title, message)
+             .yesText(yesText)
+             .noText(noText)
+             .icon(icon)
+             .doNotAsk(doNotAskOption)
+             .guessWindowAndAsk() ? YES : NO;
+  }
+
   /** Use {@link MessageDialogBuilder#yesNo} */
   @YesNoResult
   public static int showYesNoDialog(@DialogMessage String message,
@@ -460,7 +575,7 @@ public class Messages {
     return MessageDialogBuilder.yesNo(title, message).icon(icon).guessWindowAndAsk() ? YES : NO;
   }
 
-  /** Use {@link MessageDialogBuilder#yesNo} */
+  /** Use {@link MessageDialogBuilder#okCancel} */
   @OkCancelResult
   public static int showOkCancelDialog(@Nullable Project project,
                                        @NotNull @DialogMessage String message,
@@ -475,6 +590,23 @@ public class Messages {
       .icon(icon)
       .doNotAsk(doNotAskOption)
       .ask(project) ? OK : CANCEL;
+  }
+
+  /** Use {@link MessageDialogBuilder#okCancel} */
+  @OkCancelResult
+  public static int showOkCancelDialog(@Nullable Project project,
+                                       @NotNull @DialogMessage String message,
+                                       @NotNull @DialogTitle String title,
+                                       @NotNull @NlsContexts.Button String okText,
+                                       @NotNull @NlsContexts.Button String cancelText,
+                                       @Nullable Icon icon,
+                                       @Nullable DialogWrapper.DoNotAskOption doNotAskOption) {
+    return MessageDialogBuilder.okCancel(title, message)
+             .yesText(okText)
+             .noText(cancelText)
+             .icon(icon)
+             .doNotAsk(doNotAskOption)
+             .ask(project) ? OK : CANCEL;
   }
 
   /** Use {@link MessageDialogBuilder#yesNo} */
@@ -535,7 +667,7 @@ public class Messages {
   }
 
   /**
-   * Use this method only if you do not know project or component
+   * Use this method only if you do not know a project or component
    *
    * @return {@link #OK} if user pressed "Ok" or {@link #CANCEL} if user pressed "Cancel" button.
    * @see #showOkCancelDialog(Project, String, String, String, String, Icon)
@@ -551,7 +683,7 @@ public class Messages {
   }
 
   /**
-   * Use this method only if you do not know project or component
+   * Use this method only if you do not know a project or component
    *
    * @return {@link #OK} if user pressed "Ok" or {@link #CANCEL} if user pressed "Cancel" button.
    * @see #showOkCancelDialog(Project, String, String, String, String, Icon, DoNotAskOption)
@@ -570,6 +702,22 @@ public class Messages {
       .icon(icon)
       .doNotAsk(doNotAskOption)
       .guessWindowAndAsk() ? OK : CANCEL;
+  }
+
+  @Deprecated(forRemoval = true)
+  @OkCancelResult
+  public static int showOkCancelDialog(@DialogMessage String message,
+                                       @NotNull @DialogTitle String title,
+                                       @NotNull @NlsContexts.Button String okText,
+                                       @NotNull @NlsContexts.Button String cancelText,
+                                       Icon icon,
+                                       @Nullable DialogWrapper.DoNotAskOption doNotAskOption) {
+    return MessageDialogBuilder.okCancel(title, message)
+             .yesText(okText)
+             .noText(cancelText)
+             .icon(icon)
+             .doNotAsk(doNotAskOption)
+             .guessWindowAndAsk() ? OK : CANCEL;
   }
 
   public static int showCheckboxOkCancelDialog(@DialogMessage String message,
@@ -639,7 +787,7 @@ public class Messages {
   }
 
   /**
-   * Use this method only if you do not know project or component
+   * Use this method only if you do not know a project or component
    *
    * @see #showErrorDialog(Project, String, String)
    * @see #showErrorDialog(Component, String, String)
@@ -661,7 +809,7 @@ public class Messages {
   }
 
   /**
-   * Use this method only if you do not know project or component
+   * Use this method only if you do not know a project or component
    *
    * @see #showWarningDialog(Project, String, String)
    * @see #showWarningDialog(Component, String, String)
@@ -674,6 +822,7 @@ public class Messages {
   /**
    * Use {@link MessageDialogBuilder#yesNoCancel}
    */
+  @SuppressWarnings("MagicConstant")
   @YesNoCancelResult
   public static int showYesNoCancelDialog(@Nullable Project project,
                                           @DialogMessage String message,
@@ -693,6 +842,7 @@ public class Messages {
   /**
    * Use {@link MessageDialogBuilder#yesNoCancel}
    */
+  @SuppressWarnings("MagicConstant")
   @YesNoCancelResult
   public static int showYesNoCancelDialog(@Nullable Project project,
                                           @DialogMessage String message,
@@ -704,6 +854,7 @@ public class Messages {
   /**
    * Use {@link MessageDialogBuilder#yesNoCancel}
    */
+  @SuppressWarnings("MagicConstant")
   @YesNoCancelResult
   public static int showYesNoCancelDialog(@NotNull Component parent,
                                           @DialogMessage String message,
@@ -723,6 +874,7 @@ public class Messages {
   /**
    * Use {@link MessageDialogBuilder#yesNoCancel}
    */
+  @SuppressWarnings("MagicConstant")
   @YesNoCancelResult
   public static int showYesNoCancelDialog(@NotNull Component parent,
                                           @DialogMessage String message,
@@ -734,6 +886,7 @@ public class Messages {
   /**
    * Use {@link MessageDialogBuilder#yesNoCancel}
    */
+  @SuppressWarnings("MagicConstant")
   @YesNoCancelResult
   public static int showYesNoCancelDialog(@DialogMessage String message,
                                           @NotNull @DialogTitle String title,
@@ -752,8 +905,30 @@ public class Messages {
   }
 
   /**
+   * @deprecated Use {@link MessageDialogBuilder#yesNoCancel}
+   */
+  @Deprecated(forRemoval = true)
+  @YesNoCancelResult
+  public static int showYesNoCancelDialog(@DialogMessage String message,
+                                          @NotNull @DialogTitle String title,
+                                          @NotNull @NlsContexts.Button String yes,
+                                          @NotNull @NlsContexts.Button String no,
+                                          @NotNull @NlsContexts.Button String cancel,
+                                          Icon icon,
+                                          @Nullable DialogWrapper.DoNotAskOption doNotAskOption) {
+    return MessageDialogBuilder.yesNoCancel(title, message)
+      .yesText(yes)
+      .noText(no)
+      .cancelText(cancel)
+      .icon(icon)
+      .doNotAsk(doNotAskOption)
+      .guessWindowAndAsk();
+  }
+
+  /**
    * Use {@link MessageDialogBuilder#yesNoCancel}
    */
+  @SuppressWarnings("MagicConstant")
   @YesNoCancelResult
   public static int showYesNoCancelDialog(@DialogMessage String message,
                                           @DialogTitle String title,
@@ -770,12 +945,13 @@ public class Messages {
   }
 
   /**
-   * Use this method only if you do not know project or component
+   * Use this method only if you do not know a project or component
    *
    * @return {@link #YES} if user pressed "Yes" or {@link #NO} if user pressed "No", or {@link #CANCEL} if user pressed "Cancel" button.
    * @see #showYesNoCancelDialog(Project, String, String, Icon)
    * @see #showYesNoCancelDialog(Component, String, String, Icon)
    */
+  @SuppressWarnings("MagicConstant")
   @YesNoCancelResult
   public static int showYesNoCancelDialog(@DialogMessage String message,
                                           @DialogTitle String title,
@@ -784,14 +960,14 @@ public class Messages {
   }
 
   /**
-   * @return trimmed input string or {@code null} if user cancelled dialog.
+   * @return trimmed input string or {@code null} if user canceled dialog.
    */
   public static @Nullable String showPasswordDialog(@DialogMessage String message, @DialogTitle String title) {
     return showPasswordDialog(null, message, title, null, null);
   }
 
   /**
-   * @return trimmed input string or {@code null} if user cancelled dialog.
+   * @return trimmed input string or {@code null} if user canceled dialog.
    */
   public static @Nullable String showPasswordDialog(Project project,
                                           @DialogMessage String message,
@@ -801,7 +977,7 @@ public class Messages {
   }
 
   /**
-   * @return trimmed input string or {@code null} if user cancelled dialog.
+   * @return trimmed input string or {@code null} if user canceled dialog.
    */
   public static @Nullable String showPasswordDialog(@Nullable Project project,
                                           @DialogMessage String message,
@@ -812,7 +988,7 @@ public class Messages {
   }
 
   /**
-   * @return trimmed input string or {@code null} if user cancelled dialog.
+   * @return trimmed input string or {@code null} if user canceled dialog.
    */
   public static @Nullable @NlsSafe String showInputDialog(@Nullable Project project,
                                        @DialogMessage String message,
@@ -822,7 +998,7 @@ public class Messages {
   }
 
   /**
-   * @return trimmed input string or {@code null} if user cancelled dialog.
+   * @return trimmed input string or {@code null} if user canceled dialog.
    */
   public static @Nullable @NlsSafe String showInputDialog(@NotNull Component parent,
                                        @DialogMessage String message,
@@ -832,7 +1008,7 @@ public class Messages {
   }
 
   /**
-   * Use this method only if you do not know project or component
+   * Use this method only if you do not know a project or component
    *
    * @see #showInputDialog(Project, String, String, Icon)
    * @see #showInputDialog(Component, String, String, Icon)
@@ -895,7 +1071,7 @@ public class Messages {
   }
 
   /**
-   * Use this method only if you do not know project or component
+   * Use this method only if you do not know a project or component
    *
    * @see #showInputDialog(Project, String, String, Icon, String, InputValidator)
    * @see #showInputDialog(Component, String, String, Icon, String, InputValidator)
@@ -984,7 +1160,7 @@ public class Messages {
   /**
    * Shows dialog with given message and title, information icon {@link #getInformationIcon()} and OK button
    * <p/>
-   * Use this method only if you do not know project or component
+   * Use this method only if you do not know a project or component
    *
    * @see #showInputDialog(Project, String, String, Icon, String, InputValidator)
    * @see #showInputDialog(Component, String, String, Icon, String, InputValidator)
@@ -995,7 +1171,7 @@ public class Messages {
   }
 
   /**
-   * Shows dialog with text area to edit long strings that don't fit in text field.
+   * Shows dialog with text area to edit long strings that don't fit in a text field.
    */
   public static void showTextAreaDialog(final JTextField textField,
                                         final @DialogTitle String title,
@@ -1030,7 +1206,7 @@ public class Messages {
       super(project, true);
       myComment = comment;
       myValidator = validator;
-      _init(title, message, options, defaultOption, -1, icon, null, null);
+      _init(title, message, options, defaultOption, -1, icon, (com.intellij.openapi.ui.DoNotAskOption)null, null);
       myField.setText(initialValue);
       enableOkAction();
     }
@@ -1091,7 +1267,7 @@ public class Messages {
         String option = myOptions[i];
         final int exitCode = i;
         ExitActionType exitType = myExitActionTypes.length > i ? myExitActionTypes[i] : ExitActionType.UNDEFINED;
-        if (i == 0) { // "OK" is default button. It has index 0.
+        if (i == 0) { // "OK" is the default button. It has index 0.
           actions[0] = getOKAction();
           actions[0].putValue(DialogWrapper.DEFAULT_ACTION, Boolean.TRUE);
           myField.getDocument().addDocumentListener(new DocumentAdapter() {

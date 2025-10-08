@@ -20,12 +20,14 @@ import com.intellij.openapi.extensions.PluginDescriptor;
 import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.project.DumbService;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.PsiCompiledElement;
 import com.intellij.psi.PsiDocumentManager;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.util.PsiUtilCore;
 import com.intellij.util.ArrayUtil;
 import com.intellij.util.ArrayUtilRt;
+import com.intellij.util.concurrency.annotations.RequiresBackgroundThread;
 import com.intellij.util.containers.ContainerUtil;
 import it.unimi.dsi.fastutil.ints.Int2ObjectMap;
 import it.unimi.dsi.fastutil.ints.Int2ObjectOpenHashMap;
@@ -171,6 +173,7 @@ public final class TextEditorHighlightingPassRegistrarImpl extends TextEditorHig
   }
 
   @Override
+  @RequiresBackgroundThread
   public @NotNull List<@NotNull TextEditorHighlightingPass> instantiatePasses(@NotNull PsiFile psiFile,
                                                                               @NotNull Editor editor,
                                                                               int @NotNull [] passesToIgnore) {
@@ -195,6 +198,7 @@ public final class TextEditorHighlightingPassRegistrarImpl extends TextEditorHig
     List<TextEditorHighlightingPass> result = new ArrayList<>(frozenPassConfigs.length);
     IntList passesRefusedToCreate = new IntArrayList();
     boolean shouldHighlightFile = ProblemHighlightFilter.shouldHighlightFile(psiFile);
+    VirtualFile virtualFile = psiFile.getVirtualFile();
     try (AccessToken ignored = ClientId.withExplicitClientId(ClientEditorManager.Companion.getClientId(editor))) {
       for (int passId = 1; passId < frozenPassConfigs.length; passId++) {
         ProgressManager.checkCanceled();
@@ -204,9 +208,9 @@ public final class TextEditorHighlightingPassRegistrarImpl extends TextEditorHig
           continue;
         }
         TextEditorHighlightingPassFactory factory = passConfig.passFactory;
-        TextEditorHighlightingPass pass = shouldHighlightFile && DumbService.getInstance(myProject).isUsableInCurrentContext(factory) ?
+        TextEditorHighlightingPass pass = shouldHighlightFile && DumbService.getInstance(myProject).isUsableInCurrentContext(factory, virtualFile) ?
                                           factory.createHighlightingPass(psiFile, editor) : null;
-        if (pass == null || !DumbService.getInstance(myProject).isUsableInCurrentContext(pass)) {
+        if (pass == null || !DumbService.getInstance(myProject).isUsableInCurrentContext(pass, virtualFile)) {
           passesRefusedToCreate.add(passId);
         }
         else {
@@ -248,6 +252,7 @@ public final class TextEditorHighlightingPassRegistrarImpl extends TextEditorHig
   }
 
   @Override
+  @RequiresBackgroundThread
   public @NotNull List<@NotNull TextEditorHighlightingPass> instantiateMainPasses(@NotNull PsiFile psiFile,
                                                                                   @NotNull Document document,
                                                                                   @NotNull HighlightInfoProcessor highlightInfoProcessor) {

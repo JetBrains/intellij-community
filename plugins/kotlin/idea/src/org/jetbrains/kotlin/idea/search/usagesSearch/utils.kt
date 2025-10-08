@@ -267,6 +267,7 @@ fun PsiElement.getReceiverTypeSearcherInfo(isDestructionDeclarationSearch: Boole
 fun KtFile.getDefaultImports(): List<ImportPath> {
     return platform
         .findAnalyzerServices(project)
+        .defaultImportsProvider
         .getDefaultImports(includeLowPriorityImports = true)
 }
 

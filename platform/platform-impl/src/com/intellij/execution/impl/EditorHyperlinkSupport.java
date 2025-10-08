@@ -523,7 +523,9 @@ public final class EditorHyperlinkSupport {
   }
 
   private void linkFollowed(@NotNull RangeHighlighter link) {
-    myLinkEffectSupport.linkFollowed(link);
+    if (link.isValid()) {
+      myLinkEffectSupport.linkFollowed(link);
+    }
   }
 
   public static @NotNull String getLineText(@NotNull Document document, int lineNumber, boolean includeEol) {

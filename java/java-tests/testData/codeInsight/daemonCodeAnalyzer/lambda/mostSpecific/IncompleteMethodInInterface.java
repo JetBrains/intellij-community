@@ -1,6 +1,6 @@
 class Test {
   interface I { Object in<EOLError descr="';' expected"></EOLError>
-    <error descr="Invalid method declaration; return type required">voke</error>(); }
+    <error descr="Method return type missing">voke</error>(); }
   interface IStr { String foo(); }
 
   public static void call(IStr str) {}

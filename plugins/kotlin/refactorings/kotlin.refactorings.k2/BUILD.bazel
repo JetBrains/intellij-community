@@ -1,6 +1,6 @@
 ### auto-generated section `build kotlin.refactorings.k2` start
 load("//build:compiler-options.bzl", "create_kotlinc_options")
-load("@rules_jvm//:jvm.bzl", "jvm_library", "jvm_resources")
+load("@rules_jvm//:jvm.bzl", "jvm_library", "resourcegroup")
 
 create_kotlinc_options(
   name = "custom_kotlin-refactorings-k2",
@@ -15,9 +15,9 @@ create_kotlinc_options(
   x_context_parameters = True
 )
 
-jvm_resources(
+resourcegroup(
   name = "kotlin-refactorings-k2_resources",
-  files = glob(["resources/**/*"]),
+  srcs = glob(["resources/**/*"]),
   strip_prefix = "resources"
 )
 
@@ -26,6 +26,7 @@ jvm_library(
   module_name = "kotlin.refactorings.k2",
   visibility = ["//visibility:public"],
   srcs = glob(["src/**/*.kt", "src/**/*.java", "src/**/*.form"], allow_empty = True),
+  resources = [":kotlin-refactorings-k2_resources"],
   kotlinc_opts = ":custom_kotlin-refactorings-k2",
   deps = [
     "//java/java-indexing-api:indexing",
@@ -65,15 +66,14 @@ jvm_library(
     "//plugins/kotlin/frontend-independent",
     "//plugins/kotlin/kotlin.searching/base",
     "@lib//:kotlinc-analysis-api-impl-base",
-    "@lib//:guava",
+    "//libraries/guava",
     "//plugins/kotlin/refactorings/kotlin.refactorings.move.k2:kotlin-refactorings-move-k2",
     "//platform/util/text-matching",
     "//plugins/kotlin/base/indices",
-    "@lib//:fastutil-min",
+    "//libraries/fastutil",
     "//plugins/kotlin/j2k/shared",
     "//platform/ide-core-impl",
     "//plugins/kotlin/kotlin.ide:ide",
-  ],
-  runtime_deps = [":kotlin-refactorings-k2_resources"]
+  ]
 )
 ### auto-generated section `build kotlin.refactorings.k2` end

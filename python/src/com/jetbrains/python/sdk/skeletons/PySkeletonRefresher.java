@@ -158,7 +158,7 @@ public class PySkeletonRefresher {
     cleanUpSkeletons(skeletonsDir);
 
     if ((builtinsUpdated || PythonSdkUtil.isRemote(mySdk)) && myProject != null) {
-      ApplicationManager.getApplication().invokeLater(() -> DaemonCodeAnalyzer.getInstance(myProject).restart(), myProject.getDisposed());
+      ApplicationManager.getApplication().invokeLater(() -> DaemonCodeAnalyzer.getInstance(myProject).restart(this), myProject.getDisposed());
     }
 
     return failedModules;

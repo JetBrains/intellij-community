@@ -3,6 +3,7 @@ package com.intellij.debugger.impl.hotswap
 
 import com.intellij.configurationStore.saveSettingsForRemoteDevelopment
 import com.intellij.debugger.settings.DebuggerSettings
+import com.intellij.icons.AllIcons
 import com.intellij.openapi.actionSystem.ActionUpdateThread
 import com.intellij.openapi.actionSystem.AnActionEvent
 import com.intellij.openapi.actionSystem.DefaultActionGroup
@@ -11,7 +12,6 @@ import com.intellij.openapi.project.DumbAwareToggleAction
 import com.intellij.util.PlatformUtils
 import com.intellij.xdebugger.XDebuggerBundle
 import com.intellij.xdebugger.impl.hotswap.HotSwapUiExtension
-import icons.PlatformDebuggerImplIcons
 import javax.swing.Icon
 
 private class JvmHotSwapUiExtension : HotSwapUiExtension {
@@ -19,7 +19,7 @@ private class JvmHotSwapUiExtension : HotSwapUiExtension {
   override fun showFloatingToolbar() = DebuggerSettings.getInstance().HOTSWAP_SHOW_FLOATING_BUTTON
 
   override val hotSwapIcon: Icon
-    get() = PlatformDebuggerImplIcons.Actions.DebuggerSync
+    get() = AllIcons.Debugger.DebuggerSync
 
   override fun popupMenuActions() = DefaultActionGroup(ToggleShowButtonAction())
 }

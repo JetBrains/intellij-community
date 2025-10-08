@@ -13,16 +13,7 @@ import org.apache.maven.execution.MavenSession;
 import org.apache.maven.model.Model;
 import org.apache.maven.model.building.ModelBuildingRequest;
 import org.apache.maven.model.building.ModelProblem;
-import org.apache.maven.project.DefaultDependencyResolutionRequest;
-import org.apache.maven.project.DefaultProjectBuilder;
-import org.apache.maven.project.DependencyResolutionException;
-import org.apache.maven.project.DependencyResolutionResult;
-import org.apache.maven.project.MavenProject;
-import org.apache.maven.project.ProjectBuilder;
-import org.apache.maven.project.ProjectBuildingException;
-import org.apache.maven.project.ProjectBuildingRequest;
-import org.apache.maven.project.ProjectBuildingResult;
-import org.apache.maven.project.ProjectDependenciesResolver;
+import org.apache.maven.project.*;
 import org.apache.maven.resolver.MavenChainedWorkspaceReader;
 import org.eclipse.aether.RepositorySystemSession;
 import org.eclipse.aether.graph.Dependency;
@@ -34,30 +25,14 @@ import org.eclipse.aether.util.graph.transformer.ConflictResolver;
 import org.eclipse.aether.util.graph.visitor.TreeDependencyVisitor;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
-import org.jetbrains.idea.maven.model.MavenArtifact;
-import org.jetbrains.idea.maven.model.MavenId;
-import org.jetbrains.idea.maven.model.MavenModel;
-import org.jetbrains.idea.maven.model.MavenProjectProblem;
-import org.jetbrains.idea.maven.model.MavenWorkspaceMap;
+import org.jetbrains.idea.maven.model.*;
 import org.jetbrains.idea.maven.server.LongRunningTask;
 import org.jetbrains.idea.maven.server.MavenServerExecutionResult;
 import org.jetbrains.idea.maven.server.MavenServerGlobals;
 import org.jetbrains.idea.maven.server.PomHashMap;
 
 import java.io.File;
-import java.util.ArrayDeque;
-import java.util.ArrayList;
-import java.util.Collection;
-import java.util.Collections;
-import java.util.HashMap;
-import java.util.HashSet;
-import java.util.IdentityHashMap;
-import java.util.LinkedHashSet;
-import java.util.List;
-import java.util.Map;
-import java.util.Properties;
-import java.util.Queue;
-import java.util.Set;
+import java.util.*;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.stream.Collectors;
 
@@ -403,7 +378,7 @@ public class Maven40ProjectResolver {
     return new MavenServerExecutionResult(file, data, problems, Collections.emptySet(), unresolvedProblems);
   }
 
-  private static @NotNull List<MavenId> getManagedDependencies(@Nullable MavenProject project) {
+  private static @NotNull List<MavenArtifactInfo> getManagedDependencies(@Nullable MavenProject project) {
 
     if (project == null ||
         project.getDependencyManagement() == null ||
@@ -412,7 +387,7 @@ public class Maven40ProjectResolver {
     }
     //noinspection SSBasedInspection
     return project.getDependencyManagement().getDependencies().stream().map(
-      dep -> new MavenId(dep.getGroupId(), dep.getArtifactId(), dep.getVersion())
+      dep -> new MavenArtifactInfo(dep.getGroupId(), dep.getArtifactId(), dep.getVersion(), dep.getType(), dep.getClassifier())
     ).collect(Collectors.toList());
   }
 

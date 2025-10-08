@@ -23,23 +23,23 @@
     <orderEntry type="module" module-name="intellij.libraries.ai.grazie.spell.gec.engine.local" />
     <orderEntry type="module" module-name="intellij.platform.statistics" />
     <orderEntry type="module" module-name="intellij.searchEverywhereMl" />
-    <orderEntry type="library" name="fastutil-min" level="project" />
+    <orderEntry type="module" module-name="intellij.libraries.fastutil" />
     <orderEntry type="module" module-name="intellij.platform.ml.impl" />
     <orderEntry type="module-library">
       <library name="ai.grazie.spell.gec.engine.local.jvm" type="repository">
-        <properties include-transitive-deps="false" maven-id="ai.grazie.spell:gec-spell-engine-local:0.8.48">
+        <properties include-transitive-deps="false" maven-id="ai.grazie.spell:gec-spell-engine-local:0.8.63">
           <verification>
-            <artifact url="file://$MAVEN_REPOSITORY$/ai/grazie/spell/gec-spell-engine-local/0.8.48/gec-spell-engine-local-0.8.48.jar">
-              <sha256sum>4ebe67fb1359c0a1a1278797c41d6b16feca6b12257aeab30d124d426ef4645f</sha256sum>
+            <artifact url="file://$MAVEN_REPOSITORY$/ai/grazie/spell/gec-spell-engine-local/0.8.63/gec-spell-engine-local-0.8.63.jar">
+              <sha256sum>23532ad5c4cd74c1e272e792859f9798f3a0cecb703056eaec5e6a7731e8eca8</sha256sum>
             </artifact>
           </verification>
         </properties>
         <CLASSES>
-          <root url="jar://$MAVEN_REPOSITORY$/ai/grazie/spell/gec-spell-engine-local/0.8.48/gec-spell-engine-local-0.8.48.jar!/" />
+          <root url="jar://$MAVEN_REPOSITORY$/ai/grazie/spell/gec-spell-engine-local/0.8.63/gec-spell-engine-local-0.8.63.jar!/" />
         </CLASSES>
         <JAVADOC />
         <SOURCES>
-          <root url="jar://$MAVEN_REPOSITORY$/ai/grazie/spell/gec-spell-engine-local/0.8.48/gec-spell-engine-local-0.8.48-sources.jar!/" />
+          <root url="jar://$MAVEN_REPOSITORY$/ai/grazie/spell/gec-spell-engine-local/0.8.63/gec-spell-engine-local-0.8.63-sources.jar!/" />
         </SOURCES>
       </library>
     </orderEntry>

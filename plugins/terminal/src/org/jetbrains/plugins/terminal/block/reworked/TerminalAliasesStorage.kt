@@ -2,8 +2,8 @@
 package org.jetbrains.plugins.terminal.block.reworked
 
 import com.intellij.openapi.util.Key
-import com.intellij.terminal.session.TerminalAliasesInfo
 import org.jetbrains.annotations.ApiStatus
+import org.jetbrains.plugins.terminal.session.TerminalAliasesInfo
 
 @ApiStatus.Internal
 class TerminalAliasesStorage {

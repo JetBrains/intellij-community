@@ -28,7 +28,7 @@
     <orderEntry type="module" module-name="intellij.python.psi" scope="TEST" />
     <orderEntry type="module" module-name="intellij.python.community.impl" scope="TEST" />
     <orderEntry type="module" module-name="intellij.platform.debugger" scope="TEST" />
-    <orderEntry type="library" name="Guava" level="project" />
+    <orderEntry type="module" module-name="intellij.libraries.guava" />
     <orderEntry type="module" module-name="intellij.spellchecker" scope="TEST" />
     <orderEntry type="module" module-name="intellij.platform.editor.ex" />
     <orderEntry type="module" module-name="intellij.platform.debugger.impl" scope="TEST" />
@@ -44,7 +44,6 @@
     <orderEntry type="library" scope="TEST" name="Objenesis" level="project" />
     <orderEntry type="module" module-name="intellij.platform.lang.tests" scope="TEST" />
     <orderEntry type="module" module-name="intellij.platform.ide.internal" scope="TEST" />
-    <orderEntry type="library" name="XmlRPC" level="project" />
     <orderEntry type="module" module-name="intellij.platform.testExtensions" scope="TEST" />
     <orderEntry type="library" scope="TEST" name="hamcrest" level="project" />
     <orderEntry type="module" module-name="intellij.platform.tests" scope="TEST" />
@@ -75,7 +74,7 @@
     <orderEntry type="library" scope="TEST" name="kotlinx-coroutines-test" level="project" />
     <orderEntry type="module" module-name="intellij.python.community.core.impl" scope="TEST" />
     <orderEntry type="module" module-name="intellij.python.sdk" scope="TEST" />
-    <orderEntry type="library" scope="TEST" name="gson" level="project" />
+    <orderEntry type="module" module-name="intellij.libraries.gson" scope="TEST" />
     <orderEntry type="module" module-name="intellij.tools.ide.metrics.benchmark" scope="TEST" />
     <orderEntry type="module" module-name="intellij.commandInterface" scope="TEST" />
     <orderEntry type="module" module-name="intellij.python.community.plugin" scope="TEST" />
@@ -84,7 +83,7 @@
     <orderEntry type="library" scope="TEST" name="JUnit5Params" level="project" />
     <orderEntry type="module" module-name="intellij.platform.ide.remote" scope="TEST" />
     <orderEntry type="module" module-name="intellij.platform.testFramework.junit5" scope="TEST" />
-    <orderEntry type="library" scope="TEST" name="kotlin-reflect" level="project" />
+    <orderEntry type="module" module-name="intellij.libraries.kotlin.reflect" scope="TEST" />
     <orderEntry type="module" module-name="intellij.platform.todo" scope="TEST" />
     <orderEntry type="module" module-name="intellij.python.community.testFramework.testEnv" scope="TEST" />
     <orderEntry type="module" module-name="intellij.python.community.testFramework.testEnv.conda" scope="TEST" />

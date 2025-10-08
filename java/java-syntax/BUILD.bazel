@@ -1,6 +1,6 @@
 ### auto-generated section `build intellij.java.syntax` start
 load("//build:compiler-options.bzl", "create_kotlinc_options")
-load("@rules_jvm//:jvm.bzl", "jvm_library", "jvm_resources")
+load("@rules_jvm//:jvm.bzl", "jvm_library", "resourcegroup")
 
 create_kotlinc_options(
   name = "custom_syntax",
@@ -14,9 +14,9 @@ create_kotlinc_options(
   x_no_param_assertions = True
 )
 
-jvm_resources(
+resourcegroup(
   name = "syntax_resources",
-  files = glob(["resources/**/*"]),
+  srcs = glob(["resources/**/*"]),
   strip_prefix = "resources"
 )
 
@@ -25,6 +25,7 @@ jvm_library(
   module_name = "intellij.java.syntax",
   visibility = ["//visibility:public"],
   srcs = glob(["gen/**/*.kt", "gen/**/*.java", "src/**/*.kt", "src/**/*.java", "src/**/*.form"], allow_empty = True),
+  resources = [":syntax_resources"],
   kotlinc_opts = ":custom_syntax",
   deps = [
     "//platform/syntax/syntax-api:syntax",
@@ -39,7 +40,6 @@ jvm_library(
   exports = [
     "//platform/syntax/syntax-api:syntax",
     "//platform/syntax/syntax-util:util",
-  ],
-  runtime_deps = [":syntax_resources"]
+  ]
 )
 ### auto-generated section `build intellij.java.syntax` end

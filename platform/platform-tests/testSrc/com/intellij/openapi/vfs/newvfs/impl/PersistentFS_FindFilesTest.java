@@ -206,22 +206,46 @@ public class PersistentFS_FindFilesTest {
         return;
       }
 
+      //Quite a lot of trickiness in this test relates to symlink processing.
+      //POSIX path resolution rules (which we sort-of follow in .findFileByPath) demands symlinks resolution as soon, as
+      // they are met in the path -- which means '/a/../a/' is NOT always equivalent to just '/a/'.
+      // Namely, if '/a' is a symlink to -> '/b/c/d' then POSIX (and .findFileByPath) resolves '/a/../a/' to the '/b/c/a',
+      // instead of just '/a/' (= '/b/c/d').
+      // So, we better skip paths with symlink from this test -- _before_ checking [/a/] -> [/a/../a/] equivalent transformation,
+      // we ensure no symlinks in the path -- when [/a/] <=> [/a/../a/] equivalency is correct.
+      //
+      // Surprisingly, determine is there a symlink in the path happens to be untrivial too.
+      // It seems like we have VirtualFileSystemEntry.thisOrParentHaveSymlink() method exactly for that -- but it is only
+      // partially correct, since in VFS .thisOrParentHaveSymlink() works only up to _VFS root_, which is different from
+      // file-path root.
+      // The most obvious example is jar-paths. Lets' take [jar:///local/path/file.jar!/path/inside/jar.class] file: if
+      // [/local/path] is a symlink, then
+      //  VirtualFile[file:///local/path/file.jar].thisOrParentHaveSymlink() == true
+      //  but
+      //  VirtualFile[ jar:///local/path/file.jar!/path/inside/jar.class].thisOrParentHaveSymlink() == false,
+      // because for VFS VirtualFile[jar:///local/path/file.jar/!/path/inside/jar.class] belongs to the
+      // [jar:///local/path/file.jar!/] root, and up to this root there are no symlinks. But then VFS resolves the
+      // [jar:///local/path/file.jar!/path/inside/jar.class] (and it's non-canonical form, produced in this test) it
+      // navigates through 'file:///local/path/file.jar' parts first, and in these parts there _is_ a symlink, which
+      // ruins the invariant checked by this test.
+      //So, the 'no-symlink' check is split into .thisOrParentHaveSymlink() fast-path, and .hasSymlinkInThePath() slow-paths
+
       if (((VirtualFileSystemEntry)file).thisOrParentHaveSymlink()) {
-        //POSIX path resolution rules (which we sort-of follow in .findFileByPath) demands symlinks resolution as soon, as
-        // they are met in the path -- which means '/a/../a/' is NOT always equivalent to just '/a/'.
-        // Namely, if '/a' is a symlink to -> '/b/c/d' then POSIX (and .findFileByPath) resolves '/a/../a/' to the '/b/c/a',
-        // instead of just '/a/' (= '/b/c/d').
-        // So _before_ checking [/a/] -> [/a/../a/] equivalent transformation, we ensure no symlinks in the path -- when
-        // [/a/] <=> [/a/../a/] equivalency is correct
         return;
       }
 
       String path = file.getPath();
 
-      String nonCanonicalPath = path.replaceAll("([\\w+\\-.@]+)/", "$1/../$1/");// [/a/] -> [/a/../a/]
+      String nonCanonicalPath = path.replaceAll("([\\w+\\-.@\\s]+)/", "$1/../$1/");// [/a/] -> [/a/../a/]
+
       NewVirtualFile fileFoundByNonCanonicalPath = VfsImplUtil.findFileByPath(fileSystem, nonCanonicalPath);
-      assertEquals(file, fileFoundByNonCanonicalPath,
-                   () -> "[" + nonCanonicalPath + "] must be resolved to it's original [" + path + "]");
+      if (!file.equals(fileFoundByNonCanonicalPath)) {
+        if (!hasSymlinkInThePath(path)) {
+          fail("[" + nonCanonicalPath + "] must be resolved to it's original [" + path + "]:\n" +
+               file + " original file\n" +
+               fileFoundByNonCanonicalPath + " found by non-original file");
+        }
+      }
     });
   }
 
@@ -294,7 +318,6 @@ public class PersistentFS_FindFilesTest {
     }
     finally {
       pool.shutdown();
-      //noinspection ResultOfMethodCallIgnored
       pool.awaitTermination(1, MINUTES);
     }
   }
@@ -329,6 +352,24 @@ public class PersistentFS_FindFilesTest {
       if (file.isValid()) {
         consumer.accept(fileId, file);
       }
+    }
+  }
+
+  private static boolean hasSymlinkInThePath(@NotNull String path) {
+    try {
+      Path nioPath = Path.of(path);
+      do {
+        boolean isSymlink = Files.isSymbolicLink(nioPath);
+        if (isSymlink) {
+          return true;
+        }
+        nioPath = nioPath.getParent();
+      }
+      while (nioPath != null);
+      return false;
+    }
+    catch (Exception e) {
+      return false;
     }
   }
 

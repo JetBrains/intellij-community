@@ -11,6 +11,7 @@ import com.intellij.execution.ExecutionException;
 import com.intellij.openapi.actionSystem.DataContext;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.diagnostic.Logger;
+import com.intellij.openapi.extensions.ExtensionPointName;
 import com.intellij.openapi.fileTypes.FileType;
 import com.intellij.openapi.fileTypes.LanguageFileType;
 import com.intellij.openapi.project.IndexNotReadyException;
@@ -38,7 +39,10 @@ import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import java.util.*;
+import java.util.HashSet;
+import java.util.LinkedList;
+import java.util.Set;
+import java.util.function.Consumer;
 import java.util.function.Function;
 
 public abstract class DebuggerUtils {
@@ -598,4 +602,31 @@ public abstract class DebuggerUtils {
   public static boolean isAndroidVM(@NotNull VirtualMachine virtualMachine) {
     return StringUtil.containsIgnoreCase(virtualMachine.name(), "dalvik");
   }
+
+  /**
+   * Safely iterates through the elements provided by the specified extension point and applies the given {@code action} to each element.
+   * Any exceptions thrown during the action execution are caught and handled using {@code logErrorImpl},
+   * while execution continues for the other elements.
+   */
+  public static <T> void forEachSafe(ExtensionPointName<T> ep, Consumer<? super T> action) {
+    forEachSafe(ep.getIterable(), action);
+  }
+
+  /**
+   * Safely iterates through the provided {@code iterable} and applies the given {@code action} to each element.
+   * Any exceptions thrown during the action execution are caught and handled using {@code logErrorImpl},
+   * while execution continues for the other elements.
+   */
+  public static <T> void forEachSafe(Iterable<? extends T> iterable, Consumer<? super T> action) {
+    for (T o : iterable) {
+      try {
+        action.accept(o);
+      }
+      catch (Throwable e) {
+        getInstance().logErrorImpl(e);
+      }
+    }
+  }
+
+  protected abstract void logErrorImpl(@NotNull Throwable e);
 }

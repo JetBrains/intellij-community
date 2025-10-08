@@ -173,7 +173,7 @@ class KotlinChangeSignatureDialog (
                 val codeFragment = parameter.defaultValueCodeFragment as KtExpressionCodeFragment
                 if (newKotlinType != oldKotlinType && codeFragment.getContentElement() != null) {
                     codeFragment.putUserData(CodeFragmentAnalyzer.EXPECTED_TYPE_KEY, kotlinTypeInfo.type)
-                    DaemonCodeAnalyzer.getInstance(codeFragment.project).restart(codeFragment)
+                    DaemonCodeAnalyzer.getInstance(codeFragment.project).restart(codeFragment, this)
                 }
 
                 if (!forPreview) AddFullQualifierIntention.Holder.addQualifiersRecursively(codeFragment)

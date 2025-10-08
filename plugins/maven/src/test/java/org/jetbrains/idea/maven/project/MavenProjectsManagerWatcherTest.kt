@@ -68,6 +68,7 @@ class MavenProjectsManagerWatcherTest : MavenMultiVersionImportingTestCase() {
 
   @Test
   fun testSaveDocumentChangesBeforeAutoImport() = runBlocking {
+    assumeModel_4_0_0("IDEA-379195")
     assertNoPendingProjectForReload()
     assertModules("project")
     replaceContent(projectPom, createPomXml(

@@ -1,7 +1,8 @@
 package com.intellij.notebooks.visualization.ui
 
+import com.intellij.notebooks.jupyter.core.jupyter.CellType
+import com.intellij.notebooks.ui.afterDistinctChange
 import com.intellij.notebooks.visualization.NotebookCellInlayManager
-import com.intellij.notebooks.visualization.NotebookCellLines.CellType
 import com.intellij.notebooks.visualization.NotebookCellLines.Interval
 import com.intellij.notebooks.visualization.NotebookIntervalPointer
 import com.intellij.notebooks.visualization.UpdateContext
@@ -9,6 +10,7 @@ import com.intellij.notebooks.visualization.outputs.NotebookOutputDataKey
 import com.intellij.notebooks.visualization.ui.providers.frame.EditorCellFrameManager
 import com.intellij.openapi.Disposable
 import com.intellij.openapi.actionSystem.AnAction
+import com.intellij.openapi.diagnostic.thisLogger
 import com.intellij.openapi.editor.impl.EditorImpl
 import com.intellij.openapi.observable.properties.AtomicBooleanProperty
 import com.intellij.openapi.observable.properties.AtomicProperty
@@ -28,12 +30,15 @@ class EditorCell(
   val isSelected: AtomicBooleanProperty = AtomicBooleanProperty(false)
   val isHovered: AtomicBooleanProperty = AtomicBooleanProperty(false)
 
-  //Enable NotebookVisibleCellsBatchUpdater if this field is required
-  //val isInViewportRectangle: AtomicBooleanProperty = AtomicBooleanProperty(false)
-
   val source: AtomicProperty<String> = AtomicProperty(interval.getContentText(editor))
   val gutterAction: AtomicProperty<AnAction?> = AtomicProperty(null)
   val executionStatus: AtomicProperty<ExecutionStatus> = AtomicProperty<ExecutionStatus>(ExecutionStatus())
+
+  init {
+    executionStatus.afterDistinctChange(this) {
+      thisLogger().debug("Execution status changed: $it for interval ${intervalPointer.get()?.ordinal}")
+    }
+  }
 
   val cellFrameManager: EditorCellFrameManager? = EditorCellFrameManager.create(this)?.also {
     Disposer.register(this, it)

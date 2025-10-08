@@ -8,10 +8,7 @@ import com.intellij.configurationStore.RenameableStateStorageManager
 import com.intellij.facet.FacetManagerFactory
 import com.intellij.facet.impl.FacetEventsPublisher
 import com.intellij.facet.impl.FacetManagerFactoryImpl
-import com.intellij.openapi.application.ApplicationManager
-import com.intellij.openapi.application.UiWithModelAccess
-import com.intellij.openapi.application.WriteAction
-import com.intellij.openapi.application.WriteIntentReadAction
+import com.intellij.openapi.application.*
 import com.intellij.openapi.components.*
 import com.intellij.openapi.components.impl.ModulePathMacroManager
 import com.intellij.openapi.components.impl.stores.ComponentStoreOwner
@@ -98,7 +95,7 @@ open class ModuleBridgeImpl(
     val componentStore = componentStore
     (componentStore.storageManager as? RenameableStateStorageManager)?.pathRenamed(imlPath, null)
     componentStore.setPath(imlPath)
-    (PathMacroManager.getInstance(this) as? ModulePathMacroManager)?.onImlFileMoved()
+    ModulePathMacroManager(this, PathMacros.getInstance()).onImlFileMoved()
   }
 
   override fun markContainerAsCreated() {
@@ -181,7 +178,7 @@ open class ModuleBridgeImpl(
 
     internal suspend fun initFacets(modules: Collection<Pair<ModuleEntity, ModuleBridge>>, project: Project) {
       val facetManagerFactory = project.serviceAsync<FacetManagerFactory>() as FacetManagerFactoryImpl
-      span("init facets in EDT", Dispatchers.UiWithModelAccess) {
+      span("init facets in EDT", Dispatchers.EDT) {
         facetsInitializationTimeMs.addMeasuredTime {
           doInitFacetsInEdt(modules, facetManagerFactory)
         }

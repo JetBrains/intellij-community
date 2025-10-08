@@ -732,7 +732,7 @@ public abstract class PsiDocumentManagerBase extends PsiDocumentManager implemen
       whenAllCommitted.run();
     }
     else {
-      EdtInvocationManager.invokeLaterIfNeeded(() -> {
+      ApplicationManager.getApplication().invokeLater(() -> {
         if (!myProject.isDisposed()) {
           performWhenAllCommitted(whenAllCommitted);
         }

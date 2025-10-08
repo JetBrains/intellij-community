@@ -1,9 +1,9 @@
 // Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.plugins.gitlab.mergerequest.ui.toolwindow
 
+import com.intellij.collaboration.async.childScope
 import com.intellij.collaboration.util.MainDispatcherRule
 import com.intellij.openapi.project.Project
-import com.intellij.platform.util.coroutines.childScope
 import io.mockk.coEvery
 import io.mockk.every
 import io.mockk.mockk
@@ -50,7 +50,7 @@ internal class GitLabRepositoryAndAccountSelectorViewModelTest {
     coEvery { accountManager.getCredentialsState(any(), any()) } returns MutableStateFlow("")
     every { accountManager.canPersistCredentials } returns MutableStateFlow(true)
 
-    val scope = childScope(Dispatchers.Main)
+    val scope = childScope(this::class, Dispatchers.Main)
     val vm = GitLabRepositoryAndAccountSelectorViewModel(project, scope, projectManager, accountManager) { _, _ -> mockk() }
 
     assertEquals(projectMapping, vm.repoSelectionState.value)
@@ -80,7 +80,7 @@ internal class GitLabRepositoryAndAccountSelectorViewModelTest {
     coEvery { accountManager.getCredentialsState(any(), any()) } returns MutableStateFlow("")
     every { accountManager.canPersistCredentials } returns MutableStateFlow(true)
 
-    val scope = childScope(Dispatchers.Main)
+    val scope = childScope(this::class, Dispatchers.Main)
     val vm = GitLabRepositoryAndAccountSelectorViewModel(project, scope, projectManager, accountManager) { _, _ -> mockk() }
 
     assertEquals(null, vm.repoSelectionState.value)

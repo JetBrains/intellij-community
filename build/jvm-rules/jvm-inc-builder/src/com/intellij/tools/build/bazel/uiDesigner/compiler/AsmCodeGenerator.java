@@ -22,6 +22,15 @@ import java.util.List;
 
 public final class AsmCodeGenerator {
   private static final int ASM_API_VERSION = Opcodes.API_VERSION;
+
+  /**
+   * Previously, if "idea.is.internal" flag was set, border factory type defaulted to
+   * "com.intellij.ui.IdeBorderFactory$PlainSmallWithIndent"
+   * This behavior has been changed in favor of explicit border factory type declaration.
+   * Now this is a compile-time assertion: All code that relied on this behavior must now specify the border factory type explicitly.
+   */
+  private static final boolean REQUIRE_EXPLICIT_BORDER_FACTORY_VALUE_IF_TITLE_SET = true;
+  
   private final LwRootContainer myRootContainer;
   private final InstrumentationClassFinder myFinder;
   private final List<FormErrorInfo> myErrors;
@@ -807,7 +816,7 @@ public final class AsmCodeGenerator {
       }
     }
 
-    private void generateBorder(final LwContainer container, final GeneratorAdapter generator, final int componentLocal) {
+    private void generateBorder(final LwContainer container, final GeneratorAdapter generator, final int componentLocal) throws CodeGenerationException {
       final BorderType borderType = container.getBorderType();
       final StringDescriptor borderTitle = container.getBorderTitle();
       final String borderFactoryMethodName = borderType.getBorderFactoryMethodName();
@@ -835,12 +844,16 @@ public final class AsmCodeGenerator {
       }
     }
 
-    private Type borderFactoryType(LwContainer container, StringDescriptor borderTitle) {
+    private Type borderFactoryType(LwContainer container, StringDescriptor borderTitle) throws CodeGenerationException {
       Type result = ourBorderFactoryType;
       StringDescriptor borderFactoryValue = (StringDescriptor)container.getDelegeeClientProperties().get(ourBorderFactoryClientProperty);
-      if (borderFactoryValue == null && borderTitle != null && Boolean.valueOf(System.getProperty("idea.is.internal")).booleanValue()) {
-        borderFactoryValue = StringDescriptor.create("com.intellij.ui.IdeBorderFactory$PlainSmallWithIndent");
-        container.getDelegeeClientProperties().put(ourBorderFactoryClientProperty, borderFactoryValue);
+      if (borderFactoryValue == null && borderTitle != null && REQUIRE_EXPLICIT_BORDER_FACTORY_VALUE_IF_TITLE_SET) {
+        //borderFactoryValue = StringDescriptor.create("com.intellij.ui.IdeBorderFactory$PlainSmallWithIndent");
+        //container.getDelegeeClientProperties().put(ourBorderFactoryClientProperty, borderFactoryValue);
+        throw new CodeGenerationException(
+          container.getId(),
+          "For title borders, the border factory type must be explicitly specified.\nExpected default is " + ourBorderFactoryClientProperty + " = \"com.intellij.ui.IdeBorderFactory$PlainSmallWithIndent\"."
+        );
       }
       if (borderFactoryValue != null && !borderFactoryValue.getValue().isEmpty()) {
         result = typeFromClassName(borderFactoryValue.getValue());

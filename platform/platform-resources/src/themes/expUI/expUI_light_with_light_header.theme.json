@@ -286,6 +286,11 @@
 
     "ManagedIdeBadgeBorder": "Gray11",
     "ManagedIdeBadgeBackground": "Gray13",
-    "ManagedIdeBadgeBackgroundHover": "Gray12"
+    "ManagedIdeBadgeBackgroundHover": "Gray12",
+
+    "ProgressBar": {
+      "progressCounterBackground": "#5288f2",
+      "progressCounterForeground": "#FFFFFF"
+    }
   }
 }

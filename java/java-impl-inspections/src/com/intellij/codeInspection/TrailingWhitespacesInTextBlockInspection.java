@@ -16,7 +16,6 @@ import com.intellij.psi.util.PsiLiteralUtil;
 import com.siyeh.ig.PsiReplacementUtil;
 import org.jetbrains.annotations.NotNull;
 
-import java.util.List;
 import java.util.Set;
 import java.util.function.Function;
 
@@ -177,9 +176,7 @@ public final class TrailingWhitespacesInTextBlockInspection extends AbstractBase
       }
       else if (element instanceof PsiFragment fragment) {
         if (fragment.isTextBlock() && fragment.getParent() instanceof PsiTemplate template) {
-          @NotNull List<@NotNull PsiFragment> fragments = template.getFragments();
-          for (int i = fragments.size() - 1; i >= 0; i--) {
-            PsiFragment current = fragments.get(i);
+          for (PsiFragment current : template.getFragments().reversed()) {
             String suffix = fragment.getTokenType() == JavaTokenType.TEXT_BLOCK_TEMPLATE_END ? "\"\"\"" : "\\{";
             String text = buildReplacementText(current, suffix, myTransformation);
             if (text == null) return;

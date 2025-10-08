@@ -60,6 +60,11 @@ public class PsiBuilderAdapter implements PsiBuilder {
   }
 
   @Override
+  public void remapCurrentTokenAndRestoreOnRollback(@NotNull IElementType type) {
+    myDelegate.remapCurrentTokenAndRestoreOnRollback(type);
+  }
+
+  @Override
   public IElementType lookAhead(int steps) {
     return myDelegate.lookAhead(steps);
   }

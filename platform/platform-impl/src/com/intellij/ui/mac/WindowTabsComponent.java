@@ -67,6 +67,8 @@ public final class WindowTabsComponent extends JBTabsImpl {
   private final Disposable myParentDisposable;
   private final Map<IdeFrameImpl, Integer> myIndexes = new HashMap<>();
 
+  public BorderPainter borderPainter = new DefaultBorderPainter();
+
   public WindowTabsComponent(@NotNull IdeFrameImpl nativeWindow, @Nullable Project project, @NotNull Disposable parentDisposable) {
     super(project, parentDisposable);
 
@@ -120,6 +122,12 @@ public final class WindowTabsComponent extends JBTabsImpl {
   @Override
   public @NotNull Dimension getPreferredSize() {
     return new Dimension(super.getPreferredSize().width, JBUI.scale(TAB_HEIGHT));
+  }
+
+  @Override
+  public void paintChildren(Graphics g) {
+    super.paintChildren(g);
+    borderPainter.paintAfterChildren(this, g);
   }
 
   @Override

@@ -70,7 +70,7 @@ public final class EqualsBetweenInconvertibleTypesInspection extends BaseInspect
   }
 
   @Override
-  public BaseInspectionVisitor buildVisitor() {
+  public @NotNull BaseInspectionVisitor buildVisitor() {
     return new EqualsBetweenInconvertibleTypesVisitor();
   }
 

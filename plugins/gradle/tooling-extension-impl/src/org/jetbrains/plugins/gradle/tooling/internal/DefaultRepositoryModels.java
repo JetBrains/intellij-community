@@ -16,9 +16,11 @@ import java.util.List;
 public class DefaultRepositoryModels implements RepositoryModels {
 
   private final @NotNull List<MavenRepositoryModel> myRepositories;
+  private final int myRepositoriesHashCode;
 
   public DefaultRepositoryModels(@NotNull List<MavenRepositoryModel> repositories) {
     myRepositories = Collections.unmodifiableList(repositories);
+    myRepositoriesHashCode = myRepositories.hashCode();
   }
 
   @Override
@@ -32,14 +34,12 @@ public class DefaultRepositoryModels implements RepositoryModels {
     if (o == null || getClass() != o.getClass()) return false;
 
     DefaultRepositoryModels model = (DefaultRepositoryModels)o;
-
-    if (!myRepositories.equals(model.myRepositories)) return false;
-
+    if (myRepositoriesHashCode != model.myRepositoriesHashCode) return false;
     return true;
   }
 
   @Override
   public int hashCode() {
-    return myRepositories.hashCode();
+    return myRepositoriesHashCode;
   }
 }

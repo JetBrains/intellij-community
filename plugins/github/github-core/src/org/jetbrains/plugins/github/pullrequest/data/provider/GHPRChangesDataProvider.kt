@@ -3,6 +3,7 @@ package org.jetbrains.plugins.github.pullrequest.data.provider
 
 import com.intellij.collaboration.async.computationStateFlow
 import com.intellij.collaboration.async.withInitial
+import com.intellij.collaboration.util.CodeReviewDomainEntity
 import com.intellij.collaboration.util.ComputedResult
 import com.intellij.openapi.diff.impl.patch.FilePatch
 import git4idea.changes.GitBranchComparisonResult
@@ -10,6 +11,7 @@ import kotlinx.coroutines.flow.Flow
 import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.plugins.github.api.data.GHCommit
 
+@CodeReviewDomainEntity
 interface GHPRChangesDataProvider {
 
   val changesNeedReloadSignal: Flow<Unit>

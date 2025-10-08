@@ -544,18 +544,6 @@ public abstract class GitHandler {
   private final List<VcsException> myErrors = Collections.synchronizedList(new ArrayList<>());
 
   /**
-   * @return exit code for process if it is available
-   * @deprecated use {@link GitLineHandler}, {@link Git#runCommand(GitLineHandler)} and {@link GitCommandResult}
-   */
-  @Deprecated(forRemoval = true)
-  public int getExitCode() {
-    if (myExitCode == null) {
-      return -1;
-    }
-    return myExitCode.intValue();
-  }
-
-  /**
    * @param exitCode a exit code for process
    * @deprecated use {@link GitLineHandler}, {@link Git#runCommand(GitLineHandler)} and {@link GitCommandResult}
    */

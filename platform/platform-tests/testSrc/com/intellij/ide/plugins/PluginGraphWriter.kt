@@ -1,4 +1,6 @@
 // Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+@file:Suppress("ReplacePutWithAssignment", "ReplaceGetOrSet")
+
 package com.intellij.ide.plugins
 
 import com.fasterxml.jackson.core.JsonFactory
@@ -55,7 +57,7 @@ internal class PluginGraphWriter(private val pluginIdToInfo: Map<String, ModuleI
       entries.sortBy { it.value.sourceModule.name }
       for (entry in entries) {
         val item = entry.value
-        if (item.packageName == null && !hasContentOrDependenciesInV2Format(item.descriptor)) {
+        if (!hasContentOrDependenciesInV2Format(item.descriptor)) {
           continue
         }
 
@@ -70,13 +72,15 @@ internal class PluginGraphWriter(private val pluginIdToInfo: Map<String, ModuleI
         }
       }
 
-      writeLinks(writer, contentLinks, isContent = true)
-      writeLinks(writer, dependencyLinks, isContent = false)
+      writeLinks(writer = writer, links = contentLinks, isContent = true)
+      writeLinks(writer = writer, links = dependencyLinks, isContent = false)
     }
   }
 
   private fun writeModuleInfo(writer: JsonGenerator, item: ModuleInfo, parentId: String?) {
-    assert(!nodeInfoToId.containsKey(item))
+    require(!nodeInfoToId.containsKey(item)) {
+      "Node with the same name already exists: $item"
+    }
 
     if (isNodeSkipped(item)) {
       return
@@ -98,7 +102,7 @@ internal class PluginGraphWriter(private val pluginIdToInfo: Map<String, ModuleI
 
     nodeInfoToId.put(item, id)
     writer.obj {
-      // for us is very important to understand dependencies between source modules, that's why on graph source module name is used
+      // for us, it is very important to understand dependencies between source modules, that's why on graph source module name is used
       // for plugins as node name
       writer.writeStringField("group", "nodes")
       writer.obj("data") {

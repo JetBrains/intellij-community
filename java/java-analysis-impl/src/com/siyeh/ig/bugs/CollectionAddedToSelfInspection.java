@@ -34,7 +34,7 @@ public final class CollectionAddedToSelfInspection extends BaseInspection {
   }
 
   @Override
-  public BaseInspectionVisitor buildVisitor() {
+  public @NotNull BaseInspectionVisitor buildVisitor() {
     return new CollectionAddedToSelfVisitor();
   }
 

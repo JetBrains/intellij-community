@@ -136,11 +136,7 @@ public final class JavaApplicationSettingsEditor extends JavaSettingsEditorBase<
     }
 
     String getClassName() {
-      return myIsImplicitClassConfiguration ? myImplicitClassField.getText() : myClassEditorField.getClassName();
-    }
-
-    boolean isReadyForApply() {
-      return myIsImplicitClassConfiguration || myClassEditorField.isReadyForApply();
+      return myIsImplicitClassConfiguration ? myImplicitClassField.getText() : myClassEditorField.getText();
     }
 
     void setImplicitClassConfiguration(boolean isImplicitClassConfiguration) {
@@ -194,10 +190,6 @@ public final class JavaApplicationSettingsEditor extends JavaSettingsEditorBase<
                                      configuration.setMainClassName(classNameInEditor);
                                    },
                                    Predicates.alwaysTrue()) {
-        @Override
-        public boolean isReadyForApply() {
-          return myComponent.isReadyForApply();
-        }
       };
     myMainClassFragment.setRemovable(false);
     myMainClassFragment.setEditorGetter(field -> field.getEditorComponent());
@@ -221,7 +213,7 @@ public final class JavaApplicationSettingsEditor extends JavaSettingsEditorBase<
   static @NotNull JavaCodeFragment.VisibilityChecker getVisibilityChecker(@NotNull ConfigurationModuleSelector selector) {
     return (declaration, place) -> {
       if (declaration instanceof PsiClass aClass) {
-        if (ConfigurationUtil.MAIN_CLASS.value(aClass) && PsiMethodUtil.findMainMethod(aClass) != null ||
+        if (PsiMethodUtil.MAIN_CLASS.value(aClass) && PsiMethodUtil.findMainMethod(aClass) != null ||
             place != null && place.getParent() != null && selector.findClass(aClass.getQualifiedName()) != null) {
           return JavaCodeFragment.VisibilityChecker.Visibility.VISIBLE;
         }

@@ -1,7 +1,7 @@
 // Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.workspaceModel.ide.impl.jps.serialization
 
-import com.intellij.platform.backend.workspace.GlobalWorkspaceModelCache
+import com.intellij.platform.backend.workspace.InternalEnvironmentName
 import com.intellij.platform.workspace.storage.MutableEntityStorage
 import com.intellij.platform.workspace.storage.impl.VersionedEntityStorageImpl
 import com.intellij.testFramework.junit5.TestApplication
@@ -27,7 +27,7 @@ private class TestableJpsGlobalModelSynchronizer(
   override val delayDuration: Duration
     get() = testDelayDuration
 
-  override suspend fun delayLoadGlobalWorkspaceModel(environmentName: GlobalWorkspaceModelCache.InternalEnvironmentName) {
+  override suspend fun delayLoadGlobalWorkspaceModel(environmentName: InternalEnvironmentName) {
     onDelayLoadCalled()
     // skip the actual loading for the test
   }
@@ -59,7 +59,7 @@ class JpsGlobalModelSynchronizerJobTest {
 
     synchronizer.setVirtualFileUrlManager(IdeVirtualFileUrlManagerImpl())
 
-    val environmentName = object : GlobalWorkspaceModelCache.InternalEnvironmentName {
+    val environmentName = object : InternalEnvironmentName {
       override val name: String
         get() = "test"
     }
@@ -140,7 +140,7 @@ class JpsGlobalModelSynchronizerJobTest {
 
     synchronizer.setVirtualFileUrlManager(IdeVirtualFileUrlManagerImpl())
 
-    val environmentName = object : GlobalWorkspaceModelCache.InternalEnvironmentName {
+    val environmentName = object : InternalEnvironmentName {
       override val name: String
         get() = "test"
     }
@@ -195,7 +195,7 @@ class JpsGlobalModelSynchronizerJobTest {
 
     synchronizer.setVirtualFileUrlManager(IdeVirtualFileUrlManagerImpl())
 
-    val environmentName = object : GlobalWorkspaceModelCache.InternalEnvironmentName {
+    val environmentName = object : InternalEnvironmentName {
       override val name: String
         get() = "test"
     }
@@ -233,7 +233,7 @@ class JpsGlobalModelSynchronizerJobTest {
 
     synchronizer.setVirtualFileUrlManager(IdeVirtualFileUrlManagerImpl())
 
-    val environmentName = object : GlobalWorkspaceModelCache.InternalEnvironmentName {
+    val environmentName = object : InternalEnvironmentName {
       override val name: String
         get() = "test"
     }
@@ -305,7 +305,7 @@ class JpsGlobalModelSynchronizerJobTest {
 
     synchronizer.setVirtualFileUrlManager(IdeVirtualFileUrlManagerImpl())
 
-    val environmentName = object : GlobalWorkspaceModelCache.InternalEnvironmentName {
+    val environmentName = object : InternalEnvironmentName {
       override val name: String
         get() = "test"
     }

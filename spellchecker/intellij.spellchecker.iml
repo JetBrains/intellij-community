@@ -25,9 +25,8 @@
     <orderEntry type="module" module-name="intellij.platform.backend" scope="RUNTIME" />
     <orderEntry type="module" module-name="intellij.platform.testFramework" scope="TEST" />
     <orderEntry type="module" module-name="intellij.platform.refactoring" />
-    <orderEntry type="library" name="Guava" level="project" />
+    <orderEntry type="module" module-name="intellij.libraries.guava" />
     <orderEntry type="module" module-name="intellij.platform.statistics" />
-    <orderEntry type="module" module-name="intellij.libraries.ai.grazie.spell.gec.engine.local" />
     <orderEntry type="module-library">
       <library name="java-string-similarity" type="repository">
         <properties include-transitive-deps="false" maven-id="info.debatty:java-string-similarity:2.0.0">
@@ -55,7 +54,6 @@
     <orderEntry type="library" scope="TEST" name="kotlin-test" level="project" />
     <orderEntry type="library" scope="TEST" name="kotlin-test-junit" level="project" />
     <orderEntry type="library" name="kotlinx-coroutines-core" level="project" />
-    <orderEntry type="library" name="caffeine" level="project" />
     <orderEntry type="module" module-name="intellij.tools.ide.metrics.benchmark" scope="TEST" />
     <orderEntry type="module" module-name="intellij.relaxng" scope="TEST" />
   </component>

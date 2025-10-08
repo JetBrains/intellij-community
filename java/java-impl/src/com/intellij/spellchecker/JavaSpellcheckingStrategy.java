@@ -52,6 +52,6 @@ public final class JavaSpellcheckingStrategy extends SpellcheckingStrategy imple
 
   @Override
   public boolean useTextLevelSpellchecking() {
-    return Registry.is("spellchecker.grazie.enabled");
+    return Registry.is("spellchecker.grazie.enabled", false);
   }
 }

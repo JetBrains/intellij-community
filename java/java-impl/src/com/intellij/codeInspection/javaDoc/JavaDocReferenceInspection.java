@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInspection.javaDoc;
 
 import com.intellij.codeHighlighting.HighlightDisplayLevel;
@@ -7,6 +7,7 @@ import com.intellij.codeInsight.daemon.impl.quickfix.ImportClassFix;
 import com.intellij.codeInsight.daemon.quickFix.CreateFilePathFix;
 import com.intellij.codeInsight.daemon.quickFix.NewFileLocation;
 import com.intellij.codeInsight.daemon.quickFix.TargetDirectory;
+import com.intellij.codeInsight.javadoc.JavaDocFragmentAnchorCacheKt;
 import com.intellij.codeInsight.template.impl.ConstantNode;
 import com.intellij.codeInspection.*;
 import com.intellij.codeInspection.options.OptPane;
@@ -200,6 +201,10 @@ public final class JavaDocReferenceInspection extends LocalInspectionTool {
       }
     }
 
+    if (value instanceof PsiDocFragmentRef fragmentRef) {
+      if (checkFragmentReference(context, holder, isOnTheFly, fragmentRef)) return;
+    }
+
     PsiReference reference = value.getReference();
     if (reference == null) return;
     int textOffset = value.getTextOffset();
@@ -246,6 +251,23 @@ public final class JavaDocReferenceInspection extends LocalInspectionTool {
     holder.registerProblem(holder.getManager().createProblemDescriptor(
       valueElement, reference.getRangeInElement(), message, ProblemHighlightType.LIKE_UNKNOWN_SYMBOL, isOnTheFly,
       fixes.toArray(LocalQuickFix.EMPTY_ARRAY)));
+  }
+
+  private boolean checkFragmentReference(PsiElement context, ProblemsHolder holder, boolean isOnTheFly, PsiDocFragmentRef fragmentRef) {
+    if (!REPORT_INACCESSIBLE) return false;
+
+    var fragmentName = fragmentRef.getFragmentName();
+    if (fragmentName == null) return false;
+    var fragmentData = JavaDocFragmentAnchorCacheKt.resolveJavaDocFragment(fragmentRef.getProject(), fragmentName);
+    if (fragmentData != null) return false;
+
+    holder.registerProblem(holder.getManager().createProblemDescriptor(
+      fragmentName,
+      JavaBundle.message("inspection.javadoc.problem.cannot.resolve.fragment", fragmentName.getText()),
+      isOnTheFly,
+      null,
+      ProblemHighlightType.LIKE_UNKNOWN_SYMBOL));
+    return true;
   }
 
   private @InspectionMessage String getResolveErrorMessage(ResolveResult[] resolveResults, PsiElement context, CharSequence referenceText) {

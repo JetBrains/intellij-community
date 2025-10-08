@@ -198,7 +198,7 @@ public final class AnonymousCanBeLambdaInspection extends AbstractBaseJavaLocalI
                                                boolean acceptParameterizedFunctionTypes,
                                                boolean reportNotAnnotatedInterfaces,
                                                @NotNull Set<String> ignoredRuntimeAnnotations) {
-    if (aClass.getBaseClassType().getAnnotations().length > 0) return false;
+    if (aClass.getBaseClassType().hasAnnotations()) return false;
     PsiElement parent = aClass.getParent();
     final PsiElement lambdaContext = parent != null ? PsiUtil.skipParenthesizedExprUp(parent.getParent()) : null;
     if (lambdaContext == null || !LambdaUtil.isValidLambdaContext(lambdaContext) && !(lambdaContext instanceof PsiReferenceExpression)) return false;

@@ -1,19 +1,15 @@
 // Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.debugger.ui.impl.watch;
 
-import com.intellij.Patches;
 import com.intellij.debugger.DebuggerContext;
 import com.intellij.debugger.JavaDebuggerBundle;
 import com.intellij.debugger.engine.DebugProcessImpl;
 import com.intellij.debugger.engine.DebuggerManagerThreadImpl;
 import com.intellij.debugger.engine.JavaValue;
-import com.intellij.debugger.engine.SuspendContextImpl;
 import com.intellij.debugger.engine.evaluation.CodeFragmentFactoryContextWrapper;
 import com.intellij.debugger.engine.evaluation.EvaluateException;
 import com.intellij.debugger.engine.evaluation.EvaluationContextImpl;
-import com.intellij.debugger.engine.events.SuspendContextCommandImpl;
 import com.intellij.debugger.impl.*;
-import com.intellij.debugger.jdi.VirtualMachineProxyImpl;
 import com.intellij.debugger.memory.utils.NamesUtils;
 import com.intellij.debugger.settings.DebuggerSettings;
 import com.intellij.debugger.settings.NodeRendererSettings;
@@ -35,7 +31,6 @@ import com.intellij.psi.JavaPsiFacade;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiExpression;
 import com.intellij.ui.JBColor;
-import com.intellij.util.concurrency.Semaphore;
 import com.intellij.xdebugger.frame.XValueModifier;
 import com.intellij.xdebugger.frame.XValueNode;
 import com.intellij.xdebugger.frame.presentation.XRegularValuePresentation;
@@ -58,6 +53,7 @@ import java.util.concurrent.CancellationException;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.CompletionException;
 import java.util.concurrent.RejectedExecutionException;
+import java.util.function.Function;
 
 public abstract class ValueDescriptorImpl extends NodeDescriptorImpl implements ValueDescriptor {
   protected final Project myProject;
@@ -68,6 +64,7 @@ public abstract class ValueDescriptorImpl extends NodeDescriptorImpl implements 
   private final MutableSharedFlow<Unit> myRenderersChangedFlow = CoroutineUtilsKt.createMutableSharedFlow(1, 1);
 
   private Value myValue;
+  private Value myPreviousValue;
 
   private EvaluateException myValueException;
   protected EvaluationContextImpl myStoredEvaluationContext = null;
@@ -147,7 +144,8 @@ public abstract class ValueDescriptorImpl extends NodeDescriptorImpl implements 
 
   public boolean isEnumConstant() {
     assertValueReady();
-    return myValue instanceof ObjectReference && isEnumConstant(((ObjectReference)myValue));
+    return myValue instanceof ObjectReference objectReference
+           && isEnumConstant(objectReference);
   }
 
   public boolean isValueValid() {
@@ -168,36 +166,6 @@ public abstract class ValueDescriptorImpl extends NodeDescriptorImpl implements 
 
   @Override
   public Value getValue() {
-    // the following code makes sense only if we do not use ObjectReference.enableCollection() / disableCollection()
-    // to keep temporary objects
-    if (Patches.IBM_JDK_DISABLE_COLLECTION_BUG) {
-      final EvaluationContextImpl evalContext = myStoredEvaluationContext;
-      if (evalContext != null && !evalContext.getSuspendContext().isResumed() &&
-          myValue instanceof ObjectReference && VirtualMachineProxyImpl.isCollected((ObjectReference)myValue)) {
-
-        final Semaphore semaphore = new Semaphore();
-        semaphore.down();
-        evalContext.getManagerThread().invoke(new SuspendContextCommandImpl(evalContext.getSuspendContext()) {
-          @Override
-          public void contextAction(@NotNull SuspendContextImpl suspendContext) {
-            // re-setting the context will cause value recalculation
-            try {
-              setContext(myStoredEvaluationContext);
-            }
-            finally {
-              semaphore.up();
-            }
-          }
-
-          @Override
-          protected void commandCancelled() {
-            semaphore.up();
-          }
-        });
-        semaphore.waitFor();
-      }
-    }
-
     assertValueReady();
     return myValue;
   }
@@ -219,14 +187,14 @@ public abstract class ValueDescriptorImpl extends NodeDescriptorImpl implements 
 
       if (!myIsNew) {
         try {
-          if (myValue instanceof DoubleValue && Double.isNaN(((DoubleValue)myValue).doubleValue())) {
+          if (myPreviousValue instanceof DoubleValue doubleValue && Double.isNaN(doubleValue.doubleValue())) {
             myIsDirty = !(value instanceof DoubleValue);
           }
-          else if (myValue instanceof FloatValue && Float.isNaN(((FloatValue)myValue).floatValue())) {
+          else if (myPreviousValue instanceof FloatValue floatValue && Float.isNaN(floatValue.floatValue())) {
             myIsDirty = !(value instanceof FloatValue);
           }
           else {
-            myIsDirty = !Objects.equals(value, myValue);
+            myIsDirty = !Objects.equals(value, myPreviousValue);
           }
         }
         catch (ObjectCollectedException ignored) {
@@ -264,7 +232,8 @@ public abstract class ValueDescriptorImpl extends NodeDescriptorImpl implements 
 
   @ApiStatus.Internal
   public CompletableFuture<Void> getInitFuture() {
-    return myInitFuture;
+    // return a new derived future to avoid undesired cancellations
+    return myInitFuture.thenApply(Function.identity());
   }
 
   private static @Nullable ObjectReference getTargetExceptionWithStackTraceFilled(@Nullable EvaluationContextImpl evaluationContext,
@@ -293,12 +262,9 @@ public abstract class ValueDescriptorImpl extends NodeDescriptorImpl implements 
   public void setAncestor(NodeDescriptor oldDescriptor) {
     super.setAncestor(oldDescriptor);
     myIsNew = false;
-    if (!isValueReady()) {
-      ValueDescriptorImpl other = (ValueDescriptorImpl)oldDescriptor;
-      if (other.isValueReady()) {
-        myValue = other.getValue();
-        // Do not mark myInitFuture as completed until the correct value is computed in #setContext
-      }
+    ValueDescriptorImpl other = (ValueDescriptorImpl)oldDescriptor;
+    if (other.isValueReady()) {
+      myPreviousValue = other.getValue();
     }
   }
 
@@ -340,9 +306,10 @@ public abstract class ValueDescriptorImpl extends NodeDescriptorImpl implements 
   }
 
   private @NotNull String calcRepresentation(EvaluationContextImpl context,
-                                             DescriptorLabelListener labelListener,
+                                             DescriptorLabelListener originalListener,
                                              DebugProcessImpl debugProcess,
                                              NodeRenderer renderer) {
+    var labelListener = new DelayedDescriptorLabelListener(originalListener);
     DebuggerManagerThreadImpl.assertIsManagerThread();
 
     EvaluateException valueException = myValueException;
@@ -412,6 +379,8 @@ public abstract class ValueDescriptorImpl extends NodeDescriptorImpl implements 
       labelListener.labelChanged();
     });
 
+    labelListener.start();
+
     return ""; // we have overridden getLabel
   }
 
@@ -422,14 +391,15 @@ public abstract class ValueDescriptorImpl extends NodeDescriptorImpl implements 
   }
 
   public ValueDescriptorImpl getFullValueDescriptor() {
-    ValueDescriptorImpl descriptor = new ValueDescriptorImpl(myProject, myValue) {
+    Value value = getValue();
+    ValueDescriptorImpl descriptor = new ValueDescriptorImpl(myProject, value) {
       @Override
-      public Value calcValue(EvaluationContextImpl evaluationContext) throws EvaluateException {
-        return myValue;
+      public Value calcValue(EvaluationContextImpl evaluationContext) {
+        return value;
       }
 
       @Override
-      public PsiExpression getDescriptorEvaluation(DebuggerContext context) throws EvaluateException {
+      public PsiExpression getDescriptorEvaluation(DebuggerContext context) {
         return null;
       }
 
@@ -525,14 +495,15 @@ public abstract class ValueDescriptorImpl extends NodeDescriptorImpl implements 
 
   public CompletableFuture<NodeRenderer> getChildrenRenderer(DebugProcessImpl debugProcess) {
     if (OnDemandRenderer.isOnDemandForced(debugProcess)) {
-      return CompletableFuture.completedFuture(DebugProcessImpl.getDefaultRenderer(getValue()));
+      return myInitFuture.thenApply(__ -> DebugProcessImpl.getDefaultRenderer(getValue()));
     }
     return getRenderer(debugProcess);
   }
 
   public CompletableFuture<NodeRenderer> getRenderer(DebugProcessImpl debugProcess) {
     DebuggerManagerThreadImpl.assertIsManagerThread();
-    return DebuggerUtilsAsync.type(getValue())
+    return myInitFuture
+      .thenCompose(__ -> DebuggerUtilsAsync.type(getValue()))
       .thenCompose(type -> getRenderer(type, debugProcess));
   }
 
@@ -758,9 +729,7 @@ public abstract class ValueDescriptorImpl extends NodeDescriptorImpl implements 
 
   @ApiStatus.Internal
   public CompletableFuture<Boolean> canSetValueAsync() {
-    return myInitFuture.thenApply((init) -> {
-      return isLvalue();
-    });
+    return myInitFuture.thenApply(__ -> isLvalue());
   }
 
   public XValueModifier getModifier(JavaValue value) {
@@ -820,5 +789,30 @@ public abstract class ValueDescriptorImpl extends NodeDescriptorImpl implements 
 
   public EvaluationContextImpl getStoredEvaluationContext() {
     return myStoredEvaluationContext;
+  }
+
+  private static class DelayedDescriptorLabelListener implements DescriptorLabelListener {
+    private final DescriptorLabelListener myLabelListener;
+    private volatile boolean started = false;
+    private volatile boolean fired = false;
+
+    DelayedDescriptorLabelListener(DescriptorLabelListener labelListener) {
+      myLabelListener = labelListener;
+    }
+
+    @Override
+    public void labelChanged() {
+      fired = true;
+      if (started) {
+        myLabelListener.labelChanged();
+      }
+    }
+
+    public void start() {
+      started = true;
+      if (fired) {
+        myLabelListener.labelChanged();
+      }
+    }
   }
 }

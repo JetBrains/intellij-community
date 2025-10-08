@@ -7,7 +7,6 @@ import git4idea.config.GitConfigUtil
 import git4idea.inMemory.objects.GitObject
 import git4idea.inMemory.objects.Oid
 import git4idea.test.GitSingleRepoTest
-import git4idea.test.commit
 import git4idea.test.gitAsBytes
 import git4idea.test.tac
 import kotlin.jvm.java
@@ -22,7 +21,7 @@ class GitObjectRepositoryTest : GitSingleRepoTest() {
 
     val blob = repository.createBlob(SAMPLE_CONTENT.toByteArray())
 
-    val cachedBlob = repository.findObjectFromCache(blob.oid)
+    val cachedBlob = repository.findBlob(blob.oid)
     assertNotNull(cachedBlob)
     assertEquals(blob, cachedBlob)
   }

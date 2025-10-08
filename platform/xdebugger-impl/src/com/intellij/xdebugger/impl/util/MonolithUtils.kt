@@ -6,7 +6,9 @@ import com.intellij.frontend.FrontendType
 import com.intellij.xdebugger.breakpoints.XBreakpointType
 import com.intellij.xdebugger.frame.XValue
 import com.intellij.xdebugger.impl.XDebugSessionImpl
+import com.intellij.xdebugger.impl.breakpoints.XBreakpointBase
 import com.intellij.xdebugger.impl.breakpoints.XBreakpointUtil
+import com.intellij.xdebugger.impl.rpc.XBreakpointId
 import com.intellij.xdebugger.impl.rpc.XDebugSessionId
 import com.intellij.xdebugger.impl.rpc.XValueId
 import com.intellij.xdebugger.impl.rpc.models.BackendXValueModel
@@ -47,5 +49,16 @@ object MonolithUtils {
   fun findBreakpointTypeById(id: String): XBreakpointType<*, *>? {
     if (!isMonolith()) return null
     return XBreakpointUtil.findType(id)
+  }
+
+  /**
+   * Provides access to the backend [XBreakpointBase] by its ID.
+   * This method will return null in RemDev mode.
+   * Use this method only for components that should be available in monolith only.
+   */
+  @JvmStatic
+  fun findBreakpointById(breakpointId: XBreakpointId): XBreakpointBase<*, *, *>? {
+    if (!isMonolith()) return null
+    return breakpointId.findValue()
   }
 }

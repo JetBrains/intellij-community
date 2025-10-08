@@ -3,6 +3,9 @@ package com.intellij.ui.components
 
 import com.intellij.openapi.Disposable
 import com.intellij.openapi.ui.LoadingDecorator
+import com.intellij.ui.dsl.builder.DslComponentProperty
+import com.intellij.ui.dsl.builder.VerticalComponentGap
+import com.intellij.ui.dsl.gridLayout.UnscaledGaps
 import com.intellij.util.containers.ContainerUtil
 import org.jetbrains.annotations.Nls
 import java.awt.BorderLayout
@@ -36,6 +39,9 @@ open class JBLoadingPanel(manager: LayoutManager?,
     contentPanel.isOpaque = false
     contentPanel.isFocusable = false
     decorator = createLoadingDecorator.apply(contentPanel)
+
+    putClientProperty(DslComponentProperty.VERTICAL_COMPONENT_GAP, VerticalComponentGap.BOTH)
+    putClientProperty(DslComponentProperty.VISUAL_PADDINGS, UnscaledGaps.EMPTY)
 
     super.add(decorator.component, BorderLayout.CENTER)
   }

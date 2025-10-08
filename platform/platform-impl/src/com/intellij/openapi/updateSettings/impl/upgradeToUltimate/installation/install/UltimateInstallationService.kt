@@ -5,6 +5,7 @@ import com.intellij.icons.AllIcons
 import com.intellij.ide.IdeBundle
 import com.intellij.openapi.application.EDT
 import com.intellij.openapi.components.Service
+import com.intellij.openapi.components.service
 import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.extensions.PluginId
 import com.intellij.openapi.progress.ProgressManager
@@ -14,9 +15,10 @@ import com.intellij.openapi.ui.Messages
 import com.intellij.openapi.ui.messages.MessagesService
 import com.intellij.openapi.updateSettings.impl.BuildInfo
 import com.intellij.openapi.updateSettings.impl.ChannelStatus
-import com.intellij.openapi.updateSettings.impl.UpdateChecker
+import com.intellij.openapi.updateSettings.impl.UpdateCheckerFacade
 import com.intellij.openapi.updateSettings.impl.pluginsAdvertisement.FUSEventSource
 import com.intellij.openapi.updateSettings.impl.pluginsAdvertisement.SuggestedIde
+import com.intellij.openapi.updateSettings.impl.pluginsAdvertisement.OpenAnotherToolHandler
 import com.intellij.openapi.updateSettings.impl.pluginsAdvertisement.disableTryUltimate
 import com.intellij.openapi.updateSettings.impl.pluginsAdvertisement.enableTryUltimate
 import com.intellij.openapi.updateSettings.impl.upgradeToUltimate.installation.linux.LinuxInstaller
@@ -37,13 +39,14 @@ import java.net.URI
 import java.net.http.HttpClient
 import java.net.http.HttpRequest
 import java.net.http.HttpResponse
+import java.nio.file.Path
 import javax.swing.Icon
 
 private const val TOOLBOX_INSTALL_BASE_URL: String = "http://localhost:52829/install/IDEA-U"
 private const val TOOLBOX_ORIGIN: String = "https://toolbox.app"
 
 @Service(Service.Level.PROJECT)
-class UltimateInstallationService(
+internal class UltimateInstallationService(
   private val project: Project,
   private val coroutineScope: CoroutineScope,
 ) {
@@ -59,20 +62,12 @@ class UltimateInstallationService(
     }
   }
 
-  fun install(pluginId: PluginId? = null, suggestedIde: SuggestedIde, eventSource: FUSEventSource) {
-    if (!canBeAutoInstalled(suggestedIde)) {
-      eventSource.openDownloadPageAndLog(project = project,
-                                         url = suggestedIde.defaultDownloadUrl,
-                                         suggestedIde = suggestedIde,
-                                         pluginId = pluginId)
-      return
-    }
-
+  fun install(pluginId: PluginId? = null, suggestedIde: SuggestedIde) {
     coroutineScope.launch {
       try {
         installerLock.withLock {
           withBackgroundProgress(project, IdeBundle.message("plugins.advertiser.try.ultimate.upgrade", suggestedIde.name), true) {
-            val productData = UpdateChecker.loadProductData(null)
+            val productData = service<UpdateCheckerFacade>().loadProductData(null)
             val status = if (Registry.`is`("ide.try.ultimate.use.eap")) ChannelStatus.EAP else ChannelStatus.RELEASE
             val build = productData?.channels?.firstOrNull { it.status == status }?.builds?.first() ?: return@withBackgroundProgress
 
@@ -227,6 +222,23 @@ class UltimateInstallationService(
 
   private fun useFallback(pluginId: PluginId? = null, defaultDownloadUrl: String) {
     FUSEventSource.EDITOR.logTryUltimateFallback(project, defaultDownloadUrl, pluginId)
+  }
+}
+
+private class TryUltimateActionHandler : OpenAnotherToolHandler {
+  override fun isApplicable(project: Project?, suggestedIde: SuggestedIde, pluginId: PluginId?): Boolean {
+    return Registry.`is`("ide.try.ultimate.automatic.installation")
+           && project != null
+           && canBeAutoInstalled(suggestedIde)
+  }
+
+  override fun openTool(project: Project?, suggestedIde: SuggestedIde, pluginId: PluginId?, pathToOpen: Path?) {
+    val installationService = project!!.service<UltimateInstallationService>()
+    try {
+      installationService.install(pluginId, suggestedIde)
+    } catch (e: Exception) {
+      logger<TryUltimateActionHandler>().error("Failed to initiate IDE installation.", e)
+    }
   }
 }
 

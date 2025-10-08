@@ -31,7 +31,7 @@ public final class DesignerBackgroundEditorHighlighter implements BackgroundEdit
   }
 
   @Override
-  public HighlightingPass @NotNull [] createPassesForEditor() {
+  public @NotNull HighlightingPass @NotNull [] createPassesForEditor() {
     return myHighlightingPasses;
   }
 }

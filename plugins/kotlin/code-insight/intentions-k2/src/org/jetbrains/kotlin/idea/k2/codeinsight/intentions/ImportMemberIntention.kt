@@ -12,22 +12,20 @@ import org.jetbrains.kotlin.analysis.api.components.ShortenCommand
 import org.jetbrains.kotlin.analysis.api.components.ShortenStrategy
 import org.jetbrains.kotlin.analysis.api.components.collectPossibleReferenceShortenings
 import org.jetbrains.kotlin.analysis.api.components.importableFqName
-import org.jetbrains.kotlin.analysis.api.symbols.KaCallableSymbol
-import org.jetbrains.kotlin.analysis.api.symbols.KaClassSymbol
-import org.jetbrains.kotlin.analysis.api.symbols.KaConstructorSymbol
-import org.jetbrains.kotlin.analysis.api.symbols.KaSymbol
+import org.jetbrains.kotlin.analysis.api.symbols.*
 import org.jetbrains.kotlin.idea.base.analysis.api.utils.invokeShortening
 import org.jetbrains.kotlin.idea.base.resources.KotlinBundle
 import org.jetbrains.kotlin.idea.codeinsight.api.applicable.intentions.KotlinApplicableModCommandAction
-import org.jetbrains.kotlin.idea.references.mainReference
 import org.jetbrains.kotlin.name.FqName
-import org.jetbrains.kotlin.psi.KtNameReferenceExpression
-import org.jetbrains.kotlin.psi.psiUtil.getQualifiedElement
+import org.jetbrains.kotlin.psi.KtDotQualifiedExpression
+import org.jetbrains.kotlin.psi.KtElement
+import org.jetbrains.kotlin.psi.KtFile
+import org.jetbrains.kotlin.psi.KtUserType
 import org.jetbrains.kotlin.psi.psiUtil.isInImportDirective
 
 @OptIn(KaIdeApi::class)
 internal class ImportMemberIntention :
-    KotlinApplicableModCommandAction<KtNameReferenceExpression, ImportMemberIntention.Context>(KtNameReferenceExpression::class) {
+    KotlinApplicableModCommandAction<KtElement, ImportMemberIntention.Context>(KtElement::class) {
 
     data class Context(
         val fqName: FqName,
@@ -39,7 +37,7 @@ internal class ImportMemberIntention :
 
     override fun getPresentation(
         context: ActionContext,
-        element: KtNameReferenceExpression,
+        element: KtElement,
     ): Presentation? {
         val (fqName) = getElementContext(context, element)
             ?: return null
@@ -47,18 +45,20 @@ internal class ImportMemberIntention :
             .withPriority(PriorityAction.Priority.HIGH)
     }
 
-    override fun isApplicableByPsi(element: KtNameReferenceExpression): Boolean =
-        // Ignore simple name expressions or already imported names.
-        element.getQualifiedElement() != element && !element.isInImportDirective()
+    override fun isApplicableByPsi(element: KtElement): Boolean =
+        (element is KtDotQualifiedExpression && !element.isInImportDirective()) || element is KtUserType
 
-    override fun KaSession.prepareContext(element: KtNameReferenceExpression): Context? {
-        val symbol = element.mainReference.resolveToSymbol() ?: return null
-        return computeContext(element, symbol)
+    override fun KaSession.prepareContext(element: KtElement): Context? {
+        val symbol = element.actualReference?.resolveToSymbol() ?: return null
+        val file = element.containingKtFile
+        return computeContext(file, symbol)?.takeUnless {
+            symbol.isTopLevel && symbol.containingFile?.isInSamePackage(file) == true
+        }
     }
 
     override fun invoke(
         actionContext: ActionContext,
-        element: KtNameReferenceExpression,
+        element: KtElement,
         elementContext: Context,
         updater: ModPsiUpdater,
     ) {
@@ -68,7 +68,7 @@ internal class ImportMemberIntention :
 
 context(_: KaSession)
 @OptIn(KaIdeApi::class)
-private fun computeContext(psi: KtNameReferenceExpression, symbol: KaSymbol): ImportMemberIntention.Context? {
+private fun computeContext(file: KtFile, symbol: KaSymbol): ImportMemberIntention.Context? {
     return when (symbol) {
         is KaConstructorSymbol,
         is KaClassSymbol -> {
@@ -78,7 +78,7 @@ private fun computeContext(psi: KtNameReferenceExpression, symbol: KaSymbol): Im
                 (symbol as KaConstructorSymbol).containingClassId
             } ?: return null
             val shortenCommand = collectPossibleReferenceShortenings(
-                psi.containingKtFile,
+                file,
                 classShortenStrategy = {
                     if (it.classId == classId)
                         ShortenStrategy.SHORTEN_AND_IMPORT
@@ -99,7 +99,7 @@ private fun computeContext(psi: KtNameReferenceExpression, symbol: KaSymbol): Im
             if (callableId.callableName.isSpecial) return null
             if (symbol.importableFqName == null) return null
             val shortenCommand = collectPossibleReferenceShortenings(
-                psi.containingKtFile,
+                file,
                 classShortenStrategy = { ShortenStrategy.DO_NOT_SHORTEN },
                 callableShortenStrategy = {
                     if (it.callableId == callableId)
@@ -115,3 +115,6 @@ private fun computeContext(psi: KtNameReferenceExpression, symbol: KaSymbol): Im
         else -> return null
     }
 }
+
+private fun KaFileSymbol.isInSamePackage(file: KtFile): Boolean =
+    (psi as? KtFile)?.packageFqName == file.packageFqName

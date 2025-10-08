@@ -19,9 +19,11 @@ import org.jetbrains.jps.model.module.JpsModuleReference
  * all libraries these modules depend on with scope 'Compile' or 'Runtime', and all project libraries from dependencies (with scope 'Compile'
  * or 'Runtime') of plugin modules for plugins which are [org.jetbrains.intellij.build.ProductModulesLayout.bundledPluginModules] bundled
  * (or prepared to be [org.jetbrains.intellij.build.ProductModulesLayout.pluginModulesToPublish] published) with the product (except
- * project libraries which are explicitly included into layouts of all plugins depending on them by [BaseLayoutSpec.withProjectLibrary]).
+ * project libraries which are explicitly included in layouts of all plugins depending on them by [BaseLayoutSpec.withProjectLibrary]).
  */
-class PlatformLayout: BaseLayout() {
+class PlatformLayout : BaseLayout() {
+  internal var libAsProductModule: Set<String> = emptySet()
+
   private val projectLibraryToPolicy: MutableMap<String, ProjectLibraryPackagingPolicy> = HashMap()
 
   @get:TestOnly
@@ -33,7 +35,11 @@ class PlatformLayout: BaseLayout() {
     ALWAYS_PACK_TO_PLUGIN,
   }
 
-  fun isProjectLibraryExcluded(name: String) = projectLibraryToPolicy.get(name) == ProjectLibraryPackagingPolicy.EXCLUDE
+  fun hasLibrary(name: String, moduleName: String): Boolean {
+    return super.hasLibrary(name) || (!moduleName.startsWith(LIB_MODULE_PREFIX) && libAsProductModule.contains(name))
+  }
+
+  fun isProjectLibraryExcluded(name: String): Boolean = projectLibraryToPolicy.get(name) == ProjectLibraryPackagingPolicy.EXCLUDE
 
   internal fun alwaysPackToPlugin(names: List<String>) {
     for (name in names) {
@@ -41,9 +47,9 @@ class PlatformLayout: BaseLayout() {
     }
   }
 
-  fun isLibraryAlwaysPackedIntoPlugin(name: String) = projectLibraryToPolicy.get(name) == ProjectLibraryPackagingPolicy.ALWAYS_PACK_TO_PLUGIN
+  fun isLibraryAlwaysPackedIntoPlugin(name: String): Boolean = projectLibraryToPolicy.get(name) == ProjectLibraryPackagingPolicy.ALWAYS_PACK_TO_PLUGIN
 
-  override fun getRelativeJarPath(moduleName: String) = APP_BACKEND_JAR
+  override fun getRelativeJarPath(moduleName: String): String = APP_BACKEND_JAR
 
   fun withoutProjectLibrary(libraryName: String) {
     projectLibraryToPolicy.put(libraryName, ProjectLibraryPackagingPolicy.EXCLUDE)

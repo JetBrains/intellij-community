@@ -18,13 +18,13 @@ import com.intellij.openapi.roots.JavaProjectModelModificationService;
 import com.intellij.openapi.roots.ModuleOrderEntry;
 import com.intellij.openapi.roots.ModuleRootManager;
 import com.intellij.openapi.ui.Messages;
+import com.intellij.openapi.ui.popup.IPopupChooserBuilder;
 import com.intellij.openapi.ui.popup.JBPopup;
 import com.intellij.openapi.ui.popup.JBPopupFactory;
 import com.intellij.openapi.util.Couple;
 import com.intellij.openapi.util.text.HtmlChunk;
 import com.intellij.psi.*;
 import com.intellij.psi.impl.source.resolve.JavaResolveUtil;
-import com.intellij.psi.util.PointersKt;
 import com.intellij.util.SlowOperations;
 import com.intellij.util.concurrency.AppExecutorUtil;
 import com.intellij.util.containers.ContainerUtil;
@@ -121,10 +121,12 @@ class AddModuleDependencyFix extends OrderEntryFix {
       addDependencyOnModule(project, editor, ContainerUtil.getFirstItem(myModules));
     }
     else {
+      ModuleListCellRenderer renderer = new ModuleListCellRenderer();
+
       //noinspection DialogTitleCapitalization
-      JBPopup popup = JBPopupFactory.getInstance()
+      IPopupChooserBuilder<? extends Module> builder = JBPopupFactory.getInstance()
         .createPopupChooserBuilder(new ArrayList<>(myModules))
-        .setRenderer(new ModuleListCellRenderer())
+        .setRenderer(renderer)
         .setTitle(QuickFixBundle.message("orderEntry.fix.choose.module.to.add.dependency.on"))
         .setMovable(false)
         .setResizable(false)
@@ -133,8 +135,9 @@ class AddModuleDependencyFix extends OrderEntryFix {
           if (selectedValue != null) {
             addDependencyOnModule(project, editor, selectedValue);
           }
-        })
-        .createPopup();
+        });
+      builder = renderer.installSpeedSearch(builder);
+      JBPopup popup = builder.createPopup();
       if (editor != null) {
         popup.showInBestPositionFor(editor);
       }

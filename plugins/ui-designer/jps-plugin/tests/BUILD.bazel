@@ -16,7 +16,7 @@ jvm_library(
     "//jps/jps-builders:build-tests_test_lib",
     "//jps/model-api:model",
     "//plugins/ui-designer/jps-plugin:java-guiForms-jps",
-    "@lib//:asm",
+    "//libraries/asm",
     "//platform/forms_rt:java-guiForms-rt",
     "//jps/jps-builders:build",
     "//platform/testFramework",

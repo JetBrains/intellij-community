@@ -540,8 +540,16 @@ fun CodeInsightTestFixture.checkGTDUOutcome(expectedOutcome: GotoDeclarationOrUs
 
 fun CodeInsightTestFixture.checkGotoDeclaration(fromSignature: String?, declarationSignature: String, expectedFileName: String? = null) {
   checkGTDUOutcome(GotoDeclarationOrUsageHandler2.GTDUOutcome.GTD, fromSignature)
+  checkEditorNavigation("GotoDeclaration", fromSignature, declarationSignature, expectedFileName)
+}
+
+fun CodeInsightTestFixture.checkJumpToSource(fromSignature: String?, sourceSignature: String, expectedFileName: String? = null) {
+  checkEditorNavigation("EditSource", fromSignature, sourceSignature, expectedFileName)
+}
+
+private fun CodeInsightTestFixture.checkEditorNavigation(action: String, fromSignature: String?, targetSignature: String, expectedFileName: String?) {
   val actualSignature = fromSignature ?: editor.currentPositionSignature
-  performEditorAction("GotoDeclaration")
+  performEditorAction(action)
   val targetEditor = FileEditorManager.getInstance(project).selectedTextEditor?.topLevelEditor
   if (targetEditor == null) throw NullPointerException(actualSignature)
   val targetFile = PsiDocumentManager.getInstance(project).getPsiFile(targetEditor.document)!!
@@ -551,12 +559,12 @@ fun CodeInsightTestFixture.checkGotoDeclaration(fromSignature: String?, declarat
   else {
     assertEquals(actualSignature, targetEditor, editor.topLevelEditor)
   }
-  if (!declarationSignature.contains("<caret>") || targetFile.findOffsetBySignature(
-      declarationSignature) != targetEditor.caretModel.offset) {
+  if (!targetSignature.contains("<caret>") || targetFile.findOffsetBySignature(
+      targetSignature) != targetEditor.caretModel.offset) {
     assertEquals("For go to from: $actualSignature",
-                 declarationSignature + if (!declarationSignature.contains("<caret>")) ""
+                 targetSignature + if (!targetSignature.contains("<caret>")) ""
                  else (" [" + InjectedLanguageManager.getInstance(project).getTopLevelFile(file)
-                   .findOffsetBySignature(declarationSignature) + "]"),
+                   .findOffsetBySignature(targetSignature) + "]"),
                  targetEditor.currentPositionSignature + "[${targetEditor.caretModel.offset}]")
   }
 }

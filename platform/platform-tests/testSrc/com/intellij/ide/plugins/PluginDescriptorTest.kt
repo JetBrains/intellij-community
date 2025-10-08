@@ -435,6 +435,56 @@ class PluginDescriptorTest {
     assertThat(barModule.contentModules).hasSize(0)
   }
 
+  @Test
+  fun `namespace and visibility of content modules`() {
+    plugin("foo") {
+      namespace = "my.namespace"
+      content {
+        module("foo.internal") {
+          moduleVisibility = ModuleVisibility.INTERNAL
+        }
+        module("foo.private") {
+          moduleVisibility = ModuleVisibility.PRIVATE
+        }
+        module("foo.public") {
+          moduleVisibility = ModuleVisibility.PUBLIC
+        }
+      }
+    }.buildDir(pluginDirPath)
+    val foo = loadDescriptorInTest(pluginDirPath)
+    assertThat(foo).hasExactlyEnabledContentModules("foo.internal", "foo.private", "foo.public")
+    val contentModules = foo.contentModules.sortedBy { it.moduleId.id }
+    assertThat(contentModules[0].visibility).isEqualTo(ModuleVisibility.INTERNAL)
+    assertThat(contentModules[1].visibility).isEqualTo(ModuleVisibility.PRIVATE)
+    assertThat(contentModules[2].visibility).isEqualTo(ModuleVisibility.PUBLIC)
+    assertThat(foo.namespace).isEqualTo("my.namespace")
+  }
+
+  @Test
+  fun `multiple namespaces in content tags`() {
+    val (plugin, errors) = runAndReturnWithLoggedErrors { loadDescriptorFromTestDataDir("multipleNamespaces") as PluginMainDescriptor }
+    assertThat(errors.joinToString { it.message ?: "" }).contains("already set namespace", "my.namespace.1", "my.namespace.2")
+    assertThat(plugin).hasExactlyEnabledContentModules("module1", "module2")
+    assertThat(plugin.namespace).isEqualTo("my.namespace.1")
+  }
+
+  @Test
+  fun `unexpected visibility value for content module`() {
+    val (plugin, errors) = runAndReturnWithLoggedErrors { loadDescriptorFromTestDataDir("unexpectedVisibility") as PluginMainDescriptor }
+    assertThat(errors.joinToString { it.message ?: "" }).contains("Unexpected", "visibility", "foo")
+    assertThat(plugin).hasExactlyEnabledContentModules("my.module")
+    assertThat(plugin.contentModules[0].visibility).isEqualTo(ModuleVisibility.PRIVATE)
+  }
+
+  @Test
+  fun `visibility is not allowed for plugin descriptor`() {
+    plugin {
+      moduleVisibility = ModuleVisibility.PUBLIC
+    }.buildDir(pluginDirPath)
+    val (_, errors) = runAndReturnWithLoggedErrors { loadDescriptorInTest(pluginDirPath) }
+    assertThat(errors.joinToString { it.message ?: "" }).contains("visibility", "has no effect")
+  }
+
   // todo this is rather about plugin set loading, probably needs to be moved out
   @Test
   fun `only one instance of a plugin is loaded if it's duplicated`() {

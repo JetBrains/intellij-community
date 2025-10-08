@@ -20,9 +20,9 @@ import com.siyeh.ig.junit.JUnitCommonClassNames
 
 class TestCaseWithoutTestsInspection : JvmLocalInspection() {
   @JvmField
-  var ignoreSupers = true
+  var ignoreSupers: Boolean = true
 
-  override fun getOptionsPane() = OptPane.pane(OptPane.checkbox(
+  override fun getOptionsPane(): OptPane = OptPane.pane(OptPane.checkbox(
     "ignoreSupers",
     JvmAnalysisBundle.message("jvm.inspections.test.case.without.test.methods.option")
   ))

@@ -23,6 +23,7 @@ import com.intellij.openapi.util.*;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.util.*;
+import com.intellij.util.concurrency.ThreadingAssertions;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.text.CharArrayUtil;
 import com.intellij.util.text.ImmutableCharSequence;
@@ -39,7 +40,10 @@ import java.lang.ref.ReferenceQueue;
 import java.lang.ref.SoftReference;
 import java.lang.ref.WeakReference;
 import java.text.MessageFormat;
-import java.util.*;
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.Collections;
+import java.util.List;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.concurrent.atomic.AtomicReference;
 
@@ -555,6 +559,11 @@ public final class DocumentImpl extends UserDataHolderBase implements DocumentEx
 
   @Override
   public void setModificationStamp(long modificationStamp) {
+    if (myAssertThreading && ApplicationManager.getApplication().isWriteAccessAllowed()) {
+      // document modification stamp can be accessed on EDT without any lock
+      // hence, we forbid to mutate it from background thread
+      ThreadingAssertions.assertEventDispatchThread();
+    }
     myModificationStamp = modificationStamp;
     myFrozen = null;
   }
@@ -723,6 +732,9 @@ public final class DocumentImpl extends UserDataHolderBase implements DocumentEx
   private void assertWriteAccess() {
     if (myAssertThreading) {
       Application application = ApplicationManager.getApplication();
+      // Document serves as a model for the Editor
+      // hence, due to IJPL-184084, it must be updated on EDT
+      ThreadingAssertions.assertEventDispatchThread();
       if (application != null) {
         application.assertWriteAccessAllowed();
         VirtualFile file = FileDocumentManager.getInstance().getFile(this);
@@ -936,7 +948,7 @@ public final class DocumentImpl extends UserDataHolderBase implements DocumentEx
     if (!myAssertThreading) return;
     CommandProcessor commandProcessor = CommandProcessor.getInstance();
     if (!commandProcessor.isUndoTransparentActionInProgress() &&
-        commandProcessor.getCurrentCommand() == null) {
+        !commandProcessor.isCommandInProgress()) {
       throw new IncorrectOperationException("Must not change document outside command or undo-transparent action. See com.intellij.openapi.command.WriteCommandAction or com.intellij.openapi.command.CommandProcessor");
     }
   }

@@ -1,9 +1,9 @@
 ### auto-generated section `build intellij.platform.statistics.devkit` start
-load("@rules_jvm//:jvm.bzl", "jvm_library", "jvm_resources")
+load("@rules_jvm//:jvm.bzl", "jvm_library", "resourcegroup")
 
-jvm_resources(
+resourcegroup(
   name = "devkit_resources",
-  files = glob(["resources/**/*"]),
+  srcs = glob(["resources/**/*"]),
   strip_prefix = "resources"
 )
 
@@ -12,6 +12,7 @@ jvm_library(
   module_name = "intellij.platform.statistics.devkit",
   visibility = ["//visibility:public"],
   srcs = glob(["src/**/*.kt", "src/**/*.java", "src/**/*.form"], allow_empty = True),
+  resources = [":devkit_resources"],
   deps = [
     "@lib//:kotlin-stdlib",
     "//platform/analysis-api:analysis",
@@ -24,18 +25,17 @@ jvm_library(
     "//platform/lang-impl",
     "//platform/execution-impl",
     "//platform/projectModel-api:projectModel",
-    "@lib//:guava",
+    "//libraries/guava",
     "//platform/statistics",
     "//platform/util/progress",
     "//json/backend",
     "//platform/core-ui",
     "//platform/statistics/uploader",
     "@lib//:kotlinx-coroutines-core",
-    "@lib//:jackson",
-    "@lib//:jackson-databind",
+    "//libraries/jackson/jackson",
+    "//libraries/jackson/databind",
     "//platform/util/jdom",
-  ],
-  runtime_deps = [":devkit_resources"]
+  ]
 )
 
 jvm_library(
@@ -57,7 +57,7 @@ jvm_library(
     "//platform/projectModel-api:projectModel",
     "//platform/testFramework",
     "//platform/testFramework:testFramework_test_lib",
-    "@lib//:guava",
+    "//libraries/guava",
     "//platform/statistics",
     "//platform/statistics:statistics_test_lib",
     "//platform/util/progress",
@@ -65,11 +65,10 @@ jvm_library(
     "//platform/core-ui",
     "//platform/statistics/uploader",
     "@lib//:kotlinx-coroutines-core",
-    "@lib//:jackson",
-    "@lib//:jackson-databind",
+    "//libraries/jackson/jackson",
+    "//libraries/jackson/databind",
     "//platform/util/jdom",
-  ],
-  runtime_deps = [":devkit_resources"]
+  ]
 )
 ### auto-generated section `build intellij.platform.statistics.devkit` end
 

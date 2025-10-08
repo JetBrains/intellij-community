@@ -2,7 +2,6 @@
 package com.intellij.openapi.extensions
 
 interface ExtensionPointListener<T> {
-
   fun extensionAdded(extension: T, pluginDescriptor: PluginDescriptor) {}
 
   fun extensionRemoved(extension: T, pluginDescriptor: PluginDescriptor) {}

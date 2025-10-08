@@ -9,11 +9,15 @@ import com.intellij.psi.PsiElement
 import com.intellij.psi.PsiElementVisitor
 import com.intellij.psi.ResolveState
 import com.intellij.psi.scope.PsiScopeProcessor
+import com.jetbrains.python.PyPsiBundle
+import com.jetbrains.python.codeInsight.PyDataclassNames.Dataclasses
+import com.jetbrains.python.codeInsight.parseDataclassParameters
 import com.jetbrains.python.codeInsight.stdlib.PyNamedTupleTypeProvider
 import com.jetbrains.python.psi.LanguageLevel
 import com.jetbrains.python.psi.PyClass
 import com.jetbrains.python.psi.PyTargetExpression
 import com.jetbrains.python.psi.impl.PyPsiUtils
+import com.jetbrains.python.psi.types.PyClassType
 import com.jetbrains.python.psi.types.TypeEvalContext
 
 class PyNamedTupleInspection : PyInspection() {
@@ -26,7 +30,7 @@ class PyNamedTupleInspection : PyInspection() {
                            callback: (PsiElement, @InspectionMessage String, ProblemHighlightType) -> Unit,
                            fieldsFilter: (PyTargetExpression) -> Boolean = { true },
                            hasAssignedValue: (PyTargetExpression) -> Boolean = PyTargetExpression::hasAssignedValue) {
-      val fieldsProcessor = if (classFieldsFilter(cls)) processFields(cls, fieldsFilter, hasAssignedValue) else null
+      val fieldsProcessor = if (classFieldsFilter(cls)) processFields(cls, fieldsFilter, hasAssignedValue, context) else null
 
       if ((fieldsProcessor == null || fieldsProcessor.fieldsWithoutDefaultValue.isEmpty()) && !checkInheritedOrder) return
 
@@ -36,7 +40,7 @@ class PyNamedTupleInspection : PyInspection() {
           Ancestor.FILTERED
         }
         else {
-          val processor = processFields(it, fieldsFilter, hasAssignedValue)
+          val processor = processFields(it, fieldsFilter, hasAssignedValue, context)
           if (processor.fieldsWithDefaultValue.isNotEmpty()) {
             Ancestor.HAS_FIELD_WITH_DEFAULT_VALUE
           }
@@ -56,12 +60,8 @@ class PyNamedTupleInspection : PyInspection() {
             seenAncestorHavingFieldWithDefaultValue = ancestor
           }
           else if (ancestorKind == Ancestor.HAS_FIELD_WITHOUT_DEFAULT_VALUE && seenAncestorHavingFieldWithDefaultValue != null) {
-            callback(
-              cls.superClassExpressionList!!,
-              "Inherited non-default argument(s) defined in ${ancestor.name} follows " +
-              "inherited default argument defined in ${seenAncestorHavingFieldWithDefaultValue.name}",
-              ProblemHighlightType.GENERIC_ERROR
-            )
+            val msg = PyPsiBundle.message("INSP.named.tuple.default.value.order.inherited", ancestor.name, seenAncestorHavingFieldWithDefaultValue.name)
+            callback(cls.superClassExpressionList!!, msg, ProblemHighlightType.GENERIC_ERROR)
             break
           }
         }
@@ -80,26 +80,22 @@ class PyNamedTupleInspection : PyInspection() {
               .filter { it.second == Ancestor.HAS_FIELD_WITH_DEFAULT_VALUE }
               .joinToString { "'${it.first.name}'" }
 
-            callback(classNameElement,
-                     "Non-default argument(s) follows default argument(s) defined in $ancestorNames",
-                     ProblemHighlightType.GENERIC_ERROR)
+            val msg = PyPsiBundle.message("INSP.named.tuple.default.value.order.superclass", ancestorNames)
+            callback(fieldsWithoutDefaultNotOverriden.first(), msg, ProblemHighlightType.GENERIC_ERROR)
           }
         }
-        val lastFieldWithoutDefault = fieldsWithoutDefaultNotOverriden.last()
         fieldsProcessor.fieldsWithDefaultValue
-          .takeWhile { PyPsiUtils.isBefore(it, lastFieldWithoutDefault) }
-          .forEach {
-            callback(it,
-                     "Fields with a default value must come after any fields without a default.",
-                     ProblemHighlightType.GENERIC_ERROR)
-          }
+          .takeWhile { PyPsiUtils.isBefore(it, fieldsWithoutDefaultNotOverriden.last()) }
+          .forEach { callback(it, PyPsiBundle.message("INSP.named.tuple.default.value.order.local"), ProblemHighlightType.GENERIC_ERROR) }
       }
     }
 
     private fun processFields(cls: PyClass,
                               filter: (PyTargetExpression) -> Boolean,
-                              hasAssignedValue: (PyTargetExpression) -> Boolean): LocalFieldsProcessor {
-      val fieldsProcessor = LocalFieldsProcessor(filter, hasAssignedValue)
+                              hasAssignedValue: (PyTargetExpression) -> Boolean,
+                              context: TypeEvalContext): LocalFieldsProcessor {
+      val isDataclass = parseDataclassParameters(cls, context) != null
+      val fieldsProcessor = LocalFieldsProcessor(filter, hasAssignedValue, isDataclass, context)
       cls.processClassLevelDeclarations(fieldsProcessor)
       return fieldsProcessor
     }
@@ -127,13 +123,18 @@ class PyNamedTupleInspection : PyInspection() {
   }
 
   private class LocalFieldsProcessor(private val filter: (PyTargetExpression) -> Boolean,
-                                     private val hasAssignedValue: (PyTargetExpression) -> Boolean) : PsiScopeProcessor {
+                                     private val hasAssignedValue: (PyTargetExpression) -> Boolean,
+                                     private val isDataclass: Boolean,
+                                     private val context: TypeEvalContext) : PsiScopeProcessor {
     val fieldsWithDefaultValue = mutableListOf<PyTargetExpression>()
     val fieldsWithoutDefaultValue = mutableListOf<PyTargetExpression>()
+    var kwOnlyMarkerVisited: Boolean = false
 
     override fun execute(element: PsiElement, state: ResolveState): Boolean {
       if (element is PyTargetExpression && filter(element)) {
-        if (hasAssignedValue(element)) {
+        if (isDataclass && isKwOnlyMarker(element, context)) {
+          kwOnlyMarkerVisited = true
+        } else if (hasAssignedValue(element) || kwOnlyMarkerVisited) {
           fieldsWithDefaultValue.add(element)
         }
         else {
@@ -141,6 +142,10 @@ class PyNamedTupleInspection : PyInspection() {
         }
       }
       return true
+    }
+
+    private fun isKwOnlyMarker(field: PyTargetExpression, context: TypeEvalContext): Boolean {
+      return (context.getType(field) as? PyClassType)?.classQName == Dataclasses.DATACLASSES_KW_ONLY
     }
   }
 }

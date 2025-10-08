@@ -5,11 +5,6 @@ import com.intellij.execution.filters.navigate
 import com.intellij.openapi.application.EDT
 import com.intellij.openapi.editor.event.EditorMouseEvent
 import com.intellij.openapi.project.Project
-import com.intellij.terminal.session.TerminalHyperlinkId
-import com.intellij.terminal.session.TerminalHyperlinksChangedEvent
-import com.intellij.terminal.session.TerminalHyperlinksHeartbeatEvent
-import com.intellij.terminal.session.TerminalHyperlinksModelState
-import com.intellij.terminal.session.dto.toFilterResultInfo
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.Flow
@@ -23,6 +18,11 @@ import org.jetbrains.plugins.terminal.block.reworked.TerminalOutputModel
 import org.jetbrains.plugins.terminal.block.reworked.hyperlinks.TerminalHyperlinksModel
 import org.jetbrains.plugins.terminal.fus.ReworkedTerminalUsageCollector
 import org.jetbrains.plugins.terminal.hyperlinks.BackendHyperlinkInfo
+import org.jetbrains.plugins.terminal.session.TerminalHyperlinkId
+import org.jetbrains.plugins.terminal.session.TerminalHyperlinksChangedEvent
+import org.jetbrains.plugins.terminal.session.TerminalHyperlinksHeartbeatEvent
+import org.jetbrains.plugins.terminal.session.TerminalHyperlinksModelState
+import org.jetbrains.plugins.terminal.session.dto.toFilterResultInfo
 
 @ApiStatus.Internal
 class BackendTerminalHyperlinkFacade(

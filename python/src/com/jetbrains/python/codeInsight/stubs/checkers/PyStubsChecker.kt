@@ -7,6 +7,7 @@ import com.intellij.openapi.progress.runBlockingMaybeCancellable
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.projectRoots.Sdk
 import com.intellij.openapi.util.Key
+import com.jetbrains.python.NON_INTERACTIVE_ROOT_TRACE_CONTEXT
 import com.jetbrains.python.packaging.common.PythonPackageManagementListener
 import com.jetbrains.python.packaging.management.PythonPackageManager
 import com.jetbrains.python.packaging.utils.PyPackageCoroutine
@@ -19,7 +20,7 @@ internal abstract class PyStubsChecker(val project: Project) : Disposable.Defaul
   init {
     project.messageBus.connect(this).subscribe(PythonPackageManager.PACKAGE_MANAGEMENT_TOPIC, object : PythonPackageManagementListener {
       override fun packagesChanged(sdk: Sdk) {
-        PyPackageCoroutine.launch(project) {
+        PyPackageCoroutine.launch(project, NON_INTERACTIVE_ROOT_TRACE_CONTEXT) {
           checkSdk(sdk)
         }
       }
@@ -43,7 +44,7 @@ internal abstract class PyStubsChecker(val project: Project) : Disposable.Defaul
       }
     }
     else {
-      PyPackageCoroutine.launch(project) {
+      PyPackageCoroutine.launch(project, NON_INTERACTIVE_ROOT_TRACE_CONTEXT) {
         checkSdk(sdk)
       }
     }

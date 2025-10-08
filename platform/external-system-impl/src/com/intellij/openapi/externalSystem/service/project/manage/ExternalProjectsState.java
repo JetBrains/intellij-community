@@ -13,7 +13,7 @@ import java.util.Map;
  * @author Vladislav.Soroka
  */
 @ApiStatus.Internal
-public class ExternalProjectsState {
+public final class ExternalProjectsState {
   private final Map<String, State> myExternalSystemsState = FactoryMap.create(key -> new State());
 
   @Property(surroundWithTag = false)
@@ -30,7 +30,7 @@ public class ExternalProjectsState {
   public boolean storeExternally = false;
 
   @Tag("state")
-  public static class State {
+  public static final class State {
     private ExternalProjectsViewState projectsViewState = new ExternalProjectsViewState();
 
     private final Map<String, TaskActivationState> myExternalSystemsTaskActivation = FactoryMap.createMap(key-> new TaskActivationState(), LinkedHashMap::new);

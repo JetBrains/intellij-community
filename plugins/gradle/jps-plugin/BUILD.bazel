@@ -1,9 +1,9 @@
 ### auto-generated section `build intellij.gradle.jps` start
-load("@rules_jvm//:jvm.bzl", "jvm_library", "jvm_resources")
+load("@rules_jvm//:jvm.bzl", "jvm_library", "resourcegroup")
 
-jvm_resources(
+resourcegroup(
   name = "jps_resources",
-  files = glob(["resources/**/*"]),
+  srcs = glob(["resources/**/*"]),
   strip_prefix = "resources"
 )
 
@@ -12,6 +12,7 @@ jvm_library(
   module_name = "intellij.gradle.jps",
   visibility = ["//visibility:public"],
   srcs = glob(["src/**/*.kt", "src/**/*.java", "src/**/*.form"], allow_empty = True),
+  resources = [":jps_resources"],
   kotlinc_opts = "@community//:k11",
   deps = [
     "//platform/util",
@@ -21,13 +22,12 @@ jvm_library(
     "//jps/model-serialization",
     "@lib//:gradle",
     "@lib//:gradle-jps-ant",
-    "@lib//:gson",
+    "//libraries/gson",
     "//plugins/groovy/jps-plugin:jps",
-    "@lib//:fastutil-min",
+    "//libraries/fastutil",
     "//platform/util/jdom",
-    "@lib//:hash4j",
-  ],
-  runtime_deps = [":jps_resources"]
+    "//libraries/hash4j",
+  ]
 )
 
 jvm_library(
@@ -45,16 +45,15 @@ jvm_library(
     "//jps/model-serialization",
     "@lib//:gradle",
     "@lib//:gradle-jps-ant",
-    "@lib//:gson",
+    "//libraries/gson",
     "//plugins/groovy/jps-plugin:jps",
     "//platform/testFramework",
     "//platform/testFramework:testFramework_test_lib",
-    "@lib//:fastutil-min",
+    "//libraries/fastutil",
     "//platform/util/jdom",
     "//jps/jps-builders:build-tests_test_lib",
-    "@lib//:hash4j",
-  ],
-  runtime_deps = [":jps_resources"]
+    "//libraries/hash4j",
+  ]
 )
 ### auto-generated section `build intellij.gradle.jps` end
 

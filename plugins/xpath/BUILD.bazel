@@ -1,15 +1,15 @@
 ### auto-generated section `build intellij.xpath` start
-load("@rules_jvm//:jvm.bzl", "jvm_library", "jvm_resources")
+load("@rules_jvm//:jvm.bzl", "jvm_library", "resourcegroup")
 
-jvm_resources(
+resourcegroup(
   name = "xpath_resources",
-  files = glob(["xpath-lang/resources/**/*"]),
+  srcs = glob(["xpath-lang/resources/**/*"]),
   strip_prefix = "xpath-lang/resources"
 )
 
-jvm_resources(
+resourcegroup(
   name = "xpath_test_resources",
-  files = glob(["xpath-lang/testData/**/*"]),
+  srcs = glob(["xpath-lang/testData/**/*"]),
   strip_prefix = "xpath-lang/testData"
 )
 
@@ -18,6 +18,7 @@ jvm_library(
   module_name = "intellij.xpath",
   visibility = ["//visibility:public"],
   srcs = glob(["xpath-lang/src/**/*.kt", "xpath-lang/src/**/*.java", "xpath-lang/src/**/*.form", "xpath-view/src/**/*.kt", "xpath-view/src/**/*.java", "xpath-view/src/**/*.form", "xpath-lang/gen/**/*.kt", "xpath-lang/gen/**/*.java"], allow_empty = True),
+  resources = [":xpath_resources"],
   deps = [
     "//platform/analysis-api:analysis",
     "//platform/code-style-api:codeStyle",
@@ -43,22 +44,20 @@ jvm_library(
     "//plugins/xpath/xslt-rt:rt",
     "@lib//:jaxen",
     "//platform/util/nanoxml",
-    "@lib//:fastutil-min",
+    "//libraries/fastutil",
     "//platform/core-ui",
     "//platform/code-style-impl:codeStyle-impl",
     "//platform/platform-util-io:ide-util-io",
     "//platform/util/jdom",
   ],
-  runtime_deps = [
-    ":xpath_resources",
-    "//xml/dom-impl",
-  ]
+  runtime_deps = ["//xml/dom-impl"]
 )
 
 jvm_library(
   name = "xpath_test_lib",
   visibility = ["//visibility:public"],
   srcs = glob(["xpath-lang/test/**/*.kt", "xpath-lang/test/**/*.java", "xpath-lang/test/**/*.form"], allow_empty = True),
+  resources = [":xpath_test_resources"],
   associates = [":xpath"],
   deps = [
     "//platform/analysis-api:analysis",
@@ -89,17 +88,13 @@ jvm_library(
     "//platform/testFramework",
     "//platform/testFramework:testFramework_test_lib",
     "//platform/util/nanoxml",
-    "@lib//:fastutil-min",
+    "//libraries/fastutil",
     "//platform/core-ui",
     "//platform/code-style-impl:codeStyle-impl",
     "//platform/platform-util-io:ide-util-io",
     "//platform/util/jdom",
     "//tools/intellij.tools.ide.metrics.benchmark:ide-metrics-benchmark",
     "//tools/intellij.tools.ide.metrics.benchmark:ide-metrics-benchmark_test_lib",
-  ],
-  runtime_deps = [
-    ":xpath_resources",
-    ":xpath_test_resources",
   ]
 )
 ### auto-generated section `build intellij.xpath` end

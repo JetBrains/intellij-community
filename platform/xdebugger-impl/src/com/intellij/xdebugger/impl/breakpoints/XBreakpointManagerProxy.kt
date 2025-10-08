@@ -4,7 +4,6 @@ package com.intellij.xdebugger.impl.breakpoints
 import com.intellij.openapi.Disposable
 import com.intellij.openapi.application.WriteAction
 import com.intellij.openapi.diagnostic.logger
-import com.intellij.openapi.editor.Document
 import com.intellij.openapi.editor.Editor
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.util.ThrowableRunnable
@@ -21,6 +20,7 @@ interface XBreakpointManagerProxy {
   val breakpointsDialogSettings: XBreakpointsDialogState?
 
   val dependentBreakpointManager: XDependentBreakpointManagerProxy
+  val inlineBreakpointsCache: InlineBreakpointsCache
 
   fun setBreakpointsDialogSettings(settings: XBreakpointsDialogState)
 
@@ -31,6 +31,7 @@ interface XBreakpointManagerProxy {
   suspend fun awaitBreakpointCreation(breakpointId: XBreakpointId): XBreakpointProxy?
 
   fun getAllBreakpointItems(): List<BreakpointItem>
+  fun getAllBreakpoints(): List<XBreakpointProxy>
 
   fun getLineBreakpointManager(): XLineBreakpointManager
 
@@ -54,14 +55,14 @@ interface XBreakpointManagerProxy {
 
   suspend fun <T> withLightBreakpointIfPossible(editor: Editor?, info: XLineBreakpointInstallationInfo, block: suspend () -> T): T
 
-  suspend fun getBreakpointVariants(document: Document, onlyLine: Int?): Map<Int, List<InlineVariantWithMatchingBreakpointProxy>>
-
   class Monolith(val breakpointManager: XBreakpointManagerImpl) : XBreakpointManagerProxy {
     override val breakpointsDialogSettings: XBreakpointsDialogState?
       get() = breakpointManager.breakpointsDialogSettings
 
     override val dependentBreakpointManager: XDependentBreakpointManagerProxy
       get() = XDependentBreakpointManagerProxy.Monolith(breakpointManager.dependentBreakpointManager)
+
+    override val inlineBreakpointsCache: InlineBreakpointsCache get() = MonolithInlineBreakpointsCache(breakpointManager.project)
 
     override fun setBreakpointsDialogSettings(settings: XBreakpointsDialogState) {
       breakpointManager.breakpointsDialogSettings = settings
@@ -83,6 +84,10 @@ interface XBreakpointManagerProxy {
       return breakpointManager.allBreakpoints.map {
         XBreakpointItem(it, this)
       }
+    }
+
+    override fun getAllBreakpoints(): List<XBreakpointProxy> {
+      return breakpointManager.allBreakpoints.map { it.asProxy() }
     }
 
     override fun getLineBreakpointManager(): XLineBreakpointManager {
@@ -158,13 +163,6 @@ interface XBreakpointManagerProxy {
 
     override suspend fun <T> withLightBreakpointIfPossible(editor: Editor?, info: XLineBreakpointInstallationInfo, block: suspend () -> T): T {
       return block()
-    }
-
-    override suspend fun getBreakpointVariants(document: Document, onlyLine: Int?): Map<Int, List<InlineVariantWithMatchingBreakpointProxy>> {
-      return InlineBreakpointsVariantsManager.getInstance(breakpointManager.project).calculateBreakpointsVariants(document, onlyLine)
-        .mapValues { (_, variants) ->
-          variants.map { (breakpoint, variant) -> InlineVariantWithMatchingBreakpointProxy(breakpoint?.asProxy(), variant?.asProxy()) }
-        }
     }
   }
 }

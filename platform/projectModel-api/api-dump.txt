@@ -11,7 +11,6 @@ f:com.intellij.configurationStore.ComponentSerializationUtil
 - a:ignore():Z
 com.intellij.configurationStore.SaveSession
 - a:save(java.util.List,kotlin.coroutines.Continuation):java.lang.Object
-- a:saveBlocking():V
 com.intellij.configurationStore.SaveSessionProducer
 - a:createSaveSession():com.intellij.configurationStore.SaveSession
 - a:setState(java.lang.Object,java.lang.String,com.intellij.openapi.extensions.PluginId,java.lang.Object):V
@@ -747,6 +746,7 @@ c:com.intellij.openapi.roots.OrderRootType
 - p:<init>(java.lang.String):V
 - f:equals(java.lang.Object):Z
 - s:getAllPersistentTypes():com.intellij.openapi.roots.PersistentOrderRootType[]
+- s:getAllPersistentTypesList():java.util.List
 - s:getAllTypes():com.intellij.openapi.roots.OrderRootType[]
 - ps:getOrderRootType(java.lang.Class):java.lang.Object
 - s:getSortedRootTypes():java.util.List
@@ -778,7 +778,6 @@ com.intellij.openapi.roots.ProjectFileIndex
 - a:getModuleForFile(com.intellij.openapi.vfs.VirtualFile,Z):com.intellij.openapi.module.Module
 - a:getOrderEntriesForFile(com.intellij.openapi.vfs.VirtualFile):java.util.List
 - a:getPackageNameByDirectory(com.intellij.openapi.vfs.VirtualFile):java.lang.String
-- getSourceFolder(com.intellij.openapi.vfs.VirtualFile):com.intellij.openapi.roots.SourceFolder
 - a:getSourceRootForFile(com.intellij.openapi.vfs.VirtualFile):com.intellij.openapi.vfs.VirtualFile
 - a:getUnloadedModuleNameForFile(com.intellij.openapi.vfs.VirtualFile):java.lang.String
 - a:isExcluded(com.intellij.openapi.vfs.VirtualFile):Z

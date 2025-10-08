@@ -9,7 +9,6 @@ import com.intellij.platform.searchEverywhere.impl.SeRemoteApi
 import com.intellij.platform.searchEverywhere.providers.SeLog
 import com.intellij.platform.searchEverywhere.providers.SeLog.ITEM_EMIT
 import com.intellij.platform.searchEverywhere.providers.target.SeTypeVisibilityStatePresentation
-import fleet.kernel.DurableRef
 import kotlinx.coroutines.channels.BufferOverflow
 import kotlinx.coroutines.channels.Channel
 import kotlinx.coroutines.flow.Flow
@@ -21,7 +20,7 @@ import org.jetbrains.annotations.Nls
 @Internal
 class SeFrontendItemDataProvidersFacade(private val projectId: ProjectId,
                                         val idsWithDisplayNames: Map<SeProviderId, @Nls String>,
-                                        private val sessionRef: DurableRef<SeSessionEntity>,
+                                        private val session: SeSession,
                                         private val dataContextId: DataContextId,
                                         private val isAllTab: Boolean,
                                         val essentialProviderIds: Set<SeProviderId>) {
@@ -39,7 +38,7 @@ class SeFrontendItemDataProvidersFacade(private val projectId: ProjectId,
       channel.send(DEFAULT_CHUNK_SIZE)
       var pendingCount = DEFAULT_CHUNK_SIZE
 
-      SeRemoteApi.getInstance().getItems(projectId, sessionRef, ids, isAllTab, params, dataContextId, channel).collect { transferEvent ->
+      SeRemoteApi.getInstance().getItems(projectId, session, ids, isAllTab, params, dataContextId, channel).collect { transferEvent ->
         pendingCount--
         if (pendingCount == 0) {
           pendingCount += DEFAULT_CHUNK_SIZE
@@ -66,7 +65,7 @@ class SeFrontendItemDataProvidersFacade(private val projectId: ProjectId,
     modifiers: Int,
     searchText: String,
   ): Boolean {
-    return SeRemoteApi.getInstance().itemSelected(projectId, sessionRef, itemData, modifiers, searchText, isAllTab = isAllTab)
+    return SeRemoteApi.getInstance().itemSelected(projectId, session, itemData, modifiers, searchText, isAllTab = isAllTab)
   }
 
   suspend fun getUpdatedPresentation(item: SeItemData): SeItemPresentation? =
@@ -74,17 +73,27 @@ class SeFrontendItemDataProvidersFacade(private val projectId: ProjectId,
 
   suspend fun getSearchScopesInfos(): Map<SeProviderId, SearchScopesInfo> =
     SeRemoteApi.getInstance().getSearchScopesInfoForProviders(
-      projectId, providerIds = providerIds, sessionRef = sessionRef, dataContextId = dataContextId, isAllTab = isAllTab
+      projectId, providerIds = providerIds, session = session, dataContextId = dataContextId, isAllTab = isAllTab
     )
 
   suspend fun getTypeVisibilityStates(index: Int): List<SeTypeVisibilityStatePresentation> =
     SeRemoteApi.getInstance().getTypeVisibilityStatesForProviders(
-      index = index, projectId = projectId, providerIds = providerIds, sessionRef = sessionRef, dataContextId = dataContextId, isAllTab = isAllTab
+      index = index, projectId = projectId, providerIds = providerIds, session = session, dataContextId = dataContextId, isAllTab = isAllTab
     )
 
   suspend fun canBeShownInFindResults(): Boolean {
     return SeRemoteApi.getInstance().canBeShownInFindResults(
-      projectId, providerIds = providerIds, sessionRef = sessionRef, dataContextId = dataContextId, isAllTab = isAllTab
+      projectId, providerIds = providerIds, session = session, dataContextId = dataContextId, isAllTab = isAllTab
+    )
+  }
+
+  suspend fun performExtendedAction(itemData: SeItemData): Boolean {
+    return SeRemoteApi.getInstance().performExtendedAction(projectId, session, itemData, isAllTab)
+  }
+
+  suspend fun isPreviewEnabled(): Boolean {
+    return SeRemoteApi.getInstance().isPreviewEnabled(
+      projectId, providerIds = providerIds, session = session, dataContextId = dataContextId, isAllTab = isAllTab
     )
   }
 

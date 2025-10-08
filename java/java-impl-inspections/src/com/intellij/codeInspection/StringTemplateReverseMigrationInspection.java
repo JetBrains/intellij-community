@@ -87,7 +87,7 @@ public final class StringTemplateReverseMigrationInspection extends AbstractBase
         }
         if (string) stringSeen = true;
       }
-      String last = fragments.get(fragments.size() - 1).getValue();
+      String last = fragments.getLast().getValue();
       if (last == null) return;
       if (!last.isEmpty()) {
         concatenation.append("+\"").append(StringUtil.escapeStringCharacters(last)).append('"');

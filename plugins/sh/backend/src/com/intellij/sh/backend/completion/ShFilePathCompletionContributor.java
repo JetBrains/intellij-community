@@ -10,7 +10,7 @@ import com.intellij.openapi.editor.Caret;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.project.DumbAware;
-import com.intellij.openapi.util.io.FileUtil;
+import com.intellij.openapi.util.io.OSAgnosticPathUtil;
 import com.intellij.patterns.StandardPatterns;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
@@ -31,7 +31,6 @@ import java.util.List;
 
 import static com.intellij.patterns.PlatformPatterns.psiElement;
 import static com.intellij.sh.ShStringUtil.quote;
-import static com.intellij.sh.ShStringUtil.unquote;
 
 public class ShFilePathCompletionContributor extends CompletionContributor implements DumbAware {
   private static final InsertHandler<LookupElement> FILE_INSERT_HANDLER = (context, item) -> {
@@ -95,7 +94,7 @@ public class ShFilePathCompletionContributor extends CompletionContributor imple
 
             if (beforeSlash.startsWith("/") || isRoot || beforeSlash.startsWith("~")) {  // absolute paths
               String path = beforeSlash.equals("~") ? "~/" : beforeSlash;
-              String maybeFilePath = FileUtil.expandUserHome(unquote(path));
+              String maybeFilePath = OSAgnosticPathUtil.expandUserHome(ShStringUtil.unquote(path));
               File dir = isRoot ? new File("/") : new File(maybeFilePath);
               if (dir.exists() && dir.isDirectory()) {
                 File[] files = dir.listFiles();

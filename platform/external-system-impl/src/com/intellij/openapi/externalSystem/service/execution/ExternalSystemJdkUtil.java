@@ -51,8 +51,8 @@ public final class ExternalSystemJdkUtil {
 
   @Contract("_, null -> null")
   public static @Nullable Sdk resolveJdkName(@Nullable Sdk projectSdk, @Nullable String jdkName) throws ExternalSystemJdkException {
-    if (jdkName == null) return null;
     return switch (jdkName) {
+      case null -> null;
       case USE_INTERNAL_JAVA -> getInternalJdk();
       case USE_PROJECT_JDK -> {
         if (projectSdk == null) {
@@ -269,6 +269,14 @@ public final class ExternalSystemJdkUtil {
       }
       return createJdk(sdkHome);
     });
+  }
+
+  @ApiStatus.Internal
+  public static boolean matchJavaVersion(@NotNull JavaVersion versionRequirement, @Nullable String versionString) {
+    var version = JavaVersion.tryParse(versionString);
+    return version != null &&
+           version.compareTo(versionRequirement) >= 0 &&
+           version.feature == versionRequirement.feature;
   }
 
   @RequiresWriteLock

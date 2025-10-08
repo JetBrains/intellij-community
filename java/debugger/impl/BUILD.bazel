@@ -1,15 +1,15 @@
 ### auto-generated section `build intellij.java.debugger.impl` start
-load("@rules_jvm//:jvm.bzl", "jvm_library", "jvm_resources")
+load("@rules_jvm//:jvm.bzl", "jvm_library", "resourcegroup")
 
-jvm_resources(
+resourcegroup(
   name = "impl_resources",
-  files = glob(["resources/**/*"]),
+  srcs = glob(["resources/**/*"]),
   strip_prefix = "resources"
 )
 
-jvm_resources(
+resourcegroup(
   name = "impl_test_resources",
-  files = glob(["testResources/**/*"]),
+  srcs = glob(["testResources/**/*"]),
   strip_prefix = "testResources"
 )
 
@@ -18,6 +18,7 @@ jvm_library(
   module_name = "intellij.java.debugger.impl",
   visibility = ["//visibility:public"],
   srcs = glob(["src/**/*.kt", "src/**/*.java", "src/**/*.form"], allow_empty = True),
+  resources = [":impl_resources"],
   deps = [
     "//java/debugger/openapi:java-debugger",
     "//java/openapi:java",
@@ -52,17 +53,17 @@ jvm_library(
     "//platform/statistics",
     "//images",
     "//platform/core-ui",
-    "@lib//:fastutil-min",
+    "//libraries/fastutil",
     "//platform/platform-util-io-impl:ide-util-io-impl",
-    "@lib//:gson",
-    "@lib//:asm",
+    "//libraries/gson",
+    "//libraries/asm",
     "//platform/util/jdom",
     "//platform/build-scripts/downloader",
     "//platform/feedback",
     "//platform/util/progress",
     "@lib//:kotlinx-datetime-jvm",
-    "@lib//:kotlinx-serialization-core",
-    "@lib//:kotlinx-serialization-json",
+    "//libraries/kotlinx/serialization/core",
+    "//libraries/kotlinx/serialization/json",
     "//platform/util/coroutines",
     "//platform/threadDumpParser",
     "//java/debugger/shared",
@@ -73,14 +74,14 @@ jvm_library(
     "//platform/xdebugger-impl/rpc",
     "//fleet/rpc",
     "//platform/kernel/rpc",
-  ],
-  runtime_deps = [":impl_resources"]
+  ]
 )
 
 jvm_library(
   name = "impl_test_lib",
   visibility = ["//visibility:public"],
   srcs = glob(["test/**/*.kt", "test/**/*.java", "test/**/*.form"], allow_empty = True),
+  resources = [":impl_test_resources"],
   associates = [":impl"],
   deps = [
     "//java/debugger/openapi:java-debugger",
@@ -120,17 +121,17 @@ jvm_library(
     "//images",
     "//images:images_test_lib",
     "//platform/core-ui",
-    "@lib//:fastutil-min",
+    "//libraries/fastutil",
     "//platform/platform-util-io-impl:ide-util-io-impl",
-    "@lib//:gson",
-    "@lib//:asm",
+    "//libraries/gson",
+    "//libraries/asm",
     "//platform/util/jdom",
     "//platform/build-scripts/downloader",
     "//platform/feedback",
     "//platform/util/progress",
     "@lib//:kotlinx-datetime-jvm",
-    "@lib//:kotlinx-serialization-core",
-    "@lib//:kotlinx-serialization-json",
+    "//libraries/kotlinx/serialization/core",
+    "//libraries/kotlinx/serialization/json",
     "//platform/util/coroutines",
     "//platform/threadDumpParser",
     "//platform/threadDumpParser:threadDumpParser_test_lib",
@@ -143,10 +144,6 @@ jvm_library(
     "//fleet/rpc",
     "//platform/kernel/rpc",
     "//platform/testFramework/common",
-  ],
-  runtime_deps = [
-    ":impl_resources",
-    ":impl_test_resources",
   ]
 )
 ### auto-generated section `build intellij.java.debugger.impl` end

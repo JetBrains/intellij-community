@@ -9,9 +9,11 @@ import com.intellij.openapi.project.DumbAware;
 import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.registry.Registry;
 import com.intellij.xdebugger.XDebuggerBundle;
+import com.intellij.xdebugger.impl.XDebugSessionImpl;
 import com.intellij.xdebugger.impl.actions.EditBreakpointAction;
 import com.intellij.xdebugger.impl.frame.XDebugManagerProxy;
 import com.intellij.xdebugger.impl.frame.XDebugSessionProxy;
+import com.intellij.xdebugger.impl.util.MonolithUtils;
 import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -68,10 +70,12 @@ public final class BreakpointGutterIconRenderer extends CommonBreakpointGutterIc
   @Override
   public @Nullable ActionGroup getPopupMenuActions() {
     XDebugSessionProxy currentSessionProxy = XDebugManagerProxy.getInstance().getCurrentSessionProxy(myBreakpoint.getProject());
-    // TODO IJPL-185322
-    if (myBreakpoint instanceof XBreakpointProxy.Monolith monolithBreakpoint
-        && currentSessionProxy instanceof XDebugSessionProxy.Monolith sessionProxy) {
-      return new DefaultActionGroup(monolithBreakpoint.getBreakpoint().getAdditionalPopupMenuActions(sessionProxy.getSession()));
+    if (currentSessionProxy != null) {
+      XDebugSessionImpl debugSession = MonolithUtils.findSessionById(currentSessionProxy.getId());
+      XBreakpointBase<?, ?, ?> breakpoint = MonolithUtils.findBreakpointById(myBreakpoint.getId());
+      if (debugSession != null && breakpoint != null) {
+        return new DefaultActionGroup(breakpoint.getAdditionalPopupMenuActions(debugSession));
+      }
     }
     return super.getPopupMenuActions();
   }

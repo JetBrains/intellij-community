@@ -1,4 +1,4 @@
-<idea-plugin>
+<idea-plugin visibility="public">
   <dependencies>
     <module name="intellij.python.syntax.core"/>
   </dependencies>
@@ -7,7 +7,6 @@
                     interface="com.jetbrains.python.psi.resolve.PyReferenceResolveProvider"
                     dynamic="true"/>
     <extensionPoint qualifiedName="Pythonid.typeProvider" interface="com.jetbrains.python.psi.impl.PyTypeProvider" dynamic="true"/>
-    <extensionPoint qualifiedName="Pythonid.typeHintProvider" interface="com.jetbrains.python.codeInsight.typing.PyTypeHintProvider" dynamic="true"/>
     <extensionPoint qualifiedName="Pythonid.pySuperMethodsSearch" interface="com.intellij.util.QueryExecutor" dynamic="true"/>
     <extensionPoint qualifiedName="Pythonid.pyClassMembersProvider"
                     interface="com.jetbrains.python.psi.types.PyClassMembersProvider"
@@ -21,9 +20,6 @@
                     dynamic="true"/>
     <extensionPoint qualifiedName="Pythonid.pyModuleMembersProvider"
                     interface="com.jetbrains.python.psi.types.PyModuleMembersProvider"
-                    dynamic="true"/>
-    <extensionPoint qualifiedName="Pythonid.knownDecoratorProvider"
-                    interface="com.jetbrains.python.psi.PyKnownDecoratorProvider"
                     dynamic="true"/>
     <extensionPoint qualifiedName="Pythonid.canonicalPathProvider"
                     interface="com.jetbrains.python.psi.resolve.PyCanonicalPathProvider"

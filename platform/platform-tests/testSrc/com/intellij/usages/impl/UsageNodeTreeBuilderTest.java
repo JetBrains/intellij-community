@@ -276,7 +276,7 @@ public class UsageNodeTreeBuilderTest extends LightPlatformTestCase {
       PsiFile f2 = getPsiManager().findFile(VfsTestUtil.createFile(dir, "/y/X.java", "class X{}"));
       PsiElement class1 = ArrayUtil.getLastElement(f1.getChildren());
       PsiElement class2 = ArrayUtil.getLastElement(f2.getChildren());
-      FileGroupingRule fileGroupingRule = new FileGroupingRule(getProject());
+      FileGroupingRule fileGroupingRule = new FileGroupingRule(getProject(), false);
       UsageGroup group1 = fileGroupingRule.getParentGroupFor(new UsageInfo2UsageAdapter(new UsageInfo(class1)), UsageTarget.EMPTY_ARRAY);
       UsageGroup group2 = fileGroupingRule.getParentGroupFor(new UsageInfo2UsageAdapter(new UsageInfo(class2)), UsageTarget.EMPTY_ARRAY);
       int compareTo = group1.compareTo(group2);

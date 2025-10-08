@@ -473,10 +473,7 @@ abstract class KotlinDescriptorTestCase : DescriptorTestCase(),
         compilerFacility: DebuggerTestCompilerFacility
     ) {
         for (library in preferences[DebuggerPreferenceKeys.ATTACH_LIBRARY]) {
-            if (library.startsWith("maven("))
-                addMavenDependency(compilerFacility, library)
-            else
-                compilerFacility.compileExternalLibrary(library, librarySrcDirectory, libraryOutputDirectory)
+            compilerFacility.compileExternalLibrary(library, librarySrcDirectory, libraryOutputDirectory)
         }
 
         val libraries = preferences[DebuggerPreferenceKeys.ATTACH_LIBRARY_BY_LABEL]
@@ -606,10 +603,6 @@ abstract class KotlinDescriptorTestCase : DescriptorTestCase(),
         assertNotNull(process)
 
         return debuggerSession
-    }
-
-    @Deprecated("Use org.jetbrains.kotlin.idea.debugger.test.KotlinDescriptorTestCase.addDependenciesByLabels instead")
-    open fun addMavenDependency(compilerFacility: DebuggerTestCompilerFacility, library: String) {
     }
 
     /**

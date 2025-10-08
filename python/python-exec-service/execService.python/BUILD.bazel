@@ -1,9 +1,9 @@
 ### auto-generated section `build intellij.python.community.execService.python` start
-load("@rules_jvm//:jvm.bzl", "jvm_library", "jvm_resources")
+load("@rules_jvm//:jvm.bzl", "jvm_library", "resourcegroup")
 
-jvm_resources(
+resourcegroup(
   name = "execService.python_resources",
-  files = glob(["resources/**/*"]),
+  srcs = glob(["resources/**/*"]),
   strip_prefix = "resources"
 )
 
@@ -12,6 +12,7 @@ jvm_library(
   module_name = "intellij.python.community.execService.python",
   visibility = ["//visibility:public"],
   srcs = glob(["src/**/*.kt", "src/**/*.java", "src/**/*.form"], allow_empty = True),
+  resources = [":execService.python_resources"],
   deps = [
     "@lib//:kotlin-stdlib",
     "//python/python-exec-service:community-execService",
@@ -24,8 +25,7 @@ jvm_library(
     "//platform/util",
     "//platform/core-api:core",
     "//python/python-sdk:sdk",
-  ],
-  runtime_deps = [":execService.python_resources"]
+  ]
 )
 
 jvm_library(
@@ -55,8 +55,7 @@ jvm_library(
     "//platform/core-api:core",
     "//python/python-sdk:sdk",
     "//python/python-sdk:sdk_test_lib",
-  ],
-  runtime_deps = [":execService.python_resources"]
+  ]
 )
 ### auto-generated section `build intellij.python.community.execService.python` end
 

@@ -6,4 +6,5 @@ import kotlin.time.Duration
 
 data class Subscriber<T : Event>(val subscriberName: Any,
                                  val timeout: Duration,
+                                 val executeOnce: Boolean = false,
                                  val callback: suspend (event: T) -> Unit)

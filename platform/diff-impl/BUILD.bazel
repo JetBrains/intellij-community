@@ -1,9 +1,9 @@
 ### auto-generated section `build intellij.platform.diff.impl` start
-load("@rules_jvm//:jvm.bzl", "jvm_library", "jvm_resources")
+load("@rules_jvm//:jvm.bzl", "jvm_library", "resourcegroup")
 
-jvm_resources(
+resourcegroup(
   name = "diff-impl_resources",
-  files = glob(["resources/**/*"]),
+  srcs = glob(["resources/**/*"]),
   strip_prefix = "resources"
 )
 
@@ -12,6 +12,7 @@ jvm_library(
   module_name = "intellij.platform.diff.impl",
   visibility = ["//visibility:public"],
   srcs = glob(["src/**/*.kt", "src/**/*.java", "src/**/*.form"], allow_empty = True),
+  resources = [":diff-impl_resources"],
   deps = [
     "//platform/analysis-api:analysis",
     "//platform/code-style-api:codeStyle",
@@ -25,20 +26,19 @@ jvm_library(
     "//platform/analysis-impl",
     "//platform/editor-ui-ex:editor-ex",
     "//platform/lang-api:lang",
-    "@lib//:guava",
+    "//libraries/guava",
     "//platform/ide-core-impl",
     "//platform/projectModel-api:projectModel",
     "//platform/statistics",
     "//platform/boot",
     "//platform/core-ui",
-    "@lib//:fastutil-min",
+    "//libraries/fastutil",
     "//platform/platform-util-io-impl:ide-util-io-impl",
     "@lib//:kotlinx-coroutines-core",
     "//platform/util/coroutines",
     "//platform/util/diff",
     "//platform/util/jdom",
   ],
-  exports = ["//platform/diff-api:diff"],
-  runtime_deps = [":diff-impl_resources"]
+  exports = ["//platform/diff-api:diff"]
 )
 ### auto-generated section `build intellij.platform.diff.impl` end

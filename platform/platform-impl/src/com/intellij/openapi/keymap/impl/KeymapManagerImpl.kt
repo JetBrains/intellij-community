@@ -7,7 +7,7 @@ import com.intellij.configurationStore.LazySchemeProcessor
 import com.intellij.configurationStore.SchemeDataHolder
 import com.intellij.ide.IdeBundle
 import com.intellij.openapi.application.ApplicationManager
-import com.intellij.openapi.application.ConfigImportHelper
+import com.intellij.openapi.application.InitialConfigImportState
 import com.intellij.openapi.components.*
 import com.intellij.openapi.diagnostic.debug
 import com.intellij.openapi.diagnostic.logger
@@ -87,7 +87,7 @@ class KeymapManagerImpl : KeymapManagerEx(), PersistentStateComponent<Element> {
 
     isKeymapManagerInitialized = true
 
-    if (ConfigImportHelper.isNewUser()) {
+    if (InitialConfigImportState.isNewUser()) {
       CtrlYActionChooser.askAboutShortcut()
     }
 

@@ -6,6 +6,7 @@ import com.intellij.openapi.application.PathManager
 import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.util.registry.Registry
 import com.intellij.platform.backend.workspace.GlobalWorkspaceModelCache
+import com.intellij.platform.backend.workspace.InternalEnvironmentName
 import com.intellij.platform.util.coroutines.forEachConcurrent
 import com.intellij.platform.workspace.jps.serialization.impl.ApplicationLevelUrlRelativizer
 import com.intellij.platform.workspace.storage.MutableEntityStorage
@@ -26,9 +27,9 @@ internal class GlobalWorkspaceModelCacheImpl(coroutineScope: CoroutineScope) : G
   private val saveRequests = MutableSharedFlow<Unit>(replay=1, onBufferOverflow = BufferOverflow.DROP_OLDEST)
   private val cacheFiles: ConcurrentHashMap<String, Path> = ConcurrentHashMap()
 
-  override fun cacheFile(id: GlobalWorkspaceModelCache.InternalEnvironmentName): Path {
-    return cacheFiles[id.name]
-           ?: throw IllegalArgumentException("Global workspace storage with id $id must be registered with `registerCachePartition` before it can be loaded")
+  override fun cacheFile(environmentName: InternalEnvironmentName): Path {
+    return cacheFiles[environmentName.name]
+           ?: throw IllegalArgumentException("Global workspace storage with id $environmentName must be registered with `registerCachePartition` before it can be loaded")
   }
 
   private lateinit var virtualFileUrlManager: VirtualFileUrlManager
@@ -64,7 +65,7 @@ internal class GlobalWorkspaceModelCacheImpl(coroutineScope: CoroutineScope) : G
       return
     }
 
-    LOG.debug("Schedule cache update")
+    LOG.debug("Schedule global cache update")
     check(saveRequests.tryEmit(Unit))
   }
 
@@ -78,7 +79,7 @@ internal class GlobalWorkspaceModelCacheImpl(coroutineScope: CoroutineScope) : G
 
   private suspend fun doCacheSaving() {
     cacheFiles.entries.forEachConcurrent { (id, cacheFile) ->
-      val storage = GlobalWorkspaceModel.getInstanceByInternalName(InternalEnvironmentNameImpl(id)).currentSnapshot
+      val storage = GlobalWorkspaceModel.getInstanceByEnvironmentName(InternalEnvironmentNameImpl(id)).currentSnapshot
       if (!storage.isConsistent) {
         invalidateCaches()
       }
@@ -94,12 +95,12 @@ internal class GlobalWorkspaceModelCacheImpl(coroutineScope: CoroutineScope) : G
     }
   }
 
-  override fun loadCache(id: GlobalWorkspaceModelCache.InternalEnvironmentName): MutableEntityStorage? {
+  override fun loadCache(environmentName: InternalEnvironmentName): MutableEntityStorage? {
     if (ApplicationManager.getApplication().isUnitTestMode &&
         !System.getProperty("ide.tests.permit.global.workspace.model.serialization", "false").toBoolean()) {
       return null
     }
-    val cacheFile = cacheFile(id)
+    val cacheFile = cacheFile(environmentName)
     return cacheSerializer.loadCacheFromFile(cacheFile, invalidateCachesMarkerFile, invalidateCachesMarkerFile)
   }
 
@@ -107,15 +108,15 @@ internal class GlobalWorkspaceModelCacheImpl(coroutineScope: CoroutineScope) : G
     virtualFileUrlManager = vfuManager
   }
 
-  override fun registerCachePartition(id: GlobalWorkspaceModelCache.InternalEnvironmentName) {
-    val cacheSuffix = if (id.name == GlobalWorkspaceModelRegistry.GLOBAL_WORKSPACE_MODEL_LOCAL_CACHE_ID) {
+  override fun registerCachePartition(environmentName: InternalEnvironmentName) {
+    val cacheSuffix = if (environmentName.name == GlobalWorkspaceModelRegistry.GLOBAL_WORKSPACE_MODEL_LOCAL_CACHE_ID) {
       "$DATA_DIR_NAME/cache.data"
     }
     else {
-      "$DATA_DIR_NAME/${id.name}/cache.data"
+      "$DATA_DIR_NAME/${environmentName.name}/cache.data"
     }
     val path = PathManager.getSystemDir().resolve(cacheSuffix)
-    cacheFiles[id.name] = path
+    cacheFiles[environmentName.name] = path
   }
 
   companion object {

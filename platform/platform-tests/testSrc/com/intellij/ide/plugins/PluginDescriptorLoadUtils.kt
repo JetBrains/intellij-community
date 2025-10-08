@@ -6,7 +6,6 @@ import com.intellij.platform.ide.bootstrap.ZipFilePoolImpl
 import com.intellij.platform.plugins.parser.impl.PluginDescriptorFromXmlStreamConsumer
 import com.intellij.platform.plugins.parser.impl.PluginDescriptorReaderContext
 import com.intellij.platform.plugins.parser.impl.consume
-import com.intellij.platform.plugins.parser.impl.elements.OS
 import com.intellij.util.xml.dom.NoOpXmlInterner
 import java.nio.file.Path
 
@@ -21,8 +20,6 @@ fun readDescriptorFromBytesForTest(path: Path, isBundled: Boolean, input: ByteAr
   val rawBuilder = PluginDescriptorFromXmlStreamConsumer(object : PluginDescriptorReaderContext {
     override val interner = NoOpXmlInterner
     override val isMissingIncludeIgnored = false
-    override val elementOsFilter: (OS) -> Boolean
-      get() = { it.convert().isSuitableForOs() }
   }, pathResolver.toXIncludeLoader(dataLoader)).let {
     it.consume(input, path.toString())
     it.getBuilder()

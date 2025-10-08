@@ -1,9 +1,9 @@
 ### auto-generated section `build intellij.java.manifest` start
-load("@rules_jvm//:jvm.bzl", "jvm_library", "jvm_resources")
+load("@rules_jvm//:jvm.bzl", "jvm_library", "resourcegroup")
 
-jvm_resources(
+resourcegroup(
   name = "manifest_resources",
-  files = glob(["resources/**/*"]),
+  srcs = glob(["resources/**/*"]),
   strip_prefix = "resources"
 )
 
@@ -12,6 +12,7 @@ jvm_library(
   module_name = "intellij.java.manifest",
   visibility = ["//visibility:public"],
   srcs = glob(["src/**/*.kt", "src/**/*.java", "src/**/*.form"], allow_empty = True),
+  resources = [":manifest_resources"],
   deps = [
     "//platform/code-style-api:codeStyle",
     "//platform/editor-ui-api:editor-ui",
@@ -27,8 +28,7 @@ jvm_library(
     "//java/java-impl:impl",
     "//spellchecker",
     "//platform/core-ui",
-  ],
-  runtime_deps = [":manifest_resources"]
+  ]
 )
 
 jvm_library(
@@ -55,8 +55,7 @@ jvm_library(
     "//spellchecker",
     "//spellchecker:spellchecker_test_lib",
     "//platform/core-ui",
-  ],
-  runtime_deps = [":manifest_resources"]
+  ]
 )
 ### auto-generated section `build intellij.java.manifest` end
 

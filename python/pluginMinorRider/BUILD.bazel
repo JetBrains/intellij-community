@@ -1,9 +1,9 @@
 ### auto-generated section `build intellij.python.community.plugin.minorRider` start
-load("@rules_jvm//:jvm.bzl", "jvm_library", "jvm_resources")
+load("@rules_jvm//:jvm.bzl", "jvm_library", "resourcegroup")
 
-jvm_resources(
+resourcegroup(
   name = "community-plugin-minorRider_resources",
-  files = glob(["resources/**/*"]),
+  srcs = glob(["resources/**/*"]),
   strip_prefix = "resources"
 )
 
@@ -12,14 +12,12 @@ jvm_library(
   module_name = "intellij.python.community.plugin.minorRider",
   visibility = ["//visibility:public"],
   srcs = glob(["src/**/*.kt", "src/**/*.java", "src/**/*.form"], allow_empty = True),
+  resources = [":community-plugin-minorRider_resources"],
   deps = [
     "//platform/analysis-api:analysis",
     "//platform/core-api:core",
     "//platform/analysis-impl",
   ],
-  runtime_deps = [
-    ":community-plugin-minorRider_resources",
-    "//platform/backend",
-  ]
+  runtime_deps = ["//platform/backend"]
 )
 ### auto-generated section `build intellij.python.community.plugin.minorRider` end

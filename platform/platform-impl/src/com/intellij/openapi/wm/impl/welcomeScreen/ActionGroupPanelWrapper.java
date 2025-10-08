@@ -20,7 +20,6 @@ import com.intellij.ui.components.JBList;
 import com.intellij.ui.components.panels.NonOpaquePanel;
 import com.intellij.ui.scale.JBUIScale;
 import com.intellij.util.IJSwingUtilities;
-import com.intellij.util.MathUtil;
 import com.intellij.util.ui.JBUI;
 import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
@@ -72,7 +71,7 @@ public final class ActionGroupPanelWrapper {
     actionsListPanel.setBackground(getProjectsBackground());
     actionsListPanel.add(pane, BorderLayout.CENTER);
 
-    int width = (int)MathUtil.clamp(Math.round(list.getPreferredSize().getWidth()), JBUIScale.scale(100), JBUIScale.scale(200));
+    int width = Math.clamp(Math.round(list.getPreferredSize().getWidth()), JBUIScale.scale(100), JBUIScale.scale(200));
     pane.setPreferredSize(JBUI.size(width + 14, -1));
 
     boolean singleProjectGenerator = list.getModel().getSize() == 1;

@@ -29,6 +29,7 @@ import com.jetbrains.python.sdk.add.PySdkPathChoosingComboBox
 import com.jetbrains.python.sdk.add.addBaseInterpretersAsync
 import com.jetbrains.python.sdk.associatedModulePath
 import com.jetbrains.python.sdk.basePath
+import com.jetbrains.python.sdk.impl.PySdkBundle
 import com.jetbrains.python.sdk.installSdkIfNeeded
 import com.jetbrains.python.sdk.pipenv.*
 import com.jetbrains.python.statistics.InterpreterTarget

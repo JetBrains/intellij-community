@@ -14,6 +14,7 @@ interface AiDataCollectionExternalSettings {
 
     private const val AI_ASSISTANT_PLUGIN_ID = "com.intellij.ml.llm"
 
+    @JvmStatic
     fun findSettingsImplementedByAiAssistant(): AiDataCollectionExternalSettings? {
       return EP_NAME.findFirstSafe {
         val pluginInfo = getPluginInfo(it.javaClass)

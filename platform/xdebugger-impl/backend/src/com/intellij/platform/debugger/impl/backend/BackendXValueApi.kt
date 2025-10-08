@@ -6,6 +6,7 @@ import com.intellij.openapi.util.NlsContexts
 import com.intellij.platform.debugger.impl.rpc.*
 import com.intellij.platform.util.coroutines.childScope
 import com.intellij.ui.SimpleTextAttributes
+import com.intellij.util.awaitCancellationAndInvoke
 import com.intellij.xdebugger.Obsolescent
 import com.intellij.xdebugger.XDebuggerBundle
 import com.intellij.xdebugger.XSourcePosition
@@ -172,6 +173,7 @@ private class AddNextChildrenCallbackHandler(cs: CoroutineScope) {
   }
 }
 
+@Suppress("OPT_IN_USAGE")
 internal fun computeContainerChildren(
   parentCs: CoroutineScope,
   xValueContainer: XValueContainer,
@@ -180,12 +182,16 @@ internal fun computeContainerChildren(
   val rawEvents = Channel<RawComputeChildrenEvent>(capacity = Int.MAX_VALUE)
 
   return channelFlow {
+    parentCs.awaitCancellationAndInvoke {
+      close()
+    }
     val addNextChildrenCallbackHandler = AddNextChildrenCallbackHandler(this@channelFlow)
 
-    var isObsolete = false
     val xCompositeBridgeNode = object : XCompositeNode {
+      @Volatile
+      var obsolete = false
       override fun isObsolete(): Boolean {
-        return isObsolete
+        return obsolete
       }
 
       override fun addChildren(children: XValueChildrenList, last: Boolean) {
@@ -217,20 +223,18 @@ internal fun computeContainerChildren(
       }
     }
 
-    xValueContainer.computeChildren(xCompositeBridgeNode)
-
-    // mark xCompositeBridgeNode as obsolete when the channel collection is canceled
     launch {
-      try {
-        awaitCancellation()
-      }
-      finally {
-        isObsolete = true
+      for (event in rawEvents) {
+        send(event.convertToRpcEvent(parentCs, session))
       }
     }
 
-    for (event in rawEvents) {
-      send(event.convertToRpcEvent(parentCs, session))
+    try {
+      xValueContainer.computeChildren(xCompositeBridgeNode)
+      awaitClose()
+    }
+    finally {
+      xCompositeBridgeNode.obsolete = true
     }
   }
 }

@@ -1,9 +1,9 @@
 ### auto-generated section `build kotlin.migration` start
-load("@rules_jvm//:jvm.bzl", "jvm_library", "jvm_resources")
+load("@rules_jvm//:jvm.bzl", "jvm_library", "resourcegroup")
 
-jvm_resources(
+resourcegroup(
   name = "migration_resources",
-  files = glob(["resources/**/*"]),
+  srcs = glob(["resources/**/*"]),
   strip_prefix = "resources"
 )
 
@@ -12,6 +12,7 @@ jvm_library(
   module_name = "kotlin.migration",
   visibility = ["//visibility:public"],
   srcs = glob(["src/**/*.kt", "src/**/*.java", "src/**/*.form"], allow_empty = True),
+  resources = [":migration_resources"],
   deps = [
     "@lib//:kotlin-stdlib",
     "@lib//:kotlinc-kotlin-compiler-common",
@@ -34,7 +35,6 @@ jvm_library(
     "//platform/external-system-api:externalSystem",
     "//platform/external-system-impl:externalSystem-impl",
     "//platform/statistics",
-  ],
-  runtime_deps = [":migration_resources"]
+  ]
 )
 ### auto-generated section `build kotlin.migration` end

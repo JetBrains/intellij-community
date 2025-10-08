@@ -5306,6 +5306,21 @@ public abstract class HighLevelQuickFixTestGenerated extends AbstractHighLevelQu
                 runTest("../../../idea/tests/testData/quickfix/createFromUsage/createVariable/parameter/fromDelegateConstructorCall.kt");
             }
 
+            @TestMetadata("fromUnqualifiedCallExpression.kt")
+            public void testFromUnqualifiedCallExpression() throws Exception {
+                runTest("../../../idea/tests/testData/quickfix/createFromUsage/createVariable/parameter/fromUnqualifiedCallExpression.kt");
+            }
+
+            @TestMetadata("fromUnqualifiedCallExpressionNoExpectType.kt")
+            public void testFromUnqualifiedCallExpressionNoExpectType() throws Exception {
+                runTest("../../../idea/tests/testData/quickfix/createFromUsage/createVariable/parameter/fromUnqualifiedCallExpressionNoExpectType.kt");
+            }
+
+            @TestMetadata("fromUnqualifiedCallExpressionWithUnknownParam.kt")
+            public void testFromUnqualifiedCallExpressionWithUnknownParam() throws Exception {
+                runTest("../../../idea/tests/testData/quickfix/createFromUsage/createVariable/parameter/fromUnqualifiedCallExpressionWithUnknownParam.kt");
+            }
+
             @TestMetadata("inAccessorInClass.kt")
             public void testInAccessorInClass() throws Exception {
                 runTest("../../../idea/tests/testData/quickfix/createFromUsage/createVariable/parameter/inAccessorInClass.kt");
@@ -9162,7 +9177,49 @@ public abstract class HighLevelQuickFixTestGenerated extends AbstractHighLevelQu
         }
     }
 
+    @RunWith(JUnit3RunnerWithInners.class)
+    @TestMetadata("../../../idea/tests/testData/quickfix/kdocMissingDocumentation")
+    public static class KdocMissingDocumentation extends AbstractHighLevelQuickFixTest {
+        @java.lang.Override
+        @org.jetbrains.annotations.NotNull
+        public final KotlinPluginMode getPluginMode() {
+            return KotlinPluginMode.K2;
+        }
 
+        private void runTest(String testDataFilePath) throws Exception {
+            KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
+        }
+
+        @TestMetadata("funWithKDoc.kt")
+        public void testFunWithKDoc() throws Exception {
+            runTest("../../../idea/tests/testData/quickfix/kdocMissingDocumentation/funWithKDoc.kt");
+        }
+
+        @TestMetadata("functionalParameter.kt")
+        public void testFunctionalParameter() throws Exception {
+            runTest("../../../idea/tests/testData/quickfix/kdocMissingDocumentation/functionalParameter.kt");
+        }
+
+        @TestMetadata("internalFun.kt")
+        public void testInternalFun() throws Exception {
+            runTest("../../../idea/tests/testData/quickfix/kdocMissingDocumentation/internalFun.kt");
+        }
+
+        @TestMetadata("privateClass.kt")
+        public void testPrivateClass() throws Exception {
+            runTest("../../../idea/tests/testData/quickfix/kdocMissingDocumentation/privateClass.kt");
+        }
+
+        @TestMetadata("publicClass.kt")
+        public void testPublicClass() throws Exception {
+            runTest("../../../idea/tests/testData/quickfix/kdocMissingDocumentation/publicClass.kt");
+        }
+
+        @TestMetadata("withIndentation.kt")
+        public void testWithIndentation() throws Exception {
+            runTest("../../../idea/tests/testData/quickfix/kdocMissingDocumentation/withIndentation.kt");
+        }
+    }
 
     @RunWith(JUnit3RunnerWithInners.class)
     @TestMetadata("../../../idea/tests/testData/quickfix/lateinit")
@@ -11056,6 +11113,65 @@ public abstract class HighLevelQuickFixTestGenerated extends AbstractHighLevelQu
     }
 
     @RunWith(JUnit3RunnerWithInners.class)
+    @TestMetadata("../../../idea/tests/testData/quickfix/receiverShadowedByContextParameter")
+    public static class ReceiverShadowedByContextParameter extends AbstractHighLevelQuickFixTest {
+        @java.lang.Override
+        @org.jetbrains.annotations.NotNull
+        public final KotlinPluginMode getPluginMode() {
+            return KotlinPluginMode.K2;
+        }
+
+        private void runTest(String testDataFilePath) throws Exception {
+            KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
+        }
+
+        @TestMetadata("anonymousType.kt")
+        public void testAnonymousType() throws Exception {
+            runTest("../../../idea/tests/testData/quickfix/receiverShadowedByContextParameter/anonymousType.kt");
+        }
+
+        @TestMetadata("memberExtensionAddContextOf.kt")
+        public void testMemberExtensionAddContextOf() throws Exception {
+            runTest("../../../idea/tests/testData/quickfix/receiverShadowedByContextParameter/memberExtensionAddContextOf.kt");
+        }
+
+        @TestMetadata("memberExtensionAddContextParameterName.kt")
+        public void testMemberExtensionAddContextParameterName() throws Exception {
+            runTest("../../../idea/tests/testData/quickfix/receiverShadowedByContextParameter/memberExtensionAddContextParameterName.kt");
+        }
+
+        @TestMetadata("memberExtensionAddThis.kt")
+        public void testMemberExtensionAddThis() throws Exception {
+            runTest("../../../idea/tests/testData/quickfix/receiverShadowedByContextParameter/memberExtensionAddThis.kt");
+        }
+
+        @TestMetadata("propertyAddThis.kt")
+        public void testPropertyAddThis() throws Exception {
+            runTest("../../../idea/tests/testData/quickfix/receiverShadowedByContextParameter/propertyAddThis.kt");
+        }
+
+        @TestMetadata("propertyWithoutOuterCall.kt")
+        public void testPropertyWithoutOuterCall() throws Exception {
+            runTest("../../../idea/tests/testData/quickfix/receiverShadowedByContextParameter/propertyWithoutOuterCall.kt");
+        }
+
+        @TestMetadata("simpleAddContextOf.kt")
+        public void testSimpleAddContextOf() throws Exception {
+            runTest("../../../idea/tests/testData/quickfix/receiverShadowedByContextParameter/simpleAddContextOf.kt");
+        }
+
+        @TestMetadata("simpleAddContextParameterName.kt")
+        public void testSimpleAddContextParameterName() throws Exception {
+            runTest("../../../idea/tests/testData/quickfix/receiverShadowedByContextParameter/simpleAddContextParameterName.kt");
+        }
+
+        @TestMetadata("simpleAddThis.kt")
+        public void testSimpleAddThis() throws Exception {
+            runTest("../../../idea/tests/testData/quickfix/receiverShadowedByContextParameter/simpleAddThis.kt");
+        }
+    }
+
+    @RunWith(JUnit3RunnerWithInners.class)
     @TestMetadata("../../../idea/tests/testData/quickfix/redundantConst")
     public static class RedundantConst extends AbstractHighLevelQuickFixTest {
         @java.lang.Override
@@ -12755,6 +12871,11 @@ public abstract class HighLevelQuickFixTestGenerated extends AbstractHighLevelQu
 
         private void runTest(String testDataFilePath) throws Exception {
             KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
+        }
+
+        @TestMetadata("constantConditionInSelectorExpression.kt")
+        public void testConstantConditionInSelectorExpression() throws Exception {
+            runTest("../../../idea/tests/testData/quickfix/simplifyExpression/constantConditionInSelectorExpression.kt");
         }
 
         @TestMetadata("constantFalse.kt")

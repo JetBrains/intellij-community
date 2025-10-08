@@ -19,6 +19,7 @@ package com.intellij.history.core.changes;
 import com.intellij.history.core.Content;
 import com.intellij.history.core.HistoryPathFilter;
 import com.intellij.util.io.DataInputOutputUtil;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 
 import java.io.DataInput;
@@ -53,7 +54,8 @@ public abstract class Change {
   /**
    * @deprecated Use {@link Change#affectsMatching(HistoryPathFilter)} instead.
    */
-  @Deprecated
+  @ApiStatus.Internal
+  @Deprecated(forRemoval = true)
   public abstract boolean affectsMatching(@NotNull Pattern pattern);
 
   public abstract boolean affectsMatching(@NotNull HistoryPathFilter historyPathFilter);

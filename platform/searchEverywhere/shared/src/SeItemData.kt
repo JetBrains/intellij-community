@@ -13,7 +13,7 @@ import org.jetbrains.annotations.ApiStatus
 @Serializable
 @ApiStatus.Experimental
 @ApiStatus.Internal
-class SeItemData(
+class SeItemData private constructor(
   val uuid: String,
   val providerId: SeProviderId,
   val weight: Int,
@@ -37,7 +37,7 @@ class SeItemData(
   @ApiStatus.Internal
   companion object {
     suspend fun createItemData(
-      sessionRef: DurableRef<SeSessionEntity>,
+      session: SeSession,
       uuid: String,
       item: SeItem,
       providerId: SeProviderId,
@@ -46,7 +46,7 @@ class SeItemData(
       additionalInfo: Map<String, String>,
       uuidToReplace: List<String>,
     ): SeItemData? {
-      val entityRef = SeItemEntity.createWith(sessionRef, item) ?: return null
+      val entityRef = SeItemEntity.createWith(session, item) ?: return null
       val additionalInfo = additionalInfo.toMutableMap()
 
       if (item is SeLegacyItem) {

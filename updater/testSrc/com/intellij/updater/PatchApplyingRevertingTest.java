@@ -263,6 +263,19 @@ abstract class PatchApplyingRevertingTest {
     assertAppliedAndReverted(dirs, preparationResult);
   }
 
+  @Test void applyingWithPresentOptionalCriticalFile() throws Exception {
+    var dirs = prepareDirectories(tempDir, dataDir, true);
+    Files.deleteIfExists(dirs.oldDir.resolve("bin/idea.bat"));
+    Files.writeString(dirs.newDir.resolve("bin/idea.bat"), "new content");
+    var files = List.of("bin/idea.bat");
+    var patchFile = createPatch(createPatchSpec(dirs.oldDir, dirs.newDir).setOptionalFiles(files).setCriticalFiles(files));
+    Files.writeString(dirs.oldDir.resolve("bin/idea.bat"), "old content");
+    var preparationResult = PatchFileCreator.prepareAndValidate(patchFile.toFile(), dirs.oldDir.toFile(), testUI);
+
+    assertThat(preparationResult.validationResults).isEmpty();
+    assertAppliedAndReverted(dirs, preparationResult, (original, target) -> { original.remove("bin/idea.bat"); });
+  }
+
   @Test void revertingWithAbsentFileToDelete() throws Exception {
     var dirs = prepareDirectories(tempDir, dataDir, true);
     var patchFile = createPatch(createPatchSpec(dirs.oldDir, dirs.newDir));

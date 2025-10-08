@@ -123,12 +123,10 @@ public class IntentionPolicy {
    */
   public @Nullable String validateCommand(@NotNull ModCommand modCommand) {
     // TODO: debug commands that do nothing. This should not be generally the case
-    if (modCommand instanceof ModDisplayMessage message && message.kind() == ModDisplayMessage.MessageKind.ERROR) {
-      return "Error: " + message.messageText();
-    }
-    if (modCommand instanceof ModUpdateSystemOptions option) {
-      return "Updates " + option.options().stream().map(opt -> opt.bindId()).collect(Collectors.joining("; "));
-    }
-    return null;
+    return switch (modCommand) {
+      case ModDisplayMessage(var text, var kind) when kind == ModDisplayMessage.MessageKind.ERROR -> "Error: " + text;
+      case ModUpdateSystemOptions(var options) -> "Updates " + options.stream().map(opt -> opt.bindId()).collect(Collectors.joining("; "));
+      default -> null;
+    };
   }
 }

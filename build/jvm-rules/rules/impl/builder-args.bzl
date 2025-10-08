@@ -5,7 +5,7 @@ load("//:rules/impl/kotlinc-options.bzl", "KotlincOptions", "kotlinc_options_to_
 
 visibility("private")
 
-def init_builder_args(ctx, associates, transitiveInputs, plugins, compile_deps):
+def init_builder_args(ctx, srcs, resources, associates, transitiveInputs, plugins, compile_deps):
     """Initialize an arg object for a task that will be executed by the Kotlin Builder."""
     args = ctx.actions.args()
     args.set_param_file_format("multiline")
@@ -24,7 +24,13 @@ def init_builder_args(ctx, associates, transitiveInputs, plugins, compile_deps):
 
     kotlinc_options_to_args(kotlinc_options, args)
 
+    args.add_all("--srcs", srcs.all_srcs)
     args.add_all("--cp", compile_deps.compile_jars)
+
+    if resources:
+        args.add("--resources")
+        for r in resources:
+            args.add_joined([r.strip_prefix, r.add_prefix] + r.files, join_with = ":")
 
     if ctx.attr._reduced_classpath:
         args.add("--reduced-classpath-mode", "true")

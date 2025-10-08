@@ -91,6 +91,7 @@ val Project.isExternalStorageEnabled: Boolean
     if (manager.isEnabled) {
       return true
     }
+
     val testMode = ApplicationManager.getApplication()?.isUnitTestMode ?: false
     return testMode && enableExternalStorageByDefaultInTests
   }

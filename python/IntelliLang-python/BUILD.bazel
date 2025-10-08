@@ -1,9 +1,9 @@
 ### auto-generated section `build intellij.python.langInjection` start
-load("@rules_jvm//:jvm.bzl", "jvm_library", "jvm_resources")
+load("@rules_jvm//:jvm.bzl", "jvm_library", "resourcegroup")
 
-jvm_resources(
+resourcegroup(
   name = "langInjection_resources",
-  files = glob(["resources/**/*"]),
+  srcs = glob(["resources/**/*"]),
   strip_prefix = "resources"
 )
 
@@ -12,6 +12,7 @@ jvm_library(
   module_name = "intellij.python.langInjection",
   visibility = ["//visibility:public"],
   srcs = glob(["src/**/*.kt", "src/**/*.java", "src/**/*.form"], allow_empty = True),
+  resources = [":langInjection_resources"],
   deps = [
     "//platform/core-api:core",
     "//plugins/IntelliLang:langInjection",
@@ -19,7 +20,6 @@ jvm_library(
     "//python:python-community-impl",
     "//platform/lang-impl",
     "@lib//:stream_ex",
-  ],
-  runtime_deps = [":langInjection_resources"]
+  ]
 )
 ### auto-generated section `build intellij.python.langInjection` end

@@ -280,6 +280,64 @@ internal class SmoothRobot @JvmOverloads constructor(
     }
   }
 
+  /**
+   * Performs a strict click in the context of SmoothRobot by repeating the full
+   * mouse cycle until a `mouseClicked` event is observed.
+   *
+   * How it differs from `clickWithRetry`:
+   * - `clickWithRetry` treats any of `mousePressed`/`mouseReleased`/`mouseClicked` as success
+   *   and stops retrying once any of these events fires.
+   * - `strictClickWithRetry` is stricter: it only considers `mouseClicked` as success and
+   *   will keep retrying the full press→release sequence until that event is received
+   *   (or attempts are exhausted).
+   *
+   * Why this is needed: some components trigger their action only when the release happens
+   * within the same target. If we stop on `pressed` or `released` alone, the intended action may not
+   * happen.
+   *
+   * !!! Don't use strictClick if the component should disappear after mouse release.
+   */
+
+  fun strictClick(component: Component, point: Point? = null) {
+    strictClickWithRetry(component, point)
+  }
+
+  private fun strictClickWithRetry(component: Component, where: Point?) {
+    if (useInputEvents()) {
+      postClickEvent(component, MouseButton.LEFT_BUTTON, 1)
+      return
+    }
+    //we don't want to register mouse listener to component that doesn't have mouse listeners
+    //this will break event propagation to a parent component
+    if (component.mouseListeners.isEmpty()) {
+      moveMouseAndClick(component, where, MouseButton.LEFT_BUTTON, 1)
+      return
+    }
+
+    var attempt = 0
+    while (attempt < 3) {
+      val clickLatch = CountDownLatch(1)
+      val mouseListener = object : MouseAdapter() {
+        override fun mouseClicked(e: MouseEvent?) {
+          clickLatch.countDown()
+          logger.info("Mouse clicked on $component")
+        }
+      }
+
+      component.addMouseListener(mouseListener)
+      moveMouseAndClick(component, where, MouseButton.LEFT_BUTTON, 1)
+      val clicked = clickLatch.await(3, TimeUnit.SECONDS)
+      component.removeMouseListener(mouseListener)
+
+      if (clicked) {
+        break
+      }
+
+      logger.warn("Repeating click. Click was unsuccessful on $component")
+      attempt++
+    }
+  }
+
   private fun fastPressAndReleaseKey(keyCode: Int, vararg modifiers: Int) {
     val unifiedModifiers = unify(*modifiers)
     val updatedModifiers = Modifiers.updateModifierWithKeyCode(keyCode, unifiedModifiers)
@@ -315,6 +373,17 @@ internal class SmoothRobot @JvmOverloads constructor(
       ApplicationManager.getApplication().invokeAndWait({}, ModalityState.any())
       basicRobot.click(component, button, times)
     }
+  }
+
+  fun moveMouseAndPress(component: Component, where: Point?) {
+    if (where != null) {
+      moveMouse(component, where)
+    }
+    else {
+      moveMouse(component)
+    }
+    ApplicationManager.getApplication().invokeAndWait({}, ModalityState.any())
+    basicRobot.pressMouse(MouseButton.LEFT_BUTTON)
   }
 
   private fun moveMouseWithAttempts(c: Component, x: Int, y: Int, attempts: Int = 3) {

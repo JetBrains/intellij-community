@@ -7,7 +7,7 @@ import com.intellij.psi.stubs.StubInputStream
 import com.intellij.psi.stubs.StubOutputStream
 import com.intellij.psi.tree.IElementType
 
-open class XmlStubBasedAttributeStubSerializer(elementType: IElementType) : XmlStubBasedStubSerializer<XmlAttributeStubImpl>(elementType) {
+open class XmlStubBasedAttributeStubSerializer(elementTypeSupplier: () -> IElementType) : XmlStubBasedStubSerializer<XmlAttributeStubImpl>(elementTypeSupplier) {
   override fun serialize(stub: XmlAttributeStubImpl, dataStream: StubOutputStream) {
     stub.serialize(dataStream)
   }

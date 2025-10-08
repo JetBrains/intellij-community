@@ -1,4 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.execution.junit;
 
 import com.intellij.execution.ExecutionBundle;
@@ -71,7 +71,7 @@ public class InheritorChooser {
       }
 
       if (classes.size() == 1) {
-        runForClass(classes.get(0), psiMethod, context, performRunnable);
+        runForClass(classes.getFirst(), psiMethod, context, performRunnable);
         return true;
       }
       if (classes.isEmpty()) return false;
@@ -83,7 +83,7 @@ public class InheritorChooser {
           final List<PsiClass> psiClasses = new ArrayList<>(Arrays.asList(((PsiClassOwner)containingFile).getClasses()));
           psiClasses.retainAll(classes);
           if (psiClasses.size() == 1) {
-            runForClass(psiClasses.get(0), psiMethod, context, performRunnable);
+            runForClass(psiClasses.getFirst(), psiMethod, context, performRunnable);
             return true;
           }
         }
@@ -107,7 +107,7 @@ public class InheritorChooser {
       classes.sort(renderer.getComparator());
 
       //suggest to run all inherited tests
-      classes.add(0, null);
+      classes.addFirst(null);
       String locationName = psiMethod != null ? psiMethod.getName() : containingClass.getName();
       JBPopupFactory.getInstance()
         .createPopupChooserBuilder(classes)
@@ -137,7 +137,7 @@ public class InheritorChooser {
     return false;
   }
 
-  private static void collectClasses(PsiClass containingClass, List<? super PsiClass> classes, HashSet<? super PsiClass> visited) {
+  private static void collectClasses(PsiClass containingClass, List<? super PsiClass> classes, Set<? super PsiClass> visited) {
     if (!visited.add(containingClass)) return;
     Set<PsiClass> containers = new HashSet<>();
     final boolean isJUnit5 = ReadAction.compute(() -> JUnitUtil.isJUnit5(containingClass));

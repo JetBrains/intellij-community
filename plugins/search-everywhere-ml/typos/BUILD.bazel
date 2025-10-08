@@ -1,9 +1,9 @@
 ### auto-generated section `build intellij.searchEverywhereMl.typos` start
-load("@rules_jvm//:jvm.bzl", "jvm_library", "jvm_resources")
+load("@rules_jvm//:jvm.bzl", "jvm_library", "resourcegroup")
 
-jvm_resources(
+resourcegroup(
   name = "typos_resources",
-  files = glob(["resources/**/*"]),
+  srcs = glob(["resources/**/*"]),
   strip_prefix = "resources"
 )
 
@@ -12,6 +12,7 @@ jvm_library(
   module_name = "intellij.searchEverywhereMl.typos",
   visibility = ["//visibility:public"],
   srcs = glob(["src/**/*.kt", "src/**/*.java", "src/**/*.form"], allow_empty = True),
+  resources = [":typos_resources"],
   deps = [
     "@lib//:kotlin-stdlib",
     "@lib//:kotlinx-coroutines-core",
@@ -25,11 +26,10 @@ jvm_library(
     "//libraries/ai.grazie.spell.gec.engine.local",
     "//platform/statistics",
     "//plugins/search-everywhere-ml",
-    "@lib//:fastutil-min",
+    "//libraries/fastutil",
     "//platform/ml-impl",
     "@lib//:search_everywhere_ml-typos-ai-grazie-spell-gec-engine-local-jvm",
-  ],
-  runtime_deps = [":typos_resources"]
+  ]
 )
 
 jvm_library(
@@ -55,12 +55,11 @@ jvm_library(
     "//platform/statistics:statistics_test_lib",
     "//plugins/search-everywhere-ml",
     "//plugins/search-everywhere-ml:search-everywhere-ml_test_lib",
-    "@lib//:fastutil-min",
+    "//libraries/fastutil",
     "//platform/ml-impl",
     "//platform/ml-impl:ml-impl_test_lib",
     "@lib//:search_everywhere_ml-typos-ai-grazie-spell-gec-engine-local-jvm",
-  ],
-  runtime_deps = [":typos_resources"]
+  ]
 )
 ### auto-generated section `build intellij.searchEverywhereMl.typos` end
 

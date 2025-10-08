@@ -12,10 +12,10 @@ import com.intellij.openapi.application.impl.NonBlockingReadActionImpl
 import com.intellij.openapi.util.TextRange
 import com.intellij.openapi.util.registry.Registry
 import com.intellij.testFramework.PlatformTestUtil
+import com.intellij.testFramework.fixtures.JavaCodeInsightTestFixture
 import org.jetbrains.kotlin.idea.KotlinFileType
 import org.jetbrains.kotlin.idea.base.plugin.KotlinPluginMode
 import org.jetbrains.kotlin.idea.test.KotlinLightCodeInsightFixtureTestCase
-import java.util.concurrent.TimeUnit
 
 class K2CommandCompletionTest : KotlinLightCodeInsightFixtureTestCase() {
     override val pluginMode = KotlinPluginMode.K2
@@ -35,7 +35,7 @@ class K2CommandCompletionTest : KotlinLightCodeInsightFixtureTestCase() {
         """.trimIndent()
         )
         val elements = myFixture.completeBasic()
-        selectItem(elements.first { element -> element.lookupString.contains("Change type of", ignoreCase = true) })
+        selectItem(myFixture, elements.first { element -> element.lookupString.contains("Change type of", ignoreCase = true) })
         myFixture.checkResult(
             """
             fun main() {
@@ -207,7 +207,7 @@ class K2CommandCompletionTest : KotlinLightCodeInsightFixtureTestCase() {
         """.trimIndent()
         )
         val elements = myFixture.completeBasic()
-        selectItem(elements.first { element -> element.lookupString.equals("Reformat code", ignoreCase = true) })
+        selectItem(myFixture, elements.first { element -> element.lookupString.equals("Reformat code", ignoreCase = true) })
         myFixture.checkResult(
             """
             fun main() {
@@ -227,7 +227,7 @@ class K2CommandCompletionTest : KotlinLightCodeInsightFixtureTestCase() {
         """.trimIndent()
         )
         val elements = myFixture.completeBasic()
-        selectItem(elements.first { element -> element.lookupString.contains("Comment with line", ignoreCase = true) })
+        selectItem(myFixture, elements.first { element -> element.lookupString.contains("Comment with line", ignoreCase = true) })
         myFixture.checkResult(
             """
             //fun main() {
@@ -247,7 +247,7 @@ class K2CommandCompletionTest : KotlinLightCodeInsightFixtureTestCase() {
         """.trimIndent()
         )
         val elements = myFixture.completeBasic()
-        selectItem(elements.first { element -> element.lookupString.contains("Comment with block", ignoreCase = true) })
+        selectItem(myFixture, elements.first { element -> element.lookupString.contains("Comment with block", ignoreCase = true) })
         myFixture.checkResult(
             """
             /*
@@ -269,7 +269,7 @@ class K2CommandCompletionTest : KotlinLightCodeInsightFixtureTestCase() {
         """.trimIndent()
         )
         val elements = myFixture.completeBasic()
-        selectItem(elements.first { element -> element.lookupString.contains("Delete", ignoreCase = true) })
+        selectItem(myFixture, elements.first { element -> element.lookupString.contains("Delete", ignoreCase = true) })
         myFixture.checkResult(
             ""
         )
@@ -285,7 +285,7 @@ class K2CommandCompletionTest : KotlinLightCodeInsightFixtureTestCase() {
             """.trimIndent()
         )
         val elements = myFixture.completeBasic()
-        selectItem(elements.first { element -> element.lookupString.contains("Generate 'Secondary", ignoreCase = true) })
+        selectItem(myFixture, elements.first { element -> element.lookupString.contains("Generate 'Secondary", ignoreCase = true) })
         myFixture.checkResult(
             """
             class A{
@@ -316,7 +316,7 @@ class K2CommandCompletionTest : KotlinLightCodeInsightFixtureTestCase() {
             """.trimIndent()
         )
         val elements = myFixture.completeBasic()
-        selectItem(elements.first { element -> element.lookupString.contains("Copy ref", ignoreCase = true) })
+        selectItem(myFixture, elements.first { element -> element.lookupString.contains("Copy ref", ignoreCase = true) })
         myFixture.performEditorAction(IdeActions.ACTION_EDITOR_PASTE)
         myFixture.checkResult(
             """
@@ -324,99 +324,6 @@ class K2CommandCompletionTest : KotlinLightCodeInsightFixtureTestCase() {
             
             }
             """.trimIndent()
-        )
-    }
-
-    fun testGoToDeclaration() {
-        Registry.get("ide.completion.command.force.enabled").setValue(true, getTestRootDisposable())
-        myFixture.configureByText(
-            "x.kt", """
-            fun main() {
-                val a = "1"
-                print(a.<caret>)
-            }
-            """.trimIndent()
-        )
-        val elements = myFixture.completeBasic()
-        selectItem(elements.first { element -> element.lookupString.contains("Go to decl", ignoreCase = true) })
-        myFixture.performEditorAction(IdeActions.ACTION_EDITOR_PASTE)
-        myFixture.checkResult(
-            """
-            fun main() {
-                val <caret>a = "1"
-                print(a)
-            }
-            """.trimIndent()
-        )
-    }
-
-    fun testGoToSuperMethod() {
-        Registry.get("ide.completion.command.force.enabled").setValue(true, getTestRootDisposable())
-        myFixture.configureByText(
-            "x.kt", """
-            open class TestSuper {
-                open fun foo() {}
-            
-                class Child : TestSuper() {
-                    override fun foo.<caret>() {
-                        super.foo()
-                        println()
-                    }
-                }
-            }""".trimIndent()
-        )
-        val elements = myFixture.completeBasic()
-        selectItem(elements.first { element -> element.lookupString.contains("Go to super", ignoreCase = true) })
-        myFixture.performEditorAction(IdeActions.ACTION_EDITOR_PASTE)
-        myFixture.checkResult(
-            """
-            open class TestSuper {
-                open fun <caret>foo() {}
-            
-                class Child : TestSuper() {
-                    override fun foo() {
-                        super.foo()
-                        println()
-                    }
-                }
-            }""".trimIndent()
-        )
-    }
-
-    fun testCommandsOnlyGoToImplementation() {
-        Registry.get("ide.completion.command.force.enabled").setValue(true, getTestRootDisposable())
-        myFixture.configureByText(
-            "x.kt", """
-        interface A{
-        
-            fun a..<caret>()
-        
-            class B : A{
-        
-                override fun a() {
-        
-                }
-            }
-        }
-      """.trimIndent()
-        )
-        val elements = myFixture.completeBasic()
-        selectItem(elements.first { element -> element.lookupString.contains("Go to impl", ignoreCase = true) })
-        NonBlockingReadActionImpl.waitForAsyncTaskCompletion()
-        myFixture.checkResult(
-            """
-        interface A{
-        
-            fun a()
-        
-            class B : A{
-        
-                override fun <caret>a() {
-        
-                }
-            }
-        }
-      """.trimIndent()
         )
     }
 
@@ -443,7 +350,8 @@ class K2CommandCompletionTest : KotlinLightCodeInsightFixtureTestCase() {
             }""".trimIndent()
         )
         val elements = myFixture.completeBasic()
-        selectItem(elements.first { element -> element.lookupString.contains("Introduce parameter", ignoreCase = true) })
+        selectItem(myFixture, elements.first { element -> element.lookupString.contains("Introduce parameter", ignoreCase = true) })
+        NonBlockingReadActionImpl.waitForAsyncTaskCompletion()
         myFixture.performEditorAction(IdeActions.ACTION_EDITOR_PASTE)
         myFixture.checkResult(
             """
@@ -452,122 +360,6 @@ class K2CommandCompletionTest : KotlinLightCodeInsightFixtureTestCase() {
                 val a = string
             }""".trimIndent()
         )
-    }
-
-    fun testExtractLocalVariableLiteral() {
-        Registry.get("ide.completion.command.force.enabled").setValue(true, getTestRootDisposable())
-        myFixture.configureByText(
-            "x.kt", """
-            fun foo() {
-                val y = "1".<caret>
-            }
-            """.trimIndent()
-        )
-        val elements = myFixture.completeBasic()
-        selectItem(elements.first { element -> element.lookupString.contains("Introduce variable", ignoreCase = true) })
-        NonBlockingReadActionImpl.waitForAsyncTaskCompletion()
-        myFixture.checkResult(
-            """
-            fun foo() {
-                val string = "1"
-                val y = string
-            }""".trimIndent())
-    }
-
-    fun testExtractLocalVariableManyLiterals() {
-        Registry.get("ide.completion.command.force.enabled").setValue(true, getTestRootDisposable())
-        myFixture.configureByText(
-            "x.kt", """
-            fun foo() {
-                val y = "1" + "2".<caret>
-            }
-            """.trimIndent())
-        val elements = myFixture.completeBasic()
-        selectItem(elements.first { element -> element.lookupString.contains("Introduce variable", ignoreCase = true) })
-        NonBlockingReadActionImpl.waitForAsyncTaskCompletion()
-        myFixture.checkResult(
-            """
-            fun foo() {
-                val string = "1" + "2"
-                val y = string
-            }""".trimIndent())
-    }
-
-    fun testExtractLocalVariableManyLiteralsPrefix() {
-        Registry.get("ide.completion.command.force.enabled").setValue(true, getTestRootDisposable())
-        myFixture.configureByText(
-            "x.kt", """
-            fun foo() {
-                val y = "1".<caret> + "2"
-            }
-            """.trimIndent())
-        val elements = myFixture.completeBasic()
-        selectItem(elements.first { element -> element.lookupString.contains("Introduce variable", ignoreCase = true) })
-        NonBlockingReadActionImpl.waitForAsyncTaskCompletion()
-        myFixture.checkResult(
-            """
-            fun foo() {
-                val string = "1"
-                val y = string + "2"
-            }""".trimIndent())
-    }
-
-    fun testExtractLocalVariableInChainCall() {
-        Registry.get("ide.completion.command.force.enabled").setValue(true, getTestRootDisposable())
-        myFixture.configureByText(
-            "x.kt", """
-            class A {
-                fun f() : String = ""
-            }
-            
-            fun foo() {
-                A().f().<caret>
-            }
-         """.trimIndent()
-        )
-
-        val elements = myFixture.completeBasic()
-        selectItem(elements.first { element -> element.lookupString.contains("Introduce variable", ignoreCase = true) })
-        NonBlockingReadActionImpl.waitForAsyncTaskCompletion()
-
-        myFixture.checkResult(
-            """
-            class A {
-                fun f() : String = ""
-            }
-        
-            fun foo() {
-                val f = A().f()
-            }""".trimIndent())
-    }
-
-    fun testExtractLocalVariableInChainCallWithPrefix() {
-        Registry.get("ide.completion.command.force.enabled").setValue(true, getTestRootDisposable())
-        myFixture.configureByText(
-            "x.kt", """
-            class A {
-                fun f() : String = ""
-            }
-            
-            fun foo() {
-                A().<caret>.f()
-            }""".trimIndent()
-        )
-
-        val elements = myFixture.completeBasic()
-        selectItem(elements.first { element -> element.lookupString.contains("Introduce variable", ignoreCase = true) })
-        NonBlockingReadActionImpl.waitForAsyncTaskCompletion()
-
-        myFixture.checkResult(
-            """
-            class A {
-                fun f() : String = ""
-            }
-        
-            fun foo() {
-                val a = A()
-                a.f()
-            }""".trimIndent())
     }
 
     fun testExtractMethodInChainCall() {
@@ -604,6 +396,78 @@ class K2CommandCompletionTest : KotlinLightCodeInsightFixtureTestCase() {
         assertTrue(elements.any { element -> element.lookupString.contains("Extract function", ignoreCase = true) })
     }
 
+    fun testExtractMethodInControlFlowForAfterLBrace() {
+        Registry.get("ide.completion.command.force.enabled").setValue(true, getTestRootDisposable())
+        myFixture.configureByText(
+            "x.kt", """
+            fun foo() {
+                for (i in 1..10) {.<caret>
+                    println(i)
+                }
+            }
+        """.trimIndent())
+        val elements = myFixture.completeBasic()
+        assertTrue(elements.any { element -> element.lookupString.contains("Extract function", ignoreCase = true) })
+    }
+
+    fun testExtractMethodInControlFlowForAfterRBrace() {
+        Registry.get("ide.completion.command.force.enabled").setValue(true, getTestRootDisposable())
+        myFixture.configureByText(
+            "x.kt", """
+            fun foo() {
+                for (i in 1..10) {
+                }.<caret>
+            }
+            """
+        )
+        val elements = myFixture.completeBasic()
+        assertTrue(elements.any { element -> element.lookupString.contains("Extract function", ignoreCase = true) })
+    }
+
+    fun testExtractMethodInControlFlowIf() {
+        Registry.get("ide.completion.command.force.enabled").setValue(true, getTestRootDisposable())
+        myFixture.configureByText(
+            "x.kt", """
+            fun foo() {
+                if(true) {.<caret>
+                }
+            }
+            """
+        )
+        val elements = myFixture.completeBasic()
+        assertTrue(elements.any { element -> element.lookupString.contains("Extract function", ignoreCase = true) })
+    }
+
+    fun testExtractMethodInControlFlowIfElse() {
+        Registry.get("ide.completion.command.force.enabled").setValue(true, getTestRootDisposable())
+        myFixture.configureByText(
+            "x.kt", """
+            fun foo() {
+                if(true) {
+                } else {.<caret>
+                }
+            }
+            """
+        )
+        val elements = myFixture.completeBasic()
+        assertTrue(elements.any { element -> element.lookupString.contains("Extract function", ignoreCase = true) })
+    }
+
+    fun testExtractMethodInControlFlowIfElseIf() {
+        Registry.get("ide.completion.command.force.enabled").setValue(true, getTestRootDisposable())
+        myFixture.configureByText(
+            "x.kt", """
+            fun foo() {
+                if(true) {
+                } else if (true) {
+                } else if (true) {.<caret>
+                } else {
+                }
+            }
+            """
+        )
+    }
+
     fun testInlineMethod() {
         Registry.get("ide.completion.command.force.enabled").setValue(true, getTestRootDisposable())
         myFixture.configureByText(
@@ -619,7 +483,7 @@ class K2CommandCompletionTest : KotlinLightCodeInsightFixtureTestCase() {
             """.trimIndent()
         )
         val elements = myFixture.completeBasic()
-        selectItem(elements.first { element -> element.lookupString.contains("Inline", ignoreCase = true) })
+        selectItem(myFixture, elements.first { element -> element.lookupString.contains("Inline", ignoreCase = true) })
         myFixture.checkResult(
             """
             fun bar() {
@@ -643,7 +507,7 @@ class K2CommandCompletionTest : KotlinLightCodeInsightFixtureTestCase() {
             """.trimIndent()
         )
         val elements = myFixture.completeBasic()
-        selectItem(elements.first { element -> element.lookupString.contains("Inline", ignoreCase = true) })
+        selectItem(myFixture, elements.first { element -> element.lookupString.contains("Inline", ignoreCase = true) })
         myFixture.checkResult(
             """
             fun bar() {
@@ -667,7 +531,7 @@ class K2CommandCompletionTest : KotlinLightCodeInsightFixtureTestCase() {
             """.trimIndent()
         )
         val elements = myFixture.completeBasic()
-        selectItem(elements.first { element -> element.lookupString.contains("Inline", ignoreCase = true) })
+        selectItem(myFixture, elements.first { element -> element.lookupString.contains("Inline", ignoreCase = true) })
         myFixture.checkResult(
             """
             fun bar() {
@@ -688,7 +552,7 @@ class K2CommandCompletionTest : KotlinLightCodeInsightFixtureTestCase() {
             """.trimIndent()
         )
         val elements = myFixture.completeBasic()
-        selectItem(elements.first { element -> element.lookupString.contains("Inline", ignoreCase = true) })
+        selectItem(myFixture, elements.first { element -> element.lookupString.contains("Inline", ignoreCase = true) })
         myFixture.checkResult(
             """
             fun bar(): Int {
@@ -743,7 +607,7 @@ class K2CommandCompletionTest : KotlinLightCodeInsightFixtureTestCase() {
         myFixture.type(".aaaa")
         val elements = myFixture.completeBasic()
         TemplateManagerImpl.setTemplateTesting(myFixture.testRootDisposable)
-        selectItem(elements.first { element -> element.lookupString.contains("Create method", ignoreCase = true) })
+        selectItem(myFixture, elements.first { element -> element.lookupString.contains("Create method", ignoreCase = true) })
         NonBlockingReadActionImpl.waitForAsyncTaskCompletion()
 
         myFixture.checkResult(
@@ -814,6 +678,65 @@ class K2CommandCompletionTest : KotlinLightCodeInsightFixtureTestCase() {
         assertTrue(elements[0].`as`(CommandCompletionLookupElement::class.java) != null)
     }
 
+    fun testNoCompletionInsideStringBlock() {
+      Registry.get("ide.completion.command.force.enabled").setValue(true, getTestRootDisposable())
+      myFixture.configureByText(
+        "x.kt", """
+            class A {
+                fun test() {
+                    call(
+                        ""${'"'}some.a.<caret>
+                    ""${'"'}.trimMargin(), "1"
+                    )
+                }
+            }
+            
+            fun call(key: String, key2: String) {
+                println(key + key2)
+            }""".trimIndent()
+      )
+      val elements = myFixture.complete(CompletionType.BASIC, 0)
+      assertTrue(elements.none { it.`as`(CommandCompletionLookupElement::class.java) != null })
+    }
+
+    fun testNoCompletionInsideStringLiteral() {
+      Registry.get("ide.completion.command.force.enabled").setValue(true, getTestRootDisposable())
+      myFixture.configureByText(
+        "x.kt", """
+            class A {
+                fun test3() {
+                   call("some.a.<caret>", "1")
+                }
+            }
+            
+            fun call(key: String, key2: String) {
+                println(key + key2)
+            }""".trimIndent()
+      )
+      val elements = myFixture.complete(CompletionType.BASIC, 0)
+      assertTrue(elements.none { it.`as`(CommandCompletionLookupElement::class.java) != null })
+    }
+
+    fun testNoCompletionInsideStringInsideInterpolation() {
+      Registry.get("ide.completion.command.force.enabled").setValue(true, getTestRootDisposable())
+      myFixture.configureByText(
+        "x.kt", """
+            class A {
+                fun test2(a: String) {
+                    call(
+                        "some.a.${'$'}{a.<caret>}".trimMargin(), "1"
+                    )
+                }
+            }
+            
+            fun call(key: String, key2: String) {
+                println(key + key2)
+            }""".trimIndent()
+      )
+      val elements = myFixture.complete(CompletionType.BASIC, 0)
+      assertFalse(elements.none { it.`as`(CommandCompletionLookupElement::class.java) != null })
+    }
+
     fun testNotFirstCompletion() {
         Registry.get("ide.completion.command.force.enabled").setValue(true, getTestRootDisposable())
         myFixture.configureByText(
@@ -843,17 +766,18 @@ class K2CommandCompletionTest : KotlinLightCodeInsightFixtureTestCase() {
         val elements = myFixture.completeBasic()
         assertTrue(elements.any { element -> element.lookupString.contains("Optimize im", ignoreCase = true) })
     }
+}
 
-    private fun selectItem(item: LookupElement, completionChar: Char = 0.toChar()) {
-        val lookup: LookupImpl = myFixture.lookup as LookupImpl
-        lookup.setCurrentItem(item)
-        if (LookupEvent.isSpecialCompletionChar(completionChar)) {
-            lookup.finishLookup(completionChar)
-        } else {
-            myFixture.type(completionChar)
-        }
-        NonBlockingReadActionImpl.waitForAsyncTaskCompletion()
-        PlatformTestUtil.waitForAllDocumentsCommitted(10, TimeUnit.SECONDS)
+internal fun selectItem(fixture: JavaCodeInsightTestFixture,
+                        item: LookupElement,
+                        completionChar: Char = 0.toChar()) {
+    val lookup: LookupImpl = fixture.lookup as LookupImpl
+    lookup.setCurrentItem(item)
+    if (LookupEvent.isSpecialCompletionChar(completionChar)) {
+        lookup.finishLookup(completionChar)
+    } else {
+        fixture.type(completionChar)
     }
-
+    NonBlockingReadActionImpl.waitForAsyncTaskCompletion()
+    PlatformTestUtil.dispatchAllInvocationEventsInIdeEventQueue()
 }

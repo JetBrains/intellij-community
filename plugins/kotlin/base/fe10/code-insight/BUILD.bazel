@@ -1,6 +1,6 @@
 ### auto-generated section `build kotlin.base.fe10.code-insight` start
 load("//build:compiler-options.bzl", "create_kotlinc_options")
-load("@rules_jvm//:jvm.bzl", "jvm_library", "jvm_resources")
+load("@rules_jvm//:jvm.bzl", "jvm_library", "resourcegroup")
 
 create_kotlinc_options(
   name = "custom_code-insight",
@@ -12,9 +12,9 @@ create_kotlinc_options(
   ]
 )
 
-jvm_resources(
+resourcegroup(
   name = "code-insight_resources",
-  files = glob(["resources/**/*"]),
+  srcs = glob(["resources/**/*"]),
   strip_prefix = "resources"
 )
 
@@ -23,6 +23,7 @@ jvm_library(
   module_name = "kotlin.base.fe10.code-insight",
   visibility = ["//visibility:public"],
   srcs = glob(["src/**/*.kt", "src/**/*.java", "src/**/*.form"], allow_empty = True),
+  resources = [":code-insight_resources"],
   kotlinc_opts = ":custom_code-insight",
   deps = [
     "@lib//:kotlin-stdlib",
@@ -31,7 +32,7 @@ jvm_library(
     "@lib//:kotlinc-kotlin-compiler-ir",
     "@lib//:kotlinc-kotlin-jps-common",
     "@lib//:kotlinc-analysis-api",
-    "@lib//:guava",
+    "//libraries/guava",
     "//platform/code-style-api:codeStyle",
     "//platform/core-api:core",
     "//platform/execution-impl",
@@ -56,7 +57,6 @@ jvm_library(
     "//platform/core-ui",
     "//java/java-psi-api:psi",
     "//plugins/kotlin/code-insight/api",
-  ],
-  runtime_deps = [":code-insight_resources"]
+  ]
 )
 ### auto-generated section `build kotlin.base.fe10.code-insight` end

@@ -84,7 +84,7 @@ class ProjectExtensionsDataBuilderImpl : ModelBuilderService {
       for (configurationName in configurations.names) {
         val configuration = configurations.getByName(configurationName)
         val description = configuration.description
-        val visible = configuration.isVisible
+        val visible = if (GradleVersionUtil.isCurrentGradleOlderThan("9.1")) { configuration.isVisible } else { true }
         val declarationAlternatives = getDeclarationAlternatives(configuration)
         result.add(DefaultGradleConfiguration(configurationName, description, visible, scriptClasspathConfiguration, declarationAlternatives))
       }

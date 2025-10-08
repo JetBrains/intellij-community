@@ -2,6 +2,8 @@
 package org.jetbrains.intellij.build
 
 import org.jetbrains.intellij.build.LibraryLicense.Companion.PREDEFINED_LICENSE_URLS
+import org.jetbrains.jps.model.library.JpsMavenRepositoryLibraryDescriptor
+import kotlin.text.startsWith
 
 /**
  * Describes a library which is included in the distribution of an IntelliJ-based IDE.
@@ -99,12 +101,12 @@ data class LibraryLicense(
     private const val APACHE_LICENSE_URL = "https://www.apache.org/licenses/LICENSE-2.0"
     private val PREDEFINED_LICENSE_URLS = mapOf("Apache 2.0" to APACHE_LICENSE_URL)
 
-    const val JETBRAINS_OWN = "JetBrains"
+    const val JETBRAINS_OWN: String = "JetBrains"
 
     /**
      * Denotes the version of a library built from custom revision.
      */
-    const val CUSTOM_REVISION = "custom revision"
+    const val CUSTOM_REVISION: String = "custom revision"
 
     /**
      * Use this method only for JetBrains own libraries which are available as part of IntelliJ-based IDEs only,
@@ -112,6 +114,27 @@ data class LibraryLicense(
      * For other libraries please fill all necessary fields of [LibraryLicense] instead of using this method.
      */
     fun jetbrainsLibrary(libraryName: String): LibraryLicense = LibraryLicense(libraryName = libraryName, license = JETBRAINS_OWN)
+
+    private val JETBRAINS_GITHUB_ORGANIZATIONS: Set<String> = setOf(
+      "JetBrains",
+      "Kotlin",
+      "ktorio",
+    )
+
+    internal fun isJetBrainsOwnLibrary(library: LibraryLicense): Boolean {
+      return library.license == JETBRAINS_OWN || JETBRAINS_GITHUB_ORGANIZATIONS.any {
+        library.url?.startsWith("https://github.com/$it/") == true ||
+        library.licenseUrl?.startsWith("https://github.com/$it/") == true
+      }
+    }
+
+    internal fun isJetBrainsOwnLibrary(library: JpsMavenRepositoryLibraryDescriptor): Boolean {
+      return library.groupId.startsWith("org.jetbrains") ||
+             library.groupId.startsWith("com.jetbrains") ||
+             library.groupId.startsWith("com.intellij") ||
+             library.groupId.startsWith("ai.grazie") ||
+             library.groupId.startsWith("io.ktor")
+    }
   }
 
   fun additionalLibraryNames(vararg names: String): LibraryLicense {

@@ -10,15 +10,15 @@ jvm_library(
   deps = [
     "//platform/util/jdom",
     "//platform/util",
-    "@lib//:fastutil-min",
+    "//libraries/fastutil",
     "@lib//:kotlin-stdlib",
     "//platform/util/xmlDom",
     "@lib//:kotlinx-coroutines-core",
     "//platform/diagnostic",
     "@lib//:kotlinx-collections-immutable",
     "@lib//:jetbrains-annotations",
-    "@lib//:kotlinx-serialization-core",
-    "@lib//:kotlinx-serialization-json",
+    "//libraries/kotlinx/serialization/core",
+    "//libraries/kotlinx/serialization/json",
   ],
   exports = ["@lib//:kotlinx-coroutines-core"]
 )

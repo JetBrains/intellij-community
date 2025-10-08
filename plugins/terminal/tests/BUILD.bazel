@@ -1,9 +1,9 @@
 ### auto-generated section `build intellij.terminal.tests` start
-load("@rules_jvm//:jvm.bzl", "jvm_library", "jvm_resources")
+load("@rules_jvm//:jvm.bzl", "jvm_library", "resourcegroup")
 
-jvm_resources(
+resourcegroup(
   name = "tests_test_resources",
-  files = glob(["resources/**/*"]),
+  srcs = glob(["resources/**/*"]),
   strip_prefix = "resources"
 )
 
@@ -12,6 +12,7 @@ jvm_library(
   module_name = "intellij.terminal.tests",
   visibility = ["//visibility:public"],
   srcs = glob(["src/**/*.kt", "src/**/*.java", "src/**/*.form"], allow_empty = True),
+  resources = [":tests_test_resources"],
   deps = [
     "//platform/platform-impl:ide-impl",
     "//platform/testFramework",
@@ -42,12 +43,11 @@ jvm_library(
     "@lib//:jediterm-core",
     "@lib//:jediterm-ui",
     "@lib//:pty4j",
-    "@lib//:guava",
+    "//libraries/guava",
     "@lib//:junit4",
     "//platform/eel-provider",
     "//platform/lang-impl",
-  ],
-  runtime_deps = [":tests_test_resources"]
+  ]
 )
 ### auto-generated section `build intellij.terminal.tests` end
 

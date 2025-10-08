@@ -1,9 +1,9 @@
 ### auto-generated section `build intellij.platform.collaborationTools` start
-load("@rules_jvm//:jvm.bzl", "jvm_library", "jvm_resources")
+load("@rules_jvm//:jvm.bzl", "jvm_library", "resourcegroup")
 
-jvm_resources(
+resourcegroup(
   name = "collaboration-tools_resources",
-  files = glob(["resources/**/*"]),
+  srcs = glob(["resources/**/*"]),
   strip_prefix = "resources"
 )
 
@@ -12,6 +12,7 @@ jvm_library(
   module_name = "intellij.platform.collaborationTools",
   visibility = ["//visibility:public"],
   srcs = glob(["src/**/*.kt", "src/**/*.java", "src/**/*.form", "gen/**/*.kt", "gen/**/*.java"], allow_empty = True),
+  resources = [":collaboration-tools_resources"],
   deps = [
     "//platform/analysis-api:analysis",
     "//platform/code-style-api:codeStyle",
@@ -30,16 +31,16 @@ jvm_library(
     "//platform/core-ui",
     "//platform/editor-ui-ex:editor-ex",
     "//platform/lang-impl",
-    "@lib//:miglayout-swing",
+    "//libraries/miglayout-swing",
     "@lib//:kotlin-stdlib",
     "//platform/diff-api:diff",
-    "@lib//:fastutil-min",
+    "//libraries/fastutil",
     "//platform/diff-impl",
     "//platform/credential-store-ui:credentialStore-ui",
     "//platform/vcs-impl",
     "//platform/platform-util-io:ide-util-io",
     "//platform/vcs-log/api:vcs-log",
-    "@lib//:caffeine",
+    "//libraries/caffeine",
     "@lib//:kotlinx-coroutines-core",
     "@lib//:jetbrains-markdown",
     "//platform/dvcs-impl:vcs-dvcs-impl",
@@ -48,8 +49,7 @@ jvm_library(
     "//platform/dvcs-impl/shared",
     "@lib//:http-client",
     "//platform/vcs-impl/shared",
-  ],
-  runtime_deps = [":collaboration-tools_resources"]
+  ]
 )
 
 jvm_library(
@@ -77,10 +77,10 @@ jvm_library(
     "//platform/core-ui",
     "//platform/editor-ui-ex:editor-ex",
     "//platform/lang-impl",
-    "@lib//:miglayout-swing",
+    "//libraries/miglayout-swing",
     "@lib//:kotlin-stdlib",
     "//platform/diff-api:diff",
-    "@lib//:fastutil-min",
+    "//libraries/fastutil",
     "//platform/diff-impl",
     "@lib//:junit4",
     "//platform/credential-store-ui:credentialStore-ui",
@@ -90,7 +90,7 @@ jvm_library(
     "//platform/vcs-impl:vcs-impl_test_lib",
     "//platform/platform-util-io:ide-util-io",
     "//platform/vcs-log/api:vcs-log",
-    "@lib//:caffeine",
+    "//libraries/caffeine",
     "@lib//:kotlinx-coroutines-core",
     "@lib//:jetbrains-markdown",
     "@lib//:kotlin-test",
@@ -108,8 +108,7 @@ jvm_library(
     "@lib//:app-cash-turbine-jvm",
     "@lib//:assert_j",
     "//platform/vcs-impl/shared",
-  ],
-  runtime_deps = [":collaboration-tools_resources"]
+  ]
 )
 ### auto-generated section `build intellij.platform.collaborationTools` end
 

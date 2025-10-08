@@ -41,6 +41,7 @@ import com.intellij.pycharm.community.ide.impl.newProjectWizard.welcome.PyWelcom
 import com.intellij.pycharm.community.ide.impl.newProjectWizard.welcome.PyWelcomeCollector.RunConfigurationResult
 import com.intellij.pycharm.community.ide.impl.newProjectWizard.welcome.PyWelcomeCollector.ScriptResult
 import com.intellij.pycharm.community.ide.impl.newProjectWizard.welcome.PyWelcomeCollector.logWelcomeRunConfiguration
+import com.intellij.python.common.welcomeScreen.PyWelcomeBundle
 import com.intellij.util.concurrency.annotations.RequiresWriteLock
 import com.intellij.xdebugger.XDebuggerUtil
 import com.jetbrains.python.PythonPluginDisposable

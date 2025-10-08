@@ -8,9 +8,31 @@ import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.PsiDocumentManager;
 import com.intellij.psi.PsiFile;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
+/**
+ * Contains useful information about the current completion session.
+ * <p>
+ * The following information is available:
+ * <ul>
+ *   <li>char which was typed to finish completion</li>
+ *   <li>list of lookup elements</li>
+ *   <li>file which was edited</li>
+ *   <li>editor which was edited</li>
+ *   <li>offset map which tracks offsets of inserted elements</li>
+ *   <li>runnable which should be executed after completing write action is finished. You can update it.</li>
+ * </ul>
+ * <p>
+ * Offset map contains the following offsets by default:
+ * <ul>
+ *   <li>{@link CompletionInitializationContext#START_OFFSET}</li>
+ *   <li>{@link CompletionInitializationContext#SELECTION_END_OFFSET}</li>
+ *   <li>{@link CompletionInitializationContext#IDENTIFIER_END_OFFSET}</li>
+ * </ul>
+ */
+@ApiStatus.NonExtendable
 public class InsertionContext {
   public static final OffsetKey TAIL_OFFSET = OffsetKey.create("tailOffset", true);
 
@@ -24,7 +46,7 @@ public class InsertionContext {
 
   public InsertionContext(@NotNull OffsetMap offsetMap,
                           char completionChar,
-                          LookupElement @NotNull [] elements,
+                          @NotNull LookupElement @NotNull [] elements,
                           @NotNull PsiFile psiFile,
                           @NotNull Editor editor,
                           boolean addCompletionChar) {
@@ -37,7 +59,7 @@ public class InsertionContext {
     myAddCompletionChar = addCompletionChar;
   }
 
-  public void setTailOffset(final int offset) {
+  public void setTailOffset(int offset) {
     myOffsetMap.addOffset(TAIL_OFFSET, offset);
   }
 
@@ -61,7 +83,7 @@ public class InsertionContext {
     return getEditor().getDocument();
   }
 
-  public int getOffset(OffsetKey key) {
+  public int getOffset(@NotNull OffsetKey key) {
     return getOffsetMap().getOffset(key);
   }
 
@@ -70,7 +92,7 @@ public class InsertionContext {
   }
 
   public @NotNull OffsetKey trackOffset(int offset, boolean movableToRight) {
-    final OffsetKey key = OffsetKey.create("tracked", movableToRight);
+    OffsetKey key = OffsetKey.create("tracked", movableToRight);
     getOffsetMap().addOffset(key, offset);
     return key;
   }
@@ -83,7 +105,7 @@ public class InsertionContext {
     return myCompletionChar;
   }
 
-  public @NotNull LookupElement[] getElements() {
+  public @NotNull LookupElement @NotNull [] getElements() {
     return myElements;
   }
 
@@ -99,14 +121,17 @@ public class InsertionContext {
     return myLaterRunnable;
   }
 
-  public void setLaterRunnable(final @Nullable Runnable laterRunnable) {
+  /**
+   * See doc of {@link LookupElement#handleInsert}
+   */
+  public void setLaterRunnable(@Nullable Runnable laterRunnable) {
     myLaterRunnable = laterRunnable;
   }
 
   /**
    * @param addCompletionChar Whether completionChar should be added to document at tail offset (see {@link #TAIL_OFFSET}) after insert handler (default: {@code true}).
    */
-  public void setAddCompletionChar(final boolean addCompletionChar) {
+  public void setAddCompletionChar(boolean addCompletionChar) {
     myAddCompletionChar = addCompletionChar;
   }
 
@@ -121,7 +146,11 @@ public class InsertionContext {
            completionChar != Lookup.NORMAL_SELECT_CHAR;
   }
 
+  /**
+   * Creates a new instance of {@link InsertionContext} with the new copy of {@link OffsetMap}
+   */
   public @NotNull InsertionContext forkByOffsetMap() {
-    return new InsertionContext(myOffsetMap.copyOffsets(myEditor.getDocument()), myCompletionChar, myElements, myPsiFile, myEditor, myAddCompletionChar);
+    return new InsertionContext(myOffsetMap.copyOffsets(myEditor.getDocument()), myCompletionChar, myElements, myPsiFile, myEditor,
+                                myAddCompletionChar);
   }
 }

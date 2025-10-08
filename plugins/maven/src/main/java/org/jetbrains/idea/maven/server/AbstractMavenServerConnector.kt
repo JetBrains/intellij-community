@@ -4,6 +4,7 @@ package org.jetbrains.idea.maven.server
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.projectRoots.Sdk
 import com.intellij.util.ExceptionUtil
+import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.idea.maven.server.MavenServerManager.Companion.getInstance
 import java.rmi.RemoteException
 import java.util.concurrent.ConcurrentHashMap
@@ -26,6 +27,7 @@ abstract class AbstractMavenServerConnector(override val project: Project?,  // 
     return myMultimoduleDirectories.add(multimoduleDirectory)
   }
 
+  @ApiStatus.Internal
   @Deprecated("use suspend", ReplaceWith("getServer"))
   protected abstract fun getServerBlocking(): MavenServer
 

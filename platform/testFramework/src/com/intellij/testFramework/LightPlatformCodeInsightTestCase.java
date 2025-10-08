@@ -535,6 +535,9 @@ public abstract class LightPlatformCodeInsightTestCase extends LightPlatformTest
   protected void type(char c) {
     type(c, getEditor(), getProject());
   }
+  protected void escape() {
+    executeAction(IdeActions.ACTION_EDITOR_ESCAPE, getEditor(), getProject());
+  }
 
   public static void type(char c, @NotNull Editor editor, @Nullable Project project) {
     if (c == '\n') {

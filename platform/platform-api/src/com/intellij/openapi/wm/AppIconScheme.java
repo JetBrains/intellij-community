@@ -20,8 +20,9 @@ import java.awt.*;
 public class AppIconScheme {
 
   private static final Color TESTS_OK_COLOR = new Color(46, 191, 38);
-  private static final Color BUILD_OK_COLOR = new Color(51, 153, 255);
-  private static final Color INDEXING_OK_COLOR = new Color(255, 170, 0);
+  private static final Color BLUE = new Color(51, 153, 255);
+  private static final Color BUILD_OK_COLOR = BLUE;
+  private static final Color INDEXING_OK_COLOR = BLUE;
   private static final Color ERROR_COLOR = Color.red;
 
   public interface Progress {

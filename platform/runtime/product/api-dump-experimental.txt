@@ -4,14 +4,11 @@
 *:com.intellij.platform.runtime.product.PluginModuleGroup
 - com.intellij.platform.runtime.product.RuntimeModuleGroup
 - a:getMainModule():com.intellij.platform.runtime.repository.RuntimeModuleDescriptor
-*e:com.intellij.platform.runtime.product.ProductMode
-- java.lang.Enum
+*f:com.intellij.platform.runtime.product.ProductMode
 - sf:BACKEND:com.intellij.platform.runtime.product.ProductMode
 - sf:FRONTEND:com.intellij.platform.runtime.product.ProductMode
 - sf:MONOLITH:com.intellij.platform.runtime.product.ProductMode
 - getId():java.lang.String
-- s:valueOf(java.lang.String):com.intellij.platform.runtime.product.ProductMode
-- s:values():com.intellij.platform.runtime.product.ProductMode[]
 *:com.intellij.platform.runtime.product.ProductModules
 - a:getBundledPluginModuleGroups():java.util.List
 - a:getMainModuleGroup():com.intellij.platform.runtime.product.RuntimeModuleGroup

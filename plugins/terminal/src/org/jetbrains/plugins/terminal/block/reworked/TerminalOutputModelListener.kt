@@ -7,13 +7,13 @@ import java.util.*
 @ApiStatus.Internal
 interface TerminalOutputModelListener : EventListener {
   /**
-   * Called before actual changes in the document and highlightings in [TerminalOutputModel.updateContent].
+   * Called before actual changes in the document and highlightings in [MutableTerminalOutputModel.updateContent].
    */
   fun beforeContentChanged(model: TerminalOutputModel) {}
 
   /**
-   * Called after changing the document and highlightings in [TerminalOutputModel.updateContent].
+   * Called after changing the document and highlightings in [MutableTerminalOutputModel.updateContent].
    * @param startOffset offset from which document was updated.
    */
-  fun afterContentChanged(model: TerminalOutputModel, startOffset: Int, isTypeAhead: Boolean) {}
+  fun afterContentChanged(model: TerminalOutputModel, startOffset: TerminalOffset, isTypeAhead: Boolean) {}
 }

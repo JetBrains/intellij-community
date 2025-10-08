@@ -10,7 +10,10 @@ import org.jetbrains.idea.maven.importing.MavenImporter
 import org.jetbrains.idea.maven.importing.MavenProjectImporterUtil
 import org.jetbrains.idea.maven.importing.MavenStaticSyncAware
 import org.jetbrains.idea.maven.importing.MavenWorkspaceConfigurator
-import org.jetbrains.idea.maven.project.*
+import org.jetbrains.idea.maven.project.MavenImportingSettings
+import org.jetbrains.idea.maven.project.MavenProject
+import org.jetbrains.idea.maven.project.MavenProjectsProcessorTask
+import org.jetbrains.idea.maven.project.MavenProjectsTree
 
 internal class StaticWorkspaceProjectImporter(
   projectsTree: MavenProjectsTree,
@@ -48,6 +51,6 @@ internal class StaticWorkspaceProjectImporter(
                                                                             importers)
       }
     }
-    MavenProjectImporterUtil.importLegacyExtensions(myProject, myModifiableModelsProvider, legacyFacetImporters, postTasks, activity)
+    MavenProjectImporterUtil.importLegacyExtensions(project, myModifiableModelsProvider, legacyFacetImporters, postTasks, activity)
   }
 }

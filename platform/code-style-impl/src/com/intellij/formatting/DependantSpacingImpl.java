@@ -119,15 +119,6 @@ public class DependantSpacingImpl extends SpacingImpl {
   }
 
   /**
-   * @deprecated use {@link DependantSpacingImpl#isDependentRegionLinefeedStatusChanged(int)} instead
-   */
-  @Deprecated
-  @ApiStatus.ScheduledForRemoval
-  public final boolean isDependentRegionLinefeedStatusChanged() {
-    return isDependantSpacingChangedAtLeastOnce();
-  }
-
-  /**
    * Allows to answer whether 'contains line feed' status has been changed for the target dependent region during formatting.
    *
    * @return    {@code true} if target 'contains line feed' status has been changed for the target dependent region during formatting;

@@ -9,6 +9,7 @@
 
   <dependencies>
     <module name="intellij.libraries.ktor.client"/>
+    <module name="intellij.libraries.kotlinx.io"/>
   </dependencies>
 
   <extensionPoints>

@@ -60,9 +60,7 @@ public class UndoManagerImpl extends UndoManager {
   }
 
   private final @Nullable Project myProject;
-  private final @NotNull SharedAdjustableUndoableActionsHolder myAdjustableUndoableActionsHolder;
-  private final @NotNull SharedUndoRedoStacksHolder mySharedUndoStacksHolder;
-  private final @NotNull SharedUndoRedoStacksHolder mySharedRedoStacksHolder;
+  private final @NotNull UndoSharedState myUndoSharedState;
 
   private @Nullable CurrentEditorProvider myOverriddenEditorProvider;
 
@@ -80,9 +78,7 @@ public class UndoManagerImpl extends UndoManager {
   @NonInjectable
   protected UndoManagerImpl(@Nullable ComponentManager componentManager) {
     myProject = componentManager instanceof Project project ? project : null;
-    myAdjustableUndoableActionsHolder = new SharedAdjustableUndoableActionsHolder();
-    mySharedUndoStacksHolder = new SharedUndoRedoStacksHolder(myAdjustableUndoableActionsHolder, isPerClientSupported(), true);
-    mySharedRedoStacksHolder = new SharedUndoRedoStacksHolder(myAdjustableUndoableActionsHolder, isPerClientSupported(), false);
+    myUndoSharedState = new UndoSharedState(isPerClientSupported());
   }
 
   @Override
@@ -272,8 +268,7 @@ public class UndoManagerImpl extends UndoManager {
     for (UndoClientState state : getAllClientStates()) {
       state.clearDocumentReferences(document);
     }
-    mySharedUndoStacksHolder.clearDocumentReferences(document);
-    mySharedRedoStacksHolder.clearDocumentReferences(document);
+    myUndoSharedState.clearDocumentReferences(document);
   }
 
   @ApiStatus.Internal
@@ -345,11 +340,6 @@ public class UndoManagerImpl extends UndoManager {
     return state.getStackSize(docRef, isUndo);
   }
 
-  void trimSharedStacks(@NotNull DocumentReference docRef) {
-    mySharedRedoStacksHolder.trimStacks(Collections.singleton(docRef));
-    mySharedUndoStacksHolder.trimStacks(Collections.singleton(docRef));
-  }
-
   @ApiStatus.Internal
   protected void onCommandStarted(
     @Nullable Project project,
@@ -391,36 +381,32 @@ public class UndoManagerImpl extends UndoManager {
   }
 
   @Nullable LocalUndoRedoSnapshot getUndoRedoSnapshotForDocument(@NotNull DocumentReference reference) {
-    HashMap<ClientId, PerClientLocalUndoRedoSnapshot> map = new HashMap<>();
+    var perClient = new HashMap<ClientId, PerClientLocalUndoRedoSnapshot>();
     for (UndoClientState state : getAllClientStates()) {
-      PerClientLocalUndoRedoSnapshot perClientSnapshot = state.getUndoRedoSnapshotForDocument(reference, myAdjustableUndoableActionsHolder);
+      PerClientLocalUndoRedoSnapshot perClientSnapshot = state.getUndoRedoSnapshotForDocument(reference);
       if (perClientSnapshot == null) {
         return null;
       }
-      map.put(state.getClientId(), perClientSnapshot);
+      perClient.put(state.getClientId(), perClientSnapshot);
     }
     return new LocalUndoRedoSnapshot(
-      map,
-      mySharedUndoStacksHolder.getStack(reference).snapshot(),
-      mySharedRedoStacksHolder.getStack(reference).snapshot()
+      Collections.unmodifiableMap(perClient),
+      myUndoSharedState.getSharedUndoRedoSnapshot(reference)
     );
   }
 
-  boolean resetLocalHistory(DocumentReference reference, LocalUndoRedoSnapshot snapshot) {
+  boolean resetLocalHistory(@NotNull DocumentReference reference, @NotNull LocalUndoRedoSnapshot snapshot) {
     for (UndoClientState state : getAllClientStates()) {
       PerClientLocalUndoRedoSnapshot perClientSnapshot = snapshot.getClientSnapshots().get(state.getClientId());
       if (perClientSnapshot == null) {
         perClientSnapshot = PerClientLocalUndoRedoSnapshot.empty();
       }
       boolean success = state.resetLocalHistory(reference, perClientSnapshot);
-      if (success) {
-        myAdjustableUndoableActionsHolder.getStack(reference).resetTo(perClientSnapshot.getActionsHolderSnapshot());
-      } else {
+      if (!success) {
         return false;
       }
     }
-    mySharedUndoStacksHolder.getStack(reference).resetTo(snapshot.getSharedUndoStack());
-    mySharedRedoStacksHolder.getStack(reference).resetTo(snapshot.getSharedRedoStack());
+    myUndoSharedState.resetLocalHistory(reference, snapshot.getSharedSnapshot());
     return true;
   }
 
@@ -429,16 +415,8 @@ public class UndoManagerImpl extends UndoManager {
     return state != null && state.isUndoRedoAvailable(Collections.singleton(docRef), undo);
   }
 
-  @NotNull SharedAdjustableUndoableActionsHolder getAdjustableUndoableActionsHolder() {
-    return myAdjustableUndoableActionsHolder;
-  }
-
-  @NotNull SharedUndoRedoStacksHolder getSharedUndoStacksHolder() {
-    return mySharedUndoStacksHolder;
-  }
-
-  @NotNull SharedUndoRedoStacksHolder getSharedRedoStacksHolder() {
-    return mySharedRedoStacksHolder;
+  @NotNull UndoSharedState getUndoSharedState() {
+    return myUndoSharedState;
   }
 
   @TestOnly
@@ -469,7 +447,7 @@ public class UndoManagerImpl extends UndoManager {
     if (state != null) {
       DocumentReference docRef = DocumentReferenceManager.getInstance().create(file);
       state.clearUndoRedoQueue(docRef);
-      trimSharedStacks(docRef);
+      myUndoSharedState.trimSharedStacks(docRef);
     }
   }
 
@@ -479,7 +457,7 @@ public class UndoManagerImpl extends UndoManager {
     if (state != null) {
       DocumentReference docRef = DocumentReferenceManager.getInstance().create(document);
       state.clearUndoRedoQueue(docRef);
-      trimSharedStacks(docRef);
+      myUndoSharedState.trimSharedStacks(docRef);
     }
   }
 

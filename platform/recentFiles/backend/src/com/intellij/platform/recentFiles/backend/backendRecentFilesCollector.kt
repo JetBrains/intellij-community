@@ -10,6 +10,7 @@ import com.intellij.openapi.fileEditor.impl.EditorHistoryManager
 import com.intellij.openapi.fileEditor.impl.EditorTabPresentationUtil
 import com.intellij.openapi.progress.ProgressManager
 import com.intellij.openapi.project.Project
+import com.intellij.openapi.util.Key
 import com.intellij.openapi.util.io.FileUtil
 import com.intellij.openapi.util.io.toNioPathOrNull
 import com.intellij.openapi.vcs.FileStatusManager
@@ -23,9 +24,12 @@ import com.intellij.problems.WolfTheProblemSolver
 import com.intellij.psi.search.FilenameIndex
 import com.intellij.psi.search.GlobalSearchScope
 import com.intellij.util.IconUtil
+import com.intellij.util.PlatformUtils
+import com.intellij.util.Processor
 import com.intellij.util.SystemProperties
 import com.intellij.util.concurrency.annotations.RequiresReadLock
 import java.io.File
+import java.util.concurrent.atomic.AtomicInteger
 import kotlin.io.path.Path
 import kotlin.io.path.pathString
 import kotlin.math.max
@@ -116,13 +120,44 @@ private fun getRecentFiles(project: Project): List<VirtualFile> {
   return result
 }
 
+private val IDENTICAL_NAMES_CACHE_KEY = Key.create<Boolean>("IDENTICAL_NAMES_CACHE_KEY")
+
+private fun areThereFilesWithSameName(virtualFile: VirtualFile, project: Project): Boolean {
+  val alreadyComputedValue = virtualFile.getUserData(IDENTICAL_NAMES_CACHE_KEY)
+  if (alreadyComputedValue != null) return alreadyComputedValue
+
+  val searchScope =
+    if (PlatformUtils.isRider()) GlobalSearchScope.allScope(project) else GlobalSearchScope.projectScope(project)
+  val processor = StopOnTwoIdenticalNamesProcessor(virtualFile.name)
+  FilenameIndex.processFilesByName(virtualFile.name, true, searchScope, processor)
+  val moreThanOneOccurrence = processor.areThereMoreThanOneFile()
+  virtualFile.putUserData(IDENTICAL_NAMES_CACHE_KEY, moreThanOneOccurrence)
+  return moreThanOneOccurrence
+}
+
+private class StopOnTwoIdenticalNamesProcessor(private val searchedName: String) : Processor<VirtualFile> {
+  private var fileNameCounter = AtomicInteger(0)
+
+  fun areThereMoreThanOneFile(): Boolean {
+    return fileNameCounter.get() > 1
+  }
+
+  override fun process(file: VirtualFile): Boolean {
+    val name = file.name
+
+    if (searchedName != name) return true
+
+    val newCount = fileNameCounter.incrementAndGet()
+    return newCount <= 1
+  }
+}
+
 internal fun createRecentFileViewModel(virtualFile: VirtualFile, project: Project): SwitcherRpcDto.File {
   ProgressManager.checkCanceled()
   val parentPath = virtualFile.parent?.path?.toNioPathOrNull()
-  val sameNameFiles = FilenameIndex.getVirtualFilesByName(virtualFile.name, GlobalSearchScope.projectScope(project))
   val result = if (parentPath == null ||
                    parentPath.nameCount == 0 ||
-                   sameNameFiles.size <= 1
+                   !areThereFilesWithSameName(virtualFile, project)
   ) {
     ""
   }

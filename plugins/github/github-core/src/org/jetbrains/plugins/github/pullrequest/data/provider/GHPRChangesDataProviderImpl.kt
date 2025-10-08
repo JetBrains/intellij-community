@@ -4,6 +4,7 @@ package org.jetbrains.plugins.github.pullrequest.data.provider
 import com.google.common.graph.GraphBuilder
 import com.google.common.graph.ImmutableGraph
 import com.google.common.graph.Traverser
+import com.intellij.collaboration.async.childScope
 import com.intellij.openapi.diff.impl.patch.FilePatch
 import com.intellij.platform.util.coroutines.childScope
 import git4idea.changes.GitBranchComparisonResult
@@ -80,7 +81,7 @@ internal class GHPRChangesDataProviderImpl(parentCs: CoroutineScope,
   }
 
   private inner class ChangesDataLoader(parentCs: CoroutineScope, val refs: GHPRBranchesRefs) {
-    private val cs = parentCs.childScope()
+    private val cs = parentCs.childScope(this::class)
 
     private val referencesRequest = cs.async(start = CoroutineStart.LAZY) {
       val mergeBaseRef = changesService.loadMergeBaseOid(refs.baseRef, refs.headRef)

@@ -1,9 +1,9 @@
 ### auto-generated section `build intellij.maven.tests` start
-load("@rules_jvm//:jvm.bzl", "jvm_library", "jvm_resources")
+load("@rules_jvm//:jvm.bzl", "jvm_library", "resourcegroup")
 
-jvm_resources(
+resourcegroup(
   name = "maven-tests_test_resources",
-  files = glob(["resources/**/*"]),
+  srcs = glob(["resources/**/*"]),
   strip_prefix = "resources"
 )
 
@@ -18,6 +18,7 @@ jvm_library(
   module_name = "intellij.maven.tests",
   visibility = ["//visibility:public"],
   srcs = glob(["java/**/*.kt", "java/**/*.java", "java/**/*.form"], allow_empty = True),
+  resources = [":maven-tests_test_resources"],
   deps = [
     "//plugins/maven",
     "//plugins/maven/testFramework",
@@ -45,6 +46,8 @@ jvm_library(
     "//plugins/properties/properties-psi-api:psi",
     "//spellchecker",
     "//spellchecker:spellchecker_test_lib",
+    "//plugins/grazie/src:core",
+    "//plugins/grazie/src/test:grazie-tests_test_lib",
     "//platform/vcs-api:vcs",
     "//plugins/groovy",
     "//plugins/groovy:groovy_test_lib",
@@ -53,7 +56,7 @@ jvm_library(
     "//jps/model-impl",
     "//platform/util/progress",
     "//platform/workspace/jps",
-    "@lib//:guava",
+    "//libraries/guava",
     "//plugins/maven/artifact-resolver/common",
     "//libraries/mockito",
     "//plugins/maven/jps-plugin:jps",
@@ -67,17 +70,16 @@ jvm_library(
     "//java/java-impl:impl",
     "//platform/backend/observation",
     "//platform/backend/observation:observation_test_lib",
-    "@lib//:hash4j",
-    "@lib//:kotlin-reflect",
-    "@lib//:kotlinx-serialization-core",
+    "//libraries/hash4j",
+    "//libraries/kotlin-reflect",
+    "//libraries/kotlinx/serialization/core",
     "//platform/statistics/testFramework",
     "//xml/xml-psi-api:psi",
     "//platform/xdebugger-api:debugger",
     "//libraries/hamcrest",
     "//platform/testFramework/eelJava",
     "//platform/eel-provider",
-  ],
-  runtime_deps = [":maven-tests_test_resources"]
+  ]
 )
 ### auto-generated section `build intellij.maven.tests` end
 

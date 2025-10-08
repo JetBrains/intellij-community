@@ -36,6 +36,14 @@ public interface PsiModifierListOwner extends PsiElement {
     return PsiJvmConversionHelper.getListAnnotations(this);
   }
 
+  /**
+   * @return true if the element has annotations, false otherwise.
+   */
+  default boolean hasAnnotations() {
+    PsiModifierList list = getModifierList();
+    return list != null && list.hasAnnotations();
+  }
+
   default @Nullable PsiAnnotation getAnnotation(@NotNull String fqn) {
     return PsiJvmConversionHelper.getListAnnotation(this, fqn);
   }

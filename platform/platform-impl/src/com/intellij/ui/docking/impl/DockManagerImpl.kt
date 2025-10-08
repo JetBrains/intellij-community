@@ -24,6 +24,7 @@ import com.intellij.openapi.util.Key
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.openapi.wm.IdeFocusManager
 import com.intellij.openapi.wm.IdeFrame
+import com.intellij.openapi.wm.IdeGlassPaneUtil
 import com.intellij.openapi.wm.ex.WindowManagerEx
 import com.intellij.openapi.wm.impl.executeOnCancelInEdt
 import com.intellij.platform.util.coroutines.childScope
@@ -33,6 +34,10 @@ import com.intellij.ui.awt.DevicePoint
 import com.intellij.ui.awt.RelativePoint
 import com.intellij.ui.docking.*
 import com.intellij.ui.docking.DockContainer.ContentResponse
+import com.intellij.ui.drag.DialogDragImageView
+import com.intellij.ui.drag.DialogWithImage
+import com.intellij.ui.drag.DragImageView
+import com.intellij.ui.drag.GlassPaneDragImageView
 import com.intellij.util.IconUtil
 import com.intellij.util.containers.sequenceOfNotNull
 import com.intellij.util.ui.EdtInvocationManager
@@ -43,10 +48,7 @@ import kotlinx.coroutines.job
 import org.jdom.Element
 import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.annotations.Contract
-import java.awt.Component
-import java.awt.Graphics
-import java.awt.Image
-import java.awt.Rectangle
+import java.awt.*
 import java.awt.event.MouseEvent
 import java.util.function.Predicate
 import javax.swing.*
@@ -77,13 +79,6 @@ class DockManagerImpl(@JvmField internal val project: Project, private val corou
                 replaceWith = ReplaceWith("FileEditorManagerKeys.WINDOW_DIMENSION_KEY",
                                           imports = ["com.intellij.openapi.fileEditor.FileEditorManagerKeys"]))
     val WINDOW_DIMENSION_KEY: Key<String> = FileEditorManagerKeys.WINDOW_DIMENSION_KEY
-
-    @JvmField
-    @ApiStatus.ScheduledForRemoval
-    @Deprecated("Prefer using FileEditorManagerKeys.REOPEN_WINDOW",
-                replaceWith = ReplaceWith("FileEditorManagerKeys.REOPEN_WINDOW",
-                                          imports = ["com.intellij.openapi.fileEditor.FileEditorManagerKeys"]))
-    val REOPEN_WINDOW: Key<Boolean> = FileEditorManagerKeys.REOPEN_WINDOW
 
     private fun getWindowDimensionKey(content: DockableContent<*>): String? {
       return if (content is DockableEditor) getWindowDimensionKey(content.file) else null
@@ -192,19 +187,14 @@ class DockManagerImpl(@JvmField internal val project: Project, private val corou
   internal val ready: ActionCallback
     get() = busyObject.getReady(this)
 
-  private inner class MyDragSession(mouseEvent: MouseEvent, content: DockableContent<*>) : DragSession {
-    private val window: JDialog = JDialog(ComponentUtil.getWindow(mouseEvent.component))
+  private inner class MyDragSession(mouseEvent: MouseEvent, private val content: DockableContent<*>) : DragSession {
+    private val view: DragImageView
     private var dragImage: Image?
     private val defaultDragImage: Image
-    private val content: DockableContent<*>
-    val startDragContainer: DockContainer?
+    val startDragContainer: DockContainer? = getContainerFor(mouseEvent.component) { true }
     private var currentOverContainer: DockContainer? = null
-    private val imageContainer: JLabel
 
     init {
-      window.isUndecorated = true
-      this.content = content
-      startDragContainer = getContainerFor(mouseEvent.component) { true }
       val buffer = ImageUtil.toBufferedImage(content.previewImage)
       val requiredSize = 220.0
       val width = buffer.getWidth(null).toDouble()
@@ -212,32 +202,23 @@ class DockManagerImpl(@JvmField internal val project: Project, private val corou
       val ratio = if (width > height) requiredSize / width else requiredSize / height
       defaultDragImage = buffer.getScaledInstance((width * ratio).toInt(), (height * ratio).toInt(), Image.SCALE_SMOOTH)
       dragImage = defaultDragImage
-      imageContainer = JLabel(object : Icon {
-        override fun getIconWidth(): Int = defaultDragImage.getWidth(window)
-
-        override fun getIconHeight(): Int = defaultDragImage.getHeight(window)
-
-        @Synchronized
-        override fun paintIcon(c: Component, g: Graphics, x: Int, y: Int) {
-          StartupUiUtil.drawImage(g, defaultDragImage, x, y, sourceBounds = null, op = null, observer = window)
-        }
-      })
-      window.contentPane = imageContainer
-      window.pack()
+      view = if (StartupUiUtil.isWaylandToolkit()) {
+        GlassPaneDragImageView(IdeGlassPaneUtil.find(mouseEvent.component))
+      }
+      else {
+        DialogDragImageView(DragImageDialog(ComponentUtil.getWindow(mouseEvent.component), defaultDragImage))
+      }
       setLocationFrom(mouseEvent)
-      window.isVisible = true
-      val windowManager = WindowManagerEx.getInstanceEx()
-      windowManager.setAlphaModeEnabled(window, true)
-      windowManager.setAlphaModeRatio(window, 0.1f)
+      view.show()
     }
 
     private fun setLocationFrom(me: MouseEvent) {
       val devicePoint = DevicePoint(me)
       val showPoint = devicePoint.locationOnScreen
-      val size = imageContainer.size
+      val size = view.size
       showPoint.x -= size.width / 2
       showPoint.y -= size.height / 2
-      window.bounds = Rectangle(showPoint, size)
+      view.location = showPoint
     }
 
     override fun getResponse(e: MouseEvent): ContentResponse {
@@ -280,8 +261,7 @@ class DockManagerImpl(@JvmField internal val project: Project, private val corou
         }
         if (img !== dragImage) {
           dragImage = img
-          imageContainer.icon = IconUtil.createImageIcon(dragImage!!)
-          window.pack()
+          view.image = dragImage!!
         }
         setLocationFrom(e)
       }
@@ -317,10 +297,47 @@ class DockManagerImpl(@JvmField internal val project: Project, private val corou
     }
 
     fun cancelSession() {
-      window.dispose()
+      view.hide()
       if (currentOverContainer != null) {
         currentOverContainer!!.resetDropOver(content)
         currentOverContainer = null
+      }
+    }
+  }
+
+  private class DragImageDialog(owner: Window?, initialImage: Image) : JDialog(owner), DialogWithImage {
+    private val imageContainer: JLabel
+
+    override var image: Image? = initialImage
+      set(value) {
+        field = value
+        imageContainer.icon = value?.let { IconUtil.createImageIcon(it) }
+        pack()
+      }
+
+    init {
+      isUndecorated = true
+      val observer = this
+      imageContainer = JLabel(object : Icon {
+        override fun getIconWidth(): Int = initialImage.getWidth(observer)
+
+        override fun getIconHeight(): Int = initialImage.getHeight(observer)
+
+        @Synchronized
+        override fun paintIcon(c: Component, g: Graphics, x: Int, y: Int) {
+          StartupUiUtil.drawImage(g, initialImage, x, y, sourceBounds = null, op = null, observer = observer)
+        }
+      })
+      contentPane = imageContainer
+      pack()
+    }
+
+    override fun setVisible(isVisible: Boolean) {
+      super.setVisible(isVisible)
+      if (isVisible) {
+        val windowManager = WindowManagerEx.getInstanceEx()
+        windowManager.setAlphaModeEnabled(this, true)
+        windowManager.setAlphaModeRatio(this, 0.1f)
       }
     }
   }

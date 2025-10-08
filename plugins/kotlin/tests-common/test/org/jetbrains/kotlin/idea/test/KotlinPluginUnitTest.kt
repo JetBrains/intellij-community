@@ -10,18 +10,7 @@ import com.intellij.testFramework.fixtures.LightJavaCodeInsightFixtureTestCase5
 import org.jetbrains.kotlin.idea.base.plugin.KotlinPluginMode
 import org.jetbrains.kotlin.idea.base.plugin.useK2Plugin
 import org.junit.jupiter.api.TestTemplate
-import org.junit.jupiter.api.extension.AfterEachCallback
-import org.junit.jupiter.api.extension.BeforeEachCallback
-import org.junit.jupiter.api.extension.BeforeTestExecutionCallback
-import org.junit.jupiter.api.extension.ConditionEvaluationResult
-import org.junit.jupiter.api.extension.ExecutionCondition
-import org.junit.jupiter.api.extension.ExtendWith
-import org.junit.jupiter.api.extension.Extension
-import org.junit.jupiter.api.extension.ExtensionContext
-import org.junit.jupiter.api.extension.ParameterContext
-import org.junit.jupiter.api.extension.ParameterResolver
-import org.junit.jupiter.api.extension.TestTemplateInvocationContext
-import org.junit.jupiter.api.extension.TestTemplateInvocationContextProvider
+import org.junit.jupiter.api.extension.*
 import org.junit.jupiter.params.provider.EnumSource
 import org.junit.platform.commons.util.AnnotationUtils
 import java.util.stream.Stream
@@ -156,17 +145,15 @@ private fun ClassLoader.loadClassOrNull(name: String): Class<*>? {
 private class KotlinPluginUnitTestInvocationContext(
     val mode: KotlinPluginMode
 ) : TestTemplateInvocationContext {
-    override fun getDisplayName(invocationIndex: Int): String? {
-        return "KotlinPluginMode ${mode.name}"
-    }
+    override fun getDisplayName(invocationIndex: Int): String =
+        "KotlinPluginMode ${mode.name}"
 
-    override fun getAdditionalExtensions(): List<Extension?>? {
-        return return listOf(
+    override fun getAdditionalExtensions(): List<Extension?> =
+        listOf(
             KotlinPluginModeParameterResolver(mode),
             KotlinPluginSetup(mode),
             LightJavaCodeInsightTestFixtureExtension5()
         )
-    }
 }
 
 
@@ -180,18 +167,17 @@ private class IgnoredKotlinPluginUnitTestInvocationContext(
         }
     }
 
-    override fun getDisplayName(invocationIndex: Int): String? {
+    override fun getDisplayName(invocationIndex: Int): String {
         return "KotlinPluginMode: ${mode.name} | Ignored"
     }
 
-    override fun getAdditionalExtensions(): List<Extension?>? {
-        return return listOf(
+    override fun getAdditionalExtensions(): List<Extension?> =
+        listOf(
             Ignored(),
             KotlinPluginModeParameterResolver(mode),
             KotlinPluginSetup(mode),
             LightJavaCodeInsightTestFixtureExtension5()
         )
-    }
 }
 
 

@@ -3,11 +3,15 @@ package com.intellij.ide.trustedProjects.impl
 
 import com.intellij.ide.trustedProjects.TrustedProjectsLocator
 import com.intellij.openapi.project.Project
+import com.intellij.project.ProjectStoreOwner
 import java.nio.file.Path
 
 private class DefaultTrustedProjectsLocator : TrustedProjectsLocator {
   override fun getProjectRoots(project: Project): List<Path> {
-    return listOfNotNull(project.basePath?.let { Path.of(it) })
+    if (project !is ProjectStoreOwner) {
+      return emptyList()
+    }
+    return listOf(project.componentStore.storeDescriptor.historicalProjectBasePath)
   }
 
   override fun getProjectRoots(projectRoot: Path, project: Project?): List<Path> = listOf(projectRoot)

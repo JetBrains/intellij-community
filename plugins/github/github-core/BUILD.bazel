@@ -1,21 +1,21 @@
 ### auto-generated section `build intellij.vcs.github` start
-load("@rules_jvm//:jvm.bzl", "jvm_library", "jvm_resources")
+load("@rules_jvm//:jvm.bzl", "jvm_library", "resourcegroup")
 
-jvm_resources(
+resourcegroup(
   name = "vcs-github_resources",
-  files = glob(["gen-resources/**/*"]),
+  srcs = glob(["gen-resources/**/*"]),
   strip_prefix = "gen-resources"
 )
 
-jvm_resources(
+resourcegroup(
   name = "vcs-github_resources_1",
-  files = glob(["resources/**/*"]),
+  srcs = glob(["resources/**/*"]),
   strip_prefix = "resources"
 )
 
-jvm_resources(
+resourcegroup(
   name = "vcs-github_test_resources",
-  files = glob(["test-resources/**/*"]),
+  srcs = glob(["test-resources/**/*"]),
   strip_prefix = "test-resources"
 )
 
@@ -24,6 +24,10 @@ jvm_library(
   module_name = "intellij.vcs.github",
   visibility = ["//visibility:public"],
   srcs = glob(["gen/**/*.kt", "gen/**/*.java", "src/**/*.kt", "src/**/*.java", "src/**/*.form"], allow_empty = True),
+  resources = [
+    ":vcs-github_resources",
+    ":vcs-github_resources_1",
+  ],
   deps = [
     "//platform/analysis-api:analysis",
     "//platform/core-api:core",
@@ -39,19 +43,19 @@ jvm_library(
     "//platform/vcs-impl",
     "//platform/platform-impl:ide-impl",
     "//platform/util",
-    "@lib//:jackson",
+    "//libraries/jackson/jackson",
     "//platform/dvcs-impl:vcs-dvcs-impl",
     "//platform/dvcs-api:vcs-dvcs",
     "//xml/impl",
     "//platform/vcs-log/api:vcs-log",
     "//platform/vcs-log/impl",
     "//platform/util/progress",
-    "@lib//:guava",
+    "//libraries/guava",
     "//platform/credential-store-ui:credentialStore-ui",
     "//platform/lang-impl",
-    "@lib//:miglayout-swing",
-    "@lib//:jackson-databind",
-    "@lib//:jackson-module-kotlin",
+    "//libraries/miglayout-swing",
+    "//libraries/jackson/databind",
+    "//libraries/jackson/module-kotlin:libraries-jackson-module-kotlin",
     "//platform/editor-ui-api:editor-ui",
     "//platform/diff-impl",
     "//platform/statistics",
@@ -60,28 +64,24 @@ jvm_library(
     "//platform/collaboration-tools",
     "@lib//:netty-buffer",
     "//platform/core-ui",
-    "@lib//:fastutil-min",
+    "//libraries/fastutil",
     "//platform/platform-util-io:ide-util-io",
     "//platform/platform-util-netty:ide-util-netty",
-    "@lib//:caffeine",
+    "//libraries/caffeine",
     "//platform/collaboration-tools/auth",
     "//platform/collaboration-tools/auth-base:collaborationTools-auth-base",
     "//platform/markdown-utils",
     "@lib//:kotlinx-coroutines-core",
     "@lib//:jetbrains-markdown",
-    "@lib//:kotlinx-serialization-core",
-    "@lib//:kotlinx-serialization-json",
+    "//libraries/kotlinx/serialization/core",
+    "//libraries/kotlinx/serialization/json",
     "@lib//:kotlinc-kotlinx-serialization-compiler-plugin-provided",
     "//platform/util/coroutines",
     "//platform/platform-impl/ui",
-    "@lib//:gson",
+    "//libraries/gson",
     "//platform/dvcs-impl/shared",
     "//platform/ide-core-impl",
     "//platform/vcs-impl/shared",
-  ],
-  runtime_deps = [
-    ":vcs-github_resources",
-    ":vcs-github_resources_1",
   ]
 )
 
@@ -89,6 +89,7 @@ jvm_library(
   name = "vcs-github_test_lib",
   visibility = ["//visibility:public"],
   srcs = glob(["test/**/*.kt", "test/**/*.java", "test/**/*.form"], allow_empty = True),
+  resources = [":vcs-github_test_resources"],
   associates = [":vcs-github"],
   deps = [
     "//platform/analysis-api:analysis",
@@ -108,7 +109,7 @@ jvm_library(
     "//platform/vcs-impl:vcs-impl_test_lib",
     "//platform/platform-impl:ide-impl",
     "//platform/util",
-    "@lib//:jackson",
+    "//libraries/jackson/jackson",
     "//platform/dvcs-impl:vcs-dvcs-impl",
     "//platform/dvcs-impl:vcs-dvcs-impl_test_lib",
     "//platform/dvcs-api:vcs-dvcs",
@@ -121,12 +122,12 @@ jvm_library(
     "//platform/util/progress",
     "//plugins/tasks/tasks-core/jira",
     "//platform/vcs-tests:vcs-tests_test_lib",
-    "@lib//:guava",
+    "//libraries/guava",
     "//platform/credential-store-ui:credentialStore-ui",
     "//platform/lang-impl",
-    "@lib//:miglayout-swing",
-    "@lib//:jackson-databind",
-    "@lib//:jackson-module-kotlin",
+    "//libraries/miglayout-swing",
+    "//libraries/jackson/databind",
+    "//libraries/jackson/module-kotlin:libraries-jackson-module-kotlin",
     "//platform/editor-ui-api:editor-ui",
     "//platform/diff-impl",
     "//platform/statistics",
@@ -137,10 +138,10 @@ jvm_library(
     "//platform/collaboration-tools:collaboration-tools_test_lib",
     "@lib//:netty-buffer",
     "//platform/core-ui",
-    "@lib//:fastutil-min",
+    "//libraries/fastutil",
     "//platform/platform-util-io:ide-util-io",
     "//platform/platform-util-netty:ide-util-netty",
-    "@lib//:caffeine",
+    "//libraries/caffeine",
     "//platform/collaboration-tools/auth",
     "//platform/collaboration-tools/auth-base:collaborationTools-auth-base",
     "//platform/markdown-utils",
@@ -148,8 +149,8 @@ jvm_library(
     "@lib//:kotlinx-coroutines-core",
     "@lib//:jetbrains-markdown",
     "//platform/util/jdom",
-    "@lib//:kotlinx-serialization-core",
-    "@lib//:kotlinx-serialization-json",
+    "//libraries/kotlinx/serialization/core",
+    "//libraries/kotlinx/serialization/json",
     "@lib//:kotlinc-kotlinx-serialization-compiler-plugin-provided",
     "//platform/util/coroutines",
     "@lib//:junit4",
@@ -157,19 +158,14 @@ jvm_library(
     "@lib//:io-mockk",
     "@lib//:io-mockk-jvm",
     "//platform/platform-impl/ui",
-    "@lib//:gson",
+    "//libraries/gson",
     "@lib//:classgraph",
     "@lib//:assert_j",
-    "@lib//:kotlin-reflect",
+    "//libraries/kotlin-reflect",
     "@lib//:vcs-github-apollographql-apollo-ast-jvm",
     "//platform/dvcs-impl/shared",
     "//platform/ide-core-impl",
     "//platform/vcs-impl/shared",
-  ],
-  runtime_deps = [
-    ":vcs-github_resources",
-    ":vcs-github_resources_1",
-    ":vcs-github_test_resources",
   ]
 )
 ### auto-generated section `build intellij.vcs.github` end

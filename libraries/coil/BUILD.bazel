@@ -1,9 +1,9 @@
 ### auto-generated section `build intellij.libraries.coil` start
-load("@rules_jvm//:jvm.bzl", "jvm_library", "jvm_resources")
+load("@rules_jvm//:jvm.bzl", "jvm_library", "resourcegroup")
 
-jvm_resources(
+resourcegroup(
   name = "coil_resources",
-  files = glob(["resources/**/*"]),
+  srcs = glob(["resources/**/*"]),
   strip_prefix = "resources"
 )
 
@@ -11,6 +11,7 @@ jvm_library(
   name = "coil",
   visibility = ["//visibility:public"],
   srcs = glob([], allow_empty = True),
+  resources = [":coil_resources"],
   exports = [
     "@lib//:libraries-coil-io-coil-kt-coil3-network-ktor3-jvm",
     "@lib//:libraries-coil-io-coil-kt-coil3-svg-jvm",
@@ -18,8 +19,7 @@ jvm_library(
     "@lib//:libraries-coil-io-coil-kt-coil3-compose-jvm",
   ],
   runtime_deps = [
-    ":coil_resources",
-    "//libraries/ktor-client",
+    "//libraries/ktor/client",
     "//libraries/compose-foundation-desktop",
     "@lib//:libraries-coil-io-coil-kt-coil3-network-ktor3-jvm",
     "@lib//:libraries-coil-io-coil-kt-coil3-svg-jvm",

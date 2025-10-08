@@ -10,7 +10,7 @@ fun main() {
 }
 
 class MyTest1 {
-    fun start() = runBlocking {
+    fun start() = runBlocking(Dispatchers.Default) {
         launch {
             for (i in 1 .. 10) {
                 launch {
@@ -23,13 +23,17 @@ class MyTest1 {
     suspend fun worker(i: Int) {
         coroutineScope {
             launch(start = CoroutineStart.UNDISPATCHED) {
-                //Breakpoint!
-                val a = 5
+                if (i == 5) {
+                    //Breakpoint!
+                    val a = 5
+                }
                 withContext(Dispatchers.IO) {
                     println("x")
                 }
+                // EXPRESSION: i
+                // RESULT: 5: I
                 // RUN_TO_CURSOR: 1
-                val b = 5
+                val b = 5 + i
             }
         }
     }

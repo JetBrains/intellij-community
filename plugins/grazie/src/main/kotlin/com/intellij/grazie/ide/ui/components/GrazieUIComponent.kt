@@ -15,13 +15,6 @@ internal interface GrazieUIComponent {
   /** Applies changes from component to passed state of GrazieConfig and returns new version */
   fun apply(state: GrazieConfig.State): GrazieConfig.State
 
-  /** View-only components, that can not be modified somehow */
-  interface ViewOnly : GrazieUIComponent {
-    override fun isModified(state: GrazieConfig.State) = false
-    override fun apply(state: GrazieConfig.State) = state
-    override fun reset(state: GrazieConfig.State) {}
-  }
-
   /** Components, that change representation, but delegate actual data handing to `impl` */
   interface Delegating : GrazieUIComponent {
     val impl: GrazieUIComponent

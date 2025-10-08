@@ -1,9 +1,9 @@
 ### auto-generated section `build intellij.execution.process.mediator.client` start
-load("@rules_jvm//:jvm.bzl", "jvm_library", "jvm_resources")
+load("@rules_jvm//:jvm.bzl", "jvm_library", "resourcegroup")
 
-jvm_resources(
+resourcegroup(
   name = "client_resources",
-  files = glob(["resources/**/*"]),
+  srcs = glob(["resources/**/*"]),
   strip_prefix = "resources"
 )
 
@@ -12,10 +12,11 @@ jvm_library(
   module_name = "intellij.execution.process.mediator.client",
   visibility = ["//visibility:public"],
   srcs = glob(["src/**/*.kt", "src/**/*.java", "src/**/*.form"], allow_empty = True),
+  resources = [":client_resources"],
   deps = [
     "@lib//:kotlin-stdlib",
     "@lib//:kotlinx-coroutines-core",
-    "@lib//:guava",
+    "//libraries/guava",
     "@lib//:protobuf",
     "//platform/execution-process-mediator/daemon",
     "//platform/execution-process-mediator/common",
@@ -27,8 +28,7 @@ jvm_library(
     "@lib//:execution-process-mediator-client-grpc-inprocess",
     "//libraries/grpc",
     "//libraries/grpc-netty-shaded",
-  ],
-  runtime_deps = [":client_resources"]
+  ]
 )
 
 jvm_library(
@@ -39,7 +39,7 @@ jvm_library(
   deps = [
     "@lib//:kotlin-stdlib",
     "@lib//:kotlinx-coroutines-core",
-    "@lib//:guava",
+    "//libraries/guava",
     "@lib//:protobuf",
     "//platform/execution-process-mediator/daemon",
     "//platform/execution-process-mediator/common",
@@ -56,8 +56,7 @@ jvm_library(
     "@lib//:execution-process-mediator-client-grpc-inprocess",
     "//libraries/grpc",
     "//libraries/grpc-netty-shaded",
-  ],
-  runtime_deps = [":client_resources"]
+  ]
 )
 ### auto-generated section `build intellij.execution.process.mediator.client` end
 

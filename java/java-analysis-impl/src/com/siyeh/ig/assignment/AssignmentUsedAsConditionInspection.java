@@ -61,7 +61,7 @@ public final class AssignmentUsedAsConditionInspection extends BaseInspection {
   }
 
   @Override
-  public BaseInspectionVisitor buildVisitor() {
+  public @NotNull BaseInspectionVisitor buildVisitor() {
     return new AssignmentUsedAsConditionVisitor();
   }
 

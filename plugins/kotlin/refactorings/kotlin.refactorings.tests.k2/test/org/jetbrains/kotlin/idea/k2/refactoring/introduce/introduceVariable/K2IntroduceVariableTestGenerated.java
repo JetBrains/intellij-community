@@ -130,45 +130,73 @@ public abstract class K2IntroduceVariableTestGenerated extends AbstractK2Introdu
 
     @RunWith(JUnit3RunnerWithInners.class)
     @TestMetadata("../../idea/tests/testData/refactoring/introduceVariable/explicateTypeArguments")
-    public static class ExplicateTypeArguments extends AbstractK2IntroduceVariableTest {
-        @java.lang.Override
-        @org.jetbrains.annotations.NotNull
-        public final KotlinPluginMode getPluginMode() {
-            return KotlinPluginMode.K2;
+    public abstract static class ExplicateTypeArguments extends AbstractK2IntroduceVariableTest {
+        @RunWith(JUnit3RunnerWithInners.class)
+        @TestMetadata("../../idea/tests/testData/refactoring/introduceVariable/explicateTypeArguments/smartCast")
+        public static class SmartCast extends AbstractK2IntroduceVariableTest {
+            @java.lang.Override
+            @org.jetbrains.annotations.NotNull
+            public final KotlinPluginMode getPluginMode() {
+                return KotlinPluginMode.K2;
+            }
+
+            private void runTest(String testDataFilePath) throws Exception {
+                KotlinTestUtils.runTest(this::doIntroduceVariableTest, this, testDataFilePath);
+            }
+
+            @TestMetadata("smartCastSimple.kt")
+            public void testSmartCastSimple() throws Exception {
+                runTest("../../idea/tests/testData/refactoring/introduceVariable/explicateTypeArguments/smartCast/smartCastSimple.kt");
+            }
+
+            @TestMetadata("smartCastWithIntersectionType.kt")
+            public void testSmartCastWithIntersectionType() throws Exception {
+                runTest("../../idea/tests/testData/refactoring/introduceVariable/explicateTypeArguments/smartCast/smartCastWithIntersectionType.kt");
+            }
         }
 
-        private void runTest(String testDataFilePath) throws Exception {
-            KotlinTestUtils.runTest(this::doIntroduceVariableTest, this, testDataFilePath);
-        }
+        @RunWith(JUnit3RunnerWithInners.class)
+        @TestMetadata("../../idea/tests/testData/refactoring/introduceVariable/explicateTypeArguments")
+        public static class Uncategorized extends AbstractK2IntroduceVariableTest {
+            @java.lang.Override
+            @org.jetbrains.annotations.NotNull
+            public final KotlinPluginMode getPluginMode() {
+                return KotlinPluginMode.K2;
+            }
 
-        @TestMetadata("DeeperNestedCall.kt")
-        public void testDeeperNestedCall() throws Exception {
-            runTest("../../idea/tests/testData/refactoring/introduceVariable/explicateTypeArguments/DeeperNestedCall.kt");
-        }
+            private void runTest(String testDataFilePath) throws Exception {
+                KotlinTestUtils.runTest(this::doIntroduceVariableTest, this, testDataFilePath);
+            }
 
-        @TestMetadata("NestedCall.kt")
-        public void testNestedCall() throws Exception {
-            runTest("../../idea/tests/testData/refactoring/introduceVariable/explicateTypeArguments/NestedCall.kt");
-        }
+            @TestMetadata("DeeperNestedCall.kt")
+            public void testDeeperNestedCall() throws Exception {
+                runTest("../../idea/tests/testData/refactoring/introduceVariable/explicateTypeArguments/DeeperNestedCall.kt");
+            }
 
-        @TestMetadata("Parenthesized.kt")
-        public void testParenthesized() throws Exception {
-            runTest("../../idea/tests/testData/refactoring/introduceVariable/explicateTypeArguments/Parenthesized.kt");
-        }
+            @TestMetadata("NestedCall.kt")
+            public void testNestedCall() throws Exception {
+                runTest("../../idea/tests/testData/refactoring/introduceVariable/explicateTypeArguments/NestedCall.kt");
+            }
 
-        @TestMetadata("Qualified.kt")
-        public void testQualified() throws Exception {
-            runTest("../../idea/tests/testData/refactoring/introduceVariable/explicateTypeArguments/Qualified.kt");
-        }
+            @TestMetadata("Parenthesized.kt")
+            public void testParenthesized() throws Exception {
+                runTest("../../idea/tests/testData/refactoring/introduceVariable/explicateTypeArguments/Parenthesized.kt");
+            }
 
-        @TestMetadata("Simple.kt")
-        public void testSimple() throws Exception {
-            runTest("../../idea/tests/testData/refactoring/introduceVariable/explicateTypeArguments/Simple.kt");
-        }
+            @TestMetadata("Qualified.kt")
+            public void testQualified() throws Exception {
+                runTest("../../idea/tests/testData/refactoring/introduceVariable/explicateTypeArguments/Qualified.kt");
+            }
 
-        @TestMetadata("UnmatchedOccurrences.kt")
-        public void testUnmatchedOccurrences() throws Exception {
-            runTest("../../idea/tests/testData/refactoring/introduceVariable/explicateTypeArguments/UnmatchedOccurrences.kt");
+            @TestMetadata("Simple.kt")
+            public void testSimple() throws Exception {
+                runTest("../../idea/tests/testData/refactoring/introduceVariable/explicateTypeArguments/Simple.kt");
+            }
+
+            @TestMetadata("UnmatchedOccurrences.kt")
+            public void testUnmatchedOccurrences() throws Exception {
+                runTest("../../idea/tests/testData/refactoring/introduceVariable/explicateTypeArguments/UnmatchedOccurrences.kt");
+            }
         }
     }
 
@@ -225,6 +253,11 @@ public abstract class K2IntroduceVariableTestGenerated extends AbstractK2Introdu
             runTest("../../idea/tests/testData/refactoring/introduceVariable/extractToScope/insideNestedLamba.kt");
         }
 
+        @TestMetadata("insideNestedLambdaAllOccurrences.kt")
+        public void testInsideNestedLambdaAllOccurrences() throws Exception {
+            runTest("../../idea/tests/testData/refactoring/introduceVariable/extractToScope/insideNestedLambdaAllOccurrences.kt");
+        }
+
         @TestMetadata("insideNestedLambdaInFunExpression.kt")
         public void testInsideNestedLambdaInFunExpression() throws Exception {
             runTest("../../idea/tests/testData/refactoring/introduceVariable/extractToScope/insideNestedLambdaInFunExpression.kt");
@@ -233,11 +266,6 @@ public abstract class K2IntroduceVariableTestGenerated extends AbstractK2Introdu
         @TestMetadata("itInsideNestedLamba.kt")
         public void testItInsideNestedLamba() throws Exception {
             runTest("../../idea/tests/testData/refactoring/introduceVariable/extractToScope/itInsideNestedLamba.kt");
-        }
-
-        @TestMetadata("KTIJ-17001.kt")
-        public void testKTIJ_17001() throws Exception {
-            runTest("../../idea/tests/testData/refactoring/introduceVariable/extractToScope/KTIJ-17001.kt");
         }
 
         @TestMetadata("outerItInsideNestedLamba.kt")
@@ -904,6 +932,16 @@ public abstract class K2IntroduceVariableTestGenerated extends AbstractK2Introdu
             runTest("../../idea/tests/testData/refactoring/introduceVariable/IntroduceDestructuringDeclarationAndCreateBlock.kt");
         }
 
+        @TestMetadata("IntroduceInsideClassAllOccurrencesExpression.kt")
+        public void testIntroduceInsideClassAllOccurrencesExpression() throws Exception {
+            runTest("../../idea/tests/testData/refactoring/introduceVariable/IntroduceInsideClassAllOccurrencesExpression.kt");
+        }
+
+        @TestMetadata("IntroduceInsideClassAllOccurrencesLiteral.kt")
+        public void testIntroduceInsideClassAllOccurrencesLiteral() throws Exception {
+            runTest("../../idea/tests/testData/refactoring/introduceVariable/IntroduceInsideClassAllOccurrencesLiteral.kt");
+        }
+
         @TestMetadata("IntroduceLambdaAndCreateBlock.kt")
         public void testIntroduceLambdaAndCreateBlock() throws Exception {
             runTest("../../idea/tests/testData/refactoring/introduceVariable/IntroduceLambdaAndCreateBlock.kt");
@@ -937,21 +975,6 @@ public abstract class K2IntroduceVariableTestGenerated extends AbstractK2Introdu
         @TestMetadata("javaInnerClassQualifier.kt")
         public void testJavaInnerClassQualifier() throws Exception {
             runTest("../../idea/tests/testData/refactoring/introduceVariable/javaInnerClassQualifier.kt");
-        }
-
-        @TestMetadata("KTIJ-14455.kt")
-        public void testKTIJ_14455() throws Exception {
-            runTest("../../idea/tests/testData/refactoring/introduceVariable/KTIJ-14455.kt");
-        }
-
-        @TestMetadata("KTIJ-6396.kt")
-        public void testKTIJ_6396() throws Exception {
-            runTest("../../idea/tests/testData/refactoring/introduceVariable/KTIJ-6396.kt");
-        }
-
-        @TestMetadata("KTIJ-9043.kt")
-        public void testKTIJ_9043() throws Exception {
-            runTest("../../idea/tests/testData/refactoring/introduceVariable/KTIJ-9043.kt");
         }
 
         @TestMetadata("kt10808.kt")
@@ -1107,6 +1130,16 @@ public abstract class K2IntroduceVariableTestGenerated extends AbstractK2Introdu
         @TestMetadata("OneExplicitReceiver.kt")
         public void testOneExplicitReceiver() throws Exception {
             runTest("../../idea/tests/testData/refactoring/introduceVariable/OneExplicitReceiver.kt");
+        }
+
+        @TestMetadata("parenthesizedInIfBranchWithoutBraces.kt")
+        public void testParenthesizedInIfBranchWithoutBraces() throws Exception {
+            runTest("../../idea/tests/testData/refactoring/introduceVariable/parenthesizedInIfBranchWithoutBraces.kt");
+        }
+
+        @TestMetadata("parenthesizedInWhenBranch.kt")
+        public void testParenthesizedInWhenBranch() throws Exception {
+            runTest("../../idea/tests/testData/refactoring/introduceVariable/parenthesizedInWhenBranch.kt");
         }
 
         @TestMetadata("PropertyAccessorAddBlock.kt")

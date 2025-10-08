@@ -135,6 +135,8 @@ object LookupModelConverter {
                         is Class<*> -> UserDataValueModel.ClassModel(value.name)
                         is Int -> UserDataValueModel.IntModel(value)
                         is Long -> UserDataValueModel.LongModel(value)
+                        is Float -> UserDataValueModel.FloatModel(value)
+                        is Double -> UserDataValueModel.DoubleModel(value)
                         is Name -> UserDataValueModel.NameModel(value)
                         is PsiReference -> UserDataValueModel.PsiReferenceModel.create(value)
                         else -> {
@@ -172,6 +174,8 @@ object LookupModelConverter {
                 is UserDataValueModel.ClassModel -> Class.forName(v.className)
                 is UserDataValueModel.IntModel -> v.value
                 is UserDataValueModel.LongModel -> v.value
+                is UserDataValueModel.FloatModel -> v.value
+                is UserDataValueModel.DoubleModel -> v.value
                 is UserDataValueModel.NameModel -> v.name
                 is UserDataValueModel.PsiReferenceModel -> v.restore(project)
             }

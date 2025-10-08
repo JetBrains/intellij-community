@@ -132,7 +132,11 @@ open class InlayButtonPresentationFactory(
     }
 
     fun withTooltip(tooltip: @NlsContexts.Tooltip String): InlayButtonPresentationBuilder {
-      presentation = factory.delegate.withTooltip(tooltip, presentation)
+      return withTooltip(tooltip, showAbove = true)
+    }
+
+    fun withTooltip(tooltip: @NlsContexts.Tooltip String, showAbove: Boolean): InlayButtonPresentationBuilder {
+      presentation = factory.delegate.withTooltip(tooltip, presentation, showAbove)
       return this
     }
 

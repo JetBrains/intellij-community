@@ -2,6 +2,7 @@
 package org.jetbrains.plugins.groovy.lang.psi.api.statements;
 
 import com.intellij.openapi.util.NlsSafe;
+import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiType;
 import com.intellij.psi.PsiVariable;
 import com.intellij.util.ArrayFactory;
@@ -9,10 +10,14 @@ import com.intellij.util.IncorrectOperationException;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+import org.jetbrains.plugins.groovy.config.GroovyConfigUtils;
 import org.jetbrains.plugins.groovy.lang.psi.GrNamedElement;
+import org.jetbrains.plugins.groovy.lang.psi.api.GrLambdaExpression;
 import org.jetbrains.plugins.groovy.lang.psi.api.auxiliary.modifiers.GrModifier.GrModifierConstant;
 import org.jetbrains.plugins.groovy.lang.psi.api.auxiliary.modifiers.GrModifierList;
+import org.jetbrains.plugins.groovy.lang.psi.api.statements.blocks.GrClosableBlock;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrExpression;
+import org.jetbrains.plugins.groovy.lang.psi.api.statements.params.GrParameterList;
 import org.jetbrains.plugins.groovy.lang.psi.api.types.GrTypeElement;
 
 public interface GrVariable extends PsiVariable, GrNamedElement {
@@ -50,6 +55,28 @@ public interface GrVariable extends PsiVariable, GrNamedElement {
   default @Nullable PsiType getInitializerType() {
     GrExpression initializer = getInitializerGroovy();
     return initializer == null ? null : initializer.getType();
+  }
+
+  /**
+   * Checks whether this variable is an unnamed variable. A variable is considered unnamed if it is
+   * located inside a variable declaration list or parameter of lambda expression and a version of Groovy is >= 5.
+   * Some examples:
+   * <ul>
+   *   <li>{@code def (a, _) = [1, 2] }</li>
+   *   <li>{@code def x = (a, _) -> a}</li>
+   *   <li>{@code def x = {a, _ -> a}}</li>
+   * </ul>
+   */
+  @Override
+  default boolean isUnnamed() {
+    if (!GroovyConfigUtils.isAtLeastGroovy50(this)) return false;
+    if (!getName().equals("_")) return false;
+    PsiElement parent = getParent();
+
+    if (parent instanceof GrVariableDeclaration variableDeclaration && variableDeclaration.isTuple()) return true;
+    PsiElement grandParent = parent.getParent();
+    return parent instanceof GrParameterList &&
+           (grandParent instanceof GrLambdaExpression || grandParent instanceof GrClosableBlock);
   }
 
   @Nullable PsiType getTypeGroovy();

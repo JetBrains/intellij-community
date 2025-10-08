@@ -6,16 +6,14 @@
   <module value="com.intellij.platform.ide.provisioner"/>
   <!-- for compatibility -->
 
-  <content>
+  <content namespace="jetbrains">
     <module name="intellij.platform.ide.newUiOnboarding"/>
     <module name="intellij.ide.startup.importSettings"/>
     <module name="intellij.platform.tips"/>
-    <module name="intellij.rd.ide.model.generated"/>
-    <module name="intellij.rd.platform"/>
-    <module name="intellij.rd.ui"/>
   </content>
 
   <xi:include href="/META-INF/common-ide-modules.xml"/>
+  <xi:include href="/META-INF/rd-common-modules.xml"/>
 
   <!--suppress XmlPathReference -->
   <xi:include href="/META-INF/community-extensions.xml">
@@ -33,6 +31,7 @@
     <applicationService serviceInterface="com.intellij.platform.ide.customization.ExternalProductResourceUrls"
                         serviceImplementation="com.intellij.pycharm.community.customization.PyCharmExternalResourceUrls"
                         overrides="true"/>
+    <defaultToolWindowLayout implementation="com.intellij.pycharm.community.customization.PyToolWindowLayoutProvider" order="last"/>
     <ide.newUiOnboarding ideHelpName="pycharm">
       <remove stepId="codeWithMe"/>
     </ide.newUiOnboarding>

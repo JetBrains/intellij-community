@@ -12,6 +12,7 @@ import com.intellij.util.ArrayUtil;
 import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+import org.jetbrains.annotations.Unmodifiable;
 
 import java.util.ArrayList;
 import java.util.Collections;
@@ -97,7 +98,7 @@ public final class TextChunk {
     return result;
   }
 
-  private static @NotNull Object replaceDefaultAttributeChunksWithStrings(@NotNull List<@NotNull TextChunk> chunks) {
+  private static @NotNull Object replaceDefaultAttributeChunksWithStrings(@NotNull @Unmodifiable List<@NotNull TextChunk> chunks) {
     AttributesFlyweight defaultFlyweight = defaultAttributes().getFlyweight();
     if (ContainerUtil.and(chunks, chunk -> !chunk.myAttributes.equals(defaultFlyweight))) {
       return chunks.size() == 1

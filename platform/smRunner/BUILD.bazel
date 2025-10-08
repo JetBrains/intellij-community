@@ -1,9 +1,9 @@
 ### auto-generated section `build intellij.platform.smRunner` start
-load("@rules_jvm//:jvm.bzl", "jvm_library", "jvm_resources")
+load("@rules_jvm//:jvm.bzl", "jvm_library", "resourcegroup")
 
-jvm_resources(
+resourcegroup(
   name = "smRunner_resources",
-  files = glob(["resources/**/*"]),
+  srcs = glob(["resources/**/*"]),
   strip_prefix = "resources"
 )
 
@@ -12,6 +12,7 @@ jvm_library(
   module_name = "intellij.platform.smRunner",
   visibility = ["//visibility:public"],
   srcs = glob(["src/**/*.kt", "src/**/*.java", "src/**/*.form"], allow_empty = True),
+  resources = [":smRunner_resources"],
   deps = [
     "@lib//:kotlin-stdlib",
     "//platform/analysis-api:analysis",
@@ -28,7 +29,7 @@ jvm_library(
     "@lib//:tc_service_messages",
     "//platform/platform-impl/concurrency",
     "//platform/lang-api:lang",
-    "@lib//:fastutil-min",
+    "//libraries/fastutil",
     "//platform/core-ui",
     "//platform/ide-core-impl",
     "//platform/platform-util-io:ide-util-io",
@@ -37,8 +38,7 @@ jvm_library(
   exports = [
     "//platform/testRunner",
     "@lib//:tc_service_messages",
-  ],
-  runtime_deps = [":smRunner_resources"]
+  ]
 )
 
 jvm_library(
@@ -69,7 +69,7 @@ jvm_library(
     "//platform/testFramework",
     "//platform/testFramework:testFramework_test_lib",
     "//platform/lang-api:lang",
-    "@lib//:fastutil-min",
+    "//libraries/fastutil",
     "//platform/core-ui",
     "//platform/ide-core-impl",
     "//platform/platform-util-io:ide-util-io",
@@ -82,8 +82,7 @@ jvm_library(
     "//platform/testRunner",
     "//platform/testRunner:testRunner_test_lib",
     "@lib//:tc_service_messages",
-  ],
-  runtime_deps = [":smRunner_resources"]
+  ]
 )
 ### auto-generated section `build intellij.platform.smRunner` end
 

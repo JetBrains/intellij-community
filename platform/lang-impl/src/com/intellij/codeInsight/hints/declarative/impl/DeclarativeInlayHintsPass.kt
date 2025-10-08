@@ -35,14 +35,17 @@ class DeclarativeInlayHintsPass(
   private val isProviderDisabled: Boolean = false
 ) : EditorBoundHighlightingPass(editor, rootElement.containingFile, true), DumbAware {
   private var preprocessedInlayData: PreprocessedInlayData = PreprocessedInlayData.EMPTY
+  private var ignoredProviderIds: Set<String> = emptySet()
 
   override fun doCollectInformation(progress: ProgressIndicator) {
     val ownCollectors = ArrayList<CollectionInfo<OwnBypassCollector>>()
     val sharedCollectors = ArrayList<CollectionInfo<SharedBypassCollector>>()
     val sinks = ArrayList<InlayTreeSinkImpl>()
+    val ignoredProviderIds = mutableSetOf<String>()
     for (providerInfo in providerInfos) {
       val provider = providerInfo.provider
       if (DumbService.isDumb(myProject) && !DumbService.isDumbAware(provider)) {
+        ignoredProviderIds.add(providerInfo.providerId)
         continue
       }
 
@@ -66,6 +69,7 @@ class DeclarativeInlayHintsPass(
     }
 
     preprocessedInlayData = preprocessCollectedInlayData(sinks.flatMap { it.finish() }, document)
+    this.ignoredProviderIds = ignoredProviderIds
   }
 
   private data class CollectionInfo<T>(
@@ -93,7 +97,7 @@ class DeclarativeInlayHintsPass(
   override fun doApplyInformationToEditor() {
     val positionKeeper = EditorScrollingPositionKeeper(editor)
     positionKeeper.savePosition()
-    applyInlayData(editor, myFile.project, preprocessedInlayData, passSourceId)
+    applyInlayData(editor, myFile.project, preprocessedInlayData, ignoredProviderIds, passSourceId)
     positionKeeper.restorePosition(false)
   }
 
@@ -103,21 +107,27 @@ class DeclarativeInlayHintsPass(
 
     @RequiresEdt
     @ApiStatus.Internal
-    fun applyInlayData(editor: Editor, project: Project, preprocessedInlayData: PreprocessedInlayData, sourceId: String) {
+    fun applyInlayData(
+      editor: Editor,
+      project: Project,
+      preprocessedInlayData: PreprocessedInlayData,
+      ignoredProviderIds: Set<String>,
+      sourceId: String,
+    ) {
       val inlayModel = editor.inlayModel
       val document = editor.document
       val offsetToExistingInlineInlays = groupRelevantExistingInlays(
-        sourceId,
+        filter = { it.renderer.sourceId == sourceId && it.renderer.providerId !in ignoredProviderIds },
         inlayModel.getInlineElementsInRange(0, document.textLength, DeclarativeInlayRenderer::class.java),
         groupKey = { inlay -> inlay.offset }
       )
       val offsetToExistingEolInlays = groupRelevantExistingInlays(
-        sourceId,
+        filter = { it.renderer.sourceId == sourceId && it.renderer.providerId !in ignoredProviderIds },
         inlayModel.getAfterLineEndElementsInRange(0, document.textLength, DeclarativeInlayRenderer::class.java),
         groupKey = { inlay -> inlay.offset }
       )
       val offsetToExistingBlockInlays = groupRelevantExistingInlays(
-        sourceId,
+        filter = { it.renderer.sourceId == sourceId && it.renderer.providerId !in ignoredProviderIds },
         inlayModel.getBlockElementsInRange(0, document.textLength, DeclarativeIndentedBlockInlayRenderer::class.java),
         groupKey = { inlay -> document.getLineNumber(inlay.offset) }
       )
@@ -305,14 +315,14 @@ class DeclarativeInlayHintsPass(
   }
 }
 
-private fun <Rend : DeclarativeInlayRendererBase<*>> groupRelevantExistingInlays(
-  sourceId: String,
+private inline fun <Rend : DeclarativeInlayRendererBase<*>> groupRelevantExistingInlays(
+  filter: (existingInlay: Inlay<out Rend>) -> Boolean,
   inlays: List<Inlay<out Rend>>,
   groupKey: (Inlay<*>) -> Int
 ): Int2ObjectOpenHashMap<SmartList<Inlay<out Rend>>> {
   val grouped = Int2ObjectOpenHashMap<SmartList<Inlay<out Rend>>>()
   for (inlay in inlays) {
-    if (inlay.renderer.sourceId != sourceId) continue
+    if (!filter(inlay)) continue
     val key = groupKey(inlay)
     grouped.computeIfAbsent(key, IntFunction { SmartList() }).add(inlay)
   }

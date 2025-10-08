@@ -29,3 +29,5 @@ fun main() {
 
 // EXPRESSION: MyClass().foo()
 // RESULT: 8: I
+
+// SKIP_WRONG_DIRECTIVE_CHECK

@@ -7,8 +7,8 @@ import com.intellij.openapi.actionSystem.DataContext
 import com.intellij.openapi.editor.Caret
 import com.intellij.openapi.editor.Editor
 import com.intellij.openapi.editor.actionSystem.EditorActionHandler
-import com.intellij.terminal.frontend.TerminalSearchController
 import com.intellij.terminal.frontend.action.TerminalFrontendDataContextUtils.terminalSearchController
+import com.intellij.terminal.frontend.view.impl.TerminalSearchController
 import org.jetbrains.plugins.terminal.block.BlockTerminalController
 import org.jetbrains.plugins.terminal.block.TerminalPromotedDumbAwareAction
 import org.jetbrains.plugins.terminal.block.util.TerminalDataContextUtils.blockTerminalController

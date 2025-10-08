@@ -6,6 +6,12 @@ import com.intellij.codeInsight.template.impl.InvokeTemplateAction;
 import com.intellij.codeInsight.template.impl.SurroundWithTemplateHandler;
 import com.intellij.codeInsight.template.impl.TemplateImpl;
 import com.intellij.openapi.actionSystem.AnAction;
+import com.intellij.openapi.util.Disposer;
+import com.intellij.openapi.util.Ref;
+import com.intellij.testFramework.PlatformTestUtil;
+import com.intellij.ui.UiInterceptors;
+import com.intellij.ui.popup.PopupFactoryImpl;
+import com.intellij.ui.popup.list.ListPopupModel;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.HashSet;
@@ -57,10 +63,43 @@ public class XmlSurroundWithTest extends MarkupSurroundTestBase {
 
   public void testSurroundWithTagFirstElement() {
     myFixture.configureByFile(BASE_PATH + "tag/Xml.xml");
-    AnAction firstAction = SurroundWithTemplateHandler.createActionGroup(myFixture.getEditor(), myFixture.getFile(), new HashSet<>()).get(0);
+    AnAction firstAction =
+      SurroundWithTemplateHandler.createActionGroup(myFixture.getEditor(), myFixture.getFile(), new HashSet<>()).get(0);
     assertInstanceOf(firstAction, InvokeTemplateAction.class);
     TemplateImpl template = ((InvokeTemplateAction)firstAction).getTemplate();
     assertEquals("T", template.getKey());
+  }
+
+  public void testSurroundWithAction() throws InterruptedException {
+    myFixture.configureByText("foo.html", "<selection>some text</selection>");
+    myFixture.performEditorAction("SurroundWith");
+    var ref = new Ref<PopupFactoryImpl.ActionGroupPopup>();
+    UiInterceptors.register(new UiInterceptors.UiInterceptor<>(PopupFactoryImpl.ActionGroupPopup.class) {
+      @Override
+      protected void doIntercept(PopupFactoryImpl.@NotNull ActionGroupPopup component) {
+        ref.set(component);
+      }
+    });
+    var startTime = System.currentTimeMillis();
+    while (ref.isNull()) {
+      PlatformTestUtil.dispatchAllInvocationEventsInIdeEventQueue();
+      //noinspection BusyWait
+      Thread.sleep(1);
+      if (startTime + 5000 < System.currentTimeMillis()) {
+        throw new AssertionError("Popup not shown");
+      }
+    }
+    try {
+      var model = (ListPopupModel<?>)ref.get().getList().getModel();
+      for (int i = 0; i < model.getSize(); i++) {
+        if (model.getElementAt(i).toString().contains("Surround with <tag></tag>")) {
+          return;
+        }
+      }
+      throw new AssertionError("Surround with <tag></tag> action not found");
+    } finally {
+      Disposer.dispose(ref.get());
+    }
   }
 
   private void doHtmlSurroundWithTagViaSurroundPopup(String tag) {
@@ -69,7 +108,7 @@ public class XmlSurroundWithTest extends MarkupSurroundTestBase {
     List<AnAction> actions = SurroundWithHandler.buildSurroundActions(getProject(), myFixture.getEditor(), myFixture.getFile());
     Optional<InvokeTemplateAction> surroundWithTagAction = actions.stream()
       .filter(it -> it instanceof InvokeTemplateAction)
-      .map(it -> (InvokeTemplateAction) it)
+      .map(it -> (InvokeTemplateAction)it)
       .filter(it -> it.getTemplateText().toLowerCase(Locale.ROOT).contains("surround with <tag>"))
       .findFirst();
     assertTrue(surroundWithTagAction.isPresent());

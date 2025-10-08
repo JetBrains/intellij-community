@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 @file:JvmName("ActionUpdaterKt")
 @file:OptIn(IntellijInternalApi::class)
 
@@ -35,6 +35,7 @@ import com.intellij.platform.diagnostic.telemetry.helpers.useWithScope
 import com.intellij.platform.ide.CoreUiCoroutineScopeHolder
 import com.intellij.platform.util.coroutines.childScope
 import com.intellij.util.*
+import com.intellij.util.concurrency.ThreadingAssertions
 import com.intellij.util.concurrency.annotations.RequiresBackgroundThread
 import com.intellij.util.concurrency.annotations.RequiresEdt
 import com.intellij.util.containers.FList
@@ -447,6 +448,7 @@ internal class ActionUpdater @JvmOverloads constructor(
     val deferred = scope.async(
       currentCoroutineContext().minusKey(Job) +
       CoroutineName("computeOnEdt ($place)") + edtDispatcher) {
+      // we downgrade access to read to not allow accidental clients that rely on write-intent
       runReadAction { // will immediately succeed because lock is parallelized here
         supplier()
       }

@@ -22,6 +22,8 @@ com.intellij.codeInsight.completion.CompletionLookupArranger
 - a:addElement(com.intellij.codeInsight.lookup.LookupElement,com.intellij.codeInsight.completion.CompletionSorter,com.intellij.codeInsight.completion.PrefixMatcher,com.intellij.codeInsight.lookup.LookupElementPresentation):V
 - a:arrangeItems():com.intellij.openapi.util.Pair
 - a:itemMatcher(com.intellij.codeInsight.lookup.LookupElement):com.intellij.codeInsight.completion.PrefixMatcher
+c:com.intellij.codeInsight.daemon.DaemonCodeAnalyzerSettings
+- sf:AUTOREPARSE_DELAY_DEFAULT:I
 com.intellij.codeInsight.daemon.ReferenceImporter
 - sf:EP_NAME:com.intellij.openapi.extensions.ExtensionPointName
 - autoImportReferenceAtCursor(com.intellij.openapi.editor.Editor,com.intellij.psi.PsiFile):Z
@@ -202,6 +204,9 @@ com.intellij.codeInspection.InspectionToolResultExporter
 - a:suppressProblem(com.intellij.codeInspection.CommonProblemDescriptor):V
 - a:suppressProblem(com.intellij.codeInspection.reference.RefEntity):V
 - a:updateContent():V
+c:com.intellij.codeInspection.ProblemDescriptorBase
+- <init>(com.intellij.psi.PsiElement,com.intellij.psi.PsiElement,java.lang.String,com.intellij.codeInspection.LocalQuickFix[],com.intellij.codeInspection.ProblemHighlightType,Z,com.intellij.openapi.util.TextRange,Z,Z,java.lang.String):V
+- getTooltipTemplate():java.lang.String
 com.intellij.codeInspection.dataFlow.interpreter.DataFlowInterpreter
 - a:cancel():V
 - a:createClosureState(com.intellij.psi.PsiElement,com.intellij.codeInspection.dataFlow.memory.DfaMemoryState):V

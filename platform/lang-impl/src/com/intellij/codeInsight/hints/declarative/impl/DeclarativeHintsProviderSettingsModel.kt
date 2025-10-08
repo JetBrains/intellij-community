@@ -154,7 +154,7 @@ class DeclarativeHintsProviderSettingsModel(
     val inlayData = sink.finish()
     val preprocessed = DeclarativeInlayHintsPass.preprocessCollectedInlayData(inlayData, editor.document)
     return Runnable {
-      DeclarativeInlayHintsPass.applyInlayData(editor, project, preprocessed, sourceId)
+      DeclarativeInlayHintsPass.applyInlayData(editor, project, preprocessed, emptySet(), sourceId)
     }
   }
 

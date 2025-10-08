@@ -26,7 +26,7 @@ jvm_library(
     "@lib//:kotlinc-kotlin-compiler-ir",
     "@lib//:kotlinc-kotlin-jps-common",
     "@lib//:kotlinx-coroutines-core",
-    "@lib//:guava",
+    "//libraries/guava",
     "//java/java-indexing-api:indexing",
     "//platform/analysis-api:analysis",
     "//platform/code-style-api:codeStyle",

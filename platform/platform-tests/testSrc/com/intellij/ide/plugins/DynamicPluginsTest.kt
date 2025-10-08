@@ -10,6 +10,9 @@ import com.intellij.codeInspection.InspectionEP
 import com.intellij.codeInspection.ex.InspectionToolRegistrar
 import com.intellij.ide.actions.ContextHelpAction
 import com.intellij.ide.plugins.cl.PluginClassLoader
+import com.intellij.ide.plugins.testPluginSrc.IJPL207058.DefaultService
+import com.intellij.ide.plugins.testPluginSrc.IJPL207058.ServiceInterface
+import com.intellij.ide.plugins.testPluginSrc.IJPL207058.module.OverriddenService
 import com.intellij.ide.plugins.testPluginSrc.bar.BarAction
 import com.intellij.ide.plugins.testPluginSrc.bar.BarService
 import com.intellij.ide.plugins.testPluginSrc.foo.FooAction
@@ -68,6 +71,7 @@ import com.intellij.util.io.directoryContent
 import com.intellij.util.io.java.classFile
 import com.intellij.util.ui.UIUtil
 import com.intellij.util.xmlb.annotations.Attribute
+import org.junit.Ignore
 import org.junit.Rule
 import org.junit.Test
 import java.nio.file.Path
@@ -348,7 +352,7 @@ class DynamicPluginsTest {
       content {
         module("intellij.foo.one.module1") {
           packagePrefix = "org.foo"
-          dependencies { module(pluginTwoBuilder.id!!) } // TODO this shouldn't work o_O
+          dependencies { plugin(pluginTwoBuilder.id!!) }
           extensions("""<barExtension key="foo" implementationClass="y"/>""", "bar")
         }
       }
@@ -1137,6 +1141,30 @@ class DynamicPluginsTest {
         assertThat(PluginManagerCore.getPluginSet().buildContentModuleIdMap().contains(PluginModuleId("foo.a"))).isTrue
       }
     }
+  }
+
+  @Ignore // FIXME
+  @Test // IJPL-207058
+  fun `dynamic load of a plugin with service overrides is declined`() {
+    plugin("foo") {
+      content {
+        module("foo.module") {
+          extensions("""
+            <applicationService interface="${ServiceInterface::class.qualifiedName}" 
+                                implementation="${OverriddenService::class.qualifiedName}"
+                                overrides="true"/>
+          """.trimIndent())
+          includePackageClassFiles<OverriddenService>()
+        }
+      }
+      extensions("""
+        <applicationService interface="${ServiceInterface::class.qualifiedName}" 
+                            implementation="${DefaultService::class.qualifiedName}"/>
+      """.trimIndent())
+      includePackageClassFiles<DefaultService>()
+    }.buildDir(pluginsDir.resolve("foo"))
+    val foo = loadDescriptorInTest(pluginsDir.resolve("foo"))
+    assertThat(DynamicPlugins.loadPlugin(foo)).isFalse
   }
 }
 

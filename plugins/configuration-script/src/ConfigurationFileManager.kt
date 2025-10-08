@@ -37,7 +37,8 @@ internal class ConfigurationFileManager(project: Project): Disposable {
     if (!TrustedProjects.isProjectTrusted(project)) {
       return@SynchronizedClearableLazy null
     }
-    val projectIdeaDir = Paths.get(project.basePath ?: return@SynchronizedClearableLazy null)
+
+    val projectIdeaDir = Path.of(project.basePath ?: return@SynchronizedClearableLazy null)
     readProjectConfigurationFile(projectIdeaDir)
   }
 
@@ -117,7 +118,7 @@ internal fun doRead(reader: Reader): MappingNode? {
       .setUseMarks(false)
       .setSchema(FailsafeSchema())
       .build()
-    val parser = ParserImpl(settings, StreamReader(settings, it))
+    val parser = ParserImpl(settings, StreamReader(settings, reader))
     return Composer(settings, parser).singleNode.orElse(null) as? MappingNode
   }
 }

@@ -105,7 +105,7 @@ class Maven4ModelVersionErrorParser(
       val path = Path(fileName)
       if (pathChecker(path)) {
         val modelAndOffset = getModelFromPath(project, path)
-        if (modelAndOffset == null || modelAndOffset.first == "4.0.0")
+        if (modelAndOffset == null || modelAndOffset.first == MavenConstants.MODEL_VERSION_4_0_0)
           return newBuildIssue(logLine, path, modelAndOffset?.second)
       }
     }

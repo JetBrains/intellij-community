@@ -1,15 +1,15 @@
 ### auto-generated section `build intellij.xml.psi.impl` start
-load("@rules_jvm//:jvm.bzl", "jvm_library", "jvm_resources")
+load("@rules_jvm//:jvm.bzl", "jvm_library", "resourcegroup")
 
-jvm_resources(
+resourcegroup(
   name = "psi-impl_resources",
-  files = glob(["resources/**/*"]),
+  srcs = glob(["resources/**/*"]),
   strip_prefix = "resources"
 )
 
-jvm_resources(
+resourcegroup(
   name = "psi-impl_resources_1",
-  files = glob(["resources-gen/**/*"]),
+  srcs = glob(["resources-gen/**/*"]),
   strip_prefix = "resources-gen"
 )
 
@@ -18,6 +18,10 @@ jvm_library(
   module_name = "intellij.xml.psi.impl",
   visibility = ["//visibility:public"],
   srcs = glob(["src/**/*.kt", "src/**/*.java", "src/**/*.form", "gen/**/*.kt", "gen/**/*.java"], allow_empty = True),
+  resources = [
+    ":psi-impl_resources",
+    ":psi-impl_resources_1",
+  ],
   deps = [
     "//platform/analysis-api:analysis",
     "//platform/util/concurrency",
@@ -33,11 +37,11 @@ jvm_library(
     "//platform/lang-impl",
     "@lib//:xml-resolver",
     "//platform/util:util-ui",
-    "@lib//:fastutil-min",
-    "@lib//:jackson",
-    "@lib//:jackson-databind",
-    "@lib//:jackson-module-kotlin",
-    "@lib//:caffeine",
+    "//libraries/fastutil",
+    "//libraries/jackson/jackson",
+    "//libraries/jackson/databind",
+    "//libraries/jackson/module-kotlin:libraries-jackson-module-kotlin",
+    "//libraries/caffeine",
     "//platform/util/jdom",
     "//platform/markdown-utils",
     "//platform/polySymbols",
@@ -45,10 +49,6 @@ jvm_library(
     "//platform/syntax/syntax-psi:psi",
     "//xml/xml-syntax:syntax",
     "//platform/platform-impl:ide-impl",
-  ],
-  runtime_deps = [
-    ":psi-impl_resources",
-    ":psi-impl_resources_1",
   ]
 )
 ### auto-generated section `build intellij.xml.psi.impl` end

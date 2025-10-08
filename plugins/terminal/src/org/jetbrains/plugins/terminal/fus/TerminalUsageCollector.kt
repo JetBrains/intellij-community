@@ -20,7 +20,7 @@ import kotlin.time.Duration
 object TerminalUsageTriggerCollector : CounterUsagesCollector() {
   override fun getGroup(): EventLogGroup = GROUP
 
-  private val GROUP = EventLogGroup(GROUP_ID, 29)
+  private val GROUP = EventLogGroup(GROUP_ID, 30)
 
   private val TERMINAL_COMMAND_HANDLER_FIELD = EventFields.Class("terminalCommandHandler")
   private val RUN_ANYTHING_PROVIDER_FIELD = EventFields.Class("runAnythingProvider")
@@ -78,16 +78,6 @@ object TerminalUsageTriggerCollector : CounterUsagesCollector() {
                                                                TerminalCommandUsageStatistics.subCommandField,
                                                                EXIT_CODE_FIELD,
                                                                EXECUTION_TIME_FIELD)
-
-  private val promotionShownEvent = GROUP.registerEvent("promotion.shown")
-  private val promotionGotItClickedEvent = GROUP.registerEvent("promotion.got.it.clicked")
-
-  private val blockTerminalSwitchedEvent = GROUP.registerEvent("new.terminal.switched",
-                                                               EventFields.Boolean("enabled"),
-                                                               EventFields.Enum<BlockTerminalSwitchPlace>("switch_place"))
-  private val feedbackSurveyEvent = GROUP.registerEvent("feedback.event.happened",
-                                                        EventFields.Enum<TerminalFeedbackEvent>("event_type"),
-                                                        EventFields.Enum<TerminalFeedbackMoment>("moment"))
 
   private val commandGenerationEvent = GROUP.registerEvent("command.generation.event.happened",
                                                            EventFields.Enum<TerminalCommandGenerationEvent>("event_type"),
@@ -169,39 +159,9 @@ object TerminalUsageTriggerCollector : CounterUsagesCollector() {
                           TerminalShellInfoStatistics.isBashItField with shellInfo.isBashIt)
   }
 
-  internal fun triggerPromotionShown(project: Project) {
-    promotionShownEvent.log(project)
-  }
-
-  internal fun triggerPromotionGotItClicked(project: Project) {
-    promotionGotItClickedEvent.log(project)
-  }
-
-  @JvmStatic
-  fun triggerBlockTerminalSwitched(project: Project, enabled: Boolean, place: BlockTerminalSwitchPlace) {
-    blockTerminalSwitchedEvent.log(project, enabled, place)
-  }
-
-  internal fun triggerFeedbackSurveyEvent(project: Project, event: TerminalFeedbackEvent, moment: TerminalFeedbackMoment) {
-    feedbackSurveyEvent.log(project, event, moment)
-  }
-
   fun triggerCommandGenerationEvent(project: Project, event: TerminalCommandGenerationEvent) {
     commandGenerationEvent.log(project, event)
   }
-}
-
-@ApiStatus.Internal
-enum class BlockTerminalSwitchPlace {
-  SETTINGS, TOOLWINDOW_OPTIONS
-}
-
-internal enum class TerminalFeedbackEvent {
-  NOTIFICATION_SHOWN, DIALOG_SHOWN, FEEDBACK_SENT
-}
-
-internal enum class TerminalFeedbackMoment {
-  ON_DISABLING, AFTER_USAGE
 }
 
 @ApiStatus.Internal

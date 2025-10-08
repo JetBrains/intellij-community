@@ -10,6 +10,7 @@ import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.ClassExtension
 import com.intellij.platform.backend.navigation.NavigationTarget
 import com.intellij.platform.backend.presentation.TargetPresentationBuilder
+import com.intellij.pom.Navigatable
 import com.intellij.psi.PsiElement
 import com.intellij.psi.PsiFile
 import com.intellij.util.SmartList
@@ -50,4 +51,7 @@ class SymbolNavigationServiceImpl : SymbolNavigationService {
   override fun presentationBuilder(presentableText: @Nls String): TargetPresentationBuilder {
     return TargetPresentationBuilderImpl(presentableText = presentableText)
   }
+
+  override fun getNavigatable(project: Project, target: NavigationTarget): Navigatable =
+    NavigationTargetNavigatable(project, target)
 }

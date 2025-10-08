@@ -319,6 +319,7 @@ class JavaDocParser(
     val moduleMarker = parseModuleRef(builder.mark())
     var referenceParsed = false
     var referenceEnded = false
+    var fragmentReference = false
 
     if (getTokenType() === JavaDocSyntaxTokenType.DOC_RBRACKET) {
       if (moduleMarker == null) {
@@ -329,7 +330,7 @@ class JavaDocParser(
       }
     }
 
-    if (!referenceEnded && getTokenType() !== JavaDocSyntaxTokenType.DOC_SHARP) {
+    if (!referenceEnded && getTokenType() !== JavaDocSyntaxTokenType.DOC_SHARP && getTokenType() !== JavaDocSyntaxTokenType.DOC_DOUBLE_SHARP) {
       builder.remapCurrentToken(JavaDocSyntaxElementType.DOC_REFERENCE_HOLDER)
       builder.advanceLexer()
     }
@@ -370,10 +371,31 @@ class JavaDocParser(
 
       referenceParsed = true
     }
+    else if (!referenceEnded && getTokenType() === JavaDocSyntaxTokenType.DOC_DOUBLE_SHARP) {
+      // auto-completion token
+      builder.remapCurrentToken(JavaDocSyntaxTokenType.DOC_TAG_VALUE_DOUBLE_SHARP_TOKEN)
+      builder.advanceLexer()
+
+      // fragment name
+      val nameMarker = builder.mark()
+
+      if (getTokenType() !== JavaDocSyntaxTokenType.DOC_COMMENT_DATA) {
+        nameMarker.rollbackTo()
+      }
+      else {
+        builder.advanceLexer()
+        nameMarker.done(JavaDocSyntaxElementType.DOC_FRAGMENT_NAME)
+        referenceParsed = true
+        fragmentReference = true
+      }
+    }
 
     if (referenceParsed || moduleMarker != null) {
       moduleMarker?.done(JavaDocSyntaxElementType.DOC_TAG_VALUE_ELEMENT)
-      refStart.done(JavaDocSyntaxElementType.DOC_METHOD_OR_FIELD_REF)
+      when (fragmentReference) {
+        true -> refStart.done(JavaDocSyntaxElementType.DOC_FRAGMENT_REF)
+        false -> refStart.done(JavaDocSyntaxElementType.DOC_METHOD_OR_FIELD_REF)
+      }
     } else {
       refStart.drop()
     }
@@ -525,6 +547,9 @@ class JavaDocParser(
     if (tokenType === JavaDocSyntaxTokenType.DOC_TAG_VALUE_SHARP_TOKEN) {
       parseMethodRef(builder.mark())
     }
+    else if (tokenType === JavaDocSyntaxTokenType.DOC_TAG_VALUE_DOUBLE_SHARP_TOKEN) {
+      parseFragmentRef(builder.mark())
+    }
     else if (tokenType === JavaDocSyntaxTokenType.DOC_TAG_VALUE_TOKEN) {
       val refStart = builder.mark()
       builder.remapCurrentToken(JavaDocSyntaxElementType.DOC_REFERENCE_HOLDER)
@@ -532,6 +557,9 @@ class JavaDocParser(
 
       if (getTokenType() === JavaDocSyntaxTokenType.DOC_TAG_VALUE_SHARP_TOKEN) {
         parseMethodRef(refStart)
+      }
+      else if (getTokenType() === JavaDocSyntaxTokenType.DOC_TAG_VALUE_DOUBLE_SHARP_TOKEN) {
+        parseFragmentRef(refStart)
       }
       else if (allowBareFieldReference) {
         refStart.rollbackTo()
@@ -566,6 +594,19 @@ class JavaDocParser(
     } else {
       refStart.rollbackTo()
       return null
+    }
+  }
+
+  private fun parseFragmentRef(mark: SyntaxTreeBuilder.Marker) {
+    builder.advanceLexer()
+    val fragmentName = builder.mark()
+    if (getTokenType() !== JavaDocSyntaxTokenType.DOC_TAG_VALUE_TOKEN) {
+      fragmentName.drop()
+      mark.done(JavaDocSyntaxElementType.DOC_FRAGMENT_REF)
+    } else {
+      builder.advanceLexer()
+      fragmentName.done(JavaDocSyntaxElementType.DOC_FRAGMENT_NAME)
+      mark.done(JavaDocSyntaxElementType.DOC_FRAGMENT_REF)
     }
   }
 
@@ -667,7 +708,7 @@ class JavaDocParser(
 private val TAG_VALUES_SET: SyntaxElementTypeSet = syntaxElementTypeSetOf(
   JavaDocSyntaxTokenType.DOC_TAG_VALUE_TOKEN, JavaDocSyntaxTokenType.DOC_TAG_VALUE_COMMA, JavaDocSyntaxTokenType.DOC_TAG_VALUE_DOT,
   JavaDocSyntaxTokenType.DOC_TAG_VALUE_LPAREN, JavaDocSyntaxTokenType.DOC_TAG_VALUE_RPAREN,
-  JavaDocSyntaxTokenType.DOC_TAG_VALUE_SLASH, JavaDocSyntaxTokenType.DOC_TAG_VALUE_SHARP_TOKEN,
+  JavaDocSyntaxTokenType.DOC_TAG_VALUE_SLASH, JavaDocSyntaxTokenType.DOC_TAG_VALUE_SHARP_TOKEN, JavaDocSyntaxTokenType.DOC_TAG_VALUE_DOUBLE_SHARP_TOKEN,
   JavaDocSyntaxTokenType.DOC_TAG_VALUE_LT, JavaDocSyntaxTokenType.DOC_TAG_VALUE_GT, JavaDocSyntaxTokenType.DOC_TAG_VALUE_COLON,
   JavaDocSyntaxTokenType.DOC_TAG_VALUE_QUOTE
 )
@@ -680,7 +721,8 @@ private val SKIP_TOKENS: SyntaxElementTypeSet = syntaxElementTypeSetOf(JavaDocSy
 private val COMMENT_DATA_TOKENS: SyntaxElementTypeSet = syntaxElementTypeSetOf(
   JavaDocSyntaxTokenType.DOC_COMMENT_DATA,
   JavaDocSyntaxTokenType.DOC_TAG_VALUE_SLASH,
-  JavaDocSyntaxTokenType.DOC_COMMA, JavaDocSyntaxTokenType.DOC_SHARP,
+  JavaDocSyntaxTokenType.DOC_COMMA,
+  JavaDocSyntaxTokenType.DOC_SHARP, JavaDocSyntaxTokenType.DOC_DOUBLE_SHARP,
 )
 
 private const val SEE_TAG = "@see"

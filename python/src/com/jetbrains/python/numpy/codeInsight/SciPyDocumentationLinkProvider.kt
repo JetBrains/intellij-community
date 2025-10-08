@@ -43,7 +43,10 @@ class SciPyDocumentationLinkProvider : PythonDocumentationLinkProvider {
                !PythonDocumentationMap.getInstance().entries.containsKey(qname.firstComponent)) {
       val webPage = nameToWebpageName.get(qname.toString())
       if (webPage != null) {
-        "https://docs.scipy.org/doc/${qname.firstComponent}/reference/generated/$webPage.html"
+        if (qname.firstComponent == "numpy")
+          "https://numpy.org/doc/stable/$webPage"
+        else
+          "https://docs.scipy.org/doc/scipy/$webPage"
       } else {
         "https://docs.scipy.org/doc/${qname.firstComponent}/reference/"
       }

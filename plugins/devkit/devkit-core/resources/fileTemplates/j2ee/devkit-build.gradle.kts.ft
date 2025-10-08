@@ -1,9 +1,10 @@
 plugins {
     id("java")
-#if ($context.hasLanguage("kotlin"))
     id("org.jetbrains.kotlin.jvm") version "${context.getBomProperty("kotlin.version")}"
-#end
     id("org.jetbrains.intellij.platform") version "${context.getBomProperty("gradle.intellij.version")}"
+#if ($context.hasLibrary("compose"))
+    id("org.jetbrains.kotlin.plugin.compose") version "${context.getBomProperty("kotlin.version")}"
+#end
 }
 
 group = "${context.group}"
@@ -16,15 +17,70 @@ repositories {
     }
 }
 
-// Configure IntelliJ Platform Gradle Plugin
 // Read more: https://plugins.jetbrains.com/docs/intellij/tools-intellij-platform-gradle-plugin.html
 dependencies {
     intellijPlatform {
-        create("IC", "${context.getBomProperty("intellij.version")}")
+        intellijIdeaUltimate("${context.getBomProperty("intellij.version")}")
         testFramework(org.jetbrains.intellij.platform.gradle.TestFrameworkType.Platform)
 
-      // Add necessary plugin dependencies for compilation here, example:
-      // bundledPlugin("com.intellij.java")
+#if ($context.hasLibraries())
+        // Add plugin dependencies for compilation here:
+#end
+
+#if ($context.hasLibrary("compose"))
+        bundledModules(
+            "intellij.libraries.skiko",
+            "intellij.libraries.compose.foundation.desktop",
+            "intellij.platform.compose",
+            "intellij.platform.jewel.foundation",
+            "intellij.platform.jewel.ui",
+            "intellij.platform.jewel.ideLafBridge"
+        )
+#end
+
+#if ($context.hasLibrary("java"))
+        bundledPlugin("com.intellij.java")
+#end
+#if ($context.hasLibrary("kotlin"))
+        bundledPlugin("org.jetbrains.kotlin")
+#end
+#if ($context.hasLibrary("javascript"))
+        bundledPlugin("JavaScript")
+#end
+#if ($context.hasLibrary("json"))
+        bundledPlugin("com.intellij.modules.json")
+#end
+#if ($context.hasLibrary("yaml"))
+        bundledPlugin("org.jetbrains.plugins.yaml")
+#end
+#if ($context.hasLibrary("com.intellij.properties"))
+        bundledPlugin("org.jetbrains.plugins.yaml")
+#end
+#if ($context.hasLibrary("markdown"))
+        bundledPlugin("org.intellij.plugins.markdown")
+#end
+#if ($context.hasLibrary("python"))
+        compatiblePlugin("PythonCore")
+#end
+#if ($context.hasLibrary("go"))
+        compatiblePlugin("org.jetbrains.plugins.go")
+#end
+#if ($context.hasLibrary("php"))
+        compatiblePlugin("com.jetbrains.php")
+#end
+#if ($context.hasLibrary("ruby"))
+        compatiblePlugin("org.jetbrains.plugins.ruby")
+#end
+#if ($context.hasLibrary("rust"))
+        compatiblePlugin("com.jetbrains.rust")
+#end
+#if ($context.hasLibrary("database"))
+        bundledPlugin("com.intellij.database")
+#end
+#if (!$context.hasLibraries())
+        // Add plugin dependencies for compilation here, example:
+        // bundledPlugin("com.intellij.java")
+#end
     }
 }
 
@@ -48,10 +104,8 @@ tasks {
     }
 }
 
-#if ($context.hasLanguage("kotlin"))
 kotlin {
     compilerOptions {
         jvmTarget.set(org.jetbrains.kotlin.gradle.dsl.JvmTarget.JVM_21)
     }
 }
-#end

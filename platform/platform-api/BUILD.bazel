@@ -1,5 +1,5 @@
 ### auto-generated section `build intellij.platform.ide` start
-load("@rules_jvm//:jvm.bzl", "jvm_library", "jvm_resources", "kt_javac_options")
+load("@rules_jvm//:jvm.bzl", "jvm_library", "kt_javac_options", "resourcegroup")
 
 kt_javac_options(
   name = "custom-javac-options",
@@ -12,9 +12,9 @@ kt_javac_options(
   no_proc = True
 )
 
-jvm_resources(
+resourcegroup(
   name = "ide_resources",
-  files = glob(["resources/**/*"]),
+  srcs = glob(["resources/**/*"]),
   strip_prefix = "resources"
 )
 
@@ -23,6 +23,7 @@ jvm_library(
   module_name = "intellij.platform.ide",
   visibility = ["//visibility:public"],
   srcs = glob(["src/**/*.kt", "src/**/*.java", "src/**/*.form"], allow_empty = True),
+  resources = [":ide_resources"],
   javac_opts = ":custom-javac-options",
   deps = [
     "//platform/util",
@@ -51,17 +52,19 @@ jvm_library(
     "//platform/ide-core",
     "//platform/util/text-matching",
     "//platform/diagnostic",
-    "@lib//:jackson",
-    "@lib//:caffeine",
+    "//libraries/jackson/jackson",
+    "//libraries/caffeine",
     "//platform/progress/shared:ide-progress",
     "//platform/util/diff",
+    "//platform/runtime/product",
   ],
   exports = [
     "//platform/util",
     "//platform/forms_rt:java-guiForms-rt",
+    "//platform/editor-ui-api:editor-ui",
+    "//platform/util:util-ui",
     "//platform/ide-core",
     "//platform/progress/shared:ide-progress",
-  ],
-  runtime_deps = [":ide_resources"]
+  ]
 )
 ### auto-generated section `build intellij.platform.ide` end

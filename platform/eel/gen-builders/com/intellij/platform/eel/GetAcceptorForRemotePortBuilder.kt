@@ -12,7 +12,7 @@ import kotlin.time.Duration.Companion.seconds
 
 @GeneratedBuilder.Result
 @ApiStatus.Internal
-class GetAcceptorForRemotePortBuilder() {
+class GetAcceptorForRemotePortBuilder {
   private var configureServerSocket: ConfigurableSocket.() -> Unit = {}
 
   private var hostname: String = "localhost"

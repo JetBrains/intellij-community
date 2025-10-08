@@ -277,6 +277,7 @@ private class CommandCompletionDocumentationTarget(
   private fun postprocess(info: IntentionPreviewInfo) = when (info) {
     is IntentionPreviewInfo.CustomDiff -> IntentionPreviewDiffResult.fromCustomDiff(info)
     is IntentionPreviewInfo.MultiFileDiff -> IntentionPreviewDiffResult.fromMultiDiff(info)
+    is IntentionPreviewInfo.Snippet -> IntentionPreviewDiffResult.fromSnippet(info)
     else -> info
   }
 }

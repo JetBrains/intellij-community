@@ -130,7 +130,7 @@ public final class ImplicitArrayToStringInspection extends BaseInspection {
   }
 
   @Override
-  public BaseInspectionVisitor buildVisitor() {
+  public @NotNull BaseInspectionVisitor buildVisitor() {
     return new ImplicitArrayToStringVisitor();
   }
 

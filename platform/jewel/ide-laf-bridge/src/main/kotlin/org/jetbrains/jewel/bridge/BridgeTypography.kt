@@ -71,14 +71,15 @@ public object BridgeTypography : Typography {
         get() = labelTextStyle.applyFrom(JBFont.small())
 }
 
+// Do NOT use for editor and console fonts! They are already unscaled.
 @OptIn(ExperimentalTextApi::class)
 private fun TextStyle.applyFrom(font: Font) =
     copy(
         fontFamily = font.asComposeFontFamily(),
-        fontSize = font.sizeSp,
+        fontSize = font.sizeSp, // Unscale font size to compensate for IDE zoom
         fontWeight = if (font.isBold) FontWeight.Bold else FontWeight.Normal,
         fontStyle = if (font.isItalic) FontStyle.Italic else FontStyle.Normal,
-        lineHeight = computeBaseLineHeightFor(font).sp,
+        lineHeight = computeBaseLineHeightFor(font, treatAsUnscaled = false),
     )
 
 private val Font.sizeSp

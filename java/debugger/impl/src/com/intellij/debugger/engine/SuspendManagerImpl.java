@@ -28,7 +28,7 @@ import java.util.Set;
 import java.util.concurrent.ConcurrentLinkedDeque;
 import java.util.concurrent.atomic.AtomicLong;
 
-import static com.intellij.debugger.impl.DebuggerUtilsImpl.forEachSafe;
+import static com.intellij.debugger.engine.DebuggerUtils.forEachSafe;
 
 public class SuspendManagerImpl implements SuspendManager {
   private static final Logger LOG = Logger.getInstance(SuspendManager.class);

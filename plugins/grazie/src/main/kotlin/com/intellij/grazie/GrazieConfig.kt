@@ -18,6 +18,7 @@ import com.intellij.grazie.jlanguage.LangTool
 import com.intellij.grazie.remote.GrazieRemote.isAvailableLocally
 import com.intellij.grazie.rule.RuleIdeClient
 import com.intellij.grazie.text.Rule
+import com.intellij.grazie.utils.TextStyleDomain
 import com.intellij.openapi.Disposable
 import com.intellij.openapi.components.*
 import com.intellij.openapi.project.ProjectManager
@@ -51,8 +52,8 @@ class GrazieConfig : PersistentStateComponent<GrazieConfig.State>, ModificationT
     //Since commit cc47dd17
     NEW_UI;
 
-    override fun next() = values().getOrNull(ordinal + 1)
-    override fun toString() = ordinal.toString()
+    override fun next(): Version? = entries.getOrNull(ordinal + 1)
+    override fun toString(): String = ordinal.toString()
 
     companion object {
       val CURRENT = NEW_UI
@@ -76,6 +77,8 @@ class GrazieConfig : PersistentStateComponent<GrazieConfig.State>, ModificationT
     @Deprecated("Moved to checkingContext in version 2") @ApiStatus.ScheduledForRemoval @Property val enabledCommitIntegration: Boolean = false,
     @Property val userDisabledRules: Set<String> = HashSet(),
     @Property val userEnabledRules: Set<String> = HashSet(),
+    @Property val domainDisabledRules: Map<TextStyleDomain, Set<String>> = TreeMap(),
+    @Property val domainEnabledRules: Map<TextStyleDomain, Set<String>> = TreeMap(),
     //Formerly suppressionContext -- name changed due to compatibility issues
     @Property val suppressingContext: SuppressingContext = SuppressingContext(),
     @Property val detectionContext: DetectionContext.State = DetectionContext.State(),
@@ -84,6 +87,7 @@ class GrazieConfig : PersistentStateComponent<GrazieConfig.State>, ModificationT
     //Ex. Grazie pro properties
     @Property val styleProfile: String? = TextStyle.Unspecified.id,
     @Property val parameters: Map<Language, Map<String, String>> = TreeMap(),
+    @Property val parametersPerDomain: Map<TextStyleDomain, Map<Language, Map<String, String>>> = TreeMap(),
     @Property val useOxfordSpelling: Boolean = false,
     @Property val autoFix: Boolean = false,
   ) : VersionedState<Version, State> {
@@ -104,7 +108,7 @@ class GrazieConfig : PersistentStateComponent<GrazieConfig.State>, ModificationT
     val missedLanguages: Set<Lang>
       get() = enabledLanguages.asSequence().filter { isMissingLanguage(it) }.toCollection(CollectionFactory.createSmallMemoryFootprintLinkedSet())
 
-    override fun increment() = copy(version = version.next() ?: error("Attempt to increment latest version $version"))
+    override fun increment(): State = copy(version = version.next() ?: error("Attempt to increment latest version $version"))
 
     fun hasMissedLanguages(): Boolean {
       return enabledLanguages.any { isMissingLanguage(it) }
@@ -114,32 +118,102 @@ class GrazieConfig : PersistentStateComponent<GrazieConfig.State>, ModificationT
       return !isAvailableLocally(lang) && lang.jLanguage == null
     }
 
-    fun withAutoFix(autoFix: Boolean): State = copy(autoFix = autoFix)
-    fun withOxfordSpelling(useOxford: Boolean): State = copy(useOxfordSpelling = useOxford)
-    fun withParameter(language: Language, parameter: Parameter, value: String?): State {
-      val newLangParams = TreeMap(parameters[language] ?: emptyMap())
-      if (value != null) {
-        newLangParams[parameter.id()] = value
-      }
-      else {
-        newLangParams.remove(parameter.id())
-      }
-
-      val newParams = TreeMap(parameters)
-      if (newLangParams.isEmpty()) {
-        newParams.remove(language)
-      }
-      else {
-        newParams[language] = newLangParams
-      }
-      return copy(parameters = newParams)
+    fun isRuleEnabled(ruleId: String, domain: TextStyleDomain): Boolean {
+      return ruleId in if (domain == TextStyleDomain.Other) userEnabledRules else domainEnabledRules[domain] ?: emptySet()
     }
 
-    val textStyle: TextStyle
-      get() = TextStyle.styles(RuleIdeClient.INSTANCE).find { it.id == styleProfile } ?: TextStyle.Unspecified
+    fun isRuleDisabled(ruleId: String, domain: TextStyleDomain): Boolean {
+      return ruleId in if (domain == TextStyleDomain.Other) userDisabledRules else domainDisabledRules[domain] ?: emptySet()
+    }
 
-    fun paramValue(language: Language, parameter: Parameter): String? {
-      return parameters[language]?.get(parameter.id())
+    fun withAutoFix(autoFix: Boolean): State = copy(autoFix = autoFix)
+    fun withOxfordSpelling(useOxford: Boolean): State = copy(useOxfordSpelling = useOxford)
+    fun withParameter(domain: TextStyleDomain, language: Language, parameter: Parameter, value: String?): State {
+      if (domain == TextStyleDomain.Other) {
+        val newLangParams = TreeMap(parameters[language] ?: emptyMap())
+        if (value != null) newLangParams[parameter.id()] = value else newLangParams.remove(parameter.id())
+
+        val newParams = TreeMap(parameters)
+        if (newLangParams.isEmpty()) newParams.remove(language) else newParams[language] = newLangParams
+        return copy(parameters = newParams)
+      }
+
+      val newParamsPerDomain = TreeMap(parametersPerDomain)
+      val langsInDomain = TreeMap(newParamsPerDomain[domain] ?: emptyMap())
+      val newLangParams = TreeMap(langsInDomain[language] ?: emptyMap())
+
+      if (value != null) newLangParams[parameter.id()] = value else newLangParams.remove(parameter.id())
+
+      if (newLangParams.isEmpty()) {
+        langsInDomain.remove(language)
+      } else {
+        langsInDomain[language] = newLangParams
+      }
+
+      if (langsInDomain.isEmpty()) {
+        newParamsPerDomain.remove(domain)
+      } else {
+        newParamsPerDomain[domain] = langsInDomain
+      }
+
+      return copy(parametersPerDomain = newParamsPerDomain)
+    }
+
+    fun getUserChangedRules(domain: TextStyleDomain): UserChangedRules {
+      val userEnabledRules = HashSet<String>()
+      val userDisabledRules = HashSet<String>()
+      val isOtherDomain = domain == TextStyleDomain.Other
+      if (isOtherDomain) {
+        userEnabledRules.addAll(this.userEnabledRules)
+        userDisabledRules.addAll(this.userDisabledRules)
+      }
+      else {
+        userEnabledRules.addAll(getDomainEnabledRules(domain))
+        userDisabledRules.addAll(getDomainDisabledRules(domain))
+      }
+      return UserChangedRules(userEnabledRules, userDisabledRules)
+    }
+
+    fun updateUserRules(domain: TextStyleDomain, userEnabledRules: Set<String>, userDisabledRules: Set<String>): State {
+      val userRules = getUserChangedRules(domain)
+      if (userEnabledRules == userRules.enabled && userDisabledRules == userRules.disabled) {
+        return this
+      }
+      return if (domain == TextStyleDomain.Other) this.copy(userEnabledRules = userEnabledRules, userDisabledRules = userDisabledRules)
+      else this.withDomainEnabledRules(domain, userEnabledRules).withDomainDisabledRules(domain, userDisabledRules)
+    }
+
+    private fun getDomainEnabledRules(domain: TextStyleDomain) = domainEnabledRules[domain] ?: emptySet()
+
+    private fun getDomainDisabledRules(domain: TextStyleDomain) = domainDisabledRules[domain] ?: emptySet()
+
+    fun withDomainEnabledRules(domain: TextStyleDomain, rules: Set<String>): State {
+      val newRules = TreeMap(domainEnabledRules)
+      newRules[domain] = rules
+      return copy(domainEnabledRules = newRules)
+    }
+
+    fun withDomainDisabledRules(domain: TextStyleDomain, rules: Set<String>): State {
+      val newRules = TreeMap(domainDisabledRules)
+      newRules[domain] = rules
+      return copy(domainDisabledRules = newRules)
+    }
+
+    fun paramValue(domain: TextStyleDomain, language: Language, parameter: Parameter): String? {
+      if (domain == TextStyleDomain.Other) {
+        return parameters[language]?.get(parameter.id())
+      }
+      return parametersPerDomain[domain]?.get(language)?.get(parameter.id())
+    }
+
+    @JvmOverloads
+    fun getTextStyle(domain: TextStyleDomain? = null): TextStyle {
+      val styleProfileId = getTextStyleId(domain) ?: return TextStyle.Unspecified
+      return TextStyle.styles(RuleIdeClient.INSTANCE).find { it.id == styleProfileId } ?: TextStyle.Unspecified
+    }
+
+    private fun getTextStyleId(domain: TextStyleDomain? = null): String? {
+      return if (domain == null || domain == TextStyleDomain.Other) styleProfile else domain.name
     }
 
     enum class Processing {
@@ -155,7 +229,7 @@ class GrazieConfig : PersistentStateComponent<GrazieConfig.State>, ModificationT
     @VisibleForTesting
     fun migrateLTRuleIds(state: State): State {
       val ltRules: List<Rule> by lazy {
-        state.enabledLanguages.filter { it.jLanguage != null }.flatMap { grammarRules(LangTool.createTool(it, state), it) }
+        state.enabledLanguages.filter { it.jLanguage != null }.flatMap { grammarRules(LangTool.createTool(it, state, TextStyleDomain.Other), it) }
       }
 
       fun convert(ids: Set<String>): Set<String> =
@@ -179,7 +253,7 @@ class GrazieConfig : PersistentStateComponent<GrazieConfig.State>, ModificationT
      *
      * Should never be called in GrazieStateLifecycle actions
      */
-    fun get() = service<GrazieConfig>().state
+    fun get(): State = service<GrazieConfig>().state
 
     /** Update Grazie config state */
     @Synchronized
@@ -189,10 +263,12 @@ class GrazieConfig : PersistentStateComponent<GrazieConfig.State>, ModificationT
       service<GrazieInitializerManager>().publisher.update(prevState, newState)
 
       ProjectManager.getInstance().openProjects.forEach {
-        DaemonCodeAnalyzer.getInstance(it).restart()
+        DaemonCodeAnalyzer.getInstance(it).restart("GrazieConfig")
       }
     }
   }
+
+  data class UserChangedRules(val enabled: Set<String>, val disabled: Set<String>)
 
   class PresentableNameGetter : com.intellij.openapi.components.State.NameGetter() {
     override fun get() = GrazieBundle.message("grazie.config.name")
@@ -203,12 +279,15 @@ class GrazieConfig : PersistentStateComponent<GrazieConfig.State>, ModificationT
 
   override fun getModificationCount(): Long = myModCount.get()
 
-  override fun getState() = myState
+  override fun getState(): State = myState
 
   override fun loadState(state: State) {
     myModCount.incrementAndGet()
     val prevState = myState
     myState = migrateLTRuleIds(VersionedState.migrate(state))
+    if (myState.enabledLanguages.none { it.isEnglish() }) {
+      myState = myState.copy(enabledLanguages = myState.enabledLanguages + Lang.AMERICAN_ENGLISH)
+    }
 
     if (prevState != myState) {
       if (prevState.useOxfordSpelling != state.useOxfordSpelling) {
@@ -224,7 +303,7 @@ class GrazieConfig : PersistentStateComponent<GrazieConfig.State>, ModificationT
       update { state ->
         val oxford = get().useOxfordSpelling
         if (oxford) {
-          state.copy(userDisabledRules = state.userDisabledRules - oxfordSpellingLtRules.toSet())
+          state.copy(userDisabledRules = state.userDisabledRules - oxfordSpellingLtRules)
         }
         else {
           state.copy(userDisabledRules = state.userDisabledRules + oxfordSpellingLtRules)

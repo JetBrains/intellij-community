@@ -1,11 +1,10 @@
 // Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
-
 package com.intellij.psi.search.scope.packageSet;
 
 import com.intellij.codeInsight.CodeInsightBundle;
 import com.intellij.icons.AllIcons;
+import com.intellij.ide.impl.ProjectUtil;
 import com.intellij.lexer.Lexer;
-import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.components.impl.stores.IComponentStoreKt;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.extensions.ExtensionPointListener;
@@ -15,6 +14,7 @@ import com.intellij.openapi.project.ProjectManager;
 import com.intellij.psi.TokenType;
 import com.intellij.psi.search.scope.packageSet.lexer.ScopeTokenTypes;
 import com.intellij.psi.search.scope.packageSet.lexer.ScopesLexer;
+import kotlinx.coroutines.CoroutineScope;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -24,14 +24,16 @@ import java.util.List;
 final class PackageSetFactoryImpl extends PackageSetFactory {
   private static final Logger LOG = Logger.getInstance(PackageSetFactoryImpl.class);
 
-  public PackageSetFactoryImpl() {
-    PackageSetParserExtension.EP_NAME.addExtensionPointListener(new ExtensionPointListener<>() {
+  PackageSetFactoryImpl(@NotNull CoroutineScope coroutineScope) {
+    PackageSetParserExtension.EP_NAME.addExtensionPointListener(coroutineScope, new ExtensionPointListener<>() {
       @Override
       public void extensionAdded(@NotNull PackageSetParserExtension extension, @NotNull PluginDescriptor pluginDescriptor) {
-        for (Project project : ProjectManager.getInstance().getOpenProjects()) {
+        for (Project project : ProjectUtil.getOpenProjects()) {
           for (NamedScopesHolder holder : NamedScopesHolder.getAllNamedScopeHolders(project)) {
-            IComponentStoreKt.getStateStore(project).reloadState(holder.getClass());
-            holder.fireScopeListeners();
+            IComponentStoreKt.scheduleReloadState(IComponentStoreKt.getStateStore(project),
+                                                  holder.getClass(),
+                                                  holder::fireScopeListeners,
+                                                  coroutineScope);
           }
         }
       }
@@ -59,7 +61,7 @@ final class PackageSetFactoryImpl extends PackageSetFactory {
           }
         }
       }
-    }, ApplicationManager.getApplication());
+    });
   }
 
   @Override
@@ -156,24 +158,31 @@ final class PackageSetFactoryImpl extends PackageSetFactory {
             myLexer.getTokenType() == null) {
           myLexer.advance();
           break;
-        } else if (myLexer.getTokenType() == ScopeTokenTypes.ASTERISK) {
+        }
+        else if (myLexer.getTokenType() == ScopeTokenTypes.ASTERISK) {
           pattern.append("*");
-        } else if (myLexer.getTokenType() == ScopeTokenTypes.IDENTIFIER ||
-                   myLexer.getTokenType() == TokenType.WHITE_SPACE ||
-                   myLexer.getTokenType() == ScopeTokenTypes.INTEGER_LITERAL ) {
+        }
+        else if (myLexer.getTokenType() == ScopeTokenTypes.IDENTIFIER ||
+                 myLexer.getTokenType() == TokenType.WHITE_SPACE ||
+                 myLexer.getTokenType() == ScopeTokenTypes.INTEGER_LITERAL) {
           pattern.append(getTokenText());
-        } else if (myLexer.getTokenType() == ScopeTokenTypes.DOT) {
+        }
+        else if (myLexer.getTokenType() == ScopeTokenTypes.DOT) {
           pattern.append(".");
-        } else if (myLexer.getTokenType() == ScopeTokenTypes.MINUS) {
+        }
+        else if (myLexer.getTokenType() == ScopeTokenTypes.MINUS) {
           pattern.append("-");
-        } else if (myLexer.getTokenType() == ScopeTokenTypes.TILDE) {
+        }
+        else if (myLexer.getTokenType() == ScopeTokenTypes.TILDE) {
           pattern.append("~");
-        } else if (myLexer.getTokenType() == ScopeTokenTypes.SHARP) {
+        }
+        else if (myLexer.getTokenType() == ScopeTokenTypes.SHARP) {
           pattern.append("#");
         }
         else if (myLexer.getTokenType() == ScopeTokenTypes.COLON) {
           pattern.append(":");
-        } else {
+        }
+        else {
           pattern.append(getTokenText());
         }
         myLexer.advance();

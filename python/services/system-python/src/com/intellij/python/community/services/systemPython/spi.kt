@@ -3,7 +3,7 @@ package com.intellij.python.community.services.systemPython
 
 import com.intellij.openapi.extensions.ExtensionPointName
 import com.intellij.platform.eel.EelApi
-import com.intellij.python.community.services.shared.UICustomization
+import com.jetbrains.python.PyToolUIInfo
 import com.intellij.python.community.services.systemPython.SystemPythonProvider.Companion.EP
 import com.jetbrains.python.PythonBinary
 import com.jetbrains.python.errorProcessing.PyResult
@@ -19,7 +19,7 @@ interface SystemPythonProvider {
   /**
    * You can optionally customize how your pythons are displayed
    */
-  val uiCustomization: UICustomization? get() = null
+  val uiCustomization: PyToolUIInfo? get() = null
 
   suspend fun findSystemPythons(eelApi: EelApi): PyResult<Set<PythonBinary>>
 }

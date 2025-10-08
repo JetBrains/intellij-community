@@ -195,6 +195,9 @@ public abstract class GrVariableBaseImpl<T extends GrVariableStubBase> extends G
 
   @Override
   public @NotNull SearchScope getUseScope() {
+    if (isUnnamed()) {
+      return LocalSearchScope.EMPTY;
+    }
     final GrVariableDeclarationOwner owner = PsiTreeUtil.getParentOfType(this, GrVariableDeclarationOwner.class);
     if (owner != null) return new LocalSearchScope(owner);
     return super.getUseScope();

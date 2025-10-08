@@ -225,7 +225,9 @@ class WorkspaceFileIndexContributorOnReferenceDependenciesTest {
         name = "ReferredTestEntity"
       }
     }
-    referredTestEntityContributor.assertNumberOfCalls(0)
+    // now we call it once for "New Name" entity change
+    // even though we already did it when first created a reference
+    referredTestEntityContributor.assertNumberOfCalls(1)
   }
 
   @Test
@@ -257,8 +259,8 @@ class WorkspaceFileIndexContributorOnReferenceDependenciesTest {
         references = mutableListOf(DependencyItem(referredTestEntity.symbolicId))
       }
     }
-    // first added for WithReferenceTestEntity
-    referredTestEntityContributor.assertNumberOfCalls(2)
+    // first added for WithReferenceTestEntity, 0 because symbolicId was added earlier
+    referredTestEntityContributor.assertNumberOfCalls(0)
     readAction {
       assertTrue(WorkspaceFileIndex.getInstance(projectModel.project).isInWorkspace(entityRoot))
     }
@@ -286,8 +288,8 @@ class WorkspaceFileIndexContributorOnReferenceDependenciesTest {
     model.update("Remove first type last reference holder") {
       it.removeEntity(it.entities(OneMoreWithReferenceTestEntity::class.java).first())
     }
-    // last removed for OneMoreWithReferenceTestEntity
-    referredTestEntityContributor.assertNumberOfCalls(2)
+    // last removed for OneMoreWithReferenceTestEntity, 0 because it is still in another entity (WithReferenceTestEntity)
+    referredTestEntityContributor.assertNumberOfCalls(0)
     // should be in workspace because it is referenced by WithReferenceTestEntity
     readAction {
       assertTrue(WorkspaceFileIndex.getInstance(projectModel.project).isInWorkspace(entityRoot))
@@ -318,16 +320,12 @@ class WorkspaceFileIndexContributorOnReferenceDependenciesTest {
 
     override val dependenciesOnOtherEntities: List<DependencyDescription<ReferredTestEntity>>
       get() = listOf(
-        DependencyDescription.OnReference(WithReferenceTestEntity::class.java, ReferredTestEntityId::class.java),
-        DependencyDescription.OnReference(OneMoreWithReferenceTestEntity::class.java, ReferredTestEntityId::class.java)
+        DependencyDescription.OnReference(ReferredTestEntityId::class.java),
       )
 
     override fun registerFileSets(entity: ReferredTestEntity, registrar: WorkspaceFileSetRegistrar, storage: EntityStorage) {
       numberOfCalls.incrementAndGet()
-      val hasRefs = storage.referrers(entity.symbolicId, WithReferenceTestEntity::class.java).any() ||
-                    storage.referrers(entity.symbolicId, OneMoreWithReferenceTestEntity::class.java).any()
-
-      if (hasRefs) {
+      if (storage.hasReferrers(entity.symbolicId)) {
         registrar.registerFileSet(entity.file, WorkspaceFileKind.CUSTOM, entity, null)
       }
     }

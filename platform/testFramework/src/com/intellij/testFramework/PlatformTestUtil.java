@@ -469,6 +469,7 @@ public final class PlatformTestUtil {
         AtomicBoolean laterInvoked = new AtomicBoolean();
         app.invokeLater(() -> laterInvoked.set(true));
         dispatchAllInvocationEventsInIdeEventQueue();
+        waitForAllDocumentsCommitted(10, TimeUnit.SECONDS);
         assertTrue(laterInvoked.get());
 
         TimeoutUtil.sleep(sleptAlready ? 10 : delay);
@@ -506,9 +507,14 @@ public final class PlatformTestUtil {
     IdeEventQueue eventQueue = IdeEventQueue.getInstance();
     ThreadContext.resetThreadContext(() -> {
       TestOnlyThreading.releaseTheAcquiredWriteIntentLockThenExecuteActionAndTakeWriteIntentLockBack(() -> {
+        // due to non-blocking acquisition of write-intent, `NonBlockingFlushQueue` can appear in the state
+        // where it has stuck WI runnables. This method is called to ensure that _all_ runnables are dispatched,
+        // so we also want to wait for WI runnables here
+        AtomicBoolean canary = new AtomicBoolean(false);
+        ApplicationManager.getApplication().invokeLater(() -> canary.set(true), ModalityState.any());
         while (true) {
           AWTEvent event = eventQueue.peekEvent();
-          if (event == null) break;
+          if (event == null && canary.get()) break;
           event = eventQueue.getNextEvent();
           if (event instanceof InvocationEvent) {
             eventQueue.dispatchEvent(event);
@@ -1305,7 +1311,7 @@ public final class PlatformTestUtil {
       configCopy = Files.move(configDir, Paths.get(configDir + "_bak"), StandardCopyOption.ATOMIC_MOVE, StandardCopyOption.REPLACE_EXISTING);
     }
     else {
-      FileUtil.delete(configDir);
+      NioFiles.deleteRecursively(configDir);
       configCopy = null;
     }
 
@@ -1313,7 +1319,7 @@ public final class PlatformTestUtil {
       task.run();
     }
     finally {
-      FileUtil.delete(configDir);
+      NioFiles.deleteRecursively(configDir);
       if (configCopy != null) {
         Files.move(configCopy, configDir, StandardCopyOption.ATOMIC_MOVE);
       }

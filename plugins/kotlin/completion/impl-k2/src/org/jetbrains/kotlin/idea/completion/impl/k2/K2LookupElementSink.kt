@@ -15,7 +15,9 @@ import org.jetbrains.kotlin.idea.completion.impl.k2.contributors.K2ChainCompleti
 import java.util.concurrent.atomic.AtomicInteger
 
 /**
- * A sink for adding elements and
+ * An abstraction layer that decouples adding elements to the [CompletionResultSet] from adding it from the contributors.
+ * The purpose of the class is to potentially allow deferring adding elements immediately or from different threads
+ * which is needed for running contributors in parallel.
  */
 internal interface K2LookupElementSink {
     /**

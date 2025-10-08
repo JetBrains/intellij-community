@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInspection.logging
 
 import com.intellij.analysis.JvmAnalysisBundle
@@ -19,7 +19,7 @@ private const val STRUCTURED_ARGUMENT_CLASS = "net.logstash.logback.argument.Str
 
 class LoggingPlaceholderCountMatchesArgumentCountInspection : AbstractBaseUastLocalInspectionTool() {
   @JvmField
-  var slf4jToLog4J2Type = Slf4jToLog4J2Type.AUTO
+  var slf4jToLog4J2Type: Slf4jToLog4J2Type = Slf4jToLog4J2Type.AUTO
 
   override fun getOptionsPane(): OptPane {
     return OptPane.pane(

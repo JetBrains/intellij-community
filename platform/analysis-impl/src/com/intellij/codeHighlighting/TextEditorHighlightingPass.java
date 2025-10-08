@@ -183,7 +183,7 @@ public abstract class TextEditorHighlightingPass implements HighlightingPass {
 
   @Override
   public @NonNls String toString() {
-    return (getClass().isAnonymousClass() ? getClass().getSuperclass() : getClass()).getSimpleName() + "; id=" + getId();
+    return (getClass().isAnonymousClass() ? getClass().getSuperclass() : getClass()).getSimpleName() + ": id=" + getId();
   }
 
   public boolean isRunIntentionPassAfter() {

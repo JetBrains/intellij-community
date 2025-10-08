@@ -63,6 +63,7 @@ public class PsiBuilderImpl extends UnprotectedUserDataHolder implements PsiBuil
 
   private final int[] myLexStarts;
   private final IElementType[] myLexTypes;
+  private final NavigableMap<Integer, IElementType> myTokenTypesToRestoreOnRollback = new TreeMap<>();
   private int myCurrentLexeme;
 
   private final ParserDefinition myParserDefinition;
@@ -767,6 +768,12 @@ public class PsiBuilderImpl extends UnprotectedUserDataHolder implements PsiBuil
   }
 
   @Override
+  public void remapCurrentTokenAndRestoreOnRollback(@NotNull IElementType type) {
+    myTokenTypesToRestoreOnRollback.putIfAbsent(myCurrentLexeme, myLexTypes[myCurrentLexeme]);
+    remapCurrentToken(type);
+  }
+
+  @Override
   public @Nullable IElementType lookAhead(int steps) {
     int cur = shiftOverWhitespaceForward(myCurrentLexeme);
 
@@ -912,6 +919,11 @@ public class PsiBuilderImpl extends UnprotectedUserDataHolder implements PsiBuil
     if (DIAGNOSTICS != null) {
       DIAGNOSTICS.registerRollback(myCurrentLexeme - marker.myLexemeIndex);
     }
+
+    NavigableMap<Integer, IElementType> remapped = myTokenTypesToRestoreOnRollback.tailMap(marker.myLexemeIndex, true);
+    remapped.forEach((index, type) -> myLexTypes[index] = type);
+    remapped.clear();
+
     myCurrentLexeme = marker.myLexemeIndex;
     myTokenTypeChecked = true;
     myProduction.rollbackTo(marker);

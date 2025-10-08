@@ -314,7 +314,7 @@ public class OuterModelsModificationTracker extends SimpleModificationTracker {
         try {
           PsiModifierList psiModifierList = psiPackageStatement.getAnnotationList();
           if (psiModifierList != null) {
-            return psiModifierList.getAnnotations().length > 0;
+            return psiModifierList.hasAnnotations();
           }
         }
         catch (PsiInvalidElementAccessException ignored) {

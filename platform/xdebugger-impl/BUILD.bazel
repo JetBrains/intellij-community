@@ -1,10 +1,22 @@
 ### auto-generated section `build intellij.platform.debugger.impl` start
-load("@rules_jvm//:jvm.bzl", "jvm_library", "jvm_resources")
+load("//build:compiler-options.bzl", "create_kotlinc_options")
+load("@rules_jvm//:jvm.bzl", "jvm_library", "resourcegroup")
 
-jvm_resources(
+create_kotlinc_options(
+  name = "custom_debugger-impl",
+  x_context_parameters = True
+)
+
+resourcegroup(
   name = "debugger-impl_resources",
-  files = glob(["resources/**/*"]),
+  srcs = glob(["resources/**/*"]),
   strip_prefix = "resources"
+)
+
+resourcegroup(
+  name = "debugger-impl_resources_1",
+  srcs = glob(["compatibilityResources/**/*"]),
+  strip_prefix = "compatibilityResources"
 )
 
 jvm_library(
@@ -12,6 +24,11 @@ jvm_library(
   module_name = "intellij.platform.debugger.impl",
   visibility = ["//visibility:public"],
   srcs = glob(["src/**/*.kt", "src/**/*.java", "src/**/*.form"], allow_empty = True),
+  resources = [
+    ":debugger-impl_resources",
+    ":debugger-impl_resources_1",
+  ],
+  kotlinc_opts = ":custom_debugger-impl",
   deps = [
     "//platform/analysis-api:analysis",
     "//platform/code-style-api:codeStyle",
@@ -30,14 +47,14 @@ jvm_library(
     "//platform/projectModel-api:projectModel",
     "@lib//:stream_ex",
     "//platform/statistics",
-    "@lib//:fastutil-min",
+    "//libraries/fastutil",
     "//platform/core-ui",
     "//platform/platform-util-io-impl:ide-util-io-impl",
     "//platform/platform-impl:ide-impl",
     "//platform/analysis-impl",
     "//platform/util/jdom",
     "@lib//:kotlinx-coroutines-core",
-    "@lib//:miglayout-swing",
+    "//libraries/miglayout-swing",
     "//platform/util/text-matching",
     "//platform/util/coroutines",
     "//platform/ide-core-impl",
@@ -45,25 +62,25 @@ jvm_library(
     "//platform/editor-ui-ex:editor-ex",
     "//platform/platform-impl/ui",
     "//platform/refactoring",
-    "@lib//:jackson",
-    "@lib//:jackson-databind",
+    "//libraries/jackson/jackson",
+    "//libraries/jackson/databind",
     "//platform/kernel/shared:kernel",
     "//platform/platform-impl/internal",
-    "@lib//:kotlinx-serialization-core",
-    "@lib//:kotlinx-serialization-json",
+    "//libraries/kotlinx/serialization/core",
+    "//libraries/kotlinx/serialization/json",
     "//platform/project/shared:project",
     "//platform/platform-impl/codeinsight-inline:ide-codeinsight-inline",
     "//platform/xdebugger-impl/shared",
     "//platform/xdebugger-impl/rpc",
     "//platform/remote-topics/shared:rpc-topics",
-  ],
-  runtime_deps = [":debugger-impl_resources"]
+  ]
 )
 
 jvm_library(
   name = "debugger-impl_test_lib",
   visibility = ["//visibility:public"],
   srcs = glob(["testSrc/**/*.kt", "testSrc/**/*.java", "testSrc/**/*.form"], allow_empty = True),
+  kotlinc_opts = ":custom_debugger-impl",
   associates = [":debugger-impl"],
   deps = [
     "//platform/analysis-api:analysis",
@@ -89,14 +106,14 @@ jvm_library(
     "@lib//:stream_ex",
     "//platform/statistics",
     "//platform/statistics:statistics_test_lib",
-    "@lib//:fastutil-min",
+    "//libraries/fastutil",
     "//platform/core-ui",
     "//platform/platform-util-io-impl:ide-util-io-impl",
     "//platform/platform-impl:ide-impl",
     "//platform/analysis-impl",
     "//platform/util/jdom",
     "@lib//:kotlinx-coroutines-core",
-    "@lib//:miglayout-swing",
+    "//libraries/miglayout-swing",
     "//platform/util/text-matching",
     "//platform/util/coroutines",
     "//platform/ide-core-impl",
@@ -105,19 +122,18 @@ jvm_library(
     "@lib//:assert_j",
     "//platform/platform-impl/ui",
     "//platform/refactoring",
-    "@lib//:jackson",
-    "@lib//:jackson-databind",
+    "//libraries/jackson/jackson",
+    "//libraries/jackson/databind",
     "//platform/kernel/shared:kernel",
     "//platform/platform-impl/internal",
-    "@lib//:kotlinx-serialization-core",
-    "@lib//:kotlinx-serialization-json",
+    "//libraries/kotlinx/serialization/core",
+    "//libraries/kotlinx/serialization/json",
     "//platform/project/shared:project",
     "//platform/platform-impl/codeinsight-inline:ide-codeinsight-inline",
     "//platform/xdebugger-impl/shared",
     "//platform/xdebugger-impl/rpc",
     "//platform/remote-topics/shared:rpc-topics",
-  ],
-  runtime_deps = [":debugger-impl_resources"]
+  ]
 )
 ### auto-generated section `build intellij.platform.debugger.impl` end
 

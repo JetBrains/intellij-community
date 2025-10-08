@@ -1,5 +1,5 @@
 ### auto-generated section `build intellij.platform.ui.jcef` start
-load("@rules_jvm//:jvm.bzl", "jvm_library", "jvm_resources", "kt_javac_options")
+load("@rules_jvm//:jvm.bzl", "jvm_library", "kt_javac_options", "resourcegroup")
 
 kt_javac_options(
   name = "custom-javac-options",
@@ -12,9 +12,9 @@ kt_javac_options(
   no_proc = True
 )
 
-jvm_resources(
+resourcegroup(
   name = "ui.jcef_resources",
-  files = glob(["resources/**/*"]),
+  srcs = glob(["resources/**/*"]),
   strip_prefix = "resources"
 )
 
@@ -23,6 +23,7 @@ jvm_library(
   module_name = "intellij.platform.ui.jcef",
   visibility = ["//visibility:public"],
   srcs = glob(["jcef/**/*.kt", "jcef/**/*.java", "jcef/**/*.form"], allow_empty = True),
+  resources = [":ui.jcef_resources"],
   javac_opts = ":custom-javac-options",
   deps = [
     "@lib//:jetbrains-annotations",
@@ -47,7 +48,6 @@ jvm_library(
     "//platform/jbr",
     "@lib//:jna",
   ],
-  exports = ["@lib//:jcef"],
-  runtime_deps = [":ui.jcef_resources"]
+  exports = ["@lib//:jcef"]
 )
 ### auto-generated section `build intellij.platform.ui.jcef` end

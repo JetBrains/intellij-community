@@ -1,9 +1,9 @@
 ### auto-generated section `build intellij.platform.statistics` start
-load("@rules_jvm//:jvm.bzl", "jvm_library", "jvm_resources")
+load("@rules_jvm//:jvm.bzl", "jvm_library", "resourcegroup")
 
-jvm_resources(
+resourcegroup(
   name = "statistics_resources",
-  files = glob(["resources/**/*"]),
+  srcs = glob(["resources/**/*"]),
   strip_prefix = "resources"
 )
 
@@ -12,6 +12,7 @@ jvm_library(
   module_name = "intellij.platform.statistics",
   visibility = ["//visibility:public"],
   srcs = glob(["src/**/*.kt", "src/**/*.java", "src/**/*.form"], allow_empty = True),
+  resources = [":statistics_resources"],
   deps = [
     "//platform/core-api:core",
     "//platform/core-impl",
@@ -19,7 +20,7 @@ jvm_library(
     "@lib//:jetbrains-annotations",
     "//platform/util/jdom",
     "//platform/statistics/uploader",
-    "@lib//:fastutil-min",
+    "//libraries/fastutil",
     "//platform/util/concurrency",
     "//platform/core-ui",
     "@lib//:jna",
@@ -27,18 +28,18 @@ jvm_library(
     "//platform/runtime/product",
     "//platform/platform-util-io:ide-util-io",
     "//platform/util-ex",
-    "@lib//:caffeine",
+    "//libraries/caffeine",
     "//platform/editor-ui-api:editor-ui",
     "//platform/ide-core",
     "//platform/ide-core/plugins",
     "//platform/projectModel-api:projectModel",
-    "@lib//:jackson",
-    "@lib//:jackson-databind",
-    "@lib//:jackson-module-kotlin",
-    "@lib//:kotlin-reflect",
+    "//libraries/jackson/jackson",
+    "//libraries/jackson/databind",
+    "//libraries/jackson/module-kotlin:libraries-jackson-module-kotlin",
+    "//libraries/kotlin-reflect",
     "@lib//:kotlinx-coroutines-core",
-    "@lib//:kotlinx-serialization-json",
-    "@lib//:kotlinx-serialization-core",
+    "//libraries/kotlinx/serialization/json",
+    "//libraries/kotlinx/serialization/core",
     "@lib//:com-jetbrains-fus-reporting-model",
     "@lib//:com-jetbrains-fus-reporting-serialization-kotlin",
     "@lib//:com-jetbrains-fus-reporting-connection-client",
@@ -48,8 +49,7 @@ jvm_library(
   exports = [
     "@lib//:com-jetbrains-fus-reporting-model",
     "@lib//:com-jetbrains-fus-reporting-ap-validation",
-  ],
-  runtime_deps = [":statistics_resources"]
+  ]
 )
 
 jvm_library(
@@ -64,7 +64,7 @@ jvm_library(
     "@lib//:jetbrains-annotations",
     "//platform/util/jdom",
     "//platform/statistics/uploader",
-    "@lib//:fastutil-min",
+    "//libraries/fastutil",
     "//platform/util/concurrency",
     "//platform/util/concurrency:concurrency_test_lib",
     "//platform/core-ui",
@@ -73,20 +73,20 @@ jvm_library(
     "//platform/runtime/product",
     "//platform/platform-util-io:ide-util-io",
     "//platform/util-ex",
-    "@lib//:caffeine",
+    "//libraries/caffeine",
     "//platform/editor-ui-api:editor-ui",
     "//platform/ide-core",
     "//platform/ide-core/plugins",
     "//platform/projectModel-api:projectModel",
-    "@lib//:jackson",
-    "@lib//:jackson-databind",
-    "@lib//:jackson-module-kotlin",
-    "@lib//:kotlin-reflect",
+    "//libraries/jackson/jackson",
+    "//libraries/jackson/databind",
+    "//libraries/jackson/module-kotlin:libraries-jackson-module-kotlin",
+    "//libraries/kotlin-reflect",
     "@lib//:kotlinx-coroutines-core",
     "@lib//:junit5",
     "@lib//:assert_j",
-    "@lib//:kotlinx-serialization-json",
-    "@lib//:kotlinx-serialization-core",
+    "//libraries/kotlinx/serialization/json",
+    "//libraries/kotlinx/serialization/core",
     "@lib//:com-jetbrains-fus-reporting-model",
     "@lib//:com-jetbrains-fus-reporting-serialization-kotlin",
     "@lib//:com-jetbrains-fus-reporting-connection-client",
@@ -96,8 +96,7 @@ jvm_library(
   exports = [
     "@lib//:com-jetbrains-fus-reporting-model",
     "@lib//:com-jetbrains-fus-reporting-ap-validation",
-  ],
-  runtime_deps = [":statistics_resources"]
+  ]
 )
 ### auto-generated section `build intellij.platform.statistics` end
 

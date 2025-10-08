@@ -1,5 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
-
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.kotlin.idea.k2.quickFix
 
 import com.intellij.codeInsight.intention.IntentionAction
@@ -1135,7 +1134,7 @@ class K2CommonIntentionActionsTest : KotlinLightCodeInsightFixtureTestCaseBase()
             createConstructorActions(
                 myFixture.atCaret(),
                 constructorRequest(project, listOf(pair("param0", PsiTypes.intType() as PsiType)))
-            ).findWithText("Add 'int' as 1st parameter to constructor 'Foo'")
+            ).findWithText("Add 'int' as 1st parameter to constructor 'Foo()'")
         )
         myFixture.checkResult(
             """
@@ -1157,7 +1156,7 @@ class K2CommonIntentionActionsTest : KotlinLightCodeInsightFixtureTestCaseBase()
             createConstructorActions(
                 myFixture.atCaret(),
                 constructorRequest(project, emptyList())
-            ).findWithText("Remove 1st parameter from constructor 'Foo'")
+            ).findWithText("Remove 1st parameter from constructor 'Foo()'")
         )
         myFixture.checkResult(
             """

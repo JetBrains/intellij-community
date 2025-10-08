@@ -12,7 +12,7 @@ import org.jetbrains.annotations.VisibleForTesting
 
 @ApiStatus.Internal
 @IntellijInternalApi
-class UpdateChain internal constructor(
+class UpdateChain(
   val chain: List<BuildNumber>,
   val size: String?,
 )
@@ -26,7 +26,7 @@ sealed class PlatformUpdates {
 
   @ApiStatus.Internal
   @IntellijInternalApi
-  data class Loaded @JvmOverloads internal constructor(
+  data class Loaded @JvmOverloads constructor(
     val newBuild: BuildInfo,
     val updatedChannel: UpdateChannel,
     val patches: UpdateChain? = null,
@@ -34,7 +34,7 @@ sealed class PlatformUpdates {
 
   @ApiStatus.Internal
   @IntellijInternalApi
-  data class ConnectionError internal constructor(val error: Exception) : PlatformUpdates()
+  data class ConnectionError(val error: Exception) : PlatformUpdates()
 }
 
 /**
@@ -69,14 +69,14 @@ data class InternalPluginResults @JvmOverloads @VisibleForTesting constructor(
 
 @ApiStatus.Internal
 @IntellijInternalApi
-data class ExternalUpdate @JvmOverloads internal constructor(
+data class ExternalUpdate @JvmOverloads constructor(
   val source: ExternalComponentSource,
   val components: Collection<UpdatableExternalComponent> = emptyList(),
 )
 
 @ApiStatus.Internal
 @IntellijInternalApi
-data class ExternalPluginResults @JvmOverloads internal constructor(
+data class ExternalPluginResults @JvmOverloads constructor(
   val externalUpdates: Collection<ExternalUpdate> = emptyList(),
   val errors: Map<ExternalComponentSource, Exception> = emptyMap(),
 )

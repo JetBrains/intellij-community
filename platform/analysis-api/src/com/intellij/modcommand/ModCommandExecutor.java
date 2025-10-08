@@ -4,10 +4,8 @@ package com.intellij.modcommand;
 import com.intellij.analysis.AnalysisBundle;
 import com.intellij.codeInsight.intention.preview.IntentionPreviewInfo;
 import com.intellij.openapi.application.ApplicationManager;
-import com.intellij.openapi.application.ReadAction;
 import com.intellij.openapi.command.CommandProcessor;
 import com.intellij.openapi.editor.Editor;
-import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.util.NlsContexts;
 import com.intellij.psi.PsiFile;
 import com.intellij.util.concurrency.annotations.RequiresEdt;
@@ -32,6 +30,23 @@ public interface ModCommandExecutor {
    */
   @RequiresEdt
   void executeInteractively(@NotNull ActionContext context, @NotNull ModCommand command, @Nullable Editor editor);
+
+  /**
+   * Fetch the command from the supplier in the background and execute it interactively.
+   * The action is performed synchronously in EDT and can be canceled by the user if background computation takes a long time.
+   * The {@linkplain CommandProcessor command} will be created automatically, if necessary.
+   * Do not use it directly, use {@link #executeInteractively(ActionContext, String, Editor, Supplier)} instead.
+   *
+   * @param context action context
+   * @param title user-visible title to display if background computation takes a long time.
+   * @param editor context editor, if known
+   * @param commandSupplier a side-effect-free function to produce a {@link ModCommand}
+   */
+  @ApiStatus.Internal
+  void obtainAndExecuteInteractively(@NotNull ActionContext context,
+                                     @Nls String title,
+                                     @Nullable Editor editor,
+                                     @NotNull Supplier<? extends @NotNull ModCommand> commandSupplier);
 
   /**
    * Executes given {@link ModCommand} in batch (applies default options, do not navigate)
@@ -72,30 +87,19 @@ public interface ModCommandExecutor {
    * Fetch the command from the supplier in the background and execute it interactively.
    * The action is performed synchronously in EDT and can be canceled by the user if background computation takes a long time.
    * The {@linkplain CommandProcessor command} will be created automatically, if necessary.
+   * Must be executed either in EDT, or during intention preview computation. In the latter case,
+   * only the commands that change the current file are accepted.
    * 
    * @param context action context
    * @param title user-visible title to display if background computation takes a long time.
    * @param editor context editor, if known
    * @param commandSupplier a side-effect-free function to produce a {@link ModCommand}
    */
-  @ApiStatus.Experimental
-  @RequiresEdt
   static void executeInteractively(@NotNull ActionContext context,
                                    @Nls String title,
                                    @Nullable Editor editor,
                                    @NotNull Supplier<@NotNull ModCommand> commandSupplier) {
-    ModCommand command = ProgressManager.getInstance().runProcessWithProgressSynchronously(
-      () -> ReadAction.nonBlocking(commandSupplier::get).executeSynchronously(),
-      title, true, context.project());
-    if (!command.isEmpty()) {
-      CommandProcessor commandProcessor = CommandProcessor.getInstance();
-      if (commandProcessor.getCurrentCommand() == null) {
-        commandProcessor.executeCommand(context.project(), 
-                                        () -> getInstance().executeInteractively(context, command, editor), title, null);
-      } else {
-        getInstance().executeInteractively(context, command, editor);
-      }
-    }
+    getInstance().obtainAndExecuteInteractively(context, title, editor, commandSupplier);
   }
 
   /**

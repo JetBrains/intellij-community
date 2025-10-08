@@ -1,9 +1,9 @@
 ### auto-generated section `build intellij.markdown.fenceInjection` start
-load("@rules_jvm//:jvm.bzl", "jvm_library", "jvm_provided_library", "jvm_resources")
+load("@rules_jvm//:jvm.bzl", "jvm_library", "jvm_provided_library", "resourcegroup")
 
-jvm_resources(
+resourcegroup(
   name = "fenceInjection_resources",
-  files = glob(["src/main/resources/**/*"]),
+  srcs = glob(["src/main/resources/**/*"]),
   strip_prefix = "src/main/resources"
 )
 
@@ -17,6 +17,7 @@ jvm_library(
   module_name = "intellij.markdown.fenceInjection",
   visibility = ["//visibility:public"],
   srcs = glob(["src/main/java/**/*.kt", "src/main/java/**/*.java", "src/main/java/**/*.form"], allow_empty = True),
+  resources = [":fenceInjection_resources"],
   deps = [
     "//plugins/markdown/core:markdown",
     "//platform/core-api:core",
@@ -26,7 +27,6 @@ jvm_library(
     "//platform/backend",
     "@lib//:kotlin-stdlib",
     ":xml_langInjection_provided",
-  ],
-  runtime_deps = [":fenceInjection_resources"]
+  ]
 )
 ### auto-generated section `build intellij.markdown.fenceInjection` end

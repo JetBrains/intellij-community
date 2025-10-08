@@ -73,7 +73,7 @@ public final class ProjectNameStep extends ModuleWizardStep {
     if (name == null) {
       List<String> components = StringUtil.split(FileUtil.toSystemIndependentName(myWizardContext.getProjectFileDirectory()), "/");
       if (!components.isEmpty()) {
-        name = components.get(components.size()-1);
+        name = components.getLast();
       }
     }
     myNamePathComponent.setNameValue(name);

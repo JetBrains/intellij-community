@@ -107,7 +107,7 @@ public final class JavaModuleExternalPathsImpl extends JavaModuleExternalPaths {
   @Override
   public void readExternal(@NotNull Element element) throws InvalidDataException {
     Map<OrderRootType, VirtualFilePointerContainer> newMap = new HashMap<>();
-    for (PersistentOrderRootType orderRootType : OrderRootType.getAllPersistentTypes()) {
+    for (PersistentOrderRootType orderRootType : OrderRootType.getAllPersistentTypesList()) {
       String paths = orderRootType.getModulePathsName();
       if (paths != null) {
         final Element pathsElement = element.getChild(paths);

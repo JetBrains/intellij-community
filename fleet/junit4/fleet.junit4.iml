@@ -8,5 +8,6 @@
     <orderEntry type="sourceFolder" forTests="false" />
     <orderEntry type="library" exported="" name="JUnit4" level="project" />
     <orderEntry type="library" exported="" name="hamcrest" level="project" />
+    <orderEntry type="library" exported="" name="kotlin-test-junit" level="project" />
   </component>
 </module>

@@ -180,7 +180,9 @@ public final class LocalHintManager implements ClientHintManager {
   public boolean hasShownHintsThatWillHideByOtherHint(boolean willShowTooltip) {
     EDT.assertIsEdt();
     for (HintManagerImpl.HintInfo hintInfo : myHintsStack) {
-      if (hintInfo.hint().isVisible() && BitUtil.isSet(hintInfo.flags(), HintManager.HIDE_BY_OTHER_HINT)) return true;
+      if (hintInfo.hint().isVisible() && BitUtil.isSet(hintInfo.flags(), HintManager.HIDE_BY_OTHER_HINT)) {
+        return true;
+      }
       if (willShowTooltip && hintInfo.hint().isAwtTooltip()) {
         // only one AWT tooltip can be visible, so this hint will hide even though it's not marked with HIDE_BY_OTHER_HINT
         return true;

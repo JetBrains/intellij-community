@@ -4,7 +4,6 @@
  */
 package org.jetbrains.kotlin.idea.completion.impl.k2.contributors
 
-import com.intellij.codeInsight.lookup.LookupElement
 import org.jetbrains.kotlin.analysis.api.KaSession
 import org.jetbrains.kotlin.analysis.api.analyzeCopy
 import org.jetbrains.kotlin.analysis.api.projectStructure.KaDanglingFileResolutionMode
@@ -32,11 +31,13 @@ internal class K2NamedArgumentCompletionContributor : K2SimpleCompletionContribu
     KotlinExpressionNameReferencePositionContext::class
 ) {
 
-    override fun KaSession.shouldExecute(context: K2CompletionSectionContext<KotlinExpressionNameReferencePositionContext>): Boolean {
+    context(_: KaSession, context: K2CompletionSectionContext<KotlinExpressionNameReferencePositionContext>)
+    override fun shouldExecute(): Boolean {
         return !context.positionContext.isAfterRangeOperator()
     }
 
-    override fun KaSession.complete(context: K2CompletionSectionContext<KotlinExpressionNameReferencePositionContext>) {
+    context(_: KaSession, context: K2CompletionSectionContext<KotlinExpressionNameReferencePositionContext>)
+    override fun complete() {
         if (context.positionContext.explicitReceiver != null) return
 
         val valueArgument = findValueArgument(context.positionContext.nameExpression) ?: return
@@ -70,7 +71,7 @@ internal class K2NamedArgumentCompletionContributor : K2SimpleCompletionContribu
                 }
             }
 
-            buildList<LookupElement> {
+            buildList {
                 for ((name, indexedTypes) in namedArgumentInfos) {
                     with(KotlinFirLookupElementFactory) {
                         add(createNamedArgumentLookupElement(name, indexedTypes.map { it.value }))
@@ -87,7 +88,7 @@ internal class K2NamedArgumentCompletionContributor : K2SimpleCompletionContribu
                     }
                 }
             }
-        }.map { it.applyWeighs(context.weighingContext) }
+        }.map { it.applyWeighs() }
             .forEach { context.addElement(it) }
     }
 

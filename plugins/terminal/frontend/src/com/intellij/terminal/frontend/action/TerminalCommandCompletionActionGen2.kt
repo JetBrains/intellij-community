@@ -9,7 +9,7 @@ import com.intellij.openapi.actionSystem.ActionPromoter
 import com.intellij.openapi.actionSystem.AnAction
 import com.intellij.openapi.actionSystem.AnActionEvent
 import com.intellij.openapi.actionSystem.DataContext
-import com.intellij.terminal.frontend.completion.TerminalCommandCompletionHandler
+import com.intellij.terminal.frontend.view.completion.TerminalCommandCompletionHandler
 import org.jetbrains.annotations.Unmodifiable
 import org.jetbrains.plugins.terminal.block.reworked.TerminalCommandCompletion
 import org.jetbrains.plugins.terminal.block.util.TerminalDataContextUtils.isOutputModelEditor

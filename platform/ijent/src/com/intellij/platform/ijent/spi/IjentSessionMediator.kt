@@ -3,17 +3,20 @@
 
 package com.intellij.platform.ijent.spi
 
-import com.intellij.openapi.diagnostic.*
+import com.intellij.openapi.diagnostic.Attachment
+import com.intellij.openapi.diagnostic.Logger
+import com.intellij.openapi.diagnostic.debug
+import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.progress.Cancellation
 import com.intellij.openapi.progress.Cancellation.ensureActive
 import com.intellij.openapi.util.IntellijInternalApi
 import com.intellij.platform.ijent.IjentLogger
 import com.intellij.platform.ijent.IjentUnavailableException
 import com.intellij.platform.ijent.coroutineNameAppended
-import com.intellij.platform.ijent.spi.IjentSessionMediator.ProcessExitPolicy.*
+import com.intellij.platform.ijent.spi.IjentSessionMediator.ProcessExitPolicy.CHECK_CODE
+import com.intellij.platform.ijent.spi.IjentSessionMediator.ProcessExitPolicy.NORMAL
 import com.intellij.platform.util.coroutines.childScope
 import com.intellij.util.containers.ContainerUtil
-import com.intellij.util.io.blockingDispatcher
 import kotlinx.coroutines.*
 import kotlinx.coroutines.channels.BufferOverflow
 import kotlinx.coroutines.flow.MutableSharedFlow
@@ -135,7 +138,7 @@ abstract class IjentSessionMediator private constructor(
       // stderr logger should outlive the current scope. In case if an error appears, the scope is cancelled immediately, but the whole
       // intention of the stderr logger is to write logs of the remote process, which come from the remote machine to the local one with
       // a delay.
-      GlobalScope.launch(blockingDispatcher + ijentProcessScope.coroutineNameAppended("stderr logger")) {
+      GlobalScope.launch(IjentThreadPool.asCoroutineDispatcher() + ijentProcessScope.coroutineNameAppended("stderr logger")) {
         ijentProcessStderrLogger(process, ijentLabel, lastStderrMessages)
       }
 
@@ -224,19 +227,11 @@ private val ijentLogMessageRegex = Regex(
   RegexOption.COMMENTS,
 )
 
-private val logTargets: Map<String, Logger> =
-  IjentLogger.ALL_LOGGERS.associateByTo(hashMapOf()) { logger ->
-    val getter = JulLogger::class.java.getDeclaredMethod("getLoggerName")
-    val oldIsAccessible = getter.isAccessible
-    val loggerName = try {
-      getter.isAccessible = true
-      getter.invoke(logger) as String
-    }
-    finally {
-      getter.isAccessible = oldIsAccessible
-    }
+private val logTargets: Map<String, Logger> by lazy {
+  IjentLogger.ALL_LOGGERS.mapKeys { (loggerName, _) ->
     loggerName.removePrefix("#com.intellij.platform.ijent.")
   }
+}
 
 private class LogIjentStderr {
   private var lastLoggingHandler: ((String) -> Unit)? = null
@@ -268,7 +263,7 @@ private class LogIjentStderr {
     val logger: ((String) -> Unit)? = run {
       val logTargetPrefix = message
         .take(256)  // I hope that there will never be a span/target name longer than 256 characters.
-        .split("ijent::#", limit = 2)
+        .split("ijent::-", limit = 2)
         .getOrNull(1)
         ?.substringBefore("::")
         ?.takeWhile { it.isLetter() || it == '_' }
@@ -322,7 +317,7 @@ private suspend fun ijentProcessExitAwaiter(
     NORMAL -> true
   }
 
-  throw if (isExitExpected) {
+  val error = if (isExitExpected) {
     IjentUnavailableException.CommunicationFailure("IJent process exited successfully").apply { exitedExpectedly = true }
   }
   else {
@@ -341,6 +336,15 @@ private suspend fun ijentProcessExitAwaiter(
       Attachment("stderr", stderr.toString()),
     )
   }
+
+  // TODO IJPL-198706 When IJent unexpectedly terminates, users should be asked for further actions.
+  if (isExitExpected) {
+    LOG.info(error)
+  }
+  else {
+    LOG.warn(error)
+  }
+  throw error
 }
 
 private suspend fun collectLines(lastStderrMessages: SharedFlow<String?>, stderr: StringBuilder) {

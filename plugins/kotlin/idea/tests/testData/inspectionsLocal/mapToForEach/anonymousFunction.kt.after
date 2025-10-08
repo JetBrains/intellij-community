@@ -1,0 +1,10 @@
+// FIX: Replace with 'forEach'
+
+fun foo(nums: Iterable<Int>) {
+    nums.map { it }.forEach(fun(it: Int): Unit {
+        if (it > 10) return@forEach
+        print(it)
+    })
+}
+
+// IGNORE_K1

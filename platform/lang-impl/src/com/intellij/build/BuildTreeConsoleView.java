@@ -54,7 +54,7 @@ import com.intellij.ui.*;
 import com.intellij.ui.components.panels.NonOpaquePanel;
 import com.intellij.ui.progress.ProgressUIUtil;
 import com.intellij.ui.render.RenderingHelper;
-import com.intellij.ui.split.SplitComponentFactory;
+import com.intellij.ui.split.SplitComponentBindingKt;
 import com.intellij.ui.tree.AsyncTreeModel;
 import com.intellij.ui.tree.StructureTreeModel;
 import com.intellij.ui.tree.TreePathUtil;
@@ -133,26 +133,14 @@ public final class BuildTreeConsoleView implements ConsoleView, UiDataProvider, 
   private final Tree myTree;
   private final CoroutineScope myScope;
   private final BuildTreeViewModel myTreeVm;
-  private final ComponentContainer mySplitComponent;
+  private final JComponent mySplitComponent;
   private final ExecutionNode myRootNode;
   private final ExecutionNode myBuildProgressRootNode;
   private final Set<Predicate<? super ExecutionNode>> myNodeFilters;
   private final OccurenceNavigator myOccurrenceNavigatorSupport;
   private final Set<BuildEvent> myDeferredEvents = ConcurrentCollectionFactory.createConcurrentSet();
 
-  // new implementation doesn't work on the client side currently (the case of code-with-me client)
-  private final boolean mySplitImplementation = !PlatformUtils.isJetBrainsClient() && Registry.is("build.toolwindow.split.tree", false);
-
-  /**
-   * @deprecated BuildViewSettingsProvider is not used anymore.
-   */
-  @Deprecated(forRemoval = true)
-  public BuildTreeConsoleView(@NotNull Project project,
-                              @NotNull BuildDescriptor buildDescriptor,
-                              @Nullable ExecutionConsole executionConsole,
-                              @NotNull BuildViewSettingsProvider buildViewSettingsProvider) {
-    this(project, buildDescriptor, executionConsole);
-  }
+  private final boolean mySplitImplementation = Registry.is("build.toolwindow.split.tree", false);
 
   public BuildTreeConsoleView(@NotNull Project project,
                               @NotNull BuildDescriptor buildDescriptor,
@@ -178,10 +166,12 @@ public final class BuildTreeConsoleView implements ConsoleView, UiDataProvider, 
     if (mySplitImplementation) {
       myScope = CoroutineScopeKt.childScope(ScopeHolder.getScope(project), "BuildTreeConsoleView", EmptyCoroutineContext.INSTANCE, true);
       myTreeVm = new BuildTreeViewModel(this, myScope);
-      Disposer.register(this, myTreeVm);
-      mySplitComponent = SplitComponentFactory.getInstance().createComponent(myTreeVm);
+      mySplitComponent = SplitComponentBindingKt.createComponent(
+        BuildTreeSplitComponentBindingKt.getBuildTreeSplitComponentBinding(),
+        myProject, myScope, myTreeVm.getId()
+      );
 
-      treeComponent = mySplitComponent.getComponent();
+      treeComponent = mySplitComponent;
 
       myOccurrenceNavigatorSupport = new SplitProblemOccurrenceNavigatorSupport(myTreeVm);
 
@@ -891,8 +881,15 @@ public final class BuildTreeConsoleView implements ConsoleView, UiDataProvider, 
 
   @Override
   public JComponent getPreferredFocusableComponent() {
-    return mySplitImplementation ? ObjectUtils.notNull(mySplitComponent.getPreferredFocusableComponent(), mySplitComponent.getComponent())
-                                 : myTree;
+    if (!mySplitImplementation) {
+      return myTree;
+    }
+
+    if (mySplitComponent instanceof ComponentContainer splitComponentContainer) {
+      return splitComponentContainer.getPreferredFocusableComponent();
+    }
+
+    return mySplitComponent;
   }
 
   @Override
@@ -1045,7 +1042,7 @@ public final class BuildTreeConsoleView implements ConsoleView, UiDataProvider, 
   public JTree getTree() {
     if (mySplitImplementation) {
       // won't work on rem dev backend
-      return UIUtil.findComponentOfType(mySplitComponent.getComponent(), JTree.class);
+      return UIUtil.findComponentOfType(mySplitComponent, JTree.class);
     }
     else {
       return myTree;

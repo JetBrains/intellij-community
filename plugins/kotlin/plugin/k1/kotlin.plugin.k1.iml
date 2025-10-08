@@ -68,6 +68,7 @@
     <orderEntry type="module" module-name="kotlin.compiler-plugins.assignment.common.k1" scope="RUNTIME" />
     <orderEntry type="module" module-name="kotlin.compiler-plugins.assignment.gradle" scope="RUNTIME" />
     <orderEntry type="module" module-name="kotlin.compiler-plugins.assignment.maven" scope="RUNTIME" />
+    <orderEntry type="module" module-name="kotlin.compiler-plugins.kotlin-dataframe.maven" scope="RUNTIME" />
     <orderEntry type="module" module-name="kotlin.compiler-plugins.scripting" scope="RUNTIME" />
     <orderEntry type="module" module-name="kotlin.completion.api" scope="RUNTIME" />
     <orderEntry type="module" module-name="kotlin.completion.impl.shared" scope="RUNTIME" />

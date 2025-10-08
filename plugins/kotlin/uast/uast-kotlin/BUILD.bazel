@@ -10,7 +10,7 @@ jvm_library(
   deps = [
     "//platform/core-api:core",
     "@lib//:kotlin-stdlib",
-    "@lib//:asm",
+    "//libraries/asm",
     "@lib//:kotlinc-kotlin-compiler-common",
     "@lib//:kotlinc-kotlin-compiler-fe10",
     "//platform/util",

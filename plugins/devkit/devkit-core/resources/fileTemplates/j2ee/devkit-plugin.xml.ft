@@ -1,6 +1,6 @@
-<!-- Plugin Configuration File. Read more: https://plugins.jetbrains.com/docs/intellij/plugin-configuration-file.html -->
+<!-- Plugin Configuration File: https://plugins.jetbrains.com/docs/intellij/plugin-configuration-file.html -->
 <idea-plugin>
-    <!-- Unique identifier of the plugin. It should be FQN. It cannot be changed between the plugin versions. -->
+    <!-- Unique identifier of the plugin. It should be FQN, cannot be changed between the plugin versions. -->
     <id>${context.group}.${context.artifact}</id>
 
     <!-- Public plugin name should be written in Title Case.
@@ -19,9 +19,62 @@
 
     <!-- Product and plugin compatibility requirements.
          Read more: https://plugins.jetbrains.com/docs/intellij/plugin-compatibility.html -->
-    <depends>com.intellij.modules.platform</depends>
+    <dependencies>
+#if (!$context.hasLibraries())
+        <plugin id="com.intellij.modules.platform"/>
+#end
+#if ($context.hasLibrary("compose"))
+        <module name="intellij.platform.compose"/>
+#end
+#if ($context.hasLibrary("lsp"))
+        <plugin id="com.intellij.modules.lsp"/>
+#end
 
-    <!-- Extension points defined by the plugin.
+#if ($context.hasLibrary("java"))
+        <plugin id="com.intellij.java"/>
+#end
+#if ($context.hasLibrary("kotlin"))
+        <plugin id="org.jetbrains.kotlin"/>
+#end
+#if ($context.hasLibrary("javascript"))
+        <plugin id="JavaScript"/>
+#end
+#if ($context.hasLibrary("json"))
+        <plugin id="com.intellij.modules.json"/>
+#end
+#if ($context.hasLibrary("yaml"))
+        <plugin id="org.jetbrains.plugins.yaml"/>
+#end
+#if ($context.hasLibrary("xml"))
+        <plugin id="com.intellij.modules.xml"/>
+#end
+#if ($context.hasLibrary("properties"))
+        <module name="intellij.properties.backend"/>
+#end
+#if ($context.hasLibrary("markdown"))
+        <plugin id="org.intellij.plugins.markdown"/>
+#end
+#if ($context.hasLibrary("python"))
+        <plugin id="PythonCore"/>
+#end
+#if ($context.hasLibrary("go"))
+        <plugin id="org.jetbrains.plugins.go"/>
+#end
+#if ($context.hasLibrary("php"))
+        <plugin id="com.jetbrains.php"/>
+#end
+#if ($context.hasLibrary("ruby"))
+        <plugin id="org.jetbrains.plugins.ruby"/>
+#end
+#if ($context.hasLibrary("rust"))
+        <plugin id="com.jetbrains.rust"/>
+#end
+#if ($context.hasLibrary("database"))
+        <plugin id="com.intellij.database"/>
+#end
+    </dependencies>
+
+    <!-- Extensions defined by the plugin.
          Read more: https://plugins.jetbrains.com/docs/intellij/plugin-extension-points.html -->
     <extensions defaultExtensionNs="com.intellij">
 

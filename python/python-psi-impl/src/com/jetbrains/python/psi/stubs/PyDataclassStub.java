@@ -63,4 +63,10 @@ public interface PyDataclassStub extends PyCustomClassStub {
    * its default value if it is not specified or could not be evaluated.
    */
   @Nullable Boolean kwOnly();
+
+  /**
+   * @return value of `slots` parameter or
+   * its default value if it is not specified or could not be evaluated.
+   */
+  @Nullable Boolean slotsValue();
 }

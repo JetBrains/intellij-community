@@ -31,11 +31,6 @@ interface MavenServerConnector : Disposable {
   @ApiStatus.Internal
   fun connect()
 
-  @ApiStatus.ScheduledForRemoval
-  @ApiStatus.Internal
-  @Deprecated("use suspend", ReplaceWith("ping"))
-  fun pingBlocking(): Boolean
-
   @ApiStatus.Internal
   suspend fun ping(): Boolean
 

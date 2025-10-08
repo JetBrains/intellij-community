@@ -1,9 +1,9 @@
 ### auto-generated section `build intellij.java.testFramework` start
-load("@rules_jvm//:jvm.bzl", "jvm_library", "jvm_resources")
+load("@rules_jvm//:jvm.bzl", "jvm_library", "resourcegroup")
 
-jvm_resources(
+resourcegroup(
   name = "testFramework_resources",
-  files = glob(["resources/**/*"]),
+  srcs = glob(["resources/**/*"]),
   strip_prefix = "resources"
 )
 
@@ -12,6 +12,7 @@ jvm_library(
   module_name = "intellij.java.testFramework",
   visibility = ["//visibility:public"],
   srcs = glob(["src/**/*.kt", "src/**/*.java", "src/**/*.form"], allow_empty = True),
+  resources = [":testFramework_resources"],
   deps = [
     "//java/openapi:java",
     "//java/testFramework/shared",
@@ -44,11 +45,11 @@ jvm_library(
     "//java/execution/openapi:java-execution",
     "//jps/jps-builders:build",
     "@lib//:stream_ex",
-    "@lib//:fastutil-min",
+    "//libraries/fastutil",
     "//platform/core-ui",
     "//platform/code-style-impl:codeStyle-impl",
     "//platform/platform-util-io:ide-util-io",
-    "@lib//:asm",
+    "//libraries/asm",
     "@lib//:org-codehaus-groovy-groovy",
     "//java/java-impl-refactorings:impl-refactorings",
     "//platform/xdebugger-impl:debugger-impl",
@@ -65,7 +66,6 @@ jvm_library(
     "//java/java-impl:impl",
   ],
   runtime_deps = [
-    ":testFramework_resources",
     "//java/plugin",
     "//platform/external-system-impl:externalSystem-impl",
   ]

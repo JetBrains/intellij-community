@@ -1,9 +1,9 @@
 ### auto-generated section `build kotlin.project-wizard.core` start
-load("@rules_jvm//:jvm.bzl", "jvm_library", "jvm_resources")
+load("@rules_jvm//:jvm.bzl", "jvm_library", "resourcegroup")
 
-jvm_resources(
+resourcegroup(
   name = "core_resources",
-  files = glob(["resources/**/*"]),
+  srcs = glob(["resources/**/*"]),
   strip_prefix = "resources"
 )
 
@@ -12,13 +12,14 @@ jvm_library(
   module_name = "kotlin.project-wizard.core",
   visibility = ["//visibility:public"],
   srcs = glob(["src/**/*.kt", "src/**/*.java", "src/**/*.form", "generated/**/*.kt", "generated/**/*.java"], allow_empty = True),
+  resources = [":core_resources"],
   deps = [
     "@lib//:kotlin-stdlib",
-    "@lib//:kotlin-reflect",
+    "//libraries/kotlin-reflect",
     "@lib//:kotlinx-collections-immutable",
     "//platform/observable",
     "@lib//:velocity",
-    "@lib//:gson",
+    "//libraries/gson",
     "//platform/lang-core",
     "//plugins/kotlin/base/frontend-agnostic",
     "//platform/core-api:core",
@@ -37,8 +38,7 @@ jvm_library(
     "//plugins/kotlin/project-configuration",
     "//plugins/kotlin/base/project-structure",
     "@lib//:kotlinc-kotlin-jps-plugin-classpath",
-  ],
-  runtime_deps = [":core_resources"]
+  ]
 )
 
 jvm_library(
@@ -48,11 +48,11 @@ jvm_library(
   associates = [":core"],
   deps = [
     "@lib//:kotlin-stdlib",
-    "@lib//:kotlin-reflect",
+    "//libraries/kotlin-reflect",
     "@lib//:kotlinx-collections-immutable",
     "//platform/observable",
     "@lib//:velocity",
-    "@lib//:gson",
+    "//libraries/gson",
     "@lib//:junit4",
     "@lib//:kotlin-test-junit",
     "@lib//:kotlin-test",
@@ -76,8 +76,7 @@ jvm_library(
     "//plugins/kotlin/base/project-structure",
     "//plugins/kotlin/base/project-structure:project-structure_test_lib",
     "@lib//:kotlinc-kotlin-jps-plugin-classpath",
-  ],
-  runtime_deps = [":core_resources"]
+  ]
 )
 ### auto-generated section `build kotlin.project-wizard.core` end
 

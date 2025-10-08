@@ -6,6 +6,7 @@ import com.intellij.psi.PsiElement;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.jetbrains.python.PyPsiBundle;
 import com.jetbrains.python.PyTokenTypes;
+import com.jetbrains.python.inspections.quickfix.WrapExceptTupleInParenthesesQuickFix;
 import com.jetbrains.python.psi.*;
 import com.jetbrains.python.psi.impl.PyPsiUtils;
 import org.jetbrains.annotations.NotNull;
@@ -82,12 +83,25 @@ final class PyTryExceptAnnotatorVisitor extends PyElementVisitor {
 
   @Override
   public void visitPyExceptBlock(@NotNull PyExceptPart node) {
-    if (!node.isStar()) return;
+    if (node.isStar()) {
+      var exceptClass = node.getExceptClass();
+      var exceptionGroup = tryGetExceptionGroupInExpression(exceptClass);
+      if (exceptionGroup != null) {
+        myHolder.newAnnotation(HighlightSeverity.ERROR, PyPsiBundle.message("ANN.exception.group.in.star.except")).range(exceptionGroup)
+          .create();
+      }
+    }
 
-    var exceptClass = node.getExceptClass();
-    var exceptionGroup = tryGetExceptionGroupInExpression(exceptClass);
-    if (exceptionGroup != null) {
-      myHolder.newAnnotation(HighlightSeverity.ERROR, PyPsiBundle.message("ANN.exception.group.in.star.except")).range(exceptionGroup)
+    // Add PEP-758 Py314+ missing parentheses check: except Error1, Error2 as e:
+    var level = LanguageLevel.forElement(node);
+    if (!level.isPy3K()) return;
+    if (node.getTarget() == null) return;
+    var exceptExpr = node.getExceptClass();
+    if (exceptExpr instanceof PyParenthesizedExpression) return;
+    if (exceptExpr instanceof PyTupleExpression tuple && tuple.getElements().length > 1) {
+      myHolder.newAnnotation(HighlightSeverity.ERROR, PyPsiBundle.message("INSP.except.clause.missing.parens"))
+        .range(tuple)
+        .withFix(new WrapExceptTupleInParenthesesQuickFix(tuple))
         .create();
     }
   }

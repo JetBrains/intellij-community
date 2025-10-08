@@ -210,7 +210,7 @@ public final class MacWinTabsHandlerV2 extends MacWinTabsHandler {
 
     InternalUICustomization customization = InternalUICustomization.getInstance();
     if (customization != null) {
-      customization.createProjectTab(frame);
+      customization.createProjectTab(frame, tabs);
     }
   }
 

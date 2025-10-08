@@ -55,7 +55,7 @@ public final class GroupCompletionLookupArrangerImpl extends CompletionLookupArr
       super.customizeListModel(model);
       return;
     }
-    LookupElement lastElement = model.get(model.size() - 1);
+    LookupElement lastElement = model.getLast();
     if (!isCustomElements(lastElement)) {
       super.customizeListModel(model);
       return;

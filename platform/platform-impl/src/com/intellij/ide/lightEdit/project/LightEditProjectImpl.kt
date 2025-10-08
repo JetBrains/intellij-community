@@ -20,24 +20,20 @@ import com.intellij.openapi.roots.impl.DirectoryIndex
 import com.intellij.platform.project.ProjectEntitiesStorage
 import com.intellij.serviceContainer.getComponentManagerImpl
 import kotlinx.coroutines.launch
-import java.io.File
 import java.nio.file.Path
 
-private val projectPath: Path
-  get() = Path.of(PathManager.getConfigPath() + File.separator + "light-edit")
-
-internal class LightEditProjectImpl private constructor(projectPath: Path) :
+internal class LightEditProjectImpl private constructor(identityFle: Path) :
   ProjectImpl(
     parent = ApplicationManager.getApplication().getComponentManagerImpl(),
-    filePath = projectPath,
+    isLightTestProject = false,
     projectName = PROJECT_NAME,
   ), LightEditCompatible {
-  constructor() : this(projectPath)
+  constructor() : this(PathManager.getConfigDir().resolve("light-edit"))
 
   init {
     registerComponents()
     customizeRegisteredComponents()
-    componentStore.setPath(projectPath, null)
+    componentStore.setPath(identityFle, null)
     runUnderModalProgressIfIsEdt {
       val project = this@LightEditProjectImpl
       ProjectManagerImpl.initEssentialProjectPreInit(project)

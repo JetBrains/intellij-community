@@ -2,19 +2,19 @@
 package com.intellij.openapi.application.impl
 
 import com.intellij.concurrency.ContextAwareRunnable
-import com.intellij.openapi.application.Application
-import com.intellij.openapi.application.EDT
-import com.intellij.openapi.application.ModalityState
-import com.intellij.openapi.application.asContextElement
+import com.intellij.openapi.application.*
 import com.intellij.testFramework.LeakHunter
+import com.intellij.testFramework.utils.io.deleteRecursively
 import com.intellij.util.ui.EDT
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.suspendCancellableCoroutine
 import kotlinx.coroutines.withContext
-import org.junit.jupiter.api.Assertions.assertNotNull
+import org.junit.jupiter.api.function.ThrowingConsumer
+import java.nio.file.Path
 import java.util.function.Supplier
 import javax.swing.SwingUtilities
 import kotlin.coroutines.resume
+import kotlin.io.path.createTempDirectory
 import kotlin.test.assertFalse
 
 fun Application.withModality(action: () -> Unit) {
@@ -63,4 +63,27 @@ suspend fun pumpEDT() {
 
 internal suspend fun processApplicationQueue() {
   withContext(Dispatchers.EDT + ModalityState.any().asContextElement()) {}
+}
+
+internal fun withTempDirectory(block: ThrowingConsumer<Path>) {
+  val tempDirectory = createTempDirectory()
+  try {
+    block.accept(tempDirectory)
+  }
+  finally {
+    tempDirectory.deleteRecursively()
+  }
+}
+
+internal fun withTempConfigDirectory(block: ThrowingConsumer<Path>) {
+  withTempDirectory { tempDirectory ->
+    val oldConfigDir = PathManager.getConfigDir()
+    try {
+      PathManager.setExplicitConfigPath(tempDirectory)
+      block.accept(tempDirectory)
+    }
+    finally {
+      PathManager.setExplicitConfigPath(oldConfigDir);
+    }
+  }
 }

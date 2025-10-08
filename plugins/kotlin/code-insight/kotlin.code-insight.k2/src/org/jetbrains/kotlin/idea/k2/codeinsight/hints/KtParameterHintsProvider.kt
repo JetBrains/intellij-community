@@ -89,7 +89,7 @@ class KtParameterHintsProvider : AbstractKtInlayHintsProvider() {
                 val valueParametersWithNames =
                     session.calculateValueParametersWithNames(functionSymbol, callElement, valueParameters) ?: return@whenOptionEnabled
 
-                collectFromParameters(functionCall.argumentMapping, valueParametersWithNames, contextMenuPayloads, sink)
+                collectFromParameters(callElement, functionCall.argumentMapping, valueParametersWithNames, contextMenuPayloads, sink)
             }
         }
 
@@ -105,10 +105,10 @@ class KtParameterHintsProvider : AbstractKtInlayHintsProvider() {
 
         if (compiledSource) {
             sink.whenOptionEnabled(SHOW_COMPILED_PARAMETERS.name) {
-                collectFromParameters(functionCall.argumentMapping, valueParametersWithNames, contextMenuPayloads, sink)
+                collectFromParameters(callElement, functionCall.argumentMapping, valueParametersWithNames, contextMenuPayloads, sink)
             }
         } else {
-            collectFromParameters(functionCall.argumentMapping, valueParametersWithNames, contextMenuPayloads, sink)
+            collectFromParameters(callElement, functionCall.argumentMapping, valueParametersWithNames, contextMenuPayloads, sink)
         }
     }
 
@@ -144,12 +144,15 @@ class KtParameterHintsProvider : AbstractKtInlayHintsProvider() {
 
     context(_: KaSession)
     private fun collectFromParameters(
+        callElement: KtCallElement,
         args: Map<KtExpression, KaVariableSignature<KaValueParameterSymbol>>,
         valueParametersWithNames: List<Pair<KaValueParameterSymbol, Name?>>,
         contextMenuPayloads: List<InlayPayload>?,
         sink: InlayTreeSink
     ) {
-        for ((symbol, name) in valueParametersWithNames) {
+        val referencedName = (callElement.calleeExpression as? KtNameReferenceExpression)?.getReferencedName()
+        for (indexedValue in valueParametersWithNames.withIndex()) {
+            val (symbol, name) = indexedValue.value
             if (name == null) continue
 
             val arg = args.filter { (_, signature) -> signature.symbol == symbol }.keys.firstOrNull() ?: continue
@@ -166,7 +169,16 @@ class KtParameterHintsProvider : AbstractKtInlayHintsProvider() {
                 continue
             }
 
-            if (argument.isArgumentNamed(symbol)) continue
+            if (argument.isArgumentNamed(symbol)) {
+                continue
+            }
+
+            // do not show parameter name when it is similar to caller name, e.g. `Call("call =" )`
+            if (indexedValue.index == 0
+                && referencedName != null
+                && isSimilarName(symbol.name.asString(), referencedName)) {
+                continue
+            }
 
             name.takeUnless(Name::isSpecial)?.asString()?.let { stringName ->
                 val element = arg.getParentOfType<KtValueArgument>(true, KtValueArgumentList::class.java) ?: arg
@@ -196,12 +208,7 @@ class KtParameterHintsProvider : AbstractKtInlayHintsProvider() {
         val symbolName = symbol.name.asString()
         if (argumentText == symbolName) return true
 
-        if (symbolName.length > 1) {
-            val name = symbolName.lowercase()
-            val lowercase = argumentText.lowercase()
-            // avoid cases like "`type = Type(...)`" and "`value =` myValue"
-            if (lowercase.startsWith(name) || lowercase.endsWith(name)) return true
-        }
+        if (isSimilarName(symbolName, argumentText)) return true
 
         // avoid cases like "/* value = */ value"
         var sibling: PsiElement? = this.prevSibling
@@ -218,6 +225,16 @@ class KtParameterHintsProvider : AbstractKtInlayHintsProvider() {
 
         return false
     }
+
+    private fun isSimilarName(parameterName: String, otherName: String?): Boolean =
+        if (otherName != null && parameterName.length > 1) {
+            val lowercase = otherName.lowercase()
+            val name = parameterName.lowercase()
+            // avoid cases like "`type = Type(...)`" and "`value =` myValue"
+            lowercase.startsWith(name) || lowercase.endsWith(name)
+        } else {
+            false
+        }
 }
 
 context(_: KaSession)

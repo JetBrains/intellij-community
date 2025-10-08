@@ -21,6 +21,8 @@ import com.intellij.openapi.roots.libraries.LibraryTablesRegistrar
 import com.intellij.platform.backend.workspace.WorkspaceModel
 import com.intellij.platform.backend.workspace.workspaceModel
 import com.intellij.platform.diagnostic.telemetry.helpers.MillisecondsMeasurer
+import com.intellij.platform.eel.EelMachine
+import com.intellij.platform.eel.provider.getEelDescriptor
 import com.intellij.platform.workspace.jps.entities.*
 import com.intellij.platform.workspace.jps.serialization.impl.LibraryNameGenerator
 import com.intellij.platform.workspace.storage.EntityChange
@@ -68,6 +70,9 @@ open class ModuleDependencyIndexImpl(private val project: Project): ModuleDepend
   private val libraryTablesListener = LibraryTablesListener()
   private val jdkChangeListener = JdkChangeListener()
   private val rootSetChangeListener = ReferencedRootSetChangeListener()
+
+  private val eelMachine: EelMachine
+    get() = project.getEelDescriptor().machine
 
   init {
     if (!project.isDefault) {
@@ -449,7 +454,7 @@ open class ModuleDependencyIndexImpl(private val project: Project): ModuleDepend
 
     private fun findSdk(sdkDependency: ModuleDependencyItem): Sdk? = when (sdkDependency) {
       is InheritedSdkDependency -> projectRootManager.projectSdk
-      is SdkDependency -> ModifiableRootModelBridge.findSdk(sdkDependency.sdk.name, sdkDependency.sdk.type)
+      is SdkDependency -> ModifiableRootModelBridge.findSdk(project, sdkDependency.sdk.name, sdkDependency.sdk.type)
       else -> null
     }
 

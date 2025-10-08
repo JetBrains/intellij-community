@@ -12,6 +12,7 @@ import com.intellij.xdebugger.XDebuggerUtil;
 import com.intellij.xdebugger.XSourcePosition;
 import com.intellij.xdebugger.breakpoints.XLineBreakpointType;
 import com.sun.jdi.event.LocatableEvent;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -20,12 +21,14 @@ import org.jetbrains.annotations.Nullable;
  */
 public class RunToCursorBreakpoint extends SyntheticLineBreakpoint implements SteppingBreakpoint {
   private final boolean myRestoreBreakpoints;
+  private final boolean myIsEngineBreakpoint;
   protected final @NotNull SourcePosition myCustomPosition;
 
-  protected RunToCursorBreakpoint(@NotNull Project project, @NotNull SourcePosition pos, boolean restoreBreakpoints) {
+  protected RunToCursorBreakpoint(@NotNull Project project, @NotNull SourcePosition pos, boolean restoreBreakpoints, boolean isEngineBreakpoint) {
     super(project);
     myCustomPosition = pos;
     myRestoreBreakpoints = restoreBreakpoints;
+    myIsEngineBreakpoint = isEngineBreakpoint;
   }
 
   @Override
@@ -71,6 +74,11 @@ public class RunToCursorBreakpoint extends SyntheticLineBreakpoint implements St
     return null;
   }
 
+  @ApiStatus.Internal
+  public final boolean isEngineBreakpoint() {
+    return myIsEngineBreakpoint;
+  }
+
   protected static @Nullable RunToCursorBreakpoint create(@NotNull Project project,
                                                           @NotNull XSourcePosition position,
                                                           boolean restoreBreakpoints) {
@@ -78,7 +86,7 @@ public class RunToCursorBreakpoint extends SyntheticLineBreakpoint implements St
     if (psiFile == null) {
       return null;
     }
-    return new RunToCursorBreakpoint(project, SourcePosition.createFromOffset(psiFile, position.getOffset()), restoreBreakpoints);
+    return new RunToCursorBreakpoint(project, SourcePosition.createFromOffset(psiFile, position.getOffset()), restoreBreakpoints, false);
   }
 
   @Override

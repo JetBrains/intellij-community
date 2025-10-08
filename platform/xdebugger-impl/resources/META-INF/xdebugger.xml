@@ -40,7 +40,7 @@
                     interface="com.intellij.xdebugger.frame.CustomXDescriptorSerializerProvider" dynamic="true"/>
     <extensionPoint name="xdebugger.managerProxy" interface="com.intellij.xdebugger.impl.frame.XDebugManagerProxy"
                     dynamic="true"/>
-    <extensionPoint name="xdebugger.splitDebuggerModeEnabler" interface="com.intellij.xdebugger.impl.XDebuggerSplitModeEnabler"
+    <extensionPoint name="xdebugger.splitDebuggerModeEnabler" interface="com.intellij.xdebugger.XDebuggerSplitModeEnabler"
                     dynamic="false"/>
     <extensionPoint name="xdebugger.xTextValueModificationPreparatorProvider" interface="com.intellij.xdebugger.frame.XValueTextModificationPreparatorProvider"
                     dynamic="true"/>
@@ -180,6 +180,7 @@
 
     <remote.customDataContextSerializer implementation="com.intellij.xdebugger.impl.ui.RunContentDescriptorKeySerializer"/>
     <remote.customDataContextSerializer implementation="com.intellij.xdebugger.impl.ui.ExecutionEnvironmentKeySerializer"/>
+    <remote.customDataContextSerializer implementation="com.intellij.xdebugger.impl.ui.XDebuggerTreeSelectedValuesSerializer"/>
 
     <intentionAction>
       <language>UAST</language>
@@ -257,8 +258,6 @@
   <projectListeners>
     <listener class="com.intellij.xdebugger.impl.dashboard.XDebuggerRunDashboardUpdater"
               topic="com.intellij.execution.ExecutionListener"/>
-    <listener class="com.intellij.xdebugger.impl.ui.XDebugRunContentListener"
-              topic="com.intellij.openapi.wm.ex.ToolWindowManagerListener"/>
     <listener class="com.intellij.xdebugger.impl.MonolithListenerAdapter"
               topic="com.intellij.xdebugger.XDebuggerManagerListener"/>
   </projectListeners>

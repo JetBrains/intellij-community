@@ -41,7 +41,7 @@ public final class SynchronizationOnLocalVariableOrMethodParameterInspection ext
   }
 
   @Override
-  public BaseInspectionVisitor buildVisitor() {
+  public @NotNull BaseInspectionVisitor buildVisitor() {
     return new SynchronizationOnLocalVariableVisitor();
   }
 

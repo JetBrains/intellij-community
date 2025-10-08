@@ -9,6 +9,7 @@ import com.intellij.injected.editor.DocumentWindow;
 import com.intellij.lang.annotation.AnnotationSession;
 import com.intellij.lang.injection.InjectedLanguageManager;
 import com.intellij.openapi.application.ApplicationManager;
+import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.editor.colors.*;
@@ -25,7 +26,6 @@ import com.intellij.psi.impl.source.tree.injected.InjectedLanguageUtil;
 import com.intellij.util.CommonProcessors;
 import com.intellij.util.Processor;
 import com.intellij.util.containers.ContainerUtil;
-import it.unimi.dsi.fastutil.longs.LongList;
 import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -37,6 +37,7 @@ import java.util.*;
  */
 @ApiStatus.Internal
 final class InjectedGeneralHighlightingPass extends ProgressableTextEditorHighlightingPass implements DumbAware {
+  private static final Logger LOG = Logger.getInstance(InjectedGeneralHighlightingPass.class);
   private final @Nullable List<? extends @NotNull TextRange> myReducedRanges;
   private final boolean myUpdateAll;
   private final ProperTextRange myPriorityRange;
@@ -153,12 +154,18 @@ final class InjectedGeneralHighlightingPass extends ProgressableTextEditorHighli
 
     if (!JobLauncher.getInstance().invokeConcurrentlyUnderProgress(new ArrayList<>(hosts), progress, element -> {
         ApplicationManager.getApplication().assertReadAccessAllowed();
+      try {
         injectedLanguageManager.enumerateEx(element, myFile, false, (injectedPsi, places) -> {
           if (visitedInjected.add(injectedPsi.getViewProvider())) {
             visitor.visit(injectedPsi, places);
           }
         });
-        advanceProgress(1);
+      }
+      catch (Exception e) {
+        if (Logger.shouldRethrow(e)) throw e;
+        LOG.error(e);
+      }
+      advanceProgress(1);
         return true;
       })) {
       throw new ProcessCanceledException();
@@ -192,15 +199,14 @@ final class InjectedGeneralHighlightingPass extends ProgressableTextEditorHighli
     AnnotatorRunner annotatorRunner = myRunAnnotators ? new AnnotatorRunner(session, false) : null;
     Divider.divideInsideAndOutsideAllRoots(injectedPsi, injectedPsi.getTextRange(), injectedPsi.getTextRange(), GeneralHighlightingPass.SHOULD_HIGHLIGHT_FILTER, dividedElements -> {
       List<? extends @NotNull PsiElement> inside = dividedElements.inside();
-      LongList insideRanges = dividedElements.insideRanges();
       Runnable runnable = () -> {
         HighlightVisitorRunner highlightVisitorRunner = new HighlightVisitorRunner(injectedPsi, myGlobalScheme, myRunVisitors, myHighlightErrorElements);
 
         highlightVisitorRunner.createHighlightVisitorsFor(visitors -> {
           int chunkSize = Math.max(1, inside.size() / 100); // one percent precision is enough
-          highlightVisitorRunner.runVisitors(injectedPsi, injectedPsi.getTextRange(), inside,
-                                               insideRanges, List.of(), LongList.of(), visitors, false, chunkSize, true,
-                                               () -> createInfoHolder(injectedPsi), (toolId, psiElement, infos) -> {
+          highlightVisitorRunner.runVisitors(injectedPsi, inside,
+                                             List.of(), visitors, false, chunkSize, true,
+                                             () -> createInfoHolder(injectedPsi), (toolId, psiElement, infos) -> {
               // convert injected infos to host
               List<? extends HighlightInfo> hostInfos = infos.isEmpty()
                                                         ? List.of()

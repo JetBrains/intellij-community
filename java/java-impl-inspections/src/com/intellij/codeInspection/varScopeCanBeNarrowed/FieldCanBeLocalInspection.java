@@ -384,7 +384,7 @@ public final class FieldCanBeLocalInspection extends AbstractBaseJavaLocalInspec
         if (declaration != null) newDeclarations.add(declaration);
       }
       if (!newDeclarations.isEmpty()) {
-        final PsiElement lastDeclaration = newDeclarations.get(newDeclarations.size() - 1);
+        final PsiElement lastDeclaration = newDeclarations.getLast();
         deleteField(variable, lastDeclaration);
       }
       return newDeclarations;
@@ -401,7 +401,7 @@ public final class FieldCanBeLocalInspection extends AbstractBaseJavaLocalInspec
       if (variable == null) return;
       final List<PsiElement> newDeclarations = moveDeclaration(variable);
       if (newDeclarations.isEmpty()) return;
-      updater.moveCaretTo(newDeclarations.get(newDeclarations.size() - 1));
+      updater.moveCaretTo(newDeclarations.getLast());
       newDeclarations.forEach(declaration -> ConvertToLocalUtils.inlineRedundant(declaration));
     }
 

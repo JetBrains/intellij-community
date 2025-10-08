@@ -29,6 +29,8 @@ f:com.intellij.openapi.application.PathManager
 - s:findBinFileWithException(java.lang.String):java.nio.file.Path
 - s:getBinDir():java.nio.file.Path
 - s:getBinPath():java.lang.String
+- s:getBundledPluginsDir():java.nio.file.Path
+- s:getBundledRuntimeDir():java.nio.file.Path
 - s:getCommonDataPath():java.nio.file.Path
 - s:getConfigDir():java.nio.file.Path
 - s:getConfigPath():java.lang.String
@@ -184,6 +186,7 @@ Fc:com.intellij.openapi.util.io.FileUtil
 - s:findPathsByMask(java.util.regex.Pattern,java.nio.file.Path):java.util.List
 f:com.intellij.openapi.util.io.NioFiles
 - sf:BROKEN_SYMLINK:java.nio.file.attribute.BasicFileAttributes
+- s:copyRecursively(java.nio.file.Path,java.nio.file.Path):V
 - s:createDirectories(java.nio.file.Path):java.nio.file.Path
 - s:createIfNotExists(java.nio.file.Path):java.nio.file.Path
 - s:createParentDirectories(java.nio.file.Path):java.nio.file.Path
@@ -209,6 +212,16 @@ a:com.intellij.openapi.util.io.NioFiles$StatsCollectingVisitor
 - visitFileFailed(java.nio.file.Path,java.io.IOException):java.nio.file.FileVisitResult
 f:com.intellij.openapi.util.io.NioJarUtilKt
 - sf:getJarAttribute(java.nio.file.Path,java.util.jar.Attributes$Name):java.lang.String
+f:com.intellij.openapi.util.io.OSAgnosticPathUtil
+- sf:COMPARATOR:java.util.Comparator
+- s:expandUserHome(java.lang.String):java.lang.String
+- s:getParent(java.lang.String):java.lang.String
+- s:isAbsolute(java.lang.String):Z
+- s:isAbsoluteDosPath(java.lang.String):Z
+- s:isDriveLetter(C):Z
+- s:isUncPath(java.lang.String):Z
+- s:startsWith(java.lang.String,java.lang.String):Z
+- s:startsWithWindowsDrive(java.lang.String):Z
 com.intellij.openapi.util.registry.RegistryValueListener
 - afterValueChanged(com.intellij.openapi.util.registry.RegistryValue):V
 - beforeValueChanged(com.intellij.openapi.util.registry.RegistryValue):V
@@ -358,7 +371,6 @@ com.intellij.util.containers.Convertor
 - java.util.function.Function
 - sf:SELF:com.intellij.util.containers.Convertor$IntoSelf
 - apply(java.lang.Object):java.lang.Object
-- asFunction():java.util.function.Function
 - a:convert(java.lang.Object):java.lang.Object
 - s:self():com.intellij.util.containers.Convertor
 com.intellij.util.containers.IntObjectMap

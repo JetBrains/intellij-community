@@ -1,9 +1,9 @@
 ### auto-generated section `build intellij.gradle.java` start
-load("@rules_jvm//:jvm.bzl", "jvm_library", "jvm_resources")
+load("@rules_jvm//:jvm.bzl", "jvm_library", "resourcegroup")
 
-jvm_resources(
+resourcegroup(
   name = "java_resources",
-  files = glob(["resources/**/*"]),
+  srcs = glob(["resources/**/*"]),
   strip_prefix = "resources"
 )
 
@@ -12,6 +12,7 @@ jvm_library(
   module_name = "intellij.gradle.java",
   visibility = ["//visibility:public"],
   srcs = glob(["src/**/*.kt", "src/**/*.java", "src/**/*.form", "gen/**/*.kt", "gen/**/*.java"], allow_empty = True),
+  resources = [":java_resources"],
   deps = [
     "@lib//:kotlin-stdlib",
     "//plugins/gradle",
@@ -48,10 +49,10 @@ jvm_library(
     "//java/openapi:java",
     "//java/java-impl:impl",
     "//platform/smRunner",
-    "@lib//:gson",
+    "//libraries/gson",
     "//jps/jps-builders:build",
     "//plugins/gradle/tooling-extension-impl:toolingExtension-impl",
-    "@lib//:x_stream",
+    "//libraries/xstream",
     "//plugins/groovy/groovy-psi:psi",
     "//java/execution/openapi:java-execution",
     "//plugins/maven",
@@ -70,24 +71,21 @@ jvm_library(
     "//plugins/performanceTesting/core:performanceTesting",
     "//platform/backend/workspace",
     "//platform/backend/observation",
-    "@lib//:hash4j",
-    "@lib//:fastutil-min",
+    "//libraries/hash4j",
+    "//libraries/fastutil",
     "//platform/platform-impl/ui",
     "//java/debugger/shared",
     "//platform/eel-provider",
   ],
   exports = ["//plugins/gradle:gradle-common"],
-  runtime_deps = [
-    ":java_resources",
-    "@lib//ant/lib:ant-antlr",
-  ]
+  runtime_deps = ["@lib//ant/lib:ant-antlr"]
 )
 ### auto-generated section `build intellij.gradle.java` end
 
 ### auto-generated section `build intellij.gradle.java.tests` start
-jvm_resources(
+resourcegroup(
   name = "java-tests_test_resources",
-  files = glob(["testData/**/*"]),
+  srcs = glob(["testData/**/*"]),
   strip_prefix = "testData"
 )
 
@@ -102,6 +100,7 @@ jvm_library(
   module_name = "intellij.gradle.java.tests",
   visibility = ["//visibility:public"],
   srcs = glob(["testSources/**/*.kt", "testSources/**/*.java", "testSources/**/*.form"], allow_empty = True),
+  resources = [":java-tests_test_resources"],
   deps = [
     "@lib//:jmock",
     "@lib//:junit4",
@@ -164,8 +163,7 @@ jvm_library(
     "//platform/smRunner",
     "//platform/smRunner:smRunner_test_lib",
     "//platform/statistics/testFramework",
-  ],
-  runtime_deps = [":java-tests_test_resources"]
+  ]
 )
 ### auto-generated section `build intellij.gradle.java.tests` end
 

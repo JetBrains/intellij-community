@@ -273,14 +273,6 @@ public abstract class AbstractTreeNode<T> extends PresentableNodeDescriptor<Abst
     return Comparing.equal(getValue(), element);
   }
 
-  /**
-   * @deprecated use {@link #getPresentation()} instead
-   */
-  @Deprecated(forRemoval = true)
-  protected String getToolTip() {
-    return getPresentation().getTooltip();
-  }
-
   @Override
   protected @Nullable Color computeBackgroundColor() {
     Object value = getValue();

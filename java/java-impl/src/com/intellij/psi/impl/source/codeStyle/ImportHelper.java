@@ -823,6 +823,7 @@ public final class ImportHelper extends ImportHelperBase {
       }
     }
     for (PsiClass aClass : file.getClasses()) {
+      if (aClass instanceof PsiImplicitClass) continue;
       String className = aClass.getQualifiedName();
       if (className != null && PsiNameHelper.getShortClassName(className).equals(shortClassName)) {
         return aClass;

@@ -22,7 +22,7 @@ import com.intellij.platform.workspace.jps.serialization.impl.ModulePath
 import com.intellij.platform.workspace.storage.MutableEntityStorage
 import com.intellij.projectModel.ProjectModelBundle
 import com.intellij.serviceContainer.precomputeModuleLevelExtensionModel
-import com.intellij.util.PathUtil
+import com.intellij.util.PathUtilRt
 import com.intellij.util.containers.BidirectionalMap
 import com.intellij.util.containers.ConcurrentFactoryMap
 import com.intellij.workspaceModel.ide.NonPersistentEntitySource
@@ -99,7 +99,7 @@ internal class ModifiableModuleModelBridgeImpl(
       throw ModuleWithNameAlreadyExists("Module already exists: $moduleName", moduleName)
     }
 
-    val parentPath = PathUtil.getParentPath(canonicalPath)
+    val parentPath = PathUtilRt.getParentPath(canonicalPath)
     val baseModuleDir = WorkspaceModel.getInstance(project).getVirtualFileUrlManager().getOrCreateFromUrl(VfsUtilCore.pathToUrl(parentPath))
     val entitySource = LegacyBridgeJpsEntitySourceFactory.getInstance(project).createEntitySourceForModule(
       baseModuleDir = baseModuleDir,

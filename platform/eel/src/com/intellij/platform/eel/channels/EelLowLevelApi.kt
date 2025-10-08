@@ -11,3 +11,12 @@ import org.jetbrains.annotations.ApiStatus
 )
 @ApiStatus.Internal
 annotation class EelSendApi
+
+@MustBeDocumented
+@Retention(value = AnnotationRetention.BINARY)
+@RequiresOptIn(
+  level = RequiresOptIn.Level.WARNING,
+  message = "Ensure that you read the documentation thoroughly or that you're ready to shoot your foot"
+)
+@ApiStatus.Internal
+annotation class EelDelicateApi

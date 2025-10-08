@@ -7,6 +7,7 @@ import com.intellij.codeInsight.completion.impl.CompletionServiceImpl
 import com.intellij.codeInsight.completion.impl.CompletionServiceImpl.Companion.assertPhase
 import com.intellij.codeWithMe.ClientId
 import com.intellij.openapi.Disposable
+import com.intellij.openapi.actionSystem.IdeActions
 import com.intellij.openapi.application.ApplicationListener
 import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.application.ModalityState
@@ -300,7 +301,7 @@ sealed class CompletionPhase @ApiStatus.Internal constructor(
         phase.requestCompleted()
         val time = phase.indicator?.invocationCount ?: 0
 
-        val customId = completionEditor.getUserData(CUSTOM_CODE_COMPLETION_ACTION_ID) ?: "CodeCompletion"
+        val customId = completionEditor.getUserData(CUSTOM_CODE_COMPLETION_ACTION_ID) ?: IdeActions.ACTION_CODE_COMPLETION
         val handler = CodeCompletionHandlerBase.createHandler(completionType, false, autopopup, false, customId)
         handler.invokeCompletion(project, completionEditor, time, false)
       }

@@ -119,9 +119,14 @@ data class SimpleEditorLayout(
     )
   }
 
-  override fun unfold(affectedFolds: List<Interval<*, Fold>>) {}
+  override fun unfold(affectedFolds: List<Interval<*, Fold>>) {
+    toggleFolds(emptyList(), affectedFolds)
+  }
 
-  override fun toggleFolds(add: List<Interval<*, Fold>>, remove: List<Interval<*, Fold>>, isConfirm: Boolean) {}
+  override fun toggleFolds(add: List<Interval<*, Fold>>, remove: List<Interval<*, Fold>>) {
+    folds = folds.removeByIds(remove.map { it.id as Long }).addIntervals(add as List<Interval<Long, Fold>>)
+  // we should update lines cache here, but right now simple editor with folds is used only in tests
+  }
 }
 
 class SimpleEditorLayoutComponent(var state: SimpleEditorLayout) : DocumentComponent {

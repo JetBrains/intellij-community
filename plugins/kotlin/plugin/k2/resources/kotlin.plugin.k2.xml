@@ -135,7 +135,12 @@
 
     <registryKey key="kotlin.k2.parallel.completion.enabled"
                  description="Allow Kotlin contributors to run in parallel"
-                 defaultValue="false"
+                 defaultValue="true"
+                 restartRequired="false"/>
+
+    <registryKey key="kotlin.k2.complete.top.level.packages"
+                 description="Allows completion of top level packages"
+                 defaultValue="true"
                  restartRequired="false"/>
 
     <weigher key="proximity" implementationClass="org.jetbrains.kotlin.idea.completion.implCommon.weighers.PreferKotlinxLibrariesWeigher"
@@ -203,11 +208,6 @@
     <applicationService
             serviceInterface="org.jetbrains.kotlin.idea.inspections.suppress.KotlinSuppressionChecker"
             serviceImplementation="org.jetbrains.kotlin.idea.inspections.suppress.KotlinK2SuppressionChecker"/>
-
-    <applicationService
-            serviceInterface="org.jetbrains.kotlin.analysis.decompiler.psi.KotlinBuiltInDecompilationInterceptor"
-            serviceImplementation="org.jetbrains.kotlin.idea.stubindex.K2KotlinBuiltInDecompilationInterceptor"
-    />
   </extensions>
 
   <extensions defaultExtensionNs="com.intellij">
@@ -298,6 +298,7 @@
     <module name="kotlin.compiler-plugins.kapt"/>
     <module name="kotlin.compiler-plugins.kotlinx-serialization.k2"/>
     <module name="kotlin.compiler-plugins.kotlinx-serialization.maven"/>
+    <module name="kotlin.compiler-plugins.kotlin-dataframe.maven"/>
     <module name="kotlin.compiler-plugins.lombok.maven"/>
     <module name="kotlin.compiler-plugins.assignment.maven"/>
 

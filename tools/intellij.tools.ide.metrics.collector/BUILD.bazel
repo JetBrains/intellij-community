@@ -1,15 +1,15 @@
 ### auto-generated section `build intellij.tools.ide.metrics.collector` start
 load("//build:compiler-options.bzl", "create_kotlinc_options")
-load("@rules_jvm//:jvm.bzl", "jvm_library", "jvm_resources")
+load("@rules_jvm//:jvm.bzl", "jvm_library", "resourcegroup")
 
 create_kotlinc_options(
   name = "custom_ide-metrics-collector",
   opt_in = ["kotlin.time.ExperimentalTime"]
 )
 
-jvm_resources(
+resourcegroup(
   name = "ide-metrics-collector_test_resources",
-  files = glob(["testResources/**/*"]),
+  srcs = glob(["testResources/**/*"]),
   strip_prefix = "testResources"
 )
 
@@ -22,18 +22,18 @@ jvm_library(
   deps = [
     "@lib//:kotlin-stdlib",
     "//platform/core-api:core",
-    "@lib//:jackson",
+    "//libraries/jackson/jackson",
     "//platform/util",
-    "@lib//:jackson-databind",
-    "@lib//:jackson-module-kotlin",
+    "//libraries/jackson/databind",
+    "//libraries/jackson/module-kotlin:libraries-jackson-module-kotlin",
     "//platform/diagnostic/telemetry",
     "//platform/diagnostic/telemetry.exporters",
     "@lib//:opentelemetry",
     "@lib//:opentelemetry-semconv",
     "//tools/intellij.tools.ide.util.common:ide-util-common",
-    "@lib//:kotlinx-serialization-core",
-    "@lib//:kotlinx-serialization-json",
-    "@lib//:fastutil-min",
+    "//libraries/kotlinx/serialization/core",
+    "//libraries/kotlinx/serialization/json",
+    "//libraries/fastutil",
   ]
 )
 
@@ -41,15 +41,16 @@ jvm_library(
   name = "ide-metrics-collector_test_lib",
   visibility = ["//visibility:public"],
   srcs = glob(["testSrc/**/*.kt", "testSrc/**/*.java", "testSrc/**/*.form"], allow_empty = True),
+  resources = [":ide-metrics-collector_test_resources"],
   kotlinc_opts = ":custom_ide-metrics-collector",
   associates = [":ide-metrics-collector"],
   deps = [
     "@lib//:kotlin-stdlib",
     "//platform/core-api:core",
-    "@lib//:jackson",
+    "//libraries/jackson/jackson",
     "//platform/util",
-    "@lib//:jackson-databind",
-    "@lib//:jackson-module-kotlin",
+    "//libraries/jackson/databind",
+    "//libraries/jackson/module-kotlin:libraries-jackson-module-kotlin",
     "@lib//:kotlin-test-assertions-core-jvm",
     "@lib//:junit5",
     "//libraries/mockito",
@@ -60,12 +61,11 @@ jvm_library(
     "@lib//:opentelemetry",
     "@lib//:opentelemetry-semconv",
     "//tools/intellij.tools.ide.util.common:ide-util-common",
-    "@lib//:kotlinx-serialization-core",
-    "@lib//:kotlinx-serialization-json",
-    "@lib//:fastutil-min",
+    "//libraries/kotlinx/serialization/core",
+    "//libraries/kotlinx/serialization/json",
+    "//libraries/fastutil",
     "@lib//:assert_j",
-  ],
-  runtime_deps = [":ide-metrics-collector_test_resources"]
+  ]
 )
 ### auto-generated section `build intellij.tools.ide.metrics.collector` end
 

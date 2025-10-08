@@ -36,10 +36,6 @@ internal class EelTestPosixApi(override val descriptor: EelTestDescriptor, fileS
 
 private class EelTestFileSystemPosixApi(override val descriptor: EelTestDescriptor, fileSystem: EelUnitTestFileSystem) : PosixNioBasedEelFileSystemApi(fileSystem, EelTestPosixUserInfo(descriptor)) {
 
-  override suspend fun readFully(path: EelPath, limit: ULong, overflowPolicy: EelFileSystemApi.OverflowPolicy): EelResult<EelFileSystemApi.FullReadResult, EelFileSystemApi.FullReadError> {
-    TODO("Not yet implemented")
-  }
-
   override suspend fun createTemporaryDirectory(options: EelFileSystemApi.CreateTemporaryEntryOptions): EelResult<EelPath, EelFileSystemApi.CreateTemporaryEntryError> {
     return wrapIntoEelResult {
       val nioTempDir = Files.createTempDirectory(fs.rootDirectories.single(), options.prefix)

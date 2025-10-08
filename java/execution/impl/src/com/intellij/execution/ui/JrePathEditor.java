@@ -115,7 +115,7 @@ public class JrePathEditor extends LabeledComponent<ComboBox<JrePathEditor.JreCo
     myComboboxEditor = new JreComboboxEditor(myComboBoxModel) {
       @Override
       protected JTextField createEditorComponent() {
-        JBTextField field = new ExtendableTextField().addBrowseExtension(getBrowseRunnable(), null);
+        JBTextField field = new ExtendableTextField().addBrowseExtension(getBrowseRunnable(), null, false);
         field.setBorder(null);
         field.addFocusListener(new FocusListener() {
           @Override

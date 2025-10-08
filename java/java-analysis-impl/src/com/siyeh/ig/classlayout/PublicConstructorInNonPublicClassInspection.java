@@ -40,7 +40,7 @@ public final class PublicConstructorInNonPublicClassInspection extends BaseInspe
   }
 
   @Override
-  public BaseInspectionVisitor buildVisitor() {
+  public @NotNull BaseInspectionVisitor buildVisitor() {
     return new PublicConstructorInNonPublicClassVisitor();
   }
 

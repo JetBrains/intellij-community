@@ -6,12 +6,11 @@ import com.intellij.openapi.actionSystem.ActionPlaces;
 import com.intellij.openapi.actionSystem.ActionUpdateThread;
 import com.intellij.openapi.actionSystem.AnAction;
 import com.intellij.openapi.actionSystem.AnActionEvent;
+import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.project.DumbAware;
-import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 
-@ApiStatus.Internal
-public final class CheckForUpdateAction extends AnAction implements DumbAware {
+final class CheckForUpdateAction extends AnAction implements DumbAware {
   @Override
   public void update(@NotNull AnActionEvent e) {
     if (ActionPlaces.WELCOME_SCREEN.equals(e.getPlace())) {
@@ -33,6 +32,6 @@ public final class CheckForUpdateAction extends AnAction implements DumbAware {
 
   @Override
   public void actionPerformed(@NotNull AnActionEvent e) {
-    UpdateChecker.updateAndShowResult(e.getProject());
+    ApplicationManager.getApplication().getService(UpdateCheckerFacade.class).updateAndShowResult(e.getProject());
   }
 }

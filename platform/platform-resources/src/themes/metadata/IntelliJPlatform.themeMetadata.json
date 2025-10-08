@@ -2683,6 +2683,14 @@
     {
       "key": "LicenseDialog.LicenseServer.separatorColor",
       "since": "2024.2"
+    },
+    {
+      "key": "LicenseDialog.freeBadgeForeground",
+      "since": "2025.3"
+    },
+    {
+      "key": "LicenseDialog.freeBadgeBackground",
+      "since": "2025.3"
     }
   ]
 }

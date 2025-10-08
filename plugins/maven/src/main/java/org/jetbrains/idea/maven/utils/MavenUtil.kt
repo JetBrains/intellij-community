@@ -1956,8 +1956,8 @@ object MavenUtil {
   /**
    * Static state to calculate module output when running IDEA from sources
    */
-  private val archivedClassesLocation = PathManager.getArchivedCompliedClassesLocation()
-  private val mapping = PathManager.getArchivedCompiledClassesMapping()
+  private val archivedClassesLocation = ArchivedCompilationContextUtil.archivedCompiledClassesLocation
+  private val mapping = ArchivedCompilationContextUtil.archivedCompiledClassesMapping
   private val path = PathManager.getJarForClass(MavenServerManager::class.java)?.parent
 
   /**

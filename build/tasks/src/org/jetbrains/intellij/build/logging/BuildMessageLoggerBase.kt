@@ -19,7 +19,7 @@ abstract class BuildMessageLoggerBase : BuildMessageLogger() {
         indent--
       }
       LogMessage.Kind.ARTIFACT_BUILT -> {
-        Span.current().addEvent("artifact built: ${message.text}")
+        addEvent("artifact built: ${message.text}")
       }
       LogMessage.Kind.COMPILATION_ERRORS -> {
         // reported as span event
@@ -27,9 +27,20 @@ abstract class BuildMessageLoggerBase : BuildMessageLogger() {
       LogMessage.Kind.BUILD_CANCEL -> throw BuildScriptsLoggedError(message.text)
       else -> {
         if (shouldBePrinted(message.kind)) {
-          Span.current().addEvent(message.text)
+          addEvent(message.text)
         }
       }
+    }
+  }
+
+  private fun addEvent(text: String) {
+    val currentSpan = Span.current()
+    if (currentSpan.spanContext.isValid) {
+      currentSpan.addEvent(text)
+    }
+    else {
+      // No current span is defined. Most likely, top-level span is missing
+      printLine(text)
     }
   }
 

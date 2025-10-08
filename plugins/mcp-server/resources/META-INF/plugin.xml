@@ -19,6 +19,14 @@
   <depends config-file="mcpServer-terminal.xml" optional="true">org.jetbrains.plugins.terminal</depends>
   <depends config-file="mcpServer-vcs.xml" optional="true">Git4Idea</depends>
 
+  <dependencies>
+    <module name="intellij.libraries.kotlinx.io"/>
+    <module name="intellij.libraries.ktor.client"/>
+    <module name="intellij.libraries.ktor.io"/>
+    <module name="intellij.libraries.ktor.network.tls"/>
+    <module name="intellij.libraries.ktor.client.cio"/>
+  </dependencies>
+
   <extensionPoints>
     <extensionPoint name="mcpToolsProvider" interface="com.intellij.mcpserver.McpToolsProvider" dynamic="true" />
     <extensionPoint name="mcpToolset" interface="com.intellij.mcpserver.McpToolset" dynamic="true" />

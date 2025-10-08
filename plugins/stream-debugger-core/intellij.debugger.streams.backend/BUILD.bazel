@@ -1,9 +1,9 @@
 ### auto-generated section `build intellij.debugger.streams.backend` start
-load("@rules_jvm//:jvm.bzl", "jvm_library", "jvm_resources")
+load("@rules_jvm//:jvm.bzl", "jvm_library", "resourcegroup")
 
-jvm_resources(
+resourcegroup(
   name = "debugger-streams-backend_resources",
-  files = glob(["resources/**/*"]),
+  srcs = glob(["resources/**/*"]),
   strip_prefix = "resources"
 )
 
@@ -12,6 +12,7 @@ jvm_library(
   module_name = "intellij.debugger.streams.backend",
   visibility = ["//visibility:public"],
   srcs = glob(["src/**/*.kt", "src/**/*.java", "src/**/*.form"], allow_empty = True),
+  resources = [":debugger-streams-backend_resources"],
   deps = [
     "@lib//:kotlin-stdlib",
     "//platform/kernel/rpc.backend",
@@ -24,7 +25,6 @@ jvm_library(
     "//platform/xdebugger-api:debugger",
     "//plugins/stream-debugger-core:debugger-streams-core",
     "//platform/core-api:core",
-  ],
-  runtime_deps = [":debugger-streams-backend_resources"]
+  ]
 )
 ### auto-generated section `build intellij.debugger.streams.backend` end

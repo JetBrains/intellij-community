@@ -127,6 +127,11 @@ public final class UpdateHighlightersUtil {
   }
 
 
+  /**
+   * @deprecated please use {@link BackgroundUpdateHighlightersUtil#setHighlightersToEditor} instead for better responsiveness
+   */
+  @Deprecated
+  @RequiresEdt
   public static void setHighlightersToSingleEditor(@NotNull Project project,
                                                    @NotNull Editor editor,
                                                    int startOffset,
@@ -140,6 +145,11 @@ public final class UpdateHighlightersUtil {
     setHighlightersToEditor(project, document, startOffset, endOffset, highlights, colorsScheme, group, markup);
   }
 
+  /**
+   * @deprecated please use {@link BackgroundUpdateHighlightersUtil#setHighlightersToEditor} instead for better responsiveness
+   */
+  @Deprecated
+  @RequiresEdt
   public static void setHighlightersToEditor(@NotNull Project project,
                                              @NotNull Document document,
                                              int startOffset,
@@ -306,7 +316,7 @@ public final class UpdateHighlightersUtil {
       info.updateQuickFixFields(document, range2markerCache, finalInfoRange);
     };
 
-    RangeHighlighterEx highlighter = infosToRemove == null ? null : (RangeHighlighterEx)infosToRemove.pickupHighlighterFromGarbageBin(infoStartOffset, infoEndOffset, layer);
+    RangeHighlighterEx highlighter = infosToRemove == null ? null : (RangeHighlighterEx)infosToRemove.pickupHighlighterFromGarbageBin(infoStartOffset, infoEndOffset, layer, info.getDescription());
     if (highlighter == null) {
       highlighter = markup.addRangeHighlighterAndChangeAttributes(null, infoStartOffset, infoEndOffset, layer,
                                                                   HighlighterTargetArea.EXACT_RANGE, false, changeAttributes);
@@ -399,11 +409,11 @@ public final class UpdateHighlightersUtil {
     int start = e.getOffset() - 1;
     int end = start + e.getOldLength();
 
-    List<HighlightInfo> toRemove = new ArrayList<>();
     DaemonCodeAnalyzerEx.processHighlights(document, project, null, start, end, info -> {
-      RangeHighlighter highlighter = info.getHighlighter();
-      int highlighterStart = highlighter.getStartOffset();
-      int highlighterEnd = highlighter.getEndOffset();
+      RangeHighlighterEx highlighter = info.getHighlighter();
+      TextRange range = highlighter.getTextRange();
+      int highlighterStart = range.getStartOffset();
+      int highlighterEnd = range.getEndOffset();
       if (info.isAfterEndOfLine()) {
         if (highlighterStart < document.getTextLength()) {
           highlighterStart += 1;
@@ -412,20 +422,12 @@ public final class UpdateHighlightersUtil {
           highlighterEnd += 1;
         }
       }
-      if (!highlighter.isValid() && start < highlighterEnd && highlighterStart <= end) {
-        toRemove.add(info);
+      if (!highlighter.isValid() || start < highlighterEnd && highlighterStart <= end) {
+        disableWhiteSpaceOptimization(document);
+        return false;
       }
       return true;
     });
-
-    for (HighlightInfo info : toRemove) {
-      RangeHighlighterEx highlighter = info.getHighlighter();
-      disposeWithFileLevelIgnoreErrorsInEDT(highlighter, project, info);
-    }
-
-    if (!toRemove.isEmpty()) {
-      disableWhiteSpaceOptimization(document);
-    }
   }
 
   @RequiresEdt

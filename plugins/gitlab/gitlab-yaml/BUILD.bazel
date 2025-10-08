@@ -1,9 +1,9 @@
 ### auto-generated section `build intellij.vcs.gitlab.yaml` start
-load("@rules_jvm//:jvm.bzl", "jvm_library", "jvm_resources")
+load("@rules_jvm//:jvm.bzl", "jvm_library", "resourcegroup")
 
-jvm_resources(
+resourcegroup(
   name = "vcs-gitlab-yaml_resources",
-  files = glob(["resources/**/*"]),
+  srcs = glob(["resources/**/*"]),
   strip_prefix = "resources"
 )
 
@@ -12,6 +12,7 @@ jvm_library(
   module_name = "intellij.vcs.gitlab.yaml",
   visibility = ["//visibility:public"],
   srcs = glob(["src/**/*.kt", "src/**/*.java", "src/**/*.form"], allow_empty = True),
+  resources = [":vcs-gitlab-yaml_resources"],
   deps = [
     "//plugins/gitlab/gitlab-core:vcs-gitlab",
     "//plugins/yaml/backend",
@@ -19,8 +20,7 @@ jvm_library(
     "//platform/util/base",
     "//plugins/yaml",
     "//platform/analysis-impl",
-  ],
-  runtime_deps = [":vcs-gitlab-yaml_resources"]
+  ]
 )
 
 jvm_library(
@@ -43,8 +43,7 @@ jvm_library(
     "//platform/testFramework",
     "//platform/testFramework:testFramework_test_lib",
     "//json/backend/tests:tests_test_lib",
-  ],
-  runtime_deps = [":vcs-gitlab-yaml_resources"]
+  ]
 )
 ### auto-generated section `build intellij.vcs.gitlab.yaml` end
 

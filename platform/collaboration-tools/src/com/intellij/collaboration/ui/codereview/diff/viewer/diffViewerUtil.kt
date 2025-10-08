@@ -7,13 +7,11 @@ import com.intellij.collaboration.async.withInitial
 import com.intellij.collaboration.ui.codereview.diff.DiffLineLocation
 import com.intellij.collaboration.ui.codereview.editor.*
 import com.intellij.collaboration.util.HashingUtil
-import com.intellij.collaboration.util.RefComparisonChange
 import com.intellij.diff.tools.fragmented.UnifiedDiffViewer
 import com.intellij.diff.tools.simple.SimpleOnesideDiffViewer
 import com.intellij.diff.tools.util.base.DiffViewerBase
 import com.intellij.diff.tools.util.base.DiffViewerListener
 import com.intellij.diff.tools.util.side.TwosideTextDiffViewer
-import com.intellij.diff.util.DiffUserDataKeysEx
 import com.intellij.diff.util.LineCol
 import com.intellij.diff.util.Side
 import com.intellij.openapi.application.EDT
@@ -22,7 +20,6 @@ import com.intellij.openapi.editor.ex.EditorEx
 import com.intellij.openapi.util.Key
 import com.intellij.openapi.util.component1
 import com.intellij.openapi.util.component2
-import com.intellij.openapi.vcs.history.VcsDiffUtil
 import kotlinx.coroutines.*
 import kotlinx.coroutines.channels.awaitClose
 import kotlinx.coroutines.flow.*
@@ -118,26 +115,6 @@ private fun <VM : DiffMapped> TwosideTextDiffViewer.controlInlaysIn(
     }
   }
   editor2.controlInlaysIn(cs, vmsForEditor2, { vmKeyExtractor(it.vm) }, { rendererFactory(it.vm) })
-}
-
-/**
- * Create editor models for diff editors via [modelFactory] and show inlays and gutter controls
- * Inlays are created via [rendererFactory]
- *
- * @param M - editor inlays and controls model
- * @param I - inlay model
- */
-
-@ApiStatus.ScheduledForRemoval
-@Deprecated("Using a suspend function is safer for threading",
-            ReplaceWith("cs.launch { controlReview(modelFactory, modelKey, rendererFactory) }"))
-fun <M : CodeReviewEditorModel<I>, I : CodeReviewInlayModel> DiffViewerBase.controlReviewIn(
-  cs: CoroutineScope,
-  modelFactory: CoroutineScope.(locationToLine: (DiffLineLocation) -> Int?, lineToLocation: (Int) -> DiffLineLocation?) -> M,
-  modelKey: Key<M>,
-  rendererFactory: CodeReviewRendererFactory<I>,
-) {
-  cs.launchNow { showCodeReview(modelFactory, modelKey, rendererFactory) }
 }
 
 /**
@@ -315,21 +292,4 @@ interface DiffMapped {
 private class Wrapper<VM : DiffMapped>(val vm: VM, val mapper: (DiffLineLocation) -> Int?) : EditorMapped {
   override val line: Flow<Int?> = vm.location.map { it?.let(mapper) }
   override val isVisible: Flow<Boolean> = vm.isVisible
-}
-
-/**
- * @see com.intellij.openapi.diff.impl.DiffTitleWithDetailsCustomizers
- * @see com.intellij.openapi.vcs.history.VcsDiffUtil.putFilePathsIntoChangeContext
- */
-@ApiStatus.ScheduledForRemoval
-@Deprecated("Path of changed files is shown via DiffTitleFilePathCustomizer")
-fun RefComparisonChange.buildChangeContext(): Map<Key<*>, Any> {
-  val titleLeft = VcsDiffUtil.getRevisionTitle(revisionNumberBefore.toShortString(), filePathBefore, filePathAfter)
-  val titleRight = VcsDiffUtil.getRevisionTitle(revisionNumberAfter.toShortString(), filePathAfter, null)
-
-  val changeContext: MutableMap<Key<*>, Any> = mutableMapOf(
-    DiffUserDataKeysEx.VCS_DIFF_LEFT_CONTENT_TITLE to titleLeft,
-    DiffUserDataKeysEx.VCS_DIFF_RIGHT_CONTENT_TITLE to titleRight
-  )
-  return changeContext
 }

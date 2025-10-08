@@ -4,6 +4,9 @@ package fleet.codepoints
  * Converts UTF-8 offset to UTF-16 offset.
  */
 fun String.offset8to16(offset: Int): Int {
+  if (offset == 0) {
+    return 0
+  }
   var utf8Offset = offset
   var utf16Offset = 0
   for (c in codepoints(0)) {

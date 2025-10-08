@@ -1,4 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 @file:JvmName("DocumentationFontSize")
 @file:Internal
 
@@ -14,7 +14,7 @@ private const val QUICK_DOC_FONT_SIZE_V3_PROPERTY = "quick.doc.font.size.v3" // 
 
 fun getDocumentationFontSize(): FontSize {
   return fontSizeV3()
-         ?: FontSize.SMALL
+         ?: getDefaultFontSize()
 }
 
 private fun fontSizeV3(): FontSize? {
@@ -66,3 +66,5 @@ private fun readFontSizeFromSettings(propertyName: String, unsetAfterReading: Bo
 fun setDocumentationFontSize(x: FontSize) {
   PropertiesComponent.getInstance().setValue(QUICK_DOC_FONT_SIZE_V3_PROPERTY, x.toString())
 }
+
+fun getDefaultFontSize(): FontSize = FontSize.SMALL

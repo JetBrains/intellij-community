@@ -10,14 +10,9 @@ import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.psi.PsiClass
 import com.intellij.psi.PsiElement
 import org.jetbrains.plugins.gradle.service.resolve.GradleVersionCatalogHandler
+import org.jetbrains.plugins.gradle.service.resolve.getVersionCatalogFiles as getVersionCatalogFilesCommon
 
 private class GradleDslVersionCatalogHandler : GradleVersionCatalogHandler {
-  @Deprecated("Doesn't work for included builds of a composite build", replaceWith = ReplaceWith("getVersionCatalogFiles(module)"))
-  override fun getExternallyHandledExtension(project: Project): Set<String> {
-    // todo
-    return getVersionCatalogFiles(project).takeIf { it.isNotEmpty() }?.let { setOf("libs") } ?: emptySet()
-  }
-
   @Deprecated("Doesn't work for included builds of a composite build", replaceWith = ReplaceWith("getVersionCatalogFiles(module)"))
   override fun getVersionCatalogFiles(project: Project): Map<String, VirtualFile> {
     return ProjectBuildModel.get(project).context.versionCatalogFiles.associate { it.catalogName to it.file }
@@ -29,27 +24,30 @@ private class GradleDslVersionCatalogHandler : GradleVersionCatalogHandler {
   }
 
   override fun getAccessorClass(context: PsiElement, catalogName: String): PsiClass? {
-    val project = context.project
-    val scope = context.resolveScope
     val module = ModuleUtilCore.findModuleForPsiElement(context) ?: return null
-    val buildModel = getBuildModel(module) ?: return null
-    val catalogs = buildModel.versionCatalogsModel
-    val catalogModel = catalogs.getVersionCatalogModel(catalogName) ?: return null
-    return SyntheticVersionCatalogAccessor.create(project, scope, catalogModel, catalogName)
+    val versionCatalogsModel = getBuildModel(module)?.versionCatalogsModel ?: return null
+
+    var catalogModel = versionCatalogsModel.getVersionCatalogModel(catalogName)
+    if (catalogModel == null) {
+      // Call ALL GradleVersionCatalogHandler's in case one of them provides a catalog unavailable to this one.
+      val catalogVirtualFile = getVersionCatalogFilesCommon(module)[catalogName] ?: return null
+      catalogModel = versionCatalogsModel.getVersionCatalogModel(catalogVirtualFile, catalogName)
+    }
+    return SyntheticVersionCatalogAccessor.create(context.project, context.resolveScope, catalogModel, catalogName)
   }
 
   override fun getAccessorsForAllCatalogs(context: PsiElement): Map<String, PsiClass> {
-    val project = context.project
-    val scope = context.resolveScope
     val module = ModuleUtilCore.findModuleForPsiElement(context) ?: return emptyMap()
-    val catalogs = getBuildModel(module)?.versionCatalogsModel ?: return emptyMap()
-    val result = mutableMapOf<String, PsiClass>()
-    for (catalogName in catalogs.catalogNames()) {
-      val catalogModel = catalogs.getVersionCatalogModel(catalogName) ?: continue
-      val accessor = SyntheticVersionCatalogAccessor.create(project, scope, catalogModel, catalogName) ?: continue
-      result.putIfAbsent(catalogName, accessor)
-    }
-    return result
+    val versionCatalogsModel = getBuildModel(module)?.versionCatalogsModel ?: return emptyMap()
+
+    // Call ALL GradleVersionCatalogHandler's in case others could provide catalogs unavailable to this handler.
+    val catalogNameToFile = getVersionCatalogFilesCommon(module)
+    return catalogNameToFile.mapNotNull { (catalogName, virtualFile) ->
+      val catalogModel = versionCatalogsModel.getVersionCatalogModel(virtualFile, catalogName)
+      val accessor = SyntheticVersionCatalogAccessor.create(context.project, context.resolveScope, catalogModel, catalogName)
+                     ?: return@mapNotNull null
+      catalogName to accessor
+    }.toMap()
   }
 
   private fun getBuildModel(module: Module): ProjectBuildModel? {

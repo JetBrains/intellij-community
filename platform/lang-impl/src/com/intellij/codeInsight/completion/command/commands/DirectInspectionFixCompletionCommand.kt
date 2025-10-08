@@ -6,7 +6,7 @@ import com.intellij.codeInsight.completion.command.CompletionCommand
 import com.intellij.codeInsight.completion.command.HighlightInfoLookup
 import com.intellij.codeInsight.intention.IntentionAction
 import com.intellij.codeInsight.intention.impl.ShowIntentionActionsHandler
-import com.intellij.codeInsight.intention.impl.ShowIntentionActionsHandler.availableFor
+import com.intellij.codeInsight.intention.impl.ShowIntentionActionsHandler.Companion.availableFor
 import com.intellij.codeInsight.intention.preview.IntentionPreviewInfo
 import com.intellij.codeInspection.InspectionEngine
 import com.intellij.codeInspection.InspectionEngine.inspectEx
@@ -40,7 +40,6 @@ class DirectInspectionFixCompletionCommand(
   private val topLevelTargetOffset: Int,
   private val previewProvider: () -> IntentionPreviewInfo?,
 ) : CompletionCommand() {
-
   override fun execute(offset: Int, psiFile: PsiFile, editor: Editor?) {
     if (editor == null) return
     //todo merge with error finder

@@ -7,6 +7,7 @@ create_kotlinc_options(
   opt_in = [
     "kotlinx.coroutines.ExperimentalCoroutinesApi",
     "kotlinx.serialization.ExperimentalSerializationApi",
+    "kotlin.concurrent.atomics.ExperimentalAtomicApi",
   ],
   x_consistent_data_class_copy_visibility = True,
   x_context_parameters = True,
@@ -17,7 +18,7 @@ jvm_library(
   name = "lsp.protocol",
   module_name = "fleet.lsp.protocol",
   visibility = ["//visibility:public"],
-  srcs = glob(["src/main/**/*.kt", "src/main/**/*.java", "src/main/**/*.form"], allow_empty = True, exclude = ["**/module-info.java"]),
+  srcs = glob(["srcCommonMain/**/*.kt", "srcCommonMain/**/*.java", "srcCommonMain/**/*.form", "srcJvmMain/**/*.kt", "srcJvmMain/**/*.java", "srcJvmMain/**/*.form"], allow_empty = True, exclude = ["**/module-info.java"]),
   kotlinc_opts = ":custom_lsp.protocol",
   deps = [
     "@lib//:kotlin-stdlib",

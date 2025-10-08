@@ -1,9 +1,9 @@
 ### auto-generated section `build intellij.platform.serviceContainer` start
-load("@rules_jvm//:jvm.bzl", "jvm_library", "jvm_resources")
+load("@rules_jvm//:jvm.bzl", "jvm_library", "resourcegroup")
 
-jvm_resources(
+resourcegroup(
   name = "service-container_resources",
-  files = glob(["resources/**/*"]),
+  srcs = glob(["resources/**/*"]),
   strip_prefix = "resources"
 )
 
@@ -12,6 +12,7 @@ jvm_library(
   module_name = "intellij.platform.serviceContainer",
   visibility = ["//visibility:public"],
   srcs = glob(["src/**/*.kt", "src/**/*.java", "src/**/*.form"], allow_empty = True),
+  resources = [":service-container_resources"],
   deps = [
     "@lib//:kotlin-stdlib",
     "//platform/core-api:core",
@@ -20,13 +21,12 @@ jvm_library(
     "//platform/core-impl",
     "//platform/util-ex",
     "//platform/projectModel-impl",
-    "@lib//:fastutil-min",
+    "//libraries/fastutil",
     "@lib//:kotlinx-coroutines-core",
     "//platform/instanceContainer",
     "//platform/diagnostic",
     "//platform/util/coroutines",
-  ],
-  runtime_deps = [":service-container_resources"]
+  ]
 )
 
 jvm_library(
@@ -44,13 +44,12 @@ jvm_library(
     "//platform/projectModel-impl",
     "@lib//:junit4",
     "@lib//:assert_j",
-    "@lib//:fastutil-min",
+    "//libraries/fastutil",
     "@lib//:kotlinx-coroutines-core",
     "//platform/instanceContainer",
     "//platform/diagnostic",
     "//platform/util/coroutines",
-  ],
-  runtime_deps = [":service-container_resources"]
+  ]
 )
 ### auto-generated section `build intellij.platform.serviceContainer` end
 

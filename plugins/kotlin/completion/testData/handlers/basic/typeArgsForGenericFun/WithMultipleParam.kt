@@ -7,6 +7,5 @@ fun test() {
     val res: Long? = cast(5).<caret>
 }
 
-// IGNORE_K2
 // ELEMENT: minus
 // TAIL_TEXT: "(other: Int)"

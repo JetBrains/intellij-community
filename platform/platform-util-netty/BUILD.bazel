@@ -9,8 +9,8 @@ jvm_library(
   deps = [
     "@lib//:kotlin-stdlib",
     "//platform/core-api:core",
-    "@lib//:guava",
-    "@lib//:fastutil-min",
+    "//libraries/guava",
+    "//libraries/fastutil",
     "@lib//:netty-buffer",
     "//platform/util",
     "@lib//:netty-codec-http",

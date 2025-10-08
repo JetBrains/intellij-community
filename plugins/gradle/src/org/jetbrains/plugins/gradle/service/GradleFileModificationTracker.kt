@@ -5,7 +5,7 @@ import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.components.Service
 import com.intellij.openapi.editor.Document
 import com.intellij.openapi.fileEditor.FileDocumentManager
-import com.intellij.openapi.fileEditor.FileDocumentManagerListener
+import com.intellij.openapi.fileEditor.FileDocumentManagerListenerBackgroundable
 import com.intellij.openapi.vfs.VirtualFile
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.FlowPreview
@@ -65,7 +65,7 @@ class GradleFileModificationTracker(coroutineScope: CoroutineScope) {
   }
 }
 
-private class GradleFileModificationListener : FileDocumentManagerListener {
+private class GradleFileModificationListener : FileDocumentManagerListenerBackgroundable {
   override fun beforeDocumentSaving(document: Document) {
     val modificationTracker = ApplicationManager.getApplication().getService(GradleFileModificationTracker::class.java)
     FileDocumentManager.getInstance().getFile(document)?.let { modificationTracker.beforeSaving(it) }

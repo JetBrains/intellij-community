@@ -511,6 +511,8 @@ internal class DirectIntentionCommandProvider : CommandProvider {
             intentionsCache.wrapAndUpdateActions(actionsToShow, false)
             for (intention in intentionsCache.intentions) {
               if (intention.action is EmptyIntentionAction || intentionCommandSkipperList.any { skipper -> skipper.skip(intention.action, psiFile, currentOffset) }) continue
+              //todo hardcoded, get rid of when it will be clear what to do with this
+              if (IntentionActionDelegate.unwrap(intention.action).javaClass.name == "com.intellij.ml.llm.intentions.chat.AIAssistantIntention") continue
               val intentionCommand =
                 IntentionCompletionCommand(intention, 50, AllIcons.Actions.IntentionBulbGrey,
                                            calculateIntentionHighlighting(intention, editor, psiFile, offset), topLevelCurrentOffset) {

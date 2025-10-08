@@ -67,7 +67,6 @@ public final class PathManager {
   private static Path ourOriginalConfigDir;
   private static Path ourOriginalSystemDir;
   private static Path ourOriginalLogDir;
-  private static Map<String, String> ourArchivedCompiledClassesMapping;
 
   private PathManager() { }
 
@@ -212,7 +211,7 @@ public final class PathManager {
     }
 
     // classes compiled to .jar and passed as archived compiled classes
-    String relevantJarsRoot = getArchivedCompliedClassesLocation();
+    String relevantJarsRoot = ArchivedCompilationContextUtil.getArchivedCompiledClassesLocation();
     if (relevantJarsRoot != null && rootPath.startsWith(relevantJarsRoot)) {
       String home = System.getProperty(PROPERTY_HOME_PATH);
       if (home != null) {
@@ -381,13 +380,25 @@ public final class PathManager {
   /**
    * Returns the path to the directory where bundled plugins are located.
    */
+  public static @NotNull Path getBundledPluginsDir() {
+    return getHomeDir().resolve(PLUGINS_DIRECTORY);
+  }
+
+  /** Prefer {@link #getBundledPluginsDir()}. */
+  @ApiStatus.Obsolete
   public static @NotNull String getPreInstalledPluginsPath() {
-    return getHomePath() + '/' + PLUGINS_DIRECTORY;
+    return getBundledPluginsDir().toString();
   }
 
   /** <b>Note</b>: on macOS, the method returns a "functional" home, pointing to a JRE subdirectory inside a bundle. */
+  public static @NotNull Path getBundledRuntimeDir() {
+    return getHomeDir().resolve(JRE_DIRECTORY + (OS.CURRENT == OS.macOS ? "/Contents/Home" : ""));
+  }
+
+  /** Prefer {@link #getBundledRuntimeDir()}. */
+  @ApiStatus.Obsolete
   public static @NotNull String getBundledRuntimePath() {
-    return getHomePath() + '/' + JRE_DIRECTORY + (OS.CURRENT == OS.macOS ? "/Contents/Home" : "");
+    return getBundledRuntimeDir().toString();
   }
 
   /**
@@ -1055,50 +1066,5 @@ public final class PathManager {
       System.setProperty(PROPERTY_VENDOR_NAME, property);
     }
     return property;
-  }
-
-  /**
-   * NB: actual jars might be in subdirectories
-   */
-  @ApiStatus.Internal
-  public static @Nullable String getArchivedCompliedClassesLocation() {
-    return System.getProperty("intellij.test.jars.location");
-  }
-
-  /**
-   * Returns a map of IntelliJ modules to .jar absolute paths, e.g.:
-   * "production/intellij.platform.util" => ".../production/intellij.platform.util/$hash.jar"
-   */
-  @ApiStatus.Internal
-  public static @Nullable Map<String, String> getArchivedCompiledClassesMapping() {
-    if (ourArchivedCompiledClassesMapping == null) {
-      ourArchivedCompiledClassesMapping = computeArchivedCompiledClassesMapping();
-    }
-    return ourArchivedCompiledClassesMapping;
-  }
-
-  private static @Nullable Map<String, String> computeArchivedCompiledClassesMapping() {
-    final String filePath = System.getProperty("intellij.test.jars.mapping.file");
-    if (StringUtilRt.isEmptyOrSpaces(filePath)) {
-      return null;
-    }
-    final List<String> lines;
-    try {
-      lines = Files.readAllLines(Paths.get(filePath));
-    }
-    catch (Exception e) {
-      log("Failed to load jars mappings from " + filePath);
-      return null;
-    }
-    final Map<String, String> mapping = new HashMap<>(lines.size());
-    for (String line : lines) {
-      String[] split = line.split("=", 2);
-      if (split.length < 2) {
-        log("Ignored jars mapping line: " + line);
-        continue;
-      }
-      mapping.put(split[0], split[1]);
-    }
-    return Collections.unmodifiableMap(mapping);
   }
 }

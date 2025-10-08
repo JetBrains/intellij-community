@@ -1,7 +1,7 @@
 // Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.plugins.groovy.lang;
 
-import com.intellij.spellchecker.inspections.SpellCheckingInspection;
+import com.intellij.grazie.spellcheck.GrazieSpellCheckingInspection;
 import com.intellij.testFramework.fixtures.LightJavaCodeInsightFixtureTestCase;
 
 public class GroovySpellcheckerTest extends LightJavaCodeInsightFixtureTestCase {
@@ -14,7 +14,7 @@ public class GroovySpellcheckerTest extends LightJavaCodeInsightFixtureTestCase 
   }
 
   private void checkTypos() {
-    myFixture.enableInspections(new SpellCheckingInspection());
+    myFixture.enableInspections(new GrazieSpellCheckingInspection());
     myFixture.checkHighlighting(false, false, true);
   }
 

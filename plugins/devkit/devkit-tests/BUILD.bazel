@@ -35,6 +35,7 @@ jvm_library(
     "//xml/xml-psi-api:psi",
     "//spellchecker",
     "//spellchecker:spellchecker_test_lib",
+    "//plugins/grazie/src:core",
   ]
 )
 ### auto-generated section `build intellij.devkit.testFramework` end

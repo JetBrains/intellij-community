@@ -1,6 +1,6 @@
 ### auto-generated section `build intellij.gradle.toolingExtension.impl` start
 load("//build:compiler-options.bzl", "create_kotlinc_options")
-load("@rules_jvm//:jvm.bzl", "jvm_library", "jvm_resources")
+load("@rules_jvm//:jvm.bzl", "jvm_library", "resourcegroup")
 
 create_kotlinc_options(
   name = "custom_toolingExtension-impl",
@@ -11,9 +11,9 @@ create_kotlinc_options(
   ]
 )
 
-jvm_resources(
+resourcegroup(
   name = "toolingExtension-impl_resources",
-  files = glob(["resources/**/*"]),
+  srcs = glob(["resources/**/*"]),
   strip_prefix = "resources"
 )
 
@@ -22,15 +22,16 @@ jvm_library(
   module_name = "intellij.gradle.toolingExtension.impl",
   visibility = ["//visibility:public"],
   srcs = glob(["src/**/*.kt", "src/**/*.java", "src/**/*.form"], allow_empty = True),
+  resources = [":toolingExtension-impl_resources"],
   kotlinc_opts = ":custom_toolingExtension-impl",
   deps = [
     "@lib//:jetbrains-annotations",
     "//platform/external-system-rt:externalSystem-rt",
     "//plugins/gradle/tooling-extension-api:toolingExtension",
     "@lib//:gradle",
-    "@lib//:gson",
+    "//libraries/gson",
     "//platform/object-serializer:objectSerializer-annotations",
-    "@lib//:ion",
+    "//libraries/ion",
     "//platform/util-rt",
     "@lib//:slf4j-api",
     "@lib//:slf4j-jdk14",
@@ -39,21 +40,20 @@ jvm_library(
     "//platform/diagnostic/telemetry/rt",
     "@lib//:commons-lang3",
     "@lib//:commons-io",
-    "@lib//:guava",
+    "//libraries/guava",
     "//platform/util/trove",
   ],
   exports = [
     "@lib//:slf4j-api",
     "@lib//:slf4j-jdk14",
-  ],
-  runtime_deps = [":toolingExtension-impl_resources"]
+  ]
 )
 ### auto-generated section `build intellij.gradle.toolingExtension.impl` end
 
 ### auto-generated section `build intellij.gradle.toolingExtension.tests` start
-jvm_resources(
+resourcegroup(
   name = "toolingExtension-tests_test_resources",
-  files = glob(["testResources/**/*"]),
+  srcs = glob(["testResources/**/*"]),
   strip_prefix = "testResources"
 )
 
@@ -68,6 +68,7 @@ jvm_library(
   module_name = "intellij.gradle.toolingExtension.tests",
   visibility = ["//visibility:public"],
   srcs = glob(["testSources/**/*.kt", "testSources/**/*.java", "testSources/**/*.form"], allow_empty = True),
+  resources = [":toolingExtension-tests_test_resources"],
   kotlinc_opts = "@community//:k8",
   deps = [
     "//plugins/gradle/tooling-extension-impl:toolingExtension-impl",
@@ -76,21 +77,20 @@ jvm_library(
     "@lib//:assert_j",
     "@lib//:gradle-tooling_extension-tests-io-github-classgraph-classgraph-4-8-87",
     "@lib//:gradle-tooling_extension-tests-org-jeasy-easy-random-core-4-2-0",
-    "@lib//:ion",
+    "//libraries/ion",
     "//platform/core-api:core",
     "//platform/lang-core",
     "//platform/projectModel-api:projectModel",
     "//platform/testFramework",
     "//platform/testFramework:testFramework_test_lib",
     "//java/openapi:java",
-    "@lib//:fastutil-min",
+    "//libraries/fastutil",
     "//platform/boot",
     "//plugins/gradle",
-    "@lib//:guava",
+    "//libraries/guava",
     "//platform/util/trove",
     "@lib//:commons-lang3",
-  ],
-  runtime_deps = [":toolingExtension-tests_test_resources"]
+  ]
 )
 ### auto-generated section `build intellij.gradle.toolingExtension.tests` end
 

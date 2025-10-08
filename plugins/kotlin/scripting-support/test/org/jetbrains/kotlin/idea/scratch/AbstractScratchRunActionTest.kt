@@ -20,8 +20,8 @@ import com.intellij.testFramework.*
 import com.intellij.testFramework.fixtures.impl.CodeInsightTestFixtureImpl
 import com.intellij.util.ui.UIUtil
 import org.jetbrains.kotlin.idea.KotlinLanguage
-import org.jetbrains.kotlin.idea.base.highlighting.shouldHighlightFile
 import org.jetbrains.kotlin.idea.artifacts.TestKotlinArtifacts
+import org.jetbrains.kotlin.idea.base.highlighting.shouldHighlightFile
 import org.jetbrains.kotlin.idea.core.script.k1.ScriptConfigurationManager
 import org.jetbrains.kotlin.idea.jvm.k1.scratch.actions.RunScratchAction
 import org.jetbrains.kotlin.idea.jvm.shared.scratch.ScratchFile
@@ -350,7 +350,9 @@ abstract class AbstractScratchRunActionTest : FileEditorManagerTestCase(),
             fileText: String,
             module: Module?
         ) {
-            val scratchFile = scratchFileEditor.scratchFile
+            val scratchFile = scratchFileEditor.scratchFile.apply {
+                saveOptions { copy(isMakeBeforeRun = false) }
+            }
 
             if (InTextDirectivesUtils.getPrefixedBoolean(fileText, "// INTERACTIVE_MODE: ") != true) {
                 scratchFile.saveOptions { copy(isInteractiveMode = false) }

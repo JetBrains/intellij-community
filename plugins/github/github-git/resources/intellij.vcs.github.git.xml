@@ -1,4 +1,4 @@
-<idea-plugin>
+<idea-plugin visibility="internal">
   <dependencies>
     <module name="intellij.vcs.github"/>
     <plugin id="Git4Idea"/>

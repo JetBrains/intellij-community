@@ -1,0 +1,8 @@
+// "Create parameter 'foo'" "true"
+
+fun bar() {
+    val p: String = fo<caret>o("abc")
+}
+
+// IGNORE_K1
+// FUS_K2_QUICKFIX_NAME: org.jetbrains.kotlin.idea.k2.codeinsight.quickFixes.createFromUsage.K2CreateParameterFromUsageBuilder$CreateParameterFromUsageAction

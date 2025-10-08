@@ -1,6 +1,6 @@
 ### auto-generated section `build intellij.platform.diagnostic.telemetry.exporters` start
 load("//build:compiler-options.bzl", "create_kotlinc_options")
-load("@rules_jvm//:jvm.bzl", "jvm_library", "jvm_resources")
+load("@rules_jvm//:jvm.bzl", "jvm_library", "resourcegroup")
 
 create_kotlinc_options(
   name = "custom_telemetry.exporters",
@@ -10,9 +10,9 @@ create_kotlinc_options(
   ]
 )
 
-jvm_resources(
+resourcegroup(
   name = "telemetry.exporters_resources",
-  files = glob(["resources/**/*"]),
+  srcs = glob(["resources/**/*"]),
   strip_prefix = "resources"
 )
 
@@ -21,6 +21,7 @@ jvm_library(
   module_name = "intellij.platform.diagnostic.telemetry.exporters",
   visibility = ["//visibility:public"],
   srcs = glob(["src/**/*.kt", "src/**/*.java", "src/**/*.form"], allow_empty = True),
+  resources = [":telemetry.exporters_resources"],
   kotlinc_opts = ":custom_telemetry.exporters",
   deps = [
     "@lib//:kotlin-stdlib",
@@ -32,12 +33,11 @@ jvm_library(
     "//platform/util/http",
     "@lib//:kotlinx-coroutines-core",
     "//platform/util",
-    "@lib//:jackson",
-    "@lib//:jackson-databind",
-    "@lib//:jackson-module-kotlin",
-    "@lib//:kotlinx-serialization-core",
+    "//libraries/jackson/jackson",
+    "//libraries/jackson/databind",
+    "//libraries/jackson/module-kotlin:libraries-jackson-module-kotlin",
+    "//libraries/kotlinx/serialization/core",
     "@lib//:kotlinx-serialization-protobuf",
-  ],
-  runtime_deps = [":telemetry.exporters_resources"]
+  ]
 )
 ### auto-generated section `build intellij.platform.diagnostic.telemetry.exporters` end

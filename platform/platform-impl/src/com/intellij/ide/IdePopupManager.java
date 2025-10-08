@@ -45,19 +45,6 @@ public final class IdePopupManager implements IdeEventQueue.EventDispatcher {
         return false;
       }
 
-      if (StartupUiUtil.isWaylandToolkit()) {
-        // Reasons for skipping 'focus lost'-like events on Wayland:
-        // - When a new popup window appears, the main frame looses focus, but the "opposite window"
-        //   for that event is null (because Wayland); this can be solved by waiting a bit
-        //   (several hundreds ms) for
-        //   KeyboardFocusManager.getCurrentKeyboardFocusManager().getFocusedWindow()
-        //   to become non-null.
-        // - When a (popup) window is dragged, it also looses focus (because Wayland); this one is
-        //   not solvable because there's no guarantee that the focus will get back, nor is there
-        //   a notification that the drag is actually happening.
-        return false;
-      }
-
       if (!isPopupActive()) return false;
 
       Window sourceWindow = ((WindowEvent)e).getWindow();

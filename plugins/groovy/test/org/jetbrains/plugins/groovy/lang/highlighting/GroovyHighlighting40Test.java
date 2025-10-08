@@ -69,6 +69,60 @@ public class GroovyHighlighting40Test extends LightGroovyTestCase implements Hig
     myFixture.testHighlighting(false, false, false);
   }
 
+  public void testUnnamedVariableDuplicateInVariableDefinitions() {
+    highlightingTest("""
+                       void f() {
+                          def (_, <error descr="Variable '_' already defined">_</error>) = [1, 2]
+                       }
+                       """);
+  }
+
+  public void testUnnamedVariableDuplicateInVariableDefinitionsWithOuterScope() {
+    highlightingTest("""
+                       void f() {
+                           def (_) = [1]
+                            def <error descr="Variable '_' already defined">_</error> = 1
+                       }
+                       """);
+  }
+
+  public void testUnnamedVariableDuplicateInLambdaExpression() {
+    highlightingTest("""
+                       void f() {
+                           def x = (<error descr="Variable '_' already defined">_</error>, <error descr="Variable '_' already defined">_</error>, a, b) -> a + b
+                       }
+                       """);
+  }
+
+  public void testUnnamedVariableDuplicateInLambdaExpressionWithScope() {
+    highlightingTest("""
+                       void f() {
+                           def x = (_, a) -> {
+                              def <error descr="Variable '_' already defined">_</error> = 1
+                              println a
+                           }
+                       }
+                       """);
+  }
+
+  public void testUnnamedVariableDuplicateInClosure() {
+    highlightingTest("""
+                       void f() {
+                           def x = {a, <error descr="Variable '_' already defined">_</error>, <error descr="Variable '_' already defined">_</error> -> a }
+                       }
+                       """);
+  }
+
+  public void testUnnamedVariableDuplicateInClosureWithScope() {
+    highlightingTest("""
+                       void f() {
+                           def x = {_ ->
+                           def <error descr="Variable '_' already defined">_</error> = 1
+                            }
+                       }
+                       """);
+  }
+
   @Override
   public final @NotNull LightProjectDescriptor getProjectDescriptor() {
     return GroovyProjectDescriptors.GROOVY_4_0;

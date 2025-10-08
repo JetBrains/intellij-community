@@ -91,6 +91,7 @@ import com.intellij.openapi.fileEditor.impl.EditorHistoryManager;
 import com.intellij.openapi.fileEditor.impl.text.TextEditorProvider;
 import com.intellij.openapi.fileTypes.FileType;
 import com.intellij.openapi.fileTypes.FileTypeManager;
+import com.intellij.openapi.fileTypes.UnknownFileType;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.module.ModuleManager;
 import com.intellij.openapi.progress.ProcessCanceledException;
@@ -296,9 +297,8 @@ public class CodeInsightTestFixtureImpl extends BaseFixture implements CodeInsig
     Throwable exception = null;
     int retries = 1000;
     for (int i = 0; i < retries; i++) {
-      int oldDelay = settings.getAutoReparseDelay();
       try {
-        settings.setAutoReparseDelay(0);
+        settings.forceUseZeroAutoReparseDelay(true);
         List<HighlightInfo> infos = new ArrayList<>();
         EdtTestUtil.runInEdtAndWait(() -> {
           PsiFile file = filePointer.getElement();
@@ -350,7 +350,7 @@ public class CodeInsightTestFixtureImpl extends BaseFixture implements CodeInsig
         exception = e;
       }
       finally {
-        settings.setAutoReparseDelay(oldDelay);
+        settings.forceUseZeroAutoReparseDelay(false);
       }
     }
     ExceptionUtil.rethrow(exception);
@@ -695,7 +695,7 @@ public class CodeInsightTestFixtureImpl extends BaseFixture implements CodeInsig
   public @NotNull PsiSymbolReference findSingleReferenceAtCaret() {
     PsiFile file = getFile();
     assertNotNull(file);
-    return assertOneElement(ReferencesKt.referencesAt(file, getCaretOffset()));
+    return assertOneElement(ReadAction.compute(() -> ReferencesKt.referencesAt(file, getCaretOffset())));
   }
 
   @Override
@@ -1071,7 +1071,7 @@ public class CodeInsightTestFixtureImpl extends BaseFixture implements CodeInsig
   }
 
   @Override
-  public @NotNull Collection<UsageInfo> findUsages(@NotNull PsiElement targetElement) {
+  public @NotNull @Unmodifiable Collection<UsageInfo> findUsages(@NotNull PsiElement targetElement) {
     return findUsages(targetElement, null);
   }
 
@@ -1087,7 +1087,7 @@ public class CodeInsightTestFixtureImpl extends BaseFixture implements CodeInsig
   }
 
   @Override
-  public @NotNull String getUsageViewTreeTextRepresentation(@NotNull List<UsageTarget> usageTargets,
+  public @NotNull String getUsageViewTreeTextRepresentation(@NotNull @Unmodifiable List<? extends UsageTarget> usageTargets,
                                                             @NotNull Collection<? extends Usage> usages) {
     UsageViewImpl usageView = (UsageViewImpl)UsageViewManager.getInstance(getProject())
       .createUsageView(usageTargets.toArray(UsageTarget.EMPTY_ARRAY), usages.toArray(Usage.EMPTY_ARRAY), new UsageViewPresentation(), null);
@@ -1125,7 +1125,7 @@ public class CodeInsightTestFixtureImpl extends BaseFixture implements CodeInsig
     return getUsageViewTreeTextRepresentation(usageTargets, usages);
   }
 
-  public @NotNull Collection<UsageInfo> findUsages(@NotNull PsiElement targetElement, @Nullable SearchScope scope) {
+  public @NotNull @Unmodifiable Collection<UsageInfo> findUsages(@NotNull PsiElement targetElement, @Nullable SearchScope scope) {
     Project project = getProject();
     FindUsagesHandler handler =
       ((FindManagerImpl)FindManager.getInstance(project)).getFindUsagesManager().getFindUsagesHandler(targetElement, false);
@@ -1542,7 +1542,8 @@ public class CodeInsightTestFixtureImpl extends BaseFixture implements CodeInsig
                                                    @NotNull String extension,
                                                    @NotNull Disposable parentDisposable) {
     FileTypeManager fileTypeManager = FileTypeManager.getInstance();
-    if (!fileType.equals(fileTypeManager.getFileTypeByExtension(extension))) {
+    var defaultFileType = fileTypeManager.getFileTypeByExtension(extension);
+    if (!fileType.equals(defaultFileType)) {
       WriteAction.runAndWait(() -> {
         fileTypeManager.associateExtension(fileType, extension);
         IndexingTestUtil.waitUntilIndexesAreReadyInAllOpenedProjects();
@@ -1550,6 +1551,9 @@ public class CodeInsightTestFixtureImpl extends BaseFixture implements CodeInsig
       Disposer.register(parentDisposable, () -> {
         WriteAction.runAndWait(() -> {
           fileTypeManager.removeAssociatedExtension(fileType, extension);
+          if (defaultFileType != UnknownFileType.INSTANCE) {
+            fileTypeManager.associateExtension(defaultFileType, extension);
+          }
           IndexingTestUtil.waitUntilIndexesAreReadyInAllOpenedProjects();
         });
       });

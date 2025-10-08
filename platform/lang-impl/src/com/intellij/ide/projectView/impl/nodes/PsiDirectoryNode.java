@@ -1,6 +1,7 @@
 // Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.ide.projectView.impl.nodes;
 
+import com.intellij.codeInsight.multiverse.CodeInsightContexts;
 import com.intellij.ide.projectView.NodeSortOrder;
 import com.intellij.ide.projectView.NodeSortSettings;
 import com.intellij.ide.projectView.PresentationData;
@@ -47,6 +48,7 @@ import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
 import java.util.Collection;
+import java.util.Collections;
 import java.util.List;
 import java.util.Set;
 
@@ -106,8 +108,13 @@ public class PsiDirectoryNode extends BasePsiNode<PsiDirectory> implements Navig
 
     if (ProjectRootsUtil.isModuleContentRoot(directoryFile, project)) {
       ProjectFileIndex fi = ProjectRootManager.getInstance(project).getFileIndex();
-      List<Module> modules =
-        ContainerUtil.filter(fi.getModulesForFile(directoryFile, true), module -> !ModuleType.isInternal(module));
+      List<Module> modules;
+      if (CodeInsightContexts.isSharedSourceSupportEnabled(project)) {
+        modules = ContainerUtil.filter(fi.getModulesForFile(directoryFile, true), module -> !ModuleType.isInternal(module));
+      }
+      else {
+        modules = Collections.singletonList(fi.getModuleForFile(directoryFile));
+      }
 
       var directoryName = getPossiblyCompactedDirectoryName();
       data.setPresentableText(directoryName);

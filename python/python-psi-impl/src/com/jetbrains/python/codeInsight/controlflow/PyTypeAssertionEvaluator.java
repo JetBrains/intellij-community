@@ -50,12 +50,6 @@ public class PyTypeAssertionEvaluator extends PyRecursiveElementVisitor {
           transformTypeFromAssertion(context.getType(typeElement), false, context, typeElement));
       }
     }
-    else if (node.isCalleeText(PyNames.CALLABLE_BUILTIN)) {
-      final PyExpression[] args = node.getArguments();
-      if (args.length == 1) {
-        pushAssertion(args[0], myPositive, context -> PyTypingTypeProvider.createTypingCallableType(node));
-      }
-    }
     else if (node.isCalleeText(PyNames.ISSUBCLASS)) {
       final PyExpression[] args = node.getArguments();
       if (args.length == 2) {
@@ -68,7 +62,12 @@ public class PyTypeAssertionEvaluator extends PyRecursiveElementVisitor {
   }
 
   private void visitExpressionInCondition(@NotNull PyExpression node) {
-    if (myPositive && (isIfReferenceStatement(node) || isIfReferenceConditionalStatement(node) || isIfNotReferenceStatement(node))) {
+    if (myPositive && (
+      isIfReferenceStatement(node) ||
+      isIfReferenceConditionalStatement(node) ||
+      isBinaryExpressionPart(node)
+    )) {
+      // TODO: we can actually check if the class defines __bool__ or __len__, and use it to exclude the type
       // we could not suggest `None` because it could be a reference to an empty collection
       // so we could push only non-`None` assertions
       pushAssertion(node, !myPositive, context -> PyBuiltinCache.getInstance(node).getNoneType());
@@ -392,22 +391,31 @@ public class PyTypeAssertionEvaluator extends PyRecursiveElementVisitor {
       return null;
     };
   }
+  
+  private static @Nullable PsiElement skipNotAndParens(@Nullable PsiElement element) {
+    if (element == null) return null;
+    for (PsiElement e = element.getParent(); e != null; e = e.getParent()) {
+      if (!(e instanceof PyParenthesizedExpression) && 
+          !(e instanceof PyPrefixExpression prefixExpr && prefixExpr.getOperator() == PyTokenTypes.NOT_KEYWORD)) {
+        return e;
+      }
+    }
+    return null;
+  }
 
   private static boolean isIfReferenceStatement(@NotNull PyExpression node) {
-    return PsiTreeUtil.skipParentsOfType(node, PyParenthesizedExpression.class) instanceof PyIfPart;
+    return skipNotAndParens(node) instanceof PyConditionalStatementPart;
   }
 
   private static boolean isIfReferenceConditionalStatement(@NotNull PyExpression node) {
-    final PsiElement parent = PsiTreeUtil.skipParentsOfType(node, PyParenthesizedExpression.class); 
+    final PsiElement parent = skipNotAndParens(node);
     return parent instanceof PyConditionalExpression cond &&
            PsiTreeUtil.isAncestor(cond.getCondition(), node, false);
   }
 
-  private static boolean isIfNotReferenceStatement(@NotNull PyExpression node) {
-    final PsiElement parent = PsiTreeUtil.skipParentsOfType(node, PyParenthesizedExpression.class);
-    return parent instanceof PyPrefixExpression &&
-           ((PyPrefixExpression)parent).getOperator() == PyTokenTypes.NOT_KEYWORD &&
-           parent.getParent() instanceof PyIfPart;
+  private static boolean isBinaryExpressionPart(@NotNull PyExpression node) {
+    return skipNotAndParens(node) instanceof PyBinaryExpression binExpr &&
+           (binExpr.isOperator(PyNames.AND) || binExpr.isOperator(PyNames.OR));
   }
 
   static class Assertion {

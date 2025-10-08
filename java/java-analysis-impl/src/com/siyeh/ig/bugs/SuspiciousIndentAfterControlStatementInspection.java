@@ -22,7 +22,7 @@ public final class SuspiciousIndentAfterControlStatementInspection extends BaseI
   }
 
   @Override
-  public BaseInspectionVisitor buildVisitor() {
+  public @NotNull BaseInspectionVisitor buildVisitor() {
     return new SuspiciousIndentAfterControlStatementVisitor();
   }
 

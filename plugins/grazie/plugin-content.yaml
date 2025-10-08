@@ -34,6 +34,29 @@
   files:
   - name: $MAVEN_REPOSITORY$/org/apache/commons/commons-text/1/commons-text-1.jar
   reason: <- intellij.grazie.core
+- name: lib/grazie-frontend.jar
+  contentModules:
+  - name: intellij.libraries.ai.grazie.spell.gec.engine.local
+    libraries:
+      ai.grazie.spell.gec.engine.local:
+      - name: $MAVEN_REPOSITORY$/ai/grazie/spell/gec-spell-engine-local/0/gec-spell-engine-local-0.jar
+      - name: $MAVEN_REPOSITORY$/ai/grazie/utils/utils-common-jvm/0/utils-common-jvm-0.jar
+      - name: $MAVEN_REPOSITORY$/ai/grazie/model/model-gec-jvm/0/model-gec-jvm-0.jar
+      - name: $MAVEN_REPOSITORY$/ai/grazie/model/model-text-jvm/0/model-text-jvm-0.jar
+      - name: $MAVEN_REPOSITORY$/ai/grazie/model/model-common-jvm/0/model-common-jvm-0.jar
+      - name: $MAVEN_REPOSITORY$/ai/grazie/nlp/nlp-langs-jvm/0/nlp-langs-jvm-0.jar
+      - name: $MAVEN_REPOSITORY$/ai/grazie/nlp/nlp-common-jvm/0/nlp-common-jvm-0.jar
+      - name: $MAVEN_REPOSITORY$/ai/grazie/nlp/nlp-patterns-jvm/0/nlp-patterns-jvm-0.jar
+      - name: $MAVEN_REPOSITORY$/ai/grazie/nlp/nlp-similarity-jvm/0/nlp-similarity-jvm-0.jar
+      - name: $MAVEN_REPOSITORY$/ai/grazie/nlp/nlp-phonetics-jvm/0/nlp-phonetics-jvm-0.jar
+      - name: $MAVEN_REPOSITORY$/ai/grazie/nlp/nlp-tokenizer-jvm/0/nlp-tokenizer-jvm-0.jar
+      - name: $MAVEN_REPOSITORY$/ai/grazie/utils/utils-multiplatform-jvm/0/utils-multiplatform-jvm-0.jar
+      ai.grazie.spell.hunspell.en:
+      - name: $MAVEN_REPOSITORY$/ai/grazie/spell/hunspell-en/0/hunspell-en-0.jar
+      ai.grazie.nlp.detect:
+      - name: $MAVEN_REPOSITORY$/ai/grazie/nlp/nlp-detect-jvm/0/nlp-detect-jvm-0.jar
+      ai.grazie.model.swagger.annotations.jvm:
+      - name: $MAVEN_REPOSITORY$/ai/grazie/model/swagger-annotations-jvm/0/swagger-annotations-jvm-0.jar
 - name: lib/grazie.jar
   modules:
   - name: intellij.grazie
@@ -46,28 +69,6 @@
   - name: intellij.grazie.properties
   - name: intellij.grazie.xml
   - name: intellij.grazie.yaml
-- name: lib/grpc-core.jar
-  library: grpc-core
-  files:
-  - name: $MAVEN_REPOSITORY$/io/grpc/grpc-core/1/grpc-core-1.jar
-  - name: $MAVEN_REPOSITORY$/io/grpc/grpc-api/1/grpc-api-1.jar
-  - name: $MAVEN_REPOSITORY$/com/google/android/annotations/4/annotations-4.jar
-  - name: $MAVEN_REPOSITORY$/org/codehaus/mojo/animal-sniffer-annotations/1/animal-sniffer-annotations-1.jar
-  - name: $MAVEN_REPOSITORY$/io/perfmark/perfmark-api/0/perfmark-api-0.jar
-  - name: $MAVEN_REPOSITORY$/io/grpc/grpc-context/1/grpc-context-1.jar
-  reason: <- intellij.grazie.core
-- name: lib/grpc-protobuf.jar
-  library: grpc-protobuf
-  files:
-  - name: $MAVEN_REPOSITORY$/io/grpc/grpc-protobuf/1/grpc-protobuf-1.jar
-  - name: $MAVEN_REPOSITORY$/com/google/api/grpc/proto-google-common-protos/2/proto-google-common-protos-2.jar
-  - name: $MAVEN_REPOSITORY$/io/grpc/grpc-protobuf-lite/1/grpc-protobuf-lite-1.jar
-  reason: <- intellij.grazie.core
-- name: lib/grpc-stub.jar
-  library: grpc-stub
-  files:
-  - name: $MAVEN_REPOSITORY$/io/grpc/grpc-stub/1/grpc-stub-1.jar
-  reason: <- intellij.grazie.core
 - name: lib/javax.measure-unit-api.jar
   library: javax.measure:unit-api:1.0
   module: intellij.grazie.core

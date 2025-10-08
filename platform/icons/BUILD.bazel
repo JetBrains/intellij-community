@@ -1,15 +1,15 @@
 ### auto-generated section `build intellij.platform.icons` start
-load("@rules_jvm//:jvm.bzl", "jvm_library", "jvm_resources")
+load("@rules_jvm//:jvm.bzl", "jvm_library", "resourcegroup")
 
-jvm_resources(
+resourcegroup(
   name = "icons_resources",
-  files = glob(["compatibilityResources/**/*"]),
+  srcs = glob(["compatibilityResources/**/*"]),
   strip_prefix = "compatibilityResources"
 )
 
-jvm_resources(
+resourcegroup(
   name = "icons_resources_1",
-  files = glob(["src/**/*"]),
+  srcs = glob(["src/**/*"]),
   strip_prefix = "src"
 )
 
@@ -17,7 +17,7 @@ jvm_library(
   name = "icons",
   visibility = ["//visibility:public"],
   srcs = glob([], allow_empty = True),
-  runtime_deps = [
+  resources = [
     ":icons_resources",
     ":icons_resources_1",
   ]

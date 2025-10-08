@@ -1,9 +1,9 @@
 ### auto-generated section `build intellij.libraries.grpc` start
-load("@rules_jvm//:jvm.bzl", "jvm_library", "jvm_resources")
+load("@rules_jvm//:jvm.bzl", "jvm_library", "resourcegroup")
 
-jvm_resources(
+resourcegroup(
   name = "grpc_resources",
-  files = glob(["resources/**/*"]),
+  srcs = glob(["resources/**/*"]),
   strip_prefix = "resources"
 )
 
@@ -11,6 +11,7 @@ jvm_library(
   name = "grpc",
   visibility = ["//visibility:public"],
   srcs = glob([], allow_empty = True),
+  resources = [":grpc_resources"],
   exports = [
     "@lib//:grpc-core",
     "@lib//:grpc-stub",
@@ -18,7 +19,6 @@ jvm_library(
     "@lib//:grpc-protobuf",
   ],
   runtime_deps = [
-    ":grpc_resources",
     "@lib//:grpc-core",
     "@lib//:grpc-stub",
     "@lib//:grpc-kotlin-stub",

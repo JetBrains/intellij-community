@@ -1,9 +1,9 @@
 ### auto-generated section `build intellij.remoteDev.util` start
-load("@rules_jvm//:jvm.bzl", "jvm_library", "jvm_resources")
+load("@rules_jvm//:jvm.bzl", "jvm_library", "resourcegroup")
 
-jvm_resources(
+resourcegroup(
   name = "remoteDev-util_resources",
-  files = glob(["resources/**/*"]),
+  srcs = glob(["resources/**/*"]),
   strip_prefix = "resources"
 )
 
@@ -12,6 +12,7 @@ jvm_library(
   module_name = "intellij.remoteDev.util",
   visibility = ["//visibility:public"],
   srcs = glob(["src/**/*.kt", "src/**/*.java", "src/**/*.form", "modelGenerated/**/*.kt", "modelGenerated/**/*.java"], allow_empty = True),
+  resources = [":remoteDev-util_resources"],
   deps = [
     "@lib//:kotlin-stdlib",
     "@lib//:rd-core",
@@ -27,17 +28,17 @@ jvm_library(
     "@lib//:download-pgp-verifier",
     "@lib//:bouncy-castle-pgp",
     "//platform/platform-impl:ide-impl",
-    "@lib//:miglayout-swing",
-    "@lib//:jackson",
-    "@lib//:jackson-databind",
+    "//libraries/miglayout-swing",
+    "//libraries/jackson/jackson",
+    "//libraries/jackson/databind",
     "//platform/rd-platform-community:rd-community",
     "//platform/statistics",
-    "@lib//:gson",
+    "//libraries/gson",
     "//platform/util/progress",
-    "@lib//:kotlinx-serialization-core",
-    "@lib//:kotlinx-serialization-json",
+    "//libraries/kotlinx/serialization/core",
+    "//libraries/kotlinx/serialization/json",
     "//platform/core-ui",
-    "@lib//:kotlin-reflect",
+    "//libraries/kotlin-reflect",
     "//platform/ide-core-impl",
     "@lib//:rd-gen",
     "@lib//:opentelemetry",
@@ -54,8 +55,7 @@ jvm_library(
     "//platform/runtime/product",
     "//platform/execution",
     "//platform/util/coroutines",
-  ],
-  runtime_deps = [":remoteDev-util_resources"]
+  ]
 )
 
 jvm_library(
@@ -79,22 +79,22 @@ jvm_library(
     "@lib//:download-pgp-verifier",
     "@lib//:bouncy-castle-pgp",
     "//platform/platform-impl:ide-impl",
-    "@lib//:miglayout-swing",
-    "@lib//:jackson",
-    "@lib//:jackson-databind",
+    "//libraries/miglayout-swing",
+    "//libraries/jackson/jackson",
+    "//libraries/jackson/databind",
     "//platform/rd-platform-community:rd-community",
     "//platform/statistics",
     "//platform/statistics:statistics_test_lib",
-    "@lib//:gson",
+    "//libraries/gson",
     "@lib//:junit5",
     "//platform/util/progress",
     "@lib//:junit5Params",
     "//platform/testFramework/junit5",
     "//platform/testFramework/junit5:junit5_test_lib",
-    "@lib//:kotlinx-serialization-core",
-    "@lib//:kotlinx-serialization-json",
+    "//libraries/kotlinx/serialization/core",
+    "//libraries/kotlinx/serialization/json",
     "//platform/core-ui",
-    "@lib//:kotlin-reflect",
+    "//libraries/kotlin-reflect",
     "//platform/ide-core-impl",
     "@lib//:rd-gen",
     "@lib//:opentelemetry",
@@ -112,8 +112,7 @@ jvm_library(
     "//platform/runtime/product",
     "//platform/execution",
     "//platform/util/coroutines",
-  ],
-  runtime_deps = [":remoteDev-util_resources"]
+  ]
 )
 ### auto-generated section `build intellij.remoteDev.util` end
 

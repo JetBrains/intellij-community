@@ -1,4 +1,4 @@
-<idea-plugin>
+<idea-plugin visibility="internal">
   <extensions defaultExtensionNs="com.intellij">
     <applicationService serviceInterface="com.intellij.platform.eel.provider.LocalWindowsEelApi"
                         serviceImplementation="com.intellij.platform.eel.impl.local.LocalWindowsEelApiImpl"/>

@@ -1,6 +1,6 @@
 ### auto-generated section `build kotlin.j2k.k1.old.post-processing` start
 load("//build:compiler-options.bzl", "create_kotlinc_options")
-load("@rules_jvm//:jvm.bzl", "jvm_library", "jvm_resources")
+load("@rules_jvm//:jvm.bzl", "jvm_library", "resourcegroup")
 
 create_kotlinc_options(
   name = "custom_k1.old.post-processing",
@@ -14,9 +14,9 @@ create_kotlinc_options(
   x_context_parameters = True
 )
 
-jvm_resources(
+resourcegroup(
   name = "k1.old.post-processing_resources",
-  files = glob(["resources/**/*"]),
+  srcs = glob(["resources/**/*"]),
   strip_prefix = "resources"
 )
 
@@ -25,6 +25,7 @@ jvm_library(
   module_name = "kotlin.j2k.k1.old.post-processing",
   visibility = ["//visibility:public"],
   srcs = glob(["src/**/*.kt", "src/**/*.java", "src/**/*.form"], allow_empty = True),
+  resources = [":k1.old.post-processing_resources"],
   kotlinc_opts = ":custom_k1.old.post-processing",
   deps = [
     "@lib//:kotlin-stdlib",
@@ -52,7 +53,6 @@ jvm_library(
     "//plugins/kotlin/j2k/k1.old",
     "//plugins/kotlin/base/analysis-api/analysis-api-utils:kotlin-base-analysis-api-utils",
     "//plugins/kotlin/code-insight/inspections-shared:kotlin-code-insight-inspections-shared",
-  ],
-  runtime_deps = [":k1.old.post-processing_resources"]
+  ]
 )
 ### auto-generated section `build kotlin.j2k.k1.old.post-processing` end

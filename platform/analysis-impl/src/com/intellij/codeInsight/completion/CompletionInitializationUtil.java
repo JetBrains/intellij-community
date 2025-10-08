@@ -71,7 +71,7 @@ public final class CompletionInitializationUtil {
                                                                                              @NotNull PsiFile psiFile,
                                                                                              int invocationCount,
                                                                                              @NotNull Caret caret,
-                                                                                             CompletionType completionType) {
+                                                                                             @NotNull CompletionType completionType) {
     final Ref<CompletionContributor> current = Ref.create(null);
     CompletionInitializationContextImpl context =
       new CompletionInitializationContextImpl(editor, caret, psiFile, completionType, invocationCount) {
@@ -103,8 +103,9 @@ public final class CompletionInitializationUtil {
     return context;
   }
 
-  public static @NotNull CompletionParameters createCompletionParameters(CompletionInitializationContext initContext,
-                                                                         CompletionProcess indicator, OffsetsInFile finalOffsets) {
+  public static @NotNull CompletionParameters createCompletionParameters(@NotNull CompletionInitializationContext initContext,
+                                                                         @NotNull CompletionProcess indicator,
+                                                                         @NotNull OffsetsInFile finalOffsets) {
     int offset = finalOffsets.getOffsets().getOffset(CompletionInitializationContext.START_OFFSET);
     PsiFile fileCopy = finalOffsets.getFile();
     PsiFile originalFile = fileCopy.getOriginalFile();
@@ -115,16 +116,17 @@ public final class CompletionInitializationUtil {
                                     initContext.getEditor(), indicator);
   }
 
-  public static Supplier<? extends OffsetsInFile> insertDummyIdentifier(CompletionInitializationContext initContext, CompletionProcessEx indicator) {
+  public static Supplier<OffsetsInFile> insertDummyIdentifier(@NotNull CompletionInitializationContext initContext,
+                                                              @NotNull CompletionProcessEx indicator) {
     OffsetsInFile topLevelOffsets = indicator.getHostOffsets();
     final Consumer<Supplier<Disposable>> registerDisposable = supplier -> indicator.registerChildDisposable(supplier);
 
-    return doInsertDummyIdentifier(initContext, topLevelOffsets, false, registerDisposable);
+    return doInsertDummyIdentifier(initContext, topLevelOffsets, registerDisposable);
   }
 
-  private static Supplier<? extends OffsetsInFile> doInsertDummyIdentifier(CompletionInitializationContext initContext,
-                                                                 OffsetsInFile topLevelOffsets,
-                                                                 boolean noWriteLock, Consumer<? super Supplier<Disposable>> registerDisposable) {
+  private static Supplier<OffsetsInFile> doInsertDummyIdentifier(@NotNull CompletionInitializationContext initContext,
+                                                                 @NotNull OffsetsInFile topLevelOffsets,
+                                                                 @NotNull Consumer<? super Supplier<Disposable>> registerDisposable) {
 
     CompletionAssertions.checkEditorValid(initContext.getEditor());
     if (initContext.getDummyIdentifier().isEmpty()) {
@@ -135,7 +137,7 @@ public final class CompletionInitializationUtil {
     Editor hostEditor = InjectedLanguageEditorUtil.getTopLevelEditor(editor);
     OffsetMap hostMap = topLevelOffsets.getOffsets();
 
-    PsiFile hostCopy = obtainFileCopy(topLevelOffsets.getFile(), noWriteLock);
+    PsiFile hostCopy = obtainFileCopy(topLevelOffsets.getFile());
     Document copyDocument = Objects.requireNonNull(hostCopy.getViewProvider().getDocument());
 
     String dummyIdentifier = initContext.getDummyIdentifier();
@@ -150,8 +152,10 @@ public final class CompletionInitializationUtil {
 
     //kskrygan: this check is non-relevant for CWM (quick doc and other features work separately)
     //and we are trying to avoid useless write locks during completion
-    return skipWriteLockIfNeeded(noWriteLock, () -> {
-      registerDisposable.accept((Supplier<Disposable>)() -> new OffsetTranslator(hostEditor.getDocument(), initContext.getFile(), copyDocument, startOffset, endOffset, dummyIdentifier));
+    return () -> WriteAction.compute(() -> {
+      registerDisposable.accept((Supplier<Disposable>)() -> {
+        return new OffsetTranslator(hostEditor.getDocument(), initContext.getFile(), copyDocument, startOffset, endOffset, dummyIdentifier);
+      });
       OffsetsInFile copyOffsets = apply.get();
 
       registerDisposable.accept((Supplier<Disposable>)() -> copyOffsets.getOffsets());
@@ -160,16 +164,7 @@ public final class CompletionInitializationUtil {
     });
   }
 
-  private static Supplier<? extends OffsetsInFile> skipWriteLockIfNeeded(boolean skipWriteLock, Supplier<? extends OffsetsInFile> toWrap) {
-    if (skipWriteLock) {
-      return toWrap;
-    }
-    else {
-      return () -> WriteAction.compute(() -> toWrap.get());
-    }
-  }
-
-  public static OffsetsInFile toInjectedIfAny(PsiFile originalFile, OffsetsInFile hostCopyOffsets) {
+  public static @NotNull OffsetsInFile toInjectedIfAny(@NotNull PsiFile originalFile, @NotNull OffsetsInFile hostCopyOffsets) {
     CompletionAssertions.assertHostInfo(hostCopyOffsets.getFile(), hostCopyOffsets.getOffsets());
 
     int hostStartOffset = hostCopyOffsets.getOffsets().getOffset(CompletionInitializationContext.START_OFFSET);
@@ -196,7 +191,7 @@ public final class CompletionInitializationUtil {
     return hostCopyOffsets;
   }
 
-  private static void setOriginalFile(PsiFileImpl copy, PsiFile origin) {
+  private static void setOriginalFile(@NotNull PsiFileImpl copy, @NotNull PsiFile origin) {
     checkInjectionConsistency(copy);
     PsiFile currentOrigin = copy.getOriginalFile();
     if (currentOrigin == copy) {
@@ -216,11 +211,11 @@ public final class CompletionInitializationUtil {
     }
   }
 
-  private static void recoverFromBrokenInjection(PsiFile hostFile) {
+  private static void recoverFromBrokenInjection(@NotNull PsiFile hostFile) {
     ApplicationManager.getApplication().invokeLater(() -> FileContentUtilCore.reparseFiles(hostFile.getViewProvider().getVirtualFile()));
   }
 
-  private static void checkInjectionConsistency(PsiFile injectedFile) {
+  private static void checkInjectionConsistency(@NotNull PsiFile injectedFile) {
     PsiElement host = injectedFile.getContext();
     if (host instanceof PsiLanguageInjectionHost injectionHost) {
       DocumentWindow document = (DocumentWindow)injectedFile.getViewProvider().getDocument();
@@ -244,7 +239,9 @@ public final class CompletionInitializationUtil {
     }
   }
 
-  public static @NotNull PsiElement findCompletionPositionLeaf(OffsetsInFile offsets, int offset, PsiFile originalFile) {
+  public static @NotNull PsiElement findCompletionPositionLeaf(@NotNull OffsetsInFile offsets,
+                                                               int offset,
+                                                               @NotNull PsiFile originalFile) {
     PsiElement insertedElement = offsets.getFile().findElementAt(offset);
     if (insertedElement == null && offsets.getFile().getTextLength() == offset) {
       insertedElement = PsiTreeUtil.getDeepestLast(offsets.getFile());
@@ -253,10 +250,10 @@ public final class CompletionInitializationUtil {
     return insertedElement;
   }
 
-  private static PsiFile obtainFileCopy(PsiFile file, boolean forbidCaching) {
+  private static @NotNull PsiFile obtainFileCopy(@NotNull PsiFile file) {
     final VirtualFile virtualFile = file.getVirtualFile();
-    boolean mayCacheCopy = !forbidCaching && file.isPhysical() &&
-                           // we don't want to cache code fragment copies even if they appear to be physical
+    // we don't want to cache code fragment copies even if they appear to be physical
+    boolean mayCacheCopy = file.isPhysical() &&
                            virtualFile != null && virtualFile.isInLocalFileSystem();
     if (mayCacheCopy) {
       final Pair<PsiFile, Document> cached = dereference(file.getUserData(FILE_COPY_KEY));
@@ -296,7 +293,7 @@ public final class CompletionInitializationUtil {
 
   private static final Key<SoftReference<Pair<PsiFile, Document>>> FILE_COPY_KEY = Key.create("CompletionFileCopy");
 
-  private static boolean isCopyUpToDate(Document document, @NotNull PsiFile copyFile, @NotNull PsiFile originalFile) {
+  private static boolean isCopyUpToDate(@NotNull Document document, @NotNull PsiFile copyFile, @NotNull PsiFile originalFile) {
     if (!copyFile.getClass().equals(originalFile.getClass()) ||
         !copyFile.isValid() ||
         !copyFile.getName().equals(originalFile.getName())) {

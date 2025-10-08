@@ -19,8 +19,8 @@ internal class WorkspaceBuilderChangeLog {
   var modificationCount: Long = 0
 
   internal val changeLog: ChangeLog = LinkedHashMap()
-  internal val addedSymbolicIds = mutableMapOf<Class<*>, MutableSet<SymbolicEntityId<*>>>()
-  internal val removedSymbolicIds = mutableMapOf<Class<*>, MutableSet<SymbolicEntityId<*>>>()
+  private val addedSymbolicIds = CollectionFactory.createSmallMemoryFootprintSet<SymbolicEntityId<*>>()
+  private val removedSymbolicIds = CollectionFactory.createSmallMemoryFootprintSet<SymbolicEntityId<*>>()
 
   internal fun clear() {
     modificationCount++
@@ -471,18 +471,28 @@ internal class WorkspaceBuilderChangeLog {
     }
   }
 
-  internal fun addAddedIds(entityInterface: Class<*>, addedIds: Set<SymbolicEntityId<*>>) {
+  internal fun addAddedIds(addedIds: Set<SymbolicEntityId<*>>) {
     if (addedIds.isEmpty()) return
-    removedSymbolicIds[entityInterface]?.removeAll(addedIds)
-    if (removedSymbolicIds[entityInterface]?.isEmpty() == true) removedSymbolicIds.remove(entityInterface)
-    addedSymbolicIds.computeIfAbsent(entityInterface) { CollectionFactory.createSmallMemoryFootprintSet() }.addAll(addedIds)
+    addedIds.forEach { addedId ->
+      addedSymbolicIds.add(addedId)
+      removedSymbolicIds.remove(addedId)
+    }
   }
 
-  internal fun addRemovedIds(entityInterface: Class<*>, removedIds: Set<SymbolicEntityId<*>>) {
+  internal fun addRemovedIds(removedIds: Set<SymbolicEntityId<*>>) {
     if (removedIds.isEmpty()) return
-    addedSymbolicIds[entityInterface]?.removeAll(removedIds)
-    if (addedSymbolicIds[entityInterface]?.isEmpty() == true) addedSymbolicIds.remove(entityInterface)
-    removedSymbolicIds.computeIfAbsent(entityInterface) { CollectionFactory.createSmallMemoryFootprintSet() }.addAll(removedIds)
+    removedIds.forEach { removedId ->
+      removedSymbolicIds.add(removedId)
+      addedSymbolicIds.remove(removedId)
+    }
+  }
+
+  internal fun addedSymbolicIds(): Set<SymbolicEntityId<*>> {
+    return addedSymbolicIds
+  }
+
+  internal fun removedSymbolicIds(): Set<SymbolicEntityId<*>> {
+    return removedSymbolicIds
   }
 
   companion object {

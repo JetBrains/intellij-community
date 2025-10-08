@@ -3,6 +3,7 @@
 package org.jetbrains.kotlin.idea.core.script.k1.configuration
 
 import com.intellij.ide.actions.ShowSettingsUtilImpl
+import com.intellij.openapi.components.service
 import com.intellij.openapi.fileEditor.FileEditor
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.ui.popup.JBPopupFactory
@@ -16,10 +17,10 @@ import com.intellij.ui.EditorNotifications
 import org.jetbrains.kotlin.idea.base.resources.KotlinBundle
 import org.jetbrains.kotlin.idea.base.util.createComponentActionLabel
 import org.jetbrains.kotlin.idea.core.script.k1.settings.KotlinScriptingSettingsImpl
-import org.jetbrains.kotlin.idea.core.script.v1.IdeScriptDefinitionProvider
 import org.jetbrains.kotlin.idea.util.isKotlinFileType
 import org.jetbrains.kotlin.psi.KtFile
 import org.jetbrains.kotlin.scripting.definitions.ScriptDefinition
+import org.jetbrains.kotlin.scripting.definitions.ScriptDefinitionProvider
 import org.jetbrains.kotlin.scripting.resolve.KotlinScriptDefinitionFromAnnotatedTemplate
 import org.jetbrains.kotlin.scripting.resolve.KtFileScriptSource
 import java.util.function.Function
@@ -34,7 +35,7 @@ class MultipleScriptDefinitionsChecker : EditorNotificationProvider {
 
         if (KotlinScriptingSettingsImpl.getInstance(project).suppressDefinitionsCheck) return null
 
-        val applicableDefinitions = IdeScriptDefinitionProvider.getInstance(project).getDefinitions().filter {
+        val applicableDefinitions = project.service<ScriptDefinitionProvider>().currentDefinitions.filter {
                 !it.isDefault && it.isScript(KtFileScriptSource(ktFile)) && KotlinScriptingSettingsImpl.getInstance(project)
                     .isScriptDefinitionEnabled(it)
             }.toList()

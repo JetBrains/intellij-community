@@ -69,13 +69,11 @@ import org.jetbrains.jewel.foundation.state.SelectableComponentState
  * @param pointerEventScopedActions The pointer event actions for the tree view.
  * @param chevronContent The composable function responsible for rendering the chevron icon.
  * @param nodeContent The composable function responsible for rendering the content of a tree node.
- *
- * @suppress("UNCHECKED_CAST")
- *
  * @composable
  */
 @Suppress("UNCHECKED_CAST", "ComposableParamOrder")
 @Composable
+@Deprecated("Use BasicLazyTree with 'interactionSource' parameter instead")
 public fun <T> BasicLazyTree(
     tree: Tree<T>,
     selectionMode: SelectionMode = SelectionMode.Multiple,
@@ -99,6 +97,84 @@ public fun <T> BasicLazyTree(
     chevronContent: @Composable (nodeState: TreeElementState) -> Unit,
     nodeContent: @Composable (SelectableLazyItemScope.(Tree.Element<T>) -> Unit),
 ) {
+    BasicLazyTree(
+        tree = tree,
+        elementBackgroundFocused = elementBackgroundFocused,
+        elementBackgroundSelectedFocused = elementBackgroundSelectedFocused,
+        elementBackgroundSelected = elementBackgroundSelected,
+        indentSize = indentSize,
+        elementBackgroundCornerSize = elementBackgroundCornerSize,
+        elementPadding = elementPadding,
+        elementContentPadding = elementContentPadding,
+        elementMinHeight = elementMinHeight,
+        chevronContentGap = chevronContentGap,
+        onElementClick = onElementClick,
+        onElementDoubleClick = onElementDoubleClick,
+        onSelectionChange = onSelectionChange,
+        modifier = modifier,
+        selectionMode = selectionMode,
+        treeState = treeState,
+        platformDoubleClickDelay = platformDoubleClickDelay,
+        keyActions = keyActions,
+        pointerEventScopedActions = pointerEventScopedActions,
+        chevronContent = chevronContent,
+        nodeContent = nodeContent,
+    )
+}
+
+/**
+ * Renders a lazy tree view based on the provided tree data structure.
+ *
+ * @param tree The tree structure to be rendered.
+ * @param elementBackgroundFocused The background color of a tree node when focused.
+ * @param elementBackgroundSelectedFocused The background color of a selected tree node when focused.
+ * @param elementBackgroundSelected The background color of a selected tree node.
+ * @param indentSize The size of the indent for each level of the tree node.
+ * @param elementBackgroundCornerSize The corner size of the background shape of a tree node.
+ * @param elementPadding The padding for the entire tree node.
+ * @param elementContentPadding The padding for the content within a tree node.
+ * @param elementMinHeight The minimum height of a tree node.
+ * @param chevronContentGap The gap between the chevron icon and the node content.
+ * @param onElementClick Callback function triggered when a tree node is clicked.
+ * @param onElementDoubleClick Callback function triggered when a tree node is double-clicked.
+ * @param onSelectionChange Callback function triggered when the selected tree nodes change.
+ * @param chevronContent The composable function responsible for rendering the chevron icon.
+ * @param modifier Optional modifier for styling or positioning the tree view.
+ * @param selectionMode The selection mode for the tree nodes.
+ * @param treeState The state object for managing the tree view state.
+ * @param platformDoubleClickDelay The duration between two consecutive clicks to be considered a double-click.
+ * @param keyActions The key binding actions for the tree view.
+ * @param pointerEventScopedActions The pointer event actions for the tree view.
+ * @param interactionSource The interaction source for the tree view.
+ * @param nodeContent The composable function responsible for rendering the content of a tree node.
+ * @composable
+ */
+@Suppress("UNCHECKED_CAST")
+@Composable
+public fun <T> BasicLazyTree(
+    tree: Tree<T>,
+    elementBackgroundFocused: Color,
+    elementBackgroundSelectedFocused: Color,
+    elementBackgroundSelected: Color,
+    indentSize: Dp,
+    elementBackgroundCornerSize: CornerSize,
+    elementPadding: PaddingValues,
+    elementContentPadding: PaddingValues,
+    elementMinHeight: Dp,
+    chevronContentGap: Dp,
+    onElementClick: (Tree.Element<T>) -> Unit,
+    onElementDoubleClick: (Tree.Element<T>) -> Unit,
+    onSelectionChange: (List<Tree.Element<T>>) -> Unit,
+    chevronContent: @Composable (nodeState: TreeElementState) -> Unit,
+    modifier: Modifier = Modifier,
+    selectionMode: SelectionMode = SelectionMode.Multiple,
+    treeState: TreeState = rememberTreeState(),
+    platformDoubleClickDelay: Duration = 500.milliseconds,
+    keyActions: KeyActions = DefaultTreeViewKeyActions(treeState),
+    pointerEventScopedActions: PointerEventActions = remember { DefaultTreeViewPointerEventAction(treeState) },
+    interactionSource: MutableInteractionSource = remember { MutableInteractionSource() },
+    nodeContent: @Composable (SelectableLazyItemScope.(Tree.Element<T>) -> Unit),
+) {
     val scope = rememberCoroutineScope()
 
     val flattenedTree =
@@ -108,7 +184,7 @@ public fun <T> BasicLazyTree(
         onSelectionChange(
             flattenedTree
                 .asSequence()
-                .filter { it.id in treeState.delegate.selectedKeys }
+                .filter { it.id in treeState.lazyListState.selectedKeys }
                 .map { element -> element as Tree.Element<T> }
                 .toList()
         )
@@ -117,12 +193,13 @@ public fun <T> BasicLazyTree(
     SelectableLazyColumn(
         modifier = modifier,
         selectionMode = selectionMode,
-        state = treeState.delegate,
+        state = treeState.lazyListState,
         onSelectedIndexesChange = {
             onSelectionChange(it.map { element -> flattenedTree[element] as Tree.Element<T> })
         },
         keyActions = keyActions,
         pointerEventActions = pointerEventScopedActions,
+        interactionSource = interactionSource,
     ) {
         itemsIndexed(items = flattenedTree, key = { _, item -> item.id }, contentType = { _, item -> item.data }) {
             index,
@@ -137,9 +214,11 @@ public fun <T> BasicLazyTree(
             val backgroundShape by remember {
                 derivedStateOf {
                     val hasRoundedTopCorners =
-                        flattenedTree.getOrNull(index - 1)?.id?.let { it !in treeState.delegate.selectedKeys } ?: true
+                        flattenedTree.getOrNull(index - 1)?.id?.let { it !in treeState.lazyListState.selectedKeys }
+                            ?: true
                     val hasRoundedBottomCorners =
-                        flattenedTree.getOrNull(index + 1)?.id?.let { it !in treeState.delegate.selectedKeys } ?: true
+                        flattenedTree.getOrNull(index + 1)?.id?.let { it !in treeState.lazyListState.selectedKeys }
+                            ?: true
                     val topCornerSize = computerCornerSize(hasRoundedTopCorners, elementBackgroundCornerSize)
                     val bottomCornerSize = computerCornerSize(hasRoundedBottomCorners, elementBackgroundCornerSize)
 
@@ -171,13 +250,13 @@ public fun <T> BasicLazyTree(
                                 contentDescription = if (element.id in treeState.openNodes) "expanded" else "collapsed"
                             }
 
-                            selected = element.id in treeState.delegate.selectedKeys
-                            focused = treeState.delegate.lastActiveItemIndex == index
+                            selected = element.id in treeState.lazyListState.selectedKeys
+                            focused = treeState.lazyListState.lastActiveItemIndex == index
 
                             stateDescription =
                                 if (
-                                    treeState.delegate.isKeyboardNavigating &&
-                                        treeState.delegate.lastActiveItemIndex == index
+                                    treeState.lazyListState.isKeyboardNavigating &&
+                                        treeState.lazyListState.lastActiveItemIndex == index
                                 ) {
                                     "current item"
                                 } else {
@@ -193,7 +272,7 @@ public fun <T> BasicLazyTree(
                                 onElementClick = onElementClick,
                                 onElementDoubleClick = onElementDoubleClick,
                             )
-                            treeState.delegate.lastActiveItemIndex = index
+                            treeState.lazyListState.lastActiveItemIndex = index
                         },
             ) {
                 if (element is Tree.Element.Node) {

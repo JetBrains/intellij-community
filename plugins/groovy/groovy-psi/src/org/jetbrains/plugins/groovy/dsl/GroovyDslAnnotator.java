@@ -78,7 +78,7 @@ public final class GroovyDslAnnotator implements Annotator {
     public void invoke(@NotNull Project project, Editor editor, PsiFile psiFile) throws IncorrectOperationException {
       FileDocumentManager.getInstance().saveAllDocuments();
       GroovyDslFileIndex.activate(myVfile);
-      DaemonCodeAnalyzer.getInstance(project).restart();
+      DaemonCodeAnalyzer.getInstance(project).restart(this);
     }
 
     @Override

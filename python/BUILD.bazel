@@ -1,15 +1,15 @@
 ### auto-generated section `build intellij.pycharm.community` start
-load("@rules_jvm//:jvm.bzl", "jvm_library", "jvm_resources")
+load("@rules_jvm//:jvm.bzl", "jvm_library", "resourcegroup")
 
-jvm_resources(
+resourcegroup(
   name = "pycharm-community_resources",
-  files = glob(["ide-common/resources/**/*"]),
+  srcs = glob(["ide-common/resources/**/*"]),
   strip_prefix = "ide-common/resources"
 )
 
-jvm_resources(
+resourcegroup(
   name = "pycharm-community_resources_1",
-  files = glob(["resources/**/*"]),
+  srcs = glob(["resources/**/*"]),
   strip_prefix = "resources"
 )
 
@@ -18,25 +18,25 @@ jvm_library(
   module_name = "intellij.pycharm.community",
   visibility = ["//visibility:public"],
   srcs = glob(["ide-common/src/**/*.kt", "ide-common/src/**/*.java", "ide-common/src/**/*.form"], allow_empty = True),
+  resources = [
+    ":pycharm-community_resources",
+    ":pycharm-community_resources_1",
+  ],
   deps = [
     "//platform/platform-impl:ide-impl",
     "//platform/lang-api:lang",
     "//platform/lang-impl",
-    "@lib//:guava",
+    "//libraries/guava",
     "//platform/core-ui",
     "//platform/platform-util-io:ide-util-io",
-  ],
-  runtime_deps = [
-    ":pycharm-community_resources",
-    ":pycharm-community_resources_1",
   ]
 )
 ### auto-generated section `build intellij.pycharm.community` end
 
 ### auto-generated section `build intellij.pycharm.community.customization` start
-jvm_resources(
+resourcegroup(
   name = "pycharm-community-customization_resources",
-  files = glob(["ide/resources/**/*"]),
+  srcs = glob(["ide/resources/**/*"]),
   strip_prefix = "ide/resources"
 )
 
@@ -44,8 +44,8 @@ jvm_library(
   name = "pycharm-community-customization",
   visibility = ["//visibility:public"],
   srcs = glob([], allow_empty = True),
+  resources = [":pycharm-community-customization_resources"],
   runtime_deps = [
-    ":pycharm-community-customization_resources",
     "//python/ide/impl",
     "@lib//:tips-pycharm-community",
     "//python/ide/impl/intellij.pycharm.community.ide.impl.promotion:pycharm-community-ide-impl-promotion",
@@ -188,7 +188,7 @@ jvm_library(
     "//platform/analysis-api:analysis",
     "//platform/util",
     "//platform/projectModel-api:projectModel",
-    "@lib//:guava",
+    "//libraries/guava",
     "@lib//:stream_ex",
     "//platform/analysis-impl",
     "//platform/code-style-api:codeStyle",
@@ -210,15 +210,21 @@ jps_test(
 ### auto-generated section `test intellij.python.commonTests` end
 
 ### auto-generated section `build intellij.python.community.impl` start
-jvm_resources(
+resourcegroup(
   name = "python-community-impl_resources",
-  files = glob(["pluginResources/**/*"]),
+  srcs = glob(["pluginResources/**/*"]),
   strip_prefix = "pluginResources"
 )
 
-jvm_resources(
+resourcegroup(
+  name = "python-community-impl_resources_1",
+  srcs = glob(["compatibilityResources/**/*"]),
+  strip_prefix = "compatibilityResources"
+)
+
+resourcegroup(
   name = "python-community-impl_test_resources",
-  files = glob(["testData/**/*"]),
+  srcs = glob(["testData/**/*"]),
   strip_prefix = "testData"
 )
 
@@ -227,6 +233,10 @@ jvm_library(
   module_name = "intellij.python.community.impl",
   visibility = ["//visibility:public"],
   srcs = glob(["src/**/*.kt", "src/**/*.java", "src/**/*.form", "gen/**/*.kt", "gen/**/*.java"], allow_empty = True),
+  resources = [
+    ":python-community-impl_resources",
+    ":python-community-impl_resources_1",
+  ],
   deps = [
     "//platform/analysis-api:analysis",
     "//platform/code-style-api:codeStyle",
@@ -249,11 +259,10 @@ jvm_library(
     "//platform/ide-core-impl",
     "//platform/platform-impl:ide-impl",
     "//platform/lang-impl",
-    "@lib//:guava",
+    "//libraries/guava",
     "//platform/indexing-impl",
     "//python:python-pydev",
     "//platform/observable",
-    "@lib//:xml_r_p_c",
     "//platform/xdebugger-api:debugger",
     "//RegExpSupport:regexp",
     "//platform/editor-ui-ex:editor-ex",
@@ -265,10 +274,10 @@ jvm_library(
     "//platform/xdebugger-impl:debugger-impl",
     "//platform/platform-impl/internal",
     "//xml/xml-psi-impl:psi-impl",
-    "@lib//:kotlin-reflect",
-    "@lib//:gson",
+    "//libraries/kotlin-reflect",
+    "//libraries/gson",
     "//platform/vcs-api:vcs",
-    "@lib//:x_stream",
+    "//libraries/xstream",
     "@lib//:libthrift",
     "@lib//:slf4j-api",
     "@lib//:slf4j-jdk14",
@@ -286,24 +295,23 @@ jvm_library(
     "@lib//:netty-buffer",
     "//platform/core-ui",
     "//platform/code-style-impl:codeStyle-impl",
-    "@lib//:fastutil-min",
+    "//libraries/fastutil",
     "@lib//:kotlinx-coroutines-core",
     "@lib//:jcef",
     "@lib//:jna",
     "//plugins/toml",
     "//plugins/toml/core",
-    "@lib//:tuweni-toml",
     "@lib//:jsr305",
     "@lib//:jetbrains-annotations",
     "@lib//:kotlin-stdlib",
-    "@lib//:caffeine",
+    "//libraries/caffeine",
     "//platform/util/jdom",
     "//platform/extensions",
-    "@lib//:kotlinx-serialization-json",
-    "@lib//:kotlinx-serialization-core",
+    "//libraries/kotlinx/serialization/json",
+    "//libraries/kotlinx/serialization/core",
     "@lib//:jackson-dataformat-yaml",
-    "@lib//:jackson",
-    "@lib//:jackson-databind",
+    "//libraries/jackson/jackson",
+    "//libraries/jackson/databind",
     "//python/python-core-impl:community-core-impl",
     "//platform/core-api:core",
     "//python/python-psi-api:psi",
@@ -321,7 +329,7 @@ jvm_library(
     "@lib//:kotlinx-datetime-jvm",
     "//platform/platform-impl/remote",
     "//platform/platform-impl/ui",
-    "@lib//:jackson-module-kotlin",
+    "//libraries/jackson/module-kotlin:libraries-jackson-module-kotlin",
     "//python/poetry",
     "//python/installer",
     "//platform/eel",
@@ -330,7 +338,7 @@ jvm_library(
     "//python/python-exec-service:community-execService",
     "//python/services/system-python",
     "//python/services/internal-impl:python-community-services-internal-impl",
-    "@lib//:io-github-z4kn4fein-semver-jvm",
+    "@lib//:io-github-z4kn4fein-semver-jvm-provided",
     "//python/python-pyproject:pyproject",
     "//python/python-hatch:hatch",
     "//platform/external-system-impl:externalSystem-impl",
@@ -352,10 +360,17 @@ jvm_library(
     "//python/python-psi-impl:psi-impl",
   ],
   runtime_deps = [
-    ":python-community-impl_resources",
     "//python:python-helpers",
     "//commandInterface",
   ]
+)
+
+jvm_library(
+  name = "python-community-impl_test_lib",
+  module_name = "intellij.python.community.impl",
+  visibility = ["//visibility:public"],
+  srcs = glob([], allow_empty = True),
+  resources = [":python-community-impl_test_resources"]
 )
 ### auto-generated section `build intellij.python.community.impl` end
 
@@ -409,9 +424,9 @@ jvm_library(
 ### auto-generated section `build intellij.python.community.plugin.modules` end
 
 ### auto-generated section `build intellij.python.community.tests` start
-jvm_resources(
+resourcegroup(
   name = "python-community-tests_test_resources",
-  files = glob(["testResources/**/*"]),
+  srcs = glob(["testResources/**/*"]),
   strip_prefix = "testResources"
 )
 
@@ -426,6 +441,7 @@ jvm_library(
   module_name = "intellij.python.community.tests",
   visibility = ["//visibility:public"],
   srcs = glob(["testSrc/**/*.kt", "testSrc/**/*.java", "testSrc/**/*.form"], allow_empty = True),
+  resources = [":python-community-tests_test_resources"],
   deps = [
     "//platform/analysis-api:analysis",
     "//platform/code-style-api:codeStyle",
@@ -447,7 +463,7 @@ jvm_library(
     "//python/python-psi-api:psi",
     "//python:python-community-impl",
     "//platform/xdebugger-api:debugger",
-    "@lib//:guava",
+    "//libraries/guava",
     "//spellchecker",
     "//spellchecker:spellchecker_test_lib",
     "//platform/editor-ui-ex:editor-ex",
@@ -466,7 +482,6 @@ jvm_library(
     "@lib//:objenesis",
     "//platform/lang-impl:lang-tests_test_lib",
     "//platform/platform-impl/internal",
-    "@lib//:xml_r_p_c",
     "//platform/testFramework/extensions:testExtensions",
     "@lib//:hamcrest",
     "//platform/platform-tests:tests_test_lib",
@@ -491,7 +506,7 @@ jvm_library(
     "//python/python-core-impl:community-core-impl",
     "//python/python-sdk:sdk",
     "//python/python-sdk:sdk_test_lib",
-    "@lib//:gson",
+    "//libraries/gson",
     "//tools/intellij.tools.ide.metrics.benchmark:ide-metrics-benchmark",
     "//tools/intellij.tools.ide.metrics.benchmark:ide-metrics-benchmark_test_lib",
     "//commandInterface",
@@ -502,7 +517,7 @@ jvm_library(
     "//platform/platform-impl/remote",
     "//platform/testFramework/junit5",
     "//platform/testFramework/junit5:junit5_test_lib",
-    "@lib//:kotlin-reflect",
+    "//libraries/kotlin-reflect",
     "//platform/todo",
     "//python/setup-test-environment:community-testFramework-testEnv",
     "//python/setup-test-environment/conda",
@@ -519,7 +534,6 @@ jvm_library(
     "//python/python-syntax:syntax",
   ],
   runtime_deps = [
-    ":python-community-tests_test_resources",
     "//python/pluginCore/impl",
     "//python:pycharm-community",
     "//xml/langInjection",
@@ -542,51 +556,42 @@ jps_test(
 ### auto-generated section `test intellij.python.community.tests` end
 
 ### auto-generated section `build intellij.python.helpers` start
-jvm_resources(
+resourcegroup(
   name = "python-helpers_resources",
-  files = glob(["helpers/**/*"]),
+  srcs = glob(["helpers/**/*"]),
   strip_prefix = "helpers"
-)
-
-jvm_resources(
-  name = "python-helpers_resources_1",
-  files = glob(["helpers/third_party/thriftpy/**/*"]),
-  strip_prefix = "helpers/third_party/thriftpy"
 )
 
 jvm_library(
   name = "python-helpers",
   visibility = ["//visibility:public"],
   srcs = glob([], allow_empty = True),
-  runtime_deps = [
-    ":python-helpers_resources",
-    ":python-helpers_resources_1",
-  ]
+  resources = [":python-helpers_resources"]
 )
 ### auto-generated section `build intellij.python.helpers` end
 
 ### auto-generated section `build intellij.python.helpers.tests` start
-jvm_resources(
+resourcegroup(
   name = "python-helpers-tests_test_resources",
-  files = glob(["helpers/testResources/**/*"]),
-  strip_prefix = "helpers/testResources"
+  srcs = glob(["helpersTestResources/**/*"]),
+  strip_prefix = "helpersTestResources"
 )
 
 jvm_library(
   name = "python-helpers-tests_test_lib",
   module_name = "intellij.python.helpers.tests",
   visibility = ["//visibility:public"],
-  srcs = glob(["helpers/tests/**/*.kt", "helpers/tests/**/*.java", "helpers/tests/**/*.form"], allow_empty = True, exclude = [
-    "helpers/tests/.gradle/**/*",
-    "helpers/tests/.tox/**/*",
-    "helpers/tests/build/**/*",
+  srcs = glob(["helpersTests/**/*.kt", "helpersTests/**/*.java", "helpersTests/**/*.form"], allow_empty = True, exclude = [
+    "helpersTests/.gradle/**/*",
+    "helpersTests/.tox/**/*",
+    "helpersTests/build/**/*",
   ]),
+  resources = [":python-helpers-tests_test_resources"],
   deps = [
     "//python:python-helpers",
     "@lib//ant/lib:ant-antlr",
     "@lib//:kotlin-stdlib",
-  ],
-  runtime_deps = [":python-helpers-tests_test_resources"]
+  ]
 )
 ### auto-generated section `build intellij.python.helpers.tests` end
 
@@ -600,9 +605,9 @@ jps_test(
 ### auto-generated section `test intellij.python.helpers.tests` end
 
 ### auto-generated section `build intellij.python.pydev` start
-jvm_resources(
+resourcegroup(
   name = "python-pydev_resources",
-  files = glob(["pydevSrc/resources/**/*"]),
+  srcs = glob(["pydevSrc/resources/**/*"]),
   strip_prefix = "pydevSrc/resources"
 )
 
@@ -611,15 +616,16 @@ jvm_library(
   module_name = "intellij.python.pydev",
   visibility = ["//visibility:public"],
   srcs = glob(["pydevSrc/src/**/*.kt", "pydevSrc/src/**/*.java", "pydevSrc/src/**/*.form"], allow_empty = True),
+  resources = [":python-pydev_resources"],
   deps = [
     "//platform/core-api:core",
     "//platform/xdebugger-api:debugger",
-    "@lib//:xml_r_p_c",
-    "@lib//:guava",
+    "//libraries/xml-rpc",
+    "//libraries/guava",
     "//platform/editor-ui-api:editor-ui",
     "//platform/util",
     "@lib//:kotlin-stdlib",
-    "@lib//:x_stream",
+    "//libraries/xstream",
     "//platform/util:util-ui",
     "//python/python-psi-api:psi",
     "//platform/util/concurrency",
@@ -629,7 +635,6 @@ jvm_library(
     "//platform/core-ui",
     "//platform/ide-core-impl",
     "//platform/core-impl",
-  ],
-  runtime_deps = [":python-pydev_resources"]
+  ]
 )
 ### auto-generated section `build intellij.python.pydev` end

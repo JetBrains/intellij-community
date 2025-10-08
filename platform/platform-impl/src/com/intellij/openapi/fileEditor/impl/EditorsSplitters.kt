@@ -80,7 +80,6 @@ import com.intellij.util.xmlb.jsonDomToXml
 import kotlinx.coroutines.*
 import kotlinx.coroutines.flow.*
 import org.jdom.Element
-import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.annotations.ApiStatus.Internal
 import org.jetbrains.annotations.NonNls
 import java.awt.*
@@ -396,10 +395,6 @@ open class EditorsSplitters internal constructor(
     }
     _currentWindowFlow.value = window
   }
-
-  @ApiStatus.ScheduledForRemoval
-  @Deprecated("Use openFilesAsync(Boolean) instead", ReplaceWith("openFilesAsync(true)"))
-  fun openFilesAsync(): Job = openFilesAsync(requestFocus = true)
 
   fun openFilesAsync(requestFocus: Boolean): Job {
     return coroutineScope.launch {

@@ -97,7 +97,7 @@ public class ClassWrapper {
       catch (LimitContainer.LimitExceededDecompilerException e) {
         String message =
           "Method " + mt.getName() + " " + mt.getDescriptor() + " in class " + classStruct.qualifiedName + " couldn't be decompiled.";
-        DecompilerContext.getLogger().writeMessage(message, IFernflowerLogger.Severity.WARN, e);
+        DecompilerContext.getLogger().writeMessage(message, IFernflowerLogger.Severity.WARN);
         isError = true;
         customErrorMessage = e.getMessage();
       }

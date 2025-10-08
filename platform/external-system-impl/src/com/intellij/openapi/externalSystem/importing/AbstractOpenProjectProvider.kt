@@ -3,7 +3,6 @@ package com.intellij.openapi.externalSystem.importing
 
 import com.intellij.ide.impl.OpenProjectTask
 import com.intellij.ide.impl.ProjectUtil
-import com.intellij.openapi.application.EDT
 import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.externalSystem.autolink.ExternalSystemUnlinkedProjectAware
 import com.intellij.openapi.externalSystem.autolink.UnlinkedProjectNotificationAware
@@ -34,14 +33,13 @@ abstract class AbstractOpenProjectProvider {
     return if (file.isDirectory) file.children.any(::isProjectFile) else isProjectFile(file)
   }
 
-  protected open fun getProjectDirectory(file: VirtualFile): VirtualFile {
-    return if (file.isDirectory) file else file.parent
+  @ApiStatus.Internal
+  protected suspend fun getProjectDirectory(file: VirtualFile): VirtualFile = withContext(Dispatchers.IO) {
+    if (file.isDirectory) file else file.parent
   }
 
-  @Deprecated("use async method instead", ReplaceWith("linkToExistingProjectAsync"))
-  open fun linkToExistingProject(projectFile: VirtualFile, project: Project) {
-    throw UnsupportedOperationException()
-  }
+  @Deprecated("use async method instead", ReplaceWith("linkToExistingProjectAsync"), level = DeprecationLevel.ERROR)
+  open fun linkToExistingProject(projectFile: VirtualFile, project: Project): Unit = Unit
 
   suspend fun linkToExistingProjectAsync(projectFile: VirtualFile, project: Project) {
     unlinkOtherLinkedProjects(project, projectFile)
@@ -54,18 +52,10 @@ abstract class AbstractOpenProjectProvider {
     ExternalSystemUnlinkedProjectAware.unlinkOtherLinkedProjects(project, externalProjectPath, systemId)
   }
 
-  open suspend fun unlinkProject(project: Project, externalProjectPath: String) {
-    throw UnsupportedOperationException()
-  }
 
-  protected open suspend fun linkProject(projectFile: VirtualFile, project: Project, ) {
-    withContext(Dispatchers.EDT) {
-      @Suppress("DEPRECATION")
-      linkToExistingProject(projectFile, project)
-    }
-  }
+  protected abstract suspend fun linkProject(projectFile: VirtualFile, project: Project)
 
-  open suspend fun openProject(projectFile: VirtualFile, projectToClose: Project?, forceOpenInNewFrame: Boolean): Project? {
+  suspend fun openProject(projectFile: VirtualFile, projectToClose: Project?, forceOpenInNewFrame: Boolean): Project? {
     LOG.debug("Open ${systemId.readableName} project from $projectFile")
 
     val projectDirectory = getProjectDirectory(projectFile)
@@ -99,10 +89,9 @@ abstract class AbstractOpenProjectProvider {
     return ProjectManagerEx.getInstanceEx().openProjectAsync(nioPath, options)
   }
 
-  @Deprecated("use async method instead", ReplaceWith("linkToExistingProjectAsync"))
+  @Deprecated("use async method instead", ReplaceWith("linkToExistingProjectAsync"), level = DeprecationLevel.ERROR)
   fun linkToExistingProject(projectFilePath: String, project: Project) {
-    @Suppress("DEPRECATION")
-    linkToExistingProject(getProjectFile(projectFilePath), project)
+    throw NotImplementedError("Do not use")
   }
 
   suspend fun linkToExistingProjectAsync(projectFilePath: String, project: Project) {

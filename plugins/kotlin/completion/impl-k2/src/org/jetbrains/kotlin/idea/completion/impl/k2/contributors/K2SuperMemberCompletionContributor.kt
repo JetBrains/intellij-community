@@ -6,6 +6,7 @@ import com.intellij.psi.util.parentsOfType
 import org.jetbrains.kotlin.analysis.api.KaSession
 import org.jetbrains.kotlin.analysis.api.components.KaScopeKind
 import org.jetbrains.kotlin.analysis.api.components.allOverriddenSymbols
+import org.jetbrains.kotlin.analysis.api.components.expressionType
 import org.jetbrains.kotlin.analysis.api.lifetime.KaLifetimeOwner
 import org.jetbrains.kotlin.analysis.api.lifetime.KaLifetimeToken
 import org.jetbrains.kotlin.analysis.api.lifetime.withValidityAssertion
@@ -55,45 +56,43 @@ internal class K2SuperMemberCompletionContributor : K2SimpleCompletionContributo
             get() = withValidityAssertion { _signature }
     }
 
-    override fun KaSession.complete(context: K2CompletionSectionContext<KotlinSuperReceiverNameReferencePositionContext>) {
+    context(_: KaSession, context: K2CompletionSectionContext<KotlinSuperReceiverNameReferencePositionContext>)
+    override fun complete() {
         val positionContext = context.positionContext
         val superReceiver = positionContext.explicitReceiver
         val superType = superReceiver.expressionType ?: return
 
         val (nonExtensionMembers: Iterable<CallableInfo>, namesNeedDisambiguation: Set<Name>) =
             if (superType !is KaIntersectionType) {
-                getNonExtensionsMemberSymbols(context, superType).asIterable() to emptySet()
+                getNonExtensionsMemberSymbols(superType).asIterable() to emptySet()
             } else {
-                getSymbolsAndNamesNeedDisambiguation(context, superType.conjuncts)
+                getSymbolsAndNamesNeedDisambiguation(superType.conjuncts)
             }
 
         nonExtensionMembers.flatMap {
             collectCallToSuperMember(
                 callableInfo = it,
-                context = context,
                 namesNeedDisambiguation = namesNeedDisambiguation,
                 importStrategyDetector = context.importStrategyDetector,
             )
         }.forEach { context.addElement(it) }
 
         collectDelegateCallToSuperMember(
-            context = context,
             superReceiver = superReceiver,
             nonExtensionMembers = nonExtensionMembers,
             namesNeedDisambiguation = namesNeedDisambiguation,
         ).forEach { context.addElement(it) }
     }
 
-    context(_: KaSession)
+    context(_: KaSession, context: K2CompletionSectionContext<KotlinSuperReceiverNameReferencePositionContext>)
     private fun getSymbolsAndNamesNeedDisambiguation(
-        context: K2CompletionSectionContext<KotlinSuperReceiverNameReferencePositionContext>,
         superTypes: List<KaType>,
     ): Pair<List<CallableInfo>, Set<Name>> {
         val allSymbols = mutableListOf<CallableInfo>()
         val symbolsInAny = mutableSetOf<KaCallableSymbol>()
         val symbolCountsByName = mutableMapOf<Name, Int>()
         for (superType in superTypes) {
-            for (callableInfo in getNonExtensionsMemberSymbols(context, superType)) {
+            for (callableInfo in getNonExtensionsMemberSymbols(superType)) {
                 val symbol = callableInfo.signature.symbol
 
                 // Abstract symbol does not participate completion.
@@ -120,9 +119,8 @@ internal class K2SuperMemberCompletionContributor : K2SimpleCompletionContributo
         return Pair(allSymbols, nameNeedDisambiguation)
     }
 
-    context(_: KaSession)
+    context(_: KaSession, context: K2CompletionSectionContext<KotlinSuperReceiverNameReferencePositionContext>)
     private fun getNonExtensionsMemberSymbols(
-        context: K2CompletionSectionContext<KotlinSuperReceiverNameReferencePositionContext>,
         receiverType: KaType,
     ): Sequence<CallableInfo> = collectNonExtensionsForType(
         parameters = context.parameters,
@@ -137,17 +135,14 @@ internal class K2SuperMemberCompletionContributor : K2SimpleCompletionContributo
         )
     }
 
-    context(_: KaSession)
+    context(_: KaSession, context: K2CompletionSectionContext<KotlinSuperReceiverNameReferencePositionContext>)
     private fun collectCallToSuperMember(
-        context: K2CompletionSectionContext<KotlinSuperReceiverNameReferencePositionContext>,
         callableInfo: CallableInfo,
         namesNeedDisambiguation: Set<Name>,
         importStrategyDetector: ImportStrategyDetector,
     ): Sequence<LookupElement> {
         val signature = callableInfo.signature
         return createCallableLookupElements(
-            context = context.weighingContext,
-            parameters = context.parameters,
             signature = signature,
             options = CallableInsertionOptions(
                 importStrategyDetector.detectImportStrategyForCallableSymbol(signature.symbol),
@@ -169,9 +164,8 @@ internal class K2SuperMemberCompletionContributor : K2SimpleCompletionContributo
         else -> CallableInsertionStrategy.AsIdentifier
     }
 
-    context(_: KaSession)
+    context(_: KaSession, context: K2CompletionSectionContext<KotlinSuperReceiverNameReferencePositionContext>)
     private fun collectDelegateCallToSuperMember(
-        context: K2CompletionSectionContext<KotlinSuperReceiverNameReferencePositionContext>,
         superReceiver: KtSuperExpression,
         nonExtensionMembers: Iterable<CallableInfo>,
         namesNeedDisambiguation: Set<Name>
@@ -224,8 +218,6 @@ internal class K2SuperMemberCompletionContributor : K2SimpleCompletionContributo
                 if (args.size < matchedContainingFunction.valueParameters.size) continue
 
                 val elements = createCallableLookupElements(
-                    context = context.weighingContext,
-                    parameters = context.parameters,
                     signature = signature,
                     options = CallableInsertionOptions(
                         context.importStrategyDetector.detectImportStrategyForCallableSymbol(callableInfo.signature.symbol),

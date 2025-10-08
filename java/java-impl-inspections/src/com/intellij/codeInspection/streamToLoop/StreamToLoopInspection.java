@@ -211,7 +211,7 @@ public final class StreamToLoopInspection extends AbstractBaseJavaLocalInspectio
         Operation combined = op.combineWithNext(next);
         if (combined != null) {
           op = combined;
-          operations.remove(operations.size() - 1);
+          operations.removeLast();
         }
       }
       OperationRecord or = new OperationRecord();
@@ -238,7 +238,7 @@ public final class StreamToLoopInspection extends AbstractBaseJavaLocalInspectio
   @Contract("null -> null")
   static @Nullable TerminalOperation getTerminal(List<? extends OperationRecord> operations) {
     if (operations == null || operations.isEmpty()) return null;
-    OperationRecord record = operations.get(operations.size()-1);
+    OperationRecord record = operations.getLast();
     if(record.myOperation instanceof TerminalOperation) {
       return (TerminalOperation)record.myOperation;
     }

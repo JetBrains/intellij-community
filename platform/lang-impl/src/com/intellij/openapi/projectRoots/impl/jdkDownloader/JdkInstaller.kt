@@ -23,6 +23,7 @@ import com.intellij.openapi.projectRoots.JdkUtil
 import com.intellij.openapi.projectRoots.impl.jdkDownloader.JdkInstallerEel.unpackJdkOnEel
 import com.intellij.openapi.projectRoots.impl.jdkDownloader.JdkInstallerWSL.unpackJdkOnWsl
 import com.intellij.openapi.util.io.FileUtil
+import com.intellij.openapi.util.io.OSAgnosticPathUtil
 import com.intellij.openapi.util.registry.Registry
 import com.intellij.platform.eel.*
 import com.intellij.platform.eel.path.EelPath
@@ -259,7 +260,7 @@ abstract class JdkInstallerBase {
       return null to ProjectBundle.message("dialog.message.error.target.path.empty")
     }
 
-    val targetDir = runCatching { Path.of(FileUtil.expandUserHome(selectedPath)) }.getOrElse { t ->
+    val targetDir = runCatching { Path.of(OSAgnosticPathUtil.expandUserHome(selectedPath)) }.getOrElse { t ->
       LOG.warn("Failed to resolve user path: $selectedPath. ${t.message}", t)
       return null to ProjectBundle.message("dialog.message.error.resolving.path")
     }

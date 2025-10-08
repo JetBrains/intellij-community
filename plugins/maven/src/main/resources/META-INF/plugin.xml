@@ -70,8 +70,9 @@
   <depends optional="true" config-file="groovy-support.xml">org.intellij.groovy</depends>
   <depends optional="true" config-file="errorProne-compiler-support.xml">Error-prone plugin</depends>
   <depends optional="true" config-file="maven-performance-plugin-support.xml">com.jetbrains.performancePlugin</depends>
+  <depends optional="true" config-file="grazie-support.xml">tanvd.grazi</depends>
 
-  <content>
+  <content namespace="jetbrains">
     <module name="intellij.maven.profiler"/>
   </content>
 

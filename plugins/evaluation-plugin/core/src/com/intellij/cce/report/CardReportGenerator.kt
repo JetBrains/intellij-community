@@ -433,6 +433,7 @@ private data class PropertyValue(
           embedString((value as CodeCommentRange).text),
           "\"${(value as CodeCommentRange).negativeExample}\"",
           embedString((value as CodeCommentRange).category.toString()),
+          embedString((value as CodeCommentRange).type.toString()),
         )
         DataRenderer.ColoredInsights -> listOf(embedString((value as ColoredInsightsData).text))
       }

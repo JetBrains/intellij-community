@@ -8,8 +8,6 @@ import com.intellij.openapi.diagnostic.Logger
 import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.project.Project
 import com.intellij.platform.util.coroutines.childScope
-import com.intellij.terminal.session.TerminalCloseEvent
-import com.intellij.terminal.session.TerminalStateChangedEvent
 import com.intellij.util.AwaitCancellationAndInvoke
 import com.intellij.util.awaitCancellationAndInvoke
 import kotlinx.coroutines.CoroutineScope
@@ -19,6 +17,8 @@ import kotlinx.coroutines.sync.withLock
 import kotlinx.coroutines.withContext
 import org.jetbrains.plugins.terminal.ShellStartupOptions
 import org.jetbrains.plugins.terminal.block.reworked.session.TerminalSessionTab
+import org.jetbrains.plugins.terminal.session.TerminalCloseEvent
+import org.jetbrains.plugins.terminal.session.TerminalStateChangedEvent
 import java.util.concurrent.atomic.AtomicInteger
 
 @OptIn(AwaitCancellationAndInvoke::class)

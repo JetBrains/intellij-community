@@ -5,9 +5,12 @@ import com.intellij.util.ArrayUtilRt;
 import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.Contract;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import java.io.Serializable;
 import java.util.*;
+import java.util.function.Predicate;
+import java.util.function.UnaryOperator;
 
 /**
  * Stripped-down version of {@link com.intellij.util.containers.ContainerUtil}.
@@ -111,6 +114,51 @@ public final class ContainerUtilRt {
     @Override
     public int hashCode() {
       return 1;
+    }
+
+    @Override
+    public void clear() {
+      throw new UnsupportedOperationException();
+    }
+
+    @Override
+    public boolean remove(Object o) {
+      throw new UnsupportedOperationException();
+    }
+
+    @Override
+    public boolean removeAll(@NotNull Collection<?> c) {
+      throw new UnsupportedOperationException();
+    }
+
+    @Override
+    public boolean removeIf(@NotNull Predicate<? super T> filter) {
+      throw new UnsupportedOperationException();
+    }
+
+    @Override
+    public boolean retainAll(@NotNull Collection<?> c) {
+      throw new UnsupportedOperationException();
+    }
+
+    @Override
+    public boolean addAll(int index, Collection<? extends T> c) {
+      throw new UnsupportedOperationException();
+    }
+
+    @Override
+    public boolean addAll(@NotNull Collection<? extends T> c) {
+      throw new UnsupportedOperationException();
+    }
+
+    @Override
+    public void sort(@Nullable Comparator<? super T> c) {
+      throw new UnsupportedOperationException();
+    }
+
+    @Override
+    public void replaceAll(@NotNull UnaryOperator<T> operator) {
+      throw new UnsupportedOperationException();
     }
   }
 

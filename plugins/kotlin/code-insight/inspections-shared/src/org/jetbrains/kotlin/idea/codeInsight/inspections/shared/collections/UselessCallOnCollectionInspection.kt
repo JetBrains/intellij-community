@@ -122,15 +122,15 @@ class UselessCallOnCollectionInspection : AbstractUselessCallInspection() {
                 RemoveUselessCallFix()
             }
             val descriptor = holder.manager.createProblemDescriptor(
-                expression,
-                TextRange(
+              expression,
+              TextRange(
                     expression.operationTokenNode.startOffset - expression.startOffset,
                     calleeExpression.endOffset - expression.startOffset
                 ),
-                KotlinBundle.message("useless.call.on.collection.type"),
-                ProblemHighlightType.LIKE_UNUSED_SYMBOL,
-                isOnTheFly,
-                fix
+              KotlinBundle.message("redundant.call.on.collection.type"),
+              ProblemHighlightType.LIKE_UNUSED_SYMBOL,
+              isOnTheFly,
+              fix
             )
             holder.registerProblem(descriptor)
         }

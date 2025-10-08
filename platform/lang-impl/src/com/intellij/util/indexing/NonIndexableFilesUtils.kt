@@ -109,6 +109,7 @@ interface FilesDeque {
      * where we need to process non-indexable files in a non-blocking read action, such as find-in-files
      */
     @ApiStatus.Internal
+    @JvmStatic
     @RequiresReadLock
     @RequiresBackgroundThread
     fun nonIndexableDequeue(project: Project): FilesDeque {

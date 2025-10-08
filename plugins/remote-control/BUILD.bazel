@@ -1,9 +1,9 @@
 ### auto-generated section `build intellij.remoteControl` start
-load("@rules_jvm//:jvm.bzl", "jvm_library", "jvm_resources")
+load("@rules_jvm//:jvm.bzl", "jvm_library", "resourcegroup")
 
-jvm_resources(
+resourcegroup(
   name = "remote-control_resources",
-  files = glob(["resources/**/*"]),
+  srcs = glob(["resources/**/*"]),
   strip_prefix = "resources"
 )
 
@@ -12,6 +12,7 @@ jvm_library(
   module_name = "intellij.remoteControl",
   visibility = ["//visibility:public"],
   srcs = glob(["src/**/*.kt", "src/**/*.java", "src/**/*.form"], allow_empty = True),
+  resources = [":remote-control_resources"],
   deps = [
     "@lib//:kotlin-stdlib",
     "//platform/built-in-server-api:builtInServer",
@@ -22,11 +23,10 @@ jvm_library(
     "//platform/platform-impl:ide-impl",
     "@lib//:netty-buffer",
     "@lib//:netty-codec-http",
-    "@lib//:gson",
+    "//libraries/gson",
     "//platform/analysis-api:analysis",
     "//platform/projectModel-api:projectModel",
-  ],
-  runtime_deps = [":remote-control_resources"]
+  ]
 )
 
 jvm_library(
@@ -44,7 +44,7 @@ jvm_library(
     "//platform/platform-impl:ide-impl",
     "@lib//:netty-buffer",
     "@lib//:netty-codec-http",
-    "@lib//:gson",
+    "//libraries/gson",
     "//platform/analysis-api:analysis",
     "//platform/projectModel-api:projectModel",
     "//platform/testFramework",
@@ -56,8 +56,7 @@ jvm_library(
     "@lib//:assert_j",
     "//platform/testFramework/junit5",
     "//platform/testFramework/junit5:junit5_test_lib",
-  ],
-  runtime_deps = [":remote-control_resources"]
+  ]
 )
 ### auto-generated section `build intellij.remoteControl` end
 

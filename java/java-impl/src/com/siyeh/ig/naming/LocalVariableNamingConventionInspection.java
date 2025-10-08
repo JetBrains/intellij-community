@@ -64,7 +64,7 @@ public final class LocalVariableNamingConventionInspection extends ConventionIns
   }
 
   @Override
-  public BaseInspectionVisitor buildVisitor() {
+  public @NotNull BaseInspectionVisitor buildVisitor() {
     return new NamingConventionsVisitor();
   }
 

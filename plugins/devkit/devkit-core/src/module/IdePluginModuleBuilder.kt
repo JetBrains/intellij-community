@@ -6,10 +6,8 @@ import com.intellij.ide.fileTemplates.FileTemplateManager
 import com.intellij.ide.projectView.actions.MarkRootsManager
 import com.intellij.ide.starters.local.*
 import com.intellij.ide.starters.local.wizard.StarterInitialStep
+import com.intellij.ide.starters.local.wizard.StarterLibrariesStep
 import com.intellij.ide.starters.shared.*
-import com.intellij.ide.util.projectWizard.ModuleWizardStep
-import com.intellij.ide.util.projectWizard.ProjectWizardUtil
-import com.intellij.ide.util.projectWizard.WizardContext
 import com.intellij.openapi.module.Module
 import com.intellij.openapi.module.ModuleType
 import com.intellij.openapi.observable.properties.GraphProperty
@@ -17,8 +15,6 @@ import com.intellij.openapi.project.ProjectManager
 import com.intellij.openapi.projectRoots.Sdk
 import com.intellij.openapi.projectRoots.SdkTypeId
 import com.intellij.openapi.roots.ModifiableRootModel
-import com.intellij.openapi.roots.ui.configuration.ModulesProvider
-import com.intellij.openapi.util.Condition
 import com.intellij.openapi.util.Key
 import com.intellij.openapi.util.text.Strings
 import com.intellij.openapi.vfs.LocalFileSystem
@@ -56,15 +52,38 @@ internal class IdePluginModuleBuilder : StarterModuleBuilder() {
   }
 
   override fun getStarterPack(): StarterPack {
+    val libs = IdePluginDependencies()
+
     return StarterPack("devkit", listOf(
-      Starter("devkit", "DevKit", getDependencyConfig("/starters/devkit.pom"), emptyList())
+      Starter("devkit", "DevKit", getDependencyConfig("/starters/devkit.pom"), listOf(
+        libs.compose(),
+        libs.lsp(),
+
+        libs.json(),
+        libs.yaml(),
+        libs.xml(),
+        libs.properties(),
+        libs.markdown(),
+        libs.database(),
+
+        libs.java(),
+        libs.kotlin(),
+        libs.javascript(),
+        libs.python(),
+        libs.go(),
+        libs.php(),
+        libs.ruby(),
+        libs.rust(),
+      ))
     ))
   }
 
-  override fun createWizardSteps(context: WizardContext, modulesProvider: ModulesProvider) = emptyArray<ModuleWizardStep>()
-
   override fun createOptionsStep(contextProvider: StarterContextProvider): StarterInitialStep {
     return IdePluginInitialStep(contextProvider)
+  }
+
+  override fun createLibrariesStep(contextProvider: StarterContextProvider): StarterLibrariesStep {
+    return IdePluginDependenciesStep(contextProvider)
   }
 
   override fun isSuitableSdkType(sdkType: SdkTypeId): Boolean {
@@ -105,18 +124,15 @@ internal class IdePluginModuleBuilder : StarterModuleBuilder() {
       assets.add(GeneratorTemplateFile(standardAssetsProvider.gradleWrapperPropertiesLocation,
                                        ftManager.getJ2eeTemplate(DevKitFileTemplatesFactory.GRADLE_WRAPPER_PROPERTIES)))
 
+      assets.add(GeneratorResourceFile("README.md", javaClass.getResource("/assets/devkit-README.md")!!))
+
       assets.addAll(standardAssetsProvider.getGradlewAssets())
       if (starterContext.isCreatingNewProject) {
         assets.addAll(standardAssetsProvider.getGradleIgnoreAssets())
       }
 
       val packagePath = getPackagePath(starterContext.group, starterContext.artifact)
-      if (starterContext.language == JAVA_STARTER_LANGUAGE) {
-        assets.add(GeneratorEmptyDirectory("src/main/java/${packagePath}"))
-      }
-      else if (starterContext.language == KOTLIN_STARTER_LANGUAGE) {
-        assets.add(GeneratorEmptyDirectory("src/main/kotlin/${packagePath}"))
-      }
+      assets.add(GeneratorEmptyDirectory("src/main/kotlin/${packagePath}"))
 
       assets.add(GeneratorResourceFile(".run/Run IDE with Plugin.run.xml",
                                        javaClass.getResource("/assets/devkit-Run_IDE_with_Plugin_run.xml")!!))
@@ -190,6 +206,12 @@ internal class IdePluginModuleBuilder : StarterModuleBuilder() {
     return starterContext.getUserData(PLUGIN_TYPE_KEY) ?: PluginType.PLUGIN
   }
 
+  private inner class IdePluginDependenciesStep(contextProvider: StarterContextProvider) : StarterLibrariesStep(contextProvider) {
+    override fun isStepVisible(): Boolean {
+      return getPluginType() == PluginType.PLUGIN
+    }
+  }
+
   private inner class IdePluginInitialStep(contextProvider: StarterContextProvider) : StarterInitialStep(contextProvider) {
     private val typeProperty: GraphProperty<PluginType> = propertyGraph.property(PluginType.PLUGIN)
 
@@ -207,10 +229,7 @@ internal class IdePluginModuleBuilder : StarterModuleBuilder() {
         groupRow.visible(pluginType == PluginType.PLUGIN)
         artifactRow.visible(pluginType == PluginType.PLUGIN)
 
-        // Theme / Plugin projects require different SDK type
-        sdkComboBox.selectedJdk = null
-        sdkComboBox.reloadModel()
-        ProjectWizardUtil.preselectJdkForNewModule(wizardContext.project, null, sdkComboBox, Condition(::isSuitableSdkType))
+        fireStateChanged() // refresh the next step depending on a plugin type, skip dependencies step for THEME
       }
     }
 
@@ -227,7 +246,7 @@ internal class IdePluginModuleBuilder : StarterModuleBuilder() {
   }
 
   enum class PluginType(
-    val messagePointer: Supplier<String>
+    val messagePointer: Supplier<String>,
   ) {
     PLUGIN(DevKitBundle.messagePointer("module.builder.type.plugin")),
     THEME(DevKitBundle.messagePointer("module.builder.type.theme"))

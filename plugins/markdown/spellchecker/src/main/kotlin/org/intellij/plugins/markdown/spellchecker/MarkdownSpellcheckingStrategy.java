@@ -38,6 +38,6 @@ final class MarkdownSpellcheckingStrategy extends SpellcheckingStrategy implemen
 
   @Override
   public boolean useTextLevelSpellchecking() {
-    return Registry.is("spellchecker.grazie.enabled");
+    return Registry.is("spellchecker.grazie.enabled", false);
   }
 }

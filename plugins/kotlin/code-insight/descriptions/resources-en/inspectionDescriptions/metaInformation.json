@@ -505,6 +505,14 @@
       "codeQualityCategory": "Code Style"
     },
     {
+      "id": "UnsafeCastWithReturn",
+      "codeQualityCategory": "Reliability"
+    },
+    {
+      "id": "RemoveUnnecessaryParentheses",
+      "codeQualityCategory": "Code Style"
+    },
+    {
       "id": "ReplaceAssertBooleanWithAssertEquality",
       "codeQualityCategory": "Code Style"
     },

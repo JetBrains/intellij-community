@@ -1,6 +1,0 @@
-<!-- cannot use dependent-on-core="false" - kotlin stdlib is required -->
-<idea-plugin>
-  <dependencies>
-    <module name="intellij.libraries.ktor.client"/>
-  </dependencies>
-</idea-plugin>

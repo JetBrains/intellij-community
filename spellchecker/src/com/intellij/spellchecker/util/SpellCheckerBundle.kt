@@ -9,7 +9,7 @@ import java.util.function.Supplier
 
 private const val BUNDLE: @NonNls String = "messages.SpellCheckerBundle"
 
-internal object SpellCheckerBundle : DynamicBundle(BUNDLE) {
+object SpellCheckerBundle : DynamicBundle(BUNDLE) {
   @JvmStatic
   fun message(key: @PropertyKey(resourceBundle = BUNDLE) String, vararg params: Any): @Nls String {
     return getMessage(key, *params)

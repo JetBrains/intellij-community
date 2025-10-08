@@ -38,20 +38,13 @@ import static java.util.Objects.requireNonNullElse;
 public final class DateFormatUtil {
   private static final Logger LOG = Logger.getInstance(DateFormatUtil.class);
 
-  /** @deprecated use {@link java.util.concurrent.TimeUnit#toMillis} */
-  @Deprecated(forRemoval = true) public static final long SECOND = 1_000L;
-  /** @deprecated use {@link java.util.concurrent.TimeUnit#toMillis} */
-  @Deprecated(forRemoval = true) public static final long MINUTE = 60 * SECOND;
-  /** @deprecated use {@link java.util.concurrent.TimeUnit#toMillis} */
-  @Deprecated(forRemoval = true) public static final long HOUR = 60 * MINUTE;
-  /** @deprecated use {@link java.util.concurrent.TimeUnit#toMillis} */
-  @Deprecated(forRemoval = true) public static final long DAY = 24 * HOUR;
-  /** @deprecated use {@link java.util.concurrent.TimeUnit#toMillis} */
-  @Deprecated(forRemoval = true) public static final long WEEK = 7 * DAY;
-  /** @deprecated use {@link java.util.concurrent.TimeUnit#toMillis} */
-  @Deprecated(forRemoval = true) public static final long MONTH = 30 * DAY;
-  /** @deprecated use {@link java.util.concurrent.TimeUnit#toMillis} */
-  @Deprecated(forRemoval = true) public static final long YEAR = 365 * DAY;
+  private static final long SECOND = 1_000L;
+  private static final long MINUTE = 60 * SECOND;
+  private static final long HOUR = 60 * MINUTE;
+  private static final long DAY = 24 * HOUR;
+  private static final long WEEK = 7 * DAY;
+  private static final long MONTH = 30 * DAY;
+  private static final long YEAR = 365 * DAY;
 
   public static final String TIME_SHORT_12H = "h:mm\u202Fa";
   public static final String TIME_SHORT_24H = "HH:mm";

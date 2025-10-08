@@ -13,7 +13,7 @@
   ]]></description>
   <vendor>JetBrains</vendor>
 
-  <content>
+  <content namespace="jetbrains">
     <module name="intellij.groovy.duplicates"/>
     <module name="intellij.groovy.duplicatesDetection"/>
     <module name="intellij.groovy.git"/>
@@ -349,6 +349,8 @@
                                  order="last"/>
     <delegatesToProvider implementation="org.jetbrains.plugins.groovy.lang.resolve.delegatesTo.DefaultDelegatesToProvider" id="default" order="last"/>
     <delegatesToProvider implementation="org.jetbrains.plugins.groovy.lang.resolve.delegatesTo.InferredDelegatesToProvider" order="last"/>
+
+    <methodMayBeStaticInspectionFilter implementation="org.jetbrains.plugins.groovy.testIntegration.MainMethodMayBeStaticFilter"/>
   </extensions>
 
   <extensions defaultExtensionNs="com.intellij.properties">
@@ -807,6 +809,7 @@
                         implementationClass="org.jetbrains.plugins.groovy.regexp.GroovyRegExpHost"/>
 
     <lang.jvm.actions.jvmElementActionsFactory implementation="org.jetbrains.plugins.groovy.annotator.intentions.elements.GroovyElementActionsFactory"/>
+    <javaMainMethodProvider implementation="org.jetbrains.plugins.groovy.testIntegration.GroovyMainMethodProvider"/>
     <localInspection language="Groovy" key="inspection.display.name.unused.declaration"
                      groupPath="Groovy"
                      groupKey="inspection.redundancy" enabledByDefault="true"
@@ -1034,6 +1037,18 @@
                      key="inspection.display.name.nested.synchronized.statement"
                      groupKey="inspection.threading"
                      implementationClass="org.jetbrains.plugins.groovy.codeInspection.threading.GroovyNestedSynchronizedStatementInspection"/>
+    <localInspection language="Groovy" groupPath="Groovy"
+                     key="inspection.display.name.multiple.main.methods.inspection"
+                     groupKey="inspection.control.flow"
+                     implementationClass="org.jetbrains.plugins.groovy.codeInspection.control.GroovyMultipleMainMethodsInspection"
+                     enabledByDefault="true"
+                     />
+    <localInspection language="Groovy" groupPath="Groovy"
+                     key="inspection.display.name.nested.class.with.instance.main.method"
+                     groupKey="inspection.control.flow"
+                     implementationClass="org.jetbrains.plugins.groovy.codeInspection.control.GroovyNestedClassWithInstanceMainMethodInspection"
+                     enabledByDefault="true"
+    />
     <!--suppress PluginXmlCapitalization -->
     <localInspection language="Groovy" groupPath="Groovy"
                      key="inspection.display.name.thread.stop.suspend.resume"

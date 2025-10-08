@@ -119,7 +119,7 @@ Ableism
 Absolute date issues
 Adapt to v. adopt to
 Add a space between number and unit of measurement
-Add diacritics to generic expressions
+Add diacritics
 Additional (Additionally)
 Adjective position issues
 Adverb instead of an adjective
@@ -531,6 +531,7 @@ Gmail
 Good fuck (luck)
 Google product names
 Google product names (style rules)
+Grammar error correction (ML)
 Great (,) thanks
 Great(,) please ...
 Great(,) that is ...
@@ -779,6 +780,7 @@ Misplaced space
 Missing 'as' in 'as well as or better than'
 Missing 'to' before infinitive
 Missing 'to': It's possible do it
+Missing article check (ML)
 Missing articles
 Missing comma 'first come first serve'
 Missing comma after introductory phrase

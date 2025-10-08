@@ -1,9 +1,9 @@
 ### auto-generated section `build intellij.json` start
-load("@rules_jvm//:jvm.bzl", "jvm_library", "jvm_resources")
+load("@rules_jvm//:jvm.bzl", "jvm_library", "resourcegroup")
 
-jvm_resources(
+resourcegroup(
   name = "json_resources",
-  files = glob(["resources/**/*"]),
+  srcs = glob(["resources/**/*"]),
   strip_prefix = "resources"
 )
 
@@ -12,6 +12,7 @@ jvm_library(
   module_name = "intellij.json",
   visibility = ["//visibility:public"],
   srcs = glob(["gen/**/*.kt", "gen/**/*.java", "src/**/*.kt", "src/**/*.java", "src/**/*.form"], allow_empty = True),
+  resources = [":json_resources"],
   deps = [
     "//platform/analysis-api:analysis",
     "//platform/code-style-api:codeStyle",
@@ -26,12 +27,11 @@ jvm_library(
     "//platform/lang-impl",
     "@lib//:kotlin-stdlib",
     "//platform/editor-ui-api:editor-ui",
-    "@lib//:caffeine",
+    "//libraries/caffeine",
     "//json/syntax",
     "//platform/syntax/syntax-psi:psi",
     "//platform/syntax/syntax-util:util",
   ],
-  exports = ["//json/syntax"],
-  runtime_deps = [":json_resources"]
+  exports = ["//json/syntax"]
 )
 ### auto-generated section `build intellij.json` end

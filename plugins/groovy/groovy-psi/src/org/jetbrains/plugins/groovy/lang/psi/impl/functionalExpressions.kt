@@ -22,6 +22,7 @@ internal fun GrFunctionalExpression.processParameters(processor: PsiScopeProcess
   if (!processor.shouldProcessLocals()) return true
 
   for (parameter in allParameters) {
+    if (parameter.isUnnamed) continue
     if (!ResolveUtil.processElement(processor, parameter, state)) return false
   }
 

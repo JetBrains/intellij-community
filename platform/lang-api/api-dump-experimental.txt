@@ -563,9 +563,15 @@ f:com.intellij.codeInsight.hints.declarative.InlayProviderOption
 - p:<init>(java.lang.String):V
 - f:render(com.intellij.codeInspection.options.OptCustom,com.intellij.openapi.project.Project):javax.swing.JComponent
 - a:render(java.lang.Object,com.intellij.openapi.project.Project):javax.swing.JComponent
+*:com.intellij.execution.RunConfigurationProducerSuppressor
+- *sf:Companion:com.intellij.execution.RunConfigurationProducerSuppressor$Companion
+- a:shouldSuppress(com.intellij.execution.actions.RunConfigurationProducer,com.intellij.openapi.project.Project):Z
+*f:com.intellij.execution.RunConfigurationProducerSuppressor$Companion
 *:com.intellij.execution.dashboard.RunDashboardChecker
 - a:countUniqueConfigurations(com.intellij.openapi.project.Project):I
 - a:getTypeId():java.lang.String
+com.intellij.execution.services.ServiceViewDescriptor
+- *:getUniqueId():java.lang.String
 *:com.intellij.ide.actions.searcheverywhere.SearchEverywhereSpellCheckResult
 *f:com.intellij.ide.actions.searcheverywhere.SearchEverywhereSpellCheckResult$Correction
 - com.intellij.ide.actions.searcheverywhere.SearchEverywhereSpellCheckResult
@@ -686,6 +692,8 @@ com.intellij.ide.bookmark.BookmarksManager
 - f:setBoilerplate(Z):V
 - f:setFrameworkLanguage(java.lang.String):V
 - f:setFrameworkVersion(java.lang.String):V
+com.intellij.openapi.roots.ModifiableModelsProvider
+- *a:getGlobalLibraryTableModifiableModel(com.intellij.openapi.project.Project):com.intellij.openapi.roots.libraries.LibraryTable$ModifiableModel
 *:com.intellij.openapi.roots.SkipAddingToWatchedRoots
 *a:com.intellij.platform.lang.lsWidget.LanguageServiceWidgetItem
 - <init>():V
@@ -718,12 +726,11 @@ com.intellij.refactoring.RenameRefactoring
 - *a:respectEnabledAutomaticRenames():V
 c:com.intellij.task.ProjectTaskContext
 - com.intellij.openapi.util.UserDataHolderBase
-- *:addDirtyOutputPathsProvider(java.util.function.Supplier):V
-- *:enableCollectionOfGeneratedFiles():V
-- *:fileGenerated(java.lang.String,java.lang.String):V
-- *:getGeneratedFilesRelativePaths(java.lang.String):java.util.Collection
-- *:getGeneratedFilesRoots():java.util.Collection
-- *:isCollectionOfGeneratedFilesEnabled():Z
+- *f:addDirtyOutputPathsProvider(kotlin.jvm.functions.Function0):V
+- *f:fileGenerated(java.lang.String,java.lang.String):V
+- *f:getGeneratedFilesRelativePaths(java.lang.String):java.util.Collection
+- *f:getGeneratedFilesRoots():java.util.Collection
+- *f:isCollectionOfGeneratedFilesEnabled():Z
 Fa:com.intellij.task.ProjectTaskManager
 - *a:createProjectTaskExecutionEnvironment(com.intellij.task.ProjectTask):com.intellij.execution.runners.ExecutionEnvironment
 com.intellij.task.ProjectTaskManager$Result

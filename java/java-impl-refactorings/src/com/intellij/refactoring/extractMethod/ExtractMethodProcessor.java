@@ -1438,41 +1438,21 @@ public class ExtractMethodProcessor implements MatchProvider {
   }
 
   protected @Nullable PsiMethodCallExpression getMatchMethodCallExpression(PsiElement element) {
-    PsiMethodCallExpression methodCallExpression = null;
-    if (element instanceof PsiMethodCallExpression) {
-      methodCallExpression = (PsiMethodCallExpression)element;
-    }
-    else if (element instanceof PsiExpressionStatement) {
-      final PsiExpression expression = ((PsiExpressionStatement)element).getExpression();
-      if (expression instanceof PsiMethodCallExpression) {
-        methodCallExpression = (PsiMethodCallExpression)expression;
-      }
-      else if (expression instanceof PsiAssignmentExpression) {
-        final PsiExpression psiExpression = ((PsiAssignmentExpression)expression).getRExpression();
-        if (psiExpression instanceof PsiMethodCallExpression) {
-          methodCallExpression = (PsiMethodCallExpression)psiExpression;
-        }
-      }
-    }
-    else if (element instanceof PsiDeclarationStatement) {
-      final PsiElement[] declaredElements = ((PsiDeclarationStatement)element).getDeclaredElements();
-      for (PsiElement declaredElement : declaredElements) {
-        if (declaredElement instanceof PsiLocalVariable) {
-          final PsiExpression initializer = ((PsiLocalVariable)declaredElement).getInitializer();
-          if (initializer instanceof PsiMethodCallExpression) {
-            methodCallExpression = (PsiMethodCallExpression)initializer;
-            break;
-          }
-        }
-      }
-    }
-    else if (element instanceof PsiIfStatement) {
-      PsiExpression condition = ((PsiIfStatement)element).getCondition();
-      if (condition instanceof PsiMethodCallExpression) {
-        methodCallExpression = (PsiMethodCallExpression)condition;
-      }
-    }
-    return methodCallExpression;
+    return switch (element) {
+      case PsiMethodCallExpression expression -> expression;
+      case PsiExpressionStatement expressionStatement -> switch (expressionStatement.getExpression()) {
+        case PsiMethodCallExpression call -> call;
+        case PsiAssignmentExpression assignment -> ObjectUtils.tryCast(assignment.getRExpression(), PsiMethodCallExpression.class);
+        default -> null;
+      };
+      case PsiDeclarationStatement decl -> StreamEx.of(decl.getDeclaredElements())
+        .select(PsiLocalVariable.class)
+        .map(lv -> lv.getInitializer())
+        .select(PsiMethodCallExpression.class)
+        .findFirst().orElse(null);
+      case PsiIfStatement ifStatement -> ObjectUtils.tryCast(ifStatement.getCondition(), PsiMethodCallExpression.class);
+      case null, default -> null;
+    };
   }
 
   protected void deleteExtracted() throws IncorrectOperationException {

@@ -45,12 +45,12 @@ public final class RainbowColorsInSchemeState {
           scheme.setAttributes(key, RainbowHighlighter.createRainbowAttribute(color));
         }
       }
-      updateRainbowMarkup(scheme);
+      updateRainbowMarkup(scheme, this);
     }
   }
 
   @ApiStatus.Internal
-  public static void updateRainbowMarkup(@NotNull EditorColorsScheme scheme) {
+  public static void updateRainbowMarkup(@NotNull EditorColorsScheme scheme, @NotNull Object reason) {
     Set<String> languagesWithRainbowHighlighting = getRainbowOnLanguageIds(scheme);
     reportStatistic(languagesWithRainbowHighlighting);
 
@@ -67,7 +67,7 @@ public final class RainbowColorsInSchemeState {
       if (project != null) {
         PsiFile file = PsiDocumentManager.getInstance(project).getPsiFile(editor.getDocument());
         if (file != null) {
-          DaemonCodeAnalyzer.getInstance(project).restart(file);
+          DaemonCodeAnalyzer.getInstance(project).restart(file, reason);
         }
       }
     }

@@ -173,6 +173,13 @@ public final class InstalledPluginsState {
     PluginManagerUsageCollector.pluginInstallationFinished(descriptor);
   }
 
+  @ApiStatus.Internal
+  public void onPluginLoadAfterInstall(@NotNull IdeaPluginDescriptor descriptor) {
+    synchronized (myLock) {
+      myInstalledPlugins.remove(descriptor.getPluginId());
+      myInstalledWithoutRestartPlugins.add(descriptor.getPluginId());
+    }
+  }
 
   @ApiStatus.Internal
   public void onPluginUninstall(@NotNull IdeaPluginDescriptor descriptor,

@@ -1,11 +1,12 @@
 // Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.plugins.terminal.block.session.scraper
 
-import com.intellij.terminal.session.StyleRange
 import com.jediterm.terminal.TextStyle
 import com.jediterm.terminal.model.TerminalLine
 import org.jetbrains.annotations.ApiStatus
+import org.jetbrains.plugins.terminal.block.ui.TerminalUiUtils
 import org.jetbrains.plugins.terminal.block.ui.normalize
+import org.jetbrains.plugins.terminal.session.StyleRange
 
 @ApiStatus.Internal
 class StylesCollectingTerminalLinesCollector(
@@ -28,7 +29,8 @@ class StylesCollectingTerminalLinesCollector(
         if (entry.style != TextStyle.EMPTY) {
           val endOffset = delegate.length()
           val startOffset = endOffset - nonNullText.length
-          val style = StyleRange(startOffset.toLong(), endOffset.toLong(), entry.style)
+          val ignoreContrastAdjustment = !entry.isNul && text.any { TerminalUiUtils.shouldIgnoreContrastAdjustment(it) }
+          val style = StyleRange(startOffset.toLong(), endOffset.toLong(), entry.style, ignoreContrastAdjustment)
           stylesConsumer(style)
         }
       }

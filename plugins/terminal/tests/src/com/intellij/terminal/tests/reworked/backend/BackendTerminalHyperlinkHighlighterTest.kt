@@ -13,7 +13,6 @@ import com.intellij.openapi.editor.markup.TextAttributes
 import com.intellij.openapi.project.Project
 import com.intellij.platform.util.coroutines.childScope
 import com.intellij.terminal.backend.hyperlinks.BackendTerminalHyperlinkFacade
-import com.intellij.terminal.session.*
 import com.intellij.terminal.tests.reworked.util.TerminalTestUtil
 import com.intellij.testFramework.ExtensionTestUtil
 import com.intellij.testFramework.common.timeoutRunBlocking
@@ -22,8 +21,10 @@ import kotlinx.coroutines.*
 import kotlinx.coroutines.CoroutineStart.UNDISPATCHED
 import kotlinx.coroutines.flow.*
 import org.assertj.core.api.Assertions.assertThat
+import org.jetbrains.plugins.terminal.block.reworked.TerminalOffset
 import org.jetbrains.plugins.terminal.block.reworked.TerminalOutputModel
 import org.jetbrains.plugins.terminal.block.reworked.updateContent
+import org.jetbrains.plugins.terminal.session.*
 import org.junit.Test
 import org.junit.runner.RunWith
 import org.junit.runners.JUnit4
@@ -502,9 +503,9 @@ internal class BackendTerminalHyperlinkHighlighterTest : BasePlatformTestCase() 
         val expected = expectedLinks[i]
         val actualStartOffset = outputModel.absoluteOffset(actual.absoluteStartOffset)
         val actualEndOffset = outputModel.absoluteOffset(actual.absoluteEndOffset)
-        if (i == 0 && actualStartOffset.toRelative() < 0) continue // partially trimmed link, we may not be able to locate it
-        val expectedStartOffset = outputModel.relativeOffset(expected.locator.locateOffset(document))
-        val expectedEndOffset = outputModel.relativeOffset(expectedStartOffset.toRelative() + expected.locator.length)
+        if (i == 0 && actualStartOffset < outputModel.startOffset) continue // partially trimmed link, we may not be able to locate it
+        val expectedStartOffset = expected.locator.locateOffset(outputModel)
+        val expectedEndOffset = expectedStartOffset + expected.locator.length.toLong()
         val expectedLayer = HighlighterLayer.HYPERLINK
         
         val description = "at $i actual link $actual expected link $expected"
@@ -524,10 +525,10 @@ internal class BackendTerminalHyperlinkHighlighterTest : BasePlatformTestCase() 
       for (i in actualHighlightings.indices) {
         val actual = actualHighlightings[i]
         val expected = expectedHighlightings[i]
-        val expectedStartOffset = expected.locator.locateOffset(document)
-        val expectedEndOffset = expectedStartOffset + expected.locator.length
-        val actualStartOffset = outputModel.absoluteOffset(actual.absoluteStartOffset).toRelative()
-        val actualEndOffset = outputModel.absoluteOffset(actual.absoluteEndOffset).toRelative()
+        val expectedStartOffset = expected.locator.locateOffset(outputModel)
+        val expectedEndOffset = expectedStartOffset + expected.locator.length.toLong()
+        val actualStartOffset = outputModel.absoluteOffset(actual.absoluteStartOffset)
+        val actualEndOffset = outputModel.absoluteOffset(actual.absoluteEndOffset)
         val expectedLayer = HighlighterLayer.CONSOLE_FILTER
 
         val description = "at $i actual highlight $actual expected highlight $expected"
@@ -545,10 +546,10 @@ internal class BackendTerminalHyperlinkHighlighterTest : BasePlatformTestCase() 
       for (i in actualInlays.indices) {
         val actual = actualInlays[i]
         val expected = expectedInlays[i]
-        val expectedStartOffset = expected.locator.locateOffset(document)
-        val expectedEndOffset = expectedStartOffset + expected.locator.length
-        val actualStartOffset = outputModel.absoluteOffset(actual.absoluteStartOffset).toRelative()
-        val actualEndOffset = outputModel.absoluteOffset(actual.absoluteEndOffset).toRelative()
+        val expectedStartOffset = expected.locator.locateOffset(outputModel)
+        val expectedEndOffset = expectedStartOffset + expected.locator.length.toLong()
+        val actualStartOffset = outputModel.absoluteOffset(actual.absoluteStartOffset)
+        val actualEndOffset = outputModel.absoluteOffset(actual.absoluteEndOffset)
 
         val description = "at $i actual inlay $actual expected inlay $expected"
         assertThat(actualStartOffset).`as`(description).isEqualTo(expectedStartOffset)
@@ -607,16 +608,17 @@ internal class BackendTerminalHyperlinkHighlighterTest : BasePlatformTestCase() 
     data class LinkLocator(val line: Int, val substring: String) {
       val length: Int get() = substring.length
 
-      fun locateOffset(document: Document): Int {
-        val lineStart = document.getLineStartOffset(line)
-        val lineEnd = document.getLineEndOffset(line)
-        val lineText = document.immutableCharSequence.substring(lineStart, lineEnd)
+      fun locateOffset(model: TerminalOutputModel): TerminalOffset {
+        val line = model.firstLine + line.toLong()
+        val lineStart = model.startOffset(line)
+        val lineEnd = model.endOffset(line)
+        val lineText = model.getText(lineStart, lineEnd)
         val column = lineText.indexOfSingle(substring)
-        return lineStart + column
+        return lineStart + column.toLong()
       }
 
       fun locateLink(outputModel: TerminalOutputModel, backendFacade: BackendTerminalHyperlinkFacade): TerminalFilterResultInfo {
-        val offset = outputModel.relativeOffset(locateOffset(outputModel.document))
+        val offset = locateOffset(outputModel)
         val links = backendFacade.dumpState().hyperlinks
         return links.single { offset.toAbsolute() in it.absoluteStartOffset until it.absoluteEndOffset }
       }

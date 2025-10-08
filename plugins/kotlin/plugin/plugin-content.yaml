@@ -3,6 +3,11 @@
   module: kotlin.ml-completion
   files:
   - name: $MAVEN_REPOSITORY$/org/jetbrains/intellij/deps/completion/completion-ranking-kotlin/0/completion-ranking-kotlin-0.jar
+- name: lib/ehcache.sizeof.jar
+  library: ehcache.sizeof
+  module: kotlin.base.fir.analysis-api-platform
+  files:
+  - name: $MAVEN_REPOSITORY$/org/ehcache/sizeof/0/sizeof-0.jar
 - name: lib/frontend-split/kotlin-frontend.jar
   modules:
   - name: kotlin.frontend.split
@@ -145,6 +150,7 @@
   - name: kotlin.compiler-plugins.kotlinx-serialization.gradle
   - name: kotlin.compiler-plugins.kotlinx-serialization.k2
   - name: kotlin.compiler-plugins.kotlinx-serialization.maven
+  - name: kotlin.compiler-plugins.kotlin-dataframe.maven
   - name: kotlin.compiler-plugins.noarg.common
   - name: kotlin.compiler-plugins.noarg.gradle
   - name: kotlin.compiler-plugins.noarg.maven

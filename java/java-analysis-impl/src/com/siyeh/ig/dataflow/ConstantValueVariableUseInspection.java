@@ -60,7 +60,7 @@ public final class ConstantValueVariableUseInspection extends BaseInspection imp
   }
 
   @Override
-  public BaseInspectionVisitor buildVisitor() {
+  public @NotNull BaseInspectionVisitor buildVisitor() {
     return new ConstantValueVariableUseVisitor();
   }
 

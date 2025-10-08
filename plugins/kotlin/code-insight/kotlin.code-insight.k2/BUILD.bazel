@@ -1,6 +1,6 @@
 ### auto-generated section `build kotlin.code-insight.k2` start
 load("//build:compiler-options.bzl", "create_kotlinc_options")
-load("@rules_jvm//:jvm.bzl", "jvm_library", "jvm_resources")
+load("@rules_jvm//:jvm.bzl", "jvm_library", "resourcegroup")
 
 create_kotlinc_options(
   name = "custom_kotlin-code-insight-k2",
@@ -13,9 +13,9 @@ create_kotlinc_options(
   x_context_parameters = True
 )
 
-jvm_resources(
+resourcegroup(
   name = "kotlin-code-insight-k2_resources",
-  files = glob(["resources/**/*"]),
+  srcs = glob(["resources/**/*"]),
   strip_prefix = "resources"
 )
 
@@ -24,6 +24,7 @@ jvm_library(
   module_name = "kotlin.code-insight.k2",
   visibility = ["//visibility:public"],
   srcs = glob(["src/**/*.kt", "src/**/*.java", "src/**/*.form"], allow_empty = True),
+  resources = [":kotlin-code-insight-k2_resources"],
   kotlinc_opts = ":custom_kotlin-code-insight-k2",
   deps = [
     "@lib//:kotlin-stdlib",
@@ -61,7 +62,7 @@ jvm_library(
     "//plugins/kotlin/highlighting/highlighting-shared:kotlin-highlighting-shared",
     "//java/java-impl:impl",
     "@lib//:kotlinc-analysis-api-impl-base",
-    "@lib//:guava",
+    "//libraries/guava",
     "//plugins/kotlin/refactorings/kotlin.refactorings.common:kotlin-refactorings-common",
     "//plugins/kotlin/base/analysis",
     "//plugins/kotlin/base/facet",
@@ -79,12 +80,11 @@ jvm_library(
     "//platform/util/jdom",
     "//plugins/kotlin/code-insight/override-implement-k2:kotlin-code-insight-override-implement-k2",
     "//plugins/kotlin/code-insight/override-implement-shared:kotlin-code-insight-override-implement-shared",
-    "@lib//:fastutil-min",
+    "//libraries/fastutil",
     "//plugins/kotlin/kotlin.searching:searching-k2",
     "//plugins/kotlin/base/statistics",
     "//platform/editor-ui-ex:editor-ex",
-  ],
-  runtime_deps = [":kotlin-code-insight-k2_resources"]
+  ]
 )
 
 jvm_library(
@@ -140,7 +140,7 @@ jvm_library(
     "//plugins/kotlin/highlighting/highlighting-shared:kotlin-highlighting-shared",
     "//java/java-impl:impl",
     "@lib//:kotlinc-analysis-api-impl-base",
-    "@lib//:guava",
+    "//libraries/guava",
     "//plugins/kotlin/refactorings/kotlin.refactorings.common:kotlin-refactorings-common",
     "//plugins/kotlin/base/analysis",
     "//plugins/kotlin/base/facet",
@@ -160,7 +160,7 @@ jvm_library(
     "//platform/util/jdom",
     "//plugins/kotlin/code-insight/override-implement-k2:kotlin-code-insight-override-implement-k2",
     "//plugins/kotlin/code-insight/override-implement-shared:kotlin-code-insight-override-implement-shared",
-    "@lib//:fastutil-min",
+    "//libraries/fastutil",
     "//plugins/kotlin/kotlin.searching:searching-k2",
     "//plugins/kotlin/base/test:test_test_lib",
     "//java/testFramework",
@@ -168,8 +168,8 @@ jvm_library(
     "//platform/editor-ui-ex:editor-ex",
     "//plugins/kotlin/bundled-compiler-plugins-support",
     "//plugins/kotlin/base/scripting/scripting.k2",
-  ],
-  runtime_deps = [":kotlin-code-insight-k2_resources"]
+    "//plugins/kotlin/base/scripting/scripting.k2:scripting.k2_test_lib",
+  ]
 )
 ### auto-generated section `build kotlin.code-insight.k2` end
 

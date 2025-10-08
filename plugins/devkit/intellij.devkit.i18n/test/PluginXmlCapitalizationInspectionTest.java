@@ -2,8 +2,8 @@
 package org.jetbrains.idea.devkit.i18n;
 
 import com.intellij.codeInsight.intention.IntentionAction;
+import com.intellij.grazie.spellcheck.GrazieSpellCheckingInspection;
 import com.intellij.openapi.project.IntelliJProjectUtil;
-import com.intellij.spellchecker.inspections.SpellCheckingInspection;
 import com.intellij.testFramework.TestDataPath;
 import com.intellij.testFramework.fixtures.LightJavaCodeInsightFixtureTestCase;
 
@@ -79,7 +79,7 @@ public class PluginXmlCapitalizationInspectionTest extends LightJavaCodeInsightF
                        "  enum Capitalization {NotSpecified,Title,Sentence}" +
                        "  Capitalization capitalization() default Capitalization.NotSpecified;" +
                        "}");
-    myFixture.enableInspections(new SpellCheckingInspection());
+    myFixture.enableInspections(new GrazieSpellCheckingInspection());
     myFixture.testHighlighting("pluginXmlCapitalization_extensionPoint.xml", "MyExtensionPoint.java");
   }
 }

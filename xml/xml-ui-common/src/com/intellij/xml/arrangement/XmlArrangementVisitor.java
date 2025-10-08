@@ -26,7 +26,7 @@ public class XmlArrangementVisitor extends XmlElementVisitor {
   private final Stack<XmlElementArrangementEntry> myStack = new Stack<>();
 
   private final XmlArrangementParseInfo myInfo;
-  private final Collection<? extends TextRange> myRanges;
+  protected final Collection<? extends TextRange> myRanges;
 
   public XmlArrangementVisitor(@NotNull XmlArrangementParseInfo info, @NotNull Collection<? extends TextRange> ranges) {
     myInfo = info;
@@ -122,6 +122,4 @@ public class XmlArrangementVisitor extends XmlElementVisitor {
     }
     return false;
   }
-  
-  
 }

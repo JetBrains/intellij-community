@@ -53,7 +53,7 @@ public class JavaTextExtractor extends TextExtractor {
             .build(root, DOCUMENTATION)
         );
       }
-      if (root instanceof PsiDocTagImpl) {
+      if (root instanceof PsiDocTagImpl tag && !tag.getName().equals("author")) {
         return HtmlUtilsKt.excludeHtml(javadocBuilder.build(root, DOCUMENTATION));
       }
     }
@@ -80,7 +80,7 @@ public class JavaTextExtractor extends TextExtractor {
           content = content.excludeRanges(
             ContainerUtil.map(Text.allOccurrences(Pattern.compile("(?<=\n)" + "\\s{" + indent + "}"), content), Exclusion::exclude));
         }
-        content = replaceBackslashEscapes(content);
+        content = content.excludeRanges(ContainerUtil.map(Text.allOccurrences(Pattern.compile("\\\\\n"), content), Exclusion::exclude));
         return ContainerUtil.createMaybeSingletonList(content.trimWhitespace());
       }
       if (indent == -1 && content != null) {

@@ -22,12 +22,24 @@ public interface TypeAnnotationProvider {
     }
 
     @Override
+    public boolean hasAnnotations() {
+      return false;
+    }
+
+    @Override
     public String toString() {
       return "EMPTY";
     }
   };
 
   @NotNull PsiAnnotation @NotNull [] getAnnotations();
+
+  /**
+   * @return true if this provider has annotations.
+   */
+  default boolean hasAnnotations() {
+    return getAnnotations().length > 0;
+  }
 
   /**
    * @param owner owner for annotations in this provider
@@ -50,6 +62,12 @@ public interface TypeAnnotationProvider {
     @Override
     public @NotNull PsiAnnotation @NotNull [] getAnnotations() {
       return myAnnotations;
+    }
+
+    @Override
+    public boolean hasAnnotations() {
+      // Array is always non-empty
+      return true;
     }
 
     public static @NotNull TypeAnnotationProvider create(@NotNull PsiAnnotation @NotNull [] annotations) {

@@ -70,6 +70,11 @@ public class ProjectViewProjectNode extends AbstractProjectNode {
       var psiDirectory = psiManager.findDirectory(projectRoot);
       if (psiDirectory != null) {
         nodes.add(new PsiDirectoryNode(myProject, psiDirectory, getSettings()));
+      } else {
+        var psiFile = psiManager.findFile(projectRoot);
+        if (psiFile != null) {
+          nodes.add(new PsiFileNode(myProject, psiFile, getSettings()));
+        }
       }
     }
 

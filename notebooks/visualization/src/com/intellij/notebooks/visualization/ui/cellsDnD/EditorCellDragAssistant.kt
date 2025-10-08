@@ -2,6 +2,7 @@
 package com.intellij.notebooks.visualization.ui.cellsDnD
 
 import com.intellij.notebooks.visualization.NotebookCellInlayManager
+import com.intellij.notebooks.visualization.NotebookVisualizationCoroutine
 import com.intellij.notebooks.visualization.getCell
 import com.intellij.notebooks.visualization.ui.EditorCell
 import com.intellij.notebooks.visualization.ui.EditorCellInput
@@ -12,6 +13,9 @@ import com.intellij.openapi.editor.impl.EditorImpl
 import com.intellij.openapi.util.NlsSafe
 import com.intellij.openapi.util.text.StringUtil
 import com.intellij.openapi.wm.WindowManager
+import com.intellij.util.cancelOnDispose
+import kotlinx.coroutines.Job
+import kotlinx.coroutines.delay
 import org.jetbrains.annotations.Nls
 import java.awt.KeyEventDispatcher
 import java.awt.KeyboardFocusManager
@@ -19,6 +23,7 @@ import java.awt.Point
 import java.awt.event.KeyEvent
 import java.awt.event.MouseEvent
 import javax.swing.JComponent
+import javax.swing.SwingUtilities
 
 class EditorCellDragAssistant(
   private val editor: EditorImpl,
@@ -42,6 +47,15 @@ class EditorCellDragAssistant(
 
   private val inlayManager = NotebookCellInlayManager.get(editor)
   private var keyEventDispatcher: KeyEventDispatcher? = null
+
+  /** 0 - no scrolling, 1 - scroll down, -1 - scroll up */
+  var scrollingDirection: Int = 0
+
+  /*
+   * When the dragged item is close to the editor top or bottom, auto-scrolling is performed in the background via this job.
+   * Work with this Job is always in EDT, so here is no need to protect anything from concurrency.
+   */
+  var scrollingJob: Job? = null
 
   fun initDrag(e: MouseEvent) {
     isDragging = true
@@ -103,11 +117,45 @@ class EditorCellDragAssistant(
     dragPreview?.followCursor(e.locationOnScreen)
     val currentLocation = e.locationOnScreen
     updateDragVisuals(currentLocation)
+
+    scrollEditorIfNearBounds(e)
+  }
+
+  fun scrollEditorIfNearBounds(e: MouseEvent) {
+    val editorPoint = SwingUtilities.convertPoint(e.component, e.point, editor.component)
+    val scrollBarModel = editor.scrollPane.verticalScrollBar.model
+    val sensitiveZoneHeight = (editor.component.height * 0.05).toInt()
+    if (editorPoint.y < sensitiveZoneHeight && scrollBarModel.value > scrollBarModel.minimum) {
+      startScrolling(-1)
+    }
+    else if (editorPoint.y > editor.component.height - sensitiveZoneHeight && scrollBarModel.value < scrollBarModel.maximum) {
+      startScrolling(1)
+    }
+    else {
+      scrollingJob?.cancel()
+      scrollingJob = null
+      scrollingDirection = 0
+    }
+  }
+
+  fun startScrolling(delta: Int) {
+    if (scrollingDirection == delta) return
+    scrollingJob?.cancel()
+    scrollingDirection = delta
+    val speed = editor.component.height * 0.01
+
+    scrollingJob = NotebookVisualizationCoroutine.Utils.launchEdt {
+      while (isDragging) {
+        delay(10)
+        editor.scrollingModel.scrollVertically((editor.scrollingModel.verticalScrollOffset + delta * speed).toInt())
+      }
+    }.apply { cancelOnDispose(this@EditorCellDragAssistant) }
   }
 
   fun finishDrag(e: MouseEvent) {
     deleteDragPreview()
     removeKeyEventDispatcher()
+    scrollingJob?.cancel()
 
     if (!isDragging || dragStartPoint == null) {
       isDragging = false

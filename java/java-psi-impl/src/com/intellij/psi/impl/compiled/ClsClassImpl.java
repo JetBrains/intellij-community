@@ -477,7 +477,7 @@ public class ClsClassImpl extends ClsMemberImpl<PsiClassStub<?>> implements PsiE
     }
 
     // If the count of stubs and mirrors doesn't match, this it is possibly because the default constructor isn't present in the
-    // decompiled code because it was removed by FernFlower's "high readability" mode.
+    // decompiled code because it was removed by Fernflower's "high readability" mode.
 
     // If after removing all constructors from both stubs and mirrors, the count is still different, then we cannot help.
     final long nonConstructorStubCount = stubs.stream().filter(method -> !method.isConstructor()).count();

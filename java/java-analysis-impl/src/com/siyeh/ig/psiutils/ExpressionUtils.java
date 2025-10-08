@@ -1214,11 +1214,11 @@ public final class ExpressionUtils {
     PsiExpression initializer = array.getInitializer();
     if (initializer instanceof PsiNewExpression expression) initializer = expression.getArrayInitializer();
     if (!(initializer instanceof PsiArrayInitializerExpression expression)) return null;
-    PsiExpression[] initializers = expression.getInitializers();
     if (array instanceof PsiField && !(array.hasModifierProperty(PsiModifier.PRIVATE) && array.hasModifierProperty(PsiModifier.STATIC))) {
       return null;
     }
     if (!isConstantContent(array)) return null;
+    PsiExpression[] initializers = expression.getInitializers();
     Arrays.asList(initializers).replaceAll(expr -> isIllegalReference(array, expr) ? null : expr);
     return initializers;
   }

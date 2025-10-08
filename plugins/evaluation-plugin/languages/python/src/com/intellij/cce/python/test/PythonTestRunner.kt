@@ -29,29 +29,59 @@ class PythonTestRunner : TestRunner {
 
     val process = CapturingProcessHandler(commandLine).runProcess()
 
-    val passedTests = process.stdoutLines
-      .filter { it.contains("PASSED") }
-      .map { it.substringBefore("PASSED").trim() }
-      .filter { it.isNotEmpty() }
-      .map(::normalizeTestName)
-
-    val failedTests = process.stdoutLines
-      .filter { it.contains("FAILED") }
-      .map { it.substringBefore("FAILED").trim() }
-      .filter { it.isNotEmpty() }
-      .map(::normalizeTestName)
+    val testResult =
+      if (testCommand.contains("pytest")) pytest(process.stdoutLines, request.tests)
+      else if (testCommand.contains("unittest")) unittest(process.stderrLines, request.tests)
+      else error("Unsupported test command: $testCommand")
 
     return TestRunResult(
       exitCode = process.exitCode,
-      passed = passedTests,
-      failed = failedTests,
-      expected = request.tests,
+      passed = testResult.passedTests,
+      failed = testResult.failedTests,
+      expected = testResult.expectedTests,
       compilationSuccessful = true,
       projectIsResolvable = true,
       output = process.stdout + "\n\nSTDERR\n\n" + process.stderr,
     )
   }
 
-  private fun normalizeTestName(testName: String): String =
-    testName.replace("::", ":None:")
+  private fun pytest(output: List<String>, expectedTests: List<String>): TestResult {
+    val passedTests = output
+      .filter { it.contains("PASSED") }
+      .map { it.substringBefore("PASSED").trim() }
+      .filter { it.isNotEmpty() }
+      .map(::normalizePytestName)
+
+    val failedTests = output
+      .filter { it.contains("FAILED") }
+      .map { it.substringBefore("FAILED").trim() }
+      .filter { it.isNotEmpty() }
+      .map(::normalizePytestName)
+
+    return TestResult(expectedTests, passedTests, failedTests)
+  }
+
+  private fun unittest(output: List<String>, expectedTests: List<String>): TestResult {
+    val passedTests = output
+      .filter { it.endsWith("... ok") }
+      .map { it.substringBefore("... ok").trim() }
+      .filter { it.isNotEmpty() }
+      .map(::normalizeUnittestName)
+
+    val failedTests = output
+      .filter { it.endsWith("... ERROR") }
+      .map { it.substringBefore("... ERROR").trim() }
+      .map(::normalizeUnittestName)
+
+    return TestResult(expectedTests.map { it.trim(':') }, passedTests, failedTests)
+  }
+
+  private fun normalizePytestName(testName: String): String =
+    if (testName.indexOf("::") == testName.lastIndexOf("::")) testName.replace("::", ":None:")
+    else testName.replace("::", ":")
+
+  private fun normalizeUnittestName(testName: String): String =
+    if (!testName.contains(" ")) testName.takeLastWhile { it != '.' } else testName
+
+  private data class TestResult(val expectedTests: List<String>, val passedTests: List<String>, val failedTests: List<String>)
 }

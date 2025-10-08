@@ -32,8 +32,11 @@ import java.util.List;
 @ApiStatus.NonExtendable
 public interface ModuleFileIndex extends FileIndex {
   /**
-   * Returns the order entry to which the specified file or directory
-   * belongs.
+   * Returns the order entry to which the specified file or directory belongs.
+   * <br/>
+   * <strong>Use this method only if you really need to process {@link OrderEntry} instances.</strong>
+   * Otherwise, use {@link ProjectFileIndex#findContainingLibraries(VirtualFile)}</strong> or
+   * {@link ProjectFileIndex#findContainingSdks(VirtualFile)} which are much more efficient.
    *
    * @param fileOrDir the file or directory to check.
    * @return the order entry to which the file or directory belongs, or null if
@@ -46,6 +49,10 @@ public interface ModuleFileIndex extends FileIndex {
   /**
    * Returns the list of all order entries to which the specified file or directory
    * belongs.
+   * <br/>
+   * <strong>Use this method only if you really need to process {@link OrderEntry} instances.</strong>
+   * Otherwise, use {@link ProjectFileIndex#findContainingLibraries(VirtualFile)}</strong> or
+   * {@link ProjectFileIndex#findContainingSdks(VirtualFile)} which are much more efficient.
    *
    * @param fileOrDir the file or directory to check.
    * @return the list of order entries to which the file or directory belongs.

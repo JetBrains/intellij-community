@@ -312,7 +312,7 @@ public class ComboBox<E> extends ComboBoxWithWidePopup<E> implements AWTEventLis
     ComboBoxEditor editor = new BasicComboBoxEditor() {
       @Override
       protected JTextField createEditorComponent() {
-        JTextField editor = new ExtendableTextField().addBrowseExtension(browseAction, parentDisposable);
+        JTextField editor = new ExtendableTextField().addBrowseExtension(browseAction, parentDisposable, false);
         editor.setBorder(null);
         return editor;
       }

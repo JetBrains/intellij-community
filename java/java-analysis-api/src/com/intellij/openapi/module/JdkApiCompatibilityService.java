@@ -9,6 +9,7 @@ import com.intellij.pom.java.LanguageLevel;
 import com.intellij.psi.*;
 import com.intellij.psi.util.PsiUtil;
 import org.jetbrains.annotations.ApiStatus;
+import org.jetbrains.annotations.Contract;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -116,10 +117,16 @@ public final class JdkApiCompatibilityService {
    * @return The newly introduced API if it appears after or including {@code languageLevel}, or null if it was introduced before
    * {@code languageLevel}.
    */
-  private LanguageLevel getIntroducedApiLevel(@NotNull String signature, @Nullable LanguageLevel languageLevel) {
+  @Contract("_, null -> null")
+  private @Nullable LanguageLevel getIntroducedApiLevel(@NotNull String signature, @Nullable LanguageLevel languageLevel) {
     if (languageLevel == null) return null;
-    if (getIntroducedApis(languageLevel).contains(signature)) return languageLevel;
-    return getIntroducedApiLevel(signature, languageLevel.next());
+    LanguageLevel curLevel = LanguageLevel.HIGHEST;
+    while (true) {
+      if (getIntroducedApis(curLevel).contains(signature)) return curLevel;
+      if (languageLevel == curLevel) return null;
+      curLevel = curLevel.previous();
+      if (curLevel == null) return null;
+    }
   }
 
   /**

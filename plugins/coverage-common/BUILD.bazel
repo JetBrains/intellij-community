@@ -1,9 +1,9 @@
 ### auto-generated section `build intellij.platform.coverage` start
-load("@rules_jvm//:jvm.bzl", "jvm_library", "jvm_resources")
+load("@rules_jvm//:jvm.bzl", "jvm_library", "resourcegroup")
 
-jvm_resources(
+resourcegroup(
   name = "coverage_resources",
-  files = glob(["resources/**/*"]),
+  srcs = glob(["resources/**/*"]),
   strip_prefix = "resources"
 )
 
@@ -12,6 +12,7 @@ jvm_library(
   module_name = "intellij.platform.coverage",
   visibility = ["//visibility:public"],
   srcs = glob(["src/**/*.kt", "src/**/*.java", "src/**/*.form"], allow_empty = True),
+  resources = [":coverage_resources"],
   deps = [
     "//platform/analysis-api:analysis",
     "//platform/util/concurrency",
@@ -33,13 +34,12 @@ jvm_library(
     "//platform/platform-impl/concurrency",
     "//platform/util/diff",
     "//platform/vcs-api:vcs",
-    "@lib//:fastutil-min",
+    "//libraries/fastutil",
     "//platform/core-ui",
     "//platform/statistics",
     "//platform/util/jdom",
     "//plugins/coverage-common/intellij.platform.coverage.agent:coverage-agent",
-  ],
-  runtime_deps = [":coverage_resources"]
+  ]
 )
 
 jvm_library(
@@ -71,14 +71,13 @@ jvm_library(
     "//platform/platform-impl/concurrency",
     "//platform/util/diff",
     "//platform/vcs-api:vcs",
-    "@lib//:fastutil-min",
+    "//libraries/fastutil",
     "//platform/core-ui",
     "//platform/statistics",
     "//platform/statistics:statistics_test_lib",
     "//platform/util/jdom",
     "//plugins/coverage-common/intellij.platform.coverage.agent:coverage-agent",
-  ],
-  runtime_deps = [":coverage_resources"]
+  ]
 )
 ### auto-generated section `build intellij.platform.coverage` end
 

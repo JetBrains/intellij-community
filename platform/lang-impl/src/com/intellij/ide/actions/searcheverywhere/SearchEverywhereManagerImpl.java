@@ -25,6 +25,7 @@ import com.intellij.ui.ScreenUtil;
 import com.intellij.ui.SearchTextField;
 import com.intellij.ui.awt.RelativePoint;
 import com.intellij.ui.popup.AbstractPopup;
+import com.intellij.util.PlatformUtils;
 import com.intellij.util.SystemProperties;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.ui.JBInsets;
@@ -106,6 +107,7 @@ public final class SearchEverywhereManagerImpl implements SearchEverywhereManage
       .setProject(myProject)
       .setModalContext(false)
       .setNormalWindowLevel(StartupUiUtil.isWaylandToolkit())
+      .setCancelOnWindowDeactivation(!StartupUiUtil.isWaylandToolkit())
       .setCancelOnClickOutside(true)
       .setRequestFocus(true)
       .setCancelKeyEnabled(false)
@@ -279,13 +281,19 @@ public final class SearchEverywhereManagerImpl implements SearchEverywhereManage
     return false;
   }
 
+  @ApiStatus.Internal
+  @Override
+  public boolean isPreviewEnabled() {
+    return PreviewExperiment.isExperimentEnabled() && !PlatformUtils.isJetBrainsClient();
+  }
+
   @Override
   public SearchEverywherePopupInstance getCurrentlyShownPopupInstance() {
     return getCurrentlyShownUI();
   }
 
-  private SearchEverywhereUI createView(Project project, List<SearchEverywhereContributor<?>> contributors,
-                                        @Nullable StartMoment startMoment) {
+  private @NotNull SearchEverywhereUI createView(Project project, List<SearchEverywhereContributor<?>> contributors,
+                                                 @Nullable StartMoment startMoment) {
     if (LightEdit.owns(project)) {
       contributors = ContainerUtil.filter(contributors, (contributor) -> contributor instanceof LightEditCompatible);
     }

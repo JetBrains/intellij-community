@@ -1,9 +1,9 @@
 ### auto-generated section `build intellij.java.plugin` start
-load("@rules_jvm//:jvm.bzl", "jvm_library", "jvm_resources")
+load("@rules_jvm//:jvm.bzl", "jvm_library", "resourcegroup")
 
-jvm_resources(
+resourcegroup(
   name = "plugin_resources",
-  files = glob(["resources/**/*"]),
+  srcs = glob(["resources/**/*"]),
   strip_prefix = "resources"
 )
 
@@ -11,8 +11,8 @@ jvm_library(
   name = "plugin",
   visibility = ["//visibility:public"],
   srcs = glob([], allow_empty = True),
+  resources = [":plugin_resources"],
   runtime_deps = [
-    ":plugin_resources",
     "//java/compiler/impl",
     "//java/debugger/impl",
     "//java/debugger/shared",

@@ -66,7 +66,7 @@ public final class MethodCouplingInspection extends MethodMetricInspection {
   }
 
   @Override
-  public BaseInspectionVisitor buildVisitor() {
+  public @NotNull BaseInspectionVisitor buildVisitor() {
     return new MethodCouplingVisitor();
   }
 

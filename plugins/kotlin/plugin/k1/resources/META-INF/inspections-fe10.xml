@@ -797,14 +797,6 @@
                      language="kotlin"
                      key="inspection.replace.get.or.set.display.name" bundle="messages.KotlinBundle"/>
 
-    <localInspection implementationClass="org.jetbrains.kotlin.idea.inspections.ReplaceManualRangeWithIndicesCallsInspection"
-                     groupPath="Kotlin"
-                     groupBundle="messages.KotlinBundle" groupKey="group.names.style.issues"
-                     enabledByDefault="true"
-                     level="WEAK WARNING"
-                     language="kotlin"
-                     key="inspection.replace.manual.range.with.indices.calls.display.name" bundle="messages.KotlinBundle"/>
-
     <localInspection implementationClass="org.jetbrains.kotlin.idea.inspections.branchedTransformations.IfThenToElvisInspection"
                      groupPath="Kotlin"
                      groupBundle="messages.KotlinBundle" groupKey="group.names.style.issues"
@@ -1340,7 +1332,7 @@
                      enabledByDefault="true"
                      level="WARNING"
                      language="kotlin"
-                     key="inspection.useless.call.on.not.null.display.name" bundle="messages.KotlinBundle"/>
+                     key="inspection.redundant.call.on.not.null.display.name" bundle="messages.KotlinBundle"/>
 
     <localInspection implementationClass="org.jetbrains.kotlin.idea.inspections.RedundantExplicitTypeInspection"
                      groupPath="Kotlin"
@@ -1356,7 +1348,7 @@
                      enabledByDefault="true"
                      level="WARNING"
                      language="kotlin"
-                     key="inspection.useless.call.on.collection.display.name" bundle="messages.KotlinBundle"/>
+                     key="inspection.redundant.call.on.collection.display.name" bundle="messages.KotlinBundle"/>
 
     <localInspection implementationClass="org.jetbrains.kotlin.idea.inspections.collections.SimplifiableCallChainInspection"
                      groupPath="Kotlin"
@@ -1491,14 +1483,6 @@
                      language="kotlin"
                      cleanupTool="true"
                      key="inspection.self.assignment.display.name" bundle="messages.KotlinBundle"/>
-
-    <localInspection implementationClass="org.jetbrains.kotlin.idea.inspections.ImplicitNullableNothingTypeInspection"
-                     groupPath="Kotlin"
-                     groupBundle="messages.KotlinBundle" groupKey="group.names.probable.bugs"
-                     enabledByDefault="true"
-                     level="WEAK WARNING"
-                     language="kotlin"
-                     key="inspection.implicit.nullable.nothing.type.display.name" bundle="messages.KotlinBundle"/>
 
     <localInspection implementationClass="org.jetbrains.kotlin.idea.inspections.JavaCollectionsStaticMethodInspection"
                      groupPath="Kotlin"
@@ -1828,14 +1812,6 @@
                      language="kotlin"
                      key="inspection.simplifiable.call.display.name" bundle="messages.KotlinBundle"/>
 
-    <localInspection implementationClass="org.jetbrains.kotlin.idea.inspections.SafeCastWithReturnInspection"
-                     groupPath="Kotlin"
-                     groupBundle="messages.KotlinBundle" groupKey="group.names.style.issues"
-                     enabledByDefault="true"
-                     level="WEAK WARNING"
-                     language="kotlin"
-                     key="inspection.safe.cast.with.return.display.name" bundle="messages.KotlinBundle"/>
-
     <localInspection implementationClass="org.jetbrains.kotlin.idea.inspections.RemoveEmptyParenthesesFromAnnotationEntryInspection"
                      groupPath="Kotlin"
                      groupBundle="messages.KotlinBundle" groupKey="group.names.style.issues"
@@ -2104,14 +2080,6 @@
                      language="kotlin"
                      key="floating.point.literal.precision.inspection.display.name" bundle="messages.KotlinBundle"/>
 
-    <localInspection implementationClass="org.jetbrains.kotlin.idea.inspections.ReplaceMapIndexedWithListGeneratorInspection"
-                     groupPath="Kotlin"
-                     groupBundle="messages.KotlinBundle" groupKey="group.names.style.issues"
-                     enabledByDefault="true"
-                     level="WEAK WARNING"
-                     language="kotlin"
-                     key="inspection.replace.mapIndexed.with.list.generator.display.name" bundle="messages.KotlinBundle"/>
-
     <localInspection implementationClass="org.jetbrains.kotlin.idea.inspections.ReplaceWithImportAliasInspection"
                      groupPath="Kotlin"
                      groupBundle="messages.KotlinBundle" groupKey="group.names.style.issues"
@@ -2162,15 +2130,6 @@
                      level="WEAK WARNING"
                      language="kotlin"
                      key="inspection.verbose.nullability.and.emptiness.display.name" bundle="messages.KotlinBundle"/>
-
-    <localInspection implementationClass="org.jetbrains.kotlin.idea.inspections.ReplaceWithStringBuilderAppendRangeInspection"
-                     groupPath="Kotlin"
-                     groupBundle="messages.KotlinBundle" groupKey="group.names.other.problems"
-                     enabledByDefault="true"
-                     cleanupTool="true"
-                     level="WARNING"
-                     language="kotlin"
-                     key="inspection.replace.with.string.builder.append.range.display.name" bundle="messages.KotlinBundle"/>
 
     <localInspection implementationClass="org.jetbrains.kotlin.idea.inspections.NonExternalClassifierExtendingStateOrPropsInspection"
                      groupPath="Kotlin,React"

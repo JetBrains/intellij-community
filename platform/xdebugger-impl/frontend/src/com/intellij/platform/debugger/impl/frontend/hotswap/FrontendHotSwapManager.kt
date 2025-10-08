@@ -4,10 +4,10 @@ package com.intellij.platform.debugger.impl.frontend.hotswap
 import com.intellij.openapi.components.Service
 import com.intellij.openapi.components.service
 import com.intellij.openapi.project.Project
+import com.intellij.platform.debugger.impl.frontend.durableWithStateReset
 import com.intellij.platform.project.projectId
 import com.intellij.xdebugger.impl.hotswap.NOTIFICATION_TIME_SECONDS
 import com.intellij.xdebugger.impl.rpc.*
-import fleet.rpc.client.durable
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.delay
@@ -22,17 +22,17 @@ import kotlin.time.Duration.Companion.seconds
 internal class FrontendHotSwapManager(private val project: Project, val coroutineScope: CoroutineScope) {
   private val frontendStatusFlow = MutableStateFlow(null as XDebugHotSwapCurrentSessionStatus?).also { flow ->
     coroutineScope.launch {
-      val statusFlow = durable {
-        XDebuggerHotSwapApi.getInstance().currentSessionStatus(project.projectId())
-      }
-      statusFlow.collectLatest { state ->
-        flow.value = state
-        // clear success status after delay
-        if (state?.status == HotSwapVisibleStatus.SUCCESS) {
-          delay(NOTIFICATION_TIME_SECONDS.seconds)
-          flow.compareAndSet(state, state.copy(status = HotSwapVisibleStatus.NO_CHANGES))
+      durableWithStateReset(block = {
+        val statusFlow = XDebuggerHotSwapApi.getInstance().currentSessionStatus(project.projectId())
+        statusFlow.collectLatest { state ->
+          flow.value = state
+          // clear success status after delay
+          if (state?.status == HotSwapVisibleStatus.SUCCESS) {
+            delay(NOTIFICATION_TIME_SECONDS.seconds)
+            flow.compareAndSet(state, state.copy(status = HotSwapVisibleStatus.NO_CHANGES))
+          }
         }
-      }
+      }, stateReset = { flow.value = null })
     }
   }
 

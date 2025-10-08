@@ -78,6 +78,7 @@ class BuildScriptDataBuilder(
   override fun addRepository(repository: String): BuildScriptDataBuilder = apply { backend.addRepository(repository) }
   override fun withRepository(configure: GradleScriptTreeBuilder.() -> Unit): BuildScriptDataBuilder = apply { backend.withRepository(configure) }
   override fun withRepository(configure: Consumer<GradleScriptTreeBuilder>): BuildScriptDataBuilder = apply { backend.withRepository(configure) }
+  override fun withExtension(name: String, configure: GradleScriptTreeBuilder.() -> Unit): BuildScriptDataBuilder = apply { backend.withExtension(name, configure) }
   override fun addPostfix(vararg postfix: String): BuildScriptDataBuilder = apply { backend.addPostfix(*postfix) }
   override fun withPostfix(configure: GradleScriptTreeBuilder.() -> Unit): BuildScriptDataBuilder = apply { backend.withPostfix(configure) }
   override fun withPostfix(configure: Consumer<GradleScriptTreeBuilder>): BuildScriptDataBuilder = apply { backend.withPostfix(configure) }
@@ -88,7 +89,9 @@ class BuildScriptDataBuilder(
   override fun addVersion(version: String): BuildScriptDataBuilder = apply { backend.addVersion(version) }
   override fun registerTask(name: String, type: String?, configure: GradleScriptTreeBuilder.() -> Unit): BuildScriptDataBuilder = apply { backend.registerTask(name, type, configure) }
   override fun configureTask(name: String, type: String, configure: GradleScriptTreeBuilder.() -> Unit): BuildScriptDataBuilder = apply { backend.configureTask(name, type, configure) }
-  override fun configureTestTask(configure: GradleScriptTreeBuilder.() -> Unit): BuildScriptDataBuilder = apply { backend.configureTestTask(configure) }
+  override fun test(configure: GradleScriptTreeBuilder.() -> Unit): BuildScriptDataBuilder = apply { backend.test(configure) }
+  override fun compileJava(configure: GradleScriptTreeBuilder.() -> Unit): BuildScriptDataBuilder = apply { backend.compileJava(configure) }
+  override fun compileTestJava(configure: GradleScriptTreeBuilder.() -> Unit): BuildScriptDataBuilder = apply { backend.compileTestJava(configure) }
   override fun addDependency(scope: String, dependency: String, sourceSet: String?): BuildScriptDataBuilder = apply { backend.addDependency(scope, dependency, sourceSet) }
   override fun addDependency(scope: String, dependency: Expression, sourceSet: String?): BuildScriptDataBuilder = apply { backend.addDependency(scope, dependency, sourceSet) }
   override fun addApiDependency(dependency: String, sourceSet: String?): BuildScriptDataBuilder = apply { backend.addApiDependency(dependency, sourceSet) }
@@ -110,9 +113,12 @@ class BuildScriptDataBuilder(
   override fun applyPlugin(plugin: String): BuildScriptDataBuilder = apply { backend.applyPlugin(plugin) }
   override fun applyPluginFrom(path: String): BuildScriptDataBuilder = apply { backend.applyPluginFrom(path) }
   override fun withPlugin(id: String, version: String?): BuildScriptDataBuilder = apply { backend.withPlugin(id, version) }
+  override fun withJava(configure: GradleScriptTreeBuilder.() -> Unit): BuildScriptDataBuilder = apply { backend.withJava(configure) }
   override fun withJavaPlugin(): BuildScriptDataBuilder = apply { backend.withJavaPlugin() }
   override fun withJavaLibraryPlugin(): BuildScriptDataBuilder = apply { backend.withJavaLibraryPlugin() }
+  override fun withJavaToolchain(languageVersion: Int): BuildScriptDataBuilder = apply { backend.withJavaToolchain(languageVersion) }
   override fun withIdeaPlugin(): BuildScriptDataBuilder = apply { backend.withIdeaPlugin() }
+  override fun withKotlin(configure: GradleScriptTreeBuilder.() -> Unit): BuildScriptDataBuilder = apply { backend.withKotlin(configure) }
   override fun withKotlinJvmPlugin(): BuildScriptDataBuilder = apply { backend.withKotlinJvmPlugin() }
   override fun withKotlinJvmPlugin(version: String?): BuildScriptDataBuilder = apply { backend.withKotlinJvmPlugin(version) }
   override fun withKotlinJsPlugin(): BuildScriptDataBuilder = apply { backend.withKotlinJsPlugin() }
@@ -121,18 +127,16 @@ class BuildScriptDataBuilder(
   override fun withKotlinJvmToolchain(jvmTarget: Int): BuildScriptDataBuilder = apply { backend.withKotlinJvmToolchain(jvmTarget) }
   override fun withGroovyPlugin(): BuildScriptDataBuilder = apply { backend.withGroovyPlugin() }
   override fun withGroovyPlugin(version: String): BuildScriptDataBuilder = apply { backend.withGroovyPlugin(version) }
+  override fun withApplicationPlugin(): BuildScriptDataBuilder = apply { backend.withApplicationPlugin() }
+  override fun withApplication(configure: GradleScriptTreeBuilder.() -> Unit): BuildScriptDataBuilder = apply { backend.withApplication(configure) }
   override fun withApplicationPlugin(mainClass: String?, mainModule: String?, executableDir: String?, defaultJvmArgs: List<String>?): BuildScriptDataBuilder =
     apply { backend.withApplicationPlugin(mainClass, mainModule, executableDir, defaultJvmArgs) }
   override fun withKotlinTest(): BuildScriptDataBuilder = apply { backend.withKotlinTest() }
   override fun withJUnit(): BuildScriptDataBuilder = apply { backend.withJUnit() }
   override fun withJUnit4(): BuildScriptDataBuilder = apply { backend.withJUnit4() }
   override fun withJUnit5(): BuildScriptDataBuilder = apply { backend.withJUnit5() }
-  override fun withJava(configure: GradleScriptTreeBuilder.() -> Unit): BuildScriptDataBuilder = apply { backend.withJava(configure) }
-  override fun withJava(configure: Consumer<GradleScriptTreeBuilder>): BuildScriptDataBuilder = apply { backend.withJava(configure) }
   override fun targetCompatibility(level: String): BuildScriptDataBuilder = apply { backend.targetCompatibility(level) }
   override fun sourceCompatibility(level: String): BuildScriptDataBuilder = apply { backend.sourceCompatibility(level) }
-  override fun withKotlin(configure: GradleScriptTreeBuilder.() -> Unit): BuildScriptDataBuilder = apply { backend.withKotlin(configure) }
-  override fun withKotlin(configure: Consumer<GradleScriptTreeBuilder>): BuildScriptDataBuilder = apply { backend.withKotlin(configure) }
 
   override fun project(name: String): Expression = backend.project(name)
   override fun project(name: String, configuration: String): Expression = backend.project(name, configuration)

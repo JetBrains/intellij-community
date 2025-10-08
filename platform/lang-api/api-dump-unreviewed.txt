@@ -1168,22 +1168,6 @@ a:com.intellij.execution.ExecutionTargetProvider
 - sf:EXTENSION_NAME:com.intellij.openapi.extensions.ExtensionPointName
 - <init>():V
 - a:getTargets(com.intellij.openapi.project.Project,com.intellij.execution.configurations.RunConfiguration):java.util.List
-f:com.intellij.execution.RunConfigurationConfigurableAdapter
-- com.intellij.openapi.options.SettingsEditorConfigurable
-- <init>(com.intellij.openapi.options.SettingsEditor,com.intellij.execution.configurations.RunConfiguration):V
-- getConfiguration():com.intellij.execution.configurations.RunConfiguration
-- getDisplayName():java.lang.String
-f:com.intellij.execution.RunConfigurationProducerService
-- com.intellij.openapi.components.PersistentStateComponent
-- <init>():V
-- addIgnoredProducer(java.lang.Class):V
-- s:getInstance(com.intellij.openapi.project.Project):com.intellij.execution.RunConfigurationProducerService
-- getState():com.intellij.execution.RunConfigurationProducerService$State
-- isIgnored(com.intellij.execution.actions.RunConfigurationProducer):Z
-- loadState(com.intellij.execution.RunConfigurationProducerService$State):V
-f:com.intellij.execution.RunConfigurationProducerService$State
-- ignoredProducers:java.util.Set
-- <init>():V
 f:com.intellij.execution.RunnerRegistry
 - <init>():V
 - s:getInstance():com.intellij.execution.RunnerRegistry
@@ -1301,24 +1285,15 @@ a:com.intellij.execution.actions.RunConfigurationProducer
 a:com.intellij.execution.dashboard.RunDashboardCustomizer
 - sf:NODE_LINKS:com.intellij.openapi.util.Key
 - <init>():V
-- canDrop(com.intellij.execution.dashboard.RunDashboardRunConfigurationNode,com.intellij.ide.dnd.DnDEvent):Z
-- drop(com.intellij.execution.dashboard.RunDashboardRunConfigurationNode,com.intellij.ide.dnd.DnDEvent):V
-- getChildren(com.intellij.execution.dashboard.RunDashboardRunConfigurationNode):java.util.Collection
-- getPsiElement(com.intellij.execution.dashboard.RunDashboardRunConfigurationNode):com.intellij.psi.PsiElement
-- getStatus(com.intellij.execution.dashboard.RunDashboardRunConfigurationNode):com.intellij.execution.dashboard.RunDashboardRunConfigurationStatus
 - a:isApplicable(com.intellij.execution.RunnerAndConfigurationSettings,com.intellij.execution.ui.RunContentDescriptor):Z
 - updatePresentation(com.intellij.ide.projectView.PresentationData,com.intellij.execution.dashboard.RunDashboardRunConfigurationNode):Z
 com.intellij.execution.dashboard.RunDashboardGroup
 - a:getIcon():javax.swing.Icon
 - a:getName():java.lang.String
-com.intellij.execution.dashboard.RunDashboardGroupingRule
-- a:getGroup(com.intellij.ide.util.treeView.AbstractTreeNode):com.intellij.execution.dashboard.RunDashboardGroup
-- a:getName():java.lang.String
 com.intellij.execution.dashboard.RunDashboardNode
 - getContent():com.intellij.ui.content.Content
 - getDescriptor():com.intellij.execution.ui.RunContentDescriptor
 - a:getProject():com.intellij.openapi.project.Project
-- getRemover():java.lang.Runnable
 c:com.intellij.execution.dashboard.RunDashboardRunConfigurationStatus
 - com.intellij.ide.util.treeView.WeighedItem
 - sf:CONFIGURED:com.intellij.execution.dashboard.RunDashboardRunConfigurationStatus
@@ -1329,7 +1304,6 @@ c:com.intellij.execution.dashboard.RunDashboardRunConfigurationStatus
 - getIcon():javax.swing.Icon
 - getId():java.lang.String
 - getName():java.lang.String
-- s:getStatus(com.intellij.execution.dashboard.RunDashboardRunConfigurationNode):com.intellij.execution.dashboard.RunDashboardRunConfigurationStatus
 - s:getStatusById(java.lang.String):com.intellij.execution.dashboard.RunDashboardRunConfigurationStatus
 - getWeight():I
 c:com.intellij.execution.filters.CompositeFilter
@@ -1677,12 +1651,8 @@ c:com.intellij.execution.util.EnvVariablesTable
 - p:createElement():com.intellij.execution.util.EnvironmentVariable
 - p:createExtraToolbarActions():com.intellij.openapi.actionSystem.AnAction[]
 - p:createListModel():com.intellij.util.ui.ListTableModel
-- editVariableName(com.intellij.execution.util.EnvironmentVariable):V
 - getComponent():javax.swing.JComponent
-- getEnvironmentVariables():java.util.List
 - p:isEmpty(com.intellij.execution.util.EnvironmentVariable):Z
-- s:parseEnvsFromText(java.lang.String):java.util.Map
-- setPasteActionEnabled(Z):V
 - setValues(java.util.List):V
 pc:com.intellij.execution.util.EnvVariablesTable$NameColumnInfo
 - com.intellij.execution.util.ListTableWithButtons$ElementsColumnInfoBase
@@ -4685,10 +4655,6 @@ f:com.intellij.refactoring.suggested.SuggestedChangeSignatureData
 f:com.intellij.refactoring.suggested.SuggestedChangeSignatureData$Companion
 - f:create(com.intellij.refactoring.suggested.SuggestedRefactoringState,java.lang.String):com.intellij.refactoring.suggested.SuggestedChangeSignatureData
 a:com.intellij.refactoring.suggested.SuggestedRefactoringAvailability
-- sf:Companion:com.intellij.refactoring.suggested.SuggestedRefactoringAvailability$Companion
-- sf:IMPLEMENTATIONS:java.lang.String
-- sf:OVERRIDES:java.lang.String
-- sf:USAGES:java.lang.String
 - <init>(com.intellij.refactoring.suggested.SuggestedRefactoringSupport):V
 - amendStateInBackground(com.intellij.refactoring.suggested.SuggestedRefactoringState):java.util.Iterator
 - a:detectAvailableRefactoring(com.intellij.refactoring.suggested.SuggestedRefactoringState):com.intellij.refactoring.suggested.SuggestedRefactoringData
@@ -4700,7 +4666,6 @@ a:com.intellij.refactoring.suggested.SuggestedRefactoringAvailability
 - pf:nameChanges(com.intellij.refactoring.suggested.SuggestedRefactoringSupport$Signature,com.intellij.refactoring.suggested.SuggestedRefactoringSupport$Signature,com.intellij.psi.PsiElement,java.util.List):kotlin.Pair
 - refineSignaturesWithResolve(com.intellij.refactoring.suggested.SuggestedRefactoringState):com.intellij.refactoring.suggested.SuggestedRefactoringState
 - shouldSuppressRefactoringForDeclaration(com.intellij.refactoring.suggested.SuggestedRefactoringState):Z
-f:com.intellij.refactoring.suggested.SuggestedRefactoringAvailability$Companion
 c:com.intellij.refactoring.suggested.SuggestedRefactoringAvailability$RenameOnly
 - com.intellij.refactoring.suggested.SuggestedRefactoringAvailability
 - <init>(com.intellij.refactoring.suggested.SuggestedRefactoringSupport):V
@@ -4885,7 +4850,6 @@ f:com.intellij.refactoring.suggested.TextRangeUtilsKt
 f:com.intellij.refactoring.suggested.UtilsKt
 - sf:createSmartPointer(com.intellij.psi.PsiElement):com.intellij.psi.SmartPsiElementPointer
 - sf:getEndOffset(com.intellij.psi.PsiElement):I
-- sf:getNewRange(com.intellij.openapi.editor.event.DocumentEvent):com.intellij.openapi.util.TextRange
 - sf:getOldRange(com.intellij.openapi.editor.event.DocumentEvent):com.intellij.openapi.util.TextRange
 - sf:getRange(com.intellij.openapi.editor.RangeMarker):com.intellij.openapi.util.TextRange
 - sf:getStartOffset(com.intellij.psi.PsiElement):I
@@ -4943,11 +4907,6 @@ c:com.intellij.task.ProjectTaskContext
 - <init>(java.lang.Object,com.intellij.execution.configurations.RunConfiguration):V
 - <init>(java.lang.Object,com.intellij.execution.configurations.RunConfiguration,Z):V
 - <init>(Z):V
-- getDirtyOutputPaths():java.util.Optional
-- getRunConfiguration():com.intellij.execution.configurations.RunConfiguration
-- getSessionId():java.lang.Object
-- isAutoRun():Z
-- withUserData(com.intellij.openapi.util.Key,java.lang.Object):com.intellij.task.ProjectTaskContext
 Fa:com.intellij.task.ProjectTaskManager
 - sf:EMPTY_TASKS_ARRAY:com.intellij.task.ProjectTask[]
 - <init>(com.intellij.openapi.project.Project):V

@@ -1,7 +1,10 @@
 // Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.tools.model.updater
 
-import java.io.File
+import kotlin.io.path.ExperimentalPathApi
+import kotlin.io.path.Path
+import kotlin.io.path.copyToRecursively
+import kotlin.io.path.isDirectory
 
 /**
  * We have to do the manual copying of Kotlin bootstrap artifacts from the 
@@ -20,20 +23,25 @@ internal fun copyBootstrapArtifactsToMavenRepositoryIfExists() {
         return
     }
     
-    println("Custom Kotlin bootstrap location: $bootstrapLocation; trying to copy artifacts to Maven repository")
+    println("Custom Kotlin bootstrap location: $bootstrapLocation; trying to copy artifacts to Maven repository...")
     
-    val bootstrapDir = File(bootstrapLocation).absoluteFile
+    val bootstrapDir = Path(bootstrapLocation).toAbsolutePath().normalize()
 
-    if (!bootstrapDir.isDirectory) {
-        println("WARN: Bootstrap location does not exist or is not a directory, skipping copy: ${bootstrapDir}")
+    if (!bootstrapDir.isDirectory()) {
+        System.err.println("Bootstrap location does not exist or is not a directory, skipping copy: ${bootstrapDir}")
         return
     }
-    
-    val mavenRepository = File(System.getProperty("user.home")).resolve(".m2").resolve("repository").absoluteFile
 
-    println("Copying bootstrap artifacts from $bootstrapLocation to $mavenRepository")
+    val mavenRepository = Path(System.getProperty("user.home"))
+        .resolve(".m2")
+        .resolve("repository")
+        .toAbsolutePath()
+        .normalize()
 
-    bootstrapDir.copyRecursively(mavenRepository, overwrite = true)
+    println("Copying bootstrap artifacts from $bootstrapLocation to $mavenRepository...")
+
+    @OptIn(ExperimentalPathApi::class)
+    bootstrapDir.copyToRecursively(mavenRepository, followLinks = false, overwrite = true)
     
     println("Kotlin bootstrap artifacts copy completed")
 }

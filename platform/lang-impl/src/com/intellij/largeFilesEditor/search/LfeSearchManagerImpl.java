@@ -4,6 +4,7 @@ package com.intellij.largeFilesEditor.search;
 import com.intellij.codeInsight.hint.HintManager;
 import com.intellij.codeInsight.hint.HintManagerImpl;
 import com.intellij.codeInsight.hint.HintUtil;
+import com.intellij.find.EditorSearchSession;
 import com.intellij.find.FindUsagesCollector;
 import com.intellij.find.SearchReplaceComponent;
 import com.intellij.find.impl.RegExHelpPopup;
@@ -318,7 +319,7 @@ public final class LfeSearchManagerImpl implements LfeSearchManager, CloseSearch
         if (options.loopedPhase) {
           setNewStatusText(EditorBundle.message("large.file.editor.message.search.is.completed.and.no.more.matches"));
           mySearchReplaceComponent.setNotFoundBackground();
-          if (!(largeFileEditor.getEditor().getHeaderComponent() instanceof SearchReplaceComponent)) {
+          if (EditorSearchSession.getSearchReplaceComponent(largeFileEditor.getEditor()) == null) {
             String message = EditorBundle.message("large.file.editor.message.some.string.not.found", options.stringToFind);
             showSimpleHintInEditor(message, largeFileEditor.getEditor());
           }
@@ -388,7 +389,7 @@ public final class LfeSearchManagerImpl implements LfeSearchManager, CloseSearch
         .getInstance(largeFileEditor.getProject())
         .requestFocus(largeFileEditor.getEditor().getContentComponent(), false);
       largeFileEditor.getEditorModel().setHighlightingCloseSearchResultsEnabled(false);
-      if (largeFileEditor.getEditor().getHeaderComponent() instanceof SearchReplaceComponent) {
+      if (EditorSearchSession.getSearchReplaceComponent(largeFileEditor.getEditor()) != null) {
         largeFileEditor.getEditor().setHeaderComponent(null);
       }
     }

@@ -450,6 +450,13 @@ public final class DebuggerUtilsAsync {
     return toCompletableFuture(() -> request.setEnabled(value));
   }
 
+  public static CompletableFuture<Void> suspend(VirtualMachine vm) {
+    if (vm instanceof VirtualMachineImpl && isAsyncEnabled()) {
+      return reschedule(((VirtualMachineImpl)vm).suspendAsync());
+    }
+    return toCompletableFuture(() -> vm.suspend());
+  }
+
   public static CompletableFuture<Void> resume(VirtualMachine vm) {
     if (vm instanceof VirtualMachineImpl && isAsyncEnabled()) {
       return ((VirtualMachineImpl)vm).resumeAsync();

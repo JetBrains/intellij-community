@@ -78,6 +78,7 @@ import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.DisposableWrapperList;
 import com.intellij.util.lang.JavaVersion;
 import com.intellij.util.system.OS;
+import com.intellij.util.ui.EDT;
 import com.intellij.util.ui.UIUtil;
 import com.intellij.xdebugger.XDebugSession;
 import com.intellij.xdebugger.XDebuggerBundle;
@@ -123,8 +124,8 @@ import java.util.function.Consumer;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
+import static com.intellij.debugger.engine.DebuggerUtils.forEachSafe;
 import static com.intellij.debugger.engine.MethodInvokeUtilsKt.tryInvokeWithHelper;
-import static com.intellij.debugger.impl.DebuggerUtilsImpl.forEachSafe;
 
 public abstract class DebugProcessImpl extends UserDataHolderBase implements DebugProcess {
   private static final Logger LOG = Logger.getInstance(DebugProcessImpl.class);
@@ -174,6 +175,8 @@ public abstract class DebugProcessImpl extends UserDataHolderBase implements Deb
 
   final SteppingProgressTracker mySteppingProgressTracker = new SteppingProgressTracker(this);
 
+  protected final @NotNull RunToCursorManager myRunToCursorManager;
+
   // These 2 fields are needs to switching from found suspend-thread context to user-friendly suspend-all context.
   // The main related logic is in [SuspendOtherThreadsRequestor].
   volatile ParametersForSuspendAllReplacing myParametersForSuspendAllReplacing = null;
@@ -192,6 +195,8 @@ public abstract class DebugProcessImpl extends UserDataHolderBase implements Deb
       .childScope(projectScope, "DebugProcessImpl", EmptyCoroutineContext.INSTANCE, true);
     myDebuggerManagerThread = createManagerThread();
     myShowStatusManager = new ShowStatusManager(project, myCoroutineScope);
+    myRunToCursorManager = new RunToCursorManager(this, myCoroutineScope);
+
     requestManager = new RequestManagerImpl(this);
     NodeRendererSettings.getInstance().addListener(this::reloadRenderers, disposable);
     NodeRenderer.EP_NAME.addChangeListener(this::reloadRenderers, disposable);
@@ -681,6 +686,12 @@ public abstract class DebugProcessImpl extends UserDataHolderBase implements Deb
     }
   }
 
+  @Nullable
+  private String getConnectorArgument(String name) {
+    Connector.Argument argument = myArguments.get(name);
+    return argument != null ? argument.value() : null;
+  }
+
   private void setConnectorArgument(String name, String value) {
     Connector.Argument argument = myArguments.get(name);
     if (argument != null) {
@@ -715,7 +726,7 @@ public abstract class DebugProcessImpl extends UserDataHolderBase implements Deb
         // It's a known macOS sandbox restriction.
         // https://github.com/bazelbuild/bazel/issues/5206#issuecomment-402398624
         // This code tries to keep involvement with production flow to a bare minimum
-        String localAddress = myArguments.get("localAddress").value();
+        String localAddress = getConnectorArgument("localAddress");
         if (BazelEnvironmentUtil.isBazelTestRun() &&
             OS.CURRENT == OS.macOS &&
             ("localhost".equals(localAddress) || "127.0.0.1".equals(localAddress))) {
@@ -765,7 +776,7 @@ public abstract class DebugProcessImpl extends UserDataHolderBase implements Deb
       // It's a known macOS sandbox restriction.
       // https://github.com/bazelbuild/bazel/issues/5206#issuecomment-402398624
       // This code tries to keep involvement with production flow to a bare minimum
-      String localAddress = myArguments.get("hostname").value();
+      String localAddress = getConnectorArgument("hostname");
       if (BazelEnvironmentUtil.isBazelTestRun() &&
           OS.CURRENT == OS.macOS &&
           ("localhost".equals(localAddress) || "127.0.0.1".equals(localAddress))) {
@@ -1165,6 +1176,11 @@ public abstract class DebugProcessImpl extends UserDataHolderBase implements Deb
     requestManager.setThreadFilter(null);
   }
 
+  /**
+   * Prefer using {@link SuspendContextImpl#getManagerThread()},
+   * {@link EvaluationContextImpl#getManagerThread()},
+   * or {@link DebuggerContextImpl#getManagerThread()} instead.
+   */
   @ApiStatus.Obsolete
   @Override
   public final @NotNull DebuggerManagerThreadImpl getManagerThread() {
@@ -1420,33 +1436,6 @@ public abstract class DebugProcessImpl extends UserDataHolderBase implements Deb
       context.getManagerThread().startLongProcessAndFork(() -> {
         try {
           try {
-            if (myMethod.isVarArgs()) {
-              // See IDEA-63581
-              // if vararg parameter array is of interface type and Object[] is expected, JDI wrap it into another array,
-              // in this case we have to unroll the array manually and pass its elements to the method instead of array object
-              int lastIndex = myMethod.argumentTypeNames().size() - 1;
-              if (lastIndex >= 0 && myArgs.size() > lastIndex) { // at least one varargs param
-                Object firstVararg = myArgs.get(lastIndex);
-                if (myArgs.size() == lastIndex + 1) { // only one vararg param
-                  if (firstVararg instanceof ArrayReference arrayRef) {
-                    if (((ArrayType)arrayRef.referenceType()).componentType() instanceof InterfaceType) {
-                      List<String> argTypes = myMethod.argumentTypeNames();
-                      if (argTypes.size() > lastIndex && argTypes.get(lastIndex).startsWith(CommonClassNames.JAVA_LANG_OBJECT)) {
-                        // unwrap array of interfaces for vararg param
-                        myArgs.remove(lastIndex);
-                        myArgs.addAll(arrayRef.getValues());
-                      }
-                    }
-                  }
-                }
-              }
-            }
-
-            if (!Patches.IBM_JDK_DISABLE_COLLECTION_BUG) {
-              // ensure args are not collected
-              StreamEx.of(myArgs).select(ObjectReference.class).forEach(DebuggerUtilsEx::disableCollection);
-            }
-
             if (Patches.JDK_BUG_ID_21275177 && (ourTraceMask & VirtualMachine.TRACE_SENDS) != 0) {
               //noinspection ResultOfMethodCallIgnored
               StreamEx.of(myArgs).nonNull().forEach(Object::toString);
@@ -1469,11 +1458,6 @@ public abstract class DebugProcessImpl extends UserDataHolderBase implements Deb
           finally {
             if (Patches.JDK_BUG_WITH_TRACE_SEND && (getTraceMask() & VirtualMachine.TRACE_SENDS) != 0) {
               myMethod.virtualMachine().setDebugTraceMode(getTraceMask());
-            }
-            //  assertThreadSuspended(thread, context);
-            if (!Patches.IBM_JDK_DISABLE_COLLECTION_BUG) {
-              // ensure args are not collected
-              StreamEx.of(myArgs).select(ObjectReference.class).forEach(DebuggerUtilsEx::enableCollection);
             }
           }
         }
@@ -2151,6 +2135,7 @@ public abstract class DebugProcessImpl extends UserDataHolderBase implements Deb
       final DebugProcessImpl debugProcess = context.getDebugProcess();
 
       if (shouldExecuteRegardlessOfRequestWarnings() || debugProcess.getRequestsManager().getWarning(myRunToCursorBreakpoint) == null) {
+        myRunToCursorManager.onRunToCursorCommandStarted();
         super.contextAction(context);
       }
       else {
@@ -2232,7 +2217,7 @@ public abstract class DebugProcessImpl extends UserDataHolderBase implements Deb
 
     protected void beforeSteppingAction(SuspendContextImpl context) {
       if (context != null) {
-        DebuggerUtilsImpl.forEachSafe(SteppingListener.getExtensions(),
+        forEachSafe(SteppingListener.getExtensions(),
                                       listener -> listener.beforeSteppingStarted(context, getSteppingAction()));
       }
     }
@@ -2282,7 +2267,7 @@ public abstract class DebugProcessImpl extends UserDataHolderBase implements Deb
     public void contextAction(@NotNull SuspendContextImpl suspendContext) {
       showStatusText(JavaDebuggerBundle.message("status.process.resumed"));
       if (!(this instanceof StepCommand)) {
-        DebuggerUtilsImpl.forEachSafe(SteppingListener.getExtensions(), listener -> listener.beforeResume(suspendContext));
+        forEachSafe(SteppingListener.getExtensions(), listener -> listener.beforeResume(suspendContext));
       }
       resumeAction();
 
@@ -2378,7 +2363,7 @@ public abstract class DebugProcessImpl extends UserDataHolderBase implements Deb
       };
       var request = process.getRequestsManager().createMethodEntryRequest(requestor);
       request.setSuspendPolicy(EventRequest.SUSPEND_ALL);
-      request.setEnabled(true);
+      DebuggerUtilsAsync.setEnabled(request, true);
 
       long timeout = Registry.intValue("debugger.evaluate.on.pause.timeout.ms", 500);
       evaluatableContextObtained
@@ -3048,7 +3033,7 @@ public abstract class DebugProcessImpl extends UserDataHolderBase implements Deb
           BalloonBuilder balloonBuilder = JBPopupFactory.getInstance()
             .createHtmlTextBalloonBuilder(content, messageType, null)
             .setHideOnClickOutside(true)
-            .setDisposable(disposable)
+            .setDisposable(createEdtDisposable())
             .setHideOnFrameResize(false);
           Balloon balloon = balloonBuilder.createBalloon();
           balloon.show(new AnchoredPoint(AnchoredPoint.Anchor.TOP, target), Balloon.Position.above);
@@ -3078,6 +3063,25 @@ public abstract class DebugProcessImpl extends UserDataHolderBase implements Deb
 
   private record VirtualMachineData(VirtualMachineProxyImpl vm, RemoteConnection connection,
                                     DebuggerManagerThreadImpl debuggerManagerThread) {
+  }
+
+  private @NotNull Disposable createEdtDisposable() {
+    EDT.assertIsEdt();
+    Disposable result = Disposer.newCheckedDisposable();
+    boolean isSuccess = Disposer.tryRegister(disposable, new Disposable() {
+      @Override
+      public void dispose() {
+        ApplicationManager.getApplication().invokeLater(() -> {
+          Disposer.dispose(result);
+        });
+      }
+    });
+    if (!isSuccess) {
+      ApplicationManager.getApplication().invokeLater(() -> {
+        Disposer.dispose(result);
+      });
+    }
+    return result;
   }
 
   public void logError(@NotNull String message, @NotNull Attachment attachment) {

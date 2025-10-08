@@ -54,7 +54,7 @@ jvm_library(
     "//platform/core-api:core",
     "//platform/testFramework",
     "//platform/testFramework:testFramework_test_lib",
-    "@lib//:gson",
+    "//libraries/gson",
     "//plugins/kotlin/idea/tests:tests_test_lib",
   ]
 )

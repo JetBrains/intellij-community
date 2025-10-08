@@ -1,9 +1,9 @@
 ### auto-generated section `build intellij.textmate.common` start
-load("@rules_jvm//:jvm.bzl", "jvm_library", "jvm_resources")
+load("@rules_jvm//:jvm.bzl", "jvm_library", "resourcegroup")
 
-jvm_resources(
+resourcegroup(
   name = "common_resources",
-  files = glob(["resources/**/*"]),
+  srcs = glob(["resources/**/*"]),
   strip_prefix = "resources"
 )
 
@@ -11,10 +11,8 @@ jvm_library(
   name = "common",
   visibility = ["//visibility:public"],
   srcs = glob([], allow_empty = True),
+  resources = [":common_resources"],
   exports = ["//plugins/textmate"],
-  runtime_deps = [
-    ":common_resources",
-    "//plugins/textmate",
-  ]
+  runtime_deps = ["//plugins/textmate"]
 )
 ### auto-generated section `build intellij.textmate.common` end

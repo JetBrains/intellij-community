@@ -16,7 +16,7 @@ import kotlinx.serialization.json.JsonElement
 import kotlinx.serialization.json.encodeToJsonElement
 import org.jetbrains.plugins.terminal.TerminalBundle
 import org.jetbrains.plugins.terminal.TerminalProjectOptionsProvider
-import org.jetbrains.plugins.terminal.fus.TerminalFeedbackMoment
+import org.jetbrains.plugins.terminal.block.feedback.TerminalFeedbackUtils.getFeedbackMoment
 import org.jetbrains.plugins.terminal.fus.TerminalShellInfoStatistics
 
 internal class ReworkedTerminalFeedbackDialog(private val project: Project, forTest: Boolean) : BlockBasedFeedbackDialog<ReworkedTerminalUsageData>(project, forTest) {

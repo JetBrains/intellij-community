@@ -1,6 +1,6 @@
 ### auto-generated section `build kotlin.code-insight.inspections.k2` start
 load("//build:compiler-options.bzl", "create_kotlinc_options")
-load("@rules_jvm//:jvm.bzl", "jvm_library", "jvm_resources")
+load("@rules_jvm//:jvm.bzl", "jvm_library", "resourcegroup")
 
 create_kotlinc_options(
   name = "custom_kotlin-code-insight-inspections-k2",
@@ -14,9 +14,9 @@ create_kotlinc_options(
   x_context_parameters = True
 )
 
-jvm_resources(
+resourcegroup(
   name = "kotlin-code-insight-inspections-k2_resources",
-  files = glob(["resources/**/*"]),
+  srcs = glob(["resources/**/*"]),
   strip_prefix = "resources"
 )
 
@@ -25,10 +25,11 @@ jvm_library(
   module_name = "kotlin.code-insight.inspections.k2",
   visibility = ["//visibility:public"],
   srcs = glob(["src/**/*.kt", "src/**/*.java", "src/**/*.form"], allow_empty = True),
+  resources = [":kotlin-code-insight-inspections-k2_resources"],
   kotlinc_opts = ":custom_kotlin-code-insight-inspections-k2",
   deps = [
     "@lib//:kotlin-stdlib",
-    "@lib//:kotlin-reflect",
+    "//libraries/kotlin-reflect",
     "@lib//:kotlinc-kotlin-compiler-common",
     "@lib//:kotlinc-kotlin-compiler-fir",
     "@lib//:kotlinc-analysis-api",
@@ -53,7 +54,7 @@ jvm_library(
     "//platform/platform-impl:ide-impl",
     "//platform/editor-ui-api:editor-ui",
     "//java/java-psi-api:psi",
-    "@lib//:guava",
+    "//libraries/guava",
     "//plugins/kotlin/base/facet",
     "//java/java-impl:impl",
     "//plugins/kotlin/base/analysis",
@@ -77,7 +78,8 @@ jvm_library(
     "//plugins/kotlin/formatter/minimal",
     "//platform/ide-core",
     "//platform/core-ui",
-  ],
-  runtime_deps = [":kotlin-code-insight-inspections-k2_resources"]
+    "//plugins/kotlin/base/kdoc",
+    "//platform/code-style-api:codeStyle",
+  ]
 )
 ### auto-generated section `build kotlin.code-insight.inspections.k2` end

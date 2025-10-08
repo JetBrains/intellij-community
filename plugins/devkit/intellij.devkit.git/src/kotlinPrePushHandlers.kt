@@ -9,17 +9,6 @@ import com.intellij.openapi.util.registry.Registry
 import org.jetbrains.annotations.Nls
 import java.nio.file.Path
 
-internal class KotlinPluginPrePushHandler : IssueIDPrePushHandler() {
-  override val paths: List<String> = listOf("plugins/kotlin/")
-  override val pathsToIgnore = super.pathsToIgnore.toMutableList()
-    .apply { add("/fleet/plugins/kotlin/") }
-    .apply { add("/plugins/kotlin/jupyter/") }
-  override val commitMessageRegex = buildRegexFromAcceptableProjects()
-
-  override fun isAvailable(): Boolean = Registry.`is`("kotlin.commit.message.validation.enabled", true)
-  override fun getPresentableName(): String = DevKitGitBundle.message("push.commit.kotlin.handler.name")
-}
-
 internal class KotlinNotebookPluginPrePushHandler : IssueIDPrePushHandler() {
   override val paths: List<String> = listOf("plugins/kotlin/jupyter/")
   override val acceptableProjects: List<String> = super.acceptableProjects + listOf(

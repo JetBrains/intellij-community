@@ -13,7 +13,7 @@ jvm_library(
     "//platform/util/zip",
     "//platform/util/rt-java8",
     "@community//build:zip",
-    "@lib//:hash4j",
+    "//libraries/hash4j",
   ]
 )
 ### auto-generated section `build intellij.platform.util.immutableKeyValueStore.benchmark` end

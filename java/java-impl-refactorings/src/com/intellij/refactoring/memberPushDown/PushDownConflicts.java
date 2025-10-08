@@ -110,7 +110,7 @@ public class PushDownConflicts {
             if (unrelatedDefaults.size() > 1) {
               List<PsiClass> supers = new ArrayList<>(unrelatedDefaults);
               supers.sort(Comparator.comparing(PsiClass::getName));
-              PsiClass lastClass = supers.remove(supers.size() - 1);
+              PsiClass lastClass = supers.removeLast();
               myConflicts.putValue(member, StringUtil
                 .capitalize(JavaRefactoringBundle
                               .message("push.down.unrelated.defaults.conflict", RefactoringUIUtil.getDescription(myClass, false),

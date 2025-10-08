@@ -15,7 +15,7 @@
     <orderEntry type="module" module-name="intellij.platform.lang.core" />
     <orderEntry type="module" module-name="intellij.platform.lang.impl" scope="PROVIDED" />
     <orderEntry type="module" module-name="intellij.platform.execution.impl" scope="PROVIDED" />
-    <orderEntry type="library" name="Guava" level="project" />
+    <orderEntry type="module" module-name="intellij.libraries.guava" />
     <orderEntry type="module" module-name="intellij.platform.projectModel" />
     <orderEntry type="module" module-name="intellij.python.community.impl" scope="PROVIDED" />
     <orderEntry type="module" module-name="intellij.platform.core.ui" scope="PROVIDED" />

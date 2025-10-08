@@ -1,6 +1,7 @@
 // Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.xdebugger.impl.breakpoints
 
+import com.intellij.openapi.editor.Document
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.TextRange
 import com.intellij.openapi.vfs.VirtualFile
@@ -15,22 +16,22 @@ interface XLineBreakpointInlineVariantProxy {
   val highlightRange: TextRange?
   val icon: Icon
   val tooltipDescription: String
-  fun createBreakpoint(project: Project, file: VirtualFile, line: Int)
+  fun createBreakpoint(project: Project, file: VirtualFile, document: Document, line: Int)
+}
 
-  data class Monolith(val variant: XLineBreakpointType<*>.XLineBreakpointVariant) : XLineBreakpointInlineVariantProxy {
-    override val highlightRange: TextRange?
-      get() = variant.highlightRange
-    override val icon: Icon
-      get() = variant.type.enabledIcon
-    override val tooltipDescription: String
-      get() = variant.tooltipDescription
+private data class MonolithXLineBreakpointInlineVariantProxy(val variant: XLineBreakpointType<*>.XLineBreakpointVariant) : XLineBreakpointInlineVariantProxy {
+  override val highlightRange: TextRange?
+    get() = variant.highlightRange
+  override val icon: Icon
+    get() = variant.type.enabledIcon
+  override val tooltipDescription: String
+    get() = variant.tooltipDescription
 
-    override fun createBreakpoint(project: Project, file: VirtualFile, line: Int) {
-      val breakpointManager = XDebuggerManager.getInstance(project).breakpointManager
-      XDebuggerUtilImpl.addLineBreakpoint(breakpointManager, variant, file, line)
-    }
+  override fun createBreakpoint(project: Project, file: VirtualFile, document: Document, line: Int) {
+    val breakpointManager = XDebuggerManager.getInstance(project).breakpointManager
+    XDebuggerUtilImpl.addLineBreakpoint(breakpointManager, variant, file, line)
   }
 }
 
-internal fun XLineBreakpointType<*>.XLineBreakpointVariant.asProxy(): XLineBreakpointInlineVariantProxy.Monolith =
-  XLineBreakpointInlineVariantProxy.Monolith(this)
+internal fun XLineBreakpointType<*>.XLineBreakpointVariant.asProxy(): XLineBreakpointInlineVariantProxy =
+  MonolithXLineBreakpointInlineVariantProxy(this)

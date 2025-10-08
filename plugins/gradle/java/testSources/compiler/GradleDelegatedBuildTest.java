@@ -9,6 +9,7 @@ import com.intellij.task.ProjectTaskManager;
 import com.intellij.testFramework.VfsTestUtil;
 import com.intellij.util.PathUtil;
 import com.intellij.util.PathsList;
+import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.messages.MessageBusConnection;
 import org.assertj.core.api.Assertions;
 import org.jetbrains.annotations.NotNull;
@@ -246,13 +247,13 @@ public class GradleDelegatedBuildTest extends GradleDelegatedBuildTestCase {
     connection.subscribe(ProjectTaskListener.TOPIC, new ProjectTaskListener() {
       @Override
       public void started(@NotNull ProjectTaskContext context) {
-        context.enableCollectionOfGeneratedFiles();
+        context.setCollectionOfGeneratedFilesEnabled(true);
       }
 
       @Override
       public void finished(@NotNull ProjectTaskManager.Result result) {
         result.getContext().getDirtyOutputPaths()
-          .ifPresent(paths -> dirtyOutputRoots.addAll(paths.map(PathUtil::toSystemIndependentName).toList()));
+          .ifPresent(paths -> dirtyOutputRoots.addAll(ContainerUtil.map(paths, PathUtil::toSystemIndependentName)));
       }
     });
 

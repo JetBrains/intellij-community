@@ -214,7 +214,7 @@ public interface TextContent extends CharSequence, UserDataHolderEx {
    */
   static @Nullable TextContent join(List<? extends @NotNull TextContent> components) {
     if (components.isEmpty()) return null;
-    if (components.size() == 1) return components.get(0);
+    if (components.size() == 1) return components.getFirst();
 
     return new TextContentImpl(commonDomain(components), ContainerUtil.flatMap(components, c -> ((TextContentImpl) c).tokens));
   }
@@ -228,7 +228,7 @@ public interface TextContent extends CharSequence, UserDataHolderEx {
       throw new IllegalArgumentException("Whitespace expected, got " + StringUtil.escapeStringCharacters(String.valueOf(whitespace)));
     }
     if (components.isEmpty()) return null;
-    if (components.size() == 1) return components.get(0);
+    if (components.size() == 1) return components.getFirst();
 
     TextContentImpl.WSTokenInfo wsToken = new TextContentImpl.WSTokenInfo(whitespace);
     return new TextContentImpl(commonDomain(components), StreamEx.of(components)
@@ -238,8 +238,8 @@ public interface TextContent extends CharSequence, UserDataHolderEx {
   }
 
   private static TextDomain commonDomain(List<? extends TextContent> components) {
-    TextDomain domain = components.get(0).getDomain();
-    if (components.stream().anyMatch(c -> c.getDomain() != domain)) {
+    TextDomain domain = components.getFirst().getDomain();
+    if (ContainerUtil.exists(components, c -> c.getDomain() != domain)) {
       throw new IllegalArgumentException("Joined TextContents should share the same domain");
     }
     return domain;

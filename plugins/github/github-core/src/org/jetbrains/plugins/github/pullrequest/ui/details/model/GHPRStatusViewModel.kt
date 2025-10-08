@@ -1,6 +1,7 @@
 // Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.plugins.github.pullrequest.ui.details.model
 
+import com.intellij.collaboration.async.childScope
 import com.intellij.collaboration.async.launchNow
 import com.intellij.collaboration.async.modelFlow
 import com.intellij.collaboration.ui.codereview.details.data.CodeReviewCIJob
@@ -8,7 +9,6 @@ import com.intellij.collaboration.ui.codereview.details.model.CodeReviewStatusVi
 import com.intellij.collaboration.util.getOrNull
 import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.project.Project
-import com.intellij.platform.util.coroutines.childScope
 import git4idea.repo.GitRepository
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.flow.*
@@ -40,7 +40,7 @@ class GHPRStatusViewModelImpl(
   detailsData: GHPRDetailsDataProvider,
   detailsState: StateFlow<GHPullRequest>,
 ) : GHPRStatusViewModel {
-  private val cs = parentCs.childScope()
+  private val cs = parentCs.childScope(this::class)
 
   override val viewerDidAuthor: Boolean = detailsState.value.viewerDidAuthor
 

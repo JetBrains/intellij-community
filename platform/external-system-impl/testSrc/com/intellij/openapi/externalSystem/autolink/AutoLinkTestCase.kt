@@ -94,9 +94,6 @@ abstract class AutoLinkTestCase {
       override fun canOpenProject(file: VirtualFile): Boolean =
         openProvider.canOpenProject(file)
 
-      override fun doOpenProject(virtualFile: VirtualFile, projectToClose: Project?, forceOpenInNewFrame: Boolean): Project? {
-        throw UnsupportedOperationException("openProjectAsync must be used")
-      }
 
       override suspend fun openProjectAsync(virtualFile: VirtualFile,
                                             projectToClose: Project?,

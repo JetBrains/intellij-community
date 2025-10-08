@@ -121,21 +121,13 @@ public class FileTypeManagerImpl extends FileTypeManagerEx implements Persistent
 
   private @Nullable Consumer<? super ConflictingFileTypeMappingTracker.ResolveConflictResult> conflictResultConsumer;
 
-  private static final class StandardFileType {
-    private final @NotNull FileType fileType;
-    private final @NotNull List<FileNameMatcher> matchers;
-    private final @NotNull PluginDescriptor pluginDescriptor;
-
-    private StandardFileType(@NotNull FileType fileType, @NotNull PluginDescriptor pluginDescriptor, @NotNull List<? extends FileNameMatcher> matchers) {
-      this.fileType = fileType;
-      this.pluginDescriptor = pluginDescriptor;
-      this.matchers = new ArrayList<>(matchers);
+  private record StandardFileType(@NotNull FileType fileType,
+                                  @NotNull PluginDescriptor pluginDescriptor,
+                                  @NotNull List<FileNameMatcher> matchers) {
+      private @NotNull FileTypeWithDescriptor getDescriptor() {
+        return new FileTypeWithDescriptor(fileType, pluginDescriptor);
+      }
     }
-
-    private @NotNull FileTypeWithDescriptor getDescriptor() {
-      return new FileTypeWithDescriptor(fileType, pluginDescriptor);
-    }
-  }
 
   private final Map<String, StandardFileType> standardFileTypes = new LinkedHashMap<>();
   private final SchemeManager<FileTypeWithDescriptor> schemeManager;
@@ -1899,7 +1891,7 @@ public class FileTypeManagerImpl extends FileTypeManagerEx implements Persistent
 
     private void register(@NotNull FileType fileType,
                           @NotNull PluginDescriptor pluginDescriptor,
-                          @NotNull List<? extends FileNameMatcher> fileNameMatchers) {
+                          @NotNull List<FileNameMatcher> fileNameMatchers) {
       String typeName = fileType.getName();
       instantiatePendingFileTypeByName(typeName);
       for (FileNameMatcher matcher : fileNameMatchers) {

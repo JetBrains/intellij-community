@@ -1,30 +1,29 @@
 // Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.platform.ml.logs
 
+import com.intellij.internal.statistic.eventLog.EventLogGroup
 import com.intellij.internal.statistic.eventLog.events.VarargEventId
-import com.jetbrains.ml.tools.logs.FusEventLogger
-import com.jetbrains.ml.tools.logs.FusEventRegister
+import com.jetbrains.mlapi.feature.Feature
+import com.jetbrains.mlapi.feature.FeatureDeclaration
+import com.jetbrains.mlapi.logs.LogsEventRegister
+import com.jetbrains.mlapi.logs.MLEventLogger
 import org.jetbrains.annotations.ApiStatus
-import com.intellij.internal.statistic.eventLog.EventLogGroup as IJEventLogGroup
-import com.jetbrains.ml.api.logs.EventField as MLEventField
-import com.jetbrains.ml.api.logs.EventPair as MLEventPair
-import com.jetbrains.ml.api.logs.ObjectDescription as MLObjectDescription
 
 
 @ApiStatus.Internal
-class IntelliJFusEventRegister(private val baseEventGroup: IJEventLogGroup) : FusEventRegister {
+class IntelliJFusEventRegister(private val baseEventGroup: EventLogGroup) : LogsEventRegister {
   private class Logger(
     private val varargEventId: VarargEventId,
     private val objectDescription: ConverterObjectDescription
-  ) : FusEventLogger {
-    override fun log(eventPairs: List<MLEventPair<*>>) {
-      val ijEventPairs = objectDescription.buildEventPairs(eventPairs)
+  ) : MLEventLogger {
+    override fun log(features: List<Feature>) {
+      val ijEventPairs = objectDescription.buildEventPairs(features)
       varargEventId.log(*ijEventPairs.toTypedArray())
     }
   }
 
-  override fun registerEvent(name: String, eventFields: List<MLEventField<*>>): FusEventLogger {
-    val objectDescription = ConverterObjectDescription(MLObjectDescription(eventFields))
+  override fun registerEvent(name: String, declarations: List<FeatureDeclaration<*>>): MLEventLogger {
+    val objectDescription = ConverterObjectDescription(declarations)
     val varargEventId = baseEventGroup.registerVarargEvent(name, null, *objectDescription.getFields())
     return Logger(varargEventId, objectDescription)
   }

@@ -22,6 +22,8 @@ object StandardKotlinNames {
     }
     object Collections {
         @JvmField val asSequence: FqName = BASE_COLLECTIONS_PACKAGE + "asSequence"
+        @JvmField val map: FqName = BASE_COLLECTIONS_PACKAGE + "map"
+        @JvmField val mapIndexed: FqName = BASE_COLLECTIONS_PACKAGE + "mapIndexed"
 
         @JvmField val transformations: List<FqName> =
             collectionTransformationFunctionNames.map { BASE_COLLECTIONS_PACKAGE + it }

@@ -1,9 +1,9 @@
 ### auto-generated section `build intellij.properties.backend.psi` start
-load("@rules_jvm//:jvm.bzl", "jvm_library", "jvm_resources")
+load("@rules_jvm//:jvm.bzl", "jvm_library", "resourcegroup")
 
-jvm_resources(
+resourcegroup(
   name = "backend-psi_resources",
-  files = glob(["resources/**/*"]),
+  srcs = glob(["resources/**/*"]),
   strip_prefix = "resources"
 )
 
@@ -12,6 +12,7 @@ jvm_library(
   module_name = "intellij.properties.backend.psi",
   visibility = ["//visibility:public"],
   srcs = glob(["src/**/*.kt", "src/**/*.java", "src/**/*.form"], allow_empty = True),
+  resources = [":backend-psi_resources"],
   deps = [
     "//platform/code-style-api:codeStyle",
     "//platform/core-api:core",
@@ -30,7 +31,7 @@ jvm_library(
     "//platform/analysis-impl",
     "//platform/lang-impl",
     "//platform/util/nanoxml",
-    "@lib//:fastutil-min",
+    "//libraries/fastutil",
     "//platform/core-ui",
     "//platform/util/jdom",
     "//plugins/properties/properties-common:properties",
@@ -40,9 +41,6 @@ jvm_library(
     "//plugins/properties/properties-psi-api:psi",
     "//plugins/properties/properties-common:properties",
   ],
-  runtime_deps = [
-    ":backend-psi_resources",
-    "//platform/backend",
-  ]
+  runtime_deps = ["//platform/backend"]
 )
 ### auto-generated section `build intellij.properties.backend.psi` end

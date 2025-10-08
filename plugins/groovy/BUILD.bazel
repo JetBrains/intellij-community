@@ -1,9 +1,9 @@
 ### auto-generated section `build intellij.groovy` start
-load("@rules_jvm//:jvm.bzl", "jvm_library", "jvm_provided_library", "jvm_resources")
+load("@rules_jvm//:jvm.bzl", "jvm_library", "jvm_provided_library", "resourcegroup")
 
-jvm_resources(
+resourcegroup(
   name = "groovy_resources",
-  files = glob(["resources/**/*"]),
+  srcs = glob(["resources/**/*"]),
   strip_prefix = "resources"
 )
 
@@ -22,6 +22,7 @@ jvm_library(
   module_name = "intellij.groovy",
   visibility = ["//visibility:public"],
   srcs = glob(["src/**/*.kt", "src/**/*.java", "src/**/*.form"], allow_empty = True),
+  resources = [":groovy_resources"],
   deps = [
     "//platform/analysis-api:analysis",
     "//platform/code-style-api:codeStyle",
@@ -59,7 +60,7 @@ jvm_library(
     "//java/java-impl:impl",
     "//plugins/copyright",
     "//plugins/IntelliLang:langInjection",
-    "@lib//:guava",
+    "//libraries/guava",
     "//java/langInjection",
     "//jps/jps-builders:build",
     "//spellchecker",
@@ -74,7 +75,7 @@ jvm_library(
     "@lib//:protobuf",
     "//platform/util-class-loader:util-classLoader",
     "//platform/core-ui",
-    "@lib//:fastutil-min",
+    "//libraries/fastutil",
     "//platform/code-style-impl:codeStyle-impl",
     "//platform/platform-util-io:ide-util-io",
     "//java/java-impl-refactorings:impl-refactorings",
@@ -86,8 +87,7 @@ jvm_library(
     ":plugins_ant_provided",
     ":plugins_java-byteCodeViewer_provided",
   ],
-  exports = ["//plugins/groovy/groovy-psi:psi"],
-  runtime_deps = [":groovy_resources"]
+  exports = ["//plugins/groovy/groovy-psi:psi"]
 )
 
 jvm_library(
@@ -139,13 +139,14 @@ jvm_library(
     "//plugins/IntelliLang:langInjection",
     "//plugins/ant",
     "//plugins/ant:ant_test_lib",
-    "@lib//:guava",
+    "//libraries/guava",
     "//java/testFramework",
     "//java/langInjection",
     "//xml/langInjection",
     "//jps/jps-builders:build",
     "//spellchecker",
     "//spellchecker:spellchecker_test_lib",
+    "//plugins/grazie/src:core",
     "//plugins/junit",
     "//plugins/junit_rt:junit-rt",
     "//java/java-indexing-api:indexing",
@@ -162,10 +163,10 @@ jvm_library(
     "@lib//:protobuf",
     "//platform/util-class-loader:util-classLoader",
     "//platform/core-ui",
-    "@lib//:fastutil-min",
+    "//libraries/fastutil",
     "//platform/code-style-impl:codeStyle-impl",
     "//platform/platform-util-io:ide-util-io",
-    "@lib//:asm",
+    "//libraries/asm",
     "//java/java-impl-refactorings:impl-refactorings",
     "//platform/util/jdom",
     "//platform/build-scripts/downloader",
@@ -179,8 +180,7 @@ jvm_library(
     "//xml/xml-psi-api:psi",
     "//java/unscramble",
   ],
-  exports = ["//plugins/groovy/groovy-psi:psi"],
-  runtime_deps = [":groovy_resources"]
+  exports = ["//plugins/groovy/groovy-psi:psi"]
 )
 ### auto-generated section `build intellij.groovy` end
 

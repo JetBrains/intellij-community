@@ -24,9 +24,9 @@ import java.io.File;
 import java.io.IOException;
 import java.lang.reflect.Field;
 import java.text.SimpleDateFormat;
+import java.util.*;
 import java.util.List;
 import java.util.Queue;
-import java.util.*;
 import java.util.concurrent.*;
 import java.util.regex.MatchResult;
 import java.util.regex.Matcher;
@@ -235,7 +235,7 @@ final class DetailedEventWatcher implements EventWatcher, Disposable {
                               matcher.toMatchResult() :
                               null;
     return matchResult instanceof Matcher ?
-           ((Matcher)matchResult).group("description") :
+           matchResult.group("description") :
            string;
   }
 

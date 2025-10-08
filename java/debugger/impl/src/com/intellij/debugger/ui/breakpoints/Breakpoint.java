@@ -213,10 +213,20 @@ public abstract class Breakpoint<P extends JavaBreakpointProperties> implements 
 
   public abstract Icon getIcon();
 
+  /**
+   * Updates the breakpoint configuration from the underlying XBreakpoint.
+   * <p>
+   * This method should either be synchronous or trigger {@code XBreakpointBase.emitBreakpointChanged} upon completion,
+   * to ensure the latest breakpoint configuration is reflected in the UI.
+   */
   public abstract void reload();
 
   void scheduleReload() {
-    ReadAction.nonBlocking(this::reload)
+    ReadAction.nonBlocking(() -> {
+        reload();
+        XBreakpointBase<?, ?, ?> breakpoint = (XBreakpointBase<?, ?, ?>)getXBreakpoint();
+        breakpoint.emitBreakpointChanged();
+      })
       .coalesceBy(myProject, this)
       .expireWith(myProject)
       .submit(RELOAD_EXECUTOR);

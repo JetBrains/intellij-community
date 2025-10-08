@@ -1,9 +1,9 @@
 ### auto-generated section `build intellij.xml.parser` start
-load("@rules_jvm//:jvm.bzl", "jvm_library", "jvm_resources")
+load("@rules_jvm//:jvm.bzl", "jvm_library", "resourcegroup")
 
-jvm_resources(
+resourcegroup(
   name = "parser_resources",
-  files = glob(["resources/**/*"]),
+  srcs = glob(["resources/**/*"]),
   strip_prefix = "resources"
 )
 
@@ -12,6 +12,7 @@ jvm_library(
   module_name = "intellij.xml.parser",
   visibility = ["//visibility:public"],
   srcs = glob(["src/**/*.kt", "src/**/*.java", "src/**/*.form", "gen/**/*.kt", "gen/**/*.java"], allow_empty = True),
+  resources = [":parser_resources"],
   deps = [
     "@lib//:kotlin-stdlib",
     "//platform/core-api:core",
@@ -22,7 +23,6 @@ jvm_library(
     "//platform/syntax/syntax-psi:psi",
     "//xml/xml-syntax:syntax",
     "//platform/syntax/syntax-util:util",
-  ],
-  runtime_deps = [":parser_resources"]
+  ]
 )
 ### auto-generated section `build intellij.xml.parser` end

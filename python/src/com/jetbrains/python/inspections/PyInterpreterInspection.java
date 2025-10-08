@@ -27,9 +27,7 @@ import com.intellij.openapi.roots.ModuleRootManager;
 import com.intellij.openapi.roots.ProjectRootManager;
 import com.intellij.openapi.roots.ui.configuration.ProjectSettingsService;
 import com.intellij.openapi.roots.ui.configuration.projectRoot.ProjectSdksModel;
-import com.intellij.openapi.util.NlsSafe;
 import com.intellij.openapi.util.UserDataHolderBase;
-import com.intellij.openapi.util.registry.Registry;
 import com.intellij.platform.backend.workspace.WorkspaceModelChangeListener;
 import com.intellij.platform.workspace.jps.entities.ModuleEntity;
 import com.intellij.platform.workspace.storage.EntityChange;
@@ -43,8 +41,6 @@ import com.intellij.util.containers.ContainerUtil;
 import com.intellij.workspaceModel.ide.impl.legacyBridge.module.ModuleEntityUtils;
 import com.jetbrains.python.PyPsiBundle;
 import com.jetbrains.python.PythonIdeLanguageCustomization;
-import com.jetbrains.python.projectModel.uv.UvProjectModelService;
-import com.jetbrains.python.projectModel.uv.UvProjectModelService.UvWorkspace;
 import com.jetbrains.python.psi.LanguageLevel;
 import com.jetbrains.python.psi.PyFile;
 import com.jetbrains.python.psi.impl.PyBuiltinCache;
@@ -123,75 +119,17 @@ public final class PyInterpreterInspection extends PyInspection {
         else {
           message = PyPsiBundle.message("INSP.interpreter.no.python.interpreter.configured.for.module");
         }
-        registerProblemWithCommonFixes(node, message, module, null, fixes, pyCharm);
-      }
-      else {
-        final @NlsSafe String associatedModulePath = PySdkExtKt.getAssociatedModulePath(sdk);
-        if (module != null && !PlatformUtils.isFleetBackend()) {
-          boolean isAlreadyUsedByModule = (PySdkExtKt.getPythonSdk(module) == sdk);
-          boolean isAssociatedWithThisModule = associatedModulePath != null && associatedModulePath.equals(BasePySdkExtKt.getBasePath(module));
-          // TODO: this logic should be generalized via the workspace manager
-          boolean isAssociatedWithUvRoot = associatedModulePath != null && Registry.is("python.project.model.uv", false) &&
-                                           isAssociatedWithUvWorkspaceRootModule(associatedModulePath, module);
-
-          if (!isAlreadyUsedByModule && !isAssociatedWithThisModule && !isAssociatedWithUvRoot &&
-              (associatedModulePath == null || PySdkExtKt.isAssociatedWithAnotherModule(sdk, module))) {
-            final PyInterpreterInspectionQuickFixData fixData = PySdkProvider.EP_NAME.getExtensionList().stream()
-              .map(ext -> ext.createEnvironmentAssociationFix(module, sdk, pyCharm, associatedModulePath))
-              .filter(it -> it != null)
-              .findFirst()
-              .orElse(null);
-
-            if (fixData != null) {
-              fixes.add(fixData.getQuickFix());
-              registerProblemWithCommonFixes(node, fixData.getMessage(), module, sdk, fixes, pyCharm);
-              return;
-            }
-          }
-        }
-
-        if (!PySdkExtKt.getSdkSeemsValid(sdk)) {
-          final @InspectionMessage String message;
-          if (pyCharm) {
-            message = PyPsiBundle.message("INSP.interpreter.invalid.python.interpreter.selected.for.project");
-          }
-          else {
-            message = PyPsiBundle.message("INSP.interpreter.invalid.python.interpreter.selected.for.module");
-          }
-          registerProblemWithCommonFixes(node, message, module, sdk, fixes, pyCharm);
-        }
-        else {
-          final LanguageLevel languageLevel = PythonSdkType.getLanguageLevelForSdk(sdk);
-          if (!LanguageLevel.SUPPORTED_LEVELS.contains(languageLevel)) {
-            final @InspectionMessage String message;
-            if (pyCharm) {
-              message = PyPsiBundle.message("INSP.interpreter.python.has.reached.its.end.of.life.and.is.no.longer.supported.in.pycharm",
-                                            languageLevel);
-            }
-            else {
-              message = PyPsiBundle.message("INSP.interpreter.python.has.reached.its.end.life.and.is.no.longer.supported.in.python.plugin",
-                                            languageLevel);
-            }
-            registerProblemWithCommonFixes(node, message, module, sdk, fixes, pyCharm);
-          }
-        }
+        registerProblemWithCommonFixes(node, message, module, fixes, pyCharm);
       }
     }
 
-    private static boolean isAssociatedWithUvWorkspaceRootModule(@Nullable String sdkAssociatedPath, @NotNull Module module) {
-      if (sdkAssociatedPath == null) return false;
-      UvWorkspace<@NotNull Module> uvWorkspace = UvProjectModelService.INSTANCE.findWorkspace(module);
-      if (uvWorkspace == null) return false;
-      return sdkAssociatedPath.equals(BasePySdkExtKt.getBasePath(uvWorkspace.getRoot()));
-    }
 
     private void registerProblemWithCommonFixes(PyFile node,
                                                 @InspectionMessage String message,
                                                 @Nullable Module module,
-                                                Sdk sdk,
                                                 List<LocalQuickFix> fixes,
                                                 boolean pyCharm) {
-      if (module != null && pyCharm && sdk == null) {
+      if (module != null && pyCharm) {
         final String sdkName = ProjectRootManager.getInstance(node.getProject()).getProjectSdkName();
         ContainerUtil.addIfNotNull(fixes, getSuitableSdkFix(sdkName, module));
       }
@@ -274,9 +212,12 @@ public final class PyInterpreterInspection extends PyInspection {
         return new UseExistingInterpreterFix(systemWideSdk, module);
       }
 
-      LocalQuickFix fallbackFix = PyCondaSdkCustomizer.Companion.getInstance().getFallbackInterpreterFix();
-      if (fallbackFix != null) {
-        return fallbackFix;
+      PyProjectSdkConfigurationExtension configurator = PyCondaSdkCustomizer.Companion.getInstance().getFallbackConfigurator();
+      if (configurator != null) {
+        String intentionName = PyCondaSdkCustomizer.Companion.getIntentionBlocking(configurator, module);
+        if (intentionName != null) {
+          return new UseProvidedInterpreterFix(module, configurator, intentionName);
+        }
       }
 
       final var detectedSystemWideSdk = ContainerUtil.getFirstItem(PySdkExtKt.detectSystemWideSdks(module, existingSdks));

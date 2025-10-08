@@ -1,4 +1,4 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.platform.ide.bootstrap;
 
 import com.intellij.ide.CliResult;
@@ -13,6 +13,7 @@ import com.intellij.testFramework.TestLoggerFactory;
 import com.intellij.testFramework.rules.InMemoryFsRule;
 import com.intellij.testFramework.rules.TempDirectory;
 import com.intellij.util.Suppressions;
+import com.intellij.util.system.OS;
 import org.junit.After;
 import org.junit.Before;
 import org.junit.Rule;
@@ -42,7 +43,7 @@ public abstract sealed class DirectoryLockTest {
     protected Path getTestDir() throws IOException {
       var testDir = tempDir.getRootPath();
       if (testDir.toString().length() > 90) {
-        var dir = SystemInfo.isWindows ? Path.of(System.getenv("SystemRoot"), "Temp") : Path.of("/tmp");
+        var dir = OS.CURRENT == OS.Windows ? Path.of(System.getenv("SystemRoot"), "Temp") : Path.of("/tmp");
         testDir = Files.createTempDirectory(dir, testDir.getFileName().toString());
       }
       return testDir;
@@ -62,11 +63,11 @@ public abstract sealed class DirectoryLockTest {
   }
 
   public static final class FallbackModeTest extends DirectoryLockTest {
-    @Rule public final InMemoryFsRule memoryFs = new InMemoryFsRule(SystemInfo.isWindows);
+    @Rule public final InMemoryFsRule memoryFs = new InMemoryFsRule(OS.CURRENT);
 
     @Override
     protected Path getTestDir() {
-      var path = SystemInfo.isWindows ? "C:\\tests\\" + tempDir.getRootPath().getFileName() : tempDir.getRootPath().toString();
+      var path = OS.CURRENT == OS.Windows ? "C:\\tests\\" + tempDir.getRootPath().getFileName() : tempDir.getRootPath().toString();
       return memoryFs.getFs().getPath(path);
     }
   }

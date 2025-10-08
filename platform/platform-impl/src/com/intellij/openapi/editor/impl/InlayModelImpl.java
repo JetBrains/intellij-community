@@ -3,7 +3,6 @@ package com.intellij.openapi.editor.impl;
 
 import com.intellij.diagnostic.Dumpable;
 import com.intellij.openapi.Disposable;
-import com.intellij.openapi.application.ReadAction;
 import com.intellij.openapi.diagnostic.Attachment;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.*;
@@ -394,7 +393,7 @@ public final class InlayModelImpl implements InlayModel, InlayModelEx, Prioritiz
   }
 
   Inlay<?> getElementAt(@NotNull EditorLocation location, boolean ignoreBlockElementWidth) {
-    return ReadAction.compute(() -> {
+    return EditorThreading.compute(() -> {
       Insets insets = myEditor.getContentComponent().getInsets();
       Point point = location.getPoint();
       if (point.y < insets.top) return null; // can happen for mouse drag events

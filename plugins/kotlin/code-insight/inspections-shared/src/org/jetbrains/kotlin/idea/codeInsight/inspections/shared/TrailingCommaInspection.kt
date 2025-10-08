@@ -104,11 +104,11 @@ internal class TrailingCommaInspection(
                 }
                 TrailingCommaState.REDUNDANT -> {
                     reportProblem(
-                        trailingCommaOrLastElement,
-                        KotlinBundle.message("inspection.trailing.comma.useless.trailing.comma"),
-                        KotlinBundle.message("inspection.trailing.comma.remove.trailing.comma"),
-                        ProblemHighlightType.LIKE_UNUSED_SYMBOL,
-                        checkTrailingCommaSettings = false,
+                      trailingCommaOrLastElement,
+                      KotlinBundle.message("inspection.trailing.comma.redundant.trailing.comma"),
+                      KotlinBundle.message("inspection.trailing.comma.remove.trailing.comma"),
+                      ProblemHighlightType.LIKE_UNUSED_SYMBOL,
+                      checkTrailingCommaSettings = false,
                     )
                 }
                 else -> Unit

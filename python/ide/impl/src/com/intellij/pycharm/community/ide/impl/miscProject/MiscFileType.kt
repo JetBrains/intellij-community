@@ -15,7 +15,7 @@ interface MiscFileType {
   companion object {
     val EP: ExtensionPointName<MiscFileType> = ExtensionPointName.create("Pythonid.miscFileType")
   }
-
+  val id: String
   val title: @NlsActions.ActionText String
   val icon: Icon
   val fileName: TemplateFileName

@@ -2,8 +2,5 @@
 package org.jetbrains.kotlin.idea.fir.parameterInfo
 
 abstract class AbstractFirMultilineParameterInfoTest : AbstractFirParameterInfoTest() {
-    override fun setUp() {
-        isMultiline = true
-        super.setUp()
-    }
+    override val isMultiline: Boolean = true
 }

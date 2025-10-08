@@ -39,12 +39,14 @@ com.intellij.openapi.diff.impl.patch.PatchEP
 c:com.intellij.openapi.diff.impl.patch.PatchHunk
 - <init>(I,I,I,I):V
 - addLine(com.intellij.openapi.diff.impl.patch.PatchLine):V
+- equals(java.lang.Object):Z
 - getEndLineAfter():I
 - getEndLineBefore():I
 - getLines():java.util.List
 - getStartLineAfter():I
 - getStartLineBefore():I
 - getText():java.lang.String
+- hashCode():I
 - isDeletedContent():Z
 - isNewContent():Z
 - isNoNewLineAtEnd():Z
@@ -66,9 +68,11 @@ c:com.intellij.openapi.diff.impl.patch.PatchLine
 - sf:UNKNOWN_PATCH_FILE_LINE_NUMBER:I
 - <init>(com.intellij.openapi.diff.impl.patch.PatchLine$Type,java.lang.String):V
 - <init>(com.intellij.openapi.diff.impl.patch.PatchLine$Type,java.lang.String,I):V
+- equals(java.lang.Object):Z
 - getPatchFileLineNumber():I
 - getText():java.lang.String
 - getType():com.intellij.openapi.diff.impl.patch.PatchLine$Type
+- hashCode():I
 - isSuppressNewLine():Z
 - setSuppressNewLine(Z):V
 e:com.intellij.openapi.diff.impl.patch.PatchLine$Type

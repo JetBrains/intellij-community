@@ -1,6 +1,7 @@
 // Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.plugins.groovy.intentions.style.parameterToEntry;
 
+import com.intellij.codeInsight.FileModificationService;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ReadAction;
 import com.intellij.openapi.command.CommandProcessor;
@@ -164,6 +165,8 @@ public final class ConvertParameterToMapEntryIntention extends Intention {
                                          final boolean createNewFirstParam,
                                          final @Nullable String mapParamName,
                                          final boolean specifyMapType) {
+    PsiFile file = element.getContainingFile();
+    if (!FileModificationService.getInstance().prepareFileForWrite(file)) return;
     final GrParameter param = getAppropriateParameter(element);
     assert param != null;
     final String paramName = param.getName();
@@ -479,6 +482,7 @@ public final class ConvertParameterToMapEntryIntention extends Intention {
       }
       if (parameter == null) return false;
       if (parameter.isOptional()) return false;
+      if (parameter.isUnnamed()) return false;
 
       GrParameterListOwner owner = PsiTreeUtil.getParentOfType(element, GrParameterListOwner.class);
       return owner != null && checkForMapParameters(owner);

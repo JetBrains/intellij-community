@@ -8,19 +8,13 @@ import org.jetbrains.kotlin.scripting.definitions.ScriptDefinition
 
 @ApiStatus.Internal
 interface KotlinScriptingSettingsStorage {
-    fun autoReloadConfigurations(scriptDefinition: ScriptDefinition): Boolean
-    fun setAutoReloadConfigurations(scriptDefinition: ScriptDefinition, autoReloadScriptDependencies: Boolean)
-    fun setOrder(scriptDefinition: ScriptDefinition, order: Int)
+    fun autoReloadConfigurations(scriptDefinition: ScriptDefinition): Boolean = true
+    fun setAutoReloadConfigurations(scriptDefinition: ScriptDefinition, autoReloadScriptDependencies: Boolean) {}
+    fun setOrder(scriptDefinition: ScriptDefinition, order: Int) {}
     fun isScriptDefinitionEnabled(scriptDefinition: ScriptDefinition): Boolean
     fun getScriptDefinitionOrder(scriptDefinition: ScriptDefinition): Int
 
     companion object {
         fun getInstance(project: Project): KotlinScriptingSettingsStorage = project.service()
     }
-}
-
-@ApiStatus.Internal
-@Deprecated("marked for deletion")
-abstract class KotlinScriptingSettings : KotlinScriptingSettingsStorage {
-
 }

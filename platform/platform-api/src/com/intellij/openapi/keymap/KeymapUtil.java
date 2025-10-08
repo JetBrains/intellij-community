@@ -182,6 +182,10 @@ public final class KeymapUtil {
    */
   public static @Nullable KeyStroke getKeyStroke(@NotNull String s) {
     KeyStroke result = null;
+    if (s.length() >= 2 && s.charAt(s.length() - 2) == ' ' && Character.isLowerCase(s.charAt(s.length() - 1))) {
+      // there's no java.awt.event.KeyEvent.VK_x, but there is VK_X
+      s = s.substring(0, s.length() - 1) + Character.toUpperCase(s.charAt(s.length() - 1));
+    }
     try {
       result = KeyStroke.getKeyStroke(s);
     }

@@ -9,11 +9,6 @@ import org.jetbrains.annotations.Nullable;
 import org.jetbrains.concurrency.Promise;
 
 public interface ChangesViewEx extends ChangesViewI {
-  /**
-   * @deprecated Changes no longer could be refreshed immediately, use {@link #promiseRefresh()} or {@link #scheduleRefresh()}
-   */
-  @Deprecated(forRemoval = true)
-  void refreshImmediately();
 
   /**
    * Immediately reset changes view and request refresh when NON_MODAL modality allows (i.e. after a plugin was unloaded or a dialog closed)

@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.documentation.mdn
 
 import com.fasterxml.jackson.core.JsonParser
@@ -19,13 +19,13 @@ import com.intellij.openapi.project.DefaultProjectFactory
 import com.intellij.openapi.util.NlsSafe
 import com.intellij.openapi.util.text.StringUtil.capitalize
 import com.intellij.openapi.util.text.StringUtil.toLowerCase
+import com.intellij.polySymbols.PolySymbolApiStatus
+import com.intellij.polySymbols.PolySymbolsBundle
 import com.intellij.psi.PsiElement
 import com.intellij.psi.impl.source.html.dtd.HtmlSymbolDeclaration
 import com.intellij.psi.util.PsiTreeUtil
 import com.intellij.psi.xml.*
 import com.intellij.util.asSafely
-import com.intellij.polySymbols.PolySymbolApiStatus
-import com.intellij.polySymbols.PolySymbolsBundle
 import com.intellij.xml.psi.impl.icons.XmlPsiImplIcons
 import com.intellij.xml.util.HtmlUtil
 import org.jetbrains.annotations.ApiStatus
@@ -647,7 +647,7 @@ private class CompatibilityMapDeserializer : JsonDeserializer<CompatibilityMap>(
       .asSafely<ObjectNode>()
       ?.let {
         if (it.firstOrNull() is ObjectNode) {
-          it.fields().asSequence()
+          it.properties().asSequence()
             .map { (key, value) -> Pair(key, (value as ObjectNode).toBcdMap()) }
             .toMap()
         }
@@ -658,7 +658,7 @@ private class CompatibilityMapDeserializer : JsonDeserializer<CompatibilityMap>(
     ?: emptyMap()
 
   private fun ObjectNode.toBcdMap(): Map<MdnJavaScriptRuntime, String> =
-    this.fields().asSequence().map { (key, value) ->
+    this.properties().asSequence().map { (key, value) ->
       Pair(MdnJavaScriptRuntime.valueOf(key), (value as TextNode).asText())
     }.toMap()
 

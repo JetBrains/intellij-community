@@ -40,18 +40,14 @@ class PreviewDiffRequest extends SimpleDiffRequest {
     mySelectNode = selectNode;
   }
 
-  public void setViewer(FrameDiffTool.DiffViewer viewer) {
+  public void setViewer(@NotNull FrameDiffTool.DiffViewer viewer) {
     ThreadingAssertions.assertEventDispatchThread();
 
-    if (viewer instanceof UnifiedDiffViewer) {
-      myCaretTracker = new UnifiedCaretTracker((UnifiedDiffViewer)viewer);
-    }
-    else if (viewer instanceof SimpleDiffViewer) {
-      myCaretTracker = new SimpleCaretTracker((SimpleDiffViewer)viewer);
-    }
-    else {
-      myCaretTracker = null;
-    }
+    myCaretTracker = switch (viewer) {
+      case UnifiedDiffViewer diffViewer -> new UnifiedCaretTracker(diffViewer);
+      case SimpleDiffViewer diffViewer -> new SimpleCaretTracker(diffViewer);
+      default -> null;
+    };
   }
 
   public void onNodeSelected(@NotNull FragmentNode node) {

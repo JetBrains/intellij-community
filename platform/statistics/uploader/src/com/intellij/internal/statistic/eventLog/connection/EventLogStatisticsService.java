@@ -94,7 +94,7 @@ public class EventLogStatisticsService implements StatisticsService {
     final boolean isInternal = info.isInternal();
     final String productCode = info.getProductCode();
     EventLogBuildType defaultBuildType = getDefaultBuildType(info.isEAP());
-    LogEventFilter baseFilter = settings.provideBaseEventFilter(info.getBaselineVersion());
+    LogEventFilter baseFilter = settings.provideBaseEventFilter();
 
     MachineId machineId = getActualOrDisabledMachineId(config.getMachineId(), settings);
     try {

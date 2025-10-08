@@ -32,7 +32,6 @@ import com.intellij.testFramework.DisposableRule
 import com.intellij.testFramework.IndexingTestUtil
 import com.intellij.testFramework.PlatformTestUtil
 import com.intellij.testFramework.RuleChain
-import com.intellij.util.application
 import org.jetbrains.jps.model.module.JpsModuleSourceRootType
 import org.junit.jupiter.api.extension.*
 import org.junit.rules.ExternalResource
@@ -217,7 +216,7 @@ open class ProjectModelRule : TestRule {
   }
 
   fun setUnloadedModules(vararg moduleName: String) {
-    runUnderModalProgressIfIsEdt {
+    runUnderModalProgressIfIsEdt(project) {
       moduleManager.setUnloadedModules(moduleName.toList())
     }
     IndexingTestUtil.waitUntilIndexesAreReady(project)

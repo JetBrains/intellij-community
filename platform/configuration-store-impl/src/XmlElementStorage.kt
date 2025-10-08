@@ -4,11 +4,7 @@ package com.intellij.configurationStore
 import com.fasterxml.aalto.UncheckedStreamException
 import com.intellij.diagnostic.PluginException
 import com.intellij.openapi.application.ApplicationManager
-import com.intellij.openapi.components.HandledByWSM
-import com.intellij.openapi.components.PathMacroManager
-import com.intellij.openapi.components.PathMacroSubstitutor
-import com.intellij.openapi.components.PersistentStateComponent
-import com.intellij.openapi.components.RoamingType
+import com.intellij.openapi.components.*
 import com.intellij.openapi.components.impl.stores.ComponentStorageUtil
 import com.intellij.openapi.diagnostic.debug
 import com.intellij.openapi.extensions.PluginId
@@ -28,14 +24,14 @@ import org.jdom.Attribute
 import org.jdom.Element
 import org.jdom.JDOMException
 import org.jdom.JDOMInterner
-import org.jetbrains.annotations.ApiStatus
+import org.jetbrains.annotations.ApiStatus.Internal
 import java.io.FileNotFoundException
 import java.io.InputStream
 import java.io.Writer
 import javax.xml.stream.XMLStreamException
 import kotlin.math.min
 
-@ApiStatus.Internal
+@Internal
 abstract class XmlElementStorage protected constructor(
   @JvmField val fileSpec: String,
   @JvmField protected val rootElementName: String?,
@@ -77,18 +73,20 @@ abstract class XmlElementStorage protected constructor(
         isLoadLocalData = !provider.read(fileSpec, roamingType) { inputStream ->
           inputStream?.let {
             element = loadFromStreamProvider(inputStream)
-            val writer = object : StringDataWriter() {
-              override fun hasData(filter: DataWriterFilter) = filter.hasData(element!!)
+            providerDataStateChanged(
+              writer = object : StringDataWriter() {
+                override fun hasData(filter: DataWriterFilter) = filter.hasData(element!!)
 
-              override fun writeTo(writer: Writer, lineSeparator: String, filter: DataWriterFilter?) {
-                JbXmlOutputter(
-                  lineSeparator = lineSeparator,
-                  elementFilter = filter?.toElementFilter(),
-                  storageFilePathForDebugPurposes = toString()
-                ).output(element!!, writer)
-              }
-            }
-            providerDataStateChanged(writer, DataStateChanged.LOADED)
+                override fun writeTo(writer: Writer, lineSeparator: String, filter: DataWriterFilter?) {
+                  JbXmlOutputter(
+                    lineSeparator = lineSeparator,
+                    elementFilter = filter?.toElementFilter(),
+                    storageFilePathForDebugPurposes = toString(),
+                  ).output(element!!, writer)
+                }
+              },
+              type = DataStateChanged.LOADED,
+            )
           }
         }
       }
@@ -105,7 +103,7 @@ abstract class XmlElementStorage protected constructor(
     return element
   }
 
-  protected open fun providerDataStateChanged(writer: DataWriter?, type: DataStateChanged) { }
+  protected open fun providerDataStateChanged(writer: DataWriter?, type: DataStateChanged) {}
 
   private fun loadState(element: Element): StateMap {
     beforeElementLoaded(element)
@@ -136,7 +134,7 @@ abstract class XmlElementStorage protected constructor(
 
   protected abstract fun createSaveSession(states: StateMap): SaveSessionProducer
 
-  final override fun analyzeExternalChangesAndUpdateIfNeeded(componentNames: MutableSet<in String>) {
+  final override suspend fun analyzeExternalChangesAndUpdateIfNeeded(componentNames: MutableSet<in String>) {
     LOG.debug("Running analyzeExternalChangesAndUpdateIfNeeded")
     val oldData = storageDataRef.get()
     val newData = getStorageData(reload = true)
@@ -181,7 +179,7 @@ abstract class XmlElementStorage protected constructor(
       }
 
       val stateMap = StateMap.fromMap(copiedStates!!)
-      val elements = save(stateMap, newLiveStates ?: throw IllegalStateException("createSaveSession was already called"))
+      val elements = save(states = stateMap, newLiveStates = newLiveStates ?: throw IllegalStateException("createSaveSession was already called"))
       newLiveStates = null
 
       val writer = if (elements == null) {
@@ -252,23 +250,23 @@ abstract class XmlElementStorage protected constructor(
 
     private inner class XmlSaveSession(
       private val elements: MutableList<Element>?,
+      // null only when an element list is null
       private val writer: DataWriter?,
       private val stateMap: StateMap
     ) : SaveSession, SafeWriteRequestor, LargeFileWriteRequestor {
       override suspend fun save(events: MutableList<VFileEvent>?) {
-        doSave(useVfs = false, events = events)
-      }
-
-      override fun saveBlocking() = doSave(useVfs = true, events = null)
-
-      private fun doSave(useVfs: Boolean, events: MutableList<VFileEvent>?) {
         var isSavedLocally = false
         val provider = storage.provider
 
         if (elements == null) {
           if (provider == null || !provider.delete(storage.fileSpec, storage.roamingType)) {
             isSavedLocally = true
-            saveLocally(writer, useVfs, events)
+            if (writer == null) {
+              remove(events)
+            }
+            else {
+              saveLocally(dataWriter = writer, events = events)
+            }
           }
         }
         else if (provider != null && provider.isApplicable(storage.fileSpec, storage.roamingType)) {
@@ -281,11 +279,16 @@ abstract class XmlElementStorage protected constructor(
         }
         else {
           isSavedLocally = true
-          saveLocally(writer, useVfs, events)
+          if (writer == null) {
+            remove(events)
+          }
+          else {
+            saveLocally(dataWriter = writer, events = events)
+          }
         }
 
         if (!isSavedLocally) {
-          storage.providerDataStateChanged(writer, DataStateChanged.SAVED)
+          storage.providerDataStateChanged(writer = writer, type = DataStateChanged.SAVED)
         }
 
         storage.setStates(originalStates, stateMap)
@@ -296,19 +299,21 @@ abstract class XmlElementStorage protected constructor(
       val newLiveStates = newLiveStates ?: throw IllegalStateException("createSaveSession was already called")
       val normalized = element?.let { normalizeRootName(it) }
       if (copiedStates == null) {
-        copiedStates = setStateAndCloneIfNeeded(key = componentName, newState = normalized, oldStates = originalStates, newLiveStates)
+        copiedStates = setStateAndCloneIfNeeded(key = componentName, newState = normalized, oldStates = originalStates, newLiveStates = newLiveStates)
       }
       else {
-        updateState(states = copiedStates!!, key = componentName, newState = normalized, newLiveStates)
+        updateState(states = copiedStates!!, key = componentName, newState = normalized, newLiveStates = newLiveStates)
       }
     }
 
-    protected abstract fun saveLocally(dataWriter: DataWriter?, useVfs: Boolean, events: MutableList<VFileEvent>?)
+    protected abstract fun remove(events: MutableList<VFileEvent>?)
+
+    protected abstract fun saveLocally(dataWriter: DataWriter, events: MutableList<VFileEvent>?)
   }
 
-  protected open fun beforeElementLoaded(element: Element) { }
+  protected open fun beforeElementLoaded(element: Element) {}
 
-  protected open fun beforeElementSaved(elements: MutableList<Element>, rootAttributes: MutableMap<String, String>) { }
+  protected open fun beforeElementSaved(elements: MutableList<Element>, rootAttributes: MutableMap<String, String>) {}
 
   fun updatedFromStreamProvider(changedComponentNames: MutableSet<String>, deleted: Boolean) {
     val newElement = if (deleted) null else loadElement()
@@ -426,7 +431,7 @@ private class StateGetterImpl<S : Any>(
 ) : StateGetter<S> {
   private var serializedState: Element? = null
 
-  override fun getState(mergeInto: S?): S? {
+  override suspend fun getState(mergeInto: S?): S? {
     LOG.assertTrue(serializedState == null)
     serializedState = storage.getSerializedState(storageData = storageData, component = component, componentName = componentName, archive = false)
     return deserializeStateWithController(
@@ -502,12 +507,12 @@ private fun normalizeRootName(element: Element): Element {
   }
 }
 
-@ApiStatus.Internal
+@Internal
 enum class DataStateChanged { LOADED, SAVED }
 
-@ApiStatus.Internal
+@Internal
 interface StateGetter<S : Any> {
-  fun getState(mergeInto: S? = null): S?
+  suspend fun getState(mergeInto: S? = null): S?
 
   fun archiveState(): S?
 }

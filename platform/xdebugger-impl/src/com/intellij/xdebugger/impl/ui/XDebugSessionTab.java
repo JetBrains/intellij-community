@@ -8,10 +8,7 @@ import com.intellij.execution.runners.BackendExecutionEnvironmentProxy;
 import com.intellij.execution.runners.ExecutionEnvironment;
 import com.intellij.execution.runners.ExecutionEnvironmentProxy;
 import com.intellij.execution.runners.RunContentBuilder;
-import com.intellij.execution.ui.RunContentDescriptor;
-import com.intellij.execution.ui.RunContentManager;
-import com.intellij.execution.ui.RunnerLayoutUi;
-import com.intellij.execution.ui.UIExperiment;
+import com.intellij.execution.ui.*;
 import com.intellij.execution.ui.layout.PlaceInGrid;
 import com.intellij.execution.ui.layout.impl.RunnerContentUi;
 import com.intellij.execution.ui.layout.impl.RunnerLayoutUiImpl;
@@ -54,7 +51,6 @@ import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.function.Consumer;
-import java.util.function.Supplier;
 
 import static com.intellij.xdebugger.impl.frame.XDebugSessionProxy.useFeProxy;
 
@@ -75,7 +71,7 @@ public class XDebugSessionTab extends DebuggerSessionTabBase {
   private Consumer<DataSink> myAdditionalKeysProvider;
 
   /**
-   * @deprecated Use {@link XDebugSessionTab#create(XDebugSessionProxy, Icon, ExecutionEnvironmentProxy, RunContentDescriptor, boolean, boolean)}
+   * @deprecated Use {@link XDebugSessionTab#create(XDebugSessionProxy, Icon, ExecutionEnvironmentProxy, RunContentDescriptor, boolean, boolean, String)}
    */
   @Deprecated
   public static @NotNull XDebugSessionTab create(@NotNull XDebugSessionImpl session,
@@ -273,6 +269,20 @@ public class XDebugSessionTab extends DebuggerSessionTabBase {
     myRunContentDescriptor = new RunContentDescriptor(myConsole, session.getProcessHandler(),
                                                       myUi.getComponent(), session.getSessionName(), icon, this::computeWatches,
                                                       restartActions);
+    if (!(session instanceof XDebugSessionProxy.Monolith)) {
+      // Session Proxy is not fully initialized in the Monolith,
+      // For the Monolith we incorporate the legacy happy execution path in ExecutionManagerImpl to assign run content descriptor id.
+      myRunContentDescriptor.setId(session.getRunContentDescriptorId());
+    }
+
+    if (myEnvironmentProxy != null) {
+      String toolWindowId = myEnvironmentProxy.getContentDescriptorToolWindowId();
+      if (toolWindowId != null) {
+        myRunContentDescriptor.setContentToolWindowId(toolWindowId);
+      }
+      myRunContentDescriptor.setRunConfigurationName(myEnvironmentProxy.getRunProfileName());
+      myRunContentDescriptor.setRunConfigurationTypeId(myEnvironmentProxy.getRunConfigurationTypeId());
+    }
     myRunContentDescriptor.setRunnerLayoutUi(myUi);
     Disposer.register(myRunContentDescriptor, this);
     Disposer.register(myProject, myRunContentDescriptor);
@@ -404,7 +414,12 @@ public class XDebugSessionTab extends DebuggerSessionTabBase {
       attachNotificationTo(consoleContent);
       layouter.registerAdditionalContent(myUi);
 
-      RunContentBuilder.addAdditionalConsoleEditorActions(myConsole, consoleContent);
+      final DefaultActionGroup consoleActions = new DefaultActionGroup();
+      for (AnAction action : session.getConsoleActions()) {
+        consoleActions.add(action);
+      }
+      consoleContent.setActions(consoleActions, ActionPlaces.RUNNER_TOOLBAR, myConsole.getComponent());
+
       consoleContent.setHelpId(DefaultDebugExecutor.getDebugExecutorInstance().getHelpId());
     }
     else {

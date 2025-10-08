@@ -1,6 +1,6 @@
 ### auto-generated section `build kotlin.code-insight.live-templates.shared` start
 load("//build:compiler-options.bzl", "create_kotlinc_options")
-load("@rules_jvm//:jvm.bzl", "jvm_library", "jvm_resources")
+load("@rules_jvm//:jvm.bzl", "jvm_library", "resourcegroup")
 
 create_kotlinc_options(
   name = "custom_kotlin-code-insight-live-templates-shared",
@@ -12,9 +12,9 @@ create_kotlinc_options(
   x_context_parameters = True
 )
 
-jvm_resources(
+resourcegroup(
   name = "kotlin-code-insight-live-templates-shared_resources",
-  files = glob(["resources/**/*"]),
+  srcs = glob(["resources/**/*"]),
   strip_prefix = "resources"
 )
 
@@ -23,6 +23,7 @@ jvm_library(
   module_name = "kotlin.code-insight.live-templates.shared",
   visibility = ["//visibility:public"],
   srcs = glob(["src/**/*.kt", "src/**/*.java", "src/**/*.form"], allow_empty = True),
+  resources = [":kotlin-code-insight-live-templates-shared_resources"],
   kotlinc_opts = ":custom_kotlin-code-insight-live-templates-shared",
   deps = [
     "@lib//:kotlin-stdlib",
@@ -41,8 +42,7 @@ jvm_library(
     "//platform/core-impl",
     "//platform/analysis-api:analysis",
     "//java/java-impl:impl",
-  ],
-  runtime_deps = [":kotlin-code-insight-live-templates-shared_resources"]
+  ]
 )
 
 jvm_library(
@@ -78,8 +78,8 @@ jvm_library(
     "//platform/testFramework:testFramework_test_lib",
     "@lib//:kotlinc-kotlin-compiler-tests",
     "//java/testFramework",
-  ],
-  runtime_deps = [":kotlin-code-insight-live-templates-shared_resources"]
+    "//plugins/groovy-live-templates",
+  ]
 )
 ### auto-generated section `build kotlin.code-insight.live-templates.shared` end
 

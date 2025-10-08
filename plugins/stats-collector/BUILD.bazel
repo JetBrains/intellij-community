@@ -1,9 +1,9 @@
 ### auto-generated section `build intellij.statsCollector` start
-load("@rules_jvm//:jvm.bzl", "jvm_library", "jvm_resources")
+load("@rules_jvm//:jvm.bzl", "jvm_library", "resourcegroup")
 
-jvm_resources(
+resourcegroup(
   name = "stats-collector_resources",
-  files = glob(["resources/**/*"]),
+  srcs = glob(["resources/**/*"]),
   strip_prefix = "resources"
 )
 
@@ -12,6 +12,7 @@ jvm_library(
   module_name = "intellij.statsCollector",
   visibility = ["//visibility:public"],
   srcs = glob(["src/**/*.kt", "src/**/*.java", "src/**/*.form"], allow_empty = True),
+  resources = [":stats-collector_resources"],
   deps = [
     "@lib//:kotlin-stdlib",
     "//platform/analysis-api:analysis",
@@ -22,14 +23,13 @@ jvm_library(
     "//plugins/completion-ml-ranking",
     "@lib//:http-client",
     "//platform/platform-impl:ide-impl",
-    "@lib//:guava",
-    "@lib//:gson",
+    "//libraries/guava",
+    "//libraries/gson",
     "@lib//:stats_collector-completion-log-events",
     "//platform/projectModel-api:projectModel",
     "//platform/statistics",
     "//platform/core-ui",
-  ],
-  runtime_deps = [":stats-collector_resources"]
+  ]
 )
 ### auto-generated section `build intellij.statsCollector` end
 

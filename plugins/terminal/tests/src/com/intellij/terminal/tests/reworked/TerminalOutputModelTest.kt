@@ -2,8 +2,6 @@
 package com.intellij.terminal.tests.reworked
 
 import com.intellij.openapi.application.EDT
-import com.intellij.terminal.session.StyleRange
-import com.intellij.terminal.session.TerminalOutputModelState
 import com.intellij.terminal.tests.reworked.util.TerminalTestUtil
 import com.intellij.terminal.tests.reworked.util.TerminalTestUtil.restore
 import com.intellij.terminal.tests.reworked.util.TerminalTestUtil.update
@@ -15,9 +13,12 @@ import kotlinx.coroutines.runBlocking
 import org.jetbrains.plugins.terminal.block.output.HighlightingInfo
 import org.jetbrains.plugins.terminal.block.output.TerminalOutputHighlightingsSnapshot
 import org.jetbrains.plugins.terminal.block.output.TextStyleAdapter
+import org.jetbrains.plugins.terminal.block.reworked.TerminalOffset
 import org.jetbrains.plugins.terminal.block.reworked.TerminalOutputModel
 import org.jetbrains.plugins.terminal.block.reworked.TerminalOutputModelListener
 import org.jetbrains.plugins.terminal.block.ui.BlockTerminalColorPalette
+import org.jetbrains.plugins.terminal.session.StyleRange
+import org.jetbrains.plugins.terminal.session.TerminalOutputModelState
 import org.junit.Test
 import org.junit.runner.RunWith
 import org.junit.runners.JUnit4
@@ -147,9 +148,9 @@ internal class TerminalOutputModelTest : BasePlatformTestCase() {
   @Test
   fun `update exceeds maxCapacity`() = runBlocking(Dispatchers.EDT) {
     val model = TerminalTestUtil.createOutputModel(maxLength = 10)
-    val startOffsets = mutableListOf<Int>()
+    val startOffsets = mutableListOf<TerminalOffset>()
     model.addListener(testRootDisposable, object: TerminalOutputModelListener {
-      override fun afterContentChanged(model: TerminalOutputModel, startOffset: Int, isTypeAhead: Boolean) {
+      override fun afterContentChanged(model: TerminalOutputModel, startOffset: TerminalOffset, isTypeAhead: Boolean) {
         startOffsets.add(startOffset)
       }
     })
@@ -158,6 +159,7 @@ internal class TerminalOutputModelTest : BasePlatformTestCase() {
       abcdef
       ghijkl
     """.trimIndent(), emptyList())
+    val firstStartOffset = model.startOffset
 
     assertEquals("""
       def
@@ -168,12 +170,13 @@ internal class TerminalOutputModelTest : BasePlatformTestCase() {
       mnopqrs
       tuvwxyz
     """.trimIndent(), emptyList())
+    val secondStartOffset = model.startOffset
 
     assertEquals("""
       rs
       tuvwxyz
     """.trimIndent(), model.document.text)
-    assertEquals(listOf(0, 0), startOffsets)
+    assertEquals(listOf(firstStartOffset, secondStartOffset), startOffsets)
   }
 
   @Test
@@ -191,7 +194,7 @@ internal class TerminalOutputModelTest : BasePlatformTestCase() {
       ghijkl
     """.trimIndent(), model.document.text)
     // three characters were trimmed, so the new cursor offset is 1
-    assertEquals(1, model.cursorOffsetState.value.toRelative())
+    assertEquals(model.startOffset + 1, model.cursorOffset)
 
     // now check that this specific state can be copied correctly
 
@@ -203,12 +206,12 @@ internal class TerminalOutputModelTest : BasePlatformTestCase() {
       def
       ghijkl
     """.trimIndent(), newModel.document.text)
-    assertEquals(1, newModel.cursorOffsetState.value.toRelative())
+    assertEquals(model.startOffset + 1, newModel.cursorOffset)
 
     // ...and modified correctly
 
     newModel.updateCursor(0, 5)
-    assertEquals(2, newModel.cursorOffsetState.value.toRelative())
+    assertEquals(model.startOffset + 2, newModel.cursorOffset)
   }
 
   @Test
@@ -326,7 +329,7 @@ internal class TerminalOutputModelTest : BasePlatformTestCase() {
     model.restore(state)
 
     assertEquals(line, model.document.text)
-    assertEquals(3, model.cursorOffsetState.value.toRelative())
+    assertEquals(model.startOffset + 3, model.cursorOffset)
     assertEquals(9L, model.trimmedLinesCount)
     assertEquals(90L, model.trimmedCharsCount)
     assertEquals(10, model.firstLineTrimmedCharsCount)
@@ -353,7 +356,7 @@ internal class TerminalOutputModelTest : BasePlatformTestCase() {
     newModel.restore(state)
 
     assertEquals(line, newModel.document.text)
-    assertEquals(3, newModel.cursorOffsetState.value.toRelative())
+    assertEquals(newModel.startOffset + 3, newModel.cursorOffset)
     assertEquals(9L, newModel.trimmedLinesCount)
     assertEquals(90L, newModel.trimmedCharsCount)
 

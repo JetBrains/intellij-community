@@ -64,7 +64,7 @@ class UselessCallOnNotNullInspection : AbstractUselessCallInspection() {
             val descriptor = holder.manager.createProblemDescriptor(
                 expression,
                 defaultRange,
-                KotlinBundle.message("useless.call.on.not.null.type"),
+                KotlinBundle.message("redundant.call.on.not.null.type"),
                 ProblemHighlightType.LIKE_UNUSED_SYMBOL,
                 isOnTheFly,
                 RemoveUselessCallFix()
@@ -72,10 +72,10 @@ class UselessCallOnNotNullInspection : AbstractUselessCallInspection() {
             holder.registerProblem(descriptor)
         } else if (safeExpression != null) {
             holder.registerProblem(
-                safeExpression.operationTokenNode.psi,
-                KotlinBundle.message("this.call.is.useless.with"),
-                ProblemHighlightType.GENERIC_ERROR_OR_WARNING,
-                ReplaceWithDotCallFix(safeExpression).asQuickFix(),
+              safeExpression.operationTokenNode.psi,
+              KotlinBundle.message("this.call.is.redundant.with"),
+              ProblemHighlightType.GENERIC_ERROR_OR_WARNING,
+              ReplaceWithDotCallFix(safeExpression).asQuickFix(),
             )
         }
     }

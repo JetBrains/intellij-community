@@ -118,7 +118,7 @@ public abstract class TextProblem {
 
   @Override
   public String toString() {
-    return text.subSequence(highlightRanges.get(0).getStartOffset(), ContainerUtil.getLastItem(highlightRanges).getEndOffset()) + " (" + getShortMessage() + ")";
+    return text.subSequence(highlightRanges.getFirst().getStartOffset(), ContainerUtil.getLastItem(highlightRanges).getEndOffset()) + " (" + getShortMessage() + ")";
   }
 
   public interface Suggestion {

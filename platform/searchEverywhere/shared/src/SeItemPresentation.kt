@@ -21,13 +21,19 @@ import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.annotations.Nls
 import java.awt.Color
 import javax.swing.Icon
+import javax.swing.ListCellRenderer
 
 @ApiStatus.Experimental
 @Serializable
 sealed interface SeItemPresentation {
   val text: String
-  val extendedDescription: String? get() = null
+  val extendedInfo: SeExtendedInfo? get() = null
   val isMultiSelectionSupported: Boolean
+
+  fun contentEquals(other: SeItemPresentation?): Boolean {
+    if (other == null) return false
+    return text == other.text && extendedInfo?.actionText == other.extendedInfo?.actionText
+  }
 }
 
 @ApiStatus.Internal
@@ -38,7 +44,7 @@ class SeSimpleItemPresentation(
   val selectedTextChunk: SerializableTextChunk? = null,
   val description: @NlsSafe String? = null,
   val accessibleAdditionToText: @NlsSafe String? = null,
-  override val extendedDescription: String? = null,
+  override val extendedInfo: SeExtendedInfo? = null,
   override val isMultiSelectionSupported: Boolean,
 ) : SeItemPresentation {
   override val text: @Nls String get() = textChunk?.text ?: ""
@@ -48,7 +54,7 @@ class SeSimpleItemPresentation(
     text: @NlsSafe String? = null,
     description: @NlsSafe String? = null,
     accessibleAdditionToText: @NlsSafe String? = null,
-    extendedDescription: String? = null,
+    extendedInfo: SeExtendedInfo? = null,
     isMultiSelectionSupported: Boolean,
   ) : this(
     iconId,
@@ -56,8 +62,18 @@ class SeSimpleItemPresentation(
     null,
     description,
     accessibleAdditionToText,
-    extendedDescription,
+    extendedInfo,
     isMultiSelectionSupported)
+
+  override fun contentEquals(other: SeItemPresentation?): Boolean {
+    if (this === other) return true
+    if (other !is SeSimpleItemPresentation) return false
+
+    return super.contentEquals(other) &&
+           selectedTextChunk?.text == other.selectedTextChunk?.text &&
+           description == other.description &&
+           accessibleAdditionToText == other.accessibleAdditionToText
+  }
 }
 
 @ApiStatus.Internal
@@ -70,12 +86,19 @@ sealed interface SeActionItemPresentation : SeItemPresentation {
     val text: @Nls String,
     val location: @Nls String? = null,
     private var _switcherState: Boolean? = null,
-    val extendedDescription: String? = null,
+    val extendedInfo: SeExtendedInfo? = null,
   ) {
     val switcherState: Boolean? get() = _switcherState
     fun toggleStateIfSwitcher() {
       _switcherState = _switcherState?.not()
     }
+  }
+
+  override fun contentEquals(other: SeItemPresentation?): Boolean {
+    if (this === other) return true
+    if (other !is SeActionItemPresentation) return false
+
+    return super.contentEquals(other) && commonData == other.commonData
   }
 }
 
@@ -93,7 +116,7 @@ data class SeRunnableActionItemPresentation(
   override val isMultiSelectionSupported: Boolean,
 ) : SeActionItemPresentation {
   override val text: String get() = commonData.text
-  override val extendedDescription: String? get() = commonData.extendedDescription
+  override val extendedInfo: SeExtendedInfo? get() = commonData.extendedInfo
 
   @ApiStatus.Internal
   @Serializable
@@ -101,6 +124,18 @@ data class SeRunnableActionItemPresentation(
     val productIconId: IconId?,
     val callToActionText: @Nls String,
   )
+
+  override fun contentEquals(other: SeItemPresentation?): Boolean {
+    if (this === other) return true
+    if (other !is SeRunnableActionItemPresentation) return false
+
+    return super.contentEquals(other) &&
+           commonData == other.commonData &&
+           toolTip == other.toolTip &&
+           actionId == other.actionId &&
+           shortcut == other.shortcut &&
+           promo == other.promo
+  }
 }
 
 @ApiStatus.Internal
@@ -112,7 +147,17 @@ data class SeOptionActionItemPresentation(
   override val isMultiSelectionSupported: Boolean,
 ) : SeActionItemPresentation {
   override val text: String get() = commonData.text
-  override val extendedDescription: String? get() = commonData.extendedDescription
+  override val extendedInfo: SeExtendedInfo? get() = commonData.extendedInfo
+
+  override fun contentEquals(other: SeItemPresentation?): Boolean {
+    if (this === other) return true
+    if (other !is SeOptionActionItemPresentation) return false
+
+    return super.contentEquals(other) &&
+           commonData == other.commonData &&
+           value == other.value &&
+           isBooleanOption == other.isBooleanOption
+  }
 }
 
 @ApiStatus.Internal
@@ -129,7 +174,7 @@ class SeTargetItemPresentation(
   val containerTextMatchedRanges: List<SerializableRange>? = null,
   val locationText: @NlsSafe String? = null,
   private val locationIconId: IconId? = null,
-  override val extendedDescription: @NlsSafe String? = null,
+  override val extendedInfo: SeExtendedInfo?,
   override val isMultiSelectionSupported: Boolean,
 ) : SeItemPresentation {
   override val text: String get() = presentableText
@@ -147,7 +192,7 @@ class SeTargetItemPresentation(
   }
 
   companion object {
-    fun create(tp: TargetPresentation, matchers: ItemMatchers?, extendedDescription: String?, isMultiSelectionSupported: Boolean): SeTargetItemPresentation =
+    fun create(tp: TargetPresentation, matchers: ItemMatchers?, extendedInfo: SeExtendedInfo?, isMultiSelectionSupported: Boolean): SeTargetItemPresentation =
       SeTargetItemPresentation(backgroundColorId = tp.backgroundColor?.rpcId(),
                                iconId = tp.icon?.rpcId(),
                                presentableText = tp.presentableText,
@@ -165,7 +210,7 @@ class SeTargetItemPresentation(
                                containerTextMatchedRanges = (matchers?.locationMatcher as? MinusculeMatcher)?.calcMatchedRanges(tp.containerText),
                                locationText = tp.locationText,
                                locationIconId = tp.locationIcon?.rpcId(),
-                               extendedDescription = extendedDescription,
+                               extendedInfo = extendedInfo,
                                isMultiSelectionSupported = isMultiSelectionSupported)
 
     private fun MinusculeMatcher.calcMatchedRanges(text: String?): List<SerializableRange>? {
@@ -173,17 +218,58 @@ class SeTargetItemPresentation(
       return matchingFragments(text)?.map { SerializableRange(it) }
     }
   }
+
+  override fun contentEquals(other: SeItemPresentation?): Boolean {
+    if (this === other) return true
+    if (other !is SeTargetItemPresentation) return false
+    return super.contentEquals(other) &&
+           presentableText == other.presentableText &&
+           containerText == other.containerText &&
+           locationText == other.locationText
+  }
 }
 
 @ApiStatus.Internal
 @Serializable
 class SeTextSearchItemPresentation(
   override val text: @NlsSafe String,
-  override val extendedDescription: @NlsSafe String?,
+  override val extendedInfo: SeExtendedInfo?,
   val textChunks: List<SerializableTextChunk>,
   private val backgroundColorId: ColorId?,
   val fileString: @NlsSafe String,
   override val isMultiSelectionSupported: Boolean,
 ) : SeItemPresentation {
   val backgroundColor: Color? get() = backgroundColorId?.color()
+
+  override fun contentEquals(other: SeItemPresentation?): Boolean {
+    if (this === other) return true
+    if (other !is SeTextSearchItemPresentation) return false
+
+    return super.contentEquals(other) &&
+           fileString == other.fileString &&
+           isMultiSelectionSupported == other.isMultiSelectionSupported
+  }
+}
+
+@ApiStatus.Internal
+@Serializable
+class SeAdaptedItemEmptyPresentation(override val isMultiSelectionSupported: Boolean) : SeItemPresentation {
+  override val text: String get() = ""
+}
+
+// Must stay internal, it's not serializable and can't be used for transfer
+@ApiStatus.Internal
+class SeAdaptedItemPresentation(
+  override val isMultiSelectionSupported: Boolean,
+  val fetchedItem: Any,
+  val rendererProvider: () -> ListCellRenderer<Any>,
+) : SeItemPresentation {
+  override val text: String get() = ""
+
+  override fun contentEquals(other: SeItemPresentation?): Boolean {
+    if (this === other) return true
+    if (other !is SeAdaptedItemPresentation) return false
+
+    return super.contentEquals(other) && fetchedItem == other.fetchedItem
+  }
 }

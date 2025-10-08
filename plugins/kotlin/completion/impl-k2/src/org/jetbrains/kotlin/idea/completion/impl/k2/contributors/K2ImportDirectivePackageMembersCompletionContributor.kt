@@ -3,6 +3,7 @@ package org.jetbrains.kotlin.idea.completion.impl.k2.contributors
 
 import org.jetbrains.kotlin.analysis.api.KaExperimentalApi
 import org.jetbrains.kotlin.analysis.api.KaSession
+import org.jetbrains.kotlin.analysis.api.components.asSignature
 import org.jetbrains.kotlin.idea.completion.contributors.helpers.KtSymbolWithOrigin
 import org.jetbrains.kotlin.idea.completion.contributors.helpers.resolveReceiverToSymbols
 import org.jetbrains.kotlin.idea.completion.contributors.helpers.staticScope
@@ -19,9 +20,9 @@ internal class K2ImportDirectivePackageMembersCompletionContributor : K2SimpleCo
     KotlinImportDirectivePositionContext::class
 ) {
     @OptIn(KaExperimentalApi::class)
-    override fun KaSession.complete(context: K2CompletionSectionContext<KotlinImportDirectivePositionContext>) {
+    context(_: KaSession, context: K2CompletionSectionContext<KotlinImportDirectivePositionContext>)
+    override fun complete() {
         val positionContext = context.positionContext
-        val weighingContext = context.weighingContext
         positionContext.resolveReceiverToSymbols()
             .mapNotNull { it.staticScope }
             .flatMap { scopeWithKind ->
@@ -31,7 +32,6 @@ internal class K2ImportDirectivePackageMembersCompletionContributor : K2SimpleCo
                     .filter { context.visibilityChecker.isVisible(it, positionContext) }
                     .mapNotNull { symbol ->
                         KotlinFirLookupElementFactory.createClassifierLookupElement(symbol)?.applyWeighs(
-                            context = weighingContext,
                             symbolWithOrigin = KtSymbolWithOrigin(symbol, scopeWithKind.kind)
                         )
                     } + scope.callables(context.completionContext.scopeNameFilter)
@@ -39,11 +39,9 @@ internal class K2ImportDirectivePackageMembersCompletionContributor : K2SimpleCo
                     .map { it.asSignature() }
                     .flatMap {
                         createCallableLookupElements(
-                            context = weighingContext,
                             signature = it,
                             options = CallableInsertionOptions(ImportStrategy.DoNothing, CallableInsertionStrategy.AsIdentifier),
                             scopeKind = scopeWithKind.kind,
-                            parameters = context.parameters,
                         )
                     }
             }.forEach { context.addElement(it) }

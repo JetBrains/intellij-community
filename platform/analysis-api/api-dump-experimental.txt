@@ -2,6 +2,7 @@ a:com.intellij.codeInsight.completion.CompletionService
 - *p:getVariantsFromGroupContributors(com.intellij.codeInsight.completion.CompletionParameters,com.intellij.codeInsight.completion.PrefixMatcher,com.intellij.util.Consumer):V
 *:com.intellij.codeInsight.completion.command.CommandCompletionFactory
 - com.intellij.openapi.project.PossiblyDumbAware
+- adjustCaret(com.intellij.psi.PsiFile,I):java.lang.Integer
 - commandProviders(com.intellij.openapi.project.Project,com.intellij.lang.Language):java.util.List
 - createFile(com.intellij.psi.PsiFile,java.lang.String):com.intellij.psi.PsiFile
 - filterSuffix():java.lang.Character
@@ -36,6 +37,7 @@ a:com.intellij.codeInsight.completion.CompletionService
 - com.intellij.openapi.project.PossiblyDumbAware
 - a:getCommands(com.intellij.codeInsight.completion.command.CommandCompletionProviderContext):java.util.List
 - getId():java.lang.String
+- supportNewLineCompletion():Z
 - supportsInjected():Z
 - supportsReadOnly():Z
 *a:com.intellij.codeInsight.completion.command.CompletionCommand
@@ -82,6 +84,17 @@ a:com.intellij.codeInsight.completion.CompletionService
 - highlightMessage():java.lang.String
 - highlightReference(com.intellij.lang.annotation.AnnotationBuilder):com.intellij.lang.annotation.AnnotationBuilder
 - highlightSeverity():com.intellij.lang.annotation.HighlightSeverity
+com.intellij.codeInsight.intention.preview.IntentionPreviewInfo
+- *s:snippet(com.intellij.psi.NavigatablePsiElement):com.intellij.codeInsight.intention.preview.IntentionPreviewInfo$Snippet
+*f:com.intellij.codeInsight.intention.preview.IntentionPreviewInfo$Snippet
+- java.lang.Record
+- com.intellij.codeInsight.intention.preview.IntentionPreviewInfo
+- <init>(com.intellij.openapi.fileTypes.FileType,java.lang.String,I):V
+- f:equals(java.lang.Object):Z
+- fileType():com.intellij.openapi.fileTypes.FileType
+- f:hashCode():I
+- startLine():I
+- text():java.lang.String
 f:com.intellij.codeInsight.intention.preview.IntentionPreviewUtils
 - *s:getModCommandPreview(com.intellij.modcommand.ModCommand,com.intellij.modcommand.ActionContext):com.intellij.codeInsight.intention.preview.IntentionPreviewInfo
 com.intellij.codeInsight.lookup.LookupEx
@@ -198,8 +211,6 @@ com.intellij.modcommand.ModCommand
 - f:applyFix(com.intellij.openapi.project.Project,com.intellij.codeInspection.CommonProblemDescriptor[],java.util.List,java.lang.Runnable):V
 - perform(com.intellij.openapi.project.Project,com.intellij.codeInspection.ProblemDescriptor):com.intellij.modcommand.ModCommand
 - a:perform(com.intellij.openapi.project.Project,java.util.List):com.intellij.modcommand.ModCommand
-com.intellij.modcommand.ModCommandExecutor
-- *s:executeInteractively(com.intellij.modcommand.ActionContext,java.lang.String,com.intellij.openapi.editor.Editor,java.util.function.Supplier):V
 *:com.intellij.modcommand.ModPsiNavigator
 - a:getCaretOffset():I
 - a:moveCaretTo(I):V
@@ -312,15 +323,10 @@ a:com.intellij.openapi.fileEditor.FileEditorManager
 e:com.intellij.openapi.fileEditor.FileEditorPolicy
 - java.lang.Enum
 - *sf:HIDE_OTHER_EDITORS:com.intellij.openapi.fileEditor.FileEditorPolicy
-com.intellij.openapi.fileEditor.FileNavigator
-- *:navigateAsync(com.intellij.openapi.fileEditor.OpenFileDescriptor,Z,kotlin.coroutines.Continuation):java.lang.Object
-- *:navigateInEditorAsync(com.intellij.openapi.fileEditor.OpenFileDescriptor,Z,kotlin.coroutines.Continuation):java.lang.Object
 c:com.intellij.openapi.fileEditor.OpenFileDescriptor
 - com.intellij.openapi.fileEditor.FileEditorNavigatable
-- com.intellij.pom.AsyncNavigatable
 - java.lang.Comparable
 - *:<init>(com.intellij.openapi.project.Project,com.intellij.openapi.vfs.VirtualFile,com.intellij.codeInsight.multiverse.CodeInsightContext,I):V
-- *:navigateAsync(Z,kotlin.coroutines.Continuation):java.lang.Object
 *f:com.intellij.openapi.vfs.newvfs.AttributeInputStream
 - java.io.DataInputStream
 - readEnumeratedString():java.lang.String

@@ -7,11 +7,7 @@ import com.intellij.modcommand.ActionContext
 import com.intellij.modcommand.ModPsiUpdater
 import com.intellij.modcommand.Presentation
 import org.jetbrains.kotlin.analysis.api.KaSession
-import org.jetbrains.kotlin.analysis.api.components.ShortenCommand
-import org.jetbrains.kotlin.analysis.api.components.ShortenStrategy
-import org.jetbrains.kotlin.analysis.api.components.containingDeclaration
-import org.jetbrains.kotlin.analysis.api.components.resolveToCall
-import org.jetbrains.kotlin.analysis.api.components.resolveToSymbol
+import org.jetbrains.kotlin.analysis.api.components.*
 import org.jetbrains.kotlin.analysis.api.resolution.KaCallableMemberCall
 import org.jetbrains.kotlin.analysis.api.resolution.successfulCallOrNull
 import org.jetbrains.kotlin.analysis.api.resolution.symbol
@@ -28,14 +24,11 @@ import org.jetbrains.kotlin.idea.references.mainReference
 import org.jetbrains.kotlin.name.ClassId
 import org.jetbrains.kotlin.name.FqName
 import org.jetbrains.kotlin.psi.*
-import org.jetbrains.kotlin.psi.psiUtil.anyDescendantOfType
-import org.jetbrains.kotlin.psi.psiUtil.getQualifiedExpressionForReceiver
-import org.jetbrains.kotlin.psi.psiUtil.getQualifiedExpressionForSelector
-import org.jetbrains.kotlin.psi.psiUtil.isInImportDirective
+import org.jetbrains.kotlin.psi.psiUtil.*
 import org.jetbrains.kotlin.utils.addToStdlib.safeAs
 
 internal class ImportAllMembersIntention :
-    KotlinApplicableModCommandAction<KtExpression, ImportAllMembersIntention.Context>(KtExpression::class) {
+    KotlinApplicableModCommandAction<KtElement, ImportAllMembersIntention.Context>(KtElement::class) {
 
     data class Context(
         val fqName: FqName,
@@ -47,7 +40,7 @@ internal class ImportAllMembersIntention :
 
     override fun getPresentation(
         context: ActionContext,
-        element: KtExpression,
+        element: KtElement,
     ): Presentation? {
         val (fqName) = getElementContext(context, element)
             ?: return null
@@ -55,22 +48,30 @@ internal class ImportAllMembersIntention :
             .withPriority(PriorityAction.Priority.HIGH)
     }
 
-    override fun isApplicableByPsi(element: KtExpression): Boolean =
-        element.isOnTheLeftOfQualificationDot && !element.isInImportDirective()
+    override fun isApplicableByPsi(element: KtElement): Boolean =
+        (element is KtExpression && element.isOnTheLeftOfQualificationDot && !element.isInImportDirective()) ||
+                element is KtUserType
 
-    override fun KaSession.prepareContext(element: KtExpression): Context? {
+    override fun KaSession.prepareContext(element: KtElement): Context? {
         val actualReference = element.actualReference
+
+        val expression = when (element) {
+            is KtUserType -> element.referenceExpression
+            is KtExpression -> element
+            else -> null
+        } ?: return null
+
         val target = actualReference?.resolveToSymbol() as? KaNamedClassSymbol ?: return null
         val classId = target.classId ?: return null
         if (!target.origin.isJavaSourceOrLibrary() &&
             (target.classKind == KaClassKind.OBJECT ||
                     // One cannot use on-demand import for properties or functions declared inside objects
-                    isReferenceToObjectMemberOrUnresolved(element))
+                    isReferenceToObjectMemberOrUnresolved(expression))
         ) {
             // Import all members of an object is not supported by Kotlin.
             return null
         }
-        if (element.getQualifiedExpressionForReceiver()?.isEnumSyntheticMethodCall(target) == true) return null
+        if (expression.getQualifiedExpressionForReceiver()?.isEnumSyntheticMethodCall(target) == true) return null
         if (element.containingKtFile.hasImportedEnumSyntheticMethodCall()) return null
 
         val shortenCommand = collectPossibleReferenceShortenings(
@@ -102,7 +103,7 @@ internal class ImportAllMembersIntention :
 
     override fun invoke(
         actionContext: ActionContext,
-        element: KtExpression,
+        element: KtElement,
         elementContext: Context,
         updater: ModPsiUpdater,
     ) {
@@ -144,10 +145,12 @@ private val KtExpression.isOnTheLeftOfQualificationDot: Boolean
         }
     }
 
-private val KtExpression.actualReference: KtReference?
+val KtElement.actualReference: KtReference?
     get() = when (this) {
-        is KtDotQualifiedExpression -> selectorExpression?.mainReference ?: mainReference
-        else -> mainReference
+        is KtDotQualifiedExpression -> this.getQualifiedElementSelector()?.mainReference
+        is KtExpression -> mainReference
+        is KtUserType -> referenceExpression?.mainReference
+        else -> null
     }
 
 context(_: KaSession)

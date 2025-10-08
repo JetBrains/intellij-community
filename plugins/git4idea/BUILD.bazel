@@ -1,27 +1,27 @@
 ### auto-generated section `build intellij.vcs.git` start
 load("//build:compiler-options.bzl", "create_kotlinc_options")
-load("@rules_jvm//:jvm.bzl", "jvm_library", "jvm_resources")
+load("@rules_jvm//:jvm.bzl", "jvm_library", "resourcegroup")
 
 create_kotlinc_options(
   name = "custom_vcs-git",
   opt_in = ["kotlin.RequiresOptIn"]
 )
 
-jvm_resources(
+resourcegroup(
   name = "vcs-git_resources",
-  files = glob(["resources/**/*"]),
+  srcs = glob(["resources/**/*"]),
   strip_prefix = "resources"
 )
 
-jvm_resources(
+resourcegroup(
   name = "vcs-git_resources_1",
-  files = glob(["compatibilityResources/**/*"]),
+  srcs = glob(["compatibilityResources/**/*"]),
   strip_prefix = "compatibilityResources"
 )
 
-jvm_resources(
+resourcegroup(
   name = "vcs-git_test_resources",
-  files = glob(["testResources/**/*"]),
+  srcs = glob(["testResources/**/*"]),
   strip_prefix = "testResources"
 )
 
@@ -30,6 +30,10 @@ jvm_library(
   module_name = "intellij.vcs.git",
   visibility = ["//visibility:public"],
   srcs = glob(["src/**/*.kt", "src/**/*.java", "src/**/*.form", "gen/**/*.kt", "gen/**/*.java"], allow_empty = True),
+  resources = [
+    ":vcs-git_resources",
+    ":vcs-git_resources_1",
+  ],
   kotlinc_opts = ":custom_vcs-git",
   deps = [
     "//platform/analysis-api:analysis",
@@ -49,7 +53,7 @@ jvm_library(
     "//platform/lang-api:lang",
     "//platform/lvcs-api:lvcs",
     "//platform/platform-api:ide",
-    "@lib//:guava",
+    "//libraries/guava",
     "//platform/lang-impl",
     "//platform/execution-impl",
     "//plugins/git4idea/rt",
@@ -62,20 +66,20 @@ jvm_library(
     "//platform/util",
     "@lib//:ini4j",
     "//platform/diff-impl",
-    "@lib//:jackson",
-    "@lib//:jackson-databind",
-    "@lib//:gson",
-    "@lib//:xz",
+    "//libraries/jackson/jackson",
+    "//libraries/jackson/databind",
+    "//libraries/gson",
+    "//libraries/xz",
     "@lib//:stream_ex",
     "//platform/statistics",
-    "@lib//:miglayout-swing",
+    "//libraries/miglayout-swing",
     "//platform/core-ui",
-    "@lib//:fastutil-min",
+    "//libraries/fastutil",
     "//platform/platform-util-io:ide-util-io",
-    "@lib//:caffeine",
+    "//libraries/caffeine",
     "@lib//:kotlinx-coroutines-core",
-    "@lib//:kotlinx-serialization-core",
-    "@lib//:kotlinx-serialization-json",
+    "//libraries/kotlinx/serialization/core",
+    "//libraries/kotlinx/serialization/json",
     "//platform/external-process-auth-helper",
     "//platform/external-process-auth-helper/rt",
     "//platform/util/progress",
@@ -101,23 +105,21 @@ jvm_library(
     "//platform/project/shared:project",
     "//platform/eel-provider",
     "//platform/eel",
-    "//platform/eel-impl",
+    "//platform/platform-impl/recentProjects",
+    "//platform/platform-impl/eel:ide-impl-wsl",
   ],
   exports = [
     "//platform/dvcs-api:vcs-dvcs",
     "@lib//:cucumber-testing",
   ],
-  runtime_deps = [
-    ":vcs-git_resources",
-    ":vcs-git_resources_1",
-    "//platform/lvcs-impl",
-  ]
+  runtime_deps = ["//platform/lvcs-impl"]
 )
 
 jvm_library(
   name = "vcs-git_test_lib",
   visibility = ["//visibility:public"],
   srcs = glob(["tests/**/*.kt", "tests/**/*.java", "tests/**/*.form"], allow_empty = True),
+  resources = [":vcs-git_test_resources"],
   kotlinc_opts = ":custom_vcs-git",
   associates = [":vcs-git"],
   deps = [
@@ -145,7 +147,7 @@ jvm_library(
     "//platform/testFramework",
     "//platform/testFramework:testFramework_test_lib",
     "//platform/platform-api:ide",
-    "@lib//:guava",
+    "//libraries/guava",
     "//platform/lang-impl",
     "//platform/execution-impl",
     "//plugins/git4idea/rt",
@@ -169,21 +171,21 @@ jvm_library(
     "//platform/tasks-platform-api:tasks",
     "@lib//:assert_j",
     "//platform/diff-impl",
-    "@lib//:jackson",
-    "@lib//:jackson-databind",
-    "@lib//:gson",
-    "@lib//:xz",
+    "//libraries/jackson/jackson",
+    "//libraries/jackson/databind",
+    "//libraries/gson",
+    "//libraries/xz",
     "@lib//:stream_ex",
     "//platform/statistics",
     "//platform/statistics:statistics_test_lib",
-    "@lib//:miglayout-swing",
+    "//libraries/miglayout-swing",
     "//platform/core-ui",
-    "@lib//:fastutil-min",
+    "//libraries/fastutil",
     "//platform/platform-util-io:ide-util-io",
-    "@lib//:caffeine",
+    "//libraries/caffeine",
     "@lib//:kotlinx-coroutines-core",
-    "@lib//:kotlinx-serialization-core",
-    "@lib//:kotlinx-serialization-json",
+    "//libraries/kotlinx/serialization/core",
+    "//libraries/kotlinx/serialization/json",
     "@lib//:commons-lang3",
     "//platform/external-process-auth-helper",
     "//platform/external-process-auth-helper:external-process-auth-helper_test_lib",
@@ -217,16 +219,12 @@ jvm_library(
     "//platform/testFramework/extensions:testExtensions",
     "//platform/eel-provider",
     "//platform/eel",
-    "//platform/eel-impl",
+    "//platform/platform-impl/recentProjects",
+    "//platform/platform-impl/eel:ide-impl-wsl",
   ],
   exports = [
     "//platform/dvcs-api:vcs-dvcs",
     "@lib//:cucumber-testing",
-  ],
-  runtime_deps = [
-    ":vcs-git_resources",
-    ":vcs-git_resources_1",
-    ":vcs-git_test_resources",
   ]
 )
 ### auto-generated section `build intellij.vcs.git` end

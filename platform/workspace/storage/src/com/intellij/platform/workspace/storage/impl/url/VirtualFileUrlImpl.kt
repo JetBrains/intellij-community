@@ -1,7 +1,7 @@
 // Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.platform.workspace.storage.impl.url
 
-import com.intellij.openapi.util.io.FileUtil
+import com.intellij.openapi.util.io.FileUtilRt
 import com.intellij.platform.workspace.storage.url.VirtualFileUrl
 import com.intellij.platform.workspace.storage.url.VirtualFileUrlManager
 import com.intellij.util.io.URLUtil
@@ -73,6 +73,6 @@ public fun File.toVirtualFileUrl(virtualFileManager: VirtualFileUrlManager): Vir
 public fun Path.toVirtualFileUrl(virtualFileManager: VirtualFileUrlManager): VirtualFileUrl = toAbsolutePath().toString().toVirtualFileUrl(virtualFileManager)
 
 private fun String.toVirtualFileUrl(virtualFileManager: VirtualFileUrlManager): VirtualFileUrl {
-  val url = URLUtil.FILE_PROTOCOL + URLUtil.SCHEME_SEPARATOR + FileUtil.toSystemIndependentName(this)
+  val url = URLUtil.FILE_PROTOCOL + URLUtil.SCHEME_SEPARATOR + FileUtilRt.toSystemIndependentName(this)
   return virtualFileManager.getOrCreateFromUrl(url)
 }

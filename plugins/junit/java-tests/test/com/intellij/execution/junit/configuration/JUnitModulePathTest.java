@@ -25,6 +25,7 @@ import com.intellij.rt.junit.JUnitStarter;
 import com.intellij.testFramework.IdeaTestUtil;
 import com.intellij.util.PathUtil;
 import com.intellij.util.PathsList;
+import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.jps.model.java.JavaSourceRootType;
 import org.jetbrains.jps.model.library.JpsMavenRepositoryLibraryDescriptor;
@@ -106,7 +107,7 @@ public class JUnitModulePathTest extends BaseConfigurationTestCase {
                                                           "modulePath/prod1", module);
     ModuleRootModificationUtil.updateModel(module, model -> {
       ContentEntry entry = model.getContentEntries()[0];
-      entry.removeSourceFolder(entry.getSourceFolders(JavaSourceRootType.SOURCE).get(0));
+      entry.removeSourceFolder(entry.getSourceFolders(JavaSourceRootType.SOURCE).getFirst());
     });
     JavaParameters params4Tests = configuration.getTestObject().createJavaParameters4Tests();
     assertEmpty(params4Tests.getModulePath().getPathList());
@@ -126,7 +127,7 @@ public class JUnitModulePathTest extends BaseConfigurationTestCase {
     PathsList modulePath = params4Tests.getModulePath();
 
     assertTrue("module path: " + modulePath.getPathsString(),
-                        modulePath.getPathList().stream().anyMatch(filePath -> filePath.contains("junit-jupiter-api")));
+               ContainerUtil.exists(modulePath.getPathList(), filePath -> filePath.contains("junit-jupiter-api")));
     //production module output is not on the module path
     assertFalse("module path: " + modulePath.getPathsString(),
                          modulePath.getPathList().contains(getCompilerOutputPath(module)));
@@ -136,7 +137,7 @@ public class JUnitModulePathTest extends BaseConfigurationTestCase {
     assertSize(2, modulePath.getPathList());
 
     //launcher should be put on the classpath
-    assertTrue(params4Tests.getClassPath().getPathList().stream().anyMatch(filePath -> filePath.contains("launcher")));
+    assertTrue(ContainerUtil.exists(params4Tests.getClassPath().getPathList(), filePath -> filePath.contains("launcher")));
   }
 
   public void testModuleInfoInTestModularizedJunit() throws Exception {
@@ -151,8 +152,8 @@ public class JUnitModulePathTest extends BaseConfigurationTestCase {
                           " --add-modules org.junit.platform.launcher", moduleOptions.getParametersList().getParametersString());
 
     PathsList classPath = params4Tests.getClassPath();
-    assertContainsElements(classPath.getPathList(), PathUtil.getJarPathForClass(JUnitStarter.class));
-    assertContainsElements(classPath.getPathList(), TestObject.getJUnit5RtFile().getPath());
+    assertContainsElements(classPath.getPathList(), TestObject.getJUnitRtPath().getPath());
+    assertContainsElements(classPath.getPathList(), TestObject.getJUnitRtFile(JUnitStarter.JUNIT5_PARAMETER).getPath());
 
     PathsList modulePath = params4Tests.getModulePath();
     checkLibrariesOnPathList(module, modulePath);
@@ -163,7 +164,7 @@ public class JUnitModulePathTest extends BaseConfigurationTestCase {
     //test module output is on the module path
     assertTrue("module path: " + modulePath.getPathsString(),
                         modulePathList.contains(getCompilerOutputPath(module, true)));
-    assertTrue(modulePathList.stream().anyMatch(filePath -> filePath.contains("launcher")));
+    assertTrue(ContainerUtil.exists(modulePathList, filePath -> filePath.contains("launcher")));
   }
   
   public void testModuleInfoInTestModularizedJunitDependencyOnAnotherModule() throws Exception {
@@ -174,7 +175,7 @@ public class JUnitModulePathTest extends BaseConfigurationTestCase {
       model.addModuleOrderEntry(module1);
     });
     JpsMavenRepositoryLibraryDescriptor nonModularizedJupiterDescription =
-      new JpsMavenRepositoryLibraryDescriptor("org.junit.jupiter", "junit-jupiter-api", "5.5.2");
+      new JpsMavenRepositoryLibraryDescriptor("org.junit.jupiter", "junit-jupiter-api", "6.0.0-RC2");
     JUnitConfiguration configuration = setupConfiguration(nonModularizedJupiterDescription, "modulePath/test2", module);
     JavaParameters params4Tests = configuration.getTestObject().createJavaParameters4Tests();
     ParamsGroup moduleOptions = JavaTestFrameworkRunnableState.getJigsawOptions(params4Tests);
@@ -183,8 +184,8 @@ public class JUnitModulePathTest extends BaseConfigurationTestCase {
                           " --add-modules org.junit.platform.launcher", moduleOptions.getParametersList().getParametersString());
 
     PathsList classPath = params4Tests.getClassPath();
-    assertContainsElements(classPath.getPathList(), PathUtil.getJarPathForClass(JUnitStarter.class));
-    assertContainsElements(classPath.getPathList(), TestObject.getJUnit5RtFile().getPath());
+    assertContainsElements(classPath.getPathList(), TestObject.getJUnitRtPath().getPath());
+    assertContainsElements(classPath.getPathList(), TestObject.getJUnitRtFile(JUnitStarter.JUNIT6_PARAMETER).getPath());
 
     PathsList modulePath = params4Tests.getModulePath();
     checkLibrariesOnPathList(module, modulePath);
@@ -196,7 +197,7 @@ public class JUnitModulePathTest extends BaseConfigurationTestCase {
     //test module output is on the module path
     assertTrue("module path: " + modulePath.getPathsString(),
                         modulePathList.contains(getCompilerOutputPath(module, true)));
-    assertTrue(modulePathList.stream().anyMatch(filePath -> filePath.contains("launcher")));
+    assertTrue(ContainerUtil.exists(modulePathList, filePath -> filePath.contains("launcher")));
   }
 
   private JUnitConfiguration setupConfiguration(JpsMavenRepositoryLibraryDescriptor libraryDescriptor, String sources, Module module) throws Exception {

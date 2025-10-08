@@ -28,6 +28,7 @@ import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.indexing.FindSymbolParameters;
 import it.unimi.dsi.fastutil.ints.IntOpenHashSet;
 import it.unimi.dsi.fastutil.ints.IntSet;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Unmodifiable;
 
@@ -112,31 +113,31 @@ public abstract class ContributorsBasedGotoByModel implements ChooseByNameModelE
                                       @NotNull FindSymbolParameters parameters,
                                       @NotNull Processor<? super String> nameProcessor) {
     IntSet filter = new IntOpenHashSet(1000);
+    doProcessContributorNames(contributor, parameters, s -> {
+      if (nameProcessor.process(s)) {
+        filter.add(s.hashCode());
+      }
+      return true;
+    });
+    myContributorToItsSymbolsMap.put(contributor, filter);
+  }
+
+  @ApiStatus.Internal
+  protected void doProcessContributorNames(ChooseByNameContributor contributor,
+                                           @NotNull FindSymbolParameters parameters,
+                                           Processor<? super String> filterAdderProcessor) {
     if (contributor instanceof ChooseByNameContributorEx2) {
-      ((ChooseByNameContributorEx2)contributor).processNames(s -> {
-        if (nameProcessor.process(s)) {
-          filter.add(s.hashCode());
-        }
-        return true;
-      }, parameters);
+      ((ChooseByNameContributorEx2)contributor).processNames(filterAdderProcessor, parameters);
     }
     else if (contributor instanceof ChooseByNameContributorEx) {
-      ((ChooseByNameContributorEx)contributor).processNames(s -> {
-        if (nameProcessor.process(s)) {
-          filter.add(s.hashCode());
-        }
-        return true;
-      }, parameters.getSearchScope(), parameters.getIdFilter());
+      ((ChooseByNameContributorEx)contributor).processNames(filterAdderProcessor, parameters.getSearchScope(), parameters.getIdFilter());
     }
     else {
       String[] names = contributor.getNames(myProject, parameters.isSearchInLibraries());
       for (String element : names) {
-        if (nameProcessor.process(element)) {
-          filter.add(element.hashCode());
-        }
+        filterAdderProcessor.process(element);
       }
     }
-    myContributorToItsSymbolsMap.put(contributor, filter);
   }
 
   @Override
@@ -195,36 +196,8 @@ public abstract class ContributorsBasedGotoByModel implements ChooseByNameModelE
       long start = System.nanoTime();
       int[] count = {0};
 
-      if (contributor instanceof ChooseByNameContributorEx) {
-        ((ChooseByNameContributorEx)contributor).processElementsWithName(name, item -> {
-          canceled.checkCanceled();
-          count[0]++;
-          if (acceptItem(item)) items.add(item);
-          return true;
-        }, parameters);
+      doProcessContributorForName(contributor, name, parameters, canceled, items, count, searchInLibraries);
 
-        if (LOG.isDebugEnabled()) {
-          LOG.debug(TimeoutUtil.getDurationMillis(start) + "," + contributor + "," + count[0]);
-        }
-      }
-      else {
-        NavigationItem[] itemsByName = contributor.getItemsByName(name, parameters.getLocalPatternName(), myProject, searchInLibraries);
-        count[0] += itemsByName.length;
-        for (NavigationItem item : itemsByName) {
-          canceled.checkCanceled();
-          if (item == null) {
-            PluginException.logPluginError(LOG, "null item from contributor " + contributor + " for name " + name, null, contributor.getClass());
-            continue;
-          }
-          VirtualFile file = item instanceof PsiElement && !(item instanceof PomTargetPsiElement)
-                             ? PsiUtilCore.getVirtualFile((PsiElement)item) : null;
-          if (file != null && !parameters.getSearchScope().contains(file)) continue;
-
-          if (acceptItem(item)) {
-            items.add(item);
-          }
-        }
-      }
       if (LOG.isDebugEnabled()) {
         LOG.debug(TimeoutUtil.getDurationMillis(start) + "," + contributor + "," + count[0]);
       }
@@ -238,6 +211,42 @@ public abstract class ContributorsBasedGotoByModel implements ChooseByNameModelE
       LOG.error(ex);
     }
     return true;
+  }
+
+  @ApiStatus.Internal
+  protected void doProcessContributorForName(@NotNull ChooseByNameContributor contributor,
+                                             @NotNull String name,
+                                             @NotNull FindSymbolParameters parameters,
+                                             @NotNull ProgressIndicator canceled,
+                                             @NotNull List<? super NavigationItem> items,
+                                             int @NotNull [] count,
+                                             boolean searchInLibraries) {
+    if (contributor instanceof ChooseByNameContributorEx) {
+      ((ChooseByNameContributorEx)contributor).processElementsWithName(name, item -> {
+        canceled.checkCanceled();
+        count[0]++;
+        if (acceptItem(item)) items.add(item);
+        return true;
+      }, parameters);
+    }
+    else {
+      NavigationItem[] itemsByName = contributor.getItemsByName(name, parameters.getLocalPatternName(), myProject, searchInLibraries);
+      count[0] += itemsByName.length;
+      for (NavigationItem item : itemsByName) {
+        canceled.checkCanceled();
+        if (item == null) {
+          PluginException.logPluginError(LOG, "null item from contributor " + contributor + " for name " + name, null, contributor.getClass());
+          continue;
+        }
+        VirtualFile file = item instanceof PsiElement && !(item instanceof PomTargetPsiElement)
+                           ? PsiUtilCore.getVirtualFile((PsiElement)item) : null;
+        if (file != null && !parameters.getSearchScope().contains(file)) continue;
+
+        if (acceptItem(item)) {
+          items.add(item);
+        }
+      }
+    }
   }
 
   /**

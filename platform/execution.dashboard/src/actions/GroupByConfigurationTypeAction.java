@@ -2,7 +2,7 @@
 package com.intellij.platform.execution.dashboard.actions;
 
 import com.intellij.openapi.actionSystem.remoting.ActionRemoteBehaviorSpecification;
-import com.intellij.platform.execution.dashboard.tree.ConfigurationTypeDashboardGroupingRule;
+import com.intellij.platform.execution.dashboard.splitApi.frontend.tree.ConfigurationTypeDashboardGroupingRule;
 import org.jetbrains.annotations.NotNull;
 
 final class GroupByConfigurationTypeAction

@@ -3,6 +3,7 @@ package org.jetbrains.idea.maven.dom.inspections;
 
 import com.intellij.codeHighlighting.HighlightDisplayLevel;
 import com.intellij.lang.annotation.HighlightSeverity;
+import com.intellij.openapi.project.DumbAware;
 import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.util.containers.MultiMap;
@@ -18,7 +19,7 @@ import org.jetbrains.idea.maven.project.MavenProjectBundle;
 import java.util.Collection;
 import java.util.Map;
 
-public final class MavenDuplicatePluginInspection extends DomElementsInspection<MavenDomProjectModel> {
+public final class MavenDuplicatePluginInspection extends DomElementsInspection<MavenDomProjectModel> implements DumbAware {
   public MavenDuplicatePluginInspection() {
     super(MavenDomProjectModel.class);
   }

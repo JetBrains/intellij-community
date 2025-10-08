@@ -3,6 +3,7 @@ package org.jetbrains.plugins.github.pullrequest.data.provider
 
 import com.intellij.collaboration.async.computationStateFlow
 import com.intellij.collaboration.async.withInitial
+import com.intellij.collaboration.util.CodeReviewDomainEntity
 import com.intellij.collaboration.util.ComputedResult
 import com.intellij.diff.util.Side
 import com.intellij.openapi.util.NlsSafe
@@ -14,6 +15,7 @@ import org.jetbrains.plugins.github.api.data.pullrequest.GHPullRequestReviewThre
 import org.jetbrains.plugins.github.api.data.request.GHPullRequestDraftReviewThread
 import org.jetbrains.plugins.github.pullrequest.data.GHPullRequestPendingReview
 
+@CodeReviewDomainEntity
 interface GHPRReviewDataProvider {
 
   //TODO: move to a shared VM

@@ -7,9 +7,8 @@ import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.registry.Registry
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.psi.search.FileRankerMlService
-import com.jetbrains.ml.api.feature.FeatureSet
-import com.jetbrains.ml.tools.logs.MLLogsTree
-import com.jetbrains.ml.tools.logs.MLTreeLogger
+import com.jetbrains.mlapi.logs.MLLogsTree
+import com.jetbrains.mlapi.logs.MLTreeLogger
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.launch
 import java.util.concurrent.atomic.AtomicLong
@@ -115,26 +114,30 @@ class FileRankerMlServiceImpl(private val coroutineScope: CoroutineScope) : File
                           projectPath: String) {
     val tree = MLLogsTree(
       analysis = analysisProvider.provideAnalysisTargets(
-        info = FindUsagesFileRankingAnalysisInfo(isUsage = isUsage,
-                                                 timestamp = timeStamp,
-                                                 isSearchValid = isSearchValid,
-                                                 numberOfUsageFiles = numberOfUsageFiles,
-                                                 numberOfCandidates = numberOfCandidates,
-                                                 indexInOriginalOrder = indexInOriginalOrder,
-                                                 activeSessionId = activeSessionId,
-                                                 finishSessionId = sessionId))  ,
-      features = featureProvider.provideFeatures(
-        instance = FindUsagesRankingFileInfo(queryNames = queryNames,
-                                             queryFiles = queryFiles,
-                                             candidateFile = file,
-                                             recentFilesList = recentFilesList,
-                                             timeStamp = timeStamp,
-                                             projectPath = projectPath),
-        requiredOutput = FeatureSet.ALL
+        info = FindUsagesFileRankingAnalysisInfo(
+          customSessionId = sessionId,
+          isUsage = isUsage,
+          timestamp = timeStamp,
+          isSearchValid = isSearchValid,
+          numberOfUsageFiles = numberOfUsageFiles,
+          numberOfCandidates = numberOfCandidates,
+          indexInOriginalOrder = indexInOriginalOrder,
+          activeSessionId = activeSessionId,
+          finishSessionId = sessionId
+        )
       ),
+      features = featureProvider.provideFeatures(
+        instance = FindUsagesRankingFileInfo(
+          queryNames = queryNames,
+          queryFiles = queryFiles,
+          candidateFile = file,
+          recentFilesList = recentFilesList,
+          timeStamp = timeStamp,
+          projectPath = projectPath
+        )
+      )
     )
-    logger.log(tree = tree,
-               customSessionId = sessionId)
+    logger.log(tree)
   }
 
   private fun logInvalid(activeSessionId: Long, finishedSessionId: Long) {

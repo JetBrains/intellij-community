@@ -41,7 +41,7 @@ public class AnnotateMethodInGeneratedFilesTest extends LightJavaCodeInsightFixt
 
   public void testAnnotateOverriddenMethod() {
     IdeaTestUtil.setModuleLanguageLevel(myFixture.getModule(), LanguageLevel.JDK_1_6);
-    doTest("Add missing nullability annotation");
+    doTest("Add missing nullability annotations");
   }
 
   public void testAnnotateOverriddenParameters() {

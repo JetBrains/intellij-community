@@ -5,7 +5,7 @@ package runToCursorWithinUndispatchedCoroutine
 
 import kotlinx.coroutines.*
 
-fun main() = runBlocking {
+fun main() = runBlocking(Dispatchers.Default) {
     for (i in 0 .. 10) {
         launch(start = CoroutineStart.UNDISPATCHED) {
             if (i == 5) {

@@ -1,9 +1,9 @@
 ### auto-generated section `build intellij.grazie.core` start
-load("@rules_jvm//:jvm.bzl", "jvm_library", "jvm_resources")
+load("@rules_jvm//:jvm.bzl", "jvm_library", "resourcegroup")
 
-jvm_resources(
+resourcegroup(
   name = "core_resources",
-  files = glob(["main/resources/**/*"]),
+  srcs = glob(["main/resources/**/*"]),
   strip_prefix = "main/resources"
 )
 
@@ -12,11 +12,12 @@ jvm_library(
   module_name = "intellij.grazie.core",
   visibility = ["//visibility:public"],
   srcs = glob(["main/kotlin/**/*.kt", "main/kotlin/**/*.java", "main/kotlin/**/*.form"], allow_empty = True),
+  resources = [":core_resources"],
   deps = [
     "@lib//:kotlin-stdlib",
-    "@lib//:jackson-module-kotlin",
-    "@lib//:jackson",
-    "@lib//:jackson-databind",
+    "//libraries/jackson/module-kotlin:libraries-jackson-module-kotlin",
+    "//libraries/jackson/jackson",
+    "//libraries/jackson/databind",
     "@lib//:slf4j-api",
     "@lib//:slf4j-jdk14",
     "@lib//:commons-logging",
@@ -27,15 +28,16 @@ jvm_library(
     "//platform/editor-ui-api:editor-ui",
     "//platform/indexing-api:indexing",
     "//platform/projectModel-api:projectModel",
+    "//platform/refactoring",
     "//platform/vcs-api:vcs",
     "//platform/editor-ui-ex:editor-ex",
     "//platform/lang-api:lang",
     "//platform/service-container",
     "//platform/vcs-impl",
     "//spellchecker",
-    "@lib//:miglayout-swing",
+    "//libraries/miglayout-swing",
     "@lib//:kotlinx-coroutines-core",
-    "@lib//:kotlinx-serialization-json",
+    "//libraries/kotlinx/serialization/json",
     "//platform/platform-api:ide",
     "@lib//:grazie-core-org-jetbrains-intellij-deps-languagetool-languagetool-core",
     "@lib//:grazie-core-org-jetbrains-intellij-deps-languagetool-language-en",
@@ -46,7 +48,7 @@ jvm_library(
     "@lib//:grazie-core-org-carrot2-morfologik-fsa-builders",
     "@lib//:grazie-core-org-carrot2-morfologik-fsa",
     "//platform/statistics",
-    "@lib//:fastutil-min",
+    "//libraries/fastutil",
     "//platform/util-class-loader:util-classLoader",
     "@lib//:grazie-core-tech-uom-lib-uom-lib-common-1-1",
     "@lib//:grazie-core-tech-units-indriya-1-3",
@@ -63,7 +65,7 @@ jvm_library(
     "//platform/platform-impl:ide-impl",
     "//platform/lang-impl",
     "@lib//:stream_ex",
-    "@lib//:kotlinx-serialization-core",
+    "//libraries/kotlinx/serialization/core",
     "//libraries/lucene.common",
     "//libraries/ai.grazie.spell.gec.engine.local",
     "@lib//:ai-grazie-rule-engine",
@@ -73,6 +75,9 @@ jvm_library(
     "//platform/util/coroutines",
     "//platform/util/progress",
     "//platform/util/text-matching",
+    "//libraries/grpc",
+    "//platform/util/jdom",
+    "//libraries/caffeine",
   ],
   exports = [
     "@lib//:grazie-core-org-jetbrains-intellij-deps-languagetool-languagetool-core",
@@ -81,14 +86,10 @@ jvm_library(
     "@lib//:grazie-core-ai-grazie-model-ner-jvm",
   ],
   runtime_deps = [
-    ":core_resources",
     "@lib//:jna",
     "@lib//:guava",
     "@lib//:jetbrains-annotations",
     "@lib//:commons-lang3",
-    "@lib//:grpc-core",
-    "@lib//:grpc-protobuf",
-    "@lib//:grpc-stub",
   ]
 )
 ### auto-generated section `build intellij.grazie.core` end

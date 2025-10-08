@@ -2,10 +2,7 @@
 package com.intellij.util.containers;
 
 import com.intellij.util.SmartList;
-import org.jetbrains.annotations.ApiStatus;
-import org.jetbrains.annotations.Debug;
-import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
+import org.jetbrains.annotations.*;
 
 import java.io.Serializable;
 import java.util.*;
@@ -59,7 +56,7 @@ public class MultiMap<K, V> implements Serializable {
     return new SmartList<>();
   }
 
-  protected @NotNull Collection<V> createEmptyCollection() {
+  protected @NotNull @Unmodifiable Collection<V> createEmptyCollection() {
     return Collections.emptyList();
   }
 

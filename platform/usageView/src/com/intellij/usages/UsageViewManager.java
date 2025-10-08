@@ -31,12 +31,13 @@ public abstract class UsageViewManager {
                                                 Usage @NotNull [] foundUsages,
                                                 @NotNull UsageViewPresentation presentation);
 
-  public abstract @Nullable("returns null in case of no usages found or usage view not shown for one usage") UsageView searchAndShowUsages(UsageTarget @NotNull [] searchFor,
-                                                                                                                                           @NotNull Supplier<? extends UsageSearcher> searcherFactory,
-                                                                                                                                           boolean showPanelIfOnlyOneUsage,
-                                                                                                                                           boolean showNotFoundMessage,
-                                                                                                                                           @NotNull UsageViewPresentation presentation,
-                                                                                                                                           @Nullable UsageViewStateListener listener);
+  public abstract @Nullable("returns null in case of no usages found or usage view not shown for one usage")
+  UsageView searchAndShowUsages(UsageTarget @NotNull [] searchFor,
+                                @NotNull Supplier<? extends UsageSearcher> searcherFactory,
+                                boolean showPanelIfOnlyOneUsage,
+                                boolean showNotFoundMessage,
+                                @NotNull UsageViewPresentation presentation,
+                                @Nullable UsageViewStateListener listener);
 
   public interface UsageViewStateListener {
     void usageViewCreated(@NotNull UsageView usageView);

@@ -12,12 +12,9 @@ import com.intellij.psi.PsiElement
 import com.intellij.psi.PsiWhiteSpace
 import org.jetbrains.kotlin.idea.base.plugin.KotlinPluginModeProvider.Companion.isK2Mode
 import org.jetbrains.kotlin.idea.base.util.module
-import org.jetbrains.kotlin.idea.configuration.ExperimentalFeatures.NewJ2k
 import org.jetbrains.kotlin.idea.editor.KotlinEditorOptions
 import org.jetbrains.kotlin.j2k.*
-import org.jetbrains.kotlin.j2k.J2kConverterExtension.Kind.K1_NEW
-import org.jetbrains.kotlin.j2k.J2kConverterExtension.Kind.K1_OLD
-import org.jetbrains.kotlin.j2k.J2kConverterExtension.Kind.K2
+import org.jetbrains.kotlin.j2k.J2kConverterExtension.Kind.*
 import org.jetbrains.kotlin.j2k.ParseContext.CODE_BLOCK
 import org.jetbrains.kotlin.lexer.KtTokens
 import org.jetbrains.kotlin.name.FqName
@@ -145,7 +142,7 @@ fun ElementAndTextList.lineCount(): Int {
 
 fun getJ2kKind(targetFile: KtFile): J2kConverterExtension.Kind = when {
     isK2Mode() -> K2
-    targetFile is KtCodeFragment || !NewJ2k.isEnabled -> K1_OLD
+    targetFile is KtCodeFragment -> K1_OLD
     else -> K1_NEW
 }
 

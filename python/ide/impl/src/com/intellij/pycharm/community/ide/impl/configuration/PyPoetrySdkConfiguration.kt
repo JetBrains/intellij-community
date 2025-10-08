@@ -3,6 +3,7 @@ package com.intellij.pycharm.community.ide.impl.configuration
 
 import com.intellij.openapi.application.EDT
 import com.intellij.openapi.diagnostic.Logger
+import com.intellij.openapi.extensions.ExtensionNotApplicableException
 import com.intellij.openapi.module.Module
 import com.intellij.openapi.projectRoots.Sdk
 import com.intellij.openapi.projectRoots.impl.SdkConfigurationUtil
@@ -12,15 +13,18 @@ import com.intellij.platform.ide.progress.withBackgroundProgress
 import com.intellij.platform.util.progress.reportRawProgress
 import com.intellij.pycharm.community.ide.impl.PyCharmCommunityCustomizationBundle
 import com.intellij.python.pyproject.PyProjectToml
+import com.intellij.python.pyproject.model.internal.projectModelEnabled
 import com.jetbrains.python.PyBundle
+import com.jetbrains.python.ToolId
 import com.jetbrains.python.errorProcessing.PyResult
 import com.jetbrains.python.poetry.findPoetryLock
 import com.jetbrains.python.poetry.getPyProjectTomlForPoetry
-import com.jetbrains.python.resolvePythonBinary
+import com.jetbrains.python.projectModel.poetry.POETRY_TOOL_ID
 import com.jetbrains.python.sdk.PythonSdkType
 import com.jetbrains.python.sdk.PythonSdkUtil
 import com.jetbrains.python.sdk.basePath
 import com.jetbrains.python.sdk.configuration.PyProjectSdkConfigurationExtension
+import com.jetbrains.python.sdk.impl.resolvePythonBinary
 import com.jetbrains.python.sdk.poetry.PyPoetrySdkAdditionalData
 import com.jetbrains.python.sdk.poetry.getPoetryExecutable
 import com.jetbrains.python.sdk.poetry.setupPoetry
@@ -31,9 +35,10 @@ import kotlinx.coroutines.withContext
 import org.jetbrains.annotations.ApiStatus
 import java.nio.file.Path
 import kotlin.io.path.pathString
-
 @ApiStatus.Internal
 class PyPoetrySdkConfiguration : PyProjectSdkConfigurationExtension {
+  override val toolId: ToolId = POETRY_TOOL_ID
+
   companion object {
     private val LOGGER = Logger.getInstance(PyPoetrySdkConfiguration::class.java)
   }

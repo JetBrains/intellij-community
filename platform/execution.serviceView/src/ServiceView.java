@@ -135,8 +135,18 @@ abstract class ServiceView extends JPanel implements UiDataProvider, Disposable 
     sink.set(ServiceViewActionUtils.OPTIONS_KEY, myViewOptions);
 
     List<Navigatable> navigatables = ContainerUtil.mapNotNull(selection, item -> item.getViewDescriptor().getNavigatable());
-    sink.set(CommonDataKeys.NAVIGATABLE_ARRAY,
-             navigatables.toArray(Navigatable.EMPTY_NAVIGATABLE_ARRAY));
+    if (!navigatables.isEmpty()) {
+      sink.set(CommonDataKeys.NAVIGATABLE_ARRAY, navigatables.toArray(Navigatable.EMPTY_NAVIGATABLE_ARRAY));
+    }
+
+    List<ServiceViewDescriptorId> selectedDescriptorIds = ContainerUtil.mapNotNull(selection, item -> {
+      String contributorId = item.getRootContributor().getViewDescriptor(myProject).getId();
+      if (contributorId == null) return null;
+      String descriptorId = item.getViewDescriptor().getUniqueId();
+      if (descriptorId == null) return null;
+      return new ServiceViewDescriptorId(contributorId, descriptorId);
+    });
+    sink.set(ServiceViewUIUtils.SERVICES_SELECTED_DESCRIPTOR_IDS, selectedDescriptorIds);
 
     ServiceViewDescriptor descriptor = onlyItem == null || onlyItem.isRemoved() ? null : onlyItem.getViewDescriptor();
     if (descriptor instanceof UiDataProvider uiDataProvider) {

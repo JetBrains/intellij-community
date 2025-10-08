@@ -1,22 +1,31 @@
 // Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.platform.eel.provider.utils
 
+import com.intellij.platform.eel.provider.utils.EelPathUtils.UnixFilePermissionBranch.*
+
 import com.intellij.openapi.application.PathManager
 import com.intellij.openapi.components.Service
 import com.intellij.openapi.components.service
 import com.intellij.openapi.progress.runBlockingMaybeCancellable
 import com.intellij.openapi.project.Project
+import com.intellij.openapi.util.io.FileAttributes
 import com.intellij.openapi.util.io.NioFiles
 import com.intellij.openapi.util.registry.Registry
 import com.intellij.platform.eel.EelApi
 import com.intellij.platform.eel.EelDescriptor
+import com.intellij.platform.eel.EelUserPosixInfo
 import com.intellij.platform.eel.fs.ChangeAttributesOptionsBuilder
-import com.intellij.platform.eel.fs.DirectoryHashEntryResult
-import com.intellij.platform.eel.fs.DirectoryHashEntry
-import com.intellij.platform.eel.fs.DirectoryHashEntryPosix
-import com.intellij.platform.eel.fs.DirectoryHashEntryWindows
+import com.intellij.platform.eel.fs.EelFileInfo
+import com.intellij.platform.eel.fs.WalkDirectoryEntryResult
+import com.intellij.platform.eel.fs.WalkDirectoryEntry
+import com.intellij.platform.eel.fs.WalkDirectoryEntryPosix
+import com.intellij.platform.eel.fs.WalkDirectoryEntryWindows
 import com.intellij.platform.eel.fs.EelFileSystemApi
+import com.intellij.platform.eel.fs.EelFileSystemApi.WalkDirectoryOptions.WalkDirectoryEntryOrder
+import com.intellij.platform.eel.fs.EelFileSystemApi.WalkDirectoryOptions.WalkDirectoryTraversalOrder
+import com.intellij.platform.eel.fs.EelPosixFileInfo
 import com.intellij.platform.eel.fs.EelPosixFileInfoImpl
+import com.intellij.platform.eel.fs.WalkDirectoryOptionsBuilder
 import com.intellij.platform.eel.fs.createTemporaryDirectory
 import com.intellij.platform.eel.fs.createTemporaryFile
 import com.intellij.platform.eel.fs.getPath
@@ -31,6 +40,7 @@ import com.intellij.util.concurrency.annotations.RequiresBlockingContext
 import com.intellij.util.io.copyToAsync
 import kotlinx.coroutines.*
 import kotlinx.coroutines.channels.ClosedReceiveChannelException
+import kotlinx.coroutines.channels.ReceiveChannel
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.flow
 import kotlinx.coroutines.flow.produceIn
@@ -41,6 +51,7 @@ import java.io.IOException
 import java.net.URI
 import java.nio.ByteBuffer
 import java.nio.channels.FileChannel
+import java.nio.file.AccessMode
 import java.nio.file.Files
 import java.nio.file.LinkOption
 import java.nio.file.Path
@@ -559,10 +570,16 @@ object EelPathUtils {
   @RequiresBackgroundThread
   @RequiresBlockingContext
   @VisibleForTesting
-  fun walkingTransfer(sourceRoot: Path, targetRoot: Path, removeSource: Boolean, fileAttributesStrategy: FileTransferAttributesStrategy) {
+  fun walkingTransfer(
+    sourceRoot: Path,
+    targetRoot: Path,
+    removeSource: Boolean,
+    fileAttributesStrategy: FileTransferAttributesStrategy,
+    absoluteSymlinkHandler: IncrementalWalkingTransferAbsoluteSymlinkHandler? = null,
+  ) {
     if (Registry.`is`("ijent.incremental.walking.transfer") && !removeSource) {
       runBlockingMaybeCancellable {
-        incrementalWalkingTransfer(sourceRoot, targetRoot, fileAttributesStrategy)
+        incrementalWalkingTransfer(sourceRoot, targetRoot, fileAttributesStrategy, absoluteSymlinkHandler)
       }
       return
     }
@@ -658,11 +675,11 @@ object EelPathUtils {
 
   /**
    * Compare individual parts of two relative paths lexicographically.
-   * Case-insensitive by default.
+   * Case-sensitive by default.
    * A shorter component is considered lower compared to a longer component.
    * Example: "a/b" < "ab/b" == True
    */
-  private fun compareRelativePathComponents(left: Path, right: Path, ignoreCase: Boolean = true): Int {
+  private fun compareRelativePathComponents(left: Path, right: Path, ignoreCase: Boolean = false): Int {
     val left = left
       .toString()
       .replace("\\", "/")
@@ -687,12 +704,12 @@ object EelPathUtils {
   /**
    * Function only checks permissions, and it ignores the owner, group, sticky bit, gid, and uid.
    * If FileTransferAttributesStrategy is RequirePosixPermissions, it will be checked if remote file permissions contain required permissions.
-  **/
-  private fun arePermissionsEqual(fileAttributesStrategy: FileTransferAttributesStrategy, local: DirectoryHashEntry.Permissions, remote: DirectoryHashEntry.Permissions): Boolean {
+   **/
+  private fun arePermissionsEqual(fileAttributesStrategy: FileTransferAttributesStrategy, local: WalkDirectoryEntry.Permissions, remote: WalkDirectoryEntry.Permissions): Boolean {
     return when (local) {
-      is DirectoryHashEntryPosix.Permissions -> {
+      is WalkDirectoryEntryPosix.Permissions -> {
         when (remote) {
-          is DirectoryHashEntryPosix.Permissions -> {
+          is WalkDirectoryEntryPosix.Permissions -> {
             if (fileAttributesStrategy is FileTransferAttributesStrategy.RequirePosixPermissions) {
               (local.permissionsSet + fileAttributesStrategy.requiredPermissions) == remote.permissionsSet
             }
@@ -700,17 +717,17 @@ object EelPathUtils {
               local.permissionsSet == remote.permissionsSet
             }
           }
-          is DirectoryHashEntryWindows.Permissions -> {
+          is WalkDirectoryEntryWindows.Permissions -> {
             true
           }
         }
       }
       else -> {
         when (remote) {
-          is DirectoryHashEntryPosix.Permissions -> {
+          is WalkDirectoryEntryPosix.Permissions -> {
             fileAttributesStrategy !is FileTransferAttributesStrategy.RequirePosixPermissions
           }
-          is DirectoryHashEntryWindows.Permissions -> {
+          is WalkDirectoryEntryWindows.Permissions -> {
             true
           }
         }
@@ -722,7 +739,7 @@ object EelPathUtils {
    * The presence of file timestamps varies by OS and FS. Thus, when comparing timestamps, if a timestamp does not exist on one side,
    * it should not be treated as a mismatch. Creation/birth timestamps are ignored as they cannot be set on POSIX.
    **/
-  private fun areTimestampsEqual(left: DirectoryHashEntry, right: DirectoryHashEntry): Boolean {
+  private fun areTimestampsEqual(left: WalkDirectoryEntry, right: WalkDirectoryEntry): Boolean {
     val isAccessTimeEqual = left.lastAccessTime?.let { localTimestamp ->
       right.lastAccessTime?.let { remoteTimestamp ->
         localTimestamp.compareTo(remoteTimestamp) == 0
@@ -751,13 +768,13 @@ object EelPathUtils {
   }
 
   // NOTE: in the future it could support file system specific file attributes
-  private fun areAttributesEqual(left: DirectoryHashEntry, right: DirectoryHashEntry): Boolean {
+  private fun areAttributesEqual(left: WalkDirectoryEntry, right: WalkDirectoryEntry): Boolean {
     return when (left) {
-      is DirectoryHashEntryWindows -> when (right) {
-        is DirectoryHashEntryPosix -> {
+      is WalkDirectoryEntryWindows -> when (right) {
+        is WalkDirectoryEntryPosix -> {
           true
         }
-        is DirectoryHashEntryWindows -> {
+        is WalkDirectoryEntryWindows -> {
           left.attributes == right.attributes
         }
       }
@@ -770,27 +787,27 @@ object EelPathUtils {
   sealed class DiffOperation() {
     // Always syncs permissions, attributes, and timestamps.
     data class Create(
-      val localFile: DirectoryHashEntry,
+      val localFile: WalkDirectoryEntry,
     ) : DiffOperation()
 
     data class Delete(
-      val remoteFile: DirectoryHashEntry,
+      val remoteFile: WalkDirectoryEntry,
     ) : DiffOperation()
 
     data class UpdateMetadata(
       val updatePermissions: Boolean = false,
       val updateAttributes: Boolean = false,
       val updateTimestamps: Boolean = false,
-      val localFile: DirectoryHashEntry,
-      val remoteFile: DirectoryHashEntry,
+      val localFile: WalkDirectoryEntry,
+      val remoteFile: WalkDirectoryEntry,
     ) : DiffOperation()
 
     // If a file has the same local and remote path but different file type, the existing one is deleted and replaced with a correct one.
-    // ReplaceFile is additionally used in case of symlinks. The symlink target cannot be changed in place, thus it requires replacing.
+    // ReplaceFile is additionally used in the case of a relative symlink. The symlink target cannot be changed in place, thus it requires replacing.
     // Always syncs permission, attributes and timestamps.
     data class ReplaceFile(
-      val localFile: DirectoryHashEntry,
-      val remoteFile: DirectoryHashEntry,
+      val localFile: WalkDirectoryEntry,
+      val remoteFile: WalkDirectoryEntry,
     ) : DiffOperation()
 
     // Always updates timestamps
@@ -798,8 +815,14 @@ object EelPathUtils {
       val updatePermissions: Boolean = false,
       val updateAttributes: Boolean = false,
       val updateTimestamps: Boolean = false,
-      val localFile: DirectoryHashEntry,
-      val remoteFile: DirectoryHashEntry,
+      val localFile: WalkDirectoryEntry,
+      val remoteFile: WalkDirectoryEntry,
+    ) : DiffOperation()
+
+    // Absolute symlinks are left untouched, and it is up to the user-provided lambda to handle it
+    data class AbsoluteSymlink(
+      val sourceSymlink: WalkDirectoryEntry,
+      val remoteSymlink: WalkDirectoryEntry?,
     ) : DiffOperation()
   }
 
@@ -811,18 +834,18 @@ object EelPathUtils {
     scope: CoroutineScope,
     localEntryPoint: Path,
     remoteEntryPoint: Path,
-    localHashFlow: Flow<DirectoryHashEntryResult>,
-    remoteHashFlow: Flow<DirectoryHashEntryResult>,
+    localHashFlow: Flow<WalkDirectoryEntryResult>,
+    remoteHashFlow: Flow<WalkDirectoryEntryResult>,
     fileAttributesStrategy: FileTransferAttributesStrategy,
     ignoreCase: Boolean,
   ): Flow<DiffOperation> = flow {
     val localHashChan = localHashFlow.produceIn(scope)
     val remoteHashChan = remoteHashFlow.produceIn(scope)
 
-    var localEntryResult: DirectoryHashEntryResult? = null;
-    var localEntry: DirectoryHashEntry? = null;
-    var remoteEntryResult: DirectoryHashEntryResult? = null
-    var remoteEntry: DirectoryHashEntry? = null;
+    var localEntryResult: WalkDirectoryEntryResult? = null
+    var localEntry: WalkDirectoryEntry? = null
+    var remoteEntryResult: WalkDirectoryEntryResult? = null
+    var remoteEntry: WalkDirectoryEntry? = null
 
     while (true) {
       if (localEntryResult == null) {
@@ -843,9 +866,9 @@ object EelPathUtils {
 
       if (remoteEntryResult != null) {
         remoteEntry = when (remoteEntryResult) {
-          is DirectoryHashEntryResult.Ok -> remoteEntryResult.value
-          is DirectoryHashEntryResult.Error -> {
-            LOG.info("Error processing hash on the remote side: ${remoteEntryResult.error}")
+          is WalkDirectoryEntryResult.Ok -> remoteEntryResult.value
+          is WalkDirectoryEntryResult.Error -> {
+            LOG.info("Error getting entry on the remote side: ${remoteEntryResult.error}")
             break
           }
         }
@@ -853,9 +876,9 @@ object EelPathUtils {
 
       if (localEntryResult != null) {
         localEntry = when (localEntryResult) {
-          is DirectoryHashEntryResult.Ok -> localEntryResult.value
-          is DirectoryHashEntryResult.Error -> {
-            LOG.info("Error processing hash on the local side: ${localEntryResult.error}")
+          is WalkDirectoryEntryResult.Ok -> localEntryResult.value
+          is WalkDirectoryEntryResult.Error -> {
+            LOG.info("Error getting entry on the local side: ${localEntryResult.error}")
             break
           }
         }
@@ -867,7 +890,7 @@ object EelPathUtils {
 
       // if there is no file locally but there is a file on the remote side - the file was deleted
       if (localEntry == null && remoteEntry != null) {
-        if (remoteEntry.type !is DirectoryHashEntry.Type.Other) {
+        if (remoteEntry.type !is WalkDirectoryEntry.Type.Other) {
           emit(DiffOperation.Delete(remoteEntry))
         }
         remoteEntry = null
@@ -877,7 +900,10 @@ object EelPathUtils {
 
       // if there is a file locally but not on the remote side - the file was created
       if (localEntry != null && remoteEntry == null) {
-        if (localEntry.type !is DirectoryHashEntry.Type.Other) {
+        if (localEntry.type is WalkDirectoryEntry.Type.Symlink.Absolute) {
+          emit(DiffOperation.AbsoluteSymlink(localEntry, null))
+        }
+        else if (localEntry.type !is WalkDirectoryEntry.Type.Other) {
           emit(DiffOperation.Create(localEntry))
         }
         localEntry = null
@@ -886,13 +912,13 @@ object EelPathUtils {
       }
 
       // ignore other file types
-      if (localEntry!!.type is DirectoryHashEntry.Type.Other) {
+      if (localEntry!!.type is WalkDirectoryEntry.Type.Other) {
         localEntry = null
         localEntryResult = null
         continue
       }
 
-      if (remoteEntry!!.type is DirectoryHashEntry.Type.Other) {
+      if (remoteEntry!!.type is WalkDirectoryEntry.Type.Other) {
         remoteEntry = null
         remoteEntryResult = null
         continue
@@ -905,21 +931,21 @@ object EelPathUtils {
 
       // if the same file is present on both sides, and if the permissions/hash/type is different, sync them
       if (pathComparison == 0) {
-        val updatePermissions = fileAttributesStrategy !is FileTransferAttributesStrategy.Skip && !arePermissionsEqual(fileAttributesStrategy, localEntry.permissions, remoteEntry.permissions)
+        val updatePermissions = fileAttributesStrategy !is FileTransferAttributesStrategy.Skip && !arePermissionsEqual(fileAttributesStrategy, localEntry.permissions!!, remoteEntry.permissions!!)
         val updateAttributes = fileAttributesStrategy !is FileTransferAttributesStrategy.Skip && !areAttributesEqual(localEntry, remoteEntry)
         val updateTimestamps = fileAttributesStrategy !is FileTransferAttributesStrategy.Skip && !areTimestampsEqual(localEntry, remoteEntry)
         var opEmitted = false
 
         when (localEntry.type) {
-          is DirectoryHashEntry.Type.Directory -> {
-            if (remoteEntry.type !is DirectoryHashEntry.Type.Directory) {
+          is WalkDirectoryEntry.Type.Directory -> {
+            if (remoteEntry.type !is WalkDirectoryEntry.Type.Directory) {
               emit(DiffOperation.ReplaceFile(localEntry, remoteEntry))
               opEmitted = true
             }
           }
-          is DirectoryHashEntry.Type.Regular -> {
-            if (remoteEntry.type is DirectoryHashEntry.Type.Regular) {
-              if ((localEntry.type as DirectoryHashEntry.Type.Regular).hash != (remoteEntry.type as DirectoryHashEntry.Type.Regular).hash) {
+          is WalkDirectoryEntry.Type.Regular -> {
+            if (remoteEntry.type is WalkDirectoryEntry.Type.Regular) {
+              if ((localEntry.type as WalkDirectoryEntry.Type.Regular).hash != (remoteEntry.type as WalkDirectoryEntry.Type.Regular).hash) {
                 // updating file contents implies updating modification timestamp
                 emit(DiffOperation.UpdateContents(updatePermissions, updateAttributes, true, localEntry, remoteEntry))
                 opEmitted = true
@@ -930,10 +956,10 @@ object EelPathUtils {
               opEmitted = true
             }
           }
-          is DirectoryHashEntry.Type.Symlink.Relative -> {
-            if (remoteEntry.type is DirectoryHashEntry.Type.Symlink.Relative) {
-              val localPathInPosix = (localEntry.type as DirectoryHashEntry.Type.Symlink.Relative).symlinkRelativePath.replace("\\", "/")
-              val remotePathInPosix = (remoteEntry.type as DirectoryHashEntry.Type.Symlink.Relative).symlinkRelativePath.replace("\\", "/")
+          is WalkDirectoryEntry.Type.Symlink.Relative -> {
+            if (remoteEntry.type is WalkDirectoryEntry.Type.Symlink.Relative) {
+              val localPathInPosix = (localEntry.type as WalkDirectoryEntry.Type.Symlink.Relative).symlinkRelativePath.replace("\\", "/")
+              val remotePathInPosix = (remoteEntry.type as WalkDirectoryEntry.Type.Symlink.Relative).symlinkRelativePath.replace("\\", "/")
               if (localPathInPosix != remotePathInPosix) {
                 emit(DiffOperation.ReplaceFile(localEntry, remoteEntry))
                 opEmitted = true
@@ -944,17 +970,18 @@ object EelPathUtils {
               opEmitted = true
             }
           }
-          is DirectoryHashEntry.Type.Symlink.Absolute -> {
-            // TODO: IJPL-201078
+          is WalkDirectoryEntry.Type.Symlink.Absolute -> {
+            emit(DiffOperation.AbsoluteSymlink(localEntry, remoteEntry))
+            opEmitted = true
           }
-          is DirectoryHashEntry.Type.Other -> {
+          is WalkDirectoryEntry.Type.Other -> {
             // other file types have been handled prior to this when
           }
         }
 
         // if no other op has been emitted, check if metadata is equal
         // ignore differences in permissions on symlink, as they are ignored
-        if (!opEmitted && (updatePermissions || updateAttributes || updateTimestamps) && ((localEntry.type !is DirectoryHashEntry.Type.Symlink) || (localEntry.type is DirectoryHashEntry.Type.Symlink && (updateAttributes || updateTimestamps)))) {
+        if (!opEmitted && (updatePermissions || updateAttributes || updateTimestamps) && ((localEntry.type !is WalkDirectoryEntry.Type.Symlink) || (localEntry.type is WalkDirectoryEntry.Type.Symlink && (updateAttributes || updateTimestamps)))) {
           emit(DiffOperation.UpdateMetadata(
             updatePermissions = updatePermissions,
             updateAttributes = updateAttributes,
@@ -971,7 +998,10 @@ object EelPathUtils {
       }
       // if the local path is in lower lexicographical order than the remote path, it means that the local file was created
       else if (pathComparison < 0) {
-        if (localEntry !is DirectoryHashEntry.Type.Symlink.Absolute) { // TODO: IJPL-201078
+        if (localEntry is WalkDirectoryEntry.Type.Symlink.Absolute) {
+          emit(DiffOperation.AbsoluteSymlink(localEntry, null))
+        }
+        else {
           emit(DiffOperation.Create(localEntry))
         }
         localEntry = null
@@ -1001,7 +1031,7 @@ object EelPathUtils {
   }
 
   private suspend fun setPermissionsAndAttributes(
-    localEntry: DirectoryHashEntry,
+    localEntry: WalkDirectoryEntry,
     remoteEntry: Path,
     remoteEelApi: EelApi,
     fileAttributesStrategy: FileTransferAttributesStrategy,
@@ -1027,13 +1057,16 @@ object EelPathUtils {
         var owner = 0
         var group = 0
 
+        if (localEntry.permissions == null) {
+          error("Permissions are supposed to be transferred, but were not yielded")
+        }
         when (localEntry) {
-          is DirectoryHashEntryPosix -> {
-            perms.addAll(localEntry.permissions.permissionsSet)
-            owner = localEntry.permissions.owner
-            group = localEntry.permissions.group
+          is WalkDirectoryEntryPosix -> {
+            perms.addAll(localEntry.permissions!!.permissionsSet)
+            owner = localEntry.permissions!!.owner
+            group = localEntry.permissions!!.group
           }
-          is DirectoryHashEntryWindows -> {
+          is WalkDirectoryEntryWindows -> {
             perms.addAll(remoteView.readAttributes().permissions())
           }
         }
@@ -1042,14 +1075,17 @@ object EelPathUtils {
     }
 
     if (setAttributes) {
+      if (localEntry.attributes == null) {
+        error("Attributes are supposed to be transferred, but were not yielded")
+      }
       remoteEntry.fileAttributesViewOrNull<DosFileAttributeView>(LinkOption.NOFOLLOW_LINKS)?.let { remoteView ->
         when (localEntry) {
-          is DirectoryHashEntryPosix -> {}
-          is DirectoryHashEntryWindows -> {
-            remoteView.setHidden(localEntry.attributes.isHidden)
-            remoteView.setSystem(localEntry.attributes.isSystem)
-            remoteView.setArchive(localEntry.attributes.isArchive)
-            remoteView.setReadOnly(localEntry.attributes.isReadOnly)
+          is WalkDirectoryEntryPosix -> {}
+          is WalkDirectoryEntryWindows -> {
+            remoteView.setHidden(localEntry.attributes!!.isHidden)
+            remoteView.setSystem(localEntry.attributes!!.isSystem)
+            remoteView.setArchive(localEntry.attributes!!.isArchive)
+            remoteView.setReadOnly(localEntry.attributes!!.isReadOnly)
           }
         }
       }
@@ -1076,23 +1112,26 @@ object EelPathUtils {
    * Synchronizes the remote directory tree with the local one (directories only).
    * This extra pass is necessary to handle:
    *   - Races when creating parent directories for files
-   *   - An edge case where a local directory is deleted and replaced by a file with the same name
+   *   - An edge case where a source directory is deleted and replaced by a file with the same name
    *
    * It also reduces redundant system calls when creating files.
+   * @param sourceRoot Has to be a valid path to a directory
+   * @param targetRoot Has to be a valid path to a directory
    */
   @RequiresBackgroundThread
   @VisibleForTesting
-  suspend fun directoryOnlySync(sourceRoot: Path, targetRoot: Path, eelApi: EelApi, ignoreCase: Boolean) {
+  suspend fun directoryOnlySync(
+    sourceRoot: EelPath,
+    targetRoot: EelPath,
+    targetEelApi: EelApi,
+    ignoreCase: Boolean,
+  ) {
+    val sourceRoot = sourceRoot.asNioPath()
+    val targetRoot = targetRoot.asNioPath()
     val localQ = ArrayDeque<Path>()
     val remoteQ = ArrayDeque<Path>()
-
-    if (sourceRoot.isDirectory(LinkOption.NOFOLLOW_LINKS)) {
-      localQ.add(sourceRoot)
-    }
-
-    if (targetRoot.isDirectory(LinkOption.NOFOLLOW_LINKS)) {
-      remoteQ.add(targetRoot)
-    }
+    localQ.add(sourceRoot)
+    remoteQ.add(targetRoot)
 
     while (localQ.isNotEmpty() || remoteQ.isNotEmpty()) {
       if (localQ.isNotEmpty() && remoteQ.isEmpty()) {
@@ -1113,7 +1152,7 @@ object EelPathUtils {
       }
       else if (localQ.isEmpty() && remoteQ.isNotEmpty()) {
         val path = remoteQ.removeFirst()
-        eelApi.fs.delete(path.asEelPath(), true)
+        targetEelApi.fs.delete(path.asEelPath(), true)
       }
       else {
         val localRelativeDirPath = localQ.first().relativeTo(sourceRoot)
@@ -1133,7 +1172,7 @@ object EelPathUtils {
         }
         // the local directory was deleted
         else if (comparison < 0) {
-          eelApi.fs.delete(remoteQ.removeFirst().asEelPath(), true).getOrThrow()
+          targetEelApi.fs.delete(remoteQ.removeFirst().asEelPath(), true).getOrThrow()
         }
         else {
           val localPath = localQ.removeFirst()
@@ -1154,25 +1193,85 @@ object EelPathUtils {
   }
 
   /**
+   * Callback invoked for each absolute symlink encountered during transfer.
+   * The lambda can do whatever it wants: recreate the symlink, copy contents,
+   * ignore it, call [incrementalWalkingTransfer] again on it, or implement any custom logic.
+   */
+  fun interface IncrementalWalkingTransferAbsoluteSymlinkHandler {
+    /**
+     * @param sourceSymlink Information about the source symlink
+     * @param targetEntry Directory entry that lives on the path where the source symlink should be. May or may not be a symlink.
+     */
+    suspend fun handle(sourceSymlink: WalkDirectoryEntry, targetEntry: WalkDirectoryEntry?)
+  }
+
+  /**
    * Supports transferring directories, files, and symlinks. On POSIX permissions and timestamps are transferred as well if indicated
-   * using [FileTransferAttributesStrategy]. Symlinks are transferred as is, and the target path does not have to be valid.
+   * using [FileTransferAttributesStrategy]. Relative symlinks are transferred as is, and the target path does not have to be valid.
    * Permissions on symlinks are not transferred as they are ignored by on Unix-like systems.
    */
   @RequiresBackgroundThread
-  private suspend fun incrementalWalkingTransfer(sourceRoot: Path, targetRoot: Path, fileAttributesStrategy: FileTransferAttributesStrategy) {
+  private suspend fun incrementalWalkingTransfer(
+    sourceRoot: Path,
+    targetRoot: Path,
+    fileAttributesStrategy: FileTransferAttributesStrategy,
+    absoluteSymlinkHandler: IncrementalWalkingTransferAbsoluteSymlinkHandler?,
+  ) {
     coroutineScope {
-      val remoteDescriptor = targetRoot.asEelPath().descriptor
+      val targetRootEel = targetRoot.asEelPath()
+      val remoteDescriptor = targetRootEel.descriptor
       val remoteEelApi = remoteDescriptor.toEelApi()
       val localPathEel = sourceRoot.asEelPath()
       val localOsFamily = localPathEel.descriptor.osFamily
       val remoteOsFamily = targetRoot.getEelDescriptor().osFamily
 
-      withContext(Dispatchers.IO) {
-        directoryOnlySync(sourceRoot, targetRoot, remoteDescriptor.toEelApi(), true)
+      val sourceAttrs = sourceRoot.fileAttributesView<BasicFileAttributeView>(LinkOption.NOFOLLOW_LINKS).readAttributes()
+      val targetAttrs = targetRoot.fileAttributesView<BasicFileAttributeView>(LinkOption.NOFOLLOW_LINKS).readAttributes()
+      when {
+        sourceAttrs.isDirectory -> {
+          if (!targetAttrs.isDirectory) {
+            remoteEelApi.fs.delete(targetRootEel, true).getOrThrow()
+            Files.createDirectory(targetRoot)
+          }
+          withContext(Dispatchers.IO) {
+            directoryOnlySync(localPathEel, targetRootEel, remoteDescriptor.toEelApi(), false)
+          }
+        }
+        sourceAttrs.isRegularFile -> {
+          if (!targetAttrs.isRegularFile) {
+            remoteEelApi.fs.delete(targetRootEel, true).getOrThrow()
+            Files.createFile(targetRoot)
+          }
+        }
+        sourceAttrs.isSymbolicLink -> {
+          // if targetRoot is a directory, it should be deleted to prevent it from being traversed
+          if (targetAttrs.isDirectory) {
+            remoteEelApi.fs.delete(targetRootEel, true).getOrThrow()
+            // a placeholder file is created so that, in the case of an absolute symlink, the user lambda receives the expected target path (where the absolute symlink should be)
+            Files.createFile(targetRoot)
+          }
+        }
       }
 
-      val localHashes = async(Dispatchers.IO) { localPathEel.descriptor.toEelApi().fs.directoryHash(localPathEel) }
-      val remoteHashes = async(Dispatchers.IO) { remoteDescriptor.toEelApi().fs.directoryHash(targetRoot.asEelPath()) }
+      val walkDirectoryOptionsSource = WalkDirectoryOptionsBuilder(localPathEel)
+        .traversalOrder(WalkDirectoryTraversalOrder.DFS)
+        .entryOrder(WalkDirectoryEntryOrder.ALPHABETICAL)
+        .yieldOtherFileTypes(false)
+        .fileContentsHash(true)
+        .readMetadata(fileAttributesStrategy !is FileTransferAttributesStrategy.Skip)
+        .maxDepth(-1)
+        .build()
+
+      val walkDirectoryOptionsTarget = WalkDirectoryOptionsBuilder(targetRoot.asEelPath())
+        .traversalOrder(WalkDirectoryTraversalOrder.DFS)
+        .entryOrder(WalkDirectoryEntryOrder.ALPHABETICAL)
+        .yieldOtherFileTypes(false)
+        .fileContentsHash(true)
+        .readMetadata(fileAttributesStrategy !is FileTransferAttributesStrategy.Skip)
+        .maxDepth(-1)
+        .build()
+      val localHashes = async(Dispatchers.IO) { localPathEel.descriptor.toEelApi().fs.walkDirectory(walkDirectoryOptionsSource) }
+      val remoteHashes = async(Dispatchers.IO) { remoteDescriptor.toEelApi().fs.walkDirectory(walkDirectoryOptionsTarget) }
 
       val semaphore = Semaphore(4) // TODO: fine tune
 
@@ -1180,24 +1279,20 @@ object EelPathUtils {
       // TODO: different buffer size for larger files
       val bufferSize = 64 * 1024
 
-      mergeHashByPath(this, sourceRoot, targetRoot, localHashes.await(), remoteHashes.await(), fileAttributesStrategy, true).collect { diffOp ->
+      mergeHashByPath(this, sourceRoot, targetRoot, localHashes.await(), remoteHashes.await(), fileAttributesStrategy, false).collect { diffOp ->
         // semaphore is used to limit how many files are being synced at any given moment
         semaphore.acquire()
         launch(Dispatchers.IO) {
           try {
             when (diffOp) {
               is DiffOperation.Create, is DiffOperation.ReplaceFile -> {
-                if (diffOp is DiffOperation.ReplaceFile) {
-                  val ker = diffOp.remoteFile.path.asNioPath()
-                  Files.delete(ker)
-                }
+                if (diffOp is DiffOperation.ReplaceFile) Files.delete(diffOp.remoteFile.path.asNioPath())
 
-                val localFile: DirectoryHashEntry
-                if (diffOp is DiffOperation.Create) {
-                  localFile = diffOp.localFile
+                val localFile = if (diffOp is DiffOperation.Create) {
+                  diffOp.localFile
                 }
                 else {
-                  localFile = (diffOp as DiffOperation.ReplaceFile).localFile
+                  (diffOp as DiffOperation.ReplaceFile).localFile
                 }
 
                 val localFileNioPath = localFile.path.asNioPath()
@@ -1205,10 +1300,10 @@ object EelPathUtils {
                 val remoteAbsolutePath = targetRoot.resolve(relativePath)
 
                 when (localFile.type) {
-                  is DirectoryHashEntry.Type.Directory -> {
+                  is WalkDirectoryEntry.Type.Directory -> {
                     error("unreachable, directory was supposed to created in a pass before incremental transfer")
                   }
-                  is DirectoryHashEntry.Type.Regular -> {
+                  is WalkDirectoryEntry.Type.Regular -> {
                     val remoteAbsoluteTempPath = remoteAbsolutePath.resolveSibling(remoteAbsolutePath.fileName.toString() + ".part")
                     try {
                       Files.newInputStream(localFileNioPath, READ).use { localFile ->
@@ -1225,14 +1320,14 @@ object EelPathUtils {
                       Files.deleteIfExists(remoteAbsoluteTempPath)
                     }
                   }
-                  is DirectoryHashEntry.Type.Symlink.Relative -> {
-                    var symlinkTarget = (localFile.type as DirectoryHashEntry.Type.Symlink.Relative).symlinkRelativePath
+                  is WalkDirectoryEntry.Type.Symlink.Relative -> {
+                    var symlinkTarget = (localFile.type as WalkDirectoryEntry.Type.Symlink.Relative).symlinkRelativePath
                     if (localOsFamily != remoteOsFamily) {
-                      if (remoteOsFamily.isWindows) {
-                        symlinkTarget = symlinkTarget.replace("/", "\\")
+                      symlinkTarget = if (remoteOsFamily.isWindows) {
+                        symlinkTarget.replace("/", "\\")
                       }
                       else {
-                        symlinkTarget = symlinkTarget.replace("\\", "/")
+                        symlinkTarget.replace("\\", "/")
                       }
                     }
                     Files.createSymbolicLink(remoteAbsolutePath, Path(symlinkTarget))
@@ -1240,10 +1335,10 @@ object EelPathUtils {
                     // TODO: setting timestamps on a symlink requires using ffi syscall in ijent
                     //setPermissionsAndAttributes(localFile, remoteAbsolutePath, fileAttributesStrategy, false, true, true)
                   }
-                  is DirectoryHashEntry.Type.Symlink.Absolute -> {
-                    // TODO: IJPL-201078
+                  is WalkDirectoryEntry.Type.Symlink.Absolute -> {
+                    error("unreachable, absolute symlink should exclusively be handled by the user provided lambda")
                   }
-                  is DirectoryHashEntry.Type.Other -> {
+                  is WalkDirectoryEntry.Type.Other -> {
                     // NOTE: other file types not supported
                   }
                 }
@@ -1269,8 +1364,14 @@ object EelPathUtils {
               }
               is DiffOperation.UpdateMetadata -> {
                 // TODO: setting timestamps on a symlink requires using ffi syscall in ijent
-                if (diffOp.localFile.type !is DirectoryHashEntry.Type.Symlink) {
+                if (diffOp.localFile.type !is WalkDirectoryEntry.Type.Symlink) {
                   setPermissionsAndAttributes(diffOp.localFile, diffOp.remoteFile.path.asNioPath(), remoteEelApi, fileAttributesStrategy, diffOp.updatePermissions, diffOp.updateAttributes, diffOp.updateTimestamps)
+                }
+              }
+              is DiffOperation.AbsoluteSymlink -> {
+                when (absoluteSymlinkHandler) {
+                  null -> LOG.info("No absolute symlink handler provided for incremental walking transfer, skipping symlink: ${diffOp.sourceSymlink.path}")
+                  else -> absoluteSymlinkHandler.handle(diffOp.sourceSymlink, diffOp.remoteSymlink)
                 }
               }
             }
@@ -1416,6 +1517,73 @@ object EelPathUtils {
       from.lastAccessTime(),
       from.creationTime(),
     )
+  }
+
+  private enum class UnixFilePermissionBranch { OWNER, GROUP, OTHER }
+
+  /**
+   * returns one of [modes] which is not satisfied, or `null` if all modes are satisfied
+   */
+  @ApiStatus.Internal
+  fun checkAccess(userInfo: EelUserPosixInfo, fileInfo: EelPosixFileInfo, vararg modes: AccessMode): AccessMode? {
+    if (userInfo.uid == 0) {
+      if (AccessMode.EXECUTE in modes) {
+        val executable = fileInfo.permissions.run {
+          ownerCanExecute || groupCanExecute || otherCanExecute
+        }
+        if (!executable) {
+          return AccessMode.EXECUTE
+        }
+      }
+      return null
+    }
+
+    // Inspired by sun.nio.fs.UnixFileSystemProvider#checkAccess
+    val filePermissionBranch = when {
+      userInfo.uid == fileInfo.permissions.owner -> OWNER
+      userInfo.gid == fileInfo.permissions.group -> GROUP
+      else -> OTHER
+    }
+
+    if (AccessMode.READ in modes) {
+      val canRead = when (filePermissionBranch) {
+        OWNER -> fileInfo.permissions.ownerCanRead
+        GROUP -> fileInfo.permissions.groupCanRead
+        OTHER -> fileInfo.permissions.otherCanRead
+      }
+      if (!canRead) {
+        return AccessMode.READ
+      }
+    }
+    if (AccessMode.WRITE in modes) {
+      val canWrite = when (filePermissionBranch) {
+        OWNER -> fileInfo.permissions.ownerCanWrite
+        GROUP -> fileInfo.permissions.groupCanWrite
+        OTHER -> fileInfo.permissions.otherCanWrite
+      }
+      if (!canWrite) {
+        return AccessMode.WRITE
+      }
+    }
+    if (AccessMode.EXECUTE in modes) {
+      val canExecute = when (filePermissionBranch) {
+        OWNER -> fileInfo.permissions.ownerCanExecute
+        GROUP -> fileInfo.permissions.groupCanExecute
+        OTHER -> fileInfo.permissions.otherCanExecute
+      }
+      if (!canExecute) {
+        return AccessMode.EXECUTE
+      }
+    }
+    return null
+  }
+
+  fun getCaseSensitivity(directoryType: EelFileInfo.Type.Directory): FileAttributes.CaseSensitivity {
+    return when (directoryType.sensitivity) {
+      EelFileInfo.CaseSensitivity.SENSITIVE -> FileAttributes.CaseSensitivity.SENSITIVE
+      EelFileInfo.CaseSensitivity.INSENSITIVE -> FileAttributes.CaseSensitivity.INSENSITIVE
+      EelFileInfo.CaseSensitivity.UNKNOWN -> FileAttributes.CaseSensitivity.UNKNOWN
+    }
   }
 
   fun deleteRecursively(path: Path) {

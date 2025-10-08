@@ -45,12 +45,6 @@ open class RuleGroup(rules: Set<String>) {
     @JvmField
     val SENTENCE_BOUNDARY_PUNCTUATION = RuleGroup(SENTENCE_END_PUNCTUATION, UNLIKELY_OPENING_PUNCTUATION)
 
-    /** Rules for checking punctuation errors */
-    @JvmField
-    @ApiStatus.ScheduledForRemoval
-    @Deprecated("use SENTENCE_BOUNDARY", ReplaceWith("SENTENCE_BOUNDARY_PUNCTUATION"))
-    val PUNCTUATION = SENTENCE_BOUNDARY_PUNCTUATION
-
     /** Rules that are usually disabled for literal strings */
     @JvmField
     val LITERALS = CASING + SENTENCE_BOUNDARY_PUNCTUATION

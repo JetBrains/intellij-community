@@ -7,7 +7,6 @@ import com.intellij.codeInsight.daemon.impl.analysis.JavaGenericsUtil;
 import com.intellij.java.codeserver.core.JavaPsiMethodUtil;
 import com.intellij.java.codeserver.highlighting.errors.JavaCompilationError;
 import com.intellij.java.codeserver.highlighting.errors.JavaErrorKinds;
-import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.Couple;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.pom.java.JavaFeature;
@@ -415,8 +414,14 @@ final class MethodChecker {
   void checkConstructorName(PsiMethod method) {
     PsiClass aClass = method.getContainingClass();
     if (aClass != null) {
-      String className = aClass instanceof PsiAnonymousClass ? null : aClass.getName();
-      if (className == null || !Comparing.strEqual(method.getName(), className)) {
+      String className = aClass.getName();
+      if (method.getName().equals(className)) {
+        return;
+      }
+      if (aClass.isInterface() || aClass instanceof PsiAnonymousClass || className == null) {
+        myVisitor.report(JavaErrorKinds.METHOD_MISSING_RETURN_TYPE_NOT_CONSTRUCTOR.create(method));
+      }
+      else {
         myVisitor.report(JavaErrorKinds.METHOD_MISSING_RETURN_TYPE.create(method, className));
       }
     }

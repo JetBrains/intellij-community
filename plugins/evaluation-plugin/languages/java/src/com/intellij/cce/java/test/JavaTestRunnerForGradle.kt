@@ -78,7 +78,7 @@ internal object JavaTestRunnerForGradle {
     runConfiguration.isRunAsTest = true
     runConfiguration.settings.scriptParameters = moduleTests.joinToString(" ") { (moduleName, testNames) ->
       if (moduleName != null) ":$moduleName:test ${testNames.joinToString(" ") { "--tests $it" }}"
-      else ":test ${testNames.joinToString(" ") { "--tests $it" }}"
+      else "test ${testNames.joinToString(" ") { "--tests $it" }}"
     }
     return settings
   }

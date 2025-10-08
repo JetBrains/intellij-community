@@ -1,7 +1,7 @@
 // Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.intellij.build.impl.compilation
 
-import com.intellij.openapi.application.PathManager
+import com.intellij.openapi.application.ArchivedCompilationContextUtil
 import com.intellij.openapi.util.io.NioFiles
 import com.intellij.util.currentJavaVersion
 import com.intellij.util.io.Decompressor
@@ -129,7 +129,7 @@ internal suspend fun reuseOrCompile(context: CompilationContext, moduleNames: Co
   val pathToCompiledClassArchiveMetadata = context.options.pathToCompiledClassesArchivesMetadata
   when {
     context.options.useCompiledClassesFromProjectOutput -> {
-      check(isBazelTestRun() || context.classesOutputDirectory.exists() || PathManager.getArchivedCompiledClassesMapping() != null || isRunningFromBazelOut()) {
+      check(isBazelTestRun() || context.classesOutputDirectory.exists() || ArchivedCompilationContextUtil.archivedCompiledClassesMapping != null || isRunningFromBazelOut()) {
         "${BuildOptions.USE_COMPILED_CLASSES_PROPERTY} is enabled but the classes output directory ${context.classesOutputDirectory} doesn't exist"
       }
       val production = context.classesOutputDirectory.resolve("production")

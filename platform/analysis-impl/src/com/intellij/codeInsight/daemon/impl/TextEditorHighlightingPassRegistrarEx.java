@@ -8,6 +8,7 @@ import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.PsiFile;
+import com.intellij.util.concurrency.annotations.RequiresBackgroundThread;
 import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 
@@ -19,9 +20,11 @@ public abstract class TextEditorHighlightingPassRegistrarEx extends TextEditorHi
     return (TextEditorHighlightingPassRegistrarEx)getInstance(project);
   }
 
+  @RequiresBackgroundThread
   public abstract @NotNull List<@NotNull TextEditorHighlightingPass> instantiatePasses(@NotNull PsiFile psiFile,
                                                                                        @NotNull Editor editor,
                                                                                        int @NotNull [] passesToIgnore);
+  @RequiresBackgroundThread
   public abstract @NotNull List<@NotNull TextEditorHighlightingPass> instantiateMainPasses(@NotNull PsiFile psiFile,
                                                                                            @NotNull Document document,
                                                                                            @NotNull HighlightInfoProcessor highlightInfoProcessor);

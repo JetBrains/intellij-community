@@ -1,4 +1,4 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInsight.lookup.impl;
 
 import com.intellij.codeInsight.lookup.LookupElement;
@@ -24,10 +24,10 @@ public final class LookupOffsets implements DocumentListener {
   private @Nullable Supplier<String> myStartMarkerDisposeInfo = null;
   private @NotNull RangeMarker myLookupStartMarker;
   private int myRemovedPrefix;
-  private RangeMarker myLookupOriginalStartMarker;
-  private final Editor myEditor;
+  private @NotNull RangeMarker myLookupOriginalStartMarker;
+  private final @NotNull Editor myEditor;
 
-  public LookupOffsets(Editor editor) {
+  public LookupOffsets(@NotNull Editor editor) {
     myEditor = editor;
     int caret = getPivotOffset();
     myLookupOriginalStartMarker = createLeftGreedyMarker(caret);
@@ -62,7 +62,7 @@ public final class LookupOffsets implements DocumentListener {
     }
   }
 
-  private RangeMarker createLeftGreedyMarker(int start) {
+  private @NotNull RangeMarker createLeftGreedyMarker(int start) {
     RangeMarker marker = myEditor.getDocument().createRangeMarker(start, start);
     marker.setGreedyToLeft(true);
     return marker;
@@ -74,6 +74,10 @@ public final class LookupOffsets implements DocumentListener {
                  : myEditor.getCaretModel().getOffset();
   }
 
+  /**
+   * An additional prefix is a prefix a part of completion prefix that was typed after the completion process had been started.
+   * It is stored separately because we don't always restart completion process, and in this case we have a base prefix and additional prefix.
+   */
   public @NotNull String getAdditionalPrefix() {
     return myAdditionalPrefix;
   }
@@ -83,6 +87,10 @@ public final class LookupOffsets implements DocumentListener {
     myAdditionalPrefix += c;
   }
 
+  /**
+   * @return {code true} if truncating of the additional prefix was successful. Returns {@code false} if additional prefix was empty, so
+   * we need to restart completion with truncated base prefix.
+   */
   public boolean truncatePrefix() {
     final int len = myAdditionalPrefix.length();
     if (len == 0) {
@@ -97,7 +105,7 @@ public final class LookupOffsets implements DocumentListener {
     myStableStart = false;
   }
 
-  void checkMinPrefixLengthChanges(Collection<? extends LookupElement> items, LookupImpl lookup) {
+  void checkMinPrefixLengthChanges(@NotNull Collection<? extends LookupElement> items, @NotNull LookupImpl lookup) {
     if (myStableStart) return;
     if (!lookup.isCalculating() && !items.isEmpty()) {
       myStableStart = true;
@@ -143,7 +151,7 @@ public final class LookupOffsets implements DocumentListener {
     return myLookupOriginalStartMarker.isValid() ? myLookupOriginalStartMarker.getStartOffset() : -1;
   }
 
-  boolean performGuardedChange(Runnable change) {
+  boolean performGuardedChange(@NotNull Runnable change) {
     if (!myLookupStartMarker.isValid()) {
       throw new AssertionError("Invalid start: " + myEditor + ", trace=" + (myStartMarkerDisposeInfo == null ? null : myStartMarkerDisposeInfo
         .get()));
@@ -163,7 +171,7 @@ public final class LookupOffsets implements DocumentListener {
     myLookupOriginalStartMarker.dispose();
   }
 
-  public int getPrefixLength(LookupElement item, LookupImpl lookup) {
+  public int getPrefixLength(@NotNull LookupElement item, @NotNull LookupImpl lookup) {
     return lookup.itemPattern(item).length() - myRemovedPrefix;
   }
 }

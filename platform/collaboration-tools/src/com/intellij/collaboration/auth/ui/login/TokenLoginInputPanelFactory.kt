@@ -21,7 +21,6 @@ import com.intellij.ui.dsl.builder.panel
 import com.intellij.ui.layout.ComponentPredicate
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.flow.collectLatest
-import org.jetbrains.annotations.ApiStatus
 import javax.swing.event.DocumentEvent
 
 /**
@@ -32,23 +31,6 @@ import javax.swing.event.DocumentEvent
 class TokenLoginInputPanelFactory(
   private val model: TokenLoginPanelModel
 ) {
-  @ApiStatus.ScheduledForRemoval
-  @Deprecated(
-    "Use the 'TokenLoginInputPanelFactory.createIn' method",
-    ReplaceWith(
-      expression = "TokenLoginInputPanelFactory.createIn",
-      imports = ["com.intellij.collaboration.auth.ui.login.TokenLoginInputPanelFactory"]
-    )
-  )
-  @JvmOverloads
-  fun createIn(
-    cs: CoroutineScope,
-    serverFieldDisabled: Boolean,
-    tokenNote: @NlsContexts.DetailedDescription String?,
-    footer: Panel.() -> Unit = { }
-  ): DialogPanel {
-    return createIn(cs, serverFieldDisabled, tokenNote, null, footer)
-  }
 
   @JvmOverloads
   fun createIn(

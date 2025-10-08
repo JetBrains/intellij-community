@@ -9,6 +9,8 @@ import com.intellij.openapi.wm.WindowInfo
 import com.intellij.openapi.wm.impl.FloatingDecorator
 import com.intellij.openapi.wm.impl.ToolWindowExternalDecorator
 import com.intellij.openapi.wm.impl.ToolWindowImpl
+import com.intellij.ui.drag.DragButton
+import com.intellij.ui.drag.asDragButton
 import javax.swing.Icon
 import javax.swing.JComponent
 
@@ -26,6 +28,8 @@ internal interface StripeButtonManager {
   fun remove(anchor: ToolWindowAnchor, split: Boolean)
 
   fun getComponent(): JComponent
+  
+  fun asDragButton(): DragButton = getComponent().asDragButton()
 }
 
 internal class ToolWindowEntry(stripeButton: StripeButtonManager?,

@@ -11,13 +11,12 @@ import com.intellij.diagnostic.logs.LogCategory
 import com.intellij.diagnostic.logs.LogLevelConfigurationManager
 import com.intellij.ide.impl.ProjectUtil
 import com.intellij.ide.plugins.PluginManagerCore
-import com.intellij.ide.plugins.PluginModuleId.Companion.asPluginModuleId
+import com.intellij.ide.plugins.PluginModuleId
 import com.intellij.notification.Notification
 import com.intellij.notification.NotificationType
 import com.intellij.openapi.application.*
 import com.intellij.openapi.application.impl.LaterInvocator
 import com.intellij.openapi.diagnostic.Logger
-import com.intellij.openapi.extensions.PluginId
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.project.ex.ProjectManagerEx
 import com.intellij.openapi.rd.util.adviseSuspend
@@ -161,13 +160,13 @@ open class DistributedTestHost(coroutineScope: CoroutineScope) {
           }
 
           // Create test class
-          val testPluginId = System.getProperty("distributed.test.module", TEST_PLUGIN_ID)
-          val testPlugin = PluginManagerCore.getPluginSet().findEnabledModule(PluginId(testPluginId).asPluginModuleId())
-                           ?: error("Test plugin '$testPluginId' is not found")
+          val testModuleId = System.getProperty("distributed.test.module", "intellij.rdct.tests.distributed._test")
+          val testModule = PluginManagerCore.getPluginSet().findEnabledModule(PluginModuleId(testModuleId))
+                           ?: error("Test module '$testModuleId' is not found")
 
-          LOG.info("Test class will be loaded from '${testPlugin.pluginId}' plugin")
+          LOG.info("Test class will be loaded from '${testModule.pluginId}' plugin")
 
-          val testClass = Class.forName(testQualifiedClassName, true, testPlugin.pluginClassLoader)
+          val testClass = Class.forName(testQualifiedClassName, true, testModule.pluginClassLoader)
           val testClassObject = testClass.kotlin.createInstance() as DistributedTestPlayer
           val testMethod = testClass.declaredMethods.filter { it.name == testMethodNonParameterizedName }
                              .singleOrNull { it.annotations.isNotEmpty() }
@@ -266,35 +265,33 @@ open class DistributedTestHost(coroutineScope: CoroutineScope) {
           }
         }
 
-        suspend fun leaveAllModals(throwErrorIfModal: Boolean) {
+        suspend fun makeSureNoModals(): Boolean =
           withContext(Dispatchers.EDT + ModalityState.any().asContextElement() + NonCancellable) {
             repeat(10) {
               if (ModalityState.current() == ModalityState.nonModal()) {
-                return@withContext
+                return@withContext true
               }
               delay(1.seconds)
             }
-            if (throwErrorIfModal) {
-              LOG.error("Unexpected modality: " + ModalityState.current())
-            }
+            LOG.warn("Unexpected modality: " + ModalityState.current())
             LaterInvocator.forceLeaveAllModals("DistributedTestHost - leaveAllModals")
             repeat(10) {
               if (ModalityState.current() == ModalityState.nonModal()) {
-                return@withContext
+                return@withContext true
               }
               delay(1.seconds)
             }
             LOG.error("Failed to close modal dialog: " + ModalityState.current())
+            return@withContext false
           }
-        }
 
-        session.forceLeaveAllModals.setSuspend(sessionBgtDispatcher) { _, throwErrorIfModal ->
-          leaveAllModals(throwErrorIfModal)
+        session.forceLeaveAllModals.setSuspend(sessionBgtDispatcher) { _, _ ->
+          makeSureNoModals()
         }
 
         session.closeAllOpenedProjects.setSuspend(sessionBgtDispatcher) { _, _ ->
           try {
-            leaveAllModals(throwErrorIfModal = true)
+            makeSureNoModals()
 
             ProjectManagerEx.getOpenProjects().forEach { waitProjectInitialisedOrDisposed(it) }
             withContext(Dispatchers.EDT + NonCancellable) {

@@ -16,7 +16,7 @@ import java.awt.Point
 import javax.swing.JTree
 import kotlin.time.Duration.Companion.seconds
 
-fun IdeaFrameUI.bookmarksToolWindow(action: BookmarksToolWindowUiComponent.() -> Unit = {}) =
+fun IdeaFrameUI.bookmarksToolWindow(action: BookmarksToolWindowUiComponent.() -> Unit = {}): BookmarksToolWindowUiComponent =
   x(BookmarksToolWindowUiComponent::class.java) { byAccessibleName("Bookmarks Tool Window") }.apply(action)
 
 private fun Finder.bookmarksTree(locator: QueryBuilder.() -> String = { byType(JTree::class.java) }): JTreeUiComponent =
@@ -26,20 +26,21 @@ private fun Finder.bookmarksTree(locator: QueryBuilder.() -> String = { byType(J
 
 class BookmarksToolWindowUiComponent(data: ComponentData) : ToolWindowUiComponent(data) {
 
-  val bookmarksTree by lazy {
+  val bookmarksTree: JTreeUiComponent by lazy {
     if (isRemDevMode) {
       wait(1.seconds) // wait till tree initialization
+      bookmarksTree().expandAll() // Expand bookmark tree in SplitMode IJPL-211105
     }
     bookmarksTree()
   }
 }
 
-fun IdeaFrameUI.bookmarksPopup(action: BookmarksPopupUiComponent.() -> Unit = {}) =
+fun IdeaFrameUI.bookmarksPopup(action: BookmarksPopupUiComponent.() -> Unit = {}): BookmarksPopupUiComponent =
   x("//div[@class='HeavyWeightWindow'][//div[@class='EngravedLabel' and @text='Bookmarks']]", BookmarksPopupUiComponent::class.java).apply(action)
 
 class BookmarksPopupUiComponent(data: ComponentData) : UiComponent(data) {
 
-  val bookmarksTree = bookmarksTree()
+  val bookmarksTree: JTreeUiComponent = bookmarksTree()
 
   fun clickBookmark(predicate: (String) -> Boolean) {
     bookmarksTree.clickRow(Point(5, 5), predicate)

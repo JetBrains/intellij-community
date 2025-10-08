@@ -81,9 +81,6 @@ class MergeConflictManager(private val project: Project, private val cs: Corouti
    private fun isNonModalMergeRegistryValue() = Registry.get("vcs.non.modal.merge.enabled")
 
     @JvmStatic
-    fun isForceIncludeResolvedConflicts(): Boolean = Registry.`is`("vcs.non.modal.merge.force.include.resolved")
-
-    @JvmStatic
     fun getInstance(project: Project): MergeConflictManager = project.service<MergeConflictManager>()
   }
 }

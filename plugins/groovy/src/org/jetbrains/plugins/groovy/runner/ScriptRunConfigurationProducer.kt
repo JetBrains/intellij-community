@@ -12,6 +12,7 @@ import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.psi.PsiClass
 import com.intellij.psi.PsiElement
 import com.intellij.util.text.nullize
+import org.jetbrains.plugins.groovy.config.GroovyConfigUtils
 import org.jetbrains.plugins.groovy.console.GroovyConsoleStateService
 import org.jetbrains.plugins.groovy.extensions.GroovyRunnableScriptType
 import org.jetbrains.plugins.groovy.lang.psi.GroovyFile
@@ -46,7 +47,7 @@ class ScriptRunConfigurationProducer : LazyRunConfigurationProducer<GroovyScript
       return null
     }
     val clazz = GroovyRunnerPsiUtil.getRunningClass(element) ?: return null
-    if (clazz !is GroovyScriptClass && !isRunnable(clazz)) {
+    if (clazz.containingClass != null || (clazz !is GroovyScriptClass && !isRunnable(clazz) && !GroovyConfigUtils.isAtLeastGroovy50(clazz))) {
       return null
     }
     return Data(location, element, clazz, file, virtualFile, scriptType)

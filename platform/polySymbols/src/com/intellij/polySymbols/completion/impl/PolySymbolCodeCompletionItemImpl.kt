@@ -31,6 +31,7 @@ internal data class PolySymbolCodeCompletionItemImpl(
   val typeTextStatic: String? = null,
   val typeTextProvider: (() -> String?)? = null,
   override val tailText: String? = null,
+  override val caseSensitive: Boolean = true,
   override val insertHandler: PolySymbolCodeCompletionItemInsertHandler? = null,
   @get:ApiStatus.Internal
   val stopSequencePatternEvaluation: Boolean = false,
@@ -66,6 +67,7 @@ internal data class PolySymbolCodeCompletionItemImpl(
         else it
       }
       .withTailText(tailText, true)
+      .withCaseSensitivity(caseSensitive)
       .withBoldness(!deprecatedOrObsolete && priority != null && priority >= PolySymbol.Priority.HIGHEST)
       .withStrikeoutness(deprecatedOrObsolete)
       .let {
@@ -161,6 +163,9 @@ internal data class PolySymbolCodeCompletionItemImpl(
   override fun withTailText(tailText: String?): PolySymbolCodeCompletionItem =
     copy(tailText = tailText)
 
+  override fun withCaseSensitive(value: Boolean): PolySymbolCodeCompletionItem =
+    copy(caseSensitive = value)
+
   override fun withCompleteAfterChar(char: Char): PolySymbolCodeCompletionItem =
     copy(completeAfterChars = if (!completeAfterInsert) completeAfterChars + char else emptySet())
 
@@ -221,6 +226,7 @@ internal data class PolySymbolCodeCompletionItemImpl(
     private var typeTextStatic: String? = null
     private var typeTextProvider: (() -> String?)? = null
     override var tailText: String? = null
+    override var caseSensitive: Boolean = true
     override var insertHandler: PolySymbolCodeCompletionItemInsertHandler? = null
     private var stopSequencePatternEvaluation: Boolean = false
 
@@ -228,7 +234,7 @@ internal data class PolySymbolCodeCompletionItemImpl(
 
     override fun build(): PolySymbolCodeCompletionItem = PolySymbolCodeCompletionItemImpl(
       name, offset, completeAfterInsert, completeAfterChars, displayName, symbol, priority, proximity,
-      apiStatus, aliases, icon, typeTextStatic, typeTextProvider, tailText, insertHandler, stopSequencePatternEvaluation)
+      apiStatus, aliases, icon, typeTextStatic, typeTextProvider, tailText, caseSensitive, insertHandler, stopSequencePatternEvaluation)
 
     override fun displayName(value: String?): PolySymbolCodeCompletionItemBuilder {
       displayName = value
@@ -257,6 +263,11 @@ internal data class PolySymbolCodeCompletionItemImpl(
 
     override fun tailText(value: String?): PolySymbolCodeCompletionItemBuilder {
       tailText = value
+      return this
+    }
+
+    override fun caseSensitive(value: Boolean): PolySymbolCodeCompletionItemBuilder {
+      caseSensitive = value
       return this
     }
 

@@ -3,6 +3,8 @@ package com.intellij.openapi.util;
 
 import com.intellij.ide.ui.UISettings;
 import com.intellij.ide.ui.UISettingsUtils;
+import com.intellij.openapi.application.Application;
+import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.components.PersistentStateComponent;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.Project;
@@ -173,16 +175,23 @@ abstract class WindowStateServiceImpl extends WindowStateService implements Modi
   }
 
   private <T> T getFor(Object object, @NotNull String key, @NotNull Class<T> type) {
-    if (GraphicsEnvironment.getLocalGraphicsEnvironment().isHeadlessInstance()) return null;
-    if (Registry.is("ui.disable.dimension.service.keys")) return null;
-    if (UISettings.getInstance().getPresentationMode()) key += PRESENTATION_MODE_MODE_KEY_SUFFIX; // separate key for the presentation mode
+    if (GraphicsEnvironment.getLocalGraphicsEnvironment().isHeadlessInstance() || Registry.is("ui.disable.dimension.service.keys", false)) {
+      return null;
+    }
+
+    if (UISettings.getInstance().getPresentationMode()) {
+      key += PRESENTATION_MODE_MODE_KEY_SUFFIX; // separate key for the presentation mode
+    }
+
     String keyWithScale = withAppendedIdeScale(key);
     boolean tryWithScale = shouldAppendIdeScaleToKey();
     GraphicsConfiguration configuration = getConfiguration(object);
     synchronized (myStateMap) {
       if (tryWithScale) {
         T result = synchronizedGetFor(configuration, keyWithScale, type);
-        if (result != null) return result;
+        if (result != null) {
+          return result;
+        }
       }
       return synchronizedGetFor(configuration, key, type);
     }
@@ -190,7 +199,9 @@ abstract class WindowStateServiceImpl extends WindowStateService implements Modi
 
   private <T> T synchronizedGetFor(GraphicsConfiguration configuration, @NotNull String key, @NotNull Class<T> type) {
     CachedState state = myStateMap.get(getAbsoluteKey(configuration, key));
-    if (isVisible(state)) return state.get(type, null);
+    if (isVisible(state)) {
+      return state.get(type, null);
+    }
 
     state = myStateMap.get(key);
     return state == null ? null : state.get(type, state.myScreen == null ? null : getScreenRectangle(configuration));
@@ -201,7 +212,10 @@ abstract class WindowStateServiceImpl extends WindowStateService implements Modi
                       Dimension size, boolean sizeSet,
                       boolean maximized, boolean maximizedSet,
                       boolean fullScreen, boolean fullScreenSet) {
-    if (GraphicsEnvironment.getLocalGraphicsEnvironment().isHeadlessInstance()) return;
+    if (GraphicsEnvironment.getLocalGraphicsEnvironment().isHeadlessInstance()) {
+      return;
+    }
+
     if (UISettings.getInstance().getPresentationMode()) key += PRESENTATION_MODE_MODE_KEY_SUFFIX; // separate key for the presentation mode
     key = withAppendedIdeScale(key);
     GraphicsConfiguration configuration = getConfiguration(object);
@@ -220,9 +234,12 @@ abstract class WindowStateServiceImpl extends WindowStateService implements Modi
     UISettingsUtils settingsUtils = UISettingsUtils.getInstance();
     int percentScale = UISettingsUtils.percentValue(settingsUtils.getCurrentIdeScale());
     int defaultPercentScale = UISettingsUtils.percentValue(settingsUtils.getCurrentDefaultScale());
-
-    if (percentScale == defaultPercentScale) return key;
-    else return key + ".ideScale=" + percentScale;
+    if (percentScale == defaultPercentScale) {
+      return key;
+    }
+    else {
+      return key + ".ideScale=" + percentScale;
+    }
   }
 
   private static boolean shouldAppendIdeScaleToKey() {
@@ -237,12 +254,16 @@ abstract class WindowStateServiceImpl extends WindowStateService implements Modi
     CachedState state = myStateMap.get(key);
     if (state == null) {
       state = new CachedState();
-      if (!state.set(location, locationSet, size, sizeSet, maximized, maximizedSet, fullScreen, fullScreenSet)) return null;
+      if (!state.set(location, locationSet, size, sizeSet, maximized, maximizedSet, fullScreen, fullScreenSet)) {
+        return null;
+      }
       myStateMap.put(key, state);
       return state;
     }
     else {
-      if (state.set(location, locationSet, size, sizeSet, maximized, maximizedSet, fullScreen, fullScreenSet)) return state;
+      if (state.set(location, locationSet, size, sizeSet, maximized, maximizedSet, fullScreen, fullScreenSet)) {
+        return state;
+      }
       myStateMap.remove(key);
       return null;
     }
@@ -269,23 +290,43 @@ abstract class WindowStateServiceImpl extends WindowStateService implements Modi
 
   private static @Nullable GraphicsConfiguration getConfiguration(@Nullable Object object) {
     if (object instanceof Project project) {
-      if (project.isDefault()) return null;
+      if (project.isDefault()) {
+        return null;
+      }
+
+      Application app = ApplicationManager.getApplication();
+      if (app != null && app.isHeadlessEnvironment()) {
+        return null;
+      }
 
       object = WindowManager.getInstance().getFrame(project);
-      if (object == null) LOG.warn("cannot find a project frame for " + project);
+      if (object == null) {
+        LOG.warn("cannot find a project frame for " + project);
+      }
     }
     if (object instanceof Window window) {
       GraphicsConfiguration configuration = window.getGraphicsConfiguration();
-      if (configuration != null) return configuration;
+      if (configuration != null) {
+        return configuration;
+      }
+
       object = ScreenUtil.getScreenDevice(window.getBounds());
-      if (object == null) LOG.warn("cannot find a device for " + window);
+      if (object == null) {
+        LOG.warn("cannot find a device for " + window);
+      }
     }
     if (object instanceof GraphicsDevice device) {
       object = device.getDefaultConfiguration();
-      if (object == null) LOG.warn("cannot find a configuration for " + device);
+      if (object == null) {
+        LOG.warn("cannot find a configuration for " + device);
+      }
     }
-    if (object instanceof GraphicsConfiguration) return (GraphicsConfiguration)object;
-    if (object != null) LOG.warn("unexpected object " + object.getClass());
+    if (object instanceof GraphicsConfiguration) {
+      return (GraphicsConfiguration)object;
+    }
+    if (object != null) {
+      LOG.warn("unexpected object " + object.getClass());
+    }
     return null;
   }
 

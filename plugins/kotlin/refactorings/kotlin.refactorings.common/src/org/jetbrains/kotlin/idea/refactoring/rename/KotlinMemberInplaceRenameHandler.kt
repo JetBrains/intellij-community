@@ -18,6 +18,7 @@ import org.jetbrains.kotlin.psi.KtNameReferenceExpression
 import org.jetbrains.kotlin.psi.KtNamedDeclaration
 import org.jetbrains.kotlin.psi.KtObjectDeclaration
 import org.jetbrains.kotlin.psi.KtPrimaryConstructor
+import org.jetbrains.kotlin.psi.KtReferenceExpression
 import org.jetbrains.kotlin.psi.KtThisExpression
 
 class KotlinMemberInplaceRenameHandler : MemberInplaceRenameHandler() {
@@ -36,8 +37,13 @@ class KotlinMemberInplaceRenameHandler : MemberInplaceRenameHandler() {
         override fun acceptReference(reference: PsiReference): Boolean {
             val refElement = reference.element
             val textRange = reference.rangeInElement
-            val referenceText = refElement.text.substring(textRange.startOffset, textRange.endOffset).unquoteKotlinIdentifier()
-            return referenceText == myElementToRename.name
+            val referenceText = refElement.text.substring(textRange.startOffset, textRange.endOffset)
+            if (reference is KtReferenceExpression &&
+                referenceText.unquoteKotlinIdentifier() == myElementToRename.name) {
+                return true
+            }
+            // reject non-kotlin references which are not quoted but quoting is required by the language
+            return referenceText == ((myElementToRename as? PsiNameIdentifierOwner)?.nameIdentifier?.text ?: myElementToRename.name)
         }
 
         override fun startsOnTheSameElement(handler: RefactoringActionHandler?, element: PsiElement?): Boolean {

@@ -91,13 +91,12 @@ public class WrapWithMutableCollectionFix extends PsiUpdateModCommandQuickFix {
     PsiClass aClass = ((PsiClassType)type).resolve();
     if (aClass == null) return null;
     String name = aClass.getQualifiedName();
-    if (name == null) return null;
     return switch (name) {
       case CommonClassNames.JAVA_LANG_ITERABLE, CommonClassNames.JAVA_UTIL_COLLECTION, CommonClassNames.JAVA_UTIL_LIST ->
         CommonClassNames.JAVA_UTIL_ARRAY_LIST;
       case CommonClassNames.JAVA_UTIL_SET -> CommonClassNames.JAVA_UTIL_HASH_SET;
       case CommonClassNames.JAVA_UTIL_MAP -> CommonClassNames.JAVA_UTIL_HASH_MAP;
-      default -> null;
+      case null, default -> null;
     };
   }
 }

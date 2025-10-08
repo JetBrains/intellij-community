@@ -14,7 +14,7 @@ class GroovyAnnotatorPre50Test: LightGroovyTestCase() {
       class B extends A{}
       def foo() {
         A a = new B()
-        if (a instanceof B <error descr="Pattern variable inside instanceof expressions is available in Groovy 5.0 or later">b</error>) {
+        if (a instanceof B <error descr="Pattern variables inside instanceof expressions are available in Groovy 5.0 or later">b</error>) {
         }
       }
     """.trimIndent())
@@ -28,11 +28,26 @@ class GroovyAnnotatorPre50Test: LightGroovyTestCase() {
       def foo() {
         def o = new String[][]{}
       
-        def a = <error descr="Multi-dimensional array initializer is available in Groovy 5.0 or later">new String[][]{{}}</error>
+        def a = <error descr="Multi-dimensional array initializers are available in Groovy 5.0 or later">new String[][]{{}}</error>
         
-        def b = <error descr="Multi-dimensional array initializer is available in Groovy 5.0 or later">new String[][]{{"foo"}}</error>
+        def b = <error descr="Multi-dimensional array initializers are available in Groovy 5.0 or later">new String[][]{{"foo"}}</error>
       }
     """.trimIndent())
+    myFixture.testHighlighting()
+  }
+
+  fun testIndexVariableInForeachLoop() {
+    myFixture.configureByText("a.groovy", """
+      def foo() {
+        for (<error descr="Index variables in foreach loops are available in Groovy 5.0 or later">int idx</error>, int i in [1, 2, 3]) {
+          println(idx)
+        }
+        
+        for (<error descr="Index variables in foreach loops are available in Groovy 5.0 or later">var idx</error>, int i : [1, 2, 3]) {
+          println(idx)
+        }
+      }
+    """)
     myFixture.testHighlighting()
   }
 }

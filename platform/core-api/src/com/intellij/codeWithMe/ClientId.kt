@@ -10,16 +10,11 @@ import com.intellij.concurrency.installThreadContext
 import com.intellij.diagnostic.LoadingState
 import com.intellij.openapi.Disposable
 import com.intellij.openapi.application.AccessToken
-import com.intellij.openapi.application.ApplicationManager
-import com.intellij.openapi.client.ClientSessionsManager
-import com.intellij.openapi.components.serviceOrNull
 import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.util.Disposer
 import com.intellij.openapi.util.registry.Registry
 import com.intellij.util.IncorrectOperationException
-import com.intellij.util.Processor
 import com.intellij.util.concurrency.annotations.RequiresBlockingContext
-import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.annotations.ApiStatus.Internal
 import org.jetbrains.annotations.CheckReturnValue
 import java.util.concurrent.Callable
@@ -359,20 +354,6 @@ data class ClientId(val value: String) {
       return installThreadContext(newContext, replace = true)
     }
 
-    @Internal
-    @ApiStatus.ScheduledForRemoval
-    @Deprecated(message = "Resolve ClientSessionsManager via Application in client code", level = DeprecationLevel.ERROR,
-                replaceWith = ReplaceWith("ApplicationManager.getApplication().serviceOrNull<ClientSessionsManager<*>>()"))
-    fun getCachedService(): ClientSessionsManager<*>? {
-      return ApplicationManager.getApplication().serviceOrNull<ClientSessionsManager<*>>()
-    }
-
-    @ApiStatus.ScheduledForRemoval
-    @Deprecated("ClientId propagation is handled by context propagation. You don't need to do it manually. The method will be removed soon.")
-    @Internal
-    @JvmStatic
-    fun <T> decorateFunction(action: () -> T): () -> T = action
-
     @Deprecated("ClientId propagation is handled by context propagation. You don't need to do it manually. The method will be removed soon.")
     @Internal
     @JvmStatic
@@ -392,12 +373,6 @@ data class ClientId(val value: String) {
     @Internal
     @JvmStatic
     fun <T, U> decorateBiConsumer(biConsumer: BiConsumer<T, U>): BiConsumer<T, U> = biConsumer
-
-    @ApiStatus.ScheduledForRemoval
-    @Deprecated("ClientId propagation is handled by context propagation. You don't need to do it manually. The method will be removed soon.")
-    @Internal
-    @JvmStatic
-    fun <T> decorateProcessor(processor: Processor<T>): Processor<T> = processor
 
     @Internal
     fun coroutineContext(): CoroutineContext = currentOrNull?.asContextElement() ?: EmptyCoroutineContext

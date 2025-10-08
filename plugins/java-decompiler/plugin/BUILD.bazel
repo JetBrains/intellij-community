@@ -1,9 +1,9 @@
 ### auto-generated section `build intellij.java.decompiler` start
-load("@rules_jvm//:jvm.bzl", "jvm_library", "jvm_resources")
+load("@rules_jvm//:jvm.bzl", "jvm_library", "resourcegroup")
 
-jvm_resources(
+resourcegroup(
   name = "java-decompiler_resources",
-  files = glob(["resources/**/*"]),
+  srcs = glob(["resources/**/*"]),
   strip_prefix = "resources"
 )
 
@@ -12,6 +12,7 @@ jvm_library(
   module_name = "intellij.java.decompiler",
   visibility = ["//visibility:public"],
   srcs = glob(["src/**/*.kt", "src/**/*.java", "src/**/*.form"], allow_empty = True),
+  resources = [":java-decompiler_resources"],
   deps = [
     "//plugins/java-decompiler/engine",
     "//platform/analysis-api:analysis",
@@ -29,8 +30,7 @@ jvm_library(
     "//platform/lang-impl",
     "//platform/statistics",
   ],
-  exports = ["//plugins/java-decompiler/engine"],
-  runtime_deps = [":java-decompiler_resources"]
+  exports = ["//plugins/java-decompiler/engine"]
 )
 
 jvm_library(
@@ -65,8 +65,7 @@ jvm_library(
   exports = [
     "//plugins/java-decompiler/engine",
     "//plugins/java-decompiler/engine:engine_test_lib",
-  ],
-  runtime_deps = [":java-decompiler_resources"]
+  ]
 )
 ### auto-generated section `build intellij.java.decompiler` end
 

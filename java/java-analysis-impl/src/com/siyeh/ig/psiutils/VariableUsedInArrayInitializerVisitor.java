@@ -1,5 +1,5 @@
 /*
- * Copyright 2003-2010 Dave Griffith, Bas Leijdekkers
+ * Copyright 2003-2025 Dave Griffith, Bas Leijdekkers
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -40,8 +40,7 @@ class VariableUsedInArrayInitializerVisitor extends JavaRecursiveElementWalkingV
       return;
     }
     super.visitArrayInitializerExpression(expression);
-    final PsiExpression[] initializers = expression.getInitializers();
-    for (final PsiExpression initializer : initializers) {
+    for (PsiExpression initializer : expression.getInitializers()) {
       if (VariableAccessUtils.mayEvaluateToVariable(initializer, variable)) {
         passed = true;
       }

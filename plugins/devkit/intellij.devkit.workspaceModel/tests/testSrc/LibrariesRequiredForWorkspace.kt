@@ -1,7 +1,7 @@
 // Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.devkit.workspaceModel
 
-import com.intellij.openapi.application.PathManager
+import com.intellij.openapi.application.ArchivedCompilationContextUtil
 import com.intellij.openapi.roots.ModifiableRootModel
 import com.intellij.openapi.roots.OrderRootType
 import com.intellij.openapi.roots.libraries.Library.ModifiableModel
@@ -126,7 +126,7 @@ private fun addDependencyFromCompilationOutput(model: ModifiableRootModel, libra
 
   var classpathRootVirtualFile: VirtualFile?
 
-  val mapping = PathManager.getArchivedCompiledClassesMapping()
+  val mapping = ArchivedCompilationContextUtil.archivedCompiledClassesMapping
   if (mapping != null) {
     val jar = mapping["production/$classpathFolder"] ?: error("No jar found for $classpathFolder production classes")
     classpathRootVirtualFile = VirtualFileManager.getInstance().refreshAndFindFileByUrl(VfsUtil.pathToUrl(jar))

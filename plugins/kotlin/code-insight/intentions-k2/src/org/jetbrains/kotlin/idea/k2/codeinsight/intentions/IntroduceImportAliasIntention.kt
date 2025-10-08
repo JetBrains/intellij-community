@@ -6,9 +6,12 @@ import com.intellij.codeInsight.FileModificationService
 import com.intellij.codeInsight.intention.LowPriorityAction
 import com.intellij.openapi.editor.Editor
 import com.intellij.openapi.util.TextRange
+import com.intellij.psi.PsiClass
+import com.intellij.psi.PsiMember
 import org.jetbrains.kotlin.analysis.api.analyze
 import org.jetbrains.kotlin.analysis.api.permissions.KaAllowAnalysisOnEdt
 import org.jetbrains.kotlin.analysis.api.permissions.allowAnalysisOnEdt
+import org.jetbrains.kotlin.idea.base.projectStructure.getKaModule
 import org.jetbrains.kotlin.idea.base.resources.KotlinBundle
 import org.jetbrains.kotlin.idea.codeinsight.api.classic.intentions.SelfTargetingRangeIntention
 import org.jetbrains.kotlin.idea.k2.refactoring.introduceImportAlias.KotlinIntroduceImportAliasHandler
@@ -25,10 +28,17 @@ class IntroduceImportAliasIntention : SelfTargetingRangeIntention<KtNameReferenc
     override fun applicabilityRange(element: KtNameReferenceExpression): TextRange? {
         if (element.parent is KtInstanceExpressionWithLabel || element.mainReference.getImportAlias() != null) return null
 
-        val declaration = element.mainReference.resolve() as? KtNamedDeclaration ?: return null
+        val declaration = element.mainReference.resolve() ?: return null
         val nonImportableFQN = allowAnalysisOnEdt {
-            analyze(declaration) {
-                declaration.symbol.importableFqName == null
+            analyze(declaration.getKaModule(declaration.project, null)) {
+                val declarationSymbol =
+                    when (declaration) {
+                        is KtNamedDeclaration -> declaration.symbol
+                        is PsiClass -> declaration.namedClassSymbol
+                        is PsiMember -> declaration.callableSymbol
+                        else -> null
+                    }
+                declarationSymbol?.importableFqName == null
             }
         }
         if (nonImportableFQN) return null

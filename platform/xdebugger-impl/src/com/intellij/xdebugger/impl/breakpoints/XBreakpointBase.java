@@ -71,7 +71,10 @@ public class XBreakpointBase<Self extends XBreakpoint<P>, P extends XBreakpointP
   private boolean myLogExpressionEnabled = true;
   private XExpression myLogExpression;
   private volatile boolean myDisposed;
-  private final MutableSharedFlow<Unit> myBreakpointChangedFlow = createMutableSharedFlow(0, 1);
+  // replay the last change event because some breakpoints can be modified asynchronously right after creation
+  // (for example, method breakpoints in Java), but faster than our subscriber collects the flow,
+  // and this change might get lost
+  private final MutableSharedFlow<Unit> myBreakpointChangedFlow = createMutableSharedFlow(1, 1);
 
   public XBreakpointBase(final XBreakpointType<Self, P> type,
                          XBreakpointManagerImpl breakpointManager,
@@ -116,6 +119,11 @@ public class XBreakpointBase<Self extends XBreakpoint<P>, P extends XBreakpointP
   public final void fireBreakpointChanged() {
     clearIcon();
     myBreakpointManager.fireBreakpointChanged(this);
+    emitBreakpointChanged();
+  }
+
+  @ApiStatus.Internal
+  public final void emitBreakpointChanged() {
     myBreakpointChangedFlow.tryEmit(Unit.INSTANCE);
   }
 
@@ -123,7 +131,7 @@ public class XBreakpointBase<Self extends XBreakpoint<P>, P extends XBreakpointP
   public final void fireBreakpointPresentationUpdated(@Nullable XDebugSession session) {
     clearIcon();
     myBreakpointManager.fireBreakpointPresentationUpdated(this, session);
-    myBreakpointChangedFlow.tryEmit(Unit.INSTANCE);
+    emitBreakpointChanged();
   }
 
   public final Flow<Unit> breakpointChangedFlow() {

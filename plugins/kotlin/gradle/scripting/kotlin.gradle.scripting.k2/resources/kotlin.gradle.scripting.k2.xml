@@ -5,6 +5,7 @@
     <module name="kotlin.base.scripting.k2"/>
     <module name="kotlin.base.scripting.shared"/>
     <plugin id="org.jetbrains.plugins.gradle"/>
+    <module name="kotlin.gradle.gradle-tooling"/>
   </dependencies>
 
   <projectListeners>

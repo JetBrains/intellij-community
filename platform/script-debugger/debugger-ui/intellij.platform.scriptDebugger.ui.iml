@@ -18,11 +18,11 @@
     <orderEntry type="module" module-name="intellij.platform.ide.impl" />
     <orderEntry type="module" module-name="intellij.platform.scriptDebugger.backend" />
     <orderEntry type="module" module-name="intellij.platform.debugger.impl" />
-    <orderEntry type="library" name="Guava" level="project" />
+    <orderEntry type="module" module-name="intellij.libraries.guava" />
     <orderEntry type="module" module-name="intellij.platform.execution.impl" />
     <orderEntry type="library" name="netty-codec-http" level="project" />
     <orderEntry type="module" module-name="intellij.platform.debugger.testFramework" scope="TEST" />
-    <orderEntry type="library" name="fastutil-min" level="project" />
+    <orderEntry type="module" module-name="intellij.libraries.fastutil" />
     <orderEntry type="library" name="netty-buffer" level="project" />
     <orderEntry type="module" module-name="intellij.platform.core.ui" />
     <orderEntry type="module" module-name="intellij.platform.projectModel" />

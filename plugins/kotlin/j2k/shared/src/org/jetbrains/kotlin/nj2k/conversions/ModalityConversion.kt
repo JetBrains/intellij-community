@@ -4,7 +4,6 @@ package org.jetbrains.kotlin.nj2k.conversions
 
 import com.intellij.psi.PsiClass
 import com.intellij.psi.PsiMethod
-import org.jetbrains.kotlin.analysis.api.KaSession
 import org.jetbrains.kotlin.j2k.ConverterContext
 import org.jetbrains.kotlin.nj2k.RecursiveConversion
 import org.jetbrains.kotlin.nj2k.annotationByFqName
@@ -20,7 +19,6 @@ import org.jetbrains.kotlin.nj2k.tree.Visibility.PRIVATE
  * Also, adds the "override" modifier to applicable methods.
  */
 class ModalityConversion(context: ConverterContext) : RecursiveConversion(context) {
-    context(_: KaSession)
     override fun applyToElement(element: JKTreeElement): JKTreeElement {
         when (element) {
             is JKClass -> element.process()

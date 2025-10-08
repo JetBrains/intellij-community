@@ -7,16 +7,7 @@ import com.intellij.codeInsight.lookup.LookupElement
 import com.intellij.psi.PsiElement
 import com.intellij.psi.util.parentsOfType
 import org.jetbrains.kotlin.analysis.api.KaSession
-import org.jetbrains.kotlin.analysis.api.components.KaImplicitReceiver
-import org.jetbrains.kotlin.analysis.api.components.KaScopeContext
-import org.jetbrains.kotlin.analysis.api.components.allOverriddenSymbols
-import org.jetbrains.kotlin.analysis.api.components.expressionType
-import org.jetbrains.kotlin.analysis.api.components.fakeOverrideOriginal
-import org.jetbrains.kotlin.analysis.api.components.importingScopeContext
-import org.jetbrains.kotlin.analysis.api.components.resolveToCall
-import org.jetbrains.kotlin.analysis.api.components.resolveToSymbol
-import org.jetbrains.kotlin.analysis.api.components.scopeContext
-import org.jetbrains.kotlin.analysis.api.components.withNullability
+import org.jetbrains.kotlin.analysis.api.components.*
 import org.jetbrains.kotlin.analysis.api.lifetime.KaLifetimeOwner
 import org.jetbrains.kotlin.analysis.api.lifetime.KaLifetimeToken
 import org.jetbrains.kotlin.analysis.api.lifetime.withValidityAssertion
@@ -39,6 +30,7 @@ import org.jetbrains.kotlin.idea.completion.KotlinFirCompletionParameters.Compan
 import org.jetbrains.kotlin.idea.completion.KotlinFirCompletionParameters.Companion.useSiteModule
 import org.jetbrains.kotlin.idea.completion.contributors.helpers.CallableMetadataProvider
 import org.jetbrains.kotlin.idea.completion.contributors.helpers.KtSymbolWithOrigin
+import org.jetbrains.kotlin.idea.completion.impl.k2.K2CompletionSectionContext
 import org.jetbrains.kotlin.idea.completion.impl.k2.context.getOriginalDeclarationOrSelf
 import org.jetbrains.kotlin.idea.completion.impl.k2.weighers.*
 import org.jetbrains.kotlin.idea.completion.implCommon.weighers.PreferKotlinClassesWeigher
@@ -49,6 +41,7 @@ import org.jetbrains.kotlin.idea.util.positionContext.*
 import org.jetbrains.kotlin.lexer.KtTokens
 import org.jetbrains.kotlin.name.FqName
 import org.jetbrains.kotlin.name.Name
+import org.jetbrains.kotlin.name.StandardClassIds
 import org.jetbrains.kotlin.psi.*
 import org.jetbrains.kotlin.resolve.ImportPath
 
@@ -172,12 +165,17 @@ internal class WeighingContext private constructor(
             val preferredSubtype = when (positionContext) {
                 is KotlinTypeNameReferencePositionContext -> {
                     val typeReferenceOwner = positionContext.typeReference?.parent
-                    val leftHandExpression = when {
-                        typeReferenceOwner is KtIsExpression -> typeReferenceOwner.leftHandSide
-                        typeReferenceOwner is KtBinaryExpressionWithTypeRHS && typeReferenceOwner.isAsOrSafeAs() -> typeReferenceOwner.left
-                        else -> null
+                    if (typeReferenceOwner?.parent?.parent is KtCatchClause) {
+                        // Prefer Throwables in catch clauses
+                        buildClassType(StandardClassIds.Throwable) as? KaClassType
+                    } else {
+                        val leftHandExpression = when (typeReferenceOwner) {
+                            is KtIsExpression -> typeReferenceOwner.leftHandSide
+                            is KtBinaryExpressionWithTypeRHS if typeReferenceOwner.isAsOrSafeAs() -> typeReferenceOwner.left
+                            else -> null
+                        }
+                        leftHandExpression?.getPreferredSealedType()
                     }
-                    leftHandExpression?.getPreferredSealedType()
                 }
 
                 else -> null
@@ -289,6 +287,16 @@ internal class WeighingContext private constructor(
 
 internal object Weighers {
 
+    context(_: KaSession, sectionContext: K2CompletionSectionContext<*>)
+    fun <E : LookupElement> E.applyWeighs(
+        symbolWithOrigin: KtSymbolWithOrigin<*>? = null,
+    ): E = also { lookupElement -> // todo replace everything with apply
+        @Suppress("DEPRECATION")
+        applyWeighs(sectionContext.weighingContext, symbolWithOrigin)
+        PreferMatchingArgumentNameWeigher.addWeight(lookupElement)
+    }
+
+    @Deprecated("This method only exists for compatibility for the old Fir contributors and will be removed soon")
     context(_: KaSession)
     fun <E : LookupElement> E.applyWeighs(
         context: WeighingContext,
@@ -326,6 +334,7 @@ internal object Weighers {
             CompletionContributorGroupWeigher.Weigher,
             ExpectedTypeWeigher.Weigher,
             DeprecatedWeigher.Weigher,
+            PreferMatchingArgumentNameWeigher.Weigher,
             PriorityWeigher.Weigher,
             PreferredSubtypeWeigher.Weigher,
             PreferGetSetMethodsToPropertyWeigher.Weigher,

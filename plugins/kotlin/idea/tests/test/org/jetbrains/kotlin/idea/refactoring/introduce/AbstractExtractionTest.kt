@@ -7,6 +7,7 @@ import com.intellij.codeInsight.completion.JavaCompletionUtil
 import com.intellij.codeInsight.template.impl.TemplateManagerImpl
 import com.intellij.codeInsight.template.impl.TemplateState
 import com.intellij.ide.DataManager
+import com.intellij.lang.LanguageRefactoringSupport
 import com.intellij.openapi.application.impl.NonBlockingReadActionImpl
 import com.intellij.openapi.application.runReadAction
 import com.intellij.openapi.command.WriteCommandAction
@@ -25,6 +26,7 @@ import com.intellij.psi.codeStyle.VariableKind
 import com.intellij.refactoring.BaseRefactoringProcessor.ConflictsInTestsException
 import com.intellij.refactoring.IntroduceParameterRefactoring
 import com.intellij.refactoring.RefactoringActionHandler
+import com.intellij.refactoring.introduce.inplace.OccurrencesChooser
 import com.intellij.refactoring.introduceField.ElementToWorkOn
 import com.intellij.refactoring.introduceParameter.IntroduceParameterProcessor
 import com.intellij.refactoring.introduceParameter.Util
@@ -42,10 +44,12 @@ import com.intellij.testFramework.runInEdtAndWait
 import org.jetbrains.kotlin.asJava.elements.KtLightMethod
 import org.jetbrains.kotlin.descriptors.FunctionDescriptor
 import org.jetbrains.kotlin.idea.KotlinFileType
+import org.jetbrains.kotlin.idea.KotlinLanguage
 import org.jetbrains.kotlin.idea.base.test.IgnoreTests
 import org.jetbrains.kotlin.idea.base.test.InTextDirectivesUtils
 import org.jetbrains.kotlin.idea.base.test.KotlinTestHelpers
 import org.jetbrains.kotlin.idea.core.script.k1.ScriptConfigurationManager
+import org.jetbrains.kotlin.idea.refactoring.KotlinCommonRefactoringSettings
 import org.jetbrains.kotlin.idea.refactoring.checkConflictsInteractively
 import org.jetbrains.kotlin.idea.refactoring.chooseMembers
 import org.jetbrains.kotlin.idea.refactoring.introduce.extractClass.ExtractSuperInfo
@@ -163,6 +167,19 @@ abstract class AbstractExtractionTest : KotlinLightCodeInsightFixtureTestCase() 
             TemplateManagerImpl.setTemplateTesting(getTestRootDisposable())
 
             file as KtFile
+
+            val introduceVariableHandler =
+                LanguageRefactoringSupport.getInstance()
+                    .forLanguage(KotlinLanguage.INSTANCE).introduceVariableHandler as KotlinIntroduceVariableHandler
+            introduceVariableHandler.occurenceReplaceChoice =
+                if (InTextDirectivesUtils.isDirectiveDefined(file.text, "// REPLACE_SINGLE_OCCURRENCE")) {
+                    OccurrencesChooser.ReplaceChoice.NO
+                } else {
+                    OccurrencesChooser.ReplaceChoice.ALL
+                }
+
+            KotlinCommonRefactoringSettings.getInstance().INTRODUCE_SPECIFY_TYPE_EXPLICITLY =
+                InTextDirectivesUtils.isDirectiveDefined(file.text, "// SPECIFY_TYPE_EXPLICITLY")
 
             getIntroduceVariableHandler().invoke(
                 fixture.project,

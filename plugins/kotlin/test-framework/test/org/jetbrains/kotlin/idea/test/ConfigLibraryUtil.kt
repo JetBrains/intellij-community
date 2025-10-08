@@ -157,6 +157,7 @@ object ConfigLibraryUtil {
         IndexingTestUtil.waitUntilIndexesAreReady(module.project)
     }
 
+    @JvmStatic
     fun addLibrary(
         rootModel: ModifiableRootModel,
         name: String, kind: PersistentLibraryKind<*>? = null,

@@ -32,7 +32,7 @@ public final class MultiCatchCanBeSplitInspection extends BaseInspection {
   }
 
   @Override
-  public BaseInspectionVisitor buildVisitor() {
+  public @NotNull BaseInspectionVisitor buildVisitor() {
     return new SplitMultiCatchVisitor();
   }
 

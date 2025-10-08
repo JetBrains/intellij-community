@@ -1,9 +1,9 @@
 ### auto-generated section `build intellij.platform.analysis.impl` start
-load("@rules_jvm//:jvm.bzl", "jvm_library", "jvm_resources")
+load("@rules_jvm//:jvm.bzl", "jvm_library", "resourcegroup")
 
-jvm_resources(
+resourcegroup(
   name = "analysis-impl_resources",
-  files = glob(["resources/**/*"]),
+  srcs = glob(["resources/**/*"]),
   strip_prefix = "resources"
 )
 
@@ -12,6 +12,7 @@ jvm_library(
   module_name = "intellij.platform.analysis.impl",
   visibility = ["//visibility:public"],
   srcs = glob(["src/**/*.kt", "src/**/*.java", "src/**/*.form", "gen/**/*.kt", "gen/**/*.java"], allow_empty = True),
+  resources = [":analysis-impl_resources"],
   deps = [
     "//platform/analysis-api:analysis",
     "//platform/util/concurrency",
@@ -29,8 +30,8 @@ jvm_library(
     "//platform/indexing-impl",
     "@lib//:kotlin-stdlib",
     "//platform/util:util-ui",
-    "@lib//:gson",
-    "@lib//:fastutil-min",
+    "//libraries/gson",
+    "//libraries/fastutil",
     "//platform/core-ui",
     "//platform/code-style-api:codeStyle",
     "//platform/platform-util-io:ide-util-io",
@@ -41,15 +42,14 @@ jvm_library(
     "//platform/diagnostic/telemetry",
     "//platform/util/text-matching",
     "//platform/diagnostic",
-    "@lib//:jackson-databind",
-    "@lib//:jackson",
-    "@lib//:jackson-module-kotlin",
+    "//libraries/jackson/databind",
+    "//libraries/jackson/jackson",
+    "//libraries/jackson/module-kotlin:libraries-jackson-module-kotlin",
     "//platform/util-class-loader:util-classLoader",
   ],
   exports = [
     "//platform/core-impl",
     "//platform/projectModel-impl",
-  ],
-  runtime_deps = [":analysis-impl_resources"]
+  ]
 )
 ### auto-generated section `build intellij.platform.analysis.impl` end

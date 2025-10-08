@@ -1,4 +1,4 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.ide.util.projectWizard;
 
 import com.intellij.BundleBase;
@@ -17,6 +17,7 @@ import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.NlsSafe;
 import com.intellij.openapi.util.NotNullLazyValue;
 import com.intellij.openapi.util.io.FileUtil;
+import com.intellij.openapi.util.io.OSAgnosticPathUtil;
 import com.intellij.openapi.util.text.HtmlChunk;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.wm.impl.welcomeScreen.AbstractActionWithPanel;
@@ -353,7 +354,7 @@ public class ProjectSettingsStepBase<T> extends AbstractActionWithPanel implemen
   }
 
   public String getProjectLocation() {
-    return FileUtil.expandUserHome(FileUtil.toSystemIndependentName(myLocationField.getText()));
+    return OSAgnosticPathUtil.expandUserHome(FileUtil.toSystemIndependentName(myLocationField.getText()));
   }
 
   public final void setLocation(final @NotNull String location) {

@@ -1,4 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.updateSettings.impl;
 
 import com.intellij.ide.IdeBundle;
@@ -21,7 +21,6 @@ import com.intellij.openapi.progress.Task;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.DialogWrapper;
 import com.intellij.openapi.ui.Divider;
-import com.intellij.openapi.util.text.HtmlChunk;
 import com.intellij.openapi.util.text.StringUtilRt;
 import com.intellij.openapi.wm.impl.welcomeScreen.WelcomeFrame;
 import com.intellij.platform.ide.CoreUiCoroutineScopeHolder;
@@ -44,17 +43,13 @@ import org.jetbrains.annotations.Nullable;
 import javax.swing.*;
 import java.awt.*;
 import java.awt.event.ActionEvent;
-import java.util.List;
 import java.util.*;
+import java.util.List;
 import java.util.function.Consumer;
 import java.util.stream.Collectors;
 
-/**
- * @author Alexander Lobas
- */
 @ApiStatus.Internal
 public class PluginUpdateDialog extends DialogWrapper {
-  private final @NotNull Collection<PluginDownloader> myDownloaders;
   private final boolean myPlatformUpdate;
   private final MyPluginModel myPluginModel;
   private final PluginsGroupComponent myPluginsPanel;
@@ -64,34 +59,83 @@ public class PluginUpdateDialog extends DialogWrapper {
   private final ActionLink myIgnoreAction;
   private final JBCheckBox myAutoUpdateOption;
 
+  //Binary compatibility fields for AIA
+  private boolean myUpdateOnOk = false;
+  private Collection<PluginDownloader> myDownloaders;
+
   private @Nullable Runnable myFinishCallback;
 
   public PluginUpdateDialog(@Nullable Project project,
-                            @NotNull Collection<PluginDownloader> downloaders,
+                            @NotNull Collection<PluginUiModel> plugins,
                             @Nullable Collection<PluginUiModel> customRepositoryPlugins,
                             Map<PluginId, PluginUiModel> installedPlugins) {
-    this(project, downloaders, customRepositoryPlugins, installedPlugins, false);
+    this(project, plugins, customRepositoryPlugins, installedPlugins, false);
     setTitle(IdeBundle.message("dialog.title.plugin.updates"));
   }
 
+  //For compatibility purposes only
+  @Deprecated
   public PluginUpdateDialog(@Nullable Project project,
                             @NotNull Collection<PluginDownloader> updatesForPlugins,
                             Map<PluginId, PluginUiModel> installedPlugins) {
-    this(project, updatesForPlugins, null, Collections.emptyMap(), true);
+    this(project, ContainerUtil.map(updatesForPlugins, PluginDownloader::getUiModel), null, installedPlugins, true);
+    myUpdateOnOk = true;
+    myDownloaders = updatesForPlugins;
     setTitle(IdeBundle.message("updates.dialog.title", ApplicationNamesInfo.getInstance().getFullProductName()));
   }
 
+  //For compatibility purposes only
+  @Deprecated
+  public PluginUpdateDialog(@Nullable Project project,
+                            @NotNull Collection<PluginDownloader> updatesForPlugins) {
+    this(project, ContainerUtil.map(updatesForPlugins, PluginDownloader::getUiModel), null, findInstalledPlugins(updatesForPlugins), true);
+    myUpdateOnOk = true;
+    myDownloaders = updatesForPlugins;
+    setTitle(IdeBundle.message("updates.dialog.title", ApplicationNamesInfo.getInstance().getFullProductName()));
+  }
+
+  public static boolean showDialogAndUpdate(@NotNull Collection<PluginDownloader> downloaders, @NotNull PluginUpdateDialog dialog) {
+    if (dialog.showAndGet()) {
+      List<PluginUiModel> selectedPlugins = dialog.getSelectedPluginModels();
+      List<PluginDownloader> selectedDownloaders = findDownloadersForPlugins(downloaders, selectedPlugins);
+      runUpdateAll(selectedDownloaders, dialog.getContentPanel(), dialog.myFinishCallback, null);
+      return true;
+    }
+    return false;
+  }
+
+  private static Map<PluginId, PluginUiModel> findInstalledPlugins(Collection<PluginDownloader> downloaders) {
+    if (downloaders.isEmpty()) return Collections.emptyMap();
+    PluginDownloader downloader = ContainerUtil.getFirstItem(downloaders);
+    IdeaPluginDescriptorImpl descriptor = PluginManagerCore.getPluginSet().buildPluginIdMap().get(downloader.getId());
+    if (descriptor == null) return Collections.emptyMap();
+    return Map.of(descriptor.getPluginId(), new PluginUiModelAdapter(descriptor));
+  }
+
+  private static @NotNull List<PluginDownloader> findDownloadersForPlugins(@NotNull Collection<PluginDownloader> downloaders,
+                                                                           @NotNull List<PluginUiModel> selectedPlugins) {
+    List<PluginDownloader> selectedDownloaders = new ArrayList<>();
+    Set<PluginId> selectedPluginIds = ContainerUtil.map2Set(selectedPlugins, PluginUiModel::getPluginId);
+
+    for (PluginDownloader downloader : downloaders) {
+      if (selectedPluginIds.contains(downloader.getDescriptor().getPluginId())) {
+        selectedDownloaders.add(downloader);
+      }
+    }
+
+    return selectedDownloaders;
+  }
+
   private PluginUpdateDialog(@Nullable Project project,
-                             Collection<PluginDownloader> downloaders,
+                             Collection<PluginUiModel> updates,
                              @Nullable Collection<PluginUiModel> customRepositoryPlugins,
                              Map<PluginId, PluginUiModel> installedPlugins,
                              boolean platformUpdate) {
     super(project, true);
 
-    myDownloaders = downloaders;
     myPlatformUpdate = platformUpdate;
 
-    myIgnoreAction = new ActionLink(IdeBundle.message("updates.ignore.updates.button", downloaders.size()), e -> {
+    myIgnoreAction = new ActionLink(IdeBundle.message("updates.ignore.updates.button", updates.size()), e -> {
       doIgnoreUpdateAction(e);
     });
 
@@ -117,7 +161,10 @@ public class PluginUpdateDialog extends DialogWrapper {
     });
 
     //noinspection unchecked
-    myDetailsPage = new PluginDetailsPageComponent(new PluginModelFacade(myPluginModel), LinkListener.NULL, true);
+    myDetailsPage = new PluginDetailsPageComponent(new PluginModelFacade(myPluginModel),
+                                                   LinkListener.NULL,
+                                                   true,
+                                                   UpdateDialogPluginDetailsPageCustomizationStrategy.INSTANCE);
     myDetailsPage.setOnlyUpdateMode();
 
     MultiSelectionEventHandler eventHandler = new MultiSelectionEventHandler();
@@ -148,11 +195,11 @@ public class PluginUpdateDialog extends DialogWrapper {
         return component;
       }
     };
-    PluginManagerConfigurable.registerCopyProvider(myPluginsPanel);
+    PluginManagerConfigurablePanel.registerCopyProvider(myPluginsPanel);
     myPluginsPanel.setSelectionListener(__ -> myDetailsPage.showPlugins(myPluginsPanel.getSelection()));
 
-    for (PluginDownloader plugin : downloaders) {
-      myGroup.addDescriptor(plugin.getDescriptor());
+    for (PluginUiModel descriptor : updates) {
+      myGroup.addModel(descriptor);
     }
     myGroup.sortByName();
     myPluginsPanel.addGroup(myGroup);
@@ -169,7 +216,8 @@ public class PluginUpdateDialog extends DialogWrapper {
 
   protected void doIgnoreUpdateAction(ActionEvent e) {
     close(CANCEL_EXIT_CODE);
-    UpdateChecker.ignorePlugins(ContainerUtil.map(myGroup.ui.plugins, ListPluginComponent::getPluginDescriptor));
+    ApplicationManager.getApplication().getService(UpdateCheckerFacade.class)
+      .ignorePlugins(ContainerUtil.map(myGroup.ui.plugins, ListPluginComponent::getPluginDescriptor));
   }
 
   private void updateButtons() {
@@ -197,6 +245,20 @@ public class PluginUpdateDialog extends DialogWrapper {
     myFinishCallback = finishCallback;
   }
 
+  public @Nullable Runnable getFinishCallback() {
+    return myFinishCallback;
+  }
+
+  public @NotNull List<PluginUiModel> getSelectedPluginModels() {
+    List<PluginUiModel> selectedPlugins = new ArrayList<>();
+    for (ListPluginComponent plugin : myGroup.ui.plugins) {
+      if (plugin.getChooseUpdateButton().isSelected()) {
+        selectedPlugins.add(plugin.getPluginModel());
+      }
+    }
+    return selectedPlugins;
+  }
+
   @Override
   protected void doOKAction() {
     super.doOKAction();
@@ -206,11 +268,11 @@ public class PluginUpdateDialog extends DialogWrapper {
       boolean selected = myAutoUpdateOption.isSelected();
       if (state.isPluginsAutoUpdateEnabled() != selected) {
         state.setPluginsAutoUpdateEnabled(selected);
-        ApplicationManager.getApplication().getService(PluginAutoUpdateService.class).onSettingsChanged$intellij_platform_ide_impl();
+        ApplicationManager.getApplication().getService(PluginAutoUpdateService.class).onSettingsChanged();
       }
     }
 
-    if (myPlatformUpdate) return;
+    if (myPlatformUpdate || !myUpdateOnOk) return;
 
     List<PluginDownloader> toDownloads = new ArrayList<>();
 
@@ -224,10 +286,10 @@ public class PluginUpdateDialog extends DialogWrapper {
     runUpdateAll(toDownloads, getContentPanel(), myFinishCallback, null);
   }
 
-  static void runUpdateAll(@NotNull Collection<PluginDownloader> toDownload,
-                           @Nullable JComponent ownerComponent,
-                           @Nullable Runnable finishCallback,
-                           @Nullable Consumer<Boolean> customRestarter) {
+  public static void runUpdateAll(@NotNull Collection<PluginDownloader> toDownload,
+                                  @Nullable JComponent ownerComponent,
+                                  @Nullable Runnable finishCallback,
+                                  @Nullable Consumer<Boolean> customRestarter) {
     String message = IdeBundle.message("updates.notification.title", ApplicationNamesInfo.getInstance().getFullProductName());
     new Task.Backgroundable(null, message, true, PerformInBackgroundOption.DEAF) {
       @Override
@@ -247,31 +309,32 @@ public class PluginUpdateDialog extends DialogWrapper {
           }
           if (PluginManagementPolicy.getInstance().isPluginAutoUpdateAllowed() &&
               !UpdateSettings.getInstance().getState().isPluginsAutoUpdateEnabled()) {
-            Notification notification = UpdateChecker.getNotificationGroupForPluginUpdateResults()
-              .createNotification(IdeBundle.message("updates.plugins.notification.title"),
-                                  IdeBundle.message("updates.plugins.autoupdate.notification.message"), NotificationType.INFORMATION)
-              .addAction(new NotificationAction(IdeBundle.message("updates.auto.update.title")) {
-                @Override
-                public void actionPerformed(@NotNull AnActionEvent e, @NotNull Notification notification) {
-                  UpdateSettings.getInstance().getState().setPluginsAutoUpdateEnabled(true);
-                  ApplicationManager.getApplication().getService(PluginAutoUpdateService.class)
-                    .onSettingsChanged$intellij_platform_ide_impl();
-                  notification.expire();
-                }
-              })
-              .addAction(new NotificationAction(IdeBundle.message("label.dont.show")) {
-                @Override
-                public void actionPerformed(@NotNull AnActionEvent e, @NotNull Notification notification) {
-                  notification.setDoNotAskFor(null);
-                  notification.expire();
-                }
-              });
+            Notification notification =
+              ApplicationManager.getApplication().getService(UpdateCheckerFacade.class).getNotificationGroupForPluginUpdateResults()
+                .createNotification(IdeBundle.message("updates.plugins.notification.title"),
+                                    IdeBundle.message("updates.plugins.autoupdate.notification.message"), NotificationType.INFORMATION)
+                .addAction(new NotificationAction(IdeBundle.message("updates.auto.update.title")) {
+                  @Override
+                  public void actionPerformed(@NotNull AnActionEvent e, @NotNull Notification notification) {
+                    UpdateSettings.getInstance().getState().setPluginsAutoUpdateEnabled(true);
+                    ApplicationManager.getApplication().getService(PluginAutoUpdateService.class)
+                      .onSettingsChanged();
+                    notification.expire();
+                  }
+                })
+                .addAction(new NotificationAction(IdeBundle.message("label.dont.show")) {
+                  @Override
+                  public void actionPerformed(@NotNull AnActionEvent e, @NotNull Notification notification) {
+                    notification.setDoNotAskFor(null);
+                    notification.expire();
+                  }
+                });
             notification.configureDoNotAskOption("updates.plugins.autoupdate.notification",
                                                  IdeBundle.message("updates.plugins.autoupdate.notification.do.not.ask.display"));
             notification.notify(myProject);
           }
           if (!restartRequired) {
-            UpdateChecker.getNotificationGroupForPluginUpdateResults()
+            ApplicationManager.getApplication().getService(UpdateCheckerFacade.class).getNotificationGroupForPluginUpdateResults()
               .createNotification(getUpdateNotificationMessage(installedDescriptors),
                                   NotificationType.INFORMATION)
               .setDisplayId("plugins.updated.without.restart")
@@ -393,7 +456,7 @@ public class PluginUpdateDialog extends DialogWrapper {
     myGroup.ui.panel.setPreferredSize(new Dimension());
 
     JPanel leftPanel = new JPanel(new BorderLayout());
-    leftPanel.add(PluginManagerConfigurable.createScrollPane(myPluginsPanel, true));
+    leftPanel.add(PluginManagerConfigurablePanel.createScrollPane(myPluginsPanel, true));
 
     OpaquePanel titlePanel = new OpaquePanel(new BorderLayout(), PluginManagerConfigurable.MAIN_BG_COLOR);
     titlePanel.setBorder(JBUI.Borders.empty(13, 12));

@@ -6,8 +6,6 @@ import com.intellij.openapi.application.ApplicationBundle;
 import com.intellij.openapi.options.Configurable;
 import com.intellij.openapi.options.ConfigurationException;
 import com.intellij.openapi.options.SearchableConfigurable;
-import com.intellij.openapi.project.Project;
-import com.intellij.openapi.project.ProjectManager;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 
@@ -15,31 +13,29 @@ import javax.swing.*;
 
 public final class PathMacroConfigurable implements SearchableConfigurable, Configurable.NoScroll {
   public static final @NonNls String HELP_ID = "preferences.pathVariables";
-  private PathMacroListEditor myEditor;
+  private PathMacroListEditor editor;
 
   @Override
   public JComponent createComponent() {
-    myEditor = new PathMacroListEditor();
-    return myEditor.getPanel();
+    editor = new PathMacroListEditor();
+    return editor.getPanel();
   }
 
   @Override
   public void apply() throws ConfigurationException {
-    myEditor.commit();
+    editor.commit();
 
-    for (Project project : ProjectManager.getInstance().getOpenProjects()) {
-      StorageUtilKt.checkUnknownMacros(project, false);
-    }
+    StorageUtilKt.scheduleCheckUnknownMacros();
   }
 
   @Override
   public void reset() {
-    myEditor.reset();
+    editor.reset();
   }
 
   @Override
   public void disposeUIResources() {
-    myEditor = null;
+    editor = null;
   }
 
   @Override
@@ -54,7 +50,7 @@ public final class PathMacroConfigurable implements SearchableConfigurable, Conf
 
   @Override
   public boolean isModified() {
-    return myEditor != null && myEditor.isModified();
+    return editor != null && editor.isModified();
   }
 
   @Override

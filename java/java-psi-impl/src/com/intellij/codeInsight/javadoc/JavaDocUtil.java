@@ -1,4 +1,4 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInsight.javadoc;
 
 import com.intellij.openapi.diagnostic.Logger;
@@ -11,6 +11,7 @@ import com.intellij.psi.*;
 import com.intellij.psi.codeStyle.JavaFileCodeStyleFacade;
 import com.intellij.psi.impl.source.javadoc.PsiDocMethodOrFieldRef;
 import com.intellij.psi.javadoc.PsiDocComment;
+import com.intellij.psi.javadoc.PsiDocFragmentRef;
 import com.intellij.psi.javadoc.PsiDocTagValue;
 import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.psi.templateLanguages.TemplateLanguageUtil;
@@ -106,40 +107,64 @@ public final class JavaDocUtil {
 
     int poundIndex = refTextCorrected.indexOf('#');
     if (poundIndex < 0) {
-      PsiClass aClass = findClassFromRef(manager, facade, refTextCorrected, context);
-      if (aClass != null) {
-        return useNavigationElement ? aClass.getNavigationElement() : aClass;
-      }
-      PsiPackage aPackage = facade.findPackage(refTextCorrected);
-      if (aPackage != null) {
-        return aPackage;
-      }
-      return null;
+      return findClassOrPackage(manager, context, useNavigationElement, facade, refTextCorrected);
     }
     else {
+      int fragmentIndex = refTextCorrected.indexOf("##");
       String classRef = refTextCorrected.substring(0, poundIndex).trim();
-      if (!classRef.isEmpty()) {
-        PsiClass aClass = findClassFromRef(manager, facade, classRef, context);
-
-        if (aClass == null) return null;
-        PsiElement member = findReferencedMember(aClass, refTextCorrected.substring(poundIndex + 1), context);
-        return useNavigationElement && member != null ? member.getNavigationElement() : member;
-      }
-      else {
-        String memberRefText = refTextCorrected.substring(1);
-        PsiElement scope = context;
-        while (scope != null && !(scope instanceof PsiFile)) {
-          if (scope instanceof PsiClass) {
-            PsiElement member = findReferencedMember((PsiClass)scope, memberRefText, context);
-            if (member != null) {
-              return useNavigationElement ? member.getNavigationElement() : member;
-            }
-          }
-          scope = scope.getParent();
-        }
-        return null;
+      PsiClass aClass = classRef.isEmpty()
+                        ? PsiTreeUtil.getParentOfType(context, PsiClass.class, false)
+                        : findClassFromRef(manager, facade, classRef, context);
+      if (aClass == null) return null;
+      if (fragmentIndex >= 0) {
+        return findFragmentOwner(aClass, useNavigationElement, refTextCorrected, fragmentIndex, manager);
+      } else {
+        return findReference(aClass, useNavigationElement, refTextCorrected, poundIndex);
       }
     }
+  }
+
+  private static @Nullable PsiElement findClassOrPackage(@NotNull PsiManager manager,
+                                                         PsiElement context,
+                                                         boolean useNavigationElement,
+                                                         JavaPsiFacade facade,
+                                                         String refTextCorrected) {
+    PsiClass aClass = findClassFromRef(manager, facade, refTextCorrected, context);
+    if (aClass != null) {
+      return useNavigationElement ? aClass.getNavigationElement() : aClass;
+    }
+    PsiPackage aPackage = facade.findPackage(refTextCorrected);
+    if (aPackage != null) {
+      return aPackage;
+    }
+    return null;
+  }
+
+  private static @Nullable PsiElement findReference(@NotNull PsiClass refClass,
+                                                    boolean useNavigationElement,
+                                                    String refTextCorrected,
+                                                    int poundIndex) {
+    PsiElement member = findReferencedMember(refClass, refTextCorrected.substring(poundIndex + 1), refClass);
+    return useNavigationElement && member != null ? member.getNavigationElement() : member;
+  }
+
+  private static @Nullable PsiElement findFragmentOwner(@NotNull PsiClass aClass,
+                                                   boolean useNavigationElement,
+                                                   String refTextCorrected,
+                                                   int fragmentIndex,
+                                                   @NotNull PsiManager manager) {
+    String fragmentName = refTextCorrected.substring(fragmentIndex + 2);
+    for (JavaDocFragmentData fragmentData : JavaDocFragmentAnchorCacheKt.getJavaDocFragmentsForClass(manager.getProject(), aClass)) {
+      if (fragmentName.equals(fragmentData.getName())) {
+        PsiElement ref = PsiUtilCore.getElementAtOffset(aClass.getContainingFile(), fragmentData.getOffset());
+        PsiDocComment docComment = PsiTreeUtil.getParentOfType(ref, PsiDocComment.class, false);
+        if (docComment == null) return null;
+        PsiElement owner = docComment.getOwner();
+        if (owner == null) return null;
+        return useNavigationElement ? owner.getNavigationElement() : owner;
+      }
+    }
+    return null;
   }
 
   private static PsiClass findClassFromRef(@NotNull PsiManager manager,
@@ -339,6 +364,9 @@ public final class JavaDocUtil {
     }
     catch (IndexNotReadyException e) {
       LOG.debug(e);
+    }
+    if (context instanceof PsiDocFragmentRef) {
+      return refText;
     }
     if (refElement == null) {
       return refText.replaceFirst("^#", "").replaceAll("#", ".");

@@ -1,4 +1,4 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.tasks.jira;
 
 import com.google.gson.Gson;
@@ -7,6 +7,7 @@ import com.google.gson.JsonObject;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.io.StreamUtil;
+import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.tasks.CustomTaskState;
 import com.intellij.tasks.LocalTask;
@@ -15,6 +16,8 @@ import com.intellij.tasks.TaskBundle;
 import com.intellij.tasks.impl.BaseRepositoryImpl;
 import com.intellij.tasks.impl.gson.TaskGsonUtil;
 import com.intellij.tasks.jira.rest.JiraRestApi;
+import com.intellij.tasks.jira.rest.api2.JiraRestApi2;
+import com.intellij.tasks.jira.rest.api3.JiraRestApiCloud3;
 import com.intellij.tasks.jira.soap.JiraLegacyApi;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.xmlb.annotations.Tag;
@@ -199,11 +202,20 @@ public final class JiraRepository extends BaseRepositoryImpl {
     if (isInCloud()) {
       LOG.info("Connecting to JIRA Cloud. Cookie authentication is enabled unless 'tasks.jira.basic.auth.only' VM flag is used.");
     }
-    JiraRestApi restApi = JiraRestApi.fromJiraVersion(myJiraVersion, this);
-    if (restApi == null) {
-      throw new Exception(TaskBundle.message("jira.failure.no.REST"));
+    String providedRestApiVersion = Registry.stringValue("tasks.jira.use.rest.api.version");
+    if ("3".equals(providedRestApiVersion)) {
+      return new JiraRestApiCloud3(this);
     }
-    return restApi;
+    else if ("2".equals(providedRestApiVersion)) {
+      return new JiraRestApi2(this);
+    }
+    else {
+      JiraRestApi restApi = JiraRestApi.fromJiraVersion(myJiraVersion, this);
+      if (restApi == null) {
+        throw new Exception(TaskBundle.message("jira.failure.no.REST"));
+      }
+      return restApi;
+    }
   }
 
   private static boolean isHostedInCloud(@NotNull JsonObject serverInfo) {
@@ -341,10 +353,6 @@ public final class JiraRepository extends BaseRepositoryImpl {
     return myInCloud;
   }
 
-  public void setInCloud(boolean inCloud) {
-    myInCloud = inCloud;
-  }
-
   public boolean isUseBearerTokenAuthentication() {
     return myUseBearerTokenAuthentication;
   }
@@ -436,21 +444,6 @@ public final class JiraRepository extends BaseRepositoryImpl {
     if (!getUrl().equals(oldUrl)) {
       myApiVersion = null;
       myInCloud = isAtlassianNetSubDomain(getUrl());
-    }
-  }
-
-  /**
-   * Used to preserve discovered API version for the next initialization.
-   */
-  @SuppressWarnings("UnusedDeclaration")
-  public @Nullable JiraRemoteApi.ApiType getApiType() {
-    return myApiVersion == null ? null : myApiVersion.getType();
-  }
-
-  @SuppressWarnings("UnusedDeclaration")
-  public void setApiType(@Nullable JiraRemoteApi.ApiType type) {
-    if (type != null) {
-      myApiVersion = type.createApi(this);
     }
   }
 

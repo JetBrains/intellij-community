@@ -58,6 +58,13 @@ class RawPluginDescriptor(
    * */
   val extensions: Map<String, List<ExtensionElement>>,
 
+  /** Specifies namespace for content modules of the plugin */
+  val namespace: String?,
+
   val contentModules: List<ContentModuleElement>,
+
+  /** Specifies the visibility of this content module. Irrelevant for a main plugin descriptor or config-file in a `<depends>` tag */
+  val moduleVisibility: ModuleVisibility,
+
   val dependencies: List<DependenciesElement>,
 )

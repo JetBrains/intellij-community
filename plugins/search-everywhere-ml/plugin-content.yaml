@@ -12,6 +12,11 @@
   module: intellij.searchEverywhereMl
   files:
   - name: $MAVEN_REPOSITORY$/ai/grazie/model/swagger-annotations-jvm/0/swagger-annotations-jvm-0.jar
+- name: lib/jetbrains.mlapi.core.jar
+  library: jetbrains.mlapi.core
+  files:
+  - name: $MAVEN_REPOSITORY$/com/jetbrains/mlapi/mlapi-core/0/mlapi-core-0.jar
+  reason: <- intellij.platform.ml.logs
 - name: lib/modules/intellij.searchEverywhereMl.ranking.core.jar
   contentModules:
   - name: intellij.searchEverywhereMl.ranking.core
@@ -42,6 +47,7 @@
   modules:
   - name: intellij.searchEverywhereMl
   contentModules:
+  - name: intellij.platform.ml.logs
   - name: intellij.searchEverywhereMl.ranking.ext
   - name: intellij.searchEverywhereMl.ranking.java
   - name: intellij.searchEverywhereMl.ranking.yaml

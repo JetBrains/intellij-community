@@ -19,7 +19,6 @@ import com.jediterm.terminal.ui.TerminalAction;
 import kotlin.Unit;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
-import org.jetbrains.plugins.terminal.action.RenameTerminalSessionActionKt;
 import org.jetbrains.plugins.terminal.action.TerminalSplitAction;
 import org.jetbrains.plugins.terminal.arrangement.TerminalWorkingDirectoryManager;
 import org.jetbrains.plugins.terminal.classic.ClassicTerminalVfsRefresher;
@@ -202,7 +201,7 @@ public class ShellTerminalWidget extends JBTerminalWidget implements TerminalPan
   public List<TerminalAction> getActions() {
     List<TerminalAction> actions = new ArrayList<>(super.getActions());
     if (TerminalToolWindowManager.isInTerminalToolWindow(this)) {
-      ContainerUtil.addIfNotNull(actions, TerminalActionUtil.createTerminalAction(this, RenameTerminalSessionActionKt.ACTION_ID, true));
+      ContainerUtil.addIfNotNull(actions, TerminalActionUtil.createTerminalAction(this, "Terminal.RenameSession", true));
     }
     JBTerminalWidgetListener listener = getListener();
     JBTerminalSystemSettingsProvider settingsProvider = getSettingsProvider();
