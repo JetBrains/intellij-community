@@ -5,6 +5,7 @@ import com.intellij.openapi.application.ReadAction;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.progress.ProcessCanceledException;
+import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.project.DumbService;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.roots.OrderEntry;
@@ -55,6 +56,7 @@ public final class LombokLibraryUtil {
       Ref<Boolean> exists = new Ref<>(false);
       orderEnumerator.recursively()
         .forEachLibrary(library -> {
+          ProgressManager.checkCanceled();
           VirtualFile[] libraryFiles = library.getFiles(OrderRootType.CLASSES);
           JarFileSystem jarFileSystem = JarFileSystem.getInstance();
 
