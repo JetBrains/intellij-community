@@ -1,28 +1,30 @@
 // Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
-package com.intellij.openapi.vcs.changes;
+package com.intellij.openapi.vcs.changes
 
-import com.intellij.util.concurrency.annotations.RequiresEdt;
-import com.intellij.vcs.commit.ChangesViewCommitWorkflowHandler;
-import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
-import org.jetbrains.concurrency.Promise;
+import com.intellij.util.concurrency.annotations.RequiresBackgroundThread
+import com.intellij.util.concurrency.annotations.RequiresEdt
+import com.intellij.vcs.commit.ChangesViewCommitWorkflowHandler
+import kotlinx.coroutines.CompletableDeferred
+import org.jetbrains.annotations.CalledInAny
 
-public interface ChangesViewEx extends ChangesViewI {
-
+interface ChangesViewEx : ChangesViewI {
   /**
    * Immediately reset changes view and request refresh when NON_MODAL modality allows (i.e. after a plugin was unloaded or a dialog closed)
    */
   @RequiresEdt
-  void resetViewImmediatelyAndRefreshLater();
+  fun resetViewImmediatelyAndRefreshLater()
 
-  @NotNull Promise<?> promiseRefresh();
+  @CalledInAny
+  fun refresh(@RequiresBackgroundThread callback: Runnable?)
 
-  boolean isAllowExcludeFromCommit();
+  suspend fun refresh() {
+    val deferred = CompletableDeferred<Unit>()
+    refresh { deferred.complete(Unit) }
+    deferred.await()
+  }
 
-  /**
-   * @deprecated Use {@link ChangesViewWorkflowManager#getCommitWorkflowHandler}.
-   */
-  @Deprecated(forRemoval = true)
-  @Nullable
-  ChangesViewCommitWorkflowHandler getCommitWorkflowHandler();
+  val isAllowExcludeFromCommit: Boolean
+
+  @get:Deprecated("Use {@link ChangesViewWorkflowManager#getCommitWorkflowHandler}.")
+  val commitWorkflowHandler: ChangesViewCommitWorkflowHandler?
 }

@@ -17,6 +17,7 @@ import com.intellij.openapi.vcs.changes.ui.EditChangelistSupport
 import com.intellij.openapi.vcs.changes.ui.VcsTreeModelData.*
 import com.intellij.platform.vcs.impl.shared.commit.EditedCommitPresentation
 import com.intellij.ui.EditorTextComponent
+import com.intellij.util.application
 import com.intellij.util.ui.JBUI
 import com.intellij.util.ui.UIUtil
 import com.intellij.util.ui.tree.TreeUtil.*
@@ -62,8 +63,8 @@ abstract class ChangeListViewCommitPanel @ApiStatus.Internal constructor(
   }
 
   final override var editedCommit: EditedCommitPresentation? by observable(null) { _, _, newValue ->
-    ChangesViewManager.getInstanceEx(project).promiseRefresh().then {
-      newValue?.let { expand(it) }
+    ChangesViewManager.getInstanceEx(project).refresh {
+      application.invokeLater { newValue?.let { expand(it) } }
     }
   }
 
@@ -109,8 +110,10 @@ abstract class ChangeListViewCommitPanel @ApiStatus.Internal constructor(
 
   private fun closeEditorPreviewIfEmpty() {
     val changesViewManager = ChangesViewManager.getInstance(project) as? ChangesViewManager ?: return
-    ChangesViewManager.getInstanceEx(project).promiseRefresh().then {
-      changesViewManager.closeEditorPreview(true)
+    ChangesViewManager.getInstanceEx(project).refresh {
+      application.invokeLater {
+        changesViewManager.closeEditorPreview(true)
+      }
     }
   }
 

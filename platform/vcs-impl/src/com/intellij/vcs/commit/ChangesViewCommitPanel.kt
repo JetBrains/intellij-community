@@ -13,7 +13,6 @@ import com.intellij.openapi.vcs.changes.ui.ChangesViewContentManagerListener
 import com.intellij.openapi.vcs.changes.ui.isCommitToolWindowShown
 import com.intellij.openapi.wm.ToolWindow
 import org.jetbrains.annotations.ApiStatus
-import org.jetbrains.concurrency.await
 
 class ChangesViewCommitPanel @ApiStatus.Internal constructor(
   project: Project,
@@ -69,7 +68,7 @@ class ChangesViewCommitPanel @ApiStatus.Internal constructor(
   private fun getVcsToolWindow(): ToolWindow? = getToolWindowFor(project, LOCAL_CHANGES)
 
   override suspend fun refreshChangesViewBeforeCommit() {
-    ChangesViewManager.getInstanceEx(project).promiseRefresh().await()
+    ChangesViewManager.getInstanceEx(project).refresh()
   }
 }
 

@@ -19,13 +19,10 @@ import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.vcs.commit.ChangesViewCommitWorkflowHandler;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
-import org.jetbrains.concurrency.Promise;
 
 import javax.swing.*;
 import java.util.List;
 import java.util.function.Supplier;
-
-import static org.jetbrains.concurrency.Promises.resolvedPromise;
 
 class DummyChangesView implements ChangesViewEx {
   DummyChangesView() {
@@ -60,8 +57,7 @@ class DummyChangesView implements ChangesViewEx {
   }
 
   @Override
-  public @NotNull Promise<?> promiseRefresh() {
-    return resolvedPromise();
+  public void refresh(@Nullable Runnable callback) {
   }
 
   @Override

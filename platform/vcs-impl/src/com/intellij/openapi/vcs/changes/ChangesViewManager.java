@@ -39,6 +39,7 @@ import com.intellij.ui.components.JBLabel;
 import com.intellij.ui.components.panels.Wrapper;
 import com.intellij.ui.content.Content;
 import com.intellij.util.*;
+import com.intellij.util.concurrency.annotations.RequiresBackgroundThread;
 import com.intellij.util.concurrency.annotations.RequiresEdt;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.messages.MessageBusConnection;
@@ -53,7 +54,6 @@ import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
-import org.jetbrains.concurrency.Promise;
 
 import javax.swing.*;
 import javax.swing.tree.DefaultMutableTreeNode;
@@ -72,7 +72,6 @@ import static com.intellij.openapi.vcs.changes.ui.ChangesViewContentManagerKt.is
 import static com.intellij.openapi.vcs.changes.ui.ChangesViewContentManagerKt.subscribeOnVcsToolWindowLayoutChanges;
 import static com.intellij.util.ui.JBUI.Panels.simplePanel;
 import static java.util.Arrays.asList;
-import static org.jetbrains.concurrency.Promises.cancelledPromise;
 
 public class ChangesViewManager implements ChangesViewEx, Disposable {
   private static final String CHANGES_VIEW_PREVIEW_SPLITTER_PROPORTION = "ChangesViewManager.DETAILS_SPLITTER_PROPORTION";
@@ -182,9 +181,10 @@ public class ChangesViewManager implements ChangesViewEx, Disposable {
   }
 
   @Override
-  public @NotNull Promise<?> promiseRefresh() {
-    if (myToolWindowPanel == null) return cancelledPromise();
-    return myToolWindowPanel.scheduleRefreshNow();
+  public void refresh(@Nullable Runnable callback) {
+    if (myToolWindowPanel != null) {
+      myToolWindowPanel.scheduleRefreshNow(callback);
+    }
   }
 
   @Override
@@ -611,7 +611,7 @@ public class ChangesViewManager implements ChangesViewEx, Disposable {
       super.uiDataSnapshot(sink);
       sink.set(DiffDataKeys.EDITOR_TAB_DIFF_PREVIEW, myEditorDiffPreview);
       sink.set(ChangesViewDataKeys.SETTINGS, myChangesViewSettings);
-      sink.set(ChangesViewDataKeys.REFRESHER, () -> scheduleRefreshNow());
+      sink.set(ChangesViewDataKeys.REFRESHER, () -> scheduleRefreshNow(null));
 
       // This makes COMMIT_WORKFLOW_HANDLER available anywhere in "Local Changes" - so commit executor actions are enabled.
       DataSink.uiDataSnapshot(sink, myCommitPanel);
@@ -642,8 +642,8 @@ public class ChangesViewManager implements ChangesViewEx, Disposable {
       myChangesPanel.scheduleRefresh();
     }
 
-    private @NotNull Promise<?> scheduleRefreshNow() {
-      return myChangesPanel.scheduleRefreshNow();
+    private void scheduleRefreshNow(@Nullable @RequiresBackgroundThread Runnable callback) {
+      myChangesPanel.scheduleRefreshNow(callback);
     }
 
     public void selectFile(@Nullable VirtualFile vFile) {

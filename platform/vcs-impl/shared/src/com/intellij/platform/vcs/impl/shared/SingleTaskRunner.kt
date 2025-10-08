@@ -1,14 +1,12 @@
 // Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.platform.vcs.impl.shared
 
+import com.intellij.openapi.diagnostic.debug
+import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.progress.checkCanceled
-import fleet.util.async.withTimeout
-import kotlinx.coroutines.CoroutineScope
-import kotlinx.coroutines.CoroutineStart
-import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.*
 import kotlinx.coroutines.channels.BufferOverflow
 import kotlinx.coroutines.flow.*
-import kotlinx.coroutines.launch
 import org.jetbrains.annotations.ApiStatus
 import kotlin.time.Duration
 
@@ -34,7 +32,7 @@ class SingleTaskRunner(
         checkCanceled()
         requested.first { it }
         if (delay.isPositive()) {
-          runNow.withTimeout(delay.inWholeMilliseconds).firstOrNull()
+          withTimeoutOrNull(delay) { runNow.firstOrNull() }
         }
         busy.value = true
         requested.value = false
@@ -46,6 +44,7 @@ class SingleTaskRunner(
     finally {
       requested.value = false
       busy.value = false
+      LOG.debug { "Task processing finished" }
     }
   }
 
@@ -61,6 +60,7 @@ class SingleTaskRunner(
   }
 
   fun start() {
+    LOG.debug { "Task processing started" }
     processorJob.start()
   }
 
@@ -69,5 +69,9 @@ class SingleTaskRunner(
    */
   suspend fun awaitNotBusy() {
     requested.combine(busy) { requested, busy -> !requested && !busy }.first { it }
+  }
+
+  companion object {
+    private val LOG = logger<SingleTaskRunner>()
   }
 }

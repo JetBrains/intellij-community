@@ -10,7 +10,7 @@ import com.intellij.openapi.application.UI
 import com.intellij.openapi.components.Service
 import com.intellij.openapi.components.service
 import com.intellij.openapi.extensions.ExtensionPointName
-import com.intellij.openapi.progress.ProgressManager
+import com.intellij.openapi.progress.checkCanceled
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.Disposer
 import com.intellij.openapi.vcs.FilePath
@@ -22,6 +22,7 @@ import com.intellij.openapi.vcs.changes.ui.TreeModelBuilder
 import com.intellij.platform.diagnostic.telemetry.TelemetryManager
 import com.intellij.platform.diagnostic.telemetry.helpers.use
 import com.intellij.platform.util.coroutines.childScope
+import com.intellij.platform.vcs.impl.shared.SingleTaskRunner
 import com.intellij.platform.vcs.impl.shared.changes.ChangeListsViewModel
 import com.intellij.platform.vcs.impl.shared.changes.ChangesViewSettings
 import com.intellij.platform.vcs.impl.shared.telemetry.ChangesView
@@ -31,18 +32,13 @@ import com.intellij.util.application
 import com.intellij.util.concurrency.annotations.RequiresBackgroundThread
 import com.intellij.util.concurrency.annotations.RequiresEdt
 import com.intellij.util.ui.EdtInvocationManager.invokeLaterIfNeeded
-import kotlinx.coroutines.CoroutineScope
-import kotlinx.coroutines.Dispatchers
-import kotlinx.coroutines.cancel
-import kotlinx.coroutines.launch
+import kotlinx.coroutines.*
+import kotlinx.coroutines.flow.collectLatest
 import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.annotations.CalledInAny
-import org.jetbrains.concurrency.Promise
-import org.jetbrains.concurrency.asPromise
-import org.jetbrains.concurrency.createError
-import org.jetbrains.concurrency.rejectedPromise
-import java.util.concurrent.atomic.AtomicBoolean
+import java.lang.Runnable
 import javax.swing.tree.DefaultTreeModel
+import kotlin.time.Duration.Companion.milliseconds
 
 @ApiStatus.Internal
 class CommitChangesViewWithToolbarPanel(changesView: ChangesListView, parentDisposable: Disposable) : ChangesViewPanel(changesView), Disposable {
@@ -50,13 +46,16 @@ class CommitChangesViewWithToolbarPanel(changesView: ChangesListView, parentDisp
   private val settings get() = ChangesViewSettings.getInstance(project)
 
   private val scope = project.service<ScopeProvider>().cs.childScope("CommitChangesListWithToolbarPanel")
-  private val refresher = BackgroundRefresher<Runnable>(javaClass.simpleName + " refresh", this)
+  private val refresher = SingleTaskRunner(scope, 100.milliseconds) {
+    refreshView()
+  }
 
   private var modelProvider: ModelProvider? = null
 
   private var disposed = false
 
   init {
+    refresher.start()
     Disposer.register(parentDisposable, this)
   }
 
@@ -96,12 +95,13 @@ class CommitChangesViewWithToolbarPanel(changesView: ChangesListView, parentDisp
 
   @CalledInAny
   fun scheduleRefresh() {
-    scheduleRefreshWithDelay(100)
+    scheduleRefresh(withDelay = true)
   }
 
   @CalledInAny
-  fun scheduleRefreshNow(): Promise<*> =
-    scheduleRefreshWithDelay(0)
+  fun scheduleRefreshNow(@RequiresBackgroundThread callback: Runnable? = null) {
+    scheduleRefresh(withDelay = false, callback = callback)
+  }
 
   @RequiresEdt
   fun setGrouping(groupingKey: String) {
@@ -110,53 +110,36 @@ class CommitChangesViewWithToolbarPanel(changesView: ChangesListView, parentDisp
   }
 
   @CalledInAny
-  private fun scheduleRefreshWithDelay(delayMillis: Int): Promise<*> {
+  private fun scheduleRefresh(withDelay: Boolean, @RequiresBackgroundThread callback: Runnable? = null) {
     setBusy(true)
-    return refresher.requestRefresh(delayMillis) { refreshView() }
-      .thenAsync { callback ->
-        if (callback != null)
-          scope.launch(Dispatchers.EDT) { callback.run() }.asPromise()
-        else
-          rejectedPromise(createError("ChangesViewManager is not available", false))
-      }
-      .onProcessed { setBusy(false) }
-  }
-
-  @RequiresBackgroundThread
-  private fun refreshView(): Runnable? {
-    if (disposed || !project.isInitialized || application.isUnitTestMode) return null
-
-    val modelProvider = modelProvider ?: return null
-    TRACER.spanBuilder(ChangesView.ChangesViewRefreshBackground.name).use {
-      val model = modelProvider.getModel(changesView.grouping)
-
-      val indicator = ProgressManager.getInstance().progressIndicator
-      indicator.checkCanceled()
-
-      val wasCalled = AtomicBoolean(false) // ensure multiple merged refresh requests are applied once
-      return Runnable {
-        if (wasCalled.compareAndSet(false, true)) {
-          refreshViewOnEdt(modelProvider, model.treeModel, model.changeLists, model.unversionedFiles, indicator.isCanceled)
-        }
-      }
+    if (withDelay) {
+      refresher.request()
+    }
+    else {
+      refresher.requestNow()
+    }
+    scope.launch {
+      refresher.awaitNotBusy()
+      callback?.run()
+      setBusy(false)
     }
   }
 
-  @RequiresEdt
-  private fun refreshViewOnEdt(
-    modelProvider: ModelProvider,
-    treeModel: DefaultTreeModel,
-    changeLists: List<LocalChangeList>,
-    unversionedFiles: List<FilePath>,
-    hasPendingRefresh: Boolean,
-  ) {
-    if (disposed) return
+  @RequiresBackgroundThread
+  private suspend fun refreshView() {
+    if (disposed || !project.isInitialized || application.isUnitTestMode) return
+    val modelProvider = modelProvider ?: return
 
-    TRACER.spanBuilder(ChangesView.ChangesViewRefreshEdt.getName()).use {
-      changesView.updateTreeModel(treeModel, ChangesViewTreeStateStrategy())
+    val model = TRACER.spanBuilder(ChangesView.ChangesViewRefreshBackground.name).use {
+      modelProvider.getModel(changesView.grouping)
+    }
 
-      if (!hasPendingRefresh) {
-        modelProvider.synchronizeInclusion(changeLists, unversionedFiles)
+    checkCanceled()
+    withContext(Dispatchers.EDT) {
+      TRACER.spanBuilder(ChangesView.ChangesViewRefreshEdt.getName()).use {
+        changesView.updateTreeModel(model.treeModel, ChangesViewTreeStateStrategy())
+        checkCanceled()
+        modelProvider.synchronizeInclusion(model.changeLists, model.unversionedFiles)
       }
     }
   }
