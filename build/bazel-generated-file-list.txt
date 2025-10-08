@@ -222,6 +222,8 @@ community-resources
 fleet/andel
 fleet/bifurcan
 fleet/bundles
+fleet/codecache
+fleet/codecache/test
 fleet/compiler-plugins
 fleet/fastutil
 fleet/junit4
