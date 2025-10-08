@@ -35,7 +35,7 @@ internal object ConvertKClassToClassFixFactories {
 
     val assignmentTypeMismatchFixFactory = KotlinQuickFixFactory.ModCommandBased { diagnostic: KaFirDiagnostic.AssignmentTypeMismatch ->
         listOfNotNull(
-            createFixIfAvailable(diagnostic.psi, diagnostic.expectedType, diagnostic.actualType)
+            createFixIfAvailable(diagnostic.expression, diagnostic.expectedType, diagnostic.actualType)
         )
     }
 

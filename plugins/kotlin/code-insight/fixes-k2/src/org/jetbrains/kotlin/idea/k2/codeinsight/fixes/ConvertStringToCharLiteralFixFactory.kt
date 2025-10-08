@@ -23,7 +23,7 @@ internal object ConvertStringToCharLiteralFixFactory {
     }
 
     val assignmentTypeMismatchFactory = KotlinQuickFixFactory.ModCommandBased { diagnostic: KaFirDiagnostic.AssignmentTypeMismatch ->
-        getFixes(diagnostic.psi, diagnostic.expectedType)
+        getFixes(diagnostic.expression, diagnostic.expectedType)
     }
 
     val equalityNotApplicableFactory = KotlinQuickFixFactory.ModCommandBased { diagnostic: KaFirDiagnostic.EqualityNotApplicable ->

@@ -24,7 +24,7 @@ object TypeMismatchFactories {
     }
 
     val assignmentTypeMismatch: KotlinQuickFixFactory.ModCommandBased<KaFirDiagnostic.AssignmentTypeMismatch> = KotlinQuickFixFactory.ModCommandBased { diagnostic: KaFirDiagnostic.AssignmentTypeMismatch ->
-        getFixesForTypeMismatch(diagnostic.psi, diagnostic.expectedType, diagnostic.actualType)
+        getFixesForTypeMismatch(diagnostic.expression, diagnostic.expectedType, diagnostic.actualType)
     }
 
     val initializerTypeMismatch: KotlinQuickFixFactory.ModCommandBased<KaFirDiagnostic.InitializerTypeMismatch> = KotlinQuickFixFactory.ModCommandBased { diagnostic: KaFirDiagnostic.InitializerTypeMismatch ->
