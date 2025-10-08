@@ -241,8 +241,12 @@ internal class BuildTreeView(private val project: Project, parentScope: Coroutin
     }
     else {
       LOG.debug { "Filtering state update: $filteringState" }
+      val treeWasEmpty = buildProgressRootNode.childCount == 0
       this.filteringState = filteringState
       rootNode.reload()
+      if (treeWasEmpty) {
+        tree.expandRow(0)
+      }
       updateNavigationContext()
     }
   }
