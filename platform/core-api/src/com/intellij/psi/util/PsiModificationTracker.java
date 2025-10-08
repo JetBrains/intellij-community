@@ -15,11 +15,13 @@ import java.util.function.Predicate;
 /**
  * An interface used to support tracking of common PSI modifications. It has three main usage patterns:
  * <ol>
- *   <li>Get a stamp of the current PSI state. This stamp is incremented when any PSI is modified, allowing other subsystems
- *   to check if PSI has changed since they accessed it last time. This can be used to flush and rebuild various internal caches.
+ *   <li>Get a stamp of the current PSI state {@link PsiModificationTracker#getInstance(Project) for the current project}.
+ *   This stamp is incremented when any {@link PsiElement#isPhysical() physical PSI}, that belongs to the current project, is modified.
+ *   This allows other subsystems to check if PSI has changed since they accessed it last time.
+ *   This can be used to flush and rebuild various internal caches.
  *   See {@link #getModificationCount()}</li>
  *
- *   <li>Make a {@link CachedValue} instance outdated on every {@link PsiElement#isPhysical() physical} PSI change.
+ *   <li>Make a {@link CachedValue} instance outdated on every {@link PsiElement#isPhysical() physical PSI} change.
  *   To achieve that, use {@link #MODIFICATION_COUNT} as a dependency of {@link CachedValueProvider.Result}.</li>
  *
  *   <li>Subscribe to any PSI changes (for example, to drop caches in the listener manually).
@@ -58,9 +60,9 @@ public interface PsiModificationTracker extends ModificationTracker {
    * and when Dumb Mode is entered or exited.
    * <p>
    * This means <i>literally every PSI change</i>, which may be too broad for your specific use case.
-   * For example, if you create a {@link CachedValue} with this key as a dependency,
-   * and it will {@link CachedValue#getValue() be queried} whenever the user edits some code,
-   * then such a cache won't improve performance at all (likely, it'll only make it worse).
+   * If your computation is heavy enough, or it is requested often enough, then such a cache won't improve performance.
+   * An example of such a pointless cache is a {@link CachedValue} with this key as a dependency
+   * and which {@link CachedValue#getValue() is queried} whenever the user edits some code.
    * <p>
    * If the above is a problem for your use case, consider using a {@link #forLanguage(Language) language-specific PsiModificationTracker}:
    * <pre>{@code
