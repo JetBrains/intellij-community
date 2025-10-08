@@ -140,7 +140,7 @@ internal interface K2CompletionRunner {
                                 error("Chain completion sections cannot add later sections yet")
                             }
                         )
-                        sectionContext.withSectionContext {
+                        context(sectionContext) {
                             contributor.createChainedLookupElements(receiverExpression, nameToImport)
                                 .forEach { lookupElement ->
                                     completionResultSet.addElement(lookupElement)
@@ -232,6 +232,7 @@ private fun <P : KotlinRawPositionContext> KaSession.createCommonSectionData(
         visibilityChecker = visibilityChecker,
         symbolFromIndexProvider = symbolFromIndexProvider,
         importStrategyDetector = importStrategyDetector,
+        session = this,
     )
 }
 
@@ -337,7 +338,7 @@ private class SequentialCompletionRunner : K2CompletionRunner {
                 )
 
                 // We make sure we have the correct position before running the completion section.
-                sectionContext.withSectionContext {
+                context(sectionContext) {
                     section.executeIfAllowed()
                 }
             }
@@ -426,7 +427,7 @@ private class ParallelCompletionRunner : K2CompletionRunner {
             )
 
             try {
-                sectionContext.withSectionContext {
+                context(sectionContext) {
                     currentSection.executeIfAllowed()
                 }
             } finally {
