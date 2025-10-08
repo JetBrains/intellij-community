@@ -4,8 +4,8 @@ package com.intellij.ide.gdpr.ui.consents
 import com.intellij.openapi.util.NlsSafe
 
 internal sealed interface ConsentForcedState {
-  val description: @NlsSafe String?
+  val description: @NlsSafe String
 
-  data class ExternallyDisabled(override val description: @NlsSafe String?) : ConsentForcedState
-  data class AlwaysEnabled(override val description: @NlsSafe String?) : ConsentForcedState
+  data class ExternallyDisabled(override val description: @NlsSafe String) : ConsentForcedState
+  data class AlwaysEnabled(override val description: @NlsSafe String) : ConsentForcedState
 }
