@@ -1,4 +1,4 @@
-<idea-plugin package="org.jetbrains.idea.devkit">
+<idea-plugin visibility="public" package="org.jetbrains.idea.devkit">
   <dependencies>
     <plugin id="com.intellij.properties"/>
     <plugin id="com.intellij.java"/>

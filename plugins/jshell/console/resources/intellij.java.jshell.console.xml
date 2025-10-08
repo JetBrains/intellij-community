@@ -1,4 +1,4 @@
-<idea-plugin>
+<idea-plugin visibility="public">
   <dependencies>
     <plugin id="com.intellij.modules.lang"/>
     <plugin id="com.intellij.java"/>

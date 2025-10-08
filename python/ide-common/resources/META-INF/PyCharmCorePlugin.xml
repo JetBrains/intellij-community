@@ -6,7 +6,7 @@
   <module value="com.intellij.platform.ide.provisioner"/>
   <!-- for compatibility -->
 
-  <content>
+  <content namespace="jetbrains">
     <module name="intellij.platform.ide.newUiOnboarding"/>
     <module name="intellij.ide.startup.importSettings"/>
     <module name="intellij.platform.tips"/>

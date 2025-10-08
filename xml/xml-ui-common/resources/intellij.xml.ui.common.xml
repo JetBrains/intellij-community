@@ -1,5 +1,5 @@
 <!--suppress PluginXmlValidity -->
-<idea-plugin>
+<idea-plugin visibility="public">
   <extensionPoints>
     <extensionPoint name="html.codestyle.panel" interface="com.intellij.application.options.HtmlCodeStylePanelExtension" dynamic="true"/>
   </extensionPoints>

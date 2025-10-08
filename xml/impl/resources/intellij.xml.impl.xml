@@ -1,4 +1,4 @@
-<idea-plugin>
+<idea-plugin visibility="public">
   <dependencies>
     <module name="intellij.xml.analysis.impl"/>
     <module name="intellij.xml.structureView.impl"/>/>

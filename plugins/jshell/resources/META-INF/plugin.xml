@@ -4,7 +4,7 @@
   <category>JVM Tools</category>
   <vendor url="https://www.jetbrains.com/">JetBrains</vendor>
 
-  <content>
+  <content namespace="jetbrains">
     <module name="intellij.java.jshell.console"/>
   </content>
 

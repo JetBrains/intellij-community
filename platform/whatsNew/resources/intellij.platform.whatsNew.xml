@@ -1,4 +1,4 @@
-<idea-plugin package="com.intellij.platform.whatsNew">
+<idea-plugin visibility="public" package="com.intellij.platform.whatsNew">
   <extensions defaultExtensionNs="com.intellij">
     <postStartupActivity implementation="com.intellij.platform.whatsNew.WhatsNewShowOnStartCheckService" order="last"/>
     <applicationService serviceImplementation="com.intellij.platform.whatsNew.WhatsNewInVisionContentProvider" />

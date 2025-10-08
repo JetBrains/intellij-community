@@ -15,7 +15,7 @@
       ]]>
   </description>
 
-  <content>
+  <content namespace="jetbrains">
     <module name="intellij.vcs.github" loading="embedded"/>
     <module name="intellij.vcs.github.git"/>
     <module name="intellij.vcs.github.ultimatePromo"/>

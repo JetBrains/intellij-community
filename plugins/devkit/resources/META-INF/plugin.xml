@@ -26,7 +26,7 @@
     <plugin id="com.intellij.java"/>
   </dependencies>
 
-  <content>
+  <content namespace="jetbrains">
     <module name="intellij.devkit.core"/>
     <module name="intellij.devkit.compose"/>
     <module name="intellij.devkit.git"/>

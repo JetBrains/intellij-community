@@ -4,7 +4,7 @@
   <name>Shell Script</name>
   <category>Languages</category>
 
-  <content>
+  <content namespace="jetbrains">
     <module name="intellij.sh.core" loading="embedded"/>
     <module name="intellij.sh.backend"/>
     <module name="intellij.sh.frontend.split"/>

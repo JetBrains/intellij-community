@@ -13,7 +13,7 @@
 ]]></description>
   <vendor>JetBrains</vendor>
 
-  <content>
+  <content namespace="jetbrains">
     <module name="intellij.tasks.trac"/>
     <module name="intellij.tasks.bugzilla"/>
     <module name="intellij.tasks.jira"/>

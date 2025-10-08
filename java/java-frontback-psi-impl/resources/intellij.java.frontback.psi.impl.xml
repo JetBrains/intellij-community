@@ -1,4 +1,4 @@
-<idea-plugin>
+<idea-plugin visibility="public">
   <extensions defaultExtensionNs="com.intellij">
     <!--suppress PluginXmlValidity -->
     <projectCustomDataSynchronizer implementation="com.intellij.java.frontback.psi.impl.JavaLangLevelProjectCustomDataSynchronizer"/>
