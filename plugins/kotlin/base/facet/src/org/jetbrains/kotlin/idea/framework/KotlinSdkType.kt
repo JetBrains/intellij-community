@@ -8,12 +8,12 @@ import com.intellij.openapi.application.invokeAndWaitIfNeeded
 import com.intellij.openapi.application.runWriteAction
 import com.intellij.openapi.projectRoots.*
 import com.intellij.openapi.projectRoots.impl.SdkConfigurationUtil
-import com.intellij.util.Consumer
 import org.jdom.Element
 import org.jetbrains.annotations.TestOnly
 import org.jetbrains.kotlin.idea.KotlinIcons
 import org.jetbrains.kotlin.idea.base.facet.KotlinBaseFacetBundle
 import org.jetbrains.kotlin.idea.compiler.configuration.KotlinPluginLayout
+import java.util.function.Consumer
 import javax.swing.JComponent
 
 class KotlinSdkType : SdkType("KotlinSDK") {
@@ -74,7 +74,7 @@ class KotlinSdkType : SdkType("KotlinSDK") {
     override fun supportsCustomCreateUI() = true
 
     override fun showCustomCreateUI(sdkModel: SdkModel, parentComponent: JComponent, selectedSdk: Sdk?, sdkCreatedCallback: Consumer<in Sdk>) {
-        sdkCreatedCallback.consume(createSdkWithUniqueName(sdkModel.sdks.toList()))
+        sdkCreatedCallback.accept(createSdkWithUniqueName(sdkModel.sdks.toList()))
     }
 
     fun createSdkWithUniqueName(existingSdks: Collection<Sdk>): Sdk {
