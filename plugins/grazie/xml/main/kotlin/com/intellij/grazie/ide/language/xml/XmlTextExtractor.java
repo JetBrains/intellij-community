@@ -216,7 +216,7 @@ public class XmlTextExtractor extends TextExtractor {
   }
 
   private static boolean isNonText(XmlTag tag) {
-    return tag instanceof HtmlTag && (isInlineNonTextTag(tag.getName()) || isBlockNonTextTag(tag.getName()));
+    return tag instanceof HtmlTag && (isInlineNonTextTag(tag.getName()) || isBlockNonTextTag(tag.getName())) || isAuthorTag(tag.getName());
   }
 
   private static boolean isBlockNonTextTag(String name) {
@@ -225,6 +225,10 @@ public class XmlTextExtractor extends TextExtractor {
 
   private static boolean isInlineNonTextTag(String name) {
     return "code".equals(name);
+  }
+
+  private static boolean isAuthorTag(String name) {
+    return "author".equals(name) || "authors".equals(name);
   }
 
   public static class Xml extends XmlTextExtractor {

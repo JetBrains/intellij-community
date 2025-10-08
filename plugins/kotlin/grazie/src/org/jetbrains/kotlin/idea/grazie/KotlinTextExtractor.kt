@@ -30,7 +30,7 @@ internal class KotlinTextExtractor : TextExtractor() {
       if (root is KDocSection) {
         return kdocBuilder.excluding { e -> e is KDocTag && e != root }.build(root, DOCUMENTATION)?.removeCode()
       }
-      if (root is KDocTag) {
+      if (root is KDocTag && root.name != "author") {
         return kdocBuilder.excluding { e -> e.elementType == KDocTokens.TAG_NAME }.build(root, DOCUMENTATION)?.removeCode()
       }
     }

@@ -11,6 +11,8 @@
  * </code>
  *
  * @param T the type of member in this group. And another sentence.
+ *
+ * @author Should typopos be detected here? It is an friend there.
  */
 class ExampleClassWithNoTypos<T> {
 

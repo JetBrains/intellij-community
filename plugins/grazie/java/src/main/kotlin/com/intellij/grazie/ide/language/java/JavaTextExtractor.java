@@ -53,7 +53,7 @@ public class JavaTextExtractor extends TextExtractor {
             .build(root, DOCUMENTATION)
         );
       }
-      if (root instanceof PsiDocTagImpl) {
+      if (root instanceof PsiDocTagImpl tag && !tag.getName().equals("author")) {
         return HtmlUtilsKt.excludeHtml(javadocBuilder.build(root, DOCUMENTATION));
       }
     }

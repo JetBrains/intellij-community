@@ -10,6 +10,7 @@ package ide.language.kotlin
  * @param T the type of member in this group.
  * @property name the name of this group. And another sentence.
  * @constructor Creates an empty group.
+ * @author It is an friend there.
  */
 class ExampleClassWithNoTypos<T>(val name: String) {
     /**

@@ -13,6 +13,8 @@
     System.out.println("Hello " + name)
     Hello John
   </code>
+  <authors>Should typopos be detected here? It is an friend there.</authors>
+  <author>Should typopos be detected here? It is an friend there.</author>
   <description-multiple-paragraphs><![CDATA[
       There is a possibility of such thing.<p>So that this is possible. And this is <GRAMMAR_ERROR descr="EN_A_VS_AN">an</GRAMMAR_ERROR> mistake.
   ]]></description-multiple-paragraphs>
