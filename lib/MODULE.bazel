@@ -1911,6 +1911,20 @@ http_file(
 )
 
 http_file(
+  name = "com_jetbrains_intellij_platform-util-zip-squashed-252_16432_http",
+  url = "https://cache-redirector.jetbrains.com/packages.jetbrains.team/maven/p/ij/intellij-dependencies/com/jetbrains/intellij/platform/util-zip-squashed/252.16432/util-zip-squashed-252.16432.jar",
+  sha256 = "7df07e447c1de46592dfe4b20345b61ff57c5f3b796b8e946086559b260f7690",
+  downloaded_file_path = "util-zip-squashed-252.16432.jar"
+)
+
+http_file(
+  name = "com_jetbrains_intellij_platform-util-zip-squashed-252_16432-sources_http",
+  url = "https://cache-redirector.jetbrains.com/packages.jetbrains.team/maven/p/ij/intellij-dependencies/com/jetbrains/intellij/platform/util-zip-squashed/252.16432/util-zip-squashed-252.16432-sources.jar",
+  sha256 = "bbeb2dc5abdeb292fb85d1162d3db9f3d576036d4e45efc4183775845fcd1a04",
+  downloaded_file_path = "util-zip-squashed-252.16432-sources.jar"
+)
+
+http_file(
   name = "org_jetbrains_intellij_deps_ift-git-learning-project-212_0_2_http",
   url = "https://cache-redirector.jetbrains.com/packages.jetbrains.team/maven/p/ij/intellij-dependencies/org/jetbrains/intellij/deps/ift/git-learning-project/212.0.2/git-learning-project-212.0.2.jar",
   sha256 = "648eaffe833416e2accea4bf82b980f0e91ae51ef065f5bc74fa3481c373e9fd",

@@ -239,6 +239,7 @@ fleet/util/core
 fleet/util/datetime
 fleet/util/logging/api
 fleet/util/logging/slf4j
+fleet/util/modules
 fleet/util/multiplatform
 fleet/util/serialization
 grid/api
