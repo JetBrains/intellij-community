@@ -1,6 +1,9 @@
-// "Change type of 'f' to '(Long) -> Unit'" "true"
-fun foo() {
-    var f: Int =<caret> if (true) { x: Long ->  } else { x: Long ->  }
+// "Change type of 's' to 'String'" "true"
+fun test(i: Int) {
+    val s: Int =<caret> when (i) {
+        0 -> ""
+        else -> ""
+    }
 }
 // FUS_QUICKFIX_NAME: org.jetbrains.kotlin.idea.quickfix.ChangeVariableTypeFix
 // FUS_K2_QUICKFIX_NAME: org.jetbrains.kotlin.idea.k2.codeinsight.fixes.ChangeTypeQuickFixFactories$UpdateTypeQuickFix
