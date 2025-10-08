@@ -22,6 +22,7 @@ import java.awt.*;
  *   </extensions>
  * }</pre>
  */
+@ApiStatus.OverrideOnly
 public abstract class ErrorReportSubmitter implements PluginAware {
   @ApiStatus.Internal
   public static final ExtensionPointName<ErrorReportSubmitter> EP_NAME = ExtensionPointName.create("com.intellij.errorHandler");
