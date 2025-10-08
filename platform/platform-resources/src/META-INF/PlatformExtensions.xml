@@ -1087,7 +1087,6 @@
                                            allowOnStartup="true"/>
     <statistic.eventLog.eventLoggerProvider implementation="com.intellij.internal.statistic.eventLog.fus.FeatureUsageEventLoggerProvider"/>
     <statistic.eventLog.eventLoggerProvider implementation="com.intellij.internal.statistic.eventLog.mp.MarketplaceEventLoggerProvider"/>
-    <statistic.eventLog.eventLoggerProvider implementation="com.intellij.internal.statistic.eventLog.trace.TraceEventLoggerProvider"/>
     <statistics.applicationUsagesCollector implementation="com.intellij.featureStatistics.fusCollectors.OsDataCollector"
                                            allowOnStartup="true"/>
     <statistics.applicationUsagesCollector implementation="com.intellij.featureStatistics.fusCollectors.IdeSessionDataCollector"
@@ -1527,8 +1526,6 @@
 
     <applicationService serviceImplementation="com.intellij.openapi.updateSettings.impl.UpdateCheckerService" headlessImplementation=""/>
     <postStartupActivity implementation="com.intellij.openapi.updateSettings.impl.UpdateCheckerProjectActivity" order="last"/>
-
-    <postStartupActivity implementation="com.intellij.ide.gdpr.trace.TraceDataSharingActivity"/>
 
     <applicationService serviceImplementation="com.intellij.usages.impl.UsageFilteringRuleStateService" client="all"/>
 
