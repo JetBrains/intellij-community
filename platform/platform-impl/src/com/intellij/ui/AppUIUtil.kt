@@ -347,8 +347,6 @@ object AppUIUtil {
         result.addAll(consents)
       }
     }
-    val isLegacyAiDataCollectionConsent = ConsentOptions.condAiDataCollectionConsent()
-    result.removeIf(isLegacyAiDataCollectionConsent) // IJPL-195651; AI data collection (LLMC) consent should not be present on UI while it's staying a default consent as a part of migration from LLMC to TRACE consent
     return result
   }
 
