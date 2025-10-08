@@ -3,7 +3,7 @@
 #     both its structure and content.
 #
 #     Copyright 1998-2010 W3C (MIT, ERCIM, Keio)
-# 
+#
 #     Use and distribution of this code are permitted under the terms
 #     W3C Software Notice and License
 #     http://www.w3.org/Consortium/Legal/2002/copyright-software-20021231
@@ -17,10 +17,10 @@ cn = element cn {cn.attributes,cn.content}
 cn.content = text
 cn.attributes = attribute type {"integer" | "real" | "double" | "hexdouble"}
 
-semantics-ci = element semantics {semantics.attributes,(ci|semantics-ci), 
+semantics-ci = element semantics {semantics.attributes,(ci|semantics-ci),
   (annotation|annotation-xml)*}
 
-semantics-contexp = element semantics {semantics.attributes,ContExp, 
+semantics-contexp = element semantics {semantics.attributes,ContExp,
   (annotation|annotation-xml)*}
 
 ci = element ci {ci.attributes, ci.content}

@@ -3,9 +3,9 @@
 set -o errexit
 
 ROOT=$PWD
-PATCHES="$ROOT/../src/resources/patches"
+PATCHES="$ROOT/../resources/resources/patches"
 
-cd ../src/resources
+cd ../resources/resources
 
 rm -rf temp
 rm -rf result
@@ -34,6 +34,10 @@ rsync -r --include=*.rnc temp/validator/schema/* result
 rm -rf result/xhtml10
 pwd
 ruby ../../scripts/html5charref.rb > result/html5chars.ent
+
+echo
+echo ">>>>> Trimming line endings in result directory"
+find result -type f -name "*.rnc" -exec sh -c "sed -i.bak 's/[[:space:]]*$//' {} && rm {}.bak" _ {} \;
 
 echo
 echo ">>>>> Patching html5 schema"

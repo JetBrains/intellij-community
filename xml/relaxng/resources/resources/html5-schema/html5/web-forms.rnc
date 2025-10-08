@@ -10,53 +10,53 @@ datatypes w = "http://whattf.org/datatype-draft"
 		(	common-form.attrs.name?
 		&	common-form.attrs.disabled?
 		)
-		
-	common-form.attrs.name = 
+
+	common-form.attrs.name =
 		attribute name {
 			form.data.nonemptystring
 		}
 
-	common-form.attrs.disabled = 
+	common-form.attrs.disabled =
 		attribute disabled {
 			w:string "disabled" | w:string ""
 		}
 
-	shared-form.attrs.readonly = 
+	shared-form.attrs.readonly =
 		attribute readonly {
 			w:string "readonly" | w:string ""
 		}
 
-	shared-form.attrs.maxlength = 
+	shared-form.attrs.maxlength =
 		attribute maxlength {
 			common.data.integer.non-negative
 		}
 
-	shared-form.attrs.size = 
+	shared-form.attrs.size =
 		attribute size {
 			common.data.integer.positive
 		}
-	
+
 	# REVISIT tabindex goes in common.attrs
 
 ## Shared attributes for <input>
-	
-	input.attrs.checked = 
+
+	input.attrs.checked =
 		attribute checked {
 			w:string "checked" | w:string ""
 		}
 
 ## Text Field: <input type='text'>
 
-	input.text.elem = 
+	input.text.elem =
 		element input { input.text.attrs }
-	input.text.attrs = 
+	input.text.attrs =
 		(	common.attrs
 		&	common-form.attrs
 		&	input.text.attrs.type?
-		&	shared-form.attrs.maxlength? 
+		&	shared-form.attrs.maxlength?
 		&	shared-form.attrs.readonly?
 		&	shared-form.attrs.size?
-		&	input.text.attrs.value? 
+		&	input.text.attrs.value?
 		&	(	common.attrs.aria.implicit.textbox
 			|	common.attrs.aria.role.textbox
 			|	common.attrs.aria.role.combobox
@@ -64,7 +64,7 @@ datatypes w = "http://whattf.org/datatype-draft"
 			|	common.attrs.aria.role.spinbutton
 			)?
 		)
-		input.text.attrs.type = 
+		input.text.attrs.type =
 			attribute type {
 				w:string "text"
 			}
@@ -72,23 +72,23 @@ datatypes w = "http://whattf.org/datatype-draft"
 			attribute value {
 				form.data.stringwithoutlinebreaks
 			}
-		
+
 	input.elem = input.text.elem
 
 ## Password Field: <input type='password'>
 
-	input.password.elem = 
+	input.password.elem =
 		element input { input.password.attrs }
-	input.password.attrs = 
+	input.password.attrs =
 		(	common.attrs
 		&	common-form.attrs
 		&	input.password.attrs.type
-		&	shared-form.attrs.maxlength? 
-		&	shared-form.attrs.readonly? 
+		&	shared-form.attrs.maxlength?
+		&	shared-form.attrs.readonly?
 		&	shared-form.attrs.size?
-		&	input.password.attrs.value? 
+		&	input.password.attrs.value?
 		)
-		input.password.attrs.type = 
+		input.password.attrs.type =
 			attribute type {
 				w:string "password"
 			}
@@ -96,19 +96,19 @@ datatypes w = "http://whattf.org/datatype-draft"
 			attribute value {
 				form.data.stringwithoutlinebreaks
 			}
-		
+
 	input.elem |= input.password.elem
-		
+
 ## Checkbox: <input type='checkbox'>
 
-	input.checkbox.elem = 
+	input.checkbox.elem =
 		element input { input.checkbox.attrs }
-	input.checkbox.attrs = 
+	input.checkbox.attrs =
 		(	common.attrs
 		&	common-form.attrs
 		&	input.checkbox.attrs.type
-		&	input.attrs.checked? 
-		&	input.checkbox.attrs.value? 
+		&	input.attrs.checked?
+		&	input.checkbox.attrs.value?
 		&	(	common.attrs.aria.implicit.checkbox
 			|	common.attrs.aria.role.checkbox
 			|	common.attrs.aria.role.button
@@ -117,7 +117,7 @@ datatypes w = "http://whattf.org/datatype-draft"
 			|	common.attrs.aria.role.switch-checked-not-required
 			)?
 		)
-		input.checkbox.attrs.type = 
+		input.checkbox.attrs.type =
 			attribute type {
 				w:string "checkbox"
 			}
@@ -125,25 +125,25 @@ datatypes w = "http://whattf.org/datatype-draft"
 			attribute value {
 				string #REVISIT require non-empty value?
 			}
-		
+
 	input.elem |= input.checkbox.elem
-	
+
 ## Radiobutton: <input type='radio'>
 
-	input.radio.elem = 
+	input.radio.elem =
 		element input { input.radio.attrs }
-	input.radio.attrs = 
+	input.radio.attrs =
 		(	common.attrs
 		&	common-form.attrs
 		&	input.radio.attrs.type
-		&	input.attrs.checked? 
-		&	input.radio.attrs.value? 
+		&	input.attrs.checked?
+		&	input.radio.attrs.value?
 		&	(	common.attrs.aria.implicit.radio
 			|	common.attrs.aria.role.radio
 			|	common.attrs.aria.role.menuitemradio-checked-not-required
 			)?
 		)
-		input.radio.attrs.type = 
+		input.radio.attrs.type =
 			attribute type {
 				w:string "radio"
 			}
@@ -151,18 +151,18 @@ datatypes w = "http://whattf.org/datatype-draft"
 			attribute value {
 				string #REVISIT require non-empty value?
 			}
-		
+
 	input.elem |= input.radio.elem
-	
+
 ## Scripting Hook Button: <input type='button'>
 
-	input.button.elem = 
+	input.button.elem =
 		element input { input.button.attrs }
-	input.button.attrs = 
+	input.button.attrs =
 		(	common.attrs
 		&	common-form.attrs
 		&	input.button.attrs.type
-		&	input.button.attrs.value? 
+		&	input.button.attrs.value?
 		&	button.attrs.popover-controls
 		&	(	common.attrs.aria.implicit.button
 			|	common.attrs.aria.role.button
@@ -178,7 +178,7 @@ datatypes w = "http://whattf.org/datatype-draft"
 			|	common.attrs.aria.role.tab
 			)?
 		)
-		input.button.attrs.type = 
+		input.button.attrs.type =
 			attribute type {
 				w:string "button"
 			}
@@ -186,25 +186,25 @@ datatypes w = "http://whattf.org/datatype-draft"
 			attribute value {
 				string #REVISIT require non-empty value?
 			}
-		
+
 	input.elem |= input.button.elem
 	#REVISIT should this be enabled by a scripting module only?
-	
+
 ## Submit Button: <input type='submit'>
 
-	input.submit.elem = 
+	input.submit.elem =
 		element input { input.submit.attrs }
-	input.submit.attrs = 
+	input.submit.attrs =
 		(	common.attrs
 		&	common-form.attrs
 		&	input.submit.attrs.type
-		&	input.submit.attrs.value? 
+		&	input.submit.attrs.value?
 		&	button.attrs.popover-controls
 		&	(	common.attrs.aria.implicit.button
 			|	common.attrs.aria.role.button
 			)?
 		)
-		input.submit.attrs.type = 
+		input.submit.attrs.type =
 			attribute type {
 				w:string "submit"
 			}
@@ -212,24 +212,24 @@ datatypes w = "http://whattf.org/datatype-draft"
 			attribute value {
 				string #REVISIT require non-empty value?
 			}
-		
+
 	input.elem |= input.submit.elem
-		
+
 ## Reset Button: <input type='reset'>
 
-	input.reset.elem = 
+	input.reset.elem =
 		element input { input.reset.attrs }
-	input.reset.attrs = 
+	input.reset.attrs =
 		(	common.attrs
 		&	common-form.attrs
 		&	input.reset.attrs.type
-		&	input.reset.attrs.value? 
+		&	input.reset.attrs.value?
 		&	button.attrs.popover-controls
 		&	(	common.attrs.aria.implicit.button
 			|	common.attrs.aria.role.button
 			)?
 		)
-		input.reset.attrs.type = 
+		input.reset.attrs.type =
 			attribute type {
 				w:string "reset"
 			}
@@ -237,42 +237,42 @@ datatypes w = "http://whattf.org/datatype-draft"
 			attribute value {
 				string #REVISIT require non-empty value?
 			}
-		
+
 	input.elem |= input.reset.elem
 	# REVISIT does reset make sense outside a form?
-		
+
 ## File Upload: <input type='file'>
 
-	input.file.elem = 
+	input.file.elem =
 		element input { input.file.attrs }
-	input.file.attrs = 
+	input.file.attrs =
 		(	common.attrs
 		&	common-form.attrs
 		&	input.file.attrs.type
 		&	input.file.attrs.accept?
 		)
-		input.file.attrs.type = 
+		input.file.attrs.type =
 			attribute type {
 				w:string "file"
 			}
-		input.file.attrs.accept = 
+		input.file.attrs.accept =
 			attribute accept {
 				form.data.mimetypelist
 			}
 
 	input.elem |= input.file.elem
-	
+
 ## Hidden String: <input type='hidden'>
 
-	input.hidden.elem = 
+	input.hidden.elem =
 		element input { input.hidden.attrs }
-	input.hidden.attrs = 
+	input.hidden.attrs =
 		(	common.attrs
 		&	common-form.attrs
 		&	input.hidden.attrs.type
-		&	input.hidden.attrs.value? 
+		&	input.hidden.attrs.value?
 		)
-		input.hidden.attrs.type = 
+		input.hidden.attrs.type =
 			attribute type {
 				w:string "hidden"
 			}
@@ -280,19 +280,19 @@ datatypes w = "http://whattf.org/datatype-draft"
 			attribute value {
 				string
 			}
-		
+
 	input.elem |= input.hidden.elem
-		
+
 ## Image Submit Button: <input type='image'>
 
-	input.image.elem = 
+	input.image.elem =
 		element input { input.image.attrs }
-	input.image.attrs = 
+	input.image.attrs =
 		(	common.attrs
 		&	common-form.attrs
 		&	input.image.attrs.type
-		&	input.image.attrs.alt 
-		&	input.image.attrs.src? 
+		&	input.image.attrs.alt
+		&	input.image.attrs.src?
 		&	button.attrs.popover-controls
 		&	(	common.attrs.aria.implicit.button
 			|	common.attrs.aria.role.button
@@ -303,22 +303,22 @@ datatypes w = "http://whattf.org/datatype-draft"
 			|	common.attrs.aria.role.radio
 			|	common.attrs.aria.role.switch
 			)?
-		)	
-		input.image.attrs.type = 
+		)
+		input.image.attrs.type =
 			attribute type {
 				w:string "image"
 			}
-		input.image.attrs.alt = 
+		input.image.attrs.alt =
 			attribute alt {
 				form.data.nonemptystring
 			}
-		input.image.attrs.src = 
+		input.image.attrs.src =
 			attribute src {
 				common.data.uri.non-empty
 			}
-	
+
 	input.elem |= input.image.elem
-	
+
 	common.elem.phrasing |= input.elem
 
 ## Text Area: <textarea>
@@ -335,18 +335,18 @@ datatypes w = "http://whattf.org/datatype-draft"
 			)?
 		#FIXME onfocus, onblur, onselect,onchange
 		)
-		# This is ugly. 
-		textarea.attrs.rows-and-cols-wf1 = 
-			textarea.attrs.rows-and-cols-wf1.inner	
+		# This is ugly.
+		textarea.attrs.rows-and-cols-wf1 =
+			textarea.attrs.rows-and-cols-wf1.inner
 		textarea.attrs.rows-and-cols-wf1.inner =
 			(	textarea.attrs.cols
 			&	textarea.attrs.rows
 			)
-		textarea.attrs.cols = 
+		textarea.attrs.cols =
 			attribute cols {
 				common.data.integer.positive
 			}
-		textarea.attrs.rows = 
+		textarea.attrs.rows =
 			attribute rows {
 				common.data.integer.positive
 			}
@@ -380,11 +380,11 @@ datatypes w = "http://whattf.org/datatype-draft"
 		option.attrs.label =
 			attribute label {
 				form.data.nonemptystring
-			}		
+			}
 		option.attrs.value =
 			attribute value {
 				string
-			}		
+			}
 	option.inner =
 		( text )
 
@@ -392,7 +392,7 @@ datatypes w = "http://whattf.org/datatype-draft"
 
 	optgroup.elem =
 		element optgroup { optgroup.inner & optgroup.attrs }
-	optgroup.attrs = 
+	optgroup.attrs =
 		(	common.attrs
 		&	optgroup.attrs.label
 		&	common-form.attrs.disabled?
@@ -441,9 +441,9 @@ datatypes w = "http://whattf.org/datatype-draft"
 		)
 
 	common.elem.phrasing |= select.elem
-	
+
 ## Shared Definitions for Complex Button
-	
+
 	button.attrs.value =
 		attribute value {
 			string
@@ -460,13 +460,13 @@ datatypes w = "http://whattf.org/datatype-draft"
 		attribute popovertargetaction {
 			w:string "hide" | w:string "show" | w:string "toggle"
 		}
-	button.inner = 
+	button.inner =
 		( common.inner.phrasing )
-	
+
 ## Complex Submit Button: <button type='submit'>
 
 	button.submit.elem =
-		element button { button.inner & button.submit.attrs }	
+		element button { button.inner & button.submit.attrs }
 	button.submit.attrs =
 		(	common.attrs
 		&	common-form.attrs
@@ -492,11 +492,11 @@ datatypes w = "http://whattf.org/datatype-draft"
 			}
 
 	button.elem = button.submit.elem
-	
+
 ## Complex Reset Button: <button type='reset'>
 
 	button.reset.elem =
-		element button { button.inner & button.reset.attrs }	
+		element button { button.inner & button.reset.attrs }
 	button.reset.attrs =
 		(	common.attrs
 		&	common-form.attrs
@@ -521,11 +521,11 @@ datatypes w = "http://whattf.org/datatype-draft"
 			}
 
 	button.elem |= button.reset.elem
-	
+
 ## Complex Push Button: <button type='button'>
 
 	button.button.elem =
-		element button { button.inner & button.button.attrs }	
+		element button { button.inner & button.button.attrs }
 	button.button.attrs =
 		(	common.attrs
 		&	common-form.attrs
@@ -579,7 +579,7 @@ datatypes w = "http://whattf.org/datatype-draft"
 			attribute method {
 				form.attrs.method.data
 			}
-			form.attrs.method.data = 
+			form.attrs.method.data =
 				( w:string "get"
 				| w:string "post"
 				| w:string "dialog"
@@ -588,14 +588,14 @@ datatypes w = "http://whattf.org/datatype-draft"
 			attribute enctype {
 				form.attrs.enctype.data
 			}
-			form.attrs.enctype.data = 
-				(	w:string "application/x-www-form-urlencoded" 
+			form.attrs.enctype.data =
+				(	w:string "application/x-www-form-urlencoded"
 				|	w:string "multipart/form-data"
 				)
 		form.attrs.accept-charset =
 			attribute accept-charset {
 				string
-			}	
+			}
 	form.inner =
 		( common.inner.flow )
 
@@ -617,7 +617,7 @@ datatypes w = "http://whattf.org/datatype-draft"
 		legend.elem?, common.inner.flow
 
 	common.elem.flow |= fieldset.elem
-	
+
 ## Label: <label>
 
 	label.elem =

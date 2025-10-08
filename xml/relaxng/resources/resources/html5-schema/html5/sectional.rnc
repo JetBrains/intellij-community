@@ -146,13 +146,13 @@
 		(	common.attrs
 		&	common.attrs.aria?
 		)
-	address.inner = 
+	address.inner =
 		( common.inner.flow )
 
 	common.elem.flow |= address.elem
 
 # #####################################################################
-## Quotations	
+## Quotations
 
 ## Block Quotes: <blockquote>
 

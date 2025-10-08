@@ -21,7 +21,7 @@ datatypes w = "http://whattf.org/datatype-draft"
 math = element math {math.attributes,MathExpression*}
 MathExpression = semantics
 
-NonMathMLAtt = attribute (* - (local:*|m:*)) {xsd:string} 
+NonMathMLAtt = attribute (* - (local:*|m:*)) {xsd:string}
 
 CommonDeprecatedAtt = attribute other {text}?
 
@@ -60,7 +60,7 @@ cd = attribute cd {xsd:NCName}
 src = attribute src {xsd:anyURI}?
 
 annotation = element annotation {annotation.attributes,text}
-                     
+
 # changed content model of annotation-xml -- mike
 annotation-xml =
     ( annotation-xml.xhtml
@@ -78,7 +78,7 @@ annotation-xml =
         element annotation-xml {
             annotation-xml.model, annotation-xml.attributes, att-encoding.xhtml?
         }
-        annotation-xml.model.xhtml = 
+        annotation-xml.model.xhtml =
           notAllowed
         att-encoding.xhtml =
           attribute encoding {
@@ -88,7 +88,7 @@ annotation-xml =
         element annotation-xml {
             annotation-xml.model, annotation-xml.attributes, att-encoding.svg?
         }
-        annotation-xml.model.svg = 
+        annotation-xml.model.svg =
           notAllowed
         att-encoding.svg =
           attribute encoding {
@@ -98,7 +98,7 @@ annotation-xml =
         element annotation-xml {
             annotation-xml.model, annotation-xml.attributes, att-encoding.mathml?
         }
-        annotation-xml.model.mathml = 
+        annotation-xml.model.mathml =
           math
         att-encoding.mathml =
           attribute encoding {
@@ -117,13 +117,13 @@ DefEncAtt = attribute encoding {xsd:string}?,
             attribute definitionURL {xsd:anyURI}?
 
 semantics = element semantics {semantics.attributes,
-                               MathExpression, 
+                               MathExpression,
                               (annotation|annotation-xml)*}
 semantics.attributes = CommonAtt,DefEncAtt,cd?,name?
 
 
 
 length = xsd:string {
-  pattern = '\s*((-?[0-9]*(\.[0-9]*)?(e[mx]|in|cm|mm|p[xtc]|%)?)|(negative)?((very){0,2}thi(n|ck)|medium)mathspace)\s*' 
+  pattern = '\s*((-?[0-9]*(\.[0-9]*)?(e[mx]|in|cm|mm|p[xtc]|%)?)|(negative)?((very){0,2}thi(n|ck)|medium)mathspace)\s*'
 }
 

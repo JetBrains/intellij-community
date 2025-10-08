@@ -1,54 +1,54 @@
 namespace a = "http://relaxng.org/ns/compatibility/annotations/1.0"
 
 
-## 
+##
 ##     SVG 1.1 Paint Attribute Module
 ##     file: svg-paint-attrib.rng
-## 
+##
 ##     This is SVG, a language for describing two-dimensional graphics in XML.
 ##     Copyright 2001, 2002 W3C (MIT, INRIA, Keio), All Rights Reserved.
 ##
 ##     Modifications Copyright 2007 Mozilla Foundation
-## 
+##
 ##     $Id$
-##   
+##
 
-## 
+##
 ##     Paint Attribute
-## 
+##
 ##         fill, fill-rule, stroke, stroke-dasharray, stroke-dashoffset,
 ##         stroke-linecap, stroke-linejoin, stroke-miterlimit, stroke-width, color,
 ##         color-interpolation, color-rendering
-## 
+##
 ##     This module defines the Paint and Color attribute sets.
-##   
+##
 [ xml:lang = "en" ]
 grammar {
-    
-    ## 
+
+    ##
     ##       a 'fill' or 'stroke' property/attribute value: <paint>
-    ##     
+    ##
     Paint.datatype = xsd:string
-    
-    ## 
+
+    ##
     ##       'stroke-dasharray' property/attribute value
     ##       (e.g., 'none', list of <number>s)
-    ##     
+    ##
     StrokeDashArrayValue.datatype = xsd:string
-    
-    ## 
+
+    ##
     ##       'stroke-dashoffset' property/attribute value (e.g., 'none', <legnth>)
-    ##     
+    ##
     StrokeDashOffsetValue.datatype = xsd:string
-    
-    ## 
+
+    ##
     ##       'stroke-miterlimit' property/attribute value (e.g., <number>)
-    ##     
+    ##
     StrokeMiterLimitValue.datatype = xsd:string
-    
-    ## 
+
+    ##
     ##       'stroke-width' property/attribute value (e.g., <length>)
-    ##     
+    ##
     StrokeWidthValue.datatype = xsd:string
     SVG.fill.attrib = attribute fill { Paint.datatype }?
     SVG.fill-rule.attrib =
