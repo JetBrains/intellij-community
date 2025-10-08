@@ -19,6 +19,7 @@ kotlinterGradlePlugin = "5.2.0"
 kotlinxSerialization = "1.8.0"
 ktfmtGradlePlugin = "0.23.0"
 metalava = "1.0.0-alpha13"
+jsoup = "1.21.2"
 
 [libraries]
 assertj-core = { module = "org.assertj:assertj-core", version.ref = "assertJ"}
@@ -44,6 +45,7 @@ kotlin-reflect = { module = "org.jetbrains.kotlin:kotlin-reflect", version.ref =
 kotlinx-serialization-json = { module = "org.jetbrains.kotlinx:kotlinx-serialization-json", version.ref = "kotlinxSerialization" }
 ktor-client-java = { module = "io.ktor:ktor-client-java", version = "3.0.3" }
 metalava = { module = "com.android.tools.metalava:metalava", version.ref = "metalava" }
+jsoup = { module = "org.jsoup:jsoup", version.ref = "jsoup" }
 
 # Plugin libraries for build-logic's convention plugins to use to resolve the types/tasks coming from these plugins
 detekt-gradlePlugin = { module = "io.gitlab.arturbosch.detekt:detekt-gradle-plugin", version.ref = "detekt" }

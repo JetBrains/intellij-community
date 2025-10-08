@@ -344,6 +344,94 @@ public class ScrollingSynchronizerTest {
     }
 
     @Test
+    public fun `HTML list`() {
+        @Language("Markdown")
+        val markdown =
+            """
+            |Items:
+            |<ul>
+            |  <li>item 1
+            |    <ul>
+            |      <li>subitem A</li>
+            |    </ul>
+            |  </li>
+            |  <li>item 2</li>
+            |  <li>item 3</li>
+            |</ul>
+            """
+                .trimMargin()
+        doTest(markdown) { scrollState, synchronizer ->
+            synchronizer.scrollToLine(2)
+            val i1Top = scrollState.value
+            assertTrue(i1Top >= 0)
+
+            synchronizer.scrollToLine(4)
+            val siATop = scrollState.value
+            assertTrue(siATop >= i1Top)
+
+            synchronizer.scrollToLine(7)
+            val i2Top = scrollState.value
+            assertTrue(i2Top >= siATop)
+
+            synchronizer.scrollToLine(8)
+            val i3Top = scrollState.value
+            assertTrue(i3Top >= i2Top)
+
+            synchronizer.scrollToLine(4)
+            assertEquals(siATop, scrollState.value)
+        }
+    }
+
+    @Test
+    public fun `HTML code block`() {
+        @Language("Markdown")
+        val markdown =
+            """
+            |<pre>
+            |package my.awesome.pkg
+            |
+            |fun main() {
+            |    println("Hello world")
+            |}
+            |</pre>
+            """
+                .trimMargin()
+        doTest(markdown) { scrollState, synchronizer ->
+            synchronizer.scrollToLine(1)
+            val packageTop = scrollState.value
+            assertTrue(packageTop >= 0)
+
+            synchronizer.scrollToLine(2)
+            val emptyLineTop = scrollState.value
+            assertTrue(emptyLineTop > packageTop)
+
+            synchronizer.scrollToLine(3)
+            val mainTop = scrollState.value
+            assertTrue(mainTop > emptyLineTop)
+
+            synchronizer.scrollToLine(4)
+            val printlnTop = scrollState.value
+            assertTrue(printlnTop > mainTop)
+
+            synchronizer.scrollToLine(5)
+            val rBracketTop = scrollState.value
+            assertTrue(rBracketTop > printlnTop)
+
+            synchronizer.scrollToLine(2)
+            assertEquals(emptyLineTop, scrollState.value)
+
+            assertSameDistance(
+                distance = CODE_TEXT_SIZE + 2,
+                packageTop,
+                emptyLineTop,
+                mainTop,
+                printlnTop,
+                rBracketTop,
+            )
+        }
+    }
+
+    @Test
     public fun `add a block`() {
         @Language("Markdown")
         val firstRun =
@@ -707,7 +795,8 @@ public class ScrollingSynchronizerTest {
         val markdownStyling: MarkdownStyling = createMarkdownStyling()
         val renderer =
             ScrollSyncMarkdownBlockRenderer(markdownStyling, emptyList(), DefaultInlineMarkdownRenderer(emptyList()))
-        val processor = MarkdownProcessor(markdownMode = MarkdownMode.EditorPreview(synchronizer))
+        val processor =
+            MarkdownProcessor(markdownMode = MarkdownMode.EditorPreview(synchronizer), parseEmbeddedHtml = true)
         var scope: CoroutineScope? = null
 
         setContent {
