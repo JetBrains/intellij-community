@@ -541,7 +541,7 @@ public class NullableStuffInspectionBase extends AbstractBaseJavaLocalInspection
   private void checkConflictingContainerAnnotations(@NotNull ProblemsHolder holder, @Nullable PsiModifierList list) {
     if (list == null || !list.hasAnnotations()) return;
     NullableNotNullManager manager = NullableNotNullManager.getInstance(holder.getProject());
-    List<PsiAnnotation> conflictingAnnotations = manager.getConflictingAnnotations(list);
+    List<PsiAnnotation> conflictingAnnotations = manager.getConflictingContainerAnnotations(list);
     if (!conflictingAnnotations.isEmpty()) {
       for (PsiAnnotation annotation : conflictingAnnotations) {
         reportProblem(holder, annotation, "conflicting.nullability.annotations");

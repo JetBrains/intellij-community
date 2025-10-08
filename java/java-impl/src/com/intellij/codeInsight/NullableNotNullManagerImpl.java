@@ -421,7 +421,7 @@ public class NullableNotNullManagerImpl extends NullableNotNullManager implement
   }
   
   @Override
-  public @NotNull List<@NotNull PsiAnnotation> getConflictingAnnotations(@NotNull PsiAnnotationOwner owner) {
+  public @NotNull List<@NotNull PsiAnnotation> getConflictingContainerAnnotations(@NotNull PsiModifierList owner) {
     if (!owner.hasAnnotations()) return List.of();
     for (AnnotationPackageSupport support : myAnnotationSupports) {
       List<@NotNull PsiAnnotation> annotations = support.getConflictingContainerAnnotations(owner);

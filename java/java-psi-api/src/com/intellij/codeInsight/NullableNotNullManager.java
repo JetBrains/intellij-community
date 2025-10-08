@@ -307,10 +307,10 @@ public abstract class NullableNotNullManager {
                                                                        PsiAnnotation.TargetType @NotNull [] placeTargetTypes);
 
   /**
-   * @param owner annotation owner of container (method, class, or package statement)
+   * @param owner annotation list to analyze (may belong to method, class, package statement, or module)
    * @return list of conflicting annotations which denote different nullability; empty list if no conflicts were found
    */
-  public abstract @NotNull List<@NotNull PsiAnnotation> getConflictingAnnotations(@NotNull PsiAnnotationOwner owner);
+  public abstract @NotNull List<@NotNull PsiAnnotation> getConflictingContainerAnnotations(@NotNull PsiModifierList owner);
 
   @ApiStatus.Internal
   @NotNull
