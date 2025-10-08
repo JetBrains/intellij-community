@@ -14,8 +14,6 @@ interface TraceConsentManager {
 
   fun canDisplayTraceConsent(): Boolean
 
-  fun isTraceConsentEnabled(): Boolean
-
   companion object {
     @JvmField
     val EP_NAME: ExtensionPointName<TraceConsentManager> = ExtensionPointName("com.intellij.ide.gdpr.traceConsentManager")
