@@ -35,6 +35,7 @@ import org.cef.misc.Utils;
 import org.cef.network.CefCookieManager;
 import org.cef.network.CefRequest;
 import org.cef.security.CefSSLInfo;
+import org.intellij.lang.annotations.Language;
 import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -927,5 +928,16 @@ public abstract class JBCefBrowserBase implements JBCefDisposable {
       ((JBCefOsrComponent)rendering.getComponent()).setBrowser(browser);
 
     return browser;
+  }
+
+  public void runJavaScript(@Language("JavaScript") String code) {
+    runJavaScript(code, null, 0);
+  }
+
+  public void runJavaScript(@Language("JavaScript") String code, String url, int line) {
+    if (Utils.getBoolean("ide.browser.jcef.log.extended", false)) {
+      CefLog.Debug("%s.runJavaScript(%s)", myCefBrowser.toString(), code);
+    }
+    myCefBrowser.executeJavaScript(code, url, line);
   }
 }

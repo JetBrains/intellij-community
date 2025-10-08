@@ -164,7 +164,7 @@ class JCefImageViewer(private val myFile: VirtualFile,
   override fun getZoomModel(): ImageZoomModel = ZOOM_MODEL
   override fun isGridVisible(): Boolean = myState.status == ViewerState.Status.OK && myState.gridEnabled
   fun getZoom() = myState.zoom
-  private fun execute(@Language("javascript") script: String) = myBrowser.cefBrowser.executeJavaScript(script, myBrowser.cefBrowser.url, 0)
+  private fun execute(@Language("javascript") script: String) = myBrowser.runJavaScript(script, myBrowser.cefBrowser.url, 0)
 
   private val ZOOM_MODEL: ImageZoomModel = object : ImageZoomModel {
     override fun getZoomFactor(): Double = myState.zoom

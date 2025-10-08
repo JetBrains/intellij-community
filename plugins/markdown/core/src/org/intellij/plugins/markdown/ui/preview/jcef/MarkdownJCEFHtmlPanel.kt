@@ -1,7 +1,6 @@
 // Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.intellij.plugins.markdown.ui.preview.jcef
 
-import com.intellij.ide.ui.UISettingsListener
 import com.intellij.openapi.application.readAction
 import com.intellij.openapi.components.service
 import com.intellij.openapi.diagnostic.logger
@@ -248,13 +247,13 @@ class MarkdownJCEFHtmlPanel(private val project: Project?, private val virtualFi
 
   @Suppress("OVERRIDE_DEPRECATION")
   override fun scrollToMarkdownSrcOffset(offset: Int, smooth: Boolean) {
-    executeJavaScript("window.scrollController?.scrollTo($offset, $smooth)")
+    runJavaScript("window.scrollController?.scrollTo($offset, $smooth)")
   }
 
   override fun scrollBy(horizontalUnits: Int, verticalUnits: Int) {
     val horizontal = JBCefApp.normalizeScaledSize(horizontalUnits)
     val vertical = JBCefApp.normalizeScaledSize(verticalUnits)
-    executeJavaScript("window.scrollController?.scrollBy($horizontal, $vertical)")
+    runJavaScript("window.scrollController?.scrollBy($horizontal, $vertical)")
   }
 
   private val previewInnerComponent by lazy { super.getComponent() }
@@ -339,7 +338,7 @@ class MarkdownJCEFHtmlPanel(private val project: Project?, private val virtualFi
     |  styles.setProperty("${PreviewLAFThemeStyles.Variables.FontSize}", "${scaled}px");
     |})();
     """.trimMargin()
-    executeJavaScript(code)
+    runJavaScript(code)
   }
 
   private fun createFileSchemeResourcesProcessor(projectRoot: VirtualFile?): ResourceProvider? {

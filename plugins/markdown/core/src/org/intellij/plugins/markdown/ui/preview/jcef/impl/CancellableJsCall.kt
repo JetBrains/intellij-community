@@ -67,7 +67,7 @@ internal suspend fun executeCancellableJsCall(browser: JBCefBrowser, @Language("
       }
       try {
         val wrappedCode = wrapWithErrorHandling(code, resultQuery, errorQuery)
-        browser.executeJavaScript(wrappedCode)
+        browser.runJavaScript(wrappedCode)
       } catch (exception: Exception) {
         continuation.resumeWithException(exception)
       }
