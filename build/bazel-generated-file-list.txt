@@ -225,6 +225,7 @@ fleet/compiler-plugins
 fleet/fastutil
 fleet/junit4
 fleet/kernel
+fleet/ktor/client/core
 fleet/ktor/network/tls
 fleet/lsp.protocol
 fleet/modules/api

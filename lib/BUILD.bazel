@@ -1494,9 +1494,30 @@ jvm_import(
 )
 
 jvm_import(
+  name = "fleet-io-ktor-client-core",
+  jar = "@io_ktor-ktor-client-core-jvm-3_1_3_http//file",
+  source_jar = "@io_ktor-ktor-client-core-jvm-3_1_3_http//file",
+  visibility = ["//visibility:public"]
+)
+
+jvm_import(
+  name = "fleet-io-ktor-events",
+  jar = "@io_ktor-ktor-events-jvm-3_1_3_http//file",
+  source_jar = "@io_ktor-ktor-events-jvm-3_1_3_http//file",
+  visibility = ["//visibility:public"]
+)
+
+jvm_import(
   name = "fleet-io-ktor-http",
   jar = "@io_ktor-ktor-http-jvm-3_1_3_http//file",
   source_jar = "@io_ktor-ktor-http-jvm-3_1_3_http//file",
+  visibility = ["//visibility:public"]
+)
+
+jvm_import(
+  name = "fleet-io-ktor-http-cio",
+  jar = "@io_ktor-ktor-http-cio-jvm-3_1_3_http//file",
+  source_jar = "@io_ktor-ktor-http-cio-jvm-3_1_3_http//file",
   visibility = ["//visibility:public"]
 )
 
@@ -1522,9 +1543,37 @@ jvm_import(
 )
 
 jvm_import(
+  name = "fleet-io-ktor-serialization",
+  jar = "@io_ktor-ktor-serialization-jvm-3_1_3_http//file",
+  source_jar = "@io_ktor-ktor-serialization-jvm-3_1_3_http//file",
+  visibility = ["//visibility:public"]
+)
+
+jvm_import(
+  name = "fleet-io-ktor-sse",
+  jar = "@io_ktor-ktor-sse-jvm-3_1_3_http//file",
+  source_jar = "@io_ktor-ktor-sse-jvm-3_1_3_http//file",
+  visibility = ["//visibility:public"]
+)
+
+jvm_import(
   name = "fleet-io-ktor-utils",
   jar = "@io_ktor-ktor-utils-jvm-3_1_3_http//file",
   source_jar = "@io_ktor-ktor-utils-jvm-3_1_3_http//file",
+  visibility = ["//visibility:public"]
+)
+
+jvm_import(
+  name = "fleet-io-ktor-websocket-serialization",
+  jar = "@io_ktor-ktor-websocket-serialization-jvm-3_1_3_http//file",
+  source_jar = "@io_ktor-ktor-websocket-serialization-jvm-3_1_3_http//file",
+  visibility = ["//visibility:public"]
+)
+
+jvm_import(
+  name = "fleet-io-ktor-websockets",
+  jar = "@io_ktor-ktor-websockets-jvm-3_1_3_http//file",
+  source_jar = "@io_ktor-ktor-websockets-jvm-3_1_3_http//file",
   visibility = ["//visibility:public"]
 )
 
