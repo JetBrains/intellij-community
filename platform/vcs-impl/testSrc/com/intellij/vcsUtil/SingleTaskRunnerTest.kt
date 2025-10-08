@@ -1,6 +1,8 @@
-package git4idea.util
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+package com.intellij.vcsUtil
 
 import com.intellij.platform.util.coroutines.childScope
+import com.intellij.platform.vcs.impl.shared.SingleTaskRunner
 import com.intellij.testFramework.common.timeoutRunBlocking
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.TimeoutCancellationException
@@ -8,10 +10,11 @@ import kotlinx.coroutines.cancel
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.withTimeout
+import org.junit.jupiter.api.Assertions
 import org.junit.jupiter.api.Assertions.assertEquals
-import org.junit.jupiter.api.Assertions.assertTrue
 import org.junit.jupiter.api.Test
 import org.junit.jupiter.api.assertThrows
+import kotlin.time.Duration
 
 internal class SingleTaskRunnerTest {
   @Test
@@ -34,7 +37,19 @@ internal class SingleTaskRunnerTest {
 
       request()
       awaitNotBusy()
-      assertTrue(ran)
+      Assertions.assertTrue(ran)
+    }
+  }
+
+  @Test
+  fun `test instant execution`() = timeoutRunBlocking {
+    var counter = 0
+    withRunner({ counter++ }, delay = Duration.Companion.INFINITE) {
+      start()
+      request()
+      requestNow()
+      awaitNotBusy()
+      assertEquals(1, counter)
     }
   }
 
@@ -71,10 +86,11 @@ internal class SingleTaskRunnerTest {
 
   private inline fun CoroutineScope.withRunner(
     noinline task: suspend () -> Unit,
+    delay: Duration = Duration.Companion.ZERO,
     consumer: SingleTaskRunner.() -> Unit,
   ) {
     val cs = childScope("BG runner")
-    SingleTaskRunner(cs, task).also(consumer)
+    SingleTaskRunner(cs, delay, task).also(consumer)
     cs.cancel()
   }
 }

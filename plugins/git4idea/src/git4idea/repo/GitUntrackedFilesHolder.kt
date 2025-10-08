@@ -20,6 +20,7 @@ import com.intellij.openapi.vcs.changes.VcsManagedFilesHolder
 import com.intellij.openapi.vcs.util.paths.RecursiveFilePathSet
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.platform.util.coroutines.childScope
+import com.intellij.platform.vcs.impl.shared.SingleTaskRunner
 import com.intellij.vcsUtil.VcsUtil
 import git4idea.GitContentRevision
 import git4idea.GitRefreshUsageCollector.logUntrackedRefresh
@@ -29,8 +30,6 @@ import git4idea.index.getFileStatus
 import git4idea.index.isIgnored
 import git4idea.index.isUntracked
 import git4idea.status.GitRefreshListener
-import git4idea.util.DelayedTaskRunner
-import git4idea.util.SingleTaskRunner
 import kotlinx.coroutines.*
 import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.annotations.NonNls
@@ -70,7 +69,7 @@ class GitUntrackedFilesHolder internal constructor(
     get() = untrackedFiles.initialized
 
   init {
-    updateRunner = DelayedTaskRunner(cs, 500.milliseconds, ::update)
+    updateRunner = SingleTaskRunner(cs, 500.milliseconds, ::update)
     cs.launch(start = CoroutineStart.UNDISPATCHED) {
       try {
         project.serviceAsync<InitialVfsRefreshService>().awaitInitialVfsRefreshFinished()
