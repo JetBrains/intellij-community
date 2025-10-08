@@ -581,6 +581,19 @@ datatypes w = "http://whattf.org/datatype-draft"
 		}
 	html.attrs &= html.attrs.version?
 
+## Obsolete ARIA attributes
+
+	aria.state.grabbed =
+		attribute aria-grabbed {
+			string
+		}
+	aria.state.dropeffect =
+		attribute aria-dropeffect {
+			string
+		}
+	aria.global &= aria.state.grabbed?
+	aria.global &= aria.state.dropeffect?
+
 ## Obsolete style attributes
 
 ## align attribute

@@ -11,6 +11,26 @@ namespace c = "http://n.validator.nu/custom-elements/"
 		element template { template.inner & template.attrs }
 	template.attrs =
 		( common.attrs )
+	template.attrs.shadowrootmode =
+			attribute shadowrootmode {
+				w:string "open" | w:string "closed"
+			}
+	template.attrs.shadowrootdelegatesfocus =
+			attribute shadowrootdelegatesfocus {
+				w:string "true" | w:string "false"
+			}
+	template.attrs.shadowrootclonable =
+			attribute shadowrootclonable {
+				w:string "true" | w:string "false"
+			}
+	template.attrs.shadowrootserializable =
+			attribute shadowrootserializable {
+				w:string "true" | w:string "false"
+			}
+	template.attrs.shadowrootcustomelementregistry =
+			attribute shadowrootcustomelementregistry {
+				w:string "true" | w:string "false"
+			}
 	template.inner =
 		(	common.inner.metadata
 		|	common.inner.flow
