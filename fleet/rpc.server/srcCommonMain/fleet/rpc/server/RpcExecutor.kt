@@ -21,6 +21,7 @@ import kotlinx.serialization.json.Json
 import fleet.multiplatform.shims.ConcurrentHashMap
 import fleet.multiplatform.shims.ConcurrentHashSet
 import fleet.util.async.withSupervisor
+import kotlinx.serialization.builtins.serializer
 import kotlin.coroutines.EmptyCoroutineContext
 
 class RpcExecutor private constructor(
@@ -207,16 +208,24 @@ class RpcExecutor private constructor(
                 Json.encodeToJsonElement(InstanceId.serializer(), remoteObjectId)
               }
               else {
-                val (resultSerialized, streamDescriptors) = withSerializationContext("Result of ${message.displayName}", null, serviceScope) {
-                  val kserializer = returnType.serializer(message.classMethodDisplayName())
-                  json.encodeToJsonElement(kserializer, result)
+                // tail call optimization might pass our continuation to whatever function was last in the method and we will get its return value
+                // usually kotlin will ignore it and replace with Unit, but because we are invoking an abstract lambda it gets confused
+                // TODO not the best approach, obviously, but it works without changes in the compiler plugin
+                if (returnType is RemoteKind.Data && returnType.serializer == Unit.serializer()) {
+                  json.encodeToJsonElement(Unit.serializer(), Unit)
                 }
+                else {
+                  val (resultSerialized, streamDescriptors) = withSerializationContext("Result of ${message.displayName}", null, serviceScope) {
+                    val kserializer = returnType.serializer(message.classMethodDisplayName())
+                    json.encodeToJsonElement(kserializer, result)
+                  }
 
-                streamDescriptors.forEach {
-                  registeredStreams.add(registerStream(serviceScope, it, clientId))
+                  streamDescriptors.forEach {
+                    registeredStreams.add(registerStream(serviceScope, it, clientId))
+                  }
+
+                  resultSerialized
                 }
-
-                resultSerialized
               }
 
               logger.trace { "Sending result: requestId=${request.requestId}, result=$result" }
