@@ -228,6 +228,7 @@ fleet/kernel
 fleet/ktor/network/tls
 fleet/lsp.protocol
 fleet/multiplatform.shims
+fleet/preferences
 fleet/reporting/api
 fleet/reporting/shared
 fleet/rhizomedb

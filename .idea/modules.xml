@@ -11,6 +11,7 @@
       <module fileurl="file://$PROJECT_DIR$/fleet/ktor/network/tls/fleet.ktor.network.tls.iml" filepath="$PROJECT_DIR$/fleet/ktor/network/tls/fleet.ktor.network.tls.iml" />
       <module fileurl="file://$PROJECT_DIR$/fleet/lsp.protocol/fleet.lsp.protocol.iml" filepath="$PROJECT_DIR$/fleet/lsp.protocol/fleet.lsp.protocol.iml" />
       <module fileurl="file://$PROJECT_DIR$/fleet/multiplatform.shims/fleet.multiplatform.shims.iml" filepath="$PROJECT_DIR$/fleet/multiplatform.shims/fleet.multiplatform.shims.iml" />
+      <module fileurl="file://$PROJECT_DIR$/fleet/preferences/fleet.preferences.iml" filepath="$PROJECT_DIR$/community/fleet/preferences/fleet.preferences.iml" />
       <module fileurl="file://$PROJECT_DIR$/fleet/reporting/api/fleet.reporting.api.iml" filepath="$PROJECT_DIR$/fleet/reporting/api/fleet.reporting.api.iml" />
       <module fileurl="file://$PROJECT_DIR$/fleet/reporting/shared/fleet.reporting.shared.iml" filepath="$PROJECT_DIR$/fleet/reporting/shared/fleet.reporting.shared.iml" />
       <module fileurl="file://$PROJECT_DIR$/fleet/rhizomedb/fleet.rhizomedb.iml" filepath="$PROJECT_DIR$/fleet/rhizomedb/fleet.rhizomedb.iml" />
