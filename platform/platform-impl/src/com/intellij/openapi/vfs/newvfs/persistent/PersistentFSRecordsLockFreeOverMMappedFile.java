@@ -1103,7 +1103,7 @@ public final class PersistentFSRecordsLockFreeOverMMappedFile implements Persist
         dumpRecordsAsHex(firstUnAllocatedId, firstUnAllocatedId + recordsToCheck) + "\n" +
         "=" + nonZeroedRecordsCount + " total non-zero records on the page, in range " +
         "[" + unallocatedRegionStartingOffsetInFile + ".." + (unallocatedRegionStartingOffsetInFile + nonZeroBytesBeyondEOF) + "), " +
-        "wasClosedProperly=" + wasClosedProperly
+        "wasClosedProperly=" + wasClosedProperly + ", wasAlwaysClosedProperly=" + wasAlwaysClosedProperly
       );
     }
   }

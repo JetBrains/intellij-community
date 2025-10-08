@@ -352,15 +352,7 @@ public final class PersistentFSConnection {
 
   String describeConsistencyStatus() {
     try {
-      if (!records.wasAlwaysClosedProperly()) {
-        if (!records.wasClosedProperly()) {
-          return "VFS was NOT closed properly in last session";
-        }
-        else {
-          return "VFS was NOT closed properly at least once in it's lifetime";
-        }
-      }
-      return "VFS was always properly closed";
+      return "wasClosedProperly=" + records.wasClosedProperly() + ", wasAlwaysClosedProperly=" + records.wasAlwaysClosedProperly();
     }
     catch (IOException e) {
       return "(unknown: " + e.getMessage() + ")";
