@@ -14,7 +14,6 @@ import org.jetbrains.kotlin.idea.codeinsight.api.applicators.fixes.KotlinQuickFi
 import org.jetbrains.kotlin.idea.quickfix.WrapWithCollectionLiteralCallFix
 import org.jetbrains.kotlin.psi.KtAnnotationEntry
 import org.jetbrains.kotlin.psi.KtExpression
-import org.jetbrains.kotlin.psi.KtProperty
 import org.jetbrains.kotlin.psi.psiUtil.getStrictParentOfType
 import org.jetbrains.kotlin.types.Variance
 
@@ -74,7 +73,7 @@ internal object WrapWithCollectionLiteralCallFixFactory {
     }
 
     val initializerTypeMismatch = KotlinQuickFixFactory.ModCommandBased { diagnostic: KaFirDiagnostic.InitializerTypeMismatch ->
-        val initializer = (diagnostic.psi as? KtProperty)?.initializer ?: return@ModCommandBased emptyList()
+        val initializer = diagnostic.initializer ?: return@ModCommandBased emptyList()
         createIfAvailable(initializer, diagnostic.expectedType, diagnostic.actualType)
     }
 }

@@ -10,7 +10,6 @@ import org.jetbrains.kotlin.analysis.api.types.KaTypeNullability
 import org.jetbrains.kotlin.idea.codeinsight.api.applicators.fixes.KotlinQuickFixFactory
 import org.jetbrains.kotlin.idea.quickfix.SurroundWithLambdaForTypeMismatchFix
 import org.jetbrains.kotlin.psi.KtExpression
-import org.jetbrains.kotlin.psi.KtProperty
 
 internal object SurroundWithLambdaForTypeMismatchFixFactory {
 
@@ -34,7 +33,7 @@ internal object SurroundWithLambdaForTypeMismatchFixFactory {
 
     val initializerTypeMismatchFixFactory = KotlinQuickFixFactory.ModCommandBased { diagnostic: KaFirDiagnostic.InitializerTypeMismatch ->
         listOfNotNull(
-            createFixIfAvailable((diagnostic.psi as? KtProperty)?.initializer, diagnostic.expectedType, diagnostic.actualType)
+            createFixIfAvailable(diagnostic.initializer, diagnostic.expectedType, diagnostic.actualType)
         )
     }
 

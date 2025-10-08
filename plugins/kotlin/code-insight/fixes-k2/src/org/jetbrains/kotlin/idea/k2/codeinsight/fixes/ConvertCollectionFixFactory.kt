@@ -12,7 +12,6 @@ import org.jetbrains.kotlin.idea.codeinsight.api.applicators.fixes.KotlinQuickFi
 import org.jetbrains.kotlin.idea.quickfix.ConvertCollectionFix
 import org.jetbrains.kotlin.idea.quickfix.ConvertCollectionFix.CollectionType
 import org.jetbrains.kotlin.psi.KtExpression
-import org.jetbrains.kotlin.psi.KtProperty
 
 internal object ConvertCollectionFixFactory {
     internal fun getCollectionType(type: KaType, acceptNullableTypes: Boolean = false): CollectionType? {
@@ -60,7 +59,7 @@ internal object ConvertCollectionFixFactory {
     }
 
     val initializerTypeMismatch = KotlinQuickFixFactory.ModCommandBased { diagnostic: KaFirDiagnostic.InitializerTypeMismatch ->
-        val initializer = (diagnostic.psi as? KtProperty)?.initializer ?: return@ModCommandBased emptyList()
+        val initializer = diagnostic.initializer ?: return@ModCommandBased emptyList()
         createIfAvailable(initializer, diagnostic.expectedType, diagnostic.actualType)
     }
 

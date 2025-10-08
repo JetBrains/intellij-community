@@ -13,7 +13,6 @@ import org.jetbrains.kotlin.idea.base.resources.KotlinBundle
 import org.jetbrains.kotlin.idea.codeinsight.api.applicators.fixes.KotlinQuickFixFactory
 import org.jetbrains.kotlin.idea.quickfix.ConvertStringToCharLiteralUtils
 import org.jetbrains.kotlin.psi.KtExpression
-import org.jetbrains.kotlin.psi.KtProperty
 import org.jetbrains.kotlin.psi.KtStringTemplateExpression
 
 internal object ConvertStringToCharLiteralFixFactory {
@@ -36,7 +35,7 @@ internal object ConvertStringToCharLiteralFixFactory {
     }
 
     val initializerTypeMismatchFactory = KotlinQuickFixFactory.ModCommandBased { diagnostic: KaFirDiagnostic.InitializerTypeMismatch ->
-        getFixes((diagnostic.psi as? KtProperty)?.initializer, diagnostic.expectedType)
+        getFixes(diagnostic.initializer, diagnostic.expectedType)
     }
 
     val returnTypeMismatchFactory = KotlinQuickFixFactory.ModCommandBased { diagnostic: KaFirDiagnostic.ReturnTypeMismatch ->

@@ -19,7 +19,6 @@ import org.jetbrains.kotlin.idea.codeinsight.api.applicable.intentions.KotlinPsi
 import org.jetbrains.kotlin.idea.codeinsight.api.applicators.fixes.KotlinQuickFixFactory
 import org.jetbrains.kotlin.idea.codeinsight.utils.getExpressionShortText
 import org.jetbrains.kotlin.psi.KtExpression
-import org.jetbrains.kotlin.psi.KtProperty
 import org.jetbrains.kotlin.psi.KtPsiFactory
 import org.jetbrains.kotlin.psi.createExpressionByPattern
 import org.jetbrains.kotlin.psi.psiUtil.endOffset
@@ -102,8 +101,7 @@ internal object CastExpressionFixFactories {
     }
 
     val initializerTypeMismatch = KotlinQuickFixFactory.ModCommandBased { diagnostic: KaFirDiagnostic.InitializerTypeMismatch ->
-        val initializer = (diagnostic.psi as? KtProperty)?.initializer
-            ?: return@ModCommandBased emptyList()
+        val initializer = diagnostic.initializer ?: return@ModCommandBased emptyList()
 
         createFixes(
             diagnostic.isMismatchDueToNullability,

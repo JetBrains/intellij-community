@@ -11,7 +11,6 @@ import org.jetbrains.kotlin.name.ClassId
 import org.jetbrains.kotlin.name.StandardClassIds
 import org.jetbrains.kotlin.psi.KtDotQualifiedExpression
 import org.jetbrains.kotlin.psi.KtExpression
-import org.jetbrains.kotlin.psi.KtProperty
 
 internal object ConvertClassToKClassFixFactories {
 
@@ -24,7 +23,7 @@ internal object ConvertClassToKClassFixFactories {
     }
 
     val initializerTypeMismatchFixFactory = KotlinQuickFixFactory.ModCommandBased { diagnostic: KaFirDiagnostic.InitializerTypeMismatch ->
-        listOfNotNull(createFixIfAvailable((diagnostic.psi as? KtProperty)?.initializer, diagnostic.expectedType))
+        listOfNotNull(createFixIfAvailable(diagnostic.initializer, diagnostic.expectedType))
     }
 
     val assignmentTypeMismatchFixFactory = KotlinQuickFixFactory.ModCommandBased { diagnostic: KaFirDiagnostic.AssignmentTypeMismatch ->

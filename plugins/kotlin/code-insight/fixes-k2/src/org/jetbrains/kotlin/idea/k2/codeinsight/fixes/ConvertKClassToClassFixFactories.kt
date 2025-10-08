@@ -10,7 +10,6 @@ import org.jetbrains.kotlin.analysis.api.types.KaType
 import org.jetbrains.kotlin.idea.codeinsight.api.applicators.fixes.KotlinQuickFixFactory
 import org.jetbrains.kotlin.idea.quickfix.ConvertKClassToClassFix
 import org.jetbrains.kotlin.psi.KtExpression
-import org.jetbrains.kotlin.psi.KtProperty
 import org.jetbrains.kotlin.psi.KtPsiFactory
 
 internal object ConvertKClassToClassFixFactories {
@@ -29,7 +28,7 @@ internal object ConvertKClassToClassFixFactories {
 
     val initializerTypeMismatchFixFactory = KotlinQuickFixFactory.ModCommandBased { diagnostic: KaFirDiagnostic.InitializerTypeMismatch ->
         listOfNotNull(
-            createFixIfAvailable((diagnostic.psi as? KtProperty)?.initializer, diagnostic.expectedType, diagnostic.actualType)
+            createFixIfAvailable(diagnostic.initializer, diagnostic.expectedType, diagnostic.actualType)
         )
     }
 
