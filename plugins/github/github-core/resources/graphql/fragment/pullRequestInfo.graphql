@@ -16,9 +16,14 @@ fragment pullRequestInfo on PullRequest {
     ...repository
   }
 
+  headRef {
+    id
+  }
   headRefName
   headRefOid
   headRepository {
     ...repository
   }
+
+  viewerCanDeleteHeadRef
 }

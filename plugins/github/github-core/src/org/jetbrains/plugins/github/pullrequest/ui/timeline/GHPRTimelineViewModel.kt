@@ -91,7 +91,7 @@ internal class GHPRTimelineViewModelImpl(
   override val ghostUser: GHUser = securityService.ghostUser
   override val currentUser: GHUser = securityService.currentUser
 
-  override val detailsVm = GHPRDetailsTimelineViewModel(project, parentCs, dataContext, dataProvider)
+  override val detailsVm = GHPRDetailsTimelineViewModel(project, cs, dataContext, dataProvider)
   private val timelineLoader = dataProvider.acquireTimelineLoader(cs)
 
   override val loadingErrorHandler: GHLoadingErrorHandler =
@@ -99,7 +99,7 @@ internal class GHPRTimelineViewModelImpl(
 
   override val commentVm: GHPRNewCommentViewModel? =
     if (securityService.currentUserHasPermissionLevel(GHRepositoryPermissionLevel.READ)) {
-      GHPRNewCommentViewModel(project, parentCs, commentsData)
+      GHPRNewCommentViewModel(project, cs, commentsData)
     }
     else null
 

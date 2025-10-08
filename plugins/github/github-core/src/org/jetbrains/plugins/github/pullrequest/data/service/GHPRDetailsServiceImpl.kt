@@ -180,6 +180,16 @@ internal class GHPRDetailsServiceImpl(
     }
   }
 
+  override suspend fun deleteMergedBranch(pullRequestId: GHPRIdentifier, refId: String) {
+    runCatching {
+      requestExecutor.executeSuspend(
+        GHGQLRequests.Ref.delete(repository.serverPath, refId)
+      )
+    }.processErrorAndGet { e ->
+      LOG.info("Error occurred while deleting branch for PR ${pullRequestId.number}", e)
+    }
+  }
+
   companion object {
     private val LOG = logger<GHPRDetailsService>()
   }

@@ -2,20 +2,25 @@
 package org.jetbrains.plugins.github.pullrequest.ui.timeline
 
 import com.intellij.collaboration.async.childScope
+import com.intellij.collaboration.async.mapState
 import com.intellij.collaboration.async.stateInNow
 import com.intellij.collaboration.ui.codereview.comment.CodeReviewSubmittableTextViewModelBase
 import com.intellij.collaboration.ui.codereview.comment.CodeReviewTextEditingViewModel
 import com.intellij.collaboration.ui.icon.IconsProvider
 import com.intellij.collaboration.util.ComputedResult
+import com.intellij.collaboration.util.ResultUtil.runCatchingUser
 import com.intellij.collaboration.util.getOrNull
 import com.intellij.collaboration.util.map
+import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.project.Project
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.cancel
 import kotlinx.coroutines.flow.*
+import kotlinx.coroutines.launch
 import org.jetbrains.plugins.github.api.data.GHReactionContent
 import org.jetbrains.plugins.github.api.data.GHUser
 import org.jetbrains.plugins.github.api.data.pullrequest.GHPullRequest
+import org.jetbrains.plugins.github.api.data.pullrequest.GHPullRequestState
 import org.jetbrains.plugins.github.pullrequest.comment.convertToHtml
 import org.jetbrains.plugins.github.pullrequest.data.GHPRDataContext
 import org.jetbrains.plugins.github.pullrequest.data.GHReactionsService
@@ -26,10 +31,16 @@ import org.jetbrains.plugins.github.pullrequest.ui.details.model.GHPRDetailsFull
 import org.jetbrains.plugins.github.pullrequest.ui.emoji.GHReactionViewModelImpl
 import org.jetbrains.plugins.github.pullrequest.ui.emoji.GHReactionsViewModel
 
-class GHPRDetailsTimelineViewModel internal constructor(private val project: Project,
-                                                        parentCs: CoroutineScope,
-                                                        private val dataContext: GHPRDataContext,
-                                                        private val dataProvider: GHPRDataProvider) {
+class GHPRDetailsTimelineViewModel internal constructor(
+  private val project: Project,
+  parentCs: CoroutineScope,
+  private val dataContext: GHPRDataContext,
+  private val dataProvider: GHPRDataProvider,
+) {
+  companion object {
+    private val LOG = logger<GHPRDetailsTimelineViewModel>()
+  }
+
   private val cs = parentCs.childScope(this::class)
 
   private val currentUser: GHUser = dataContext.securityService.currentUser
@@ -47,16 +58,31 @@ class GHPRDetailsTimelineViewModel internal constructor(private val project: Pro
   val reactionsVm: GHReactionsViewModel =
     GHReactionViewModelImpl(cs, dataProvider.id.id, loadedReactionsState, currentUser, reactionsService, reactionIconsProvider)
 
+  val isMerged: StateFlow<Boolean> =
+    details.mapState { it.getOrNull()?.state == GHPullRequestState.MERGED }
+  val canDeleteMergedBranch: StateFlow<Boolean> =
+    details.mapState {
+      val details = it.getOrNull() ?: return@mapState false
+      details.canDeleteHeadRef && details.state == GHPullRequestState.MERGED
+    }
+
+  val headRefName: StateFlow<String?> =
+    details.mapState { it.getOrNull()?.headRefName }
+
   private fun createDetails(data: GHPullRequest): GHPRDetailsFull = GHPRDetailsFull(
     dataProvider.id,
     data.url,
     data.author ?: dataContext.securityService.ghostUser,
     data.createdAt,
+    data.state,
     data.title.convertToHtml(project),
     data.body,
     data.body.convertToHtml(project),
+    data.headRefId,
+    data.headRefName,
     data.viewerCanUpdate,
     data.viewerCanReact,
+    data.viewerCanDeleteHeadRef && data.headRefId != null,
     data.reactions.nodes
   )
 
@@ -73,14 +99,29 @@ class GHPRDetailsTimelineViewModel internal constructor(private val project: Pro
       requestFocus()
     }
   }
+
+  fun deleteMergedBranch() {
+    if (!canDeleteMergedBranch.value) return
+    val details = details.value.getOrNull() ?: return
+    val refId = details.headRefId ?: return
+
+    cs.launch {
+      runCatchingUser {
+        dataProvider.detailsData.deleteMergedBranch(refId)
+      }.onFailure { e ->
+        LOG.warn(e)
+      }
+    }
+  }
 }
 
-class GHPREditDescriptionViewModel internal constructor(project: Project,
-                                                        parentCs: CoroutineScope,
-                                                        private val detailsData: GHPRDetailsDataProvider,
-                                                        initialText: String,
-                                                        private val onDone: () -> Unit)
-  : CodeReviewSubmittableTextViewModelBase(project, parentCs, initialText), CodeReviewTextEditingViewModel {
+class GHPREditDescriptionViewModel internal constructor(
+  project: Project,
+  parentCs: CoroutineScope,
+  private val detailsData: GHPRDetailsDataProvider,
+  initialText: String,
+  private val onDone: () -> Unit,
+) : CodeReviewSubmittableTextViewModelBase(project, parentCs, initialText), CodeReviewTextEditingViewModel {
   override fun save() {
     submit {
       detailsData.updateDetails(description = it)

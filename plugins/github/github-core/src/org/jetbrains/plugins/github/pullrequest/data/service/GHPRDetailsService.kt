@@ -35,4 +35,6 @@ internal interface GHPRDetailsService {
   suspend fun rebaseMerge(pullRequestId: GHPRIdentifier, currentHeadRef: String)
 
   suspend fun squashMerge(pullRequestId: GHPRIdentifier, commitMessage: Pair<String, String>, currentHeadRef: String)
+
+  suspend fun deleteMergedBranch(pullRequestId: GHPRIdentifier, refId: String)
 }

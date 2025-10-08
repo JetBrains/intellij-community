@@ -125,6 +125,10 @@
   </extensions>
 
   <actions>
+    <action id="GitHub.Timeline.DeleteMergedBranch"
+            class="org.jetbrains.plugins.github.pullrequest.action.GHPRDeleteMergedHeadAction"
+            icon="AllIcons.General.Delete"/>
+
     <action id="Github.Sync.Fork"
             class="org.jetbrains.plugins.github.GithubSyncForkAction"
             icon="AllIcons.Vcs.Vendors.Github">

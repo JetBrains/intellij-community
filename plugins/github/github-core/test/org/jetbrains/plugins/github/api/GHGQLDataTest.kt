@@ -32,7 +32,6 @@ import org.jetbrains.plugins.github.api.data.GHReactionContent
 import org.junit.Ignore
 import org.junit.Test
 import org.junit.jupiter.api.assertDoesNotThrow
-import org.junit.jupiter.api.assertThrows
 import org.junit.runner.RunWith
 import org.junit.runners.Parameterized
 import java.util.*
@@ -526,6 +525,8 @@ private object TestCases {
       GHGQLRequests.PullRequest.markFileAsViewed(DUMMY_SERVER_PATH, DUMMY_TEXT, DUMMY_TEXT),
       GHGQLRequests.PullRequest.unmarkFileAsViewed(DUMMY_SERVER_PATH, DUMMY_TEXT, DUMMY_TEXT),
 
+      GHGQLRequests.Ref.delete(DUMMY_SERVER_PATH, DUMMY_TEXT),
+
       GHGQLRequests.PullRequest.Timeline.items(DUMMY_SERVER_PATH, DUMMY_TEXT, DUMMY_TEXT, DUMMY_NUMBER, DUMMY_PAGINATION),
       GHGQLRequests.PullRequest.Timeline.items(DUMMY_SERVER_PATH, DUMMY_TEXT, DUMMY_TEXT, DUMMY_NUMBER, null),
       GHGQLRequests.PullRequest.Review.create(DUMMY_SERVER_PATH, DUMMY_TEXT, DUMMY_PR_EVENT, DUMMY_TEXT, DUMMY_TEXT, listOf()),
@@ -586,8 +587,8 @@ class GHGQLDeserializationAssumptionsTest {
   )
 
   @Test
-  fun `deserializing a missing value instead of a list is not fine`() {
-    assertThrows<Exception> { mapper.readValue("""{}""", ListHolder::class.java) }
+  fun `deserializing a missing value instead of a list is fine`() {
+    assertDoesNotThrow { mapper.readValue("""{}""", ListHolder::class.java) }
   }
 
   @Test
