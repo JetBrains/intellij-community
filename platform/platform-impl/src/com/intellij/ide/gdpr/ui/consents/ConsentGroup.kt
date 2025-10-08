@@ -16,8 +16,7 @@ internal class ConsentGroup(
     val CONSENT_GROUP_MAPPING: Map<String, (Consent) -> Boolean> = mapOf(
       DATA_COLLECTION_GROUP_ID to { consent ->
         ConsentOptions.condUsageStatsConsent().test(consent) ||
-        ConsentOptions.condTraceDataCollectionComConsent().test(consent) ||
-        ConsentOptions.condTraceDataCollectionNonComConsent().test(consent)
+        ConsentOptions.condTraceDataCollectionConsent().test(consent)
       }
     )
   }
