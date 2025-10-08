@@ -909,6 +909,13 @@ jvm_import(
 )
 
 jvm_import(
+  name = "com-typesafe-config",
+  jar = "@com_typesafe-config-1_4_4_http//file",
+  source_jar = "@com_typesafe-config-1_4_4_http//file",
+  visibility = ["//visibility:public"]
+)
+
+jvm_import(
   name = "commons-cli",
   jar = "@commons-cli-commons-cli-1_10_0_http//file",
   source_jar = "@commons-cli-commons-cli-1_10_0_http//file",
@@ -1557,6 +1564,27 @@ jvm_import(
 )
 
 jvm_import(
+  name = "fleet-io-ktor-server-cio",
+  jar = "@io_ktor-ktor-server-cio-jvm-3_1_3_http//file",
+  source_jar = "@io_ktor-ktor-server-cio-jvm-3_1_3_http//file",
+  visibility = ["//visibility:public"]
+)
+
+jvm_import(
+  name = "fleet-io-ktor-server-core",
+  jar = "@io_ktor-ktor-server-core-jvm-3_1_3_http//file",
+  source_jar = "@io_ktor-ktor-server-core-jvm-3_1_3_http//file",
+  visibility = ["//visibility:public"]
+)
+
+jvm_import(
+  name = "fleet-io-ktor-server-host-common",
+  jar = "@io_ktor-ktor-server-host-common-jvm-3_1_3_http//file",
+  source_jar = "@io_ktor-ktor-server-host-common-jvm-3_1_3_http//file",
+  visibility = ["//visibility:public"]
+)
+
+jvm_import(
   name = "fleet-io-ktor-sse",
   jar = "@io_ktor-ktor-sse-jvm-3_1_3_http//file",
   source_jar = "@io_ktor-ktor-sse-jvm-3_1_3_http//file",
@@ -1581,6 +1609,13 @@ jvm_import(
   name = "fleet-io-ktor-websockets",
   jar = "@io_ktor-ktor-websockets-jvm-3_1_3_http//file",
   source_jar = "@io_ktor-ktor-websockets-jvm-3_1_3_http//file",
+  visibility = ["//visibility:public"]
+)
+
+jvm_import(
+  name = "fleet-org-fusesource-jansi",
+  jar = "@org_fusesource_jansi-jansi-2_4_1_http//file",
+  source_jar = "@org_fusesource_jansi-jansi-2_4_1_http//file",
   visibility = ["//visibility:public"]
 )
 
