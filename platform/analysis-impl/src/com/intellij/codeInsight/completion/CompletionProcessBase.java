@@ -9,7 +9,7 @@ public interface CompletionProcessBase extends CompletionProcess {
   /**
    * Add a prefix to be watched for restarting completion.
    *
-   * @param startOffset      offset from which the prefix starts.
+   * @param startOffset      offset in the document from which the prefix starts.
    * @param restartCondition condition to restart completion when the prefix changes.
    */
   void addWatchedPrefix(int startOffset, @NotNull ElementPattern<String> restartCondition);
