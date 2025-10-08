@@ -102,6 +102,7 @@ class IntelliJMonorepoPrePushHandlerTest {
           "  IDEA-123", "  IDEA-123  ",
           "IJPL-123 header",
           "Header IJPL-123",
+          "[sub system 123] docs: fix typo",
           "Header IJPL-123 header",
           "IJPL-123 header",
           "Header IJPL-123",
