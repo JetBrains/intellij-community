@@ -13,8 +13,7 @@ import com.intellij.ui.components.JBLabel
 import com.intellij.ui.components.labels.LinkLabel
 import com.intellij.ui.components.labels.LinkListener
 import com.intellij.ui.components.panels.HorizontalLayout
-import com.intellij.ui.scale.JBUIScale
-import com.intellij.util.JBHiDPIScaledImage
+import com.intellij.util.ImageLoader
 import com.intellij.util.ui.JBUI
 import com.intellij.util.ui.StartupUiUtil
 import com.intellij.util.ui.UIUtil
@@ -22,7 +21,6 @@ import org.jetbrains.annotations.ApiStatus.Internal
 import org.jetbrains.annotations.Nls
 import java.awt.*
 import java.awt.event.MouseEvent
-import javax.imageio.ImageIO
 import javax.swing.*
 
 /**
@@ -114,10 +112,22 @@ abstract class LicenseExpirationDialog(project: Project?, private val imagePath:
 
     panel.add(buttons, BorderLayout.SOUTH)
 
-    val image = loadImage()!!
     val label = object : JBLabel() {
+      val image = loadImage()!!
+      var scaleImage: Image? = null
+      var imageWidth = 0
+      var imageHeight = 0
+
       override fun paintComponent(g: Graphics) {
-        StartupUiUtil.drawImage(g, image, Rectangle(0, 0, width, height), this)
+        val newWidth = width
+        val newHeight = height
+
+        if (scaleImage == null || imageWidth != newWidth || imageHeight != newHeight) {
+          imageWidth = newWidth
+          imageHeight = newHeight
+          scaleImage = ImageLoader.scaleImage(image, newWidth, newHeight)
+        }
+        StartupUiUtil.drawImage(g, scaleImage!!, Rectangle(0, 0, newWidth, newHeight), this)
       }
     }
     configureHeader(label)
@@ -156,7 +166,7 @@ abstract class LicenseExpirationDialog(project: Project?, private val imagePath:
 
   private fun loadImage(): Image? {
     try {
-      return JBHiDPIScaledImage(ImageIO.read(javaClass.getResourceAsStream(imagePath)), JBUIScale.sysScale().toDouble())
+      return ImageLoader.loadFromStream(javaClass.getResourceAsStream(imagePath)!!)
     }
     catch (e: Exception) {
       logger<InProductNotificationDialog>().error("Image $imagePath is not loaded: $e")
