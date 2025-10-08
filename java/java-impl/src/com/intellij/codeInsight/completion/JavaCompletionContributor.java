@@ -839,10 +839,12 @@ public final class JavaCompletionContributor extends CompletionContributor imple
     PsiFile originalFile = parameters.getOriginalFile();
 
     boolean first = parameters.getInvocationCount() <= 1;
+    boolean instantiableOnly = JavaSmartCompletionContributor.AFTER_NEW.accepts(position);
     JavaCompletionProcessor.Options options =
       JavaCompletionProcessor.Options.DEFAULT_OPTIONS
         .withCheckAccess(first)
         .withFilterStaticAfterInstance(first)
+        .withInstantiableOnly(instantiableOnly)
         .withShowInstanceInStaticContext(!first && !smart);
 
     for (LookupElement element : JavaCompletionUtil.processJavaReference(position,
