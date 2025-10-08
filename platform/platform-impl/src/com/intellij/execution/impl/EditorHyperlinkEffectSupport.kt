@@ -27,6 +27,9 @@ internal class EditorHyperlinkEffectSupport(
     @RequiresEdt(generateAssertion = false)
     get() = followedLinkWrapper?.linkRangeHighlighter
 
+  /**
+   * @param link a highlighter that is already in the editor, expected to be valid
+   */
   @RequiresEdt(generateAssertion = false)
   fun linkFollowed(link: RangeHighlighter) {
     if (followedLinkWrapper?.isSame(link) == true) return
