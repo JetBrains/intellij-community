@@ -11,7 +11,6 @@ internal enum class DataCollectionAgreement(private val code: Char) {
   companion object {
     private const val METADATA_LICENSE_POSITION = 27
 
-    @JvmStatic
     fun getInstance(): DataCollectionAgreement? {
       val metadata = LicensingFacade.getInstance()?.metadata ?: return null
       if (metadata.length <= METADATA_LICENSE_POSITION) return null
