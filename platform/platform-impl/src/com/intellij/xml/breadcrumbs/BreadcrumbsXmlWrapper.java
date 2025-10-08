@@ -15,7 +15,9 @@ import com.intellij.ui.ExperimentalUI;
 import com.intellij.ui.components.breadcrumbs.Crumb;
 import com.intellij.ui.paint.LinePainter2D;
 import com.intellij.ui.paint.RectanglePainter2D;
+import com.intellij.util.messages.Topic;
 import com.intellij.util.ui.JBUI;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -111,4 +113,8 @@ public final class BreadcrumbsXmlWrapper extends BreadcrumbsPanel implements Bor
     Object obj = BreadcrumbsPanel.getBreadcrumbsComponent(editor);
     return obj instanceof BreadcrumbsXmlWrapper ? (BreadcrumbsXmlWrapper)obj : null;
   }
+
+  @ApiStatus.Internal
+  @Topic.AppLevel
+  public static final Topic<Runnable> FORCE_RELOAD_BREADCRUMBS = new Topic<>(Runnable.class, Topic.BroadcastDirection.TO_DIRECT_CHILDREN);
 }

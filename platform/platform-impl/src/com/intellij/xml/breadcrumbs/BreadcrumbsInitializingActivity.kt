@@ -52,6 +52,7 @@ private class BreadcrumbsInitializingActivity : ProjectActivity {
     FileBreadcrumbsCollector.EP_NAME.getPoint(project).addChangeListener({ reinitBreadcrumbsInAllEditors(project, true) }, project)
     VirtualFileManager.getInstance().addVirtualFileListener(MyVirtualFileListener(project), project)
     connection.subscribe(UISettingsListener.TOPIC, UISettingsListener { reinitBreadcrumbsInAllEditors(project, true) })
+    connection.subscribe(BreadcrumbsXmlWrapper.FORCE_RELOAD_BREADCRUMBS, Runnable { reinitBreadcrumbsInAllEditors(project, true) })
 
     val fileEditorManager = project.serviceAsync<FileEditorManager>()
     val above = isAbove()
