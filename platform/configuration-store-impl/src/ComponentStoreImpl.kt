@@ -456,10 +456,7 @@ abstract class ComponentStoreImpl : IComponentStore {
         if (modificationCountChanged && state != null && isReportStatisticAllowed(stateSpec, storageSpec)) {
           featureUsageSettingManager.logConfigurationChanged(effectiveComponentName, state)
         }
-
-        if (state !== HandledByWSM) {
-          setStateToSaveSessionProducer(state, info, effectiveComponentName, sessionProducer)
-        } // else: WSM will call setStateToSaveSessionProducer by itself
+        setStateToSaveSessionProducer(state, info, effectiveComponentName, sessionProducer)
       }
     }
   }

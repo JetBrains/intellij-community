@@ -461,7 +461,7 @@ private class StateGetterImpl<S : Any>(
       null
     }
 
-    val serializedStateAfterLoad = if (stateAfterLoad == null || stateAfterLoad == HandledByWSM) {
+    val serializedStateAfterLoad = if (stateAfterLoad == null) {
       serializedState
     }
     else {

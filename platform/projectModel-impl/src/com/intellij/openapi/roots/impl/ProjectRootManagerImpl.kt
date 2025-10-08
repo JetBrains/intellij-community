@@ -2,8 +2,6 @@
 package com.intellij.openapi.roots.impl
 
 import com.intellij.openapi.application.ApplicationManager
-import com.intellij.openapi.components.HandledByWSM
-import com.intellij.openapi.components.PersistentStateComponent
 import com.intellij.openapi.components.State
 import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.extensions.ProjectExtensionPointName
@@ -31,7 +29,6 @@ import com.intellij.workspaceModel.ide.WsmProjectSettingsEntityUtils
 import com.intellij.workspaceModel.ide.WsmSingletonEntityUtils
 import com.intellij.workspaceModel.ide.impl.legacyBridge.module.roots.ModuleRootComponentBridge
 import kotlinx.coroutines.CoroutineScope
-import org.jdom.Element
 import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.jps.model.module.JpsModuleSourceRootType
 import java.util.concurrent.ConcurrentHashMap
@@ -45,7 +42,7 @@ private val EP_NAME = ProjectExtensionPointName<ProjectExtension>("com.intellij.
 open class ProjectRootManagerImpl(
   @JvmField val project: Project,
   @JvmField protected val coroutineScope: CoroutineScope,
-) : ProjectRootManagerEx(), PersistentStateComponent<Element> {
+) : ProjectRootManagerEx() {
 
   private val projectJdkEventDispatcher = EventDispatcher.create(ProjectJdkListener::class.java)
   private val moduleRootManagerInstances = ConcurrentHashMap<Module, ModuleRootManager>()
@@ -419,15 +416,6 @@ open class ProjectRootManagerImpl(
 
   override fun getModuleRootManager(module: Module): ModuleRootManager {
     return moduleRootManagerInstances.computeIfAbsent(module) { ModuleRootComponentBridge(module) }
-  }
-
-  @ApiStatus.Internal
-  override fun loadState(element: Element) {
-  }
-
-  @ApiStatus.Internal
-  override fun getState(): Element? {
-    return HandledByWSM
   }
 
   @ApiStatus.Internal
