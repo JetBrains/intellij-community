@@ -10,4 +10,5 @@ public interface RemoteServerListener extends EventListener {
 
   void serverAdded(@NotNull RemoteServer<?> server);
   void serverRemoved(@NotNull RemoteServer<?> server);
+  default void serverChanged(@NotNull RemoteServer<?> server) {}
 }
