@@ -308,17 +308,32 @@ public abstract class MetaAnnotationUtil {
     @NotNull PsiModifierListOwner listOwner,
     @NotNull Collection<String> annotations
   ) {
+    return findMetaAnnotationsInHierarchy(listOwner, annotations, new HashSet<>());
+  }
+
+  private static Stream<PsiAnnotation> findMetaAnnotationsInHierarchy(
+    @NotNull PsiModifierListOwner listOwner,
+    @NotNull Collection<String> annotations,
+    @NotNull Set<PsiModifierListOwner> visited
+  ) {
+    if (!visited.add(listOwner)) return Stream.empty();
     Stream<PsiAnnotation> stream = findMetaAnnotations(listOwner, annotations);
     if (listOwner instanceof PsiClass) {
       for (PsiClass superClass : ((PsiClass)listOwner).getSupers()) {
-        stream = Stream.concat(stream, findMetaAnnotationsInHierarchy(superClass, annotations));
+        stream = Stream.concat(stream, findMetaAnnotationsInHierarchy(superClass, annotations, visited));
       }
     }
     else if (listOwner instanceof PsiMethod) {
       for (PsiMethod method : ((PsiMethod)listOwner).findSuperMethods()) {
-        stream = Stream.concat(stream, findMetaAnnotationsInHierarchy(method, annotations));
+        stream = Stream.concat(stream, findMetaAnnotationsInHierarchy(method, annotations, visited));
       }
     }
+
+    List<PsiClass> resolvedAnnotations = getResolvedClassesInAnnotationsList(listOwner);
+    for (PsiClass annotationClass : resolvedAnnotations) {
+      stream = Stream.concat(stream, findMetaAnnotationsInHierarchy(annotationClass, annotations, visited));
+    }
+
     return stream;
   }
 

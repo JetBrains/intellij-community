@@ -1403,6 +1403,24 @@ abstract class KotlinJUnitMalformedDeclarationInspectionTest : KotlinJUnitMalfor
           fun beforeAll(foo: String) { println(foo) }
         }
       }
+      
+      @org.junit.jupiter.api.extension.ExtendWith(MyTest.MyCallback::class)
+      @CustomTestAnnotation
+      annotation class MyTest {
+          class MyCallback : org.junit.jupiter.api.extension.AfterEachCallback {
+              override fun afterEach(context: org.junit.jupiter.api.extension.ExtensionContext) {
+              }
+          }
+      }
+
+      @MyTest
+      class MultipleMetaParameterResolver {
+        companion object {
+          @JvmStatic
+          @org.junit.jupiter.api.BeforeAll
+          fun beforeAll(foo: String) { println(foo) }
+        }
+      }
     """.trimIndent())
   }
 
