@@ -221,6 +221,7 @@ commandInterface
 community-resources
 fleet/andel
 fleet/bifurcan
+fleet/bundles
 fleet/compiler-plugins
 fleet/fastutil
 fleet/junit4
