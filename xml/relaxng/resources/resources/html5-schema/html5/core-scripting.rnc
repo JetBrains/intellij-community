@@ -34,6 +34,7 @@ datatypes w = "http://whattf.org/datatype-draft"
 		&	script.attrs.integrity?
 		&	embedded.content.attrs.crossorigin?
 		&	common.attrs.blocking?
+		&	common.attrs.fetchpriority?
 		&	referrerpolicy?
 		)
 		script.attrs.src =

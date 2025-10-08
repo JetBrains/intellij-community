@@ -9,9 +9,10 @@ datatypes w = "http://whattf.org/datatype-draft"
 	common.attrs.interact &=
 		(	common.attrs.contenteditable?
 		&	common.attrs.draggable?
-		&	common.attrs.hidden?
 		&	common.attrs.spellcheck?
 		&	common.attrs.autocapitalize?
+		&	common.attrs.hidden?
+		&	common.attrs.popover?
 		)
 
 	common.attrs.other &= common.attrs.interact
@@ -20,7 +21,7 @@ datatypes w = "http://whattf.org/datatype-draft"
 
 	common.attrs.contenteditable =
 		attribute contenteditable {
-			w:string "true" | w:string "false" | w:string ""
+			w:string "true" | w:string "plaintext-only" | w:string "false" | w:string ""
 		}
 
 ## Draggable Element: draggable
@@ -35,6 +36,13 @@ datatypes w = "http://whattf.org/datatype-draft"
 	common.attrs.hidden =
 		attribute hidden {
 			w:string "hidden" | w:string "until-found" | w:string ""
+		}
+
+## Popover Element: popover
+
+	common.attrs.popover =
+		attribute popover {
+			w:string "auto" | w:string "manual" | w:string "hint" | w:string ""
 		}
 
 ## Global attributes applicable on elements with editable content

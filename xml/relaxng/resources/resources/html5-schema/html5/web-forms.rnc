@@ -163,6 +163,7 @@ datatypes w = "http://whattf.org/datatype-draft"
 		&	common-form.attrs
 		&	input.button.attrs.type
 		&	input.button.attrs.value? 
+		&	button.attrs.popover-controls
 		&	(	common.attrs.aria.implicit.button
 			|	common.attrs.aria.role.button
 			|	common.attrs.aria.role.checkbox
@@ -198,6 +199,7 @@ datatypes w = "http://whattf.org/datatype-draft"
 		&	common-form.attrs
 		&	input.submit.attrs.type
 		&	input.submit.attrs.value? 
+		&	button.attrs.popover-controls
 		&	(	common.attrs.aria.implicit.button
 			|	common.attrs.aria.role.button
 			)?
@@ -222,6 +224,7 @@ datatypes w = "http://whattf.org/datatype-draft"
 		&	common-form.attrs
 		&	input.reset.attrs.type
 		&	input.reset.attrs.value? 
+		&	button.attrs.popover-controls
 		&	(	common.attrs.aria.implicit.button
 			|	common.attrs.aria.role.button
 			)?
@@ -290,6 +293,7 @@ datatypes w = "http://whattf.org/datatype-draft"
 		&	input.image.attrs.type
 		&	input.image.attrs.alt 
 		&	input.image.attrs.src? 
+		&	button.attrs.popover-controls
 		&	(	common.attrs.aria.implicit.button
 			|	common.attrs.aria.role.button
 			|	common.attrs.aria.role.link
@@ -444,6 +448,18 @@ datatypes w = "http://whattf.org/datatype-draft"
 		attribute value {
 			string
 		}
+	button.attrs.popover-controls =
+		(	button.attrs.popovertarget?
+		&	button.attrs.popovertargetaction?
+		)
+	button.attrs.popovertarget =
+		attribute popovertarget {
+			common.data.idref
+		}
+	button.attrs.popovertargetaction =
+		attribute popovertargetaction {
+			w:string "hide" | w:string "show" | w:string "toggle"
+		}
 	button.inner = 
 		( common.inner.phrasing )
 	
@@ -456,6 +472,7 @@ datatypes w = "http://whattf.org/datatype-draft"
 		&	common-form.attrs
 		&	button.submit.attrs.type?
 		&	button.attrs.value?
+		&	button.attrs.popover-controls
 		&	(	common.attrs.aria.implicit.button
 			|	common.attrs.aria.role.button
 			|	common.attrs.aria.role.checkbox
@@ -485,6 +502,7 @@ datatypes w = "http://whattf.org/datatype-draft"
 		&	common-form.attrs
 		&	button.reset.attrs.type
 		&	button.attrs.value? #REVISIT I guess this still affects the DOM
+		&	button.attrs.popover-controls
 		&	(	common.attrs.aria.implicit.button
 			|	common.attrs.aria.role.button
 			|	common.attrs.aria.role.checkbox
@@ -513,6 +531,7 @@ datatypes w = "http://whattf.org/datatype-draft"
 		&	common-form.attrs
 		&	button.button.attrs.type
 		&	button.attrs.value? #REVISIT I guess this still affects the DOM
+		&	button.attrs.popover-controls
 		&	(	common.attrs.aria.implicit.button
 			|	common.attrs.aria.role.button
 			|	common.attrs.aria.role.checkbox

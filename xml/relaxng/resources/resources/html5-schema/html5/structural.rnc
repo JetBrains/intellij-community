@@ -187,13 +187,21 @@
 
 	common.elem.flow |= main.elem
 
-## search content: <search>
+## Search: <search>
 
 	search.elem =
 		element search { search.inner & search.attrs }
 	search.attrs =
 		(	common.attrs
-		&	common.attrs.aria?
+		&	(	common.attrs.aria.implicit.search
+			|	common.attrs.aria.landmark.search
+			|	common.attrs.aria.landmark.form
+			|	common.attrs.aria.role.group
+			|	common.attrs.aria.role.none
+			|	common.attrs.aria.role.presentation
+			|	common.attrs.aria.role.region
+			|	common.attrs.aria.role.search
+			)?
 		)
 	search.inner =
 		( common.inner.flow )
