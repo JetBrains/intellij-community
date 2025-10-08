@@ -623,6 +623,87 @@ class ContentRootCollectorTest : MavenTestCase() {
     )
   }
 
+  @Test
+  fun `test main only content roots`() = runBlocking {
+    val baseContentRoot = "/home/a/b/c/maven"
+    val sourceMain = "/home/a/b/c/maven/src/main/java"
+    val resourceMain = "/home/a/b/c/maven/src/main/resources"
+    val target = "/home/a/b/c/maven/target"
+    val generatedSourceFolder = "/home/a/b/c/maven/target/generated-sources/java"
+
+    val contentRoots = collect(moduleType = StandardMavenModuleType.MAIN_ONLY,
+                               projectRootFolder = baseContentRoot,
+                               mainSourceFolders = listOf(sourceMain),
+                               mainResourceFolders = listOf(resourceMain),
+                               mainGeneratedSourceFolders = listOf(generatedSourceFolder),
+                               excludeFolders = listOf(target))
+
+    assertContentRoots(contentRoots,
+                       listOf(
+                         ContentRootTestData(
+                           expectedPath = sourceMain,
+                           expectedMainSourceFolders = listOf(sourceMain),
+                         ),
+                         ContentRootTestData(
+                           expectedPath = resourceMain,
+                           expectedMainResourcesFolders = listOf(resourceMain),
+                         ),
+                         ContentRootTestData(
+                           expectedPath = generatedSourceFolder,
+                           expectedMainGeneratedFolders = listOf(generatedSourceFolder),
+                         ),
+                       )
+    )
+  }
+
+  @Test
+  fun `test main only addional content roots`() = runBlocking {
+    val baseContentRoot = "/home/a/b/c/maven"
+    val sourceMainAdditional = "/home/a/b/c/maven/src/main/java-9"
+    val target = "/home/a/b/c/maven/target"
+
+    val contentRoots = collect(moduleType = StandardMavenModuleType.MAIN_ONLY_ADDITIONAL,
+                               projectRootFolder = baseContentRoot,
+                               mainSourceFolders = listOf(sourceMainAdditional),
+                               excludeFolders = listOf(target))
+
+    assertContentRoots(contentRoots,
+                       listOf(
+                         ContentRootTestData(
+                           expectedPath = sourceMainAdditional,
+                           expectedMainSourceFolders = listOf(sourceMainAdditional),
+                         ),
+                       )
+    )
+  }
+
+  @Test
+  fun `test test only content roots`() = runBlocking {
+    val baseContentRoot = "/home/a/b/c/maven"
+    val sourceTest = "/home/a/b/c/maven/src/test/java"
+    val target = "/home/a/b/c/maven/target"
+    val generatedTestSourceFolder = "/home/a/b/c/maven/target/generated-sources-test/java"
+
+    val contentRoots = collect(moduleType = StandardMavenModuleType.TEST_ONLY,
+                               projectRootFolder = baseContentRoot,
+                               testSourceFolders = listOf(sourceTest),
+                               testGeneratedSourceFolders = listOf(generatedTestSourceFolder),
+                               excludeFolders = listOf(target))
+
+    assertContentRoots(contentRoots,
+                       listOf(
+                         ContentRootTestData(
+                           expectedPath = sourceTest,
+                           expectedTestSourceFolders = listOf(sourceTest),
+                         ),
+                         ContentRootTestData(
+                           expectedPath = generatedTestSourceFolder,
+                           expectedTestGeneratedFolders = listOf(generatedTestSourceFolder),
+                         ),
+                       )
+    )
+  }
+
   private fun collect(
     moduleType: StandardMavenModuleType = StandardMavenModuleType.SINGLE_MODULE,
     projectRootFolder: String? = null,
