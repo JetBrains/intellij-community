@@ -577,6 +577,24 @@
           <option name="BACKGROUND" value="ededed"/>
         </value>
       </option>
+      <option name="KUBERNETES_INLAY_ERROR">
+        <value>
+          <option name="FOREGROUND" value="CC3645"/>
+          <option name="BACKGROUND" value="E5576526"/>
+        </value>
+      </option>
+      <option name="KUBERNETES_INLAY_SUCCESS">
+        <value>
+          <option name="FOREGROUND" value="57965C"/>
+          <option name="BACKGROUND" value="208A3C26"/>
+        </value>
+      </option>
+      <option name="KUBERNETES_INLAY_INTERMEDIATE">
+        <value>
+          <option name="FOREGROUND" value="B4B8BF"/>
+          <option name="BACKGROUND" value="A8ADBD26"/>
+        </value>
+      </option>
       <option name="INLAY_BUTTON_DEFAULT">
         <value>
           <option name="FOREGROUND" value="9DA0A8"/>
@@ -2462,6 +2480,24 @@
           <option name="BACKGROUND" value="3b3b3b"/>
         </value>
       </option>
+      <option name="KUBERNETES_INLAY_ERROR">
+        <value>
+          <option name="FOREGROUND" value="ff6b6b"/>
+          <option name="BACKGROUND" value="5a2b2b"/>
+        </value>
+      </option>
+      <option name="KUBERNETES_INLAY_SUCCESS">
+        <value>
+          <option name="FOREGROUND" value="9ad27a"/>
+          <option name="BACKGROUND" value="1f3a1f"/>
+        </value>
+      </option>
+      <option name="KUBERNETES_INLAY_INTERMEDIATE">
+        <value>
+          <option name="FOREGROUND" value="9bbce6"/>
+          <option name="BACKGROUND" value="305d78"/>
+        </value>
+      </option>
       <option name="INLAY_BUTTON_DEFAULT">
         <value>
           <option name="FOREGROUND" value="9DA0A8"/>
@@ -2496,6 +2532,24 @@
         <value>
           <option name="FOREGROUND" value="9da0a8"/>
           <option name="EFFECT_COLOR" value="8150be"/>
+        </value>
+      </option>
+      <option name="KUBERNETES_INLAY_ERROR">
+        <value>
+          <option name="FOREGROUND" value="CC3645"/>
+          <option name="BACKGROUND" value="E5576526"/>
+        </value>
+      </option>
+      <option name="KUBERNETES_INLAY_SUCCESS">
+        <value>
+          <option name="FOREGROUND" value="1F8039"/>
+          <option name="BACKGROUND" value="208A3C26"/>
+        </value>
+      </option>
+      <option name="KUBERNETES_INLAY_INTERMEDIATE">
+        <value>
+          <option name="FOREGROUND" value="6C707E"/>
+          <option name="BACKGROUND" value="A8ADBD26"/>
         </value>
       </option>
       <option name="INLAY_BUTTON_HINT">

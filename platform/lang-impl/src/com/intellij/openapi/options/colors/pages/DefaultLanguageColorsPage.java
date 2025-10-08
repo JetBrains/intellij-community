@@ -205,7 +205,18 @@ public final class DefaultLanguageColorsPage implements RainbowColorSettingsPage
     new AttributesDescriptor(
       OptionsBundle.messagePointer("options.attribute.descriptor.inlay.hint.inlay.button.hovered"),
       DefaultLanguageHighlighterColors.INLAY_BUTTON_HOVERED),
-
+    new AttributesDescriptor(
+      OptionsBundle.messagePointer("options.attribute.descriptor.inlay.hint.kubernetes.statuses.error"),
+      DefaultLanguageHighlighterColors.KUBERNETES_INLAY_ERROR
+    ),
+    new AttributesDescriptor(
+      OptionsBundle.messagePointer("options.attribute.descriptor.inlay.hint.kubernetes.statuses.success"),
+      DefaultLanguageHighlighterColors.KUBERNETES_INLAY_SUCCESS
+    ),
+    new AttributesDescriptor(
+      OptionsBundle.messagePointer("options.attribute.descriptor.inlay.hint.kubernetes.statuses.intermediate"),
+      DefaultLanguageHighlighterColors.KUBERNETES_INLAY_INTERMEDIATE
+    ),
     new AttributesDescriptor(
       OptionsBundle.messagePointer("options.attribute.descriptor.inlay.hint.text.without.background"),
       DefaultLanguageHighlighterColors.INLAY_TEXT_WITHOUT_BACKGROUND),
