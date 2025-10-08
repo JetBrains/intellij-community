@@ -29,14 +29,17 @@ import org.jetbrains.jewel.markdown.WithTextContent
  */
 @ApiStatus.Experimental
 @ExperimentalJewelApi
-public fun Node.readInlineMarkdown(markdownProcessor: MarkdownProcessor): List<InlineMarkdown> = buildList {
-    var current = this@readInlineMarkdown.firstChild
-    while (current != null) {
-        val inline = current.toInlineMarkdownOrNull(markdownProcessor)
-        if (inline != null) add(inline)
+public fun Node.readInlineMarkdown(markdownProcessor: MarkdownProcessor): List<InlineMarkdown> {
+    val inlines = buildList {
+        var current = this@readInlineMarkdown.firstChild
+        while (current != null) {
+            val inline = current.toInlineMarkdownOrNull(markdownProcessor)
+            if (inline != null) add(inline)
 
-        current = current.next
+            current = current.next
+        }
     }
+    return markdownProcessor.convertHtmlInlines(inlines)
 }
 
 /**
