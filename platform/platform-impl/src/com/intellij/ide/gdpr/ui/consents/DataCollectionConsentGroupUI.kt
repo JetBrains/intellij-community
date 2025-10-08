@@ -3,13 +3,11 @@ package com.intellij.ide.gdpr.ui.consents
 
 import com.intellij.ide.IdeBundle
 import com.intellij.ide.gdpr.DataCollectionAgreement
-import com.intellij.openapi.diagnostic.Logger
-import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.util.NlsSafe
 
 internal data class DataCollectionConsentGroupUI(
-  override val consentUis: List<ConsentUi>,
-) : ConsentGroupUi {
+  override val consentUis: List<ConsentUi>
+): ConsentGroupUi {
   override val forcedStateDescription: @NlsSafe String? = run {
     val customerDetailedDataSharingAgreement = DataCollectionAgreement.getInstance()
     val forcedStateDescription = when (customerDetailedDataSharingAgreement) {
@@ -22,22 +20,11 @@ internal data class DataCollectionConsentGroupUI(
       return@run forcedStateDescription
     }
     val externalSettings = AiDataCollectionExternalSettings.findSettingsImplementedByAiAssistant()
-    if (LOG.isDebugEnabled) {
-      LOG.debug("AiDataCollectionExternalSettings: $externalSettings")
-    }
-    if (externalSettings != null) {
-      val isForciblyDisabled = externalSettings.isForciblyDisabled()
-      if (LOG.isDebugEnabled) {
-        LOG.debug("AiDataCollectionExternalSettings: isForciblyDisabled: ${isForciblyDisabled}")
-      }
-      if (isForciblyDisabled) {
-        return@run externalSettings.getForciblyDisabledDescription() ?: IdeBundle.message("gdpr.consent.externally.disabled.warning")
-      }
+    if (externalSettings != null && externalSettings.isForciblyDisabled()) {
+      return@run externalSettings.getForciblyDisabledDescription() ?: IdeBundle.message("gdpr.consent.externally.disabled.warning")
     }
     return@run null
   }
 
   override val commentText: @NlsSafe String = IdeBundle.message("gdpr.data.collection.consent.group.comment.text")
 }
-
-private val LOG: Logger = logger<DataCollectionConsentGroupUI>()
