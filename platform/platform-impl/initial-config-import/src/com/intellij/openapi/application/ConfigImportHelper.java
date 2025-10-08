@@ -145,7 +145,10 @@ public final class ConfigImportHelper {
       return;
     }
 
-    var guessedOldConfigDirs = findConfigDirectories(newConfigDir, settings, args);
+    var guessedOldConfigDirs = findInheritedDirectory(log, newConfigDir, settings, args);
+    if (guessedOldConfigDirs == null) {
+      guessedOldConfigDirs = findConfigDirectories(newConfigDir, settings, args);
+    }
     var bestConfigGuess = guessedOldConfigDirs.directories.isEmpty() ? null : guessedOldConfigDirs.directories.getFirst();
     var tempBackup = (Path)null;
     var vmOptionFileChanged = false;
@@ -519,6 +522,44 @@ public final class ConfigImportHelper {
       catch (IOException ignore) { }
     }
     return max;
+  }
+
+  private static @Nullable ConfigDirsSearchResult findInheritedDirectory(
+    Logger log,
+    Path newConfigDir,
+    @Nullable ConfigImportSettings settings,
+    List<String> args
+  ) {
+    var inheritedPath = System.getenv(IMPORT_FROM_ENV_VAR);
+    log.info(IMPORT_FROM_ENV_VAR + "=" + inheritedPath);
+
+    if (inheritedPath != null) {
+      try {
+        var configDir = Path.of(inheritedPath).toAbsolutePath().normalize();
+        if (configDir.equals(newConfigDir)) {
+          log.warn("  ... points to the current settings directory");
+        }
+        else if (!Files.isDirectory(configDir)) {
+          log.warn("  ... points to a non-existing directory");
+        }
+        else if (settings == null || settings.shouldBeSeenAsImportCandidate(
+          configDir,
+          getPrefixFromSelector(getNameWithVersion(configDir)),
+          settings.getProductsToImportFrom(args)
+        )) {
+          var pair = new Pair<>(configDir, FileTime.from(Instant.now()));
+          return new ConfigDirsSearchResult(List.of(pair), false);
+        }
+        else {
+          log.info("  ... rejected by " + settings);
+        }
+      }
+      catch (Exception e) {
+        log.warn("  ... is not a valid path", e);
+      }
+    }
+
+    return null;
   }
 
   public static @NotNull ConfigDirsSearchResult findConfigDirectories(
