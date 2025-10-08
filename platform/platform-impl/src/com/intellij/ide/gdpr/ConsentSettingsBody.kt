@@ -6,12 +6,10 @@ import com.intellij.ide.IdeBundle
 import com.intellij.ide.gdpr.ConsentSettingsUi.ConsentStateSupplier
 import com.intellij.ide.gdpr.ui.consents.ConsentForcedState
 import com.intellij.ide.gdpr.ui.consents.ConsentForcedState.ExternallyDisabled
-import com.intellij.ide.gdpr.ui.consents.ConsentGroup
 import com.intellij.openapi.application.impl.ApplicationInfoImpl
 import com.intellij.openapi.options.ShowSettingsUtil
 import com.intellij.openapi.ui.DialogPanel
 import com.intellij.openapi.util.NlsSafe
-import com.intellij.ui.components.JBCheckBox
 import com.intellij.ui.dsl.builder.*
 import com.intellij.util.ui.JBUI
 import com.intellij.util.ui.UIUtil
@@ -33,9 +31,10 @@ internal fun createNoOptionsConsentSettings(preferencesMode: Boolean): DialogPan
 internal fun createConsentSettings(consentMapping: MutableCollection<ConsentStateSupplier>, preferencesMode: Boolean, consents: List<Consent>): DialogPanel {
   val addCheckBox = preferencesMode || consents.size > 1
   return panel {
-    val (singleConsents, consentsWithGroup) = partitionConsentsByGroupId(consents)
-    addGroupConsents(consentMapping, consentsWithGroup, addCheckBox)
-    addSingleConsents(consentMapping, singleConsents, addCheckBox)
+    for (consent in consents) {
+      val supplier = createConsentElement(consent, addCheckBox)
+      consentMapping.add(supplier)
+    }
     if (!ConsentOptions.getInstance().isEAP) {
       row {
         comment(IdeBundle.message("gdpr.hint.text.apply.to.all.installed.products", ApplicationInfoImpl.getShadowInstance().getShortCompanyName()))
@@ -49,45 +48,6 @@ internal fun createConsentSettings(consentMapping: MutableCollection<ConsentStat
   }.apply {
     background = if (preferencesMode) UIUtil.getPanelBackground() else UIUtil.getEditorPaneBackground()
     addBorder(preferencesMode)
-  }
-}
-
-internal fun partitionConsentsByGroupId(consents: List<Consent>): Pair<List<Consent>, List<ConsentGroup>> {
-  var ungroupedConsents = consents.toList()
-  val consentGroups = ConsentGroup.CONSENT_GROUP_MAPPING.mapNotNull { (groupId, predicate) ->
-    val matchingConsents = ungroupedConsents.filter { predicate(it) }
-    if (matchingConsents.isEmpty()) null
-    else {
-      ungroupedConsents = ungroupedConsents.filterNot(predicate)
-      ConsentGroup(groupId, matchingConsents)
-    }
-  }
-  return ungroupedConsents to consentGroups
-}
-
-private fun Panel.addSingleConsents(
-  consentMapping: MutableCollection<ConsentStateSupplier>,
-  singleConsents: List<Consent>,
-  addCheckBox: Boolean
-) {
-  singleConsents.forEach { consent ->
-    val supplier = createConsentElement(consent, addCheckBox)
-    consentMapping.add(supplier)
-  }
-}
-
-private fun Panel.addGroupConsents(
-  consentMapping: MutableCollection<ConsentStateSupplier>,
-  consentsGroups: List<ConsentGroup>,
-  addCheckBox: Boolean
-) {
-  consentsGroups.forEach { consentGroup ->
-    if (consentGroup.consents.size > 1) {
-      val suppliers = createGroupConsentsElement(consentGroup)
-      consentMapping.addAll(suppliers)
-    } else {
-      addSingleConsents(consentMapping, consentGroup.consents, addCheckBox)
-    }
   }
 }
 
@@ -108,93 +68,53 @@ private fun Panel.createConsentElement(consent: Consent, addCheckBox: Boolean): 
         .comment(processCheckboxComment(consentUi.getCheckBoxCommentText()))
         .selected(consent.isAccepted)
         .component
-      result = createConsentStateSupplier(forcedState, cb, consent)
+      result = when (forcedState) {
+        is ExternallyDisabled -> {
+          cb.isEnabled = false
+          cb.isSelected = false
+          ConsentStateSupplier(consent) { consent.isAccepted }
+        }
+
+        is ConsentForcedState.AlwaysEnabled -> {
+          cb.isEnabled = false
+          cb.isSelected = true
+          ConsentStateSupplier(consent) { consent.isAccepted }
+        }
+
+        else -> {
+          ConsentStateSupplier(consent) { cb.isSelected }
+        }
+      }
     }
   }
   else {
     result = ConsentStateSupplier(consent) { true }
+
     row {
       cell(ConsentSettingsUi.createSingleConsent(consent))
         .align(AlignX.FILL)
     }
   }
 
-  val warning = getWarning(forcedState)
+  val warning = when (forcedState) {
+    is ExternallyDisabled -> forcedState.description
+    is ConsentForcedState.AlwaysEnabled -> forcedState.description
+    else -> null
+  }
+
   if (warning == null) {
     row.bottomGap(BottomGap.SMALL)
   }
   else {
-    addWarningRow(warning)
+    row {
+      icon(AllIcons.General.Warning)
+        .gap(RightGap.SMALL)
+        .align(AlignY.TOP)
+      comment(warning, maxLineLength = DEFAULT_COMMENT_WIDTH)
+    }.bottomGap(BottomGap.SMALL)
   }
 
   return result
-}
-
-private fun Panel.createGroupConsentsElement(consentGroup: ConsentGroup): List<ConsentStateSupplier> {
-  val consentGroupUI = ConsentSettingsUi.getConsentGroupUi(consentGroup)
-  if (consentGroupUI == null) return emptyList()
-  val results: MutableList<ConsentStateSupplier> = mutableListOf()
-
-  row {
-    comment(processCheckboxComment(consentGroupUI.commentText), maxLineLength = DEFAULT_COMMENT_WIDTH)
-  }.bottomGap(BottomGap.SMALL)
-
-  for ((consentUI, consent) in consentGroupUI.consentUis zip consentGroup.consents) {
-    val forcedState = consentUI.getForcedState()
-    indent {
-      row {
-        val cb = checkBox(consentUI.getCheckBoxText())
-          .comment(processCheckboxComment(consentUI.getCheckBoxCommentText()))
-          .selected(consent.isAccepted)
-          .component
-        results.add(createConsentStateSupplier(forcedState, cb, consent))
-      }.bottomGap(BottomGap.SMALL)
-    }
-  }
-
-  consentGroupUI.forcedStateDescription?.let { description ->
-    indent {
-      addWarningRow(description)
-    }
-  }
-  return results
-}
-
-private fun createConsentStateSupplier(
-  forcedState: ConsentForcedState?,
-  cb: JBCheckBox,
-  consent: Consent,
-): ConsentStateSupplier = when (forcedState) {
-  is ExternallyDisabled -> {
-    cb.isEnabled = false
-    cb.isSelected = false
-    ConsentStateSupplier(consent) { consent.isAccepted }
-  }
-
-  is ConsentForcedState.AlwaysEnabled -> {
-    cb.isEnabled = false
-    cb.isSelected = true
-    ConsentStateSupplier(consent) { consent.isAccepted }
-  }
-
-  else -> {
-    ConsentStateSupplier(consent) { cb.isSelected }
-  }
-}
-
-private fun getWarning(forcedState: ConsentForcedState?): @NlsSafe String? = when (forcedState) {
-  is ExternallyDisabled -> forcedState.description
-  is ConsentForcedState.AlwaysEnabled -> forcedState.description
-  else -> null
-}
-
-private fun Panel.addWarningRow(warning: @NlsSafe String) {
-  row {
-    icon(AllIcons.General.Warning)
-      .gap(RightGap.SMALL)
-      .align(AlignY.TOP)
-    comment(warning, maxLineLength = DEFAULT_COMMENT_WIDTH)
-  }.bottomGap(BottomGap.SMALL)
 }
 
 private fun processCheckboxComment(text: @NlsSafe String): @NlsSafe String {
