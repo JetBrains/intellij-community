@@ -2,5 +2,5 @@
 package com.intellij.junit6;
 
 public interface JUnit6Constants {
-  String VERSION = "6.0.0-RC2";
+  String VERSION = "6.0.0";
 }
