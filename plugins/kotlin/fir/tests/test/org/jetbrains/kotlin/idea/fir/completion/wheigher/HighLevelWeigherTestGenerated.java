@@ -705,9 +705,24 @@ public abstract class HighLevelWeigherTestGenerated extends AbstractHighLevelWei
             runTest("../../completion/testData/weighers/basic/PreferGetMethodToProperty.kt");
         }
 
+        @TestMetadata("PreferImportedMatchingName.kt")
+        public void testPreferImportedMatchingName() throws Exception {
+            runTest("../../completion/testData/weighers/basic/PreferImportedMatchingName.kt");
+        }
+
+        @TestMetadata("PreferImportedToNonImportedMatchingName.kt")
+        public void testPreferImportedToNonImportedMatchingName() throws Exception {
+            runTest("../../completion/testData/weighers/basic/PreferImportedToNonImportedMatchingName.kt");
+        }
+
         @TestMetadata("PreferMatchingArgumentName.kt")
         public void testPreferMatchingArgumentName() throws Exception {
             runTest("../../completion/testData/weighers/basic/PreferMatchingArgumentName.kt");
+        }
+
+        @TestMetadata("PreferMatchingArgumentNameType.kt")
+        public void testPreferMatchingArgumentNameType() throws Exception {
+            runTest("../../completion/testData/weighers/basic/PreferMatchingArgumentNameType.kt");
         }
 
         @TestMetadata("PreferMatchingNamedArgumentName.kt")
