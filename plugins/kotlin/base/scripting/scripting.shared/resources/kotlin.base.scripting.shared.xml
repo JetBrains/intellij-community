@@ -1,4 +1,4 @@
-<idea-plugin package="org.jetbrains.kotlin.idea.core.script.shared">
+<idea-plugin visibility="internal" package="org.jetbrains.kotlin.idea.core.script.shared">
   <extensionPoints>
     <extensionPoint
             qualifiedName="org.jetbrains.kotlin.scriptDefinitionsSource"

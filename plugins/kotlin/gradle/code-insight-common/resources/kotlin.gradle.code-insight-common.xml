@@ -1,4 +1,4 @@
-<idea-plugin package="org.jetbrains.kotlin.idea.gradleCodeInsightCommon">
+<idea-plugin visibility="internal" package="org.jetbrains.kotlin.idea.gradleCodeInsightCommon">
   <dependencies>
     <plugin id="com.intellij.gradle"/>
     <plugin id="org.jetbrains.plugins.gradle"/>

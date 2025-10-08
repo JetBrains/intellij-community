@@ -1,4 +1,4 @@
-<idea-plugin package="org.jetbrains.kotlin.idea.gradle">
+<idea-plugin visibility="internal" package="org.jetbrains.kotlin.idea.gradle">
   <dependencies>
     <plugin id="com.intellij.gradle"/>
     <module name="kotlin.gradle.gradle-tooling"/>

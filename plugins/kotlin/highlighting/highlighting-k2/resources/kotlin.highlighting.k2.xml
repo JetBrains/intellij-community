@@ -1,4 +1,4 @@
-<idea-plugin package="org.jetbrains.kotlin.idea.highlighting">
+<idea-plugin visibility="internal" package="org.jetbrains.kotlin.idea.highlighting">
   <dependencies>
     <module name="kotlin.searching.k2"/>
     <module name="kotlin.base.scripting.k2"/>

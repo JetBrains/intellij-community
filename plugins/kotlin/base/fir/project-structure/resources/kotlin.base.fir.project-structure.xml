@@ -1,4 +1,4 @@
-<idea-plugin package="org.jetbrains.kotlin.idea.base.fir.projectStructure">
+<idea-plugin visibility="internal" package="org.jetbrains.kotlin.idea.base.fir.projectStructure">
   <dependencies>
     <module name="kotlin.base.scripting.k2"/>
     <module name="kotlin.base.fir.analysis-api-platform"/>

@@ -1,5 +1,5 @@
 <!--suppress PluginXmlValidity -->
-<idea-plugin package="org.jetbrains.kotlin.idea.gradleTooling">
+<idea-plugin visibility="internal" package="org.jetbrains.kotlin.idea.gradleTooling">
   <dependencies>
     <plugin id="com.intellij.gradle"/>
   </dependencies>

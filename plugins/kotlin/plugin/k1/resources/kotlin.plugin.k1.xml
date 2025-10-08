@@ -44,7 +44,7 @@
 
   <xi:include href="parcelize.k1.xml"/>
 
-  <content>
+  <content namespace="jetbrains">
     <module name="kotlin.base.analysis-api-platform"/>
     <module name="kotlin.base.external-build-system"/>
     <module name="kotlin.base.fe10.plugin"/>

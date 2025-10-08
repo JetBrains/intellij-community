@@ -1,4 +1,4 @@
-<idea-plugin package="org.jetbrains.kotlin.idea.junit">
+<idea-plugin visibility="internal" package="org.jetbrains.kotlin.idea.junit">
   <dependencies>
     <plugin id="JUnit"/>
   </dependencies>

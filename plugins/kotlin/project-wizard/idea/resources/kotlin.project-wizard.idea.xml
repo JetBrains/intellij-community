@@ -1,4 +1,4 @@
-<idea-plugin package="org.jetbrains.kotlin.tools.projectWizard">
+<idea-plugin visibility="internal" package="org.jetbrains.kotlin.tools.projectWizard">
   <dependencies>
     <plugin id="com.intellij.gradle"/>
     <module name="kotlin.base.external-build-system"/>

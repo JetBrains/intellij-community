@@ -1,4 +1,4 @@
-<idea-plugin package="org.jetbrains.kotlin.training">
+<idea-plugin visibility="internal" package="org.jetbrains.kotlin.training">
   <dependencies>
     <plugin id="training"/>
     <module name="intellij.java.featuresTrainer"/>

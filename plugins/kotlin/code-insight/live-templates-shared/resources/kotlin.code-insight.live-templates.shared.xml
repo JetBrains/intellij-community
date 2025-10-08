@@ -1,4 +1,4 @@
-<idea-plugin package="org.jetbrains.kotlin.idea.liveTemplates">
+<idea-plugin visibility="internal" package="org.jetbrains.kotlin.idea.liveTemplates">
   <extensions defaultExtensionNs="com.intellij">
     <defaultLiveTemplates file="liveTemplates/Kotlin.xml"/>
 

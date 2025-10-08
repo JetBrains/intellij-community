@@ -1,4 +1,4 @@
-<idea-plugin package="org.jetbrains.kotlin.idea.searching">
+<idea-plugin visibility="internal" package="org.jetbrains.kotlin.idea.searching">
   <extensionPoints>
     <extensionPoint qualifiedName="com.intellij.directKotlinClassInheritorsSearch" interface="com.intellij.util.QueryExecutor" dynamic="true"/>
   </extensionPoints>
