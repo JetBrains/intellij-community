@@ -2,8 +2,8 @@
 package com.intellij.platform.debugger.impl.backend
 
 import com.intellij.ide.rpc.DocumentPatchVersion
-import com.intellij.ide.ui.icons.rpcId
 import com.intellij.ide.rpc.util.toRpc
+import com.intellij.ide.ui.icons.rpcId
 import com.intellij.ide.vfs.VirtualFileId
 import com.intellij.ide.vfs.virtualFile
 import com.intellij.openapi.application.EDT
@@ -26,7 +26,6 @@ import com.intellij.platform.debugger.impl.rpc.*
 import com.intellij.platform.project.ProjectId
 import com.intellij.platform.project.findProject
 import com.intellij.platform.project.findProjectOrNull
-import com.intellij.platform.rpc.backend.impl.DocumentSync
 import com.intellij.util.DocumentUtil
 import com.intellij.util.concurrency.annotations.RequiresReadLock
 import com.intellij.xdebugger.XDebuggerManager
@@ -248,9 +247,8 @@ internal class BackendXBreakpointTypeApi : XBreakpointTypeApi {
   override suspend fun computeInlineBreakpointVariants(projectId: ProjectId, fileId: VirtualFileId, lines: Set<Int>, documentPatchVersion: DocumentPatchVersion?): List<InlineBreakpointVariantsOnLine>? {
     val project = projectId.findProject()
     val file = fileId.virtualFile() ?: return emptyList()
-    DocumentSync.awaitDocumentSync()
     val document = readAction { file.findDocument() } ?: return emptyList()
-    if (!document.documentVersionMatches(project, documentPatchVersion)) return null
+    if (!document.awaitIsInSyncAndCommitted(project, documentPatchVersion)) return null
     val lineToVariants = InlineBreakpointsVariantsManager.getInstance(project).calculateBreakpointsVariants(document, lines)
     return lineToVariants.map { (line, variants) ->
       InlineBreakpointVariantsOnLine(line, variants.map { it.toRpc(project, document) })
