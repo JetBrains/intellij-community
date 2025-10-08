@@ -782,6 +782,10 @@ com.intellij.openapi.module.ModuleTypeWithWebFeatures
 com.intellij.openapi.paths.DynamicContextProvider
 - sf:EP_NAME:com.intellij.openapi.extensions.ExtensionPointName
 - a:getOffset(com.intellij.psi.PsiElement,I,java.lang.String):I
+a:com.intellij.openapi.projectRoots.impl.DependentSdkType
+- ps:createSdkOfType(com.intellij.openapi.projectRoots.SdkModel,com.intellij.openapi.projectRoots.SdkType,java.util.function.Consumer):com.intellij.openapi.projectRoots.Sdk
+- p:fixDependency(com.intellij.openapi.projectRoots.SdkModel,java.util.function.Consumer):com.intellij.openapi.projectRoots.Sdk
+- showCustomCreateUI(com.intellij.openapi.projectRoots.SdkModel,javax.swing.JComponent,com.intellij.openapi.projectRoots.Sdk,java.util.function.Consumer):V
 com.intellij.openapi.projectRoots.impl.UnknownSdkContributor
 - contributeKnownSdks(com.intellij.openapi.project.Project):java.util.List
 - a:contributeUnknownSdks(com.intellij.openapi.project.Project):java.util.List

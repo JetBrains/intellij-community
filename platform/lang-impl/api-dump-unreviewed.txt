@@ -12084,12 +12084,9 @@ a:com.intellij.openapi.projectRoots.impl.DependentSdkType
 - com.intellij.openapi.projectRoots.SdkType
 - <init>(java.lang.String):V
 - p:checkDependency(com.intellij.openapi.projectRoots.SdkModel):Z
-- ps:createSdkOfType(com.intellij.openapi.projectRoots.SdkModel,com.intellij.openapi.projectRoots.SdkType,com.intellij.util.Consumer):com.intellij.openapi.projectRoots.Sdk
-- p:fixDependency(com.intellij.openapi.projectRoots.SdkModel,com.intellij.util.Consumer):com.intellij.openapi.projectRoots.Sdk
 - a:getDependencyType():com.intellij.openapi.projectRoots.SdkType
 - a:getUnsatisfiedDependencyMessage():java.lang.String
 - pa:isValidDependency(com.intellij.openapi.projectRoots.Sdk):Z
-- showCustomCreateUI(com.intellij.openapi.projectRoots.SdkModel,javax.swing.JComponent,com.intellij.openapi.projectRoots.Sdk,com.intellij.util.Consumer):V
 - supportsCustomCreateUI():Z
 com.intellij.openapi.projectRoots.impl.FixWithConsent
 - a:giveConsent():V

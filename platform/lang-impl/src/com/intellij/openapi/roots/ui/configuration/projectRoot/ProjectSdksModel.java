@@ -464,7 +464,7 @@ public class ProjectSdksModel implements SdkModel {
                                     @NotNull JComponent parent,
                                     @NotNull java.util.function.Consumer<? super Sdk> callback) {
           if (!isForce && type.supportsCustomCreateUI()) {
-            type.showCustomCreateUI(ProjectSdksModel.this, parent, selectedSdk, sdk -> setupSdk(sdk, callback));
+            type.showCustomCreateUI(ProjectSdksModel.this, parent, selectedSdk, (java.util.function.Consumer<? super Sdk>)sdk -> setupSdk(sdk, callback));
           }
           else {
             Path pathToEnvironment = (project == null || project.getProjectFilePath() == null) ?
@@ -497,7 +497,7 @@ public class ProjectSdksModel implements SdkModel {
   public void doAdd(@NotNull JComponent parent, final @Nullable Sdk selectedSdk, final @NotNull SdkType type, final @NotNull Consumer<? super Sdk> callback) {
     myModified = true;
     if (type.supportsCustomCreateUI()) {
-      type.showCustomCreateUI(this, parent, selectedSdk, sdk -> setupSdk(sdk, callback));
+      type.showCustomCreateUI(this, parent, selectedSdk, (java.util.function.Consumer<? super Sdk>) sdk -> setupSdk(sdk, callback));
     }
     else {
       SdkConfigurationUtil.selectSdkHome(type, home -> addSdk(type, home, callback));

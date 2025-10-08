@@ -8,7 +8,6 @@ import com.intellij.openapi.projectRoots.SdkType;
 import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.util.NlsContexts;
 import com.intellij.openapi.util.Ref;
-import com.intellij.util.Consumer;
 import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
@@ -16,6 +15,7 @@ import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
 import java.util.Arrays;
+import java.util.function.Consumer;
 
 /**
  * @author Dmitry Avdeev
@@ -72,7 +72,7 @@ public abstract class DependentSdkType extends SdkType {
     SdkConfigurationUtil.selectSdkHome(sdkType, home -> {
       final Sdk newSdk = SdkConfigurationUtil.createSdk(Arrays.asList(sdkModel.getSdks()), home, sdkType, null, null);
 
-      sdkCreatedCallback.consume(newSdk);
+      sdkCreatedCallback.accept(newSdk);
       result.set(newSdk);
     });
     return result.get();

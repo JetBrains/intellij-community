@@ -551,6 +551,7 @@ a:com.intellij.openapi.projectRoots.SdkType
 - setupSdkPaths(com.intellij.openapi.projectRoots.Sdk):V
 - setupSdkPaths(com.intellij.openapi.projectRoots.Sdk,com.intellij.openapi.projectRoots.SdkModel):Z
 - showCustomCreateUI(com.intellij.openapi.projectRoots.SdkModel,javax.swing.JComponent,com.intellij.openapi.projectRoots.Sdk,com.intellij.util.Consumer):V
+- showCustomCreateUI(com.intellij.openapi.projectRoots.SdkModel,javax.swing.JComponent,com.intellij.openapi.projectRoots.Sdk,java.util.function.Consumer):V
 - a:suggestHomePath():java.lang.String
 - suggestHomePath(java.nio.file.Path):java.lang.String
 - suggestHomePaths():java.util.Collection
