@@ -1902,10 +1902,12 @@ public final class PersistentFSImpl extends PersistentFS implements Disposable {
         //Diogen reports like 49432216: rootId is _found_ among existing roots, but somehow ensureRootCached(rootPath, rootUrl)
         // leads to insertion of a _new_ root.
         // I suspect this is a bug, and this check is to provide more diagnostics for it:
+        //TODO RC: according to Diogen reports, these errors are most likely connected to case-sensitivity, most likely to to WSL
         throw new IllegalStateException(
           "root[#" + rootId + "]{rootName: '" + missedRootName + "', rootPath: '" + missedRootPath + "'} cached to something else: " +
           "cached [#" + root.getId() + "]" +
-          "{rootName: '" + root.getName() + "', rootPath: '" + root.getPath() + "', rootUrl: '" + root.getUrl() + "'}"
+          "{rootName: '" + root.getName() + "', rootPath: '" + root.getPath() + "', rootUrl: '" + root.getUrl() + "'}, " +
+          "defaultCaseSensitivity: " + SystemInfoRt.isFileSystemCaseSensitive
         );
       }
     }
