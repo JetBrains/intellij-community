@@ -193,7 +193,7 @@ public final class JavaPsiModuleUtil {
       roots.addAll(sourceRoots);
       files = ContainerUtil.mapNotNull(roots, root -> root.findFileByRelativePath(JarFile.MANIFEST_NAME));
       if (files.size() == 1 || new HashSet<>(files).size() == 1) {
-        VirtualFile manifest = files.get(0);
+        VirtualFile manifest = files.getFirst();
         PsiFile manifestPsi = PsiManager.getInstance(project).findFile(manifest);
         assert manifestPsi != null : manifest;
         return CachedValuesManager.getCachedValue(manifestPsi, () -> {
@@ -205,11 +205,11 @@ public final class JavaPsiModuleUtil {
       }
       List<VirtualFile> sourceSourceRoots = rootManager.getSourceRoots(JavaSourceRootType.SOURCE);
       if (virtualAutoModuleName != null && !sourceSourceRoots.isEmpty()) {
-        return LightJavaModule.create(PsiManager.getInstance(project), sourceSourceRoots.get(0), virtualAutoModuleName);
+        return LightJavaModule.create(PsiManager.getInstance(project), sourceSourceRoots.getFirst(), virtualAutoModuleName);
       }
     }
     else {
-      final VirtualFile file = files.get(0);
+      final VirtualFile file = files.getFirst();
       if (ContainerUtil.and(files, f -> f.equals(file))) {
         PsiFile psiFile = PsiManager.getInstance(project).findFile(file);
         if (psiFile instanceof PsiJavaFile) {
@@ -287,7 +287,7 @@ public final class JavaPsiModuleUtil {
         }
         projectModules.addAll(descriptors);
       }
-      if (descriptors.size() == 1) projectModules.add(descriptors.get(0));
+      if (descriptors.size() == 1) projectModules.add(descriptors.getFirst());
     }
 
     if (!projectModules.isEmpty()) {
@@ -388,38 +388,66 @@ public final class JavaPsiModuleUtil {
     MultiMap<PsiJavaModule, PsiJavaModule> relations = MultiMap.create();
     Set<String> transitiveEdges = new HashSet<>();
 
+    Queue<PsiJavaModule> queue = new ArrayDeque<>();
     GlobalSearchScope scope = ProjectScope.getAllScope(project);
     JavaModuleSearch.allModules(project, scope).forEach(module -> {
-      visit(module, relations, transitiveEdges);
+      queue.add(module);
       return true;
     });
+
+    Set<PsiJavaModule> visited = new HashSet<>();
+    while (!queue.isEmpty()) {
+      PsiJavaModule module = queue.poll();
+      if (!(module instanceof LightJavaModule) && visited.add(module)) {
+        Set<PsiJavaModule> shouldBeVisited = visit(module, relations, transitiveEdges);
+        shouldBeVisited.removeAll(visited);
+        queue.addAll(shouldBeVisited);
+      }
+    }
 
     Graph<PsiJavaModule> graph = GraphGenerator.generate(new ChameleonGraph<>(relations, true));
     return new RequiresGraph(graph, transitiveEdges);
   }
 
-  private static void visit(@NotNull PsiJavaModule module, @NotNull MultiMap<PsiJavaModule, PsiJavaModule> relations, @NotNull Set<String> transitiveEdges) {
-    if (!(module instanceof LightJavaModule) && !relations.containsKey(module)) {
-      relations.putValues(module, Collections.emptyList());
-      boolean explicitJavaBase = false;
-      for (PsiRequiresStatement statement : module.getRequires()) {
-        PsiJavaModuleReference ref = statement.getModuleReference();
-        if (ref != null) {
-          if (JAVA_BASE.equals(ref.getCanonicalText())) explicitJavaBase = true;
-          for (ResolveResult result : ref.multiResolve(false)) {
-            PsiJavaModule dependency = (PsiJavaModule)result.getElement();
-            assert dependency != null : result;
-            relations.putValue(module, dependency);
-            if (statement.hasModifierProperty(PsiModifier.TRANSITIVE)) transitiveEdges.add(RequiresGraph.key(dependency, module));
-            visit(dependency, relations, transitiveEdges);
+  /**
+   * Visits a given module and processes its dependencies and relations. Updates the set of visited modules,
+   * the relations between modules, and the set of transitive edges based on the requires statements within
+   * the module.
+   *
+   * @param module the module to be visited
+   * @param relations a mapping that represents module dependencies
+   * @param transitiveEdges a set of transitive edges representing transitive dependencies
+   * @return a set of modules that should be visited next
+   */
+  private static @NotNull Set<PsiJavaModule> visit(@NotNull PsiJavaModule module,
+                                                    @NotNull MultiMap<PsiJavaModule, PsiJavaModule> relations,
+                                                    @NotNull Set<String> transitiveEdges) {
+    Set<PsiJavaModule> shouldBeVisited = new HashSet<>();
+
+    relations.putValues(module, Collections.emptyList());
+    boolean explicitJavaBase = false;
+
+    for (PsiRequiresStatement statement : module.getRequires()) {
+      PsiJavaModuleReference ref = statement.getModuleReference();
+      if (ref != null) {
+        if (JAVA_BASE.equals(ref.getCanonicalText())) explicitJavaBase = true;
+        for (ResolveResult result : ref.multiResolve(false)) {
+          PsiJavaModule dependency = (PsiJavaModule)result.getElement();
+          assert dependency != null : result;
+          relations.putValue(module, dependency);
+          if (statement.hasModifierProperty(PsiModifier.TRANSITIVE)) {
+            transitiveEdges.add(RequiresGraph.key(dependency, module));
           }
+          shouldBeVisited.add(dependency);
         }
       }
-      if (!explicitJavaBase) {
-        PsiJavaModule javaBase = JavaPsiFacade.getInstance(module.getProject()).findModule(JAVA_BASE, module.getResolveScope());
-        if (javaBase != null) relations.putValue(module, javaBase);
-      }
     }
+
+    if (!explicitJavaBase) {
+      PsiJavaModule javaBase = JavaPsiFacade.getInstance(module.getProject()).findModule(JAVA_BASE, module.getResolveScope());
+      if (javaBase != null) relations.putValue(module, javaBase);
+    }
+    return shouldBeVisited;
   }
   
   private static final class ChameleonGraph<N> implements Graph<N> {
