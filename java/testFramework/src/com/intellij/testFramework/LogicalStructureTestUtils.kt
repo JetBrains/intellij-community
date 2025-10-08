@@ -146,6 +146,10 @@ class LogicalStructureNode(
     subNodes.add(subNode)
   }
 
+  fun emptyNode() {
+    node(null, "<empty>" to SimpleTextAttributes.GRAY_SMALL_ATTRIBUTES)
+  }
+
   fun anyNodes() {
     childrenDontMatter = true
   }
