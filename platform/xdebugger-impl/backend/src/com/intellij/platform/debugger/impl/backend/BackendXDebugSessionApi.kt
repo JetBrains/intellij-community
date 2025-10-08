@@ -44,10 +44,7 @@ import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.channels.BufferOverflow
 import kotlinx.coroutines.channels.Channel
 import kotlinx.coroutines.channels.awaitClose
-import kotlinx.coroutines.flow.Flow
-import kotlinx.coroutines.flow.buffer
-import kotlinx.coroutines.flow.channelFlow
-import kotlinx.coroutines.flow.emptyFlow
+import kotlinx.coroutines.flow.*
 import kotlinx.coroutines.future.asDeferred
 import kotlinx.coroutines.withContext
 import org.jetbrains.concurrency.await
@@ -261,14 +258,19 @@ internal suspend fun createBackendDocument(
     val backendDocument = editorsProvider.createDocument(project, originalExpression, sourcePosition?.sourcePosition(), evaluationMode)
     val backendDocumentId = backendDocument.bindToFrontend(frontendDocumentId, project)
     val expressionFlow = channelFlow {
+      val changedFlow = MutableSharedFlow<Unit>(1, 1, BufferOverflow.DROP_OLDEST)
       backendDocument.addDocumentListener(object : DocumentListener {
         override fun documentChanged(event: DocumentEvent) {
-          val updatedExpression = editorsProvider.createExpression(project, backendDocument, originalExpression.language, evaluationMode)
-          trySend(updatedExpression.toRpc())
+          changedFlow.tryEmit(Unit)
         }
       }, this.asDisposable())
-      awaitClose()
-    }.buffer(1, BufferOverflow.DROP_OLDEST)
+      changedFlow.collectLatest {
+        // Some implementations might rely on PSI
+        backendDocument.awaitCommited(project)
+        val updatedExpression = editorsProvider.createExpression(project, backendDocument, originalExpression.language, evaluationMode)
+        send(updatedExpression.toRpc())
+      }
+    }
     XExpressionDocumentDto(backendDocumentId, expressionFlow.toRpc())
   }
 }

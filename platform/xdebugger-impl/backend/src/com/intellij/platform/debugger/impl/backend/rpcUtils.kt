@@ -22,7 +22,7 @@ private fun Document.versionMatches(project: Project, version: DocumentPatchVers
   return version == localVersion
 }
 
-private suspend fun Document.awaitCommited(project: Project) {
+internal suspend fun Document.awaitCommited(project: Project) {
   val manager = PsiDocumentManager.getInstance(project)
   if (manager.isCommitted(this)) return
   suspendCancellableCoroutine { continuation ->
