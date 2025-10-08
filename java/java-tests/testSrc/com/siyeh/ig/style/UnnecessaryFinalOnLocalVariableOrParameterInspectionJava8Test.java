@@ -70,6 +70,40 @@ public class UnnecessaryFinalOnLocalVariableOrParameterInspectionJava8Test exten
              }""");
   }
 
+  public void testForeachParametersDisabled() {
+    final UnnecessaryFinalOnLocalVariableOrParameterInspection inspection = new UnnecessaryFinalOnLocalVariableOrParameterInspection();
+    inspection.reportForeachParameters = false;
+    myFixture.enableInspections(inspection);
+    doTest("""
+                      import java.util.Arrays;
+             
+                      class FinalTest {
+                        public void foobar(/*Unnecessary 'final' on parameter 'boo'*/final/**/ String boo) {
+                          for (final Object e : Arrays.asList(1, 2, 3)) {
+                            System.out.println(e);
+                          }
+                        }
+                      }
+             """);
+  }
+
+  public void testForeachParametersEnabled() {
+    final UnnecessaryFinalOnLocalVariableOrParameterInspection inspection = new UnnecessaryFinalOnLocalVariableOrParameterInspection();
+    inspection.reportForeachParameters = true;
+    myFixture.enableInspections(inspection);
+    doTest("""
+                      import java.util.Arrays;
+             
+                      class FinalTest {
+                        public void foobar(/*Unnecessary 'final' on parameter 'boo'*/final/**/ String boo) {
+                          for (<warning descr="Unnecessary 'final' on parameter 'e'">final</warning> Object e : Arrays.asList(1, 2, 3)) {
+                            System.out.println(e);
+                          }
+                        }
+                      }
+             """);
+  }
+
   @Nullable
   @Override
   protected InspectionProfileEntry getInspection() {

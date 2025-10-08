@@ -46,6 +46,9 @@ public final class UnnecessaryFinalOnLocalVariableOrParameterInspection extends 
   @SuppressWarnings("PublicField")
   public boolean reportParameters = true;
 
+  @SuppressWarnings("PublicField")
+  public boolean reportForeachParameters = true;
+
   @Override
   public @NotNull String buildErrorString(Object... infos) {
     final PsiVariable variable = (PsiVariable)infos[0];
@@ -63,8 +66,10 @@ public final class UnnecessaryFinalOnLocalVariableOrParameterInspection extends 
     return pane(
       checkbox("reportLocalVariables", InspectionGadgetsBundle.message("unnecessary.final.report.local.variables.option")),
       checkbox("reportPatternVariables", InspectionGadgetsBundle.message("unnecessary.final.report.pattern.variables.option")),
-      checkbox("reportParameters", InspectionGadgetsBundle.message("unnecessary.final.report.parameters.option"),
-               checkbox("onlyWarnOnAbstractMethods", InspectionGadgetsBundle.message("unnecessary.final.on.parameter.only.interface.option"))));
+      checkbox("reportParameters", InspectionGadgetsBundle.message("unnecessary.final.report.method.parameters.option"),
+               checkbox("onlyWarnOnAbstractMethods", InspectionGadgetsBundle.message("unnecessary.final.on.parameter.only.interface.option"))),
+      checkbox("reportForeachParameters", InspectionGadgetsBundle.message("unnecessary.final.report.foreach.parameters.option"))
+    );
   }
 
 
@@ -176,7 +181,7 @@ public final class UnnecessaryFinalOnLocalVariableOrParameterInspection extends 
     @Override
     public void visitForeachStatement(@NotNull PsiForeachStatement statement) {
       super.visitForeachStatement(statement);
-      if (onlyWarnOnAbstractMethods || !reportParameters) {
+      if (!reportForeachParameters) {
         return;
       }
       PsiParameter parameter = statement.getIterationParameter();
