@@ -230,7 +230,7 @@ private suspend fun doRunTestBuild(context: BuildContext, traceSpanName: String,
           }
         }
 
-        checkPrivatePluginModulesAreNotBundled(context, softly)
+        checkPrivatePluginModulesAreNotPublic(context, softly)
         softly.assertAll()
       }
       catch (e: CancellationException) {
