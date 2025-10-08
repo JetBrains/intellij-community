@@ -4,7 +4,7 @@ default namespace = "http://www.w3.org/1999/xhtml"
 # #####################################################################
 
   ## This file is unmaintained. Please use assertions.sch instead.
-  
+
 # #####################################################################
 ## Schema Framework & Parameters
 
@@ -51,7 +51,7 @@ dfn.elem.exclude-self =
 	}
 
 # FIXME this part was cut off -- hsivonen
-wildcard.elem.exclude-all = 
+wildcard.elem.exclude-all =
 	notAllowed
 
 #FIXME no nested forms in HTML-serializable docs

@@ -7,7 +7,7 @@ datatypes w = "http://whattf.org/datatype-draft"
 ## Attributes Common to Media Elements
 
 	# src not included
-	media.attrs = 
+	media.attrs =
 		(	media.attrs.autoplay?
 		&	media.attrs.preload?
 		&	media.attrs.controls?
@@ -35,7 +35,7 @@ datatypes w = "http://whattf.org/datatype-draft"
 			attribute muted {
 				w:string "muted" | w:string ""
 			}
-		
+
 ## Source: <source>
 
 	source.elem =
@@ -58,7 +58,7 @@ datatypes w = "http://whattf.org/datatype-draft"
 
 ## Media Source
 
-	media.source = 
+	media.source =
 		(	media.attrs.src
 		|	source.elem*
 		)

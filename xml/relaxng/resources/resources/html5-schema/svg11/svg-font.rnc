@@ -2,26 +2,26 @@ default namespace = "http://www.w3.org/2000/svg"
 namespace a = "http://relaxng.org/ns/compatibility/annotations/1.0"
 
 
-## 
+##
 ##     SVG 1.1 Font Module
 ##     file: svg-font.rng
-## 
+##
 ##     This is SVG, a language for describing two-dimensional graphics in XML.
 ##     Copyright 2001, 2002 W3C (MIT, INRIA, Keio), All Rights Reserved.
 ##
 ##     Modifications Copyright 2007 Mozilla Foundation
-## 
+##
 ##     $Id$
-##   
+##
 
-## 
+##
 ##     Font
-## 
+##
 ##         font, font-face, glyph, missing-glyph, hkern, vkern, font-face-src,
 ##         font-face-uri, font-face-format, font-face-name, definition-src
-## 
+##
 ##     This module declares markup to provide support for template.
-##   
+##
 [ xml:lang = "en" ]
 grammar {
     include "svg-basic-font.rnc" {
