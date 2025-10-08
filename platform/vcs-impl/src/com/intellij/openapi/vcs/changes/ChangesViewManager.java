@@ -350,7 +350,7 @@ public class ChangesViewManager implements ChangesViewEx, Disposable {
       myProject = project;
       myChangesViewSettings = ChangesViewSettings.getInstance(project);
       myChangesPanel = changesViewPanel;
-      changesViewPanel.initPanel(new MyModelProvider());
+      changesViewPanel.initPanel(new ModelProvider(project, () -> myCommitWorkflowHandler));
 
       MessageBusConnection busConnection = myProject.getMessageBus().connect(this);
       myVcsConfiguration = VcsConfiguration.getInstance(myProject);
@@ -589,7 +589,7 @@ public class ChangesViewManager implements ChangesViewEx, Disposable {
     }
 
     public boolean isAllowExcludeFromCommit() {
-      return myCommitWorkflowHandler != null && myCommitWorkflowHandler.isActive();
+      return ChangesViewManager.isAllowExcludeFromCommit(myCommitWorkflowHandler);
     }
 
     public void addListener(@NotNull Listener listener, @NotNull Disposable disposable) {
@@ -681,33 +681,6 @@ public class ChangesViewManager implements ChangesViewEx, Disposable {
     public interface Listener extends EventListener {
       void allowExcludeFromCommitChanged();
     }
-
-    private class MyModelProvider implements CommitChangesViewWithToolbarPanel.ModelProvider {
-      @Override
-      public @NotNull ExtendedTreeModel getModel(@NotNull ChangesGroupingPolicyFactory grouping) {
-        ChangeListManagerImpl changeListManager = ChangeListManagerImpl.getInstanceImpl(myProject);
-        List<LocalChangeList> changeLists = changeListManager.getChangeLists();
-        List<FilePath> unversionedFiles = changeListManager.getUnversionedFilesPaths();
-
-        DefaultTreeModel treeModel = ChangesViewUtil.INSTANCE.createTreeModel(
-          myProject,
-          grouping,
-          changeLists,
-          unversionedFiles,
-          myChangesViewSettings.getShowIgnored(),
-          () -> isAllowExcludeFromCommit()
-        );
-        return new ExtendedTreeModel(changeLists, unversionedFiles, treeModel);
-      }
-
-      @Override
-      public void synchronizeInclusion(@NotNull List<? extends @NotNull LocalChangeList> changeLists,
-                                       @NotNull List<? extends @NotNull FilePath> unversionedFiles) {
-        if (myCommitWorkflowHandler != null) {
-          myCommitWorkflowHandler.synchronizeInclusion(changeLists, unversionedFiles);
-        }
-      }
-    }
   }
 
   public static @NotNull @Nls String getLocalChangesToolWindowName(@NotNull Project project) {
@@ -718,5 +691,46 @@ public class ChangesViewManager implements ChangesViewEx, Disposable {
   @Override
   public @Nullable ChangesViewCommitWorkflowHandler getCommitWorkflowHandler() {
     return ChangesViewWorkflowManager.getInstance(myProject).getCommitWorkflowHandler();
+  }
+
+  private static class ModelProvider implements CommitChangesViewWithToolbarPanel.ModelProvider {
+    private final @NotNull Project project;
+    private final @NotNull Supplier<@Nullable ChangesViewCommitWorkflowHandler> commitWorkflowHandlerSupplier;
+
+    private ModelProvider(@NotNull Project project,
+                          @NotNull Supplier<@Nullable ChangesViewCommitWorkflowHandler> commitWorkflowHandlerSupplier) {
+      this.project = project;
+      this.commitWorkflowHandlerSupplier = commitWorkflowHandlerSupplier;
+    }
+
+    @Override
+    public @NotNull ExtendedTreeModel getModel(@NotNull ChangesGroupingPolicyFactory grouping) {
+      ChangeListManagerImpl changeListManager = ChangeListManagerImpl.getInstanceImpl(project);
+      List<LocalChangeList> changeLists = changeListManager.getChangeLists();
+      List<FilePath> unversionedFiles = changeListManager.getUnversionedFilesPaths();
+
+      DefaultTreeModel treeModel = ChangesViewUtil.INSTANCE.createTreeModel(
+        project,
+        grouping,
+        changeLists,
+        unversionedFiles,
+        ChangesViewSettings.getInstance(project).getShowIgnored(),
+        () -> isAllowExcludeFromCommit(commitWorkflowHandlerSupplier.get())
+      );
+      return new ExtendedTreeModel(changeLists, unversionedFiles, treeModel);
+    }
+
+    @Override
+    public void synchronizeInclusion(@NotNull List<? extends @NotNull LocalChangeList> changeLists,
+                                     @NotNull List<? extends @NotNull FilePath> unversionedFiles) {
+      ChangesViewCommitWorkflowHandler commitWorkflowHandler = commitWorkflowHandlerSupplier.get();
+      if (commitWorkflowHandler != null) {
+        commitWorkflowHandler.synchronizeInclusion(changeLists, unversionedFiles);
+      }
+    }
+  }
+
+  private static boolean isAllowExcludeFromCommit(@Nullable ChangesViewCommitWorkflowHandler handler) {
+    return handler != null && handler.isActive();
   }
 }
