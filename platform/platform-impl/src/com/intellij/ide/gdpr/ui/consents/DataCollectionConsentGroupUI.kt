@@ -5,13 +5,9 @@ import com.intellij.ide.IdeBundle
 import com.intellij.ide.gdpr.DataCollectionAgreement
 import com.intellij.openapi.util.NlsSafe
 
-internal class DataCollectionConsentGroupUI(
-  consentsUI: List<ConsentUi>
-): ConsentGroupUi {
-  override val consentUis: List<ConsentUi> by lazy {
-    consentsUI.sortedBy(ConsentUi::getCheckBoxText)
-  }
-
+internal data class DataCollectionConsentGroupUI(
+  override val consentUis: List<ConsentUi>,
+) : ConsentGroupUi {
   override val forcedStateDescription: @NlsSafe String? = run {
     val customerDetailedDataSharingAgreement = DataCollectionAgreement.getInstance() ?: return@run null
     when (customerDetailedDataSharingAgreement) {
