@@ -1,4 +1,4 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInsight.completion.util;
 
 import com.intellij.codeInsight.completion.InsertionContext;
@@ -14,19 +14,19 @@ public class MethodParenthesesHandler extends ParenthesesInsertHandler<LookupEle
   private final PsiMethod myMethod;
   private final boolean myOverloadsMatter;
 
-  public MethodParenthesesHandler(final PsiMethod method, boolean overloadsMatter) {
+  public MethodParenthesesHandler(@NotNull PsiMethod method, boolean overloadsMatter) {
     myMethod = method;
     myOverloadsMatter = overloadsMatter;
   }
 
   @Override
-  protected boolean placeCaretInsideParentheses(final InsertionContext context, final LookupElement item) {
+  protected boolean placeCaretInsideParentheses(InsertionContext context, LookupElement item) {
     return myOverloadsMatter
            ? overloadsHaveParameters(context.getElements(), myMethod) != ThreeState.NO
            : !myMethod.getParameterList().isEmpty();
   }
 
-  public static ThreeState overloadsHaveParameters(LookupElement[] allItems, PsiMethod method) {
+  public static @NotNull ThreeState overloadsHaveParameters(@NotNull LookupElement @NotNull [] allItems, @NotNull PsiMethod method) {
     List<PsiMethod> overloads = JBIterable.of(allItems)
       .map(LookupElement::getPsiElement)
       .filter(PsiMethod.class)
@@ -35,13 +35,14 @@ public class MethodParenthesesHandler extends ParenthesesInsertHandler<LookupEle
     return overloads.isEmpty() ? ThreeState.fromBoolean(!method.getParameterList().isEmpty()) : hasParameters(overloads);
   }
 
-  public static @NotNull ThreeState hasParameters(List<PsiMethod> methods) {
+  public static @NotNull ThreeState hasParameters(@NotNull List<PsiMethod> methods) {
     boolean hasEmpty = methods.isEmpty();
     boolean hasNonEmpty = false;
     for (PsiMethod method : methods) {
       if (!method.getParameterList().isEmpty()) {
         hasNonEmpty = true;
-      } else {
+      }
+      else {
         hasEmpty = true;
       }
     }
