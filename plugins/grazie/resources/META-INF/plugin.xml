@@ -111,7 +111,7 @@
     <nameSuggestionProvider id="SpellcheckingSuggestionProvider" implementation="com.intellij.grazie.spellcheck.suggestion.SpellcheckingNameSuggestionProvider" order="first"/>
 
     <registryKey key="spellchecker.grazie.enabled" defaultValue="true" description="Enables Grazie text-level spellchecking"/>
-    <registryKey key="spellchecker.cloud.enabled" defaultValue="false" description="Enables spellchecking via Cloud when it is available"/>
+    <registryKey key="spellchecker.cloud.enabled" defaultValue="true" description="Enables spellchecking via Cloud when it is available"/>
     <registryKey key="grazie.skip.precommit.checks"
                  defaultValue="true"
                  description="Controls whether expensive linguistic checks should be performed during pre-commit code analysis"/>
