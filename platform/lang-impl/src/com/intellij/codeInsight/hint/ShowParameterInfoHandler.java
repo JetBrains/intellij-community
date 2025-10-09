@@ -120,7 +120,7 @@ public final class ShowParameterInfoHandler implements CodeInsightActionHandler 
     Set<ParameterInfoHandler> handlers = new LinkedHashSet<>();
     DumbService dumbService = DumbService.getInstance(project);
     for (final Language language : languages) {
-      handlers.addAll(dumbService.filterByDumbAwareness(LanguageParameterInfo.INSTANCE.allForLanguage(language)));
+      handlers.addAll(dumbService.filterByDumbAwareness(LanguageParameterInfo.INSTANCE.allForLanguageOrAny(language)));
     }
     return handlers.isEmpty() ? EMPTY_HANDLERS : handlers.toArray(new ParameterInfoHandler[0]);
   }
