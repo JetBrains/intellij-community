@@ -18,7 +18,7 @@ import com.jetbrains.python.configuration.PyConfigurableInterpreterList;
 import com.jetbrains.python.run.AbstractPyCommonOptionsForm;
 import com.jetbrains.python.run.PyCommonOptionsFormData;
 import com.jetbrains.python.sdk.PySdkListCellRenderer;
-import com.jetbrains.python.sdk.PythonSdkUtil;
+import com.jetbrains.python.sdk.legacy.PythonSdkUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 

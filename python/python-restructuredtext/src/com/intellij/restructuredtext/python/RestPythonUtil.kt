@@ -8,7 +8,7 @@ import com.intellij.openapi.actionSystem.Presentation
 import com.intellij.openapi.module.ModuleManager.Companion.getInstance
 import com.jetbrains.python.packaging.management.PythonPackageManager
 import com.jetbrains.python.packaging.management.hasInstalledPackageSnapshot
-import com.jetbrains.python.sdk.PythonSdkUtil
+import com.jetbrains.python.sdk.legacy.PythonSdkUtil
 
 /**
  * User : catherine

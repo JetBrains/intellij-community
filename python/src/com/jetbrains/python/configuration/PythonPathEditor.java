@@ -29,7 +29,7 @@ import com.jetbrains.python.PyBundle;
 import com.jetbrains.python.codeInsight.typing.PyBundledStubs;
 import com.jetbrains.python.codeInsight.typing.PyTypeShed;
 import com.jetbrains.python.sdk.PythonSdkAdditionalData;
-import com.jetbrains.python.sdk.PythonSdkUtil;
+import com.jetbrains.python.sdk.legacy.PythonSdkUtil;
 import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;

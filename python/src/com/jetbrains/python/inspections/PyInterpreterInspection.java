@@ -49,6 +49,7 @@ import com.jetbrains.python.sdk.*;
 import com.jetbrains.python.sdk.conda.PyCondaSdkCustomizer;
 import com.jetbrains.python.sdk.configuration.PyProjectSdkConfiguration;
 import com.jetbrains.python.sdk.configuration.PyProjectSdkConfigurationExtension;
+import com.jetbrains.python.sdk.legacy.PythonSdkUtil;
 import com.jetbrains.python.ui.PyUiUtil;
 import kotlin.Pair;
 import one.util.streamex.StreamEx;

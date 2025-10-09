@@ -40,7 +40,7 @@ import com.jetbrains.python.run.PythonInterpreterTargetEnvironmentFactory;
 import com.jetbrains.python.sdk.CredentialsTypeExChecker;
 import com.jetbrains.python.sdk.PySdkExtKt;
 import com.jetbrains.python.sdk.PythonSdkAdditionalData;
-import com.jetbrains.python.sdk.PythonSdkUtil;
+import com.jetbrains.python.sdk.legacy.PythonSdkUtil;
 import com.jetbrains.python.sdk.flavors.conda.CondaEnvSdkFlavor;
 import com.jetbrains.python.target.PyTargetAwareAdditionalData;
 import org.jetbrains.annotations.ApiStatus;

@@ -49,7 +49,7 @@ import com.jetbrains.python.psi.impl.PyPsiUtils;
 import com.jetbrains.python.sdk.PreferredSdkComparator;
 import com.jetbrains.python.sdk.PySdkUtil;
 import com.jetbrains.python.sdk.PythonSdkType;
-import com.jetbrains.python.sdk.PythonSdkUtil;
+import com.jetbrains.python.sdk.legacy.PythonSdkUtil;
 import com.jetbrains.python.sdk.flavors.PythonSdkFlavor;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;

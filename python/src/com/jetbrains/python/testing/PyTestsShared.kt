@@ -60,7 +60,7 @@ import com.jetbrains.python.run.targetBasedConfiguration.PyRunTargetVariant
 import com.jetbrains.python.run.targetBasedConfiguration.TargetWithVariant
 import com.jetbrains.python.run.targetBasedConfiguration.createRefactoringListenerIfPossible
 import com.jetbrains.python.run.targetBasedConfiguration.targetAsPsiElement
-import com.jetbrains.python.sdk.PythonSdkUtil
+import com.jetbrains.python.sdk.legacy.PythonSdkUtil
 import com.jetbrains.python.sdk.baseDir
 import com.jetbrains.python.testing.doctest.PythonDocTestUtil
 import jetbrains.buildServer.messages.serviceMessages.ServiceMessage

@@ -9,7 +9,7 @@ import com.jetbrains.python.PyBundle
 import com.jetbrains.python.PyPsiPackageUtil.moduleToPackageName
 import com.jetbrains.python.packaging.management.ui.PythonPackageManagerUI
 import com.jetbrains.python.packaging.utils.PyPackageCoroutine
-import com.jetbrains.python.sdk.PythonSdkUtil
+import com.jetbrains.python.sdk.legacy.PythonSdkUtil
 import org.jetbrains.annotations.Nls
 
 class InstallAllPackagesQuickFix(private val packageNames: List<String>) : LocalQuickFix {

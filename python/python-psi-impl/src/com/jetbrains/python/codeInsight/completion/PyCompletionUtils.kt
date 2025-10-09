@@ -24,8 +24,9 @@ import com.jetbrains.python.psi.PyFile
 import com.jetbrains.python.psi.PyFunction
 import com.jetbrains.python.psi.resolve.QualifiedNameFinder
 import com.jetbrains.python.psi.types.TypeEvalContext
-import com.jetbrains.python.sdk.PythonSdkUtil
+import com.jetbrains.python.sdk.legacy.PythonSdkUtil
 import com.jetbrains.python.psi.icons.PythonPsiApiIcons
+import com.jetbrains.python.sdk.skeleton.PySkeletonUtil
 import one.util.streamex.StreamEx
 
 /**
@@ -157,7 +158,7 @@ fun computeCompletionWeight(element: PsiElement, elementName: String?, path: Qua
 
   if (vFile != null) {
     weight -=  when {
-      PythonSdkUtil.isStdLib(vFile, sdk) -> LOCATION
+      PySkeletonUtil.isStdLib(vFile, sdk) -> LOCATION
       ModuleUtilCore.findModuleForFile(vFile, element.project) == null -> LOCATION * 2
       else -> 0
     }

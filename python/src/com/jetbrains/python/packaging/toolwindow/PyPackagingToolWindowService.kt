@@ -40,7 +40,7 @@ import com.jetbrains.python.packaging.pyRequirement
 import com.jetbrains.python.packaging.repository.*
 import com.jetbrains.python.packaging.statistics.PythonPackagesToolwindowStatisticsCollector
 import com.jetbrains.python.packaging.toolwindow.model.*
-import com.jetbrains.python.sdk.PythonSdkUtil
+import com.jetbrains.python.sdk.legacy.PythonSdkUtil
 import com.jetbrains.python.sdk.pythonSdk
 import com.jetbrains.python.statistics.PythonPackagesIdsHolder.Companion.PYTHON_PACKAGE_DELETED
 import com.jetbrains.python.statistics.PythonPackagesIdsHolder.Companion.PYTHON_PACKAGE_INSTALLED

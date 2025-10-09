@@ -14,6 +14,7 @@ import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.util.PathUtil;
 import com.jetbrains.python.PyBundle;
+import com.jetbrains.python.sdk.legacy.PythonSdkUtil;
 import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;

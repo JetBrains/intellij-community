@@ -50,6 +50,7 @@ import com.jetbrains.python.packaging.management.PythonPackageManagerExt;
 import com.jetbrains.python.psi.PyUtil;
 import com.jetbrains.python.remote.UnsupportedPythonSdkTypeException;
 import com.jetbrains.python.sdk.headless.PythonActivityKey;
+import com.jetbrains.python.sdk.legacy.PythonSdkUtil;
 import com.jetbrains.python.sdk.skeletons.PySkeletonRefresher;
 import one.util.streamex.StreamEx;
 import org.jetbrains.annotations.ApiStatus;

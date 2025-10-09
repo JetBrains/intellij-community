@@ -54,7 +54,7 @@ import com.jetbrains.python.psi.LanguageLevel;
 import com.jetbrains.python.run.*;
 import com.jetbrains.python.run.target.HelpersAwareTargetEnvironmentRequest;
 import com.jetbrains.python.sdk.PySdkExtKt;
-import com.jetbrains.python.sdk.PythonSdkUtil;
+import com.jetbrains.python.sdk.legacy.PythonSdkUtil;
 import com.jetbrains.python.sdk.flavors.CPythonSdkFlavor;
 import com.jetbrains.python.sdk.flavors.PythonSdkFlavor;
 import kotlin.Unit;

@@ -14,7 +14,7 @@ import com.intellij.util.indexing.FileBasedIndex;
 import com.jetbrains.python.fixtures.PyTestCase;
 import com.jetbrains.python.psi.search.PySearchUtilBase;
 import com.jetbrains.python.psi.stubs.PyModuleNameIndex;
-import com.jetbrains.python.sdk.PythonSdkUtil;
+import com.jetbrains.python.sdk.legacy.PythonSdkUtil;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.ArrayList;

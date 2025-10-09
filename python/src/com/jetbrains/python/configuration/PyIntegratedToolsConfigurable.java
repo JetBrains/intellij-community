@@ -44,7 +44,7 @@ import com.jetbrains.python.packaging.PyPackageRequirementsSettings;
 import com.jetbrains.python.packaging.PyRequirementsKt;
 import com.jetbrains.python.packaging.requirementsTxt.PythonRequirementTxtSdkUtils;
 import com.jetbrains.python.sdk.PythonSdkAdditionalData;
-import com.jetbrains.python.sdk.PythonSdkUtil;
+import com.jetbrains.python.sdk.legacy.PythonSdkUtil;
 import com.jetbrains.python.sdk.pipenv.PipenvCommandExecutorKt;
 import com.jetbrains.python.testing.PyAbstractTestFactory;
 import com.jetbrains.python.testing.settings.PyTestRunConfigurationRenderer;

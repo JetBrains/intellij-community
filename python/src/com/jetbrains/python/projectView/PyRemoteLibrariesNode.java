@@ -20,7 +20,7 @@ import com.intellij.remote.RemoteSdkProperties;
 import com.intellij.util.PlatformIcons;
 import com.jetbrains.python.PyBundle;
 import com.jetbrains.python.sdk.PythonSdkAdditionalData;
-import com.jetbrains.python.sdk.PythonSdkUtil;
+import com.jetbrains.python.sdk.legacy.PythonSdkUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 

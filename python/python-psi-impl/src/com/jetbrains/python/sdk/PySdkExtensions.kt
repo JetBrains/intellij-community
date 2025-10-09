@@ -4,6 +4,7 @@ import com.intellij.openapi.editor.Editor
 import com.intellij.openapi.projectRoots.Sdk
 import com.intellij.psi.PsiDocumentManager
 import com.jetbrains.python.psi.PyFile
+import com.jetbrains.python.sdk.legacy.PythonSdkUtil
 
 val Editor.pythonSdk: Sdk?
   get() {

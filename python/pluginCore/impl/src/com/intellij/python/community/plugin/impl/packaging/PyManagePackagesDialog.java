@@ -10,13 +10,13 @@ import com.intellij.ui.scale.JBUIScale;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.webcore.packaging.PackagesNotificationPanel;
 import com.jetbrains.python.PyBundle;
+import com.jetbrains.python.sdk.legacy.PythonSdkUtil;
 import com.jetbrains.python.sdk.impl.PySdkBundle;
 import com.jetbrains.python.packaging.PyPackageManagers;
 import com.jetbrains.python.packaging.PyPackagesNotificationPanel;
 import com.jetbrains.python.packaging.ui.PyInstalledPackagesPanel;
 import com.jetbrains.python.sdk.PreferredSdkComparator;
 import com.jetbrains.python.sdk.PySdkListCellRenderer;
-import com.jetbrains.python.sdk.PythonSdkUtil;
 import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;

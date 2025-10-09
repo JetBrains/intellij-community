@@ -691,7 +691,6 @@
     <extensionPoint qualifiedName="com.jetbrains.python.console.runnerFactory"
                     interface="com.jetbrains.python.console.PythonConsoleRunnerFactory"
                     dynamic="true"/>
-    <extensionPoint qualifiedName="Pythonid.remoteSdkValidator" interface="com.jetbrains.python.sdk.PyRemoteSdkValidator" dynamic="true"/>
     <extensionPoint qualifiedName="Pythonid.pyTestFixtureExtension"
                     interface="com.jetbrains.python.testing.pyTestFixtures.PyTestFixtureExtension" dynamic="true"/>
     <extensionPoint qualifiedName="Pythonid.pyTestConfigurationSelector"

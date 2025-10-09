@@ -21,6 +21,7 @@ import com.jetbrains.python.PyBundle
 import com.jetbrains.python.sdk.*
 import com.jetbrains.python.sdk.ModuleOrProject.ModuleAndProject
 import com.jetbrains.python.sdk.ModuleOrProject.ProjectOnly
+import com.jetbrains.python.sdk.legacy.PythonSdkUtil
 import javax.swing.JTree
 import javax.swing.tree.DefaultMutableTreeNode
 import javax.swing.tree.DefaultTreeModel

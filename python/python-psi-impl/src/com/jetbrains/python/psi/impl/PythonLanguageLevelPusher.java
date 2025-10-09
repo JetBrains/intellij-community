@@ -37,7 +37,7 @@ import com.jetbrains.python.module.PyModuleService;
 import com.jetbrains.python.psi.LanguageLevel;
 import com.jetbrains.python.psi.PyUtil;
 import com.jetbrains.python.psi.resolve.PythonSdkPathCache;
-import com.jetbrains.python.sdk.PythonSdkUtil;
+import com.jetbrains.python.sdk.legacy.PythonSdkUtil;
 import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;

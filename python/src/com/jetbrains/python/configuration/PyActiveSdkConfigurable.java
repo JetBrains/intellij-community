@@ -6,7 +6,6 @@ import com.intellij.openapi.Disposable;
 import com.intellij.openapi.actionSystem.DataContext;
 import com.intellij.openapi.actionSystem.DefaultActionGroup;
 import com.intellij.openapi.application.ApplicationManager;
-import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.options.UnnamedConfigurable;
 import com.intellij.openapi.project.Project;
@@ -30,6 +29,7 @@ import com.jetbrains.python.packaging.PyPackageManagers;
 import com.jetbrains.python.packaging.PyPackagesNotificationPanel;
 import com.jetbrains.python.packaging.ui.PyInstalledPackagesPanel;
 import com.jetbrains.python.sdk.*;
+import com.jetbrains.python.sdk.legacy.PythonSdkUtil;
 import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -43,7 +43,7 @@ import java.util.Map;
 import java.util.function.Consumer;
 
 import static com.jetbrains.python.sdk.PySdkRenderingKt.groupModuleSdksByTypes;
-import static com.jetbrains.python.sdk.PythonSdkUtil.isRemote;
+import static com.jetbrains.python.sdk.legacy.PythonSdkUtil.isRemote;
 
 @ApiStatus.Internal
 public class PyActiveSdkConfigurable implements UnnamedConfigurable {

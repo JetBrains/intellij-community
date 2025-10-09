@@ -3,7 +3,7 @@ package com.jetbrains.python.sdk.readOnly
 
 import com.intellij.openapi.extensions.ExtensionPointName
 import com.intellij.openapi.projectRoots.Sdk
-import com.jetbrains.python.sdk.PythonSdkUtil
+import com.jetbrains.python.sdk.legacy.PythonSdkUtil
 import org.jetbrains.annotations.ApiStatus
 
 @ApiStatus.Internal

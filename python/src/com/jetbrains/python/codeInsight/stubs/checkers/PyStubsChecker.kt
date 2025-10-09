@@ -11,7 +11,7 @@ import com.jetbrains.python.NON_INTERACTIVE_ROOT_TRACE_CONTEXT
 import com.jetbrains.python.packaging.common.PythonPackageManagementListener
 import com.jetbrains.python.packaging.management.PythonPackageManager
 import com.jetbrains.python.packaging.utils.PyPackageCoroutine
-import com.jetbrains.python.sdk.PythonSdkUtil
+import com.jetbrains.python.sdk.legacy.PythonSdkUtil
 import com.jetbrains.python.statistics.sdks
 
 internal abstract class PyStubsChecker(val project: Project) : Disposable.Default {

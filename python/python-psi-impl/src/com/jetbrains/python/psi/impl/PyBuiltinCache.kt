@@ -35,7 +35,7 @@ import com.jetbrains.python.psi.resolve.PythonSdkPathCache
 import com.jetbrains.python.psi.resolve.fromSdk
 import com.jetbrains.python.psi.resolve.resolveQualifiedName
 import com.jetbrains.python.psi.types.*
-import com.jetbrains.python.sdk.PythonSdkUtil
+import com.jetbrains.python.sdk.legacy.PythonSdkUtil
 import org.jetbrains.annotations.NonNls
 
 /**

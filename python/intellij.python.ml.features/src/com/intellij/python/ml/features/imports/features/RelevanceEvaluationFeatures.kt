@@ -11,7 +11,8 @@ import com.jetbrains.mlapi.feature.Feature
 import com.jetbrains.mlapi.feature.FeatureContainer
 import com.jetbrains.mlapi.feature.FeatureDeclaration
 import com.jetbrains.mlapi.feature.FeatureSet
-import com.jetbrains.python.sdk.PythonSdkUtil
+import com.jetbrains.python.sdk.legacy.PythonSdkUtil
+import com.jetbrains.python.sdk.skeleton.PySkeletonUtil
 
 enum class UnderscoresType {
   NO_UNDERSCORES,         // something (without underscores)
@@ -58,7 +59,7 @@ object RelevanceEvaluationFeatures : ImportCandidateFeatures(Features) {
       add(Features.MODULE_SOURCE_TYPE with
             readAction {
               when {
-                PythonSdkUtil.isStdLib(vFile, sdk) -> ModuleSourceType.STD_LIB
+                PySkeletonUtil.isStdLib(vFile, sdk) -> ModuleSourceType.STD_LIB
                 ModuleUtilCore.findModuleForFile(vFile, baseElement.project) == null -> ModuleSourceType.EXTERNAL_LIB
                 else -> ModuleSourceType.LOCAL_LIB
               }

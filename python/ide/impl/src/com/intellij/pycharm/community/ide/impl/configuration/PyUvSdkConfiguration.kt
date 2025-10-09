@@ -17,7 +17,7 @@ import com.jetbrains.python.errorProcessing.PyResult
 import com.jetbrains.python.getOrLogException
 import com.jetbrains.python.onSuccess
 import com.jetbrains.python.projectModel.uv.UV_TOOL_ID
-import com.jetbrains.python.sdk.PythonSdkUtil
+import com.jetbrains.python.sdk.legacy.PythonSdkUtil
 import com.jetbrains.python.sdk.basePath
 import com.jetbrains.python.sdk.configuration.PyProjectSdkConfigurationExtension
 import com.jetbrains.python.sdk.persist

@@ -17,7 +17,7 @@ import com.jetbrains.python.codeInsight.typing.PyTypeShed;
 import com.jetbrains.python.documentation.docstrings.DocStringFormat;
 import com.jetbrains.python.fixture.PythonCommonTestCase;
 import com.jetbrains.python.psi.LanguageLevel;
-import com.jetbrains.python.sdk.PythonSdkUtil;
+import com.jetbrains.python.sdk.legacy.PythonSdkUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 

@@ -31,7 +31,7 @@ import com.jetbrains.python.packaging.PyPackageUtil
 import com.jetbrains.python.packaging.management.PythonPackageManager
 import com.jetbrains.python.packaging.requirementsTxt.PythonRequirementTxtSdkUtils
 import com.jetbrains.python.packaging.setupPy.SetupPyManager
-import com.jetbrains.python.sdk.PythonSdkUtil
+import com.jetbrains.python.sdk.legacy.PythonSdkUtil
 import com.jetbrains.python.sdk.basePath
 import com.jetbrains.python.sdk.configuration.PyProjectSdkConfigurationExtension
 import com.jetbrains.python.sdk.configuration.createVirtualEnvAndSdkSynchronously

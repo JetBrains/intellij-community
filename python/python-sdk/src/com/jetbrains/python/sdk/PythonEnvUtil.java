@@ -19,6 +19,7 @@ import com.google.common.collect.Lists;
 import com.google.common.collect.Sets;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.util.EnvironmentUtil;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -28,6 +29,7 @@ import java.util.Collection;
 import java.util.Map;
 import java.util.Set;
 
+@ApiStatus.Internal
 public final class PythonEnvUtil {
   @SuppressWarnings("SpellCheckingInspection") public static final String PYTHONPATH = "PYTHONPATH";
   @SuppressWarnings("SpellCheckingInspection") public static final String PYTHONUNBUFFERED = "PYTHONUNBUFFERED";
@@ -130,10 +132,6 @@ public final class PythonEnvUtil {
       pythonPathList = appendSystemPythonPath(pythonPathList);
     }
     addToPythonPath(envs, pythonPathList);
-  }
-
-  public static void addToEnv(final String key, String value, Map<String, String> envs) {
-    addPathToEnv(envs, key, value);
   }
 
   public static void setupEncodingEnvs(Map<String, String> envs, @NotNull Charset charset) {

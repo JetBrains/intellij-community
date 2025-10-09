@@ -11,7 +11,7 @@ import com.intellij.openapi.updateSettings.impl.pluginsAdvertisement.PluginAdver
 import com.intellij.openapi.util.IntellijInternalApi
 import com.jetbrains.python.packaging.common.PythonPackageManagementListener
 import com.jetbrains.python.packaging.management.PythonPackageManager
-import com.jetbrains.python.sdk.PythonSdkUtil
+import com.jetbrains.python.sdk.legacy.PythonSdkUtil
 
 internal class PyDependencyCollector : DependencyCollector {
   override suspend fun collectDependencies(project: Project): Collection<DependencyInformation> {

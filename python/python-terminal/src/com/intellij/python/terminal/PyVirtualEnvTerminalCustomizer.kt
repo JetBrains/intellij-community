@@ -18,7 +18,7 @@ import com.intellij.openapi.vfs.VirtualFile
 import com.jetbrains.python.run.findActivateScript
 import com.jetbrains.python.sdk.PySdkUtil
 import com.jetbrains.python.sdk.PythonSdkAdditionalData
-import com.jetbrains.python.sdk.PythonSdkUtil
+import com.jetbrains.python.sdk.legacy.PythonSdkUtil
 import com.jetbrains.python.sdk.flavors.conda.PyCondaFlavorData
 import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.plugins.terminal.LocalTerminalCustomizer

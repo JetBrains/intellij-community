@@ -28,7 +28,7 @@ import com.jetbrains.python.packaging.PyPackageUtil
 import com.jetbrains.python.packaging.management.PythonPackageManager
 import com.jetbrains.python.packaging.management.hasInstalledPackageSnapshot
 import com.jetbrains.python.psi.PyUtil
-import com.jetbrains.python.sdk.PythonSdkUtil
+import com.jetbrains.python.sdk.legacy.PythonSdkUtil
 import java.util.function.Supplier
 
 class CreateSetupPyAction : CreateFromTemplateAction(

@@ -18,7 +18,7 @@ import com.jetbrains.python.psi.LanguageLevel
 import com.jetbrains.python.remote.PyRemoteSdkAdditionalDataBase
 import com.jetbrains.python.sdk.PySdkUtil
 import com.jetbrains.python.sdk.PythonSdkAdditionalData
-import com.jetbrains.python.sdk.PythonSdkUtil
+import com.jetbrains.python.sdk.legacy.PythonSdkUtil
 import com.jetbrains.python.sdk.flavors.PythonSdkFlavor
 import com.jetbrains.python.sdk.flavors.conda.CondaEnvSdkFlavor
 import com.jetbrains.python.sdk.pipenv.isPipEnv

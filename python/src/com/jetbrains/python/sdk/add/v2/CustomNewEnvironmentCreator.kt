@@ -18,6 +18,7 @@ import com.jetbrains.python.errorProcessing.PyResult
 import com.jetbrains.python.newProject.collector.InterpreterStatisticsInfo
 import com.jetbrains.python.sdk.*
 import com.jetbrains.python.sdk.flavors.PythonSdkFlavor
+import com.jetbrains.python.sdk.legacy.PythonSdkUtil
 import com.jetbrains.python.statistics.InterpreterCreationMode
 import com.jetbrains.python.statistics.InterpreterType
 import kotlinx.coroutines.CoroutineScope

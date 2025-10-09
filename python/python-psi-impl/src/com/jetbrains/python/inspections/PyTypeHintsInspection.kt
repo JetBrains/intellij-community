@@ -48,7 +48,7 @@ import com.jetbrains.python.psi.resolve.PyResolveContext
 import com.jetbrains.python.psi.resolve.PyResolveUtil
 import com.jetbrains.python.psi.types.*
 import com.jetbrains.python.psi.types.PyTypeVarType.Variance
-import com.jetbrains.python.sdk.PythonSdkUtil
+import com.jetbrains.python.sdk.legacy.PythonSdkUtil
 
 class PyTypeHintsInspection : PyInspection() {
 

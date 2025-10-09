@@ -9,7 +9,7 @@ import com.intellij.openapi.project.modules
 import com.intellij.openapi.projectRoots.Sdk
 import com.intellij.util.xmlb.XmlSerializerUtil
 import com.jetbrains.python.sdk.PythonSdkType
-import com.jetbrains.python.sdk.PythonSdkUtil
+import com.jetbrains.python.sdk.legacy.PythonSdkUtil
 import com.jetbrains.python.sdk.pythonSdk
 
 const val BLACK_ID: String = "Black"

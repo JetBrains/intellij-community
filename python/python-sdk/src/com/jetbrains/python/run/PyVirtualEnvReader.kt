@@ -6,7 +6,7 @@ import com.intellij.openapi.util.SystemInfo
 import com.intellij.util.EnvironmentUtil
 import com.intellij.util.ShellEnvironmentReader
 import com.jetbrains.python.packaging.PyCondaPackageService
-import com.jetbrains.python.sdk.PythonSdkUtil
+import com.jetbrains.python.sdk.legacy.PythonSdkUtil
 import java.io.File
 import java.nio.file.Files
 import java.nio.file.Path

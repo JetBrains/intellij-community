@@ -26,6 +26,7 @@ jvm_library(
     "//platform/platform-api:ide",
     "//platform/platform-impl:ide-impl",
     "//python:python-community-impl",
+    "//python/python-sdk:sdk",
     "//platform/util/concurrency",
     "//platform/core-ui",
     "//platform/platform-impl/codeinsight-inline:ide-codeinsight-inline",

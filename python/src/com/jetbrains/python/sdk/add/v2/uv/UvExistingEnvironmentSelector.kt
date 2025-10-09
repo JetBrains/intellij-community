@@ -8,7 +8,7 @@ import com.jetbrains.python.PyBundle
 import com.jetbrains.python.Result
 import com.jetbrains.python.errorProcessing.PyResult
 import com.jetbrains.python.sdk.ModuleOrProject
-import com.jetbrains.python.sdk.PythonSdkUtil
+import com.jetbrains.python.sdk.legacy.PythonSdkUtil
 import com.jetbrains.python.sdk.add.v2.CustomExistingEnvironmentSelector
 import com.jetbrains.python.sdk.add.v2.DetectedSelectableInterpreter
 import com.jetbrains.python.sdk.add.v2.PythonMutableTargetAddInterpreterModel

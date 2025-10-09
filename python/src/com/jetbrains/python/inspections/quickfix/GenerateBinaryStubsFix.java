@@ -29,7 +29,7 @@ import com.jetbrains.python.psi.PyFromImportStatement;
 import com.jetbrains.python.psi.PyImportStatementBase;
 import com.jetbrains.python.sdk.InvalidSdkException;
 import com.jetbrains.python.sdk.PySdkUtil;
-import com.jetbrains.python.sdk.PythonSdkUtil;
+import com.jetbrains.python.sdk.legacy.PythonSdkUtil;
 import com.jetbrains.python.sdk.skeletons.PySkeletonGenerator;
 import com.jetbrains.python.sdk.skeletons.PySkeletonRefresher;
 import org.jetbrains.annotations.NotNull;

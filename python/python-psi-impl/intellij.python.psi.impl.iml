@@ -46,5 +46,6 @@
     <orderEntry type="module" module-name="intellij.python.syntax.core" exported="" />
     <orderEntry type="module" module-name="intellij.python.community.helpersLocator" />
     <orderEntry type="module" module-name="intellij.libraries.hash4j" />
+    <orderEntry type="module" module-name="intellij.python.sdk" />
   </component>
 </module>

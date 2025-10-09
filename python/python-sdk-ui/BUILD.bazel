@@ -25,7 +25,6 @@ jvm_library(
     "//python/openapi:community",
     "//python/python-sdk:sdk",
     "//python/python-syntax-core:syntax-core",
-    "//python/python-psi-impl:psi-impl",
     "//libraries/caffeine",
     "@lib//:io-github-z4kn4fein-semver-jvm",
     "//python/python-exec-service:community-execService",

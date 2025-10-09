@@ -42,6 +42,7 @@ import com.jetbrains.python.sdk.conda.suggestCondaPath
 import com.jetbrains.python.sdk.flavors.VirtualEnvSdkFlavor
 import com.jetbrains.python.sdk.flavors.conda.PyCondaEnv
 import com.jetbrains.python.sdk.flavors.conda.PyCondaEnvIdentity
+import com.jetbrains.python.sdk.legacy.PythonSdkUtil
 import com.jetbrains.python.sdk.pipenv.getPipEnvExecutable
 import com.jetbrains.python.sdk.poetry.getPoetryExecutable
 import com.jetbrains.python.sdk.uv.impl.getUvExecutable

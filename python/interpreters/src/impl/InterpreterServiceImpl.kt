@@ -17,7 +17,8 @@ import com.jetbrains.python.Result
 import com.jetbrains.python.errorProcessing.MessageError
 import com.jetbrains.python.psi.LanguageLevel
 import com.jetbrains.python.sdk.PythonSdkAdditionalData
-import com.jetbrains.python.sdk.PythonSdkUtil
+import com.jetbrains.python.sdk.legacy.PythonSdkUtil
+import com.jetbrains.python.sdk.legacy.PythonSdkUtil.isPythonSdk
 import com.jetbrains.python.sdk.flavors.PyFlavorData
 import com.jetbrains.python.sdk.getOrCreateAdditionalData
 import java.nio.file.InvalidPathException
@@ -28,25 +29,21 @@ internal object InterpreterServiceImpl : InterpreterService {
   private val logger = fileLogger()
   override suspend fun getInterpreters(projectDir: Path): List<Interpreter> {
 
-    val sdkAndDatas = PythonSdkUtil.getAllSdks()
-      .map { Pair(it.getOrCreateAdditionalData(), it) }
-      .filter { (data, _) -> sdkApplicableToThePath(data, projectDir) }
+    val interpreters = PythonSdkUtil.getAllSdks().mapNotNull { pythonSdk ->
+      val data = pythonSdk.getOrCreateAdditionalData()
+      if (!sdkApplicableToThePath(data, projectDir)) return@mapNotNull null
 
-
-    val result = mutableListOf<Interpreter>()
-    for ((additionalData, sdk) in sdkAndDatas) {
-      val interpreter = findInterpreter(additionalData, sdk)
-      result.add(interpreter)
+      findInterpreter(data, pythonSdk)
     }
-    return result
+
+    return interpreters
   }
 
   override suspend fun getForModule(module: Module): Interpreter? {
-    val sdk = ModuleRootManager.getInstance(module).sdk ?: return null
-    if (sdk.sdkAdditionalData !is PythonSdkAdditionalData) {
-      return null
-    }
-    return findInterpreter(sdk.getOrCreateAdditionalData(), sdk)
+    val pythonSdk = ModuleRootManager.getInstance(module).sdk?.takeIf { isPythonSdk(it) } ?: return null
+    val data = pythonSdk.getOrCreateAdditionalData()
+
+    return findInterpreter(data, pythonSdk)
   }
 
   private suspend fun findInterpreter(

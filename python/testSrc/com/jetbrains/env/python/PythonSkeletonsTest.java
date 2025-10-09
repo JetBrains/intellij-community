@@ -36,7 +36,7 @@ import com.jetbrains.python.psi.impl.PyBuiltinCache;
 import com.jetbrains.python.psi.resolve.PythonSdkPathCache;
 import com.jetbrains.python.pyi.PyiFile;
 import com.jetbrains.python.pyi.PyiUtil;
-import com.jetbrains.python.sdk.PythonSdkUtil;
+import com.jetbrains.python.sdk.legacy.PythonSdkUtil;
 import com.jetbrains.python.sdk.skeleton.PySkeletonHeader;
 import com.jetbrains.python.toolbox.Maybe;
 import com.jetbrains.python.tools.sdkTools.SdkCreationType;

@@ -31,7 +31,8 @@ import com.jetbrains.python.psi.impl.PyPsiUtils;
 import com.jetbrains.python.psi.resolve.QualifiedNameFinder;
 import com.jetbrains.python.pyi.PyiFile;
 import com.jetbrains.python.pyi.PyiUtil;
-import com.jetbrains.python.sdk.PythonSdkUtil;
+import com.jetbrains.python.sdk.legacy.PythonSdkUtil;
+import com.jetbrains.python.sdk.skeleton.PySkeletonUtil;
 import one.util.streamex.StreamEx;
 import org.jetbrains.annotations.Contract;
 import org.jetbrains.annotations.NotNull;
@@ -380,7 +381,7 @@ public final class AddImportHelper {
     final Module module = ModuleUtilCore.findModuleForPsiElement(importLocation);
     final Sdk pythonSdk = module != null ? PythonSdkUtil.findPythonSdk(module) : projectRootManager.getProjectSdk();
 
-    if (PythonSdkUtil.isStdLib(vFile, pythonSdk)) {
+    if (PySkeletonUtil.isStdLib(vFile, pythonSdk)) {
       return new ImportPriorityChoice(ImportPriority.BUILTIN, vFile + " is either in lib but not under site-packages," +
                                                               " or belongs to the root of skeletons," +
                                                               " or is a .pyi stub definition for stdlib module");

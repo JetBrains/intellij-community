@@ -7,7 +7,7 @@ import com.intellij.openapi.diagnostic.Logger
 import com.intellij.openapi.util.SystemInfo
 import com.intellij.openapi.vfs.LocalFileSystem
 import com.intellij.util.SystemProperties
-import com.jetbrains.python.sdk.PythonSdkUtil
+import com.jetbrains.python.sdk.legacy.PythonSdkUtil
 import org.jetbrains.annotations.ApiStatus
 import java.nio.file.Files
 import java.nio.file.Path

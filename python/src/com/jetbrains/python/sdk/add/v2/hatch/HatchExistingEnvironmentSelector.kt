@@ -15,7 +15,7 @@ import com.jetbrains.python.newProject.collector.InterpreterStatisticsInfo
 import com.jetbrains.python.onSuccess
 import com.jetbrains.python.sdk.impl.resolvePythonBinary
 import com.jetbrains.python.sdk.ModuleOrProject
-import com.jetbrains.python.sdk.PythonSdkUtil
+import com.jetbrains.python.sdk.legacy.PythonSdkUtil
 import com.jetbrains.python.sdk.add.v2.PythonExistingEnvironmentConfigurator
 import com.jetbrains.python.sdk.add.v2.PythonInterpreterCreationTargets
 import com.jetbrains.python.sdk.add.v2.PythonMutableTargetAddInterpreterModel

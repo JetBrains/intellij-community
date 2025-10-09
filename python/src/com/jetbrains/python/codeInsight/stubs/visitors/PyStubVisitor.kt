@@ -8,7 +8,7 @@ import com.jetbrains.python.PyPsiPackageUtil
 import com.jetbrains.python.inspections.PyInspectionVisitor
 import com.jetbrains.python.packaging.management.PythonPackageManager
 import com.jetbrains.python.psi.PyFile
-import com.jetbrains.python.sdk.PythonSdkUtil
+import com.jetbrains.python.sdk.legacy.PythonSdkUtil
 import com.jetbrains.python.sdk.isReadOnly
 
 internal abstract class PyStubVisitor(

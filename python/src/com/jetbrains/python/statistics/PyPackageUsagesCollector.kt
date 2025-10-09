@@ -14,7 +14,7 @@ import com.jetbrains.python.packaging.PyPIPackageCache
 import com.jetbrains.python.packaging.PyPackageName
 import com.jetbrains.python.packaging.management.PythonPackageManager
 import com.jetbrains.python.sdk.PythonSdkAdditionalData
-import com.jetbrains.python.sdk.PythonSdkUtil
+import com.jetbrains.python.sdk.legacy.PythonSdkUtil
 
 /**
  * Reports usages of packages and versions

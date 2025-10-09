@@ -23,7 +23,7 @@ import com.jetbrains.python.packaging.PyPackageUtil;
 import com.jetbrains.python.packaging.PyPackagesNotificationPanel;
 import com.jetbrains.python.packaging.PyPackagingSettings;
 import com.jetbrains.python.packaging.bridge.PythonPackageManagementServiceBridge;
-import com.jetbrains.python.sdk.PythonSdkUtil;
+import com.jetbrains.python.sdk.legacy.PythonSdkUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 

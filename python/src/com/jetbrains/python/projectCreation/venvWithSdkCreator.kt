@@ -21,7 +21,7 @@ import com.jetbrains.python.*
 import com.jetbrains.python.errorProcessing.MessageError
 import com.jetbrains.python.errorProcessing.PyResult
 import com.jetbrains.python.errorProcessing.getOr
-import com.jetbrains.python.sdk.PythonSdkUtil
+import com.jetbrains.python.sdk.legacy.PythonSdkUtil
 import com.jetbrains.python.sdk.configurePythonSdk
 import com.jetbrains.python.sdk.createSdk
 import com.jetbrains.python.sdk.flavors.PythonSdkFlavor

@@ -16,7 +16,7 @@ import com.intellij.util.cancelOnDispose
 import com.jetbrains.python.packaging.common.PythonPackageManagementListener
 import com.jetbrains.python.packaging.management.PythonPackageManager
 import com.jetbrains.python.packaging.utils.PyPackageCoroutine
-import com.jetbrains.python.sdk.PythonSdkUtil.getSitePackagesDirectory
+import com.jetbrains.python.sdk.skeleton.PySkeletonUtil.getSitePackagesDirectory
 import org.jetbrains.annotations.ApiStatus
 
 @ApiStatus.Internal

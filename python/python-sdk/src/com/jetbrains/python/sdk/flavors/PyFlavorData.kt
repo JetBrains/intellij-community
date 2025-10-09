@@ -4,7 +4,7 @@ import com.intellij.execution.target.TargetedCommandLineBuilder
 import com.intellij.openapi.projectRoots.Sdk
 import com.intellij.remote.RemoteSdkPropertiesPaths
 import com.jetbrains.python.sdk.PySdkUtil
-import com.jetbrains.python.sdk.PythonSdkUtil
+import com.jetbrains.python.sdk.legacy.PythonSdkUtil
 
 /**
  * Each [PythonSdkFlavor] is associated with [PyFlavorData].

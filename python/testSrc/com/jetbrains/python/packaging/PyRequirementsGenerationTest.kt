@@ -13,7 +13,7 @@ import com.intellij.testFramework.registerServiceInstance
 import com.jetbrains.python.fixtures.PyTestCase
 import com.jetbrains.python.packaging.common.PythonPackage
 import com.jetbrains.python.packaging.management.TestPythonPackageManagerService
-import com.jetbrains.python.sdk.PythonSdkUtil
+import com.jetbrains.python.sdk.legacy.PythonSdkUtil
 import com.jetbrains.python.sdk.setAssociationToModuleAsync
 import org.easymock.EasyMock
 

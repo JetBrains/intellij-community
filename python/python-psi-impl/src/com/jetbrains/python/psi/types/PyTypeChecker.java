@@ -23,7 +23,7 @@ import com.jetbrains.python.psi.types.PyRecursiveTypeVisitor.PyTypeTraverser;
 import com.jetbrains.python.psi.types.PyRecursiveTypeVisitor.Traversal;
 import com.jetbrains.python.psi.types.PyTypeParameterMapping.Option;
 import com.jetbrains.python.pyi.PyiFile;
-import com.jetbrains.python.sdk.PythonSdkUtil;
+import com.jetbrains.python.sdk.legacy.PythonSdkUtil;
 import one.util.streamex.EntryStream;
 import one.util.streamex.IntStreamEx;
 import one.util.streamex.StreamEx;

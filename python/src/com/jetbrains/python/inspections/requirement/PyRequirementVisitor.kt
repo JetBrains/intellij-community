@@ -21,7 +21,7 @@ import com.jetbrains.python.psi.PyImportStatement
 import com.jetbrains.python.psi.PyQualifiedExpression
 import com.jetbrains.python.psi.impl.PyPsiUtils
 import com.jetbrains.python.psi.types.TypeEvalContext
-import com.jetbrains.python.sdk.PythonSdkUtil
+import com.jetbrains.python.sdk.legacy.PythonSdkUtil
 import com.jetbrains.python.sdk.pythonSdk
 import org.jetbrains.annotations.ApiStatus
 

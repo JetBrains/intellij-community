@@ -39,7 +39,7 @@ import com.jetbrains.python.remote.PyRemoteSdkAdditionalData;
 import com.jetbrains.python.run.target.HelpersAwareTargetEnvironmentRequest;
 import com.jetbrains.python.sdk.PyRemoteSdkAdditionalDataMarker;
 import com.jetbrains.python.sdk.PythonEnvUtil;
-import com.jetbrains.python.sdk.PythonSdkUtil;
+import com.jetbrains.python.sdk.legacy.PythonSdkUtil;
 import com.jetbrains.python.target.PyTargetAwareAdditionalData;
 import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;

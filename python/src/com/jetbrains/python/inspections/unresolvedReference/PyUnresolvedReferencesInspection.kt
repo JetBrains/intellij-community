@@ -39,7 +39,7 @@ import com.jetbrains.python.psi.impl.PyFromImportStatementImpl
 import com.jetbrains.python.psi.impl.PyImportElementImpl
 import com.jetbrains.python.psi.impl.references.PyImportReference
 import com.jetbrains.python.psi.types.TypeEvalContext
-import com.jetbrains.python.sdk.PythonSdkUtil
+import com.jetbrains.python.sdk.legacy.PythonSdkUtil
 import com.jetbrains.python.sdk.isReadOnly
 
 /**

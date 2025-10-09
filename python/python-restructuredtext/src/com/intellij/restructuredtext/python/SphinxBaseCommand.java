@@ -27,7 +27,7 @@ import com.jetbrains.python.run.PythonProcessRunner;
 import com.jetbrains.python.run.PythonTracebackFilter;
 import com.jetbrains.python.sdk.PythonEnvUtil;
 import com.jetbrains.python.sdk.PythonSdkType;
-import com.jetbrains.python.sdk.PythonSdkUtil;
+import com.jetbrains.python.sdk.legacy.PythonSdkUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 

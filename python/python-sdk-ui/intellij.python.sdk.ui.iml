@@ -20,7 +20,6 @@
     <orderEntry type="module" module-name="intellij.python.community" />
     <orderEntry type="module" module-name="intellij.python.sdk" />
     <orderEntry type="module" module-name="intellij.python.syntax.core" />
-    <orderEntry type="module" module-name="intellij.python.psi.impl" />
     <orderEntry type="module" module-name="intellij.libraries.caffeine" />
     <orderEntry type="library" name="io.github.z4kn4fein.semver.jvm" level="project" />
     <orderEntry type="module" module-name="intellij.python.community.execService" />

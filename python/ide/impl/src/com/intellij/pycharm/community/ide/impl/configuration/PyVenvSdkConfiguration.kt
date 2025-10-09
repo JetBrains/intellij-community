@@ -10,6 +10,7 @@ import com.jetbrains.python.errorProcessing.MessageError
 import com.jetbrains.python.errorProcessing.PyResult
 import com.jetbrains.python.sdk.*
 import com.jetbrains.python.sdk.configuration.PyProjectSdkConfigurationExtension
+import com.jetbrains.python.sdk.legacy.PythonSdkUtil
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
 import org.jetbrains.annotations.ApiStatus

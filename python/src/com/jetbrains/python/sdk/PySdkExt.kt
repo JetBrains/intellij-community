@@ -44,12 +44,15 @@ import com.jetbrains.python.packaging.utils.PyPackageCoroutine
 import com.jetbrains.python.psi.LanguageLevel
 import com.jetbrains.python.remote.PyRemoteSdkAdditionalData
 import com.jetbrains.python.run.PythonInterpreterTargetEnvironmentFactory
+import com.jetbrains.python.sdk.legacy.PythonSdkUtil.isPythonSdk
 import com.jetbrains.python.sdk.configuration.PyProjectSdkConfiguration.setReadyToUseSdk
 import com.jetbrains.python.sdk.flavors.PyFlavorAndData
 import com.jetbrains.python.sdk.flavors.PythonSdkFlavor
 import com.jetbrains.python.sdk.flavors.VirtualEnvSdkFlavor
 import com.jetbrains.python.sdk.flavors.conda.CondaEnvSdkFlavor
+import com.jetbrains.python.sdk.legacy.PythonSdkUtil
 import com.jetbrains.python.sdk.readOnly.PythonSdkReadOnlyProvider
+import com.jetbrains.python.sdk.skeleton.PySkeletonUtil
 import com.jetbrains.python.target.PyTargetAwareAdditionalData
 import com.jetbrains.python.target.createDetectedSdk
 import com.jetbrains.python.util.ShowingMessageErrorSync
@@ -487,7 +490,7 @@ private val Sdk.associatedPathFromAdditionalData: String?
   get() = (sdkAdditionalData as? PythonSdkAdditionalData)?.associatedModulePath
 
 private val Sdk.sitePackagesDirectory: VirtualFile?
-  get() = PythonSdkUtil.getSitePackagesDirectory(this)
+  get() = PySkeletonUtil.getSitePackagesDirectory(this)
 
 val Sdk.sdkFlavor: PythonSdkFlavor<*> get() = getOrCreateAdditionalData().flavor
 
@@ -608,6 +611,8 @@ fun Sdk.configureBuilderToRunPythonOnTarget(targetCommandLineBuilder: TargetedCo
  */
 val Sdk.sdkSeemsValid: Boolean
   get() {
+    if (!isPythonSdk(this, true)) return false
+
     val pythonSdkAdditionalData = getOrCreateAdditionalData()
     if (pythonSdkAdditionalData is PyRemoteSdkAdditionalData) return true
     return pythonSdkAdditionalData.flavorAndData.sdkSeemsValid(this, targetEnvConfiguration)

@@ -12,7 +12,7 @@ import com.jetbrains.python.icons.PythonIcons;
 import com.jetbrains.python.pathValidation.PathValidatorKt;
 import com.jetbrains.python.pathValidation.PlatformAndRoot;
 import com.jetbrains.python.pathValidation.ValidationRequest;
-import com.jetbrains.python.sdk.PythonSdkUtil;
+import com.jetbrains.python.sdk.legacy.PythonSdkUtil;
 import com.jetbrains.python.sdk.flavors.CPythonSdkFlavor;
 import com.jetbrains.python.sdk.flavors.PythonSdkFlavor;
 import org.jetbrains.annotations.NotNull;

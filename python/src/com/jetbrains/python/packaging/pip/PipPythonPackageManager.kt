@@ -22,7 +22,7 @@ import com.jetbrains.python.packaging.management.hasInstalledPackage
 import com.jetbrains.python.packaging.requirementsTxt.PythonRequirementsTxtManager
 import com.jetbrains.python.packaging.setupPy.SetupPyManager
 import com.jetbrains.python.psi.LanguageLevel
-import com.jetbrains.python.sdk.PythonSdkUtil
+import com.jetbrains.python.sdk.legacy.PythonSdkUtil
 import com.jetbrains.python.statistics.version
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext

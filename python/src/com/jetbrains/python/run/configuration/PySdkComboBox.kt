@@ -9,7 +9,7 @@ import com.intellij.openapi.util.Computable
 import com.jetbrains.python.PyBundle
 import com.jetbrains.python.run.AbstractPythonRunConfigurationParams
 import com.jetbrains.python.sdk.PySdkListCellRenderer
-import com.jetbrains.python.sdk.PythonSdkUtil
+import com.jetbrains.python.sdk.legacy.PythonSdkUtil
 import java.util.function.Consumer
 
 class PySdkComboBox(private val addDefault: Boolean,

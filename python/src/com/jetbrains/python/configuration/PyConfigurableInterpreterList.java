@@ -13,6 +13,7 @@ import com.jetbrains.python.run.PythonInterpreterTargetEnvironmentFactory;
 import com.jetbrains.python.run.TargetConfigurationWithLocalFsAccessExKt;
 import com.jetbrains.python.sdk.*;
 import com.jetbrains.python.sdk.flavors.PythonSdkFlavor;
+import com.jetbrains.python.sdk.legacy.PythonSdkUtil;
 import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -22,7 +23,7 @@ import java.util.Comparator;
 import java.util.List;
 
 import static com.jetbrains.python.SdkUiUtilKt.*;
-import static com.jetbrains.python.sdk.PythonSdkUtil.isRemote;
+import static com.jetbrains.python.sdk.legacy.PythonSdkUtil.isRemote;
 
 /**
  * Manages the SDK model shared between PythonSdkConfigurable and PyActiveSdkConfigurable.

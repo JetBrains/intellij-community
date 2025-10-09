@@ -42,6 +42,7 @@ import com.jetbrains.python.remote.PythonRemoteInterpreterManager;
 import com.jetbrains.python.sdk.add.PyAddSdkDialog;
 import com.jetbrains.python.sdk.flavors.CPythonSdkFlavor;
 import com.jetbrains.python.sdk.flavors.PythonSdkFlavor;
+import com.jetbrains.python.sdk.legacy.PythonSdkUtil;
 import com.jetbrains.python.target.PyDetectedSdkAdditionalData;
 import com.jetbrains.python.target.PyInterpreterVersionUtil;
 import com.jetbrains.python.target.PyTargetAwareAdditionalData;

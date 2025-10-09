@@ -16,6 +16,8 @@ import org.jetbrains.annotations.ApiStatus.Internal
 @Internal
 
 fun Sdk.getOrCreateAdditionalData(): PythonSdkAdditionalData {
+  requirePythonSdk()
+
   val existingData = sdkAdditionalData as? PythonSdkAdditionalData
   if (existingData != null) {
     return existingData
@@ -51,6 +53,8 @@ fun Sdk.getOrCreateAdditionalData(): PythonSdkAdditionalData {
 
 @Internal
 suspend fun Sdk.persist(): Unit = edtWriteAction {
+  requirePythonSdk()
+
   if (ProjectJdkTable.getInstance().findJdk(name) == null) { // Saving 2 SDKs with same name is an error
     getOrCreateAdditionalData() // additional data is always required
     ProjectJdkTable.getInstance().addJdk(this)

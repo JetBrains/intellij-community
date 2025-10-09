@@ -21,7 +21,7 @@ import com.intellij.psi.search.FilenameIndex
 import com.intellij.psi.search.GlobalSearchScope
 import com.intellij.util.EnvironmentUtil
 import com.jetbrains.python.run.PythonRunConfiguration
-import com.jetbrains.python.sdk.PythonSdkUtil
+import com.jetbrains.python.sdk.legacy.PythonSdkUtil
 
 internal val DataContext.project: Project
   get() = RunAnythingUtil.fetchProject(this)

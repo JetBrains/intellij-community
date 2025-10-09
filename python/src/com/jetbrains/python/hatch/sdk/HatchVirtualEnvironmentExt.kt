@@ -11,7 +11,7 @@ import com.intellij.python.hatch.getHatchEnvVirtualProjectPath
 import com.jetbrains.python.Result
 import com.jetbrains.python.errorProcessing.PyResult
 import com.jetbrains.python.sdk.impl.resolvePythonBinary
-import com.jetbrains.python.sdk.PythonSdkUtil
+import com.jetbrains.python.sdk.legacy.PythonSdkUtil
 import com.jetbrains.python.sdk.createSdk
 import com.jetbrains.python.sdk.persist
 import kotlinx.coroutines.Dispatchers

@@ -17,7 +17,7 @@ import com.intellij.util.concurrency.annotations.RequiresBackgroundThread
 import com.jetbrains.python.PyBundle
 import com.jetbrains.python.packaging.PyPackageName
 import com.jetbrains.python.packaging.management.PythonPackageManager
-import com.jetbrains.python.sdk.PythonSdkUtil
+import com.jetbrains.python.sdk.legacy.PythonSdkUtil
 import com.jetbrains.python.sdk.findAmongRoots
 import org.toml.lang.psi.TomlKeyValue
 import org.toml.lang.psi.TomlTable

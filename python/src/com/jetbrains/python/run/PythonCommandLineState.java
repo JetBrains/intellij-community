@@ -73,6 +73,7 @@ import com.jetbrains.python.run.target.PythonCommandLineTargetEnvironmentProvide
 import com.jetbrains.python.sdk.*;
 import com.jetbrains.python.sdk.flavors.PythonSdkFlavor;
 import com.jetbrains.python.sdk.flavors.conda.CondaPythonExecKt;
+import com.jetbrains.python.sdk.legacy.PythonSdkUtil;
 import com.jetbrains.python.target.PyTargetAwareAdditionalData;
 import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;

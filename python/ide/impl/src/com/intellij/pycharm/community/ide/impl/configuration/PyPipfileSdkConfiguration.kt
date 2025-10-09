@@ -24,6 +24,7 @@ import com.jetbrains.python.errorProcessing.PyResult
 import com.jetbrains.python.getOrLogException
 import com.jetbrains.python.sdk.*
 import com.jetbrains.python.sdk.configuration.PyProjectSdkConfigurationExtension
+import com.jetbrains.python.sdk.legacy.PythonSdkUtil
 import com.jetbrains.python.sdk.pipenv.*
 import com.jetbrains.python.sdk.pipenv.ui.PyAddNewPipEnvFromFilePanel
 import com.jetbrains.python.venvReader.VirtualEnvReader

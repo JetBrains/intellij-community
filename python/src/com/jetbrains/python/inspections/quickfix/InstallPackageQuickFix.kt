@@ -8,7 +8,7 @@ import com.intellij.openapi.project.Project
 import com.jetbrains.python.PyBundle
 import com.jetbrains.python.packaging.management.ui.PythonPackageManagerUI
 import com.jetbrains.python.packaging.utils.PyPackageCoroutine
-import com.jetbrains.python.sdk.PythonSdkUtil
+import com.jetbrains.python.sdk.legacy.PythonSdkUtil
 import com.jetbrains.python.statistics.PyPackagesUsageCollector
 import org.jetbrains.annotations.Nls
 

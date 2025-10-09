@@ -35,7 +35,7 @@ import com.jetbrains.python.packaging.requirementsTxt.PythonRequirementTxtSdkUti
 import com.jetbrains.python.psi.PyFile
 import com.jetbrains.python.sdk.PySdkPopupFactory
 import com.jetbrains.python.sdk.PythonSdkAdditionalData
-import com.jetbrains.python.sdk.PythonSdkUtil
+import com.jetbrains.python.sdk.legacy.PythonSdkUtil
 import com.jetbrains.python.statistics.SyncPythonRequirementsIdsHolder.Companion.ANALYZE_ENTRIES_IN_REQUIREMENTS_FILE_FAILED
 import com.jetbrains.python.statistics.SyncPythonRequirementsIdsHolder.Companion.CREATE_REQUIREMENTS_FILE_FAILED
 import com.jetbrains.python.statistics.SyncPythonRequirementsIdsHolder.Companion.NO_INTERPRETER_CONFIGURED

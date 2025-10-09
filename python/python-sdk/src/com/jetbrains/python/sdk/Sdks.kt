@@ -25,6 +25,7 @@ import com.intellij.util.Urls
 import com.intellij.util.system.CpuArch
 import com.intellij.util.system.OS
 import com.jetbrains.python.psi.LanguageLevel
+import com.jetbrains.python.sdk.legacy.PythonSdkUtil.isPythonSdk
 import org.jetbrains.annotations.ApiStatus
 import java.net.URL
 import java.nio.charset.StandardCharsets
@@ -197,6 +198,8 @@ object SdksKeeper {
 // as right now calling pyModuleBlocking from quick-fix is not allowed in EDT.
 @ApiStatus.Internal
 fun Sdk.setAssociationToModuleAsync(module: Module) {
+  requirePythonSdk()
+
   val path = module.basePath
   assert(path != null) { "Module $module has not paths, and can't be associated" }
 
@@ -217,6 +220,8 @@ fun Sdk.setAssociationToModuleAsync(module: Module) {
 
 @ApiStatus.Internal
 suspend fun Sdk.setAssociationToModule(module: Module) {
+  requirePythonSdk()
+
   val path = module.basePath
   assert(path != null) { "Module $module has not paths, and can't be associated" }
   setAssociationToPath(path)
@@ -224,6 +229,8 @@ suspend fun Sdk.setAssociationToModule(module: Module) {
 
 @ApiStatus.Internal
 suspend fun Sdk.setAssociationToPath(path: String?) {
+  requirePythonSdk()
+
   val data = getOrCreateAdditionalData()
     .also {
       it.associatedModulePath = path
@@ -235,4 +242,12 @@ suspend fun Sdk.setAssociationToPath(path: String?) {
   writeAction {
     modificator.commitChanges()
   }
+}
+
+/**
+ * @throws IllegalArgumentException if sdk is not a python sdk
+ */
+@ApiStatus.Internal
+fun Sdk.requirePythonSdk() {
+  require(isPythonSdk(this, true)) { "Can't be called only for PythonSdkType and not for $sdkType" }
 }

@@ -16,7 +16,7 @@ import com.jetbrains.python.psi.PyFile;
 import com.jetbrains.python.psi.PyFunction;
 import com.jetbrains.python.psi.impl.PyBuiltinCache;
 import com.jetbrains.python.psi.resolve.QualifiedNameFinder;
-import com.jetbrains.python.sdk.PythonSdkUtil;
+import com.jetbrains.python.sdk.skeleton.PySkeletonUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jsoup.nodes.Document;
@@ -978,7 +978,7 @@ public final class PyStdlibDocumentationLinkProvider implements PythonDocumentat
     }
     Sdk sdk = PyBuiltinCache.findSdkForFile(file);
     VirtualFile vFile = file.getVirtualFile();
-    if (vFile != null && sdk != null && PythonSdkUtil.isStdLib(vFile, sdk)) {
+    if (vFile != null && sdk != null && PySkeletonUtil.isStdLib(vFile, sdk)) {
       QualifiedName qName = QualifiedNameFinder.findCanonicalImportPath(element, originalElement);
       return getStdlibUrlFor(element, qName, sdk);
     }

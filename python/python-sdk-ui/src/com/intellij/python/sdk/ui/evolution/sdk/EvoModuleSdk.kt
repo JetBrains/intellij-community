@@ -3,7 +3,7 @@ package com.intellij.python.sdk.ui.evolution.sdk
 import com.intellij.icons.AllIcons
 import com.intellij.openapi.module.Module
 import com.intellij.openapi.projectRoots.Sdk
-import com.jetbrains.python.sdk.PythonSdkUtil
+import com.jetbrains.python.sdk.legacy.PythonSdkUtil
 import javax.swing.Icon
 
 

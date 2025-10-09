@@ -14,7 +14,7 @@ import com.jetbrains.python.PyBundle
 import com.jetbrains.python.isCondaVirtualEnv
 import com.jetbrains.python.isVirtualEnv
 import com.jetbrains.python.psi.LanguageLevel
-import com.jetbrains.python.sdk.PythonSdkUtil.isRemote
+import com.jetbrains.python.sdk.legacy.PythonSdkUtil.isRemote
 import com.jetbrains.python.sdk.flavors.PythonSdkFlavor
 import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.annotations.Nls
@@ -111,9 +111,9 @@ fun icon(sdk: Sdk): Icon {
  * All the others are considered as [PyRenderedSdkType.SYSTEM].
  *
  * @see Sdk.isAssociatedWithAnotherModule
- * @see PythonSdkUtil.isVirtualEnv
- * @see PythonSdkUtil.isCondaVirtualEnv
- * @see PythonSdkUtil.isRemote
+ * @see com.jetbrains.python.sdk.legacy.PythonSdkUtil.isVirtualEnv
+ * @see com.jetbrains.python.sdk.legacy.PythonSdkUtil.isCondaVirtualEnv
+ * @see com.jetbrains.python.sdk.legacy.PythonSdkUtil.isRemote
  * @see PyRenderedSdkType
  */
 @ApiStatus.Internal

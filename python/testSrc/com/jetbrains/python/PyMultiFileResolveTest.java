@@ -24,7 +24,8 @@ import com.jetbrains.python.psi.stubs.PyClassNameIndex;
 import com.jetbrains.python.psi.types.PyClassType;
 import com.jetbrains.python.psi.types.PyType;
 import com.jetbrains.python.psi.types.TypeEvalContext;
-import com.jetbrains.python.sdk.PythonSdkUtil;
+import com.jetbrains.python.sdk.legacy.PythonSdkUtil;
+import com.jetbrains.python.sdk.skeleton.PySkeletonUtil;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.Arrays;
@@ -432,7 +433,7 @@ public class PyMultiFileResolveTest extends PyMultiFileResolveTestCase {
     final PsiElement module = doResolve();
     assertNotNull(module);
     final Sdk moduleSdk = PythonSdkUtil.findPythonSdk(myFixture.getModule());
-    assertFalse(PythonSdkUtil.isStdLib(module.getContainingFile().getVirtualFile(), moduleSdk));
+    assertFalse(PySkeletonUtil.isStdLib(module.getContainingFile().getVirtualFile(), moduleSdk));
   }
 
   // PY-18626

@@ -2,7 +2,7 @@
 package com.jetbrains.python.hatch.sdk
 
 import com.intellij.openapi.projectRoots.Sdk
-import com.jetbrains.python.sdk.PythonSdkUtil
+import com.jetbrains.python.sdk.legacy.PythonSdkUtil
 import com.jetbrains.python.sdk.getOrCreateAdditionalData
 
 internal val Sdk.isHatch: Boolean

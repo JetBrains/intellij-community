@@ -19,7 +19,8 @@ import com.intellij.psi.PsiElement
 import com.intellij.psi.util.PsiUtilCore
 import com.intellij.psi.util.QualifiedName
 import com.jetbrains.python.psi.resolve.PyCanonicalPathProvider
-import com.jetbrains.python.sdk.PythonSdkUtil
+import com.jetbrains.python.sdk.legacy.PythonSdkUtil
+import com.jetbrains.python.sdk.skeleton.PySkeletonUtil
 
 
 class PyStdlibCanonicalPathProvider : PyCanonicalPathProvider {
@@ -27,7 +28,7 @@ class PyStdlibCanonicalPathProvider : PyCanonicalPathProvider {
     val virtualFile = PsiUtilCore.getVirtualFile(symbol)
     if (virtualFile != null && foothold != null) {
       val canonicalPath = restoreStdlibCanonicalPath(qName)
-      if (canonicalPath != null && PythonSdkUtil.isStdLib(virtualFile, PythonSdkUtil.findPythonSdk(foothold))) {
+      if (canonicalPath != null && PySkeletonUtil.isStdLib(virtualFile, PythonSdkUtil.findPythonSdk(foothold))) {
         return canonicalPath
       }
     }

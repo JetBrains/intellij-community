@@ -9,7 +9,7 @@ import com.jetbrains.python.PyBundle
 import com.jetbrains.python.packaging.PyRequirement
 import com.jetbrains.python.packaging.management.ui.PythonPackageManagerUI
 import com.jetbrains.python.packaging.utils.PyPackageCoroutine
-import com.jetbrains.python.sdk.PythonSdkUtil
+import com.jetbrains.python.sdk.legacy.PythonSdkUtil
 
 internal class InstallAllRequirementsInTomlQuickFix(val requirements: List<PyRequirement>) : LocalQuickFix {
   override fun getFamilyName(): String {

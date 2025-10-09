@@ -196,6 +196,8 @@ jvm_library(
     "//python/openapi:community",
     "//python/openapi:community_test_lib",
     "//python/impl.helperLocator:community-helpersLocator",
+    "//python/python-sdk:sdk",
+    "//python/python-sdk:sdk_test_lib",
   ]
 )
 ### auto-generated section `build intellij.python.commonTests` end

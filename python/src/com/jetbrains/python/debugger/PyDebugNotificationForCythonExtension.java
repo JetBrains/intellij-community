@@ -39,7 +39,7 @@ import com.jetbrains.python.PyBundle;
 import com.jetbrains.python.run.AbstractPythonRunConfiguration;
 import com.jetbrains.python.run.PythonRunConfiguration;
 import com.jetbrains.python.sdk.PythonEnvUtil;
-import com.jetbrains.python.sdk.PythonSdkUtil;
+import com.jetbrains.python.sdk.legacy.PythonSdkUtil;
 import org.jetbrains.annotations.NotNull;
 
 import java.io.File;

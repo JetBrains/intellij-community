@@ -1,6 +1,7 @@
 <idea-plugin visibility="public">
   <dependencies>
     <module name="intellij.python.psi"/>
+    <module name="intellij.python.sdk"/>
     <module name="intellij.python.community"/>
     <module name="intellij.python.community.helpersLocator"/>
   </dependencies>

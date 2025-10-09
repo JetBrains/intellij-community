@@ -10,7 +10,7 @@ import com.intellij.platform.eel.provider.localEel
 import com.intellij.python.community.services.systemPython.SystemPythonProvider
 import com.jetbrains.python.PythonBinary
 import com.jetbrains.python.errorProcessing.PyResult
-import com.jetbrains.python.sdk.PythonSdkUtil
+import com.jetbrains.python.sdk.legacy.PythonSdkUtil
 import com.jetbrains.python.sdk.WinRegistryService
 import com.jetbrains.python.sdk.getAppxFiles
 import com.jetbrains.python.venvReader.tryResolvePath

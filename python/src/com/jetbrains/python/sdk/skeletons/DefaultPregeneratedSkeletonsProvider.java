@@ -16,7 +16,7 @@ import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.util.io.ZipUtil;
 import com.jetbrains.python.PyBundle;
 import com.jetbrains.python.PyNames;
-import com.jetbrains.python.sdk.PythonSdkUtil;
+import com.jetbrains.python.sdk.legacy.PythonSdkUtil;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;

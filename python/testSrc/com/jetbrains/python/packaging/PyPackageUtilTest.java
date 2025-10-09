@@ -25,7 +25,7 @@ import com.jetbrains.python.psi.LanguageLevel;
 import com.jetbrains.python.psi.PyCallExpression;
 import com.jetbrains.python.psi.PyExpression;
 import com.jetbrains.python.psi.PyFile;
-import com.jetbrains.python.sdk.PythonSdkUtil;
+import com.jetbrains.python.sdk.legacy.PythonSdkUtil;
 import com.jetbrains.python.sdk.SdksKt;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
