@@ -45,3 +45,5 @@ interface TestRunner {
 
   suspend fun runTests(request: TestRunRequest): TestRunResult
 }
+
+class TestNotFoundException(message: String) : Exception(message)

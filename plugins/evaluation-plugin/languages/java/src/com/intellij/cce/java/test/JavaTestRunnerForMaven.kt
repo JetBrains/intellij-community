@@ -1,6 +1,7 @@
 package com.intellij.cce.java.test
 
 
+import com.intellij.cce.test.TestNotFoundException
 import com.intellij.cce.test.TestRunResult
 import com.intellij.openapi.application.smartReadAction
 import com.intellij.openapi.module.ModuleUtil
@@ -156,9 +157,14 @@ private fun tryGuessProject(project: Project, priorProject: String?, test: Strin
   val facade = JavaPsiFacade.getInstance(project)
   val scope = GlobalSearchScope.projectScope(project)
   val psiClass = facade.findClass(test, scope) ?: facade.findClass(test.split('.').dropLast(1).joinToString("."), scope)
-  val module = ModuleUtil.findModuleForFile(psiClass?.containingFile)
+
+  if (psiClass == null) {
+    throw TestNotFoundException("Not found class for test: $priorProject:$test")
+  }
+
+  val module = ModuleUtil.findModuleForFile(psiClass.containingFile)
   val mavenProject = module?.let { MavenProjectsManager.getInstance(project).findProject(it) }
 
   val guessedProject = if (mavenProject == null) null else ":${mavenProject.mavenId.artifactId}"
-  return Pair(guessedProject, psiClass?.qualifiedName!!)
+  return Pair(guessedProject, psiClass.qualifiedName!!)
 }
