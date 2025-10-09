@@ -4,7 +4,6 @@ package com.intellij.openapi.vcs.changes
 import com.intellij.util.concurrency.annotations.RequiresBackgroundThread
 import com.intellij.util.concurrency.annotations.RequiresEdt
 import com.intellij.vcs.commit.ChangesViewCommitWorkflowHandler
-import kotlinx.coroutines.CompletableDeferred
 import org.jetbrains.annotations.CalledInAny
 
 interface ChangesViewEx : ChangesViewI {
@@ -15,13 +14,7 @@ interface ChangesViewEx : ChangesViewI {
   fun resetViewImmediatelyAndRefreshLater()
 
   @CalledInAny
-  fun refresh(@RequiresBackgroundThread callback: Runnable?)
-
-  suspend fun refresh() {
-    val deferred = CompletableDeferred<Unit>()
-    refresh { deferred.complete(Unit) }
-    deferred.await()
-  }
+  fun scheduleRefresh(@RequiresBackgroundThread callback: Runnable)
 
   val isAllowExcludeFromCommit: Boolean
 

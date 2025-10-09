@@ -63,7 +63,7 @@ abstract class ChangeListViewCommitPanel @ApiStatus.Internal constructor(
   }
 
   final override var editedCommit: EditedCommitPresentation? by observable(null) { _, _, newValue ->
-    ChangesViewManager.getInstanceEx(project).refresh {
+    ChangesViewManager.getInstanceEx(project).scheduleRefresh {
       application.invokeLater { newValue?.let { expand(it) } }
     }
   }
@@ -110,7 +110,7 @@ abstract class ChangeListViewCommitPanel @ApiStatus.Internal constructor(
 
   private fun closeEditorPreviewIfEmpty() {
     val changesViewManager = ChangesViewManager.getInstance(project) as? ChangesViewManager ?: return
-    ChangesViewManager.getInstanceEx(project).refresh {
+    ChangesViewManager.getInstanceEx(project).scheduleRefresh {
       application.invokeLater {
         changesViewManager.closeEditorPreview(true)
       }

@@ -775,9 +775,8 @@ com.intellij.openapi.vcs.changes.ChangesViewEx
 - com.intellij.openapi.vcs.changes.ChangesViewI
 - a:getCommitWorkflowHandler():com.intellij.vcs.commit.ChangesViewCommitWorkflowHandler
 - a:isAllowExcludeFromCommit():Z
-- a:refresh(java.lang.Runnable):V
-- refresh(kotlin.coroutines.Continuation):java.lang.Object
 - a:resetViewImmediatelyAndRefreshLater():V
+- a:scheduleRefresh(java.lang.Runnable):V
 com.intellij.openapi.vcs.changes.ChangesViewI
 - a:scheduleRefresh():V
 - a:selectChanges(java.util.List):V
@@ -798,9 +797,9 @@ c:com.intellij.openapi.vcs.changes.ChangesViewManager
 - s:getLocalChangesToolWindowName(com.intellij.openapi.project.Project):java.lang.String
 - isAllowExcludeFromCommit():Z
 - isDiffPreviewAvailable():Z
-- refresh(java.lang.Runnable):V
 - resetViewImmediatelyAndRefreshLater():V
 - scheduleRefresh():V
+- scheduleRefresh(java.lang.Runnable):V
 - selectChanges(java.util.List):V
 - selectFile(com.intellij.openapi.vfs.VirtualFile):V
 - setBusy(Z):V

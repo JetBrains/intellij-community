@@ -98,7 +98,7 @@ public class ShowDiffFromLocalChangesActionProvider implements AnActionExtension
       // this trick is essential since we are under some conditions to refresh changes;
       // but we can only rely on callback after refresh
       ChangeListManager.getInstance(project).invokeAfterUpdate(true, () -> {
-        ChangesViewManager.getInstanceEx(project).refresh(() -> {
+        ChangesViewManager.getInstanceEx(project).scheduleRefresh(() -> {
           try {
             List<? extends Change> actualChanges = loadFakeRevisions(project, changes);
             resultRef.complete(collectRequestProducers(project, actualChanges, unversioned, view));

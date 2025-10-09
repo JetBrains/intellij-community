@@ -181,7 +181,7 @@ public class ChangesViewManager implements ChangesViewEx, Disposable {
   }
 
   @Override
-  public void refresh(@Nullable Runnable callback) {
+  public void scheduleRefresh(@NotNull Runnable callback) {
     if (myToolWindowPanel != null) {
       myToolWindowPanel.scheduleRefreshNow(callback);
     }

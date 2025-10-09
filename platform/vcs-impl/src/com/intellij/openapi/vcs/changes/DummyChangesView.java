@@ -57,7 +57,7 @@ class DummyChangesView implements ChangesViewEx {
   }
 
   @Override
-  public void refresh(@Nullable Runnable callback) {
+  public void scheduleRefresh(@NotNull Runnable callback) {
   }
 
   @Override

@@ -12,6 +12,7 @@ import com.intellij.openapi.vcs.changes.ui.ChangesViewContentManager.Companion.g
 import com.intellij.openapi.vcs.changes.ui.ChangesViewContentManagerListener
 import com.intellij.openapi.vcs.changes.ui.isCommitToolWindowShown
 import com.intellij.openapi.wm.ToolWindow
+import kotlinx.coroutines.CompletableDeferred
 import org.jetbrains.annotations.ApiStatus
 
 class ChangesViewCommitPanel @ApiStatus.Internal constructor(
@@ -68,7 +69,9 @@ class ChangesViewCommitPanel @ApiStatus.Internal constructor(
   private fun getVcsToolWindow(): ToolWindow? = getToolWindowFor(project, LOCAL_CHANGES)
 
   override suspend fun refreshChangesViewBeforeCommit() {
-    ChangesViewManager.getInstanceEx(project).refresh()
+    val deferred = CompletableDeferred<Unit>()
+    ChangesViewManager.getInstanceEx(project).scheduleRefresh { deferred.complete(Unit) }
+    deferred.await()
   }
 }
 
