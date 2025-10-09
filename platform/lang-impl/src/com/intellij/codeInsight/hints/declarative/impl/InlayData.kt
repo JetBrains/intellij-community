@@ -48,7 +48,7 @@ data class InlayData(
    *
    * @see DeclarativeInlayActionService
    */
-  val payloads: List<InlayPayload>?,
+  val payloads: List<InlayPayload>,
   val providerClass: Class<*>, // Just for debugging purposes
   val sourceId: String,
 ) {
@@ -88,7 +88,7 @@ abstract class InlayDataExternalizer(
 ) : DataExternalizer<InlayData> {
   companion object {
     // increment on format changed
-    private const val SERDE_VERSION = 10
+    private const val SERDE_VERSION = 11
   }
 
   open fun serdeVersion(): Int = SERDE_VERSION + treeExternalizer.serdeVersion()
@@ -112,7 +112,7 @@ abstract class InlayDataExternalizer(
     val tree: TinyTree<Any?>          = treeExternalizer.read(input)
     val providerId: String            = readUTF(input)
     val disabled: Boolean             = readDisabled(input)
-    val payloads: List<InlayPayload>? = readPayloads(input)
+    val payloads: List<InlayPayload>  = readPayloads(input)
     val providerClass: Class<*>       = readProviderClass(input)
     val sourceId: String              = readSourceId(input)
     return InlayData(position, tooltip, hintFormat, tree, providerId, disabled, payloads, providerClass, sourceId)
@@ -196,34 +196,23 @@ abstract class InlayDataExternalizer(
     return HintFormat(hintColorKind, hintFontSize, padding)
   }
 
-  open fun writePayloads(output: DataOutput, payloads: List<InlayPayload>?) {
-    if (payloads == null) {
-      output.writeBoolean(false)
-    }
-    else {
-      output.writeBoolean(true)
-      writeINT(output, payloads.size)
-      for (p in payloads) {
-        writeInlayPayload(output, p)
-      }
+  open fun writePayloads(output: DataOutput, payloads: List<InlayPayload>) {
+    writeINT(output, payloads.size)
+    for (p in payloads) {
+      writeInlayPayload(output, p)
     }
   }
 
-  open fun readPayloads(input: DataInput): List<InlayPayload>? {
-    if (input.readBoolean()) {
-      val payloadCount = readINT(input)
-      val payloads = ArrayList<InlayPayload>(payloadCount)
-      repeat(payloadCount) {
-        val inlayPayload = readInlayPayload(input)
-        if (inlayPayload != null) {
-          payloads.add(inlayPayload)
-        }
+  open fun readPayloads(input: DataInput): List<InlayPayload> {
+    val payloadCount = readINT(input)
+    val payloads = ArrayList<InlayPayload>(payloadCount)
+    repeat(payloadCount) {
+      val inlayPayload = readInlayPayload(input)
+      if (inlayPayload != null) {
+        payloads.add(inlayPayload)
       }
-      return payloads
     }
-    else {
-      return null
-    }
+    return payloads
   }
 
   private fun writeInlayPayload(output: DataOutput, payload: InlayPayload) {

@@ -46,7 +46,9 @@ class InlayTreeSinkImpl(
     else {
       false
     }
-    inlayDataToPresentation.add(InlayData(position, tooltip, hintFormat, tree, providerId, disabled, payloads, providerClass, sourceId))
+    inlayDataToPresentation.add(
+      InlayData(position, tooltip, hintFormat, tree, providerId, disabled, payloads ?: emptyList(), providerClass, sourceId)
+    )
   }
 
   override fun whenOptionEnabled(optionId: String, block: () -> Unit) {

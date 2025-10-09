@@ -267,7 +267,7 @@ private class PreviewInlayTreeSink(
       tree = tree,
       providerId = providerBean.requiredProviderId(),
       disabled = !enabled || !providerEnabled || activeOptions.any { !it.isEnabled },
-      payloads = null,
+      payloads = emptyList(),
       providerClass = providerBean.instance.javaClass,
       sourceId = sourceId
     ))

@@ -33,13 +33,12 @@ object RdInlayDataExternalizer : InlayDataExternalizer(RdPresentationTreeExterna
     return RD_INLAY_DATA_SOURCE_ID
   }
 
-  override fun writePayloads(output: DataOutput, payloads: List<InlayPayload>?) {
+  override fun writePayloads(output: DataOutput, payloads: List<InlayPayload>) {
     // do nothing
   }
 
-  override fun readPayloads(input: DataInput): List<InlayPayload>? {
-    return null
-  }
+  override fun readPayloads(input: DataInput): List<InlayPayload> =
+    emptyList()
 }
 
 private object RdPresentationTreeExternalizer : PresentationTreeExternalizer() {
