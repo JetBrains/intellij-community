@@ -455,6 +455,22 @@ class PyQuickFixTest : PyTestCase() {
     )
   }
 
+  // PY-84710
+  fun testDoNotAddFunctionInsideImport() {
+    doMultiFilesNegativeInspectionTest(
+      PyUnresolvedReferencesInspection::class.java,
+      PyPsiBundle.message("QFIX.create.function.in.module", "unresolved", "mod.py")
+    )
+  }
+
+  // PY-84710
+  fun testDoNotAddFunctionInsideFromImportSource() {
+    doMultiFilesNegativeInspectionTest(
+      PyUnresolvedReferencesInspection::class.java,
+      PyPsiBundle.message("QFIX.create.function.in.module", "unresolved", "mod.py")
+    )
+  }
+
   // PY-1470
   fun testRedundantParentheses() {
     val testFiles = arrayOf("RedundantParentheses.py")
@@ -1388,6 +1404,18 @@ class PyQuickFixTest : PyTestCase() {
     myFixture.launchAction(intentionAction)
     val expectedFile = getTestName(true) + "/" + graftBeforeExt(modifiedFile, "_after")
     myFixture.checkResultByFile(modifiedFile, expectedFile, true)
+  }
+
+  private fun doMultiFilesNegativeInspectionTest(
+    inspectionClass: Class<out LocalInspectionTool>,
+    intentionStr: String,
+  ) {
+    myFixture.enableInspections(inspectionClass)
+    myFixture.copyDirectoryToProject(getTestName(true), "")
+    myFixture.configureFromTempProjectFile(getTestName(true) + ".py")
+    myFixture.checkHighlighting(true, false, false)
+    val intentions = myFixture.filterAvailableIntentions(intentionStr)
+    assertEmpty("Quick fix \"$intentionStr\" should not be available", intentions)
   }
 
   companion object {

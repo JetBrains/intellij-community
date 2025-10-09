@@ -780,7 +780,9 @@ public abstract class PyUnresolvedReferencesVisitor extends PyInspectionVisitor 
     return null;
   }
 
-  private @NotNull List<LocalQuickFix> getCreateMemberFromUsageFixes(PyType type, PsiReference reference, String refText) {
+  private @NotNull List<LocalQuickFix> getCreateMemberFromUsageFixes(@NotNull PyType type,
+                                                                     @NotNull PsiReference reference,
+                                                                     @NotNull String refText) {
     List<LocalQuickFix> result = new ArrayList<>();
     PsiElement element = reference.getElement();
     if (type instanceof PyClassTypeImpl) {
@@ -794,14 +796,18 @@ public abstract class PyUnresolvedReferencesVisitor extends PyInspectionVisitor 
         }
       }
     }
-    else if (type instanceof PyModuleType) {
-      PyFile file = ((PyModuleType)type).getModule();
-      LocalQuickFix createClassQuickFix = getCreateClassFix(refText, element);
-      if (createClassQuickFix != null) {
-        result.add(createClassQuickFix);
-      }
-      else {
-        result.add(new AddFunctionQuickFix(refText, file.getName()));
+    else if (type instanceof PyModuleType moduleType) {
+      boolean isQualifiedRefInsideImport = element instanceof PyReferenceExpression re && re.isQualified() &&
+                                           PsiTreeUtil.getParentOfType(re, PyImportStatementBase.class) != null;
+      if (!isQualifiedRefInsideImport) {
+        PyFile file = moduleType.getModule();
+        LocalQuickFix createClassQuickFix = getCreateClassFix(refText, element);
+        if (createClassQuickFix != null) {
+          result.add(createClassQuickFix);
+        }
+        else {
+          result.add(new AddFunctionQuickFix(refText, file.getName()));
+        }
       }
     }
     return result;
