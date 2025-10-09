@@ -7,9 +7,9 @@ import com.intellij.bcd.json.*
 import com.intellij.documentation.mdn.*
 import com.intellij.ide.highlighter.HtmlFileType
 import com.intellij.lang.html.HTMLLanguage
+import com.intellij.lang.javascript.index.JSIndexKeys
 import com.intellij.lang.javascript.library.JSCorePredefinedLibrariesProvider
 import com.intellij.lang.javascript.psi.JSPsiElementBase
-import com.intellij.lang.javascript.psi.stubs.JSSymbolIndex2
 import com.intellij.lang.javascript.psi.types.JSNamedTypeFactory
 import com.intellij.lang.javascript.psi.types.JSTypeContext
 import com.intellij.lang.javascript.psi.types.JSTypeSourceFactory
@@ -1171,7 +1171,7 @@ class GenerateMdnDocumentation : BasePlatformTestCase() {
       .find { it.name == "lib.dom.d.ts" }
       ?.let { PsiManager.getInstance(project).findFile(it) }
 
-    val realNameMap = StubIndex.getInstance().getAllKeys(JSSymbolIndex2.KEY, project)
+    val realNameMap = StubIndex.getInstance().getAllKeys(JSIndexKeys.JS_SYMBOL_INDEX_2_KEY, project)
       .associateBy { it.lowercase(Locale.US) }
 
     return symbols.keys.asSequence()
