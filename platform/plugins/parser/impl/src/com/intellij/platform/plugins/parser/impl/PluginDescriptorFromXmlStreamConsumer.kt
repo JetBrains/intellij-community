@@ -6,17 +6,17 @@ import org.jetbrains.annotations.ApiStatus
 
 @ApiStatus.Internal
 class PluginDescriptorFromXmlStreamConsumer private constructor(
-  val readContext: PluginDescriptorReaderContext,
-  val xIncludeLoader: XIncludeLoader?,
+  @JvmField val readContext: PluginDescriptorReaderContext,
+  @JvmField val xIncludeLoader: XIncludeLoader?,
   includeBase: String?,
 ) : PluginXmlStreamConsumer {
   constructor(
     readContext: PluginDescriptorReaderContext,
     xIncludeLoader: XIncludeLoader?,
-  ) : this(readContext, xIncludeLoader, null)
+  ) : this(readContext = readContext, xIncludeLoader = xIncludeLoader, includeBase = null)
 
   private val builder: PluginDescriptorBuilder = PluginDescriptorBuilderImpl()
-  private val includeBaseStack = mutableListOf<String?>()
+  private val includeBaseStack = ArrayList<String?>()
 
   init {
     if (includeBase != null) {
@@ -29,10 +29,7 @@ class PluginDescriptorFromXmlStreamConsumer private constructor(
   fun getBuilder(): PluginDescriptorBuilder = builder
 
   override fun consume(reader: XMLStreamReader2) {
-    readModuleDescriptor(
-      consumer = this,
-      reader = reader,
-    )
+    readModuleDescriptor(consumer = this, reader = reader)
   }
 
   internal val includeBase: String?

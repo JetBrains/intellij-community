@@ -15,9 +15,11 @@ interface PluginXmlStreamConsumer {
  * Do not use [java.io.BufferedInputStream] - buffer is used internally already.
  */
 @Throws(XMLStreamException::class)
-fun PluginXmlStreamConsumer.consume(input: InputStream, locationSource: String?): Unit =
+fun PluginXmlStreamConsumer.consume(input: InputStream, locationSource: String?) {
   consume(createNonCoalescingXmlStreamReader(input = input, locationSource = locationSource))
+}
 
 @Throws(XMLStreamException::class)
-fun PluginXmlStreamConsumer.consume(byteArray: ByteArray, locationSource: String?): Unit =
+fun PluginXmlStreamConsumer.consume(byteArray: ByteArray, locationSource: String?) {
   consume(createNonCoalescingXmlStreamReader(input = byteArray, locationSource = locationSource))
+}

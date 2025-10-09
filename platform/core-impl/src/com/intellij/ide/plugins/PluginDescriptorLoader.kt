@@ -882,7 +882,7 @@ private fun CoroutineScope.loadCoreModules(
   @Suppress("UrlHashCode")
   val urlToFilename = collectPluginFilesInClassPath(classLoader)
   if (urlToFilename.isNotEmpty()) {
-    val libDir = if (useCoreClassLoader) null else Paths.get(PathManager.getLibPath())
+    val libDir = if (useCoreClassLoader) null else PathManager.getLibDir()
     urlToFilename.mapTo(result) { (url, filename) ->
       async(Dispatchers.IO) {
         loadDescriptorFromResource(
@@ -1377,7 +1377,7 @@ private fun loadPluginDependencyDescriptors(
 
     var resolveError: Exception? = null
     val raw: PluginDescriptorBuilder? = try {
-      pathResolver.resolvePath(context.readContext, dataLoader, configFile)
+      pathResolver.resolvePath(readContext = context.readContext, dataLoader = dataLoader, relativePath = configFile)
     }
     catch (e: IOException) {
       resolveError = e
@@ -1398,11 +1398,11 @@ private fun loadPluginDependencyDescriptors(
       continue
     }
 
-    descriptor.checkCycle(configFile, visitedFiles)
+    checkCycle(descriptor, configFile, visitedFiles)
     visitedFiles.add(configFile)
     try {
       val subDescriptor = descriptor.createDependsSubDescriptor(raw, configFile)
-      loadPluginDependencyDescriptors(subDescriptor, context, pathResolver, dataLoader, visitedFiles)
+      loadPluginDependencyDescriptors(descriptor = subDescriptor, context = context, pathResolver = pathResolver, dataLoader = dataLoader, visitedFiles = visitedFiles)
       dependency.setSubDescriptor(subDescriptor)
     }
     finally {
@@ -1411,13 +1411,13 @@ private fun loadPluginDependencyDescriptors(
   }
 }
 
-private fun IdeaPluginDescriptorImpl.checkCycle(configFile: String, visitedFiles: List<String>) {
+private fun checkCycle(descriptor: IdeaPluginDescriptorImpl, configFile: String, visitedFiles: List<String>) {
   var i = 0
   val n = visitedFiles.size
   while (i < n) {
     if (configFile == visitedFiles[i]) {
       val cycle = visitedFiles.subList(i, visitedFiles.size)
-      throw RuntimeException("Plugin $this optional descriptors form a cycle: ${java.lang.String.join(", ", cycle)}")
+      throw RuntimeException("Plugin $descriptor optional descriptors form a cycle: ${java.lang.String.join(", ", cycle)}")
     }
     i++
   }
