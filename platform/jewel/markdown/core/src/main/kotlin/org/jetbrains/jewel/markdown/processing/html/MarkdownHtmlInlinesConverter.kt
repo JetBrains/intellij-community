@@ -4,11 +4,12 @@ package org.jetbrains.jewel.markdown.processing.html
 import kotlin.text.ifEmpty
 import org.jetbrains.jewel.markdown.InlineMarkdown
 import org.jetbrains.jewel.markdown.WithTextContent
+import org.jetbrains.jewel.markdown.processing.MarkdownProcessor
 
 internal class MarkdownHtmlInlinesConverter {
 
-    internal fun convert(inlines: List<InlineMarkdown>): List<InlineMarkdown> {
-        val matchingPairs = inlines.findOuterMatchingPairs()
+    internal fun convert(processor: MarkdownProcessor, inlines: List<InlineMarkdown>): List<InlineMarkdown> {
+        val matchingPairs = inlines.findOuterMatchingPairs(processor)
         if (matchingPairs.isEmpty()) {
             return inlines
         }
@@ -53,11 +54,11 @@ internal class MarkdownHtmlInlinesConverter {
             when (metadata.tagName) {
                 "i",
                 "em" -> {
-                    result.add(InlineMarkdown.Emphasis("_", convert(htmlInlineContent)))
+                    result.add(InlineMarkdown.Emphasis("_", convert(processor, htmlInlineContent)))
                 }
                 "b",
                 "strong" -> {
-                    result.add(InlineMarkdown.StrongEmphasis("**", convert(htmlInlineContent)))
+                    result.add(InlineMarkdown.StrongEmphasis("**", convert(processor, htmlInlineContent)))
                 }
                 "code",
                 "pre" -> {
@@ -78,9 +79,16 @@ internal class MarkdownHtmlInlinesConverter {
                         InlineMarkdown.Link(
                             element.attr("href"),
                             element.attr("title").ifEmpty { null },
-                            convert(htmlInlineContent),
+                            convert(processor, htmlInlineContent),
                         )
                     )
+                }
+                else -> {
+                    val newInlines =
+                        convertUsingExtensions(processor, openHtmlInline.content, metadata, htmlInlineContent)
+                    if (newInlines != null) {
+                        result.addAll(newInlines)
+                    }
                 }
             }
             currentInlineIndex = closeIndex + 1
@@ -93,12 +101,23 @@ internal class MarkdownHtmlInlinesConverter {
         return result
     }
 
+    private fun convertUsingExtensions(
+        processor: MarkdownProcessor,
+        content: String,
+        metadata: HtmlInlineMetadata,
+        htmlInlineContent: List<InlineMarkdown>,
+    ): List<InlineMarkdown>? {
+        val converter = processor.provideExtensionHtmlElementConverterFor(metadata.tagName) ?: return null
+        val element = MarkdownHtmlElement.toMarkdownHtmlElement(content) ?: return null
+        return converter.convertInlines(element) { convert(processor, htmlInlineContent) }
+    }
+
     // Returns all the outer matchings that should be converted at the current recursion depth
     // (both empty and container tags)
     // "outer" means nested matchings are not counted;
     // they will be addressed recursively
     @Suppress("UNCHECKED_CAST")
-    private fun List<InlineMarkdown>.findOuterMatchingPairs(): List<MatchingPair> {
+    private fun List<InlineMarkdown>.findOuterMatchingPairs(processor: MarkdownProcessor): List<MatchingPair> {
         val htmlInlines =
             withIndex().filter { it.value is InlineMarkdown.HtmlInline }
                 as List<IndexedValue<InlineMarkdown.HtmlInline>>
@@ -113,7 +132,7 @@ internal class MarkdownHtmlInlinesConverter {
         while (i < htmlInlines.size) {
             val (index, htmlInline) = htmlInlines[i++]
 
-            val currentTag = htmlInline.metadata() ?: continue
+            val currentTag = htmlInline.metadata(processor) ?: continue
 
             when (currentTag.type) {
                 HtmlTagType.EMPTY -> {
@@ -149,16 +168,17 @@ internal class MarkdownHtmlInlinesConverter {
     private data class MatchingPair(val metadata: HtmlInlineMetadata, val openIndex: Int, val closeIndex: Int)
 
     // "null" means "tag is not supported"
-    private fun InlineMarkdown.HtmlInline.metadata(): HtmlInlineMetadata? {
+    private fun InlineMarkdown.HtmlInline.metadata(processor: MarkdownProcessor): HtmlInlineMetadata? {
+        val allSupportedInlineTags = processor.allSupportedInlineTags()
         if (content.startsWith("</")) {
             val tagName = content.substringAfter("</").takeWhile { it.isLetter() }
-            if (tagName !in supportedContainerInlineTags) {
+            if (tagName !in allSupportedInlineTags) {
                 return null
             }
             return HtmlInlineMetadata(content.substringAfter("</").substringBefore(">"), HtmlTagType.CLOSE)
         }
         val tagName = content.substringAfter("<").takeWhile { it.isLetter() }
-        if (tagName in supportedContainerInlineTags) {
+        if (tagName in allSupportedInlineTags) {
             return HtmlInlineMetadata(tagName, HtmlTagType.OPEN)
         }
         if (tagName in supportedEmptyInlineTags) {
@@ -166,6 +186,9 @@ internal class MarkdownHtmlInlinesConverter {
         }
         return null
     }
+
+    private fun MarkdownProcessor.allSupportedInlineTags() =
+        supportedContainerInlineTags + htmlConverterExtensions.flatMap { it.supportedTags }
 
     private class HtmlInlineMetadata(val tagName: String, val type: HtmlTagType)
 
@@ -175,6 +198,8 @@ internal class MarkdownHtmlInlinesConverter {
         CLOSE,
     }
 
-    private val supportedContainerInlineTags = setOf("a", "b", "code", "em", "i", "pre", "strong")
-    private val supportedEmptyInlineTags = setOf("br", "img")
+    private companion object {
+        private val supportedContainerInlineTags = setOf("a", "b", "code", "em", "i", "pre", "strong")
+        private val supportedEmptyInlineTags = setOf("br", "img")
+    }
 }

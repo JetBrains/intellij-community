@@ -3,10 +3,13 @@ package org.jetbrains.jewel.markdown.extensions
 
 import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.jewel.foundation.ExperimentalJewelApi
-import org.jetbrains.jewel.markdown.processing.html.ElementConverter
+import org.jetbrains.jewel.markdown.processing.html.HtmlElementConverter
 
 @ApiStatus.Experimental
 @ExperimentalJewelApi
 public interface MarkdownHtmlConverterExtension {
-    @ApiStatus.Experimental @ExperimentalJewelApi public fun provideConverter(tag: String): ElementConverter?
+    @get:ApiStatus.Experimental @ExperimentalJewelApi public val supportedTags: Set<String>
+
+    // leaving the tagName here because, in theory, an extension can provide different converters for different tags
+    @ApiStatus.Experimental @ExperimentalJewelApi public fun provideConverter(tagName: String): HtmlElementConverter
 }

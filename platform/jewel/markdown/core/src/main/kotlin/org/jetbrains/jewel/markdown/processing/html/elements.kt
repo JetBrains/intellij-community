@@ -57,6 +57,9 @@ public sealed interface MarkdownHtmlElement {
         internal fun toHtmlElement(content: String): JsoupElement? =
             JsoupParser.parseFragment(content, contextElement, "").firstOrNull() as? JsoupElement
 
+        internal fun toMarkdownHtmlElement(content: String): MarkdownHtmlElement? =
+            toHtmlElement(content)?.toMarkdownHtmlElement(MarkdownProcessor(), emptyList())
+
         private fun JsoupNode.toMarkdownHtmlElement(
             processor: MarkdownProcessor,
             sourceSpans: List<SourceSpan>,

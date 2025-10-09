@@ -11,7 +11,7 @@ private typealias Tag = String
  * Refer to [org.commonmark.internal.HtmlBlockParser] for tags that commonmark translates to
  * [org.commonmark.node.HtmlBlock] instead of [org.commonmark.node.Paragraph] with inline HTML.
  */
-internal val converters: Map<Tag, ElementConverter> =
+internal val converters: Map<Tag, HtmlElementConverter> =
     mapOf(
         "p" to ParagraphConverter,
         "li" to ListItemConverter,
@@ -27,7 +27,7 @@ internal val converters: Map<Tag, ElementConverter> =
         "pre" to MultilineCodeConverter,
     )
 
-private object ParagraphConverter : ElementConverter {
+private object ParagraphConverter : HtmlElementConverter {
     override fun convert(
         htmlElement: MarkdownHtmlElement.Element,
         convertChildren: MarkdownHtmlElement.Element.(transformChildren: Boolean) -> List<MarkdownBlock>,
@@ -35,7 +35,7 @@ private object ParagraphConverter : ElementConverter {
     ): MarkdownBlock = MarkdownBlock.Paragraph(convertInlines(htmlElement.children))
 }
 
-private object ListItemConverter : ElementConverter {
+private object ListItemConverter : HtmlElementConverter {
     override fun convert(
         htmlElement: MarkdownHtmlElement.Element,
         convertChildren: MarkdownHtmlElement.Element.(transformChildren: Boolean) -> List<MarkdownBlock>,
@@ -45,7 +45,7 @@ private object ListItemConverter : ElementConverter {
         MarkdownBlock.ListItem(htmlElement.convertChildren(true), level = 0)
 }
 
-private abstract class ListConverter : ElementConverter {
+private abstract class ListConverter : HtmlElementConverter {
     abstract fun convert(listItems: List<MarkdownBlock.ListItem>): MarkdownBlock
 
     final override fun convert(
@@ -77,7 +77,7 @@ private object UnorderedListConverter : ListConverter() {
         MarkdownBlock.ListBlock.UnorderedList(listItems, isTight = true, marker = ".")
 }
 
-private class HeadingConverter(private val level: Int) : ElementConverter {
+private class HeadingConverter(private val level: Int) : HtmlElementConverter {
     override fun convert(
         htmlElement: MarkdownHtmlElement.Element,
         convertChildren: MarkdownHtmlElement.Element.(transformChildren: Boolean) -> List<MarkdownBlock>,
@@ -85,7 +85,7 @@ private class HeadingConverter(private val level: Int) : ElementConverter {
     ): MarkdownBlock = MarkdownBlock.Heading(convertInlines(htmlElement.children), level)
 }
 
-private object MultilineCodeConverter : ElementConverter {
+private object MultilineCodeConverter : HtmlElementConverter {
     override fun convert(
         htmlElement: MarkdownHtmlElement.Element,
         convertChildren: MarkdownHtmlElement.Element.(transformChildren: Boolean) -> List<MarkdownBlock>,

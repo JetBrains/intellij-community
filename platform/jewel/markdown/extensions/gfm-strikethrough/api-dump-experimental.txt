@@ -1,3 +1,9 @@
+*f:org.jetbrains.jewel.markdown.extensions.github.strikethrough.GitHubStrikethroughHtmlConverterExtension
+- org.jetbrains.jewel.markdown.extensions.MarkdownHtmlConverterExtension
+- sf:$stable:I
+- sf:INSTANCE:org.jetbrains.jewel.markdown.extensions.github.strikethrough.GitHubStrikethroughHtmlConverterExtension
+- getSupportedTags():java.util.Set
+- provideConverter(java.lang.String):org.jetbrains.jewel.markdown.processing.html.HtmlElementConverter
 *f:org.jetbrains.jewel.markdown.extensions.github.strikethrough.GitHubStrikethroughInlineProcessorExtension
 - org.jetbrains.jewel.markdown.extensions.MarkdownDelimitedInlineProcessorExtension
 - sf:$stable:I
@@ -31,6 +37,7 @@
 - <init>(Z):V
 - b:<init>(Z,I,kotlin.jvm.internal.DefaultConstructorMarker):V
 - getDelimitedInlineProcessorExtension():org.jetbrains.jewel.markdown.extensions.MarkdownDelimitedInlineProcessorExtension
+- getHtmlConverterExtension():org.jetbrains.jewel.markdown.extensions.MarkdownHtmlConverterExtension
 - getParserExtension():org.commonmark.parser.Parser$ParserExtension
 - getTextRendererExtension():org.commonmark.renderer.text.TextContentRenderer$TextContentRendererExtension
 *f:org.jetbrains.jewel.markdown.extensions.github.strikethrough.GitHubStrikethroughRendererExtension

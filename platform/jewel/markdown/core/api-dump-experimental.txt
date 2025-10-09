@@ -229,7 +229,8 @@ f:org.jetbrains.jewel.markdown.SemanticsKt
 - a:canRender(org.jetbrains.jewel.markdown.InlineMarkdown$CustomDelimitedNode):Z
 - a:render(org.jetbrains.jewel.markdown.InlineMarkdown$CustomDelimitedNode,org.jetbrains.jewel.markdown.rendering.InlineMarkdownRenderer,org.jetbrains.jewel.markdown.rendering.InlinesStyling,Z,kotlin.jvm.functions.Function1):androidx.compose.ui.text.AnnotatedString
 *:org.jetbrains.jewel.markdown.extensions.MarkdownHtmlConverterExtension
-- *a:provideConverter(java.lang.String):org.jetbrains.jewel.markdown.processing.html.ElementConverter
+- *a:getSupportedTags():java.util.Set
+- *a:provideConverter(java.lang.String):org.jetbrains.jewel.markdown.processing.html.HtmlElementConverter
 f:org.jetbrains.jewel.markdown.extensions.MarkdownKt
 - *sf:getLocalMarkdownBlockRenderer():androidx.compose.runtime.ProvidableCompositionLocal
 - *sf:getLocalMarkdownMode():androidx.compose.runtime.ProvidableCompositionLocal
@@ -264,15 +265,15 @@ f:org.jetbrains.jewel.markdown.extensions.MarkdownKt
 - f:getBlockExtensions():java.util.List
 - f:getDelimitedInlineExtensions():java.util.List
 - f:getExtensions():java.util.List
-- f:getHtmlConverterExtensions():java.util.List
 - *f:plus(org.jetbrains.jewel.markdown.extensions.MarkdownProcessorExtension):org.jetbrains.jewel.markdown.processing.MarkdownProcessor
 - f:processMarkdownDocument(java.lang.String):java.util.List
 - f:withExtension(org.jetbrains.jewel.markdown.extensions.MarkdownProcessorExtension):org.jetbrains.jewel.markdown.processing.MarkdownProcessor
 f:org.jetbrains.jewel.markdown.processing.ProcessingUtilKt
 - *sf:readInlineMarkdown(org.commonmark.node.Node,org.jetbrains.jewel.markdown.processing.MarkdownProcessor):java.util.List
 - *sf:toInlineMarkdownOrNull(org.commonmark.node.Node,org.jetbrains.jewel.markdown.processing.MarkdownProcessor):org.jetbrains.jewel.markdown.InlineMarkdown
-*:org.jetbrains.jewel.markdown.processing.html.ElementConverter
-- *a:convert(org.jetbrains.jewel.markdown.processing.html.MarkdownHtmlElement$Element,kotlin.jvm.functions.Function2,kotlin.jvm.functions.Function1):org.jetbrains.jewel.markdown.MarkdownBlock
+*:org.jetbrains.jewel.markdown.processing.html.HtmlElementConverter
+- *:convert(org.jetbrains.jewel.markdown.processing.html.MarkdownHtmlElement$Element,kotlin.jvm.functions.Function2,kotlin.jvm.functions.Function1):org.jetbrains.jewel.markdown.MarkdownBlock
+- *:convertInlines(org.jetbrains.jewel.markdown.processing.html.MarkdownHtmlElement,kotlin.jvm.functions.Function0):java.util.List
 *:org.jetbrains.jewel.markdown.processing.html.MarkdownHtmlElement
 - *sf:Companion:org.jetbrains.jewel.markdown.processing.html.MarkdownHtmlElement$Companion
 - *a:getHtmlContent():java.lang.String

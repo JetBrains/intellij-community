@@ -11,15 +11,21 @@ import org.jetbrains.jewel.markdown.scrolling.ScrollingSynchronizer
 
 @ApiStatus.Experimental
 @ExperimentalJewelApi
-public interface ElementConverter {
-    // TODO separate methods into two interfaces? One converter doesn't need to support both.
+public interface HtmlElementConverter {
     @ApiStatus.Experimental
     @ExperimentalJewelApi
     public fun convert(
         htmlElement: MarkdownHtmlElement.Element,
         convertChildren: MarkdownHtmlElement.Element.(transformChildren: Boolean) -> List<MarkdownBlock>,
         convertInlines: (List<MarkdownHtmlElement>) -> List<InlineMarkdown>,
-    ): MarkdownBlock?
+    ): MarkdownBlock? = null
+
+    @ApiStatus.Experimental
+    @ExperimentalJewelApi
+    public fun convertInlines(
+        element: MarkdownHtmlElement,
+        convertSubInlines: () -> List<InlineMarkdown>,
+    ): List<InlineMarkdown>? = null
 }
 
 @ApiStatus.Experimental
@@ -55,7 +61,7 @@ internal class MarkdownHtmlConverter {
                     converter.convert(
                         htmlElement,
                         { transformChildren -> convertChildren(processor, transform) },
-                        { convert(htmlElementsToInlines(processor, it)) },
+                        { convert(processor, htmlElementsToInlines(processor, it)) },
                     ) ?: return null
                 transform(block, htmlElement.lineRange)
             }
@@ -103,10 +109,11 @@ internal class MarkdownHtmlConverter {
         if (currentInlineHtmlElements.isEmpty()) return null
         val inlines = htmlElementsToInlines(processor, currentInlineHtmlElements)
         currentInlineHtmlElements.clear()
-        return transform(MarkdownBlock.Paragraph(convert(inlines)))
+        return transform(MarkdownBlock.Paragraph(convert(processor, inlines)))
     }
 
-    fun convert(inlines: List<InlineMarkdown>): List<InlineMarkdown> = inlinesConverter.convert(inlines)
+    fun convert(processor: MarkdownProcessor, inlines: List<InlineMarkdown>): List<InlineMarkdown> =
+        inlinesConverter.convert(processor, inlines)
 
     private fun htmlElementsToInlines(
         processor: MarkdownProcessor,
@@ -122,6 +129,6 @@ internal class MarkdownHtmlConverter {
             (ogBlock as? WithInlineMarkdown)?.inlineContent.orEmpty()
         }
 
-    private fun provideConverter(processor: MarkdownProcessor, tag: String): ElementConverter? =
-        converters[tag] ?: processor.htmlConverterExtensions.firstNotNullOfOrNull { it.provideConverter(tag) }
+    private fun provideConverter(processor: MarkdownProcessor, tag: String): HtmlElementConverter? =
+        converters[tag] ?: processor.provideExtensionHtmlElementConverterFor(tag)
 }

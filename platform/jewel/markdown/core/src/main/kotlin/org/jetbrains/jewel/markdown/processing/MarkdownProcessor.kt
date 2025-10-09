@@ -33,6 +33,7 @@ import org.jetbrains.jewel.markdown.extensions.MarkdownBlockProcessorExtension
 import org.jetbrains.jewel.markdown.extensions.MarkdownDelimitedInlineProcessorExtension
 import org.jetbrains.jewel.markdown.extensions.MarkdownHtmlConverterExtension
 import org.jetbrains.jewel.markdown.extensions.MarkdownProcessorExtension
+import org.jetbrains.jewel.markdown.processing.html.HtmlElementConverter
 import org.jetbrains.jewel.markdown.processing.html.MarkdownHtmlConverter
 import org.jetbrains.jewel.markdown.processing.html.MarkdownHtmlElement
 import org.jetbrains.jewel.markdown.rendering.DefaultInlineMarkdownRenderer
@@ -93,19 +94,22 @@ public class MarkdownProcessor(
     public val delimitedInlineExtensions: List<MarkdownDelimitedInlineProcessorExtension> =
         extensions.mapNotNull { it.delimitedInlineProcessorExtension }
 
-    public val htmlConverterExtensions: List<MarkdownHtmlConverterExtension> =
+    private var currentState = State("", emptyList())
+
+    private val htmlConverter = if (convertHtml) MarkdownHtmlConverter() else null
+
+    internal fun convertHtmlInlines(inlines: List<InlineMarkdown>): List<InlineMarkdown> =
+        htmlConverter?.convert(this, inlines) ?: inlines
+
+    internal val htmlConverterExtensions: List<MarkdownHtmlConverterExtension> =
         if (convertHtml) {
             extensions.mapNotNull { it.htmlConverterExtension }
         } else {
             emptyList()
         }
 
-    private var currentState = State("", emptyList())
-
-    private val htmlConverter = if (convertHtml) MarkdownHtmlConverter() else null
-
-    internal fun convertHtmlInlines(inlines: List<InlineMarkdown>): List<InlineMarkdown> =
-        htmlConverter?.convert(inlines) ?: inlines
+    internal fun provideExtensionHtmlElementConverterFor(tagName: String): HtmlElementConverter? =
+        htmlConverterExtensions.firstOrNull { tagName in it.supportedTags }?.provideConverter(tagName)
 
     @TestOnly
     internal fun getCurrentIndexesInTest() = buildList {

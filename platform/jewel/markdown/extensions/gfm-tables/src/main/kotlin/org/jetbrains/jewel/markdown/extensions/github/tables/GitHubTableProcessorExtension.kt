@@ -24,7 +24,7 @@ import org.jetbrains.jewel.markdown.extensions.MarkdownBlockProcessorExtension
 import org.jetbrains.jewel.markdown.extensions.MarkdownHtmlConverterExtension
 import org.jetbrains.jewel.markdown.extensions.MarkdownProcessorExtension
 import org.jetbrains.jewel.markdown.processing.MarkdownProcessor
-import org.jetbrains.jewel.markdown.processing.html.ElementConverter
+import org.jetbrains.jewel.markdown.processing.html.HtmlElementConverter
 import org.jetbrains.jewel.markdown.processing.html.MarkdownHtmlElement
 import org.jetbrains.jewel.markdown.processing.readInlineMarkdown
 
@@ -134,16 +134,12 @@ private object GitHubTablesCommonMarkExtension : ParserExtension, TextContentRen
 }
 
 private object GitHubTablesHtmlConverterExtension : MarkdownHtmlConverterExtension {
+    override val supportedTags: Set<String>
+        get() = setOf("table")
 
-    override fun provideConverter(tag: String): ElementConverter? {
-        if (tag != "table") {
-            return null
-        }
+    override fun provideConverter(tagName: String): HtmlElementConverter = GitHubTableHtmlElementConverter
 
-        return GitHubTableHtmlElementConverter
-    }
-
-    private object GitHubTableHtmlElementConverter : ElementConverter {
+    private object GitHubTableHtmlElementConverter : HtmlElementConverter {
         override fun convert(
             htmlElement: MarkdownHtmlElement.Element,
             convertChildren: MarkdownHtmlElement.Element.(transformChildren: Boolean) -> List<MarkdownBlock>,

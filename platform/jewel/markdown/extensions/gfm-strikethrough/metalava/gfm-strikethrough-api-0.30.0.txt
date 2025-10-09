@@ -1,6 +1,13 @@
 // Signature format: 4.0
 package org.jetbrains.jewel.markdown.extensions.github.strikethrough {
 
+  @SuppressCompatibility @org.jetbrains.annotations.ApiStatus.Experimental @org.jetbrains.jewel.foundation.ExperimentalJewelApi public final class GitHubStrikethroughHtmlConverterExtension implements org.jetbrains.jewel.markdown.extensions.MarkdownHtmlConverterExtension {
+    method public java.util.Set<java.lang.String> getSupportedTags();
+    method public org.jetbrains.jewel.markdown.processing.html.HtmlElementConverter provideConverter(String tagName);
+    property public java.util.Set<java.lang.String> supportedTags;
+    field public static final org.jetbrains.jewel.markdown.extensions.github.strikethrough.GitHubStrikethroughHtmlConverterExtension INSTANCE;
+  }
+
   @SuppressCompatibility @org.jetbrains.annotations.ApiStatus.Experimental @org.jetbrains.jewel.foundation.ExperimentalJewelApi public final class GitHubStrikethroughInlineProcessorExtension implements org.jetbrains.jewel.markdown.extensions.MarkdownDelimitedInlineProcessorExtension {
     method public boolean canProcess(org.commonmark.node.Delimited delimited);
     method public org.jetbrains.jewel.markdown.InlineMarkdown.CustomDelimitedNode processDelimitedInline(org.commonmark.node.Delimited delimited, org.jetbrains.jewel.markdown.processing.MarkdownProcessor markdownProcessor);
@@ -30,9 +37,11 @@ package org.jetbrains.jewel.markdown.extensions.github.strikethrough {
     ctor public GitHubStrikethroughProcessorExtension();
     ctor public GitHubStrikethroughProcessorExtension(optional boolean requireTwoTildes);
     method public org.jetbrains.jewel.markdown.extensions.MarkdownDelimitedInlineProcessorExtension getDelimitedInlineProcessorExtension();
+    method public org.jetbrains.jewel.markdown.extensions.MarkdownHtmlConverterExtension getHtmlConverterExtension();
     method public org.commonmark.parser.Parser.ParserExtension getParserExtension();
     method public org.commonmark.renderer.text.TextContentRenderer.TextContentRendererExtension getTextRendererExtension();
     property public org.jetbrains.jewel.markdown.extensions.MarkdownDelimitedInlineProcessorExtension delimitedInlineProcessorExtension;
+    property public org.jetbrains.jewel.markdown.extensions.MarkdownHtmlConverterExtension htmlConverterExtension;
     property public org.commonmark.parser.Parser.ParserExtension parserExtension;
     property public org.commonmark.renderer.text.TextContentRenderer.TextContentRendererExtension textRendererExtension;
   }
