@@ -15,6 +15,7 @@ import ai.grazie.utils.LinkedSet
 import ai.grazie.utils.toLinkedSet
 import com.intellij.codeInspection.LocalInspectionToolSession
 import com.intellij.grazie.GrazieConfig
+import com.intellij.grazie.GrazieConfig.State.Processing
 import com.intellij.grazie.cloud.GrazieCloudConnector
 import com.intellij.grazie.ide.inspection.grammar.GrazieInspection.Companion.sortByPriority
 import com.intellij.grazie.mlec.LanguageHolder
@@ -141,6 +142,7 @@ object GrazieTextLevelSpellCheckingExtension {
   private fun findTyposInCloud(text: TextContent, localTypos: List<Typo>, project: Project): List<Typo> {
     if (!Registry.`is`("spellchecker.cloud.enabled", false)
         || localTypos.isEmpty()
+        || GrazieConfig.get().processing == Processing.Local
         || !GrazieCloudConnector.seemsCloudConnected()
         || GrazieCloudConnector.isAfterRecentGecError()
         || !NaturalTextDetector.seemsNatural(text.toString())) {

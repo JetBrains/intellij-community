@@ -2,6 +2,8 @@ package com.intellij.grazie.ide.ui.proofreading
 
 import com.intellij.grazie.GrazieBundle
 import com.intellij.grazie.GrazieConfig
+import com.intellij.grazie.GrazieConfig.State.Processing
+import com.intellij.grazie.cloud.GrazieCloudConnector
 import com.intellij.grazie.ide.ui.components.dsl.msg
 import com.intellij.grazie.ide.ui.proofreading.component.GrazieLanguagesComponent
 import com.intellij.grazie.jlanguage.Lang
@@ -22,6 +24,7 @@ import com.intellij.ui.dsl.builder.*
 import com.intellij.util.ui.AsyncProcessIcon
 import com.intellij.util.ui.JBDimension
 import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.selects.select
 import kotlinx.coroutines.withContext
 import java.util.concurrent.ConcurrentHashMap
 import javax.swing.JLabel
@@ -42,10 +45,8 @@ class ProofreadConfigurable : BoundSearchableConfigurable(
     AsyncProcessIcon("Downloading language models").apply { isVisible = false }
   }
 
-  private val config get() = GrazieConfig.get()
-
   var autoFix: Boolean
-    get() = config.autoFix
+    get() = GrazieConfig.get().autoFix
     set(value) = GrazieConfig.update { it.copy(autoFix = value) }
 
   private suspend fun download(langs: Collection<Lang>) {
@@ -105,7 +106,7 @@ class ProofreadConfigurable : BoundSearchableConfigurable(
         @Suppress("DialogTitleCapitalization")
         val oxfordCb = checkBox(GrazieBundle.message("grazie.settings.use.oxford.spelling.checkbox"))
           .bindSelected(
-            getter = { config.useOxfordSpelling },
+            getter = { GrazieConfig.get().useOxfordSpelling },
             setter = { GrazieConfig.update { state -> state.withOxfordSpelling(it) } }
           )
 
@@ -114,6 +115,27 @@ class ProofreadConfigurable : BoundSearchableConfigurable(
         }
         updateAvailability()
         GrazieConfig.subscribe(disposable!!) { updateAvailability() }
+      }
+
+      if (GrazieCloudConnector.hasCloudConnector()) {
+        row {
+          checkBox(GrazieBundle.message("grazie.settings.use.advanced.spelling.checkbox"))
+            .bindSelected(
+              getter = { GrazieConfig.get().processing == Processing.Cloud },
+              setter = { isSelected ->
+                val selectedProcessing = if (isSelected) Processing.Cloud else Processing.Local
+                if (GrazieConfig.get().processing != selectedProcessing || GrazieConfig.get().explicitlyChosenProcessing != null) {
+                  GrazieConfig.update { state -> state.copy(explicitlyChosenProcessing = selectedProcessing) }
+                }
+              }
+            )
+            .onChanged { checkBox ->
+              if (checkBox.isSelected && GrazieConfig.get().explicitlyChosenProcessing == null) {
+                val agreement = GrazieCloudConnector.EP_NAME.extensionList.first().askUserConsentForCloud()
+                if (!agreement) checkBox.isSelected = false
+              }
+            }
+        }
       }
     }
   }

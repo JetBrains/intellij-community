@@ -5,6 +5,9 @@ import ai.grazie.nlp.langs.Language
 import ai.grazie.rules.settings.TextStyle
 import ai.grazie.rules.tree.Parameter
 import com.intellij.codeInsight.daemon.DaemonCodeAnalyzer
+import com.intellij.grazie.GrazieConfig.State.Processing.Cloud
+import com.intellij.grazie.GrazieConfig.State.Processing.Local
+import com.intellij.grazie.cloud.GrazieCloudConnector
 import com.intellij.grazie.config.CheckingContext
 import com.intellij.grazie.config.DetectionContext
 import com.intellij.grazie.config.SuppressingContext
@@ -90,6 +93,8 @@ class GrazieConfig : PersistentStateComponent<GrazieConfig.State>, ModificationT
     @Property val parametersPerDomain: Map<TextStyleDomain, Map<Language, Map<String, String>>> = TreeMap(),
     @Property val useOxfordSpelling: Boolean = false,
     @Property val autoFix: Boolean = false,
+    // Ex. Grazie Cloud
+    @Property val explicitlyChosenProcessing: Processing? = null,
   ) : VersionedState<Version, State> {
     /**
      * The available language set depends on currently loaded LanguageTool modules.
@@ -107,6 +112,9 @@ class GrazieConfig : PersistentStateComponent<GrazieConfig.State>, ModificationT
 
     val missedLanguages: Set<Lang>
       get() = enabledLanguages.asSequence().filter { isMissingLanguage(it) }.toCollection(CollectionFactory.createSmallMemoryFootprintLinkedSet())
+
+    val processing: Processing
+      get() = explicitlyChosenProcessing ?: if (GrazieCloudConnector.EP_NAME.extensionList.firstOrNull()?.isCloudEnabledByDefault() == true) Cloud else Local
 
     override fun increment(): State = copy(version = version.next() ?: error("Attempt to increment latest version $version"))
 
@@ -126,6 +134,7 @@ class GrazieConfig : PersistentStateComponent<GrazieConfig.State>, ModificationT
       return ruleId in if (domain == TextStyleDomain.Other) userDisabledRules else domainDisabledRules[domain] ?: emptySet()
     }
 
+    fun withLanguages(langs: Set<Lang>): State = copy(enabledLanguages = langs)
     fun withAutoFix(autoFix: Boolean): State = copy(autoFix = autoFix)
     fun withOxfordSpelling(useOxford: Boolean): State = copy(useOxfordSpelling = useOxford)
     fun withParameter(domain: TextStyleDomain, language: Language, parameter: Parameter, value: String?): State {
