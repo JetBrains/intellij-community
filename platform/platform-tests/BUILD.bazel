@@ -166,7 +166,6 @@ jvm_library(
     "//platform/plugins/parser/impl",
     "//platform/plugins/parser/impl:impl_test_lib",
     "//platform/platform-impl/update-checker",
-    "@lib//:com-jetbrains-fus-reporting-serialization-jackson",
     "@lib//:com-jetbrains-fus-reporting-api",
     "@lib//:com-jetbrains-fus-reporting-ap-validation-all",
     "//platform/platform-impl/eel:ide-impl-wsl",

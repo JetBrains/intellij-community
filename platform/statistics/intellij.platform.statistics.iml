@@ -38,7 +38,6 @@
     <orderEntry type="module" module-name="intellij.libraries.kotlinx.serialization.json" />
     <orderEntry type="module" module-name="intellij.libraries.kotlinx.serialization.core" />
     <orderEntry type="library" exported="" name="com.jetbrains.fus.reporting.api" level="project" />
-    <orderEntry type="library" name="com.jetbrains.fus.reporting.serialization.jackson" level="project" />
     <orderEntry type="library" exported="" name="com.jetbrains.fus.reporting.ap.validation.all" level="project" />
   </component>
 </module>

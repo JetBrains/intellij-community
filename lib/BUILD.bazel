@@ -853,13 +853,6 @@ jvm_import(
 )
 
 jvm_import(
-  name = "com-jetbrains-fus-reporting-serialization-jackson",
-  jar = "@com_jetbrains_fus_reporting-serialization-jackson-SNAPSHOT_1_0_204_http//file",
-  source_jar = "@com_jetbrains_fus_reporting-serialization-jackson-SNAPSHOT_1_0_204_http//file",
-  visibility = ["//visibility:public"]
-)
-
-jvm_import(
   name = "com-typesafe-config",
   jar = "@com_typesafe-config-1_4_4_http//file",
   source_jar = "@com_typesafe-config-1_4_4_http//file",

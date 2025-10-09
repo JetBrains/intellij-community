@@ -1388,7 +1388,6 @@ object CommunityLibraryLicenses {
     jetbrainsLibrary("cloud-config-client"),
     jetbrainsLibrary("com.jetbrains.fus.reporting.ap.validation.all"),
     jetbrainsLibrary("com.jetbrains.fus.reporting.api"),
-    jetbrainsLibrary("com.jetbrains.fus.reporting.serialization.jackson"),
     jetbrainsLibrary("completion-log-events"),
     jetbrainsLibrary("completion-performance-kotlin"),
     jetbrainsLibrary("completion-ranking-cpp-exp"),

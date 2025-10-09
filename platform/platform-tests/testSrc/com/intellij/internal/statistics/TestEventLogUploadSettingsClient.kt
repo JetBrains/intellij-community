@@ -5,10 +5,10 @@ import com.intellij.internal.statistic.eventLog.EventLogInternalApplicationInfo
 import com.intellij.internal.statistic.eventLog.connection.EventLogSettingsClient
 import com.intellij.internal.statistic.eventLog.connection.metadata.StatsBasicConnectionSettings
 import com.intellij.internal.statistic.eventLog.connection.metadata.StatsConnectionSettings
+import com.intellij.internal.statistic.eventLog.validator.storage.FusComponentProvider
 import com.jetbrains.fus.reporting.configuration.ConfigurationClientFactory
 import com.jetbrains.fus.reporting.jvm.JvmHttpClient
 import com.jetbrains.fus.reporting.jvm.ProxyInfo
-import com.jetbrains.fus.reporting.serialization.FusJacksonSerializer
 import java.security.SecureRandom
 import java.time.Duration
 import javax.net.ssl.SSLContext
@@ -30,7 +30,7 @@ internal class TestEventLogUploadSettingsClient(configurationUrl: String) : Even
       timeout = Duration.ofSeconds(1)
     ),
     configurationUrl = configurationUrl,
-    serializer = FusJacksonSerializer
+    serializer = FusComponentProvider.FusJacksonSerializer()
   )
   override val recorderId: String = DEFAULT_RECORDER_ID
 }

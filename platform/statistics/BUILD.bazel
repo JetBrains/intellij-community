@@ -41,7 +41,6 @@ jvm_library(
     "//libraries/kotlinx/serialization/json",
     "//libraries/kotlinx/serialization/core",
     "@lib//:com-jetbrains-fus-reporting-api",
-    "@lib//:com-jetbrains-fus-reporting-serialization-jackson",
     "@lib//:com-jetbrains-fus-reporting-ap-validation-all",
   ],
   exports = [
@@ -86,7 +85,6 @@ jvm_library(
     "//libraries/kotlinx/serialization/json",
     "//libraries/kotlinx/serialization/core",
     "@lib//:com-jetbrains-fus-reporting-api",
-    "@lib//:com-jetbrains-fus-reporting-serialization-jackson",
     "@lib//:com-jetbrains-fus-reporting-ap-validation-all",
   ],
   exports = [
