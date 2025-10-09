@@ -285,7 +285,7 @@
         <!-- Extract all <content> ... </content> snippets-->
         <exec failonerror="true" executable="bash" dir="${community.out}/dist.all/lib/">
             <arg value="-c"/>
-            <arg value="awk '/&lt;content&gt;/ { in_block=1 } in_block { block = block $0 ORS } /&lt;\/content&gt;/ { in_block=0; print block &gt;&gt; &quot;module-descriptors.xml&quot;; block=&quot;&quot; }' plugin.xml"/>
+            <arg value="awk '/&lt;content[^&gt;]*&gt;/ { in_block=1 } in_block { block = block $0 ORS } /&lt;\/content&gt;/ { in_block=0; print block &gt;&gt; &quot;module-descriptors.xml&quot;; block=&quot;&quot; }' plugin.xml"/>
         </exec>
         <delete file="${community.out}/dist.all/lib/mps-resources.zip"/>
         <delete file="${community.out}/dist.all/lib/plugin.xml"/>
