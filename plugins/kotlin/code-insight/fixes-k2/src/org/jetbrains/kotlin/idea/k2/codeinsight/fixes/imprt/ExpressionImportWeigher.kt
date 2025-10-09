@@ -130,7 +130,7 @@ internal class CallExpressionImportWeigher(
 ) : AbstractExpressionImportWeigher(), KaLifetimeOwner {
 
     context(session: KaSession)
-    override fun ownWeigh(symbol: KaDeclarationSymbol): Int = withValidityAssertion {
+    override fun ownWeigh(symbol: KaDeclarationSymbol): Int = this.withValidityAssertion {
         when {
             symbol is KaCallableSymbol -> session.calculateWeight(symbol, presentReceiverTypes, valueArgumentTypes)
             // TODO: some constructors could be not visible
@@ -222,7 +222,7 @@ internal class OperatorExpressionImportWeigher(
     }
 
     context(_: KaSession)
-    override fun ownWeigh(symbol: KaDeclarationSymbol): Int = withValidityAssertion {
+    override fun ownWeigh(symbol: KaDeclarationSymbol): Int = this.withValidityAssertion {
         symbol as KaNamedFunctionSymbol
 
         val name = symbol.name
