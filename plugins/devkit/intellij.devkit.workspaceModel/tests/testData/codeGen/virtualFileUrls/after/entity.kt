@@ -51,9 +51,7 @@ interface EntityWithUrls : WorkspaceEntity {
 fun MutableEntityStorage.modifyEntityWithUrls(
   entity: EntityWithUrls,
   modification: EntityWithUrls.Builder.() -> Unit,
-): EntityWithUrls {
-  return modifyEntity(EntityWithUrls.Builder::class.java, entity, modification)
-}
+): EntityWithUrls = modifyEntity(EntityWithUrls.Builder::class.java, entity, modification)
 //endregion
 
 data class DataClassWithUrl(val url: VirtualFileUrl)

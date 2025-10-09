@@ -56,9 +56,7 @@ interface SimpleSymbolicIdEntity : WorkspaceEntityWithSymbolicId {
 fun MutableEntityStorage.modifySimpleSymbolicIdEntity(
   entity: SimpleSymbolicIdEntity,
   modification: SimpleSymbolicIdEntity.Builder.() -> Unit,
-): SimpleSymbolicIdEntity {
-  return modifyEntity(SimpleSymbolicIdEntity.Builder::class.java, entity, modification)
-}
+): SimpleSymbolicIdEntity = modifyEntity(SimpleSymbolicIdEntity.Builder::class.java, entity, modification)
 //endregion
 
 data class SimpleId(val name: String) : SymbolicEntityId<SimpleSymbolicIdEntity> {

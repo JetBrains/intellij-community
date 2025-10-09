@@ -52,9 +52,7 @@ interface EntityWithManyImports : WorkspaceEntityWithSymbolicId {
 fun MutableEntityStorage.modifyEntityWithManyImports(
   entity: EntityWithManyImports,
   modification: EntityWithManyImports.Builder.() -> Unit,
-): EntityWithManyImports {
-  return modifyEntity(EntityWithManyImports.Builder::class.java, entity, modification)
-}
+): EntityWithManyImports = modifyEntity(EntityWithManyImports.Builder::class.java, entity, modification)
 //endregion
 
 data class SimpleId(val name: String) : SymbolicEntityId<EntityWithManyImports> {
@@ -97,9 +95,7 @@ interface SimpleEntity : WorkspaceEntity {
 fun MutableEntityStorage.modifySimpleEntity(
   entity: SimpleEntity,
   modification: SimpleEntity.Builder.() -> Unit,
-): SimpleEntity {
-  return modifyEntity(SimpleEntity.Builder::class.java, entity, modification)
-}
+): SimpleEntity = modifyEntity(SimpleEntity.Builder::class.java, entity, modification)
 //endregion
 
 data class UnrelatedToEntities(val name: String, val data: EntityPointer<SimpleEntity>) {

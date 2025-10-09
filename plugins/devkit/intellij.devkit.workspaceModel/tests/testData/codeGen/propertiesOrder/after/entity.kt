@@ -40,9 +40,7 @@ interface SimpleEntity : WorkspaceEntityWithSymbolicId {
 fun MutableEntityStorage.modifySimpleEntity(
   entity: SimpleEntity,
   modification: SimpleEntity.Builder.() -> Unit,
-): SimpleEntity {
-  return modifyEntity(SimpleEntity.Builder::class.java, entity, modification)
-}
+): SimpleEntity = modifyEntity(SimpleEntity.Builder::class.java, entity, modification)
 //endregion
 
 data class SimpleId(val name: String) : SymbolicEntityId<SimpleEntity> {
@@ -154,9 +152,7 @@ interface ChildEntity : BaseEntity {
 fun MutableEntityStorage.modifyChildEntity(
   entity: ChildEntity,
   modification: ChildEntity.Builder.() -> Unit,
-): ChildEntity {
-  return modifyEntity(ChildEntity.Builder::class.java, entity, modification)
-}
+): ChildEntity = modifyEntity(ChildEntity.Builder::class.java, entity, modification)
 //endregion
 
 sealed class BaseDataClass(val baseConstructorProperty: String) {

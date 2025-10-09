@@ -14,6 +14,12 @@ interface DefaultFieldEntity : WorkspaceEntity {
     @Default get() = 0
   val description: String
     @Default get() = "Default description"
+  val defaultSet: Set<String>
+    @Default get() = emptySet<String>()
+  val defaultList: List<String>
+    @Default get() = emptyList<String>()
+  val defaultMap: Map<String, String>
+    @Default get() = emptyMap<String, String>()
 
   //region generated code
   @GeneratedCodeApiVersion(3)
@@ -23,6 +29,9 @@ interface DefaultFieldEntity : WorkspaceEntity {
     var data: TestData
     var anotherVersion: Int
     var description: String
+    var defaultSet: MutableSet<String>
+    var defaultList: MutableList<String>
+    var defaultMap: Map<String, String>
   }
 
   companion object : EntityType<DefaultFieldEntity, Builder>() {
@@ -44,15 +53,14 @@ interface DefaultFieldEntity : WorkspaceEntity {
     }
   }
   //endregion
+
 }
 
 //region generated code
 fun MutableEntityStorage.modifyDefaultFieldEntity(
   entity: DefaultFieldEntity,
   modification: DefaultFieldEntity.Builder.() -> Unit,
-): DefaultFieldEntity {
-  return modifyEntity(DefaultFieldEntity.Builder::class.java, entity, modification)
-}
+): DefaultFieldEntity = modifyEntity(DefaultFieldEntity.Builder::class.java, entity, modification)
 //endregion
 
 data class TestData(val name: String, val description: String)

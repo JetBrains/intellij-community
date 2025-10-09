@@ -44,9 +44,7 @@ interface EntityWithChildren : WorkspaceEntity {
 fun MutableEntityStorage.modifyEntityWithChildren(
   entity: EntityWithChildren,
   modification: EntityWithChildren.Builder.() -> Unit,
-): EntityWithChildren {
-  return modifyEntity(EntityWithChildren.Builder::class.java, entity, modification)
-}
+): EntityWithChildren = modifyEntity(EntityWithChildren.Builder::class.java, entity, modification)
 //endregion
 
 interface ChildEntityType1 : WorkspaceEntity {
@@ -84,9 +82,7 @@ interface ChildEntityType1 : WorkspaceEntity {
 fun MutableEntityStorage.modifyChildEntityType1(
   entity: ChildEntityType1,
   modification: ChildEntityType1.Builder.() -> Unit,
-): ChildEntityType1 {
-  return modifyEntity(ChildEntityType1.Builder::class.java, entity, modification)
-}
+): ChildEntityType1 = modifyEntity(ChildEntityType1.Builder::class.java, entity, modification)
 //endregion
 
 interface ChildEntityType2 : WorkspaceEntity {
@@ -124,7 +120,5 @@ interface ChildEntityType2 : WorkspaceEntity {
 fun MutableEntityStorage.modifyChildEntityType2(
   entity: ChildEntityType2,
   modification: ChildEntityType2.Builder.() -> Unit,
-): ChildEntityType2 {
-  return modifyEntity(ChildEntityType2.Builder::class.java, entity, modification)
-}
+): ChildEntityType2 = modifyEntity(ChildEntityType2.Builder::class.java, entity, modification)
 //endregion

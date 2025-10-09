@@ -47,9 +47,7 @@ interface ReferredEntity : WorkspaceEntity {
 fun MutableEntityStorage.modifyReferredEntity(
   entity: ReferredEntity,
   modification: ReferredEntity.Builder.() -> Unit,
-): ReferredEntity {
-  return modifyEntity(ReferredEntity.Builder::class.java, entity, modification)
-}
+): ReferredEntity = modifyEntity(ReferredEntity.Builder::class.java, entity, modification)
 
 @Parent
 var ContentRootEntity.Builder.ref: ReferredEntity.Builder

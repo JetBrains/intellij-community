@@ -42,9 +42,7 @@ interface ChildrenCollectionFieldEntity : WorkspaceEntity {
 fun MutableEntityStorage.modifyChildrenCollectionFieldEntity(
   entity: ChildrenCollectionFieldEntity,
   modification: ChildrenCollectionFieldEntity.Builder.() -> Unit,
-): ChildrenCollectionFieldEntity {
-  return modifyEntity(ChildrenCollectionFieldEntity.Builder::class.java, entity, modification)
-}
+): ChildrenCollectionFieldEntity = modifyEntity(ChildrenCollectionFieldEntity.Builder::class.java, entity, modification)
 //endregion
 
 interface SimpleEntity : WorkspaceEntity {
@@ -90,7 +88,5 @@ interface SimpleEntity : WorkspaceEntity {
 fun MutableEntityStorage.modifySimpleEntity(
   entity: SimpleEntity,
   modification: SimpleEntity.Builder.() -> Unit,
-): SimpleEntity {
-  return modifyEntity(SimpleEntity.Builder::class.java, entity, modification)
-}
+): SimpleEntity = modifyEntity(SimpleEntity.Builder::class.java, entity, modification)
 //endregion

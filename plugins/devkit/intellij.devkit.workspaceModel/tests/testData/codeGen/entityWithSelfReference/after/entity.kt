@@ -45,7 +45,5 @@ interface EntityWithSelfRef : WorkspaceEntity {
 fun MutableEntityStorage.modifyEntityWithSelfRef(
   entity: EntityWithSelfRef,
   modification: EntityWithSelfRef.Builder.() -> Unit,
-): EntityWithSelfRef {
-  return modifyEntity(EntityWithSelfRef.Builder::class.java, entity, modification)
-}
+): EntityWithSelfRef = modifyEntity(EntityWithSelfRef.Builder::class.java, entity, modification)
 //endregion

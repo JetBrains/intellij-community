@@ -110,7 +110,5 @@ interface ChildEntity: ParentEntity {
 fun MutableEntityStorage.modifyChildEntity(
   entity: ChildEntity,
   modification: ChildEntity.Builder.() -> Unit,
-): ChildEntity {
-  return modifyEntity(ChildEntity.Builder::class.java, entity, modification)
-}
+): ChildEntity = modifyEntity(ChildEntity.Builder::class.java, entity, modification)
 //endregion

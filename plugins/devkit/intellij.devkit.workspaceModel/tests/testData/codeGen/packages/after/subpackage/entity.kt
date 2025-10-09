@@ -47,7 +47,5 @@ interface SubSimpleEntity : WorkspaceEntity {
 fun MutableEntityStorage.modifySubSimpleEntity(
   entity: SubSimpleEntity,
   modification: SubSimpleEntity.Builder.() -> Unit,
-): SubSimpleEntity {
-  return modifyEntity(SubSimpleEntity.Builder::class.java, entity, modification)
-}
+): SubSimpleEntity = modifyEntity(SubSimpleEntity.Builder::class.java, entity, modification)
 //endregion

@@ -49,7 +49,5 @@ interface CollectionFieldEntity : WorkspaceEntity {
 fun MutableEntityStorage.modifyCollectionFieldEntity(
   entity: CollectionFieldEntity,
   modification: CollectionFieldEntity.Builder.() -> Unit,
-): CollectionFieldEntity {
-  return modifyEntity(CollectionFieldEntity.Builder::class.java, entity, modification)
-}
+): CollectionFieldEntity = modifyEntity(CollectionFieldEntity.Builder::class.java, entity, modification)
 //endregion
