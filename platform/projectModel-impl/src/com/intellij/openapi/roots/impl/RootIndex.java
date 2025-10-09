@@ -28,6 +28,7 @@ import com.intellij.util.SmartList;
 import com.intellij.util.concurrency.ThreadingAssertions;
 import com.intellij.util.containers.*;
 import com.intellij.util.containers.Stack;
+import com.intellij.workspaceModel.core.fileIndex.impl.FileTypeAssocTableUtil;
 import kotlin.Lazy;
 import kotlin.LazyKt;
 import org.jetbrains.annotations.ApiStatus;
@@ -100,7 +101,7 @@ public final class RootIndex {
           }
           List<String> patterns = contentEntry.getExcludePatterns();
           if (!patterns.isEmpty()) {
-            FileTypeAssocTable<Boolean> table = new FileTypeAssocTable<>();
+            FileTypeAssocTable<Boolean> table = FileTypeAssocTableUtil.newScalableFileTypeAssocTable();
             for (String pattern : patterns) {
               table.addAssociation(FileNameMatcherFactory.getInstance().createMatcher(pattern), Boolean.TRUE);
             }

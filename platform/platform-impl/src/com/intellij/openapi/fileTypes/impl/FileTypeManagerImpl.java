@@ -23,6 +23,7 @@ import com.intellij.openapi.fileTypes.ex.ExternalizableFileType;
 import com.intellij.openapi.fileTypes.ex.FileTypeChooser;
 import com.intellij.openapi.fileTypes.ex.FileTypeIdentifiableByVirtualFile;
 import com.intellij.openapi.fileTypes.ex.FileTypeManagerEx;
+import com.intellij.openapi.fileTypes.impl.copy1.IgnoredPatternSet;
 import com.intellij.openapi.options.*;
 import com.intellij.openapi.progress.ProcessCanceledException;
 import com.intellij.openapi.project.Project;
@@ -104,7 +105,7 @@ public class FileTypeManagerImpl extends FileTypeManagerEx implements Persistent
 
   FileTypeAssocTable<FileTypeWithDescriptor> patternsTable = FileTypeAssocTableUtil.newScalableFileTypeAssocTable();
   private final IgnoredPatternSet ignoredPatterns = new IgnoredPatternSet(DEFAULT_IGNORED);
-  private final IgnoredFileCache myIgnoredFileCache = new IgnoredFileCache(ignoredPatterns);
+  private final IgnoredFileCache myIgnoredFileCache = new IgnoredFileCache(name -> ignoredPatterns.isIgnored(name));
 
   private final FileTypeAssocTable<FileType> initialAssociations = FileTypeAssocTableUtil.newScalableFileTypeAssocTable();
   private final Map<FileNameMatcher, String> unresolvedMappings = new HashMap<>();

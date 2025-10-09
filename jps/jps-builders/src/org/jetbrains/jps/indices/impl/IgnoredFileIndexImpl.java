@@ -5,8 +5,10 @@ import com.intellij.openapi.fileTypes.impl.IgnoredPatternSet;
 import org.jetbrains.jps.indices.IgnoredFileIndex;
 import org.jetbrains.jps.model.JpsModel;
 
+import java.util.List;
+
 public final class IgnoredFileIndexImpl implements IgnoredFileIndex {
-  private final IgnoredPatternSet myIgnoredPatterns = new IgnoredPatternSet();
+  private final IgnoredPatternSet myIgnoredPatterns = new IgnoredPatternSet(List.of());
 
   public IgnoredFileIndexImpl(JpsModel model) {
     myIgnoredPatterns.setIgnoreMasks(model.getGlobal().getFileTypesConfiguration().getIgnoredPatternString());

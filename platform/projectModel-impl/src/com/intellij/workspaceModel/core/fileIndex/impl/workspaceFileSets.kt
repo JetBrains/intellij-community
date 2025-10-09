@@ -1,7 +1,6 @@
 // Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.workspaceModel.core.fileIndex.impl
 
-import com.intellij.openapi.fileTypes.impl.FileTypeAssocTable
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.platform.workspace.storage.EntityPointer
@@ -323,7 +322,7 @@ internal sealed interface ExcludedFileSet : StoredFileSet {
   class ByPattern(val root: VirtualFile, patterns: List<String>,
                   override val entityPointer: EntityPointer<WorkspaceEntity>,
                   override val entityStorageKind: EntityStorageKind) : ExcludedFileSet {
-    val table = FileTypeAssocTable<Boolean>()
+    val table = FileTypeAssocTableUtil.newScalableFileTypeAssocTable<Boolean>()
 
     init {
       for (pattern in patterns) {

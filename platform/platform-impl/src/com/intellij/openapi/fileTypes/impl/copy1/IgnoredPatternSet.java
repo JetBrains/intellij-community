@@ -1,6 +1,8 @@
 // Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
-package com.intellij.openapi.fileTypes.impl;
+package com.intellij.openapi.fileTypes.impl.copy1;
 
+import com.intellij.openapi.fileTypes.impl.FileTypeAssocTable;
+import com.intellij.openapi.fileTypes.impl.FileTypeAssocTableUtil;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.text.StringUtilRt;
 import org.jetbrains.annotations.ApiStatus;
@@ -9,10 +11,16 @@ import org.jetbrains.jps.model.fileTypes.FileNameMatcherFactory;
 
 import java.util.*;
 
+/**
+ * DO NOT USE
+ * TODO remove in favor of a standard {@link com.intellij.openapi.fileTypes.impl.IgnoredPatternSet}
+ * as soon as it's ported to {@link com.intellij.concurrency.ConcurrentCollectionFactory#createConcurrentMap}
+ * Until then, this copy should stay because it's more scalable
+ */
 @ApiStatus.Internal
 public final class IgnoredPatternSet {
   private final Set<String> masks;
-  private final FileTypeAssocTable<Boolean> ignorePatterns = new FileTypeAssocTable<>();
+  private final FileTypeAssocTable<Boolean> ignorePatterns = FileTypeAssocTableUtil.newScalableFileTypeAssocTable();
 
   public IgnoredPatternSet(@NotNull List<String> initialMasks) {
     FileNameMatcherFactory fileNameMatcherFactory = null;
