@@ -342,6 +342,7 @@ c:com.intellij.openapi.fileEditor.OpenFileDescriptor
 a:com.intellij.openapi.vfs.newvfs.NewVirtualFile
 - com.intellij.openapi.vfs.VirtualFile
 - com.intellij.openapi.vfs.VirtualFileWithId
+- *:allChildrenLoaded():Z
 - *a:isOffline():Z
 - *a:setOffline(Z):V
 a:com.intellij.openapi.vfs.newvfs.RefreshQueue

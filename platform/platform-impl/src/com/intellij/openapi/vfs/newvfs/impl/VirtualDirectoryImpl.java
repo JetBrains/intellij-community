@@ -978,6 +978,7 @@ public class VirtualDirectoryImpl extends VirtualFileSystemEntry {
     });
   }
 
+  @Override
   public boolean allChildrenLoaded() {
     return directoryData.children.areAllChildrenLoaded();
   }

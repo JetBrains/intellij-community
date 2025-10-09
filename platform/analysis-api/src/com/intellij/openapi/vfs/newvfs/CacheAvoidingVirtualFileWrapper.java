@@ -16,6 +16,7 @@ import java.io.InputStream;
 import java.io.OutputStream;
 import java.nio.charset.Charset;
 import java.nio.file.Path;
+import java.util.Collection;
 import java.util.function.Supplier;
 
 /**
@@ -71,7 +72,13 @@ public final class CacheAvoidingVirtualFileWrapper extends VirtualFile implement
 
   @Override
   public VirtualFile[] getChildren() {
-    //MAYBE RC: cache children once calculated?
+    if (wrappedFile.allChildrenLoaded()) {//fast-track:
+      Collection<VirtualFile> cachedChildren = wrappedFile.getCachedChildren();
+      return cachedChildren.stream()
+        .map(child -> ((NewVirtualFile)child).asCacheAvoiding())
+        .toArray(VirtualFile[]::new);
+    }
+
     NewVirtualFileSystem fileSystem = wrappedFile.getFileSystem();
     String[] childNames = fileSystem.list(wrappedFile);
     VirtualFile[] children = new VirtualFile[childNames.length];
@@ -84,7 +91,7 @@ public final class CacheAvoidingVirtualFileWrapper extends VirtualFile implement
   }
 
   @Override
-  public @Nullable VirtualFile findChild(@NotNull String childName) {
+  public VirtualFile findChild(@NotNull String childName) {
     NewVirtualFileSystem fileSystem = wrappedFile.getFileSystem();
     NewVirtualFile child = wrappedFile.findChildIfCached(childName);
     if (child != null) {
@@ -104,14 +111,7 @@ public final class CacheAvoidingVirtualFileWrapper extends VirtualFile implement
   @Override
   public @NotNull VirtualFile findOrCreateChildData(Object requestor,
                                                     @NotNull String name) throws IOException {
-    VirtualFile child = findChild(name);
-    if (child != null) return child;
-    //MAYBE RC: below we create new _cached_ child, which violates this class general contract that it does NOT create new cache
-    //          entries. From one side, it seems to be explicitly requested -- but maybe it is better to still adhere the
-    //          contract? Maybe it is more consistent to create a non-cached child (=fileSystem.createChildFile(requestor, parent, name))
-    //          -- i.e. create physical file, and TransientVirtualFileImpl around it?
-    child = createChildData(requestor, name);
-    return new CacheAvoidingVirtualFileWrapper((NewVirtualFile)child);
+    return findChild(name);
   }
 
   //<editor-fold desc="VirtualFile trivial delegates"> =====================================================================================
