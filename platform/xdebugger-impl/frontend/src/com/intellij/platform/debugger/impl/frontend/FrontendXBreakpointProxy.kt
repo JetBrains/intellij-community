@@ -47,7 +47,7 @@ internal fun createXBreakpointProxy(
 internal open class FrontendXBreakpointProxy(
   override val project: Project,
   parentCs: CoroutineScope,
-  private val dto: XBreakpointDto,
+  dto: XBreakpointDto,
   override val type: XBreakpointTypeProxy,
   private val breakpointRequestCounter: FrontendBreakpointRequestCounter,
   private val _onBreakpointChange: (XBreakpointProxy) -> Unit,
@@ -77,14 +77,15 @@ internal open class FrontendXBreakpointProxy(
     newValue: T,
     getter: (XBreakpointDtoState) -> T,
     copy: (XBreakpointDtoState) -> XBreakpointDtoState,
+    forceRequestWithoutUpdate: Boolean,
   ): Long {
     var requestId: Long = REQUEST_IS_NOT_NEEDED
     _state.update { old ->
-      if (getter(old) == newValue) {
+      if (!forceRequestWithoutUpdate && getter(old) == newValue) {
         return REQUEST_IS_NOT_NEEDED
       }
       val newState = copy(old)
-      if (newState == old) {
+      if (!forceRequestWithoutUpdate && newState == old) {
         return REQUEST_IS_NOT_NEEDED
       }
       requestId = breakpointRequestCounter.increment()
@@ -105,8 +106,8 @@ internal open class FrontendXBreakpointProxy(
     forceRequestWithoutUpdate: Boolean = false,
     sendRequest: suspend (Long) -> Unit,
   ) {
-    val requestId = getRequestIdForStateUpdate(newValue, getter, copy)
-    if (requestId == REQUEST_IS_NOT_NEEDED && !forceRequestWithoutUpdate) {
+    val requestId = getRequestIdForStateUpdate(newValue, getter, copy, forceRequestWithoutUpdate)
+    if (requestId == REQUEST_IS_NOT_NEEDED) {
       return
     }
     afterStateChanged()
