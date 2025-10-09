@@ -28,7 +28,6 @@ import com.jetbrains.fus.reporting.RegionCode
 import com.jetbrains.fus.reporting.RemoteConfig
 import com.jetbrains.fus.reporting.defaults.DefaultMetadataStorage
 import com.jetbrains.fus.reporting.defaults.NoOpLoggerFactory
-import com.jetbrains.fus.reporting.serialization.FusJacksonSerializer
 import java.io.File
 import java.nio.file.Files
 import kotlin.test.assertTrue
@@ -131,7 +130,7 @@ abstract class BaseSensitiveDataValidatorTest  : UsefulTestCase() {
       true
     )
 
-    val jsonSerializer = FusJacksonSerializer
+    val jsonSerializer = FusComponentProvider.FusJacksonSerializer()
 
     val metadataStorage = DefaultMetadataStorage(
       fusConfig,

@@ -18,6 +18,5 @@
     <orderEntry type="module" module-name="intellij.platform.statistics.uploader" scope="TEST" />
     <orderEntry type="module" module-name="intellij.libraries.jackson" />
     <orderEntry type="module" module-name="intellij.libraries.jackson.databind" />
-    <orderEntry type="library" name="com.jetbrains.fus.reporting.serialization.jackson" level="project" />
   </component>
 </module>
