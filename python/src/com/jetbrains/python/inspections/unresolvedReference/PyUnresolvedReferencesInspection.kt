@@ -75,6 +75,11 @@ class PyUnresolvedReferencesInspection : PyUnresolvedReferencesInspectionBase() 
         return emptyList()
       }
 
+      // Don't suggest installing "name" for `import pkg.name` or `from pkg.name import foo`.
+      if (node !is PyReferenceExpression || node.isQualified) {
+        return emptyList()
+      } 
+
       val qname = QualifiedName.fromDottedString(refName)
       val components = qname.components
       if (components.isEmpty()) {
