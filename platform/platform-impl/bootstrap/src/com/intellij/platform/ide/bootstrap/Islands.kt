@@ -81,7 +81,7 @@ private suspend fun enableTheme() {
   lafManager.setCurrentLookAndFeel(newTheme, true)
 
   val editorScheme = if (PlatformUtils.isRider()) {
-    if (isLight) "Rider Light" else "Rider Dark"
+    if (isLight) "Rider Light" else "Rider Islands Dark"
   }
   else {
     if (isLight) "Light" else "Islands Dark"
