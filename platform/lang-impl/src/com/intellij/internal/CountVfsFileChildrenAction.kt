@@ -20,6 +20,7 @@ import com.intellij.openapi.vfs.newvfs.NewVirtualFile
 import com.intellij.openapi.vfs.newvfs.persistent.FSRecords
 import com.intellij.platform.ide.progress.withBackgroundProgress
 import com.intellij.platform.util.progress.reportRawProgress
+import com.intellij.workspaceModel.core.fileIndex.WorkspaceFileIndex
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
 import org.jetbrains.annotations.ApiStatus
@@ -62,16 +63,21 @@ internal class CountVfsFileChildrenAction : AnAction(), DumbAware {
 
     currentThreadCoroutineScope().launch(Dispatchers.Default) {
       val fileIndex = ProjectFileIndex.getInstance(project)
+      val workspaceFileIndex = WorkspaceFileIndex.getInstance(project)
       withBackgroundProgress(project, "Counting children in VFS recursively...") {
         var vfsFilesCount = 0
         var contentFilesCount = 0
+        var contentIndexableFilesCount = 0
         var excludedFilesCount = 0
         var ignoredFilesCount = 0
         visitChildrenInVfsRecursively(root) { file ->
           vfsFilesCount++
           runReadAction {
             when {
-              fileIndex.isInContent(file) -> contentFilesCount++
+              fileIndex.isInContent(file) -> {
+                contentFilesCount++
+                if (workspaceFileIndex.isIndexable(file)) contentIndexableFilesCount++
+              }
               fileIndex.isUnderIgnored(file) -> ignoredFilesCount++
               fileIndex.isExcluded(file) -> excludedFilesCount++
             }
@@ -81,7 +87,7 @@ internal class CountVfsFileChildrenAction : AnAction(), DumbAware {
         vfsFilesCount-- // don't count the directory itself
         val message = "Under <i>${root.path}</i><br/>" +
                       "there are $vfsFilesCount files in <b>VFS</b>:<br/>" +
-                      "$contentFilesCount content files<br/>" +
+                      "$contentFilesCount content files ($contentIndexableFilesCount indexable)<br/>" +
                       "$excludedFilesCount excluded files<br/>" +
                       "$ignoredFilesCount ignored files"
         Notification("System Messages", message, NotificationType.INFORMATION)
