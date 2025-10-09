@@ -1,20 +1,21 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.diff.util;
 
 import com.intellij.codeInsight.daemon.DaemonCodeAnalyzer;
 import com.intellij.diff.contents.DocumentContent;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.application.ReadAction;
+import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.editor.ex.EditorEx;
 import com.intellij.openapi.editor.highlighter.EditorHighlighter;
 import com.intellij.openapi.fileEditor.impl.text.EditorHighlighterUpdater;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.vfs.VirtualFile;
-import com.intellij.psi.impl.PsiManagerEx;
+import com.intellij.psi.PsiDocumentManager;
 import com.intellij.util.concurrency.NonUrgentExecutor;
 import com.intellij.util.ui.UIUtil;
 import org.jetbrains.annotations.ApiStatus;
+import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -48,7 +49,7 @@ public class DiffEditorHighlighterUpdater extends EditorHighlighterUpdater {
   protected void setupHighlighter(@NotNull EditorHighlighter highlighter) {
     super.setupHighlighter(highlighter);
 
-    restartHighlighterFor(project, editor);
+    restartHighlighterInWindow(project, editor, myContent.getDocument(), this);
   }
 
   /**
@@ -57,26 +58,37 @@ public class DiffEditorHighlighterUpdater extends EditorHighlighterUpdater {
    * @see com.intellij.codeInsight.daemon.impl.EditorTrackerImpl#activeWindow
    * @see com.intellij.openapi.fileEditor.FileEditorWithTextEditors
    */
-  private void restartHighlighterFor(@Nullable Project project, @NotNull Editor editor) {
+  private static void restartHighlighterInWindow(@Nullable Project project,
+                                                 @NotNull Editor editor,
+                                                 @NotNull Document document,
+                                                 @NotNull @NonNls Object restartReason) {
     if (project == null) return;
 
     // Rely on com.intellij.codeInsight.daemon.impl.EditorTracker and EditorTrackerListener.TOPIC in a focused window
     Window window = UIUtil.getWindow(editor.getComponent());
     if (window == null || !window.isShowing() || UIUtil.isFocusAncestor(window)) return;
 
-    VirtualFile file = editor.getVirtualFile();
-    if (file == null) return;
+    restartHighlighterFor(project, editor, document, restartReason);
+  }
 
+  /**
+   * Force {@link DaemonCodeAnalyzer} to re-highlight the document.
+   *
+   * @see DaemonCodeAnalyzer#restart(com.intellij.psi.PsiFile, Object)
+   */
+  public static void restartHighlighterFor(@NotNull Project project,
+                                           @NotNull Editor editor,
+                                           @NotNull Document document,
+                                           @NotNull @NonNls Object restartReason) {
     ReadAction.nonBlocking(() -> {
-        PsiManagerEx psiManager = PsiManagerEx.getInstanceEx(project);
-        return psiManager.getFileManager().getCachedPsiFile(file);
+        return PsiDocumentManager.getInstance(project).getCachedPsiFile(document);
       })
       .coalesceBy(DiffEditorHighlighterUpdater.class, editor)
       .expireWith(project)
       .submit(NonUrgentExecutor.getInstance())
       .onSuccess(psiFile -> {
         if (psiFile != null) {
-          DaemonCodeAnalyzer.getInstance(project).restart(psiFile, this);
+          DaemonCodeAnalyzer.getInstance(project).restart(psiFile, restartReason);
         }
       });
   }

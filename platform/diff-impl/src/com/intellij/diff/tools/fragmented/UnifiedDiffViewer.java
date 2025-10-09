@@ -71,6 +71,7 @@ import com.intellij.util.concurrency.annotations.RequiresEdt;
 import com.intellij.util.concurrency.annotations.RequiresWriteLock;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.ui.UIUtil;
+import com.intellij.util.ui.update.Activatable;
 import com.intellij.util.ui.update.MergingUpdateQueue;
 import com.intellij.util.ui.update.Update;
 import com.intellij.xml.breadcrumbs.NavigatableCrumb;
@@ -170,7 +171,22 @@ public class UnifiedDiffViewer extends ListenerDiffViewerBase implements EditorD
     myPanel.setPersistentNotifications(DiffUtil.createCustomNotifications(this, myContext, myRequest));
     DiffTitleHandler.createHandler(() -> createTitles(), myContentPanel, myRequest, this);
 
-    DiffUtil.installShowNotifyListener(getComponent(), () -> myMarkupUpdater.scheduleUpdate());
+    DiffUtil.installShowNotifyListener(getComponent(), new Activatable() {
+      @Override
+      public void showNotify() {
+        myMarkupUpdater.scheduleUpdate();
+      }
+
+      @Override
+      public void hideNotify() {
+        Project project = myProject;
+        if (project == null) return;
+
+        //force re-highlighting the document which may be opened in other editor tab and miss highlighters because of com.intellij.openapi.editor.impl.MarkupModelImpl#removeHighlighter
+        Document document = getContent2().getDocument();
+        DiffEditorHighlighterUpdater.restartHighlighterFor(project, myEditor, document, "UnifiedDiffViewer.hide");
+      }
+    });
   }
 
   @Override
