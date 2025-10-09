@@ -326,6 +326,13 @@ public final class PluginInstaller {
       var isRestartRequired = oldFile != null ||
                               !DynamicPlugins.allowLoadUnloadWithoutRestart(pluginDescriptor) ||
                               operation.isRestartRequired();
+      for (PendingDynamicPluginInstall dynamicPluginInstall : operation.getPendingDynamicPluginInstalls()) {
+        var installed = installAndLoadDynamicPlugin(dynamicPluginInstall.getFile(), parent, dynamicPluginInstall.getPluginDescriptor());
+        if (!installed) {
+          isRestartRequired = true;
+        }
+      }
+
       if (isRestartRequired) {
         installAfterRestart(pluginDescriptor, file, oldFile, false);
       }
