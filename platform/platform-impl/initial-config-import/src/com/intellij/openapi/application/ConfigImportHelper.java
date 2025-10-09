@@ -410,7 +410,8 @@ public final class ConfigImportHelper {
   }
 
   private static Path backupAndDeleteCurrentConfig(Path currentConfig, Logger log, @Nullable ConfigImportSettings settings) throws IOException {
-    var tempBackupDir = Files.createTempDirectory(currentConfig.getFileName() + "-backup-" + UUID.randomUUID());
+    var tempDir = Files.createDirectories(currentConfig.getFileSystem().getPath(System.getProperty("java.io.tmpdir")));
+    var tempBackupDir = Files.createTempDirectory(tempDir, currentConfig.getFileName() + "-backup-" + UUID.randomUUID());
     log.info("Backup config from " + currentConfig + " to " + tempBackupDir);
     NioFiles.copyRecursively(currentConfig, tempBackupDir, file -> !shouldSkipFileDuringImport(file, settings));
 

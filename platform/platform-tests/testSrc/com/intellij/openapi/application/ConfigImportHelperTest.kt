@@ -50,7 +50,6 @@ import java.util.concurrent.atomic.AtomicInteger
 import java.util.function.Function
 import java.util.function.Predicate
 import kotlin.io.path.*
-import kotlin.test.fail
 
 private val LOG = logger<ConfigImportHelperTest>()
 
@@ -551,14 +550,8 @@ class ConfigImportHelperTest : ConfigImportHelperBaseTest() {
     Files.createDirectories(platformVmOptionsFile.parent)
     Files.write(platformVmOptionsFile, listOf("-Xmx2048m", "-Dsome.another.prop=another.val"))
 
-    try {
-      ConfigImportHelper.importConfigsTo(false, newConfigDir, emptyList(), LOG)
-      assertThat(newVmOptionsFile.readLines()).containsExactly("-Xmx3G", "-Dsome.prop=new.val")
-    } catch (ex: Exception) {
-      if (ex.message?.contains("contain custom VM options") == true) {
-        fail("A restart must not be required!", ex)
-      }
-    }
+    ConfigImportHelper.importConfigsTo(false, newConfigDir, emptyList(), LOG)
+    assertThat(newVmOptionsFile.readLines()).containsExactly("-Xmx3G", "-Dsome.prop=new.val")
   }
 
   @Test fun `uses broken plugins from marketplace by default`() {
