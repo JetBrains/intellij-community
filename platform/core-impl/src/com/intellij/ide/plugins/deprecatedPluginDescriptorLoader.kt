@@ -38,7 +38,9 @@ internal fun CoroutineScope.loadPluginDescriptorsInDeprecatedUnitTestMode(
   else {
     loadDescriptorsFromDir(dir = bundledPluginDir, loadingContext = loadingContext, isBundled = true, pool = zipPool)
   }
-  return async { listOfNotNull(core.await(), custom.await(), bundled?.await()) }
+  return async {
+    listOfNotNull(core.await(), custom.await(), bundled?.await())
+  }
 }
 
 internal fun CoroutineScope.deprecatedLoadPluginDescriptorsWithoutDistIndex(

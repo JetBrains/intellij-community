@@ -527,7 +527,7 @@ private fun appendPlugin(descriptor: IdeaPluginDescriptor, target: StringBuilder
 
 private suspend fun loadDescriptors(
   loadingContext: PluginDescriptorLoadingContext,
-  isUnitTestMode: Boolean = PluginManagerCore.isUnitTestMode,
+  isUnitTestMode: Boolean,
   isRunningFromSources: Boolean,
   zipPoolDeferred: Deferred<ZipEntryResolverPool>,
   mainClassLoaderDeferred: Deferred<ClassLoader>?,
@@ -538,7 +538,7 @@ private suspend fun loadDescriptors(
     val pluginsDeferred = ProductLoadingStrategy.strategy.loadPluginDescriptors(
       scope = this,
       loadingContext = loadingContext,
-      customPluginDir = Paths.get(PathManager.getPluginsPath()),
+      customPluginDir = PathManager.getPluginsDir(),
       bundledPluginDir = null,
       isUnitTestMode = isUnitTestMode,
       isRunningFromSources = isRunningFromSources,
@@ -548,7 +548,7 @@ private suspend fun loadDescriptors(
     val pluginsFromPropertyDeferred = loadDescriptorsFromProperty(loadingContext, zipPool)
     pluginsDeferred.await() to pluginsFromPropertyDeferred.await()
   }
-  val discoveredPlugins = if (pluginsFromProperty != null) { plugins + pluginsFromProperty } else { plugins }
+  val discoveredPlugins = if (pluginsFromProperty == null) { plugins } else { plugins + pluginsFromProperty }
   return PluginDescriptorLoadingResult.build(discoveredPlugins)
 }
 
