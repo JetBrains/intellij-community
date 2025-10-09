@@ -582,6 +582,10 @@ com.intellij.ide.actions.runAnything.activity.RunAnythingProvider
 - a:getMainListItem(com.intellij.openapi.actionSystem.DataContext,java.lang.Object):com.intellij.ide.actions.runAnything.items.RunAnythingItem
 - a:getMatcher(com.intellij.openapi.actionSystem.DataContext,java.lang.String):com.intellij.util.text.Matcher
 - a:getValues(com.intellij.openapi.actionSystem.DataContext,java.lang.String):java.util.Collection
+f:com.intellij.ide.actions.searcheverywhere.PSIPresentationBgRendererWrapper
+- <init>(com.intellij.ide.actions.searcheverywhere.WeightedSearchEverywhereContributor):V
+- getDelegate():com.intellij.ide.actions.searcheverywhere.WeightedSearchEverywhereContributor
+- s:wrapIfNecessary(com.intellij.ide.actions.searcheverywhere.WeightedSearchEverywhereContributor):com.intellij.ide.actions.searcheverywhere.WeightedSearchEverywhereContributor
 com.intellij.ide.actions.searcheverywhere.SEResultsEqualityProvider
 - sf:Companion:com.intellij.ide.actions.searcheverywhere.SEResultsEqualityProvider$Companion
 - a:compareItems(com.intellij.ide.actions.searcheverywhere.SearchEverywhereFoundElementInfo,java.util.List):com.intellij.ide.actions.searcheverywhere.SEResultsEqualityProvider$SEEqualElementsActionType

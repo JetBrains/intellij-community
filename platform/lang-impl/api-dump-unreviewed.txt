@@ -8228,7 +8228,6 @@ f:com.intellij.ide.actions.searcheverywhere.PSIPresentationBgRendererWrapper
 - getAdvertisement():java.lang.String
 - getAutocompleteItems(java.lang.String,I):java.util.List
 - getDataForItem(java.lang.Object,java.lang.String):java.lang.Object
-- getDelegate():com.intellij.ide.actions.searcheverywhere.AbstractGotoSEContributor
 - getEffectiveContributor():com.intellij.ide.actions.searcheverywhere.SearchEverywhereContributor
 - getElementPriority(java.lang.Object,java.lang.String):I
 - getElementsRenderer():javax.swing.ListCellRenderer

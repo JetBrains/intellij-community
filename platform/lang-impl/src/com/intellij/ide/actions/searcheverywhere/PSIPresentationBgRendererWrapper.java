@@ -44,9 +44,13 @@ public final class PSIPresentationBgRendererWrapper implements WeightedSearchEve
                                                                SearchEverywhereContributorWrapper {
   private static final Logger LOG = Logger.getInstance(PSIPresentationBgRendererWrapper.class);
 
-  private final AbstractGotoSEContributor myDelegate;
+  private final WeightedSearchEverywhereContributor<Object> myDelegate;
 
-  public PSIPresentationBgRendererWrapper(AbstractGotoSEContributor delegate) { myDelegate = delegate; }
+  public PSIPresentationBgRendererWrapper(AbstractGotoSEContributor delegate) {
+    this((WeightedSearchEverywhereContributor<Object>)delegate);
+  }
+
+  public PSIPresentationBgRendererWrapper(WeightedSearchEverywhereContributor<Object> delegate) { myDelegate = delegate; }
 
   @Override
   public List<AutoCompletionCommand> getAutocompleteItems(String pattern, int caretPosition) {
@@ -71,6 +75,10 @@ public final class PSIPresentationBgRendererWrapper implements WeightedSearchEve
   }
 
   public static WeightedSearchEverywhereContributor<Object> wrapIfNecessary(AbstractGotoSEContributor delegate) {
+    return wrapIfNecessary((WeightedSearchEverywhereContributor<Object>)delegate);
+  }
+
+  public static WeightedSearchEverywhereContributor<Object> wrapIfNecessary(WeightedSearchEverywhereContributor<Object> delegate) {
     return new PSIPresentationBgRendererWrapper(delegate);
   }
 
@@ -303,7 +311,10 @@ public final class PSIPresentationBgRendererWrapper implements WeightedSearchEve
 
   @Override
   public @Nullable ExtendedInfo createExtendedInfo() {
-    return myDelegate.createExtendedInfo();
+    if (myDelegate instanceof SearchEverywhereExtendedInfoProvider contributor) {
+      return contributor.createExtendedInfo();
+    }
+    return null;
   }
 
   @Override
@@ -333,17 +344,25 @@ public final class PSIPresentationBgRendererWrapper implements WeightedSearchEve
 
   @Override
   public ScopeDescriptor getScope() {
-    return myDelegate.getScope();
+    if (myDelegate instanceof ScopeSupporting contributor) {
+      return contributor.getScope();
+    }
+    return new ScopeDescriptor(null);
   }
 
   @Override
   public void setScope(ScopeDescriptor scope) {
-    myDelegate.setScope(scope);
+    if (myDelegate instanceof ScopeSupporting contributor) {
+      contributor.setScope(scope);
+    }
   }
 
   @Override
   public List<ScopeDescriptor> getSupportedScopes() {
-    return myDelegate.getSupportedScopes();
+    if (myDelegate instanceof ScopeSupporting contributor) {
+      return contributor.getSupportedScopes();
+    }
+    return Collections.emptyList();
   }
 
   @Override
@@ -398,7 +417,7 @@ public final class PSIPresentationBgRendererWrapper implements WeightedSearchEve
     return null;
   }
 
-  public AbstractGotoSEContributor getDelegate() {
+  public WeightedSearchEverywhereContributor<Object> getDelegate() {
     return myDelegate;
   }
 }
