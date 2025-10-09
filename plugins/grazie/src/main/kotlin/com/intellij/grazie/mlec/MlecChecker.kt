@@ -1,6 +1,5 @@
 package com.intellij.grazie.mlec
 
-import ai.grazie.gec.model.problem.Problem
 import ai.grazie.gec.model.problem.SentenceWithProblems
 import ai.grazie.nlp.langs.Language
 import ai.grazie.nlp.langs.locale
@@ -10,23 +9,15 @@ import com.intellij.codeInspection.util.InspectionMessage
 import com.intellij.grazie.GrazieConfig
 import com.intellij.grazie.cloud.GrazieCloudConnector
 import com.intellij.grazie.rule.SentenceBatcher
-import com.intellij.grazie.rule.SentenceTokenizer.Sentence
-import com.intellij.grazie.rule.SentenceTokenizer.tokenize
 import com.intellij.grazie.text.*
 import com.intellij.grazie.utils.*
 import com.intellij.openapi.Disposable
 import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.components.Service
-import com.intellij.openapi.components.service
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.TextRange
 import com.intellij.openapi.util.text.StringUtil
-import com.intellij.psi.FileViewProvider
-import org.slf4j.LoggerFactory
 import java.util.*
-import kotlin.coroutines.cancellation.CancellationException
-
-private val logger = LoggerFactory.getLogger(MlecChecker::class.java)
 
 class MlecChecker : ExternalTextChecker() {
   private val incompleteSentenceMessages = setOf(
@@ -46,7 +37,7 @@ class MlecChecker : ExternalTextChecker() {
     val rules = Constants.mlecRules[context.language] ?: return emptyList()
     if (rules.none { it.isCurrentlyEnabled(context.text) }) return emptyList()
 
-    val typos = getTypos(context.language, context.text, context.stripPrefix.length).takeIf { it.isNotEmpty() } ?: return emptyList()
+    val typos = getProblems(context, MlecServerBatcherHolder::class.java)?.takeIf { it.isNotEmpty() } ?: return emptyList()
 
     return typos
       .mapNotNull { typo ->
@@ -90,47 +81,6 @@ class MlecChecker : ExternalTextChecker() {
           }
         }
       }
-  }
-
-  private suspend fun getTypos(language: Language, text: TextContent, stripPrefixLength: Int): List<Problem> {
-    val subText = text.subText(TextRange(stripPrefixLength, text.length)) ?: return emptyList()
-    val sentences = tokenize(subText)
-    val parsed: Map<SentenceWithExclusions, SentenceWithProblems?>? = runMlec(sentences, language, text.containingFile.viewProvider)
-    if (parsed.isNullOrEmpty()) return emptyList()
-
-    val result = ArrayList<Problem>()
-    for (sentence in sentences) {
-      val corrections = parsed[sentence.swe()]?.problems ?: continue
-      val start = sentence.start + stripPrefixLength
-      if (!text.hasUnknownFragmentsIn(TextRange.from(start, sentence.text.trimEnd().length))) {
-        corrections.forEach {
-          result.add(it.withOffset(start))
-        }
-      }
-    }
-    return result
-  }
-
-  private suspend fun runMlec(
-    sentences: List<Sentence>, language: Language,
-    vp: FileViewProvider,
-  ): Map<SentenceWithExclusions, SentenceWithProblems?>? {
-    val queries = sentences.map { it.swe() }
-    if (!GrazieCloudConnector.seemsCloudConnected()) {
-      return LinkedHashMap()
-    }
-
-    return try {
-      val parser = service<ServerBatcherHolder>().get(language)?.forFile(vp)
-      parser?.parseAsync(queries)
-    }
-    catch (e: CancellationException) {
-      throw e
-    }
-    catch (e: RuntimeException) {
-      logger.warn("Got exception from MLEC", e)
-      LinkedHashMap()
-    }
   }
 
   @Suppress("NonAsciiCharacters")
@@ -189,12 +139,12 @@ class MlecChecker : ExternalTextChecker() {
   }
 
   @Service
-  private class ServerBatcherHolder : LanguageHolder<SentenceBatcher<SentenceWithProblems>>() {
+  private class MlecServerBatcherHolder : LanguageHolder<SentenceBatcher<SentenceWithProblems>>() {
     private class ServerBatcher(
       language: Language,
     ) : SentenceBatcher<SentenceWithProblems>(language, 32), Disposable {
       override suspend fun parse(sentences: List<SentenceWithExclusions>, project: Project): Map<SentenceWithExclusions, SentenceWithProblems> {
-        if (GrazieCloudConnector.EP_NAME.extensionList.any { it.isAfterRecentGecError() }) {
+        if (GrazieCloudConnector.isAfterRecentGecError()) {
           return emptyMap()
         }
         return GrazieCloudConnector.EP_NAME.extensionList

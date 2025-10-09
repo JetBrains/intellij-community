@@ -1,6 +1,8 @@
 package com.intellij.grazie.utils
 
+import ai.grazie.gec.model.problem.Problem
 import ai.grazie.gec.model.problem.ProblemHighlighting
+import ai.grazie.gec.model.problem.SentenceWithProblems
 import ai.grazie.nlp.langs.Language
 import ai.grazie.nlp.langs.Language.UNKNOWN
 import ai.grazie.rules.Rule
@@ -11,8 +13,11 @@ import com.intellij.grazie.GrazieConfig
 import com.intellij.grazie.detection.LangDetector
 import com.intellij.grazie.ide.ui.configurable.StyleConfigurable.Companion.ruleEngineLanguages
 import com.intellij.grazie.jlanguage.LangTool
+import com.intellij.grazie.mlec.LanguageHolder
 import com.intellij.grazie.rule.RuleIdeClient
-import com.intellij.grazie.text.TextChecker
+import com.intellij.grazie.rule.SentenceBatcher
+import com.intellij.grazie.rule.SentenceBatcher.Companion.runWithSentenceBatcher
+import com.intellij.grazie.rule.SentenceTokenizer.tokenize
 import com.intellij.grazie.text.TextChecker.ProofreadingContext
 import com.intellij.grazie.text.TextContent
 import com.intellij.openapi.util.TextRange
@@ -63,6 +68,27 @@ fun TextContent.toProofreadingContext(): ProofreadingContext {
     override fun getLanguage(): Language = language
     override fun getStripPrefix(): String = content.toString().substring(0, stripPrefixLength)
   }
+}
+
+suspend fun <T : LanguageHolder<SentenceBatcher<SentenceWithProblems>>> getProblems(context: ProofreadingContext, parserClass: Class<T>): List<Problem>? {
+  val stripPrefixLength = context.stripPrefix.length
+  val subText = context.text.subText(TextRange(stripPrefixLength, context.text.length)) ?: return emptyList()
+  val sentences = tokenize(subText)
+  val parsed = runWithSentenceBatcher(sentences, context.language, context.text.containingFile.viewProvider, parserClass)
+  if (parsed == null) return null
+  if (parsed.isEmpty()) return emptyList()
+
+  val result = ArrayList<Problem>()
+  for (sentence in sentences) {
+    val corrections = parsed[sentence.swe()]?.problems ?: continue
+    val start = sentence.start + stripPrefixLength
+    if (!context.text.hasUnknownFragmentsIn(TextRange.from(start, sentence.text.trimEnd().length))) {
+      corrections.forEach {
+        result.add(it.withOffset(start))
+      }
+    }
+  }
+  return result
 }
 
 val ProblemHighlighting.underline: TextRange?

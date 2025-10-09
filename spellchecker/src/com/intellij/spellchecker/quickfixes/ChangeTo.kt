@@ -31,7 +31,8 @@ internal class ChangeTo @JvmOverloads constructor(
   element: PsiElement,
   private val range: TextRange,
   private val tracker: SpellcheckerRateTracker? = null,
-) : DefaultIntentionActionWithChoice, LazySuggestions(typo) {
+  suggestions: Set<String>? = null,
+) : DefaultIntentionActionWithChoice, LazySuggestions(typo, suggestions) {
 
   private val pointer = SmartPointerManager.getInstance(element.project).createSmartPsiElementPointer(element, element.containingFile)
 

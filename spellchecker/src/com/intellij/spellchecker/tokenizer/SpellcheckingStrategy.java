@@ -26,10 +26,7 @@ import com.intellij.util.KeyedLazyInstance;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import java.util.ArrayList;
-import java.util.Collection;
-import java.util.List;
-import java.util.Set;
+import java.util.*;
 import java.util.regex.Pattern;
 
 /**
@@ -144,11 +141,21 @@ public class SpellcheckingStrategy implements PossiblyDumbAware {
            && InjectedLanguageUtil.hasInjections((PsiLanguageInjectionHost)element);
   }
 
+  // Used by 3rd party plugins
+  @SuppressWarnings("unused")
   public LocalQuickFix[] getRegularFixes(@NotNull PsiElement element,
                                          @NotNull TextRange textRange,
                                          boolean useRename,
                                          String typo) {
-    return getDefaultRegularFixes(useRename, typo, element, textRange);
+    return getDefaultRegularFixes(useRename, typo, element, textRange, null);
+  }
+
+  public LocalQuickFix[] getRegularFixes(@NotNull PsiElement element,
+                                         @NotNull TextRange textRange,
+                                         boolean useRename,
+                                         String typo,
+                                         @Nullable Set<String> suggestions) {
+    return getDefaultRegularFixes(useRename, typo, element, textRange, suggestions);
   }
 
   public static SpellcheckingStrategy getSpellcheckingStrategy(@NotNull PsiElement element) {
@@ -164,14 +171,15 @@ public class SpellcheckingStrategy implements PossiblyDumbAware {
   public static LocalQuickFix[] getDefaultRegularFixes(boolean useRename,
                                                        String typo,
                                                        @NotNull PsiElement element,
-                                                       @NotNull TextRange range) {
+                                                       @NotNull TextRange range,
+                                                       @Nullable Set<String> suggestions) {
     ArrayList<LocalQuickFix> result = new ArrayList<>();
     SpellcheckerRateTracker tracker = new SpellcheckerRateTracker(element);
 
     if (useRename && PsiTreeUtil.getNonStrictParentOfType(element, PsiNamedElement.class) != null) {
       result.add(SpellCheckerQuickFixFactory.rename(typo, range, element, tracker));
     } else {
-      List<LocalQuickFix> fixes = SpellCheckerQuickFixFactory.changeToVariants(element, range, typo, tracker);
+      List<LocalQuickFix> fixes = SpellCheckerQuickFixFactory.changeToVariants(element, range, typo, tracker, suggestions);
       result.addAll(fixes);
     }
 

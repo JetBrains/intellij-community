@@ -25,9 +25,15 @@ abstract class SpellCheckerQuickFixFactory {
 
     @JvmStatic
     @JvmOverloads
-    fun changeToVariants(element: PsiElement, rangeInElement: TextRange, word: String, tracker: SpellcheckerRateTracker? = null): List<LocalQuickFix> {
+    fun changeToVariants(
+      element: PsiElement,
+      rangeInElement: TextRange,
+      word: String,
+      tracker: SpellcheckerRateTracker? = null,
+      suggestions: Set<String>? = null,
+    ): List<LocalQuickFix> {
       return EP_NAME.extensionList.firstNotNullOfOrNull { it.createChangeToVariantsFixes(element, rangeInElement, word) }
-             ?: ChangeTo(word, element, rangeInElement, tracker).getAllAsFixes()
+             ?: ChangeTo(word, element, rangeInElement, tracker, suggestions).getAllAsFixes()
     }
 
     @JvmStatic

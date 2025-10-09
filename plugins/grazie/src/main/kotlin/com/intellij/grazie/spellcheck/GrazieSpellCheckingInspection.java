@@ -149,14 +149,14 @@ public final class GrazieSpellCheckingInspection extends SpellCheckingInspection
   }
 
   private static void addRegularDescriptor(@NotNull PsiElement element, @NotNull TextRange textRange, @NotNull ProblemsHolder holder,
-                                           boolean useRename, String wordWithTypo) {
+                                           boolean useRename, String wordWithTypo, Set<String> suggestions) {
     SpellcheckingStrategy strategy = getSpellcheckingStrategy(element);
 
     LocalQuickFix[] fixes = strategy != null
-                            ? strategy.getRegularFixes(element, textRange, useRename, wordWithTypo)
-                            : SpellcheckingStrategy.getDefaultRegularFixes(useRename, wordWithTypo, element, textRange);
+                            ? strategy.getRegularFixes(element, textRange, useRename, wordWithTypo, suggestions)
+                            : SpellcheckingStrategy.getDefaultRegularFixes(useRename, wordWithTypo, element, textRange, suggestions);
 
-    final ProblemDescriptor problemDescriptor = createProblemDescriptor(element, textRange, fixes, true);
+    ProblemDescriptor problemDescriptor = createProblemDescriptor(element, textRange, fixes, true);
     holder.registerProblem(problemDescriptor);
   }
 
@@ -362,7 +362,7 @@ public final class GrazieSpellCheckingInspection extends SpellCheckingInspection
   }
 
   private static void registerProblem(@NotNull SpellingTypo typo, @NotNull ProblemsHolder holder) {
-    registerProblem(holder, typo.getElement(), typo.getRange(), false, typo.getWord());
+    registerProblem(holder, typo.getElement(), typo.getRange(), false, typo.getWord(), typo.getFixes());
   }
 
   private static void registerProblem(@NotNull ProblemsHolder holder,
@@ -370,8 +370,17 @@ public final class GrazieSpellCheckingInspection extends SpellCheckingInspection
                                       @NotNull TextRange range,
                                       boolean useRename,
                                       String word) {
+    registerProblem(holder, element, range, useRename, word, null);
+  }
+
+  private static void registerProblem(@NotNull ProblemsHolder holder,
+                                      @NotNull PsiElement element,
+                                      @NotNull TextRange range,
+                                      boolean useRename,
+                                      String word,
+                                      Set<String> suggestions) {
     if (holder.isOnTheFly()) {
-      addRegularDescriptor(element, range, holder, useRename, word);
+      addRegularDescriptor(element, range, holder, useRename, word, suggestions);
     }
     else {
       addBatchDescriptor(element, range, word, holder);

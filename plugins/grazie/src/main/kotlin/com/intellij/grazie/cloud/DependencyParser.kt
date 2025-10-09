@@ -144,7 +144,7 @@ object DependencyParser {
 
   private class Batcher(language: Language): SentenceBatcher<Tree>(language, TreeSupport.CLOUD_BATCH_SIZE, quoteMarkup = true) {
     override suspend fun parse(sentences: List<SentenceWithExclusions>, project: Project): Map<SentenceWithExclusions, Tree> {
-      if (GrazieCloudConnector.EP_NAME.extensionList.any { it.isAfterRecentGecError() }) {
+      if (GrazieCloudConnector.isAfterRecentGecError()) {
         return emptyMap()
       }
       val support = obtainSupport(language) ?: return emptyMap()

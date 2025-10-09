@@ -1,14 +1,19 @@
 package com.intellij.grazie.rule
 
+import ai.grazie.gec.model.problem.SentenceWithProblems
 import ai.grazie.nlp.langs.Language
 import ai.grazie.rules.util.BatchParser
 import ai.grazie.text.exclusions.SentenceWithExclusions
+import com.intellij.grazie.cloud.GrazieCloudConnector
+import com.intellij.grazie.mlec.LanguageHolder
+import com.intellij.grazie.rule.SentenceTokenizer.Sentence
 import com.intellij.grazie.text.TextContent
 import com.intellij.grazie.text.TextExtractor.findAllTextContents
 import com.intellij.grazie.utils.HighlightingUtil
 import com.intellij.grazie.utils.NaturalTextDetector
 import com.intellij.grazie.utils.getLanguageIfAvailable
 import com.intellij.openapi.Disposable
+import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.diagnostic.Logger
 import com.intellij.openapi.progress.ProgressManager
 import com.intellij.openapi.progress.runBlockingCancellable
@@ -25,6 +30,7 @@ import com.intellij.util.containers.ContainerUtil
 import kotlinx.coroutines.*
 import kotlinx.coroutines.sync.Mutex
 import kotlinx.coroutines.sync.withLock
+import kotlin.coroutines.cancellation.CancellationException
 
 abstract class SentenceBatcher<T>(val language: Language, private val batchSize: Int, private val quoteMarkup: Boolean = false) : Disposable {
   @Volatile
@@ -33,7 +39,7 @@ abstract class SentenceBatcher<T>(val language: Language, private val batchSize:
   private val executorScope = CoroutineScope(SupervisorJob() + CoroutineName(name = "SentenceBatcherScope-${this::class.java.name}"))
   private val taskMutex = Mutex()
 
-  protected abstract suspend fun parse(sentences: List<SentenceWithExclusions>, project: Project): Map<SentenceWithExclusions, T>
+  protected abstract suspend fun parse(sentences: List<SentenceWithExclusions>, project: Project): Map<SentenceWithExclusions, T>?
 
   override fun dispose() {
     executorScope.cancel()
@@ -131,7 +137,8 @@ abstract class SentenceBatcher<T>(val language: Language, private val batchSize:
       }
 
       private suspend fun parseAndCache(batch: LinkedHashSet<SentenceWithExclusions>): Map<SentenceWithExclusions, T?> {
-        val parsed: Map<SentenceWithExclusions, T?> = parse(ArrayList(batch), project)
+        val parsed = parse(ArrayList(batch), project)
+        if (parsed == null) return LinkedHashMap()
         for (entry in parsed.entries) {
           if (entry.value != null) {
             globalCache[entry.key] = entry.value
@@ -195,6 +202,31 @@ abstract class SentenceBatcher<T>(val language: Language, private val batchSize:
     @JvmStatic
     fun findInstalledLTLanguage(language: Language): org.languagetool.Language? {
       return HighlightingUtil.findInstalledLang(language)?.jLanguage
+    }
+
+    @JvmStatic
+    suspend fun <T : LanguageHolder<SentenceBatcher<SentenceWithProblems>>> runWithSentenceBatcher(
+      sentences: List<Sentence>,
+      language: Language,
+      vp: FileViewProvider,
+      parserClass: Class<T>
+    ): Map<SentenceWithExclusions, SentenceWithProblems?>? {
+      val queries = sentences.map { it.swe() }
+      if (!GrazieCloudConnector.seemsCloudConnected() || GrazieCloudConnector.isAfterRecentGecError()) {
+        return LinkedHashMap()
+      }
+
+      return try {
+        val parser = ApplicationManager.getApplication().getService(parserClass).get(language)?.forFile(vp)
+        parser?.parseAsync(queries)
+      }
+      catch (e: CancellationException) {
+        throw e
+      }
+      catch (e: RuntimeException) {
+        LOG.warn("Got exception from $parserClass", e)
+        LinkedHashMap()
+      }
     }
   }
 
