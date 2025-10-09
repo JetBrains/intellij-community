@@ -4,6 +4,7 @@ package com.intellij.openapi.project
 import com.intellij.openapi.Disposable
 import com.intellij.openapi.application.*
 import com.intellij.openapi.application.impl.ApplicationImpl
+import com.intellij.openapi.application.impl.InternalThreading
 import com.intellij.openapi.components.service
 import com.intellij.openapi.diagnostic.debug
 import com.intellij.openapi.diagnostic.logger
@@ -352,7 +353,9 @@ open class DumbServiceImpl @NonInjectable @VisibleForTesting constructor(
         val new = _state.updateAndGet { it.decrementDumbCounter() }
         // unfortunately, some implementations of DumbModeListener execute a write action
         // hence we place this event sending inside WA to ensure consistency
-        proceedWithPublishingOfDecrementEvents(new.isSmart)
+        InternalThreading.invokeAndWaitWithTransferredWriteAction {
+          proceedWithPublishingOfDecrementEvents(new.isSmart)
+        }
       }
     }
   }
