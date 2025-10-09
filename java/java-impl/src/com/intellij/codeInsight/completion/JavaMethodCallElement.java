@@ -1,29 +1,19 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInsight.completion;
 
 import com.intellij.codeInsight.AutoPopupController;
 import com.intellij.codeInsight.CodeInsightSettings;
-import com.intellij.codeInsight.completion.util.MethodParenthesesHandler;
-import com.intellij.codeInsight.hint.ParameterInfoControllerBase;
-import com.intellij.codeInsight.hint.ShowParameterInfoContext;
-import com.intellij.codeInsight.hint.api.impls.MethodParameterInfoHandler;
-import com.intellij.codeInsight.hints.ParameterHintsPass;
 import com.intellij.codeInsight.lookup.*;
 import com.intellij.codeInsight.lookup.impl.JavaElementLookupRenderer;
 import com.intellij.codeInsight.template.*;
 import com.intellij.codeInsight.template.impl.ConstantNode;
 import com.intellij.codeInsight.template.impl.TemplateImpl;
 import com.intellij.codeInsight.template.impl.TemplateState;
-import com.intellij.featureStatistics.FeatureUsageTracker;
-import com.intellij.injected.editor.EditorWindow;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.command.WriteCommandAction;
-import com.intellij.openapi.editor.CaretModel;
-import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.editor.event.DocumentEvent;
 import com.intellij.openapi.editor.event.DocumentListener;
-import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.ClassConditionKey;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.Key;
@@ -33,11 +23,9 @@ import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.pom.java.LanguageLevel;
 import com.intellij.psi.*;
 import com.intellij.psi.codeStyle.JavaCodeStyleManager;
-import com.intellij.psi.impl.PsiImplUtil;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.psi.util.PsiUtil;
 import com.intellij.psi.util.TypeConversionUtil;
-import com.intellij.util.ThreeState;
 import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -86,6 +74,18 @@ public class JavaMethodCallElement extends LookupItem<PsiMethod> implements Type
 
   boolean isNegatable() {
     return myNegatable;
+  }
+
+  boolean isNeedExplicitTypeParameters() {
+    return myNeedExplicitTypeParameters;
+  }
+
+  MemberLookupHelper getHelper() {
+    return myHelper;
+  }
+
+  @Nullable PsiClass getContainingClass() {
+    return myContainingClass;
   }
 
   void setForcedQualifier(@NotNull String forcedQualifier) {
@@ -166,131 +166,7 @@ public class JavaMethodCallElement extends LookupItem<PsiMethod> implements Type
 
   @Override
   public void handleInsert(@NotNull InsertionContext context) {
-    final Document document = context.getDocument();
-    final PsiFile file = context.getFile();
-    final PsiMethod method = getObject();
-
-    final LookupElement[] allItems = context.getElements();
-    ThreeState hasParams = method.getParameterList().isEmpty() ? ThreeState.NO : MethodParenthesesHandler.overloadsHaveParameters(allItems, method);
-    if (method.isConstructor()) {
-      PsiClass aClass = method.getContainingClass();
-      if (aClass != null && aClass.getTypeParameters().length > 0) {
-        document.insertString(context.getTailOffset(), "<>");
-      }
-    }
-    JavaCompletionUtil.insertParentheses(context, this, false, hasParams, false);
-
-    final int offset = context.getStartOffset();
-    final OffsetKey refStart = context.trackOffset(offset, true);
-    beforeHandle(context);
-    if (myNeedExplicitTypeParameters) {
-      qualifyMethodCall(file, context.getOffset(refStart), document);
-      insertExplicitTypeParameters(context, refStart);
-    }
-    else if (myHelper != null) {
-      context.commitDocument();
-      importOrQualify(document, file, method, context.getOffset(refStart));
-    }
-
-    PsiCallExpression methodCall = findCallAtOffset(context, context.getOffset(refStart));
-    // make sure this is the method call we've just added, not the enclosing one
-    if (methodCall != null) {
-      PsiElement completedElement = methodCall instanceof PsiMethodCallExpression ?
-                                    ((PsiMethodCallExpression)methodCall).getMethodExpression().getReferenceNameElement() : null;
-      TextRange completedElementRange = completedElement == null ? null : completedElement.getTextRange();
-      if (completedElementRange == null || completedElementRange.getStartOffset() != context.getOffset(refStart)) {
-        methodCall = null;
-      }
-    }
-    if (methodCall != null) {
-      CompletionMemory.registerChosenMethod(method, methodCall);
-      handleNegation(context, document, methodCall);
-    }
-
-    afterHandle(context, methodCall);
-
-    if (canStartArgumentLiveTemplate()) {
-      startArgumentLiveTemplate(context, method);
-    }
-    showParameterHints(this, context, method, methodCall);
-  }
-
-  /**
-   * Checks if the argument live template can be started.
-   * see registry key java.completion.argument.live.template.description.
-   * This option allows to prevent running templates if this key is enabled
-   *
-   * @return true if the argument live template can be started, otherwise false.
-   */
-  protected boolean canStartArgumentLiveTemplate() {
-    return true;
-  }
-
-  /**
-   * Called after insertion methods. Performs any necessary post-processing or cleanup.
-   *
-   * @param context the insertion context for the code template
-   * @param call the PsiCallExpression representing the inserted code, or null if no code was inserted
-   */
-  protected void afterHandle(@NotNull InsertionContext context, @Nullable PsiCallExpression call) {
-
-  }
-
-  /**
-   * Called before insertion methods. Performs any necessary pre-processing or setup.
-   *
-   * @param context the insertion context for the code template, must not be null
-   */
-  protected void beforeHandle(@NotNull InsertionContext context) {
-  }
-
-  static PsiCallExpression findCallAtOffset(InsertionContext context, int offset) {
-    context.commitDocument();
-    return PsiTreeUtil.findElementOfClassAtOffset(context.getFile(), offset, PsiCallExpression.class, false);
-  }
-
-  private void handleNegation(InsertionContext context, Document document, PsiCallExpression methodCall) {
-    if (context.getCompletionChar() == '!' && myNegatable) {
-      context.setAddCompletionChar(false);
-      FeatureUsageTracker.getInstance().triggerFeatureUsed(CodeCompletionFeatures.EXCLAMATION_FINISH);
-      document.insertString(methodCall.getTextRange().getStartOffset(), "!");
-    }
-  }
-
-  private void importOrQualify(Document document, PsiFile file, PsiMethod method, int startOffset) {
-    if (!needImportOrQualify()) {
-      return;
-    }
-    if (willBeImported()) {
-      if (method.isConstructor()) {
-        final PsiNewExpression newExpression = PsiTreeUtil.findElementOfClassAtOffset(file, startOffset, PsiNewExpression.class, false);
-        if (newExpression != null) {
-          PsiJavaCodeReferenceElement ref = newExpression.getClassReference();
-          if (ref != null && myContainingClass != null && !ref.isReferenceTo(myContainingClass)) {
-            ref.bindToElement(myContainingClass);
-            return;
-          }
-        }
-      }
-      else {
-        final PsiReferenceExpression ref = PsiTreeUtil.findElementOfClassAtOffset(file, startOffset, PsiReferenceExpression.class, false);
-        if (ref != null && myContainingClass != null && !ref.isReferenceTo(method)) {
-          ref.bindToElementViaStaticImport(myContainingClass);
-        }
-        return;
-      }
-    }
-
-    qualifyMethodCall(file, startOffset, document);
-  }
-
-  /**
-   * Determines if import or qualification is needed.
-   *
-   * @return true if import or qualification is needed, false otherwise
-   */
-  protected boolean needImportOrQualify() {
-    return true;
+    new JavaMethodCallInsertHandler<>().handleInsert(context, this);
   }
 
   public static final Key<PsiMethod> ARGUMENT_TEMPLATE_ACTIVE = Key.create("ARGUMENT_TEMPLATE_ACTIVE");
@@ -363,74 +239,6 @@ public class JavaMethodCallElement extends LookupItem<PsiMethod> implements Type
     return true;
   }
 
-  public static void showParameterHints(LookupElement element, InsertionContext context, PsiMethod method, PsiCallExpression methodCall) {
-    if (!CodeInsightSettings.getInstance().SHOW_PARAMETER_NAME_HINTS_ON_COMPLETION ||
-        context.getCompletionChar() == Lookup.COMPLETE_STATEMENT_SELECT_CHAR ||
-        context.getCompletionChar() == Lookup.REPLACE_SELECT_CHAR ||
-        methodCall == null ||
-        methodCall.getContainingFile() instanceof PsiCodeFragment ||
-        element.getUserData(JavaMethodMergingContributor.MERGED_ELEMENT) != null) {
-      return;
-    }
-    PsiParameterList parameterList = method.getParameterList();
-    int parametersCount = parameterList.getParametersCount();
-    PsiExpressionList parameterOwner = methodCall.getArgumentList();
-    if (parameterOwner == null || !"()".equals(parameterOwner.getText()) || parametersCount == 0) {
-      return;
-    }
-
-    Editor editor = context.getEditor();
-    if (editor instanceof EditorWindow) return;
-
-    Project project = context.getProject();
-    Document document = editor.getDocument();
-    PsiDocumentManager.getInstance(project).doPostponedOperationsAndUnblockDocument(document);
-
-    int limit = getCompletionHintsLimit();
-
-    CaretModel caretModel = editor.getCaretModel();
-    int offset = caretModel.getOffset();
-
-    int afterParenOffset = offset + 1;
-    if (afterParenOffset < document.getTextLength() &&
-        Character.isJavaIdentifierPart(document.getImmutableCharSequence().charAt(afterParenOffset))) {
-      return;
-    }
-
-    int braceOffset = offset - 1;
-    int numberOfParametersToDisplay = parametersCount > 1 && PsiImplUtil.isVarArgs(method) ? parametersCount - 1 : parametersCount;
-    int numberOfCommas = Math.min(numberOfParametersToDisplay, limit) - 1;
-    String commas = Registry.is("editor.completion.hints.virtual.comma") ? "" : StringUtil.repeat(", ", numberOfCommas);
-    document.insertString(offset, commas);
-
-    PsiDocumentManager.getInstance(project).commitDocument(document);
-    MethodParameterInfoHandler handler = new MethodParameterInfoHandler();
-    ShowParameterInfoContext infoContext = new ShowParameterInfoContext(editor, project, context.getFile(), offset, braceOffset);
-    if (!methodCall.isValid() || handler.findElementForParameterInfo(infoContext) == null) {
-      document.deleteString(offset, offset + commas.length());
-      return;
-    }
-
-    setCompletionMode(methodCall, true);
-    context.setLaterRunnable(() -> {
-      Object[] itemsToShow = infoContext.getItemsToShow();
-      PsiExpressionList methodCallArgumentList = methodCall.getArgumentList();
-      ParameterInfoControllerBase controller =
-        ParameterInfoControllerBase.createParameterInfoController(project, editor, braceOffset, itemsToShow, null,
-                                                                  methodCallArgumentList, handler, false, false);
-      Disposable hintsDisposal = () -> setCompletionMode(methodCall, false);
-      if (Disposer.isDisposed(controller)) {
-        Disposer.dispose(hintsDisposal);
-        document.deleteString(offset, offset + commas.length());
-      }
-      else {
-        ParameterHintsPass.asyncUpdate(methodCall, editor);
-        Disposer.register(controller, hintsDisposal);
-      }
-    });
-
-  }
-
   public static int getCompletionHintsLimit() {
     return Math.max(1, Registry.intValue("editor.completion.hints.per.call.limit"));
   }
@@ -500,35 +308,6 @@ public class JavaMethodCallElement extends LookupItem<PsiMethod> implements Type
       return false;
     }
     return true;
-  }
-
-  private void insertExplicitTypeParameters(InsertionContext context, OffsetKey refStart) {
-    context.commitDocument();
-
-    final String typeParams = getTypeParamsText(false, getObject(), getInferenceSubstitutor());
-    if (typeParams != null) {
-      context.getDocument().insertString(context.getOffset(refStart), typeParams);
-      JavaCompletionUtil.shortenReference(context.getFile(), context.getOffset(refStart));
-    }
-  }
-
-  private void qualifyMethodCall(PsiFile file, final int startOffset, final Document document) {
-    final PsiReference reference = file.findReferenceAt(startOffset);
-    if (reference instanceof PsiReferenceExpression && ((PsiReferenceExpression)reference).isQualified()) {
-      return;
-    }
-
-    final PsiMethod method = getObject();
-    if (method.isConstructor()) return;
-    if (!method.hasModifierProperty(PsiModifier.STATIC)) {
-      document.insertString(startOffset, "this.");
-      return;
-    }
-
-    if (myContainingClass == null) return;
-
-    document.insertString(startOffset, ".");
-    JavaCompletionUtil.insertClassReference(myContainingClass, file, startOffset);
   }
 
   public static @Nullable String getTypeParamsText(boolean presentable, PsiTypeParameterListOwner owner, PsiSubstitutor substitutor) {

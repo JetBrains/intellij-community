@@ -1,4 +1,4 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInsight.completion;
 
 import com.intellij.application.options.CodeStyle;
@@ -326,15 +326,10 @@ public final class JavaQualifierAsArgumentContributor extends CompletionContribu
     }
 
     @Override
-    protected boolean needImportOrQualify() {
-      return myShouldImportOrQualify;
-    }
-
-    @Override
     public void handleInsert(@NotNull InsertionContext context) {
       JavaContributorCollectors.logInsertHandle(context.getProject(), JavaContributorCollectors.STATIC_QUALIFIER_TYPE,
                                                 myIsSmart ? CompletionType.SMART : CompletionType.BASIC);
-      super.handleInsert(context);
+      new InsertHandler().handleInsert(context, this);
     }
 
     @Override
@@ -395,37 +390,44 @@ public final class JavaQualifierAsArgumentContributor extends CompletionContribu
       }
     }
 
-    @Override
-    protected void beforeHandle(@NotNull InsertionContext context) {
-      TextRange range = myOldQualifierExpression.getTextRange();
-      context.getDocument().deleteString(range.getStartOffset(), range.getEndOffset() + 1);
-      context.commitDocument();
-    }
+    private class InsertHandler extends JavaMethodCallInsertHandler<JavaQualifierAsParameterMethodCallElement> {
+      @Override
+      protected boolean needImportOrQualify() {
+        return myShouldImportOrQualify;
+      }
 
-    @Override
-    protected boolean canStartArgumentLiveTemplate() {
-      return false;
-    }
+      @Override
+      protected void beforeHandle(@NotNull InsertionContext context) {
+        TextRange range = myOldQualifierExpression.getTextRange();
+        context.getDocument().deleteString(range.getStartOffset(), range.getEndOffset() + 1);
+        context.commitDocument();
+      }
 
-    @Override
-    protected void afterHandle(@NotNull InsertionContext context, @Nullable PsiCallExpression call) {
-      context.commitDocument();
-      PsiDocumentManager.getInstance(context.getProject()).doPostponedOperationsAndUnblockDocument(context.getDocument());
-      if (call != null) {
-        PsiExpressionList list = call.getArgumentList();
-        if (list != null) {
-          TextRange argumentList = list.getTextRange();
-          String text = myOldQualifierExpression.getText();
-          boolean hasOneArgument = ContainerUtil.exists(myMethods, method -> method.getParameterList().getParameters().length == 1);
-          if (!hasOneArgument) {
-            CommonCodeStyleSettings codeStyleSettings = CodeStyle.getLanguageSettings(myOldQualifierExpression.getContainingFile());
-            text += ",";
-            if (codeStyleSettings.SPACE_AFTER_COMMA) {
-              text += " ";
+      @Override
+      protected boolean canStartArgumentLiveTemplate() {
+        return false;
+      }
+
+      @Override
+      protected void afterHandle(@NotNull InsertionContext context, @Nullable PsiCallExpression call) {
+        context.commitDocument();
+        PsiDocumentManager.getInstance(context.getProject()).doPostponedOperationsAndUnblockDocument(context.getDocument());
+        if (call != null) {
+          PsiExpressionList list = call.getArgumentList();
+          if (list != null) {
+            TextRange argumentList = list.getTextRange();
+            String text = myOldQualifierExpression.getText();
+            boolean hasOneArgument = ContainerUtil.exists(myMethods, method -> method.getParameterList().getParameters().length == 1);
+            if (!hasOneArgument) {
+              CommonCodeStyleSettings codeStyleSettings = CodeStyle.getLanguageSettings(myOldQualifierExpression.getContainingFile());
+              text += ",";
+              if (codeStyleSettings.SPACE_AFTER_COMMA) {
+                text += " ";
+              }
             }
+            context.getDocument().insertString(argumentList.getStartOffset() + 1, text);
+            context.getEditor().getCaretModel().moveToOffset(argumentList.getStartOffset() + 1 + text.length());
           }
-          context.getDocument().insertString(argumentList.getStartOffset() + 1, text);
-          context.getEditor().getCaretModel().moveToOffset(argumentList.getStartOffset() + 1 + text.length());
         }
       }
     }
