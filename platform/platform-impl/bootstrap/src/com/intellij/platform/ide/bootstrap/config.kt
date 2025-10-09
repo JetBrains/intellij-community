@@ -9,6 +9,7 @@ import com.intellij.openapi.application.InitialConfigImportState
 import com.intellij.openapi.application.PathManager
 import com.intellij.openapi.diagnostic.Logger
 import com.intellij.openapi.diagnostic.getOrLogException
+import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.util.IconLoader
 import com.intellij.openapi.util.io.NioFiles
 import com.intellij.openapi.util.registry.EarlyAccessRegistryManager
@@ -107,6 +108,7 @@ private suspend fun importConfig(
 
     val euaDocumentStatus = euaDocumentDeferred.await()
     val veryFirstStartOnThisComputer = euaDocumentStatus is EndUserAgreementStatus.Required
+    val log = logger<ConfigImportHelper>()
     withContext(RawSwingDispatcher) {
       ConfigImportHelper.importConfigsTo(veryFirstStartOnThisComputer, targetDirectoryToImportConfig, args, log)
     }
