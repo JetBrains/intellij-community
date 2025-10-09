@@ -16,7 +16,7 @@ import org.jetbrains.kotlin.idea.references.mainReference
 import org.jetbrains.kotlin.kdoc.psi.impl.KDocName
 import java.util.function.Consumer
 
-internal class KotlinUnresolvedKdocHighlightVisitor : HighlightVisitor {
+internal class KotlinUnresolvedKDocHighlightVisitor : HighlightVisitor {
     private var _holder: HighlightInfoHolder? = null
     private val holder: HighlightInfoHolder get() = _holder!!
 
@@ -63,6 +63,6 @@ internal class KotlinUnresolvedKdocHighlightVisitor : HighlightVisitor {
     }
 
     override fun clone(): HighlightVisitor {
-        return KotlinUnresolvedKdocHighlightVisitor()
+        return KotlinUnresolvedKDocHighlightVisitor()
     }
 }
