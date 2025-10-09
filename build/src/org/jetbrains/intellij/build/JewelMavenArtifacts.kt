@@ -133,7 +133,7 @@ internal object JewelMavenArtifacts {
         // * org.jetbrains:annotations
         // * org.jetbrains.skiko:*
         // * org.jetbrains.kotlin:kotlin-stdlib
-        // * com.intellij.platform:kotlinx-coroutines-core-jvm — we want to use the "normal" one, not the IJP fork
+        // * org.jetbrains.intellij.deps.kotlinx:kotlinx-coroutines-core-jvm — we want to use the "normal" one, not the IJP fork
       }
     }
   }
