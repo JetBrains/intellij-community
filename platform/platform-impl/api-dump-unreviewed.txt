@@ -9467,7 +9467,6 @@ f:com.intellij.openapi.vfs.encoding.EncodingProjectManagerImpl
 - <init>(com.intellij.openapi.project.Project):V
 - dispose():V
 - getAllMappings():java.util.Map
-- getAllPointersMappings():java.util.Map
 - getCachedCharsetFromContent(com.intellij.openapi.editor.Document):java.nio.charset.Charset
 - getConfiguredDefaultCharset():java.nio.charset.Charset
 - getDefaultCharset():java.nio.charset.Charset
@@ -9485,9 +9484,7 @@ f:com.intellij.openapi.vfs.encoding.EncodingProjectManagerImpl
 - setDefaultCharsetForPropertiesFiles(com.intellij.openapi.vfs.VirtualFile,java.nio.charset.Charset):V
 - setDefaultCharsetName(java.lang.String):V
 - setEncoding(com.intellij.openapi.vfs.VirtualFile,java.nio.charset.Charset):V
-- setMapping(java.util.Map):V
 - setNative2AsciiForPropertiesFiles(com.intellij.openapi.vfs.VirtualFile,Z):V
-- setPointerMapping(java.util.Map):V
 - shouldAddBOMForNewUtf8File():Z
 e:com.intellij.openapi.vfs.encoding.EncodingProjectManagerImpl$BOMForNewUTF8Files
 - java.lang.Enum
