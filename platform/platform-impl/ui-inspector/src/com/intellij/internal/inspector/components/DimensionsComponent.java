@@ -25,7 +25,6 @@ final class DimensionsComponent extends JComponent {
     myComponent = component;
     setOpaque(true);
     setBackground(JBColor.WHITE);
-    setBorder(JBUI.Borders.customLine(JBColor.border()));
 
     setFont(JBUI.Fonts.label(9));
 
@@ -121,6 +120,18 @@ final class DimensionsComponent extends JComponent {
 
   @Override
   public Dimension getPreferredSize() {
-    return JBUI.size(150);
+    final String sizeString = String.format("%d x %d", myWidth, myHeight);
+
+    int boxSize = JBUIScale.scale(15);
+    FontMetrics fm = getFontMetrics(getFont());
+    int sizeWidth = fm.stringWidth(sizeString);
+    int fontHeight = fm.getHeight();
+
+    int innerBoxWidthGap = JBUIScale.scale(20);
+    int innerBoxHeightGap = JBUIScale.scale(5);
+
+    int innerWidth = sizeWidth + innerBoxWidthGap * 2 + boxSize * 4;
+    int innerHeight = fontHeight + innerBoxHeightGap * 2 + boxSize * 4;
+    return new Dimension(innerWidth, innerHeight);
   }
 }

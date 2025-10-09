@@ -203,14 +203,20 @@ final class InspectorTable extends JBSplitter implements UiDataProvider, Disposa
 
     setFirstComponent(new JBScrollPane(myTable));
     if (component != null) {
-      setSecondComponent(new DimensionsComponent(component));
+      setSecondComponent(createDimensionsComponent(component));
     }
+  }
+
+  private static @NotNull DimensionsComponent createDimensionsComponent(@NotNull Component component) {
+    var result = new DimensionsComponent(component);
+    result.setBorder(JBUI.Borders.customLine(JBColor.border()));
+    return result;
   }
 
   public void refresh() {
     myModel.refresh();
     if (myModel.myComponent != null) {
-      setSecondComponent(new DimensionsComponent(myModel.myComponent));
+      setSecondComponent(createDimensionsComponent(myModel.myComponent));
     }
   }
 
@@ -443,7 +449,7 @@ final class InspectorTable extends JBSplitter implements UiDataProvider, Disposa
       selectedProperty = property;
       if (value instanceof Dimension || value instanceof Rectangle || value instanceof Border || value instanceof Insets) {
         if (myModel.myComponent != null) {
-          setSecondComponent(new DimensionsComponent(myModel.myComponent));
+          setSecondComponent(createDimensionsComponent(myModel.myComponent));
         }
       }
       else if (myProject != null) {
