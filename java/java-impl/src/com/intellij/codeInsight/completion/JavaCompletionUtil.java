@@ -800,7 +800,7 @@ public final class JavaCompletionUtil {
   static void insertParentheses(@NotNull InsertionContext context,
                                 @NotNull LookupElement item,
                                 boolean overloadsMatter,
-                                ThreeState hasParams, // UNSURE if providing no arguments is a valid situation
+                                @NotNull ThreeState hasParams, // UNSURE if providing no arguments is a valid situation
                                 boolean forceClosingParenthesis) {
     Editor editor = context.getEditor();
     char completionChar = context.getCompletionChar();
