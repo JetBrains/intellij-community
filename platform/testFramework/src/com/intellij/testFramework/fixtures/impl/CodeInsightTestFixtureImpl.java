@@ -2232,9 +2232,10 @@ public class CodeInsightTestFixtureImpl extends BaseFixture implements CodeInsig
     var disposable = Disposer.newDisposable();
     var hintFixture = new EditorHintFixture(disposable);
     try {
+      IndexingTestUtil.waitUntilIndexesAreReady(getProject());
       performEditorAction(IdeActions.ACTION_EDITOR_SHOW_PARAMETER_INFO);
       for (int i = 0; i < 10; i++) {
-        UIUtil.dispatchAllInvocationEvents();
+        PlatformTestUtil.dispatchAllInvocationEventsInIdeEventQueue();
         NonBlockingReadActionImpl.waitForAsyncTaskCompletion();
       }
       var hintText = hintFixture.getCurrentHintText();
