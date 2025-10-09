@@ -134,14 +134,14 @@ public final class MissingDeprecatedAnnotationInspection extends BaseInspection 
     }
 
     private static void moveCaretAfter(PsiDocTag tag, @NotNull ModPsiUpdater updater) {
-      PsiElement sibling = tag.getNextSibling();
       PsiDocTagValue valueElement = tag.getValueElement();
       if (valueElement != null) {
-        int start = valueElement.getTextOffset();
-        int end = tag.getTextOffset() + tag.getTextLength();
+        int start = valueElement.getTextRange().getStartOffset();
+        int end = valueElement.getTextRange().getEndOffset();
         updater.select(TextRange.create(start, end));
-      } else {
-        updater.moveCaretTo(tag.getTextOffset() + tag.getTextLength());
+      }
+      else {
+        updater.moveCaretTo(tag.getTextRange().getStartOffset());
       }
     }
   }
