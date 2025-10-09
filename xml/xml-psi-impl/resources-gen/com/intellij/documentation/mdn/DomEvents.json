@@ -945,10 +945,6 @@
     },
     "devicehumidity": {
       "url": "$MDN_URL$/web/api/document_object_model/events",
-      "status": [
-        "Experimental",
-        "Deprecated"
-      ],
       "doc": "<a href=\"$MDN_URL$/Learn_web_development/Core/Scripting/Events\">Events</a> are fired to notify code of \"interesting changes\" that may affect code execution. These can arise from user interactions such as using a mouse or resizing a window, changes in the state of the underlying environment (e.g., low battery or media events from the operating system), and other causes.\nEach event is represented by an object that is based on the <a href=\"$MDN_URL$/Web/API/Event\"><code>Event</code></a> interface, and may have additional custom fields and/or functions to provide information about what happened. The documentation for every event has a table (near the top) that includes a link to the associated event interface, and other relevant information. A full list of the different event types is given in <a href=\"$MDN_URL$/Web/API/Event#interfaces_based_on_event\">Event &gt; Interfaces based on Event</a>.\nThis topic provides an index to the main <em>sorts</em> of events you might be interested in (animation, clipboard, workers etc.) along with the main classes that implement those sorts of events."
     },
     "devicemotion": {
@@ -974,10 +970,6 @@
     },
     "devicenoise": {
       "url": "$MDN_URL$/web/api/document_object_model/events",
-      "status": [
-        "Experimental",
-        "Deprecated"
-      ],
       "doc": "<a href=\"$MDN_URL$/Learn_web_development/Core/Scripting/Events\">Events</a> are fired to notify code of \"interesting changes\" that may affect code execution. These can arise from user interactions such as using a mouse or resizing a window, changes in the state of the underlying environment (e.g., low battery or media events from the operating system), and other causes.\nEach event is represented by an object that is based on the <a href=\"$MDN_URL$/Web/API/Event\"><code>Event</code></a> interface, and may have additional custom fields and/or functions to provide information about what happened. The documentation for every event has a table (near the top) that includes a link to the associated event interface, and other relevant information. A full list of the different event types is given in <a href=\"$MDN_URL$/Web/API/Event#interfaces_based_on_event\">Event &gt; Interfaces based on Event</a>.\nThis topic provides an index to the main <em>sorts</em> of events you might be interested in (animation, clipboard, workers etc.) along with the main classes that implement those sorts of events."
     },
     "deviceorientation": {
@@ -1003,18 +995,10 @@
     },
     "devicepressure": {
       "url": "$MDN_URL$/web/api/document_object_model/events",
-      "status": [
-        "Experimental",
-        "Deprecated"
-      ],
       "doc": "<a href=\"$MDN_URL$/Learn_web_development/Core/Scripting/Events\">Events</a> are fired to notify code of \"interesting changes\" that may affect code execution. These can arise from user interactions such as using a mouse or resizing a window, changes in the state of the underlying environment (e.g., low battery or media events from the operating system), and other causes.\nEach event is represented by an object that is based on the <a href=\"$MDN_URL$/Web/API/Event\"><code>Event</code></a> interface, and may have additional custom fields and/or functions to provide information about what happened. The documentation for every event has a table (near the top) that includes a link to the associated event interface, and other relevant information. A full list of the different event types is given in <a href=\"$MDN_URL$/Web/API/Event#interfaces_based_on_event\">Event &gt; Interfaces based on Event</a>.\nThis topic provides an index to the main <em>sorts</em> of events you might be interested in (animation, clipboard, workers etc.) along with the main classes that implement those sorts of events."
     },
     "devicetemperature": {
       "url": "$MDN_URL$/web/api/document_object_model/events",
-      "status": [
-        "Experimental",
-        "Deprecated"
-      ],
       "doc": "<a href=\"$MDN_URL$/Learn_web_development/Core/Scripting/Events\">Events</a> are fired to notify code of \"interesting changes\" that may affect code execution. These can arise from user interactions such as using a mouse or resizing a window, changes in the state of the underlying environment (e.g., low battery or media events from the operating system), and other causes.\nEach event is represented by an object that is based on the <a href=\"$MDN_URL$/Web/API/Event\"><code>Event</code></a> interface, and may have additional custom fields and/or functions to provide information about what happened. The documentation for every event has a table (near the top) that includes a link to the associated event interface, and other relevant information. A full list of the different event types is given in <a href=\"$MDN_URL$/Web/API/Event#interfaces_based_on_event\">Event &gt; Interfaces based on Event</a>.\nThis topic provides an index to the main <em>sorts</em> of events you might be interested in (animation, clipboard, workers etc.) along with the main classes that implement those sorts of events."
     },
     "drag": {

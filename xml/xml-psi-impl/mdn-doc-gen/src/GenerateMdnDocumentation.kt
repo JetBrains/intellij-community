@@ -1057,14 +1057,15 @@ class GenerateMdnDocumentation : BasePlatformTestCase() {
   private fun extractStatus(contents: DocContents): Set<MdnApiStatus>? =
     contents.getBcdMap()
       .mapNotNull { it.value.compat?.status }
-      .let { statuses ->
+      .takeIf { it.isNotEmpty() }
+      ?.let { statuses ->
         setOfNotNull(
           MdnApiStatus.Experimental.takeIf { statuses.all { it.experimental } },
           MdnApiStatus.StandardTrack.takeIf { statuses.any { it.standardTrack } },
           MdnApiStatus.Deprecated.takeIf { statuses.all { it.deprecated } },
         )
       }
-      .takeIf { it.isNotEmpty() }
+      ?.takeIf { it.isNotEmpty() }
 
   private fun extractCompatibilityInfo(contents: DocContents): CompatibilityMap? =
     contents.getBcdMap()

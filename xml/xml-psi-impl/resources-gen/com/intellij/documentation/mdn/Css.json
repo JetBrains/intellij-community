@@ -34,10 +34,6 @@
     },
     "color-profile": {
       "url": "$MDN_URL$/web/css/@color-profile",
-      "status": [
-        "Experimental",
-        "Deprecated"
-      ],
       "doc": "The <strong><code>@color-profile</code></strong> <a href=\"$MDN_URL$/Web/CSS\">CSS</a> <a href=\"$MDN_URL$/Web/CSS/CSS_syntax/At-rule\">at-rule</a> defines and names a color profile which can later be used in the <a href=\"$MDN_URL$/Web/CSS/color_value/color\"><code>color()</code></a> function to specify a color.",
       "formalSyntax": "@color-profile [ &lt;dashed-ident&gt; | device-cmyk ] { &lt;declaration-list&gt; }"
     },
@@ -766,10 +762,6 @@
       "properties": {
         "font-display": {
           "url": "$MDN_URL$/web/css/@font-feature-values/font-display",
-          "status": [
-            "Experimental",
-            "Deprecated"
-          ],
           "doc": "The <strong><code>font-display</code></strong> descriptor for the <a href=\"$MDN_URL$/Web/CSS/@font-feature-values\"><code>@font-feature-values</code></a> at-rule sets the default value of how a font face is displayed based on whether and when it is downloaded. Setting a value for the <code>font-display</code> descriptor within a <code>@font-feature-values</code> block sets the default value of the <code>font-display</code> descriptor for the <a href=\"$MDN_URL$/Web/CSS/@font-face\"><code>@font-face</code></a> at-rule for all the fonts with the same <a href=\"$MDN_URL$/Web/CSS/@font-face/font-family\"><code>font-family</code></a> value.",
           "values": {
             "auto": "The font display strategy is defined by the user agent.",
@@ -1714,10 +1706,6 @@
         },
         "scan": {
           "url": "$MDN_URL$/web/css/@media/scan",
-          "status": [
-            "Experimental",
-            "Deprecated"
-          ],
           "doc": "The <strong><code>scan</code></strong> <a href=\"$MDN_URL$/Web/CSS\">CSS</a> <a href=\"$MDN_URL$/Web/CSS/@media#media_features\">media feature</a> is used to apply CSS styles based on the scanning process of the output device."
         },
         "scripting": {
@@ -1743,10 +1731,6 @@
         },
         "shape": {
           "url": "$MDN_URL$/web/css/@media/shape",
-          "status": [
-            "Experimental",
-            "Deprecated"
-          ],
           "doc": "<div class=\"notecard experimental\"><p><strong>Experimental:</strong> <strong>This is an <a href=\"$MDN_URL$/MDN/Writing_guidelines/Experimental_deprecated_obsolete#experimental\">experimental technology</a></strong><br>Check the <a href=\"#browser_compatibility\">Browser compatibility table</a> carefully before using this in production.</div>\n<p>The <code>shape</code> <a href=\"$MDN_URL$/Web/CSS\">CSS</a> <a href=\"$MDN_URL$/Web/CSS/@media#media_features\">media feature</a> can be used to test the shape of the device to distinguish rectangular and round displays."
         },
         "update": {
@@ -2161,10 +2145,6 @@
     },
     "absolute-size": {
       "url": "$MDN_URL$/web/css/absolute-size",
-      "status": [
-        "Experimental",
-        "Deprecated"
-      ],
       "doc": "The <strong><code>&lt;absolute-size&gt;</code></strong> <a href=\"$MDN_URL$/Web/CSS\">CSS</a> <a href=\"$MDN_URL$/Web/CSS/CSS_Values_and_Units/CSS_data_types\">data type</a> describes the absolute size keywords. This data type is used in the <a href=\"$MDN_URL$/Web/CSS/font\"><code>font</code></a> shorthand and <a href=\"$MDN_URL$/Web/CSS/font-size\"><code>font-size</code></a> properties.\n<p>The font size keywords are mapped to the deprecated HTML <code>size</code> attribute. See the <a href=\"#html_size_attribute\">HTML size attribute</a> section below).",
       "values": {
         "xx-small": "An absolute size 60% the size of <code>medium</code>. Mapped to the deprecated <code>size=\"1\"</code>.",
@@ -2179,10 +2159,6 @@
     },
     "alpha-value": {
       "url": "$MDN_URL$/web/css/alpha-value",
-      "status": [
-        "Experimental",
-        "Deprecated"
-      ],
       "doc": "The <strong><code>&lt;alpha-value&gt;</code></strong> <a href=\"$MDN_URL$/Web/CSS\">CSS</a> <a href=\"$MDN_URL$/Web/CSS/CSS_Values_and_Units/CSS_data_types\">data type</a> represents a value that can be either a <a href=\"$MDN_URL$/Web/CSS/number\"><code>&lt;number&gt;</code></a> or a <a href=\"$MDN_URL$/Web/CSS/percentage\"><code>&lt;percentage&gt;</code></a>, specifying the <strong><a href=\"$MDN_URL$/Glossary/Alpha\">alpha channel</a></strong> or <strong>transparency</strong> of a color.",
       "formalSyntax": "&lt;number&gt; | &lt;percentage&gt;"
     },
@@ -2233,10 +2209,6 @@
     },
     "baseline-position": {
       "url": "$MDN_URL$/web/css/baseline-position",
-      "status": [
-        "Experimental",
-        "Deprecated"
-      ],
       "doc": "The <strong><code>&lt;baseline-position&gt;</code></strong> <a href=\"$MDN_URL$/Glossary/Enumerated\">enumerated</a> value type represents the <code>baseline</code> keyword values and <code>first</code> and <code>last</code> modifiers, used for the <a href=\"$MDN_URL$/Web/CSS/align-content\"><code>align-content</code></a>, <a href=\"$MDN_URL$/Web/CSS/align-items\"><code>align-items</code></a>, <a href=\"$MDN_URL$/Web/CSS/align-self\"><code>align-self</code></a>, <a href=\"$MDN_URL$/Web/CSS/justify-items\"><code>justify-items</code></a> and <a href=\"$MDN_URL$/Web/CSS/justify-self\"><code>justify-self</code></a> properties as well as the <a href=\"$MDN_URL$/Web/CSS/place-content\"><code>place-content</code></a>, <a href=\"$MDN_URL$/Web/CSS/place-items\"><code>place-items</code></a>, and <a href=\"$MDN_URL$/Web/CSS/place-self\"><code>place-self</code></a> shorthand properties.\n<p>The <code>first</code> and <code>last</code> values give a box a baseline alignment preference, defaulting to <code>first</code> if the modifier is omitted.",
       "values": {
         "baseline": "Computes to <code>first baseline</code>, as defined below.",
@@ -2309,10 +2281,6 @@
     },
     "box-edge": {
       "url": "$MDN_URL$/web/css/box-edge",
-      "status": [
-        "Experimental",
-        "Deprecated"
-      ],
       "doc": "The <strong><code>&lt;box-edge&gt;</code></strong> value types represent a <a href=\"$MDN_URL$/Web/CSS/CSS_box_model/Introduction_to_the_CSS_box_model\">box edge</a> keyword, such as <a href=\"#content-box\"><code>content-box</code></a> and <a href=\"#border-box\"><code>border-box</code></a>. The box-edge keywords are used to define different aspects of an element's box model and how elements are positioned and rendered on screen.\n<p>The box-edge keywords are the components of, but not limited to, the data types <code>&lt;visual-box&gt;</code>, <code>&lt;layout-box&gt;</code>, <code>&lt;paint-box&gt;</code>, <code>&lt;coord-box&gt;</code>, and <code>&lt;geometry-box&gt;</code>. These types are applied to properties such as <a href=\"$MDN_URL$/Web/CSS/transform-box\"><code>transform-box</code></a> and <a href=\"$MDN_URL$/Web/CSS/background-clip\"><code>background-clip</code></a>.",
       "values": {
         "&lt;visual-box&gt;": "Refers to the rectangular box generated for an element as seen by a user on a web page. It includes the element's content, padding, and border. Also referred to as <code>&lt;box&gt;</code>, this value excludes the margin area. This value type is used for the <a href=\"$MDN_URL$/Web/CSS/background-clip\"><code>background-clip</code></a> and <a href=\"$MDN_URL$/Web/CSS/overflow-clip-margin\"><code>overflow-clip-margin</code></a> properties.",
@@ -2353,10 +2321,6 @@
     },
     "calc-sum": {
       "url": "$MDN_URL$/web/css/calc-sum",
-      "status": [
-        "Experimental",
-        "Deprecated"
-      ],
       "doc": "The <strong><code>&lt;calc-sum&gt;</code></strong> <a href=\"$MDN_URL$/Web/CSS\">CSS</a> <a href=\"$MDN_URL$/Web/CSS/CSS_Values_and_Units/CSS_data_types\">data type</a> represents an expression which performs a calculation in any <a href=\"$MDN_URL$/Web/CSS/CSS_Values_and_Units/CSS_Value_Functions#math_functions\">CSS math function</a>. The expression executes a basic arithmetic operation of addition and subtraction between two values.",
       "formalSyntax": "&lt;calc-product&gt; [ [ '+' | '-' ] &lt;calc-product&gt; ]*\n  &lt;calc-product&gt; = &lt;calc-value&gt; [ [ '*' | / ] &lt;calc-value&gt; ]*\n  &lt;calc-value&gt; = &lt;number&gt; | &lt;dimension&gt; | &lt;percentage&gt; | &lt;calc-keyword&gt; | ( &lt;calc-sum&gt; )\n  &lt;calc-keyword&gt; = e | pi | infinity | -infinity | NaN"
     },
@@ -2413,10 +2377,6 @@
     },
     "content-distribution": {
       "url": "$MDN_URL$/web/css/content-distribution",
-      "status": [
-        "Experimental",
-        "Deprecated"
-      ],
       "doc": "The <strong><code>&lt;content-distribution&gt;</code></strong> <a href=\"$MDN_URL$/Glossary/Enumerated\">enumerated</a> value type is used by <a href=\"$MDN_URL$/Web/CSS/justify-content\"><code>justify-content</code></a> and <a href=\"$MDN_URL$/Web/CSS/align-content\"><code>align-content</code></a> properties, and the <a href=\"$MDN_URL$/Web/CSS/place-content\"><code>place-content</code></a> shorthand, to distribute a container's extra space among its <a href=\"$MDN_URL$/Glossary/Alignment_Subject\">alignment subjects</a>.",
       "values": {
         "space-between": "Evenly distributes the <a href=\"$MDN_URL$/Glossary/Alignment_Subject\">alignment subject</a> within the <a href=\"$MDN_URL$/Glossary/Alignment_Container\">alignment container</a>. The first item is placed flush with the start edge of the alignment container, the last item subject is placed flush with the end edge of the alignment container, and the remaining items are evenly distributed so that the spacing between any two adjacent items is the same. The default fallback alignment for <code>space-between</code> is <code>safe flex-start</code> for flex layout, and <code>start</code> otherwise. If there is only one item, the item will be flush with the start edge.",
@@ -2427,10 +2387,6 @@
     },
     "content-position": {
       "url": "$MDN_URL$/web/css/content-position",
-      "status": [
-        "Experimental",
-        "Deprecated"
-      ],
       "doc": "The <strong><code>&lt;content-position&gt;</code></strong> <a href=\"$MDN_URL$/Glossary/Enumerated\">enumerated</a> value type is used by <a href=\"$MDN_URL$/Web/CSS/justify-content\"><code>justify-content</code></a> and <a href=\"$MDN_URL$/Web/CSS/align-content\"><code>align-content</code></a> properties, and the <a href=\"$MDN_URL$/Web/CSS/place-content\"><code>place-content</code></a> shorthand, to align the box's contents within itself.",
       "values": {
         "center": "Centers the <a href=\"$MDN_URL$/Glossary/Alignment_Subject\">alignment subject</a> within its <a href=\"$MDN_URL$/Glossary/Alignment_Container\">alignment container</a>.",
@@ -2464,18 +2420,10 @@
     },
     "custom-ident": {
       "url": "$MDN_URL$/web/css/custom-ident",
-      "status": [
-        "Experimental",
-        "Deprecated"
-      ],
       "doc": "The <strong><code>&lt;custom-ident&gt;</code></strong> <a href=\"$MDN_URL$/Web/CSS\">CSS</a> <a href=\"$MDN_URL$/Web/CSS/CSS_Values_and_Units/CSS_data_types\">data type</a> denotes an arbitrary user-defined string used as an <a href=\"$MDN_URL$/Glossary/Identifier\">identifier</a>. It is case-sensitive, and certain values are forbidden in various contexts to prevent ambiguity."
     },
     "dashed-ident": {
       "url": "$MDN_URL$/web/css/dashed-ident",
-      "status": [
-        "Experimental",
-        "Deprecated"
-      ],
       "doc": "The <strong><code>&lt;dashed-ident&gt;</code></strong> <a href=\"$MDN_URL$/Web/CSS\">CSS</a> <a href=\"$MDN_URL$/Web/CSS/CSS_Values_and_Units/CSS_data_types\">data type</a> denotes an arbitrary string used as an <a href=\"$MDN_URL$/Glossary/Identifier\">identifier</a>."
     },
     "dimension": {
@@ -2855,27 +2803,15 @@
     },
     "frequency": {
       "url": "$MDN_URL$/web/css/frequency",
-      "status": [
-        "Experimental",
-        "Deprecated"
-      ],
       "doc": "The <strong><code>&lt;frequency&gt;</code></strong> <a href=\"$MDN_URL$/Web/CSS\">CSS</a> <a href=\"$MDN_URL$/Web/CSS/CSS_Values_and_Units/CSS_data_types\">data type</a> represents a frequency dimension, such as the pitch of a speaking voice. It is not currently used in any CSS properties."
     },
     "frequency-percentage": {
       "url": "$MDN_URL$/web/css/frequency-percentage",
-      "status": [
-        "Experimental",
-        "Deprecated"
-      ],
       "doc": "The <strong><code>&lt;frequency-percentage&gt;</code></strong> <a href=\"$MDN_URL$/Web/CSS\">CSS</a> <a href=\"$MDN_URL$/Web/CSS/CSS_Values_and_Units/CSS_data_types\">data type</a> represents a value that can be either a <a href=\"$MDN_URL$/Web/CSS/frequency\"><code>&lt;frequency&gt;</code></a> or a <a href=\"$MDN_URL$/Web/CSS/percentage\"><code>&lt;percentage&gt;</code></a>. Frequency values, e.g., the pitch of a speaking voice, are not currently used in any CSS properties.",
       "formalSyntax": "&lt;frequency&gt; | &lt;percentage&gt;"
     },
     "generic-family": {
       "url": "$MDN_URL$/web/css/generic-family",
-      "status": [
-        "Experimental",
-        "Deprecated"
-      ],
       "doc": "The <strong><code>&lt;generic-family&gt;</code></strong> <a href=\"$MDN_URL$/Web/CSS\">CSS</a> <a href=\"$MDN_URL$/Web/CSS/CSS_Values_and_Units/CSS_data_types\">data type</a> represents the keyword values for generic font families used in the <a href=\"$MDN_URL$/Web/CSS/font\"><code>font</code></a> shorthand and <a href=\"$MDN_URL$/Web/CSS/font-family\"><code>font-family</code></a> longhand properties. The <code>&lt;generic-family&gt;</code> represents one or more locally-installed fonts belonging to that category of fonts.",
       "formalSyntax": "serif | sans-serif | monospace | cursive | fantasy | system-ui | ui-serif | ui-sans-serif | ui-monospace | ui-rounded | math | fangsong",
       "values": {
@@ -3022,10 +2958,6 @@
     },
     "ident": {
       "url": "$MDN_URL$/web/css/ident",
-      "status": [
-        "Experimental",
-        "Deprecated"
-      ],
       "doc": "The <strong><code>&lt;ident&gt;</code></strong> <a href=\"$MDN_URL$/Web/CSS\">CSS</a> <a href=\"$MDN_URL$/Web/CSS/CSS_Values_and_Units/CSS_data_types\">data type</a> denotes an arbitrary string used as an <a href=\"$MDN_URL$/Glossary/Identifier\">identifier</a>."
     },
     "image": {
@@ -3272,10 +3204,6 @@
     },
     "overflow-position": {
       "url": "$MDN_URL$/web/css/overflow-position",
-      "status": [
-        "Experimental",
-        "Deprecated"
-      ],
       "doc": "The <strong><code>&lt;overflow-position&gt;</code></strong> <a href=\"$MDN_URL$/Glossary/Enumerated\">enumerated</a> value type defines how an alignment subject that is larger than its alignment container will overflow that container. For example, if centered items are wider than their container, the overflow may be displayed beyond the viewport's start edge, which can't be scrolled to. The <code>&lt;overflow-position&gt;</code> value defines whether the alignment mode should be overridden to ensure the content is visible (<code>safe</code>) or if the alignment mode must be adhered to (<code>unsafe</code>).\n<p>This data type is valid for the <a href=\"$MDN_URL$/Web/CSS/align-content\"><code>align-content</code></a>, <a href=\"$MDN_URL$/Web/CSS/align-items\"><code>align-items</code></a>, <a href=\"$MDN_URL$/Web/CSS/align-self\"><code>align-self</code></a>, <a href=\"$MDN_URL$/Web/CSS/justify-items\"><code>justify-items</code></a> and <a href=\"$MDN_URL$/Web/CSS/justify-self\"><code>justify-self</code></a> properties as well as the <a href=\"$MDN_URL$/Web/CSS/place-content\"><code>place-content</code></a>, <a href=\"$MDN_URL$/Web/CSS/place-items\"><code>place-items</code></a>, and <a href=\"$MDN_URL$/Web/CSS/place-self\"><code>place-self</code></a> shorthand properties.\nIf omitted, the default overflow alignment is a blend of <code>safe</code> and <code>unsafe</code>.",
       "values": {
         "safe": "If the size of the <a href=\"$MDN_URL$/Glossary/Alignment_Subject\">alignment subject</a> overflows the <a href=\"$MDN_URL$/Glossary/Alignment_Container\">alignment container</a>, the alignment subject is instead aligned as if the alignment mode were <code>start</code>.",
@@ -3352,10 +3280,6 @@
     },
     "relative-size": {
       "url": "$MDN_URL$/web/css/relative-size",
-      "status": [
-        "Experimental",
-        "Deprecated"
-      ],
       "doc": "The <strong><code>&lt;relative-size&gt;</code></strong> <a href=\"$MDN_URL$/Web/CSS\">CSS</a> <a href=\"$MDN_URL$/Web/CSS/CSS_Values_and_Units/CSS_data_types\">data type</a> describes relative size keywords. The <code>&lt;relative-size&gt;</code> keywords define a size relative to the computed size of the parent element. This data type is used in the <a href=\"$MDN_URL$/Web/CSS/font\"><code>font</code></a> shorthand and <a href=\"$MDN_URL$/Web/CSS/font-size\"><code>font-size</code></a> properties.",
       "values": {
         "smaller": "A relative size one size smaller than the inherited size.",
@@ -3430,10 +3354,6 @@
     },
     "self-position": {
       "url": "$MDN_URL$/web/css/self-position",
-      "status": [
-        "Experimental",
-        "Deprecated"
-      ],
       "doc": "The <strong><code>&lt;self-position&gt;</code></strong> <a href=\"$MDN_URL$/Glossary/Enumerated\">enumerated</a> value data type is used by the <a href=\"$MDN_URL$/Web/CSS/justify-self\"><code>justify-self</code></a> and <a href=\"$MDN_URL$/Web/CSS/align-self\"><code>align-self</code></a> properties, and the <a href=\"$MDN_URL$/Web/CSS/place-self\"><code>place-self</code></a> shorthand, to align the box within its alignment container. It is also used by the <a href=\"$MDN_URL$/Web/CSS/justify-items\"><code>justify-items</code></a> and <a href=\"$MDN_URL$/Web/CSS/align-items\"><code>align-items</code></a> properties, and the <a href=\"$MDN_URL$/Web/CSS/place-items\"><code>place-items</code></a> shorthand, to specify default values for <code>justify-self</code> and <code>align-self</code>.",
       "values": {
         "center": "Centers the <a href=\"$MDN_URL$/Glossary/Alignment_Subject\">alignment subject</a> within its <a href=\"$MDN_URL$/Glossary/Alignment_Container\">alignment container</a>.",
@@ -3562,10 +3482,6 @@
     },
     "time-percentage": {
       "url": "$MDN_URL$/web/css/time-percentage",
-      "status": [
-        "Experimental",
-        "Deprecated"
-      ],
       "doc": "The <strong><code>&lt;time-percentage&gt;</code></strong> <a href=\"$MDN_URL$/Web/CSS\">CSS</a> <a href=\"$MDN_URL$/Web/CSS/CSS_Values_and_Units/CSS_data_types\">data type</a> represents a value that can be either a <a href=\"$MDN_URL$/Web/CSS/time\"><code>&lt;time&gt;</code></a> or a <a href=\"$MDN_URL$/Web/CSS/percentage\"><code>&lt;percentage&gt;</code></a>.",
       "formalSyntax": "&lt;time&gt; | &lt;percentage&gt;"
     },
@@ -4173,10 +4089,6 @@
     },
     "device-cmyk": {
       "url": "$MDN_URL$/web/css/color_value/device-cmyk",
-      "status": [
-        "Experimental",
-        "Deprecated"
-      ],
       "doc": "The <strong><code>device-cmyk()</code></strong> functional notation is used to express CMYK colors in a device dependent way, specifying the cyan, magenta, yellow, and black components.\n<p>This approach to color is useful when creating material to be output to a particular printer, when the output for particular ink combinations is known. CSS processors may attempt to approximate the color, however, the end result is likely to be different from the printed result.",
       "formalSyntax": "&lt;legacy-device-cmyk-syntax&gt; | &lt;modern-device-cmyk-syntax&gt;\n  &lt;legacy-device-cmyk-syntax&gt; = device-cmyk( &lt;number&gt;#{4} )\n  &lt;modern-device-cmyk-syntax&gt; = device-cmyk( &lt;cmyk-component&gt;{4} [ / [ &lt;alpha-value&gt; | none ] ]? )\n  &lt;cmyk-component&gt; = &lt;number&gt; | &lt;percentage&gt; | none\n  &lt;alpha-value&gt; = &lt;number&gt; | &lt;percentage&gt;",
       "values": {
@@ -4476,10 +4388,6 @@
     },
     "image": {
       "url": "$MDN_URL$/web/css/image/image",
-      "status": [
-        "Experimental",
-        "Deprecated"
-      ],
       "doc": "The <strong><code>image()</code></strong> <a href=\"$MDN_URL$/Web/CSS\">CSS</a> <a href=\"$MDN_URL$/Web/CSS/CSS_Values_and_Units/CSS_Value_Functions\">function</a> defines an <a href=\"$MDN_URL$/Web/CSS/image\"><code>&lt;image&gt;</code></a> in a similar fashion to the <a href=\"$MDN_URL$/Web/CSS/url_function\"><code>url()</code></a> function, but with added functionality including specifying the image's directionality, displaying just a part of that image defined by a media fragment, and specifying a solid color as a fallback in case none of the specified images are able to be rendered.\n<div class=\"notecard note\">\n<p><strong>Note:</strong>\nThe CSS <code>image()</code> function should not confused with <a href=\"$MDN_URL$/Web/API/HTMLImageElement/Image\" ><code>Image()</code>, the <code>HTMLImageElement</code> constructor</a>.\n</div>",
       "formalSyntax": "image( &lt;image-tags&gt;? [ &lt;image-src&gt;? , &lt;color&gt;? ]! )\n  &lt;image-tags&gt; = ltr | rtl\n  &lt;image-src&gt; = &lt;url&gt; | &lt;string&gt;\n  &lt;url&gt; = &lt;url()&gt; | &lt;src()&gt;\n  &lt;url()&gt; = url( &lt;string&gt; &lt;url-modifier&gt;* ) | &lt;url-token&gt;\n  &lt;src()&gt; = src( &lt;string&gt; &lt;url-modifier&gt;* )",
       "values": {
@@ -9682,10 +9590,6 @@
     },
     "caret": {
       "url": "$MDN_URL$/web/css/caret",
-      "status": [
-        "Experimental",
-        "Deprecated"
-      ],
       "doc": "<div class=\"notecard experimental\"><p><strong>Experimental:</strong> <strong>This is an <a href=\"$MDN_URL$/MDN/Writing_guidelines/Experimental_deprecated_obsolete#experimental\">experimental technology</a></strong><br>Check the <a href=\"#browser_compatibility\">Browser compatibility table</a> carefully before using this in production.</div>\n<p>The <strong><code>caret</code></strong> <a href=\"$MDN_URL$/Web/CSS/CSS_cascade/Shorthand_properties\">shorthand</a> <a href=\"$MDN_URL$/Web/CSS\">CSS</a> property sets the appearance and behavior of the <strong>insertion caret</strong> in a single declaration.",
       "formalSyntax": "&lt;'caret-color'&gt; || &lt;'caret-animation'&gt; || &lt;'caret-shape'&gt;\n  &lt;caret-color&gt; = auto | &lt;color&gt;\n  &lt;caret-animation&gt; = auto | manual\n  &lt;caret-shape&gt; = auto | bar | block | underscore",
       "values": {
@@ -12972,10 +12876,6 @@
     },
     "guides": {
       "url": "$MDN_URL$/web/css/guides",
-      "status": [
-        "Experimental",
-        "Deprecated"
-      ],
       "doc": "There are a number of methods that you can use to lay out your web pages and applications. MDN contains a number of in-depth guides to the different methods, and this page provides an overview of them all."
     },
     "hanging-punctuation": {
@@ -13186,10 +13086,6 @@
     },
     "image-resolution": {
       "url": "$MDN_URL$/web/css/image-resolution",
-      "status": [
-        "Experimental",
-        "Deprecated"
-      ],
       "doc": "<div class=\"notecard experimental\"><p><strong>Experimental:</strong> <strong>This is an <a href=\"$MDN_URL$/MDN/Writing_guidelines/Experimental_deprecated_obsolete#experimental\">experimental technology</a></strong><br>Check the <a href=\"#browser_compatibility\">Browser compatibility table</a> carefully before using this in production.</div>\n<p>The <strong><code>image-resolution</code></strong> <a href=\"$MDN_URL$/Web/CSS\">CSS</a> property specifies the intrinsic resolution of all raster images used in or on the element. It affects content images such as replaced elements and generated content, and decorative images such as <code>background-image</code> images.\n<p>The image resolution is defined as the number of image pixels per unit length, e.g., pixels per inch. By default, CSS assumes a resolution of one image pixel per CSS px unit; however, the <code>image-resolution</code> property allows a different resolution to be specified.",
       "formalSyntax": "[ from-image || &lt;resolution&gt; ] &amp;&amp;snap?",
       "values": {
@@ -13200,10 +13096,6 @@
     },
     "important": {
       "url": "$MDN_URL$/web/css/important",
-      "status": [
-        "Experimental",
-        "Deprecated"
-      ],
       "doc": "A <code>!</code> delimiter followed by the <code>important</code> keyword marks the declaration as important. The <code>!important</code> flag alters the rules selecting declarations inside the <a href=\"$MDN_URL$/Web/CSS/CSS_cascade/Cascade\">cascade</a>. A declaration that is not <em>important</em> is called <em>normal</em>.\n<p>To mark a declaration important, add the <em>important flag</em> (<code>!important</code>) after the value in the declaration. While white space is allowed between the delimiter and the keyword, the flag is generally written as <code>!important</code> without any white space.\n<div>\n```css\nselector {\n  property: value; /* normal declaration */\n  property: value !important; /* important declaration (preferred) */\n  property: value ! important; /* important declaration (not preferred) */\n}\n```\n</div>\n<p>The <code>!important</code> comes after the value of the property value pair declaration, preceded by zero or more spaces. The important flag must be the last token in the declaration. In other words, there can be white space and comments between the flag and the declaration's ending semicolon, but nothing else."
     },
     "initial-letter": {
@@ -13774,10 +13666,6 @@
     },
     "line-height-step": {
       "url": "$MDN_URL$/web/css/line-height-step",
-      "status": [
-        "Experimental",
-        "Deprecated"
-      ],
       "doc": "<div class=\"notecard experimental\"><p><strong>Experimental:</strong> <strong>This is an <a href=\"$MDN_URL$/MDN/Writing_guidelines/Experimental_deprecated_obsolete#experimental\">experimental technology</a></strong><br>Check the <a href=\"#browser_compatibility\">Browser compatibility table</a> carefully before using this in production.</div>\n<p>The <strong><code>line-height-step</code></strong> <a href=\"$MDN_URL$/Web/CSS\">CSS</a> property sets the step unit for line box heights. When the property is set, line box heights are rounded up to the closest multiple of the unit.",
       "formalSyntax": "&lt;length [0,∞]&gt;",
       "values": {
@@ -14409,10 +14297,6 @@
     },
     "mask-border-mode": {
       "url": "$MDN_URL$/web/css/mask-border-mode",
-      "status": [
-        "Experimental",
-        "Deprecated"
-      ],
       "doc": "The <strong><code>mask-border-mode</code></strong> <a href=\"$MDN_URL$/Web/CSS\">CSS</a> property specifies the blending mode used in a <a href=\"$MDN_URL$/Web/CSS/mask-border\">mask border</a>.",
       "formalSyntax": "luminance | alpha",
       "values": {
@@ -16850,26 +16734,14 @@
     },
     "properties": {
       "url": "$MDN_URL$/web/css/properties",
-      "status": [
-        "Experimental",
-        "Deprecated"
-      ],
       "doc": "A <a href=\"$MDN_URL$/Web/CSS\">CSS</a> <strong><em>property</em></strong> is a parameter used in a <a href=\"$MDN_URL$/Web/CSS/CSS_syntax/Syntax#css_declarations\">CSS declaration</a> that lets you style certain aspects of selected elements.\nFor example, the <a href=\"$MDN_URL$/Web/CSS/opacity\"><code>opacity</code></a> property is used to set the opacity of a selected element, allowing you to control if content behind that element is visible:\n<div>\n```css\n/* Set 0.8 opacity on  elements */\nimg {\n  opacity: 0.8;\n}\n```\n</div>\n<p>Each property has a name (e.g., <code>opacity</code>), a value (e.g., <code>0.8</code>), and a defined behavior on the rendering of the document.\nCSS also defines shorthand properties, so you can specify multiple related properties in a single declaration.\nFor example, the <a href=\"$MDN_URL$/Web/CSS/margin\"><code>margin</code></a> property is a shorthand for <a href=\"$MDN_URL$/Web/CSS/margin-top\"><code>margin-top</code></a>, <a href=\"$MDN_URL$/Web/CSS/margin-right\"><code>margin-right</code></a>, <a href=\"$MDN_URL$/Web/CSS/margin-bottom\"><code>margin-bottom</code></a>, and <a href=\"$MDN_URL$/Web/CSS/margin-left\"><code>margin-left</code></a>, setting the margin of all four sides of an element:\n<div>\n```css\n/* Give  elements 1rem of margin */\nimg {\n  margin: 1rem;\n}\n```\n</div>"
     },
     "pseudo-classes": {
       "url": "$MDN_URL$/web/css/pseudo-classes",
-      "status": [
-        "Experimental",
-        "Deprecated"
-      ],
       "doc": "A <a href=\"$MDN_URL$/Web/CSS\">CSS</a> <strong><em>pseudo-class</em></strong> is a keyword added to a selector that lets you style a specific state of the selected element(s). For example, the pseudo-class <a href=\"$MDN_URL$/Web/CSS/:hover\"><code>:hover</code></a> can be used to select a button when a user's pointer hovers over the button and this selected button can then be styled.\n<div>\n```css\n/* Any button over which the user's pointer is hovering */\nbutton:hover {\n  color: blue;\n}\n```\n</div>\n<p>A pseudo-class consists of a colon (<code>:</code>) followed by the pseudo-class name (e.g., <code>:hover</code>). A functional pseudo-class also contains a pair of parentheses to define the arguments (e.g., <code>:dir()</code>). The element that a pseudo-class is attached to is defined as an <em>anchor element</em> (e.g., <code>button</code> in case <code>button:hover</code>).\n<p>Pseudo-classes let you apply a style to an element not only in relation to the content of the document tree, but also in relation to external factors like the history of the navigator (<a href=\"$MDN_URL$/Web/CSS/:visited\"><code>:visited</code></a>, for example), the status of its content (like <a href=\"$MDN_URL$/Web/CSS/:checked\"><code>:checked</code></a> on certain form elements), or the position of the mouse (like <a href=\"$MDN_URL$/Web/CSS/:hover\"><code>:hover</code></a>, which lets you know if the mouse is over an element or not).\n<div class=\"notecard note\">\n<p><strong>Note:</strong>\nIn contrast to pseudo-classes, <a href=\"$MDN_URL$/Web/CSS/Pseudo-elements\">pseudo-elements</a> can be used to style a <em>specific part</em> of an element.\n</div>"
     },
     "pseudo-elements": {
       "url": "$MDN_URL$/web/css/pseudo-elements",
-      "status": [
-        "Experimental",
-        "Deprecated"
-      ],
       "doc": "A CSS <strong>pseudo-element</strong> is a keyword added to a selector that lets you style a specific part of the selected element(s)."
     },
     "quotes": {
@@ -16963,10 +16835,6 @@
     },
     "reference": {
       "url": "$MDN_URL$/web/css/reference",
-      "status": [
-        "Experimental",
-        "Deprecated"
-      ],
       "doc": "Use this <strong>CSS reference</strong> to browse an <a href=\"#index\">alphabetical index</a> of all of the standard <a href=\"$MDN_URL$/Web/CSS\">CSS</a> properties, <a href=\"$MDN_URL$/Web/CSS/Pseudo-classes\">pseudo-classes</a>, <a href=\"$MDN_URL$/Web/CSS/Pseudo-elements\">pseudo-elements</a>, <a href=\"$MDN_URL$/Web/CSS/CSS_Values_and_Units/CSS_data_types\">data types</a>, <a href=\"$MDN_URL$/Web/CSS/CSS_Values_and_Units/CSS_Value_Functions\">functional notations</a> and <a href=\"$MDN_URL$/Web/CSS/CSS_syntax/At-rule\">at-rules</a>. You can also browse <a href=\"#concepts\">key CSS concepts</a> and a list of <a href=\"#selectors\">selectors organized by type</a>. Also included is a brief <a href=\"#dom-css_cssom\">DOM-CSS / CSSOM reference</a>."
     },
     "resize": {
@@ -19933,10 +19801,6 @@
     },
     "tutorials": {
       "url": "$MDN_URL$/web/css/tutorials",
-      "status": [
-        "Experimental",
-        "Deprecated"
-      ],
       "doc": "Learning CSS may be a daunting task.\nIn order to help you, we have written numerous <strong>tutorials about CSS</strong>.\nSome are aimed at complete beginners, while others present complex features to be used by more experienced users.\n<p>This page lists them all, with a short description.\nThey are grouped by complexity so that you can choose the most appropriate for your level."
     },
     "type_selectors": {
@@ -20634,10 +20498,6 @@
     },
     "-moz-drag-over": {
       "url": "$MDN_URL$/web/css/_colon_-moz-drag-over",
-      "status": [
-        "Experimental",
-        "Deprecated"
-      ],
       "doc": "<div class=\"notecard nonstandard\"><p><strong>Non-standard:</strong> This feature is not standardized. We do not recommend using non-standard features in production, as they have limited browser support, and may change or be removed. However, they can be a suitable alternative in specific cases where no standard option exists.</div>\n<p>The <strong><code>:-moz-drag-over</code></strong> <a href=\"$MDN_URL$/Web/CSS\">CSS</a> <a href=\"$MDN_URL$/Web/CSS/Pseudo-classes\">pseudo-class</a> is a <a href=\"$MDN_URL$/Web/CSS/Mozilla_Extensions\">Mozilla extension</a> that matches an element when a <a href=\"$MDN_URL$/Web/API/HTMLElement/dragover_event\" ><code>dragover</code></a> event is called on it."
     },
     "-moz-first-node": {
@@ -20653,26 +20513,14 @@
     },
     "-moz-handler-blocked": {
       "url": "$MDN_URL$/web/css/_colon_-moz-handler-blocked",
-      "status": [
-        "Experimental",
-        "Deprecated"
-      ],
       "doc": "<div class=\"notecard nonstandard\"><p><strong>Non-standard:</strong> This feature is not standardized. We do not recommend using non-standard features in production, as they have limited browser support, and may change or be removed. However, they can be a suitable alternative in specific cases where no standard option exists.</div>\n<p>The <strong><code>:-moz-handler-blocked</code></strong> <a href=\"$MDN_URL$/Web/CSS\">CSS</a> <a href=\"$MDN_URL$/Web/CSS/Pseudo-classes\">pseudo-class</a> is a <a href=\"$MDN_URL$/Web/CSS/Mozilla_Extensions\">Mozilla extension</a> that matches elements that can't be displayed because their handlers have been blocked.\n<div class=\"notecard note\">\n<p><strong>Note:</strong>\nThis selector is mainly intended to be used by theme developers.\n</div>"
     },
     "-moz-handler-crashed": {
       "url": "$MDN_URL$/web/css/_colon_-moz-handler-crashed",
-      "status": [
-        "Experimental",
-        "Deprecated"
-      ],
       "doc": "<div class=\"notecard nonstandard\"><p><strong>Non-standard:</strong> This feature is not standardized. We do not recommend using non-standard features in production, as they have limited browser support, and may change or be removed. However, they can be a suitable alternative in specific cases where no standard option exists.</div>\n<p>The <strong><code>:-moz-handler-crashed</code></strong> <a href=\"$MDN_URL$/Web/CSS\">CSS</a> <a href=\"$MDN_URL$/Web/CSS/Pseudo-classes\">pseudo-class</a> is a <a href=\"$MDN_URL$/Web/CSS/Mozilla_Extensions\">Mozilla extension</a> that matches elements that can't be displayed because the plugin responsible for drawing them has crashed.\n<div class=\"notecard note\">\n<p><strong>Note:</strong>\nThis selector is mainly intended to be used by theme developers.\n</div>"
     },
     "-moz-handler-disabled": {
       "url": "$MDN_URL$/web/css/_colon_-moz-handler-disabled",
-      "status": [
-        "Experimental",
-        "Deprecated"
-      ],
       "doc": "<div class=\"notecard nonstandard\"><p><strong>Non-standard:</strong> This feature is not standardized. We do not recommend using non-standard features in production, as they have limited browser support, and may change or be removed. However, they can be a suitable alternative in specific cases where no standard option exists.</div>\n<p>The <strong><code>:-moz-handler-disabled</code></strong> <a href=\"$MDN_URL$/Web/CSS\">CSS</a> <a href=\"$MDN_URL$/Web/CSS/Pseudo-classes\">pseudo-class</a> is a <a href=\"$MDN_URL$/Web/CSS/Mozilla_Extensions\">Mozilla extension</a> that matches elements that can't be displayed because their handlers have been disabled by the user.\n<div class=\"notecard note\">\n<p><strong>Note:</strong>\nThis selector is mainly intended to be used by theme developers.\n</div>"
     },
     "-moz-last-node": {
@@ -20688,26 +20536,14 @@
     },
     "-moz-loading": {
       "url": "$MDN_URL$/web/css/_colon_-moz-loading",
-      "status": [
-        "Experimental",
-        "Deprecated"
-      ],
       "doc": "<div class=\"notecard nonstandard\"><p><strong>Non-standard:</strong> This feature is not standardized. We do not recommend using non-standard features in production, as they have limited browser support, and may change or be removed. However, they can be a suitable alternative in specific cases where no standard option exists.</div>\n<p>The <strong><code>:-moz-loading</code></strong> <a href=\"$MDN_URL$/Web/CSS\">CSS</a> <a href=\"$MDN_URL$/Web/CSS/Pseudo-classes\">pseudo-class</a> is a <a href=\"$MDN_URL$/Web/CSS/Mozilla_Extensions\">Mozilla extension</a> that matches elements that can't be displayed because they have not started loading, such as images that haven't started to arrive yet. Note that images that are <em>in the process</em> of loading <em>are not</em> matched by this pseudo-class.\n<div class=\"notecard note\">\n<p><strong>Note:</strong>\nThis selector is mainly intended to be used by theme developers.\n</div>"
     },
     "-moz-locale-dir_ltr": {
       "url": "$MDN_URL$/web/css/_colon_-moz-locale-dir_ltr",
-      "status": [
-        "Experimental",
-        "Deprecated"
-      ],
       "doc": "<div class=\"notecard nonstandard\"><p><strong>Non-standard:</strong> This feature is not standardized. We do not recommend using non-standard features in production, as they have limited browser support, and may change or be removed. However, they can be a suitable alternative in specific cases where no standard option exists.</div>\n<p>The <strong><code>:-moz-locale-dir(ltr)</code></strong> <a href=\"$MDN_URL$/Web/CSS\">CSS</a> <a href=\"$MDN_URL$/Web/CSS/Pseudo-classes\">pseudo-class</a> is a <a href=\"$MDN_URL$/Web/CSS/Mozilla_Extensions\">Mozilla extension</a> that matches an element if the user interface is being displayed left-to-right. This is determined by the preference <code>intl.uidirection.locale</code> (where <code>locale</code> is the current locale) being set to \"ltr\".\n<div class=\"notecard note\">\n<p><strong>Note:</strong>\nThis selector is mainly used by extensions and themes to adapt the user interface based on the user's locale. (This can vary from window to window, and even from tab to tab.) It also allows extensions to work even when they don't support the user's default locale, since they can support both left-to-right and right-to-left layouts regardless of locale specifics.\n</div>\n<div class=\"notecard warning\">\n<p><strong>Warning:</strong>\nThis selector does not work properly from HTML; it always matches, regardless of whether the UI locale is left-to-right or right-to-left.\n</div>"
     },
     "-moz-locale-dir_rtl": {
       "url": "$MDN_URL$/web/css/_colon_-moz-locale-dir_rtl",
-      "status": [
-        "Experimental",
-        "Deprecated"
-      ],
       "doc": "<div class=\"notecard nonstandard\"><p><strong>Non-standard:</strong> This feature is not standardized. We do not recommend using non-standard features in production, as they have limited browser support, and may change or be removed. However, they can be a suitable alternative in specific cases where no standard option exists.</div>\n<p>The <strong><code>:-moz-locale-dir(rtl)</code></strong> <a href=\"$MDN_URL$/Web/CSS\">CSS</a> <a href=\"$MDN_URL$/Web/CSS/Pseudo-classes\">pseudo-class</a> is a <a href=\"$MDN_URL$/Web/CSS/Mozilla_Extensions\">Mozilla extension</a> that matches an element if the user interface is being displayed right-to-left. This is determined by the preference <code>intl.uidirection.locale</code> (where <code>locale</code> is the current locale) being set to \"rtl\".\n<div class=\"notecard note\">\n<p><strong>Note:</strong>\nThis selector is mainly used by extensions and themes to adapt the user interface based on the user's locale. (This can vary from window to window, and even from tab to tab.) It also allows extensions to work even when they don't support the user's default locale, since they can support both left-to-right and right-to-left layouts regardless of locale specifics.\n</div>\n<div class=\"notecard warning\">\n<p><strong>Warning:</strong>\nThis selector does not work properly from HTML; it never matches, no matter whether the UI locale is left-to-right or right-to-left.\n</div>"
     },
     "-moz-only-whitespace": {
@@ -20725,18 +20561,10 @@
     },
     "-moz-suppressed": {
       "url": "$MDN_URL$/web/css/_colon_-moz-suppressed",
-      "status": [
-        "Experimental",
-        "Deprecated"
-      ],
       "doc": "<div class=\"notecard nonstandard\"><p><strong>Non-standard:</strong> This feature is not standardized. We do not recommend using non-standard features in production, as they have limited browser support, and may change or be removed. However, they can be a suitable alternative in specific cases where no standard option exists.</div>\n<p>The <strong><code>:-moz-suppressed</code></strong> <a href=\"$MDN_URL$/Web/CSS\">CSS</a> <a href=\"$MDN_URL$/Web/CSS/Pseudo-classes\">pseudo-class</a> is a <a href=\"$MDN_URL$/Web/CSS/Mozilla_Extensions\">Mozilla extension</a> that matches elements representing images that were suppressed because loading images from the specified site has been blocked.\n<div class=\"notecard note\">\n<p><strong>Note:</strong>\nThis selector is mainly intended to be used by theme developers.\n</div>"
     },
     "-moz-user-disabled": {
       "url": "$MDN_URL$/web/css/_colon_-moz-user-disabled",
-      "status": [
-        "Experimental",
-        "Deprecated"
-      ],
       "doc": "<div class=\"notecard nonstandard\"><p><strong>Non-standard:</strong> This feature is not standardized. We do not recommend using non-standard features in production, as they have limited browser support, and may change or be removed. However, they can be a suitable alternative in specific cases where no standard option exists.</div>\n<p>The <strong><code>:-moz-user-disabled</code></strong> <a href=\"$MDN_URL$/Web/CSS\">CSS</a> <a href=\"$MDN_URL$/Web/CSS/Pseudo-classes\">pseudo-class</a> is a <a href=\"$MDN_URL$/Web/CSS/Mozilla_Extensions\">Mozilla extension</a> that matches elements representing images that were not loaded because images have been entirely disabled by the user's preferences.\n<div class=\"notecard note\">\n<p><strong>Note:</strong>\nThis selector is mainly intended to be used by theme developers.\n</div>"
     },
     "-moz-window-inactive": {
@@ -20834,10 +20662,6 @@
     },
     "blank": {
       "url": "$MDN_URL$/web/css/_colon_blank",
-      "status": [
-        "Experimental",
-        "Deprecated"
-      ],
       "doc": "<div class=\"notecard experimental\"><p><strong>Experimental:</strong> <strong>This is an <a href=\"$MDN_URL$/MDN/Writing_guidelines/Experimental_deprecated_obsolete#experimental\">experimental technology</a></strong><br>Check the <a href=\"#browser_compatibility\">Browser compatibility table</a> carefully before using this in production.</div>\n<div class=\"notecard note\">\n<p><strong>Note:</strong>\nThe <code>:blank</code> selector is considered at risk, as the CSSWG keeps changing it.\n<p>See <a href=\"https://github.com/w3c/csswg-drafts/issues/1967\" class=\"external\" target=\"_blank\">CSSWG issue #1967</a>.\n</div>\n<p>The <strong><code>:blank</code></strong> <a href=\"$MDN_URL$/Web/CSS\">CSS</a> <a href=\"$MDN_URL$/Web/CSS/Pseudo-classes\">pseudo-class</a> selects empty user input elements (e.g., <a href=\"$MDN_URL$/Web/HTML/Reference/Elements/input\"><code>&lt;input&gt;</code></a> or <a href=\"$MDN_URL$/Web/HTML/Reference/Elements/textarea\"><code>&lt;textarea&gt;</code></a>)."
     },
     "buffering": {
@@ -20878,10 +20702,6 @@
     },
     "current": {
       "url": "$MDN_URL$/web/css/_colon_current",
-      "status": [
-        "Experimental",
-        "Deprecated"
-      ],
       "doc": "<div class=\"notecard experimental\"><p><strong>Experimental:</strong> <strong>This is an <a href=\"$MDN_URL$/MDN/Writing_guidelines/Experimental_deprecated_obsolete#experimental\">experimental technology</a></strong><br>Check the <a href=\"#browser_compatibility\">Browser compatibility table</a> carefully before using this in production.</div>\n<p>The <strong><code>:current</code></strong> <a href=\"$MDN_URL$/Web/CSS\">CSS</a> <a href=\"$MDN_URL$/Web/CSS/Pseudo-classes\">pseudo-class</a> selector is a time-dimensional pseudo-class that represents an element or the ancestor of an element that is currently being displayed. For example, this pseudo-class can be used to represent a video that is being displayed with captions by <a href=\"$MDN_URL$/Web/API/WebVTT_API\">WebVTT</a>.\n<div>\n```css\n:current(p, span) {\n  background-color: yellow;\n}\n```\n</div>"
     },
     "default": {
@@ -21522,10 +21342,6 @@
     },
     "local-link": {
       "url": "$MDN_URL$/web/css/_colon_local-link",
-      "status": [
-        "Experimental",
-        "Deprecated"
-      ],
       "doc": "<div class=\"notecard experimental\"><p><strong>Experimental:</strong> <strong>This is an <a href=\"$MDN_URL$/MDN/Writing_guidelines/Experimental_deprecated_obsolete#experimental\">experimental technology</a></strong><br>Check the <a href=\"#browser_compatibility\">Browser compatibility table</a> carefully before using this in production.</div>\n<p>The <strong><code>:local-link</code></strong> <a href=\"$MDN_URL$/Web/CSS\">CSS</a> <a href=\"$MDN_URL$/Web/CSS/Pseudo-classes\">pseudo-class</a> represents a link to the same document. Therefore an element that is the source anchor of a hyperlink whose target's absolute URL matches the element's own document URL.\n<div>\n```css\n/* Selects any <a> that links to the current document */\na:local-link {\n  color: green;\n}\n```\n</div>"
     },
     "modal": {
@@ -22233,10 +22049,6 @@
     },
     "-moz-focus-inner": {
       "url": "$MDN_URL$/web/css/_doublecolon_-moz-focus-inner",
-      "status": [
-        "Experimental",
-        "Deprecated"
-      ],
       "doc": "<div class=\"notecard nonstandard\"><p><strong>Non-standard:</strong> This feature is not standardized. We do not recommend using non-standard features in production, as they have limited browser support, and may change or be removed. However, they can be a suitable alternative in specific cases where no standard option exists.</div>\n<div class=\"notecard deprecated\"><p><strong>Deprecated:</strong> This feature is no longer recommended. Though some browsers might still support it, it may have already been removed from the relevant web standards, may be in the process of being dropped, or may only be kept for compatibility purposes. Avoid using it, and update existing code if possible; see the <a href=\"#browser_compatibility\">compatibility table</a> at the bottom of this page to guide your decision. Be aware that this feature may cease to work at any time.</div>\n<p>The <strong><code>::-moz-focus-inner</code></strong> <a href=\"$MDN_URL$/Web/CSS\">CSS</a> <a href=\"$MDN_URL$/Web/CSS/Pseudo-elements\">pseudo-element</a> is a <a href=\"$MDN_URL$/Web/CSS/Mozilla_Extensions\">Mozilla extension</a> that represents an inner focus ring of the <a href=\"$MDN_URL$/Web/HTML/Reference/Elements/button\"><code>&lt;button&gt;</code></a> element as well as the <a href=\"$MDN_URL$/Web/HTML/Reference/Elements/input/button\">button</a>, <a href=\"$MDN_URL$/Web/HTML/Reference/Elements/input/submit\">submit</a>, <a href=\"$MDN_URL$/Web/HTML/Reference/Elements/input/reset\">reset</a>, and <a href=\"$MDN_URL$/Web/HTML/Reference/Elements/input/color\">color</a> types of the <a href=\"$MDN_URL$/Web/HTML/Reference/Elements/input\"><code>&lt;input&gt;</code></a> element.\n<div class=\"notecard note\">\n<p><strong>Note:</strong>\nUsing <code>::-moz-focus-inner</code> with anything than the buttons that support it doesn't match anything and has no effect.\n</div>"
     },
     "-moz-list-bullet": {
@@ -22263,10 +22075,6 @@
     },
     "-moz-meter-bar": {
       "url": "$MDN_URL$/web/css/_doublecolon_-moz-meter-bar",
-      "status": [
-        "Experimental",
-        "Deprecated"
-      ],
       "doc": "<div class=\"notecard nonstandard\"><p><strong>Non-standard:</strong> This feature is not standardized. We do not recommend using non-standard features in production, as they have limited browser support, and may change or be removed. However, they can be a suitable alternative in specific cases where no standard option exists.</div>\n<p>The <strong><code>::-moz-meter-bar</code></strong> <a href=\"$MDN_URL$/Web/CSS\">CSS</a> <a href=\"$MDN_URL$/Glossary/Pseudo-element\">pseudo-element</a> represents the meter gauge in a <a href=\"$MDN_URL$/Web/HTML/Reference/Elements/meter\"><code>&lt;meter&gt;</code></a> element. It is used for selecting and applying styles to the gauge inside a meter element."
     },
     "-moz-progress-bar": {
