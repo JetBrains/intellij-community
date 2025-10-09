@@ -1,5 +1,5 @@
 load("@rules_kotlin//kotlin/internal:defs.bzl", "KtPluginConfiguration", _KtCompilerPluginInfo = "KtCompilerPluginInfo", _KtJvmInfo = "KtJvmInfo", _KtPluginConfiguration = "KtPluginConfiguration")
-load("//:rules/common-attrs.bzl", "add_dicts", "common_attr", "common_toolchains")
+load("//:rules/common-attrs.bzl", "add_dicts", "common_toolchains", "kmp_attr")
 load("//:rules/impl/compile-wasmjs.bzl", "KtWasmJsBin", "KtWasmJsInfo", "kt_wasmjs_produce_module_actions")
 load("//:rules/impl/kotlinc-options.bzl", "KotlincOptions")
 load("//:rules/impl/transitions.bzl", "jvm_platform_transition", "scrubbed_host_platform_transition")
@@ -14,7 +14,7 @@ def _kt_wasmjs_library(ctx):
 
 kt_wasmjs_library = rule(
     doc = """This rule compiles and links Kotlin and Java sources into a .jar file.""",
-    attrs = add_dicts(common_attr, {
+    attrs = add_dicts(kmp_attr, {
         "fragment_sources": attr.string_keyed_label_dict(
             doc = "Maps fragment names to their source targets",
             # allow_files = [".kt"],  # TODO: cannot specify that as we want to allow label that matches nothing as well
@@ -52,11 +52,6 @@ kt_wasmjs_library = rule(
             providers = [[KtWasmJsInfo], [KtWasmJsInfo, _KtJvmInfo]],
             allow_files = False,
         ),
-        "runtime_deps": attr.label_list(
-            doc = """never used""",
-            default = [],
-            allow_files = False,
-        ),
         "exports": attr.label_list(
             doc = """\
             Exported libraries.
@@ -65,29 +60,6 @@ kt_wasmjs_library = rule(
             these deps. This is not true for regular (non-exported) deps.""",
             default = [],
             providers = [[KtWasmJsInfo], [KtWasmJsInfo, _KtJvmInfo]],
-        ),
-        # "data": attr.label_list(
-        #     doc = """The list of files needed by this rule at runtime. See general comments about `data` at
-        #       [Attributes common to all build rules](https://docs.bazel.build/versions/master/be/common-definitions.html#common-attributes).""",
-        #     allow_files = True,
-        # ),
-        "plugins": attr.label_list(
-            default = [],
-            cfg = "exec",
-            providers = [
-                [_KtPluginConfiguration],
-                [_KtCompilerPluginInfo],
-            ],
-        ),
-        "module_name": attr.string(
-            doc = """The name of the module, if not provided the module name is derived from the label. --e.g.,
-              `//some/package/path:label_name` is translated to
-              `some_package_path-label_name`.""",
-        ),
-        "kotlinc_opts": attr.label(
-            doc = """Kotlinc options to be used when compiling this target.""",
-            default = "//:default-kotlinc-opts",
-            providers = [KotlincOptions],
         ),
         "_wasmjs_builder": attr.label(
             default = "//src/kotlin/kotlin-builder-wasmjs:kotlin-builder-wasmjs",
