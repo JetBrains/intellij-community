@@ -264,8 +264,10 @@
                     dynamic="true"/>
 
     <extensionPoint name="vcs.commitMessageInspection"
-                    interface="com.intellij.vcs.commit.message.BaseCommitMessageInspection"
-                    dynamic="true"/>
+                    beanClass="com.intellij.vcs.commit.message.CommitMessageInspectionEP"
+                    dynamic="true">
+      <with attribute="implementation" implements="com.intellij.vcs.commit.message.BaseCommitMessageInspection"/>
+    </extensionPoint>
 
     <extensionPoint qualifiedName="com.intellij.vcs.impl.backend.treeNodeConverter"
                     interface="com.intellij.vcs.shelf.NodeToEntityConverter"
