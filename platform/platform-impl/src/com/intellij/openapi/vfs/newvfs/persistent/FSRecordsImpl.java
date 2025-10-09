@@ -1275,20 +1275,21 @@ public final class FSRecordsImpl implements Closeable {
   public void setName(int fileId, @NotNull String name) {
     checkNotClosed();
 
-    int nameId = getNameId(name);
+    int newNameId = getNameId(name);
 
+    InvertedNameIndex invertedNameIndex = invertedNameIndexLazy.get();
     updateRecordFields(fileId, record -> {
       int previousNameId = record.getNameId();
-      if (previousNameId == nameId) {
+      if (previousNameId == newNameId) {
         return false;
       }
 
-      record.setNameId(nameId);
+      record.setNameId(newNameId);
 
-      invertedNameIndexLazy.get().updateFileName(fileId, previousNameId, nameId);
-      invertedNameIndexModCount.incrementAndGet();
+      invertedNameIndex.updateFileName(fileId, previousNameId, newNameId);
       return true;
     });
+    invertedNameIndexModCount.incrementAndGet();
   }
 
   /** Consider {@link #updateRecordFields(int, RecordUpdater)} for everything except for (probably) single-field updates */
