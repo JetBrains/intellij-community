@@ -14,34 +14,34 @@ import java.util.Objects;
 
 final class EditorAndState {
 
-  static @Nullable EditorAndState getStateFor(@Nullable Project project, @NotNull CurrentEditorProvider editorProvider) {
+  static @Nullable EditorAndState getStateFor(
+    @Nullable Project project,
+    @NotNull CurrentEditorProvider editorProvider
+  ) {
     FileEditor editor = editorProvider.getCurrentEditor(project);
-    if (editor == null) {
-      return null;
+    if (editor != null && editor.isValid()) {
+      FileEditorState state = editor.getState(FileEditorStateLevel.UNDO);
+      return new EditorAndState(editor, state);
     }
-    if (!editor.isValid()) {
-      return null;
-    }
-    return new EditorAndState(editor, editor.getState(FileEditorStateLevel.UNDO));
+    return null;
   }
 
-  private final FileEditorState myState;
+  private final @NotNull FileEditorState myState;
   private final VirtualFile myVirtualFile;
 
-  EditorAndState(FileEditor editor, FileEditorState state) {
+  EditorAndState(@NotNull FileEditor editor, @NotNull FileEditorState state) {
     myVirtualFile = editor.getFile();
     myState = state;
   }
 
-  boolean canBeAppliedTo(FileEditor editor) {
+  boolean canBeAppliedTo(@Nullable FileEditor editor) {
     if (editor == null) return false;
     if (!Objects.equals(myVirtualFile, editor.getFile())) return false;
-    if (myState == null) return false;
     FileEditorState currentState = editor.getState(FileEditorStateLevel.UNDO);
     return myState.getClass() == currentState.getClass();
   }
 
-  FileEditorState getState() {
+  @NotNull FileEditorState getState() {
     return myState;
   }
 }

@@ -174,7 +174,7 @@ public class UndoManagerImpl extends UndoManager {
 
   public boolean isActive() {
     UndoClientState state = getClientState();
-    return state != null && state.isActive();
+    return state != null && state.isActiveForCurrentProject();
   }
 
   public void addDocumentAsAffected(@NotNull Document document) {
@@ -344,7 +344,8 @@ public class UndoManagerImpl extends UndoManager {
   protected void onCommandStarted(
     @Nullable Project project,
     @NotNull UndoConfirmationPolicy undoConfirmationPolicy,
-    boolean recordOriginalReference
+    boolean recordOriginalReference,
+    boolean isTransparent
   ) {
     UndoClientState state = getClientState();
     if (state == null || !state.isInsideCommand()) {
@@ -353,7 +354,13 @@ public class UndoManagerImpl extends UndoManager {
       }
     }
     if (state != null) {
-      state.commandStarted(project, getEditorProvider(), undoConfirmationPolicy, recordOriginalReference);
+      state.commandStarted(
+        project,
+        getEditorProvider(),
+        undoConfirmationPolicy,
+        recordOriginalReference,
+        isTransparent
+      );
     }
   }
 
@@ -437,7 +444,7 @@ public class UndoManagerImpl extends UndoManager {
   public void flushCurrentCommandMerger() {
     UndoClientState state = getClientState();
     if (state != null) {
-      state.flushCurrentCommand(UndoCommandFlushReason.MANAGER_FORCE);
+      state.flushCommandMerger(UndoCommandFlushReason.MANAGER_FORCE);
     }
   }
 

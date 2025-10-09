@@ -226,7 +226,6 @@ abstract class UndoRedo {
         IdeBundle.message("undo.command.local.name") + undoableGroup.getCommandName(),
         localActions, // only action that changes file locally
         undoableGroup.getConfirmationPolicy(),
-        stacksHolder,
         undoableGroup.getStateBefore(),
         undoableGroup.getStateAfter(),
         null,
@@ -241,7 +240,6 @@ abstract class UndoRedo {
         undoableGroup.getCommandName(),
         nonLocalActions, // all action except local
         undoableGroup.getConfirmationPolicy(),
-        stacksHolder,
         undoableGroup.getStateBefore(),
         undoableGroup.getStateAfter(),
         null,
