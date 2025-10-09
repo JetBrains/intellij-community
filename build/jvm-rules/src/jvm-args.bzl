@@ -23,6 +23,8 @@ def get_jvm_flags(flags):
         "--add-opens=java.base/java.util.concurrent.atomic=ALL-UNNAMED",
         "--add-opens=java.base/java.util.concurrent.locks=ALL-UNNAMED",
         "--add-opens=java.base/java.nio=ALL-UNNAMED",
+        # Allow querying OS-specific error message for hardlinks-related error detection on Windows
+        "--add-opens=java.base/sun.nio.fs=ALL-UNNAMED",
         # Apache Arrow, but we already opened java.nio for PHM
         # "--add-opens=java.base/java.nio=org.apache.arrow.memory.core,ALL-UNNAMED",
         # kotlin compiler
