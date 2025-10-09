@@ -12077,6 +12077,11 @@ public abstract class K2LocalInspectionTestGenerated extends AbstractK2LocalInsp
             public void testFilterTextSingleOrNull() throws Exception {
                 runTest("../../../idea/tests/testData/inspectionsLocal/collections/simplifiableCallChain/text/filterTextSingleOrNull.kt");
             }
+
+            @TestMetadata("mapTextFlatten.kt")
+            public void testMapTextFlatten() throws Exception {
+                runTest("../../../idea/tests/testData/inspectionsLocal/collections/simplifiableCallChain/text/mapTextFlatten.kt");
+            }
         }
     }
 

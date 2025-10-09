@@ -170,6 +170,7 @@ object CallChainConversions {
     private val KOTLIN_TEXT_IS_NOT_EMPTY = FqName("kotlin.text.isNotEmpty")
     private val KOTLIN_TEXT_LAST = FqName("kotlin.text.last")
     private val KOTLIN_TEXT_LAST_OR_NULL = FqName("kotlin.text.lastOrNull")
+    private val KOTLIN_TEXT_MAP = FqName("kotlin.text.map")
     private val KOTLIN_TEXT_NONE = FqName("kotlin.text.none")
     private val KOTLIN_TEXT_SINGLE = FqName("kotlin.text.single")
     private val KOTLIN_TEXT_SINGLE_OR_NULL = FqName("kotlin.text.singleOrNull")
@@ -405,6 +406,8 @@ object CallChainConversions {
             CallChainConversion(KOTLIN_TEXT_FILTER, KOTLIN_TEXT_COUNT, COUNT),
             CallChainConversion(KOTLIN_TEXT_FILTER, KOTLIN_TEXT_ANY, ANY),
             CallChainConversion(KOTLIN_TEXT_FILTER, KOTLIN_TEXT_NONE, NONE),
+
+            CallChainConversion(KOTLIN_TEXT_MAP, KOTLIN_COLLECTIONS_FLATTEN, FLAT_MAP),
         )
     }
 

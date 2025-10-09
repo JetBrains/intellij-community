@@ -2968,6 +2968,11 @@ public abstract class LocalInspectionTestGenerated extends AbstractLocalInspecti
                 public void testFilterTextSingleOrNull() throws Exception {
                     runTest("testData/inspectionsLocal/collections/simplifiableCallChain/text/filterTextSingleOrNull.kt");
                 }
+
+                @TestMetadata("mapTextFlatten.kt")
+                public void testMapTextFlatten() throws Exception {
+                    runTest("testData/inspectionsLocal/collections/simplifiableCallChain/text/mapTextFlatten.kt");
+                }
             }
         }
 
