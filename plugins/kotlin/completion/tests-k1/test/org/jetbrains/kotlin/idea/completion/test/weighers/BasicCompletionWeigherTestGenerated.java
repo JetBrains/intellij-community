@@ -730,6 +730,31 @@ public abstract class BasicCompletionWeigherTestGenerated extends AbstractBasicC
             runTest("../testData/weighers/basic/PreferMatchingNamedArgumentName.kt");
         }
 
+        @TestMetadata("PreferTypesMatchingConstructorParameterName.kt")
+        public void testPreferTypesMatchingConstructorParameterName() throws Exception {
+            runTest("../testData/weighers/basic/PreferTypesMatchingConstructorParameterName.kt");
+        }
+
+        @TestMetadata("PreferTypesMatchingConstructorValParameterName.kt")
+        public void testPreferTypesMatchingConstructorValParameterName() throws Exception {
+            runTest("../testData/weighers/basic/PreferTypesMatchingConstructorValParameterName.kt");
+        }
+
+        @TestMetadata("PreferTypesMatchingContextParameterName.kt")
+        public void testPreferTypesMatchingContextParameterName() throws Exception {
+            runTest("../testData/weighers/basic/PreferTypesMatchingContextParameterName.kt");
+        }
+
+        @TestMetadata("PreferTypesMatchingParameterName.kt")
+        public void testPreferTypesMatchingParameterName() throws Exception {
+            runTest("../testData/weighers/basic/PreferTypesMatchingParameterName.kt");
+        }
+
+        @TestMetadata("PreferTypesMatchingPropertyTypeName.kt")
+        public void testPreferTypesMatchingPropertyTypeName() throws Exception {
+            runTest("../testData/weighers/basic/PreferTypesMatchingPropertyTypeName.kt");
+        }
+
         @TestMetadata("Prefix.kt")
         public void testPrefix() throws Exception {
             runTest("../testData/weighers/basic/Prefix.kt");

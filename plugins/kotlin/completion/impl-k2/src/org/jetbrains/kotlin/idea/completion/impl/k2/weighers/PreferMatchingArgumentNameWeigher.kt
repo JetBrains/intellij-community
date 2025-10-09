@@ -13,10 +13,9 @@ import org.jetbrains.kotlin.idea.completion.findValueArgument
 import org.jetbrains.kotlin.idea.completion.impl.k2.K2CompletionSectionContext
 import org.jetbrains.kotlin.idea.completion.impl.k2.LazyCompletionSessionProperty
 import org.jetbrains.kotlin.idea.completion.impl.k2.lookups.factories.NamedArgumentLookupObject
-import org.jetbrains.kotlin.psi.KtCallElement
-import org.jetbrains.kotlin.psi.KtSimpleNameExpression
-import org.jetbrains.kotlin.psi.KtValueArgumentList
-import org.jetbrains.kotlin.psi.UserDataProperty
+import org.jetbrains.kotlin.name.Name
+import org.jetbrains.kotlin.psi.*
+import org.jetbrains.kotlin.psi.psiUtil.parents
 
 internal object PreferMatchingArgumentNameWeigher {
     private const val WEIGHER_ID = "kotlin.preferMatchingArgumentName"
@@ -58,18 +57,38 @@ internal object PreferMatchingArgumentNameWeigher {
         return 1f - matchingProportion
     }
 
+    /**
+     * Returns the names of the parameters associated with the [nameExpression].
+     * This can be either the names of parameters of the function we are passing arguments to
+     * or the name of the parameter we are specifying the type of.
+     */
+    context(_: KaSession, scopeContext: K2CompletionSectionContext<*>)
+    private fun getAvailableReferenceNames(nameExpression: KtSimpleNameExpression): List<Name> {
+        // Get the first parent above the actual type declaration.
+        // If we have a parameter like `someUserType: <caret>`, or some value like `val someUserType: <caret>`,
+        // then we want to prioritize types that match the words of `someUserType`.
+        val typeOwnerParent = nameExpression.parents.dropWhile { it is KtTypeReference || it is KtUserType }.firstOrNull()
+
+        return if (typeOwnerParent is KtNamedDeclaration) {
+            listOf(typeOwnerParent.nameAsSafeName)
+        } else {
+            val candidates = scopeContext.callCandidates
+            if (candidates.isEmpty()) return emptyList()
+
+            val availableNames = candidates.mapNotNull { it.argumentMapping[nameExpression]?.name }
+            availableNames
+        }
+    }
+
     context(_: KaSession, scopeContext: K2CompletionSectionContext<*>)
     fun addWeight(element: LookupElement) {
         if (element.`object` is NamedArgumentLookupObject) return
         val nameExpression = scopeContext.positionContext.position.parent as? KtSimpleNameExpression ?: return
 
-        val candidates = scopeContext.callCandidates
-        if (candidates.isEmpty()) return
+        val availableReferenceNames = getAvailableReferenceNames(nameExpression)
+        if (availableReferenceNames.isEmpty()) return
 
-        val availableNames = candidates.mapNotNull { it.argumentMapping[nameExpression]?.name }
-        if (availableNames.isEmpty()) return
-
-        val bestMatch = availableNames.minOf { calcNameSimilarity(it.asString(), element.lookupString) }
+        val bestMatch = availableReferenceNames.minOf { calcNameSimilarity(it.asString(), element.lookupString) }
         if (bestMatch != WEIGHT_UNRELATED) {
             element.matchingArgumentName = bestMatch
         }
