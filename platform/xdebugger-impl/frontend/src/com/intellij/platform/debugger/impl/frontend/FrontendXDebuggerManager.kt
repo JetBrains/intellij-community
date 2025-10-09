@@ -151,7 +151,7 @@ class FrontendXDebuggerManager(private val project: Project, private val cs: Cor
   }
 
   private fun getSessionIdByContentDescriptor(descriptor: RunContentDescriptor): XDebugSessionId? {
-    return sessionsFlow.value.firstOrNull { it.sessionTab?.runContentDescriptor === descriptor }?.id
+    return sessions.firstOrNull { it.sessionTab?.runContentDescriptor === descriptor }?.id
   }
 
   private suspend fun createDebuggerSession(sessionDto: XDebugSessionDto): XDebugSessionProxy {

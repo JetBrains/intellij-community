@@ -44,7 +44,7 @@ interface XDebugSessionTabApi : RemoteApi<Unit> {
 @Serializable
 data class XDebuggerSessionTabDto(
   val tabInfo: XDebuggerSessionTabAbstractInfo,
-  val pausedInfo: RpcFlow<XDebugSessionPausedInfo?>,
+  val pausedInfo: RpcFlow<XDebugSessionPausedInfo>,
 )
 
 @ApiStatus.Internal

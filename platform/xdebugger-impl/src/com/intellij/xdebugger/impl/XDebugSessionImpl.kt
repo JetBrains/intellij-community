@@ -308,7 +308,7 @@ class XDebugSessionImpl @JvmOverloads constructor(
   }
 
   @ApiStatus.Internal
-  fun getPausedEventsFlow(): Flow<XDebugSessionPausedInfo?> {
+  fun getPausedEventsFlow(): Flow<XDebugSessionPausedInfo> {
     return myPausedEvents
   }
 
@@ -551,8 +551,8 @@ class XDebugSessionImpl @JvmOverloads constructor(
   }
 
   fun showSessionTab() {
-    if (sessionTab != null) {
-      sessionTab!!.showTab()
+    if (!useFeProxy()) {
+      sessionTab?.showTab()
     }
   }
 

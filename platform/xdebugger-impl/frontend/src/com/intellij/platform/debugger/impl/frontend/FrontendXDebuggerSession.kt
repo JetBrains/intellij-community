@@ -11,6 +11,7 @@ import com.intellij.openapi.actionSystem.AnAction
 import com.intellij.openapi.actionSystem.DataSink
 import com.intellij.openapi.actionSystem.DefaultActionGroup
 import com.intellij.openapi.application.EDT
+import com.intellij.openapi.diagnostic.thisLogger
 import com.intellij.openapi.project.Project
 import com.intellij.platform.debugger.impl.frontend.evaluate.quick.FrontendXValue
 import com.intellij.platform.debugger.impl.frontend.frame.FrontendDropFrameHandler
@@ -284,45 +285,52 @@ class FrontendXDebuggerSession private constructor(
   }
 
   @OptIn(AwaitCancellationAndInvoke::class)
-  private fun initTabInfo(tabDto: XDebuggerSessionTabDto) {
+  private suspend fun initTabInfo(tabDto: XDebuggerSessionTabDto) {
     val (tabInfo, pausedFlow) = tabDto
-    tabScope.launch {
-      if (tabInfo !is XDebuggerSessionTabInfo) return@launch
+    if (tabInfo !is XDebuggerSessionTabInfo) return
+    val backendRunContentDescriptorId = tabInfo.backendRunContendDescriptorId.await()
+    val executionEnvironmentId = tabInfo.executionEnvironmentId
 
-      val backendRunContentDescriptorId = tabInfo.backendRunContendDescriptorId.await()
-      val executionEnvironmentId = tabInfo.executionEnvironmentId
+    suspend fun onTabClosed() {
+      tabInfo.tabClosedCallback.send(Unit)
+      tabInfo.tabClosedCallback.close()
+      tabScope.cancel()
+    }
 
-      val proxy = this@FrontendXDebuggerSession
-      withContext(Dispatchers.EDT) {
-        // TODO restore content to reuse on frontend if needed (it is not used now in create)
-        XDebugSessionTab.create(proxy, tabInfo.iconId?.icon(), tabInfo.executionEnvironmentProxyDto?.executionEnvironment(project, tabScope), null,
-                                tabInfo.forceNewDebuggerUi, tabInfo.withFramesCustomization, tabInfo.defaultFramesViewKey).apply {
-          setAdditionalKeysProvider { sink ->
-            sink[SplitDebuggerUIUtil.SPLIT_RUN_CONTENT_DESCRIPTOR_KEY] = backendRunContentDescriptorId
-            if (executionEnvironmentId != null) {
-              sink[SplitDebuggerUIUtil.SPLIT_EXECUTION_ENVIRONMENT_KEY] = executionEnvironmentId
-            }
-          }
-          sessionTabDeferred.complete(this)
-          proxy.onTabInitialized(this)
-          showTab()
-          val descriptorScope = runContentDescriptor?.coroutineScope
-          // don't subscribe on additional tabs if we have [ExecutionEnvironment] (it means this is Monolith)
-          if (descriptorScope != null && tabInfo.executionEnvironmentProxyDto?.executionEnvironment == null) {
-            subscribeOnAdditionalTabs(descriptorScope, this@apply, tabInfo.additionalTabsComponentManagerId)
-          }
-          descriptorScope?.awaitCancellationAndInvoke {
-            tabInfo.tabClosedCallback.send(Unit)
-            tabInfo.tabClosedCallback.close()
-            tabScope.cancel()
-          }
-          pausedFlow.toFlow().collectLatest { paused ->
-            if (paused == null) return@collectLatest
-            withContext(Dispatchers.EDT) {
-              onPause(paused.pausedByUser, paused.topFrameIsAbsent)
-            }
+    val proxy = this@FrontendXDebuggerSession
+    val tab = withContext(Dispatchers.EDT) {
+      // TODO restore content to reuse on frontend if needed (it is not used now in create)
+      XDebugSessionTab.create(proxy, tabInfo.iconId?.icon(), tabInfo.executionEnvironmentProxyDto?.executionEnvironment(project, tabScope), null,
+                              tabInfo.forceNewDebuggerUi, tabInfo.withFramesCustomization, tabInfo.defaultFramesViewKey).apply {
+        setAdditionalKeysProvider { sink ->
+          sink[SplitDebuggerUIUtil.SPLIT_RUN_CONTENT_DESCRIPTOR_KEY] = backendRunContentDescriptorId
+          if (executionEnvironmentId != null) {
+            sink[SplitDebuggerUIUtil.SPLIT_EXECUTION_ENVIRONMENT_KEY] = executionEnvironmentId
           }
         }
+        sessionTabDeferred.complete(this)
+        proxy.onTabInitialized(this)
+        showTab()
+      }
+    }
+
+    val runContentDescriptor = tab.runContentDescriptor
+    if (runContentDescriptor == null) {
+      onTabClosed()
+      thisLogger().error("Run content descriptor is not set for tab")
+      return
+    }
+    runContentDescriptor.coroutineScope.awaitCancellationAndInvoke {
+      onTabClosed()
+    }
+    // don't subscribe on additional tabs if we have [ExecutionEnvironment] (it means this is Monolith)
+    if (tabInfo.executionEnvironmentProxyDto?.executionEnvironment == null) {
+      subscribeOnAdditionalTabs(tabScope, tab, tabInfo.additionalTabsComponentManagerId)
+    }
+
+    tabScope.launch(Dispatchers.EDT) {
+      pausedFlow.toFlow().collectLatest { paused ->
+        tab.onPause(paused.pausedByUser, paused.topFrameIsAbsent)
       }
     }
   }

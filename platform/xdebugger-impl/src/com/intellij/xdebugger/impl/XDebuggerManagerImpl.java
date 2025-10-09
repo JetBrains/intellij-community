@@ -285,7 +285,7 @@ public final class XDebuggerManagerImpl extends XDebuggerManager implements Pers
     XDebugSessionImpl session = startSession(contentToReuse, starter,
       new XDebugSessionImpl(environment, this, sessionName, icon, showToolWindowOnSuspendOnly, contentToReuse));
 
-    if (!showToolWindowOnSuspendOnly && !XDebugSessionProxy.useFeProxy()) {
+    if (!showToolWindowOnSuspendOnly) {
       session.showSessionTab();
     }
     ProcessHandler handler = session.getDebugProcess().getProcessHandler();
