@@ -142,8 +142,9 @@ internal class WhenToIfIntention :
 
         val result = element.replace(ifExpressionToReplaceWhen)
         val addedProperty = propertyForWhenSubject?.property?.let { property ->
-            val newLineForNewProperty = result.parent.addBefore(KtPsiFactory(element.project).createNewLine(), result)
-            result.parent.addBefore(property, newLineForNewProperty) as? KtProperty
+            val added = result.parent.addBefore(property, result)
+            result.parent.addAfter(KtPsiFactory(element.project).createNewLine(), added)
+            added as? KtProperty
         }
         commentSaver.restore(result)
 

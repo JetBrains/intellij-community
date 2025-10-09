@@ -3048,6 +3048,11 @@ public abstract class K1IntentionTestGenerated extends AbstractK1IntentionTest {
                     runTest("testData/intentions/branched/ifWhen/whenToIf/whenGuardsUnsupported.kt");
                 }
 
+                @TestMetadata("whenInLambda.kt")
+                public void testWhenInLambda() throws Exception {
+                    runTest("testData/intentions/branched/ifWhen/whenToIf/whenInLambda.kt");
+                }
+
                 @TestMetadata("whenTrueOrFalse.kt")
                 public void testWhenTrueOrFalse() throws Exception {
                     runTest("testData/intentions/branched/ifWhen/whenToIf/whenTrueOrFalse.kt");

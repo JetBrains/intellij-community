@@ -6343,6 +6343,11 @@ public abstract class K2IntentionTestGenerated extends AbstractK2IntentionTest {
             runTest("../../../idea/tests/testData/intentions/branched/ifWhen/whenToIf/whenGuardsUnsupported.kt");
         }
 
+        @TestMetadata("whenInLambda.kt")
+        public void testWhenInLambda() throws Exception {
+            runTest("../../../idea/tests/testData/intentions/branched/ifWhen/whenToIf/whenInLambda.kt");
+        }
+
         @TestMetadata("whenTrueOrFalse.kt")
         public void testWhenTrueOrFalse() throws Exception {
             runTest("../../../idea/tests/testData/intentions/branched/ifWhen/whenToIf/whenTrueOrFalse.kt");
