@@ -83,6 +83,7 @@ internal fun MutableTWorkspace.generateK2IntentionTests() {
             )
             model("${idea}intentions/mergeIfs", pattern = pattern, isIgnored = false)
             model("${idea}intentions/convertTrimIndentToTrimMargin", pattern = pattern)
+            model("${idea}intentions/convertTrimMarginToTrimIndent", pattern = pattern)
             model("${idea}intentions/iterateExpression", pattern = pattern)
             model("${idea}intentions/convertRangeCheckToTwoComparisons", pattern = pattern, isIgnored = true)
             model("${idea}intentions/implementAsConstructorParameter", pattern = pattern)

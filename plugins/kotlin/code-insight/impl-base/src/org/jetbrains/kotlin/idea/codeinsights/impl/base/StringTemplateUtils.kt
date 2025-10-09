@@ -23,6 +23,7 @@ import org.jetbrains.kotlin.lexer.KtTokens
 import org.jetbrains.kotlin.psi.*
 import org.jetbrains.kotlin.psi.psiUtil.getContentRange
 import org.jetbrains.kotlin.psi.psiUtil.isSingleQuoted
+import org.jetbrains.kotlin.utils.addToStdlib.safeAs
 
 /**
  * Recursively visits all operands of binary expression with plus and,
@@ -280,4 +281,31 @@ fun KtBinaryExpression?.containsPrefixedStringOperands(): Boolean {
     })
 
     return containsMultiDollarString
+}
+
+fun KtStringTemplateExpression.isSurroundedByLineBreaksOrBlanks(): Boolean {
+    return listOfNotNull(entries.firstOrNull(), entries.lastOrNull()).all { it.text.isLineBreakOrBlank() }
+}
+
+fun String.isLineBreakOrBlank(): Boolean = this == "\n" || this.isBlank()
+
+fun KtStringTemplateExpression.calculateIndent(): String =
+    entries
+        .asSequence()
+        .mapNotNull { entry -> if (entry.isStartOfLine()) entry.text.takeWhile { it.isWhitespace() } else null }
+        .minByOrNull { it.length } ?: ""
+
+fun KtStringTemplateEntry.isStartOfLine(): Boolean =
+    this.text != "\n" &&
+            prevSibling.safeAs<KtStringTemplateEntry>()?.text == "\n" &&
+            nextSibling.safeAs<KtStringTemplateEntry>() != null
+
+fun KtCallExpression.marginPrefix(): String? {
+    val argument = valueArguments.firstOrNull()?.getArgumentExpression()
+    if (argument != null) {
+        val stringTemplate = argument as? KtStringTemplateExpression ?: return null
+        val entry = stringTemplate.entries.toList().singleOrNull() as? KtLiteralStringTemplateEntry ?: return null
+        return entry.text.replace("\"", "")
+    }
+    return "|"
 }

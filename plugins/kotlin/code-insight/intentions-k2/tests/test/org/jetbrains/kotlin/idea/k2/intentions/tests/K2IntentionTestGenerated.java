@@ -8445,6 +8445,70 @@ public abstract class K2IntentionTestGenerated extends AbstractK2IntentionTest {
     }
 
     @RunWith(JUnit3RunnerWithInners.class)
+    @TestMetadata("../../../idea/tests/testData/intentions/convertTrimMarginToTrimIndent")
+    public static class ConvertTrimMarginToTrimIndent extends AbstractK2IntentionTest {
+        @java.lang.Override
+        @org.jetbrains.annotations.NotNull
+        public final KotlinPluginMode getPluginMode() {
+            return KotlinPluginMode.K2;
+        }
+
+        private void runTest(String testDataFilePath) throws Exception {
+            KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
+        }
+
+        @TestMetadata("differentIndent.kt")
+        public void testDifferentIndent() throws Exception {
+            runTest("../../../idea/tests/testData/intentions/convertTrimMarginToTrimIndent/differentIndent.kt");
+        }
+
+        @TestMetadata("escapedMarginPrefixArgument.kt")
+        public void testEscapedMarginPrefixArgument() throws Exception {
+            runTest("../../../idea/tests/testData/intentions/convertTrimMarginToTrimIndent/escapedMarginPrefixArgument.kt");
+        }
+
+        @TestMetadata("noMarginPrefix.kt")
+        public void testNoMarginPrefix() throws Exception {
+            runTest("../../../idea/tests/testData/intentions/convertTrimMarginToTrimIndent/noMarginPrefix.kt");
+        }
+
+        @TestMetadata("notBlankFirst.kt")
+        public void testNotBlankFirst() throws Exception {
+            runTest("../../../idea/tests/testData/intentions/convertTrimMarginToTrimIndent/notBlankFirst.kt");
+        }
+
+        @TestMetadata("notBlankLast.kt")
+        public void testNotBlankLast() throws Exception {
+            runTest("../../../idea/tests/testData/intentions/convertTrimMarginToTrimIndent/notBlankLast.kt");
+        }
+
+        @TestMetadata("notRawString.kt")
+        public void testNotRawString() throws Exception {
+            runTest("../../../idea/tests/testData/intentions/convertTrimMarginToTrimIndent/notRawString.kt");
+        }
+
+        @TestMetadata("referenceMarginPrefixArgument.kt")
+        public void testReferenceMarginPrefixArgument() throws Exception {
+            runTest("../../../idea/tests/testData/intentions/convertTrimMarginToTrimIndent/referenceMarginPrefixArgument.kt");
+        }
+
+        @TestMetadata("simple.kt")
+        public void testSimple() throws Exception {
+            runTest("../../../idea/tests/testData/intentions/convertTrimMarginToTrimIndent/simple.kt");
+        }
+
+        @TestMetadata("simple2.kt")
+        public void testSimple2() throws Exception {
+            runTest("../../../idea/tests/testData/intentions/convertTrimMarginToTrimIndent/simple2.kt");
+        }
+
+        @TestMetadata("startWithDollarSign.kt")
+        public void testStartWithDollarSign() throws Exception {
+            runTest("../../../idea/tests/testData/intentions/convertTrimMarginToTrimIndent/startWithDollarSign.kt");
+        }
+    }
+
+    @RunWith(JUnit3RunnerWithInners.class)
     @TestMetadata("../../../idea/tests/testData/intentions/iterateExpression")
     public static class IterateExpression extends AbstractK2IntentionTest {
         @java.lang.Override
