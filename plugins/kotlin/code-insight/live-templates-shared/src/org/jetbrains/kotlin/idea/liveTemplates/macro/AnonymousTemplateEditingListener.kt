@@ -13,6 +13,7 @@ import com.intellij.openapi.util.Key
 import com.intellij.psi.PsiDocumentManager
 import com.intellij.psi.PsiFile
 import org.jetbrains.kotlin.analysis.api.KaContextParameterApi
+import org.jetbrains.kotlin.analysis.api.KaExperimentalApi
 import org.jetbrains.kotlin.analysis.api.KaSession
 import org.jetbrains.kotlin.analysis.api.analyze
 import org.jetbrains.kotlin.analysis.api.components.containingDeclaration
@@ -56,7 +57,7 @@ internal class AnonymousTemplateEditingListener(private val psiFile: PsiFile, pr
         }
     }
 
-    @OptIn(KaContextParameterApi::class)
+    @OptIn(KaContextParameterApi::class, KaExperimentalApi::class)
     context(_: KaSession)
     private fun resolveSubtypeInfo(referenceExpression: KtReferenceExpression): SubtypeInfo? {
         val referencedClasses = sequence {
@@ -79,7 +80,7 @@ internal class AnonymousTemplateEditingListener(private val psiFile: PsiFile, pr
             .constructors
             .any { ctor ->
                 val parameters = ctor.valueParameters
-                parameters.isEmpty() || parameters.all { it.hasDefaultValue }
+                parameters.isEmpty() || parameters.all { it.hasDeclaredDefaultValue }
             }
 
         return SubtypeInfo(referenceExpression, referencedClass.classKind, hasZeroParameterConstructors)
