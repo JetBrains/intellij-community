@@ -7,7 +7,6 @@ import com.intellij.ide.IdeBundle
 import com.intellij.ide.IdeEventQueue
 import com.intellij.ide.consumeUnrelatedEvent
 import com.intellij.openapi.application.EDT
-import com.intellij.openapi.application.UI
 import com.intellij.openapi.application.asContextElement
 import com.intellij.openapi.application.contextModality
 import com.intellij.openapi.application.ex.ApplicationManagerEx
@@ -489,7 +488,7 @@ internal fun CoroutineScope.showIndicator(
   return launch(Dispatchers.Default) {
     delay(ProgressUIUtil.DEFAULT_PROGRESS_DELAY_MILLIS)
     withContext(progressManagerTracer.span("Progress: ${progressModel.title}")) {
-      withContext(Dispatchers.UI) {
+      withContext(Dispatchers.EDT) {
         val taskInfo = taskInfo(progressModel.title, progressModel.cancellation)
         try {
           LOG.trace { "Showing indicator for task: ${progressModel.title}" }
