@@ -659,6 +659,18 @@
         }
       }
     },
+    "meter": {
+      "doc": "",
+      "attrs": {
+        "form": {
+          "url": "$MDN_URL$/web/html/reference/elements/meter#form",
+          "status": [
+            "Obsolete"
+          ],
+          "doc": "This optional attribute is used to explicitly set a <a href=\"$MDN_URL$/Web/HTML/Reference/Elements/form\"><code>&lt;form&gt;</code></a> owner for the <code>&lt;meter&gt;</code> element. If omitted, the <code>&lt;meter&gt;</code> is associated with its ancestor <code>&lt;form&gt;</code> element or the form association set by the <code>form</code> attribute on another ancestor element, such as on a <a href=\"$MDN_URL$/Web/HTML/Reference/Elements/fieldset\"><code>&lt;fieldset&gt;</code></a>, if any. If included, the value must be the <a href=\"$MDN_URL$/Web/HTML/Reference/Global_attributes/id\"><code>id</code></a> of a <code>&lt;form&gt;</code> in the same tree."
+        }
+      }
+    },
     "object": {
       "doc": "",
       "attrs": {

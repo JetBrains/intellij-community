@@ -47,7 +47,7 @@
         "lowDate": "2015-07-29",
         "highDate": "2018-01-29"
       },
-      "doc": "The <strong><code>DOMContentLoaded</code></strong> event fires when the HTML document has been completely parsed, and all deferred scripts (<a href=\"$MDN_URL$/Web/HTML/Reference/Elements/script#defer\"><code>&lt;script defer src=\"…\"&gt;</code></a> and <a href=\"$MDN_URL$/Web/HTML/Reference/Elements/script#module\"><code>&lt;script type=\"module\"&gt;</code></a>) have downloaded and executed. It doesn't wait for other things like images, subframes, and async scripts to finish loading.\n<code>DOMContentLoaded</code> does not wait for stylesheets to load, however deferred scripts <em>do</em> wait for stylesheets, and the <code>DOMContentLoaded</code> event is queued after deferred scripts. Also, scripts which aren't deferred or async (e.g., <code>&lt;script&gt;</code>) will wait for already-parsed stylesheets to load.\nA different event, <a href=\"$MDN_URL$/Web/API/Window/load_event\" ><code>load</code></a>, should be used only to detect a fully-loaded page. It is a common mistake to use <code>load</code> where <code>DOMContentLoaded</code> would be more appropriate.\nThis event is not cancelable."
+      "doc": "The <strong><code>DOMContentLoaded</code></strong> event fires when the HTML document has been completely parsed, and all deferred scripts (<a href=\"$MDN_URL$/Web/HTML/Reference/Elements/script#defer\"><code>&lt;script defer src=\"…\"&gt;</code></a> and <a href=\"$MDN_URL$/Web/HTML/Reference/Elements/script#module\"><code>&lt;script type=\"module\"&gt;</code></a>) have downloaded and executed. It doesn't wait for other things like images, subframes, and async scripts to finish loading.\n<code>DOMContentLoaded</code> does not wait for stylesheets to load, however deferred scripts <em>do</em> wait for stylesheets, and the <code>DOMContentLoaded</code> event is queued after deferred scripts. Also, scripts which aren't deferred or async (e.g., <code>&lt;script&gt;</code>) will wait for already-parsed stylesheets to load.\nA different event, <a href=\"$MDN_URL$/Web/API/Window/load_event\" ><code>load</code></a>, should be used only to detect a fully-loaded page. It is a common mistake to use <code>load</code> where <code>DOMContentLoaded</code> would be more appropriate.\nUsually, to avoid running a script before the DOM it manipulates has been fully constructed, you can simply place the script at the end of the document body, immediately before the closing <code>&lt;/body&gt;</code> tag, without wrapping it in an event listener.\nThis event is not cancelable."
     },
     "dommousescroll": {
       "url": "$MDN_URL$/web/api/element/dommousescroll_event",
@@ -207,10 +207,7 @@
       "status": [
         "Deprecated"
       ],
-      "compatibility": {
-        "Firefox": "2",
-        "FirefoxAndroid": "4"
-      },
+      "compatibility": {},
       "doc": "The <strong><code>afterscriptexecute</code></strong> event is fired after a script has been executed.\nIt is a proprietary event specific to Gecko (Firefox).\nThis event is not cancelable."
     },
     "animationcancel": {
@@ -316,9 +313,9 @@
         "StandardTrack"
       ],
       "compatibility": {
-        "Chrome": "33",
-        "ChromeAndroid": "33",
-        "Edge": "79",
+        "Chrome": "139",
+        "ChromeAndroid": "139",
+        "Edge": "139",
         "Opera": "20",
         "Safari": "14.1",
         "SafariIOS": "14.5"
@@ -352,9 +349,9 @@
         "StandardTrack"
       ],
       "compatibility": {
-        "Chrome": "33",
-        "ChromeAndroid": "33",
-        "Edge": "79",
+        "Chrome": "139",
+        "ChromeAndroid": "139",
+        "Edge": "139",
         "Opera": "20",
         "Safari": "14.1",
         "SafariIOS": "14.5"
@@ -434,10 +431,7 @@
       "status": [
         "Deprecated"
       ],
-      "compatibility": {
-        "Firefox": "2",
-        "FirefoxAndroid": "4"
-      },
+      "compatibility": {},
       "doc": "The <strong><code>beforescriptexecute</code></strong> event is fired when a script is about to be executed. Cancelling the event prevents the script from executing.\nIt is a proprietary event specific to Gecko (Firefox)."
     },
     "beforeunload": {
@@ -560,7 +554,7 @@
         "lowDate": "2020-01-15",
         "highDate": "2022-07-15"
       },
-      "doc": "A <strong><code>bufferedamountlow</code></strong> event is sent to an <a href=\"$MDN_URL$/Web/API/RTCDataChannel\"><code>RTCDataChannel</code></a> when the number of bytes currently in the outbound data transfer buffer falls below the threshold specified in <a href=\"$MDN_URL$/Web/API/RTCDataChannel/bufferedAmountLowThreshold\" ><code>bufferedAmountLowThreshold</code></a>. <code>bufferedamountlow</code> events aren't sent if <code>bufferedAmountLowThreshold</code> is 0.\nThis event is not cancelable and does not bubble."
+      "doc": "A <strong><code>bufferedamountlow</code></strong> event is sent to an <a href=\"$MDN_URL$/Web/API/RTCDataChannel\"><code>RTCDataChannel</code></a> when the number of bytes currently in the outbound data transfer buffer (<a href=\"$MDN_URL$/Web/API/RTCDataChannel/bufferedAmount\" ><code>bufferedAmount</code></a>) falls from above to below or equal the threshold specified in <a href=\"$MDN_URL$/Web/API/RTCDataChannel/bufferedAmountLowThreshold\" ><code>bufferedAmountLowThreshold</code></a>.\nThis event is not cancelable and does not bubble."
     },
     "cancel": {
       "url": "$MDN_URL$/web/api/htmldialogelement/cancel_event",
@@ -840,7 +834,7 @@
         "lowDate": "2015-07-29",
         "highDate": "2018-01-29"
       },
-      "doc": "The <strong><code>copy</code></strong> event of the <a href=\"$MDN_URL$/Web/API/Clipboard_API\">Clipboard API</a> fires when the user initiates a copy action through the browser's user interface.\nThe event's default action is to copy the selection (if any) to the clipboard.\nA handler for this event can <em>modify</em> the clipboard contents by calling <a href=\"$MDN_URL$/Web/API/DataTransfer/setData\" ><code>setData(format, data)</code></a> on the event's <a href=\"$MDN_URL$/Web/API/ClipboardEvent/clipboardData\"><code>ClipboardEvent.clipboardData</code></a> property, and cancelling the event's default action using <a href=\"$MDN_URL$/Web/API/Event/preventDefault\" ><code>event.preventDefault()</code></a>.\nHowever, the handler cannot <em>read</em> the clipboard data.\nIt's possible to construct and dispatch a <a href=\"$MDN_URL$/Web/Events/Creating_and_triggering_events\">synthetic</a> <code>copy</code> event, but this will not affect the system clipboard.\nThis event <a href=\"$MDN_URL$/Learn_web_development/Core/Scripting/Event_bubbling\">bubbles</a>, is <a href=\"$MDN_URL$/Web/API/Event/cancelable\">cancelable</a> and is <a href=\"$MDN_URL$/Web/API/Event/composed\">composed</a>."
+      "doc": "The <strong><code>copy</code></strong> event of the <a href=\"$MDN_URL$/Web/API/Clipboard_API\">Clipboard API</a> fires when the user initiates a copy action through the browser's user interface.\nThe event's default action is to copy the selection (if any) to the clipboard.\nA handler for this event can <em>modify</em> the clipboard contents by calling <a href=\"$MDN_URL$/Web/API/DataTransfer/setData\" ><code>setData(format, data)</code></a> on the event's <a href=\"$MDN_URL$/Web/API/ClipboardEvent/clipboardData\"><code>ClipboardEvent.clipboardData</code></a> property, and cancelling the event's default action using <a href=\"$MDN_URL$/Web/API/Event/preventDefault\" ><code>event.preventDefault()</code></a>.\nHowever, the handler cannot <em>read</em> the clipboard data.\nIt's possible to construct and dispatch a <a href=\"$MDN_URL$/Web/API/Document_Object_Model/Events#creating_and_dispatching_events\">synthetic</a> <code>copy</code> event, but this will not affect the system clipboard.\nThis event <a href=\"$MDN_URL$/Learn_web_development/Core/Scripting/Event_bubbling\">bubbles</a> up the DOM tree, eventually to <a href=\"$MDN_URL$/Web/API/Document\"><code>Document</code></a> and <a href=\"$MDN_URL$/Web/API/Window\"><code>Window</code></a>, is <a href=\"$MDN_URL$/Web/API/Event/cancelable\">cancelable</a> and is <a href=\"$MDN_URL$/Web/API/Event/composed\">composed</a>."
     },
     "cuechange": {
       "url": "$MDN_URL$/web/api/texttrack/cuechange_event",
@@ -884,7 +878,7 @@
         "lowDate": "2015-07-29",
         "highDate": "2018-01-29"
       },
-      "doc": "The <strong><code>cut</code></strong> event of the <a href=\"$MDN_URL$/Web/API/Clipboard_API\">Clipboard API</a> is fired when the user has initiated a \"cut\" action through the browser's user interface.\nIf the user attempts a cut action on uneditable content, the <code>cut</code> event still fires but the event object contains no data.\nThe event's default action is to copy the current selection (if any) to the system clipboard and remove it from the document.\nA handler for this event can <em>modify</em> the clipboard contents by calling <a href=\"$MDN_URL$/Web/API/DataTransfer/setData\" ><code>setData(format, data)</code></a> on the event's <a href=\"$MDN_URL$/Web/API/ClipboardEvent/clipboardData\"><code>ClipboardEvent.clipboardData</code></a> property, and cancelling the default action using <a href=\"$MDN_URL$/Web/API/Event/preventDefault\" ><code>event.preventDefault()</code></a>.\nNote though that cancelling the default action will also prevent the document from being updated. So an event handler which wants to emulate the default action for \"cut\" while modifying the clipboard must also manually remove the selection from the document.\nThe handler cannot <em>read</em> the clipboard data.\nIt's possible to construct and dispatch a <a href=\"$MDN_URL$/Web/Events/Creating_and_triggering_events\">synthetic</a> <code>cut</code> event, but this will not affect the system clipboard or the document's contents.\nThis event <a href=\"$MDN_URL$/Learn_web_development/Core/Scripting/Event_bubbling\">bubbles</a>, is <a href=\"$MDN_URL$/Web/API/Event/cancelable\">cancelable</a> and is <a href=\"$MDN_URL$/Web/API/Event/composed\">composed</a>."
+      "doc": "The <strong><code>cut</code></strong> event of the <a href=\"$MDN_URL$/Web/API/Clipboard_API\">Clipboard API</a> is fired when the user has initiated a \"cut\" action through the browser's user interface.\nIf the user attempts a cut action on uneditable content, the <code>cut</code> event still fires but the event object contains no data.\nThe event's default action is to copy the current selection (if any) to the system clipboard and remove it from the document.\nA handler for this event can <em>modify</em> the clipboard contents by calling <a href=\"$MDN_URL$/Web/API/DataTransfer/setData\" ><code>setData(format, data)</code></a> on the event's <a href=\"$MDN_URL$/Web/API/ClipboardEvent/clipboardData\"><code>ClipboardEvent.clipboardData</code></a> property, and cancelling the default action using <a href=\"$MDN_URL$/Web/API/Event/preventDefault\" ><code>event.preventDefault()</code></a>.\nNote though that cancelling the default action will also prevent the document from being updated. So an event handler which wants to emulate the default action for \"cut\" while modifying the clipboard must also manually remove the selection from the document.\nThe handler cannot <em>read</em> the clipboard data.\nIt's possible to construct and dispatch a <a href=\"$MDN_URL$/Web/API/Document_Object_Model/Events#creating_and_dispatching_events\">synthetic</a> <code>cut</code> event, but this will not affect the system clipboard or the document's contents.\nThis event <a href=\"$MDN_URL$/Learn_web_development/Core/Scripting/Event_bubbling\">bubbles</a> up the DOM tree, eventually to <a href=\"$MDN_URL$/Web/API/Document\"><code>Document</code></a> and <a href=\"$MDN_URL$/Web/API/Window\"><code>Window</code></a>, is <a href=\"$MDN_URL$/Web/API/Event/cancelable\">cancelable</a> and is <a href=\"$MDN_URL$/Web/API/Event/composed\">composed</a>."
     },
     "datachannel": {
       "url": "$MDN_URL$/web/api/rtcpeerconnection/datachannel_event",
@@ -950,7 +944,7 @@
       "doc": "The <strong><code>devicechange</code></strong> event is sent to a <a href=\"$MDN_URL$/Web/API/MediaDevices\"><code>MediaDevices</code></a> instance whenever a media device such as a camera, microphone, or speaker is connected to or removed from the system.\nThis event is not cancelable and does not bubble."
     },
     "devicehumidity": {
-      "url": "$MDN_URL$/web/events",
+      "url": "$MDN_URL$/web/api/document_object_model/events",
       "status": [
         "Experimental",
         "Deprecated"
@@ -979,7 +973,7 @@
       "doc": "The <strong><code>devicemotion</code></strong> event is fired at a regular interval and indicates the acceleration rate of the device with/without the contribution of the gravity force at that time. It also provides information about the rate of rotation, if available.\nThis event is not cancelable and does not bubble."
     },
     "devicenoise": {
-      "url": "$MDN_URL$/web/events",
+      "url": "$MDN_URL$/web/api/document_object_model/events",
       "status": [
         "Experimental",
         "Deprecated"
@@ -1008,7 +1002,7 @@
       "doc": "The <strong><code>deviceorientation</code></strong> event is fired when fresh data is available from an orientation sensor about the current orientation of the device as compared to the Earth coordinate frame. This data is gathered from a magnetometer inside the device.\nSee <a href=\"$MDN_URL$/Web/API/Device_orientation_events/Orientation_and_motion_data_explained\">Orientation and motion data explained</a> for details.\nThis event is not cancelable and does not bubble."
     },
     "devicepressure": {
-      "url": "$MDN_URL$/web/events",
+      "url": "$MDN_URL$/web/api/document_object_model/events",
       "status": [
         "Experimental",
         "Deprecated"
@@ -1016,7 +1010,7 @@
       "doc": "<a href=\"$MDN_URL$/Learn_web_development/Core/Scripting/Events\">Events</a> are fired to notify code of \"interesting changes\" that may affect code execution. These can arise from user interactions such as using a mouse or resizing a window, changes in the state of the underlying environment (e.g., low battery or media events from the operating system), and other causes.\nEach event is represented by an object that is based on the <a href=\"$MDN_URL$/Web/API/Event\"><code>Event</code></a> interface, and may have additional custom fields and/or functions to provide information about what happened. The documentation for every event has a table (near the top) that includes a link to the associated event interface, and other relevant information. A full list of the different event types is given in <a href=\"$MDN_URL$/Web/API/Event#interfaces_based_on_event\">Event &gt; Interfaces based on Event</a>.\nThis topic provides an index to the main <em>sorts</em> of events you might be interested in (animation, clipboard, workers etc.) along with the main classes that implement those sorts of events."
     },
     "devicetemperature": {
-      "url": "$MDN_URL$/web/events",
+      "url": "$MDN_URL$/web/api/document_object_model/events",
       "status": [
         "Experimental",
         "Deprecated"
@@ -1227,9 +1221,9 @@
         "StandardTrack"
       ],
       "compatibility": {
-        "Chrome": "33",
-        "ChromeAndroid": "33",
-        "Edge": "79",
+        "Chrome": "139",
+        "ChromeAndroid": "139",
+        "Edge": "139",
         "Opera": "20",
         "Safari": "14.1",
         "SafariIOS": "14.5"
@@ -1756,7 +1750,7 @@
         "lowDate": "2015-07-29",
         "highDate": "2018-01-29"
       },
-      "doc": "The <strong><code>load</code></strong> event is fired when the whole page has loaded, including all dependent resources such as stylesheets, scripts, iframes, and images, except those that are <a href=\"$MDN_URL$/Web/Performance/Guides/Lazy_loading#images_and_iframes\">loaded lazily</a>.\nThis is in contrast to <a href=\"$MDN_URL$/Web/API/Document/DOMContentLoaded_event\" ><code>DOMContentLoaded</code></a>, which is fired as soon as the page DOM has been loaded, without waiting for resources to finish loading.\nThis event is not cancelable and does not bubble."
+      "doc": "The <strong><code>load</code></strong> event is fired when the whole page has loaded, including all dependent resources such as stylesheets, scripts (including async, deferred, and module scripts), iframes, and images, except those that are <a href=\"$MDN_URL$/Web/Performance/Guides/Lazy_loading#images_and_iframes\">loaded lazily</a>.\nThis is in contrast to <a href=\"$MDN_URL$/Web/API/Document/DOMContentLoaded_event\" ><code>DOMContentLoaded</code></a>, which is fired as soon as the page DOM has been loaded, without waiting for resources to finish loading.\nThis event is not cancelable and does not bubble.\nTo avoid running a script before the DOM it manipulates has been fully constructed, you can place the script at the end of the document body, immediately before the closing <code>&lt;/body&gt;</code> tag, without wrapping it in an event listener. You should usually only use the <code>load</code> event to wait for external resources, such as images or deferred scripts, to load."
     },
     "loadeddata": {
       "url": "$MDN_URL$/web/api/htmlmediaelement/loadeddata_event",
@@ -1803,46 +1797,40 @@
       "doc": "The <code>loadedmetadata</code> event is fired when the metadata has been loaded."
     },
     "loadend": {
-      "url": "$MDN_URL$/web/api/xmlhttprequest/loadend_event",
+      "url": "$MDN_URL$/web/api/xmlhttprequesteventtarget/loadend_event",
       "status": [
         "StandardTrack"
       ],
       "compatibility": {
-        "Chrome": "18",
-        "ChromeAndroid": "18",
-        "Edge": "12",
-        "Firefox": "5",
-        "FirefoxAndroid": "5",
-        "Opera": "12.1",
-        "Safari": "4",
-        "SafariIOS": "3"
+        "support_of_loadend_event": {
+          "Chrome": "18",
+          "ChromeAndroid": "",
+          "Edge": "",
+          "Firefox": "5",
+          "FirefoxAndroid": "5",
+          "Opera": "12.1",
+          "Safari": "4",
+          "SafariIOS": "3"
+        }
       },
-      "baseline": {
-        "level": "HIGH",
-        "lowDate": "2015-07-29",
-        "highDate": "2018-01-29"
-      },
-      "doc": "The <strong><code>loadend</code></strong> event is fired when a request has completed, whether successfully (after <a href=\"$MDN_URL$/Web/API/XMLHttpRequest/load_event\" ><code>load</code></a>) or unsuccessfully (after <a href=\"$MDN_URL$/Web/API/XMLHttpRequest/abort_event\" ><code>abort</code></a> or <a href=\"$MDN_URL$/Web/API/XMLHttpRequest/error_event\" ><code>error</code></a>)."
+      "doc": "The <strong><code>loadend</code></strong> event is fired when a request has completed, whether successfully (after <a href=\"$MDN_URL$/Web/API/XMLHttpRequestEventTarget/load_event\" ><code>load</code></a>) or unsuccessfully (after <a href=\"$MDN_URL$/Web/API/XMLHttpRequestEventTarget/abort_event\" ><code>abort</code></a> or <a href=\"$MDN_URL$/Web/API/XMLHttpRequestEventTarget/error_event\" ><code>error</code></a>)."
     },
     "loadstart": {
-      "url": "$MDN_URL$/web/api/xmlhttprequest/loadstart_event",
+      "url": "$MDN_URL$/web/api/xmlhttprequesteventtarget/loadstart_event",
       "status": [
         "StandardTrack"
       ],
       "compatibility": {
-        "Chrome": "1",
-        "ChromeAndroid": "18",
-        "Edge": "12",
-        "Firefox": "3.5",
-        "FirefoxAndroid": "4",
-        "Opera": "12.1",
-        "Safari": "1.3",
-        "SafariIOS": "1"
-      },
-      "baseline": {
-        "level": "HIGH",
-        "lowDate": "2015-07-29",
-        "highDate": "2018-01-29"
+        "support_of_loadstart_event": {
+          "Chrome": "2",
+          "ChromeAndroid": "",
+          "Edge": "",
+          "Firefox": "3.5",
+          "FirefoxAndroid": "4",
+          "Opera": "12.1",
+          "Safari": "4",
+          "SafariIOS": "3"
+        }
       },
       "doc": "The <strong><code>loadstart</code></strong> event is fired when a request has started to load data."
     },
@@ -1941,8 +1929,9 @@
         "SafariIOS": "16.4"
       },
       "baseline": {
-        "level": "LOW",
-        "lowDate": "2023-03-27"
+        "level": "HIGH",
+        "lowDate": "2023-03-27",
+        "highDate": "2025-09-27"
       },
       "doc": "The <code>messageerror</code> event is fired on a <a href=\"$MDN_URL$/Web/API/Window\"><code>Window</code></a> object when it receives a message that can't be deserialized.\nThis event is not cancellable and does not bubble."
     },
@@ -2165,9 +2154,9 @@
         "StandardTrack"
       ],
       "compatibility": {
-        "Chrome": "33",
-        "ChromeAndroid": "33",
-        "Edge": "79",
+        "Chrome": "139",
+        "ChromeAndroid": "139",
+        "Edge": "139",
         "Opera": "20",
         "Safari": "14.1",
         "SafariIOS": "14.5"
@@ -2339,7 +2328,7 @@
         "lowDate": "2015-07-29",
         "highDate": "2018-01-29"
       },
-      "doc": "The <strong><code>paste</code></strong> event of the <a href=\"$MDN_URL$/Web/API/Clipboard_API\">Clipboard API</a> is fired when the user has initiated a \"paste\" action through the browser's user interface.\nIf the cursor is in an editable context (for example, in a <a href=\"$MDN_URL$/Web/HTML/Reference/Elements/textarea\"><code>&lt;textarea&gt;</code></a> or an element with <a href=\"$MDN_URL$/Web/HTML/Reference/Global_attributes/contenteditable\"><code>contenteditable</code></a> attribute set to <code>true</code>) then the default action is to insert the contents of the clipboard into the document at the cursor position.\nA handler for this event can access the clipboard contents by calling <a href=\"$MDN_URL$/Web/API/DataTransfer/getData\" ><code>getData()</code></a> on the event's <code>clipboardData</code> property.\nTo override the default behavior (for example to insert some different data or a transformation of the clipboard contents) an event handler must cancel the default action using <a href=\"$MDN_URL$/Web/API/Event/preventDefault\" ><code>event.preventDefault()</code></a>, and then insert its desired data manually.\nIt's possible to construct and dispatch a <a href=\"$MDN_URL$/Web/Events/Creating_and_triggering_events\">synthetic</a> <code>paste</code> event, but this will not affect the document's contents.\nThis event <a href=\"$MDN_URL$/Learn_web_development/Core/Scripting/Event_bubbling\">bubbles</a>, is <a href=\"$MDN_URL$/Web/API/Event/cancelable\">cancelable</a> and is <a href=\"$MDN_URL$/Web/API/Event/composed\">composed</a>."
+      "doc": "The <strong><code>paste</code></strong> event of the <a href=\"$MDN_URL$/Web/API/Clipboard_API\">Clipboard API</a> is fired when the user has initiated a \"paste\" action through the browser's user interface.\nIf the cursor is in an editable context (for example, in a <a href=\"$MDN_URL$/Web/HTML/Reference/Elements/textarea\"><code>&lt;textarea&gt;</code></a> or an element with <a href=\"$MDN_URL$/Web/HTML/Reference/Global_attributes/contenteditable\"><code>contenteditable</code></a> attribute set to <code>true</code>) then the default action is to insert the contents of the clipboard into the document at the cursor position.\nA handler for this event can access the clipboard contents by calling <a href=\"$MDN_URL$/Web/API/DataTransfer/getData\" ><code>getData()</code></a> on the event's <code>clipboardData</code> property.\nTo override the default behavior (for example to insert some different data or a transformation of the clipboard contents) an event handler must cancel the default action using <a href=\"$MDN_URL$/Web/API/Event/preventDefault\" ><code>event.preventDefault()</code></a>, and then insert its desired data manually.\nIt's possible to construct and dispatch a <a href=\"$MDN_URL$/Web/API/Document_Object_Model/Events#creating_and_dispatching_events\">synthetic</a> <code>paste</code> event, but this will not affect the document's contents.\nThis event <a href=\"$MDN_URL$/Learn_web_development/Core/Scripting/Event_bubbling\">bubbles</a> up the DOM tree, eventually to <a href=\"$MDN_URL$/Web/API/Document\"><code>Document</code></a> and <a href=\"$MDN_URL$/Web/API/Window\"><code>Window</code></a>, is <a href=\"$MDN_URL$/Web/API/Event/cancelable\">cancelable</a> and is <a href=\"$MDN_URL$/Web/API/Event/composed\">composed</a>."
     },
     "pause": {
       "url": "$MDN_URL$/web/api/htmlmediaelement/pause_event",
@@ -2410,6 +2399,9 @@
         "ChromeAndroid": "80",
         "Edge": "80",
         "Opera": "67"
+      },
+      "baseline": {
+        "level": "NONE"
       },
       "doc": "The <strong><code>periodicsync</code></strong> event of the <a href=\"$MDN_URL$/Web/API/ServiceWorkerGlobalScope\"><code>ServiceWorkerGlobalScope</code></a> interface is fired at timed intervals, specified when registering a <a href=\"$MDN_URL$/Web/API/PeriodicSyncManager\"><code>PeriodicSyncManager</code></a>.\nThis event is not cancelable and does not bubble."
     },
@@ -2552,7 +2544,6 @@
       ],
       "compatibility": {
         "Chrome": "36",
-        "ChromeAndroid": "36",
         "Edge": "13",
         "Firefox": "50",
         "FirefoxAndroid": "50",
@@ -2571,7 +2562,6 @@
       ],
       "compatibility": {
         "Chrome": "36",
-        "ChromeAndroid": "36",
         "Edge": "13",
         "Firefox": "50",
         "FirefoxAndroid": "50",
@@ -2694,24 +2684,21 @@
       "doc": "The <strong><code>popstate</code></strong> event of the <a href=\"$MDN_URL$/Web/API/Window\"><code>Window</code></a> interface is fired when the active history entry changes while the user navigates the session history. It changes the current history entry to that of the last page the user visited or, if <a href=\"$MDN_URL$/Web/API/History/pushState\"><code>history.pushState()</code></a> has been used to add a history entry to the history stack, that history entry is used instead."
     },
     "progress": {
-      "url": "$MDN_URL$/web/api/xmlhttprequest/progress_event",
+      "url": "$MDN_URL$/web/api/xmlhttprequesteventtarget/progress_event",
       "status": [
         "StandardTrack"
       ],
       "compatibility": {
-        "Chrome": "1",
-        "ChromeAndroid": "18",
-        "Edge": "12",
-        "Firefox": "1",
-        "FirefoxAndroid": "4",
-        "Opera": "12.1",
-        "Safari": "3",
-        "SafariIOS": "1"
-      },
-      "baseline": {
-        "level": "HIGH",
-        "lowDate": "2015-07-29",
-        "highDate": "2018-01-29"
+        "support_of_progress_event": {
+          "Chrome": "2",
+          "ChromeAndroid": "",
+          "Edge": "",
+          "Firefox": "3.5",
+          "FirefoxAndroid": "4",
+          "Opera": "12.1",
+          "Safari": "4",
+          "SafariIOS": "3"
+        }
       },
       "doc": "The <strong><code>progress</code></strong> event is fired periodically when a request receives more data."
     },
@@ -2731,8 +2718,9 @@
         "SafariIOS": "16.4"
       },
       "baseline": {
-        "level": "LOW",
-        "lowDate": "2023-03-27"
+        "level": "HIGH",
+        "lowDate": "2023-03-27",
+        "highDate": "2025-09-27"
       },
       "doc": "The <strong><code>push</code></strong> event is sent to a service worker's global scope (represented by the <a href=\"$MDN_URL$/Web/API/ServiceWorkerGlobalScope\"><code>ServiceWorkerGlobalScope</code></a> interface) when the service worker has received a push message.\nThis event is not cancelable and does not bubble."
     },
@@ -2742,6 +2730,9 @@
         "StandardTrack"
       ],
       "compatibility": {
+        "Chrome": "138",
+        "ChromeAndroid": "138",
+        "Opera": "122",
         "Safari": "16"
       },
       "baseline": {
@@ -2929,9 +2920,9 @@
         "StandardTrack"
       ],
       "compatibility": {
-        "Chrome": "33",
-        "ChromeAndroid": "33",
-        "Edge": "79",
+        "Chrome": "139",
+        "ChromeAndroid": "139",
+        "Edge": "139",
         "Opera": "20",
         "Safari": "14.1",
         "SafariIOS": "14.5"
@@ -3095,7 +3086,8 @@
         "SafariIOS": "18"
       },
       "baseline": {
-        "level": "NONE"
+        "level": "LOW",
+        "lowDate": "2024-09-16"
       },
       "doc": "The <strong><code>selectionchange</code></strong> event of the <a href=\"$MDN_URL$/Web/API/Selection\">Selection API</a> is fired when the text selection within an <a href=\"$MDN_URL$/Web/HTML/Reference/Elements/input\"><code>&lt;input&gt;</code></a> element is changed.\nThis includes both changes in the selected range of characters, or if the caret moves.\nThis event is not cancelable.\nThe event is usually processed by adding an event listener on the <a href=\"$MDN_URL$/Web/HTML/Reference/Elements/input\"><code>&lt;input&gt;</code></a>, and in the handler function read by the <a href=\"$MDN_URL$/Web/API/HTMLInputElement\"><code>HTMLInputElement</code></a> <code>selectionStart</code>, <code>selectionEnd</code> and <code>selectionDirection</code> properties.\nIt is also possible to add a listener on the <code>onselectionchange</code> event handler, and within the handler function use <a href=\"$MDN_URL$/Web/API/Document/getSelection\"><code>Document.getSelection()</code></a> to get the <a href=\"$MDN_URL$/Web/API/Selection\" ><code>Selection</code></a>. However this is not very useful for getting changes to <em>text</em> selections."
     },
@@ -3198,9 +3190,9 @@
         "StandardTrack"
       ],
       "compatibility": {
-        "Chrome": "33",
-        "ChromeAndroid": "33",
-        "Edge": "79",
+        "Chrome": "139",
+        "ChromeAndroid": "139",
+        "Edge": "139",
         "Opera": "20",
         "Safari": "14.1",
         "SafariIOS": "14.5"
@@ -3216,9 +3208,9 @@
         "StandardTrack"
       ],
       "compatibility": {
-        "Chrome": "33",
-        "ChromeAndroid": "33",
-        "Edge": "79",
+        "Chrome": "139",
+        "ChromeAndroid": "139",
+        "Edge": "139",
         "Opera": "20",
         "Safari": "14.1",
         "SafariIOS": "14.5"
@@ -3234,9 +3226,9 @@
         "StandardTrack"
       ],
       "compatibility": {
-        "Chrome": "33",
-        "ChromeAndroid": "33",
-        "Edge": "79",
+        "Chrome": "139",
+        "ChromeAndroid": "139",
+        "Edge": "139",
         "Opera": "20",
         "Safari": "14.1",
         "SafariIOS": "14.5"
@@ -3252,9 +3244,9 @@
         "StandardTrack"
       ],
       "compatibility": {
-        "Chrome": "33",
-        "ChromeAndroid": "33",
-        "Edge": "79",
+        "Chrome": "139",
+        "ChromeAndroid": "139",
+        "Edge": "139",
         "Opera": "20",
         "Safari": "14.1",
         "SafariIOS": "14.5"
@@ -3292,9 +3284,9 @@
         "StandardTrack"
       ],
       "compatibility": {
-        "Chrome": "33",
-        "ChromeAndroid": "33",
-        "Edge": "79",
+        "Chrome": "139",
+        "ChromeAndroid": "139",
+        "Edge": "139",
         "Opera": "20",
         "Safari": "14.1",
         "SafariIOS": "14.5"
@@ -3414,24 +3406,21 @@
       "doc": "The <code>suspend</code> event is fired when the user agent is intentionally not fetching media data, in which case <a href=\"$MDN_URL$/Web/API/HTMLMediaElement/networkState\"><code>HTMLMediaElement.networkState</code></a> is set to <code>HTMLMediaElement.NETWORK_IDLE</code>. This can happen if there's no more data to load, or if loading is unnecessary; for example, the browser may decide to only buffer 5 minutes of a video in advance, in which case loading is suspended until the user watches more of the video.\nThis event is not cancelable and does not bubble."
     },
     "timeout": {
-      "url": "$MDN_URL$/web/api/xmlhttprequest/timeout_event",
+      "url": "$MDN_URL$/web/api/xmlhttprequesteventtarget/timeout_event",
       "status": [
         "StandardTrack"
       ],
       "compatibility": {
-        "Chrome": "29",
-        "ChromeAndroid": "29",
-        "Edge": "12",
-        "Firefox": "12",
-        "FirefoxAndroid": "14",
-        "Opera": "16",
-        "Safari": "7",
-        "SafariIOS": "7"
-      },
-      "baseline": {
-        "level": "HIGH",
-        "lowDate": "2015-07-29",
-        "highDate": "2018-01-29"
+        "support_of_timeout_event": {
+          "Chrome": "29",
+          "ChromeAndroid": "29",
+          "Edge": "",
+          "Firefox": "12",
+          "FirefoxAndroid": "14",
+          "Opera": "16",
+          "Safari": "7",
+          "SafariIOS": "7"
+        }
       },
       "doc": "The <strong><code>timeout</code></strong> event is fired when progression is terminated due to preset time expiring."
     },
@@ -4041,7 +4030,7 @@
       "baseline": {
         "level": "NONE"
       },
-      "doc": "The <strong><code>wheel</code></strong> event fires when the user rotates a wheel button on a pointing device (typically a mouse). It is also fired for related devices that simulate wheel actions, such as trackpads and mouse balls.\nThis event replaces the non-standard deprecated <a href=\"$MDN_URL$/Web/API/Element/mousewheel_event\" ><code>mousewheel</code></a> event.\nDon't confuse the <code>wheel</code> event with the <a href=\"$MDN_URL$/Web/API/Element/scroll_event\" ><code>scroll</code></a> event:\nTherefore, do not rely on the <code>wheel</code> event's <code>delta*</code> properties to get the scrolling direction. Instead, detect value changes of <a href=\"$MDN_URL$/Web/API/Element/scrollLeft\" ><code>scrollLeft</code></a> and <a href=\"$MDN_URL$/Web/API/Element/scrollTop\" ><code>scrollTop</code></a> of the target in the <code>scroll</code> event.\nThe <code>wheel</code> event is cancelable. If the event is canceled, no scrolling or zooming is performed. This may cause performance issues as the browser has to wait for every wheel event to be processed before actually scrolling the content. You can avoid this by setting <code>passive: true</code> when calling <a href=\"$MDN_URL$/Web/API/EventTarget/addEventListener\" ><code>addEventListener()</code></a>, which may cause the browser to generate non-cancelable <code>wheel</code> events."
+      "doc": "The <strong><code>wheel</code></strong> event fires when the user rotates a wheel button on a pointing device (typically a mouse). It is also fired for related devices that simulate wheel actions, such as trackpads and mouse balls.\nThis event replaces the non-standard deprecated <a href=\"$MDN_URL$/Web/API/Element/mousewheel_event\" ><code>mousewheel</code></a> event.\nDon't confuse the <code>wheel</code> event with the <a href=\"$MDN_URL$/Web/API/Element/scroll_event\" ><code>scroll</code></a> event:\nTherefore, do not rely on the <code>wheel</code> event's <code>delta*</code> properties to get the scrolling direction. Instead, detect value changes of <a href=\"$MDN_URL$/Web/API/Element/scrollLeft\" ><code>scrollLeft</code></a> and <a href=\"$MDN_URL$/Web/API/Element/scrollTop\" ><code>scrollTop</code></a> of the target in the <code>scroll</code> event.\nThe <code>wheel</code> event is cancelable. In some browsers, only the first <code>wheel</code> event in a sequence is cancelable, and later events are non-cancelable. If the event is canceled, no scrolling or zooming is performed. This may cause performance issues as the browser has to wait for every wheel event to be processed before actually scrolling the content. You can avoid this by setting <code>passive: true</code> when calling <a href=\"$MDN_URL$/Web/API/EventTarget/addEventListener\" ><code>addEventListener()</code></a>, which may cause the browser to generate non-cancelable <code>wheel</code> events."
     }
   }
 }
