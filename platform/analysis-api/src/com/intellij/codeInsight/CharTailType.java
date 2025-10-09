@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInsight;
 
 import com.intellij.codeInsight.completion.InsertionContext;
@@ -29,7 +29,7 @@ public class CharTailType extends TailType {
   }
 
   @Override
-  public int processTail(final Editor editor, final int tailOffset) {
+  public int processTail(final @NotNull Editor editor, final int tailOffset) {
     return insertChar(editor, tailOffset, myChar, myOverwrite);
   }
 

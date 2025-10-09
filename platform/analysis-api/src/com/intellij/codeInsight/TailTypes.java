@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInsight;
 
 import com.intellij.codeInsight.completion.InsertionContext;
@@ -12,7 +12,7 @@ public final class TailTypes {
 
   private static final TailType UNKNOWN = new TailType() {
     @Override
-    public int processTail(final Editor editor, final int tailOffset) {
+    public int processTail(final @NotNull Editor editor, final int tailOffset) {
       return tailOffset;
     }
 
@@ -24,7 +24,7 @@ public final class TailTypes {
 
   private static final TailType NONE = new TailType() {
     @Override
-    public int processTail(final Editor editor, final int tailOffset) {
+    public int processTail(final @NotNull Editor editor, final int tailOffset) {
       return tailOffset;
     }
 
@@ -68,7 +68,7 @@ public final class TailTypes {
 
   private static final TailType COND_EXPR_COLON = new TailType() {
     @Override
-    public int processTail(final Editor editor, final int tailOffset) {
+    public int processTail(final @NotNull Editor editor, final int tailOffset) {
       Document document = editor.getDocument();
       int textLength = document.getTextLength();
       CharSequence chars = document.getCharsSequence();

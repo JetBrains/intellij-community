@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInsight;
 
 import com.intellij.codeInsight.completion.InsertionContext;
@@ -50,7 +50,7 @@ public final class JavaTailTypes {
     }
 
     @Override
-    public int processTail(final Editor editor, int tailOffset) {
+    public int processTail(final @NotNull Editor editor, int tailOffset) {
       return insertChar(editor, super.processTail(editor, tailOffset), ';');
     }
   };
@@ -124,7 +124,7 @@ public final class JavaTailTypes {
   private static final String ARROW = " -> ";
   public static final TailType CASE_ARROW = new TailType() {
     @Override
-    public int processTail(Editor editor, int tailOffset) {
+    public int processTail(@NotNull Editor editor, int tailOffset) {
       Document document = editor.getDocument();
       document.insertString(tailOffset, ARROW);
       return moveCaret(editor, tailOffset, ARROW.length());
