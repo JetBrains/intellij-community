@@ -18,7 +18,6 @@ import com.intellij.psi.PsiElement
 import com.intellij.psi.PsiReference
 import com.intellij.psi.util.PsiTreeUtil
 import com.intellij.psi.util.QualifiedName
-import com.intellij.psi.util.parentOfType
 import com.intellij.util.containers.ContainerUtil
 import com.jetbrains.python.PyPsiBundle
 import com.jetbrains.python.PyPsiPackageUtil
@@ -35,8 +34,7 @@ import com.jetbrains.python.packaging.PyPackageUtil
 import com.jetbrains.python.packaging.management.PythonPackageManager
 import com.jetbrains.python.packaging.management.isNotInstalledAndCanBeInstalled
 import com.jetbrains.python.psi.*
-import com.jetbrains.python.psi.impl.PyFromImportStatementImpl
-import com.jetbrains.python.psi.impl.PyImportElementImpl
+import com.jetbrains.python.psi.impl.references.PyFromImportNameReference
 import com.jetbrains.python.psi.impl.references.PyImportReference
 import com.jetbrains.python.psi.types.TypeEvalContext
 import com.jetbrains.python.sdk.legacy.PythonSdkUtil
@@ -71,17 +69,10 @@ class PyUnresolvedReferencesInspection : PyUnresolvedReferencesInspectionBase() 
       reference: PsiReference,
       refName: String,
     ): List<LocalQuickFix> {
-      if (reference !is PyImportReference) {
+      // Suggest installing "name" only for `import name` and `from name import foo`, 
+      // not for `from pkg import name`.
+      if (reference !is PyImportReference || reference is PyFromImportNameReference) {
         return emptyList()
-      }
-
-      //Ignore references in the second part of the 'from ... import ...' expression
-      val fromImport = node.parentOfType<PyFromImportStatementImpl>()
-      if (fromImport != null) {
-        val importSection = node.parentOfType<PyImportElementImpl>()
-        if (importSection != null) {
-          return emptyList()
-        }
       }
 
       val qname = QualifiedName.fromDottedString(refName)
