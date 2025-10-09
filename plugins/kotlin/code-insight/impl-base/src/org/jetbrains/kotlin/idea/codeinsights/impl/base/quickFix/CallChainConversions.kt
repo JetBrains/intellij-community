@@ -118,6 +118,7 @@ object CallChainConversions {
     private val KOTLIN_COLLECTIONS_LIST_IS_EMPTY = FqName("kotlin.collections.List.isEmpty")
     private val KOTLIN_COLLECTIONS_LIST_OF = FqName("kotlin.collections.listOf")
     private val KOTLIN_COLLECTIONS_MAP = FqName("kotlin.collections.map")
+    private val KOTLIN_COLLECTIONS_MAP_INDEXED = FqName("kotlin.collections.mapIndexed")
     private val KOTLIN_COLLECTIONS_MAP_NOT_NULL = FqName("kotlin.collections.mapNotNull")
     private val KOTLIN_COLLECTIONS_MAX = FqName("kotlin.collections.max")
     private val KOTLIN_COLLECTIONS_MAX_OR_NULL = FqName("kotlin.collections.maxOrNull")
@@ -146,6 +147,7 @@ object CallChainConversions {
     private val KOTLIN_SEQUENCES_LAST = FqName("kotlin.sequences.last")
     private val KOTLIN_SEQUENCES_LAST_OR_NULL = FqName("kotlin.sequences.lastOrNull")
     private val KOTLIN_SEQUENCES_MAP = FqName("kotlin.sequences.map")
+    private val KOTLIN_SEQUENCES_MAP_INDEXED = FqName("kotlin.sequences.mapIndexed")
     private val KOTLIN_SEQUENCES_MAP_NOT_NULL = FqName("kotlin.sequences.mapNotNull")
     private val KOTLIN_SEQUENCES_MAX = FqName("kotlin.sequences.max")
     private val KOTLIN_SEQUENCES_MAX_OR_NULL = FqName("kotlin.sequences.maxOrNull")
@@ -171,6 +173,7 @@ object CallChainConversions {
     private val KOTLIN_TEXT_LAST = FqName("kotlin.text.last")
     private val KOTLIN_TEXT_LAST_OR_NULL = FqName("kotlin.text.lastOrNull")
     private val KOTLIN_TEXT_MAP = FqName("kotlin.text.map")
+    private val KOTLIN_TEXT_MAP_INDEXED = FqName("kotlin.text.mapIndexed")
     private val KOTLIN_TEXT_NONE = FqName("kotlin.text.none")
     private val KOTLIN_TEXT_SINGLE = FqName("kotlin.text.single")
     private val KOTLIN_TEXT_SINGLE_OR_NULL = FqName("kotlin.text.singleOrNull")
@@ -179,6 +182,7 @@ object CallChainConversions {
     const val FIRST: String = "first"
     const val FIRST_OR_NULL: String = "firstOrNull"
     const val FLAT_MAP: String = "flatMap"
+    const val FLAT_MAP_INDEXED: String = "flatMapIndexed"
     const val LAST: String = "last"
     const val LAST_OR_NULL: String = "lastOrNull"
     const val SINGLE: String = "single"
@@ -295,6 +299,7 @@ object CallChainConversions {
             ),
 
             CallChainConversion(KOTLIN_COLLECTIONS_MAP, KOTLIN_COLLECTIONS_FLATTEN, FLAT_MAP),
+            CallChainConversion(KOTLIN_COLLECTIONS_MAP_INDEXED, KOTLIN_COLLECTIONS_FLATTEN, FLAT_MAP_INDEXED),
         ).flatMap {
             it.withAdditionalMinMaxConversions()
         }
@@ -382,6 +387,7 @@ object CallChainConversions {
             ),
 
             CallChainConversion(KOTLIN_SEQUENCES_MAP, KOTLIN_SEQUENCES_FLATTEN, FLAT_MAP),
+            CallChainConversion(KOTLIN_SEQUENCES_MAP_INDEXED, KOTLIN_SEQUENCES_FLATTEN, FLAT_MAP_INDEXED),
         ).flatMap {
             it.withAdditionalMinMaxConversions()
         }
@@ -408,6 +414,7 @@ object CallChainConversions {
             CallChainConversion(KOTLIN_TEXT_FILTER, KOTLIN_TEXT_NONE, NONE),
 
             CallChainConversion(KOTLIN_TEXT_MAP, KOTLIN_COLLECTIONS_FLATTEN, FLAT_MAP),
+            CallChainConversion(KOTLIN_TEXT_MAP_INDEXED, KOTLIN_COLLECTIONS_FLATTEN, FLAT_MAP_INDEXED),
         )
     }
 

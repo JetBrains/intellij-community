@@ -1953,6 +1953,11 @@ public abstract class LocalInspectionTestGenerated extends AbstractLocalInspecti
                         runTest("testData/inspectionsLocal/collections/simplifiableCallChain/collectionsOperations/mapFlattenWithReference.kt");
                     }
 
+                    @TestMetadata("mapIndexedFlatten.kt")
+                    public void testMapIndexedFlatten() throws Exception {
+                        runTest("testData/inspectionsLocal/collections/simplifiableCallChain/collectionsOperations/mapIndexedFlatten.kt");
+                    }
+
                     @TestMetadata("mapMax.kt")
                     public void testMapMax() throws Exception {
                         runTest("testData/inspectionsLocal/collections/simplifiableCallChain/collectionsOperations/mapMax.kt");
@@ -2599,6 +2604,11 @@ public abstract class LocalInspectionTestGenerated extends AbstractLocalInspecti
                         runTest("testData/inspectionsLocal/collections/simplifiableCallChain/sequencesOperations/mapFlattenWithReference.kt");
                     }
 
+                    @TestMetadata("mapIndexedFlatten.kt")
+                    public void testMapIndexedFlatten() throws Exception {
+                        runTest("testData/inspectionsLocal/collections/simplifiableCallChain/sequencesOperations/mapIndexedFlatten.kt");
+                    }
+
                     @TestMetadata("mapMax.kt")
                     public void testMapMax() throws Exception {
                         runTest("testData/inspectionsLocal/collections/simplifiableCallChain/sequencesOperations/mapMax.kt");
@@ -2967,6 +2977,11 @@ public abstract class LocalInspectionTestGenerated extends AbstractLocalInspecti
                 @TestMetadata("filterTextSingleOrNull.kt")
                 public void testFilterTextSingleOrNull() throws Exception {
                     runTest("testData/inspectionsLocal/collections/simplifiableCallChain/text/filterTextSingleOrNull.kt");
+                }
+
+                @TestMetadata("mapIndexedTextFlatten.kt")
+                public void testMapIndexedTextFlatten() throws Exception {
+                    runTest("testData/inspectionsLocal/collections/simplifiableCallChain/text/mapIndexedTextFlatten.kt");
                 }
 
                 @TestMetadata("mapTextFlatten.kt")
