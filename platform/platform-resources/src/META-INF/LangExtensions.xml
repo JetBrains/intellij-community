@@ -612,7 +612,7 @@
     <fileBasedIndex implementation="com.intellij.psi.impl.include.FileIncludeIndex"/>
 
     <syntaxHighlighter factoryClass="com.intellij.openapi.fileTypes.LanguageFileTypeHighlighterProvider"/>
-    <structureViewBuilder factoryClass="com.intellij.ide.highlighter.LanguageFileTypeStructureViewBuilderProvider"/>
+    <structureViewBuilder factoryClass="com.intellij.ide.highlighter.LanguageStructureViewBuilderProvider"/>
     <registryKey key="logical.structure.enabled"
                  description="Show logical structure in Structure View"
                  defaultValue="true"
