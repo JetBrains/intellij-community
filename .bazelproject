@@ -1,0 +1,8 @@
+# Read more about project view files here:
+# https://code.jetbrains.team/p/ij/repositories/ultimate/files/master/plugins/bazel/commons/src/main/kotlin/org/jetbrains/bazel/projectview/README.md
+
+targets:
+  //...
+  @rules_jvm//...
+
+use_jetbrains_test_runner: true

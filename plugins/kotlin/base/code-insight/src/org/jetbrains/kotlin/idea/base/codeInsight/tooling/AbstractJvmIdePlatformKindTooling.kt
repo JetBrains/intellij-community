@@ -9,6 +9,7 @@ import com.intellij.psi.util.CachedValue
 import com.intellij.psi.util.CachedValueProvider
 import com.intellij.psi.util.CachedValuesManager
 import com.intellij.testIntegration.TestFramework
+import org.jetbrains.kotlin.idea.base.psi.KotlinPsiHeuristics
 import org.jetbrains.kotlin.idea.highlighter.KotlinTestRunLineMarkerContributor
 import org.jetbrains.kotlin.idea.projectModel.KotlinPlatform
 import org.jetbrains.kotlin.idea.testIntegration.framework.KotlinPsiBasedTestFramework
@@ -69,20 +70,21 @@ abstract class AbstractJvmIdePlatformKindTooling : IdePlatformKindTooling() {
 
     private fun calculateUrls(declaration: KtNamedDeclaration): List<String>? {
         val qualifiedName = when (declaration) {
-            is KtClassOrObject -> declaration.fqName?.asString()
-            is KtNamedFunction -> declaration.containingClassOrObject?.fqName?.asString()
+            is KtClassOrObject -> declaration.fqName
+            is KtNamedFunction -> declaration.containingClassOrObject?.fqName
             else -> null
         } ?: return null
+        val jvmQualifiedName = KotlinPsiHeuristics.getJvmName(qualifiedName)
 
         return when (declaration) {
-            is KtClassOrObject -> listOf("$URL_SUITE_PREFIX$qualifiedName")
+            is KtClassOrObject -> listOf("$URL_SUITE_PREFIX$jvmQualifiedName")
             is KtNamedFunction -> {
                 val urlList = listOf(
-                    "$URL_TEST_PREFIX$qualifiedName/${declaration.name}",
-                    "$URL_TEST_PREFIX$qualifiedName.${declaration.name}"
+                    "$URL_TEST_PREFIX$jvmQualifiedName/${declaration.name}",
+                    "$URL_TEST_PREFIX$jvmQualifiedName.${declaration.name}"
                 )
                 if (RunConfigurationUtils.isGradleRunConfiguration(declaration)) {
-                    urlList + "$URL_SUITE_PREFIX$qualifiedName/${declaration.name}"
+                    urlList + "$URL_SUITE_PREFIX$jvmQualifiedName/${declaration.name}"
                 } else {
                     urlList
                 }
