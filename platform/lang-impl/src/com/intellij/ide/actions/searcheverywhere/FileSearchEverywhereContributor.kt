@@ -44,18 +44,7 @@ open class FileSearchEverywhereContributor(event: AnActionEvent, contributorModu
   private val filter: PersistentSearchEverywhereContributorFilter<FileTypeRef>
 
   @Internal
-  override val navigationHandler: SearchEverywhereNavigationHandler = object : SearchEverywhereNavigationHandler(project) {
-    override suspend fun createSourceNavigationRequest(project: Project, element: PsiElement, file: VirtualFile, searchText: String, offset: Int): NavigationRequest? {
-      val navigationRequests = serviceAsync<NavigationRequests>()
-      return readAction {
-        navigationRequests.sourceNavigationRequest(project = project, file = file, offset = -1, elementRange = null)
-      }
-    }
-
-    override suspend fun triggerLineOrColumnFeatureUsed(extendedNavigatable: Navigatable) {
-      serviceAsync<FeatureUsageTracker>().triggerFeatureUsed("navigation.goto.file.line")
-    }
-  }
+  override val navigationHandler: SearchEverywhereNavigationHandler = FileSearchEverywhereNavigationContributionHandler(project)
 
   constructor(event: AnActionEvent) : this(event, null)
 
@@ -153,5 +142,19 @@ open class FileSearchEverywhereContributor(event: AnActionEvent, contributorModu
 class FileSearchEverywhereContributorFactory : SearchEverywhereContributorFactory<Any?> {
   override fun createContributor(initEvent: AnActionEvent): SearchEverywhereContributor<Any?> {
     return PSIPresentationBgRendererWrapper.wrapIfNecessary(FileSearchEverywhereContributor(initEvent))
+  }
+}
+
+@Internal
+class FileSearchEverywhereNavigationContributionHandler(project: Project): SearchEverywhereNavigationHandler(project) {
+  override suspend fun createSourceNavigationRequest(project: Project, element: PsiElement, file: VirtualFile, searchText: String, offset: Int): NavigationRequest? {
+    val navigationRequests = serviceAsync<NavigationRequests>()
+    return readAction {
+      navigationRequests.sourceNavigationRequest(project = project, file = file, offset = -1, elementRange = null)
+    }
+  }
+
+  override suspend fun triggerLineOrColumnFeatureUsed(extendedNavigatable: Navigatable) {
+    serviceAsync<FeatureUsageTracker>().triggerFeatureUsed("navigation.goto.file.line")
   }
 }
