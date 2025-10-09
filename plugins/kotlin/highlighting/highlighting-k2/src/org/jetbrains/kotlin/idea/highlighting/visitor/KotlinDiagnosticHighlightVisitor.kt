@@ -315,10 +315,10 @@ class KotlinDiagnosticHighlightVisitor : HighlightVisitor, HighlightRangeExtensi
         return application.isInternal || application.isUnitTestMode
     }
 
-
-    private fun KaSession.getHighlightInfoType(psi: KaDiagnosticWithPsi<*>): HighlightInfoType = when {
+    private fun getHighlightInfoType(psi: KaDiagnosticWithPsi<*>): HighlightInfoType = when {
         isUnresolvedDiagnostic(psi) -> HighlightInfoType.WRONG_REF
         isDeprecatedDiagnostic(psi) -> HighlightInfoType.DEPRECATED
+        isUnusedElementDiagnostic(psi) -> HighlightInfoType.UNUSED_SYMBOL
         else -> when (psi.severity) {
             KaSeverity.INFO -> HighlightInfoType.INFORMATION
             KaSeverity.ERROR -> HighlightInfoType.ERROR
@@ -326,7 +326,7 @@ class KotlinDiagnosticHighlightVisitor : HighlightVisitor, HighlightRangeExtensi
         }
     }
 
-    private fun KaSession.isUnresolvedDiagnostic(psi: KaDiagnosticWithPsi<*>) = when (psi) {
+    private fun isUnresolvedDiagnostic(psi: KaDiagnosticWithPsi<*>) = when (psi) {
         is KaFirDiagnostic.UnresolvedReference -> true
         is KaFirDiagnostic.UnresolvedLabel -> true
         is KaFirDiagnostic.UnresolvedReferenceWrongReceiver -> true
@@ -335,8 +335,15 @@ class KotlinDiagnosticHighlightVisitor : HighlightVisitor, HighlightRangeExtensi
         else -> false
     }
 
-    private fun KaSession.isDeprecatedDiagnostic(psi: KaDiagnosticWithPsi<*>) = when (psi) {
+    private fun isDeprecatedDiagnostic(psi: KaDiagnosticWithPsi<*>) = when (psi) {
         is KaFirDiagnostic.Deprecation -> true
+        else -> false
+    }
+
+    private fun isUnusedElementDiagnostic(psi: KaDiagnosticWithPsi<*>) = when (psi) {
+        is KaFirDiagnostic.UselessCast -> true
+        is KaFirDiagnostic.UselessElvis -> true
+        is KaFirDiagnostic.UselessIsCheck -> true
         else -> false
     }
 

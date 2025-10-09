@@ -59,6 +59,11 @@ public abstract class CommonNativeJvmK2HighlightingMetaInfoTestGenerated extends
         public void testMppIsNotEnabled() throws Exception {
             runTest("../../idea/tests/testData/highlighterMetaInfo/diagnostics/mppIsNotEnabled.kt");
         }
+
+        @TestMetadata("uselessCast.kt")
+        public void testUselessCast() throws Exception {
+            runTest("../../idea/tests/testData/highlighterMetaInfo/diagnostics/uselessCast.kt");
+        }
     }
 
     @RunWith(JUnit3RunnerWithInners.class)

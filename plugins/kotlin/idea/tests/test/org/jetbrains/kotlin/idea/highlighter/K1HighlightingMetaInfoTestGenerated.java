@@ -52,6 +52,11 @@ public abstract class K1HighlightingMetaInfoTestGenerated extends AbstractK1High
         public void testMppIsNotEnabled() throws Exception {
             runTest("testData/highlighterMetaInfo/diagnostics/mppIsNotEnabled.kt");
         }
+
+        @TestMetadata("uselessCast.kt")
+        public void testUselessCast() throws Exception {
+            runTest("testData/highlighterMetaInfo/diagnostics/uselessCast.kt");
+        }
     }
 
     @RunWith(JUnit3RunnerWithInners.class)
