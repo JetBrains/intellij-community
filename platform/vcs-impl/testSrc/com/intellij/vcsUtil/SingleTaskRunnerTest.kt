@@ -3,6 +3,7 @@ package com.intellij.vcsUtil
 
 import com.intellij.platform.util.coroutines.childScope
 import com.intellij.platform.vcs.impl.shared.SingleTaskRunner
+import com.intellij.testFramework.LoggedErrorProcessor
 import com.intellij.testFramework.common.timeoutRunBlocking
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.TimeoutCancellationException
@@ -82,6 +83,31 @@ internal class SingleTaskRunnerTest {
       awaitNotBusy()
       assertEquals(2, counter)
     }
+  }
+
+  @Test
+  fun `test thrown exception doesn't prevent further execution`() =
+    LoggedErrorProcessor.executeWith<IllegalStateException>(allowLoggedError()) {
+      timeoutRunBlocking {
+        var counter = 0
+        withRunner({
+                     counter++
+                     error("Test exception")
+                   }) {
+          start()
+          request()
+          awaitNotBusy()
+          assertEquals(1, counter)
+          request()
+          awaitNotBusy()
+          assertEquals(2, counter)
+        }
+      }
+    }
+
+  private fun allowLoggedError() = object : LoggedErrorProcessor() {
+    override fun processError(category: String, message: String, details: Array<out String>, t: Throwable?): Set<Action> =
+      if (message.contains("Task failed")) Action.NONE else Action.ALL
   }
 
   private inline fun CoroutineScope.withRunner(

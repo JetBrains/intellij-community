@@ -2,6 +2,7 @@
 package com.intellij.platform.vcs.impl.shared
 
 import com.intellij.openapi.diagnostic.debug
+import com.intellij.openapi.diagnostic.getOrHandleException
 import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.progress.checkCanceled
 import kotlinx.coroutines.*
@@ -37,7 +38,9 @@ class SingleTaskRunner(
         busy.value = true
         requested.value = false
         checkCanceled()
-        task()
+        runCatching {
+          task()
+        }.getOrHandleException { LOG.error("Task failed", it) }
         busy.value = false
       }
     }
