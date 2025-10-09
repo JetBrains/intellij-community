@@ -1450,6 +1450,8 @@
                  description="Shows recent files or code locations last visited timestamps"/>
     <registryKey key="project.view.show.vfs.cached.children.count.limit" defaultValue="0"
                  description="Shows the number of cached children in VFS"/>
+    <registryKey key="project.view.show.file.indexability" defaultValue="false"
+                 description="Shows if a file is indexable"/>
 
     <editorFactoryDocumentListener implementation="com.intellij.openapi.command.impl.DocumentUndoProvider"/>
 

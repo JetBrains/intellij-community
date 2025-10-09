@@ -152,6 +152,7 @@ public abstract class AbstractPsiBasedNode<Value> extends ProjectViewNode<Value>
       ProjectViewInplaceCommentProducerImplKt.appendInplaceComments(this, appender);
     }
     ProjectViewInplaceCommentProducerImplKt.appendVfsInfo(this, appender);
+    ProjectViewInplaceCommentProducerImplKt.appendIndexabilityInfo(this, appender);
   }
 
   // Should be called in atomic action

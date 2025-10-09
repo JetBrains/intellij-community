@@ -1869,7 +1869,7 @@
     </group>
   </actions>
   <applicationListeners>
-    <listener class="com.intellij.ide.projectView.impl.ProjectViewVfsInfoListener"
-              topic="com.intellij.openapi.util.registry.RegistryValueListener"/>
+    <listener class="com.intellij.ide.projectView.impl.ProjectViewVfsInfoListener" topic="com.intellij.openapi.util.registry.RegistryValueListener"/>
+    <listener class="com.intellij.ide.projectView.impl.ProjectViewIndexableInfoListener" topic="com.intellij.openapi.util.registry.RegistryValueListener"/>
   </applicationListeners>
 </idea-plugin>

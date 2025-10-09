@@ -132,6 +132,9 @@ enum class WorkspaceFileKind {
   /**
    * Describe files that are in the workspace but should not be indexed. These files are usually in a directory that the user has opened,
    * but before the project is imported by any build system. They can be edited.
+   *
+   * There is a registry flag 'project.view.show.file.indexability' that displays 'I' next to a file in the Project View if the file is indexable
+   * and 'NI' if it's non-indexable.
    */
   CONTENT_NON_INDEXABLE,
 
