@@ -11,11 +11,15 @@ jvm_resources(
 java_library(
   name = "compose-foundation-desktop",
   visibility = ["//visibility:public"],
-  exports = ["@lib//:libraries-compose-foundation-desktop-compose-foundation-desktop"],
+  exports = [
+    "@lib//:libraries-compose-foundation-desktop-compose-foundation-desktop",
+    "@lib//:libraries-compose-foundation-desktop-androidx-compose-runtime-desktop",
+  ],
   runtime_deps = [
     ":compose-foundation-desktop_resources",
     "//libraries/skiko",
     "@lib//:libraries-compose-foundation-desktop-compose-foundation-desktop",
+    "@lib//:libraries-compose-foundation-desktop-androidx-compose-runtime-desktop",
   ]
 )
 ### auto-generated section `build intellij.libraries.compose.foundation.desktop` end

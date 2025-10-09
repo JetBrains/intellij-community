@@ -5,7 +5,6 @@ load("@rules_jvm//:jvm.bzl", "jvm_resources")
 
 create_kotlinc_options(
   name = "custom",
-  context_receivers = True,
   opt_in = [
     "androidx.compose.ui.ExperimentalComposeUiApi",
     "androidx.compose.foundation.ExperimentalFoundationApi",
