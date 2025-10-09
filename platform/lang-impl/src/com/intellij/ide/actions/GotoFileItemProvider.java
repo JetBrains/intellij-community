@@ -334,7 +334,7 @@ public class GotoFileItemProvider extends DefaultChooseByNameItemProvider {
     }
   }
 
-  public static @NotNull String getSanitizedPattern(@NotNull String pattern, @NotNull GotoFileModel model) {
+  public static @NotNull String getSanitizedPattern(@NotNull String pattern, @Nullable GotoFileModel model) {
     return removeSlashes(StringUtil.replace(ChooseByNamePopup.getTransformedPattern(pattern, model), "\\", "/"));
   }
 

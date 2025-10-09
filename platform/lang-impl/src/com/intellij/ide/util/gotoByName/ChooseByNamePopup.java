@@ -362,7 +362,7 @@ public class ChooseByNamePopup extends ChooseByNameBase implements ChooseByNameP
     return getTransformedPattern(pattern, model);
   }
 
-  public static @NotNull String getTransformedPattern(@NotNull String pattern, @NotNull ChooseByNameModel model) {
+  public static @NotNull String getTransformedPattern(@NotNull String pattern, @Nullable ChooseByNameModel model) {
     String rawPattern = pattern;
 
     Pattern regex = null;
