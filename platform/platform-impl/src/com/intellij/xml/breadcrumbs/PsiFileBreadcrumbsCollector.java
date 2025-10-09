@@ -56,6 +56,14 @@ public final class PsiFileBreadcrumbsCollector extends FileBreadcrumbsCollector 
                               @NotNull Editor editor,
                               @NotNull Disposable disposable,
                               @NotNull Runnable changesHandler) {
+    watchForChanges(myProject, file, disposable, changesHandler);
+  }
+
+  @ApiStatus.Internal
+  public static void watchForChanges(@NotNull Project myProject,
+                                     @NotNull VirtualFile file,
+                                     @NotNull Disposable disposable,
+                                     @NotNull Runnable changesHandler) {
     PomManager.getModel(myProject).addModelListener(
       new PomModelListener() {
         @Override
