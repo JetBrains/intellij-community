@@ -5,10 +5,11 @@ import com.intellij.psi.PsiParameter
 import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.kotlin.psi.KtTypeReference
 import org.jetbrains.uast.UElement
+import org.jetbrains.uast.UReceiverParameter
 
 @ApiStatus.Internal
 class KotlinReceiverUParameter(
     psi: PsiParameter,
     private val receiver: KtTypeReference,
     givenParent: UElement?
-) : KotlinUParameter(psi, receiver, givenParent)
+) : KotlinUParameter(psi, receiver, givenParent), UReceiverParameter

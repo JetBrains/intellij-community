@@ -134,9 +134,6 @@
     <applicationService serviceImplementation="org.jetbrains.kotlin.idea.editor.KotlinEditorOptions"/>
     <applicationActivity implementation="org.jetbrains.kotlin.idea.macros.ApplicationWideKotlinBundledPathMacroCleaner"/>
 
-    <applicationService serviceInterface="com.siyeh.ig.dependency.KotlinExtensionMemberChecker"
-                        serviceImplementation="org.jetbrains.uast.kotlin.internal.KotlinExtensionMemberCheckerImpl"/>
-
     <projectService
             serviceInterface="org.jetbrains.kotlin.idea.facet.KotlinFacetEditorProviderService"
             serviceImplementation="org.jetbrains.kotlin.idea.base.compilerPreferences.KotlinFacetEditorProviderServiceImpl"/>

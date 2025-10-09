@@ -34,6 +34,5 @@
     <orderEntry type="module" module-name="kotlin.refactorings.common" />
     <orderEntry type="module" module-name="intellij.platform.lang.impl" />
     <orderEntry type="module" module-name="intellij.platform.uast.ide" />
-    <orderEntry type="module" module-name="intellij.java.impl" />
   </component>
 </module>
