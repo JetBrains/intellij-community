@@ -1,4 +1,4 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInsight.completion;
 
 import com.intellij.codeInsight.lookup.LookupElementPresentation;
@@ -22,18 +22,23 @@ public class MemberLookupHelper {
   private final @Nullable PsiClass myContainingClass;
   private boolean myShouldImport;
 
-  public MemberLookupHelper(List<? extends PsiMethod> overloads, PsiClass containingClass, boolean shouldImport) {
-    this(overloads.get(0), containingClass, shouldImport, true);
+  public MemberLookupHelper(@NotNull List<? extends PsiMethod> overloads,
+                            @Nullable PsiClass containingClass,
+                            boolean shouldImport) {
+    this(overloads.getFirst(), containingClass, shouldImport, true);
   }
 
-  public MemberLookupHelper(PsiMember member, @Nullable PsiClass containingClass, boolean shouldImport, final boolean mergedOverloads) {
+  public MemberLookupHelper(@NotNull PsiMember member,
+                            @Nullable PsiClass containingClass,
+                            boolean shouldImport,
+                            final boolean mergedOverloads) {
     myMember = member;
     myContainingClass = containingClass;
     myShouldImport = shouldImport;
     myMergedOverloads = mergedOverloads;
   }
 
-  public PsiMember getMember() {
+  public @NotNull PsiMember getMember() {
     return myMember;
   }
 
@@ -49,7 +54,10 @@ public class MemberLookupHelper {
     return myShouldImport;
   }
 
-  public void renderElement(LookupElementPresentation presentation, boolean showClass, boolean showPackage, PsiSubstitutor substitutor) {
+  public void renderElement(@NotNull LookupElementPresentation presentation,
+                            boolean showClass,
+                            boolean showPackage,
+                            @NotNull PsiSubstitutor substitutor) {
     final String className = myContainingClass == null ? "???" : myContainingClass.getName();
 
     final String memberName = myMember.getName();
