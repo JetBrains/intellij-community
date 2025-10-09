@@ -280,7 +280,9 @@
                     dynamic="true"/>
 
     <extensionPoint name="vcs.commitMessageInspection"
-                    interface="com.intellij.vcs.commit.message.BaseCommitMessageInspection"
-                    dynamic="true"/>
+                    beanClass="com.intellij.vcs.commit.message.CommitMessageInspectionEP"
+                    dynamic="true">
+      <with attribute="implementation" implements="com.intellij.vcs.commit.message.BaseCommitMessageInspection"/>
+    </extensionPoint>
   </extensionPoints>
 </idea-plugin>
