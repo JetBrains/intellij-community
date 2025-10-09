@@ -2,6 +2,7 @@
 package com.intellij.ide.projectView.impl
 
 import com.intellij.ide.projectView.ProjectView
+import com.intellij.openapi.application.EDT
 import com.intellij.openapi.components.Service
 import com.intellij.openapi.components.service
 import com.intellij.openapi.project.Project
@@ -9,11 +10,8 @@ import com.intellij.openapi.project.ProjectManager
 import com.intellij.openapi.util.registry.Registry
 import com.intellij.openapi.util.registry.RegistryValue
 import com.intellij.openapi.util.registry.RegistryValueListener
-import kotlinx.coroutines.CoroutineName
-import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.*
 import kotlinx.coroutines.channels.Channel
-import kotlinx.coroutines.delay
-import kotlinx.coroutines.launch
 import org.jetbrains.annotations.ApiStatus
 import kotlin.time.Duration.Companion.seconds
 
@@ -35,7 +33,9 @@ internal class ProjectViewVfsInfoUpdater(val project: Project, val scope: Corout
         if (Registry.intValue("project.view.show.vfs.cached.children.count.limit") <= 0) {
           continue
         }
-        ProjectView.getInstance(project)?.currentProjectViewPane?.updateFromRoot(true)
+        withContext(Dispatchers.EDT) {
+          ProjectView.getInstance(project)?.currentProjectViewPane?.updateFromRoot(true)
+        }
       }
     }
   }
@@ -43,7 +43,7 @@ internal class ProjectViewVfsInfoUpdater(val project: Project, val scope: Corout
 
 internal class ProjectViewVfsInfoListener : RegistryValueListener {
   override fun afterValueChanged(value: RegistryValue) {
-    if (value.key == "project.view.show.vfs.cached.children.count.limit" && value.asInteger() > 0) {
+    if (value.key == "project.view.show.vfs.cached.children.count.limit") {
       for (project in ProjectManager.getInstance().openProjects) {
         project.service<ProjectViewVfsInfoUpdater>().requests.trySend(Unit)
       }
