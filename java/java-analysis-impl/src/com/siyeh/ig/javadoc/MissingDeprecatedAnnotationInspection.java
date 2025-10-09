@@ -141,7 +141,7 @@ public final class MissingDeprecatedAnnotationInspection extends BaseInspection 
         int end = tag.getTextOffset() + tag.getTextLength();
         updater.select(TextRange.create(start, end));
       } else {
-        updater.moveCaretTo(sibling);
+        updater.moveCaretTo(tag.getTextOffset() + tag.getTextLength());
       }
     }
   }
