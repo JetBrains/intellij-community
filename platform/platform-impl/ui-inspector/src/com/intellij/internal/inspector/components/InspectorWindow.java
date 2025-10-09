@@ -203,17 +203,18 @@ public final class InspectorWindow extends JDialog implements Disposable {
       }
       InlineBanner banner = new InlineBanner(message, EditorNotificationPanel.Status.Error);
       topPanel.add(banner);
-      // Add a subtle, visible hint about navigation to help discovery without being intrusive
-      String altHoverHint = InternalActionsBundle.message("ui.inspector.hint.alt.hover.next");
-      // Show once by default; hide permanently after user closes it
-      String altHoverHintKey = "ui.inspector.hint.alt.hover.next.dismissed";
-      PropertiesComponent props = PropertiesComponent.getInstance();
-      if (!props.getBoolean(altHoverHintKey, false)) {
-        InlineBanner hintBanner = new InlineBanner(altHoverHint, EditorNotificationPanel.Status.Info)
-          .showCloseButton(true)
-          .setCloseAction(() -> props.setValue(altHoverHintKey, true));
-        topPanel.add(hintBanner);
-      }
+    }
+
+    // Add a subtle, visible hint about navigation to help discovery without being intrusive
+    String altHoverHint = InternalActionsBundle.message("ui.inspector.hint.alt.hover.next");
+    // Show once by default; hide permanently after user closes it
+    String altHoverHintKey = "ui.inspector.hint.alt.hover.next.dismissed";
+    PropertiesComponent props = PropertiesComponent.getInstance();
+    if (!props.getBoolean(altHoverHintKey, false)) {
+      InlineBanner hintBanner = new InlineBanner(altHoverHint, EditorNotificationPanel.Status.Info)
+        .showCloseButton(true)
+        .setCloseAction(() -> props.setValue(altHoverHintKey, true));
+      topPanel.add(hintBanner);
     }
 
     topPanel.add(navBarScroll);
