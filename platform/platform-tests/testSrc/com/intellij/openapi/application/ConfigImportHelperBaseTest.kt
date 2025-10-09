@@ -7,6 +7,8 @@ import com.intellij.testFramework.fixtures.BareTestFixtureTestCase
 import com.intellij.testFramework.rules.InMemoryFsRule
 import com.intellij.util.SystemProperties
 import com.intellij.util.system.OS
+import org.junit.Assume.assumeTrue
+import org.junit.Before
 import org.junit.Rule
 import org.junit.rules.ExternalResource
 import java.nio.file.Files
@@ -19,6 +21,13 @@ import java.util.function.Function
 abstract class ConfigImportHelperBaseTest : BareTestFixtureTestCase() {
   @JvmField @Rule val memoryFs = InMemoryFsRule(OS.CURRENT)
   @JvmField @Rule val configImportMarketplaceStub = ConfigImportMarketplaceStub()
+
+  @Before fun assertEnvironment() {
+    assumeTrue(
+      "'${ConfigImportHelper.IMPORT_FROM_ENV_VAR}' might affect tests. Please quit the IDE and open it again (don't use File | Restart)",
+      System.getenv(ConfigImportHelper.IMPORT_FROM_ENV_VAR) == null
+    )
+  }
 
   protected fun newTempDir(name: String): Path =
     Files.createDirectories(memoryFs.fs.getPath("_temp", name).toAbsolutePath())
