@@ -35,9 +35,6 @@ import static com.intellij.codeInspection.options.OptPane.pane;
 public final class UnnecessaryFinalOnLocalVariableOrParameterInspection extends BaseInspection implements CleanupLocalInspectionTool {
 
   @SuppressWarnings("PublicField")
-  public boolean onlyWarnOnAbstractMethods = false;
-
-  @SuppressWarnings("PublicField")
   public boolean reportLocalVariables = true;
 
   @SuppressWarnings("PublicField")
@@ -45,6 +42,9 @@ public final class UnnecessaryFinalOnLocalVariableOrParameterInspection extends 
 
   @SuppressWarnings("PublicField")
   public boolean reportParameters = true;
+
+  @SuppressWarnings("PublicField")
+  public boolean onlyWarnOnAbstractMethods = false;
 
   @SuppressWarnings("PublicField")
   public boolean reportCatchParameters = true;
@@ -70,9 +70,10 @@ public final class UnnecessaryFinalOnLocalVariableOrParameterInspection extends 
       checkbox("reportLocalVariables", InspectionGadgetsBundle.message("unnecessary.final.report.local.variables.option")),
       checkbox("reportPatternVariables", InspectionGadgetsBundle.message("unnecessary.final.report.pattern.variables.option")),
       checkbox("reportParameters", InspectionGadgetsBundle.message("unnecessary.final.report.method.parameters.option"),
-               checkbox("onlyWarnOnAbstractMethods", InspectionGadgetsBundle.message("unnecessary.final.on.parameter.only.interface.option"))),
-      checkbox("reportForeachParameters", InspectionGadgetsBundle.message("unnecessary.final.report.foreach.parameters.option")),
-      checkbox("reportCatchParameters", InspectionGadgetsBundle.message("unnecessary.final.report.catch.parameters.option"))
+               checkbox("onlyWarnOnAbstractMethods",InspectionGadgetsBundle.message("unnecessary.final.on.parameter.only.interface.option"))
+      ),
+      checkbox("reportCatchParameters", InspectionGadgetsBundle.message("unnecessary.final.report.catch.parameters.option")),
+      checkbox("reportForeachParameters", InspectionGadgetsBundle.message("unnecessary.final.report.foreach.parameters.option"))
     );
   }
 

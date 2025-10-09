@@ -26,11 +26,11 @@ import static com.intellij.codeInspection.options.OptPane.pane;
 
 public class LocalCanBeFinal extends AbstractBaseJavaLocalInspectionTool implements CleanupLocalInspectionTool {
   public boolean REPORT_VARIABLES = true;
+  public boolean REPORT_PATTERN_VARIABLES = true;
   public boolean REPORT_PARAMETERS = true;
   public boolean REPORT_CATCH_PARAMETERS = true;
   public boolean REPORT_FOREACH_PARAMETERS = true;
   public boolean REPORT_IMPLICIT_FINALS = true;
-  public boolean REPORT_PATTERN_VARIABLES = true;
 
   private final LocalQuickFix myQuickFix;
   public static final @NonNls String SHORT_NAME = "LocalCanBeFinal";
@@ -415,10 +415,10 @@ public class LocalCanBeFinal extends AbstractBaseJavaLocalInspectionTool impleme
   public @NotNull OptPane getOptionsPane() {
     return pane(
       checkbox("REPORT_VARIABLES", JavaAnalysisBundle.message("inspection.local.can.be.final.option")),
+      checkbox("REPORT_PATTERN_VARIABLES", JavaAnalysisBundle.message("inspection.local.can.be.final.option5")),
       checkbox("REPORT_PARAMETERS", JavaAnalysisBundle.message("inspection.local.can.be.final.option1")),
       checkbox("REPORT_CATCH_PARAMETERS", JavaAnalysisBundle.message("inspection.local.can.be.final.option2")),
       checkbox("REPORT_FOREACH_PARAMETERS", JavaAnalysisBundle.message("inspection.local.can.be.final.option3")),
-      checkbox("REPORT_IMPLICIT_FINALS", JavaAnalysisBundle.message("inspection.local.can.be.final.option4")),
-      checkbox("REPORT_PATTERN_VARIABLES", JavaAnalysisBundle.message("inspection.local.can.be.final.option5")));
+      checkbox("REPORT_IMPLICIT_FINALS", JavaAnalysisBundle.message("inspection.local.can.be.final.option4")));
   }
 }
