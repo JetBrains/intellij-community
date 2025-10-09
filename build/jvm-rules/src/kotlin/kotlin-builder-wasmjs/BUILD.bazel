@@ -27,3 +27,12 @@ java_binary(
     visibility = ["//visibility:public"],
     runtime_deps = [":kotlin-builder-wasmjs-lib"],
 )
+
+string_list_flag(
+    name = "kotlin-builder-wasmjs-jvm_flags",
+    build_setting_default = get_jvm_flags([
+        "-Dkotlin.environment.keepalive=true",
+        "-XX:+HeapDumpOnOutOfMemoryError",
+    ]),
+    visibility = ["//visibility:public"],
+)

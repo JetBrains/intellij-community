@@ -62,11 +62,16 @@ kt_wasmjs_library = rule(
             providers = [[KtWasmJsInfo], [KtWasmJsInfo, _KtJvmInfo]],
         ),
         "_wasmjs_builder": attr.label(
-            default = "//src/kotlin/kotlin-builder-wasmjs:kotlin-builder-wasmjs",
-            executable = True,
-            #             allow_single_file = True,
-            cfg = "exec",
-            # cfg = scrubbed_host_platform_transition,
+            default = "//src/kotlin/kotlin-builder-wasmjs:kotlin-builder-wasmjs_deploy.jar",
+            allow_single_file = True,
+            cfg = scrubbed_host_platform_transition,
+        ),
+        "_wasmjs_builder_jvm_flags": attr.label(
+            default = "//:wasmjs-builder-jvm_flags",
+        ),
+        "_wasmjs_builder_launcher": attr.label(
+            default = "//:rules/impl/MemoryLauncher.java",
+            allow_single_file = True,
         ),
         "neverlink": attr.bool(
             doc = """If true only use this library for compilation and not at runtime.""",
@@ -76,4 +81,5 @@ kt_wasmjs_library = rule(
     toolchains = common_toolchains,
     implementation = _kt_wasmjs_library,
     provides = [KtWasmJsInfo, KtWasmJsBin, _KtJvmInfo],
+    cfg = jvm_platform_transition,
 )

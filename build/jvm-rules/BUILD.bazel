@@ -40,6 +40,12 @@ label_flag(
     visibility = ["//visibility:public"],
 )
 
+label_flag(
+    name = "wasmjs-builder-jvm_flags",
+    build_setting_default = "//src/kotlin/kotlin-builder-wasmjs:kotlin-builder-wasmjs-jvm_flags",
+    visibility = ["//visibility:public"],
+)
+
 # used by _jvm_builder_launcher attribute in jvm_library rule and _worker_launcher attribute in jvm_resources rule
 exports_files(
   ["rules/impl/MemoryLauncher.java"],

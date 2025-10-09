@@ -12,6 +12,7 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
+load("@bazel_skylib//rules:common_settings.bzl", "BuildSettingInfo")
 load("@rules_kotlin//kotlin/internal:defs.bzl", KotlinInfo = "KtJvmInfo")
 load("//:rules/impl/compiler-plugins.bzl", "compiler_plugins_from", "exported_compiler_plugins_from")
 load("//:rules/impl/kotlinc-options.bzl", "KotlincOptions", "kotlinc_options_to_flags")
@@ -127,17 +128,30 @@ def kt_wasmjs_produce_module_actions(ctx, rule_kind):
         compile_args.add_all(["-Pplugin:%s:%s=%s" % id % opt.id % opt.value for opt in options])
     compile_args.add_all(srcs)
 
+    java_runtime = ctx.attr._tool_java_runtime[java_common.JavaRuntimeInfo]
+
     ctx.actions.run(
         mnemonic = "KotlinCompileWasmJs",
-        inputs = depset(ctx.files.fragment_sources, transitive = [compile_libraries, compiler_plugins_classpath]),
-        use_default_shell_env = True,
-        outputs = [klib_out],
-        executable = ctx.executable._wasmjs_builder,
-        arguments = [compile_args],
-        progress_message = "Compile %%{label} { files: %d }" % (len(ctx.files.fragment_sources)),
         env = {
-            "LC_CTYPE": "en_US.UTF-8",
+            "MALLOC_ARENA_MAX": "2",  # TODO: copied over from JvmCompile action, not sure it is required
         },
+        inputs = depset(ctx.files.fragment_sources, transitive = [compile_libraries, compiler_plugins_classpath, java_runtime.files]),  # TODO: remove `java_runtime.files` when running worker support is done (redundant then)
+        outputs = [klib_out],
+        tools = [ctx.file._wasmjs_builder_launcher, ctx.file._wasmjs_builder],
+        executable = java_runtime.java_executable_exec_path,
+        execution_requirements = {
+            "supports-workers": "0",  # TODO: [FL-34215] enable worker support
+            "supports-multiplex-workers": "0",  # TODO: [FL-34215] enable worker support
+            "supports-worker-cancellation": "1",
+            "supports-path-mapping": "1",
+            "supports-multiplex-sandboxing": "1",
+        },
+        arguments = ctx.attr._wasmjs_builder_jvm_flags[BuildSettingInfo].value + [
+            ctx.file._wasmjs_builder_launcher.path,
+            ctx.file._wasmjs_builder.path,
+            compile_args,
+        ],
+        progress_message = "Compile %%{label} { files: %d }" % (len(ctx.files.fragment_sources)),
     )
 
     all_link_libraries = depset([klib_out], transitive = [link_libraries])
@@ -152,15 +166,26 @@ def kt_wasmjs_produce_module_actions(ctx, rule_kind):
 
     ctx.actions.run(
         mnemonic = "KotlinLinkWasmJs",
-        inputs = all_link_libraries,
-        use_default_shell_env = True,
-        outputs = [mjs_out],
-        executable = ctx.executable._wasmjs_builder,
-        arguments = [link_args],
-        progress_message = "Linking %%{label}",
         env = {
-            "LC_CTYPE": "en_US.UTF-8",
+            "MALLOC_ARENA_MAX": "2",  # TODO: copied over from JvmCompile action, not sure it is required
         },
+        inputs = depset(transitive = [all_link_libraries, java_runtime.files]),  # TODO: remove `java_runtime.files` when running worker support is done (redundant then)
+        outputs = [mjs_out],
+        tools = [ctx.file._wasmjs_builder_launcher, ctx.file._wasmjs_builder],
+        executable = java_runtime.java_executable_exec_path,
+        execution_requirements = {
+            "supports-workers": "0",  # TODO: [FL-34215] enable worker support
+            "supports-multiplex-workers": "0",  # TODO: [FL-34215] enable worker support
+            "supports-worker-cancellation": "1",
+            "supports-path-mapping": "1",
+            "supports-multiplex-sandboxing": "1",
+        },
+        arguments = ctx.attr._wasmjs_builder_jvm_flags[BuildSettingInfo].value + [
+            ctx.file._wasmjs_builder_launcher.path,
+            ctx.file._wasmjs_builder.path,
+            link_args,
+        ],
+        progress_message = "Linking %%{label}",
     )
 
     return [
