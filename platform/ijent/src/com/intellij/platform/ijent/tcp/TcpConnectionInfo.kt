@@ -1,31 +1,17 @@
 // Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.platform.ijent.tcp
 
-data class TcpConnectionInfo(
-  /**
-   * The address that used by remote agent for port listening
-   *
-   * In the common case, it's `127.0.0.1`, but Docker requires `0.0.0.0`
-   */
-  val ijentBindAddress: String,
-  /**
-   * Address to connect to the remote agent
-   */
-  val remoteHost: String,
-  /**
-   * Port that remote agent is listening to on.
-   */
-  val ijentListeningPort: Int?,
-  /**
-   * Port that local agent is connecting to.
-   *
-   * It could be a different port than [ijentListeningPort] if the port is forwarded (e.g., docker, ssh)
-   */
-  val localPort: Int?
-) {
-  companion object {
-    fun createLocalConfigurationWithRandomPort(): TcpConnectionInfo = TcpConnectionInfo("127.0.0.1", "127.0.0.1", null, null)
-    fun createLocalConfiguration(port: Int): TcpConnectionInfo = TcpConnectionInfo("127.0.0.1", "127.0.0.1", port, port)
-    fun createDockerConfiguration(ijentListeningPort: Int, localPort: Int): TcpConnectionInfo = TcpConnectionInfo("0.0.0.0", "127.0.0.1", ijentListeningPort, localPort)
+data class TcpConnectionInfo(val connectionInfo: TcpEndpoint, val deployingInfo: TcpDeployInfo)
+
+sealed interface TcpDeployInfo {
+  val host: String
+  data class RandomPort(override val host: String) : TcpDeployInfo
+  data class FixedPort(override val host: String, val port: Int) : TcpDeployInfo {
+    constructor(tcpEndpoint: TcpEndpoint) : this(tcpEndpoint.host, tcpEndpoint.port)
   }
-}
+  companion object {
+    fun localRandom(): RandomPort = TcpDeployInfo.RandomPort("127.0.0.1")
+    fun localFixedPort(port: Int): FixedPort = FixedPort("127.0.0.1", port)
+    fun listeningFixedPort(port: Int): FixedPort = FixedPort("0.0.0.0", port)
+  }
+ }

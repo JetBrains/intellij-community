@@ -9,7 +9,7 @@ import com.intellij.openapi.extensions.ExtensionPointName
 import com.intellij.platform.eel.EelPlatform
 import com.intellij.platform.ijent.IjentUnavailableException
 import com.intellij.platform.ijent.getIjentGrpcArgv
-import com.intellij.platform.ijent.tcp.TcpConnectionInfo
+import com.intellij.platform.ijent.tcp.TcpDeployInfo
 import com.intellij.util.io.copyToAsync
 import kotlinx.coroutines.*
 import org.jetbrains.annotations.VisibleForTesting
@@ -41,6 +41,13 @@ abstract class IjentDeployingOverShellProcessStrategy(scope: CoroutineScope) : I
   protected abstract suspend fun mapPath(path: Path): String?
 
   protected abstract suspend fun createShellProcess(): Process
+
+  protected sealed interface ExecutionStrategy {
+    data object Default : ExecutionStrategy
+    data class Tcp(val deployInfo: TcpDeployInfo) : ExecutionStrategy
+  }
+
+  protected open val executionStrategy: ExecutionStrategy = ExecutionStrategy.Default
 
   private val myContext: Deferred<DeployingContextAndShell> = run {
     var createdShellProcess: ShellProcessWrapper? = null
@@ -76,8 +83,8 @@ abstract class IjentDeployingOverShellProcessStrategy(scope: CoroutineScope) : I
 
   final override suspend fun createProcess(binaryPath: String): IjentSessionProcessMediator {
     return myContext.await().execCommand {
-      when (val strategy = getConnectionStrategy()) {
-        is IjentConnectionStrategy.Tcp -> execIjentWithTcp(binaryPath, strategy.config)
+      when (val strategy = executionStrategy) {
+        is ExecutionStrategy.Tcp -> execIjentWithTcp(binaryPath, strategy.deployInfo)
         else -> execIjent(binaryPath)
       }
     }
@@ -408,11 +415,11 @@ private suspend fun DeployingContextAndShell.createMediator(
 }
 
 
-private suspend fun DeployingContextAndShell.execIjentWithTcp(remotePathToBinary: String, tcpConfiguration: TcpConnectionInfo): IjentSessionProcessMediator {
+private suspend fun DeployingContextAndShell.execIjentWithTcp(remotePathToBinary: String, deployInfo: TcpDeployInfo): IjentSessionProcessMediator {
   val joinedCmd = getIjentGrpcArgv(remotePathToBinary,
                                    selfDeleteOnExit = true,
                                    usrBinEnv = context.env,
-                                   tcpConfig = tcpConfiguration).joinToString(" ")
+                                   deployInfo = deployInfo).joinToString(" ")
   return createMediator(remotePathToBinary, joinedCmd)
 }
 
