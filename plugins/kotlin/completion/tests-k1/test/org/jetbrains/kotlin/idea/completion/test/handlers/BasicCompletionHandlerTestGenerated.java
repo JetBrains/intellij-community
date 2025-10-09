@@ -662,6 +662,11 @@ public abstract class BasicCompletionHandlerTestGenerated extends AbstractBasicC
             runTest("../testData/handlers/basic/importAliases/CompanionObject.kt");
         }
 
+        @TestMetadata("Constructor.kt")
+        public void testConstructor() throws Exception {
+            runTest("../testData/handlers/basic/importAliases/Constructor.kt");
+        }
+
         @TestMetadata("ExtensionFun.kt")
         public void testExtensionFun() throws Exception {
             runTest("../testData/handlers/basic/importAliases/ExtensionFun.kt");

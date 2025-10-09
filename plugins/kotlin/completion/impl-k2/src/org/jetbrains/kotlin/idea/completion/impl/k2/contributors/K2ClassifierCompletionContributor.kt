@@ -77,8 +77,13 @@ internal open class K2ClassifierCompletionContributor : K2CompletionContributor<
     private fun getImportingStrategy(
         context: K2CompletionContext<KotlinNameReferencePositionContext>,
         importStrategyDetector: ImportStrategyDetector,
-        classifierSymbol: KaClassifierSymbol
+        classifierSymbol: KaClassifierSymbol,
+        aliasName: Name?,
     ): ImportStrategy {
+        if (aliasName != null) {
+            // If we are using the alias, then we do not need to import anything
+            return ImportStrategy.DoNothing
+        }
         return if (context.positionContext is KotlinCallableReferencePositionContext) {
             when (classifierSymbol) {
                 is KaTypeParameterSymbol -> ImportStrategy.DoNothing
@@ -162,9 +167,10 @@ internal open class K2ClassifierCompletionContributor : K2CompletionContributor<
                     classifierSymbol = classifierSymbol,
                     expectedType = context.expectedType,
                     importingStrategy = getImportingStrategy(
-                        sectionContext.completionContext,
-                        sectionContext.importStrategyDetector,
-                        classifierSymbol
+                        context = sectionContext.completionContext,
+                        importStrategyDetector = sectionContext.importStrategyDetector,
+                        classifierSymbol = classifierSymbol,
+                        aliasName = aliasName,
                     ),
                     aliasName = aliasName,
                     positionContext = positionContext,
@@ -194,9 +200,10 @@ internal open class K2ClassifierCompletionContributor : K2CompletionContributor<
                         classifierSymbol = classifierSymbol,
                         expectedType = weighingContext.expectedType,
                         importingStrategy = getImportingStrategy(
-                            sectionContext.completionContext,
-                            sectionContext.importStrategyDetector,
-                            classifierSymbol
+                            context = sectionContext.completionContext,
+                            importStrategyDetector = sectionContext.importStrategyDetector,
+                            classifierSymbol = classifierSymbol,
+                            aliasName = null,
                         ),
                         positionContext = sectionContext.positionContext,
                         visibilityChecker = sectionContext.visibilityChecker,
