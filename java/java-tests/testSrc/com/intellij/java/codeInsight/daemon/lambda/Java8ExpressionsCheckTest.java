@@ -345,19 +345,24 @@ public class Java8ExpressionsCheckTest extends LightDaemonAnalyzerTestCase {
 
     PsiMethodCallExpression outerCall = (PsiMethodCallExpression) innerCall.getParent().getParent();
 
-    assertAmbiguous(outerCall);
-    assertAmbiguous(innerCall);
+    assertAmbiguous(outerCall, "java.util.Collection<? extends java.lang.Object>");
+    assertAmbiguous(innerCall, "java.util.Collection<? extends java.lang.Object>");
 
     dropCaches();
 
-    assertAmbiguous(innerCall);
-    assertAmbiguous(outerCall);
+    assertAmbiguous(innerCall, "java.util.Collection<? extends java.lang.Object>");
+    assertAmbiguous(outerCall, "java.util.Collection<? extends java.lang.Object>");
   }
 
-  private static void assertAmbiguous(PsiMethodCallExpression call) {
+  private static void assertAmbiguous(PsiMethodCallExpression call, @Nullable String expectedType) {
     assertNull(call.getText(), call.resolveMethod());
     assertSize(2, call.multiResolve(false));
-    assertNull(call.getText(), call.getType());
+    PsiType type = call.getType();
+    if (expectedType == null) {
+      assertNull(call.getText(), type);
+    } else {
+      assertEquals(call.getText(), expectedType, type.getCanonicalText());
+    }
   }
 
   public void testAdditionalConstraintsBasedOnLambdaResolution() {
