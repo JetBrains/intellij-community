@@ -33,11 +33,11 @@ import static com.intellij.codeInsight.completion.JavaMethodCallElement.startArg
 public class JavaMethodCallInsertHandler<MethodCallElement extends JavaMethodCallElement> implements InsertHandler<MethodCallElement> {
   @Override
   public void handleInsert(@NotNull InsertionContext context, @NotNull MethodCallElement item) {
-    final Document document = context.getDocument();
-    final PsiFile file = context.getFile();
-    final PsiMethod method = item.getObject();
+    Document document = context.getDocument();
+    PsiFile file = context.getFile();
+    PsiMethod method = item.getObject();
 
-    final LookupElement[] allItems = context.getElements();
+    LookupElement[] allItems = context.getElements();
     ThreeState hasParams = method.getParameterList().isEmpty() ? ThreeState.NO : MethodParenthesesHandler.overloadsHaveParameters(allItems, method);
     if (method.isConstructor()) {
       PsiClass aClass = method.getContainingClass();
@@ -47,8 +47,8 @@ public class JavaMethodCallInsertHandler<MethodCallElement extends JavaMethodCal
     }
     JavaCompletionUtil.insertParentheses(context, item, false, hasParams, false);
 
-    final int offset = context.getStartOffset();
-    final OffsetKey refStart = context.trackOffset(offset, true);
+    int offset = context.getStartOffset();
+    OffsetKey refStart = context.trackOffset(offset, true);
     beforeHandle(context);
     if (item.isNeedExplicitTypeParameters()) {
       qualifyMethodCall(item, file, context.getOffset(refStart), document);
@@ -126,7 +126,7 @@ public class JavaMethodCallInsertHandler<MethodCallElement extends JavaMethodCal
     if (item.willBeImported()) {
       PsiClass containingClass = item.getContainingClass();
       if (method.isConstructor()) {
-        final PsiNewExpression newExpression = PsiTreeUtil.findElementOfClassAtOffset(file, startOffset, PsiNewExpression.class, false);
+        PsiNewExpression newExpression = PsiTreeUtil.findElementOfClassAtOffset(file, startOffset, PsiNewExpression.class, false);
         if (newExpression != null) {
           PsiJavaCodeReferenceElement ref = newExpression.getClassReference();
           if (ref != null && containingClass != null && !ref.isReferenceTo(containingClass)) {
@@ -136,7 +136,7 @@ public class JavaMethodCallInsertHandler<MethodCallElement extends JavaMethodCal
         }
       }
       else {
-        final PsiReferenceExpression ref = PsiTreeUtil.findElementOfClassAtOffset(file, startOffset, PsiReferenceExpression.class, false);
+        PsiReferenceExpression ref = PsiTreeUtil.findElementOfClassAtOffset(file, startOffset, PsiReferenceExpression.class, false);
         if (ref != null && containingClass != null && !ref.isReferenceTo(method)) {
           ref.bindToElementViaStaticImport(containingClass);
         }
@@ -156,13 +156,13 @@ public class JavaMethodCallInsertHandler<MethodCallElement extends JavaMethodCal
     return true;
   }
 
-  private void qualifyMethodCall(MethodCallElement item, PsiFile file, final int startOffset, final Document document) {
-    final PsiReference reference = file.findReferenceAt(startOffset);
+  private void qualifyMethodCall(MethodCallElement item, PsiFile file, int startOffset, Document document) {
+    PsiReference reference = file.findReferenceAt(startOffset);
     if (reference instanceof PsiReferenceExpression && ((PsiReferenceExpression)reference).isQualified()) {
       return;
     }
 
-    final PsiMethod method = item.getObject();
+    PsiMethod method = item.getObject();
     if (method.isConstructor()) return;
     if (!method.hasModifierProperty(PsiModifier.STATIC)) {
       document.insertString(startOffset, "this.");
@@ -179,7 +179,7 @@ public class JavaMethodCallInsertHandler<MethodCallElement extends JavaMethodCal
   private void insertExplicitTypeParameters(MethodCallElement item, InsertionContext context, OffsetKey refStart) {
     context.commitDocument();
 
-    final String typeParams = getTypeParamsText(false, item.getObject(), item.getInferenceSubstitutor());
+    String typeParams = getTypeParamsText(false, item.getObject(), item.getInferenceSubstitutor());
     if (typeParams != null) {
       context.getDocument().insertString(context.getOffset(refStart), typeParams);
       JavaCompletionUtil.shortenReference(context.getFile(), context.getOffset(refStart));
