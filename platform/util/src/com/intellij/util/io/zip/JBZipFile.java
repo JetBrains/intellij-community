@@ -1,20 +1,21 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.util.io.zip;
 
 import com.intellij.util.ArrayUtilRt;
 import com.intellij.util.ThreeState;
 import com.intellij.util.containers.ContainerUtil;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 
 import java.io.Closeable;
 import java.io.EOFException;
-import java.io.File;
 import java.io.IOException;
 import java.nio.ByteBuffer;
 import java.nio.channels.FileChannel;
 import java.nio.channels.SeekableByteChannel;
 import java.nio.charset.Charset;
 import java.nio.charset.StandardCharsets;
+import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.util.*;
@@ -87,35 +88,37 @@ public class JBZipFile implements Closeable {
    * The actual data source.
    */
   final SeekableByteChannel myArchive;
+  final boolean myIsReadonly;
 
   private boolean myIsZip64;
-
   private JBZipOutputStream myOutputStream;
   private long currentCfdOffset;
-  final boolean myIsReadonly;
   private final long mySize;
 
-
   /**
-   * Opens the given file for reading, assuming the platform's
-   * native encoding for file names.
+   * Opens the given file for reading, assuming the platform's native encoding for file names.
    *
-   * @param f the archive.
+   * @param file the archive.
    * @throws IOException if an error occurs while reading the file.
    */
-  public JBZipFile(File f) throws IOException {
+  public JBZipFile(@NotNull Path file) throws IOException {
+    this(file, DEFAULT_CHARSET);
+  }
+
+  @ApiStatus.Obsolete
+  @SuppressWarnings({"IO_FILE_USAGE", "UnnecessaryFullyQualifiedName"})
+  public JBZipFile(java.io.File f) throws IOException {
     this(f, DEFAULT_CHARSET);
   }
 
   /**
-   * Opens the given file for reading, assuming the platform's
-   * native encoding for file names.
+   * Opens the given file for reading, assuming the platform's native encoding for file names.
    *
    * @param name name of the archive.
    * @throws IOException if an error occurs while reading the file.
    */
   public JBZipFile(String name) throws IOException {
-    this(new File(name), DEFAULT_CHARSET);
+    this(Paths.get(name), DEFAULT_CHARSET);
   }
 
   /**
@@ -126,69 +129,84 @@ public class JBZipFile implements Closeable {
    * @param readonly true to open file as readonly
    * @throws IOException if an error occurs while reading the file.
    */
-  public JBZipFile(@NotNull File f, boolean readonly) throws IOException {
+  @ApiStatus.Obsolete
+  @SuppressWarnings({"IO_FILE_USAGE", "UnnecessaryFullyQualifiedName"})
+  public JBZipFile(@NotNull java.io.File f, boolean readonly) throws IOException {
     this(f, DEFAULT_CHARSET, readonly);
   }
 
   /**
-   * Opens the given file for reading, assuming the specified
-   * encoding for file names.
+   * Opens the given file for reading, assuming the specified encoding for file names.
    *
    * @param name     name of the archive.
    * @param encoding the encoding to use for file names
    * @throws IOException if an error occurs while reading the file.
    */
+  @ApiStatus.Obsolete
   public JBZipFile(String name, @NotNull String encoding) throws IOException {
-    this(new File(name), encoding);
+    this(Paths.get(name), Charset.forName(encoding));
   }
 
   /**
-   * Opens the given file for reading, assuming the specified
-   * encoding for file names.
+   * Opens the given file for reading, assuming the specified encoding for file names.
    *
    * @param f        the archive.
    * @param encoding the encoding to use for file names
    * @throws IOException if an error occurs while reading the file.
    */
-  public JBZipFile(File f, @NotNull String encoding) throws IOException {
+  @ApiStatus.Obsolete
+  @SuppressWarnings({"IO_FILE_USAGE", "UnnecessaryFullyQualifiedName"})
+  public JBZipFile(java.io.File f, @NotNull String encoding) throws IOException {
     this(f, Charset.forName(encoding));
   }
 
   /**
-   * Opens the given file for reading, assuming the specified
-   * encoding for file names.
+   * Opens the given file for reading, assuming the specified encoding for file names.
    *
-   * @param f        the archive.
+   * @param file     the archive.
    * @param encoding the encoding to use for file names
    * @throws IOException if an error occurs while reading the file.
    */
-  public JBZipFile(File f, @NotNull Charset encoding) throws IOException {
+  public JBZipFile(@NotNull Path file, @NotNull Charset encoding) throws IOException {
+    this(file, encoding, false);
+  }
+
+  @ApiStatus.Obsolete
+  @SuppressWarnings({"IO_FILE_USAGE", "UnnecessaryFullyQualifiedName"})
+  public JBZipFile(java.io.File f, @NotNull Charset encoding) throws IOException {
     this(f, encoding, false);
   }
 
-  boolean isZip64() {
-    return myIsZip64;
-  }
-
   /**
-   * Opens the given file for reading, assuming the specified
-   * encoding for file names.
+   * Opens the given file for reading, assuming the specified encoding for file names.
    *
-   * @param f        the archive.
+   * @param file     the archive.
    * @param encoding the encoding to use for file names
    * @param readonly true to open file as readonly
    * @throws IOException if an error occurs while reading the file.
    */
-  public JBZipFile(@NotNull File f, @NotNull Charset encoding, boolean readonly) throws IOException {
+  public JBZipFile(@NotNull Path file, @NotNull Charset encoding, boolean readonly) throws IOException {
+    this(file, encoding, readonly, ThreeState.NO);
+  }
+
+  @ApiStatus.Obsolete
+  @SuppressWarnings({"IO_FILE_USAGE", "UnnecessaryFullyQualifiedName"})
+  public JBZipFile(@NotNull java.io.File f, @NotNull Charset encoding, boolean readonly) throws IOException {
     this(f, encoding, readonly, ThreeState.NO);
   }
 
-  public JBZipFile(@NotNull File f, @NotNull Charset encoding, boolean readonly, @NotNull ThreeState isZip64) throws IOException {
-    this(getFileChannel(f, readonly), encoding, readonly, isZip64);
+  @ApiStatus.Obsolete
+  @SuppressWarnings({"IO_FILE_USAGE", "UnnecessaryFullyQualifiedName"})
+  public JBZipFile(@NotNull java.io.File f, @NotNull Charset encoding, boolean readonly, @NotNull ThreeState isZip64) throws IOException {
+    this(openChannel(f, readonly), encoding, readonly, isZip64);
+  }
+
+  public JBZipFile(@NotNull Path file, @NotNull Charset encoding, boolean readonly, @NotNull ThreeState isZip64) throws IOException {
+    this(openChannel(file, readonly), encoding, readonly, isZip64);
   }
 
   /**
-   * Interprets a given channel as a zip file.
+   * Interprets the given channel as a ZIP file.
    *
    * @param channel  the channel.
    * @param encoding the encoding to use for file names
@@ -199,12 +217,7 @@ public class JBZipFile implements Closeable {
     myEncoding = encoding;
     myIsReadonly = readonly;
     long channelSize = channel.size();
-    if (readonly) {
-      mySize = channelSize;
-    }
-    else {
-      mySize = -1;
-    }
+    mySize = readonly ? channelSize : -1;
     myArchive = channel;
 
     try {
@@ -227,9 +240,17 @@ public class JBZipFile implements Closeable {
     }
   }
 
-  private static FileChannel getFileChannel(final File file, boolean isReadonly) throws IOException {
-    Path path = Paths.get(file.getPath());
-    return path.getFileSystem().provider().newFileChannel(path, isReadonly ? EnumSet.of(READ) : EnumSet.of(READ, WRITE, CREATE));
+  @SuppressWarnings({"IO_FILE_USAGE", "UnnecessaryFullyQualifiedName"})
+  private static SeekableByteChannel openChannel(java.io.File file, boolean isReadonly) throws IOException {
+    return openChannel(file.toPath(), isReadonly);
+  }
+
+  private static SeekableByteChannel openChannel(Path path, boolean isReadonly) throws IOException {
+    return Files.newByteChannel(path, isReadonly ? EnumSet.of(READ) : EnumSet.of(READ, WRITE, CREATE));
+  }
+
+  boolean isZip64() {
+    return myIsZip64;
   }
 
   @Override
@@ -659,16 +680,6 @@ public class JBZipFile implements Closeable {
     }
   }
 
-  private boolean hasMatchForEocd(SeekableByteChannel channel) throws IOException {
-    byte[] byteArray = new byte[MIN_EOCD_SIZE];
-    int read = channel.read(ByteBuffer.wrap(byteArray));
-    if (read < 0) {
-      return false;
-    }
-    return byteArray[0] == JBZipOutputStream.EOCD_SIG[0] && byteArray[1] == JBZipOutputStream.EOCD_SIG[1] &&
-           byteArray[2] == JBZipOutputStream.EOCD_SIG[2] && byteArray[3] == JBZipOutputStream.EOCD_SIG[3];
-  }
-
   /**
    * Number of bytes in local file header up to the &quot;crc&quot; entry.
    */
@@ -722,7 +733,7 @@ public class JBZipFile implements Closeable {
     if (myOutputStream != null) {
       myOutputStream = null;
 
-      final Map<JBZipEntry, byte[]> existingEntries = new LinkedHashMap<>();
+      Map<JBZipEntry, byte[]> existingEntries = new LinkedHashMap<>();
       for (JBZipEntry entry : entries) {
         existingEntries.put(entry, entry.getData());
       }

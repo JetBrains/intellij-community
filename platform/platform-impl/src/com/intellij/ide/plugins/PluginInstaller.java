@@ -27,7 +27,6 @@ import com.intellij.openapi.util.io.NioFiles;
 import com.intellij.openapi.util.registry.RegistryManager;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.util.SystemProperties;
-import com.intellij.util.ThreeState;
 import com.intellij.util.concurrency.annotations.RequiresEdt;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.io.Decompressor;
@@ -39,11 +38,9 @@ import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
 import java.io.IOException;
-import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.StandardCopyOption;
-import java.nio.file.StandardOpenOption;
 import java.util.ArrayList;
 import java.util.HashSet;
 import java.util.List;
@@ -219,7 +216,7 @@ public final class PluginInstaller {
   }
 
   public static String rootEntryName(@NotNull Path zip) throws IOException {
-    try (var zipFile = new JBZipFile(Files.newByteChannel(zip, StandardOpenOption.READ), StandardCharsets.UTF_8, true, ThreeState.UNSURE)) {
+    try (var zipFile = new JBZipFile(zip)) {
       for (var zipEntry : zipFile.getEntries()) {
         // we do not necessarily get a separate entry for the subdirectory when the file
         // in the ZIP archive is placed in a subdirectory, so we need to check if the slash is found anywhere in the path

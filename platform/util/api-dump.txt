@@ -526,6 +526,11 @@ com.intellij.util.io.storage.RecordIdIterator
 - a:hasNextId():Z
 - a:nextId():I
 - a:validId():Z
+c:com.intellij.util.io.zip.JBZipFile
+- <init>(java.nio.file.Path):V
+- <init>(java.nio.file.Path,java.nio.charset.Charset):V
+- <init>(java.nio.file.Path,java.nio.charset.Charset,Z):V
+- <init>(java.nio.file.Path,java.nio.charset.Charset,Z,com.intellij.util.ThreeState):V
 com.intellij.util.keyFMap.KeyFMap
 - sf:EMPTY_MAP:com.intellij.util.keyFMap.KeyFMap
 - a:equalsByReference(com.intellij.util.keyFMap.KeyFMap):Z
