@@ -1,7 +1,8 @@
 // Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInsight.hints.declarative.impl
 
-import com.intellij.codeInsight.hints.declarative.*
+import com.intellij.codeInsight.hints.declarative.InlayActionData
+import com.intellij.codeInsight.hints.declarative.InlayActionPayload
 import com.intellij.codeInsight.hints.declarative.impl.util.TinyTree
 import com.intellij.util.io.DataInputOutputUtil.readINT
 import com.intellij.util.io.DataInputOutputUtil.writeINT
@@ -60,20 +61,11 @@ abstract class PresentationTreeExternalizer : TinyTree.Externalizer<Any?>() {
   }
 
   open fun writeInlayActionData(output: DataOutput, inlayActionData: InlayActionData) {
-    if (inlayActionData.payload is NonPersistableInlayActionPayload) {
-      writeNullableString(output, null)
-    }
-    else {
-      writeNullableString(output, inlayActionData.handlerId)
-      writeInlayActionPayload(output, inlayActionData.payload)
-    }
+    writeNamedInlayActionPayload(output, inlayActionData.handlerId, inlayActionData.payload)
   }
 
-  open fun readInlayActionData(input: DataInput): InlayActionData? {
-    val handlerId = readNullableString(input) ?: return null
-    val payload = readInlayActionPayload(input)
-    return InlayActionData(payload, handlerId)
-  }
+  open fun readInlayActionData(input: DataInput): InlayActionData? =
+    readNamedInlayActionPayload(input) { n, p -> InlayActionData(p, n) }
 
   abstract fun writeInlayActionPayload(output: DataOutput, actionPayload: InlayActionPayload)
 
@@ -97,4 +89,27 @@ internal fun readNullableString(input: DataInput): String? {
   } else {
     null
   }
+}
+
+internal fun PresentationTreeExternalizer.writeNamedInlayActionPayload(
+  output: DataOutput,
+  name: String,
+  payload: InlayActionPayload,
+) {
+  if (payload is NonPersistableInlayActionPayload) {
+    writeNullableString(output, null)
+  }
+  else {
+    writeNullableString(output, name)
+    writeInlayActionPayload(output, payload)
+  }
+}
+
+internal inline fun <T> PresentationTreeExternalizer.readNamedInlayActionPayload(
+  input: DataInput,
+  constructor: (String, InlayActionPayload) -> T,
+): T? {
+  val name = readNullableString(input) ?: return null
+  val payload = readInlayActionPayload(input)
+  return constructor(name, payload)
 }

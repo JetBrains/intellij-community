@@ -227,20 +227,11 @@ abstract class InlayDataExternalizer(
   }
 
   private fun writeInlayPayload(output: DataOutput, payload: InlayPayload) {
-    if (payload.payload is NonPersistableInlayActionPayload) {
-      writeNullableString(output, null)
-    }
-    else {
-      writeNullableString(output, payload.payloadName)
-      treeExternalizer.writeInlayActionPayload(output, payload.payload)
-    }
+    treeExternalizer.writeNamedInlayActionPayload(output, payload.payloadName, payload.payload)
   }
 
-  private fun readInlayPayload(input: DataInput): InlayPayload? {
-    val payloadName = readNullableString(input) ?: return null
-    val inlayActionPayload = treeExternalizer.readInlayActionPayload(input)
-    return InlayPayload(payloadName, inlayActionPayload)
-  }
+  private fun readInlayPayload(input: DataInput): InlayPayload? =
+    treeExternalizer.readNamedInlayActionPayload(input) { n, p -> InlayPayload(n, p) }
 
   open fun writeSourceId(output: DataOutput, sourceId: String) {
     writeUTF(output, sourceId)
