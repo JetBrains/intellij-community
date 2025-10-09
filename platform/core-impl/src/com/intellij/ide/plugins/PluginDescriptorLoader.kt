@@ -564,27 +564,15 @@ internal fun CoroutineScope.loadPluginDescriptorsImpl(
   val platformPrefix = PlatformUtils.getPlatformPrefix()
 
   if (isUnitTestMode) {
-    // Do not hardcode `isRunningFromSources = true`.
-    // This falsely assumes that if `isUnitTestMode = true`, then tests are running inside the monorepo.
-    // For external plugins (and internal plugins developed outside the monorepo, like the Scala plugin), `isRunningFromSources` has the value `false`.
-    // An incorrect value for `isRunningFromSources` leads to plugin loading issues in tests for external plugins.
-    val core = loadCoreModules(
+    return loadPluginDescriptorsInDeprecatedUnitTestMode(
       loadingContext = loadingContext,
       platformPrefix = platformPrefix,
-      isUnitTestMode = true,
-      isInDevServerMode = false,
-      isRunningFromSources = isRunningFromSources, // do not hardcode to `true`
-      classLoader = mainClassLoader,
-      pool = zipPool,
+      isRunningFromSources = isRunningFromSources,
+      mainClassLoader = mainClassLoader,
+      zipPool = zipPool,
+      customPluginDir = customPluginDir,
+      bundledPluginDir = bundledPluginDir,
     )
-    val custom = loadDescriptorsFromDir(dir = customPluginDir, loadingContext = loadingContext, isBundled = false, pool = zipPool)
-    val bundled = if (bundledPluginDir != null) {
-      loadDescriptorsFromDir(dir = bundledPluginDir, loadingContext = loadingContext, isBundled = true, pool = zipPool)
-    }
-    else {
-      null
-    }
-    return async { listOfNotNull(core.await(), custom.await(), bundled?.await()) }
   }
 
   val effectiveBundledPluginDir = bundledPluginDir ?: PathManager.getBundledPluginsDir()
@@ -597,20 +585,15 @@ internal fun CoroutineScope.loadPluginDescriptorsImpl(
   }
 
   if (bundledPluginClasspathBytes == null) {
-    val core = loadCoreModules(
+    return deprecatedLoadPluginDescriptorsWithoutDistIndex(
       loadingContext = loadingContext,
       platformPrefix = platformPrefix,
-      isUnitTestMode = false,
-      isInDevServerMode = AppMode.isRunningFromDevBuild(),
       isRunningFromSources = isRunningFromSources,
-      pool = zipPool,
-      classLoader = mainClassLoader,
+      zipPool = zipPool,
+      mainClassLoader = mainClassLoader,
+      customPluginDir = customPluginDir,
+      effectiveBundledPluginDir = effectiveBundledPluginDir,
     )
-    val custom = loadDescriptorsFromDir(dir = customPluginDir, loadingContext = loadingContext, isBundled = false, pool = zipPool)
-    val bundled = loadDescriptorsFromDir(dir = effectiveBundledPluginDir, loadingContext = loadingContext, isBundled = true, pool = zipPool)
-    return async {
-      listOfNotNull(core.await(), custom.await(), bundled.await())
-    }
   }
   else {
     val byteInput = ByteArrayInputStream(bundledPluginClasspathBytes, 2, bundledPluginClasspathBytes.size)
@@ -852,58 +835,8 @@ private fun loadModuleFromSeparateJar(
   }
 }
 
-private fun CoroutineScope.loadCoreModules(
-  loadingContext: PluginDescriptorLoadingContext,
-  platformPrefix: String,
-  isUnitTestMode: Boolean,
-  isInDevServerMode: Boolean,
-  isRunningFromSources: Boolean,
-  pool: ZipEntryResolverPool,
-  classLoader: ClassLoader,
-): Deferred<DiscoveredPluginsList> {
-  val pathResolver = ClassPathXmlPathResolver(classLoader = classLoader, isRunningFromSourcesWithoutDevBuild = isRunningFromSources && !isInDevServerMode)
-  val useCoreClassLoader = pathResolver.isRunningFromSourcesWithoutDevBuild || platformPrefix.startsWith("CodeServer") || forceUseCoreClassloader()
-  val (corePluginDeferred, isSingleDescriptorCore) = loadCorePlugin(
-    platformPrefix = platformPrefix,
-    isInDevServerMode = isInDevServerMode,
-    isUnitTestMode = isUnitTestMode,
-    isRunningFromSources = isRunningFromSources,
-    loadingContext = loadingContext,
-    pathResolver = pathResolver,
-    useCoreClassLoader = useCoreClassLoader,
-    classLoader = classLoader,
-  )
-  if (isSingleDescriptorCore) {
-    return async { DiscoveredPluginsList(listOfNotNull(corePluginDeferred.await()), PluginsSourceContext.Product) }
-  }
-
-  val result = ArrayList<Deferred<PluginMainDescriptor?>>()
-  result.add(corePluginDeferred)
-  @Suppress("UrlHashCode")
-  val urlToFilename = collectPluginFilesInClassPath(classLoader)
-  if (urlToFilename.isNotEmpty()) {
-    val libDir = if (useCoreClassLoader) null else PathManager.getLibDir()
-    urlToFilename.mapTo(result) { (url, filename) ->
-      async(Dispatchers.IO) {
-        loadDescriptorFromResource(
-          resource = url,
-          filename = filename,
-          loadingContext = loadingContext,
-          pathResolver = pathResolver,
-          useCoreClassLoader = useCoreClassLoader,
-          pool = pool,
-          libDir = libDir,
-        )
-      }
-    }
-  }
-  return async { DiscoveredPluginsList(result.awaitAllNotNull(), PluginsSourceContext.Product) }
-}
-
-/**
- * @returns `(corePluginDeferred, isSingleDescriptorCore)` (well, the last one is probably not a precise description, FIXME)
- */
-fun CoroutineScope.loadCorePlugin(
+@Deprecated("Used only by module-based loader")
+fun loadCorePlugin(
   platformPrefix: String,
   isInDevServerMode: Boolean,
   isUnitTestMode: Boolean,
@@ -912,30 +845,28 @@ fun CoroutineScope.loadCorePlugin(
   pathResolver: PathResolver,
   useCoreClassLoader: Boolean,
   classLoader: ClassLoader,
-): Pair<Deferred<PluginMainDescriptor?>, Boolean> {
+): PluginMainDescriptor? {
   if (isProductWithTheOnlyDescriptor(platformPrefix) && (isInDevServerMode || (!isUnitTestMode && !isRunningFromSources))) {
-    return async(Dispatchers.IO) {
-      val reader = getResourceReader(PluginManagerCore.PLUGIN_XML_PATH, classLoader)!!
-      loadCoreProductPlugin(
-        loadingContext = loadingContext,
-        pathResolver = pathResolver,
-        useCoreClassLoader = useCoreClassLoader,
-        reader = reader,
-        isRunningFromSourcesWithoutDevBuild = false,
-      )
-    } to true
+    val reader = getResourceReader(PluginManagerCore.PLUGIN_XML_PATH, classLoader)!!
+    return loadCoreProductPlugin(
+      loadingContext = loadingContext,
+      pathResolver = pathResolver,
+      useCoreClassLoader = useCoreClassLoader,
+      reader = reader,
+      isRunningFromSourcesWithoutDevBuild = false,
+    )
   }
-  return async(Dispatchers.IO) {
+  else {
     val path = "${PluginManagerCore.META_INF}${platformPrefix}Plugin.xml"
-    val reader = getResourceReader(path, classLoader) ?: return@async null
-    loadCoreProductPlugin(
+    val reader = getResourceReader(path, classLoader) ?: return null
+    return loadCoreProductPlugin(
       loadingContext = loadingContext,
       pathResolver = pathResolver,
       useCoreClassLoader = useCoreClassLoader,
       reader = reader,
       isRunningFromSourcesWithoutDevBuild = isRunningFromSources && !isInDevServerMode,
     )
-  } to false
+  }
 }
 
 // should be the only plugin in lib
@@ -948,7 +879,7 @@ fun isProductWithTheOnlyDescriptor(platformPrefix: String): Boolean {
          platformPrefix == PlatformUtils.GIT_CLIENT_PREFIX
 }
 
-private fun getResourceReader(path: String, classLoader: ClassLoader): XMLStreamReader2? {
+internal fun getResourceReader(path: String, classLoader: ClassLoader): XMLStreamReader2? {
   if (classLoader is UrlClassLoader) {
     return createNonCoalescingXmlStreamReader(input = classLoader.getResourceAsBytes(path, false) ?: return null, locationSource = path)
   }
@@ -957,7 +888,7 @@ private fun getResourceReader(path: String, classLoader: ClassLoader): XMLStream
   }
 }
 
-private fun loadCoreProductPlugin(
+internal fun loadCoreProductPlugin(
   loadingContext: PluginDescriptorLoadingContext,
   pathResolver: PathResolver,
   useCoreClassLoader: Boolean,
@@ -972,11 +903,10 @@ private fun loadCoreProductPlugin(
 
     override fun toString() = "product classpath"
   }
-  val raw = PluginDescriptorFromXmlStreamConsumer(loadingContext.readContext, pathResolver.toXIncludeLoader(dataLoader)).let {
-    it.consume(reader)
-    loadingContext.patchPlugin(it.getBuilder())
-    it.build()
-  }
+  val consumer = PluginDescriptorFromXmlStreamConsumer(loadingContext.readContext, pathResolver.toXIncludeLoader(dataLoader))
+  consumer.consume(reader)
+  loadingContext.patchPlugin(consumer.getBuilder())
+  val raw = consumer.build()
   val libDir = PathManager.getLibDir()
   val descriptor = PluginMainDescriptor(raw = raw, pluginPath = libDir, isBundled = true, useCoreClassLoader = useCoreClassLoader)
   loadContentModuleDescriptors(
@@ -1071,7 +1001,7 @@ private fun loadProductModule(
 }
 
 @Suppress("UrlHashCode")
-private fun collectPluginFilesInClassPath(loader: ClassLoader): Map<URL, String> {
+internal fun collectPluginFilesInClassPath(loader: ClassLoader): Map<URL, String> {
   val urlToFilename = LinkedHashMap<URL, String>()
   try {
     val enumeration = loader.getResources(PluginManagerCore.PLUGIN_XML_PATH)
@@ -1256,7 +1186,7 @@ internal fun CoroutineScope.loadDescriptorsFromDir(
 }
 
 // filename - plugin.xml or ${platformPrefix}Plugin.xml
-private fun loadDescriptorFromResource(
+internal fun loadDescriptorFromResource(
   resource: URL,
   filename: String,
   loadingContext: PluginDescriptorLoadingContext,
@@ -1423,7 +1353,7 @@ private fun checkCycle(descriptor: IdeaPluginDescriptorImpl, configFile: String,
   }
 }
 
-private fun forceUseCoreClassloader() = java.lang.Boolean.getBoolean("idea.force.use.core.classloader")
+internal fun forceUseCoreClassloader() = java.lang.Boolean.getBoolean("idea.force.use.core.classloader")
 
 /** Unlike [readBasicDescriptorDataFromArtifact], this method loads only basic data (plugin ID, name, etc.) */
 @Throws(IOException::class)

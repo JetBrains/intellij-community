@@ -97,7 +97,18 @@ internal class ModuleBasedProductLoadingStrategy(internal val moduleRepository: 
     else {
       classpathPathResolver
     }
-    val (corePlugin, _) = scope.loadCorePlugin(platformPrefix, isInDevServerMode, isUnitTestMode, isRunningFromSources, loadingContext, pathResolver, useCoreClassLoader, mainClassLoader)
+    val corePlugin = scope.async(Dispatchers.IO) {
+      loadCorePlugin(
+        platformPrefix = platformPrefix,
+        isInDevServerMode = isInDevServerMode,
+        isUnitTestMode = isUnitTestMode,
+        isRunningFromSources = isRunningFromSources,
+        loadingContext = loadingContext,
+        pathResolver = pathResolver,
+        useCoreClassLoader = useCoreClassLoader,
+        classLoader = mainClassLoader,
+      )
+    }
     val custom = loadCustomPluginDescriptors(scope, customPluginDir, loadingContext, zipPool)
     val bundled = loadBundledPluginDescriptors(scope, loadingContext, zipPool)
     return scope.async {
