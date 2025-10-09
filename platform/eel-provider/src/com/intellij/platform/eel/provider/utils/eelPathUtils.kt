@@ -37,6 +37,7 @@ import com.intellij.platform.eel.provider.*
 import com.intellij.platform.eel.provider.utils.EelPathUtils.transferLocalContentToRemote
 import com.intellij.util.concurrency.annotations.RequiresBackgroundThread
 import com.intellij.util.concurrency.annotations.RequiresBlockingContext
+import com.intellij.util.containers.CollectionFactory
 import com.intellij.util.io.copyToAsync
 import kotlinx.coroutines.*
 import kotlinx.coroutines.channels.ClosedReceiveChannelException
@@ -342,26 +343,36 @@ object EelPathUtils {
     }
   }
 
+  /**
+   * Temporary solution: caches are scoped per EelApi instance using WeakIdentityMap.
+   * 
+   * TODO: Ideally, TransferredContentHolder should be bound to the IJent instance (or its CoroutineScope)
+   * instead of being an application-level service. This would provide cleaner lifecycle management
+   * and explicit cache invalidation on IJent restart.
+   */
   @Service
   private class TransferredContentHolder(private val scope: CoroutineScope) {
 
     data class CacheKey(
-      val descriptor: EelDescriptor,
       val sourcePathString: String,
       val fileAttributesStrategy: FileTransferAttributesStrategy,
     )
+
     data class CacheValue(
       val sourceHash: String,
       val transferredFilePath: Path
     )
+
     private class Cache: ConcurrentHashMap<CacheKey, Deferred<CacheValue>>()
 
-    // eel descriptor -> source path string ->> source hash -> transferred file
-    private val cache = Cache()
+    // eel api instance -> (source path string -> source hash -> transferred file)
+    private val caches = CollectionFactory.createConcurrentWeakIdentityMap<EelApi, Cache>()
 
     @OptIn(ExperimentalCoroutinesApi::class)
     suspend fun transferIfNeeded(eel: EelApi, source: Path, fileAttributesStrategy: FileTransferAttributesStrategy): Path {
-      return cache.compute(CacheKey(eel.descriptor, source.toString(), fileAttributesStrategy)) { _, deferred ->
+      val cache = caches.computeIfAbsent(eel) { Cache() }
+
+      return cache.compute(CacheKey(source.toString(), fileAttributesStrategy)) { _, deferred ->
         val sourceHash by lazy { calculateFileHashUsingMetadata(source) }
 
         if (deferred != null) {
