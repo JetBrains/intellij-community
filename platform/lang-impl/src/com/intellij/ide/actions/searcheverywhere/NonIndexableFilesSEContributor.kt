@@ -4,7 +4,6 @@ package com.intellij.ide.actions.searcheverywhere
 import com.intellij.ide.IdeBundle
 import com.intellij.ide.actions.GotoFileItemProvider
 import com.intellij.ide.actions.SearchEverywherePsiRenderer
-import com.intellij.ide.util.gotoByName.GOTO_FILE_SEARCH_IN_NON_INDEXABLE
 import com.intellij.openapi.actionSystem.AnActionEvent
 import com.intellij.openapi.application.ReadAction
 import com.intellij.openapi.application.runReadAction
@@ -87,7 +86,7 @@ class NonIndexableFilesSEContributor(event: AnActionEvent) : WeightedSearchEvery
    * @implNote instead of running under one large read action, launches many short blocking RAs
    */
   override fun fetchWeightedElements(pattern: String, progressIndicator: ProgressIndicator, consumer: Processor<in FoundItemDescriptor<Any>>) {
-    if (!isGotoFileToNonIndexableEnabled(project)) return
+    if (!isGotoFileToNonIndexableEnabled()) return
     if (pattern.isEmpty()) return
 
     val (namePattern, pathPattern) = run {
@@ -170,7 +169,7 @@ class NonIndexableFilesSEContributor(event: AnActionEvent) : WeightedSearchEvery
     }
 
     override fun isAvailable(project: Project?): Boolean {
-      return project != null && isGotoFileToNonIndexableEnabled(project)
+      return project != null && isGotoFileToNonIndexableEnabled()
     }
   }
 }
@@ -180,5 +179,4 @@ private fun PsiManager.getPsiFileSystemItem(file: VirtualFile) = when {
   else -> runReadAction { findFile(file) }
 }
 
-private fun isGotoFileToNonIndexableEnabled(project: Project): Boolean =
-  Registry.`is`("se.enable.non.indexable.files.contributor") || project.getUserData(GOTO_FILE_SEARCH_IN_NON_INDEXABLE) != false
+private fun isGotoFileToNonIndexableEnabled(): Boolean = Registry.`is`("se.enable.non.indexable.files.contributor")

@@ -5,6 +5,7 @@ package com.intellij.ide.util.gotoByName
 
 import com.intellij.navigation.ChooseByNameContributorEx
 import com.intellij.navigation.NavigationItem
+import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.project.DumbAware
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.Key
@@ -21,12 +22,15 @@ import org.jetbrains.annotations.ApiStatus
 @ApiStatus.Internal
 val GOTO_FILE_SEARCH_IN_NON_INDEXABLE: Key<Boolean> = Key.create("search.in.non.indexable")
 
+private val LOG = logger<NonIndexableFileNavigationContributor>()
+
 /**
  * The current implementation loads files into VFS, which we should avoid here.
  * Creating "Disposable virtual files" instead of loading them into VFS should be a better solution.
  * See IJPL-189502 Support non-persistent `VirtualFile`s
  */
 @ApiStatus.Internal
+@Deprecated("Use NonIndexableFilesSEContributor")
 class NonIndexableFileNavigationContributor : ChooseByNameContributorEx, DumbAware {
 
   override fun processNames(processor: Processor<in String>, scope: GlobalSearchScope, filter: IdFilter?) {
@@ -66,8 +70,16 @@ class NonIndexableFileNavigationContributor : ChooseByNameContributorEx, DumbAwa
   }
 }
 
-private fun isGotoFileToNonIndexableEnabled(project: Project): Boolean =
-  Registry.`is`("search.in.non.indexable") || project.getUserData(GOTO_FILE_SEARCH_IN_NON_INDEXABLE) == true
+private fun isGotoFileToNonIndexableEnabled(project: Project): Boolean {
+  if (project.getUserData(GOTO_FILE_SEARCH_IN_NON_INDEXABLE) != true) return false
+  val enabled = Registry.`is`("search.in.non.indexable")
+  val seContributorEnabled = Registry.`is`("se.enable.non.indexable.files.contributor")
+  if (!enabled || seContributorEnabled) {
+    // if new contributor is enabled we don't want to run the second one
+    return false
+  }
+  return true
+}
 
 
 private inline fun idFilter(crossinline filter: (Int) -> Boolean): IdFilter = object : IdFilter() {

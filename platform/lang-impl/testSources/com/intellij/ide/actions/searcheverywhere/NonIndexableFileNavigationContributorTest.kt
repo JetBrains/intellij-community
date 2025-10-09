@@ -1,6 +1,7 @@
 // Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.ide.actions.searcheverywhere
 
+import com.intellij.ide.util.gotoByName.GOTO_FILE_SEARCH_IN_NON_INDEXABLE
 import com.intellij.ide.util.gotoByName.NonIndexableFileNavigationContributor
 import com.intellij.mock.MockProgressIndicator
 import com.intellij.openapi.Disposable
@@ -37,6 +38,7 @@ import java.nio.file.Files
 
 @TestApplication
 @RegistryKey("search.in.non.indexable", "true")
+@RegistryKey("se.enable.non.indexable.files.contributor", "false")
 class NonIndexableFileNavigationContributorTest {
   @RegisterExtension
   val projectModel: ProjectModelExtension = ProjectModelExtension()
@@ -55,6 +57,7 @@ class NonIndexableFileNavigationContributorTest {
     WorkspaceFileIndexImpl.EP_NAME.point.registerExtension(NonIndexableKindFileSetTestContributor(), disposable)
     WorkspaceFileIndexImpl.EP_NAME.point.registerExtension(IndexableKindFileSetTestContributor(), disposable)
     WorkspaceFileIndexImpl.EP_NAME.point.registerExtension(NonRecursiveFileSetContributor(), disposable)
+    project.putUserData(GOTO_FILE_SEARCH_IN_NON_INDEXABLE, true)
   }
 
 
