@@ -185,20 +185,36 @@ class MacDistributionBuilder(
       val builder = this@MacDistributionBuilder
 
       val productJson = generateProductJson(context, arch, withRuntime = true)
-      val productJsonWithoutRuntime = generateProductJson(context, arch, withRuntime = false)
+      val productJsonWithoutRuntime = generateProductJson(context = context, arch = arch, withRuntime = false)
       withContext(Dispatchers.IO) {
         macZipProductInfoJson.writeText(productJson)
         macZipWithoutRuntimeProductInfoJson.writeText(productJsonWithoutRuntime)
       }
 
       buildMacZip(
-        builder, macZip, zipRoot, arch, productJson, directories, extraFiles, includeRuntime = true, compressionLevel
+        macDistributionBuilder = builder,
+        targetFile = macZip,
+        zipRoot = zipRoot,
+        arch = arch,
+        productJson = productJson,
+        directories = directories,
+        extraFiles = extraFiles,
+        includeRuntime = true,
+        compressionLevel = compressionLevel,
       )
 
       if (customizer.buildArtifactWithoutRuntime) {
         val directoriesSansRuntime = directories.filterNot { it == runtimeDir }
         buildMacZip(
-          builder, macZipWithoutRuntime, zipRoot, arch, productJsonWithoutRuntime, directoriesSansRuntime, extraFiles, includeRuntime = false, compressionLevel
+          macDistributionBuilder = builder,
+          targetFile = macZipWithoutRuntime,
+          zipRoot = zipRoot,
+          arch = arch,
+          productJson = productJsonWithoutRuntime,
+          directories = directoriesSansRuntime,
+          extraFiles = extraFiles,
+          includeRuntime = false,
+          compressionLevel = compressionLevel,
         )
       }
 
@@ -212,7 +228,13 @@ class MacDistributionBuilder(
         }
       }
       else {
-        buildForArch(arch, macZip, macZipProductInfoJson, macZipWithoutRuntime, macZipWithoutRuntimeProductInfoJson)
+        buildForArch(
+          arch = arch,
+          macZip = macZip,
+          macZipProductInfoJson = macZipProductInfoJson,
+          macZipWithoutRuntime = macZipWithoutRuntime,
+          macZipWithoutRuntimeProductInfoJson = macZipWithoutRuntimeProductInfoJson,
+        )
       }
     }
   }
@@ -231,7 +253,7 @@ class MacDistributionBuilder(
       signMacBinaries(binariesToSign, context)
       for (dir in listOf(osAndArchSpecificDistPath, runtimeDist)) {
         launch(CoroutineName("recursively signing macOS binaries in $dir")) {
-          recursivelySignMacBinaries(coroutineScope = this, dir, context, matchers)
+          recursivelySignMacBinaries(coroutineScope = this, root = dir, context = context, executableFileMatchers = matchers)
         }
       }
     }

@@ -90,14 +90,21 @@ internal class BuildTasksImpl(private val context: BuildContextImpl) : BuildTask
     checkProductProperties(context)
     checkPluginModules(mainPluginModules, "mainPluginModules", context)
     copyDependenciesFile(context)
-    val pluginsToPublish = getPluginLayoutsByJpsModuleNames(mainPluginModules, context.productProperties.productLayout, toPublish = true)
+    val pluginsToPublish = getPluginLayoutsByJpsModuleNames(modules = mainPluginModules, productLayout = context.productProperties.productLayout, toPublish = true)
     val distState = createDistributionBuilderState(pluginsToPublish, context)
     context.compileModules(null)
 
     buildProjectArtifacts(distState.platform, getEnabledPluginModules(distState.pluginsToPublish, context), context)
 
     val searchableOptionSet = buildSearchableOptions(context.createProductRunner(mainPluginModules + dependencyModules), context)
-    buildNonBundledPlugins(pluginsToPublish, context.options.compressZipFiles, null, distState, searchableOptionSet, context)
+    buildNonBundledPlugins(
+      pluginsToPublish = pluginsToPublish,
+      compressPluginArchive = context.options.compressZipFiles,
+      buildPlatformLibJob = null,
+      state = distState,
+      searchableOptionSet = searchableOptionSet,
+      context = context,
+    )
   }
 
   override suspend fun buildUnpackedDistribution(targetDirectory: Path, includeBinAndRuntime: Boolean) {
@@ -310,10 +317,10 @@ private suspend fun buildOsSpecificDistributions(context: BuildContext): List<Di
 
         async(CoroutineName("$stepId build step")) {
           spanBuilder(stepId).use {
-            val osAndArchSpecificDistDirectory = getOsAndArchSpecificDistDirectory(os, arch, libcImpl, context)
+            val osAndArchSpecificDistDirectory = getOsAndArchSpecificDistDirectory(osFamily = os, arch = arch, libc = libcImpl, context = context)
             builder.buildArtifacts(osAndArchSpecificDistDirectory, arch)
-            checkClassFiles(osAndArchSpecificDistDirectory, context, isDistAll = false)
-            DistributionForOsTaskResult(builder, arch, libcImpl, osAndArchSpecificDistDirectory)
+            checkClassFiles(root = osAndArchSpecificDistDirectory, context = context, isDistAll = false)
+            DistributionForOsTaskResult(builder = builder, arch = arch, libc = libcImpl, outDir = osAndArchSpecificDistDirectory)
           }
         }
       }
@@ -360,7 +367,7 @@ private suspend fun buildSourcesArchive(contentReport: ContentReport, context: B
   val openSourceModules = getIncludedModules(contentReport.bundled()).filter { moduleName ->
     productProperties.includeIntoSourcesArchiveFilter.test(context.findRequiredModule(moduleName), context)
   }.toList()
-  zipSourcesOfModules(openSourceModules, targetFile = context.paths.artifactDir.resolve(archiveName), includeLibraries = true, context)
+  zipSourcesOfModules(modules = openSourceModules, targetFile = context.paths.artifactDir.resolve(archiveName), includeLibraries = true, context = context)
 }
 
 internal suspend fun createDistributionState(context: BuildContext): DistributionBuilderState {
@@ -692,7 +699,7 @@ private fun checkBaseLayout(layout: BaseLayout, description: String, context: Bu
       }
     }
 
-    checkModules(layout.modulesWithExcludedModuleLibraries, "modulesWithExcludedModuleLibraries in $description", context)
+    checkModules(modules = layout.modulesWithExcludedModuleLibraries, fieldName = "modulesWithExcludedModuleLibraries in $description", context = context)
   }
 }
 
@@ -798,8 +805,8 @@ private suspend fun buildCrossPlatformZip(distResults: List<DistributionForOsTas
     launch = sequenceOf(JvmArchitecture.x64, JvmArchitecture.aarch64).flatMap { arch ->
       listOf(
         ProductInfoLaunchData.create(
-          OsFamily.WINDOWS.osName,
-          arch.dirName,
+          os = OsFamily.WINDOWS.osName,
+          arch = arch.dirName,
           launcherPath = "bin/${executableName}.bat",
           javaExecutablePath = null,
           vmOptionsFilePath = "bin/win/${executableName}64.exe.vmoptions",
@@ -808,8 +815,8 @@ private suspend fun buildCrossPlatformZip(distResults: List<DistributionForOsTas
           mainClass = context.ideMainClassName
         ),
         ProductInfoLaunchData.create(
-          OsFamily.LINUX.osName,
-          arch.dirName,
+          os = OsFamily.LINUX.osName,
+          arch = arch.dirName,
           launcherPath = "bin/${executableName}.sh",
           javaExecutablePath = null,
           vmOptionsFilePath = "bin/linux/${executableName}64.vmoptions",
@@ -819,8 +826,8 @@ private suspend fun buildCrossPlatformZip(distResults: List<DistributionForOsTas
           startupWmClass = getLinuxFrameClass(context)
         ),
         ProductInfoLaunchData.create(
-          OsFamily.MACOS.osName,
-          arch.dirName,
+          os = OsFamily.MACOS.osName,
+          arch = arch.dirName,
           launcherPath = "bin/${executableName}.sh",
           javaExecutablePath = null,
           vmOptionsFilePath = "bin/mac/${executableName}.vmoptions",
@@ -980,9 +987,9 @@ private fun crossPlatformZip(
       val binEntryCustomizer = { entry: ZipArchiveEntry, path: Path, relative: String ->
         entryCustomizer.invoke(entry, path, "bin/${relative}")
       }
-      distResults.forEach {
-        val prefix = "bin/${it.builder.targetOs.dirName}/${it.arch.dirName}/"
-        out.dir(it.outDir.resolve("bin"), prefix, fileFilter = { _, relPath ->
+      for (result in distResults) {
+        val prefix = "bin/${result.builder.targetOs.dirName}/${result.arch.dirName}/"
+        out.dir(result.outDir.resolve("bin"), prefix, fileFilter = { _, relPath ->
           relPath != "brokenPlugins.db" &&
           !(relPath.startsWith(executableName) && relPath.endsWith(".exe")) &&
           relPath != "${executableName}.bat" &&
@@ -995,7 +1002,7 @@ private fun crossPlatformZip(
           !nonConflictingBinDirs.any(relPath::startsWith)
         }, binEntryCustomizer)
 
-        out.dir(it.outDir.resolve("bin"), prefix = "bin/", fileFilter = { file, relPath ->
+        out.dir(result.outDir.resolve("bin"), prefix = "bin/", fileFilter = { file, relPath ->
           nonConflictingBinDirs.any(relPath::startsWith)&&
           filterFileIfAlreadyInZip(relPath, file, zipFileUniqueGuard)
         }, binEntryCustomizer)

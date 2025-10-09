@@ -265,17 +265,17 @@ private fun writePluginInfo(
   additional: List<Pair<Path, List<Path>>>?,
   context: BuildContext,
 ) {
-  val commonClassPath = generatePluginClassPath(pluginEntries = common, moduleOutputPatcher)
+  val commonClassPath = generatePluginClassPath(pluginEntries = common, moduleOutputPatcher = moduleOutputPatcher)
   val additionalClassPath = additional?.let { generatePluginClassPathFromPrebuiltPluginFiles(it) }
 
   for ((supportedDist) in pluginDirs) {
-    val specificList = specific[supportedDist]
-    val specificClasspath = specificList?.let { generatePluginClassPath(pluginEntries = it, moduleOutputPatcher) }
+    val specificList = specific.get(supportedDist)
+    val specificClasspath = specificList?.let { generatePluginClassPath(pluginEntries = it, moduleOutputPatcher = moduleOutputPatcher) }
 
     val byteOut = ByteArrayOutputStream()
     val out = DataOutputStream(byteOut)
     val pluginCount = common.size + (additional?.size ?: 0) + (specificList?.size ?: 0)
-    writePluginClassPathHeader(out, isJarOnly = true, pluginCount, moduleOutputPatcher, context)
+    writePluginClassPathHeader(out = out, isJarOnly = true, pluginCount = pluginCount, moduleOutputPatcher = moduleOutputPatcher, context = context)
     out.write(commonClassPath)
     additionalClassPath?.let { out.write(it) }
     specificClasspath?.let { out.write(it) }
@@ -897,6 +897,7 @@ private suspend fun checkOutputOfPluginModules(
       module == "intellij.java.guiForms.rt" ||
       !containsFileInOutput(module, "com/intellij/uiDesigner/core/GridLayoutManager.class", moduleExcludes.get(module) ?: emptyList(), context)
     ) {
+      @Suppress("GrazieInspection")
       "Runtime classes of GUI designer must not be packaged to '$module' module in '$mainPluginModule' plugin, " +
       "because they are included into a platform JAR. Make sure that 'Automatically copy form runtime classes " +
       "to the output directory' is disabled in Settings | Editor | GUI Designer."
@@ -1269,7 +1270,7 @@ private suspend fun checkModuleExcludes(moduleExcludes: Map<String, List<String>
   for (module in moduleExcludes.keys) {
     check(context.getModuleOutputRoots(context.findRequiredModule(module)).all(Files::exists)) {
       "There are excludes defined for module '${module}', but the module wasn't compiled;" +
-      " most probably it means that '${module}' isn't included into the product distribution," +
+      " most probably it means that '${module}' isn't included in the product distribution," +
       " so it doesn't make sense to define excludes for it."
     }
   }
