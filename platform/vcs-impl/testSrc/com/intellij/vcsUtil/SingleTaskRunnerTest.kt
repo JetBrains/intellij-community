@@ -16,6 +16,7 @@ import org.junit.jupiter.api.Assertions.assertEquals
 import org.junit.jupiter.api.Test
 import org.junit.jupiter.api.assertThrows
 import kotlin.time.Duration
+import kotlin.time.Duration.Companion
 
 internal class SingleTaskRunnerTest {
   @Test
@@ -45,11 +46,29 @@ internal class SingleTaskRunnerTest {
   @Test
   fun `test instant execution`() = timeoutRunBlocking {
     var counter = 0
-    withRunner({ counter++ }, delay = Duration.Companion.INFINITE) {
+    withRunner({ counter++ }, delay = Duration.INFINITE) {
       start()
       request()
       requestNow()
       awaitNotBusy()
+      assertEquals(1, counter)
+    }
+  }
+
+  @Test
+  fun `test delayed execution after instant`() = timeoutRunBlocking {
+    var counter = 0
+    withRunner({ counter++ }, delay = Duration.INFINITE) {
+      start()
+      request()
+      requestNow()
+      awaitNotBusy()
+      request()
+      assertThrows<TimeoutCancellationException> {
+        withTimeout(100) {
+          awaitNotBusy()
+        }
+      }
       assertEquals(1, counter)
     }
   }
@@ -112,7 +131,7 @@ internal class SingleTaskRunnerTest {
 
   private inline fun CoroutineScope.withRunner(
     noinline task: suspend () -> Unit,
-    delay: Duration = Duration.Companion.ZERO,
+    delay: Duration = Companion.ZERO,
     consumer: SingleTaskRunner.() -> Unit,
   ) {
     val cs = childScope("BG runner")

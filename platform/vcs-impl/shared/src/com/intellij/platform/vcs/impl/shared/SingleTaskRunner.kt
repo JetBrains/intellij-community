@@ -6,8 +6,10 @@ import com.intellij.openapi.diagnostic.getOrHandleException
 import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.progress.checkCanceled
 import kotlinx.coroutines.*
-import kotlinx.coroutines.channels.BufferOverflow
-import kotlinx.coroutines.flow.*
+import kotlinx.coroutines.channels.Channel
+import kotlinx.coroutines.flow.MutableStateFlow
+import kotlinx.coroutines.flow.combine
+import kotlinx.coroutines.flow.first
 import org.jetbrains.annotations.ApiStatus
 import kotlin.time.Duration
 
@@ -25,7 +27,7 @@ class SingleTaskRunner(
   private val requested = MutableStateFlow(false)
   private val busy = MutableStateFlow(false)
 
-  private val runNow = MutableSharedFlow<Unit>(replay = 1, onBufferOverflow = BufferOverflow.DROP_OLDEST)
+  private val runNow = Channel<Unit>(capacity = Channel.CONFLATED)
 
   private val processorJob = cs.launch(Dispatchers.Default, CoroutineStart.LAZY) {
     try {
@@ -33,7 +35,7 @@ class SingleTaskRunner(
         checkCanceled()
         requested.first { it }
         if (delay.isPositive()) {
-          withTimeoutOrNull(delay) { runNow.firstOrNull() }
+          withTimeoutOrNull(delay) { runNow.receive() }
         }
         busy.value = true
         requested.value = false
@@ -58,7 +60,7 @@ class SingleTaskRunner(
 
   fun requestNow() {
     if (processorJob.isCancelled) return
-    runNow.tryEmit(Unit)
+    runNow.trySend(Unit)
     requested.value = true
   }
 
