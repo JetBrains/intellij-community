@@ -9,6 +9,18 @@
   },
   "lang": "en-us",
   "atRules": {
+    "media": {
+      "doc": "",
+      "properties": {
+        "aural": {
+          "url": "$MDN_URL$/web/css/@media/aural",
+          "status": [
+            "Obsolete"
+          ],
+          "doc": "<div class=\"notecard deprecated\"><p><strong>Deprecated:</strong> This feature is no longer recommended. Though some browsers might still support it, it may have already been removed from the relevant web standards, may be in the process of being dropped, or may only be kept for compatibility purposes. Avoid using it, and update existing code if possible; see the <a href=\"#browser_compatibility\">compatibility table</a> at the bottom of this page to guide your decision. Be aware that this feature may cease to work at any time.</div>\n<p>The <code>aural</code> <a href=\"$MDN_URL$/Web/CSS\">CSS</a> <a href=\"$MDN_URL$/Web/CSS/@media#media_types\">media type</a> is used for devices that have speech output capabilities."
+        }
+      }
+    },
     "viewport": {
       "url": "$MDN_URL$/web/CSS/@viewport",
       "status": [
@@ -58,6 +70,19 @@
     }
   },
   "properties": {
+    "-moz-image-region": {
+      "url": "$MDN_URL$/web/css/-moz-image-region",
+      "status": [
+        "Obsolete"
+      ],
+      "compatibility": {},
+      "doc": "<div class=\"notecard nonstandard\"><p><strong>Non-standard:</strong> This feature is non-standard and is not on a standards track. Do not use it on production sites facing the Web: it will not work for every user. There may also be large incompatibilities between implementations and the behavior may change in the future.</div>\n<p>For certain XUL elements and pseudo-elements that use an image from the <a href=\"$MDN_URL$/Web/CSS/list-style-image\"><code>list-style-image</code></a> property, this property specifies a region of the image that is used in place of the whole image. This allows elements to use different pieces of the same image to improve performance.\n<p>The syntax is similar to the <a href=\"$MDN_URL$/Web/CSS/clip\"><code>clip</code></a> property. All four values are relative to the upper left corner of the image.",
+      "formalSyntax": "&lt;shape&gt; | auto",
+      "values": {
+        "auto": "Automatically defines the region of the image to use.",
+        "&lt;shape&gt;": "A shape defining the part of the image to use. The <code>rect()</code> function defines a rectangle to use as shape. Its parameters define the top, right, bottom, and left offsets of the edges of the image, in this order."
+      }
+    },
     "-webkit-line-clamp": {
       "url": "$MDN_URL$/web/css/-webkit-line-clamp",
       "status": [
@@ -341,7 +366,15 @@
       "doc": "The basic goal of the Cascading Stylesheet (<a href=\"$MDN_URL$/Web/CSS\">CSS</a>) language is to allow a browser engine to paint elements of the page with specific features, like colors, positioning, or decorations. The <em>CSS syntax</em> reflects this goal and its basic building blocks are:\n<ul>\n<li>The <strong>property</strong> which is an identifier, that is a human-readable <em>name</em>, that defines which feature is considered.</li>\n<li>The <strong>value</strong> which describe how the feature must be handled by the engine. Each property has a set of valid values, defined by a formal grammar, as well as a semantic meaning, implemented by the browser engine.</li>\n</ul>"
     }
   },
-  "pseudoClasses": {},
+  "pseudoClasses": {
+    "target-within": {
+      "url": "$MDN_URL$/web/css/_colon_target-within",
+      "status": [
+        "Obsolete"
+      ],
+      "doc": "<div class=\"notecard experimental\"><p><strong>Experimental:</strong> <strong>This is an <a href=\"$MDN_URL$/MDN/Writing_guidelines/Experimental_deprecated_obsolete#experimental\">experimental technology</a></strong><br>Check the <a href=\"#browser_compatibility\">Browser compatibility table</a> carefully before using this in production.</div>\n<p>The <strong><code>:target-within</code></strong> <a href=\"$MDN_URL$/Web/CSS\">CSS</a> <a href=\"$MDN_URL$/Web/CSS/Pseudo-classes\">pseudo-class</a> represents an element that is a target element or <em>contains</em> an element that is a target. A target element is a unique element with an <a href=\"$MDN_URL$/Web/HTML/Reference/Global_attributes/id\"><code>id</code></a> matching the URL's fragment. In other words, it represents an element that is itself matched by the <a href=\"$MDN_URL$/Web/CSS/:target\"><code>:target</code></a> pseudo-class or has a descendant that is matched by <code>:target</code>. (This includes descendants in <a href=\"$MDN_URL$/Web/API/Web_components/Using_shadow_DOM\">shadow trees</a>.)\n<div>\n```css\n/* Selects a <div> when one of its descendants is a target */\ndiv:target-within {\n  background: cyan;\n}\n```\n</div>"
+    }
+  },
   "pseudoElements": {
     "-moz-page": {
       "url": "$MDN_URL$/web/css/_doublecolon_-moz-page",

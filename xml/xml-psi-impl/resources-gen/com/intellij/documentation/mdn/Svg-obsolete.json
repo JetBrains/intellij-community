@@ -225,6 +225,29 @@
         }
       }
     },
+    "discard": {
+      "url": "$MDN_URL$/web/svg/reference/element/discard",
+      "status": [
+        "Obsolete"
+      ],
+      "compatibility": {},
+      "doc": "<div class=\"notecard experimental\"><p><strong>Experimental:</strong> <strong>This is an <a href=\"$MDN_URL$/MDN/Writing_guidelines/Experimental_deprecated_obsolete#experimental\">experimental technology</a></strong><br>Check the <a href=\"#browser_compatibility\">Browser compatibility table</a> carefully before using this in production.</div>\n<p>The <strong><code>&lt;discard&gt;</code></strong> <a href=\"$MDN_URL$/Web/SVG\">SVG</a> element may be used to specify the time at which a particular element should be removed from the DOM.\nThis allows an SVG viewer to conserve memory by discarding elements that are no longer needed, such as animated elements that have completed.\n<p>The operation removes the target element and all its children, and then the <code>&lt;discard&gt;</code> element itself (this happens even if the target element was invalid).\n<p>The <a href=\"#begin\"><code>begin</code></a> attribute is used to specify the trigger point at which the <code>&lt;discard&gt;</code> element becomes active and its associated element is discarded.\nThe target element that is to be removed from the DOM is specified using the <a href=\"#href\"><code>href</code></a> attribute.\nIf not specified, the immediate parent of the <code>&lt;discard&gt;</code> element is the target.\n<p><code>&lt;discard&gt;</code> may be used in all the same places as the <a href=\"$MDN_URL$/Web/SVG/Reference/Element/animate\"><code>&lt;animate&gt;</code></a> element.\nAuthors should set the <code>playbackorder</code> attribute to <code>forwardonly</code> when using this element, as elements are not re-added if the user seeks backwards in the timeline.",
+      "attrs": {
+        "begin": {
+          "url": "$MDN_URL$/web/svg/reference/element/discard#begin",
+          "doc": "The trigger that causes the <code>&lt;discard&gt;</code> element to become active, at which point the associated element should be discarded.\nThis is commonly a <a href=\"$MDN_URL$/Web/SVG/Reference/Attribute/begin#syncbase-value\"><code>syncbase-value</code></a> indicating the start or end of another animation, an <a href=\"$MDN_URL$/Web/SVG/Reference/Attribute/begin#offset-value\"><code>offset-value</code></a> relative to when the SVG file was loaded into the DOM, or an <a href=\"$MDN_URL$/Web/SVG/Reference/Attribute/begin#event-value\"><code>event-value</code></a>.",
+          "details": {
+            "Value type": "<a href=\"$MDN_URL$/Web/SVG/Reference/Attribute/begin#animate_animatemotion_animatetransform_set\"><strong>&lt;begin-value-list&gt;</strong></a>",
+            "Default": "<code>0</code>",
+            "Animatable": "<strong>no</strong>"
+          }
+        },
+        "href": {
+          "url": "$MDN_URL$/web/svg/reference/element/discard#href",
+          "doc": "An URL reference for the target element to discard.\nThis has the same requirements as <a href=\"$MDN_URL$/Web/SVG/Reference/Attribute/href#animate_animatemotion_animatetransform_set\"><code>href</code> on animation elements</a>, and can be another <code>&lt;discard&gt;</code> element.\nIf not defined, the target element is the immediate parent of the <code>&lt;discard&gt;</code> element.\n<p>Note that if the target element is not part of the current SVG document fragment, whether or not it is discarded depends on the target language.\n<p><em>Default value</em>: <code>none</code>; <em>Animatable</em>: <strong>no</strong>"
+        }
+      }
+    },
     "filter": {
       "doc": "",
       "attrs": {
