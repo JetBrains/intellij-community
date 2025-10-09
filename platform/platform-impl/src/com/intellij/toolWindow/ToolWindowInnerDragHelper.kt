@@ -53,13 +53,14 @@ internal class ToolWindowInnerDragHelper(parent: Disposable, val pane: JComponen
     with(point.getPoint(pane)) {
       val child = SwingUtilities.getDeepestComponentAt(pane, x, y)
       val decorator = InternalDecoratorImpl.findTopLevelDecorator(child)
+      val editorSupport = getEditorSupport(decorator)
       if (decorator != null &&
           ToolWindowContentUi.isTabsReorderingAllowed(decorator.toolWindow) &&
           child is ContentTabLabel &&
           (child.parent is ToolWindowContentUi.TabPanel ||
            Registry.`is`("debugger.new.tool.window.layout.dnd", false) && child.parent is SingleContentLayout.TabAdapter) &&
           ((decorator.toolWindow.contentManager as ContentManagerImpl).getRecursiveContentCount() > 1 ||
-           getEditorSupport(decorator) != null)
+           editorSupport?.canOpenInEditor(decorator.toolWindow.project, child.content) == true)
       ) {
         return child
       }
@@ -368,9 +369,12 @@ internal class ToolWindowInnerDragHelper(parent: Disposable, val pane: JComponen
       }
     }
 
+    val content = myDraggingTab?.content
     curDropLocation = when {
       decorator != null -> DropLocation.ToolWindow(decorator)
-      editorWindow != null && getEditorSupport(sourceDecorator) != null -> DropLocation.Editor(editorWindow)
+      editorWindow != null && content != null && getEditorSupport(sourceDecorator)?.canOpenInEditor(editorWindow.manager.project, content) == true -> {
+        DropLocation.Editor(editorWindow)
+      }
       else -> null
     }
   }

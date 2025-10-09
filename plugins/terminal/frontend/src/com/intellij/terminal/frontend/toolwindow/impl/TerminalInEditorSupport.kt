@@ -11,26 +11,21 @@ import com.intellij.terminal.frontend.toolwindow.TerminalToolWindowTabsManager
 import com.intellij.terminal.frontend.toolwindow.findTabByContent
 import com.intellij.terminal.frontend.toolwindow.impl.TerminalToolWindowTabsManagerImpl.Companion.TAB_DETACHED_KEY
 import com.intellij.ui.content.Content
-import org.jetbrains.plugins.terminal.TerminalToolWindowManager
 import javax.swing.JSplitPane
 import javax.swing.SwingConstants
 
 internal class TerminalInEditorSupport : ToolWindowInEditorSupport {
+  override fun canOpenInEditor(project: Project, content: Content): Boolean {
+    return TerminalToolWindowTabsManager.getInstance(project).findTabByContent(content) != null
+  }
+
   override fun openInEditor(content: Content, targetWindow: EditorWindow, dropSide: Int) {
     val project = targetWindow.owner.manager.project
-    val terminalTab = TerminalToolWindowTabsManager.getInstance(project).findTabByContent(content)
-    val terminalWidget = TerminalToolWindowManager.findWidgetByContent(content)
-
-    if (terminalTab != null) {
-      openReworkedTerminalInEditor(project, terminalTab, targetWindow, dropSide)
-    }
-    else if (terminalWidget != null) {
-      // todo
-    }
+    val terminalTab = TerminalToolWindowTabsManager.getInstance(project).findTabByContent(content) ?: return
+    openReworkedTerminalInEditor(terminalTab, targetWindow, dropSide)
   }
 
   private fun openReworkedTerminalInEditor(
-    project: Project,
     tab: TerminalToolWindowTab,
     editorWindow: EditorWindow,
     dropSide: Int,
