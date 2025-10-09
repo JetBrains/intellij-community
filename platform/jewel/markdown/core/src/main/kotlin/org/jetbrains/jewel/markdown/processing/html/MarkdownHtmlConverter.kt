@@ -43,7 +43,6 @@ public sealed interface MarkdownHtmlElementConversionResult {
 }
 
 internal class MarkdownHtmlConverter {
-
     private val inlinesConverter = MarkdownHtmlInlinesConverter()
 
     fun convert(
@@ -125,7 +124,9 @@ internal class MarkdownHtmlConverter {
             val ogBlock =
                 if (markdownBlock is ScrollingSynchronizer.LocatableMarkdownBlock) {
                     markdownBlock.originalBlock
-                } else markdownBlock
+                } else {
+                    markdownBlock
+                }
             (ogBlock as? WithInlineMarkdown)?.inlineContent.orEmpty()
         }
 

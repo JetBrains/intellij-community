@@ -7,7 +7,6 @@ import org.jetbrains.jewel.markdown.WithTextContent
 import org.jetbrains.jewel.markdown.processing.MarkdownProcessor
 
 internal class MarkdownHtmlInlinesConverter {
-
     internal fun convert(processor: MarkdownProcessor, inlines: List<InlineMarkdown>): List<InlineMarkdown> {
         val matchingPairs = inlines.findOuterMatchingPairs(processor)
         if (matchingPairs.isEmpty()) {

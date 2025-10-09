@@ -15,11 +15,9 @@ private typealias JsoupNode = org.jsoup.nodes.Node
 private typealias JsoupElement = org.jsoup.nodes.Element
 
 /** Intermediate representation of HTML elements parsed from [org.commonmark.node.HtmlBlock]. */
-// intentionally not a MarkdownBlock -- it's just an intermediate representation
 @ApiStatus.Experimental
 @ExperimentalJewelApi
 public sealed interface MarkdownHtmlElement {
-
     /** Raw HTML content of the element. */
     @get:ApiStatus.Experimental @ExperimentalJewelApi public val htmlContent: String
 

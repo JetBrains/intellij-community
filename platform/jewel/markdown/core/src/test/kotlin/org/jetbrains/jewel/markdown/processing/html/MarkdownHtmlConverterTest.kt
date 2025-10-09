@@ -8,7 +8,6 @@ import org.jetbrains.jewel.markdown.processing.MarkdownProcessor
 import org.junit.Test
 
 public class MarkdownHtmlConverterTest {
-
     private val processor = MarkdownProcessor(convertHtml = true)
 
     @Test
