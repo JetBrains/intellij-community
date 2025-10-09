@@ -2,7 +2,7 @@
 plugins {
   id("maven-publish")
   id("java")
-  id("org.jetbrains.kotlin.jvm") version "1.8.0"
+  id("org.jetbrains.kotlin.jvm") version "2.2.20"
 }
 
 fun properties(key: String) = project.findProperty(key).toString()
@@ -28,7 +28,7 @@ kotlin {
 publishing {
   repositories {
     maven {
-      url = uri(System.getProperty("intellij.dependencies.repo.url") ?: "")
+      System.getProperty("intellij.dependencies.repo.url")?.let { url = uri(it) }
       credentials {
         username = System.getProperty("intellij.workspace.codegen.repository.user")
         password = System.getProperty("intellij.workspace.codegen.repository.password")

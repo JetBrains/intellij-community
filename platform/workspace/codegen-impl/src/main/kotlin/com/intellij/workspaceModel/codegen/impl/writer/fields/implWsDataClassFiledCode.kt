@@ -2,6 +2,7 @@ package com.intellij.workspaceModel.codegen.impl.writer.fields
 
 import com.intellij.workspaceModel.codegen.deft.meta.ObjProperty
 import com.intellij.workspaceModel.codegen.deft.meta.ValueType
+import com.intellij.workspaceModel.codegen.impl.writer.StorageCollection
 import com.intellij.workspaceModel.codegen.impl.writer.extensions.hasSetter
 import com.intellij.workspaceModel.codegen.impl.writer.extensions.isOverride
 import com.intellij.workspaceModel.codegen.impl.writer.extensions.isRefType
@@ -20,11 +21,18 @@ internal val ObjProperty<*, *>.implWsDataFieldCode: String
         is ObjProperty.ValueKind.WithDefault -> kind.value
         else -> error(kind)
       }
+      val changeToMutable = valueType is ValueType.Collection<*, *> && !valueType.isRefType()
+      val javaType = if (changeToMutable) valueType.javaMutableType else valueType.javaType
+      val toMutable = when {
+        changeToMutable && valueType is ValueType.List<*> -> ".${StorageCollection.toMutableWorkspaceList}()"
+        changeToMutable && valueType is ValueType.Set<*> -> ".${StorageCollection.toMutableWorkspaceSet}()"
+        else -> ""
+      }
       if (expression.startsWith("=")) {
-        append("$generatedCodeVisibilityModifier var $javaName: ${valueType.javaType} $expression")
+        append("$generatedCodeVisibilityModifier var $javaName: $javaType $expression$toMutable")
       }
       else {
-        append("$generatedCodeVisibilityModifier var $javaName: ${valueType.javaType} = $expression")
+        append("$generatedCodeVisibilityModifier var $javaName: $javaType = $expression$toMutable")
       }
     }
   }
