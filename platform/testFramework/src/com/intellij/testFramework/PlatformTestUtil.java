@@ -8,16 +8,12 @@ import com.intellij.execution.*;
 import com.intellij.execution.ExecutionException;
 import com.intellij.execution.Executor;
 import com.intellij.execution.actions.ConfigurationContext;
-import com.intellij.execution.actions.ConfigurationFromContext;
 import com.intellij.execution.actions.RunConfigurationProducer;
-import com.intellij.execution.configurations.ConfigurationFactory;
 import com.intellij.execution.configurations.GeneralCommandLine;
 import com.intellij.execution.configurations.RunConfiguration;
 import com.intellij.execution.executors.DefaultRunExecutor;
 import com.intellij.execution.process.ProcessEvent;
-import com.intellij.execution.process.ProcessHandler;
 import com.intellij.execution.process.ProcessListener;
-import com.intellij.execution.process.ProcessOutput;
 import com.intellij.execution.runners.ExecutionEnvironment;
 import com.intellij.execution.runners.ProgramRunner;
 import com.intellij.execution.ui.RunContentDescriptor;
@@ -26,6 +22,7 @@ import com.intellij.ide.DataManager;
 import com.intellij.ide.IdeEventQueue;
 import com.intellij.ide.fileTemplates.FileTemplateManager;
 import com.intellij.ide.fileTemplates.impl.FileTemplateManagerImpl;
+import com.intellij.ide.highlighter.ArchiveFileType;
 import com.intellij.ide.projectView.impl.nodes.ExternalLibrariesNode;
 import com.intellij.ide.util.treeView.AbstractTreeNode;
 import com.intellij.ide.util.treeView.AbstractTreeStructure;
@@ -33,7 +30,7 @@ import com.intellij.model.psi.PsiSymbolReferenceService;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.actionSystem.ex.ActionUtil;
-import com.intellij.openapi.application.Application;
+import com.intellij.openapi.actionSystem.impl.SimpleDataContext;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ModalityState;
 import com.intellij.openapi.application.PathManager;
@@ -41,14 +38,13 @@ import com.intellij.openapi.application.impl.LaterInvocator;
 import com.intellij.openapi.application.impl.NonBlockingReadActionImpl;
 import com.intellij.openapi.application.impl.TestOnlyThreading;
 import com.intellij.openapi.diagnostic.Logger;
-import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.extensions.ProjectExtensionPointName;
 import com.intellij.openapi.extensions.impl.ExtensionPointImpl;
 import com.intellij.openapi.fileEditor.FileDocumentManager;
 import com.intellij.openapi.fileEditor.impl.LoadTextUtil;
+import com.intellij.openapi.fileTypes.FileTypeManager;
 import com.intellij.openapi.fileTypes.FileTypeRegistry;
 import com.intellij.openapi.fileTypes.FileTypes;
-import com.intellij.openapi.fileTypes.StdFileTypes;
 import com.intellij.openapi.module.ModuleUtilCore;
 import com.intellij.openapi.paths.UrlReference;
 import com.intellij.openapi.paths.WebReference;
@@ -56,19 +52,20 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.project.ex.ProjectManagerEx;
 import com.intellij.openapi.ui.Queryable;
 import com.intellij.openapi.util.*;
-import com.intellij.openapi.util.io.FileUtil;
+import com.intellij.openapi.util.io.FileUtilRt;
 import com.intellij.openapi.util.io.NioFiles;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.LocalFileSystem;
-import com.intellij.openapi.vfs.VfsUtilCore;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.vfs.VirtualFileFilter;
 import com.intellij.openapi.vfs.ex.temp.TempFileSystem;
 import com.intellij.platform.testFramework.core.FileComparisonFailedError;
-import com.intellij.psi.*;
+import com.intellij.psi.PsiElement;
+import com.intellij.psi.PsiManager;
+import com.intellij.psi.PsiRecursiveElementWalkingVisitor;
+import com.intellij.psi.PsiReference;
 import com.intellij.psi.impl.DocumentCommitThread;
 import com.intellij.psi.impl.source.resolve.reference.impl.PsiMultiReference;
-import com.intellij.testFramework.common.TestApplicationKt;
 import com.intellij.testFramework.fixtures.IdeaTestExecutionPolicy;
 import com.intellij.ui.ClientProperty;
 import com.intellij.ui.tree.AsyncTreeModel;
@@ -79,14 +76,13 @@ import com.intellij.util.concurrency.ThreadingAssertions;
 import com.intellij.util.concurrency.annotations.RequiresEdt;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.io.Decompressor;
+import com.intellij.util.system.OS;
 import com.intellij.util.ui.EDT;
 import com.intellij.util.ui.UIUtil;
 import com.intellij.util.ui.tree.TreeUtil;
 import junit.framework.AssertionFailedError;
 import kotlin.Unit;
-import kotlinx.coroutines.Job;
 import org.jetbrains.annotations.*;
-import org.jetbrains.concurrency.AsyncPromise;
 import org.jetbrains.concurrency.Promise;
 import org.junit.AssumptionViolatedException;
 
@@ -95,11 +91,12 @@ import javax.swing.tree.TreeModel;
 import javax.swing.tree.TreePath;
 import java.awt.*;
 import java.awt.event.InvocationEvent;
-import java.io.File;
 import java.io.IOException;
 import java.io.OutputStream;
 import java.io.PrintStream;
 import java.net.MalformedURLException;
+import java.net.URI;
+import java.net.URISyntaxException;
 import java.net.URL;
 import java.nio.charset.Charset;
 import java.nio.file.Files;
@@ -113,16 +110,16 @@ import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.function.*;
 import java.util.function.Consumer;
 import java.util.function.Function;
-import java.util.jar.JarFile;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
 import static com.intellij.openapi.util.text.StringUtil.splitByLines;
 import static com.intellij.testFramework.UsefulTestCase.assertSameLines;
 import static com.intellij.util.containers.ContainerUtil.sorted;
+import static java.util.Objects.requireNonNull;
 import static org.junit.Assert.*;
 
-@SuppressWarnings("UseOfSystemOutOrSystemErr")
+@SuppressWarnings({"UseOfSystemOutOrSystemErr", "UIUtilDispatchAllInvocationEventsInTests"})
 public final class PlatformTestUtil {
   private static final Logger LOG = Logger.getInstance(PlatformTestUtil.class);
 
@@ -133,7 +130,7 @@ public final class PlatformTestUtil {
 
   public static @NotNull String getTestName(@NotNull String name, boolean lowercaseFirstLetter) {
     name = StringUtil.trimStart(name, "test");
-    return StringUtil.isEmpty(name) ? "" : lowercaseFirstLetter(name, lowercaseFirstLetter);
+    return name.isEmpty() ? "" : lowercaseFirstLetter(name, lowercaseFirstLetter);
   }
 
   public static @NotNull String lowercaseFirstLetter(@NotNull String name, boolean lowercaseFirstLetter) {
@@ -144,8 +141,8 @@ public final class PlatformTestUtil {
   }
 
   public static boolean isAllUppercaseName(@NotNull String name) {
-    int uppercaseChars = 0;
-    for (int i = 0; i < name.length(); i++) {
+    var uppercaseChars = 0;
+    for (var i = 0; i < name.length(); i++) {
       if (Character.isLowerCase(name.charAt(i))) {
         return false;
       }
@@ -157,20 +154,14 @@ public final class PlatformTestUtil {
   }
 
   /**
-   * @deprecated moved to {@link TestApplicationKt#loadApp(Runnable)}
-   */
-  @Deprecated
-  static void loadApp(@NotNull Runnable setupEventQueue) {
-    TestApplicationKt.loadApp(setupEventQueue);
-  }
-
-  /**
    * @see ExtensionPointImpl#maskAll(List, Disposable, boolean)
    */
-  public static <T> void maskExtensions(@NotNull ProjectExtensionPointName<T> pointName,
-                                        @NotNull Project project,
-                                        @NotNull List<? extends T> newExtensions,
-                                        @NotNull Disposable parentDisposable) {
+  public static <T> void maskExtensions(
+    @NotNull ProjectExtensionPointName<T> pointName,
+    @NotNull Project project,
+    @NotNull List<? extends T> newExtensions,
+    @NotNull Disposable parentDisposable
+  ) {
     ((ExtensionPointImpl<@NotNull T>)pointName.getPoint(project)).maskAll(newExtensions, parentDisposable, true);
   }
 
@@ -199,41 +190,45 @@ public final class PlatformTestUtil {
     return print(tree, new TreePath(tree.getModel().getRoot()), withSelection, null, nodePrintCondition);
   }
 
-  private static String print(JTree tree,
-                              TreePath path,
-                              boolean withSelection,
-                              @Nullable Queryable.PrintInfo printInfo,
-                              @Nullable Predicate<? super String> nodePrintCondition) {
-    Collection<String> strings = new ArrayList<>();
+  private static String print(
+    JTree tree,
+    TreePath path,
+    boolean withSelection,
+    @Nullable Queryable.PrintInfo printInfo,
+    @Nullable Predicate<? super String> nodePrintCondition
+  ) {
+    var strings = new ArrayList<String>();
     printImpl(tree, path, strings, 0, withSelection, printInfo, nodePrintCondition);
     return String.join("\n", strings);
   }
 
-  private static void printImpl(JTree tree,
-                                TreePath path,
-                                Collection<? super String> strings,
-                                int level,
-                                boolean withSelection,
-                                @Nullable Queryable.PrintInfo printInfo,
-                                @Nullable Predicate<? super String> nodePrintCondition) {
-    Object pathComponent = path.getLastPathComponent();
-    Object userObject = TreeUtil.getUserObject(pathComponent);
-    String nodeText = toString(userObject, printInfo);
+  private static void printImpl(
+    JTree tree,
+    TreePath path,
+    Collection<? super String> strings,
+    int level,
+    boolean withSelection,
+    @Nullable Queryable.PrintInfo printInfo,
+    @Nullable Predicate<? super String> nodePrintCondition
+  ) {
+    var pathComponent = path.getLastPathComponent();
+    var userObject = TreeUtil.getUserObject(pathComponent);
+    var nodeText = toString(userObject, printInfo);
 
     if (nodePrintCondition != null && !nodePrintCondition.test(nodeText)) {
       return;
     }
 
-    StringBuilder buff = new StringBuilder();
-    StringUtil.repeatSymbol(buff, ' ', level);
+    var buff = new StringBuilder();
+    buff.repeat(' ', level);
 
-    boolean expanded = tree.isExpanded(path);
-    int childCount = tree.getModel().getChildCount(pathComponent);
+    var expanded = tree.isExpanded(path);
+    var childCount = tree.getModel().getChildCount(pathComponent);
     if (childCount > 0) {
       buff.append(expanded ? '-' : '+');
     }
 
-    boolean selected = tree.getSelectionModel().isPathSelected(path);
+    var selected = tree.getSelectionModel().isPathSelected(path);
     if (withSelection && selected) {
       buff.append('[');
     }
@@ -247,26 +242,26 @@ public final class PlatformTestUtil {
     strings.add(buff.toString());
 
     if (expanded) {
-      for (int i = 0; i < childCount; i++) {
-        TreePath childPath = path.pathByAddingChild(tree.getModel().getChild(pathComponent, i));
+      for (var i = 0; i < childCount; i++) {
+        var childPath = path.pathByAddingChild(tree.getModel().getChild(pathComponent, i));
         printImpl(tree, childPath, strings, level + 1, withSelection, printInfo, nodePrintCondition);
       }
     }
   }
 
-  public static void assertTreeEqual(@NotNull JTree tree, @NotNull @NonNls String expected) {
+  public static void assertTreeEqual(@NotNull JTree tree, @NotNull String expected) {
     assertTreeEqual(tree, expected, false);
   }
 
-  public static void assertTreeEqual(@NotNull JTree tree, @NotNull @NonNls String expected, boolean checkSelected) {
+  public static void assertTreeEqual(@NotNull JTree tree, @NotNull String expected, boolean checkSelected) {
     assertTreeEqual(tree, expected, checkSelected, false);
   }
 
-  public static void assertTreeEqual(@NotNull JTree tree, @NotNull @NonNls String expected, boolean checkSelected, boolean ignoreOrder) {
-    String treeStringPresentation = print(tree, checkSelected);
+  public static void assertTreeEqual(@NotNull JTree tree, @NotNull String expected, boolean checkSelected, boolean ignoreOrder) {
+    var treeStringPresentation = print(tree, checkSelected);
     if (ignoreOrder) {
-      List<String> actualLines = sorted(ContainerUtil.map(splitByLines(treeStringPresentation), String::trim));
-      List<String> expectedLines = sorted(ContainerUtil.map(splitByLines(expected), String::trim));
+      var actualLines = sorted(ContainerUtil.map(splitByLines(treeStringPresentation), String::trim));
+      var expectedLines = sorted(ContainerUtil.map(splitByLines(expected), String::trim));
       assertEquals("Expected:\n" + expected + "\nActual:\n" + treeStringPresentation, expectedLines, actualLines);
     }
     else {
@@ -275,7 +270,7 @@ public final class PlatformTestUtil {
   }
 
   public static void expand(@NotNull JTree tree, int @NotNull ... rows) {
-    for (int row : rows) {
+    for (var row : rows) {
       tree.expandRow(row);
       waitWhileBusy(tree);
     }
@@ -288,10 +283,7 @@ public final class PlatformTestUtil {
   public static void expandAll(@NotNull JTree tree, @NotNull Predicate<@NotNull TreePath> predicate) {
     // Ignore AbstractTreeNode.isIncludedInExpandAll because some tests need to expand
     // more than that, but not the External Libraries node which is huge and only wastes time.
-    waitForPromise(TreeUtil.promiseExpand(
-      tree,
-      Integer.MAX_VALUE,
-      predicate));
+    waitForPromise(TreeUtil.promiseExpand(tree, Integer.MAX_VALUE, predicate));
   }
 
   private static long getMillisSince(long startTimeMillis) {
@@ -303,21 +295,19 @@ public final class PlatformTestUtil {
   }
 
   private static void assertMaxWaitTimeSince(long startTimeMillis, long timeoutMillis) {
-    long took = getMillisSince(startTimeMillis);
-    if (took <= timeoutMillis) {
-      return;
+    var took = getMillisSince(startTimeMillis);
+    if (took > timeoutMillis) {
+      throw new AssertionError(
+        "The waiting takes too long. " +
+        "Expected to take no more than: " + timeoutMillis + " ms but took: " + took + " ms\n" +
+        "Thread dump: " + ThreadDumper.dumpThreadsToString() + "\n" +
+        "Coroutine dump: " + CoroutineDumperKt.dumpCoroutines(null, true, true) + "\n"
+      );
     }
-
-    throw new AssertionError(
-      "The waiting takes too long. " +
-      "Expected to take no more than: " + timeoutMillis + " ms but took: " + took + " ms\n" +
-      "Thread dump: " + ThreadDumper.dumpThreadsToString() + "\n" +
-      "Coroutine dump: " + CoroutineDumperKt.dumpCoroutines(null, true, true) + "\n"
-    );
   }
 
   private static void assertDispatchThreadWithoutWriteAccess() {
-    Application application = ApplicationManager.getApplication();
+    var application = ApplicationManager.getApplication();
     if (application == null) {
       // skipping write access check in simple tests
       assertEventQueueDispatchThread();
@@ -334,7 +324,7 @@ public final class PlatformTestUtil {
     }
   }
 
-  private static boolean isBusy(@NotNull JTree tree, TreeModel model) {
+  private static boolean isBusy(JTree tree, TreeModel model) {
     UIUtil.dispatchAllInvocationEvents();
     if (ClientProperty.isTrue(tree, TreeUtil.TREE_IS_BUSY)) return true;
     if (model instanceof AsyncTreeModel async) {
@@ -351,7 +341,7 @@ public final class PlatformTestUtil {
 
   public static void waitWhileBusy(@NotNull Supplier<Boolean> busyCondition) {
     assertDispatchThreadWithoutWriteAccess();
-    long startTimeMillis = System.currentTimeMillis();
+    var startTimeMillis = System.currentTimeMillis();
     while (busyCondition.get()) {
       assertMaxWaitTimeSince(startTimeMillis);
       TimeoutUtil.sleep(5);
@@ -363,26 +353,30 @@ public final class PlatformTestUtil {
   }
 
   public static void waitForCallback(@NotNull ActionCallback callback) {
-    AsyncPromise<?> promise = new AsyncPromise<>();
-    callback.doWhenDone(() -> promise.setResult(null)).doWhenRejected((@NotNull Runnable)promise::cancel);
-    waitForPromise(promise);
+    var future = new CompletableFuture<>();
+    callback.doWhenDone(() -> future.complete(null)).doWhenRejected(__ -> future.complete(null));
+    waitForFuture(future);
   }
 
+  @SuppressWarnings("UsagesOfObsoleteApi")
   public static <T> @Nullable T waitForPromise(@NotNull Promise<T> promise) {
     return waitForPromise(promise, MAX_WAIT_TIME, false);
   }
 
+  @SuppressWarnings("UsagesOfObsoleteApi")
   public static <T> @Nullable T waitForPromise(@NotNull Promise<T> promise, long timeoutMillis) {
     return waitForPromise(promise, timeoutMillis, false);
   }
 
+  @SuppressWarnings("UsagesOfObsoleteApi")
   public static <T> @Nullable T assertPromiseSucceeds(@NotNull Promise<T> promise) {
     return waitForPromise(promise, MAX_WAIT_TIME, true);
   }
 
-  private static @Nullable <T> T waitForPromise(@NotNull Promise<T> promise, long timeoutMillis, boolean assertSucceeded) {
+  @SuppressWarnings("UsagesOfObsoleteApi")
+  private static @Nullable <T> T waitForPromise(Promise<T> promise, long timeoutMillis, boolean assertSucceeded) {
     assertDispatchThreadWithoutWriteAccess();
-    long start = System.currentTimeMillis();
+    var start = System.currentTimeMillis();
     while (true) {
       if (promise.getState() == Promise.State.PENDING) {
         TestOnlyThreading.releaseTheAcquiredWriteIntentLockThenExecuteActionAndTakeWriteIntentLockBack(() -> {
@@ -420,16 +414,15 @@ public final class PlatformTestUtil {
       }
     }
     assertDispatchThreadWithoutWriteAccess();
-    long start = System.currentTimeMillis();
+    var start = System.currentTimeMillis();
     while (true) {
       if (!future.isDone()) {
-        PlatformTestUtil.dispatchAllInvocationEventsInIdeEventQueue();
+        dispatchAllInvocationEventsInIdeEventQueue();
       }
       try {
         return future.get(10, TimeUnit.MILLISECONDS);
       }
-      catch (TimeoutException ignore) {
-      }
+      catch (TimeoutException ignore) { }
       catch (Exception e) {
         throw new AssertionError(e);
       }
@@ -437,19 +430,20 @@ public final class PlatformTestUtil {
     }
   }
 
+  @SuppressWarnings("UsagesOfObsoleteApi")
   public static void waitForAlarm(int delay) {
-    @NotNull Application app = ApplicationManager.getApplication();
+    var app = ApplicationManager.getApplication();
     assertDispatchThreadWithoutWriteAccess();
 
-    Disposable tempDisposable = Disposer.newDisposable();
+    var tempDisposable = Disposer.newDisposable();
 
-    AtomicBoolean runnableInvoked = new AtomicBoolean();
-    AtomicBoolean pooledRunnableInvoked = new AtomicBoolean();
-    AtomicBoolean alarmInvoked1 = new AtomicBoolean();
-    AtomicBoolean alarmInvoked2 = new AtomicBoolean();
-    Alarm alarm = new Alarm(Alarm.ThreadToUse.SWING_THREAD, tempDisposable);
-    Alarm pooledAlarm = new Alarm(Alarm.ThreadToUse.POOLED_THREAD, tempDisposable);
-    ModalityState initialModality = ModalityState.current();
+    var runnableInvoked = new AtomicBoolean();
+    var pooledRunnableInvoked = new AtomicBoolean();
+    var alarmInvoked1 = new AtomicBoolean();
+    var alarmInvoked2 = new AtomicBoolean();
+    var alarm = new Alarm(Alarm.ThreadToUse.SWING_THREAD, tempDisposable);
+    var pooledAlarm = new Alarm(Alarm.ThreadToUse.POOLED_THREAD, tempDisposable);
+    var initialModality = ModalityState.current();
 
     alarm.addRequest(() -> {
       alarmInvoked1.set(true);
@@ -462,11 +456,11 @@ public final class PlatformTestUtil {
 
     dispatchAllInvocationEventsInIdeEventQueue();
 
-    long start = System.currentTimeMillis();
+    var start = System.currentTimeMillis();
     try {
-      boolean sleptAlready = false;
+      var sleptAlready = false;
       while (!alarmInvoked2.get()) {
-        AtomicBoolean laterInvoked = new AtomicBoolean();
+        var laterInvoked = new AtomicBoolean();
         app.invokeLater(() -> laterInvoked.set(true));
         dispatchAllInvocationEventsInIdeEventQueue();
         waitForAllDocumentsCommitted(10, TimeUnit.SECONDS);
@@ -475,19 +469,20 @@ public final class PlatformTestUtil {
         TimeoutUtil.sleep(sleptAlready ? 10 : delay);
         sleptAlready = true;
         if (getMillisSince(start) > MAX_WAIT_TIME) {
-          String queue = ((AppScheduledExecutorService)AppExecutorUtil.getAppScheduledExecutorService()).dumpQueue();
-          throw new AssertionError("Couldn't await alarm" +
-                                   "; alarm passed=" + alarmInvoked1.get() +
-                                   "; modality1=" + initialModality +
-                                   "; modality2=" + ModalityState.current() +
-                                   "; non-modal=" + (initialModality == ModalityState.nonModal()) +
-                                   "; invokeLater passed=" + runnableInvoked.get() +
-                                   "; pooled alarm passed=" + pooledRunnableInvoked.get() +
-                                   "; app.disposed=" + app.isDisposed() +
-                                   "; alarm.disposed=" + alarm.isDisposed() +
-                                   "; alarm.requests=" + alarm.getActiveRequestCount() +
-                                   "\n delayQueue=" + StringUtil.trimLog(queue, 1000) +
-                                   "\n invocatorEdtQueue=" + LaterInvocator.getLaterInvocatorEdtQueue()
+          var queue = ((AppScheduledExecutorService)AppExecutorUtil.getAppScheduledExecutorService()).dumpQueue();
+          throw new AssertionError(
+            "Couldn't await alarm" +
+            "; alarm passed=" + alarmInvoked1.get() +
+            "; modality1=" + initialModality +
+            "; modality2=" + ModalityState.current() +
+            "; non-modal=" + (initialModality == ModalityState.nonModal()) +
+            "; invokeLater passed=" + runnableInvoked.get() +
+            "; pooled alarm passed=" + pooledRunnableInvoked.get() +
+            "; app.disposed=" + app.isDisposed() +
+            "; alarm.disposed=" + alarm.isDisposed() +
+            "; alarm.requests=" + alarm.getActiveRequestCount() +
+            "\n delayQueue=" + StringUtil.trimLog(queue, 1000) +
+            "\n invocatorEdtQueue=" + LaterInvocator.getLaterInvocatorEdtQueue()
           );
         }
       }
@@ -504,16 +499,16 @@ public final class PlatformTestUtil {
    */
   public static void dispatchAllInvocationEventsInIdeEventQueue() {
     assertDispatchThreadWithoutWriteAccess();
-    IdeEventQueue eventQueue = IdeEventQueue.getInstance();
+    var eventQueue = IdeEventQueue.getInstance();
     ThreadContext.resetThreadContext(() -> {
       TestOnlyThreading.releaseTheAcquiredWriteIntentLockThenExecuteActionAndTakeWriteIntentLockBack(() -> {
         // due to non-blocking acquisition of write-intent, `NonBlockingFlushQueue` can appear in the state
         // where it has stuck WI runnables. This method is called to ensure that _all_ runnables are dispatched,
         // so we also want to wait for WI runnables here
-        AtomicBoolean canary = new AtomicBoolean(false);
+        var canary = new AtomicBoolean(false);
         ApplicationManager.getApplication().invokeLater(() -> canary.set(true), ModalityState.any());
         while (true) {
-          AWTEvent event = eventQueue.peekEvent();
+          var event = eventQueue.peekEvent();
           if (event == null && canary.get()) break;
           event = eventQueue.getNextEvent();
           if (event instanceof InvocationEvent) {
@@ -527,13 +522,14 @@ public final class PlatformTestUtil {
   }
 
   @TestOnly
+  @SuppressWarnings("UsagesOfObsoleteApi")
   public static void waitForSingleAlarm(@NotNull SingleAlarm alarm, long timeout, @NotNull TimeUnit timeUnit) throws TimeoutException {
-    Job job = alarm.getCurrentJob();
+    var job = alarm.getCurrentJob();
     if (job == null) {
       return;
     }
 
-    long currentTime = System.currentTimeMillis();
+    var currentTime = System.currentTimeMillis();
     while (true) {
       if (!job.isActive()) {
         return;
@@ -555,62 +551,70 @@ public final class PlatformTestUtil {
   /**
    * Dispatch one pending event (if any) in the {@link IdeEventQueue}. Should only be invoked from EDT.
    */
-  public static AWTEvent dispatchNextEventIfAny() throws InterruptedException {
+  public static AWTEvent dispatchNextEventIfAny() {
     return EdtTestUtilKt.dispatchNextEventIfAny();
   }
 
-  public static @NotNull StringBuilder print(@NotNull AbstractTreeStructure structure,
-                                             @NotNull Object node,
-                                             int currentLevel,
-                                             @Nullable Comparator<?> comparator,
-                                             int maxRowCount,
-                                             char paddingChar,
-                                             @Nullable Queryable.PrintInfo printInfo) {
+  public static @NotNull StringBuilder print(
+    @NotNull AbstractTreeStructure structure,
+    @NotNull Object node,
+    int currentLevel,
+    @Nullable Comparator<?> comparator,
+    int maxRowCount,
+    char paddingChar,
+    @Nullable Queryable.PrintInfo printInfo
+  ) {
     return print(structure, node, currentLevel, comparator, maxRowCount, paddingChar, o -> toString(o, printInfo));
   }
 
-  public static @NotNull String print(@NotNull AbstractTreeStructure structure,
-                                      @NotNull Object node,
-                                      @NotNull Function<Object, String> nodePresenter) {
+  public static @NotNull String print(
+    @NotNull AbstractTreeStructure structure,
+    @NotNull Object node,
+    @NotNull Function<Object, String> nodePresenter
+  ) {
     return print(structure, node, 0, Comparator.comparing(nodePresenter), -1, ' ', nodePresenter).toString();
   }
 
-  private static @NotNull StringBuilder print(AbstractTreeStructure structure,
-                                              Object node,
-                                              int currentLevel,
-                                              @Nullable Comparator<?> comparator,
-                                              int maxRowCount,
-                                              char paddingChar,
-                                              Function<Object, String> nodePresenter) {
-    StringBuilder buffer = new StringBuilder();
+  private static StringBuilder print(
+    AbstractTreeStructure structure,
+    Object node,
+    int currentLevel,
+    @Nullable Comparator<?> comparator,
+    int maxRowCount,
+    char paddingChar,
+    Function<Object, String> nodePresenter
+  ) {
+    var buffer = new StringBuilder();
     doPrint(buffer, currentLevel, node, structure, comparator, maxRowCount, 0, paddingChar, nodePresenter);
     return buffer;
   }
 
-  private static int doPrint(StringBuilder buffer,
-                             int currentLevel,
-                             Object node,
-                             AbstractTreeStructure structure,
-                             @Nullable Comparator<?> comparator,
-                             int maxRowCount,
-                             int currentLine,
-                             char paddingChar,
-                             Function<Object, String> nodePresenter) {
+  private static int doPrint(
+    StringBuilder buffer,
+    int currentLevel,
+    Object node,
+    AbstractTreeStructure structure,
+    @Nullable Comparator<?> comparator,
+    int maxRowCount,
+    int currentLine,
+    char paddingChar,
+    Function<Object, String> nodePresenter
+  ) {
     if (currentLine >= maxRowCount && maxRowCount != -1) return currentLine;
 
-    StringUtil.repeatSymbol(buffer, paddingChar, currentLevel);
+    buffer.repeat(paddingChar, currentLevel);
     buffer.append(nodePresenter.apply(node)).append("\n");
     currentLine++;
-    Object[] children = structure.getChildElements(node);
+    var children = structure.getChildElements(node);
 
     if (comparator != null) {
-      List<?> list = new ArrayList<>(Arrays.asList(children));
+      var list = new ArrayList<>(List.of(children));
       @SuppressWarnings("unchecked")
-      Comparator<Object> c = (Comparator<Object>)comparator;
+      var c = (Comparator<Object>)comparator;
       list.sort(c);
       children = ArrayUtil.toObjectArray(list);
     }
-    for (Object child : children) {
+    for (var child : children) {
       currentLine = doPrint(buffer, currentLevel + 1, child, structure, comparator, maxRowCount, currentLine, paddingChar, nodePresenter);
     }
 
@@ -618,7 +622,7 @@ public final class PlatformTestUtil {
   }
 
   public static @NotNull String print(Object @NotNull [] objects) {
-    return print(Arrays.asList(objects));
+    return print(List.of(objects));
   }
 
   public static @NotNull String print(@NotNull Collection<?> c) {
@@ -626,8 +630,8 @@ public final class PlatformTestUtil {
   }
 
   public static @NotNull String print(@NotNull ListModel<?> model) {
-    StringBuilder result = new StringBuilder();
-    for (int i = 0; i < model.getSize(); i++) {
+    var result = new StringBuilder();
+    for (var i = 0; i < model.getSize(); i++) {
       result.append(toString(model.getElementAt(i), null));
       result.append("\n");
     }
@@ -641,11 +645,12 @@ public final class PlatformTestUtil {
   /**
    * @see IdeActions
    */
+  @SuppressWarnings("UsagesOfObsoleteApi")
   public static void invokeNamedAction(@NotNull String actionId) {
-    AnAction action = ActionManager.getInstance().getAction(actionId);
+    var action = ActionManager.getInstance().getAction(actionId);
     assertNotNull(action);
-    @SuppressWarnings("deprecation") DataContext context = DataManager.getInstance().getDataContext();
-    AnActionEvent event = AnActionEvent.createFromAnAction(action, null, "", context);
+    @SuppressWarnings("deprecation") var context = DataManager.getInstance().getDataContext();
+    var event = AnActionEvent.createEvent(action, context, null, "", ActionUiKind.NONE, null);
     PerformWithDocumentsCommitted.commitDocumentsIfNeeded(action, event);
     ActionUtil.updateAction(action, event);
     assertTrue(event.getPresentation().isEnabled());
@@ -655,12 +660,12 @@ public final class PlatformTestUtil {
   public static void assertTiming(@NotNull String message, long expectedMillis, long actualMillis) {
     if (COVERAGE_ENABLED_BUILD) return;
 
-    long expectedOnMyMachine = Math.max(1, expectedMillis * Timings.CPU_TIMING / Timings.REFERENCE_CPU_TIMING);
+    var expectedOnMyMachine = Math.max(1, expectedMillis * Timings.CPU_TIMING / Timings.REFERENCE_CPU_TIMING);
 
     // Allow 10% more in case of test machine is busy.
-    String logMessage = message;
+    var logMessage = message;
     if (actualMillis > expectedOnMyMachine) {
-      int percentage = (int)(100.0 * (actualMillis - expectedOnMyMachine) / expectedOnMyMachine);
+      var percentage = (int)(100.0 * (actualMillis - expectedOnMyMachine) / expectedOnMyMachine);
       logMessage += ". Operation took " + percentage + "% longer than expected";
     }
     logMessage += ". Expected on my machine: " + expectedOnMyMachine + "." +
@@ -668,7 +673,7 @@ public final class PlatformTestUtil {
                   " Expected on Standard machine: " + expectedMillis + ";" +
                   " Timings: CPU=" + Timings.CPU_TIMING +
                   ", I/O=" + Timings.IO_TIMING + ".";
-    double acceptableChangeFactor = 1.1;
+    var acceptableChangeFactor = 1.1;
     if (actualMillis < expectedOnMyMachine) {
       System.out.println(logMessage);
       TeamCityLogger.info(logMessage);
@@ -692,7 +697,7 @@ public final class PlatformTestUtil {
    */
   // to warn about not calling .assertTiming() in the end
   @Contract(pure = true)
-  public static @NotNull BenchmarkTestInfo newBenchmark(@NonNls @NotNull String launchName, @NotNull ThrowableRunnable<?> test) {
+  public static @NotNull BenchmarkTestInfo newBenchmark(@NotNull String launchName, @NotNull ThrowableRunnable<?> test) {
     return newBenchmarkWithVariableInputSize(launchName, 1, () -> {
       test.run();
       return 1;
@@ -710,28 +715,30 @@ public final class PlatformTestUtil {
    * </p>
    */
   @Contract(pure = true)
-  public static @NotNull BenchmarkTestInfo newBenchmarkWithVariableInputSize(@NonNls @NotNull String launchName,
-                                                                             int expectedInputSize,
-                                                                             @NotNull ThrowableComputable<Integer, ?> test) {
+  public static @NotNull BenchmarkTestInfo newBenchmarkWithVariableInputSize(
+    @NotNull String launchName,
+    int expectedInputSize,
+    @NotNull ThrowableComputable<Integer, ?> test
+  ) {
     return BenchmarkTestInfoLoader.Companion.getInstance().initialize(test, expectedInputSize, launchName);
   }
 
   public static void assertPathsEqual(@Nullable String expected, @Nullable String actual) {
-    if (expected != null) expected = FileUtil.toSystemIndependentName(expected);
-    if (actual != null) actual = FileUtil.toSystemIndependentName(actual);
+    if (expected != null) expected = FileUtilRt.toSystemIndependentName(expected);
+    if (actual != null) actual = FileUtilRt.toSystemIndependentName(actual);
     assertEquals(expected, actual);
   }
 
   public static @NotNull String getJavaExe() {
-    return SystemProperties.getJavaHome() + (SystemInfo.isWindows ? "\\bin\\java.exe" : "/bin/java");
+    return SystemProperties.getJavaHome() + (OS.CURRENT == OS.Windows ? "\\bin\\java.exe" : "/bin/java");
   }
 
   public static @NotNull URL getRtJarURL() {
-    String home = SystemProperties.getJavaHome();
+    var home = SystemProperties.getJavaHome();
     try {
-      return CurrentJavaVersion.currentJavaVersion().feature >= 9 ? new URL("jrt:" + home) : new File(home + "/lib/rt.jar").toURI().toURL();
+      return new URI("jrt:" + home).toURL();
     }
-    catch (MalformedURLException e) {
+    catch (MalformedURLException | URISyntaxException e) {
       throw new RuntimeException(e);
     }
   }
@@ -751,8 +758,8 @@ public final class PlatformTestUtil {
   }
 
   public static void waitForAllBackgroundActivityToCalmDown() {
-    for (int i = 0; i < 50; i++) {
-      CpuUsageData data = CpuUsageData.measureCpuUsage(() -> TimeoutUtil.sleep(100));
+    for (var i = 0; i < 50; i++) {
+      var data = CpuUsageData.measureCpuUsage(() -> TimeoutUtil.sleep(100));
       if (!data.hasAnyActivityBesides(Thread.currentThread())) {
         break;
       }
@@ -768,7 +775,7 @@ public final class PlatformTestUtil {
     while (true) {
       attempts--;
       waitForAllBackgroundActivityToCalmDown();
-      long duration = TimeoutUtil.measureExecutionTime(actionToMeasure::run);
+      var duration = TimeoutUtil.measureExecutionTime(actionToMeasure::run);
       try {
         assertTiming(message, expectedMillis, duration);
         break;
@@ -778,20 +785,22 @@ public final class PlatformTestUtil {
         System.gc();
         System.gc();
         System.gc();
-        String s = e.getMessage() + "\n  " + attempts + " " + StringUtil.pluralize("attempt", attempts) + " remain";
+        var s = e.getMessage() + "\n  " + attempts + " " + StringUtil.pluralize("attempt", attempts) + " remain";
         TeamCityLogger.warning(s, null);
         System.err.println(s);
       }
     }
   }
 
-  private static @NotNull Map<String, VirtualFile> buildNameToFileMap(VirtualFile @NotNull [] files,
-                                                                      @Nullable VirtualFileFilter filter,
-                                                                      @Nullable Function<VirtualFile, String> fileNameMapper) {
-    Map<String, VirtualFile> map = new HashMap<>();
-    for (VirtualFile file : files) {
+  private static @NotNull Map<String, VirtualFile> buildNameToFileMap(
+    VirtualFile[] files,
+    @Nullable VirtualFileFilter filter,
+    @Nullable Function<VirtualFile, String> fileNameMapper
+  ) {
+    var map = new HashMap<String, VirtualFile>();
+    for (var file : files) {
       if (filter != null && !filter.accept(file)) continue;
-      String fileName = fileNameMapper != null ? fileNameMapper.apply(file) : file.getName();
+      var fileName = fileNameMapper != null ? fileNameMapper.apply(file) : file.getName();
       map.put(fileName, file);
     }
     return map;
@@ -801,37 +810,44 @@ public final class PlatformTestUtil {
     assertDirectoriesEqual(dirExpected, dirActual, null);
   }
 
-  public static void assertDirectoriesEqual(@NotNull VirtualFile dirExpected,
-                                            @NotNull VirtualFile dirActual,
-                                            @Nullable VirtualFileFilter fileFilter) throws IOException {
+  public static void assertDirectoriesEqual(
+    @NotNull VirtualFile dirExpected,
+    @NotNull VirtualFile dirActual,
+    @Nullable VirtualFileFilter fileFilter
+  ) throws IOException {
     assertDirectoriesEqual(dirExpected, dirActual, fileFilter, null);
   }
 
   @SuppressWarnings("UnsafeVfsRecursion")
-  public static void assertDirectoriesEqual(@NotNull VirtualFile dirExpected,
-                                            @NotNull VirtualFile dirActual,
-                                            @Nullable VirtualFileFilter fileFilter,
-                                            @Nullable Function<VirtualFile, String> fileNameMapper) throws IOException {
+  public static void assertDirectoriesEqual(
+    @NotNull VirtualFile dirExpected,
+    @NotNull VirtualFile dirActual,
+    @Nullable VirtualFileFilter fileFilter,
+    @Nullable Function<VirtualFile, String> fileNameMapper
+  ) throws IOException {
     FileDocumentManager.getInstance().saveAllDocuments();
 
-    VirtualFile[] childrenAfter = dirExpected.getChildren();
+    var childrenAfter = dirExpected.getChildren();
     shallowCompare(dirExpected, childrenAfter);
 
-    VirtualFile[] childrenBefore = dirActual.getChildren();
+    var childrenBefore = dirActual.getChildren();
     shallowCompare(dirActual, childrenBefore);
 
-    Map<String, VirtualFile> mapAfter = buildNameToFileMap(childrenAfter, fileFilter, fileNameMapper);
-    Map<String, VirtualFile> mapBefore = buildNameToFileMap(childrenBefore, fileFilter, fileNameMapper);
+    var mapAfter = buildNameToFileMap(childrenAfter, fileFilter, fileNameMapper);
+    var mapBefore = buildNameToFileMap(childrenBefore, fileFilter, fileNameMapper);
 
-    Set<String> keySetAfter = mapAfter.keySet();
-    Set<String> keySetBefore = mapBefore.keySet();
+    var keySetAfter = mapAfter.keySet();
+    var keySetBefore = mapBefore.keySet();
     assertEquals(dirExpected.getPath(), keySetAfter, keySetBefore);
 
-    for (String name : keySetAfter) {
-      VirtualFile fileAfter = mapAfter.get(name);
-      VirtualFile fileBefore = mapBefore.get(name);
+    for (var name : keySetAfter) {
+      var fileAfter = mapAfter.get(name);
+      var fileBefore = mapBefore.get(name);
       if (fileAfter.isDirectory()) {
         assertDirectoriesEqual(fileAfter, fileBefore, fileFilter, fileNameMapper);
+      }
+      else if (FileTypeRegistry.getInstance().findFileTypeByName(fileAfter.getName()) == ArchiveFileType.INSTANCE) {
+        assertJarFilesEqual(fileAfter, fileBefore);
       }
       else {
         assertFilesEqual(fileAfter, fileBefore);
@@ -839,34 +855,29 @@ public final class PlatformTestUtil {
     }
   }
 
-  private static void shallowCompare(@NotNull VirtualFile dir, VirtualFile @NotNull [] vfs) {
+  private static void shallowCompare(VirtualFile dir, VirtualFile[] vfs) {
     if (dir.isInLocalFileSystem() && dir.getFileSystem() != TempFileSystem.getInstance()) {
-      String vfsPaths = Stream.of(vfs).map(VirtualFile::getPath).sorted().collect(Collectors.joining("\n"));
-      File[] io = Objects.requireNonNull(new File(dir.getPath()).listFiles());
-      String ioPaths = Stream.of(io).map(f -> FileUtil.toSystemIndependentName(f.getPath())).sorted().collect(Collectors.joining("\n"));
+      var vfsPaths = Stream.of(vfs).map(VirtualFile::getPath).sorted().toList();
+      var ioPaths = NioFiles.list(dir.toNioPath()).stream().map(Path::toString).map(FileUtilRt::toSystemIndependentName).sorted().toList();
       assertEquals(vfsPaths, ioPaths);
     }
   }
 
   public static void assertFilesEqual(@NotNull VirtualFile fileExpected, @NotNull VirtualFile fileActual) throws IOException {
-    try {
-      assertJarFilesEqual(VfsUtilCore.virtualToIoFile(fileExpected), VfsUtilCore.virtualToIoFile(fileActual));
+    var actual = fileText(fileActual);
+    var expected = fileText(fileExpected);
+    if (expected == null || actual == null) {
+      assertArrayEquals(fileExpected.getPath(), fileExpected.contentsToByteArray(), fileActual.contentsToByteArray());
     }
-    catch (IOException e) {
-      String actual = fileText(fileActual);
-      String expected = fileText(fileExpected);
-      if (expected == null || actual == null) {
-        assertArrayEquals(fileExpected.getPath(), fileExpected.contentsToByteArray(), fileActual.contentsToByteArray());
-      }
-      else if (!StringUtil.equals(expected, actual)) {
-        throw new FileComparisonFailedError("Text mismatch in the file " + fileExpected.getName(), expected, actual,
-                                            fileActual.getUserData(VfsTestUtil.TEST_DATA_FILE_PATH));
-      }
+    else if (!StringUtil.equals(expected, actual)) {
+      throw new FileComparisonFailedError(
+        "Text mismatch in the file " + fileExpected.getName(), expected, actual,
+        fileActual.getUserData(VfsTestUtil.TEST_DATA_FILE_PATH));
     }
   }
 
   private static String fileText(@NotNull VirtualFile file) throws IOException {
-    Document doc = FileDocumentManager.getInstance().getDocument(file);
+    var doc = FileDocumentManager.getInstance().getDocument(file);
     if (doc != null) {
       return doc.getText();
     }
@@ -876,18 +887,22 @@ public final class PlatformTestUtil {
     return null;
   }
 
-  private static void assertJarFilesEqual(File file1, File file2) throws IOException {
-    Path tempDir = Files.createTempDirectory("assert_jar_tmp_");
-    try (JarFile jarFile1 = new JarFile(file1); JarFile jarFile2 = new JarFile(file2)) {
-      Path tempDirectory1 = Files.createDirectory(tempDir.resolve("tmp1"));
-      Path tempDirectory2 = Files.createDirectory(tempDir.resolve("tmp2"));
+  public static void assertJarFilesEqual(@NotNull VirtualFile fileExpected, @NotNull VirtualFile fileActual) throws IOException {
+    assertJarFilesEqual(fileExpected.toNioPath(), fileActual.toNioPath());
+  }
 
-      new Decompressor.Zip(new File(jarFile1.getName())).extract(tempDirectory1);
-      new Decompressor.Zip(new File(jarFile2.getName())).extract(tempDirectory2);
+  private static void assertJarFilesEqual(Path file1, Path file2) throws IOException {
+    var tempDir = Files.createTempDirectory("assert_jar_tmp_");
+    try {
+      var tempDirectory1 = Files.createDirectory(tempDir.resolve("tmp1"));
+      var tempDirectory2 = Files.createDirectory(tempDir.resolve("tmp2"));
 
-      VirtualFile dirAfter = LocalFileSystem.getInstance().refreshAndFindFileByNioFile(tempDirectory1);
+      new Decompressor.Zip(file1).extract(tempDirectory1);
+      new Decompressor.Zip(file2).extract(tempDirectory2);
+
+      var dirAfter = LocalFileSystem.getInstance().refreshAndFindFileByNioFile(tempDirectory1);
       assertNotNull(tempDirectory1.toString(), dirAfter);
-      VirtualFile dirBefore = LocalFileSystem.getInstance().refreshAndFindFileByNioFile(tempDirectory2);
+      var dirBefore = LocalFileSystem.getInstance().refreshAndFindFileByNioFile(tempDirectory2);
       assertNotNull(tempDirectory2.toString(), dirBefore);
       ApplicationManager.getApplication().runWriteAction(() -> {
         dirAfter.refresh(false, true);
@@ -900,37 +915,42 @@ public final class PlatformTestUtil {
     }
   }
 
-  public static @NotNull String getCommunityPath() {
-    String homePath = IdeaTestExecutionPolicy.getHomePathWithPolicy();
-    if (new File(homePath, "community/.idea").isDirectory()) {
-      homePath = homePath + File.separatorChar + "community";
+  public static @NotNull @SystemDependent String getCommunityPath() {
+    var homePath = Path.of(IdeaTestExecutionPolicy.getHomePathWithPolicy());
+    if (Files.isDirectory(homePath.resolve("community/.idea"))) {
+      homePath = homePath.resolve("community");
     }
-    return homePath;
+    return homePath.toString();
   }
 
-  public static @NotNull String getPlatformTestDataPath() {
-    return getCommunityPath().replace(File.separatorChar, '/') + "/platform/platform-tests/testData/";
+  public static @NotNull @SystemIndependent String getPlatformTestDataPath() {
+    return getCommunityPath().replace('\\', '/') + "/platform/platform-tests/testData/";
   }
 
   @Contract(pure = true)
   public static @NotNull Comparator<AbstractTreeNode<?>> createComparator(Queryable.PrintInfo printInfo) {
     return (o1, o2) -> {
-      String displayText1 = o1.toTestString(printInfo);
-      String displayText2 = o2.toTestString(printInfo);
+      var displayText1 = o1.toTestString(printInfo);
+      var displayText2 = o2.toTestString(printInfo);
       return Comparing.compare(displayText1, displayText2);
     };
   }
 
   public static @NotNull String loadFileText(@NotNull String fileName) throws IOException {
-    return StringUtil.convertLineSeparators(FileUtil.loadFile(new File(fileName)));
+    return StringUtil.convertLineSeparators(Files.readString(Path.of(fileName)));
   }
 
+  /** @deprecated use {@link #withEncoding(Charset, ThrowableRunnable)} instead */
+  @Deprecated(forRemoval = true)
   public static void withEncoding(@NotNull String encoding, @NotNull ThrowableRunnable<?> r) {
-    Charset.forName(encoding); // check the encoding exists
+    withEncoding(Charset.forName(encoding), r);
+  }
+
+  public static void withEncoding(@NotNull Charset encoding, @NotNull ThrowableRunnable<?> r) {
     try {
-      Charset oldCharset = Charset.defaultCharset();
+      var oldCharset = Charset.defaultCharset();
       try {
-        patchSystemFileEncoding(encoding);
+        patchSystemFileEncoding(encoding.name());
         r.run();
       }
       finally {
@@ -942,14 +962,14 @@ public final class PlatformTestUtil {
     }
   }
 
-  private static void patchSystemFileEncoding(@NotNull String encoding) {
+  private static void patchSystemFileEncoding(String encoding) {
     ReflectionUtil.resetField(Charset.class, Charset.class, "defaultCharset");
     System.setProperty("file.encoding", encoding);
   }
 
   @SuppressWarnings("ImplicitDefaultCharsetUsage")
   public static void withStdErrSuppressed(@NotNull Runnable r) {
-    PrintStream std = System.err;
+    var std = System.err;
     System.setErr(new PrintStream(OutputStream.nullOutputStream()));
     try {
       r.run();
@@ -961,7 +981,7 @@ public final class PlatformTestUtil {
 
   public static void assertSuccessful(@NotNull GeneralCommandLine command) {
     try {
-      ProcessOutput output = ExecUtil.execAndGetOutput(command.withRedirectErrorStream(true));
+      var output = ExecUtil.execAndGetOutput(command.withRedirectErrorStream(true));
       assertEquals(output.getStdout(), 0, output.getExitCode());
     }
     catch (ExecutionException e) {
@@ -970,11 +990,11 @@ public final class PlatformTestUtil {
   }
 
   public static @NotNull List<WebReference> collectWebReferences(@NotNull PsiElement element) {
-    List<WebReference> refs = new ArrayList<>();
+    var refs = new ArrayList<WebReference>();
     element.accept(new PsiRecursiveElementWalkingVisitor() {
       @Override
       public void visitElement(@NotNull PsiElement element) {
-        for (PsiReference ref : element.getReferences()) {
+        for (var ref : element.getReferences()) {
           if (ref instanceof WebReference) {
             refs.add((WebReference)ref);
           }
@@ -986,7 +1006,7 @@ public final class PlatformTestUtil {
   }
 
   public static @NotNull List<UrlReference> collectUrlReferences(@NotNull PsiElement element) {
-    List<UrlReference> result = new SmartList<>();
+    var result = new SmartList<UrlReference>();
     element.accept(new PsiRecursiveElementWalkingVisitor() {
       @Override
       public void visitElement(@NotNull PsiElement element) {
@@ -999,15 +1019,15 @@ public final class PlatformTestUtil {
 
   public static @NotNull <T extends PsiReference> T getReferenceOfTypeWithAssertion(@Nullable PsiReference reference, @NotNull Class<T> refType) {
     if (refType.isInstance(reference)) {
-      //noinspection unchecked
-      return (T)reference;
+      @SuppressWarnings("unchecked") T t = (T)reference;
+      return t;
     }
     if (reference instanceof PsiMultiReference) {
-      PsiReference[] psiReferences = ((PsiMultiReference)reference).getReferences();
-      for (PsiReference psiReference : psiReferences) {
+      var psiReferences = ((PsiMultiReference)reference).getReferences();
+      for (var psiReference : psiReferences) {
         if (refType.isInstance(psiReference)) {
-          //noinspection unchecked
-          return (T)psiReference;
+          @SuppressWarnings("unchecked") T t = (T)psiReference;
+          return t;
         }
       }
     }
@@ -1019,22 +1039,24 @@ public final class PlatformTestUtil {
   }
 
   public static void cleanupAllProjects() {
-    for (Runnable each : ourProjectCleanups) {
+    for (var each : ourProjectCleanups) {
       each.run();
     }
     ourProjectCleanups.clear();
   }
 
-  public static <T> void assertComparisonContractNotViolated(@NotNull List<? extends T> values,
-                                                             @NotNull Comparator<? super T> comparator,
-                                                             @NotNull BiPredicate<? super T, ? super T> equality) {
-    for (int i1 = 0; i1 < values.size(); i1++) {
-      for (int i2 = i1; i2 < values.size(); i2++) {
-        T value1 = values.get(i1);
-        T value2 = values.get(i2);
+  public static <T> void assertComparisonContractNotViolated(
+    @NotNull List<? extends T> values,
+    @NotNull Comparator<? super T> comparator,
+    @NotNull BiPredicate<? super T, ? super T> equality
+  ) {
+    for (var i1 = 0; i1 < values.size(); i1++) {
+      for (var i2 = i1; i2 < values.size(); i2++) {
+        var value1 = values.get(i1);
+        var value2 = values.get(i2);
 
-        int result12 = comparator.compare(value1, value2);
-        int result21 = comparator.compare(value2, value1);
+        var result12 = comparator.compare(value1, value2);
+        var result21 = comparator.compare(value2, value1);
         if (equality.test(value1, value2)) {
           if (result12 != 0) fail(String.format("Equal, but not 0: '%s' - '%s'", value1, value2));
           if (result21 != 0) fail(String.format("Equal, but not 0: '%s' - '%s'", value2, value1));
@@ -1047,11 +1069,11 @@ public final class PlatformTestUtil {
           }
         }
 
-        for (int i3 = i2; i3 < values.size(); i3++) {
-          T value3 = values.get(i3);
+        for (var i3 = i2; i3 < values.size(); i3++) {
+          var value3 = values.get(i3);
 
-          int result23 = comparator.compare(value2, value3);
-          int result31 = comparator.compare(value3, value1);
+          var result23 = comparator.compare(value2, value3);
+          var result31 = comparator.compare(value3, value1);
 
           if (!isTransitive(result12, result23, result31)) {
             fail(String.format("Not transitive: '%s' - '%s' - '%s'", value1, value2, value3));
@@ -1075,13 +1097,14 @@ public final class PlatformTestUtil {
   }
 
   public static void setLongMeaninglessFileIncludeTemplateTemporarilyFor(@NotNull Project project, @NotNull Disposable parentDisposable) {
-    FileTemplateManagerImpl templateManager = (FileTemplateManagerImpl)FileTemplateManager.getInstance(project);
-    templateManager.setDefaultFileIncludeTemplateTextTemporarilyForTest(FileTemplateManager.FILE_HEADER_TEMPLATE_NAME,
-                                                                        """
-                                                                          /**
-                                                                           * Created by ${USER} on ${DATE}.
-                                                                           */
-                                                                          """, parentDisposable);
+    ((FileTemplateManagerImpl)FileTemplateManager.getInstance(project)).setDefaultFileIncludeTemplateTextTemporarilyForTest(
+      FileTemplateManager.FILE_HEADER_TEMPLATE_NAME,
+      """
+      /**
+       * Created by ${USER} on ${DATE}.
+       */
+      """,
+      parentDisposable);
   }
 
   /**
@@ -1094,15 +1117,15 @@ public final class PlatformTestUtil {
   }
 
   public static @Nullable RunConfiguration getRunConfiguration(@NotNull PsiElement element, @NotNull RunConfigurationProducer<?> producer) {
-    MapDataContext dataContext = new MapDataContext();
-    dataContext.put(CommonDataKeys.PROJECT, element.getProject());
-    dataContext.put(PlatformCoreDataKeys.MODULE, ModuleUtilCore.findModuleForPsiElement(element));
-    Location<PsiElement> location = PsiLocation.fromPsiElement(element);
-    dataContext.put(Location.DATA_KEY, location);
+    var dataContext = SimpleDataContext.builder()
+      .add(CommonDataKeys.PROJECT, element.getProject())
+      .add(PlatformCoreDataKeys.MODULE, ModuleUtilCore.findModuleForPsiElement(element))
+      .add(Location.DATA_KEY, PsiLocation.fromPsiElement(element))
+      .build();
 
-    ConfigurationContext cc = ConfigurationContext.getFromContext(dataContext, ActionPlaces.UNKNOWN);
+    var cc = ConfigurationContext.getFromContext(dataContext, ActionPlaces.UNKNOWN);
 
-    ConfigurationFromContext configuration = producer.createConfigurationFromContext(cc);
+    var configuration = producer.createConfigurationFromContext(cc);
     return configuration != null ? configuration.getConfiguration() : null;
   }
 
@@ -1118,16 +1141,20 @@ public final class PlatformTestUtil {
    * Executes {@code runConfiguration} with {@link DefaultRunExecutor#EXECUTOR_ID run} executor,
    * then waits for {@code timeoutInSeconds} seconds till the process ends.
    */
-  public static @NotNull ExecutionEnvironment executeConfigurationAndWait(@NotNull RunConfiguration runConfiguration,
-                                                                          long timeoutInSeconds) throws InterruptedException {
+  public static @NotNull ExecutionEnvironment executeConfigurationAndWait(
+    @NotNull RunConfiguration runConfiguration,
+    long timeoutInSeconds
+  ) throws InterruptedException {
     return executeConfigurationAndWait(runConfiguration, DefaultRunExecutor.EXECUTOR_ID, timeoutInSeconds);
   }
 
   /**
    * Executes {@code runConfiguration} with executor {@code executorId}, then waits for 60 seconds till the process ends.
    */
-  public static @NotNull ExecutionEnvironment executeConfigurationAndWait(@NotNull RunConfiguration runConfiguration,
-                                                                          @NotNull String executorId) throws InterruptedException {
+  public static @NotNull ExecutionEnvironment executeConfigurationAndWait(
+    @NotNull RunConfiguration runConfiguration,
+    @NotNull String executorId
+  ) throws InterruptedException {
     return executeConfigurationAndWait(runConfiguration, executorId, 60);
   }
 
@@ -1135,11 +1162,13 @@ public final class PlatformTestUtil {
    * Executes {@code runConfiguration} with executor {@code executorId},
    * then waits for the {@code timeoutInSeconds} seconds till the process ends.
    */
-  public static @NotNull ExecutionEnvironment executeConfigurationAndWait(@NotNull RunConfiguration runConfiguration,
-                                                                          @NotNull String executorId,
-                                                                          long timeoutInSeconds) throws InterruptedException {
-    Pair<@NotNull ExecutionEnvironment, RunContentDescriptor> result = executeConfiguration(runConfiguration, executorId, null);
-    ProcessHandler processHandler = result.second.getProcessHandler();
+  public static @NotNull ExecutionEnvironment executeConfigurationAndWait(
+    @NotNull RunConfiguration runConfiguration,
+    @NotNull String executorId,
+    long timeoutInSeconds
+  ) throws InterruptedException {
+    var result = executeConfiguration(runConfiguration, executorId, null);
+    var processHandler = result.second.getProcessHandler();
     assertNotNull("Process handler must not be null!", processHandler);
     waitWithEventsDispatching(
       () -> "Process failed to finish in " + timeoutInSeconds + " seconds: " + processHandler,
@@ -1160,9 +1189,9 @@ public final class PlatformTestUtil {
   public static @NotNull Pair<@NotNull ExecutionEnvironment, RunContentDescriptor> executeConfiguration(
     @NotNull RunConfiguration runConfiguration,
     @NotNull String executorId,
-    @Nullable Consumer<? super RunContentDescriptor> contentDescriptorProcessor)
-    throws InterruptedException {
-    Executor executor = ExecutorRegistry.getInstance().getExecutorById(executorId);
+    @Nullable Consumer<? super RunContentDescriptor> contentDescriptorProcessor
+  ) throws InterruptedException {
+    var executor = ExecutorRegistry.getInstance().getExecutorById(executorId);
     assertNotNull("Unable to find executor: " + executorId, executor);
     return executeConfiguration(runConfiguration, executor, contentDescriptorProcessor);
   }
@@ -1178,20 +1207,19 @@ public final class PlatformTestUtil {
     @NotNull Executor executor,
     @Nullable Consumer<? super RunContentDescriptor> descriptorProcessor
   ) throws InterruptedException {
-    Project project = runConfiguration.getProject();
-    ConfigurationFactory factory = runConfiguration.getFactory();
+    var project = runConfiguration.getProject();
+    var factory = runConfiguration.getFactory();
     if (factory == null) {
       fail("No factory found for: " + runConfiguration);
     }
-    RunnerAndConfigurationSettings runnerAndConfigurationSettings =
-      RunManager.getInstance(project).createConfiguration(runConfiguration, factory);
-    ProgramRunner<?> runner = ProgramRunner.getRunner(executor.getId(), runConfiguration);
+    var runnerAndConfigurationSettings = RunManager.getInstance(project).createConfiguration(runConfiguration, factory);
+    var runner = ProgramRunner.getRunner(executor.getId(), runConfiguration);
     if (runner == null) {
       fail("No runner found for: " + executor.getId() + " and " + runConfiguration);
     }
-    Ref<RunContentDescriptor> refRunContentDescriptor = new Ref<>();
-    ExecutionEnvironment executionEnvironment = new ExecutionEnvironment(executor, runner, runnerAndConfigurationSettings, project);
-    boolean[] failure = {false};
+    var refRunContentDescriptor = new Ref<RunContentDescriptor>();
+    var executionEnvironment = new ExecutionEnvironment(executor, runner, runnerAndConfigurationSettings, project);
+    var failure = new boolean[]{false};
     ProgramRunnerUtil.executeConfigurationAsync(executionEnvironment, false, false, new ProgramRunner.Callback() {
       @Override
       public void processNotStarted(@Nullable Throwable error) {
@@ -1200,7 +1228,7 @@ public final class PlatformTestUtil {
 
       @Override
       public void processStarted(RunContentDescriptor descriptor) {
-        ProcessHandler processHandler = descriptor.getProcessHandler();
+        var processHandler = descriptor.getProcessHandler();
         LOG.debug("Process started: ", processHandler);
         if (descriptorProcessor != null) {
           descriptorProcessor.accept(descriptor);
@@ -1261,11 +1289,13 @@ public final class PlatformTestUtil {
    * Wait and dispatch events during timeout.
    * A {@link Runnable} callback may be provided to be executed when {@code condition} gets satisfied or {@code timeoutInSeconds} runs out.
    */
-  public static void waitWithEventsDispatching(@NotNull Supplier<String> errorMessageSupplier,
-                                               @NotNull BooleanSupplier condition,
-                                               int timeoutInSeconds,
-                                               @Nullable Runnable callback) {
-    long start = System.currentTimeMillis();
+  public static void waitWithEventsDispatching(
+    @NotNull Supplier<String> errorMessageSupplier,
+    @NotNull BooleanSupplier condition,
+    int timeoutInSeconds,
+    @Nullable Runnable callback
+  ) {
+    var start = System.currentTimeMillis();
     while (true) {
       try {
         if (System.currentTimeMillis() - start > timeoutInSeconds * 1000L) {
@@ -1291,21 +1321,21 @@ public final class PlatformTestUtil {
   }
 
   public static PsiElement findElementBySignature(@NotNull String signature, @NotNull String fileRelativePath, @NotNull Project project) {
-    String filePath = project.getBasePath() + File.separator + fileRelativePath;
-    VirtualFile virtualFile = LocalFileSystem.getInstance().findFileByPath(filePath);
+    var filePath = Path.of(requireNonNull(project.getBasePath(), () -> project.toString()), fileRelativePath);
+    var virtualFile = LocalFileSystem.getInstance().findFileByNioFile(filePath);
     if (virtualFile == null || !virtualFile.exists()) {
       throw new IllegalArgumentException(String.format("File '%s' doesn't exist", filePath));
     }
-    PsiFile psiFile = PsiManager.getInstance(project).findFile(virtualFile);
+    var psiFile = PsiManager.getInstance(project).findFile(virtualFile);
     if (psiFile == null) {
       return null;
     }
-    int offset = psiFile.getText().indexOf(signature);
+    var offset = psiFile.getText().indexOf(signature);
     return psiFile.findElementAt(offset);
   }
 
   public static void useAppConfigDir(@NotNull ThrowableRunnable<? extends Exception> task) throws Exception {
-    Path configDir = PathManager.getConfigDir();
+    var configDir = PathManager.getConfigDir();
     Path configCopy;
     if (Files.exists(configDir)) {
       configCopy = Files.move(configDir, Paths.get(configDir + "_bak"), StandardCopyOption.ATOMIC_MOVE, StandardCopyOption.REPLACE_EXISTING);
@@ -1327,20 +1357,19 @@ public final class PlatformTestUtil {
   }
 
   public static @NotNull Project loadAndOpenProject(@NotNull Path path, @NotNull Disposable parent) {
-    Project project = Objects.requireNonNull(ProjectManagerEx.getInstanceEx().openProject(path, new OpenProjectTaskBuilder().build()));
+    var project = requireNonNull(ProjectManagerEx.getInstanceEx().openProject(path, new OpenProjectTaskBuilder().build()));
     Disposer.register(parent, () -> forceCloseProjectWithoutSaving(project));
     IndexingTestUtil.waitUntilIndexesAreReady(project);
     return project;
   }
 
-  @SuppressWarnings("deprecation")
   public static boolean isUnderCommunityClassPath() {
     // StdFileTypes.JSPX is assigned to PLAIN_TEXT in IDEA Community
-    return StdFileTypes.JSPX == FileTypes.PLAIN_TEXT;
+    return FileTypeManager.getInstance().getStdFileType("JSPX") == FileTypes.PLAIN_TEXT;
   }
 
   public static <E extends Throwable> void withSystemProperty(@NotNull String key, String value, @NotNull ThrowableRunnable<E> task) throws E {
-    String original = System.setProperty(key, value);
+    var original = System.setProperty(key, value);
     try {
       task.run();
     }
@@ -1353,7 +1382,10 @@ public final class PlatformTestUtil {
    * throws if the CPU cores number is too low for parallel tests
    */
   public static void assumeEnoughParallelism() throws AssumptionViolatedException {
-    int N = Math.min(Runtime.getRuntime().availableProcessors(), Math.min(ForkJoinPool.getCommonPoolParallelism(), ForkJoinPool.commonPool().getParallelism()));
+    var N = Math.min(
+      Runtime.getRuntime().availableProcessors(),
+      Math.min(ForkJoinPool.getCommonPoolParallelism(), ForkJoinPool.commonPool().getParallelism())
+    );
     if (N < 4) {
       throw new AssumptionViolatedException(
         "not enough parallelism, couldn't test parallel performance: " +
@@ -1365,7 +1397,7 @@ public final class PlatformTestUtil {
 
   @TestOnly
   public static void waitForAllDocumentsCommitted(long timeout, @NotNull TimeUnit timeUnit) {
-    DocumentCommitThread documentCommitThread = DocumentCommitThread.getInstance();
+    var documentCommitThread = DocumentCommitThread.getInstance();
     TestOnlyThreading.releaseTheAcquiredWriteIntentLockThenExecuteActionAndTakeWriteIntentLockBack(() -> {
       documentCommitThread.waitForAllCommits(timeout, timeUnit);
       return Unit.INSTANCE;

@@ -1,9 +1,9 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.util.io
 
 import com.intellij.jna.JnaLoader
 import com.intellij.openapi.diagnostic.logger
-import com.intellij.openapi.util.SystemInfo
+import com.intellij.util.system.OS
 import com.sun.jna.Structure
 import com.sun.jna.platform.unix.LibC
 import com.sun.jna.platform.win32.*
@@ -17,9 +17,8 @@ object SuperUserStatus {
     try {
       when {
         !JnaLoader.isLoaded() -> false
-        SystemInfo.isWindows -> WindowsElevationStatus.isElevated()
-        SystemInfo.isUnix -> UnixUserStatus.isSuperUser()
-        else -> false
+        OS.CURRENT == OS.Windows -> WindowsElevationStatus.isElevated()
+        else -> UnixUserStatus.isSuperUser()
       }
     }
     catch (t: Throwable) {

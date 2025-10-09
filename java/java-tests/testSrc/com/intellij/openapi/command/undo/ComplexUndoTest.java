@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.command.undo;
 
 import com.intellij.openapi.command.WriteCommandAction;
@@ -76,7 +76,7 @@ public class ComplexUndoTest extends EditorUndoTestCase {
 
   public void testDoesNotLoseCharset() {
     char utf8character = '\u00e9';
-    EditorTestUtil.saveEncodingsIn(myProject, null, WINDOWS_1251, () -> PlatformTestUtil.withEncoding(WINDOWS_1251.name(), () -> {
+    EditorTestUtil.saveEncodingsIn(myProject, null, WINDOWS_1251, () -> PlatformTestUtil.withEncoding(WINDOWS_1251, () -> {
       assertEquals(CharsetToolkit.UTF8, EncodingManager.getInstance().getDefaultCharsetName());
       VirtualFile virtualFile = createFileInCommand("f.java");
       VirtualFile virtualFile2 = createFileInCommand("g.java");
