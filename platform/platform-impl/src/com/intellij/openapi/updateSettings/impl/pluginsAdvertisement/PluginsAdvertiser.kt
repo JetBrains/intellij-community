@@ -20,7 +20,9 @@ import org.jetbrains.annotations.ApiStatus
 private const val IGNORE_ULTIMATE_EDITION = "promo.ignore.suggested.ide"
 
 internal var isIgnoreIdeSuggestion: Boolean
-  get() = PropertiesComponent.getInstance().isTrueValue(IGNORE_ULTIMATE_EDITION) || PlatformUtils.isJetBrainsClient()
+  get() = PropertiesComponent.getInstance().isTrueValue(IGNORE_ULTIMATE_EDITION)
+          || PlatformUtils.isJetBrainsClient()
+          || (!PlatformUtils.isCommunityEdition() && PluginManagerCore.isDisabled(PluginManagerCore.ULTIMATE_PLUGIN_ID))
   set(value) = PropertiesComponent.getInstance().setValue(IGNORE_ULTIMATE_EDITION, value)
 
 @get:Deprecated("Use `getPluginSuggestionNotificationGroup()`")
