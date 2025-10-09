@@ -94,6 +94,7 @@
     <lang.floatingToolbar language="yaml" minimal="true"/>
 
     <pluginSuggestionProvider implementation="org.jetbrains.yaml.swagger.OpenApiSuggestionProvider"/>
+    <pluginSuggestionProvider implementation="org.jetbrains.yaml.helm.GoTemplatePluginSuggestionProvider"/>
     <intentionAction>
       <language>yaml</language>
       <className>org.jetbrains.yaml.intentions.YAMLAddOptionalPropertiesIntention</className>
