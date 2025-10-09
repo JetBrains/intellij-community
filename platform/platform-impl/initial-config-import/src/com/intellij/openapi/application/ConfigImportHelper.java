@@ -75,7 +75,6 @@ import java.util.function.Supplier;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 import java.util.stream.Collectors;
-import java.util.stream.Stream;
 
 @ApiStatus.Internal
 public final class ConfigImportHelper {
@@ -198,38 +197,17 @@ public final class ConfigImportHelper {
           log.error("Couldn't backup current config or delete current config directory", e);
         }
       }
-      else if (shouldAskForConfig()) {
-        log.info("shouldAskForConfig: true");
-        oldConfigDirAndOldIdePath = showDialogAndGetOldConfigPath(guessedOldConfigDirs.getPaths());
-        importScenarioStatistics = ImportOldConfigsUsagesCollector.InitialImportScenario.SHOW_DIALOG_REQUESTED_BY_PROPERTY;
-      }
-      else if (!(
-        bestConfigGuess == null ||
-        isConfigOld(bestConfigGuess.second) ||
-        guessedOldConfigDirs.mixedEditions && !canAskForConfig()  // can't ask for clarification, use whatever edition fits best
-      )) {
+      else if (bestConfigGuess != null && !isConfigOld(bestConfigGuess.second)) {
         oldConfigDirAndOldIdePath = new Pair<>(bestConfigGuess.first, null);
         log.info("choosing [" + bestConfigGuess.first + "] to import from");
       }
-      else if (!canAskForConfig()) {
-        log.info("canAskForConfig: false");
-      }
-      else if (bestConfigGuess == null) {
-        log.info("no configs found; veryFirstStartOnThisComputer: " + veryFirstStartOnThisComputer);
-        if (!veryFirstStartOnThisComputer) {
-          oldConfigDirAndOldIdePath = showDialogAndGetOldConfigPath(guessedOldConfigDirs.getPaths());
-          importScenarioStatistics = ImportOldConfigsUsagesCollector.InitialImportScenario.SHOW_DIALOG_NO_CONFIGS_FOUND;
-        }
-      }
-      else if (isConfigOld(bestConfigGuess.second)) {
-        log.info("the best config guess [" + bestConfigGuess.first + "] is too old, it won't be used for importing.");
+      else if (canAskForConfig() && !veryFirstStartOnThisComputer) {
+        log.info("bestConfigGuess=" + bestConfigGuess);
         oldConfigDirAndOldIdePath = showDialogAndGetOldConfigPath(guessedOldConfigDirs.getPaths());
-        importScenarioStatistics = ImportOldConfigsUsagesCollector.InitialImportScenario.SHOW_DIALOG_CONFIGS_ARE_TOO_OLD;
+        importScenarioStatistics = ImportOldConfigsUsagesCollector.InitialImportScenario.SHOW_DIALOG_REQUESTED_BY_PROPERTY;
       }
-      else if (guessedOldConfigDirs.mixedEditions) {
-        log.info("configs from different editions are applicable, it's better to confirm");
-        oldConfigDirAndOldIdePath = showDialogAndGetOldConfigPath(guessedOldConfigDirs.getPaths());
-        importScenarioStatistics = ImportOldConfigsUsagesCollector.InitialImportScenario.SHOW_DIALOG_MIXED_EDITIONS;
+      else {
+        log.info("canAskForConfig=" + canAskForConfig() + " veryFirstStart=" + veryFirstStartOnThisComputer);
       }
 
       if (oldConfigDirAndOldIdePath != null) {
@@ -370,8 +348,7 @@ public final class ConfigImportHelper {
   }
 
   public static boolean isConfigOld(FileTime time) {
-    var deadline = Instant.now().minus(180, ChronoUnit.DAYS);
-    return time.toInstant().compareTo(deadline) < 0;
+    return ChronoUnit.DAYS.between(time.toInstant(), Instant.now()) >= 180;
   }
 
   private static boolean doesVmOptionsFileExist(Path configDir) {
@@ -451,12 +428,8 @@ public final class ConfigImportHelper {
     }
   }
 
-  private static boolean shouldAskForConfig() {
-    return canAskForConfig() && Boolean.getBoolean(SHOW_IMPORT_CONFIG_DIALOG_PROPERTY);
-  }
-
   private static boolean canAskForConfig() {
-    return !("never".equals(System.getProperty(SHOW_IMPORT_CONFIG_DIALOG_PROPERTY)) || AppMode.isRemoteDevHost());
+    return !InitialConfigImportState.isStartupWizardEnabled() && Boolean.getBoolean(SHOW_IMPORT_CONFIG_DIALOG_PROPERTY);
   }
 
   private static @Nullable Pair<Path, Path> showDialogAndGetOldConfigPath(List<Path> guessedOldConfigDirs) {
@@ -491,11 +464,8 @@ public final class ConfigImportHelper {
   public static final class ConfigDirsSearchResult {
     private final List<? extends Pair<Path, FileTime>> directories;
 
-    public final boolean mixedEditions;
-
-    private ConfigDirsSearchResult(List<? extends Pair<Path, FileTime>> directories, boolean mixedEditions) {
+    private ConfigDirsSearchResult(List<? extends Pair<Path, FileTime>> directories) {
       this.directories = directories;
-      this.mixedEditions = mixedEditions;
     }
 
     public @Unmodifiable @NotNull List<Path> getPaths() {
@@ -549,7 +519,7 @@ public final class ConfigImportHelper {
           settings.getProductsToImportFrom(args)
         )) {
           var pair = new Pair<>(configDir, FileTime.from(Instant.now()));
-          return new ConfigDirsSearchResult(List.of(pair), false);
+          return new ConfigDirsSearchResult(List.of(pair));
         }
         else {
           log.info("  ... rejected by " + settings);
@@ -586,8 +556,7 @@ public final class ConfigImportHelper {
     }
     if (prefix == null) prefix = PlatformUtils.getPlatformPrefix();
 
-    var exactCandidates = new HashSet<Path>();
-    var otherEditionCandidates = new HashSet<Path>();
+    var exactCandidates = new ArrayList<Path>();
     var otherProductCandidates = new ArrayList<Path>();
 
     for (var home : homes) {
@@ -609,7 +578,7 @@ public final class ConfigImportHelper {
             }
             else if (ContainerUtil.exists(otherEditionPrefixes, other -> nameMatchesPrefixStrictly(name, other, dotted))) {
               if (settings == null || settings.shouldBeSeenAsImportCandidate(path, pathPrefix, otherProductPrefixes)) {
-                otherEditionCandidates.add(path);
+                exactCandidates.add(path);
               }
             }
             else if (ContainerUtil.exists(otherProductPrefixes, other -> nameMatchesPrefixStrictly(name, other, dotted))) {
@@ -624,14 +593,14 @@ public final class ConfigImportHelper {
     }
 
     List<Path> candidates;
-    if (!exactCandidates.isEmpty() || !otherEditionCandidates.isEmpty()) {
-      candidates = Stream.concat(exactCandidates.stream(), otherEditionCandidates.stream()).toList();
+    if (!exactCandidates.isEmpty()) {
+      candidates = exactCandidates;
     }
     else if (!otherProductCandidates.isEmpty()) {
       candidates = otherProductCandidates;
     }
     else {
-      return new ConfigDirsSearchResult(List.of(), false);
+      return new ConfigDirsSearchResult(List.of());
     }
 
     var candidatesSorted = new ArrayList<Pair<Path, FileTime>>();
@@ -649,11 +618,7 @@ public final class ConfigImportHelper {
       return diff;
     });
 
-    var mixedBag =
-      otherEditionCandidates.contains(candidatesSorted.getFirst().first) &&
-      !exactCandidates.isEmpty() &&
-      ContainerUtil.exists(candidatesSorted, candidate -> exactCandidates.contains(candidate.first) && !isConfigOld(candidate.second));
-    return new ConfigDirsSearchResult(candidatesSorted, mixedBag);
+    return new ConfigDirsSearchResult(candidatesSorted);
   }
 
   private static boolean nameMatchesPrefixStrictly(String name, String prefix, boolean dotted) {
