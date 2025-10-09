@@ -9,4 +9,12 @@ open class ProtectedMembersKotlin {
     get() = ""
 
   protected fun String.extensionFunction(): String = ""
+
+  companion object {
+    @JvmStatic
+    protected val jvmStaticProperty: String = ""
+
+    @JvmStatic
+    protected fun jvmStaticFunction(): Unit = Unit
+  }
 }

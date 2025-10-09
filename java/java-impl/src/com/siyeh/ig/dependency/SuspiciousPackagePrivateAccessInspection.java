@@ -30,6 +30,7 @@ import com.intellij.util.xmlb.annotations.XCollection;
 import com.siyeh.InspectionGadgetsBundle;
 import com.siyeh.ig.psiutils.ClassUtils;
 import com.siyeh.ig.psiutils.TestUtils;
+import kotlin.jvm.JvmStatic;
 import one.util.streamex.StreamEx;
 import org.jdom.Element;
 import org.jetbrains.annotations.NotNull;
@@ -222,13 +223,24 @@ public final class SuspiciousPackagePrivateAccessInspection extends AbstractBase
   }
 
   private static boolean canAccessProtectedMember(UElement sourceNode, PsiMember member, PsiClass accessObjectType) {
-    PsiClass memberClass = member.getContainingClass();
+    PsiClass containingClass = member.getContainingClass();
+    if (containingClass == null) return false;
+
+    boolean isJvmStatic = isJvmStatic(member);
+    PsiClass memberClass = isJvmStatic ? containingClass.getContainingClass() : containingClass;
     if (memberClass == null) return false;
 
     PsiClass contextClass = getContextClass(sourceNode, member instanceof PsiClass);
     if (contextClass == null) return false;
 
-    return canAccessProtectedMember(member, memberClass, accessObjectType, member.hasModifierProperty(PsiModifier.STATIC), contextClass);
+    boolean isStaticAccess = isJvmStatic || member.hasModifierProperty(PsiModifier.STATIC);
+    return canAccessProtectedMember(member, memberClass, accessObjectType, isStaticAccess, contextClass);
+  }
+
+  private static boolean isJvmStatic(@NotNull PsiModifierListOwner member) {
+    UAnnotated annotated = UastContextKt.toUElement(member.getNavigationElement(), UAnnotated.class);
+    return annotated != null &&
+           UVariableKt.findSourceAnnotation(annotated, JvmStatic.class.getCanonicalName()) != null;
   }
 
   /**
