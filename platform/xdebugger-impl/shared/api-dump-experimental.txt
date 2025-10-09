@@ -1,0 +1,3 @@
+*f:com.intellij.platform.debugger.impl.shared.ShowImagePopupUtil
+- sf:INSTANCE:com.intellij.platform.debugger.impl.shared.ShowImagePopupUtil
+- sf:showOnFrontend(com.intellij.openapi.project.Project,B[]):V

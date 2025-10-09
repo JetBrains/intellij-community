@@ -19,6 +19,8 @@ import org.jetbrains.annotations.ApiStatus
 @ApiStatus.Internal
 @Rpc
 interface XDebuggerManagerApi : RemoteApi<Unit> {
+  suspend fun initialize(projectId: ProjectId, capabilities: XFrontendDebuggerCapabilities)
+
   suspend fun currentSession(projectId: ProjectId): Flow<XDebugSessionId?>
 
   suspend fun sessions(projectId: ProjectId): XDebugSessionsList
@@ -40,6 +42,12 @@ interface XDebuggerManagerApi : RemoteApi<Unit> {
     }
   }
 }
+
+@ApiStatus.Internal
+@Serializable
+data class XFrontendDebuggerCapabilities(
+  val canShowImages: Boolean,
+)
 
 @ApiStatus.Internal
 @Serializable

@@ -10,11 +10,13 @@ import com.intellij.debugger.engine.events.SuspendContextCommandImpl;
 import com.intellij.debugger.impl.DebuggerUtilsImpl;
 import com.intellij.icons.AllIcons;
 import com.intellij.openapi.util.registry.Registry;
+import com.sun.jdi.Value;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
 
-final class IconObjectRenderer extends CompoundRendererProvider {
+final class IconObjectRenderer extends AbstractImageRenderer {
   @Override
   protected String getName() {
     return "Icon";
@@ -23,11 +25,6 @@ final class IconObjectRenderer extends CompoundRendererProvider {
   @Override
   protected String getClassName() {
     return "javax.swing.Icon";
-  }
-
-  @Override
-  protected boolean isEnabled() {
-    return true;
   }
 
   @Override
@@ -42,7 +39,7 @@ final class IconObjectRenderer extends CompoundRendererProvider {
         @Override
         public void contextAction(@NotNull SuspendContextImpl suspendContext) {
           String getterName = AllIcons.Debugger.Value.getIconHeight() <= 16 ? "iconToBytesPreviewNormal" : "iconToBytesPreviewRetina";
-          descriptor.setValueIcon(ImageObjectRenderer.getIcon(evalContext, descriptor.getValue(), getterName));
+          descriptor.setValueIcon(getImageIcon(evalContext, descriptor.getValue(), getterName));
           listener.labelChanged();
         }
       });
@@ -53,12 +50,13 @@ final class IconObjectRenderer extends CompoundRendererProvider {
   @Override
   protected FullValueEvaluatorProvider getFullValueEvaluatorProvider() {
     return (evaluationContext, valueDescriptor) -> {
-      return new ImageObjectRenderer.IconPopupEvaluator(JavaDebuggerBundle.message("message.node.show.icon"), evaluationContext) {
-        @Override
-        protected Icon getData() {
-          return ImageObjectRenderer.getIcon(getEvaluationContext(), valueDescriptor.getValue(), "iconToBytes");
-        }
-      };
+      return createImagePopupEvaluator(JavaDebuggerBundle.message("message.node.show.icon"), evaluationContext,
+                                       valueDescriptor.getValue(), "iconToBytes");
     };
+  }
+
+  static @Nullable ImageIcon getImageIcon(EvaluationContextImpl evaluationContext, Value obj, String methodName) {
+    byte[] data = getImageBytes(evaluationContext, obj, methodName);
+    return data != null ? new ImageIcon(data) : null;
   }
 }

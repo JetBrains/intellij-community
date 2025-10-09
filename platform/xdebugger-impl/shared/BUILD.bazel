@@ -24,6 +24,7 @@ jvm_library(
     "//platform/platform-impl/rpc",
     "//platform/project/shared:project",
     "//platform/editor-ui-api:editor-ui",
+    "//platform/remote-topics/shared:rpc-topics",
   ]
 )
 ### auto-generated section `build intellij.platform.debugger.impl.shared` end

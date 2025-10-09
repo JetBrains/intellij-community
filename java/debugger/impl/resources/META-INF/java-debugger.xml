@@ -150,6 +150,7 @@
     <debugger.compoundRendererProvider implementation="com.intellij.debugger.ui.tree.render.UnboxableTypeRenderer$FloatRenderer"/>
     <debugger.compoundRendererProvider implementation="com.intellij.debugger.ui.tree.render.UnboxableTypeRenderer$DoubleRenderer"/>
     <debugger.compoundRendererProvider implementation="com.intellij.debugger.ui.tree.render.ColorObjectRenderer"/>
+    <debugger.compoundRendererProvider implementation="com.intellij.debugger.ui.tree.render.ImageObjectRenderer"/>
     <debugger.compoundRendererProvider implementation="com.intellij.debugger.ui.tree.render.IconObjectRenderer"/>
     <debugger.compoundRendererProvider implementation="com.intellij.debugger.ui.tree.render.GraphicsObjectRenderer"/>
     <debugger.compoundRendererProvider implementation="com.intellij.debugger.ui.tree.render.BinaryRenderer"/>

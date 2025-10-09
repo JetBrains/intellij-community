@@ -39,6 +39,7 @@ import com.intellij.openapi.project.ProjectManager;
 import com.intellij.openapi.ui.popup.Balloon;
 import com.intellij.openapi.wm.IdeGlassPaneUtil;
 import com.intellij.openapi.wm.ToolWindowId;
+import com.intellij.platform.debugger.impl.rpc.XFrontendDebuggerCapabilities;
 import com.intellij.ui.ExperimentalUI;
 import com.intellij.ui.HintHint;
 import com.intellij.ui.awt.RelativePoint;
@@ -94,6 +95,11 @@ public final class XDebuggerManagerImpl extends XDebuggerManager implements Pers
   private XDebuggerState myState = new XDebuggerState();
 
   private InlayRunToCursorEditorListener myNewRunToCursorListener = null;
+
+  private @NotNull XFrontendDebuggerCapabilities myFrontendCapabilities =
+    new XFrontendDebuggerCapabilities(
+      false
+    );
 
   XDebuggerManagerImpl(@NotNull Project project, @NotNull CoroutineScope coroutineScope) {
     myProject = project;
@@ -367,6 +373,15 @@ public final class XDebuggerManagerImpl extends XDebuggerManager implements Pers
   }
 
   private static final TooltipGroup RUN_TO_CURSOR_TOOLTIP_GROUP = new TooltipGroup("RUN_TO_CURSOR_TOOLTIP_GROUP", 0);
+
+  @ApiStatus.Internal
+  public void setFrontendCapabilities(@NotNull XFrontendDebuggerCapabilities capabilities) {
+    myFrontendCapabilities = capabilities;
+  }
+
+  public @NotNull XFrontendDebuggerCapabilities getFrontendCapabilities() {
+    return myFrontendCapabilities;
+  }
 
   public static @NotNull NotificationGroup getNotificationGroup() {
     return NotificationGroupManager.getInstance().getNotificationGroup("Debugger messages");

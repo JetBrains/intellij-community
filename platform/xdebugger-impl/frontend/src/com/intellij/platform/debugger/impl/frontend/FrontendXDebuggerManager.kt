@@ -13,10 +13,8 @@ import com.intellij.openapi.wm.ToolWindowManager
 import com.intellij.openapi.wm.ex.ToolWindowManagerListener
 import com.intellij.platform.debugger.impl.frontend.editor.BreakpointPromoterEditorListener
 import com.intellij.platform.debugger.impl.frontend.evaluate.quick.common.ValueLookupManager
-import com.intellij.platform.debugger.impl.rpc.XDebugSessionDto
-import com.intellij.platform.debugger.impl.rpc.XDebuggerManagerApi
-import com.intellij.platform.debugger.impl.rpc.XDebuggerManagerSessionEvent
-import com.intellij.platform.debugger.impl.rpc.XDebuggerValueLookupHintsRemoteApi
+import com.intellij.platform.debugger.impl.frontend.frame.ImageEditorUIUtil
+import com.intellij.platform.debugger.impl.rpc.*
 import com.intellij.platform.project.projectId
 import com.intellij.ui.content.ContentManagerEvent
 import com.intellij.ui.content.ContentManagerListener
@@ -64,6 +62,9 @@ class FrontendXDebuggerManager(private val project: Project, private val cs: Cor
   internal val sessions get() = sessionsFlow.value
 
   init {
+    initCapabilities()
+    // TODO: make sure that capabilities are send before anything else
+
     cs.launch {
       for (event in synchronousExecutor) {
         event()
@@ -79,6 +80,12 @@ class FrontendXDebuggerManager(private val project: Project, private val cs: Cor
       XDebuggerValueLookupHintsRemoteApi.getInstance().getValueLookupListeningFlow(project.projectId()).filter { it }.first()
       ValueLookupManager.getInstance(project).startListening()
     }
+  }
+
+  private fun initCapabilities() = cs.launch {
+    XDebuggerManagerApi.getInstance().initialize(project.projectId(), XFrontendDebuggerCapabilities(
+      canShowImages = ImageEditorUIUtil.canCreateImageEditor(),
+    ))
   }
 
   private fun initSessions() = cs.launch {

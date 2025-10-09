@@ -15,6 +15,7 @@
 
   <content>
     <module name="intellij.platform.images.copyright"/>
+    <module name="intellij.platform.images.xdebugger"/>
   </content>
 
   <extensions defaultExtensionNs="com.intellij">

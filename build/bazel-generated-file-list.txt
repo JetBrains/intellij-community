@@ -264,6 +264,7 @@ idea/customization/base
 idea/customization/min
 images
 images/intellij.platform.images.copyright
+images/intellij.platform.images.xdebugger
 java/codeserver/core
 java/codeserver/highlighting
 java/compiler

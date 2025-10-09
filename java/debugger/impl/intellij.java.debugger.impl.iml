@@ -79,7 +79,6 @@
     <orderEntry type="library" name="jb-jdi" level="project" />
     <orderEntry type="module" module-name="intellij.libraries.stream" />
     <orderEntry type="module" module-name="intellij.platform.statistics" />
-    <orderEntry type="module" module-name="intellij.platform.images" />
     <orderEntry type="module" module-name="intellij.platform.core.ui" />
     <orderEntry type="module" module-name="intellij.libraries.fastutil" />
     <orderEntry type="module" module-name="intellij.platform.ide.util.io.impl" />
@@ -103,6 +102,7 @@
     <orderEntry type="module" module-name="fleet.rpc" />
     <orderEntry type="module" module-name="intellij.platform.rpc" />
     <orderEntry type="module" module-name="intellij.platform.testFramework.common" scope="TEST" />
+    <orderEntry type="module" module-name="intellij.platform.rpc.topics" />
   </component>
   <component name="copyright">
     <Base>

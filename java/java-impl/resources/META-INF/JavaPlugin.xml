@@ -2,7 +2,7 @@
 <idea-plugin xmlns:xi="http://www.w3.org/2001/XInclude">
   <module value="com.intellij.modules.java"/>
 
-  <depends optional="true" config-file="images-integration.xml">com.intellij.platform.images</depends>
+  <depends optional="true">com.intellij.platform.images</depends>
   <depends optional="true" config-file="community-integration.xml">com.intellij.modules.idea.community</depends>
 
   <xi:include href="/idea/JavaActions.xml"/>

@@ -14,6 +14,7 @@ internal object PlatformApi {
     "intellij.platform.uast.ide", // IDEA
     "intellij.platform.images", // plugin
     "intellij.platform.images.copyright", // plugin
+    "intellij.platform.images.xdebugger", // plugin
     "intellij.platform.images.build", // build scripts
   )
 

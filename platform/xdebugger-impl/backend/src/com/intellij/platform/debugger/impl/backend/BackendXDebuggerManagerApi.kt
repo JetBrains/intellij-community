@@ -7,6 +7,7 @@ import com.intellij.openapi.application.EDT
 import com.intellij.openapi.editor.impl.EditorId
 import com.intellij.openapi.editor.impl.findEditorOrNull
 import com.intellij.platform.debugger.impl.rpc.*
+import com.intellij.platform.debugger.impl.rpc.XFrontendDebuggerCapabilities
 import com.intellij.platform.execution.impl.backend.createProcessHandlerDto
 import com.intellij.platform.project.ProjectId
 import com.intellij.platform.project.findProject
@@ -31,6 +32,17 @@ import kotlinx.coroutines.channels.awaitClose
 import kotlinx.coroutines.flow.*
 
 internal class BackendXDebuggerManagerApi : XDebuggerManagerApi {
+  override suspend fun initialize(projectId: ProjectId, capabilities: XFrontendDebuggerCapabilities) {
+    val project = projectId.findProject()
+    val manager = XDebuggerManager.getInstance(project) as XDebuggerManagerImpl
+    val old = manager.frontendCapabilities
+    val new = XFrontendDebuggerCapabilities(
+      // _any_ of clients can show images
+      canShowImages = old.canShowImages || capabilities.canShowImages,
+    )
+    manager.frontendCapabilities = new
+  }
+
   @OptIn(ExperimentalCoroutinesApi::class)
   override suspend fun currentSession(projectId: ProjectId): Flow<XDebugSessionId?> {
     val project = projectId.findProject()

@@ -51,7 +51,6 @@ jvm_library(
     "@lib//:jb-jdi",
     "//libraries/stream",
     "//platform/statistics",
-    "//images",
     "//platform/core-ui",
     "//libraries/fastutil",
     "//platform/platform-util-io-impl:ide-util-io-impl",
@@ -74,6 +73,7 @@ jvm_library(
     "//platform/xdebugger-impl/rpc",
     "//fleet/rpc",
     "//platform/kernel/rpc",
+    "//platform/remote-topics/shared:rpc-topics",
   ]
 )
 
@@ -118,8 +118,6 @@ jvm_library(
     "//libraries/stream",
     "//platform/statistics",
     "//platform/statistics:statistics_test_lib",
-    "//images",
-    "//images:images_test_lib",
     "//platform/core-ui",
     "//libraries/fastutil",
     "//platform/platform-util-io-impl:ide-util-io-impl",
@@ -144,6 +142,7 @@ jvm_library(
     "//fleet/rpc",
     "//platform/kernel/rpc",
     "//platform/testFramework/common",
+    "//platform/remote-topics/shared:rpc-topics",
   ]
 )
 ### auto-generated section `build intellij.java.debugger.impl` end
