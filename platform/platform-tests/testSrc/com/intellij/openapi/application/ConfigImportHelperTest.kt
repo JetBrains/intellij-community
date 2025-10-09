@@ -554,6 +554,17 @@ class ConfigImportHelperTest : ConfigImportHelperBaseTest() {
     assertThat(newVmOptionsFile.readLines()).containsExactly("-Xmx3G", "-Dsome.prop=new.val")
   }
 
+  @Test fun `finding inherited directory`() {
+    val oldConfigDir = createConfigDir("2025.2", storageTS = LocalDateTime.now())
+    val newConfigDir = newTempDir("newConfig")
+
+    assertThat(findInheritedDirectory(newConfigDir, null)).isNull()
+    assertThat(findInheritedDirectory(newConfigDir, newConfigDir.toString())).isNull()
+    assertThat(findInheritedDirectory(newConfigDir, newConfigDir.resolveSibling("_missing").toString())).isNull()
+
+    assertThat(findInheritedDirectory(newConfigDir, oldConfigDir.toString())!!.paths).containsExactly(oldConfigDir)
+  }
+
   @Test fun `uses broken plugins from marketplace by default`() {
     val oldConfigDir = newTempDir("oldConfig")
     val oldPluginsDir = Files.createDirectories(oldConfigDir.resolve("plugins"))

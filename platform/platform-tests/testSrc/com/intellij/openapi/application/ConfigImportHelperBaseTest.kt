@@ -2,6 +2,7 @@
 package com.intellij.openapi.application
 
 import com.intellij.openapi.components.StoragePathMacros
+import com.intellij.openapi.diagnostic.thisLogger
 import com.intellij.testFramework.fixtures.BareTestFixtureTestCase
 import com.intellij.testFramework.rules.InMemoryFsRule
 import com.intellij.util.SystemProperties
@@ -40,8 +41,11 @@ abstract class ConfigImportHelperBaseTest : BareTestFixtureTestCase() {
     Files.setLastModifiedTime(file, FileTime.from(lastModified.toInstant(ZoneOffset.UTC)))
   }
 
+  protected fun findInheritedDirectory(newConfigPath: Path, inheritedPath: String?): ConfigImportHelper.ConfigDirsSearchResult? =
+    ConfigImportHelper.findInheritedDirectory(newConfigPath, inheritedPath, ConfigImportHelper.findCustomConfigImportSettings(), emptyList(), thisLogger())
+
   protected fun findConfigDirectories(newConfigPath: Path): ConfigImportHelper.ConfigDirsSearchResult =
-    ConfigImportHelper.findConfigDirectories(newConfigPath, ConfigImportHelper.findCustomConfigImportSettings(), /*args =*/ emptyList())
+    ConfigImportHelper.findConfigDirectories(newConfigPath, ConfigImportHelper.findCustomConfigImportSettings(), emptyList())
 
   // disables broken plugins fetcher from the Marketplace by default
   class ConfigImportMarketplaceStub : ExternalResource() {

@@ -145,7 +145,7 @@ public final class ConfigImportHelper {
       return;
     }
 
-    var guessedOldConfigDirs = findInheritedDirectory(log, newConfigDir, settings, args);
+    var guessedOldConfigDirs = findInheritedDirectory(newConfigDir, System.getenv(IMPORT_FROM_ENV_VAR), settings, args, log);
     if (guessedOldConfigDirs == null) {
       guessedOldConfigDirs = findConfigDirectories(newConfigDir, settings, args);
     }
@@ -525,18 +525,18 @@ public final class ConfigImportHelper {
     return max;
   }
 
-  private static @Nullable ConfigDirsSearchResult findInheritedDirectory(
-    Logger log,
-    Path newConfigDir,
+  public static @Nullable ConfigDirsSearchResult findInheritedDirectory(
+    @NotNull Path newConfigDir,
+    @Nullable String inheritedPath,
     @Nullable ConfigImportSettings settings,
-    List<String> args
+    @NotNull List<String> args,
+    @NotNull Logger log
   ) {
-    var inheritedPath = System.getenv(IMPORT_FROM_ENV_VAR);
     log.info(IMPORT_FROM_ENV_VAR + "=" + inheritedPath);
 
     if (inheritedPath != null) {
       try {
-        var configDir = Path.of(inheritedPath).toAbsolutePath().normalize();
+        var configDir = newConfigDir.getFileSystem().getPath(inheritedPath).toAbsolutePath().normalize();
         if (configDir.equals(newConfigDir)) {
           log.warn("  ... points to the current settings directory");
         }
