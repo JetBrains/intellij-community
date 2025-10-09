@@ -1,7 +1,6 @@
 // Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.kotlin.idea.core.script.k2.settings
 
-import com.intellij.openapi.components.service
 import com.intellij.openapi.observable.properties.AtomicProperty
 import com.intellij.openapi.options.SearchableConfigurable
 import com.intellij.openapi.project.Project
@@ -16,12 +15,12 @@ import com.intellij.ui.table.TableView
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.launch
 import org.jetbrains.kotlin.idea.base.resources.KotlinBundle.message
+import org.jetbrains.kotlin.idea.core.script.k2.definitions.ScriptDefinitionProviderImpl
 import org.jetbrains.kotlin.idea.core.script.k2.definitions.ScriptTemplatesFromDependenciesDefinitionSource
 import org.jetbrains.kotlin.idea.core.script.k2.settings.ScriptDefinitionPersistentSettings.ScriptDefinitionSetting
 import org.jetbrains.kotlin.idea.core.script.shared.KOTLIN_SCRIPTING_SETTINGS_ID
 import org.jetbrains.kotlin.idea.core.script.shared.KotlinBaseScriptingBundle
 import org.jetbrains.kotlin.idea.core.script.shared.scriptDefinitionsSourceOfType
-import org.jetbrains.kotlin.scripting.definitions.ScriptDefinitionProvider
 import javax.swing.JComponent
 import javax.swing.JPanel
 import javax.swing.ListSelectionModel
@@ -33,7 +32,7 @@ internal class KotlinScriptingSettingsConfigurable(val project: Project, val cor
 
     private fun calculateModel(): KotlinScriptDefinitionsModel {
         val settingsProvider = ScriptDefinitionPersistentSettings.getInstance(project)
-        val definitions = project.service<ScriptDefinitionProvider>().currentDefinitions
+        val definitions = ScriptDefinitionProviderImpl.getInstance(project).definitionsFromSources
             .sortedBy { settingsProvider.getScriptDefinitionOrder(it) }
             .map {
                 ScriptDefinitionModel(

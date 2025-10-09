@@ -15,9 +15,9 @@ import org.jetbrains.annotations.Nullable;
 import org.jetbrains.kotlin.idea.base.resources.KotlinBundle;
 import org.jetbrains.kotlin.idea.core.script.k1.ScriptDefinitionsManager;
 import org.jetbrains.kotlin.idea.core.script.k1.settings.KotlinScriptingSettingsImpl;
+import org.jetbrains.kotlin.idea.core.script.shared.KotlinScriptingSetttingsIdKt;
 import org.jetbrains.kotlin.scripting.definitions.ScriptDefinition;
 import org.jetbrains.kotlin.scripting.definitions.ScriptDefinitionProvider;
-import org.jetbrains.kotlin.idea.core.script.shared.KotlinScriptingSetttingsIdKt;
 
 import javax.swing.*;
 
@@ -98,7 +98,7 @@ public class KotlinScriptingSettingsConfigurable implements SearchableConfigurab
                 return true;
             }
         }
-        return !model.getDefinitions().equals(asStream(manager.getCurrentDefinitions()));
+        return !model.getDefinitions().equals(asStream(manager.getCurrentDefinitions()).toList());
     }
 
 
