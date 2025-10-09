@@ -106,6 +106,8 @@ a:org.intellij.plugins.intelliLang.inject.AbstractLanguageInjectionSupport
 - ps:showEditInjectionDialog(com.intellij.openapi.project.Project,org.intellij.plugins.intelliLang.inject.config.ui.AbstractInjectionPanel,java.lang.String,java.lang.String):Z
 - useDefaultCommentInjector():Z
 - useDefaultInjector(com.intellij.psi.PsiLanguageInjectionHost):Z
+f:org.intellij.plugins.intelliLang.inject.DefaultInjectorSuppressorKt
+- sf:isSuppressedFor(com.intellij.psi.PsiElement):Z
 f:org.intellij.plugins.intelliLang.inject.InjectedLanguage
 - s:create(java.lang.String):org.intellij.plugins.intelliLang.inject.InjectedLanguage
 - s:create(java.lang.String,java.lang.String,java.lang.String,Z):org.intellij.plugins.intelliLang.inject.InjectedLanguage
