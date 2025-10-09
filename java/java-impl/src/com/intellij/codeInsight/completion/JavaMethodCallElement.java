@@ -38,7 +38,7 @@ public class JavaMethodCallElement extends LookupItem<PsiMethod> implements Type
   public static final ClassConditionKey<JavaMethodCallElement> CLASS_CONDITION_KEY = ClassConditionKey.create(JavaMethodCallElement.class);
   public static final Key<Boolean> COMPLETION_HINTS = Key.create("completion.hints");
   private final @Nullable PsiClass myContainingClass;
-  private final PsiMethod myMethod;
+  private final @NotNull PsiMethod myMethod;
   private final MemberLookupHelper myHelper;
   private final boolean myNegatable;
   private PsiSubstitutor myQualifierSubstitutor = PsiSubstitutor.EMPTY;
@@ -51,7 +51,7 @@ public class JavaMethodCallElement extends LookupItem<PsiMethod> implements Type
     this(method, null);
   }
 
-  private JavaMethodCallElement(PsiMethod method, @Nullable MemberLookupHelper helper) {
+  private JavaMethodCallElement(@NotNull PsiMethod method, @Nullable MemberLookupHelper helper) {
     super(method, method.isConstructor() ? "new " + method.getName() : method.getName());
     myMethod = method;
     myContainingClass = method.getContainingClass();
@@ -60,7 +60,7 @@ public class JavaMethodCallElement extends LookupItem<PsiMethod> implements Type
     myNegatable = type != null && PsiTypes.booleanType().isAssignableFrom(type);
   }
 
-  public JavaMethodCallElement(PsiMethod method, boolean shouldImportStatic, boolean mergedOverloads) {
+  public JavaMethodCallElement(@NotNull PsiMethod method, boolean shouldImportStatic, boolean mergedOverloads) {
     this(method, new MemberLookupHelper(method, method.getContainingClass(), shouldImportStatic || method.isConstructor(), mergedOverloads));
     if (!shouldImportStatic && !method.isConstructor()) {
       if (myContainingClass != null) {
@@ -337,7 +337,6 @@ public class JavaMethodCallElement extends LookupItem<PsiMethod> implements Type
 
     presentation.setStrikeout(JavaElementLookupRenderer.isToStrikeout(this));
     boolean isAutoImportName = myContainingClass != null &&
-                               myMethod != null &&
                                JavaCodeStyleManager.getInstance(myMethod.getProject())
                                  .isStaticAutoImportName(myContainingClass.getQualifiedName() + "." + myMethod.getName());
     MemberLookupHelper helper = myHelper != null ? myHelper : new MemberLookupHelper(myMethod, myContainingClass, false, false);
