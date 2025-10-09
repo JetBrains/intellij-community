@@ -203,6 +203,10 @@ public final class InspectorWindow extends JDialog implements Disposable {
       }
       InlineBanner banner = new InlineBanner(message, EditorNotificationPanel.Status.Error);
       topPanel.add(banner);
+      // Add a subtle, visible hint about navigation to help discovery without being intrusive
+      String altHoverHint = InternalActionsBundle.message("ui.inspector.hint.alt.hover.next");
+      InlineBanner hintBanner = new InlineBanner(altHoverHint, EditorNotificationPanel.Status.Info);
+      topPanel.add(hintBanner);
     }
 
     topPanel.add(navBarScroll);
