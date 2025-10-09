@@ -775,8 +775,7 @@ com.intellij.openapi.vcs.changes.ChangesViewEx
 - com.intellij.openapi.vcs.changes.ChangesViewI
 - a:getCommitWorkflowHandler():com.intellij.vcs.commit.ChangesViewCommitWorkflowHandler
 - a:isAllowExcludeFromCommit():Z
-- promiseRefresh():org.jetbrains.concurrency.Promise
-- a:promiseRefresh(com.intellij.openapi.application.ModalityState):org.jetbrains.concurrency.Promise
+- a:promiseRefresh():org.jetbrains.concurrency.Promise
 - a:resetViewImmediatelyAndRefreshLater():V
 com.intellij.openapi.vcs.changes.ChangesViewI
 - a:scheduleRefresh():V
@@ -798,7 +797,7 @@ c:com.intellij.openapi.vcs.changes.ChangesViewManager
 - s:getLocalChangesToolWindowName(com.intellij.openapi.project.Project):java.lang.String
 - isAllowExcludeFromCommit():Z
 - isDiffPreviewAvailable():Z
-- promiseRefresh(com.intellij.openapi.application.ModalityState):org.jetbrains.concurrency.Promise
+- promiseRefresh():org.jetbrains.concurrency.Promise
 - resetViewImmediatelyAndRefreshLater():V
 - scheduleRefresh():V
 - selectChanges(java.util.List):V
@@ -817,8 +816,6 @@ f:com.intellij.openapi.vcs.changes.ChangesViewManager$ChangesViewToolWindowPanel
 - scheduleRefresh():V
 - selectChanges(java.util.List):V
 - selectFile(com.intellij.openapi.vfs.VirtualFile):V
-- setBusy(Z):V
-- setGrouping(java.lang.String):V
 - uiDataSnapshot(com.intellij.openapi.actionSystem.DataSink):V
 - updateCommitWorkflow():V
 - updateProgressText(java.lang.String,Z):V

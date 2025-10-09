@@ -2,8 +2,6 @@
 package com.intellij.vcs.commit
 
 import com.intellij.openapi.Disposable
-import com.intellij.openapi.application.ModalityState
-import com.intellij.openapi.application.contextModality
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.vcs.VcsBundle.message
 import com.intellij.openapi.vcs.changes.ChangesViewManager
@@ -16,7 +14,6 @@ import com.intellij.openapi.vcs.changes.ui.isCommitToolWindowShown
 import com.intellij.openapi.wm.ToolWindow
 import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.concurrency.await
-import kotlin.coroutines.coroutineContext
 
 class ChangesViewCommitPanel @ApiStatus.Internal constructor(
   project: Project,
@@ -72,8 +69,7 @@ class ChangesViewCommitPanel @ApiStatus.Internal constructor(
   private fun getVcsToolWindow(): ToolWindow? = getToolWindowFor(project, LOCAL_CHANGES)
 
   override suspend fun refreshChangesViewBeforeCommit() {
-    val modalityState = coroutineContext.contextModality() ?: ModalityState.nonModal()
-    ChangesViewManager.getInstanceEx(project).promiseRefresh(modalityState).await()
+    ChangesViewManager.getInstanceEx(project).promiseRefresh().await()
   }
 }
 

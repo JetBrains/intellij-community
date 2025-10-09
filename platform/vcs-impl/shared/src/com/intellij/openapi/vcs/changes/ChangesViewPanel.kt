@@ -1,7 +1,6 @@
 // Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.vcs.changes
 
-import com.intellij.openapi.Disposable
 import com.intellij.openapi.actionSystem.ActionManager
 import com.intellij.openapi.actionSystem.ActionPlaces.CHANGES_VIEW_TOOLBAR
 import com.intellij.openapi.actionSystem.ActionToolbar
@@ -19,7 +18,7 @@ import javax.swing.SwingConstants
 import kotlin.properties.Delegates.observable
 
 @ApiStatus.Internal
-class ChangesViewPanel(val changesView: ChangesListView) : BorderLayoutPanel() {
+open class ChangesViewPanel(val changesView: ChangesListView) : BorderLayoutPanel() {
   val toolbarActionGroup = DefaultActionGroup()
 
   var isToolbarHorizontal: Boolean by observable(false) { _, oldValue, newValue ->

@@ -12,12 +12,9 @@ import com.intellij.ide.dnd.DnDEvent;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.actionSystem.ex.ActionUtil;
-import com.intellij.openapi.application.AppUIExecutor;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ModalityState;
 import com.intellij.openapi.options.advanced.AdvancedSettingsChangeListener;
-import com.intellij.openapi.progress.ProgressIndicator;
-import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.SimpleToolWindowPanel;
 import com.intellij.openapi.util.Disposer;
@@ -30,16 +27,13 @@ import com.intellij.openapi.vcs.*;
 import com.intellij.openapi.vcs.changes.actions.diff.ShowDiffFromLocalChangesActionProvider;
 import com.intellij.openapi.vcs.changes.shelf.ShelveChangesManager;
 import com.intellij.openapi.vcs.changes.ui.*;
-import com.intellij.openapi.vcs.telemetry.VcsBackendTelemetrySpan.ChangesView;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.wm.ToolWindow;
-import com.intellij.platform.diagnostic.telemetry.TelemetryManager;
 import com.intellij.platform.vcs.impl.shared.RdLocalChanges;
 import com.intellij.platform.vcs.impl.shared.changes.ChangeListsViewModel;
 import com.intellij.platform.vcs.impl.shared.changes.ChangesViewDataKeys;
 import com.intellij.platform.vcs.impl.shared.changes.ChangesViewSettings;
 import com.intellij.platform.vcs.impl.shared.changes.PreviewDiffSplitterComponent;
-import com.intellij.platform.vcs.impl.shared.telemetry.VcsScopeKt;
 import com.intellij.problems.ProblemListener;
 import com.intellij.ui.ComponentUtil;
 import com.intellij.ui.JBColor;
@@ -47,7 +41,6 @@ import com.intellij.ui.components.JBLabel;
 import com.intellij.ui.components.panels.Wrapper;
 import com.intellij.ui.content.Content;
 import com.intellij.util.*;
-import com.intellij.util.concurrency.annotations.RequiresBackgroundThread;
 import com.intellij.util.concurrency.annotations.RequiresEdt;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.messages.MessageBusConnection;
@@ -58,11 +51,11 @@ import com.intellij.util.ui.components.BorderLayoutPanel;
 import com.intellij.util.ui.tree.TreeUtil;
 import com.intellij.vcs.commit.*;
 import com.intellij.vcsUtil.VcsUtil;
-import io.opentelemetry.api.trace.Span;
-import io.opentelemetry.api.trace.Tracer;
-import org.jetbrains.annotations.*;
+import org.jetbrains.annotations.ApiStatus;
+import org.jetbrains.annotations.Nls;
+import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 import org.jetbrains.concurrency.Promise;
-import org.jetbrains.concurrency.Promises;
 
 import javax.swing.*;
 import javax.swing.tree.DefaultMutableTreeNode;
@@ -82,22 +75,20 @@ import static java.util.Arrays.asList;
 import static org.jetbrains.concurrency.Promises.cancelledPromise;
 
 public class ChangesViewManager implements ChangesViewEx, Disposable {
-
-  private static final Tracer TRACER = TelemetryManager.getInstance().getTracer(VcsScopeKt.VcsScope);
   private static final String CHANGES_VIEW_PREVIEW_SPLITTER_PROPORTION = "ChangesViewManager.DETAILS_SPLITTER_PROPORTION";
 
   private final @NotNull Project myProject;
 
-  private @Nullable ChangesViewPanel myChangesPanel;
+  private @Nullable CommitChangesViewWithToolbarPanel myChangesPanel;
   private @Nullable ChangesViewToolWindowPanel myToolWindowPanel;
 
   @NotNull
   @RequiresEdt
-  ChangesViewPanel initChangesPanel() {
+  CommitChangesViewWithToolbarPanel initChangesPanel() {
     if (myChangesPanel == null) {
       Activity activity = StartUpMeasurer.startActivity("ChangesViewPanel initialization");
       ChangesListView tree = new LocalChangesListView(myProject);
-      myChangesPanel = new ChangesViewPanel(tree);
+      myChangesPanel = new CommitChangesViewWithToolbarPanel(tree, this);
       activity.end();
     }
     return myChangesPanel;
@@ -109,8 +100,8 @@ public class ChangesViewManager implements ChangesViewEx, Disposable {
       Activity activity = StartUpMeasurer.startActivity("ChangesViewToolWindowPanel initialization");
 
       // ChangesViewPanel is used for a singular ChangesViewToolWindowPanel instance. Cleanup is not needed.
-      ChangesViewPanel changesViewPanel = initChangesPanel();
-      ChangesViewToolWindowPanel panel = new ChangesViewToolWindowPanel(myProject, ChangesViewSettings.getInstance(myProject), changesViewPanel);
+      CommitChangesViewWithToolbarPanel changesViewPanel = initChangesPanel();
+      ChangesViewToolWindowPanel panel = new ChangesViewToolWindowPanel(myProject, changesViewPanel);
       Disposer.register(this, panel);
 
       panel.updateCommitWorkflow();
@@ -192,9 +183,9 @@ public class ChangesViewManager implements ChangesViewEx, Disposable {
   }
 
   @Override
-  public @NotNull Promise<?> promiseRefresh(@NotNull ModalityState modalityState) {
+  public @NotNull Promise<?> promiseRefresh() {
     if (myToolWindowPanel == null) return cancelledPromise();
-    return myToolWindowPanel.scheduleRefreshWithDelay(0, modalityState);
+    return myToolWindowPanel.scheduleRefreshNow();
   }
 
   @Override
@@ -224,13 +215,13 @@ public class ChangesViewManager implements ChangesViewEx, Disposable {
   @Override
   public void setBusy(boolean b) {
     if (myToolWindowPanel == null) return;
-    myToolWindowPanel.setBusy(b);
+    myToolWindowPanel.myChangesPanel.setBusy(b);
   }
 
   @Override
   public void setGrouping(@NotNull String groupingKey) {
     if (myToolWindowPanel == null) return;
-    myToolWindowPanel.setGrouping(groupingKey);
+    myToolWindowPanel.myChangesPanel.setGrouping(groupingKey);
   }
 
   private void updateCommitWorkflow() {
@@ -252,7 +243,7 @@ public class ChangesViewManager implements ChangesViewEx, Disposable {
   @Override
   public void resetViewImmediatelyAndRefreshLater() {
     if (myToolWindowPanel != null) {
-      myToolWindowPanel.resetViewImmediatelyAndRefreshLater();
+      myToolWindowPanel.myChangesPanel.resetViewImmediatelyAndRefreshLater();
     }
   }
 
@@ -338,7 +329,7 @@ public class ChangesViewManager implements ChangesViewEx, Disposable {
 
     private final @NotNull Wrapper myMainPanelContent;
     private final @NotNull BorderLayoutPanel myContentPanel;
-    private final @NotNull ChangesViewPanel myChangesPanel;
+    private final @NotNull CommitChangesViewWithToolbarPanel myChangesPanel;
     private final @NotNull ChangesListView myView;
 
     private final @NotNull ChangesViewCommitPanelSplitter myCommitPanelSplitter;
@@ -350,34 +341,24 @@ public class ChangesViewManager implements ChangesViewEx, Disposable {
     private @Nullable ChangesViewCommitPanel myCommitPanel;
     private @Nullable ChangesViewCommitWorkflowHandler myCommitWorkflowHandler;
 
-    private final BackgroundRefresher<@Nullable Runnable> myBackgroundRefresher =
-      new BackgroundRefresher<>(getClass().getSimpleName() + " refresh", this);
-
     private final EventDispatcher<Listener> myDispatcher = EventDispatcher.create(Listener.class);
 
     private boolean myDisposed = false;
 
     private ChangesViewToolWindowPanel(@NotNull Project project,
-                                       @NotNull ChangesViewSettings changesViewSettings,
-                                       @NotNull ChangesViewPanel changesViewPanel) {
+                                       @NotNull CommitChangesViewWithToolbarPanel changesViewPanel) {
       super(false, true);
       myProject = project;
-      myChangesViewSettings = changesViewSettings;
+      myChangesViewSettings = ChangesViewSettings.getInstance(project);
       myChangesPanel = changesViewPanel;
+      changesViewPanel.initPanel(new MyModelProvider());
 
       MessageBusConnection busConnection = myProject.getMessageBus().connect(this);
       myVcsConfiguration = VcsConfiguration.getInstance(myProject);
 
       // ChangesViewPanel is used for a singular ChangesViewToolWindowPanel instance. Cleanup is not needed.
       myView = myChangesPanel.getChangesView();
-      myView.installPopupHandler((DefaultActionGroup)ActionManager.getInstance().getAction("ChangesViewPopupMenu"));
-      ChangesTree.installGroupingSupport(myView.getGroupingSupport(),
-                                         changesViewSettings::getGroupingKeys,
-                                         changesViewSettings::setGroupingKeys,
-                                         () -> scheduleRefresh());
       ChangesViewDnDSupport.install(myProject, myView, this);
-
-      ChangesViewPanelActions.initActions(myChangesPanel);
       registerShortcuts(this);
 
       ApplicationManager.getApplication().getMessageBus().connect(project)
@@ -687,97 +668,12 @@ public class ChangesViewManager implements ChangesViewEx, Disposable {
       updateProgressComponent(Collections.singletonList(createTextStatusFactory(text, isError)));
     }
 
-    public void setBusy(final boolean b) {
-      invokeLaterIfNeeded(() -> myView.setPaintBusy(b));
-    }
-
     public void scheduleRefresh() {
-      scheduleRefreshWithDelay(100, ModalityState.nonModal());
+      myChangesPanel.scheduleRefresh();
     }
 
-    private void scheduleRefreshNow() {
-      scheduleRefreshWithDelay(0, ModalityState.nonModal());
-    }
-
-    @CalledInAny
-    private @NotNull Promise<?> scheduleRefreshWithDelay(int delayMillis, @NotNull ModalityState modalityState) {
-      setBusy(true);
-      return myBackgroundRefresher.requestRefresh(delayMillis, this::refreshView)
-        .thenAsync(callback -> callback != null
-                               ? AppUIExecutor.onUiThread(modalityState).submit(callback)
-                               : Promises.rejectedPromise(Promises.createError("ChangesViewManager is not available", false)))
-        .onProcessed(__ -> setBusy(false));
-    }
-
-    @RequiresBackgroundThread
-    private @Nullable Runnable refreshView() {
-      if (myDisposed || !myProject.isInitialized() || ApplicationManager.getApplication().isUnitTestMode()) return null;
-
-      Span span = TRACER.spanBuilder(ChangesView.ChangesViewRefreshBackground.getName()).startSpan();
-      try {
-        ChangeListManagerImpl changeListManager = ChangeListManagerImpl.getInstanceImpl(myProject);
-        List<LocalChangeList> changeLists = changeListManager.getChangeLists();
-        List<FilePath> unversionedFiles = changeListManager.getUnversionedFilesPaths();
-
-        DefaultTreeModel treeModel = ChangesViewUtil.INSTANCE.createTreeModel(
-          myProject,
-          myView.getGrouping(),
-          changeLists,
-          unversionedFiles,
-          myChangesViewSettings.getShowIgnored(),
-          () -> isAllowExcludeFromCommit()
-        );
-
-        ProgressIndicator indicator = ProgressManager.getInstance().getProgressIndicator();
-        indicator.checkCanceled();
-
-        boolean[] wasCalled = new boolean[1]; // ensure multiple merged refresh requests are applied once
-        return () -> {
-          if (wasCalled[0]) return;
-          wasCalled[0] = true;
-          refreshViewOnEdt(treeModel, changeLists, unversionedFiles, indicator.isCanceled());
-        };
-      }
-      finally {
-        span.end();
-      }
-    }
-
-    /**
-     * Immediately reset changes view and request refresh when NON_MODAL modality allows (i.e. after a plugin was unloaded or a dialog closed)
-     */
-    @RequiresEdt
-    private void resetViewImmediatelyAndRefreshLater() {
-      myView.setModel(new DefaultTreeModel(ChangesBrowserNode.createRoot()));
-      myView.setPaintBusy(true);
-      ApplicationManager.getApplication().invokeLater(() -> {
-        scheduleRefreshNow();
-      }, ModalityState.nonModal());
-    }
-
-    @RequiresEdt
-    private void refreshViewOnEdt(@NotNull DefaultTreeModel treeModel,
-                                  @NotNull List<? extends LocalChangeList> changeLists,
-                                  @NotNull List<? extends FilePath> unversionedFiles,
-                                  boolean hasPendingRefresh) {
-      if (myDisposed) return;
-
-      Span span = TRACER.spanBuilder(ChangesView.ChangesViewRefreshEdt.getName()).startSpan();
-      try {
-        myView.updateTreeModel(treeModel, new ChangesViewTreeStateStrategy());
-
-        if (myCommitWorkflowHandler != null && !hasPendingRefresh) {
-          myCommitWorkflowHandler.synchronizeInclusion(changeLists, unversionedFiles);
-        }
-      }
-      finally {
-        span.end();
-      }
-    }
-
-    public void setGrouping(@NotNull String groupingKey) {
-      myView.getGroupingSupport().setGroupingKeysOrSkip(Set.of(groupingKey));
-      scheduleRefreshNow();
+    private @NotNull Promise<?> scheduleRefreshNow() {
+      return myChangesPanel.scheduleRefreshNow();
     }
 
     public void selectFile(@Nullable VirtualFile vFile) {
@@ -841,7 +737,7 @@ public class ChangesViewManager implements ChangesViewEx, Disposable {
 
       @Override
       public void changedFileStatusChanged() {
-        setBusy(false);
+        myChangesPanel.setBusy(false);
         scheduleRefresh();
 
         ChangeListManagerImpl changeListManager = ChangeListManagerImpl.getInstanceImpl(myProject);
@@ -851,6 +747,33 @@ public class ChangesViewManager implements ChangesViewEx, Disposable {
 
     public interface Listener extends EventListener {
       void allowExcludeFromCommitChanged();
+    }
+
+    private class MyModelProvider implements CommitChangesViewWithToolbarPanel.ModelProvider {
+      @Override
+      public @NotNull ExtendedTreeModel getModel(@NotNull ChangesGroupingPolicyFactory grouping) {
+        ChangeListManagerImpl changeListManager = ChangeListManagerImpl.getInstanceImpl(myProject);
+        List<LocalChangeList> changeLists = changeListManager.getChangeLists();
+        List<FilePath> unversionedFiles = changeListManager.getUnversionedFilesPaths();
+
+        DefaultTreeModel treeModel = ChangesViewUtil.INSTANCE.createTreeModel(
+          myProject,
+          grouping,
+          changeLists,
+          unversionedFiles,
+          myChangesViewSettings.getShowIgnored(),
+          () -> isAllowExcludeFromCommit()
+        );
+        return new ExtendedTreeModel(changeLists, unversionedFiles, treeModel);
+      }
+
+      @Override
+      public void synchronizeInclusion(@NotNull List<? extends @NotNull LocalChangeList> changeLists,
+                                       @NotNull List<? extends @NotNull FilePath> unversionedFiles) {
+        if (myCommitWorkflowHandler != null) {
+          myCommitWorkflowHandler.synchronizeInclusion(changeLists, unversionedFiles);
+        }
+      }
     }
   }
 

@@ -38,6 +38,7 @@ jvm_library(
     "//libraries/fastutil",
     "//platform/util/jdom",
     "//platform/ide-core-impl",
+    "//platform/diagnostic/telemetry",
   ]
 )
 ### auto-generated section `build intellij.platform.vcs.impl.shared` end

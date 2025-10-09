@@ -142,12 +142,4 @@ interface VcsBackendTelemetrySpan: VcsTelemetrySpan {
 
     override fun getName(): String = tag
   }
-
-  enum class ChangesView(val tag: String) : VcsBackendTelemetrySpan {
-    ChangesViewRefreshBackground("changes-view-refresh-background"),
-
-    ChangesViewRefreshEdt("changes-view-refresh-edt");
-
-    override fun getName(): String = tag
-  }
 }

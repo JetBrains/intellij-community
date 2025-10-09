@@ -6,7 +6,7 @@ import com.intellij.openapi.application.UI
 import com.intellij.openapi.components.Service
 import com.intellij.openapi.components.service
 import com.intellij.openapi.project.Project
-import com.intellij.openapi.vcs.changes.ChangeList
+import com.intellij.openapi.vcs.changes.LocalChangeList
 import com.intellij.platform.project.ProjectId
 import com.intellij.platform.project.projectIdOrNull
 import com.intellij.platform.vcs.changes.ChangeListManagerState
@@ -61,5 +61,5 @@ class ChangeListsViewModel(
     fun getInstance(project: Project): ChangeListsViewModel = project.service()
   }
 
-  class ChangeLists(val lists: List<ChangeList>)
+  class ChangeLists(val lists: List<LocalChangeList>)
 }
