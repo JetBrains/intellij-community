@@ -8,6 +8,5 @@
     <prePushHandler implementation="org.jetbrains.idea.devkit.commit.KotlinBuildToolsPrePushHandler"/>
     <prePushHandler implementation="org.jetbrains.idea.devkit.commit.KotlinNotebookPluginPrePushHandler"/>
     <prePushHandler implementation="org.jetbrains.idea.devkit.commit.IntelliJMonorepoPrePushHandler"/>
-    <prePushHandler implementation="org.jetbrains.idea.devkit.commit.AiAssistantPluginPrePushHandler"/>
   </extensions>
 </idea-plugin>

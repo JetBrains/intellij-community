@@ -21,10 +21,13 @@ import javax.swing.JEditorPane
 import javax.swing.JPanel
 
 internal class IntelliJMonorepoPrePushHandler : IssueIDPrePushHandler() {
+  private val protectedBranches = listOf("ij-ai/", "ij-aia/", "ide-next/")
+
   override val paths: List<String> = listOf(
     "/community/platform/",
     "remote-dev", // ij platform
-    "plugins/kotlin/" // kotlin plugin
+    "plugins/kotlin/", // kotlin plugin
+    "plugins/llm/", "plugins/llm-installer/", "plugins/full-line/", // aia plugin
   )
   override val pathsToIgnore: List<String> = super.pathsToIgnore.toMutableList()
     .apply { add("/fleet/plugins/kotlin/") }
@@ -36,6 +39,10 @@ internal class IntelliJMonorepoPrePushHandler : IssueIDPrePushHandler() {
     option = RegexOption.IGNORE_CASE
   )
   override val validateCommitsOnlyFromCurrentUser: Boolean = true
+
+  override fun isTargetBranchProtected(project: Project, pushInfo: PushInfo): Boolean {
+    return super.isTargetBranchProtected(project, pushInfo) || protectedBranches.any { pushInfo.pushSpec.target.presentation.startsWith(it) }
+  }
 
   override fun isAvailable(): Boolean = Registry.`is`("intellij.monorepo.commit.message.validation.enabled", true)
   override fun getPresentableName(): @Nls String = DevKitGitBundle.message("push.commit.intellij.platform.handler.name")
