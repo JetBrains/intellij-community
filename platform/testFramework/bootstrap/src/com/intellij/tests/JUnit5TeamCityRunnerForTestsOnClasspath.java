@@ -34,7 +34,11 @@ public final class JUnit5TeamCityRunnerForTestsOnClasspath {
 
     System.out.println(new TestStarted(testName, true, null));
     if (e != null) {
-      System.out.println(new TestFailed(testName, e));
+      var testFailedServiceMessage = new TestFailed(testName, e).toString();
+      if (!isLeak(testFailedServiceMessage)) {
+        // leaks are already checked by _LastInSuiteTest.testProjectLeak
+        System.out.println(testFailedServiceMessage);
+      }
     }
     System.out.println(new TestFinished(testName, 0));
   }
@@ -209,5 +213,14 @@ public final class JUnit5TeamCityRunnerForTestsOnClasspath {
       e.printStackTrace();
       System.exit(1);
     }
+  }
+
+  private static boolean isLeak(String testFailedServiceMessage) {
+    return
+      // copied from com.intellij.testFramework.LeakHunter#getLeakedObjectDetails
+      testFailedServiceMessage.contains("Found a leaked instance of") ||
+      // copied from com.intellij.openapi.util.ObjectNode#assertNoChildren
+      testFailedServiceMessage.contains("Memory leak detected") &&
+      testFailedServiceMessage.contains("was registered in Disposer");
   }
 }

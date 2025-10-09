@@ -164,7 +164,7 @@ class TestApplicationManager private constructor() {
 
     /**
      * Call this method after the test to check whether project instances leak.
-     * This is done automatically on CI inside {@code _LastInSuiteTest.testProjectLeak}.
+     * This is done automatically on CI inside [_LastInSuiteTest.testProjectLeak].
      * However, you may want to add this check to a particular test to make sure 
      * whether it causes the leak or not.
      */
