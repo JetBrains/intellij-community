@@ -460,7 +460,7 @@ class BackgroundWriteActionTest {
     checkpoint(8)
   }
 
-  @RepeatedTest(100)
+  @RepeatedTest(1000)
   fun `write access allowed inside explicit WA`(): Unit = timeoutRunBlocking(context = Dispatchers.Default) {
     repeat(1000) {
       launch {
@@ -859,5 +859,30 @@ class BackgroundWriteActionTest {
       }
     }
 
+  }
+
+  @Test
+  fun `background write action inside parallelized lock is properly cancellable`() = timeoutRunBlocking {
+    modalProgress {
+      val raJob = Job(coroutineContext.job)
+      val raStarted = Job(coroutineContext.job)
+      launch(Dispatchers.Default) {
+        readAction {
+          raStarted.complete()
+          raJob.asCompletableFuture().join()
+        }
+      }
+      raStarted.join()
+      modalProgress {
+        val job = launch(Dispatchers.Default) {
+          backgroundWriteAction {
+          }
+        }
+        Thread.sleep(10)
+        job.cancel()
+        raJob.complete()
+        backgroundWriteAction {  }
+      }
+    }
   }
 }

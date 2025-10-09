@@ -15,6 +15,7 @@ import com.intellij.platform.locking.impl.listeners.LegacyProgressIndicatorProvi
 import com.intellij.platform.locking.impl.listeners.LockAcquisitionListener
 import com.intellij.util.IntelliJCoroutinesFacade
 import com.intellij.util.ReflectionUtil
+import com.intellij.util.SmartList
 import kotlinx.coroutines.*
 import org.jetbrains.annotations.ApiStatus
 import java.util.*
@@ -384,10 +385,26 @@ class NestedLocksThreadingSupport : ThreadingSupport {
 
       // we need to acquire writes on the whole stack of lower-level write-intent permits,
       // since we want to cancel all lower-level running read actions
-      val writePermits = Array(level()) {
-        lowerLevelPermits[it].acquireWriteActionPermit()
+      val level = level()
+      val writePermits = Array<WritePermit?>(level) { null }
+      var acquiredPermits = 0
+      try {
+        while (acquiredPermits < level) {
+          val permit = lowerLevelPermits[acquiredPermits].acquireWriteActionPermit()
+          writePermits[acquiredPermits] = permit
+          acquiredPermits += 1
+        }
+        @Suppress("UNCHECKED_CAST")
+        return ExposedWritePermitData(lowerLevelPermits, writePermits as Array<WritePermit>, finalPermit, permit, permit)
+      } catch (e: Throwable) {
+        finalPermit.release()
+        var releasePermitsIndex = 0
+        while (releasePermitsIndex < acquiredPermits) {
+          writePermits[releasePermitsIndex]!!.release()
+          releasePermitsIndex += 1
+        }
+        throw e
       }
-      return ExposedWritePermitData(lowerLevelPermits, writePermits, finalPermit, permit, permit)
     }
 
     fun releaseWritePermit() {
