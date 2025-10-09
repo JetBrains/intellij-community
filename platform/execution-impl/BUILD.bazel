@@ -96,6 +96,9 @@ jvm_library(
     "//platform/util/concurrency",
     "//platform/util/concurrency:concurrency_test_lib",
     "@lib//:assert_j",
+    "//platform/core-ui",
+    "@lib//:jediterm-core",
+    "@lib//:jediterm-ui",
   ]
 )
 ### auto-generated section `build intellij.platform.execution.tests` end

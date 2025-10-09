@@ -249,32 +249,26 @@ public class TerminalExecutionConsole implements ConsoleView, ObservableConsoleV
     }
     myTerminalWidget.createTerminalSession(ttyConnector);
     myTerminalWidget.start();
-
-    processHandler.addProcessListener(new ProcessListener() {
-      @Override
-      public void onTextAvailable(@NotNull ProcessEvent event, @NotNull Key outputType) {
-        if (attachToProcessOutput) {
-          try {
-            ConsoleViewContentType contentType = null;
-            if (outputType != ProcessOutputTypes.STDOUT) {
-              contentType = ConsoleViewContentType.getConsoleViewType(outputType);
-            }
-
-            String text = event.getText();
-            if (outputType == ProcessOutputTypes.SYSTEM) {
-              text = StringUtil.convertLineSeparators(text, LineSeparator.CRLF.getSeparatorString());
-            }
-            else if (shouldConvertLfToCrlf(processHandler)) {
-              text = convertTextToCRLF(text);
-            }
-            printText(text, contentType);
+    if (attachToProcessOutput) {
+      boolean convertLfToCrlf = shouldConvertLfToCrlf(processHandler);
+      if (processHandler instanceof ColoredProcessHandler coloredProcessHandler) {
+        coloredProcessHandler.addRawTextListener(new ColoredProcessHandler.RawTextListener() {
+          @Override
+          public void onRawTextAvailable(@NotNull String text, @NotNull Key<?> outputType) {
+            processProcessOutputText(text, outputType, convertLfToCrlf);
           }
-          catch (IOException e) {
-            LOG.info(e);
-          }
-        }
+        });
       }
-
+      else {
+        processHandler.addProcessListener(new ProcessListener() {
+          @Override
+          public void onTextAvailable(@NotNull ProcessEvent event, @NotNull Key outputType) {
+            processProcessOutputText(event.getText(), outputType, convertLfToCrlf);
+          }
+        });
+      }
+    }
+    processHandler.addProcessListener(new ProcessListener() {
       @Override
       public void processTerminated(@NotNull ProcessEvent event) {
         myAttachedToProcess.set(false);
@@ -283,6 +277,25 @@ public class TerminalExecutionConsole implements ConsoleView, ObservableConsoleV
         }, ModalityState.any());
       }
     });
+  }
+
+  private void processProcessOutputText(@NotNull String text, @NotNull Key<?> outputType, boolean convertLfToCrlf) {
+    try {
+      ConsoleViewContentType contentType = null;
+      if (outputType != ProcessOutputTypes.STDOUT) {
+        contentType = ConsoleViewContentType.getConsoleViewType(outputType);
+      }
+      if (outputType == ProcessOutputTypes.SYSTEM) {
+        text = StringUtil.convertLineSeparators(text, LineSeparator.CRLF.getSeparatorString());
+      }
+      else if (convertLfToCrlf) {
+        text = convertTextToCRLF(text);
+      }
+      printText(text, contentType);
+    }
+    catch (IOException e) {
+      LOG.info(e);
+    }
   }
 
   private boolean shouldConvertLfToCrlf(@NotNull ProcessHandler processHandler) {
@@ -373,12 +386,12 @@ public class TerminalExecutionConsole implements ConsoleView, ObservableConsoleV
   }
 
   public static boolean isAcceptable(@NotNull ProcessHandler processHandler) {
-    if (!(processHandler instanceof OSProcessHandler) || processHandler instanceof ColoredProcessHandler) {
-      return false;
+    if (processHandler instanceof BaseProcessHandler<?> baseProcessHandler) {
+      Process process = baseProcessHandler.getProcess();
+      return process instanceof PtyProcess ||
+             (process instanceof PtyBasedProcess && ((PtyBasedProcess)process).hasPty());
     }
-    Process process = ((OSProcessHandler)processHandler).getProcess();
-    return process instanceof PtyProcess ||
-           (process instanceof PtyBasedProcess && ((PtyBasedProcess)process).hasPty());
+    return false;
   }
 
   private final class ConsoleTerminalWidget extends JBTerminalWidget {
