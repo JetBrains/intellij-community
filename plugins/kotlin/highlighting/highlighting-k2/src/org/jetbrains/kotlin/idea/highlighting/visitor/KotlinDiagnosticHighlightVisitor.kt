@@ -13,7 +13,6 @@ import com.intellij.codeInsight.quickfix.UnresolvedReferenceQuickFixProvider
 import com.intellij.lang.injection.InjectedLanguageManager
 import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.application.readAction
-import com.intellij.openapi.diagnostic.ControlFlowException
 import com.intellij.openapi.diagnostic.Logger
 import com.intellij.openapi.project.IntelliJProjectUtil
 import com.intellij.openapi.util.NlsSafe
@@ -79,7 +78,7 @@ class KotlinDiagnosticHighlightVisitor : HighlightVisitor, HighlightRangeExtensi
             diagnosticsMap = analyzeFile(contextFile)
             action.run()
         } catch (e: Throwable) {
-            if (e is ControlFlowException) throw e
+            if (Logger.shouldRethrow(e)) throw e
             // TODO: Port KotlinHighlightingSuspender to K2 to avoid the issue with infinite highlighting loop restart
             throw e
         } finally {

@@ -15,7 +15,7 @@ import com.intellij.lang.injection.InjectedLanguageManager
 import com.intellij.openapi.Disposable
 import com.intellij.openapi.application.runReadAction
 import com.intellij.openapi.components.service
-import com.intellij.openapi.diagnostic.ControlFlowException
+import com.intellij.openapi.diagnostic.Logger
 import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.fileTypes.FileType
 import com.intellij.openapi.module.Module
@@ -226,7 +226,7 @@ class KotlinCompilerReferenceIndexService(private val project: Project) : Dispos
     private fun <T> runActionSafe(actionName: String, action: () -> T): T? = try {
         action()
     } catch (e: Throwable) {
-        if (e is ControlFlowException) throw e
+        if (Logger.shouldRethrow(e)) throw e
 
         try {
             LOG.error("an exception during $actionName calculation", e)

@@ -3,7 +3,6 @@ package org.jetbrains.kotlin.idea.k2.codeinsight.fixes
 
 import com.intellij.codeInsight.daemon.QuickFixActionRegistrar
 import com.intellij.codeInsight.quickfix.UnresolvedReferenceQuickFixProvider
-import com.intellij.openapi.diagnostic.ControlFlowException
 import com.intellij.openapi.diagnostic.Logger
 import com.intellij.openapi.diagnostic.debug
 import com.intellij.psi.PsiReference
@@ -61,7 +60,7 @@ class KotlinFirUnresolvedReferenceQuickFixProvider : UnresolvedReferenceQuickFix
                 try {
                     createRenameUnresolvedReferenceFix(ktElement)?.let { action -> registrar.register(action) }
                 } catch (e: Exception) {
-                    if (e is ControlFlowException) throw e
+                    if (Logger.shouldRethrow(e)) throw e
                     throw KotlinExceptionWithAttachments("Unable to create rename unresolved reference fix", e)
                         .withPsiAttachment("element.kt", ktElement)
                         .withPsiAttachment("file.kt", ktElement.containingFile)

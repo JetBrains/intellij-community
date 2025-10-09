@@ -3,7 +3,6 @@
 package org.jetbrains.kotlin.idea.caches.resolve
 
 import com.intellij.java.library.JavaLibraryModificationTracker
-import com.intellij.openapi.diagnostic.ControlFlowException
 import com.intellij.openapi.diagnostic.Logger
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.projectRoots.Sdk
@@ -43,11 +42,7 @@ import org.jetbrains.kotlin.idea.caches.project.isLibraryClasses
 import org.jetbrains.kotlin.idea.caches.resolve.util.GlobalFacadeModuleFilters
 import org.jetbrains.kotlin.idea.caches.resolve.util.contextWithCompositeExceptionTracker
 import org.jetbrains.kotlin.idea.caches.trackers.outOfBlockModificationCount
-import org.jetbrains.kotlin.idea.core.script.v1.ScriptAdditionalIdeaDependenciesProvider
-import org.jetbrains.kotlin.idea.core.script.v1.ScriptDependenciesInfo
-import org.jetbrains.kotlin.idea.core.script.v1.ScriptDependenciesModificationTracker
-import org.jetbrains.kotlin.idea.core.script.v1.ScriptDependenciesSourceInfo
-import org.jetbrains.kotlin.idea.core.script.v1.ScriptModuleInfo
+import org.jetbrains.kotlin.idea.core.script.v1.*
 import org.jetbrains.kotlin.idea.resolve.ResolutionFacade
 import org.jetbrains.kotlin.platform.TargetPlatform
 import org.jetbrains.kotlin.platform.jvm.JvmPlatforms
@@ -189,7 +184,7 @@ class KotlinCacheServiceImpl(val project: Project) : KotlinCacheService {
         @Suppress("USELESS_ELVIS")
         containingKtFile ?: throw IllegalStateException("containingKtFile was null for $this of ${this.javaClass}")
     } catch (e: Exception) {
-        if (e is ControlFlowException) throw e
+        if (Logger.shouldRethrow(e)) throw e
         throw KotlinExceptionWithAttachments("Couldn't get containingKtFile for ktElement", e)
             .withPsiAttachment("element", this)
             .withPsiAttachment("file", this.containingFile)
