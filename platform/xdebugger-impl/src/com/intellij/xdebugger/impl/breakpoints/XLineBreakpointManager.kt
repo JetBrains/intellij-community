@@ -190,12 +190,23 @@ class XLineBreakpointManager(private val project: Project, coroutineScope: Corou
 
   private fun cleanUpBreakpoints(document: Document) {
     val breakpoints = getDocumentBreakpointProxies(document)
-    // Check if two or more breakpoints occurred at the same position and remove duplicates.
-    val (valid, invalid) = breakpoints.partition {
-      val highlighter = it.getHighlighter()
-      highlighter != null && highlighter.isValid
+    val valid = mutableListOf<XLineBreakpointProxy>()
+    val invalid = mutableListOf<XLineBreakpointProxy>()
+    for (breakpoint in breakpoints) {
+      val highlighter = breakpoint.getHighlighter()
+      if (highlighter == null) {
+        // Breakpoint is uninitialized yet
+        continue
+      }
+      if (highlighter.isValid) {
+        valid.add(breakpoint)
+      }
+      else {
+        invalid.add(breakpoint)
+      }
     }
     removeBreakpoints(invalid)
+    // Check if two or more breakpoints occurred at the same position and remove duplicates.
     val areInlineBreakpoints = XDebuggerUtil.areInlineBreakpointsEnabled(FileDocumentManager.getInstance().getFile(document))
     val duplicates = valid
       .groupBy { b ->
