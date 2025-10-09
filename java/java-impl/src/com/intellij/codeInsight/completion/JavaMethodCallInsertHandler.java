@@ -111,7 +111,7 @@ public class JavaMethodCallInsertHandler<MethodCallElement extends JavaMethodCal
     return true;
   }
 
-  private static void handleNegation(InsertionContext context, Document document, PsiCallExpression methodCall, boolean negatable) {
+  private static void handleNegation(@NotNull InsertionContext context, @NotNull Document document, @NotNull PsiCallExpression methodCall, boolean negatable) {
     if (context.getCompletionChar() == '!' && negatable) {
       context.setAddCompletionChar(false);
       FeatureUsageTracker.getInstance().triggerFeatureUsed(CodeCompletionFeatures.EXCLAMATION_FINISH);
@@ -119,7 +119,7 @@ public class JavaMethodCallInsertHandler<MethodCallElement extends JavaMethodCal
     }
   }
 
-  private void importOrQualify(MethodCallElement item, Document document, PsiFile file, PsiMethod method, int startOffset) {
+  private void importOrQualify(@NotNull MethodCallElement item, @NotNull Document document, @NotNull PsiFile file, @NotNull PsiMethod method, int startOffset) {
     if (!needImportOrQualify()) {
       return;
     }
@@ -156,7 +156,7 @@ public class JavaMethodCallInsertHandler<MethodCallElement extends JavaMethodCal
     return true;
   }
 
-  private void qualifyMethodCall(MethodCallElement item, PsiFile file, int startOffset, Document document) {
+  private void qualifyMethodCall(@NotNull MethodCallElement item, @NotNull PsiFile file, int startOffset, @NotNull Document document) {
     PsiReference reference = file.findReferenceAt(startOffset);
     if (reference instanceof PsiReferenceExpression && ((PsiReferenceExpression)reference).isQualified()) {
       return;
@@ -176,7 +176,7 @@ public class JavaMethodCallInsertHandler<MethodCallElement extends JavaMethodCal
     JavaCompletionUtil.insertClassReference(containingClass, file, startOffset);
   }
 
-  private void insertExplicitTypeParameters(MethodCallElement item, InsertionContext context, OffsetKey refStart) {
+  private void insertExplicitTypeParameters(@NotNull MethodCallElement item, @NotNull InsertionContext context, @NotNull OffsetKey refStart) {
     context.commitDocument();
 
     String typeParams = getTypeParamsText(false, item.getObject(), item.getInferenceSubstitutor());
@@ -186,12 +186,15 @@ public class JavaMethodCallInsertHandler<MethodCallElement extends JavaMethodCal
     }
   }
 
-  static PsiCallExpression findCallAtOffset(InsertionContext context, int offset) {
+  static PsiCallExpression findCallAtOffset(@NotNull InsertionContext context, int offset) {
     context.commitDocument();
     return PsiTreeUtil.findElementOfClassAtOffset(context.getFile(), offset, PsiCallExpression.class, false);
   }
 
-  public static void showParameterHints(LookupElement element, InsertionContext context, PsiMethod method, PsiCallExpression methodCall) {
+  public static void showParameterHints(@NotNull LookupElement element,
+                                        @NotNull InsertionContext context,
+                                        @NotNull PsiMethod method,
+                                        @Nullable PsiCallExpression methodCall) {
     if (!CodeInsightSettings.getInstance().SHOW_PARAMETER_NAME_HINTS_ON_COMPLETION ||
         context.getCompletionChar() == Lookup.COMPLETE_STATEMENT_SELECT_CHAR ||
         context.getCompletionChar() == Lookup.REPLACE_SELECT_CHAR ||
