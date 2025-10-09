@@ -11,10 +11,8 @@
     <annotator language="kotlin" implementationClass="org.jetbrains.kotlin.idea.k2.codeinsight.fixes.MissingConstructorBracketsAnnotator"/>
     <codeInsight.unresolvedReferenceQuickFixProvider
             implementation="org.jetbrains.kotlin.idea.k2.codeinsight.fixes.KotlinFirUnresolvedReferenceQuickFixProvider"/>
+    <codeInsight.unresolvedReferenceQuickFixProvider 
+            implementation="org.jetbrains.kotlin.idea.k2.codeinsight.fixes.imprt.KDocUnresolvedReferenceQuickFixProvider"/>
     <errorQuickFixProvider implementation="org.jetbrains.kotlin.idea.k2.codeinsight.fixes.ReplaceAndWithWhenGuardFixProvider"/>
-  </extensions>
-
-  <extensions defaultExtensionNs="org.jetbrains.kotlin">
-    <codeinsight.quickfix.kdocQuickfixProvider implementation="org.jetbrains.kotlin.idea.k2.codeinsight.fixes.imprt.KDocUnresolvedReferenceQuickFixProvider"  />
   </extensions>
 </idea-plugin>

@@ -4,9 +4,6 @@
     <extensionPoint qualifiedName="org.jetbrains.kotlin.codeinsight.quickfix.registrar"
                     interface="org.jetbrains.kotlin.idea.codeinsight.api.applicators.fixes.KotlinQuickFixRegistrar"
                     dynamic="true"/>
-    <extensionPoint qualifiedName="org.jetbrains.kotlin.codeinsight.quickfix.kdocQuickfixProvider"
-                    interface="org.jetbrains.kotlin.idea.codeinsight.api.applicators.fixes.KotlinKdocQuickfixProvider"
-                    dynamic="true"/>
   </extensionPoints>
 
 </idea-plugin>

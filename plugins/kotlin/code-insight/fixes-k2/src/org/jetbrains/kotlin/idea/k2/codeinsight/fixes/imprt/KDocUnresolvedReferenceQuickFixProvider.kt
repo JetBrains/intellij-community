@@ -1,8 +1,9 @@
 // Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.kotlin.idea.k2.codeinsight.fixes.imprt
 
+import com.intellij.codeInsight.daemon.QuickFixActionRegistrar
 import com.intellij.codeInsight.hint.QuestionAction
-import com.intellij.codeInsight.intention.IntentionAction
+import com.intellij.codeInsight.quickfix.UnresolvedReferenceQuickFixProvider
 import com.intellij.codeInspection.util.IntentionFamilyName
 import com.intellij.codeInspection.util.IntentionName
 import com.intellij.openapi.editor.Editor
@@ -10,9 +11,9 @@ import com.intellij.openapi.project.Project
 import org.jetbrains.kotlin.analysis.api.analyze
 import org.jetbrains.kotlin.idea.base.analysis.api.utils.KtSymbolFromIndexProvider
 import org.jetbrains.kotlin.idea.base.resources.KotlinBundle
-import org.jetbrains.kotlin.idea.codeinsight.api.applicators.fixes.KotlinKdocQuickfixProvider
 import org.jetbrains.kotlin.idea.kdoc.KDocElementFactory
 import org.jetbrains.kotlin.idea.quickfix.AutoImportVariant
+import org.jetbrains.kotlin.idea.references.KDocReference
 import org.jetbrains.kotlin.idea.util.application.executeWriteCommand
 import org.jetbrains.kotlin.kdoc.psi.impl.KDocName
 import org.jetbrains.kotlin.name.FqName
@@ -20,10 +21,13 @@ import org.jetbrains.kotlin.name.Name
 import org.jetbrains.kotlin.psi.KtFile
 
 
-internal class KDocUnresolvedReferenceQuickFixProvider : KotlinKdocQuickfixProvider {
+internal class KDocUnresolvedReferenceQuickFixProvider : UnresolvedReferenceQuickFixProvider<KDocReference>() {
+    override fun getReferenceClass(): Class<KDocReference> = KDocReference::class.java
 
-    override fun getKdocQuickFixesFor(kdocName: KDocName): List<IntentionAction> {
-        return listOfNotNull(createQuickFix(kdocName))
+    override fun registerFixes(ref: KDocReference, registrar: QuickFixActionRegistrar) {
+        val kDocName = ref.element
+        val fix = createQuickFix(kDocName) ?: return
+        registrar.register(fix)
     }
 
     private fun createQuickFix(kDocName: KDocName): KDocUnresolvedReferenceQuickFix? {
