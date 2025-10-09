@@ -52,9 +52,11 @@ public abstract class JavaCommandLineState extends CommandLineState implements J
 
   public void clear() {
     myParams = null;
-    myTargetEnvironmentRequest = null;
-    myCommandLine = null;
-    myTargetDebuggerConnection = null;
+    if(Registry.is("ide.jvm.command.line.clear.all.environments")) {
+      myTargetEnvironmentRequest = null;
+      myCommandLine = null;
+      myTargetDebuggerConnection = null;
+    }
   }
 
   @Override
