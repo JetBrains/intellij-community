@@ -246,6 +246,7 @@ public class GitRebaseProcess {
           return new GitRebaseStatus(GitRebaseStatus.Type.SUSPENDED);
         }
         LOG.debug("Successfully rebased " + repoName);
+        hideStoppedForEditingMessage();
         return new GitSuccessfulRebase();
       }
       else if (rebaseDetector.isDirtyTree() && customMode == null && !retryWhenDirty) {
@@ -439,7 +440,11 @@ public class GitRebaseProcess {
       .setDisplayId(GitNotificationIdsHolder.REBASE_STOPPED_ON_EDITING)
       .addAction(CONTINUE_ACTION)
       .addAction(ABORT_ACTION);
-    myNotifier.notify(notification);
+    myNotifier.showNotificationAndHideExisting(notification);
+  }
+
+  private void hideStoppedForEditingMessage() {
+    myNotifier.hideAllNotificationsById(GitNotificationIdsHolder.REBASE_STOPPED_ON_EDITING);
   }
 
   private void showRebaseContinueHasUnstagedChangesError(@NotNull GitRepository repository,

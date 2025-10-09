@@ -592,7 +592,7 @@ class GitSingleRepoRebaseTest : GitRebaseBaseTest() {
     assertSuccessfulRebaseNotification("Rebased feature on master")
   }
 
-  fun `test interactive rebase stopped for editing`() {
+  fun `test interactive rebase stopped for editing with continue`() {
     build {
       master {
         0()
@@ -617,16 +617,57 @@ class GitSingleRepoRebaseTest : GitRebaseBaseTest() {
     rebaseInteractively()
 
     assertSuccessfulNotification("Rebase stopped for editing", "")
+    val successfulNotification = vcsNotifier.lastNotification
     assertEquals("The repository must be in the 'SUSPENDED' state", repo, repositoryManager.ongoingRebaseSpec!!.ongoingRebase)
 
     GitRebaseUtils.continueRebase(project)
-
     assertSuccessfulRebaseNotification("Rebased feature on master")
+
+    // IJPL-73963
+    assertTrue(successfulNotification.isExpired)
+
     repo.`assert feature rebased on master`()
     assertNoRebaseInProgress(repo)
   }
 
-    // IDEA-140568
+  fun `test interactive rebase stopped for editing with abort`() {
+    build {
+      master {
+        0()
+        1()
+      }
+      feature(1) {
+        2()
+        3()
+      }
+    }
+
+    git.setInteractiveRebaseEditor(TestGitImpl.InteractiveRebaseEditor({
+                                                                          it.lines().mapIndexed { i, s ->
+                                                                            if (i != 0) s
+                                                                            else s.replace("pick", "edit")
+                                                                          }.joinToString(LineSeparator.getSystemLineSeparator().separatorString)
+                                                                        }, null))
+
+    refresh()
+    updateChangeListManager()
+
+    rebaseInteractively()
+
+    assertSuccessfulNotification("Rebase stopped for editing", "")
+    val successfulNotification = vcsNotifier.lastNotification
+    assertEquals("The repository must be in the 'SUSPENDED' state", repo, repositoryManager.ongoingRebaseSpec!!.ongoingRebase)
+    dialogManager.onMessage { Messages.YES }
+    GitRebaseUtils.abort(project, EmptyProgressIndicator())
+    assertSuccessfulNotification("Abort rebase succeeded")
+
+    // IJPL-73963
+    assertTrue(successfulNotification.isExpired)
+
+    assertNoRebaseInProgress(repo)
+  }
+
+  // IDEA-140568
   fun `test git help comments are ignored when parsing interactive rebase`() {
     makeCommit("initial.txt")
     repo.update()
