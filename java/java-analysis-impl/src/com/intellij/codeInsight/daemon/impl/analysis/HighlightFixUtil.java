@@ -754,7 +754,6 @@ public final class HighlightFixUtil {
                                          @NotNull JavaResolveResult @NotNull [] resolveResults) {
     PsiExpressionList list = methodCall.getArgumentList();
     MethodCandidateInfo[] candidates = toMethodCandidates(resolveResults);
-    CastMethodArgumentFix.REGISTRAR.registerCastActions(candidates, methodCall, sink);
     WrapWithAdapterMethodCallFix.registerCastActions(candidates, methodCall, sink);
     WrapObjectWithOptionalOfNullableFix.REGISTAR.registerCastActions(candidates, methodCall, sink);
     WrapExpressionFix.registerWrapAction(candidates, list.getExpressions(), sink);

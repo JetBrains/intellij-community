@@ -9,8 +9,18 @@ import com.intellij.modcommand.Presentation;
 import com.intellij.psi.*;
 import com.intellij.psi.util.PsiUtil;
 import com.intellij.util.IncorrectOperationException;
+import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+
+import java.util.Collection;
+import java.util.List;
+
+import static com.intellij.codeInsight.ExceptionUtil.collectUnhandledExceptions;
+import static com.intellij.codeInsight.ExceptionUtil.isHandledBy;
+import static com.intellij.psi.LambdaUtil.getFunctionalInterfaceMethod;
+import static com.intellij.psi.util.PsiUtil.skipParenthesizedExprDown;
+import static java.util.Arrays.asList;
 
 public final class CastMethodArgumentFix extends MethodArgumentFix {
   private CastMethodArgumentFix(PsiExpressionList list, int i, PsiType toType, final ArgumentFixerActionFactory factory) {
@@ -68,6 +78,44 @@ public final class CastMethodArgumentFix extends MethodArgumentFix {
 
       return parameterType instanceof PsiEllipsisType ellipsisType &&
              areTypesConvertible(exprType, ellipsisType.getComponentType(), context);
+    }
+
+    /**
+     * @return true when the parameterType is a functional interface
+     * AND argument is a functional interface instance
+     * AND that instance throws an unchecked exception that is not declared by functional interface SAM.
+     */
+    @Override
+    protected boolean doesFixCauseOtherCompilationErrors(@NotNull PsiExpression expression, @NotNull PsiType parameterType) {
+      var declaredExceptions = declaredExceptionsOfFunctionalInterface(parameterType);
+      if (declaredExceptions == null) return false;
+      var unhandledExceptions = exceptionsThrownByFunctionalExpression(skipParenthesizedExprDown(expression));
+      return ContainerUtil.exists(unhandledExceptions, unhandled -> !isHandledBy(unhandled, declaredExceptions));
+    }
+
+    private static @NotNull Collection<@NotNull PsiClassType> exceptionsThrownByFunctionalExpression(PsiExpression expression) {
+      if (expression instanceof PsiLambdaExpression lambdaExpression) {
+        PsiElement body = lambdaExpression.getBody();
+        if (body != null) {
+          return collectUnhandledExceptions(body, body);
+        }
+      }
+      else if (expression instanceof PsiMethodReferenceExpression methodReferenceExpression) {
+        PsiElement target = methodReferenceExpression.resolve();
+        if (target instanceof PsiMethod psiMethod) {
+          return asList(psiMethod.getThrowsList().getReferencedTypes());
+        }
+      }
+      return List.of();
+    }
+
+    private static @NotNull PsiClassType @Nullable [] declaredExceptionsOfFunctionalInterface(@NotNull PsiType parameterType) {
+      if (!(parameterType instanceof PsiClassType classType)) return null;
+      var psiSubstitutor = classType.resolveGenerics().getSubstitutor();
+      var psiMethod = getFunctionalInterfaceMethod(parameterType);
+      if (psiMethod == null) return null;
+      var throwListTypes = psiMethod.getThrowsList().getReferencedTypes();
+      return ContainerUtil.map(throwListTypes, type -> (PsiClassType)psiSubstitutor.substitute(type)).toArray(PsiClassType[]::new);
     }
   }
 
