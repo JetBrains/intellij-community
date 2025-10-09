@@ -244,7 +244,7 @@ internal class ToolWindowInnerDragHelper(parent: Disposable, val pane: JComponen
 
   private fun dropIntoEditor(content: Content, sourceDecorator: InternalDecoratorImpl, editorWindow: EditorWindow) {
     val support = getEditorSupport(sourceDecorator) ?: return
-    support.openInEditor(content, editorWindow, currentDropSide)
+    support.openInEditor(content, editorWindow)
   }
 
   override fun cancelDragging(): Boolean {
@@ -351,7 +351,7 @@ internal class ToolWindowInnerDragHelper(parent: Disposable, val pane: JComponen
     val dropLocation = curDropLocation
     when (dropLocation) {
       is DropLocation.ToolWindow -> highlightToolWindowDropArea(dropLocation.decorator, relativePoint)
-      is DropLocation.Editor -> highlightEditorDropArea(dropLocation.window, relativePoint)
+      is DropLocation.Editor -> highlightEditorDropArea(dropLocation.window)
       else -> {
         currentDropIndex = -1
         highlighter.bounds = Rectangle()
@@ -410,11 +410,9 @@ internal class ToolWindowInnerDragHelper(parent: Disposable, val pane: JComponen
     }
   }
 
-  private fun highlightEditorDropArea(window: EditorWindow, point: RelativePoint) {
+  private fun highlightEditorDropArea(window: EditorWindow) {
     val component = window.component
-    currentDropSide = TabsUtil.getDropSideFor(point.getPoint(component), component)
     val dropArea = Rectangle(component.size)
-    TabsUtil.updateBoundsWithDropSide(dropArea, currentDropSide)
     dropArea.bounds = SwingUtilities.convertRectangle(component, dropArea, pane.rootPane.glassPane)
     highlighter.bounds = dropArea
   }

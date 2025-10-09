@@ -11,43 +11,29 @@ import com.intellij.terminal.frontend.toolwindow.TerminalToolWindowTabsManager
 import com.intellij.terminal.frontend.toolwindow.findTabByContent
 import com.intellij.terminal.frontend.toolwindow.impl.TerminalToolWindowTabsManagerImpl.Companion.TAB_DETACHED_KEY
 import com.intellij.ui.content.Content
-import javax.swing.JSplitPane
-import javax.swing.SwingConstants
 
 internal class TerminalInEditorSupport : ToolWindowInEditorSupport {
   override fun canOpenInEditor(project: Project, content: Content): Boolean {
     return TerminalToolWindowTabsManager.getInstance(project).findTabByContent(content) != null
   }
 
-  override fun openInEditor(content: Content, targetWindow: EditorWindow, dropSide: Int) {
+  override fun openInEditor(content: Content, targetWindow: EditorWindow) {
     val project = targetWindow.owner.manager.project
     val terminalTab = TerminalToolWindowTabsManager.getInstance(project).findTabByContent(content) ?: return
-    openReworkedTerminalInEditor(terminalTab, targetWindow, dropSide)
+    openReworkedTerminalInEditor(terminalTab, targetWindow)
   }
 
   private fun openReworkedTerminalInEditor(
     tab: TerminalToolWindowTab,
     editorWindow: EditorWindow,
-    dropSide: Int,
   ) {
     tab.content.putUserData(TAB_DETACHED_KEY, Unit)
     val file = TerminalViewVirtualFile(tab.view)
 
     file.putUserData(FileEditorManagerKeys.CLOSING_TO_REOPEN, true)
     try {
-      if (dropSide != -1 && dropSide != SwingConstants.CENTER) {
-        editorWindow.split(
-          orientation = if (dropSide == SwingConstants.BOTTOM || dropSide == SwingConstants.TOP) JSplitPane.VERTICAL_SPLIT else JSplitPane.HORIZONTAL_SPLIT,
-          forceSplit = true,
-          virtualFile = file,
-          focusNew = true,
-          fileIsSecondaryComponent = dropSide != SwingConstants.LEFT && dropSide != SwingConstants.TOP,
-        )
-      }
-      else {
-        val manager = editorWindow.manager
-        manager.openFile(file, editorWindow, FileEditorOpenOptions(requestFocus = true))
-      }
+      val manager = editorWindow.manager
+      manager.openFile(file, editorWindow, FileEditorOpenOptions(requestFocus = true))
     }
     finally {
       file.putUserData(FileEditorManagerKeys.CLOSING_TO_REOPEN, null)
