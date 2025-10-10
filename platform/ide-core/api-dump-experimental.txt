@@ -63,6 +63,10 @@ f:com.intellij.openapi.vfs.FilePermissionsKt
 - com.intellij.openapi.wm.WidgetPresentation
 - a:getAlignment():F
 - a:text():kotlinx.coroutines.flow.Flow
+com.intellij.openapi.wm.ToolWindow
+- com.intellij.openapi.util.BusyObject
+- *:canSplitTabs():Z
+- *:setTabsSplittingAllowed(Z):V
 *:com.intellij.openapi.wm.WidgetPresentation
 - getClickConsumer():kotlin.jvm.functions.Function1
 - getShortcutText(kotlin.coroutines.Continuation):java.lang.Object

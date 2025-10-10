@@ -933,8 +933,7 @@ class InternalDecoratorImpl internal constructor(
     }
     contentUi.update()
 
-    if ((toolWindow.type == ToolWindowType.WINDOWED || toolWindow.type == ToolWindowType.FLOATING) &&
-        ToolWindowContentUi.isTabsReorderingAllowed(toolWindow)) {
+    if ((toolWindow.type == ToolWindowType.WINDOWED || toolWindow.type == ToolWindowType.FLOATING) && toolWindow.canSplitTabs()) {
       ToolWindowInnerDragHelper(disposable, this).start()
     }
   }

@@ -55,7 +55,7 @@ internal class ToolWindowInnerDragHelper(parent: Disposable, val pane: JComponen
       val decorator = InternalDecoratorImpl.findTopLevelDecorator(child)
       val editorSupport = getEditorSupport(decorator)
       if (decorator != null &&
-          ToolWindowContentUi.isTabsReorderingAllowed(decorator.toolWindow) &&
+          decorator.toolWindow.canSplitTabs() &&
           child is ContentTabLabel &&
           (child.parent is ToolWindowContentUi.TabPanel ||
            Registry.`is`("debugger.new.tool.window.layout.dnd", false) && child.parent is SingleContentLayout.TabAdapter) &&
