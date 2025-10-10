@@ -228,9 +228,7 @@ internal class TerminalToolWindowTabsManagerImpl(
       // It is not easy to determine whether it is explicit closing or not, so we use the heuristic.
       val isProjectClosing = getToolWindow().contentManager.isDisposed
       if (!isProjectClosing) {
-        durable {
-          TerminalTabsManagerApi.getInstance().closeTerminalTab(project.projectId(), backendTabId)
-        }
+        TerminalTabsManagerApi.getInstance().closeTerminalTab(project.projectId(), backendTabId)
       }
     }
 
