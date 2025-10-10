@@ -5,6 +5,7 @@ import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.platform.ijent.community.buildConstants.IjentBuildScriptsConstantsKt;
 import com.intellij.testFramework.PlatformTestUtil;
 import com.intellij.testFramework.rules.TempDirectory;
+import com.intellij.util.ConcurrencyUtil;
 import com.intellij.util.ExceptionUtil;
 import com.intellij.util.ThrowableConsumer;
 import com.intellij.util.lang.ClassPath;
@@ -121,9 +122,7 @@ public class UrlClassLoaderTest {
           }));
         }
 
-        for (Future<?> future : futures) {
-          future.get();
-        }
+        ConcurrencyUtil.getAll(futures);
       }
     }
     finally {

@@ -24,6 +24,7 @@ import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.testFramework.BombedProgressIndicator;
 import com.intellij.testFramework.SkipSlowTestLocally;
 import com.intellij.testFramework.fixtures.JavaCodeInsightFixtureTestCase;
+import com.intellij.util.ConcurrencyUtil;
 import com.intellij.util.ref.GCWatcher;
 import org.jetbrains.annotations.NotNull;
 
@@ -82,7 +83,7 @@ public class ConcurrentIndexTest extends JavaCodeInsightFixtureTestCase {
         }));
       }
 
-      for (Future<?> future : futuresToWait) future.get();
+      ConcurrencyUtil.getAll(futuresToWait);
     }
   }
 
@@ -149,7 +150,7 @@ public class ConcurrentIndexTest extends JavaCodeInsightFixtureTestCase {
       }
 
 
-      for (Future<?> future : futuresToWait) future.get();
+      ConcurrencyUtil.getAll(futuresToWait);
     }
   }
 
@@ -209,7 +210,7 @@ public class ConcurrentIndexTest extends JavaCodeInsightFixtureTestCase {
         }));
       }
 
-      for (Future<?> future : futuresToWait) future.get();
+      ConcurrencyUtil.getAll(futuresToWait);
     }
   }
 
@@ -253,12 +254,10 @@ public class ConcurrentIndexTest extends JavaCodeInsightFixtureTestCase {
           public void run(@NotNull ProgressIndicator indicator) {
             ReadAction.run(() -> {
               assertNotNull(JavaPsiFacade.getInstance(project).findClass("Foo", GlobalSearchScope.allScope(project)));
-              });
+            });
           }
         }));
-      for (Future<?> future : futures) {
-        future.get();
-      }
+      ConcurrencyUtil.getAll(futures);
     }
   }
 }
