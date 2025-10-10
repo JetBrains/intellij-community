@@ -67,7 +67,7 @@ kt_wasmjs_library = rule(
             cfg = scrubbed_host_platform_transition,
         ),
         "_wasmjs_builder_jvm_flags": attr.label(
-            default = "//:wasmjs-builder-jvm_flags",
+            default = "//src/kotlin/kotlin-builder-wasmjs:kotlin-builder-wasmjs-jvm_flags",
         ),
         "_wasmjs_builder_launcher": attr.label(
             default = "//:rules/impl/MemoryLauncher.java",
