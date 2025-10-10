@@ -113,6 +113,11 @@ internal class TerminalTabsManager(private val project: Project, private val cor
           // Return here, because the tab will be removed once we free the tabs' lock.
           return@updateTabsAndStore
         }
+        if (session.isClosed) {
+          // Cancellation is in progress: the session already received the close event and closed itself.
+          // But it is not yet removed from the [TerminalSessionsManager] yet.
+          return@updateTabsAndStore
+        }
         // It should terminate the shell process, then cancel the coroutine scope,
         // and finally remove the tab in awaitCancellationAndInvoke body defined in the methods above.
         session.getInputChannel().send(TerminalCloseEvent())
