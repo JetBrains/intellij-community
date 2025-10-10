@@ -32,7 +32,7 @@ public class VcsVirtualFile extends AbstractVcsVirtualFile {
   /**
    * @deprecated {@link VcsFileSystem} cannot be overwritten
    */
-  @Deprecated
+  @Deprecated(forRemoval = true)
   public VcsVirtualFile(@NotNull String path,
                         @Nullable VcsFileRevision revision,
                         @NotNull VirtualFileSystem ignored) {
@@ -48,7 +48,7 @@ public class VcsVirtualFile extends AbstractVcsVirtualFile {
   /**
    * @deprecated {@link VcsFileSystem} cannot be overwritten
    */
-  @Deprecated
+  @Deprecated(forRemoval = true)
   public VcsVirtualFile(@NotNull VirtualFile parent, @NotNull String name, @Nullable VcsFileRevision revision, VirtualFileSystem ignored) {
     this(parent, name, revision);
   }
@@ -71,7 +71,7 @@ public class VcsVirtualFile extends AbstractVcsVirtualFile {
   /**
    * @deprecated {@link VcsFileSystem} cannot be overwritten
    */
-  @Deprecated
+  @Deprecated(forRemoval = true)
   public VcsVirtualFile(@NotNull String path,
                         byte @NotNull [] content,
                         @Nullable String revision,

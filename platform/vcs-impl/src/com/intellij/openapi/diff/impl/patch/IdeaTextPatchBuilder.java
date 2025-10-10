@@ -107,7 +107,7 @@ public final class IdeaTextPatchBuilder {
   /**
    * @deprecated Use {@link #buildPatch}
    */
-  @Deprecated
+  @Deprecated(forRemoval = true)
   public static @NotNull List<FilePatch> buildPatch(@Nullable Project project,
                                                     @NotNull Collection<? extends Change> changes,
                                                     @NotNull Path basePath,

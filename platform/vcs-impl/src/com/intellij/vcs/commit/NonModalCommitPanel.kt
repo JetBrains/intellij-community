@@ -32,6 +32,7 @@ import com.intellij.util.ui.JBUI.Borders.emptyLeft
 import com.intellij.util.ui.JBUI.scale
 import com.intellij.util.ui.components.BorderLayoutPanel
 import com.intellij.vcsUtil.VcsUIUtil
+import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.annotations.Nls
 import javax.swing.JComponent
 import javax.swing.LayoutFocusTraversalPolicy
@@ -231,6 +232,7 @@ abstract class NonModalCommitPanel(
     internal const val COMMIT_EDITOR_PLACE: String = "ChangesView.Editor"
     internal val COMMIT_OPTIONS_POPUP_MINIMUM_SIZE = 300
 
+    @ApiStatus.ScheduledForRemoval
     @Deprecated("Extracted to a separate file",
                 replaceWith = ReplaceWith("showAbove(component)", "com.intellij.vcsUtil.showAbove"))
     fun JBPopup.showAbove(component: JComponent) = VcsUIUtil.showPopupAbove(this, component)
