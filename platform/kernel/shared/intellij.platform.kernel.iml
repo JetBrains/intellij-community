@@ -12,7 +12,7 @@
     <orderEntry type="module" module-name="intellij.platform.rpc" exported="" />
     <orderEntry type="module" module-name="fleet.kernel" exported="" />
     <orderEntry type="library" name="kotlinx-coroutines-core" level="project" />
-    <orderEntry type="library" name="kotlinx-collections-immutable" level="project" />
+    <orderEntry type="module" module-name="intellij.libraries.kotlinx.collections.immutable" />
     <orderEntry type="module" module-name="intellij.platform.core" />
     <orderEntry type="module" module-name="intellij.platform.util" />
     <orderEntry type="module" module-name="intellij.platform.util.coroutines" />

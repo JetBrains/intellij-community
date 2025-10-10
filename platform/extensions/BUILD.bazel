@@ -15,7 +15,7 @@ jvm_library(
     "//platform/util/xmlDom",
     "@lib//:kotlinx-coroutines-core",
     "//platform/diagnostic",
-    "@lib//:kotlinx-collections-immutable",
+    "//libraries/kotlinx/collections-immutable:libraries-kotlinx-collections-immutable",
     "@lib//:jetbrains-annotations",
     "//libraries/kotlinx/serialization/core",
     "//libraries/kotlinx/serialization/json",

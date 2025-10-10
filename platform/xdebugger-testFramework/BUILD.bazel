@@ -16,7 +16,7 @@ jvm_library(
     "//platform/xdebugger-impl:debugger-impl",
     "//platform/xdebugger-api:debugger",
     "//platform/testFramework/extensions:testExtensions",
-    "@lib//:stream_ex",
+    "//libraries/stream",
     "//platform/lang-impl",
     "//platform/core-ui",
   ]

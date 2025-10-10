@@ -17,7 +17,7 @@ jvm_library(
     "//java/java-indexing-api:indexing",
     "//jvm/jvm-analysis-api:analysis",
     "//java/openapi:java",
-    "@lib//:stream_ex",
+    "//libraries/stream",
     "//platform/analysis-api:analysis",
     "//platform/core-api:core",
     "//platform/core-ui",

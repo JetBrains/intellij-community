@@ -43,7 +43,7 @@ jvm_library(
     "//libraries/kryo5",
     "//platform/testFramework/junit5",
     "//platform/testFramework/junit5:junit5_test_lib",
-    "@lib//:kotlinx-collections-immutable",
+    "//libraries/kotlinx/collections-immutable:libraries-kotlinx-collections-immutable",
   ]
 )
 ### auto-generated section `build intellij.platform.workspace.storage.tests` end

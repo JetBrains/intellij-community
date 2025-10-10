@@ -135,7 +135,7 @@ jvm_library(
     "//plugins/properties/properties-psi-impl:backend-psi",
     "//plugins/javaFX",
     "//platform/analysis-api:analysis",
-    "@lib//:stream_ex",
+    "//libraries/stream",
   ]
 )
 ### auto-generated section `build intellij.javaFX.properties` end

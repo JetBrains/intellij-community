@@ -30,7 +30,7 @@ jvm_library(
     "@lib//:kotlinx-coroutines-core",
     "//libraries/kotlinx/serialization/core",
     "//libraries/kotlinx/serialization/json",
-    "@lib//:kotlinx-datetime-jvm",
+    "//libraries/kotlinx/datetime",
     "//platform/feedback",
   ]
 )

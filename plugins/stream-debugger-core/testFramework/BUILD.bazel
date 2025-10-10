@@ -16,7 +16,7 @@ jvm_library(
   deps = [
     "@lib//:kotlin-stdlib",
     "@lib//:kotlin-test",
-    "@lib//:stream_ex",
+    "//libraries/stream",
     "//plugins/stream-debugger-core:debugger-streams-core",
     "//platform/core-api:core",
     "//platform/xdebugger-api:debugger",

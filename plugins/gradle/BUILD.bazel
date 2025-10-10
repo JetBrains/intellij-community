@@ -47,7 +47,7 @@ jvm_library(
     "//libraries/gson",
     "//platform/object-serializer:objectSerializer-annotations",
     "//libraries/ion",
-    "@lib//:stream_ex",
+    "//libraries/stream",
     "//platform/statistics",
     "//libraries/fastutil",
     "//libraries/commons/cli",

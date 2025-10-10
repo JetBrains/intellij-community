@@ -11,7 +11,7 @@ jvm_library(
     "//platform/core-api:core",
     "//platform/util/base",
     "//platform/platform-util-io:ide-util-io",
-    "@lib//:pty4j",
+    "//libraries/pty4j",
     "//libraries/winp",
     "//platform/util",
     "//libraries/proxy-vole",

@@ -30,7 +30,7 @@ jvm_library(
     "//platform/configuration-store-impl:configurationStore-impl",
     "//platform/object-serializer",
     "//platform/service-container",
-    "@lib//:snakeyaml-engine",
+    "//libraries/snakeyaml-engine",
     "//platform/util/jdom",
   ]
 )
@@ -67,7 +67,7 @@ jvm_library(
     "//libraries/jackson/jackson",
     "//platform/service-container",
     "//platform/service-container:service-container_test_lib",
-    "@lib//:snakeyaml-engine",
+    "//libraries/snakeyaml-engine",
     "//platform/util/jdom",
   ]
 )

@@ -21,7 +21,7 @@ jvm_library(
     "//grid/types",
     "//platform/core-impl",
     "//platform/projectModel-api:projectModel",
-    "@lib//:automaton",
+    "//libraries/automaton",
   ]
 )
 ### auto-generated section `build intellij.grid.csv.core.impl` end

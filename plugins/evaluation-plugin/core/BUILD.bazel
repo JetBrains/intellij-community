@@ -17,7 +17,7 @@ jvm_library(
     "@lib//:kotlin-stdlib",
     "//libraries/gson",
     "//libraries/commons/compress",
-    "@lib//:kotlinx-html-jvm",
+    "//libraries/kotlinx/html",
     "//libraries/commons/lang3",
     "//libraries/commons/text",
     "//platform/core-api:core",

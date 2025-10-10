@@ -64,7 +64,7 @@ jvm_library(
     "//platform/util/coroutines",
     "//libraries/microba",
     "//platform/platform-impl/ui",
-    "@lib//:kotlinx-html-jvm",
+    "//libraries/kotlinx/html",
   ]
 )
 ### auto-generated section `build intellij.grid.impl` end

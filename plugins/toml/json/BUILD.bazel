@@ -24,7 +24,7 @@ jvm_library(
     "//plugins/toml/core",
     "@lib//:kotlin-stdlib",
     "//json/backend",
-    "@lib//:stream_ex",
+    "//libraries/stream",
   ],
   exports = ["//json/backend"],
   runtime_deps = ["//platform/backend"]

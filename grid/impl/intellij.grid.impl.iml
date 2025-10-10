@@ -61,6 +61,6 @@
     <orderEntry type="module" module-name="intellij.platform.util.coroutines" />
     <orderEntry type="module" module-name="intellij.libraries.microba" />
     <orderEntry type="module" module-name="intellij.platform.ide.ui" />
-    <orderEntry type="library" name="kotlinx-html-jvm" level="project" />
+    <orderEntry type="module" module-name="intellij.libraries.kotlinx.html" />
   </component>
 </module>

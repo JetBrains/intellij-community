@@ -12,7 +12,7 @@ jvm_library(
     "//platform/platform-api:ide",
     "@lib//:rd-core",
     "@lib//:rd-framework",
-    "@lib//:rd-text",
+    "//libraries/rd-text",
     "@lib//:rd-swing",
     "//platform/util/progress",
     "//platform/util/concurrency",

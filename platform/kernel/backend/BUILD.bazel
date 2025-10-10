@@ -26,7 +26,7 @@ jvm_library(
   deps = [
     "//platform/extensions",
     "//platform/util",
-    "@lib//:kotlinx-collections-immutable",
+    "//libraries/kotlinx/collections-immutable:libraries-kotlinx-collections-immutable",
     "@lib//:jetbrains-annotations",
     "//platform/util/coroutines",
     "//platform/kernel/shared:kernel",

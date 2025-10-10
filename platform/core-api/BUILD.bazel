@@ -23,7 +23,7 @@ jvm_library(
     "@lib//:kotlinx-coroutines-core",
     "//platform/util/xmlDom",
     "//platform/diagnostic",
-    "@lib//:kotlinx-collections-immutable",
+    "//libraries/kotlinx/collections-immutable:libraries-kotlinx-collections-immutable",
     "//platform/util/coroutines",
     "@lib//:jetbrains-annotations",
   ],

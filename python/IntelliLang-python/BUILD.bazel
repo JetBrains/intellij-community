@@ -19,7 +19,7 @@ jvm_library(
     "//platform/projectModel-api:projectModel",
     "//python:python-community-impl",
     "//platform/lang-impl",
-    "@lib//:stream_ex",
+    "//libraries/stream",
   ]
 )
 ### auto-generated section `build intellij.python.langInjection` end

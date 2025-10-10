@@ -26,7 +26,7 @@ jvm_library(
     "//platform/util/coroutines",
     "//platform/editor-ui-ex:editor-ex",
     "@lib//:jediterm-core",
-    "@lib//:jediterm-ui",
+    "//libraries/jediterm-ui",
     "//platform/core-ui",
     "//platform/code-style-api:codeStyle",
     "//libraries/guava",
@@ -43,11 +43,11 @@ jvm_library(
     "//platform/eel-provider",
     "//libraries/caffeine",
     "//platform/observable",
-    "@lib//:kotlinx-datetime-jvm",
+    "//libraries/kotlinx/datetime",
     "//libraries/kotlinx/serialization/core",
     "//libraries/kotlinx/serialization/json",
     "//platform/project/shared:project",
-    "@lib//:pty4j",
+    "//libraries/pty4j",
     "//platform/util/jdom",
   ]
 )

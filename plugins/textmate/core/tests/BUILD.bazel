@@ -22,7 +22,7 @@ jvm_library(
     "//platform/util",
     "@lib//:kotlinx-coroutines-test",
     "@lib//:kotlinx-coroutines-core",
-    "@lib//:kotlinx-collections-immutable",
+    "//libraries/kotlinx/collections-immutable:libraries-kotlinx-collections-immutable",
   ]
 )
 ### auto-generated section `build intellij.textmate.core.tests` end

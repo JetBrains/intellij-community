@@ -39,7 +39,7 @@ jvm_library(
     "//platform/testFramework/extensions:testExtensions",
     "@lib//:kotlin-stdlib",
     "//plugins/IntelliLang:langInjection",
-    "@lib//:jsonpath",
+    "//libraries/jsonpath",
     "@lib//:kotlinx-coroutines-core",
     "@lib//:assert_j",
     "//RegExpSupport:regexp",

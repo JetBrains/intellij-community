@@ -20,7 +20,7 @@ jvm_library(
   deps = [
     "@lib//:kotlin-stdlib",
     "//libraries/asm",
-    "@lib//:stream_ex",
+    "//libraries/stream",
     "//libraries/caffeine",
     "@lib//:kotlinc-kotlin-compiler-common",
     "@lib//:kotlinc-kotlin-compiler-fe10",

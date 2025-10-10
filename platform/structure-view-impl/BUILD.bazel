@@ -19,7 +19,7 @@ jvm_library(
     "//platform/extensions",
     "//platform/core-api:core",
     "//platform/icons",
-    "@lib//:automaton",
+    "//libraries/automaton",
     "//platform/projectModel-api:projectModel",
     "//platform/platform-api:ide",
     "//platform/core-impl",

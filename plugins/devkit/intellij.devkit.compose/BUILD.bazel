@@ -26,7 +26,7 @@ jvm_library(
   kotlinc_opts = ":custom_compose",
   deps = [
     "@lib//:kotlin-stdlib",
-    "@lib//:kotlinx-datetime-jvm",
+    "//libraries/kotlinx/datetime",
     "//platform/platform-impl:ide-impl",
     "//platform/ide-core",
     "//platform/core-api:core",

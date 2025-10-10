@@ -15,6 +15,6 @@
     <orderEntry type="module" module-name="intellij.grid.types" />
     <orderEntry type="module" module-name="intellij.platform.core.impl" />
     <orderEntry type="module" module-name="intellij.platform.projectModel" />
-    <orderEntry type="library" name="automaton" level="project" />
+    <orderEntry type="module" module-name="intellij.libraries.automaton" />
   </component>
 </module>

@@ -1,0 +1,18 @@
+### auto-generated section `build intellij.libraries.jsonpath` start
+load("@rules_jvm//:jvm.bzl", "jvm_library", "resourcegroup")
+
+resourcegroup(
+  name = "jsonpath_resources",
+  srcs = glob(["resources/**/*"]),
+  strip_prefix = "resources"
+)
+
+jvm_library(
+  name = "jsonpath",
+  visibility = ["//visibility:public"],
+  srcs = glob([], allow_empty = True),
+  resources = [":jsonpath_resources"],
+  exports = ["@lib//:jsonpath"],
+  runtime_deps = ["@lib//:jsonpath"]
+)
+### auto-generated section `build intellij.libraries.jsonpath` end

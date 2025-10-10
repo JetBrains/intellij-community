@@ -18,7 +18,7 @@ jvm_library(
     "//platform/kernel/rpc",
     "//fleet/kernel",
     "@lib//:kotlinx-coroutines-core",
-    "@lib//:kotlinx-collections-immutable",
+    "//libraries/kotlinx/collections-immutable:libraries-kotlinx-collections-immutable",
     "//platform/core-api:core",
     "//platform/util",
     "//platform/util/coroutines",

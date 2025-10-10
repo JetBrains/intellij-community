@@ -12,7 +12,7 @@ jvm_library(
   visibility = ["//visibility:public"],
   srcs = glob([], allow_empty = True),
   resources = [":winp_resources"],
-  exports = ["@lib//:winp"],
-  runtime_deps = ["@lib//:winp"]
+  exports = ["@lib//:libraries-winp-winp"],
+  runtime_deps = ["@lib//:libraries-winp-winp"]
 )
 ### auto-generated section `build intellij.libraries.winp` end

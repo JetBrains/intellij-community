@@ -28,7 +28,7 @@ jvm_library(
     "//python/openapi:community",
     "//libraries/jsoup",
     "//platform/indexing-impl",
-    "@lib//:stream_ex",
+    "//libraries/stream",
     "//platform/projectModel-impl",
     "//platform/analysis-impl",
     "//platform/service-container",

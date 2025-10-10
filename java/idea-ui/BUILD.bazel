@@ -41,7 +41,7 @@ jvm_library(
     "@lib//:jna",
     "//platform/external-system-api:externalSystem",
     "//platform/external-system-impl:externalSystem-impl",
-    "@lib//:stream_ex",
+    "//libraries/stream",
     "@lib//:kotlinx-coroutines-core",
     "//platform/statistics",
     "//libraries/fastutil",

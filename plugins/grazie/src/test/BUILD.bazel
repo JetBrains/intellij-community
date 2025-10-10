@@ -44,7 +44,7 @@ jvm_library(
     "@lib//:grazie-tests-org-jetbrains-intellij-deps-languagetool-language-pt",
     "//libraries/ai.grazie.spell.gec.engine.local",
     "@lib//:grazie-tests-org-languagetool-portuguese-pos-dict",
-    "@lib//:stream_ex",
+    "//libraries/stream",
     "//RegExpSupport:regexp",
     "//RegExpSupport:regexp_test_lib",
     "//platform/vcs-impl",

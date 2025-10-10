@@ -26,7 +26,7 @@ jvm_library(
     "//platform/util-rt",
     "//platform/util-class-loader:util-classLoader",
     "@lib//:jna",
-    "@lib//:oro_matcher",
+    "//libraries/oro-matcher",
     "//libraries/lz4",
     "//libraries/commons/compress",
     "//libraries/fastutil",
@@ -191,7 +191,7 @@ jvm_library(
     "@lib//:kotlinx-coroutines-core",
     "//platform/diagnostic",
     "//libraries/kotlinx/serialization/core",
-    "@lib//:kotlinx-serialization-protobuf",
+    "//libraries/kotlinx/serialization/protobuf",
     "//libraries/mvstore",
   ]
 )

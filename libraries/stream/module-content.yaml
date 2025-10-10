@@ -1,0 +1,6 @@
+- name: <file>
+  modules:
+  - name: intellij.libraries.stream
+  library: StreamEx
+  files:
+  - name: $MAVEN_REPOSITORY$/one/util/streamex/0/streamex-0.jar

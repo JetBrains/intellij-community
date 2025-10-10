@@ -39,7 +39,7 @@ jvm_library(
     "@lib//:netty-buffer",
     "//platform/core-ui",
     "//platform/code-style-impl:codeStyle-impl",
-    "@lib//:jetbrains-markdown",
+    "//libraries/markdown",
     "//platform/platform-util-io:ide-util-io",
     "//platform/platform-util-netty:ide-util-netty",
     "//libraries/jackson/jackson",

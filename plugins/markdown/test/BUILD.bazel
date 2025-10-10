@@ -58,7 +58,7 @@ jvm_library(
     "@lib//:jcef",
     "@lib//:assert_j",
     "//platform/util-ex",
-    "@lib//:jetbrains-markdown",
+    "//libraries/markdown",
     "//plugins/toml",
     "//plugins/toml/core",
     "//plugins/yaml/backend",

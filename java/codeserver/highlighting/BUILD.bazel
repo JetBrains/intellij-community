@@ -15,7 +15,7 @@ jvm_library(
   resources = [":highlighting_resources"],
   deps = [
     "@lib//:jetbrains-annotations",
-    "@lib//:stream_ex",
+    "//libraries/stream",
     "//platform/core-api:core",
     "//jps/model-api:model",
     "//platform/util",

@@ -1,0 +1,18 @@
+### auto-generated section `build intellij.libraries.markdown` start
+load("@rules_jvm//:jvm.bzl", "jvm_library", "resourcegroup")
+
+resourcegroup(
+  name = "markdown_resources",
+  srcs = glob(["resources/**/*"]),
+  strip_prefix = "resources"
+)
+
+jvm_library(
+  name = "markdown",
+  visibility = ["//visibility:public"],
+  srcs = glob([], allow_empty = True),
+  resources = [":markdown_resources"],
+  exports = ["@lib//:jetbrains-markdown"],
+  runtime_deps = ["@lib//:jetbrains-markdown"]
+)
+### auto-generated section `build intellij.libraries.markdown` end

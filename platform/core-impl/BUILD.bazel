@@ -23,7 +23,7 @@ jvm_library(
     "//platform/util-class-loader:util-classLoader",
     "//libraries/aalto-xml",
     "//platform/util/xmlDom",
-    "@lib//:automaton",
+    "//libraries/automaton",
     "//libraries/guava",
     "//platform/util/diff",
     "//platform/diagnostic",

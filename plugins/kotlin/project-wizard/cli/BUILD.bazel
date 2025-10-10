@@ -9,8 +9,8 @@ jvm_library(
   deps = [
     "@lib//:kotlin-stdlib",
     "//libraries/kotlin/reflect",
-    "@lib//:kotlinx-collections-immutable",
-    "@lib//:snakeyaml",
+    "//libraries/kotlinx/collections-immutable:libraries-kotlinx-collections-immutable",
+    "//libraries/snakeyaml",
     "//plugins/kotlin/base/frontend-agnostic",
     "//plugins/kotlin/project-wizard/core",
   ],

@@ -76,7 +76,7 @@ jvm_library(
     "//platform/workspace/storage",
     "//platform/workspace/jps",
     "//plugins/repository-search",
-    "@lib//:stream_ex",
+    "//libraries/stream",
     "//platform/statistics",
     "//plugins/maven-model",
     "//libraries/commons/cli",

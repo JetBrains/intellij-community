@@ -51,7 +51,7 @@ jvm_library(
     "@lib//:objenesis",
     "//libraries/http-client",
     "@lib//:assert_j",
-    "@lib//:stream_ex",
+    "//libraries/stream",
     "//platform/core-ui",
     "//platform/util/jdom",
     "//platform/bookmarks",

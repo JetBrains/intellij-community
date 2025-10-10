@@ -10,7 +10,7 @@ jvm_library(
   deps = [
     "//java/java-psi-api:psi",
     "//java/java-psi-impl:psi-impl",
-    "@lib//:stream_ex",
+    "//libraries/stream",
     "@lib//:kotlin-stdlib",
     "//platform/core-api:core",
     "//platform/util",

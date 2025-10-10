@@ -30,7 +30,7 @@ jvm_library(
     "@lib//:memoryfilesystem",
     "@lib//:junit4",
     "@lib//:assert_j",
-    "@lib//:snakeyaml",
+    "//libraries/snakeyaml",
     "//libraries/fastutil",
     "//platform/core-ui",
     "@lib//:junit5",

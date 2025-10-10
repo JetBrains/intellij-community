@@ -33,7 +33,7 @@ jvm_library(
     "//platform/diff-impl",
     "//platform/platform-impl:ide-impl",
     "//platform/util/progress",
-    "@lib//:stream_ex",
+    "//libraries/stream",
     "//platform/diagnostic",
     "//platform/statistics",
     "//libraries/fastutil",

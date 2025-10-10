@@ -21,7 +21,7 @@ jvm_library(
     "//platform/core-impl",
     "//libraries/asm",
     "//platform/util",
-    "@lib//:stream_ex",
+    "//libraries/stream",
     "//libraries/fastutil",
     "//java/java-syntax:syntax",
     "//platform/syntax/syntax-psi:psi",

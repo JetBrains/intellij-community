@@ -35,7 +35,7 @@ jvm_library(
     "//platform/structure-view-impl:structureView-impl",
     "//platform/usageView",
     "//platform/ide-core-impl",
-    "@lib//:stream_ex",
+    "//libraries/stream",
     "//platform/code-style-impl:codeStyle-impl",
     "//libraries/fastutil",
     "//platform/diff-impl",

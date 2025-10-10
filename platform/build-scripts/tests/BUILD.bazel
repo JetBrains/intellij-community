@@ -28,7 +28,7 @@ jvm_library(
     "//platform/testFramework/extensions:testExtensions",
     "//build/tasks",
     "//build/tasks:tasks_test_lib",
-    "@lib//:kotlinx-collections-immutable",
+    "//libraries/kotlinx/collections-immutable:libraries-kotlinx-collections-immutable",
     "//libraries/commons/compress",
     "//build",
     "@lib//:kotlinx-coroutines-core",

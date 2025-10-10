@@ -37,7 +37,7 @@ jvm_library(
     "//libraries/jackson/databind",
     "//libraries/jackson/module-kotlin:libraries-jackson-module-kotlin",
     "//libraries/kotlinx/serialization/core",
-    "@lib//:kotlinx-serialization-protobuf",
+    "//libraries/kotlinx/serialization/protobuf",
   ]
 )
 ### auto-generated section `build intellij.platform.diagnostic.telemetry.exporters` end

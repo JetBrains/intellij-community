@@ -32,7 +32,7 @@ jvm_library(
     "//platform/object-serializer",
     "//platform/service-container",
     "//platform/ide-core-impl",
-    "@lib//:snakeyaml-engine",
+    "//libraries/snakeyaml-engine",
     "//platform/statistics",
     "//libraries/fastutil",
     "//platform/diff-api:diff",

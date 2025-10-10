@@ -44,7 +44,7 @@ jvm_library(
     "//java/debugger/impl",
     "//java/execution/openapi:java-execution",
     "//jps/jps-builders:build",
-    "@lib//:stream_ex",
+    "//libraries/stream",
     "//libraries/fastutil",
     "//platform/core-ui",
     "//platform/code-style-impl:codeStyle-impl",

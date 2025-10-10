@@ -9,7 +9,7 @@ jvm_library(
   deps = [
     "//java/openapi:java",
     "//java/java-analysis-impl:analysis-impl",
-    "@lib//:stream_ex",
+    "//libraries/stream",
     "//java/java-impl:impl",
     "//java/java-indexing-api:indexing",
     "//platform/analysis-api:analysis",

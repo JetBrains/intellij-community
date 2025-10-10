@@ -15,7 +15,7 @@ jvm_library(
     "//platform/projectModel-impl",
     "@lib//:kotlin-stdlib",
     "@lib//:kotlinx-coroutines-core",
-    "@lib//:stream_ex",
+    "//libraries/stream",
     "//libraries/fastutil",
     "//platform/util/jdom",
     "//platform/statistics",

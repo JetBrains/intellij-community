@@ -35,7 +35,7 @@ jvm_library(
     "//platform/core-ui",
     "//platform/code-style-api:codeStyle",
     "//platform/platform-util-io:ide-util-io",
-    "@lib//:stream_ex",
+    "//libraries/stream",
     "//platform/util/jdom",
     "@lib//:opentelemetry",
     "@lib//:opentelemetry-semconv",

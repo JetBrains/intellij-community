@@ -28,7 +28,7 @@ jvm_library(
     "//platform/refactoring",
     "//platform/usageView",
     "//java/java-impl-refactorings:impl-refactorings",
-    "@lib//:stream_ex",
+    "//libraries/stream",
     "//libraries/fastutil",
   ]
 )
@@ -56,7 +56,7 @@ jvm_library(
     "//platform/testFramework",
     "//platform/testFramework:testFramework_test_lib",
     "//java/java-impl-refactorings:impl-refactorings",
-    "@lib//:stream_ex",
+    "//libraries/stream",
     "//libraries/fastutil",
   ]
 )

@@ -32,7 +32,7 @@ jvm_library(
     "//platform/core-ui",
     "//plugins/kotlin/base/resources:kotlin-base-resources",
     "//plugins/kotlin/base/psi",
-    "@lib//:jetbrains-markdown",
+    "//libraries/markdown",
     "//java/java-impl:impl",
     "//plugins/kotlin/highlighting/highlighting-minimal:kotlin-highlighting-minimal",
     "//plugins/kotlin/code-insight/utils",

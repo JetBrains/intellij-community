@@ -43,14 +43,14 @@
     <orderEntry type="module" module-name="intellij.platform.ide.impl" />
     <orderEntry type="module" module-name="intellij.platform.ide.core.impl" />
     <orderEntry type="module" module-name="intellij.libraries.guava" />
-    <orderEntry type="library" name="pty4j" level="project" />
+    <orderEntry type="module" module-name="intellij.libraries.pty4j" />
     <orderEntry type="library" name="jna" level="project" />
     <orderEntry type="module" module-name="intellij.platform.projectModel" />
     <orderEntry type="module" module-name="intellij.platform.remote.core" />
     <orderEntry type="module" module-name="intellij.platform.remoteServers" />
     <orderEntry type="module" module-name="intellij.platform.remoteServers.impl" />
     <orderEntry type="library" name="jediterm-core" level="project" />
-    <orderEntry type="library" name="jediterm-ui" level="project" />
+    <orderEntry type="module" module-name="intellij.libraries.jediterm.ui" />
     <orderEntry type="module" module-name="intellij.platform.execution.impl" />
     <orderEntry type="module" module-name="intellij.libraries.winp" />
     <orderEntry type="module" module-name="intellij.platform.statistics" />
@@ -102,7 +102,7 @@
       </library>
     </orderEntry>
     <orderEntry type="module" module-name="intellij.platform.feedback" />
-    <orderEntry type="library" name="kotlinx-datetime-jvm" level="project" />
+    <orderEntry type="module" module-name="intellij.libraries.kotlinx.datetime" />
     <orderEntry type="module" module-name="intellij.platform.diagnostic.telemetry" />
     <orderEntry type="module" module-name="intellij.platform.ide.internal" />
     <orderEntry type="library" scope="PROVIDED" name="opentelemetry" level="project" />

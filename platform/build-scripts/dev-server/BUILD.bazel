@@ -18,7 +18,7 @@ jvm_library(
     "@lib//:opentelemetry",
     "@lib//:opentelemetry-semconv",
     "//platform/diagnostic/telemetry",
-    "@lib//:kotlinx-collections-immutable",
+    "//libraries/kotlinx/collections-immutable:libraries-kotlinx-collections-immutable",
     "@lib//:kotlinx-coroutines-core",
     "//platform/build-scripts/downloader",
     "//platform/boot",
@@ -29,7 +29,7 @@ jvm_library(
     "//platform/diagnostic/telemetry.exporters",
     "//platform/util/coroutines",
     "//platform/util/zip",
-    "@lib//:kotlinx-serialization-protobuf",
+    "//libraries/kotlinx/serialization/protobuf",
   ],
   runtime_deps = ["//libraries/xz"]
 )

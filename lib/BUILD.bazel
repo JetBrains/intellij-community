@@ -4307,13 +4307,6 @@ jvm_import(
   visibility = ["//visibility:public"]
 )
 
-java_library(
-  name = "kotlinx-collections-immutable-provided",
-  exports = [":kotlinx-collections-immutable"],
-  neverlink = True,
-  visibility = ["//visibility:public"]
-)
-
 jvm_import(
   name = "kotlinx-coroutines-core",
   jar = "@com_intellij_platform-kotlinx-coroutines-core-jvm-1_10_1-intellij-5_http//file",
@@ -4382,13 +4375,6 @@ jvm_import(
   name = "com_github_lamba92-kotlinx-document-store-core-jvm-0_0_4_http_import",
   jar = "@com_github_lamba92-kotlinx-document-store-core-jvm-0_0_4_http//file",
   source_jar = "@com_github_lamba92-kotlinx-document-store-core-jvm-0_0_4_http//file"
-)
-
-jvm_import(
-  name = "kotlinx-html-jvm",
-  jar = "@org_jetbrains_kotlinx-kotlinx-html-jvm-0_12_0_http//file",
-  source_jar = "@org_jetbrains_kotlinx-kotlinx-html-jvm-0_12_0_http//file",
-  visibility = ["//visibility:public"]
 )
 
 java_library(
@@ -5546,6 +5532,13 @@ jvm_import(
 )
 
 jvm_import(
+  name = "libraries-kotlinx-html-kotlinx-html-jvm",
+  jar = "@org_jetbrains_kotlinx-kotlinx-html-jvm-0_12_0_http//file",
+  source_jar = "@org_jetbrains_kotlinx-kotlinx-html-jvm-0_12_0_http//file",
+  visibility = ["//visibility:public"]
+)
+
+jvm_import(
   name = "libraries-ktor-client-cio-ktor-client-cio-internal",
   jar = "@io_ktor-ktor-client-cio-jvm-3_1_3_http//file",
   source_jar = "@io_ktor-ktor-client-cio-jvm-3_1_3_http//file",
@@ -5603,6 +5596,13 @@ jvm_import(
 )
 
 jvm_import(
+  name = "libraries-pty4j-pty4j",
+  jar = "@org_jetbrains_pty4j-pty4j-0_13_11_http//file",
+  source_jar = "@org_jetbrains_pty4j-pty4j-0_13_11_http//file",
+  visibility = ["//visibility:public"]
+)
+
+jvm_import(
   name = "libraries-skiko-jetbrains-skiko-awt-compose",
   jar = "@org_jetbrains_skiko-skiko-awt-0_9_24_http//file",
   source_jar = "@org_jetbrains_skiko-skiko-awt-0_9_24_http//file",
@@ -5649,6 +5649,19 @@ jvm_import(
   name = "net_bytebuddy-byte-buddy-agent-1_17_4_http_import",
   jar = "@net_bytebuddy-byte-buddy-agent-1_17_4_http//file",
   source_jar = "@net_bytebuddy-byte-buddy-agent-1_17_4_http//file"
+)
+
+jvm_import(
+  name = "libraries-velocity-_velocity",
+  jar = "@org_apache_velocity-velocity-engine-core-2_3_http//file",
+  source_jar = "@org_apache_velocity-velocity-engine-core-2_3_http//file",
+  visibility = ["//visibility:public"]
+)
+
+jvm_import(
+  name = "libraries-winp-winp",
+  jar = "@org_jetbrains_intellij_deps_winp-winp-1_30_1_http//file",
+  visibility = ["//visibility:public"]
 )
 
 jvm_import(
@@ -9447,13 +9460,6 @@ jvm_import(
 )
 
 jvm_import(
-  name = "pty4j",
-  jar = "@org_jetbrains_pty4j-pty4j-0_13_11_http//file",
-  source_jar = "@org_jetbrains_pty4j-pty4j-0_13_11_http//file",
-  visibility = ["//visibility:public"]
-)
-
-jvm_import(
   name = "python-community-impl-completion-ranking-python-with-full-line",
   jar = "@org_jetbrains_intellij_deps_completion-completion-ranking-python-with-full-line-0_2_1_http//file",
   source_jar = "@org_jetbrains_intellij_deps_completion-completion-ranking-python-with-full-line-0_2_1_http//file",
@@ -9957,19 +9963,6 @@ jvm_import(
   name = "com_apollographql_apollo-apollo-annotations-jvm-4_0_0_http_import",
   jar = "@com_apollographql_apollo-apollo-annotations-jvm-4_0_0_http//file",
   source_jar = "@com_apollographql_apollo-apollo-annotations-jvm-4_0_0_http//file"
-)
-
-jvm_import(
-  name = "velocity",
-  jar = "@org_apache_velocity-velocity-engine-core-2_3_http//file",
-  source_jar = "@org_apache_velocity-velocity-engine-core-2_3_http//file",
-  visibility = ["//visibility:public"]
-)
-
-jvm_import(
-  name = "winp",
-  jar = "@org_jetbrains_intellij_deps_winp-winp-1_30_1_http//file",
-  visibility = ["//visibility:public"]
 )
 
 jvm_import(

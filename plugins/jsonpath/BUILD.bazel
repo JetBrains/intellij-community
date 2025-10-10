@@ -15,7 +15,7 @@ jvm_library(
   resources = [":jsonpath_resources"],
   deps = [
     "@lib//:kotlin-stdlib",
-    "@lib//:jsonpath",
+    "//libraries/jsonpath",
     "//platform/core-api:core",
     "//platform/analysis-api:analysis",
     "//platform/editor-ui-api:editor-ui",
@@ -38,7 +38,7 @@ jvm_library(
   associates = [":jsonpath"],
   deps = [
     "@lib//:kotlin-stdlib",
-    "@lib//:jsonpath",
+    "//libraries/jsonpath",
     "//platform/core-api:core",
     "//platform/analysis-api:analysis",
     "//platform/editor-ui-api:editor-ui",

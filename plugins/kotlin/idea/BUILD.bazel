@@ -130,7 +130,7 @@ jvm_library(
     "//platform/structuralsearch:structuralSearch",
     "//platform/duplicates-analysis",
     "//platform/code-style-impl:codeStyle-impl",
-    "@lib//:jetbrains-markdown",
+    "//libraries/markdown",
     "//java/compiler/impl",
     "//platform/built-in-server:builtInServer-impl",
     "//platform/ide-core",

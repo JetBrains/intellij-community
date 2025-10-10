@@ -16,9 +16,9 @@ jvm_library(
   deps = [
     "@lib//:kotlin-stdlib",
     "//libraries/kotlin/reflect",
-    "@lib//:kotlinx-collections-immutable",
+    "//libraries/kotlinx/collections-immutable:libraries-kotlinx-collections-immutable",
     "//platform/observable",
-    "@lib//:velocity",
+    "//libraries/velocity",
     "//libraries/gson",
     "//platform/lang-core",
     "//plugins/kotlin/base/frontend-agnostic",
@@ -49,9 +49,9 @@ jvm_library(
   deps = [
     "@lib//:kotlin-stdlib",
     "//libraries/kotlin/reflect",
-    "@lib//:kotlinx-collections-immutable",
+    "//libraries/kotlinx/collections-immutable:libraries-kotlinx-collections-immutable",
     "//platform/observable",
-    "@lib//:velocity",
+    "//libraries/velocity",
     "//libraries/gson",
     "@lib//:junit4",
     "@lib//:kotlin-test-junit",

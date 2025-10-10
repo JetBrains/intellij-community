@@ -30,7 +30,7 @@ jvm_library(
     "@lib//:kotlin-stdlib",
     "@lib//:kotlinc-kotlin-compiler-common-provided",
     "@lib//:kotlinc-kotlin-jps-common-provided",
-    "@lib//:kotlinx-collections-immutable",
+    "//libraries/kotlinx/collections-immutable:libraries-kotlinx-collections-immutable",
     "@lib//:workspace-model-codegen",
     "//platform/code-style-api:codeStyle",
     "//platform/util/concurrency",

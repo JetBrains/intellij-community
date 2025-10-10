@@ -32,7 +32,7 @@ jvm_library(
     "//build/tasks",
     "@lib//:junit5",
     "@lib//:assert_j",
-    "@lib//:kotlinx-collections-immutable",
+    "//libraries/kotlinx/collections-immutable:libraries-kotlinx-collections-immutable",
     "@lib//:kotlinx-coroutines-core",
     "//libraries/kotlinx/serialization/core",
     "//libraries/kotlinx/serialization/json",

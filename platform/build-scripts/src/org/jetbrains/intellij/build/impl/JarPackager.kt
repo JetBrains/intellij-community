@@ -81,12 +81,10 @@ private val libsUsedInJps = setOf(
   // see getBuildProcessApplicationClasspath - used in JPS
   "jna",
   "maven-resolver-provider",
-  "OroMatcher",
   "jgoodies-forms",
   "jgoodies-common",
   // see ArtifactRepositoryManager.getClassesFromDependencies
   "plexus-utils",
-  "http-client",
   "kotlin-stdlib",
 )
 

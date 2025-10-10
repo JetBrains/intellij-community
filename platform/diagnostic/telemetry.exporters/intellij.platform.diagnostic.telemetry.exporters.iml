@@ -43,6 +43,6 @@
     <orderEntry type="module" module-name="intellij.libraries.jackson.databind" />
     <orderEntry type="module" module-name="intellij.libraries.jackson.module.kotlin" />
     <orderEntry type="module" module-name="intellij.libraries.kotlinx.serialization.core" />
-    <orderEntry type="library" name="kotlinx-serialization-protobuf" level="project" />
+    <orderEntry type="module" module-name="intellij.libraries.kotlinx.serialization.protobuf" />
   </component>
 </module>

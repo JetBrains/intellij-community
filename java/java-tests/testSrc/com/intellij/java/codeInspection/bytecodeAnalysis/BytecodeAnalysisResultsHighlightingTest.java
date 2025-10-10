@@ -21,7 +21,7 @@ public class BytecodeAnalysisResultsHighlightingTest extends DataFlowInspectionT
       public void configureModule(@NotNull Module module, @NotNull ModifiableRootModel model, @NotNull ContentEntry contentEntry) {
         super.configureModule(module, model, contentEntry);
         DefaultLightProjectDescriptor.addJetBrainsAnnotations(model);
-        PsiTestUtil.addProjectLibrary(model, "velocity", IntelliJProjectConfiguration.getProjectLibraryClassesRootPaths("Velocity"));
+        PsiTestUtil.addProjectLibrary(model, "velocity", IntelliJProjectConfiguration.getModuleLibrary("intellij.libraries.velocity", "Velocity").getClassesPaths());
         PsiTestUtil.addProjectLibrary(model, "commons-lang", IntelliJProjectConfiguration.getProjectLibraryClassesRootPaths("commons-lang3"));
       }
     };

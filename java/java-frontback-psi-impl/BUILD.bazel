@@ -19,7 +19,7 @@ jvm_library(
     "//platform/core-api:core",
     "//platform/core-impl",
     "//libraries/asm",
-    "@lib//:stream_ex",
+    "//libraries/stream",
     "//platform/util",
     "//libraries/fastutil",
     "@lib//:kotlin-stdlib",

@@ -33,7 +33,7 @@ jvm_library(
     "@lib//:kotlinx-coroutines-core",
     "//platform/projectModel-api:projectModel",
     "//platform/rd-platform-community:rd-community",
-    "@lib//:kotlinx-collections-immutable",
+    "//libraries/kotlinx/collections-immutable:libraries-kotlinx-collections-immutable",
     "//platform/core-ui",
     "//platform/platform-api:ide",
     "//platform/util/concurrency",

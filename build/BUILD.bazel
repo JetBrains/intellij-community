@@ -68,7 +68,7 @@ jvm_library(
     "//platform/util",
     "//jps/model-api:model",
     "//build/deps:dependencies",
-    "@lib//:kotlinx-collections-immutable",
+    "//libraries/kotlinx/collections-immutable:libraries-kotlinx-collections-immutable",
     "//build/tasks",
     "@lib//:opentelemetry",
     "@lib//:opentelemetry-semconv",

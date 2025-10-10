@@ -39,6 +39,6 @@
     <orderEntry type="module" module-name="intellij.libraries.kotlin.reflect" />
     <orderEntry type="library" name="slf4j-api" level="project" />
     <orderEntry type="library" scope="PROVIDED" name="kotlinx-coroutines-core" level="project" />
-    <orderEntry type="library" scope="PROVIDED" name="kotlinx-collections-immutable" level="project" />
+    <orderEntry type="module" module-name="intellij.libraries.kotlinx.collections.immutable" scope="PROVIDED" />
   </component>
 </module>

@@ -20,7 +20,7 @@ jvm_library(
     "//platform/core-api:core",
     "//platform/xdebugger-api:debugger",
     "//platform/xdebugger-impl:debugger-impl",
-    "@lib//:stream_ex",
+    "//libraries/stream",
     "//platform/editor-ui-api:editor-ui",
     "//platform/util:util-ui",
     "//platform/core-ui",

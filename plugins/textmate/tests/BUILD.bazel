@@ -33,7 +33,7 @@ jvm_library(
     "@lib//:kotlinx-coroutines-test",
     "//platform/util",
     "//platform/util/xmlDom",
-    "@lib//:kotlinx-collections-immutable",
+    "//libraries/kotlinx/collections-immutable:libraries-kotlinx-collections-immutable",
     "@lib//:kotlinx-coroutines-core",
     "//plugins/textmate",
     "//platform/core-api:core",

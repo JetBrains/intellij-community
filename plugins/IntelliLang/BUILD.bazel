@@ -23,7 +23,7 @@ jvm_library(
     "//platform/projectModel-api:projectModel",
     "//RegExpSupport:regexp",
     "//platform/platform-api:ide",
-    "@lib//:stream_ex",
+    "//libraries/stream",
     "//platform/core-api:core",
     "//platform/core-ui",
     "//platform/editor-ui-ex:editor-ex",

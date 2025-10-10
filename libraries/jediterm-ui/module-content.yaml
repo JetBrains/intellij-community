@@ -1,0 +1,6 @@
+- name: <file>
+  modules:
+  - name: intellij.libraries.jediterm.ui
+  library: jediterm-ui
+  files:
+  - name: $MAVEN_REPOSITORY$/org/jetbrains/jediterm/jediterm-ui/3/jediterm-ui-3.jar

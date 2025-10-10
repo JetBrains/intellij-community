@@ -24,7 +24,7 @@ jvm_library(
     "//platform/util/coroutines",
     "//platform/core-api:core",
     "@lib//:jna",
-    "@lib//:pty4j",
+    "//libraries/pty4j",
     "//platform/ide-core",
     "//platform/eel-provider",
     "//platform/core-nio-fs",

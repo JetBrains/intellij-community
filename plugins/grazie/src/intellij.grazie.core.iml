@@ -670,7 +670,7 @@
     <orderEntry type="module" module-name="intellij.platform.util.ui" />
     <orderEntry type="module" module-name="intellij.platform.ide.impl" />
     <orderEntry type="module" module-name="intellij.platform.lang.impl" />
-    <orderEntry type="library" name="StreamEx" level="project" />
+    <orderEntry type="module" module-name="intellij.libraries.stream" />
     <orderEntry type="module" module-name="intellij.libraries.kotlinx.serialization.core" />
     <orderEntry type="module" module-name="intellij.libraries.lucene.common" />
     <orderEntry type="module" module-name="intellij.libraries.ai.grazie.spell.gec.engine.local" />
@@ -718,7 +718,7 @@
         </SOURCES>
       </library>
     </orderEntry>
-    <orderEntry type="library" name="kotlinx-html-jvm" level="project" />
+    <orderEntry type="module" module-name="intellij.libraries.kotlinx.html" />
     <orderEntry type="module" module-name="intellij.libraries.commons.lang3" scope="RUNTIME" />
     <orderEntry type="module" module-name="intellij.platform.util.coroutines" />
     <orderEntry type="module" module-name="intellij.platform.util.progress" />

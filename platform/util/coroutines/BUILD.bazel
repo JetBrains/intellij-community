@@ -11,7 +11,7 @@ jvm_library(
     "@lib//:jetbrains-annotations",
     "@lib//:kotlinx-coroutines-core",
     "@lib//:kotlin-stdlib",
-    "@lib//:kotlinx-collections-immutable",
+    "//libraries/kotlinx/collections-immutable:libraries-kotlinx-collections-immutable",
   ]
 )
 ### auto-generated section `build intellij.platform.util.coroutines` end

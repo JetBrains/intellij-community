@@ -37,7 +37,7 @@ jvm_library(
     "@lib//:tasks-core-commons-discovery",
     "@lib//:javax-annotation-api",
     "//platform/core-ui",
-    "@lib//:jsonpath",
+    "//libraries/jsonpath",
     "//platform/util/jdom",
     "//platform/markdown-utils",
   ],

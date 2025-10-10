@@ -1,0 +1,18 @@
+### auto-generated section `build intellij.libraries.kotlinx.collections.immutable` start
+load("@rules_jvm//:jvm.bzl", "jvm_library", "resourcegroup")
+
+resourcegroup(
+  name = "libraries-kotlinx-collections-immutable_resources",
+  srcs = glob(["resources/**/*"]),
+  strip_prefix = "resources"
+)
+
+jvm_library(
+  name = "libraries-kotlinx-collections-immutable",
+  visibility = ["//visibility:public"],
+  srcs = glob([], allow_empty = True),
+  resources = [":libraries-kotlinx-collections-immutable_resources"],
+  exports = ["@lib//:kotlinx-collections-immutable"],
+  runtime_deps = ["@lib//:kotlinx-collections-immutable"]
+)
+### auto-generated section `build intellij.libraries.kotlinx.collections.immutable` end

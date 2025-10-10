@@ -15,7 +15,7 @@ jvm_library(
     "//platform/projectModel-api:projectModel",
     "//uast/uast-common:uast",
     "@lib//:kotlin-stdlib",
-    "@lib//:stream_ex",
+    "//libraries/stream",
   ]
 )
 ### auto-generated section `build intellij.platform.uast.ide` end

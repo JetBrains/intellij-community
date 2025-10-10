@@ -36,7 +36,7 @@ jvm_library(
     "//platform/refactoring",
     "//platform/ide-core-impl",
     "//platform/ide-core/plugins",
-    "@lib//:stream_ex",
+    "//libraries/stream",
     "//platform/util/concurrency",
     "//platform/observable",
     "//platform/util-ex",
@@ -45,8 +45,8 @@ jvm_library(
     "//platform/core-ui",
     "//platform/platform-util-io-impl:ide-util-io-impl",
     "@lib//:jediterm-core",
-    "@lib//:jediterm-ui",
-    "@lib//:pty4j",
+    "//libraries/jediterm-ui",
+    "//libraries/pty4j",
     "//platform/execution",
     "//platform/wsl-impl",
     "//platform/util/jdom",
@@ -98,7 +98,7 @@ jvm_library(
     "@lib//:assert_j",
     "//platform/core-ui",
     "@lib//:jediterm-core",
-    "@lib//:jediterm-ui",
+    "//libraries/jediterm-ui",
   ]
 )
 ### auto-generated section `build intellij.platform.execution.tests` end

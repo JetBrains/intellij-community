@@ -2,5 +2,7 @@
 <idea-plugin visibility="internal">
   <dependencies>
     <module name="intellij.libraries.ktor.utils" />
+    <!-- see the comment where we do include it about why we have dependency on it (yes, ktor-core wants this lib) -->
+    <module name="intellij.libraries.kotlinx.coroutines.slf4j" />
   </dependencies>
 </idea-plugin>

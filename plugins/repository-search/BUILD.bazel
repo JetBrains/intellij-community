@@ -50,7 +50,7 @@ jvm_library(
     "//libraries/io",
     "//libraries/ktor/client",
     "@lib//:package-search-api-client",
-    "@lib//:kotlinx-document-store-mvstore",
+    "//libraries/kotlinx/document-store-mvstore:libraries-kotlinx-document-store-mvstore",
     "//libraries/mvstore",
   ],
   exports = ["@lib//:package-search-api-client"]
@@ -90,7 +90,7 @@ jvm_library(
     "//libraries/io",
     "//libraries/ktor/client",
     "@lib//:package-search-api-client",
-    "@lib//:kotlinx-document-store-mvstore",
+    "//libraries/kotlinx/document-store-mvstore:libraries-kotlinx-document-store-mvstore",
     "//libraries/mvstore",
   ],
   exports = ["@lib//:package-search-api-client"]

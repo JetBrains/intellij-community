@@ -11,7 +11,7 @@ jvm_library(
     "@lib//:kotlin-stdlib",
     "//libraries/asm-tools",
     "@lib//:tools-api_dump-kotlinx-bcv",
-    "@lib//:kotlinx-collections-immutable",
+    "//libraries/kotlinx/collections-immutable:libraries-kotlinx-collections-immutable",
     "@lib//:kotlin-metadata",
   ]
 )

@@ -23,7 +23,7 @@ jvm_library(
     "//platform/lang-core",
     "//platform/lang-impl",
     "//platform/core-ui",
-    "@lib//:stream_ex",
+    "//libraries/stream",
     "//platform/platform-impl/concurrency",
     "//platform/platform-impl:ide-impl",
     "//platform/projectModel-api:projectModel",

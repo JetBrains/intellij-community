@@ -36,7 +36,7 @@ jvm_library(
     "//java/java-runtime:rt",
     "@lib//:junit5",
     "@lib//:junit5Launcher",
-    "@lib//:stream_ex",
+    "//libraries/stream",
     "//platform/platform-util-io:ide-util-io",
     "@lib//:junit5Jupiter",
     "@lib//:junit5Vintage",

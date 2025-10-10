@@ -15,7 +15,7 @@ jvm_library(
   resources = [":idea_resources"],
   deps = [
     "@lib//:kotlin-stdlib",
-    "@lib//:kotlinx-collections-immutable",
+    "//libraries/kotlinx/collections-immutable:libraries-kotlinx-collections-immutable",
     "//platform/analysis-api:analysis",
     "//platform/code-style-api:codeStyle",
     "//platform/core-api:core",

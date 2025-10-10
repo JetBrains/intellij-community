@@ -16,7 +16,7 @@ jvm_library(
   deps = [
     "@lib//:jetbrains-annotations",
     "@lib//:kotlin-stdlib",
-    "@lib//:pty4j",
+    "//libraries/pty4j",
     "//platform/core-api:core",
     "//platform/core-nio-fs",
     "//platform/eel-provider",
