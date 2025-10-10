@@ -9,6 +9,7 @@ import org.junit.jupiter.api.Timeout;
 import java.io.File;
 import java.util.List;
 
+import static com.intellij.openapi.util.io.IoTestUtil.assumeWindows;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
 
@@ -59,6 +60,16 @@ public class EnvironmentUtilTest {
 
   @Test void testTransitive() {
     var list = substitute("FOO=/hey;BAR=$FOO$;THIRD=$BAR$", "");
+    assertEquals("/hey", list.get(0));
+    assertEquals("/hey", list.get(1));
+    assertEquals("/hey", list.get(2));
+  }
+
+  @Test
+  public void testWindowsCaseInsensitive() {
+    assumeWindows();
+
+    List<String> list = substitute("FIRST=$foo$;SECOND=$FOO$;THIRD=$fOo$", "FOo=/hey");
     assertEquals("/hey", list.get(0));
     assertEquals("/hey", list.get(1));
     assertEquals("/hey", list.get(2));
