@@ -108,7 +108,7 @@ public final class GitBranchPopupActions {
   /**
    * @deprecated only used externally
    */
-  @Deprecated
+  @Deprecated(forRemoval = true)
   public static class GitNewBranchAction extends NewBranchAction<GitRepository> {
 
     public GitNewBranchAction(@NotNull Project project, @NotNull List<GitRepository> repositories) {

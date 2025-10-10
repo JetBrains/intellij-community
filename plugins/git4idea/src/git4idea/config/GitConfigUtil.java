@@ -14,7 +14,6 @@ import git4idea.commands.GitCommand;
 import git4idea.commands.GitCommandResult;
 import git4idea.commands.GitLineHandler;
 import git4idea.repo.GitProjectConfigurationCache;
-import git4idea.repo.GitRepository;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -123,7 +122,7 @@ public final class GitConfigUtil {
   /**
    * @deprecated Use {@link #getCommitEncodingCharset(Project, VirtualFile)}
    */
-  @Deprecated
+  @Deprecated(forRemoval = true)
   public static @NotNull String getCommitEncoding(@NotNull Project project, @NotNull VirtualFile root) {
     return getCommitEncodingCharset(project, root).name();
   }
@@ -131,7 +130,7 @@ public final class GitConfigUtil {
   /**
    * @deprecated Use {@link #getLogEncodingCharset(Project, VirtualFile)}
    */
-  @Deprecated
+  @Deprecated(forRemoval = true)
   public static String getLogEncoding(@NotNull Project project, @NotNull VirtualFile root) {
     return getLogEncodingCharset(project, root).name();
   }
