@@ -696,9 +696,10 @@ public class JavaMethodsConflictResolver implements PsiConflictResolver {
     for (CandidateInfo conflict : conflicts) {
       ProgressManager.checkCanceled();
       final PsiMethod method = (PsiMethod)conflict.getElement();
-      final int parametersCount = method.getParameterList().getParametersCount();
+      PsiParameterList list = method.getParameterList();
+      final int parametersCount = list.getParametersCount();
       if (method.isVarArgs() && parametersCount - 1 == argumentsCount) {
-        final PsiType type = method.getParameterList().getParameters()[parametersCount - 1].getType();
+        final PsiType type = Objects.requireNonNull(list.getParameter(parametersCount - 1)).getType();
         final PsiType componentType = ((PsiArrayType)type).getComponentType();
         final PsiClassType classType = PsiType.getJavaLangObject(method.getManager(), GlobalSearchScope.allScope(method.getProject()));
         if (Comparing.equal(componentType, classType)) {
@@ -712,8 +713,9 @@ public class JavaMethodsConflictResolver implements PsiConflictResolver {
         ProgressManager.checkCanceled();
         PsiMethod method = (PsiMethod)conflict.getElement();
         if (method != objectVararg.getElement() && method.isVarArgs()) {
-          final int paramsCount = method.getParameterList().getParametersCount();
-          final PsiType type = method.getParameterList().getParameters()[paramsCount - 1].getType();
+          PsiParameterList list = method.getParameterList();
+          final int paramsCount = list.getParametersCount();
+          final PsiType type = Objects.requireNonNull(list.getParameter(paramsCount - 1)).getType();
           final PsiType componentType = ((PsiArrayType)type).getComponentType();
           if (argumentsCount == paramsCount - 1 && componentType instanceof PsiPrimitiveType) {
             conflicts.remove(objectVararg);
