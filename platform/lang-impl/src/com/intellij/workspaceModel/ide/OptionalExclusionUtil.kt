@@ -4,8 +4,6 @@ package com.intellij.workspaceModel.ide
 import com.intellij.openapi.extensions.ExtensionPointName
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.vfs.VirtualFile
-import com.intellij.platform.backend.workspace.toVirtualFileUrl
-import com.intellij.platform.backend.workspace.workspaceModel
 import org.jetbrains.annotations.ApiStatus
 
 @ApiStatus.Internal
@@ -16,9 +14,8 @@ object OptionalExclusionUtil {
 
   @JvmStatic
   fun exclude(project: Project, fileOrDir: VirtualFile): Boolean {
-    val url = fileOrDir.toVirtualFileUrl(project.workspaceModel.getVirtualFileUrlManager())
     for (exclusionContributor in EP_NAME.extensionList) {
-      if (exclusionContributor.requestExclusion(project, url)) {
+      if (exclusionContributor.requestExclusion(project, fileOrDir)) {
         return true
       }
     }
@@ -27,10 +24,9 @@ object OptionalExclusionUtil {
 
   @JvmStatic
   fun cancelExclusion(project: Project, fileOrDir: VirtualFile): Boolean {
-    val url = fileOrDir.toVirtualFileUrl(project.workspaceModel.getVirtualFileUrlManager())
     var cancelled = false
     for (exclusionContributor in EP_NAME.extensionList) {
-      if (exclusionContributor.requestExclusionCancellation(project, url)) {
+      if (exclusionContributor.requestExclusionCancellation(project, fileOrDir)) {
         cancelled = true
       }
     }

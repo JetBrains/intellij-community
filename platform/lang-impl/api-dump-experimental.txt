@@ -1184,5 +1184,5 @@ c:com.intellij.util.indexing.IndexInfrastructureVersionBase
 *f:com.intellij.util.indexing.roots.IndexableSetContributorFilesIterator$Companion
 - f:createProjectUnAwareIndexableSetContributors():java.util.List
 *:com.intellij.workspaceModel.ide.OptionalExclusionContributor
-- a:requestExclusion(com.intellij.openapi.project.Project,com.intellij.platform.workspace.storage.url.VirtualFileUrl):Z
-- a:requestExclusionCancellation(com.intellij.openapi.project.Project,com.intellij.platform.workspace.storage.url.VirtualFileUrl):Z
+- a:requestExclusion(com.intellij.openapi.project.Project,com.intellij.openapi.vfs.VirtualFile):Z
+- a:requestExclusionCancellation(com.intellij.openapi.project.Project,com.intellij.openapi.vfs.VirtualFile):Z

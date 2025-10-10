@@ -2,7 +2,7 @@
 package com.intellij.workspaceModel.ide
 
 import com.intellij.openapi.project.Project
-import com.intellij.platform.workspace.storage.url.VirtualFileUrl
+import com.intellij.openapi.vfs.VirtualFile
 import org.jetbrains.annotations.ApiStatus
 
 /**
@@ -21,20 +21,20 @@ import org.jetbrains.annotations.ApiStatus
 @ApiStatus.Experimental
 interface OptionalExclusionContributor {
   /**
-   * Invoked when a file or a directory referenced by [url] is requested to be excluded.
+   * Invoked when a file/directory is requested to be excluded.
    * It can be invoked on any thread with or without read action.
-   * If the implementation can exclude the [url], it should return `true` and exclude it asynchronously.
+   * If the implementation can exclude the [fileOrDir], it should return `true` and exclude it asynchronously.
    *
-   * @return true if the [url] is expected to be excluded eventually
+   * @return true if the [fileOrDir] is expected to be excluded eventually
    */
-  fun requestExclusion(project: Project, url: VirtualFileUrl): Boolean
+  fun requestExclusion(project: Project, fileOrDir: VirtualFile): Boolean
 
   /**
-   * Invoked when a file or a directory referenced by [url] is requested to be not excluded.
+   * Invoked when an excluded file/directory is requested to be unexcluded.
    * It can be invoked on any thread with or without read action.
    * If the implementation can handle the request, it should return `true` and cancel the exclusion asynchronously.
    *
-   * @return true if the exclusion of [url] is expected to be canceled eventually
+   * @return true if the exclusion of [excludedFileOrDir] is expected to be canceled eventually
    */
-  fun requestExclusionCancellation(project: Project, url: VirtualFileUrl): Boolean
+  fun requestExclusionCancellation(project: Project, excludedFileOrDir: VirtualFile): Boolean
 }
