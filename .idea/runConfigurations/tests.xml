@@ -1,5 +1,5 @@
 <component name="ProjectRunConfigurationManager">
-  <configuration default="false" name="tests in community" type="JetRunConfigurationType">
+  <configuration default="false" name="tests" type="JetRunConfigurationType">
     <option name="MAIN_CLASS_NAME" value="CommunityRunTestsBuildTarget" />
     <module name="intellij.idea.community.build" />
     <shortenClasspath name="NONE" />

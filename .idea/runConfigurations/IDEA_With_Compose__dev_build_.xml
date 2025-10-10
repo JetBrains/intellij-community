@@ -1,5 +1,5 @@
 <component name="ProjectRunConfigurationManager">
-  <configuration default="false" name="IDEA Community With Compose (dev build)" type="Application" factoryName="Application">
+  <configuration default="false" name="IDEA With Compose (dev build)" type="Application" factoryName="Application">
     <option name="ALTERNATIVE_JRE_PATH" value="BUNDLED" />
     <envs>
       <env name="CLASSES_DIR" value="$PROJECT_DIR$/out/production" />

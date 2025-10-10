@@ -1,5 +1,5 @@
 <component name="ProjectRunConfigurationManager">
-  <configuration default="false" name="Build IDEA Community Installers (current OS)" type="JetRunConfigurationType">
+  <configuration default="false" name="Build IntelliJ IDEA Installers (current OS)" type="JetRunConfigurationType">
     <option name="MAIN_CLASS_NAME" value="OpenSourceCommunityInstallersBuildTarget" />
     <module name="intellij.idea.community.build" />
     <shortenClasspath name="ARGS_FILE" />
