@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.diff.impl.patch.apply;
 
 import com.intellij.codeInsight.actions.VcsFacade;
@@ -7,7 +7,6 @@ import com.intellij.openapi.diff.impl.patch.CharsetEP;
 import com.intellij.openapi.diff.impl.patch.TextFilePatch;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.fileEditor.FileDocumentManager;
-import com.intellij.openapi.fileEditor.impl.LoadTextUtil;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.vcs.FilePath;
 import com.intellij.openapi.vcs.changes.CommitContext;
@@ -48,7 +47,7 @@ public final class ApplyTextFilePatch extends ApplyFilePatchBase<TextFilePatch> 
       }
 
       if (appliedPatch.status == ApplyPatchStatus.SUCCESS) {
-        updateDocumentContent(project, document, fileToPatch, appliedPatch.patchedText);
+        updateDocumentContent(project, document, appliedPatch.patchedText);
         return new Result(appliedPatch.status);
       }
     }
@@ -83,21 +82,15 @@ public final class ApplyTextFilePatch extends ApplyFilePatchBase<TextFilePatch> 
     }
 
     String patchText = myPatch.getSingleHunkPatchText();
-    updateDocumentContent(project, document, newFile, patchText);
+    updateDocumentContent(project, document, patchText);
   }
 
-  private void updateDocumentContent(@NotNull Project project,
-                                     @NotNull Document document,
-                                     @NotNull VirtualFile file,
-                                     @NotNull String patchedText) {
+  private static void updateDocumentContent(@NotNull Project project,
+                                            @NotNull Document document,
+                                            @NotNull String patchedText) {
     VcsFacade.getInstance().runHeavyModificationTask(project, document, () -> {
-      try {
-        LoadTextUtil.write(project, file, this, patchedText, -1, false);
-      }
-      catch (IOException e) {
-        throw new RuntimeException(e);
-      }
-      FileDocumentManager.getInstance().reloadFromDisk(document);
+      document.setText(patchedText);
+      FileDocumentManager.getInstance().saveDocument(document);
     });
   }
 }
