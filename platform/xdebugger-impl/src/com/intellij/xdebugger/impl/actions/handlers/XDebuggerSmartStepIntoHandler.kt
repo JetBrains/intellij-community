@@ -476,7 +476,6 @@ private fun inplaceChoose(
   LOG.assertTrue(data.myCurrentVariant != null)
   editor.putUserData(SMART_STEP_INPLACE_DATA, data)
 
-  session.updateExecutionPosition()
   if (AppMode.isRemoteDevHost()) {
     val virtualFile = editor.virtualFile
     // in the case of remote development the ordinary focus request doesn't work, we need to use FileEditorManagerEx api to focus the editor

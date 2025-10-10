@@ -30,7 +30,6 @@ import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.application.EDT
 import com.intellij.openapi.application.ReadAction
 import com.intellij.openapi.diagnostic.Logger
-import com.intellij.openapi.editor.markup.GutterIconRenderer
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.ui.MessageType
 import com.intellij.openapi.util.Comparing
@@ -777,18 +776,11 @@ class XDebugSessionImpl @JvmOverloads constructor(
     updateExecutionPosition()
   }
 
+  @Deprecated("Update should go via front-end listeners")
   override fun updateExecutionPosition() {
-    updateExecutionPosition(this.currentSourceKind)
-  }
-
-  private fun updateExecutionPosition(navigationSourceKind: XSourceKind) {
-    // allowed only for the active session
+    // Actually, it is just a fallback. All information should go via front-end listeners.
     if (myDebuggerManager.currentSession == this) {
-      val isTopFrame = this.isTopFrameSelected
-      val mainSourcePosition = getFrameSourcePosition(currentStackFrame, XSourceKind.MAIN)
-      val alternativeSourcePosition = getFrameSourcePosition(currentStackFrame, XSourceKind.ALTERNATIVE)
-      XDebugManagerProxy.getInstance().getDebuggerExecutionPointManager(project)?.setExecutionPoint(mainSourcePosition, alternativeSourcePosition, isTopFrame, navigationSourceKind)
-      updateExecutionPointGutterIconRenderer()
+      updateExecutionPosition(myProject, currentSourceKind)
     }
   }
 
@@ -801,7 +793,6 @@ class XDebugSessionImpl @JvmOverloads constructor(
     val executionStack = currentSuspendContext.activeExecutionStack ?: return
     val topFrame = executionStack.getTopFrame() ?: return
     setCurrentStackFrame(executionStack, topFrame, true)
-    XDebugManagerProxy.getInstance().getDebuggerExecutionPointManager(project)?.showExecutionPosition()
   }
 
   override fun setCurrentStackFrame(executionStack: XExecutionStack, frame: XStackFrame, isTopFrame: Boolean) {
@@ -827,13 +818,7 @@ class XDebugSessionImpl @JvmOverloads constructor(
   }
 
   fun activateSession(forceUpdateExecutionPosition: Boolean) {
-    val sessionChanged = myDebuggerManager.setCurrentSession(this)
-    if (sessionChanged || forceUpdateExecutionPosition) {
-      updateExecutionPosition()
-    }
-    else {
-      XDebugManagerProxy.getInstance().getDebuggerExecutionPointManager(project)?.showExecutionPosition()
-    }
+    myDebuggerManager.setCurrentSession(this)
   }
 
   val activeNonLineBreakpoint: XBreakpoint<*>? get() = myActiveNonLineBreakpointFlow.value
@@ -843,31 +828,11 @@ class XDebugSessionImpl @JvmOverloads constructor(
     val (breakpoint, _) = myActiveNonLineBreakpointAndPositionFlow.value ?: return
     if (breakpoint === removedBreakpoint) {
       clearActiveNonLineBreakpoint()
-      updateExecutionPointGutterIconRenderer()
     }
   }
 
   private fun clearActiveNonLineBreakpoint() {
     myActiveNonLineBreakpointAndPositionFlow.value = null
-  }
-
-  fun updateExecutionPointGutterIconRenderer() {
-    if (myDebuggerManager.currentSession == this) {
-      val isTopFrame = this.isTopFrameSelected
-      val renderer = getPositionIconRenderer(isTopFrame)
-      XDebugManagerProxy.getInstance().getDebuggerExecutionPointManager(project)?.gutterIconRenderer = renderer
-    }
-  }
-
-  private fun getPositionIconRenderer(isTopFrame: Boolean): GutterIconRenderer? {
-    if (!isTopFrame) {
-      return null
-    }
-    val activeNonLineBreakpoint = this.activeNonLineBreakpoint
-    if (activeNonLineBreakpoint != null) {
-      return (activeNonLineBreakpoint as XBreakpointBase<*, *, *>).createGutterIconRenderer()
-    }
-    return currentExecutionStack?.executionLineIconRenderer
   }
 
   override fun updateBreakpointPresentation(
@@ -1069,11 +1034,6 @@ class XDebugSessionImpl @JvmOverloads constructor(
     val isSteppingSuspendContext = newSuspendContext is XSteppingSuspendContext
 
     myPaused.value = !isSteppingSuspendContext
-
-    if (!isSteppingSuspendContext) {
-      val isAlternative = myAlternativeSourceHandler?.isAlternativeSourceKindPreferred(newSuspendContext) == true
-      updateExecutionPosition(if (isAlternative) XSourceKind.ALTERNATIVE else XSourceKind.MAIN)
-    }
   }
 
   override fun positionReached(suspendContext: XSuspendContext) {
