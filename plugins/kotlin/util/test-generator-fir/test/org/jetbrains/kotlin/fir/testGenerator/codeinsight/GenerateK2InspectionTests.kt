@@ -189,6 +189,7 @@ internal fun MutableTWorkspace.generateK2InspectionTests() {
 
         testClass<AbstractK2MultiFileInspectionTest> {
             model("${idea}/multiFileInspections/mismatchedPackageDirectoryWithEmptyKts", pattern = Patterns.TEST)
+            model("${idea}/multiFileInspections/mismatchedPackageDirectory", pattern = Patterns.TEST)
             model("${idea}/multiFileInspections/mismatchedProjectAndDirectory", pattern = Patterns.TEST)
             model("${idea}/multiFileInspections/kotlinSealedInJavaTest", pattern = Patterns.TEST)
             model("${idea}/multiFileInspections/mismatchedProjectAndDirectoryRoot", pattern = Patterns.TEST)

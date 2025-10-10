@@ -11,7 +11,6 @@ import com.intellij.openapi.application.runWriteAction
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.roots.SingleFileSourcesTracker
 import com.intellij.openapi.ui.Messages
-import com.intellij.openapi.util.TextRange
 import com.intellij.psi.PsiManager
 import com.intellij.refactoring.PackageWrapper
 import com.intellij.refactoring.move.moveClassesOrPackages.AutocreatingSingleSourceRootMoveDestination
@@ -34,7 +33,6 @@ import org.jetbrains.kotlin.psi.KtFile
 import org.jetbrains.kotlin.psi.KtPackageDirective
 import org.jetbrains.kotlin.psi.KtVisitor
 import org.jetbrains.kotlin.psi.KtVisitorVoid
-import org.jetbrains.kotlin.psi.psiUtil.startOffset
 
 class PackageDirectoryMismatchInspection : AbstractKotlinInspection() {
     override fun buildVisitor(holder: ProblemsHolder, isOnTheFly: Boolean): KtVisitor<*, *> = object : KtVisitorVoid() {
@@ -54,7 +52,10 @@ class PackageDirectoryMismatchInspection : AbstractKotlinInspection() {
 
             val singleFileSourcesTracker = SingleFileSourcesTracker.getInstance(file.project)
             val isSingleFileSource = singleFileSourcesTracker.isSingleFileSource(file.virtualFile)
-            if (!isSingleFileSource) fixes += MoveFileToPackageFix(dirName)
+            if (!isSingleFileSource) {
+                fixes += MoveFileToPackageFix(dirName)
+            }
+
             val fqNameByDirectory = file.getFqNameByDirectory()
             when {
                 fqNameByDirectory.isRoot ->
@@ -68,12 +69,9 @@ class PackageDirectoryMismatchInspection : AbstractKotlinInspection() {
                 fixes += ChangePackageFix("'${fqNameWithImplicitPrefix.asString()}'", fqNameWithImplicitPrefix)
             }
 
-            val textRange = if (directive.textLength != 0) directive.textRange else file.declarations.firstOrNull()?.let {
-              TextRange.from(it.startOffset, 1)
-            }
+            val element = if (directive.textLength != 0) directive else (file.declarations.firstOrNull() ?: file)
             holder.registerProblem(
-              file,
-              textRange,
+                element,
               KotlinBundle.message("text.package.directive.dont.match.file.location"),
               *fixes.toTypedArray()
             )
@@ -88,7 +86,8 @@ class PackageDirectoryMismatchInspection : AbstractKotlinInspection() {
         override fun startInWriteAction() = false
 
         override fun applyFix(project: Project, descriptor: ProblemDescriptor) {
-            val file = descriptor.psiElement as? KtFile ?: return
+            val psiElement = descriptor.psiElement
+            val file = psiElement.containingFile as? KtFile ?: return
             val directive = file.packageDirective ?: return
 
             val sourceRoots = file.module?.findExistingNonGeneratedKotlinSourceRootFiles()?.takeIf { it.isNotEmpty() } ?: getSuitableDestinationSourceRoots(project)
@@ -126,7 +125,8 @@ class PackageDirectoryMismatchInspection : AbstractKotlinInspection() {
         override fun startInWriteAction(): Boolean = false
 
         override fun applyFix(project: Project, descriptor: ProblemDescriptor) {
-            val file = descriptor.psiElement as? KtFile ?: return
+            val psiElement = descriptor.psiElement
+            val file = psiElement.containingFile as? KtFile ?: return
             val changePkgDescriptor = K2ChangePackageDescriptor(file.project, setOf(file), packageFqName, false, false)
             K2ChangePackageRefactoringProcessor(changePkgDescriptor).run()
         }

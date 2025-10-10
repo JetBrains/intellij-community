@@ -70,6 +70,11 @@ public class MultiFileInspectionTestGenerated extends AbstractMultiFileInspectio
         runTest("testData/multiFileInspections/mismatchedPackageDirectoryWithEmptyKts/mismatchedPackageDirectoryWithEmptyKts.test");
     }
 
+    @TestMetadata("mismatchedPackageDirectory/mismatchedPackageDirectory.test")
+    public void testMismatchedPackageDirectory_MismatchedPackageDirectory() throws Exception {
+        runTest("testData/multiFileInspections/mismatchedPackageDirectory/mismatchedPackageDirectory.test");
+    }
+
     @TestMetadata("mismatchedProjectAndDirectoryRoot/mismatchedProjectAndDirectoryRoot.test")
     public void testMismatchedProjectAndDirectoryRoot_MismatchedProjectAndDirectoryRoot() throws Exception {
         runTest("testData/multiFileInspections/mismatchedProjectAndDirectoryRoot/mismatchedProjectAndDirectoryRoot.test");
