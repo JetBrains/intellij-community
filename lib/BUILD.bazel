@@ -1597,6 +1597,13 @@ jvm_import(
   visibility = ["//visibility:public"]
 )
 
+jvm_import(
+  name = "github-oshi-core",
+  jar = "@com_github_oshi-oshi-core-6_8_2_http//file",
+  source_jar = "@com_github_oshi-oshi-core-6_8_2_http//file",
+  visibility = ["//visibility:public"]
+)
+
 java_library(
   name = "google-baksmali",
   exports = [
@@ -8501,13 +8508,6 @@ jvm_import(
   name = "com_soywiz_korlibs_krypto-krypto-jvm-4_0_10_http_import",
   jar = "@com_soywiz_korlibs_krypto-krypto-jvm-4_0_10_http//file",
   source_jar = "@com_soywiz_korlibs_krypto-krypto-jvm-4_0_10_http//file"
-)
-
-jvm_import(
-  name = "performance_testing-github-oshi-core",
-  jar = "@com_github_oshi-oshi-core-6_8_2_http//file",
-  source_jar = "@com_github_oshi-oshi-core-6_8_2_http//file",
-  visibility = ["//visibility:public"]
 )
 
 java_library(

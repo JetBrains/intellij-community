@@ -38,29 +38,6 @@
     <orderEntry type="module" module-name="intellij.platform.statistics" />
     <orderEntry type="module" module-name="intellij.platform.execution.impl" />
     <orderEntry type="module" module-name="intellij.platform.ide.internal" />
-    <orderEntry type="module-library">
-      <library name="github.oshi.core" type="repository">
-        <properties maven-id="com.github.oshi:oshi-core:6.8.2">
-          <verification>
-            <artifact url="file://$MAVEN_REPOSITORY$/com/github/oshi/oshi-core/6.8.2/oshi-core-6.8.2.jar">
-              <sha256sum>9403c2537ac0dd425e556dfc3434e5d9f9a9547312472f4c27b7ab2673e9e862</sha256sum>
-            </artifact>
-          </verification>
-          <exclude>
-            <dependency maven-id="net.java.dev.jna:jna-platform" />
-            <dependency maven-id="net.java.dev.jna:jna" />
-            <dependency maven-id="org.slf4j:slf4j-api" />
-          </exclude>
-        </properties>
-        <CLASSES>
-          <root url="jar://$MAVEN_REPOSITORY$/com/github/oshi/oshi-core/6.8.2/oshi-core-6.8.2.jar!/" />
-        </CLASSES>
-        <JAVADOC />
-        <SOURCES>
-          <root url="jar://$MAVEN_REPOSITORY$/com/github/oshi/oshi-core/6.8.2/oshi-core-6.8.2-sources.jar!/" />
-        </SOURCES>
-      </library>
-    </orderEntry>
     <orderEntry type="library" name="opentelemetry" level="project" />
     <orderEntry type="library" name="opentelemetry-semconv" level="project" />
     <orderEntry type="library" name="kotlinx-coroutines-core" level="project" />
@@ -80,5 +57,6 @@
     <orderEntry type="module" module-name="intellij.tools.ide.starter.bus" />
     <orderEntry type="module" module-name="intellij.platform.eel.provider" />
     <orderEntry type="library" name="jbr-api" level="project" />
+    <orderEntry type="library" name="github.oshi.core" level="project" />
   </component>
 </module>

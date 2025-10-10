@@ -46,7 +46,6 @@ jvm_library(
     "//platform/statistics",
     "//platform/execution-impl",
     "//platform/platform-impl/internal",
-    "@lib//:performance_testing-github-oshi-core",
     "@lib//:opentelemetry",
     "@lib//:opentelemetry-semconv",
     "@lib//:kotlinx-coroutines-core",
@@ -66,6 +65,7 @@ jvm_library(
     "//plugins/performanceTesting/event-bus:tools-ide-starter-bus",
     "//platform/eel-provider",
     "@lib//:jbr-api",
+    "@lib//:github-oshi-core",
     ":libraries_cli-parser_provided",
   ]
 )
@@ -108,7 +108,6 @@ jvm_library(
     "//platform/statistics:statistics_test_lib",
     "//platform/execution-impl",
     "//platform/platform-impl/internal",
-    "@lib//:performance_testing-github-oshi-core",
     "@lib//:opentelemetry",
     "@lib//:opentelemetry-semconv",
     "@lib//:kotlinx-coroutines-core",
@@ -132,6 +131,7 @@ jvm_library(
     "//plugins/performanceTesting/event-bus:tools-ide-starter-bus_test_lib",
     "//platform/eel-provider",
     "@lib//:jbr-api",
+    "@lib//:github-oshi-core",
   ]
 )
 ### auto-generated section `build intellij.performanceTesting` end
