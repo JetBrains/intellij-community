@@ -408,12 +408,6 @@ public final class SvnVcs extends AbstractVcs {
     return false;
   }
 
-  @Override
-  public boolean fileIsUnderVcs(@NotNull FilePath path) {
-    VirtualFile file = path.getVirtualFile();
-    return file != null && SvnStatusUtil.isUnderControl(this, file);
-  }
-
   public @Nullable Info getInfo(@NotNull Url url, Revision pegRevision, Revision revision) throws SvnBindException {
     return getFactory().createInfoClient().doInfo(Target.on(url, pegRevision), revision);
   }

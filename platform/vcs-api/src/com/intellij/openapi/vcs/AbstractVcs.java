@@ -264,20 +264,6 @@ public abstract class AbstractVcs extends StartedActivated {
   }
 
   /**
-   * Returns true if the specified file path is located under a directory which is managed by this VCS.
-   * This method is called only for directories which are mapped to this VCS in the project configuration.
-   *
-   * @param filePath the path to check.
-   * @return true if the path is managed by this VCS, false otherwise.
-   * @deprecated Use {@link VcsRootChecker} instead.
-   */
-  @ApiStatus.Internal
-  @Deprecated(forRemoval = true)
-  public boolean fileIsUnderVcs(FilePath filePath) {
-    return true;
-  }
-
-  /**
    * Returns true if the specified file path represents a file which exists in the VCS repository (is neither
    * unversioned nor scheduled for addition).
    * This method is called only for directories which are mapped to this VCS in the project configuration.
