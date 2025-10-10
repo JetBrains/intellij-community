@@ -1,9 +1,7 @@
 // Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.tools.build.bazel.jvmIncBuilder;
 
-import com.intellij.tools.build.bazel.jvmIncBuilder.impl.CompositeZipOutputBuilder;
-import com.intellij.tools.build.bazel.jvmIncBuilder.impl.Utils;
-import com.intellij.tools.build.bazel.jvmIncBuilder.impl.ZipOutputBuilderImpl;
+import com.intellij.tools.build.bazel.jvmIncBuilder.impl.*;
 import com.intellij.tools.build.bazel.jvmIncBuilder.impl.forms.FormBinding;
 import com.intellij.tools.build.bazel.jvmIncBuilder.impl.graph.PersistentMVStoreMapletFactory;
 import com.intellij.tools.build.bazel.jvmIncBuilder.instrumentation.InstrumentationClassFinder;
@@ -208,6 +206,7 @@ public class StorageManager implements CloseableExt {
     GraphConfiguration config = myGraphConfig;
     if (config != null) {
       myGraphConfig = null;
+      writeKotlinCriData(config.getGraph(), saveChanges);
       safeClose(config.getGraph(), saveChanges);
     }
 
@@ -224,6 +223,31 @@ public class StorageManager implements CloseableExt {
       myInstrumentationClassFinder = null;
       finder.releaseResources();
     }
+  }
+
+  private void writeKotlinCriData(DependencyGraph graph, Boolean saveChanges) {
+    if (!saveChanges || !isKotlinCriDataGenerationEnabled) return;
+    Path kotlinCriPath = myContext.getKotlinCriStoragePath();
+    if (kotlinCriPath == null) return;
+    if (!Files.exists(kotlinCriPath)) {
+      try { Files.createDirectories(kotlinCriPath); }
+      catch (IOException e) { myContext.report(Message.create(null, e)); }
+    }
+
+    KotlinCriUtilKt.prepareSerializedData(graph)
+      .forEach(
+        (name, content) -> {
+          try {
+            Files.write(kotlinCriPath.resolve(name), content,
+                        StandardOpenOption.CREATE,
+                        StandardOpenOption.WRITE,
+                        StandardOpenOption.TRUNCATE_EXISTING);
+          }
+          catch (IOException e) {
+            myContext.report(Message.create(null, e));
+          }
+        }
+      );
   }
 
   private void safeClose(Closeable cl, boolean saveChanges) {
