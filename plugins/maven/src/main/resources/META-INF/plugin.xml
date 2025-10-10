@@ -691,7 +691,7 @@
     </action>
 
     <action id="Maven.Reimport" class="org.jetbrains.idea.maven.project.actions.ReimportAction"
-            icon="AllIcons.Actions.Refresh">
+            icon="AllIcons.Actions.ForceRefresh">
     </action>
 
     <action id="Maven.ReimportProject" class="org.jetbrains.idea.maven.project.actions.ReimportProjectAction"
