@@ -1925,6 +1925,7 @@ object MavenUtil {
     return !shouldResetDependenciesAndFolders(readingProblems)
   }
 
+  @ApiStatus.ScheduledForRemoval
   @Deprecated("use MavenUtil.resolveSuperPomFile")
   fun getEffectiveSuperPom(project: Project, workingDir: String): VirtualFile? {
     val distribution = MavenDistributionsCache.getInstance(project).getMavenDistribution(workingDir)
