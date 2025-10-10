@@ -1,43 +1,46 @@
 package com.intellij.driver.sdk.ui.components.idea.dialogs
 
+import com.intellij.driver.client.Driver
 import com.intellij.driver.sdk.step
 import com.intellij.driver.sdk.ui.components.ComponentData
 import com.intellij.driver.sdk.ui.components.UiComponent
 import com.intellij.driver.sdk.ui.components.common.dialogs.NewProjectDialogUI
-import com.intellij.driver.sdk.ui.components.elements.accessibleList
-import com.intellij.driver.sdk.ui.components.elements.popup
+import com.intellij.driver.sdk.ui.components.elements.JComboBoxUiComponent
+import com.intellij.driver.sdk.ui.components.elements.comboBox
 import com.intellij.driver.sdk.ui.shouldBe
 import com.intellij.driver.sdk.ui.ui
+import com.intellij.driver.sdk.ui.xQuery
+import javax.swing.JComboBox
 
-
-fun NewProjectDialogUI.jakartaProjectConfigureUIComponent(action: JakartaProjectConfigureUIComponent.() -> Unit = {}): JakartaProjectConfigureUIComponent {
-  return x("//div[@class='DialogRootPane']", JakartaProjectConfigureUIComponent::class.java).apply(action)
+fun Driver.jakartaNewProjectDialog(action: JakartaNewProjectDialogUI.() -> Unit) {
+  this.ui.x(xQuery { byTitle("New Project") }, JakartaNewProjectDialogUI::class.java).action()
 }
 
-class JakartaProjectConfigureUIComponent(data: ComponentData) : UiComponent(data) {
+class JakartaNewProjectDialogUI(data: ComponentData) : NewProjectDialogUI(data) {
 
-  private fun openDropdown(dropdown: String) {
-    x("//div[@accessiblename='$dropdown']/div[@class='BasicArrowButton']").click()
+  private fun pickDropdownByAccessibleName(dropdownAccessibleName: String): JComboBoxUiComponent {
+    return comboBox {
+      and(byAccessibleName(dropdownAccessibleName), byType(JComboBox::class.java))
+    }
   }
 
   fun pickTemplate(template: String) {
     step("Pick Jakarta project template") {
-      openDropdown("Template:")
-      driver.ui.popup().accessibleList().clickItem(template, false)
+      pickDropdownByAccessibleName("Template:").selectItemContains(template)
     }
   }
 
   fun pickApplicationServer(applicationServer: String) {
     step("Pick Jakarta application server") {
-      openDropdown("Application Server:")
-      driver.ui.popup().accessibleList().clickItem(applicationServer, false)
+      pickDropdownByAccessibleName("Application Server:").selectItemContains(applicationServer)
     }
   }
 
   fun pickJakartaVersion(jakartaVersion: String) {
     step("Pick Jakarta version") {
-      openDropdown("Version:")
-      driver.ui.popup().accessibleList().clickItem(jakartaVersion, false)
+      step("Pick Jakarta version") {
+        pickDropdownByAccessibleName("Version:").selectItemContains(jakartaVersion)
+      }
     }
   }
 

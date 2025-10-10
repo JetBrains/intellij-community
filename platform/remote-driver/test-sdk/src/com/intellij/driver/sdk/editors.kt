@@ -8,6 +8,7 @@ import com.intellij.driver.model.RdTarget
 import com.intellij.driver.sdk.remoteDev.GuestNavigationService
 import java.awt.Point
 import java.awt.Rectangle
+import java.nio.file.Path
 import kotlin.time.Duration.Companion.seconds
 
 @Remote("com.intellij.openapi.editor.Editor")
@@ -182,7 +183,7 @@ fun Driver.openFile(relativePath: String, project: Project = singleProject(), wa
                 },
                 checker = { virtualFile ->
                   virtualFile != null &&
-                  virtualFile.getPath().contains(relativePath)
+                  Path.of(virtualFile.getPath()).endsWith(Path.of(relativePath))
                 })!!
       }
     }
