@@ -88,6 +88,11 @@ class NotebookEditorUiComponent(private val data: ComponentData) : JEditorUiComp
     get() = xx("//div[@class='LetsPlotComponent']", LetsPlotComponent::class.java).list()
   val toolbar: UiComponent
     get() = x("//div[@class='JupyterFileEditorToolbar']")
+  val kotlinNotebookToolbarActions: KotlinNotebookActionToolBarComponent
+    get() = x(
+      "//div[@class='ActionToolbarImpl' and contains(@myvisibleactions, 'Kotlin Notebook')]",
+      KotlinNotebookActionToolBarComponent::class.java
+    )
   val imagePanel: List<UiComponent>
     get() = xx("//div[@class='FullEditorWidthRenderer']//div[@class='ImagePanel']").list()
   val lastNotebookOutput: String
