@@ -1,4 +1,4 @@
-<idea-plugin visibility="internal" package="com.intellij.platform.searchEverywhere">
+<idea-plugin visibility="public" package="com.intellij.platform.searchEverywhere">
   <dependencies>
     <module name="intellij.platform.scopes"/>
   </dependencies>
