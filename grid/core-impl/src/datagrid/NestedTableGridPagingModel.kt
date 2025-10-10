@@ -3,6 +3,7 @@ package com.intellij.database.datagrid
 import com.intellij.database.datagrid.NestedTablesDataGridModel.NestedTableCellCoordinate
 import com.intellij.database.datagrid.nested.NestedTablesAware
 import com.intellij.database.datagrid.nested.NestedTablesAware.NonEmptyStack
+import org.jetbrains.annotations.ApiStatus
 
 /**
  * The NestedTableGridPagingModel class is an implementation of the MultiPageModel interface designed to work with
@@ -42,6 +43,7 @@ class NestedTableGridPagingModel<Row, Column>(
    * @param newSelectedNestedTable The nested table to navigate into.
    *
    */
+  @ApiStatus.ScheduledForRemoval
   @Deprecated(
     "This method is deprecated and marked for removal. Use the {@link #enterNestedTable(NestedTableCellCoordinate, NestedTable)} method instead.")
   fun navigateIntoNestedTable(newSelectedNestedTable: NestedTable) {
@@ -62,6 +64,7 @@ class NestedTableGridPagingModel<Row, Column>(
    * the range [0, size).
    *
    */
+  @ApiStatus.ScheduledForRemoval
   @Deprecated("This method is deprecated and marked for removal. Use the {@link #exitNestedTable(int)}} method instead.")
   fun navigateBackFromNestedTable(steps: Int) {
     myNestedTablePageModels.pop(steps)
