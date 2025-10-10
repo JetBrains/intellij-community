@@ -70,7 +70,7 @@ public class JavaMethodsConflictResolver implements PsiConflictResolver {
     checkSameSignatures(conflicts, map);
     if (conflicts.size() == 1) return conflicts.get(0);
 
-    checkAccessStaticLevels(conflicts, true);
+    checkAccessStaticLevels(conflicts);
     if (conflicts.size() == 1) return conflicts.get(0);
 
     checkParametersNumber(conflicts, getActualParametersLength(), map, false);
@@ -154,7 +154,7 @@ public class JavaMethodsConflictResolver implements PsiConflictResolver {
     return false;
   }
 
-  protected static void checkAccessStaticLevels(@NotNull List<? extends CandidateInfo> conflicts, boolean checkAccessible) {
+  protected static void checkAccessStaticLevels(@NotNull List<? extends CandidateInfo> conflicts) {
     int conflictsCount = conflicts.size();
 
     int maxCheckLevel = -1;
@@ -163,7 +163,7 @@ public class JavaMethodsConflictResolver implements PsiConflictResolver {
     for (CandidateInfo conflict : conflicts) {
       ProgressManager.checkCanceled();
       final MethodCandidateInfo method = (MethodCandidateInfo)conflict;
-      final int level = checkAccessible ? getCheckAccessLevel(method) : getCheckStaticLevel(method);
+      final int level = getCheckAccessLevel(method);
       checkLevels[index++] = level;
       maxCheckLevel = Math.max(maxCheckLevel, level);
     }
@@ -404,12 +404,6 @@ public class JavaMethodsConflictResolver implements PsiConflictResolver {
 
   private static int getCheckAccessLevel(@NotNull MethodCandidateInfo method) {
     return method.isAccessible() ? 1 : 0;
-  }
-
-  private static int getCheckStaticLevel(@NotNull MethodCandidateInfo method) {
-    boolean available = method.isStaticsScopeCorrect();
-    return (available ? 1 : 0) << 1 |
-           (method.getCurrentFileResolveScope() instanceof PsiImportStaticStatement ? 0 : 1);
   }
 
   private int getActualParametersLength() {

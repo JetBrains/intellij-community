@@ -234,7 +234,7 @@ public class MethodReferenceResolver implements ResolveCache.PolyVariantContextR
       checkSameSignatures(conflicts, map);
       if (conflicts.size() == 1) return  conflicts.get(0);
 
-      checkAccessStaticLevels(conflicts, true);
+      checkAccessStaticLevels(conflicts);
       if (conflicts.size() == 1) return  conflicts.get(0);
 
       PsiType[] argTypes = mySignature.getParameterTypes();
