@@ -47,7 +47,6 @@ import kotlin.io.path.name
 import kotlin.io.path.readText
 import kotlin.time.Duration.Companion.minutes
 
-private const val NO_RUNTIME_SUFFIX = "-no-jbr"
 private const val EXECUTABLE_TEMPLATE_NAME = "executable-template.sh"
 
 private val BuildSnapSemaphore = Semaphore(Integer.getInteger("intellij.build.unix.snaps.concurrency", 1))
@@ -58,6 +57,9 @@ class LinuxDistributionBuilder(
   private val ideaProperties: CharSequence?,
   override val targetLibcImpl: LinuxLibcImpl,
 ) : OsSpecificDistributionBuilder {
+  companion object {
+    private const val NO_RUNTIME_SUFFIX = "-no-jbr"
+  }
   private val iconPngPath: Path?
 
   init {

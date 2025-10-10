@@ -29,7 +29,7 @@ open class LinuxDistributionCustomizer {
   var useXPlatLauncher: Boolean = true
 
   /**
-   * Relative paths to files in Linux distribution which should take 'executable' permissions
+   * Relative paths to files in the Linux distribution which should take 'executable' permissions
    */
   var extraExecutables: PersistentList<String> = persistentListOf()
 
@@ -60,7 +60,7 @@ open class LinuxDistributionCustomizer {
   }
 
   /**
-   * If `true`, a separate `*${LinuxDistributionBuilder.NO_RUNTIME_SUFFIX}.tar.gz` artifact without a runtime will be produced.
+   * If `true`, a separate `*[org.jetbrains.intellij.build.impl.LinuxDistributionBuilder.NO_RUNTIME_SUFFIX].tar.gz` artifact without a runtime will be produced.
    */
   var buildArtifactWithoutRuntime: Boolean = false
 
