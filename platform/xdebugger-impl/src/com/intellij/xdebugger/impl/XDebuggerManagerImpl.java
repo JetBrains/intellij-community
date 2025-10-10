@@ -23,6 +23,8 @@ import com.intellij.openapi.Disposable;
 import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.actionSystem.ex.ActionManagerEx;
 import com.intellij.openapi.application.ApplicationManager;
+import com.intellij.openapi.application.ModalityState;
+import com.intellij.openapi.application.ReadAction;
 import com.intellij.openapi.components.PersistentStateComponent;
 import com.intellij.openapi.components.State;
 import com.intellij.openapi.components.Storage;
@@ -47,9 +49,12 @@ import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.messages.SimpleMessageBusConnection;
 import com.intellij.util.ui.UIUtil;
 import com.intellij.xdebugger.*;
+import com.intellij.xdebugger.breakpoints.XBreakpoint;
+import com.intellij.xdebugger.breakpoints.XBreakpointListener;
 import com.intellij.xdebugger.impl.actions.XDebuggerActions;
 import com.intellij.xdebugger.impl.breakpoints.XBreakpointManagerImpl;
 import com.intellij.xdebugger.impl.evaluate.ValueLookupManagerController;
+import com.intellij.xdebugger.impl.frame.XDebugManagerProxy;
 import com.intellij.xdebugger.impl.frame.XDebugSessionProxy;
 import com.intellij.xdebugger.impl.pinned.items.XDebuggerPinToTopManager;
 import com.intellij.xdebugger.impl.settings.ShowBreakpointsOverLineNumbersAction;
@@ -104,6 +109,34 @@ public final class XDebuggerManagerImpl extends XDebuggerManager implements Pers
     myBreakpointManager = new XBreakpointManagerImpl(project, this, messageBusConnection, coroutineScope);
     myWatchesManager = new XDebuggerWatchesManager(project, coroutineScope);
     myPinToTopManager = new XDebuggerPinToTopManager(coroutineScope);
+
+    messageBusConnection.subscribe(XBreakpointListener.TOPIC, new XBreakpointListener<>() {
+      @Override
+      public void breakpointChanged(@NotNull XBreakpoint<?> breakpoint) {
+        updateActiveNonLineBreakpointGutterIconRenderer(breakpoint);
+      }
+
+      @Override
+      public void breakpointRemoved(@NotNull XBreakpoint<?> breakpoint) {
+        updateActiveNonLineBreakpointGutterIconRenderer(breakpoint);
+      }
+
+      private void updateActiveNonLineBreakpointGutterIconRenderer(@NotNull XBreakpoint<?> breakpoint) {
+        XDebugSessionImpl session = getCurrentSession();
+        if (session == null) return;
+        ReadAction
+          .nonBlocking(() -> session.getActiveNonLineBreakpoint())
+          .coalesceBy(myProject, breakpoint)
+          .expireWith(myProject)
+          .finishOnUiThread(ModalityState.defaultModalityState(), activeNonLineBreakpoint -> {
+            // also verify that the session has not changed
+            if (getCurrentSession() == session && breakpoint == activeNonLineBreakpoint) {
+              session.updateExecutionPointGutterIconRenderer();
+            }
+          })
+          .submit(EXECUTION_POINT_ICON_EXECUTOR);
+      }
+    });
 
     if (!XDebugSessionProxy.useFeProxy() || AppMode.isRemoteDevHost()) {
       startContentSelectionListening(messageBusConnection);
@@ -339,6 +372,15 @@ public final class XDebuggerManagerImpl extends XDebuggerManager implements Pers
     });
     boolean sessionChanged = previousSession != session;
     if (sessionChanged) {
+      XDebuggerExecutionPointManager executionPointManager = XDebugManagerProxy.getInstance().getDebuggerExecutionPointManager(myProject);
+      if (executionPointManager != null) {
+        if (session != null) {
+          executionPointManager.setAlternativeSourceKindFlow(session.getAlternativeSourceKindState());
+        }
+        else {
+          executionPointManager.clearExecutionPoint();
+        }
+      }
       onActiveSessionChanged(previousSession, session);
     }
     return sessionChanged;

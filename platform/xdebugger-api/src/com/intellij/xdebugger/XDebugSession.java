@@ -178,8 +178,6 @@ public interface XDebugSession extends AbstractDebuggerSession {
 
   <V extends XSmartStepIntoVariant> void smartStepInto(XSmartStepIntoHandler<V> handler, V variant);
 
-  // The execution position should be updated by the debugger engine of from the front-end
-  @Deprecated
   void updateExecutionPosition();
 
   void initBreakpoints();

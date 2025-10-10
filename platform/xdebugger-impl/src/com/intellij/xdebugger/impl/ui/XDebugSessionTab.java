@@ -8,10 +8,7 @@ import com.intellij.execution.runners.BackendExecutionEnvironmentProxy;
 import com.intellij.execution.runners.ExecutionEnvironment;
 import com.intellij.execution.runners.ExecutionEnvironmentProxy;
 import com.intellij.execution.runners.RunContentBuilder;
-import com.intellij.execution.ui.RunContentDescriptor;
-import com.intellij.execution.ui.RunContentManager;
-import com.intellij.execution.ui.RunnerLayoutUi;
-import com.intellij.execution.ui.UIExperiment;
+import com.intellij.execution.ui.*;
 import com.intellij.execution.ui.layout.PlaceInGrid;
 import com.intellij.execution.ui.layout.impl.RunnerContentUi;
 import com.intellij.execution.ui.layout.impl.RunnerLayoutUiImpl;
@@ -631,7 +628,11 @@ public class XDebugSessionTab extends DebuggerSessionTabBase {
     // and should not be made when user steps in the code
     if (!pausedByUser) return;
     if (XDebuggerSettingManagerImpl.getInstanceImpl().getGeneralSettings().isShowDebuggerOnBreakpoint()) {
-      toFront(true, null);
+      toFront(true, () -> {
+        if (mySession != null) {
+          mySession.updateExecutionPosition();
+        }
+      });
     }
 
     if (topFramePositionAbsent) {

@@ -260,7 +260,5 @@
               topic="com.intellij.execution.ExecutionListener"/>
     <listener class="com.intellij.xdebugger.impl.MonolithListenerAdapter"
               topic="com.intellij.xdebugger.XDebuggerManagerListener"/>
-    <listener class="com.intellij.xdebugger.impl.ExecutionPointManagerChangeListener"
-              topic="com.intellij.xdebugger.impl.FrontendXDebuggerManagerListener"/>
   </projectListeners>
 </idea-plugin>
