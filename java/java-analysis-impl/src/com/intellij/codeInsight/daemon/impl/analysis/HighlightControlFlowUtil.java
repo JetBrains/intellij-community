@@ -20,7 +20,7 @@ public final class HighlightControlFlowUtil {
   /**
    * @deprecated use {@link ControlFlowFactory#getControlFlowNoConstantEvaluate(PsiElement)}
    */
-  @Deprecated
+  @Deprecated(forRemoval = true)
   public static @NotNull ControlFlow getControlFlowNoConstantEvaluate(@NotNull PsiElement body) throws AnalysisCanceledException {
     return ControlFlowFactory.getControlFlowNoConstantEvaluate(body);
   }

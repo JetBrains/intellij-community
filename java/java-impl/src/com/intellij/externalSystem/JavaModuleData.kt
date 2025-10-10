@@ -6,6 +6,7 @@ import com.intellij.openapi.externalSystem.model.ProjectSystemId
 import com.intellij.openapi.externalSystem.model.project.AbstractExternalEntityData
 import com.intellij.pom.java.LanguageLevel
 import com.intellij.serialization.PropertyMapping
+import org.jetbrains.annotations.ApiStatus
 
 public class JavaModuleData : AbstractExternalEntityData {
 
@@ -13,6 +14,7 @@ public class JavaModuleData : AbstractExternalEntityData {
   public var targetBytecodeVersion: String?
   public var compilerArguments: List<String>
 
+  @ApiStatus.ScheduledForRemoval
   @Deprecated("Use #JavaModuleData(ProjectSystemId, LanguageLevel, String, Collection<String>) instead")
   public constructor(owner: ProjectSystemId, languageLevel: LanguageLevel?, targetBytecodeVersion: String?) :
     this(owner, languageLevel, targetBytecodeVersion, emptyList())

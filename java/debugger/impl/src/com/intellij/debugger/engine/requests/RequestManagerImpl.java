@@ -69,7 +69,7 @@ public class RequestManagerImpl extends DebugProcessAdapterImpl implements Reque
   }
 
   /** @deprecated Use setThreadFilter instead */
-  @Deprecated
+  @Deprecated(forRemoval = true)
   public void setFilterThread(final @Nullable ThreadReference filterThread) {
     if (filterThread != null) {
       setThreadFilter(new RealThreadInfo(filterThread));

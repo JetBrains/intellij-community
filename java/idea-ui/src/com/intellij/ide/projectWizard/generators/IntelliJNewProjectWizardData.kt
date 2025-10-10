@@ -3,6 +3,7 @@ package com.intellij.ide.projectWizard.generators
 
 import com.intellij.ide.projectWizard.ProjectWizardJdkIntent
 import com.intellij.openapi.observable.properties.ObservableMutableProperty
+import org.jetbrains.annotations.ApiStatus
 
 interface IntelliJNewProjectWizardData {
 
@@ -28,9 +29,13 @@ interface IntelliJNewProjectWizardData {
 
   @Deprecated("Use addSampleCodeProperty instead")
   val generateOnboardingTipsProperty: ObservableMutableProperty<Boolean>
+    @ApiStatus.ScheduledForRemoval
+    @Deprecated("Use addSampleCodeProperty instead")
     get() = addSampleCodeProperty
 
   @Deprecated("Use addSampleCode instead")
   val generateOnboardingTips: Boolean
+    @ApiStatus.ScheduledForRemoval
+    @Deprecated("Use addSampleCode instead")
     get() = addSampleCode
 }
