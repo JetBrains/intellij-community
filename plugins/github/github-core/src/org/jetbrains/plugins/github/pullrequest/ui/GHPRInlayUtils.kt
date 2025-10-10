@@ -18,18 +18,22 @@ import com.intellij.openapi.editor.ex.EditorEx
 import com.intellij.openapi.editor.markup.HighlighterLayer
 import com.intellij.openapi.editor.markup.HighlighterTargetArea
 import com.intellij.openapi.editor.markup.RangeHighlighter
+import com.intellij.openapi.project.Project
 import com.intellij.openapi.wm.IdeGlassPaneUtil
 import com.intellij.platform.util.coroutines.childScope
+import com.intellij.util.asDisposable
+import com.intellij.util.ui.FocusUtil
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.awaitCancellation
-import kotlinx.coroutines.flow.collectLatest
-import kotlinx.coroutines.flow.combine
-import kotlinx.coroutines.flow.map
+import kotlinx.coroutines.channels.awaitClose
+import kotlinx.coroutines.flow.*
 import kotlinx.coroutines.launch
+import org.jetbrains.plugins.github.pullrequest.comment.action.findFocusedThreadId
 import org.jetbrains.plugins.github.pullrequest.ui.comment.CommentedCodeFrameRenderer
 import org.jetbrains.plugins.github.pullrequest.ui.editor.GHPREditorMappedComponentModel
 import java.awt.*
+import java.beans.PropertyChangeListener
 import javax.swing.JComponent
 import javax.swing.JLayer
 import javax.swing.plaf.LayerUI
@@ -52,6 +56,7 @@ internal object GHPRInlayUtils {
       frameResizer
     }
     else null
+
     cs.launchNow {
       vm.shouldShowOutline.combineState(vm.range, ::Pair).collectLatest { (shouldShowOutline, range) ->
         activeLineHighlighter?.let { editor.markupModel.removeHighlighter(it) }
@@ -208,6 +213,26 @@ internal object GHPRInlayUtils {
     }
   }
 
+  internal fun installInlaysFocusTracker(cs: CoroutineScope, model: CodeReviewEditorInlaysModel<*>, project: Project) {
+    val focusedThreadFlow: Flow<String?> = callbackFlow {
+      val focusListener = PropertyChangeListener { evt ->
+        if (evt.propertyName == "focusOwner") {
+          trySend(findFocusedThreadId(project))
+        }
+      }
+
+      FocusUtil.addFocusOwnerListener(cs.asDisposable(), focusListener)
+      send(findFocusedThreadId(project))
+      awaitClose()
+    }
+    cs.launch {
+      model.inlays
+        .map { it.filterIsInstance<GHPREditorMappedComponentModel>() }
+        .combine(focusedThreadFlow) { inlays, focusedThreadId ->
+          inlays.forEach { it.setFocused(it.key == focusedThreadId) }
+        }.collect()
+    }
+  }
 
   @OptIn(ExperimentalCoroutinesApi::class)
   fun installInlaysDimming(cs: CoroutineScope, model: CodeReviewEditorInlaysModel<*>) {

@@ -8,4 +8,6 @@ interface GHPRHoverableReviewComment {
   fun showOutline(isHovered: Boolean)
   val isDimmed: StateFlow<Boolean>
   fun setDimmed(isDimmed: Boolean)
+  val isFocused: StateFlow<Boolean>
+  fun setFocused(isFocused: Boolean)
 }
