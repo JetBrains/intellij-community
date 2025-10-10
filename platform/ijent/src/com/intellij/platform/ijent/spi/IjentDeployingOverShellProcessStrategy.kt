@@ -13,6 +13,7 @@ import com.intellij.platform.ijent.getIjentGrpcArgv
 import com.intellij.util.io.copyToAsync
 import kotlinx.coroutines.*
 import org.jetbrains.annotations.VisibleForTesting
+import java.io.IOException
 import java.io.InputStream
 import java.nio.file.Path
 import kotlin.io.path.fileSize
@@ -122,6 +123,12 @@ abstract class IjentDeployingOverShellProcessStrategy(scope: CoroutineScope) : I
         val stream = mediator!!.process.inputStream
         while (true) {
           ensureActive()
+          while (stream.available() == 0) {
+            if (mediator!!.processExit.isCompleted) {
+              throw IOException("Shell process exited instead of reading a line.")
+            }
+            delay(1.milliseconds)
+          }
           val c = stream.read()
           if (c < 0 || c == '\n'.code) {
             break
