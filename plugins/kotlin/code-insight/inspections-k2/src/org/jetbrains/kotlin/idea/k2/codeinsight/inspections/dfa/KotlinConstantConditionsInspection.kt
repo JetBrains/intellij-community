@@ -31,15 +31,7 @@ import com.intellij.util.ThreeState
 import org.jetbrains.kotlin.analysis.api.KaExperimentalApi
 import org.jetbrains.kotlin.analysis.api.KaSession
 import org.jetbrains.kotlin.analysis.api.analyze
-import org.jetbrains.kotlin.analysis.api.components.KaDiagnosticCheckerFilter
-import org.jetbrains.kotlin.analysis.api.components.evaluate
-import org.jetbrains.kotlin.analysis.api.components.expectedType
-import org.jetbrains.kotlin.analysis.api.components.expressionType
-import org.jetbrains.kotlin.analysis.api.components.isMarkedNullable
-import org.jetbrains.kotlin.analysis.api.components.isNothingType
-import org.jetbrains.kotlin.analysis.api.components.isUsedAsExpression
-import org.jetbrains.kotlin.analysis.api.components.resolveToCall
-import org.jetbrains.kotlin.analysis.api.components.resolveToSymbol
+import org.jetbrains.kotlin.analysis.api.components.*
 import org.jetbrains.kotlin.analysis.api.resolution.KaFunctionCall
 import org.jetbrains.kotlin.analysis.api.resolution.singleFunctionCallOrNull
 import org.jetbrains.kotlin.analysis.api.resolution.symbol
@@ -706,8 +698,9 @@ class KotlinConstantConditionsInspection : AbstractKotlinInspection() {
 
                 else -> {}
             }
-            if (expression is KtSimpleNameExpression) {
-                val target = expression.mainReference.resolve()
+            val targetExpression = (expression as? KtDotQualifiedExpression)?.selectorExpression ?: expression
+            if (targetExpression is KtSimpleNameExpression) {
+                val target = targetExpression.mainReference.resolve()
                 if (target is KtProperty && !target.isVar && target.initializer is KtConstantExpression) {
                     // suppress warnings uses of boolean constant like 'val b = true'
                     return true

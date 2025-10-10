@@ -6,6 +6,15 @@ fun doNotWarnAtZero(x: Int) {
     if (x > ZERO) return
     assert(x == ZERO)
 }
+
+object Constants {
+    const val FALSE = false
+}
+
+fun doNotWarnAtFalse(flag: Boolean?): Boolean {
+    return flag ?: Constants.FALSE
+}
+
 fun returnInReturn(a: Boolean, b: Boolean): Boolean {
     // KTIJ-23768
     return a || return b
