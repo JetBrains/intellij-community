@@ -16,7 +16,7 @@ import git4idea.actions.ref.GitCheckoutAction
 import git4idea.actions.ref.GitDeleteRefAction
 import git4idea.actions.ref.GitMergeRefAction
 import git4idea.actions.ref.GitShowDiffWithRefAction
-import git4idea.actions.tag.GitPushTagsActionGroup
+import git4idea.actions.tag.GitPushTagActionWrapper
 import git4idea.branch.ActionState.Companion.isDisabledAndVisible
 import git4idea.branch.ActionState.Companion.isEnabledAndVisible
 import git4idea.branch.GitBranchesTreeTestContext.Companion.NOT_ORIGIN
@@ -102,7 +102,8 @@ class GitBranchesTreeActionsForSelectionTest : GitBranchesTreeTest() {
       isEnabledAndVisible<GitCheckoutAction>(),
       isEnabledAndVisible<GitShowDiffWithRefAction>(),
       isEnabledAndVisible<GitMergeRefAction>(),
-      isEnabledAndVisible<GitPushTagsActionGroup>(),
+      isEnabledAndVisible<GitPushTagActionWrapper>(),
+      isEnabledAndVisible<GitPushTagActionWrapper>(),
       isEnabledAndVisible<GitDeleteRefAction>(),
     ))
   }
@@ -119,7 +120,8 @@ class GitBranchesTreeActionsForSelectionTest : GitBranchesTreeTest() {
 
     assertActions(expected = listOf(
       isEnabledAndVisible<GitShowDiffWithRefAction>(),
-      isEnabledAndVisible<GitPushTagsActionGroup>(),
+      isEnabledAndVisible<GitPushTagActionWrapper>(),
+      isEnabledAndVisible<GitPushTagActionWrapper>(),
     ))
   }
 
@@ -203,13 +205,11 @@ class GitBranchesTreeActionsForSelectionTest : GitBranchesTreeTest() {
   }
 
   private fun GitBranchesTreeTestContext.assertActions(expected: List<ActionState>) {
-    val actions = BranchActionsBuilder.build(simpleEvent())?.getChildren(simpleEvent())?.mapNotNull {
-      if (it is Separator) return@mapNotNull null
-      val event = simpleEvent()
-      it.update(event)
-      if (!event.presentation.isVisible) return@mapNotNull null
-      ActionState(event.presentation.isEnabled, it::class)
-    }
+    val rootActions = BranchActionsBuilder.build(simpleEvent())?.getChildren(simpleEvent())
+
+    val actions = rootActions
+      ?.flatMap { expandAction(it) }
+      ?.mapNotNull { toActionState(it) }
 
     if (expected.isNotEmpty()) {
       assertNotNull(actions)
@@ -220,6 +220,24 @@ class GitBranchesTreeActionsForSelectionTest : GitBranchesTreeTest() {
     }
   }
 
+  private fun GitBranchesTreeTestContext.expandAction(action: AnAction): List<AnAction> {
+    return when (action) {
+      is Separator -> emptyList()
+      is ActionGroup -> action.getChildren(simpleEvent()).flatMap { expandAction(it) }
+      else -> listOf(action)
+    }
+  }
+
+  private fun GitBranchesTreeTestContext.toActionState(action: AnAction): ActionState? {
+    val event = simpleEvent()
+    action.update(event)
+    return if (event.presentation.isVisible) {
+      ActionState(event.presentation.isEnabled, action::class)
+    }
+    else {
+      null
+    }
+  }
 
   private fun GitBranchesTreeTestContext.simpleEvent(): AnActionEvent {
     return TestActionEvent.createTestEvent(CustomizedDataContext.withSnapshot(DataContext.EMPTY_CONTEXT) { sink ->
