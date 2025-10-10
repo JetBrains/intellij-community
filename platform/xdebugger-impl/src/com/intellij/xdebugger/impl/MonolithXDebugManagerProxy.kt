@@ -3,7 +3,6 @@ package com.intellij.xdebugger.impl
 
 import com.intellij.frontend.FrontendApplicationInfo
 import com.intellij.frontend.FrontendType
-import com.intellij.idea.AppMode
 import com.intellij.openapi.project.Project
 import com.intellij.xdebugger.XDebuggerManager
 import com.intellij.xdebugger.frame.XExecutionStack
@@ -61,13 +60,6 @@ private class MonolithXDebugManagerProxy : XDebugManagerProxy {
 
   override fun getBreakpointManagerProxy(project: Project): XBreakpointManagerProxy {
     return XBreakpointManagerProxy.Monolith(XDebuggerManager.getInstance(project).breakpointManager as XBreakpointManagerImpl)
-  }
-
-  override fun getDebuggerExecutionPointManager(project: Project): XDebuggerExecutionPointManager? {
-    if (AppMode.isRemoteDevHost()) {
-      return null
-    }
-    return XDebuggerExecutionPointManager.getInstance(project)
   }
 
   override fun hasBackendCounterpart(xValue: XValue): Boolean {

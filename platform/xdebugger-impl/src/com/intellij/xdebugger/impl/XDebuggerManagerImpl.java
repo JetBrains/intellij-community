@@ -29,16 +29,19 @@ import com.intellij.openapi.components.PersistentStateComponent;
 import com.intellij.openapi.components.State;
 import com.intellij.openapi.components.Storage;
 import com.intellij.openapi.components.StoragePathMacros;
+import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.editor.EditorFactory;
 import com.intellij.openapi.editor.event.*;
 import com.intellij.openapi.editor.ex.util.EditorUtil;
 import com.intellij.openapi.editor.impl.EditorImpl;
 import com.intellij.openapi.editor.markup.RangeHighlighter;
+import com.intellij.openapi.fileEditor.FileDocumentManagerListener;
 import com.intellij.openapi.fileEditor.FileEditorManager;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.project.ProjectManager;
 import com.intellij.openapi.ui.popup.Balloon;
+import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.wm.IdeGlassPaneUtil;
 import com.intellij.openapi.wm.ToolWindowId;
 import com.intellij.ui.ExperimentalUI;
@@ -54,7 +57,6 @@ import com.intellij.xdebugger.breakpoints.XBreakpointListener;
 import com.intellij.xdebugger.impl.actions.XDebuggerActions;
 import com.intellij.xdebugger.impl.breakpoints.XBreakpointManagerImpl;
 import com.intellij.xdebugger.impl.evaluate.ValueLookupManagerController;
-import com.intellij.xdebugger.impl.frame.XDebugManagerProxy;
 import com.intellij.xdebugger.impl.frame.XDebugSessionProxy;
 import com.intellij.xdebugger.impl.pinned.items.XDebuggerPinToTopManager;
 import com.intellij.xdebugger.impl.settings.ShowBreakpointsOverLineNumbersAction;
@@ -93,6 +95,7 @@ public final class XDebuggerManagerImpl extends XDebuggerManager implements Pers
   private final XBreakpointManagerImpl myBreakpointManager;
   private final XDebuggerWatchesManager myWatchesManager;
   private final XDebuggerPinToTopManager myPinToTopManager;
+  private final XDebuggerExecutionPointManager myExecutionPointManager;
   private final Map<ProcessHandler, XDebugSessionImpl> mySessions = Collections.synchronizedMap(new LinkedHashMap<>());
   private final MutableStateFlow<@Nullable XDebugSessionImpl> myActiveSession = createMutableStateFlow(null);
 
@@ -109,7 +112,19 @@ public final class XDebuggerManagerImpl extends XDebuggerManager implements Pers
     myBreakpointManager = new XBreakpointManagerImpl(project, this, messageBusConnection, coroutineScope);
     myWatchesManager = new XDebuggerWatchesManager(project, coroutineScope);
     myPinToTopManager = new XDebuggerPinToTopManager(coroutineScope);
+    myExecutionPointManager = new XDebuggerExecutionPointManager(project, coroutineScope);
 
+    messageBusConnection.subscribe(FileDocumentManagerListener.TOPIC, new FileDocumentManagerListener() {
+      @Override
+      public void fileContentLoaded(@NotNull VirtualFile file, @NotNull Document document) {
+        myExecutionPointManager.updateExecutionPosition(file, true);
+      }
+
+      @Override
+      public void fileContentReloaded(@NotNull VirtualFile file, @NotNull Document document) {
+        myExecutionPointManager.updateExecutionPosition(file, true);
+      }
+    });
     messageBusConnection.subscribe(XBreakpointListener.TOPIC, new XBreakpointListener<>() {
       @Override
       public void breakpointChanged(@NotNull XBreakpoint<?> breakpoint) {
@@ -215,6 +230,11 @@ public final class XDebuggerManagerImpl extends XDebuggerManager implements Pers
 
   public @NotNull XDebuggerPinToTopManager getPinToTopManager() {
     return myPinToTopManager;
+  }
+
+  @ApiStatus.Internal
+  public @NotNull XDebuggerExecutionPointManager getExecutionPointManager() {
+    return myExecutionPointManager;
   }
 
   public Project getProject() {
@@ -372,14 +392,11 @@ public final class XDebuggerManagerImpl extends XDebuggerManager implements Pers
     });
     boolean sessionChanged = previousSession != session;
     if (sessionChanged) {
-      XDebuggerExecutionPointManager executionPointManager = XDebugManagerProxy.getInstance().getDebuggerExecutionPointManager(myProject);
-      if (executionPointManager != null) {
-        if (session != null) {
-          executionPointManager.setAlternativeSourceKindFlow(session.getAlternativeSourceKindState());
-        }
-        else {
-          executionPointManager.clearExecutionPoint();
-        }
+      if (session != null) {
+        myExecutionPointManager.setAlternativeSourceKindFlow(session.getAlternativeSourceKindState());
+      }
+      else {
+        myExecutionPointManager.clearExecutionPoint();
       }
       onActiveSessionChanged(previousSession, session);
     }

@@ -4,12 +4,9 @@ package com.intellij.xdebugger.impl
 import com.intellij.codeWithMe.ClientId
 import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.application.EDT
-import com.intellij.openapi.components.Service
 import com.intellij.openapi.diagnostic.logger
-import com.intellij.openapi.editor.Document
 import com.intellij.openapi.editor.impl.EditorMouseHoverPopupControl
 import com.intellij.openapi.editor.markup.GutterIconRenderer
-import com.intellij.openapi.fileEditor.FileDocumentManagerListener
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.registry.Registry
 import com.intellij.openapi.vfs.VirtualFile
@@ -23,17 +20,12 @@ import com.intellij.xdebugger.impl.ui.showExecutionPointUi
 import kotlinx.coroutines.*
 import kotlinx.coroutines.channels.BufferOverflow.DROP_OLDEST
 import kotlinx.coroutines.flow.*
-import org.jetbrains.annotations.ApiStatus
 
 
 private val LOG = logger<XDebuggerExecutionPointManager>()
 
-@ApiStatus.Internal
-@Service(Service.Level.PROJECT)
-class XDebuggerExecutionPointManager(
-  private val project: Project,
-  parentScope: CoroutineScope,
-) {
+internal class XDebuggerExecutionPointManager(private val project: Project,
+                                              parentScope: CoroutineScope) {
   private val coroutineScope: CoroutineScope = parentScope.childScope(javaClass.simpleName, Dispatchers.EDT)
 
   private val updateRequestFlow = MutableSharedFlow<ExecutionPositionUpdateRequest>(extraBufferCapacity = 1, onBufferOverflow = DROP_OLDEST)
@@ -86,30 +78,16 @@ class XDebuggerExecutionPointManager(
           }
       }
     }
-
-    val messageBusConnection = project.getMessageBus().connect(parentScope)
-
-    messageBusConnection.subscribe(FileDocumentManagerListener.TOPIC, object : FileDocumentManagerListener {
-      override fun fileContentLoaded(file: VirtualFile, document: Document) {
-        updateExecutionPosition(file, true)
-      }
-
-      override fun fileContentReloaded(file: VirtualFile, document: Document) {
-        updateExecutionPosition(file, true)
-      }
-    })
   }
 
   fun clearExecutionPoint() {
     executionPointVm = null
   }
 
-  fun setExecutionPoint(
-    mainSourcePosition: XSourcePosition?,
-    alternativeSourcePosition: XSourcePosition?,
-    isTopFrame: Boolean,
-    navigationSourceKind: XSourceKind,
-  ) {
+  fun setExecutionPoint(mainSourcePosition: XSourcePosition?,
+                        alternativeSourcePosition: XSourcePosition?,
+                        isTopFrame: Boolean,
+                        navigationSourceKind: XSourceKind) {
     if (mainSourcePosition == null && alternativeSourcePosition == null) {
       return clearExecutionPoint()
     }
@@ -150,12 +128,6 @@ class XDebuggerExecutionPointManager(
     coroutineScope.launch(ClientId.coroutineContext()) {
       executionPointVm?.navigateTo(ExecutionPositionNavigationMode.OPEN)
     }
-  }
-
-
-  companion object {
-    @JvmStatic
-    fun getInstance(project: Project): XDebuggerExecutionPointManager = project.getService(XDebuggerExecutionPointManager::class.java)
   }
 }
 
