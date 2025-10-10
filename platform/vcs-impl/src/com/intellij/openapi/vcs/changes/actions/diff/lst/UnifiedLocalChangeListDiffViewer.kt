@@ -61,6 +61,7 @@ class UnifiedLocalChangeListDiffViewer(context: DiffContext,
   private val gutterCheckboxMouseMotionListener: GutterCheckboxMouseMotionListener
 
   private val viewerHighlighters: MutableList<RangeHighlighter> = mutableListOf()
+  private val decorators = ChangeListDiffViewerDecorator.EP_NAME.extensionList.filter { it.isAvailable(this) }
 
   init {
     trackerActionProvider = MyLocalTrackerActionProvider(this, localRequest, isAllowExcludeChangesFromCommit)
@@ -74,6 +75,8 @@ class UnifiedLocalChangeListDiffViewer(context: DiffContext,
     for (action in createTrackerShortcutOnlyActions(trackerActionProvider)) {
       DiffUtil.registerAction(action, myPanel)
     }
+
+    decorators.forEach { it.initialize(this) }
   }
 
   override fun createTitles(): JComponent {
@@ -162,6 +165,8 @@ class UnifiedLocalChangeListDiffViewer(context: DiffContext,
 
       return Runnable {
         applyChanges.run()
+
+        decorators.forEach { it.decorateFragments(builder.changes, this@UnifiedLocalChangeListDiffViewer) }
         applyGutterExcludeOperations.run()
       }
     }
@@ -374,7 +379,8 @@ class UnifiedLocalChangeListDiffViewer(context: DiffContext,
       }
   }
 
-  private class MyUnifiedDiffChange(blockStart: Int,
+  @ApiStatus.Internal
+  class MyUnifiedDiffChange(blockStart: Int,
                                     insertedStart: Int,
                                     blockEnd: Int,
                                     lineFragment: LineFragment,
