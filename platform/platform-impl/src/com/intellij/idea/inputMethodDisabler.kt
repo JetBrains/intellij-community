@@ -20,6 +20,7 @@ import com.intellij.openapi.wm.ex.WindowManagerEx
 import com.intellij.platform.ide.CoreUiCoroutineScopeHolder
 import com.intellij.util.ReflectionUtil
 import com.intellij.util.io.awaitExit
+import com.intellij.util.ui.StartupUiUtil
 import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
@@ -41,6 +42,11 @@ private var IS_NOTIFICATION_REGISTERED = false
 @ApiStatus.Internal
 suspend fun disableInputMethodsIfPossible() {
   if (SystemInfo.isWindows || SystemInfo.isMac || !SystemInfo.isJetBrainsJvm) {
+    return
+  }
+  if (StartupUiUtil.isWaylandToolkit()) {
+    // JBR-5672: this machinery shouldn't be applied for native Wayland - it provides a distinct VM option to disable input methods:
+    //   'sun.awt.wl.im.enabled'[=true|false].
     return
   }
 
