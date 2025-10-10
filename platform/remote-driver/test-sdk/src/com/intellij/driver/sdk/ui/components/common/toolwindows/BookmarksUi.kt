@@ -12,7 +12,6 @@ import com.intellij.driver.sdk.ui.components.elements.JTreeUiComponent
 import com.intellij.driver.sdk.ui.xQuery
 import com.intellij.driver.sdk.wait
 import com.intellij.driver.sdk.withRetries
-import java.awt.Point
 import javax.swing.JTree
 import kotlin.time.Duration.Companion.seconds
 
@@ -43,13 +42,13 @@ class BookmarksPopupUiComponent(data: ComponentData) : UiComponent(data) {
   val bookmarksTree: JTreeUiComponent = bookmarksTree()
 
   fun clickBookmark(predicate: (String) -> Boolean) {
-    bookmarksTree.clickRow(Point(5, 5), predicate)
+    bookmarksTree.clickRow(predicate = predicate)
   }
 
   fun doubleClickBookmark(predicate: (String) -> Boolean) {
-    withRetries(times = 3) {
-      bookmarksTree.doubleClickRow(Point(5, 5), predicate)
-      waitNotFound()
+    withRetries(times = 3, onError = { wait(1.seconds) }) {
+      bookmarksTree.doubleClickRow(predicate = predicate)
+      waitNotFound(3.seconds)
     }
   }
 }
