@@ -71,6 +71,18 @@ object IjentThreadPool : ExecutorService by Executors.newCachedThreadPool(IjentT
             // This exception is already logged during its creation.
             // No need to log it again.
           }
+          catch (err: Throwable) {
+            if (err.javaClass.name.startsWith(IjentUnavailableException::class.java.name)) {
+              thisLogger().error("We deal with classloaders here again.\n" +
+                                 "Expected class: ${IjentUnavailableException::class.java.name},\n" +
+                                 "  loaded by: ${IjentUnavailableException::class.java.classLoader},\n" +
+                                 "Actual class: ${err.javaClass}\n" +
+                                 "  loaded by: ${err.javaClass.classLoader}", err)
+            }
+            else {
+              throw err
+            }
+          }
           finally {
             threads.remove(this)
           }
