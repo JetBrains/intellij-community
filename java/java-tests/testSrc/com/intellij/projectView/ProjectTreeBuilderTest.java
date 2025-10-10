@@ -3,6 +3,7 @@ package com.intellij.projectView;
 
 import com.intellij.ide.projectView.impl.AbstractProjectViewPane;
 import com.intellij.ide.structureView.impl.java.JavaInheritedMembersNodeProvider;
+import com.intellij.ide.structureView.impl.java.KindSorter;
 import com.intellij.ide.structureView.newStructureView.StructureViewComponent;
 import com.intellij.openapi.fileEditor.FileEditor;
 import com.intellij.openapi.fileEditor.FileEditorManager;
@@ -92,6 +93,7 @@ public class ProjectTreeBuilderTest extends BaseProjectViewTestCase {
     FileEditor[] fileEditors = fileEditorManager.openFile(virtualFile, false);
     StructureViewComponent svc = (StructureViewComponent)fileEditors[0].getStructureViewBuilder()
       .createStructureView(fileEditors[0], myProject);
+    svc.setActionActive(KindSorter.ID, true);
     Disposer.register(getTestRootDisposable(), svc);
     TreeUtil.collapseAll(svc.getTree(), -1);
     fileEditorManager.closeFile(virtualFile);

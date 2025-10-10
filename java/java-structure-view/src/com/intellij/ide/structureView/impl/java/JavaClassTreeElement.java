@@ -1,10 +1,11 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.ide.structureView.impl.java;
 
 import com.intellij.ide.structureView.StructureViewTreeElement;
 import com.intellij.psi.*;
 import com.intellij.psi.impl.PsiImplUtil;
 import com.intellij.psi.impl.light.LightElement;
+import com.siyeh.ig.psiutils.PsiElementOrderComparator;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.*;
@@ -26,22 +27,18 @@ public class JavaClassTreeElement extends JavaClassTreeElementBase<PsiClass> {
   static Collection<StructureViewTreeElement> getClassChildren(PsiClass aClass) {
     if (aClass == null) return Collections.emptyList();
 
-    LinkedHashSet<PsiElement> members = getOwnChildren(aClass);
+    List<PsiElement> members = new ArrayList<>(getOwnChildren(aClass));
+    members.sort(PsiElementOrderComparator.getInstance());
     List<StructureViewTreeElement> children = new ArrayList<>(members.size());
 
     for (PsiElement child : members) {
       if (!child.isValid()) continue;
-      if (child instanceof PsiClass) {
-        children.add(new JavaClassTreeElement((PsiClass)child, false));
-      }
-      else if (child instanceof PsiField) {
-        children.add(new PsiFieldTreeElement((PsiField)child, false));
-      }
-      else if (child instanceof PsiMethod) {
-        children.add(new PsiMethodTreeElement((PsiMethod)child, false));
-      }
-      else if (child instanceof PsiClassInitializer) {
-        children.add(new ClassInitializerTreeElement((PsiClassInitializer)child));
+      switch (child) {
+        case PsiClass c -> children.add(new JavaClassTreeElement(c, false));
+        case PsiField f -> children.add(new PsiFieldTreeElement(f, false));
+        case PsiMethod m -> children.add(new PsiMethodTreeElement(m, false));
+        case PsiClassInitializer i -> children.add(new ClassInitializerTreeElement(i));
+        default -> {}
       }
     }
     PsiRecordHeader header = aClass.getRecordHeader();
@@ -53,8 +50,8 @@ public class JavaClassTreeElement extends JavaClassTreeElementBase<PsiClass> {
     return children;
   }
 
-  static @NotNull LinkedHashSet<PsiElement> getOwnChildren(@NotNull PsiClass aClass) {
-    LinkedHashSet<PsiElement> members = new LinkedHashSet<>();
+  static @NotNull Set<PsiElement> getOwnChildren(@NotNull PsiClass aClass) {
+    HashSet<PsiElement> members = new HashSet<>();
     addPhysicalElements(aClass.getFields(), members, aClass);
     addPhysicalElements(aClass.getMethods(), members, aClass);
     addPhysicalElements(aClass.getInnerClasses(), members, aClass);
@@ -66,7 +63,7 @@ public class JavaClassTreeElement extends JavaClassTreeElementBase<PsiClass> {
     for (PsiMember element : elements) {
       PsiElement mirror = PsiImplUtil.handleMirror(element);
       if (mirror instanceof LightElement) continue;
-      if (mirror instanceof PsiMember && aClass.equals(((PsiMember)mirror).getContainingClass())) {
+      if (mirror instanceof PsiMember member && aClass.equals(member.getContainingClass())) {
         to.add(mirror);
       }
     }

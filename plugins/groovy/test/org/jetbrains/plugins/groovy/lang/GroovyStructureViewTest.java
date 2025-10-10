@@ -1,6 +1,7 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.plugins.groovy.lang;
 
+import com.intellij.ide.structureView.impl.java.KindSorter;
 import com.intellij.ide.util.InheritedMembersNodeProvider;
 import com.intellij.testFramework.PlatformTestUtil;
 import com.intellij.testFramework.fixtures.LightJavaCodeInsightFixtureTestCase;
@@ -17,6 +18,7 @@ public class GroovyStructureViewTest extends LightJavaCodeInsightFixtureTestCase
       }
       """);
     myFixture.testStructureView(component -> {
+      component.setActionActive(KindSorter.ID, true);
       component.setActionActive(InheritedMembersNodeProvider.ID, false);
       PlatformTestUtil.assertTreeEqual(component.getTree(), """
         -a.groovy
@@ -40,6 +42,7 @@ public class GroovyStructureViewTest extends LightJavaCodeInsightFixtureTestCase
       }
       """);
     myFixture.testStructureView(component -> {
+      component.setActionActive(KindSorter.ID, true);
       component.setActionActive(InheritedMembersNodeProvider.ID, true);
       PlatformTestUtil.assertTreeEqual(component.getTree(), """
         -a.groovy
@@ -87,6 +90,7 @@ public class GroovyStructureViewTest extends LightJavaCodeInsightFixtureTestCase
       }
       """);
     myFixture.testStructureView(component -> {
+      component.setActionActive(KindSorter.ID, true);
       component.setActionActive(InheritedMembersNodeProvider.ID, false);
       PlatformTestUtil.assertTreeEqual(component.getTree(), """
         -a.groovy

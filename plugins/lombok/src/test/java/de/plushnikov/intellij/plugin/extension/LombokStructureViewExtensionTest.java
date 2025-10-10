@@ -1,6 +1,7 @@
 package de.plushnikov.intellij.plugin.extension;
 
 import com.intellij.ide.structureView.impl.java.JavaAnonymousClassesNodeProvider;
+import com.intellij.ide.structureView.impl.java.KindSorter;
 import com.intellij.ide.structureView.impl.java.PropertiesGrouper;
 import com.intellij.ide.structureView.impl.java.SuperTypesGrouper;
 import com.intellij.testFramework.PlatformTestUtil;
@@ -68,6 +69,7 @@ public class LombokStructureViewExtensionTest extends AbstractLombokLightCodeIns
       svc.setActionActive(SuperTypesGrouper.ID, showInterfaces);
       svc.setActionActive(PropertiesGrouper.ID, showProperties);
       svc.setActionActive(JavaAnonymousClassesNodeProvider.ID, true);
+      svc.setActionActive(KindSorter.ID, true);
       JTree tree = svc.getTree();
       PlatformTestUtil.waitWhileBusy(tree);
       PlatformTestUtil.expandAll(tree);

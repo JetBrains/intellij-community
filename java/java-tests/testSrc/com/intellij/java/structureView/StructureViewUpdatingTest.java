@@ -2,6 +2,7 @@
 package com.intellij.java.structureView;
 
 import com.intellij.JavaTestUtil;
+import com.intellij.ide.structureView.impl.java.KindSorter;
 import com.intellij.ide.structureView.newStructureView.StructureViewComponent;
 import com.intellij.ide.util.InheritedMembersNodeProvider;
 import com.intellij.openapi.command.CommandProcessor;
@@ -44,6 +45,7 @@ public class StructureViewUpdatingTest extends TestSourceBasedTestCase {
     Disposer.register(getTestRootDisposable(), svc);
     fileEditorManager.closeFile(virtualFile);
     Document document = PsiDocumentManager.getInstance(myProject).getDocument(psiClass.getContainingFile());
+    svc.setActionActive(KindSorter.ID, true);
     svc.setActionActive(InheritedMembersNodeProvider.ID, true);
     PlatformTestUtil.assertTreeEqual(
       svc.getTree(),
@@ -106,6 +108,7 @@ public class StructureViewUpdatingTest extends TestSourceBasedTestCase {
     FileEditor fileEditor = fileEditors[0];
     StructureViewComponent svc = (StructureViewComponent)fileEditor.getStructureViewBuilder()
       .createStructureView(fileEditor, myProject);
+    svc.setActionActive(KindSorter.ID, true);
     Disposer.register(getTestRootDisposable(), svc);
     fileEditorManager.closeFile(virtualFile);
     PlatformTestUtil.waitForPromise(svc.rebuildAndUpdate());
