@@ -66,11 +66,13 @@ open class LinuxDistributionCustomizer {
 
   /**
    * Set both properties if a .snap package should be produced.
-   * "snapName" is the name of the package (e.g., "intellij-idea-ultimate" or "pycharm-community").
-   * "snapDescription" is the plain text description of the package.
+   * [snapName] is the name of the package (e.g., "intellij-idea" or "pycharm").
+   * [snapDescription] is the plain text description of the package.
+   * [snapLegacyAliases] are legacy names for the package, e.g., "intellij-idea-ultimate" or "pycharm-community".
    */
   var snapName: String? = null
   var snapDescription: String? = null
+  var snapLegacyAliases: List<String> = emptyList()
 
   /**
    * Name of the root directory inside the .tar.gz archive.

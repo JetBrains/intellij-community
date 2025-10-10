@@ -239,25 +239,28 @@ class LinuxDistributionBuilder(
     JvmArchitecture.aarch64 -> "arm64"
   }
 
-  private fun getSnapArtifactName(arch: JvmArchitecture): String? {
-    val snapName = customizer.snapName ?: return null
+  private fun getSnapArtifactName(snapName: String, arch: JvmArchitecture): String {
     return "${snapName}_${snapVersion}_${getSnapArchName(arch)}.snap"
   }
 
-  private suspend fun buildSnapPackage(runtimeDir: Path, unixDistPath: Path, arch: JvmArchitecture, targetLibcImpl: LinuxLibcImpl) = BuildSnapSemaphore.withPermit {
+  private suspend fun buildSnapPackage(runtimeDir: Path, unixDistPath: Path, arch: JvmArchitecture, targetLibcImpl: LinuxLibcImpl) {
     if (!context.options.buildUnixSnaps) {
       Span.current().addEvent("Linux .snap package build is disabled")
       return
     }
-    val snapName = customizer.snapName
-    val snapArtifactName = this.getSnapArtifactName(arch)
-    check(snapName != null && snapArtifactName != null) {
+    val snapName = requireNotNull(customizer.snapName) {
       "Linux .snap package build requires 'snapName' in ${customizer::class.java.simpleName}"
     }
+    buildSnapPackage(snapName, runtimeDir, unixDistPath, arch, targetLibcImpl)
+    customizer.snapLegacyAliases.forEach {
+      buildSnapPackage(it, runtimeDir, unixDistPath, arch, targetLibcImpl)
+    }
+  }
 
+  private suspend fun buildSnapPackage(snapName: String, runtimeDir: Path, unixDistPath: Path, arch: JvmArchitecture, targetLibcImpl: LinuxLibcImpl) = BuildSnapSemaphore.withPermit {
     val architecture = getSnapArchName(arch)
-    val snapDir = context.paths.buildOutputDir.resolve("dist.snap.${architecture}")
-
+    val snapDir = context.paths.buildOutputDir.resolve("dist.snap.$snapName.$architecture")
+    val snapArtifactName = getSnapArtifactName(snapName, arch)
     spanBuilder("build Linux .snap package")
       .setAttribute("snapName", snapName)
       .setAttribute("arch", arch.name)
@@ -309,7 +312,7 @@ class LinuxDistributionBuilder(
           |# </${snapcraftConfig.name}>
         """.trimMargin()
         )
-        val productJsonDir = context.paths.tempDir.resolve("linux.dist.snap.product-info.json.$architecture")
+        val productJsonDir = context.paths.tempDir.resolve("linux.dist.snap.$snapName.product-info.json.$architecture")
         val productJsonFile = writeProductJsonFile(productJsonDir, arch)
         val installationDirectories = listOf(context.paths.distAllDir, unixDistPath, runtimeDir)
         validateProductJson(jsonText = productJsonFile.readText(), installationDirectories, installationArchives = emptyList(), context)
@@ -353,8 +356,9 @@ class LinuxDistributionBuilder(
     val archSuffix = suffix(arch, targetLibcImpl)
     return sequenceOf("${archSuffix}.tar.gz", "${NO_RUNTIME_SUFFIX}${archSuffix}.tar.gz")
       .map { suffix -> context.productProperties.getBaseArtifactName(context) + suffix }
-      .plus(getSnapArtifactName(arch))
+      .plus(customizer.snapName?.let { getSnapArtifactName(it, arch) })
       .filterNotNull()
+      .plus(customizer.snapLegacyAliases.map { getSnapArtifactName(it, arch) })
       .map(context.paths.artifactDir::resolve)
       .filter { it.exists() }
       .toList()
