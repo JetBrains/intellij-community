@@ -1,9 +1,8 @@
 // Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.toolWindow.xNext.island
 
-import com.intellij.openapi.wm.impl.IdeBackgroundUtil
+import com.intellij.openapi.application.impl.InternalUICustomization
 import com.intellij.ui.BorderPainter
-import com.intellij.ui.ClientProperty
 import com.intellij.ui.DefaultBorderPainter
 import org.jetbrains.annotations.ApiStatus
 import java.awt.Component
@@ -28,13 +27,13 @@ class XNextIslandHolder : JPanel() {
   }
 
   override fun getComponentGraphics(g: Graphics?): Graphics? {
-    return IdeBackgroundUtil.getOriginalGraphics(super.getComponentGraphics(g))
+    return InternalUICustomization.getInstance()?.backgroundImageGraphics(this, super.getComponentGraphics(g)) ?: g
   }
 
   override fun addImpl(comp: Component?, constraints: Any?, index: Int) {
     comp?.let {
       if (it is JComponent) {
-        ClientProperty.putRecursive(it, IdeBackgroundUtil.NO_BACKGROUND, true)
+        InternalUICustomization.getInstance()?.installEditorBackground(it)
       }
     }
     super.addImpl(comp, constraints, index)

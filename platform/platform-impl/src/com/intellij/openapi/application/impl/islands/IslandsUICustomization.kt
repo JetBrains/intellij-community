@@ -658,6 +658,13 @@ internal class IslandsUICustomization : InternalUICustomization() {
     return graphics
   }
 
+  override fun backgroundImageGraphics(component: JComponent, graphics: Graphics): Graphics {
+    if (isManyIslandEnabled) {
+      return IdeBackgroundUtil.getOriginalGraphics(graphics) // not supported for island themes yet
+    }
+    return JBSwingUtilities.runGlobalCGTransform(component, graphics)
+  }
+
   override val isMacScrollBar: Boolean
     get() {
       return !SystemInfoRt.isMac && isManyIslandEnabled
