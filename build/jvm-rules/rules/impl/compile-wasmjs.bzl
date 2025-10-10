@@ -132,9 +132,6 @@ def kt_wasmjs_produce_module_actions(ctx, rule_kind):
 
     ctx.actions.run(
         mnemonic = "KotlinCompileWasmJs",
-        env = {
-            "MALLOC_ARENA_MAX": "2",  # TODO: copied over from JvmCompile action, not sure it is required
-        },
         inputs = depset(ctx.files.fragment_sources, transitive = [compile_libraries, compiler_plugins_classpath, java_runtime.files]),  # TODO: remove `java_runtime.files` when running worker support is done (redundant then)
         outputs = [klib_out],
         tools = [ctx.file._wasmjs_builder_launcher, ctx.file._wasmjs_builder],
@@ -166,9 +163,6 @@ def kt_wasmjs_produce_module_actions(ctx, rule_kind):
 
     ctx.actions.run(
         mnemonic = "KotlinLinkWasmJs",
-        env = {
-            "MALLOC_ARENA_MAX": "2",  # TODO: copied over from JvmCompile action, not sure it is required
-        },
         inputs = depset(transitive = [all_link_libraries, java_runtime.files]),  # TODO: remove `java_runtime.files` when running worker support is done (redundant then)
         outputs = [mjs_out],
         tools = [ctx.file._wasmjs_builder_launcher, ctx.file._wasmjs_builder],
