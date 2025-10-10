@@ -183,9 +183,7 @@ class ToolWindowPane private constructor(
     add(layeredPane, DEFAULT_LAYER, -1)
     focusTraversalPolicy = LayoutFocusTraversalPolicy()
     ToolWindowDragHelper(disposable, this).start()
-    if (Registry.`is`("ide.allow.split.and.reorder.in.tool.window")) {
-      ToolWindowInnerDragHelper(disposable, this).start()
-    }
+    ToolWindowInnerDragHelper(disposable, this).start()
   }
 
   private fun setUpSplitter(splitter: ThreeComponentsSplitter) {

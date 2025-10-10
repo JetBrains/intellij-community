@@ -19,7 +19,6 @@ import com.intellij.openapi.ui.popup.ListPopup;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.Key;
 import com.intellij.openapi.util.Ref;
-import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.wm.*;
 import com.intellij.openapi.wm.impl.ToolWindowImpl;
 import com.intellij.openapi.wm.impl.ToolWindowManagerImpl;
@@ -821,8 +820,7 @@ public final class ToolWindowContentUi implements ContentUI, UiCompatibleDataPro
    * @return whether reorder and split of tabs in the provided tool window is allowed.
    */
   public static boolean isTabsReorderingAllowed(@NotNull ToolWindow window) {
-    return ClientProperty.isTrue(window.getComponent(), ALLOW_TABS_REORDERING) &&
-           Registry.is("ide.allow.split.and.reorder.in.tool.window", false);
+    return ClientProperty.isTrue(window.getComponent(), ALLOW_TABS_REORDERING);
   }
 
   private static final Key<ToolWindowInEditorSupport> TOOLWINDOW_IN_EDITOR_SUPPORT = Key.create("ToolWindowInEditorSupport");
