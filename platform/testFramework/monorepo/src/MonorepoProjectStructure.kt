@@ -23,9 +23,9 @@ object MonorepoProjectStructure {
 
   val JpsModule.baseDirectory: Path
     get() = JpsModelSerializationDataService.getModuleExtension(this)!!.baseDirectoryPath
-  
+
   fun JpsModule.isFromCommunity(): Boolean = baseDirectory.startsWith(communityRoot)
-  
+
   fun JpsLibrary.isFromCommunity(): Boolean = getPaths(JpsOrderRootType.COMPILED).all { it.startsWith(communityRoot) }
 }
 
@@ -44,7 +44,7 @@ fun <T> JpsModule.processProductionOutput(processor: (outputRoot: Path) -> T): T
     return processor(outputDirectoryPath)
   }
   else {
-    return FileSystems.newFileSystem(Path(outputJarPath)).use { 
+    return FileSystems.newFileSystem(Path(outputJarPath)).use {
       processor(it.rootDirectories.single())
     }
   }

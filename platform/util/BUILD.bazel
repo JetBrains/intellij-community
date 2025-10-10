@@ -127,6 +127,7 @@ jvm_library(
     "@lib//:mockito-kotlin",
     "@lib//:jimfs",
     "//platform/ijent/buildConstants",
+    "//platform/testFramework/monorepo",
     "//platform/testFramework/monorepo:monorepo_test_lib",
   ]
 )
