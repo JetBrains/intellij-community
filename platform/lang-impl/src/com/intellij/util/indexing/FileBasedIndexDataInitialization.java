@@ -84,7 +84,12 @@ final class FileBasedIndexDataInitialization extends IndexDataInitializer<FileBa
           // FileBasedIndexImpl.registerIndexer may throw, then the line below will not be executed
           myRegisteredIndexes.registerIndexExtension(extension);
         }
-        catch (IOException | ProcessCanceledException e) {
+        catch (ProcessCanceledException e) {
+          LOG.warn("Could not register indexing extension: " + extension + ". reason: PCE");
+          ID.unloadId(extension.getName());
+          throw e;
+        }
+        catch (IOException e) {
           LOG.warnWithDebug("Could not register indexing extension: " + extension + ". reason: " + e, e);
           ID.unloadId(extension.getName());
           throw e;
