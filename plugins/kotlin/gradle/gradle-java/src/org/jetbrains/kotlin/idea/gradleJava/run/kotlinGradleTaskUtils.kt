@@ -8,11 +8,14 @@ import com.intellij.psi.PsiElement
 import com.intellij.psi.impl.source.tree.LeafPsiElement
 import com.intellij.util.concurrency.annotations.RequiresReadLock
 import org.jetbrains.annotations.ApiStatus
+import org.jetbrains.kotlin.analysis.api.KaSession
 import org.jetbrains.kotlin.analysis.api.analyze
 import org.jetbrains.kotlin.analysis.api.resolution.KaCallableMemberCall
 import org.jetbrains.kotlin.analysis.api.resolution.singleCallOrNull
 import org.jetbrains.kotlin.analysis.api.resolution.singleFunctionCallOrNull
 import org.jetbrains.kotlin.analysis.api.resolution.symbol
+import org.jetbrains.kotlin.analysis.api.signatures.KaVariableSignature
+import org.jetbrains.kotlin.analysis.api.symbols.KaValueParameterSymbol
 import org.jetbrains.kotlin.analysis.api.types.symbol
 import org.jetbrains.kotlin.fileClasses.javaFileFacadeFqName
 import org.jetbrains.kotlin.idea.base.util.module
@@ -71,7 +74,9 @@ private fun findTaskNameInSurroundingCallExpression(element: PsiElement): String
         val functionCall = resolvedCall.singleFunctionCallOrNull() ?: return null
         if (!doesCustomizeTask(functionCall)) return null
         val nameArgument = functionCall.argumentMapping
-            .filter { it.value.name.identifier == "name" }
+            .filterValues { isStringParameterSignature(it) }
+            // IDEA-380456: uncomment, when parameter names in .class files are fixed. Now, the parameter is named as "var1", not "name".
+            //.filterValues { it.name.identifier == "name" }
             .keys.singleOrNull() ?: return null
         val taskName = nameArgument
             .evaluate()
@@ -129,6 +134,15 @@ private fun isMethodOfProject(methodName: String, fqClassName: FqName) =
     (methodName == "task") && (fqClassName == FqName(GRADLE_API_PROJECT)
             || fqClassName == FqName(GRADLE_KOTLIN_PROJECT_DELEGATE)
             || fqClassName == FqName("Build_gradle")) // Could be resolved instead of ProjectDelegate on Gradle 6.0
+
+private fun KaSession.isStringParameterSignature(signature: KaVariableSignature<KaValueParameterSymbol>): Boolean {
+    val notNullableType = signature.symbol.returnType.withNullability(false)
+    val classId = notNullableType.symbol?.classId ?: return false
+    return classId.asSingleFqName() in listOf(
+        FqName("java.lang.String"),
+        FqName("kotlin.String")
+    )
+}
 
 fun KtNamedFunction.getKMPGradleConfigurationName(runTask: KotlinJvmRunTaskData): String =
     "${getConfigurationName()} [${runTask.targetName}]"
