@@ -43,6 +43,7 @@ import com.intellij.openapi.application.impl.inModalContext
 import com.intellij.openapi.components.ComponentManagerEx
 import com.intellij.openapi.components.service
 import com.intellij.openapi.components.serviceIfCreated
+import com.intellij.openapi.diagnostic.debug
 import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.editor.colors.impl.BundledColorSchemeEPName
 import com.intellij.openapi.extensions.ExtensionDescriptor
@@ -559,6 +560,7 @@ object DynamicPlugins {
   private fun unloadPluginWithoutProgress(pluginDescriptor: IdeaPluginDescriptorImpl,
                                           options: UnloadPluginOptions = UnloadPluginOptions(disable = true)): Boolean {
     pluginDescriptor as PluginMainDescriptor
+    LOG.debug { "Start unloading plugin $pluginDescriptor dynamically" }
     val app = ApplicationManager.getApplication() as ApplicationImpl
     val pluginId = pluginDescriptor.pluginId
     val pluginSet = PluginManagerCore.getPluginSet()
@@ -969,6 +971,7 @@ object DynamicPlugins {
 
   private fun loadPluginWithoutProgress(pluginDescriptor: IdeaPluginDescriptorImpl, checkImplementationDetailDependencies: Boolean = true): Boolean {
     pluginDescriptor as PluginMainDescriptor
+    LOG.debug { "start loading plugin $pluginDescriptor dynamically" }
     if (classloadersFromUnloadedPlugins[pluginDescriptor.pluginId]?.isEmpty() == false) {
       LOG.info("Requiring restart for loading plugin ${pluginDescriptor.pluginId}" +
                " because previous version of the plugin wasn't fully unloaded")
