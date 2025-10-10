@@ -1,0 +1,9 @@
+<idea-plugin>
+  <dependencies>
+    <module name="intellij.platform.eel.impl"/>
+  </dependencies>
+  <extensions defaultExtensionNs="com.intellij">
+    <multiRoutingFileSystemBackend implementation="com.intellij.platform.eel.tcp.TcpEelMrfsBackend"/>
+    <eelProvider implementation="com.intellij.platform.eel.tcp.TcpEelProvider"/>
+  </extensions>
+</idea-plugin>

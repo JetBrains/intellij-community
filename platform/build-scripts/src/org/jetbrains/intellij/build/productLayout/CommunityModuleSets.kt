@@ -115,6 +115,8 @@ object CommunityModuleSets : ModuleSetProvider {
     module("intellij.platform.execution.impl.backend")
     // referenced from 'intellij.platform.ijent.community.impl' loaded by the core classloader
     embeddedModule("intellij.platform.eel.impl")
+    module("intellij.platform.eel.tcp")
+
 
     module("intellij.platform.completion.common")
     module("intellij.platform.completion.frontend")

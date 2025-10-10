@@ -543,6 +543,7 @@ platform/editor/shared
 platform/eel
 platform/eel-impl
 platform/eel-provider
+platform/eel-tcp
 platform/execution
 platform/execution-impl
 platform/execution-impl/backend

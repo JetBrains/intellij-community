@@ -153,6 +153,7 @@
     <module name="intellij.platform.execution.impl.frontend"/>
     <module name="intellij.platform.execution.impl.backend"/>
     <module name="intellij.platform.eel.impl" loading="embedded"/>
+    <module name="intellij.platform.eel.tcp"/>
     <module name="intellij.platform.completion.common"/>
     <module name="intellij.platform.completion.frontend"/>
     <module name="intellij.platform.completion.backend"/>
