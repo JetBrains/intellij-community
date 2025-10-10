@@ -2,6 +2,7 @@
 package com.intellij.util.ui.html
 
 import com.intellij.util.asSafely
+import com.intellij.util.ui.JBHtmlEditorKit
 import com.intellij.util.ui.html.CssAttributesEx.BORDER_RADIUS
 import org.jetbrains.annotations.ApiStatus
 import java.awt.*
@@ -22,7 +23,7 @@ internal val HTML_Tag_CUSTOM_BLOCK_TAGS: Set<HTML.Tag> get() = CUSTOM_BLOCK_TAGS
 @Suppress("UseDPIAwareInsets")
 val View.cssPadding: Insets
   get() {
-    val styleSheet = (document as HTMLDocument).styleSheet
+    val styleSheet = (document as JBHtmlEditorKit.JBHtmlDocument).styleSheet
     val attributeSet = attributes ?: return Insets(0, 0, 0, 0)
     return Insets(
       attributeSet.getLength(CSS.Attribute.PADDING_TOP, styleSheet).toInt(),
@@ -35,7 +36,7 @@ val View.cssPadding: Insets
 @Suppress("UseDPIAwareInsets")
 val View.cssMargin: Insets
   get() {
-    val styleSheet = (document as HTMLDocument).styleSheet
+    val styleSheet = (document as JBHtmlEditorKit.JBHtmlDocument).styleSheet
     val attributeSet = attributes ?: return Insets(0, 0, 0, 0)
     return Insets(
       attributeSet.getLength(CSS.Attribute.MARGIN_TOP, styleSheet).toInt(),
@@ -48,7 +49,7 @@ val View.cssMargin: Insets
 @Suppress("UseDPIAwareInsets")
 val View.cssBorderWidths: Insets
   get() {
-    val styleSheet = (document as HTMLDocument).styleSheet
+    val styleSheet = (document as JBHtmlEditorKit.JBHtmlDocument).styleSheet
     val attributeSet = attributes ?: return Insets(0, 0, 0, 0)
     return Insets(
       attributeSet.getLength(CSS.Attribute.BORDER_TOP_WIDTH, styleSheet).toInt(),
@@ -66,12 +67,15 @@ val View.cssBorderRadius: Float
           ?: 0f
 
 val View.cssBorderColors: BorderColors
-  get() = BorderColors(
-    attributes.getColor(CSS.Attribute.BORDER_TOP_COLOR),
-    attributes.getColor(CSS.Attribute.BORDER_LEFT_COLOR),
-    attributes.getColor(CSS.Attribute.BORDER_BOTTOM_COLOR),
-    attributes.getColor(CSS.Attribute.BORDER_RIGHT_COLOR),
-  )
+  get() {
+    val styleSheet = (document as JBHtmlEditorKit.JBHtmlDocument).styleSheet
+    return BorderColors(
+      attributes.getColor( CSS.Attribute.BORDER_TOP_COLOR, styleSheet),
+      attributes.getColor( CSS.Attribute.BORDER_LEFT_COLOR, styleSheet),
+      attributes.getColor(CSS.Attribute.BORDER_BOTTOM_COLOR, styleSheet),
+      attributes.getColor(CSS.Attribute.BORDER_RIGHT_COLOR, styleSheet),
+    )
+  }
 
 val Insets.width: Int
   get() = right + left
@@ -163,14 +167,10 @@ internal fun paintControlBackgroundAndBorder(
 }
 
 private fun AttributeSet.getLength(attribute: CSS.Attribute, styleSheet: StyleSheet): Float =
-  cssLengthMethod.invoke(css, this, attribute, styleSheet) as Float
+  cssLengthMethod.invoke(styleSheet.css, this, attribute, styleSheet) as Float
 
-private fun AttributeSet.getColor(attribute: CSS.Attribute): Color? =
-  cssGetColorMethod.invoke(css, this, attribute) as Color?
-
-private val css: CSS by lazy(LazyThreadSafetyMode.PUBLICATION) {
-  CSS().patchAttributes()
-}
+private fun AttributeSet.getColor(attribute: CSS.Attribute, styleSheet: StyleSheet): Color? =
+  cssGetColorMethod.invoke(styleSheet.css, this, attribute) as Color?
 
 private val CUSTOM_BLOCK_TAGS_SET = mutableSetOf<HTML.Tag>()
 
@@ -242,8 +242,10 @@ private val View.availableWidth: Int
     return 0
   }
 
+internal val StyleSheet.css: CSS
+  get() = styleSheetCssField.get(this) as CSS
+
 internal fun StyleSheet.patchAttributes(): StyleSheet {
-  val css = styleSheetCssField.get(this) as CSS
   css.patchAttributes()
   return this
 }
