@@ -298,7 +298,9 @@ internal fun XStackFrame.toRpc(coroutineScope: CoroutineScope, session: XDebugSe
   val id = getOrStoreGlobally(coroutineScope, session)
   val serializedEqualityObject = when (val equalityObject = equalityObject) {
     is String -> XStackFrameStringEqualityObject(equalityObject)
-    else -> null // TODO support other types
+    null -> null
+    // TODO support other types better?
+    else -> XStackFrameStringEqualityObject(equalityObject.toString())
   }
   val evaluatorDto = XDebuggerEvaluatorDto(isDocumentEvaluator)
   return XStackFrameDto(id, sourcePosition?.toRpc(), serializedEqualityObject, evaluatorDto, computeTextPresentation(),
