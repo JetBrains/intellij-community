@@ -2,6 +2,7 @@
 package com.intellij.codeInsight.completion
 
 import com.intellij.codeInsight.CodeInsightSettings
+import com.intellij.codeInsight.completion.JavaMethodCallInsertHandler.Companion.findInsertedCall
 import com.intellij.codeInsight.completion.util.MethodParenthesesHandler
 import com.intellij.codeInsight.hint.ParameterInfoControllerBase
 import com.intellij.codeInsight.hint.ShowParameterInfoContext
@@ -14,6 +15,7 @@ import com.intellij.injected.editor.EditorWindow
 import com.intellij.openapi.Disposable
 import com.intellij.openapi.editor.Document
 import com.intellij.openapi.util.Disposer
+import com.intellij.openapi.util.Key
 import com.intellij.openapi.util.registry.Registry
 import com.intellij.openapi.util.text.StringUtil
 import com.intellij.psi.*
@@ -22,7 +24,20 @@ import com.intellij.psi.util.PsiTreeUtil
 import com.intellij.util.ThreeState
 import kotlin.math.min
 
-public open class JavaMethodCallInsertHandler<MethodCallElement : JavaMethodCallElement> : InsertHandler<MethodCallElement> {
+public open class JavaMethodCallInsertHandler<MethodCallElement : JavaMethodCallElement>(
+  /**
+   * Called before insertion methods. Performs any necessary pre-processing or setup.
+   */
+  private val beforeHandler: InsertHandler<MethodCallElement>? = null,
+
+  /**
+   * Called after insertion methods. Performs any necessary post-processing or cleanup.
+   *
+   * Use [findInsertedCall] to get PsiCallExpression representing the inserted code, or null if no code was inserted
+   */
+  private val afterHandler: InsertHandler<MethodCallElement>? = null,
+
+) : InsertHandler<MethodCallElement> {
   override fun handleInsert(context: InsertionContext, item: MethodCallElement) {
     val document = context.document
     val file = context.file
@@ -40,7 +55,7 @@ public open class JavaMethodCallInsertHandler<MethodCallElement : JavaMethodCall
 
     val offset = context.startOffset
     val refStart = context.trackOffset(offset, true)
-    beforeHandle(context)
+    beforeHandler?.handleInsert(context, item)
     if (item.isNeedExplicitTypeParameters) {
       qualifyMethodCall(item, file, context.getOffset(refStart), document)
       insertExplicitTypeParameters(item, context, refStart)
@@ -64,29 +79,13 @@ public open class JavaMethodCallInsertHandler<MethodCallElement : JavaMethodCall
       handleNegation(context, document, methodCall, item.isNegatable)
     }
 
-    afterHandle(context, methodCall)
+    item.putUserData(callKey, methodCall)
+    afterHandler?.handleInsert(context, item)
 
     if (canStartArgumentLiveTemplate()) {
       JavaMethodCallElement.startArgumentLiveTemplate(context, method)
     }
     showParameterHints(item, context, method, methodCall)
-  }
-
-  /**
-   * Called before insertion methods. Performs any necessary pre-processing or setup.
-   * 
-   * @param context the insertion context for the code template, must not be null
-   */
-  protected open fun beforeHandle(context: InsertionContext) {
-  }
-
-  /**
-   * Called after insertion methods. Performs any necessary post-processing or cleanup.
-   * 
-   * @param context the insertion context for the code template
-   * @param call    the PsiCallExpression representing the inserted code, or null if no code was inserted
-   */
-  protected open fun afterHandle(context: InsertionContext, call: PsiCallExpression?) {
   }
 
   /**
@@ -105,7 +104,7 @@ public open class JavaMethodCallInsertHandler<MethodCallElement : JavaMethodCall
     document: Document,
     file: PsiFile,
     method: PsiMethod,
-    startOffset: Int
+    startOffset: Int,
   ) {
     if (!needImportOrQualify()) {
       return
@@ -165,7 +164,7 @@ public open class JavaMethodCallInsertHandler<MethodCallElement : JavaMethodCall
   private fun insertExplicitTypeParameters(
     item: MethodCallElement,
     context: InsertionContext,
-    refStart: OffsetKey
+    refStart: OffsetKey,
   ) {
     context.commitDocument()
 
@@ -180,7 +179,7 @@ public open class JavaMethodCallInsertHandler<MethodCallElement : JavaMethodCall
     context: InsertionContext,
     document: Document,
     methodCall: PsiCallExpression,
-    negatable: Boolean
+    negatable: Boolean,
   ) {
     if (context.completionChar == '!' && negatable) {
       context.setAddCompletionChar(false)
@@ -201,7 +200,7 @@ public open class JavaMethodCallInsertHandler<MethodCallElement : JavaMethodCall
       element: LookupElement,
       context: InsertionContext,
       method: PsiMethod,
-      methodCall: PsiCallExpression?
+      methodCall: PsiCallExpression?,
     ) {
       if (!CodeInsightSettings.getInstance().SHOW_PARAMETER_NAME_HINTS_ON_COMPLETION ||
           context.completionChar == Lookup.COMPLETE_STATEMENT_SELECT_CHAR ||
@@ -268,5 +267,16 @@ public open class JavaMethodCallInsertHandler<MethodCallElement : JavaMethodCall
         }
       }
     }
+
+    /**
+     * Use [findInsertedCall] to get PsiCallExpression representing the inserted code, or null if no code was inserted
+     * Can be called in [afterHandler]
+     */
+    @JvmStatic
+    public fun findInsertedCall(element: LookupElement, context: InsertionContext): PsiCallExpression? {
+      return element.getUserData(callKey)
+    }
+
+    private val callKey = Key.create<PsiCallExpression>("JavaMethodCallInsertHandler.call")
   }
 }

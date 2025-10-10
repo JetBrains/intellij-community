@@ -329,7 +329,7 @@ public final class JavaQualifierAsArgumentContributor extends CompletionContribu
     public void handleInsert(@NotNull InsertionContext context) {
       JavaContributorCollectors.logInsertHandle(context.getProject(), JavaContributorCollectors.STATIC_QUALIFIER_TYPE,
                                                 myIsSmart ? CompletionType.SMART : CompletionType.BASIC);
-      new InsertHandler().handleInsert(context, this);
+      new MyInsertHandler().handleInsert(context, this);
     }
 
     @Override
@@ -390,26 +390,36 @@ public final class JavaQualifierAsArgumentContributor extends CompletionContribu
       }
     }
 
-    private class InsertHandler extends JavaMethodCallInsertHandler<JavaQualifierAsParameterMethodCallElement> {
+    private class MyInsertHandler extends JavaMethodCallInsertHandler<JavaQualifierAsParameterMethodCallElement> {
+      private MyInsertHandler() {
+        super(new BeforeInsertHandler(), new AfterInsertHandler());
+      }
+
       @Override
       protected boolean needImportOrQualify() {
         return myShouldImportOrQualify;
       }
 
       @Override
-      protected void beforeHandle(@NotNull InsertionContext context) {
+      protected boolean canStartArgumentLiveTemplate() {
+        return false;
+      }
+    }
+
+    private class BeforeInsertHandler implements InsertHandler<JavaQualifierAsParameterMethodCallElement> {
+      @Override
+      public void handleInsert(@NotNull InsertionContext context,
+                               @NotNull JavaQualifierAsArgumentContributor.JavaQualifierAsParameterMethodCallElement item) {
         TextRange range = myOldQualifierExpression.getTextRange();
         context.getDocument().deleteString(range.getStartOffset(), range.getEndOffset() + 1);
         context.commitDocument();
       }
-
+    }
+    private class AfterInsertHandler implements InsertHandler<JavaQualifierAsParameterMethodCallElement> {
       @Override
-      protected boolean canStartArgumentLiveTemplate() {
-        return false;
-      }
-
-      @Override
-      protected void afterHandle(@NotNull InsertionContext context, @Nullable PsiCallExpression call) {
+      public void handleInsert(@NotNull InsertionContext context,
+                               @NotNull JavaQualifierAsArgumentContributor.JavaQualifierAsParameterMethodCallElement item) {
+        PsiCallExpression call = JavaMethodCallInsertHandler.findInsertedCall(item, context);
         context.commitDocument();
         PsiDocumentManager.getInstance(context.getProject()).doPostponedOperationsAndUnblockDocument(context.getDocument());
         if (call != null) {
@@ -417,9 +427,11 @@ public final class JavaQualifierAsArgumentContributor extends CompletionContribu
           if (list != null) {
             TextRange argumentList = list.getTextRange();
             String text = myOldQualifierExpression.getText();
-            boolean hasOneArgument = ContainerUtil.exists(myMethods, method -> method.getParameterList().getParameters().length == 1);
+            boolean hasOneArgument =
+              ContainerUtil.exists(myMethods, method -> method.getParameterList().getParameters().length == 1);
             if (!hasOneArgument) {
-              CommonCodeStyleSettings codeStyleSettings = CodeStyle.getLanguageSettings(myOldQualifierExpression.getContainingFile());
+              CommonCodeStyleSettings codeStyleSettings =
+                CodeStyle.getLanguageSettings(myOldQualifierExpression.getContainingFile());
               text += ",";
               if (codeStyleSettings.SPACE_AFTER_COMMA) {
                 text += " ";
