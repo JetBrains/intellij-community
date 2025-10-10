@@ -38,7 +38,9 @@ public final class LookupElementBuilder extends LookupElement {
   private final @Nullable LookupElementPresentation myHardcodedPresentation;
   private final @NotNull Set<String> myAllLookupStrings;
 
-  private LookupElementBuilder(@NotNull String lookupString, @NotNull Object object, @Nullable InsertHandler<LookupElement> insertHandler,
+  private LookupElementBuilder(@NotNull String lookupString,
+                               @NotNull Object object,
+                               @Nullable InsertHandler<LookupElement> insertHandler,
                                @Nullable LookupElementRenderer<LookupElement> renderer,
                                @Nullable LookupElementRenderer<LookupElement> expensiveRenderer,
                                @Nullable LookupElementPresentation hardcodedPresentation,
@@ -96,7 +98,8 @@ public final class LookupElementBuilder extends LookupElement {
     return new LookupElementBuilder(lookupString, lookupObject);
   }
 
-  private @NotNull LookupElementBuilder cloneWithUserData(@NotNull String lookupString, @NotNull Object object,
+  private @NotNull LookupElementBuilder cloneWithUserData(@NotNull String lookupString,
+                                                          @NotNull Object object,
                                                           @Nullable InsertHandler<LookupElement> insertHandler,
                                                           @Nullable LookupElementRenderer<LookupElement> renderer,
                                                           @Nullable LookupElementRenderer<LookupElement> expensiveRenderer,
