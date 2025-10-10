@@ -43,7 +43,7 @@ class KotlinJ2KOnboardingImportListener(private val project: Project) : ProjectD
 object KotlinJ2KOnboardingFUSCollector : CounterUsagesCollector() {
     override fun getGroup(): EventLogGroup = GROUP
 
-    val GROUP: EventLogGroup = EventLogGroup("kotlin.onboarding.j2k", 2)
+    val GROUP: EventLogGroup = EventLogGroup("kotlin.onboarding.j2k", 3)
 
     internal val pluginVersion = getPluginInfoById(KotlinIdePlugin.id).version
     internal val buildSystemField = EventFields.Enum<KotlinJ2KOnboardingBuildSystem>("build_system")
@@ -51,12 +51,14 @@ object KotlinJ2KOnboardingFUSCollector : CounterUsagesCollector() {
     internal val sessionIdField = EventFields.Int("onboarding_session_id")
     internal val canAutoConfigureField = EventFields.Boolean("can_auto_configure")
     internal val isAutoConfigurationField = EventFields.Boolean("is_auto_configuration")
+    internal val failureReasonField = EventFields.Enum<KotlinJ2KOnboardingConfigurationError>("failure_reason")
 
     private val commonFields = arrayOf(
         sessionIdField, buildSystemField, buildSystemVersionField, isAutoConfigurationField, EventFields.Version
     )
     private val autoConfigFields = commonFields.toList() + canAutoConfigureField
     private val startProjectSyncFields = commonFields.toList() + isAutoConfigurationField
+    private val configurationFailedFields = commonFields.toList() + failureReasonField
 
     private val openFirstKtFileDialog = GROUP.registerVarargEvent("first_kt_file.dialog_opened", *commonFields)
     private val createFirstKtFile = GROUP.registerVarargEvent("first_kt_file.created", *commonFields)
@@ -66,6 +68,7 @@ object KotlinJ2KOnboardingFUSCollector : CounterUsagesCollector() {
     private val clickConfigureKtNotification = GROUP.registerVarargEvent("configure_kt_notification.clicked", *commonFields)
     private val showConfigureKtWindow = GROUP.registerVarargEvent("configure_kt_window.shown", *commonFields)
     private val startConfigureKt = GROUP.registerVarargEvent("configure_kt.started", *commonFields)
+    private val failedConfigureKt = GROUP.registerVarargEvent("configure_kt.failed", *configurationFailedFields.toTypedArray())
     private val showConfiguredKtNotification = GROUP.registerVarargEvent("configured_kt_notification.shown", *commonFields)
     private val startProjectSync = GROUP.registerVarargEvent("project_sync.started", *startProjectSyncFields.toTypedArray())
     private val failedProjectSync = GROUP.registerVarargEvent("project_sync.failed", *commonFields)
@@ -185,6 +188,11 @@ object KotlinJ2KOnboardingFUSCollector : CounterUsagesCollector() {
     fun logConfigureKtUndone(project: Project): Unit = project.runEventLogger {
         val session = openSession ?: lastSuccessfullyCompletedSession ?: return@runEventLogger
         session.log(project, undoConfigureKotlin)
+    }
+
+    fun logConfigureKtFailed(project: Project, failureReason: KotlinJ2KOnboardingConfigurationError): Unit = project.runEventLogger {
+        val session = openSession ?: return@runEventLogger
+        session.log(project, failedConfigureKt, failureReasonField.with(failureReason))
     }
 }
 
@@ -348,4 +356,18 @@ class KotlinOnboardingJ2KSessionService(private val project: Project, private va
 
 internal enum class KotlinJ2KOnboardingBuildSystem {
     GRADLE, MAVEN, MULTIPLE, UNKNOWN, JPS
+}
+
+enum class KotlinJ2KOnboardingConfigurationError {
+    // Gradle specific errors
+    BUILD_SCRIPT_FOR_MODULE_IS_ABSENT_OR_NOT_WRITABLE,
+    CONFIGURING_OF_TOP_LEVEL_BUILD_SCRIPT_FAILED,
+    CONFIGURING_OF_MODULE_BUILD_SCRIPT_FAILED,
+    ADDING_KOTLIN_VERSION_TO_TOP_LEVEL_BUILD_SCRIPT_FAILED,
+    // Maven specific errors
+    VIRTUAL_FILE_DOESNT_EXIST_FOR_PSI_FILE,
+    DOM_MODEL_DOESNT_EXIST,
+    WASNT_ABLE_TO_TRANSFORM_XML_TO_POM,
+    // Other
+    OTHER
 }
