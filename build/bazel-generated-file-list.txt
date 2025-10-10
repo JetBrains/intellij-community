@@ -480,7 +480,6 @@ platform/jewel/markdown/extensions/gfm-tables
 platform/jewel/markdown/extensions/images
 platform/jewel/markdown/ide-laf-bridge-styling
 platform/jewel/markdown/int-ui-standalone-styling
-platform/jewel/samples/ide-plugin
 platform/jewel/samples/showcase
 platform/jewel/samples/standalone
 platform/jewel/ui
