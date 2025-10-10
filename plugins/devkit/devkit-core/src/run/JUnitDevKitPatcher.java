@@ -80,7 +80,7 @@ public final class JUnitDevKitPatcher extends JUnitPatcher {
 
       var basePath = project.getBasePath();
       if (module != null && hasIjentDefaultFsProviderInClassPath(module)) {
-        DevKitApplicationPatcherKt.enableIjentDefaultFsProvider(project, project.getBasePath(), vm);
+        DevKitApplicationPatcherKt.enableIjentDefaultFsProvider(project, vm);
       }
       if (!vm.hasProperty(PathManager.PROPERTY_SYSTEM_PATH)) {
         assert basePath != null;
