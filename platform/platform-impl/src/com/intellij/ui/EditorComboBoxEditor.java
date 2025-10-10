@@ -34,7 +34,7 @@ public class EditorComboBoxEditor implements ComboBoxEditor{
     myTextField.setName(NAME);
   }
 
-  protected void onEditorCreate(EditorEx editor) {}
+  protected void onEditorCreate(@NotNull EditorEx editor) {}
 
   @Override
   public void selectAll() {

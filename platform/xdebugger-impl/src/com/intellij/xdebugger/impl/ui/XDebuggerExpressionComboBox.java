@@ -204,7 +204,7 @@ public class XDebuggerExpressionComboBox extends XDebuggerEditorBase {
     XDebuggerComboBoxEditor(boolean showMultiline, boolean languageInside) {
       myDelegate = new EditorComboBoxEditor(getProject(), getEditorsProvider().getFileType()) {
         @Override
-        protected void onEditorCreate(EditorEx editor) {
+        protected void onEditorCreate(@NotNull EditorEx editor) {
           editor.putUserData(DebuggerCopyPastePreprocessor.REMOVE_NEWLINES_ON_PASTE, true);
           prepareEditor(editor);
           if (showMultiline) {

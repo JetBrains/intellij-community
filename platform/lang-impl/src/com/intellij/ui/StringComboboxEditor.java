@@ -49,7 +49,7 @@ public class StringComboboxEditor extends EditorComboBoxEditor {
   }
 
   @Override
-  protected void onEditorCreate(final EditorEx editor) {
+  protected void onEditorCreate(final @NotNull EditorEx editor) {
     Disposer.register(((EditorImpl)editor).getDisposable(), new Disposable() {
       @Override
       public void dispose() {
