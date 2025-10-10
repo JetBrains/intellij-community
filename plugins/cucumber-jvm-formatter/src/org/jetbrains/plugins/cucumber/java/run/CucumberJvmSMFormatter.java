@@ -63,7 +63,7 @@ public class CucumberJvmSMFormatter implements Formatter, Reporter {
     outCommand(TEMPLATE_TEST_SUITE_STARTED, getCurrentTime(), uri + ":" + feature.getLine(), currentFeatureName);
   }
 
-  private static boolean isRealScenario(final Scenario scenario) {
+  private static boolean isRealScenario(Scenario scenario) {
     return scenario.getKeyword().equals("Scenario");
   }
 

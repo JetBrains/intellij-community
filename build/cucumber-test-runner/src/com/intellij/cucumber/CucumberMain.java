@@ -64,7 +64,7 @@ public final class CucumberMain {
     System.exit(exitStatus);
   }
 
-  public static int run(final String[] argv, final ClassLoader classLoader) {
+  public static int run(String[] argv, ClassLoader classLoader) {
     final Ref<Throwable> errorRef = new Ref<>();
     final Ref<Runtime> runtimeRef = new Ref<>();
 
