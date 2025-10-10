@@ -181,10 +181,7 @@ private fun companionAnnotations(
     return null
   }
   // this is a `static final ContainingClassType Companion` field
-  return ApiAnnotations(
-    isInternal = companionSignature.annotations.isInternal(),
-    isExperimental = companionSignature.annotations.isExperimental(),
-  )
+  return companionSignature.annotations.apiAnnotations()
 }
 
 /**
@@ -341,10 +338,7 @@ private fun Sequence<Path>.packages(): Map<String, ApiAnnotations> {
       continue
     }
     val node = readClass(path)
-    packages[node.name.packageName()] = ApiAnnotations(
-      isInternal = node.invisibleAnnotations.isInternal(),
-      isExperimental = node.invisibleAnnotations.isExperimental(),
-    )
+    packages[node.name.packageName()] = node.invisibleAnnotations.apiAnnotations()
   }
   return packages
 }
@@ -353,7 +347,8 @@ private const val API_STATUS_INTERNAL_DESCRIPTOR = "Lorg/jetbrains/annotations/A
 private const val API_STATUS_EXPERIMENTAL_DESCRIPTOR = "Lorg/jetbrains/annotations/ApiStatus\$Experimental;"
 private const val API_STATUS_NON_EXTENDABLE = "Lorg/jetbrains/annotations/ApiStatus\$NonExtendable;"
 
-private fun List<AnnotationNode>.apiAnnotations(): ApiAnnotations {
+private fun List<AnnotationNode>?.apiAnnotations(): ApiAnnotations {
+  if (this == null) return unannotated
   var isInternal = false
   var isExperimental = false
   for (node in this) {
