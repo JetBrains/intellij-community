@@ -38,7 +38,8 @@ public class JavaMethodCallInsertHandler<MethodCallElement extends JavaMethodCal
     PsiMethod method = item.getObject();
 
     LookupElement[] allItems = context.getElements();
-    ThreeState hasParams = method.getParameterList().isEmpty() ? ThreeState.NO : MethodParenthesesHandler.overloadsHaveParameters(allItems, method);
+    ThreeState hasParams = method.getParameterList().isEmpty() ? ThreeState.NO
+                                                               : MethodParenthesesHandler.overloadsHaveParameters(allItems, method);
     if (method.isConstructor()) {
       PsiClass aClass = method.getContainingClass();
       if (aClass != null && aClass.getTypeParameters().length > 0) {
@@ -94,7 +95,7 @@ public class JavaMethodCallInsertHandler<MethodCallElement extends JavaMethodCal
    * Called after insertion methods. Performs any necessary post-processing or cleanup.
    *
    * @param context the insertion context for the code template
-   * @param call the PsiCallExpression representing the inserted code, or null if no code was inserted
+   * @param call    the PsiCallExpression representing the inserted code, or null if no code was inserted
    */
   protected void afterHandle(@NotNull InsertionContext context, @Nullable PsiCallExpression call) {
 
@@ -111,7 +112,10 @@ public class JavaMethodCallInsertHandler<MethodCallElement extends JavaMethodCal
     return true;
   }
 
-  private static void handleNegation(@NotNull InsertionContext context, @NotNull Document document, @NotNull PsiCallExpression methodCall, boolean negatable) {
+  private static void handleNegation(@NotNull InsertionContext context,
+                                     @NotNull Document document,
+                                     @NotNull PsiCallExpression methodCall,
+                                     boolean negatable) {
     if (context.getCompletionChar() == '!' && negatable) {
       context.setAddCompletionChar(false);
       FeatureUsageTracker.getInstance().triggerFeatureUsed(CodeCompletionFeatures.EXCLAMATION_FINISH);
@@ -119,7 +123,11 @@ public class JavaMethodCallInsertHandler<MethodCallElement extends JavaMethodCal
     }
   }
 
-  private void importOrQualify(@NotNull MethodCallElement item, @NotNull Document document, @NotNull PsiFile file, @NotNull PsiMethod method, int startOffset) {
+  private void importOrQualify(@NotNull MethodCallElement item,
+                               @NotNull Document document,
+                               @NotNull PsiFile file,
+                               @NotNull PsiMethod method,
+                               int startOffset) {
     if (!needImportOrQualify()) {
       return;
     }
@@ -176,7 +184,9 @@ public class JavaMethodCallInsertHandler<MethodCallElement extends JavaMethodCal
     JavaCompletionUtil.insertClassReference(containingClass, file, startOffset);
   }
 
-  private void insertExplicitTypeParameters(@NotNull MethodCallElement item, @NotNull InsertionContext context, @NotNull OffsetKey refStart) {
+  private void insertExplicitTypeParameters(@NotNull MethodCallElement item,
+                                            @NotNull InsertionContext context,
+                                            @NotNull OffsetKey refStart) {
     context.commitDocument();
 
     String typeParams = getTypeParamsText(false, item.getObject(), item.getInferenceSubstitutor());
