@@ -182,7 +182,7 @@ public final class PersistentFSRecordsLockFreeOverMMappedFile implements Persist
       updateFlags(/*flagsToAdd: */Flags.FLAGS_WAS_NOT_PROPERLY_CLOSED_ONCE, /*flagsToRemove: */ 0);
       wasAlwaysClosedProperly = false;
     }
-    else{
+    else {
       wasAlwaysClosedProperly = !getFlag(Flags.FLAGS_WAS_NOT_PROPERLY_CLOSED_ONCE);
     }
 
@@ -301,7 +301,6 @@ public final class PersistentFSRecordsLockFreeOverMMappedFile implements Persist
 
     @Override
     public @PersistentFS.Attributes int getFlags() {
-      //noinspection MagicConstant
       return getIntField(RecordLayout.FLAGS_OFFSET);
     }
 
@@ -397,7 +396,7 @@ public final class PersistentFSRecordsLockFreeOverMMappedFile implements Persist
     }
 
     @Override
-    public int getGlobalModCount() throws IOException {
+    public int getGlobalModCount() {
       return records.getGlobalModCount();
     }
 
@@ -480,7 +479,6 @@ public final class PersistentFSRecordsLockFreeOverMMappedFile implements Persist
 
   @Override
   public @PersistentFS.Attributes int getFlags(int recordId) throws IOException {
-    //noinspection MagicConstant
     return getIntField(recordId, RecordLayout.FLAGS_OFFSET);
   }
 
@@ -709,7 +707,7 @@ public final class PersistentFSRecordsLockFreeOverMMappedFile implements Persist
   }
 
   @Override
-  public int getVersion() throws IOException {
+  public int getVersion() {
     return getIntHeaderField(FileHeader.VERSION_OFFSET);
   }
 
@@ -724,7 +722,7 @@ public final class PersistentFSRecordsLockFreeOverMMappedFile implements Persist
   }
 
   @Override
-  public boolean updateFlags(int flagsToAdd, int flagsToRemove) throws IOException {
+  public boolean updateFlags(int flagsToAdd, int flagsToRemove) {
     ByteBuffer headerBuffer = headerPage().rawPageBuffer();
 
     while (true) {//CAS-loop
@@ -890,10 +888,10 @@ public final class PersistentFSRecordsLockFreeOverMMappedFile implements Persist
   }
 
   private static void checkValidIdField(int recordId,
-                                        int idFieldValue,
+                                        int fieldValue,
                                         @NotNull String fieldName) {
-    if (idFieldValue < NULL_ID) {
-      throw new IllegalArgumentException("file[id: " + recordId + "]." + fieldName + "(=" + idFieldValue + ") must be >=0");
+    if (fieldValue < NULL_ID) {
+      throw new IllegalArgumentException("file[id: " + recordId + "]." + fieldName + "(=" + fieldValue + ") must be >=0");
     }
   }
 
