@@ -220,15 +220,6 @@ public final class ClassUtils {
     return parentClass != null;
   }
 
-  /**
-   * @return containing class for {@code element} ignoring {@link PsiAnonymousClass} if {@code element} is located in corresponding expression list
-   * @deprecated use {@link PsiUtil#getContainingClass(PsiElement)}
-   */
-  @Deprecated(forRemoval = true)
-  public static @Nullable PsiClass getContainingClass(PsiElement element) {
-    return PsiUtil.getContainingClass(element);
-  }
-
   public static PsiClass getOutermostContainingClass(PsiClass aClass) {
     PsiClass outerClass = aClass;
     while (true) {
