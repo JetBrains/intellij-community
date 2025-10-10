@@ -354,6 +354,7 @@ a:com.intellij.execution.configurations.coverage.CoverageEnabledConfiguration
 - getCurrentCoverageSuite():com.intellij.coverage.CoverageSuite
 - getName():java.lang.String
 - s:getOrCreate(com.intellij.execution.configurations.RunConfigurationBase):com.intellij.execution.configurations.coverage.CoverageEnabledConfiguration
+- s:getOrCreateIfApplicable(com.intellij.execution.configurations.RunConfigurationBase):com.intellij.execution.configurations.coverage.CoverageEnabledConfiguration
 - s:isApplicableTo(com.intellij.execution.configurations.RunConfigurationBase):Z
 - isBranchCoverageEnabled():Z
 - isCoverageEnabled():Z

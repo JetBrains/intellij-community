@@ -265,15 +265,23 @@ public abstract class CoverageEnabledConfiguration implements JDOMExternalizable
     return runConfiguration.getCopyableUserData(COVERAGE_KEY);
   }
 
+  /**
+   * Consider using {@link #getOrCreateIfApplicable(RunConfigurationBase)} instead.
+   */
   public static @NotNull CoverageEnabledConfiguration getOrCreate(final @NotNull RunConfigurationBase<?> runConfiguration) {
-    CoverageEnabledConfiguration configuration = getOrNull(runConfiguration);
-    if (configuration == null) {
-      CoverageEngine suitableEngine = getSuitableEngine(runConfiguration);
-      LOG.assertTrue(suitableEngine != null, "Coverage enabled run configuration wasn't found for run configuration: "
-                                             + runConfiguration.getName() + ", type = " + runConfiguration.getClass().getName());
-      configuration = suitableEngine.createCoverageEnabledConfiguration(runConfiguration);
-      runConfiguration.putCopyableUserData(COVERAGE_KEY, configuration);
-    }
+    var configuration = getOrCreateIfApplicable(runConfiguration);
+    LOG.assertTrue(configuration != null, "Coverage enabled run configuration wasn't found for run configuration: "
+                                          + runConfiguration.getName() + ", type = " + runConfiguration.getClass().getName());
+    return configuration;
+  }
+
+  public static @Nullable CoverageEnabledConfiguration getOrCreateIfApplicable(@NotNull RunConfigurationBase<?> runConfiguration) {
+    var existingConfiguration = getOrNull(runConfiguration);
+    if (existingConfiguration != null) return existingConfiguration;
+    var suitableEngine = getSuitableEngine(runConfiguration);
+    if (suitableEngine == null) return null;
+    var configuration = suitableEngine.createCoverageEnabledConfiguration(runConfiguration);
+    runConfiguration.putCopyableUserData(COVERAGE_KEY, configuration);
     return configuration;
   }
 

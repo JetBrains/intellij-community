@@ -56,7 +56,10 @@ final class CoverageJavaRunConfigurationExtension extends RunConfigurationExtens
 
   @Override
   public void attachToProcess(final @NotNull RunConfigurationBase configuration, @NotNull ProcessHandler handler, RunnerSettings runnerSettings) {
-    if (myTargetDependentParameters == null || myTargetDependentParameters.getTargetEnvironment() == null) {
+    var coverageConfiguration = JavaCoverageEnabledConfiguration.getFrom(configuration);
+    if (myTargetDependentParameters == null ||
+        myTargetDependentParameters.getTargetEnvironment() == null ||
+        coverageConfiguration == null) {
       CoverageDataManager.getInstance(configuration.getProject()).attachToProcess(handler, configuration, runnerSettings);
       return;
     }
@@ -69,8 +72,6 @@ final class CoverageJavaRunConfigurationExtension extends RunConfigurationExtens
                                   JavaCoverageBundle.message("download.coverage.report.from.target.progress.title")) {
             @Override
             public void run(@NotNull ProgressIndicator indicator) {
-              JavaCoverageEnabledConfiguration coverageConfiguration =
-                (JavaCoverageEnabledConfiguration)CoverageEnabledConfiguration.getOrCreate(configuration);
               try {
                 coverageConfiguration.downloadReport(myTargetDependentParameters.getTargetEnvironment(), indicator);
               }
@@ -268,7 +269,8 @@ final class CoverageJavaRunConfigurationExtension extends RunConfigurationExtens
   public boolean isListenerDisabled(RunConfigurationBase configuration, Object listener, RunnerSettings runnerSettings) {
     if (listener instanceof CoverageListener) {
       if (!(runnerSettings instanceof CoverageRunnerData)) return true;
-      CoverageEnabledConfiguration coverageEnabledConfiguration = CoverageEnabledConfiguration.getOrCreate(configuration);
+      CoverageEnabledConfiguration coverageEnabledConfiguration = CoverageEnabledConfiguration.getOrCreateIfApplicable(configuration);
+      if (coverageEnabledConfiguration == null) return true;
       CoverageSuite suite = coverageEnabledConfiguration.getCurrentCoverageSuite();
       return suite == null || !suite.getRunner().isCoverageByTestApplicable() || !suite.isCoverageByTestEnabled();
     }

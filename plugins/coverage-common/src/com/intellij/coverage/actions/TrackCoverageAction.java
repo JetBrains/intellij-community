@@ -120,8 +120,11 @@ class TrackCoverageAction extends ToggleModelAction {
         // Get coverage settings
         Executor executor = myProperties.getExecutor();
         if (executor != null && executor.getId().equals(CoverageExecutor.EXECUTOR_ID)) {
-          CoverageSuite suite = CoverageEnabledConfiguration.getOrCreate(base).getCurrentCoverageSuite();
-          return ContainerUtil.find(CoverageDataManager.getInstance(myProperties.getProject()).activeSuites(), b -> b.contains(suite));
+          CoverageEnabledConfiguration configuration = CoverageEnabledConfiguration.getOrCreateIfApplicable(base);
+          if (configuration != null) {
+            CoverageSuite suite = configuration.getCurrentCoverageSuite();
+            return ContainerUtil.find(CoverageDataManager.getInstance(myProperties.getProject()).activeSuites(), b -> b.contains(suite));
+          }
         }
       }
     }

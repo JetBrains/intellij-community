@@ -11,6 +11,7 @@ import com.intellij.util.ArrayUtil;
 import com.intellij.util.ui.JBInsets;
 import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -62,11 +63,14 @@ public final class CoverageFragment<T extends RunConfigurationBase<?>> extends N
                                         p -> CoverageConfigurable.getCoveragePatterns(getConfiguration(p), included).length > 0);
   }
 
-  private static @NotNull JavaCoverageEnabledConfiguration getConfiguration(RunConfigurationBase<?> configuration) {
-    return (JavaCoverageEnabledConfiguration)CoverageEnabledConfiguration.getOrCreate(configuration);
+  private static @Nullable JavaCoverageEnabledConfiguration getConfiguration(RunConfigurationBase<?> configuration) {
+    return JavaCoverageEnabledConfiguration.getFrom(configuration);
   }
 
-  private static void setCoveragePatterns(JavaCoverageEnabledConfiguration configuration, ClassFilter[] filters, boolean included) {
+  private static void setCoveragePatterns(@Nullable JavaCoverageEnabledConfiguration configuration,
+                                          ClassFilter[] filters,
+                                          boolean included) {
+    if (configuration == null) return;
     ClassFilter[] patterns = CoverageConfigurable.getCoveragePatterns(configuration, !included);
     for (ClassFilter filter : filters) {
       filter.INCLUDE = included;

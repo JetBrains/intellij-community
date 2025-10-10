@@ -54,9 +54,9 @@ public final class JavaCoverageEnabledConfiguration extends CoverageEnabledConfi
   }
 
   public static @Nullable JavaCoverageEnabledConfiguration getFrom(final @NotNull RunConfigurationBase<?> configuration) {
-    final CoverageEnabledConfiguration coverageEnabledConfiguration = getOrCreate(configuration);
-    if (coverageEnabledConfiguration instanceof JavaCoverageEnabledConfiguration) {
-      return (JavaCoverageEnabledConfiguration)coverageEnabledConfiguration;
+    final CoverageEnabledConfiguration coverageEnabledConfiguration = getOrCreateIfApplicable(configuration);
+    if (coverageEnabledConfiguration instanceof JavaCoverageEnabledConfiguration javaConfiguration) {
+      return javaConfiguration;
     }
     return null;
   }
