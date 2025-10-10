@@ -117,6 +117,8 @@ open class InternalUICustomization {
 
   open fun preserveGraphics(graphics: Graphics): Graphics = graphics
 
+  open fun backgroundImageGraphics(component: JComponent, graphics: Graphics): Graphics = graphics
+
   open fun createCustomDivider(isVertical: Boolean, splitter: Splittable): Divider? = null
 
   open fun createCustomToolWindowPaneHolder(): JPanel = JPanel()
