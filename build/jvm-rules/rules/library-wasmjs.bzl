@@ -1,18 +1,18 @@
 load("@rules_kotlin//kotlin/internal:defs.bzl", "KtPluginConfiguration", _KtCompilerPluginInfo = "KtCompilerPluginInfo", _KtJvmInfo = "KtJvmInfo", _KtPluginConfiguration = "KtPluginConfiguration")
 load("//:rules/common-attrs.bzl", "add_dicts", "common_toolchains", "kmp_attr")
-load("//:rules/impl/compile-wasmjs.bzl", "KtWasmJsBin", "KtWasmJsInfo", "kt_wasmjs_produce_module_actions")
+load("//:rules/impl/compile-wasmjs.bzl", "KtWasmJsBin", "KtWasmJsInfo", "wasmjs_produce_module_actions")
 load("//:rules/impl/kotlinc-options.bzl", "KotlincOptions")
 load("//:rules/impl/transitions.bzl", "jvm_platform_transition", "scrubbed_host_platform_transition")
 
 visibility("private")
 
-def _kt_wasmjs_library(ctx):
+def _wasmjs_library(ctx):
     if ctx.attr.neverlink and ctx.attr.runtime_deps:
         fail("runtime_deps and neverlink is nonsensical.", attr = "runtime_deps")
 
-    return kt_wasmjs_produce_module_actions(ctx, "kt_wasmjs_library")
+    return wasmjs_produce_module_actions(ctx, "wasmjs_library")
 
-kt_wasmjs_library = rule(
+wasmjs_library = rule(
     doc = """This rule compiles and links Kotlin and Java sources into a .jar file.""",
     attrs = add_dicts(kmp_attr, {
         "fragment_sources": attr.string_keyed_label_dict(
@@ -79,7 +79,7 @@ kt_wasmjs_library = rule(
         ),
     }),
     toolchains = common_toolchains,
-    implementation = _kt_wasmjs_library,
+    implementation = _wasmjs_library,
     provides = [KtWasmJsInfo, KtWasmJsBin, _KtJvmInfo],
     cfg = jvm_platform_transition,
 )

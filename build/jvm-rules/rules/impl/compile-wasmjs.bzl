@@ -61,7 +61,7 @@ def _create_wasmjs_compilation_common_args(ctx):
 
     return args
 
-def kt_wasmjs_produce_module_actions(ctx, rule_kind):
+def wasmjs_produce_module_actions(ctx, rule_kind):
     srcs = [f.path for f in ctx.files.fragment_sources]
 
     compile_exported_deps_klibs = depset([], transitive = [d[KtWasmJsInfo].compile_klibs for d in ctx.attr.exports])
