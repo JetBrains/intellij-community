@@ -121,8 +121,8 @@ public class IntellijSensitiveDataValidator extends SensitiveDataValidator<Metad
       recorderId,
       id -> {
         return ApplicationManager.getApplication().isUnitTestMode()
-               ? new BlindSensitiveDataValidator(FusComponentProvider.createBlindFusComponents(recorderId), recorderId)
-               : new IntellijSensitiveDataValidator(FusComponentProvider.createFusComponents(recorderId), recorderId);
+               ? new BlindSensitiveDataValidator(FusComponentProvider.createBlindFusComponents(id), id)
+               : new IntellijSensitiveDataValidator(FusComponentProvider.createFusComponents(id), id);
       }
     );
   }

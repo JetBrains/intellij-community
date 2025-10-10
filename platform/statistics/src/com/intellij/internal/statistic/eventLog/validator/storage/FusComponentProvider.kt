@@ -146,42 +146,40 @@ object FusComponentProvider {
     val remoteConfig: RemoteConfig,
   )
 
+  private class BlindMetadataStorage:  MetadataStorage<EventLogBuild> {
+    override fun getIdsRulesRevisions(): RecorderDataValidationRule = throw UnsupportedOperationException("Not supported")
+    override fun getSystemDataRulesRevisions(): RecorderDataValidationRule = throw UnsupportedOperationException("Not supported")
+    override fun isUnreachable(): Boolean = false
+    override fun getGroupValidators(groupId: String): IGroupValidators<EventLogBuild> {
+      return object : IGroupValidators<EventLogBuild> {
+        override val eventGroupRules: IEventGroupRules? = null
+        override val versionFilter: IEventGroupsFilterRules<EventLogBuild>? = null
+      }
+    }
+    override fun getSkipAnonymizationIds(): Set<String> = emptySet()
+    override fun reload() = Unit
+    override fun update(): Boolean = false
+    override suspend fun update(scope: CoroutineScope): Job = throw UnsupportedOperationException("Not supported")
+    override fun getClientDataRulesRevisions(): RecorderDataValidationRule = throw UnsupportedOperationException("Not supported")
+    override fun getFieldsToAnonymize(groupId: String, eventId: String): Set<String> = emptySet()
+  }
+
+  private class BlindRemoteConfig : RemoteConfig {
+    override fun getSendUrl(): String = ""
+    override fun provideOptions(): Map<String, String> = emptyMap()
+    override fun getMetadataUrl(): String = ""
+    override fun getDictionaryUrl(): String = ""
+  }
+
   @JvmStatic
   fun createBlindFusComponents(recorderId: String): FusComponents {
-    val metadataStorage: MetadataStorage<EventLogBuild> = object : MetadataStorage<EventLogBuild> {
-      override fun getIdsRulesRevisions(): RecorderDataValidationRule = throw UnsupportedOperationException("Not supported")
-      override fun getSystemDataRulesRevisions(): RecorderDataValidationRule = throw UnsupportedOperationException("Not supported")
-      override fun isUnreachable(): Boolean = false
-      override fun getGroupValidators(groupId: String): IGroupValidators<EventLogBuild> {
-        return object : IGroupValidators<EventLogBuild> {
-          override val eventGroupRules: IEventGroupRules? = null
-          override val versionFilter: IEventGroupsFilterRules<EventLogBuild>? = null
-        }
-      }
-      override fun getSkipAnonymizationIds(): Set<String> = emptySet()
-      override fun reload() = Unit
-      override fun update(): Boolean = false
-      override suspend fun update(scope: CoroutineScope): Job = throw UnsupportedOperationException("Not supported")
-      override fun getClientDataRulesRevisions(): RecorderDataValidationRule = throw UnsupportedOperationException("Not supported")
-      override fun getFieldsToAnonymize(groupId: String, eventId: String): Set<String> = emptySet()
-    }
-
     return FusComponents(
-      if (ApplicationManager.getApplication().isInternal()) {
-        CompositeValidationRulesStorage(
-          metadataStorage,
-          ValidationTestRulesPersistedStorage(recorderId)
-        )
-      } else {
-        metadataStorage
-      },
+      CompositeValidationRulesStorage(
+        BlindMetadataStorage(),
+        ValidationTestRulesPersistedStorage(recorderId)
+      ),
       MessageBus(),
-      object : RemoteConfig {
-        override fun getSendUrl(): String = ""
-        override fun provideOptions(): Map<String, String> = emptyMap()
-        override fun getMetadataUrl(): String = ""
-        override fun getDictionaryUrl(): String = ""
-      }
+      BlindRemoteConfig()
     )
   }
 
