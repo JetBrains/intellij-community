@@ -10,7 +10,6 @@
     <orderEntry type="sourceFolder" forTests="false" />
     <orderEntry type="module" module-name="intellij.platform.boot" scope="RUNTIME" />
     <orderEntry type="module" module-name="intellij.libraries.junit4" />
-    <orderEntry type="library" name="hamcrest" level="project" />
     <orderEntry type="library" scope="PROVIDED" name="JUnit5Launcher" level="project" />
     <orderEntry type="library" scope="PROVIDED" name="JUnit5" level="project" />
     <orderEntry type="module" module-name="intellij.libraries.junit5.vintage" scope="PROVIDED" />

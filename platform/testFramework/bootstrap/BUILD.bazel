@@ -20,7 +20,6 @@ jvm_library(
   resources = [":tools-testsBootstrap_resources"],
   deps = [
     "//libraries/junit4",
-    "@lib//:hamcrest",
     "@lib//:junit5Launcher-provided",
     "@lib//:junit5-provided",
     "@lib//:tc_service_messages",
