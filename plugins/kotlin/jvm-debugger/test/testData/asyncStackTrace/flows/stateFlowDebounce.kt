@@ -59,3 +59,8 @@ suspend fun <T> `~~~!!! recognizableFrameWithEmitInAsyncStackTraceEmit 2 !!!~~~`
     flow.emit(value)
 }
 
+// IGNORE_K1
+// IGNORE_K2
+// SKIP_WRONG_DIRECTIVE_CHECK
+/* IDEA-380226 */
+
