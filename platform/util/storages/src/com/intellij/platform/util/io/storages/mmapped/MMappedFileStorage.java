@@ -675,18 +675,21 @@ public final class MMappedFileStorage implements Closeable, Unmappable, Cleanabl
       @Override
       public Region region(long regionStartOffset,
                            int pageSize) throws IOException {
-        Path mappingLockFile = mainStoragePath.resolveSibling("." + mainStoragePath.getFileName() + "." + regionStartOffset + ".lock");
-        return new RegionImpl(mappingLockFile, regionStartOffset, pageSize);
+        Path mappingLockPath = mainStoragePath.resolveSibling("." + mainStoragePath.getFileName() + "." + regionStartOffset + ".lock");
+        return new RegionImpl(mainStoragePath, mappingLockPath, regionStartOffset, pageSize);
       }
 
       private static final class RegionImpl implements Region {
+        private final Path mainStoragePath;
         private final Path mappingLockFile;
         private final long regionStartOffset;
         private final int pageSize;
 
-        private RegionImpl(@NotNull Path mappingLockFile,
+        private RegionImpl(@NotNull Path mainStoragePath, //for debug
+                           @NotNull Path mappingLockFile,
                            long regionStartOffset,
                            int pageSize) {
+          this.mainStoragePath = mainStoragePath;
           this.mappingLockFile = mappingLockFile;
           this.regionStartOffset = regionStartOffset;
           this.pageSize = pageSize;
@@ -706,7 +709,9 @@ public final class MMappedFileStorage implements Closeable, Unmappable, Cleanabl
               //    everything is fine, and waiting for some bizarre errors to pop up later on.
               Path firstExistingParent = firstExistingParent(parent);
               throw new IOException("Parent dir[" + parent.toAbsolutePath() + "] is not exist/was removed -- can't create .lock-file.\n" +
-                                    "First existing parent: [" + firstExistingParent + "]", e);
+                                    "Storage file[" + mainStoragePath + "](exists: " + Files.exists(mainStoragePath) + "), " +
+                                    "First existing parent: [" + firstExistingParent + "], " +
+                                    "indexes were dropped: " + DEBUG_INDEXES_WAS_DROPPED, e);
             }
             else {
               throw new IOException("Can't create .lock-file for unknown reasons", e);
@@ -765,4 +770,11 @@ public final class MMappedFileStorage implements Closeable, Unmappable, Cleanabl
       }
     }
   }
+
+  /**
+   * Dirty hack to prove indexes dropping is the main reason for apt. error
+   * FIXME RC: drop after proved
+   */
+  @ApiStatus.Internal
+  public static boolean DEBUG_INDEXES_WAS_DROPPED = false;
 }
