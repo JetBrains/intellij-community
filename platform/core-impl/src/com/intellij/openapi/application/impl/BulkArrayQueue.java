@@ -1,6 +1,7 @@
 // Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.application.impl;
 
+import com.intellij.openapi.diagnostic.Logger;
 import it.unimi.dsi.fastutil.objects.ObjectArrayList;
 import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
@@ -10,6 +11,8 @@ import java.util.function.Predicate;
 // array-backed queue with additional support for fast bulk inserts
 @ApiStatus.Internal
 public final class BulkArrayQueue<T> {
+  private static final Logger LOG = Logger.getInstance(BulkArrayQueue.class);
+
   // maintain wrap-around queue using these pointers into myQueue
   private int tail; // index at which the next element would be stored via enqueue()
   private int head; // index to a stored element to be returned by pollFirst(); if tail==head the queue is empty
@@ -44,7 +47,12 @@ public final class BulkArrayQueue<T> {
       firstChunkSize = oldCapacity - head;
       System.arraycopy(myQueue, 0, newQueue, reserveAtStart + firstChunkSize, tail);
     }
-    System.arraycopy(myQueue, head, newQueue, reserveAtStart, firstChunkSize);
+    try {
+      System.arraycopy(myQueue, head, newQueue, reserveAtStart, firstChunkSize);
+    } catch (Throwable e) {
+      LOG.warn("Could not copy array: head=" + head + ", tail=" + tail + ", capacity=" + oldCapacity + ", reserveAtStart=" + reserveAtStart + ", firstChunkSize=" + firstChunkSize, e);
+      throw e;
+    }
     tail = size() + reserveAtStart;
     head = reserveAtStart;
     myQueue = newQueue;
