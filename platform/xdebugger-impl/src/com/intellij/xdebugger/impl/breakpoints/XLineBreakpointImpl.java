@@ -113,12 +113,6 @@ public final class XLineBreakpointImpl<P extends XBreakpointProperties> extends 
     return super.isValid();
   }
 
-  @Override
-  protected void doDispose() {
-    myVisualRepresentation.removeHighlighter();
-    myVisualRepresentation.redrawInlineInlays(getFile(), getLine());
-  }
-
   public void updatePosition() {
     RangeMarker highlighter = myVisualRepresentation.getRangeMarker();
     if (highlighter != null && highlighter.isValid()) {

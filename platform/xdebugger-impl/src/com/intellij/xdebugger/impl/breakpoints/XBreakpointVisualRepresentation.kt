@@ -68,6 +68,7 @@ class XBreakpointVisualRepresentation(
         finally {
           // Guarantee that the highlighter is removed when the scope is canceled
           removeHighlighter()
+          redrawInlineInlays()
         }
       }
     }
@@ -113,10 +114,6 @@ class XBreakpointVisualRepresentation(
       val highlightRange = myBreakpoint.getHighlightRangeSuspend()
       if (highlightRange !is XLineBreakpointHighlighterRange.Available) return@withContext
       val range = highlightRange.range
-      if (rangeMarker != null && rangeMarker !is RangeHighlighter) {
-        removeHighlighter()
-        assert(highlighter == null)
-      }
 
       val attributes = getBreakpointAttributes()
       val highlighter = getHighlighterIfValid(range, document, attributes)
@@ -144,8 +141,9 @@ class XBreakpointVisualRepresentation(
     document: Document,
     attributes: TextAttributes?,
   ): RangeHighlighter? {
-    val highlighter = this.highlighter ?: return null
-    if (!highlighter.isValid()
+    val highlighter = rangeMarker ?: return null
+    if (highlighter !is RangeHighlighter
+        || !highlighter.isValid()
         //breakpoint range marker is out-of-sync with actual breakpoint text range
         || range != null && highlighter.textRange != range
         || !DocumentUtil.isValidOffset(highlighter.getStartOffset(), document)

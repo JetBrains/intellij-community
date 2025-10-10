@@ -227,12 +227,6 @@ internal class FrontendXLineBreakpointProxy(
     return visualRepresentation.highlighter
   }
 
-  override fun dispose() {
-    super.dispose()
-    visualRepresentation.removeHighlighter()
-    visualRepresentation.redrawInlineInlays(getFile(), getLine())
-  }
-
   override fun doUpdateUI(callOnUpdate: () -> Unit) {
     visualRepresentation.doUpdateUI(callOnUpdate)
   }
