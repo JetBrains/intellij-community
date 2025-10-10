@@ -380,6 +380,8 @@ public final class ConfigImportHelper {
       var message = BootstrapBundle.message("import.settings.restart");
       var yes = BootstrapBundle.message("import.settings.restart.now");
       var no = BootstrapBundle.message("import.settings.restart.later");
+      //noinspection TestOnlyProblems
+      LookAndFeelThemeAdapterKt.setEarlyUiLaF();
       if (Messages.showYesNoDialog(message, title, yes, no, Messages.getQuestionIcon()) == Messages.YES) {
         System.exit(0);
       }
