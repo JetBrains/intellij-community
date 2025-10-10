@@ -10,8 +10,6 @@ import java.nio.file.Files
 import java.nio.file.Path
 import kotlin.io.path.exists
 
-private val log = logger<CustomConfigMigrationOption>()
-
 /**
  * [A marker file](com.intellij.openapi.application.ConfigImportHelper.CUSTOM_MARKER_FILE_NAME) is created in the config directory
  * if we need to perform some custom migration on the next startup. The format of the file is defined below.
@@ -70,6 +68,8 @@ sealed class CustomConfigMigrationOption {
   }
 
   companion object {
+    private val log = logger<CustomConfigMigrationOption>()
+
     private const val IMPORT_PREFIX = "import "
     private const val MIGRATE_PLUGINS_PREFIX = "migrate-plugins "
     private const val PROPERTIES_PREFIX = "properties "
