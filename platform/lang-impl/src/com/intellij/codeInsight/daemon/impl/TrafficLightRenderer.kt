@@ -53,6 +53,7 @@ import it.unimi.dsi.fastutil.objects.Object2IntOpenHashMap
 import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.annotations.Nls
 import java.awt.Container
+import java.util.Collections
 import java.util.concurrent.CancellationException
 
 open class TrafficLightRenderer private constructor(
@@ -652,9 +653,12 @@ open class TrafficLightRenderer private constructor(
     ): TrafficLightRendererInfo {
       val viewProvider = psiFile.getViewProvider()
       val languages = viewProvider.getLanguages()
-      val settingMap = HashMap<Language, FileHighlightingSetting>(languages.size)
+      val settingMap = LinkedHashMap<Language, FileHighlightingSetting>(languages.size)
       val settings = HighlightingSettingsPerFile.getInstance(project)
-      for (psiRoot in viewProvider.getAllFiles()) {
+      val roots = viewProvider.getAllFiles().toMutableList()
+      // leave the first item (the base language) in place, show all others in a stable order
+      roots.subList(1, roots.size).sortBy { file ->  file.language.displayName }
+      for (psiRoot in roots) {
         val setting = settings.getHighlightingSettingForRoot(psiRoot)
         settingMap[psiRoot.getLanguage()] = setting
       }
@@ -662,7 +666,7 @@ open class TrafficLightRenderer private constructor(
       val virtualFile = psiFile.getVirtualFile()!!
       val inLib = fileIndex.isInLibrary(virtualFile) && !fileIndex.isInContent(virtualFile)
       val shouldHighlight = ProblemHighlightFilter.shouldHighlightFile(psiFile)
-      return TrafficLightRendererInfo(java.util.Map.copyOf(settingMap), inLib, shouldHighlight)
+      return TrafficLightRendererInfo(Collections.unmodifiableMap(settingMap), inLib, shouldHighlight)
     }
 
     private fun toPercent(progress: Double, finished: Boolean): Int {
