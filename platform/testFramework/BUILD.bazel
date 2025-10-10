@@ -90,7 +90,6 @@ jvm_library(
     "//platform/util/jdom",
     "//platform/workspace/jps",
     "//platform/workspace/storage",
-    "//platform/testFramework/bootstrap:tools-testsBootstrap",
     "//platform/runtime/product",
     ":libraries_junit4_provided",
     ":libraries_junit5-launcher_provided",

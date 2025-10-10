@@ -77,7 +77,7 @@
     <orderEntry type="module" module-name="intellij.platform.workspace.jps" />
     <orderEntry type="module" module-name="intellij.platform.workspace.storage" />
     <orderEntry type="module" module-name="intellij.regexp" scope="RUNTIME" />
-    <orderEntry type="module" module-name="intellij.tools.testsBootstrap" />
+    <orderEntry type="module" module-name="intellij.tools.testsBootstrap" scope="TEST" />
     <orderEntry type="module" module-name="intellij.xml.dom.impl" scope="RUNTIME" />
     <orderEntry type="module-library" scope="TEST">
       <library name="okhttp3-mockwebserver" type="repository">
