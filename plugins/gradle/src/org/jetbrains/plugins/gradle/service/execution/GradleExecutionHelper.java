@@ -88,7 +88,7 @@ public final class GradleExecutionHelper {
    * @deprecated Use the {@link ProjectConnection#newBuild} function directly.
    * Or use the {@link com.intellij.openapi.externalSystem.util.ExternalSystemUtil#runTask} API for the high-level Gradle task execution.
    */
-  @Deprecated
+  @Deprecated(forRemoval = true)
   public @NotNull BuildLauncher getBuildLauncher(
     @NotNull ProjectConnection connection,
     @NotNull ExternalSystemTaskId id,
@@ -105,7 +105,7 @@ public final class GradleExecutionHelper {
    * @deprecated Use the {@link ProjectConnection#newTestLauncher} function directly.
    * Or use the {@link com.intellij.openapi.externalSystem.util.ExternalSystemUtil#runTask} API for the high-level Gradle task execution.
    */
-  @Deprecated
+  @Deprecated(forRemoval = true)
   public @NotNull TestLauncher getTestLauncher(
     @NotNull ProjectConnection connection,
     @NotNull ExternalSystemTaskId id,

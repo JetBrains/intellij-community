@@ -388,6 +388,7 @@ open class GradleInstallationManager : Disposable.Default {
       }
     }
 
+    @ApiStatus.ScheduledForRemoval
     @JvmStatic
     @Deprecated("Use {@link GradleInstallationManager#getGradleVersion(Path)} instead.")
     fun getGradleVersion(gradleHome: String?): String? {
