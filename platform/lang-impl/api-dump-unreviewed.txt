@@ -1988,7 +1988,6 @@ f:com.intellij.codeInsight.daemon.impl.ConfigureHighlightingLevelKt
 - sf:getConfigureHighlightingLevelPopup(com.intellij.openapi.actionSystem.DataContext):com.intellij.openapi.ui.popup.JBPopup
 f:com.intellij.codeInsight.daemon.impl.DaemonListeners
 - com.intellij.openapi.Disposable
-- s:canChangeFileSilently(com.intellij.psi.PsiFileSystemItem,Z):Z
 - s:canChangeFileSilently(com.intellij.psi.PsiFileSystemItem,Z,com.intellij.util.ThreeState):Z
 - dispose():V
 f:com.intellij.codeInsight.daemon.impl.DaemonTooltipActionProvider

@@ -1023,7 +1023,6 @@ com.intellij.openapi.vcs.changes.ChangelistBuilder
 - a:processRootSwitch(com.intellij.openapi.vfs.VirtualFile,java.lang.String):V
 - a:processSwitchedFile(com.intellij.openapi.vfs.VirtualFile,java.lang.String,Z):V
 - a:processUnversionedFile(com.intellij.openapi.vcs.FilePath):V
-- processUnversionedFile(com.intellij.openapi.vfs.VirtualFile):V
 - a:removeRegisteredChangeFor(com.intellij.openapi.vcs.FilePath):V
 - a:reportAdditionalInfo(com.intellij.openapi.util.Factory):V
 - a:reportAdditionalInfo(java.lang.String):V

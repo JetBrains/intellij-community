@@ -10,7 +10,6 @@ import com.intellij.codeInsight.multiverse.CodeInsightContexts;
 import com.intellij.codeInspection.InspectionProfile;
 import com.intellij.codeInspection.LocalQuickFix;
 import com.intellij.codeInspection.ex.QuickFixWrapper;
-import com.intellij.diagnostic.PluginException;
 import com.intellij.facet.Facet;
 import com.intellij.facet.FacetManager;
 import com.intellij.facet.FacetManagerListener;
@@ -545,12 +544,6 @@ public final class DaemonListeners implements Disposable {
       return false;
     }
     return HighlightingSessionImpl.canChangeFileSilently(file, isInContent, extensionsAllowToChangeFileSilently);
-  }
-
-  @Deprecated(forRemoval = true)
-  public static boolean canChangeFileSilently(@NotNull PsiFileSystemItem file, boolean isInContent) {
-    PluginException.reportDeprecatedUsage("this method", "");
-    return canChangeFileSilently(file, isInContent, ThreeState.UNSURE);
   }
 
   private final class MyWriteActionListener implements WriteActionListener {

@@ -18,7 +18,6 @@ import com.intellij.openapi.vcs.changes.ChangeListManager;
 import com.intellij.openapi.vcs.changes.CommitContext;
 import com.intellij.openapi.vfs.LocalFileSystem;
 import com.intellij.openapi.vfs.VirtualFile;
-import com.intellij.util.concurrency.annotations.RequiresEdt;
 import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -79,15 +78,6 @@ public final class ApplyPatchAction extends DumbAwareAction {
   // used by TeamCity plugin
   public static void showApplyPatch(@NotNull Project project, @NotNull VirtualFile file) {
     ApplyPatchUtil.showApplyPatch(project, file);
-  }
-
-  /**
-   * @deprecated Use {@link ApplyPatchUtil#showAndGetApplyPatch(Project, File)} instead.
-   */
-  @Deprecated(forRemoval = true)
-  @RequiresEdt
-  public static Boolean showAndGetApplyPatch(@NotNull Project project, @NotNull File file) {
-    return ApplyPatchUtil.showAndGetApplyPatch(project, file);
   }
 
   /**

@@ -1656,7 +1656,6 @@ f:com.intellij.openapi.vcs.changes.patch.ApplyPatchAction
 - <init>():V
 - actionPerformed(com.intellij.openapi.actionSystem.AnActionEvent):V
 - getActionUpdateThread():com.intellij.openapi.actionSystem.ActionUpdateThread
-- s:showAndGetApplyPatch(com.intellij.openapi.project.Project,java.io.File):java.lang.Boolean
 - s:showApplyPatch(com.intellij.openapi.project.Project,com.intellij.openapi.vfs.VirtualFile):V
 - update(com.intellij.openapi.actionSystem.AnActionEvent):V
 c:com.intellij.openapi.vcs.changes.patch.ApplyPatchDefaultExecutor
