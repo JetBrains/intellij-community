@@ -282,7 +282,7 @@ public final class CompletionProgressIndicator extends ProgressIndicatorBase imp
 
   private void addDefaultAdvertisements(@NotNull CompletionParameters parameters) {
     if (DumbService.isDumb(getProject())) {
-      addAdvertisement(IdeBundle.message("dumb.mode.results.might.be.incomplete"), AnimatedIcon.Default.INSTANCE);
+      addAdvertisement(IdeBundle.message("dumb.mode.analyzing.project"), AnimatedIcon.Default.INSTANCE);
       return;
     }
 

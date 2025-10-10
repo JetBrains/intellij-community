@@ -136,7 +136,7 @@ class SePopupVm(
         // so isIncomplete always remains false on frontend, making dependency loading messages unavailable in RemDev.
         if (!currentTab.isIndexingDependent) ""
         else if (isDumb || isIncomplete) {
-          if (isDumb) IdeBundle.message("dumb.mode.results.might.be.incomplete")
+          if (isDumb) IdeBundle.message("dumb.mode.analyzing.project")
           else IdeBundle.message("incomplete.mode.results.might.be.incomplete")
         }
         else ""
