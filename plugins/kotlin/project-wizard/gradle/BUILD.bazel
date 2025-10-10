@@ -1,4 +1,4 @@
-### auto-generated section `build kotlin.project-wizard.gradle` start
+### auto-generated section `build intellij.kotlin.projectWizard.gradle` start
 load("@rules_jvm//:jvm.bzl", "jvm_library", "resourcegroup")
 
 resourcegroup(
@@ -9,7 +9,7 @@ resourcegroup(
 
 jvm_library(
   name = "gradle",
-  module_name = "kotlin.project-wizard.gradle",
+  module_name = "intellij.kotlin.projectWizard.gradle",
   visibility = ["//visibility:public"],
   srcs = glob(["src/**/*.kt", "src/**/*.java", "src/**/*.form"], allow_empty = True),
   resources = [":gradle_resources"],
@@ -30,7 +30,7 @@ jvm_library(
     "//platform/lang-impl",
     "//plugins/kotlin/base/plugin",
     "//java/openapi:java",
-    "//plugins/kotlin/gradle/code-insight-common",
+    "//plugins/kotlin/gradle/code-insight-common:kotlin-gradle-codeInsight-common",
     "//plugins/kotlin/project-configuration",
     "//plugins/kotlin/gradle/gradle-java",
     "//plugins/kotlin/base/project-structure",
@@ -41,4 +41,4 @@ jvm_library(
     "//libraries/jackson/jackson",
   ]
 )
-### auto-generated section `build kotlin.project-wizard.gradle` end
+### auto-generated section `build intellij.kotlin.projectWizard.gradle` end

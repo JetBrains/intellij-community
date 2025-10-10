@@ -1,4 +1,4 @@
-### auto-generated section `build kotlin.searching.base` start
+### auto-generated section `build intellij.kotlin.searching.base` start
 load("//build:compiler-options.bzl", "create_kotlinc_options")
 load("@rules_jvm//:jvm.bzl", "jvm_library")
 
@@ -13,7 +13,7 @@ create_kotlinc_options(
 
 jvm_library(
   name = "base",
-  module_name = "kotlin.searching.base",
+  module_name = "intellij.kotlin.searching.base",
   visibility = ["//visibility:public"],
   srcs = glob(["src/**/*.kt", "src/**/*.java", "src/**/*.form"], allow_empty = True),
   kotlinc_opts = ":custom_base",
@@ -47,4 +47,4 @@ jvm_library(
     "//plugins/kotlin/base/frontend-agnostic",
   ]
 )
-### auto-generated section `build kotlin.searching.base` end
+### auto-generated section `build intellij.kotlin.searching.base` end

@@ -21,7 +21,7 @@ jvm_library(
     "//plugins/kotlin/base/test:test_test_lib",
     "//plugins/kotlin/base/plugin",
     "//plugins/kotlin/base/plugin:plugin_test_lib",
-    "//plugins/kotlin/code-insight/inspections-k2:kotlin-code-insight-inspections-k2",
+    "//plugins/kotlin/code-insight/inspections-k2:kotlin-codeInsight-inspections",
     "//platform/analysis-api:analysis",
     "//platform/core-api:core",
   ],

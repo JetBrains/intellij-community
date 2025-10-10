@@ -13,7 +13,7 @@ jvm_library(
     "//platform/core-api:core",
     "//platform/util",
     "@lib//:kotlinc-noarg-compiler-plugin",
-    "//plugins/kotlin/compiler-plugins/compiler-plugin-support/common",
+    "//plugins/kotlin/compiler-plugins/compiler-plugin-support/common:kotlin-compilerPlugins-support",
     "//platform/core-impl",
     "//java/java-psi-impl:psi-impl",
   ]

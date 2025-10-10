@@ -39,12 +39,12 @@ jvm_library(
     "//platform/editor-ui-api:editor-ui",
     "//java/java-impl:impl",
     "//plugins/kotlin/base/code-insight",
-    "//plugins/kotlin/code-insight/impl-base",
+    "//plugins/kotlin/code-insight/impl-base:kotlin-codeInsight-shared",
     "//plugins/kotlin/base/resources:kotlin-base-resources",
     "//plugins/kotlin/code-insight/utils",
     "//libraries/kotlinx/serialization/core",
     "//libraries/kotlinx/serialization/json",
-    "//plugins/kotlin/base/kotlin.base.serialization:kotlin-base-serialization",
+    "//plugins/kotlin/base/kotlin.base.serialization",
   ]
 )
 ### auto-generated section `build kotlin.completion.impl.shared` end

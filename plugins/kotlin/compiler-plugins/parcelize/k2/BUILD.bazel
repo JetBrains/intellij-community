@@ -1,9 +1,9 @@
-### auto-generated section `build kotlin.compiler-plugins.parcelize.k2` start
+### auto-generated section `build intellij.kotlin.compilerPlugins.parcelize` start
 load("//build:compiler-options.bzl", "create_kotlinc_options")
 load("@rules_jvm//:jvm.bzl", "jvm_library", "resourcegroup")
 
 create_kotlinc_options(
-  name = "custom_k2",
+  name = "custom_kotlin-compilerPlugins-parcelize",
   opt_in = [
     "com.intellij.openapi.util.IntellijInternalApi",
     "org.jetbrains.kotlin.analysis.api.KaContextParameterApi",
@@ -12,18 +12,18 @@ create_kotlinc_options(
 )
 
 resourcegroup(
-  name = "k2_resources",
+  name = "kotlin-compilerPlugins-parcelize_resources",
   srcs = glob(["resources/**/*"]),
   strip_prefix = "resources"
 )
 
 jvm_library(
-  name = "k2",
-  module_name = "kotlin.compiler-plugins.parcelize.k2",
+  name = "kotlin-compilerPlugins-parcelize",
+  module_name = "intellij.kotlin.compilerPlugins.parcelize",
   visibility = ["//visibility:public"],
   srcs = glob(["src/**/*.kt", "src/**/*.java", "src/**/*.form"], allow_empty = True),
-  resources = [":k2_resources"],
-  kotlinc_opts = ":custom_k2",
+  resources = [":kotlin-compilerPlugins-parcelize_resources"],
+  kotlinc_opts = ":custom_kotlin-compilerPlugins-parcelize",
   deps = [
     "@lib//:kotlin-stdlib",
     "@lib//:kotlinc-kotlin-compiler-common",
@@ -43,4 +43,4 @@ jvm_library(
     "//platform/editor-ui-api:editor-ui",
   ]
 )
-### auto-generated section `build kotlin.compiler-plugins.parcelize.k2` end
+### auto-generated section `build intellij.kotlin.compilerPlugins.parcelize` end

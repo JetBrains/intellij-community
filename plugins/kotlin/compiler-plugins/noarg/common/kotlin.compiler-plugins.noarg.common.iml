@@ -13,7 +13,7 @@
     <orderEntry type="module" module-name="intellij.platform.core" />
     <orderEntry type="module" module-name="intellij.platform.util" />
     <orderEntry type="library" name="kotlinc.noarg-compiler-plugin" level="project" />
-    <orderEntry type="module" module-name="kotlin.compiler-plugins.compiler-plugin-support.common" />
+    <orderEntry type="module" module-name="intellij.kotlin.compilerPlugins.support" />
     <orderEntry type="module" module-name="intellij.platform.core.impl" />
     <orderEntry type="module" module-name="intellij.java.psi.impl" />
   </component>

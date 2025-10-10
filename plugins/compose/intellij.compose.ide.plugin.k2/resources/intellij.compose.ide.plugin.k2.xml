@@ -1,8 +1,8 @@
 <idea-plugin package="com.intellij.compose.ide.plugin.k2">
   <dependencies>
     <plugin id="com.intellij.modules.kotlin.k2"/>
-    <module name="kotlin.refactorings.k2"/>
-    <module name="kotlin.highlighting.k2"/>
+    <module name="intellij.kotlin.refactorings"/>
+    <module name="intellij.kotlin.highlighting"/>
     <module name="intellij.compose.ide.plugin.shared" />
   </dependencies>
 

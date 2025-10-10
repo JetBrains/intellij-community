@@ -1,4 +1,4 @@
-### auto-generated section `build kotlin.coverage` start
+### auto-generated section `build intellij.kotlin.coverage` start
 load("@rules_jvm//:jvm.bzl", "jvm_library", "resourcegroup")
 
 resourcegroup(
@@ -9,7 +9,7 @@ resourcegroup(
 
 jvm_library(
   name = "coverage",
-  module_name = "kotlin.coverage",
+  module_name = "intellij.kotlin.coverage",
   visibility = ["//visibility:public"],
   srcs = glob(["src/**/*.kt", "src/**/*.java", "src/**/*.form"], allow_empty = True),
   resources = [":coverage_resources"],
@@ -33,4 +33,4 @@ jvm_library(
     "//plugins/coverage",
   ]
 )
-### auto-generated section `build kotlin.coverage` end
+### auto-generated section `build intellij.kotlin.coverage` end

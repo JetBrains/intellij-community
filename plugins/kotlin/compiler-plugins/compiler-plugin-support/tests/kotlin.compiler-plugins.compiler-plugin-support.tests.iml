@@ -14,10 +14,10 @@
     <orderEntry type="module" module-name="intellij.platform.lang.core" scope="TEST" />
     <orderEntry type="module" module-name="intellij.platform.projectModel" scope="TEST" />
     <orderEntry type="module" module-name="intellij.platform.testFramework" scope="TEST" />
-    <orderEntry type="module" module-name="kotlin.base.facet" />
-    <orderEntry type="module" module-name="kotlin.base.facet.tests" scope="TEST" />
-    <orderEntry type="module" module-name="kotlin.compiler-plugins.compiler-plugin-support.common" scope="TEST" />
-    <orderEntry type="module" module-name="kotlin.base.plugin" scope="TEST" />
+    <orderEntry type="module" module-name="intellij.kotlin.base.facet" />
+    <orderEntry type="module" module-name="intellij.kotlin.base.facet.tests" scope="TEST" />
+    <orderEntry type="module" module-name="intellij.kotlin.compilerPlugins.support" scope="TEST" />
+    <orderEntry type="module" module-name="intellij.kotlin.base.plugin" scope="TEST" />
     <orderEntry type="module" module-name="kotlin.base.test" scope="TEST" />
   </component>
 </module>

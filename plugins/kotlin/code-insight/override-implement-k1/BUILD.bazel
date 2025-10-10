@@ -22,7 +22,7 @@ jvm_library(
     "//plugins/kotlin/base/psi",
     "//plugins/kotlin/base/resources:kotlin-base-resources",
     "//plugins/kotlin/base/util",
-    "//plugins/kotlin/code-insight/impl-base",
+    "//plugins/kotlin/code-insight/impl-base:kotlin-codeInsight-shared",
     "//plugins/kotlin/code-insight/override-implement-shared:kotlin-code-insight-override-implement-shared",
     "//plugins/kotlin/core",
     "//plugins/kotlin/frontend-independent",

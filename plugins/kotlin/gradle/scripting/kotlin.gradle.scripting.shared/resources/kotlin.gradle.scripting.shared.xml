@@ -1,8 +1,8 @@
 <idea-plugin package="org.jetbrains.kotlin.gradle.scripting.shared">
   <dependencies>
     <plugin id="org.jetbrains.plugins.gradle"/>
-    <module name="kotlin.gradle.gradle-tooling"/>
-    <module name="kotlin.base.scripting.shared"/>/>
+    <module name="intellij.kotlin.gradle.tooling"/>
+    <module name="intellij.kotlin.base.scripting.shared"/>/>
   </dependencies>
   <extensions defaultExtensionNs="org.jetbrains.plugins.gradle">
     <projectResolve implementation="org.jetbrains.kotlin.gradle.scripting.shared.importing.KotlinDslScriptModelResolver" order="first"/>

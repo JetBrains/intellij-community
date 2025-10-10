@@ -1,4 +1,4 @@
-### auto-generated section `build kotlin.onboarding` start
+### auto-generated section `build intellij.kotlin.onboarding` start
 load("@rules_jvm//:jvm.bzl", "jvm_library", "resourcegroup")
 
 resourcegroup(
@@ -9,7 +9,7 @@ resourcegroup(
 
 jvm_library(
   name = "onboarding",
-  module_name = "kotlin.onboarding",
+  module_name = "intellij.kotlin.onboarding",
   visibility = ["//visibility:public"],
   srcs = glob(["src/**/*.kt", "src/**/*.java", "src/**/*.form"], allow_empty = True),
   resources = [":onboarding_resources"],
@@ -81,13 +81,13 @@ jvm_library(
     "//plugins/kotlin/preferences",
   ]
 )
-### auto-generated section `build kotlin.onboarding` end
+### auto-generated section `build intellij.kotlin.onboarding` end
 
-### auto-generated section `test kotlin.onboarding` start
+### auto-generated section `test intellij.kotlin.onboarding` start
 load("@community//build:tests-options.bzl", "jps_test")
 
 jps_test(
   name = "onboarding_test",
   runtime_deps = [":onboarding_test_lib"]
 )
-### auto-generated section `test kotlin.onboarding` end
+### auto-generated section `test intellij.kotlin.onboarding` end

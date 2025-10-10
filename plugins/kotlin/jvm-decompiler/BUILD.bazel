@@ -1,4 +1,4 @@
-### auto-generated section `build kotlin.jvm-decompiler` start
+### auto-generated section `build intellij.kotlin.jvm.decompiler` start
 load("@rules_jvm//:jvm.bzl", "jvm_library", "resourcegroup")
 
 resourcegroup(
@@ -9,7 +9,7 @@ resourcegroup(
 
 jvm_library(
   name = "jvm-decompiler",
-  module_name = "kotlin.jvm-decompiler",
+  module_name = "intellij.kotlin.jvm.decompiler",
   visibility = ["//visibility:public"],
   srcs = glob(["src/**/*.kt", "src/**/*.java", "src/**/*.form"], allow_empty = True),
   resources = [":jvm-decompiler_resources"],
@@ -36,4 +36,4 @@ jvm_library(
     "//platform/analysis-impl",
   ]
 )
-### auto-generated section `build kotlin.jvm-decompiler` end
+### auto-generated section `build intellij.kotlin.jvm.decompiler` end

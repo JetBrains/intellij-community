@@ -1,4 +1,4 @@
-### auto-generated section `build kotlin.code-insight.descriptions` start
+### auto-generated section `build intellij.kotlin.codeInsight.descriptions` start
 load("@rules_jvm//:jvm.bzl", "jvm_library", "resourcegroup")
 
 resourcegroup(
@@ -14,4 +14,4 @@ jvm_library(
   resources = [":descriptions_resources"],
   runtime_deps = ["//plugins/kotlin/base/frontend-agnostic"]
 )
-### auto-generated section `build kotlin.code-insight.descriptions` end
+### auto-generated section `build intellij.kotlin.codeInsight.descriptions` end

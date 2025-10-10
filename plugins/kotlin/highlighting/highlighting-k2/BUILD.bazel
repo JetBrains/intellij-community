@@ -1,9 +1,9 @@
-### auto-generated section `build kotlin.highlighting.k2` start
+### auto-generated section `build intellij.kotlin.highlighting` start
 load("//build:compiler-options.bzl", "create_kotlinc_options")
 load("@rules_jvm//:jvm.bzl", "jvm_library", "resourcegroup")
 
 create_kotlinc_options(
-  name = "custom_kotlin-highlighting-k2",
+  name = "custom_kotlin-highlighting",
   opt_in = [
     "com.intellij.openapi.util.IntellijInternalApi",
     "org.jetbrains.kotlin.analysis.api.KaIdeApi",
@@ -14,18 +14,18 @@ create_kotlinc_options(
 )
 
 resourcegroup(
-  name = "kotlin-highlighting-k2_resources",
+  name = "kotlin-highlighting_resources",
   srcs = glob(["resources/**/*"]),
   strip_prefix = "resources"
 )
 
 jvm_library(
-  name = "kotlin-highlighting-k2",
-  module_name = "kotlin.highlighting.k2",
+  name = "kotlin-highlighting",
+  module_name = "intellij.kotlin.highlighting",
   visibility = ["//visibility:public"],
   srcs = glob(["src/**/*.kt", "src/**/*.java", "src/**/*.form"], allow_empty = True),
-  resources = [":kotlin-highlighting-k2_resources"],
-  kotlinc_opts = ":custom_kotlin-highlighting-k2",
+  resources = [":kotlin-highlighting_resources"],
+  kotlinc_opts = ":custom_kotlin-highlighting",
   deps = [
     "//java/java-indexing-api:indexing",
     "//platform/indexing-api:indexing",
@@ -56,23 +56,23 @@ jvm_library(
     "//platform/statistics",
     "//plugins/kotlin/base/project-structure",
     "//plugins/kotlin/kotlin.searching/base",
-    "//plugins/kotlin/kotlin.searching:searching-k2",
+    "//plugins/kotlin/kotlin.searching",
     "//plugins/kotlin/base/analysis",
-    "//plugins/kotlin/base/scripting/scripting.k2",
+    "//plugins/kotlin/base/scripting/scripting.k2:kotlin-base-scripting",
     "@lib//:kotlinc-kotlin-scripting-common",
     "@lib//:kotlinc-kotlin-scripting-compiler-impl",
     "//platform/util/coroutines",
-    "//plugins/kotlin/code-insight/impl-base",
+    "//plugins/kotlin/code-insight/impl-base:kotlin-codeInsight-shared",
     "//plugins/kotlin/base/scripting/scripting.shared",
   ]
 )
 
 jvm_library(
-  name = "kotlin-highlighting-k2_test_lib",
+  name = "kotlin-highlighting_test_lib",
   visibility = ["//visibility:public"],
   srcs = glob(["test/**/*.kt", "test/**/*.java", "test/**/*.form"], allow_empty = True),
-  kotlinc_opts = ":custom_kotlin-highlighting-k2",
-  associates = [":kotlin-highlighting-k2"],
+  kotlinc_opts = ":custom_kotlin-highlighting",
+  associates = [":kotlin-highlighting"],
   deps = [
     "//java/java-indexing-api:indexing",
     "//platform/indexing-api:indexing",
@@ -116,31 +116,31 @@ jvm_library(
     "//plugins/kotlin/base/project-structure",
     "//plugins/kotlin/base/project-structure:project-structure_test_lib",
     "//plugins/kotlin/kotlin.searching/base",
-    "//plugins/kotlin/kotlin.searching:searching-k2",
+    "//plugins/kotlin/kotlin.searching",
     "//platform/testFramework",
     "//platform/testFramework:testFramework_test_lib",
     "//platform/workspace/jps",
     "//platform/backend",
     "//plugins/kotlin/base/analysis",
-    "//plugins/kotlin/base/scripting/scripting.k2",
-    "//plugins/kotlin/base/scripting/scripting.k2:scripting.k2_test_lib",
+    "//plugins/kotlin/base/scripting/scripting.k2:kotlin-base-scripting",
+    "//plugins/kotlin/base/scripting/scripting.k2:kotlin-base-scripting_test_lib",
     "@lib//:kotlinc-kotlin-scripting-common",
     "//plugins/kotlin/test-framework:test-framework_test_lib",
     "@lib//:kotlinc-kotlin-scripting-compiler-impl",
     "//plugins/kotlin/gradle/gradle-java",
     "//plugins/kotlin/gradle/gradle-java:gradle-java_test_lib",
     "//platform/util/coroutines",
-    "//plugins/kotlin/code-insight/impl-base",
+    "//plugins/kotlin/code-insight/impl-base:kotlin-codeInsight-shared",
     "//plugins/kotlin/base/scripting/scripting.shared",
   ]
 )
-### auto-generated section `build kotlin.highlighting.k2` end
+### auto-generated section `build intellij.kotlin.highlighting` end
 
-### auto-generated section `test kotlin.highlighting.k2` start
+### auto-generated section `test intellij.kotlin.highlighting` start
 load("@community//build:tests-options.bzl", "jps_test")
 
 jps_test(
-  name = "kotlin-highlighting-k2_test",
-  runtime_deps = [":kotlin-highlighting-k2_test_lib"]
+  name = "kotlin-highlighting_test",
+  runtime_deps = [":kotlin-highlighting_test_lib"]
 )
-### auto-generated section `test kotlin.highlighting.k2` end
+### auto-generated section `test intellij.kotlin.highlighting` end

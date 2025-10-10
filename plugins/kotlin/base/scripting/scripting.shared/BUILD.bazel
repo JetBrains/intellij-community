@@ -1,4 +1,4 @@
-### auto-generated section `build kotlin.base.scripting.shared` start
+### auto-generated section `build intellij.kotlin.base.scripting.shared` start
 load("@rules_jvm//:jvm.bzl", "jvm_library", "resourcegroup")
 
 resourcegroup(
@@ -9,7 +9,7 @@ resourcegroup(
 
 jvm_library(
   name = "scripting.shared",
-  module_name = "kotlin.base.scripting.shared",
+  module_name = "intellij.kotlin.base.scripting.shared",
   visibility = ["//visibility:public"],
   srcs = glob(["src/**/*.kt", "src/**/*.java", "src/**/*.form"], allow_empty = True),
   resources = [":scripting.shared_resources"],
@@ -43,4 +43,4 @@ jvm_library(
     "//platform/indexing-api:indexing",
   ]
 )
-### auto-generated section `build kotlin.base.scripting.shared` end
+### auto-generated section `build intellij.kotlin.base.scripting.shared` end

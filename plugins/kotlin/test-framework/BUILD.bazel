@@ -62,7 +62,7 @@ jvm_library(
     "//plugins/kotlin/gradle/gradle",
     "//libraries/gson",
     "//platform/projectModel-api:projectModel",
-    "//plugins/kotlin/base/external-build-system",
+    "//plugins/kotlin/base/external-build-system:kotlin-base-externalSystem",
     "//plugins/kotlin/base/project-structure",
     "//plugins/kotlin/base/project-structure:project-structure_test_lib",
     "@lib//:junit5Pioneer",

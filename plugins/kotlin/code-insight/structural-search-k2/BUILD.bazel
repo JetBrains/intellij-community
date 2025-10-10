@@ -1,9 +1,9 @@
-### auto-generated section `build kotlin.code-insight.structural-search.k2` start
+### auto-generated section `build intellij.kotlin.codeInsight.structuralSearch` start
 load("//build:compiler-options.bzl", "create_kotlinc_options")
 load("@rules_jvm//:jvm.bzl", "jvm_library", "resourcegroup")
 
 create_kotlinc_options(
-  name = "custom_kotlin-code-insight-structural-search-k2",
+  name = "custom_kotlin-codeInsight-structuralSearch",
   opt_in = [
     "com.intellij.openapi.util.IntellijInternalApi",
     "org.jetbrains.kotlin.analysis.api.KaIdeApi",
@@ -13,18 +13,18 @@ create_kotlinc_options(
 )
 
 resourcegroup(
-  name = "kotlin-code-insight-structural-search-k2_resources",
+  name = "kotlin-codeInsight-structuralSearch_resources",
   srcs = glob(["resources/**/*"]),
   strip_prefix = "resources"
 )
 
 jvm_library(
-  name = "kotlin-code-insight-structural-search-k2",
-  module_name = "kotlin.code-insight.structural-search.k2",
+  name = "kotlin-codeInsight-structuralSearch",
+  module_name = "intellij.kotlin.codeInsight.structuralSearch",
   visibility = ["//visibility:public"],
   srcs = glob(["src/**/*.kt", "src/**/*.java", "src/**/*.form"], allow_empty = True),
-  resources = [":kotlin-code-insight-structural-search-k2_resources"],
-  kotlinc_opts = ":custom_kotlin-code-insight-structural-search-k2",
+  resources = [":kotlin-codeInsight-structuralSearch_resources"],
+  kotlinc_opts = ":custom_kotlin-codeInsight-structuralSearch",
   deps = [
     "@lib//:kotlin-stdlib",
     "@lib//:kotlinc-kotlin-compiler-common",
@@ -45,7 +45,7 @@ jvm_library(
     "//plugins/kotlin/base/resources:kotlin-base-resources",
     "//plugins/kotlin/base/util",
     "//plugins/kotlin/code-insight/live-templates-shared:kotlin-code-insight-live-templates-shared",
-    "//plugins/kotlin/base/analysis-api/analysis-api-utils:kotlin-base-analysis-api-utils",
+    "//plugins/kotlin/base/analysis-api/analysis-api-utils:kotlin-base-analysis-utils",
   ]
 )
-### auto-generated section `build kotlin.code-insight.structural-search.k2` end
+### auto-generated section `build intellij.kotlin.codeInsight.structuralSearch` end

@@ -1,9 +1,9 @@
-### auto-generated section `build kotlin.base.compiler-configuration` start
+### auto-generated section `build intellij.kotlin.base.compilerConfiguration` start
 load("@rules_jvm//:jvm.bzl", "jvm_library")
 
 jvm_library(
   name = "compiler-configuration",
-  module_name = "kotlin.base.compiler-configuration",
+  module_name = "intellij.kotlin.base.compilerConfiguration",
   visibility = ["//visibility:public"],
   srcs = glob(["src/**/*.kt", "src/**/*.java", "src/**/*.form"], allow_empty = True),
   deps = [
@@ -18,4 +18,4 @@ jvm_library(
     "//platform/projectModel-impl",
   ]
 )
-### auto-generated section `build kotlin.base.compiler-configuration` end
+### auto-generated section `build intellij.kotlin.base.compilerConfiguration` end

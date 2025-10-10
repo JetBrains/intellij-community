@@ -1,4 +1,4 @@
-### auto-generated section `build kotlin.gradle.gradle` start
+### auto-generated section `build intellij.kotlin.gradle.gradle` start
 load("//build:compiler-options.bzl", "create_kotlinc_options")
 load("@rules_jvm//:jvm.bzl", "jvm_library", "resourcegroup")
 
@@ -24,7 +24,7 @@ resourcegroup(
 
 jvm_library(
   name = "gradle",
-  module_name = "kotlin.gradle.gradle",
+  module_name = "intellij.kotlin.gradle.gradle",
   visibility = ["//visibility:public"],
   srcs = glob(["src/**/*.kt", "src/**/*.java", "src/**/*.form"], allow_empty = True),
   resources = [
@@ -83,4 +83,4 @@ jvm_library(
     "//platform/util/jdom",
   ]
 )
-### auto-generated section `build kotlin.gradle.gradle` end
+### auto-generated section `build intellij.kotlin.gradle.gradle` end

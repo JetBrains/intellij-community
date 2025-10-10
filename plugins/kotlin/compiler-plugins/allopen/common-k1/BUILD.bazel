@@ -13,7 +13,7 @@ jvm_library(
     "@lib//:kotlinc-allopen-compiler-plugin",
     "//platform/core-api:core",
     "//plugins/kotlin/core",
-    "//plugins/kotlin/compiler-plugins/compiler-plugin-support/common",
+    "//plugins/kotlin/compiler-plugins/compiler-plugin-support/common:kotlin-compilerPlugins-support",
     "//platform/util",
     "//java/java-psi-api:psi",
     "//platform/core-impl",

@@ -1,9 +1,9 @@
-### auto-generated section `build kotlin.ide` start
+### auto-generated section `build intellij.kotlin.ide` start
 load("@rules_jvm//:jvm.bzl", "jvm_library")
 
 jvm_library(
-  name = "ide",
-  module_name = "kotlin.ide",
+  name = "kotlin.ide",
+  module_name = "intellij.kotlin.ide",
   visibility = ["//visibility:public"],
   srcs = glob(["src/**/*.kt", "src/**/*.java", "src/**/*.form"], allow_empty = True),
   deps = [
@@ -33,7 +33,7 @@ jvm_library(
     "//java/openapi:java",
     "//platform/analysis-impl",
     "//platform/util/jdom",
-    "//plugins/kotlin/code-insight/impl-base",
+    "//plugins/kotlin/code-insight/impl-base:kotlin-codeInsight-shared",
     "//platform/diff-impl",
     "@lib//:kotlinc-kotlin-scripting-common",
     "@lib//:kotlinc-kotlin-scripting-compiler-impl",
@@ -41,4 +41,4 @@ jvm_library(
   ],
   runtime_deps = ["//plugins/kotlin/base/frontend-agnostic"]
 )
-### auto-generated section `build kotlin.ide` end
+### auto-generated section `build intellij.kotlin.ide` end

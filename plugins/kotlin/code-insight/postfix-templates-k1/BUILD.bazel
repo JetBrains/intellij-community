@@ -40,7 +40,7 @@ jvm_library(
     "//plugins/kotlin/refactorings/kotlin.refactorings.common:kotlin-refactorings-common",
     "//platform/lang-impl",
     "//java/java-psi-api:psi",
-    "//plugins/kotlin/code-insight/impl-base",
+    "//plugins/kotlin/code-insight/impl-base:kotlin-codeInsight-shared",
     "//plugins/kotlin/base/code-insight",
     "//plugins/kotlin/code-insight/utils",
   ]

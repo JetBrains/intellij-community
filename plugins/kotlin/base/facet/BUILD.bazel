@@ -1,4 +1,4 @@
-### auto-generated section `build kotlin.base.facet` start
+### auto-generated section `build intellij.kotlin.base.facet` start
 load("@rules_jvm//:jvm.bzl", "jvm_library", "resourcegroup")
 
 resourcegroup(
@@ -9,7 +9,7 @@ resourcegroup(
 
 jvm_library(
   name = "facet",
-  module_name = "kotlin.base.facet",
+  module_name = "intellij.kotlin.base.facet",
   visibility = ["//visibility:public"],
   srcs = glob(["src/**/*.kt", "src/**/*.java", "src/**/*.form", "gen/**/*.kt", "gen/**/*.java"], allow_empty = True),
   resources = [":facet_resources"],
@@ -42,4 +42,4 @@ jvm_library(
     "//libraries/gson",
   ]
 )
-### auto-generated section `build kotlin.base.facet` end
+### auto-generated section `build intellij.kotlin.base.facet` end

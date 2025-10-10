@@ -49,44 +49,44 @@
     <orderEntry type="module" module-name="intellij.platform.core" />
     <orderEntry type="module" module-name="kotlin.plugin.k2" scope="TEST" />
     <orderEntry type="module" module-name="intellij.platform.testFramework" scope="TEST" />
-    <orderEntry type="module" module-name="kotlin.base.analysis" />
-    <orderEntry type="module" module-name="kotlin.base.analysis-api.utils" />
-    <orderEntry type="module" module-name="kotlin.base.facet" />
-    <orderEntry type="module" module-name="kotlin.base.plugin" />
-    <orderEntry type="module" module-name="kotlin.base.project-structure" />
+    <orderEntry type="module" module-name="intellij.kotlin.base.analysis" />
+    <orderEntry type="module" module-name="intellij.kotlin.base.analysis.utils" />
+    <orderEntry type="module" module-name="intellij.kotlin.base.facet" />
+    <orderEntry type="module" module-name="intellij.kotlin.base.plugin" />
+    <orderEntry type="module" module-name="intellij.kotlin.base.projectStructure" />
     <orderEntry type="module" module-name="kotlin.base.test" scope="TEST" />
     <orderEntry type="module" module-name="intellij.java.debugger" scope="TEST" />
     <orderEntry type="module" module-name="intellij.java.debugger.impl" scope="TEST" />
     <orderEntry type="module" module-name="intellij.platform.editor.ex" />
-    <orderEntry type="module" module-name="kotlin.base.util" />
-    <orderEntry type="module" module-name="kotlin.code-insight.impl-base" />
+    <orderEntry type="module" module-name="intellij.kotlin.base.util" />
+    <orderEntry type="module" module-name="intellij.kotlin.codeInsight.shared" />
     <orderEntry type="module" module-name="kotlin.code-insight.override-implement.shared" />
-    <orderEntry type="module" module-name="kotlin.code-insight.override-implement.k2" />
+    <orderEntry type="module" module-name="intellij.kotlin.codeInsight.overrideImplement" />
     <orderEntry type="module" module-name="kotlin.completion.tests.shared" />
     <orderEntry type="module" module-name="kotlin.fir" />
     <orderEntry type="module" module-name="intellij.gradle.tests" />
     <orderEntry type="module" module-name="kotlin.idea.tests" />
     <orderEntry type="module" module-name="intellij.xml.psi" />
     <orderEntry type="module" module-name="kotlin.test-framework" />
-    <orderEntry type="module" module-name="kotlin.base.indices" scope="TEST" />
+    <orderEntry type="module" module-name="intellij.kotlin.base.indices" scope="TEST" />
     <orderEntry type="module" module-name="kotlin.gradle.gradle-java.tests.shared" scope="TEST" />
-    <orderEntry type="module" module-name="kotlin.formatter.minimal" scope="TEST" />
-    <orderEntry type="module" module-name="kotlin.base.code-insight.minimal" scope="TEST" />
+    <orderEntry type="module" module-name="intellij.kotlin.formatter.minimal" scope="TEST" />
+    <orderEntry type="module" module-name="intellij.kotlin.base.codeInsight.minimal" scope="TEST" />
     <orderEntry type="module" module-name="kotlin.tests-common" scope="TEST" />
     <orderEntry type="module" module-name="kotlin.jvm-debugger.evaluation" scope="TEST" />
-    <orderEntry type="module" module-name="kotlin.base.fir.analysis-api-platform" scope="TEST" />
-    <orderEntry type="module" module-name="kotlin.base.analysis-api-platform" scope="TEST" />
+    <orderEntry type="module" module-name="intellij.kotlin.analysis.platform" scope="TEST" />
+    <orderEntry type="module" module-name="intellij.kotlin.base.analysis.platform" scope="TEST" />
     <orderEntry type="module" module-name="kotlin.refactorings.common" scope="TEST" />
-    <orderEntry type="module" module-name="kotlin.project-wizard.idea" scope="TEST" />
-    <orderEntry type="module" module-name="kotlin.run-configurations.jvm" scope="TEST" />
+    <orderEntry type="module" module-name="intellij.kotlin.projectWizard.idea" scope="TEST" />
+    <orderEntry type="module" module-name="intellij.kotlin.runConfigurations.jvm" scope="TEST" />
     <orderEntry type="module" module-name="intellij.java.execution.impl" scope="TEST" />
-    <orderEntry type="module" module-name="kotlin.refactorings.move.k2" scope="TEST" />
-    <orderEntry type="module" module-name="kotlin.completion.api" scope="TEST" />
+    <orderEntry type="module" module-name="intellij.kotlin.refactorings.move" scope="TEST" />
+    <orderEntry type="module" module-name="intellij.kotlin.completion.api" scope="TEST" />
     <orderEntry type="module" module-name="intellij.libraries.kotlinx.serialization.core" />
     <orderEntry type="module" module-name="intellij.libraries.kotlinx.serialization.json" />
-    <orderEntry type="module" module-name="kotlin.completion.impl.k2" scope="TEST" />
+    <orderEntry type="module" module-name="intellij.kotlin.completion.impl" scope="TEST" />
     <orderEntry type="module" module-name="intellij.platform.smRunner" scope="TEST" />
     <orderEntry type="module" module-name="intellij.java.rt" scope="TEST" />
-    <orderEntry type="module" module-name="kotlin.searching.k2" scope="TEST" />
+    <orderEntry type="module" module-name="intellij.kotlin.searching" scope="TEST" />
   </component>
 </module>

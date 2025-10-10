@@ -42,7 +42,7 @@ jvm_library(
     "//plugins/kotlin/project-configuration",
     "//java/openapi:java",
     "//plugins/kotlin/frontend-independent",
-    "//plugins/kotlin/gradle/gradle-tooling",
+    "//plugins/kotlin/gradle/gradle-tooling:kotlin-gradle-tooling",
     "//plugins/kotlin/idea",
     "//plugins/kotlin/idea/tests:tests_test_lib",
     "//plugins/kotlin/gradle/gradle",

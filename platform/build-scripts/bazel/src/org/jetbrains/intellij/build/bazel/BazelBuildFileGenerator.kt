@@ -849,6 +849,7 @@ private fun getTestClasspathModule(module: ModuleDescriptor, moduleList: ModuleL
 
   val mainModuleName = when {
     moduleName.startsWith("kotlin.jvm-debugger.") -> "intellij.idea.community.main"
+    moduleName.startsWith("intellij.kotlin.jvm.debugger.") -> "intellij.idea.community.main"
     else -> null
   }
 

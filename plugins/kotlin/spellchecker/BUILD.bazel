@@ -1,4 +1,4 @@
-### auto-generated section `build kotlin.spellchecker` start
+### auto-generated section `build intellij.kotlin.spellchecker` start
 load("@rules_jvm//:jvm.bzl", "jvm_library", "resourcegroup")
 
 resourcegroup(
@@ -9,7 +9,7 @@ resourcegroup(
 
 jvm_library(
   name = "spellchecker",
-  module_name = "kotlin.spellchecker",
+  module_name = "intellij.kotlin.spellchecker",
   visibility = ["//visibility:public"],
   srcs = glob(["src/**/*.kt", "src/**/*.java", "src/**/*.form"], allow_empty = True),
   resources = [":spellchecker_resources"],
@@ -24,4 +24,4 @@ jvm_library(
     "//spellchecker",
   ]
 )
-### auto-generated section `build kotlin.spellchecker` end
+### auto-generated section `build intellij.kotlin.spellchecker` end

@@ -35,7 +35,7 @@
   <xi:include href="platform-kind-resolution-fe10.xml"/>
   <xi:include href="jvm.xml"/>
   <xi:include href="actions-fe10.xml"/>
-  <xi:include href="kotlin.base.code-insight.minimal.xml"/>
+  <xi:include href="intellij.kotlin.base.codeInsight.minimal.xml"/>
 
   <!--suppress XmlPathReference -->
   <xi:include href="ultimate-plugin.xml">
@@ -45,67 +45,67 @@
   <xi:include href="parcelize.k1.xml"/>
 
   <content namespace="jetbrains">
-    <module name="kotlin.base.analysis-api-platform"/>
-    <module name="kotlin.base.external-build-system"/>
+    <module name="intellij.kotlin.base.analysis.platform"/>
+    <module name="intellij.kotlin.base.externalSystem"/>
     <module name="kotlin.base.fe10.plugin"/>
     <module name="kotlin.base.fe10.analysis-api-platform"/>
     <module name="kotlin.base.fe10.project-structure"/>
-    <module name="kotlin.gradle.gradle-tooling"/>
-    <module name="kotlin.gradle.gradle"/>
-    <module name="kotlin.gradle.code-insight-common"/>
-    <module name="kotlin.gradle.code-insight-groovy"/>
-    <module name="kotlin.gradle.code-insight-toml"/>
+    <module name="intellij.kotlin.gradle.tooling"/>
+    <module name="intellij.kotlin.gradle.gradle"/>
+    <module name="intellij.kotlin.gradle.codeInsight.common"/>
+    <module name="intellij.kotlin.gradle.codeInsight.groovy"/>
+    <module name="intellij.kotlin.gradle.codeInsight.toml"/>
     <module name="kotlin.gradle.gradle-java"/>
     <module name="kotlin.gradle.scripting.shared"/>
     <module name="kotlin.gradle.scripting.k1"/>
     <module name="kotlin.gradle.gradle-java.k1"/>
-    <module name="kotlin.maven"/>
-    <module name="kotlin.onboarding"/>
-    <module name="kotlin.onboarding.gradle"/>
-    <module name="kotlin.project-wizard.idea"/>
+    <module name="intellij.kotlin.maven"/>
+    <module name="intellij.kotlin.onboarding"/>
+    <module name="intellij.kotlin.onboarding.gradle"/>
+    <module name="intellij.kotlin.projectWizard.idea"/>
     <module name="kotlin.project-wizard.idea.k1"/>
-    <module name="kotlin.project-wizard.gradle"/>
-    <module name="kotlin.project-wizard.maven"/>
-    <module name="kotlin.project-wizard.compose"/>
-    <module name="kotlin.jvm-decompiler"/>
+    <module name="intellij.kotlin.projectWizard.gradle"/>
+    <module name="intellij.kotlin.projectWizard.maven"/>
+    <module name="intellij.kotlin.projectWizard.compose"/>
+    <module name="intellij.kotlin.jvm.decompiler"/>
     <module name="kotlin.jvm-debugger.sequence.k1"/>
-    <module name="kotlin.run-configurations.junit"/>
+    <module name="intellij.kotlin.runConfigurations.junit"/>
     <module name="kotlin.run-configurations.junit-fe10"/>
-    <module name="kotlin.run-configurations.testng"/>
-    <module name="kotlin.run-configurations.jvm"/>
-    <module name="kotlin.coverage"/>
-    <module name="kotlin.i18n"/>
-    <module name="kotlin.git"/>
-    <module name="kotlin.grazie"/>
-    <module name="kotlin.ml-completion"/>
+    <module name="intellij.kotlin.runConfigurations.testng"/>
+    <module name="intellij.kotlin.runConfigurations.jvm"/>
+    <module name="intellij.kotlin.coverage"/>
+    <module name="intellij.kotlin.i18n"/>
+    <module name="intellij.kotlin.git"/>
+    <module name="intellij.kotlin.grazie"/>
+    <module name="intellij.kotlin.completion.ml"/>
     <module name="kotlin.compiler-plugins.compiler-plugin-support.gradle"/>
-    <module name="kotlin.compiler-plugins.compiler-plugin-support.maven"/>
+    <module name="intellij.kotlin.compilerPlugins.support.maven"/>
     <module name="kotlin.compiler-plugins.allopen.gradle"/>
-    <module name="kotlin.compiler-plugins.allopen.maven"/>
+    <module name="intellij.kotlin.compilerPlugins.allopen.maven"/>
     <module name="kotlin.compiler-plugins.noarg.gradle"/>
-    <module name="kotlin.compiler-plugins.noarg.maven"/>
+    <module name="intellij.kotlin.compilerPlugins.noarg.maven"/>
     <module name="kotlin.compiler-plugins.sam-with-receiver.gradle"/>
-    <module name="kotlin.compiler-plugins.sam-with-receiver.maven"/>
+    <module name="intellij.kotlin.compilerPlugins.samWithReceiver.maven"/>
     <module name="kotlin.compiler-plugins.parcelize.gradle"/>
-    <module name="kotlin.compiler-plugins.scripting"/>
-    <module name="kotlin.compiler-plugins.kapt"/>
+    <module name="intellij.kotlin.compilerPlugins.scripting"/>
+    <module name="intellij.kotlin.compilerPlugins.kapt"/>
     <module name="kotlin.compiler-plugins.kotlinx-serialization.gradle"/>
-    <module name="kotlin.compiler-plugins.kotlinx-serialization.maven"/>
-    <module name="kotlin.compiler-plugins.kotlin-dataframe.maven"/>
+    <module name="intellij.kotlin.compilerPlugins.serialization.maven"/>
+    <module name="intellij.kotlin.compilerPlugins.dataframe.maven"/>
     <module name="kotlin.compiler-plugins.lombok.gradle"/>
-    <module name="kotlin.compiler-plugins.lombok.maven"/>
+    <module name="intellij.kotlin.compilerPlugins.lombok.maven"/>
     <module name="kotlin.compiler-plugins.assignment.common.k1"/>
     <module name="kotlin.compiler-plugins.assignment.gradle"/>
-    <module name="kotlin.compiler-plugins.assignment.maven"/>
+    <module name="intellij.kotlin.compilerPlugins.assignment.maven"/>
 
     <module name="kotlin.jvm.shared"/>
     <module name="kotlin.jvm.k1"/>
 
-    <module name="kotlin.features-trainer"/>
+    <module name="intellij.kotlin.featuresTrainer"/>
     <module name="kotlin.j2k.k1.new.post-processing"/>
     <module name="kotlin.j2k.k1.old.post-processing"/>
 
-    <module name="kotlin.copyright"/>
+    <module name="intellij.kotlin.copyright"/>
     <module name="kotlin.injection.k1"/>
     <module name="kotlin.base.injection"/>
 
@@ -118,11 +118,11 @@
     <module name="kotlin.code-insight.structural-search.k1"/>
     <module name="kotlin.code-insight.k1"/>
 
-    <module name="kotlin.compiler-reference-index"/>
+    <module name="intellij.kotlin.compilerReferenceIndex"/>
 
-    <module name="kotlin.performanceExtendedPlugin"/>
+    <module name="intellij.kotlin.performanceExtendedPlugin"/>
 
     <module name="kotlin.base.scripting.k1"/>
-    <module name="kotlin.base.scripting.shared"/>
+    <module name="intellij.kotlin.base.scripting.shared"/>
   </content>
 </idea-plugin>

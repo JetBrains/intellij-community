@@ -30,7 +30,7 @@ jvm_library(
     "//plugins/kotlin/base/test:test_test_lib",
     "//java/testFramework",
     "//plugins/kotlin/core",
-    "//plugins/kotlin/compiler-plugins/compiler-plugin-support/common",
+    "//plugins/kotlin/compiler-plugins/compiler-plugin-support/common:kotlin-compilerPlugins-support",
     "//plugins/kotlin/compiler-plugins/noarg/common",
     "//plugins/kotlin/test-framework",
     "//plugins/kotlin/test-framework:test-framework_test_lib",

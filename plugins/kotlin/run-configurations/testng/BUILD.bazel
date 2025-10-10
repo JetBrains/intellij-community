@@ -1,4 +1,4 @@
-### auto-generated section `build kotlin.run-configurations.testng` start
+### auto-generated section `build intellij.kotlin.runConfigurations.testng` start
 load("@rules_jvm//:jvm.bzl", "jvm_library", "resourcegroup")
 
 resourcegroup(
@@ -9,7 +9,7 @@ resourcegroup(
 
 jvm_library(
   name = "testng",
-  module_name = "kotlin.run-configurations.testng",
+  module_name = "intellij.kotlin.runConfigurations.testng",
   visibility = ["//visibility:public"],
   srcs = glob(["src/**/*.kt", "src/**/*.java", "src/**/*.form"], allow_empty = True),
   resources = [":testng_resources"],
@@ -35,4 +35,4 @@ jvm_library(
     "//plugins/kotlin/base/plugin",
   ]
 )
-### auto-generated section `build kotlin.run-configurations.testng` end
+### auto-generated section `build intellij.kotlin.runConfigurations.testng` end

@@ -47,7 +47,7 @@ jvm_library(
     "//platform/core-ui",
     "//plugins/kotlin/code-insight/api",
     "//plugins/kotlin/base/resources:kotlin-base-resources",
-    "//plugins/kotlin/code-insight/impl-base",
+    "//plugins/kotlin/code-insight/impl-base:kotlin-codeInsight-shared",
     "//plugins/kotlin/code-insight/utils",
     "//platform/util",
     "//platform/external-system-api:externalSystem",

@@ -1,9 +1,9 @@
-### auto-generated section `build kotlin.base.kdoc` start
+### auto-generated section `build intellij.kotlin.base.kdoc` start
 load("@rules_jvm//:jvm.bzl", "jvm_library")
 
 jvm_library(
   name = "kdoc",
-  module_name = "kotlin.base.kdoc",
+  module_name = "intellij.kotlin.base.kdoc",
   visibility = ["//visibility:public"],
   srcs = glob(["src/**/*.kt", "src/**/*.java", "src/**/*.form"], allow_empty = True),
   deps = [
@@ -15,4 +15,4 @@ jvm_library(
     "//platform/core-impl",
   ]
 )
-### auto-generated section `build kotlin.base.kdoc` end
+### auto-generated section `build intellij.kotlin.base.kdoc` end

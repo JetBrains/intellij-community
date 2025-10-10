@@ -32,22 +32,22 @@
     <orderEntry type="module" module-name="intellij.platform.core" />
     <orderEntry type="module" module-name="intellij.platform.editor.ui" />
     <orderEntry type="module" module-name="intellij.platform.indexing" />
-    <orderEntry type="module" module-name="kotlin.base.util" />
+    <orderEntry type="module" module-name="intellij.kotlin.base.util" />
     <orderEntry type="module" module-name="kotlin.core" />
     <orderEntry type="module" module-name="kotlin.fir.frontend-independent" />
     <orderEntry type="module" module-name="intellij.platform.lang" />
     <orderEntry type="module" module-name="intellij.java.psi.impl" />
     <orderEntry type="module" module-name="kotlin.idea" />
-    <orderEntry type="module" module-name="kotlin.code-insight.impl-base" />
+    <orderEntry type="module" module-name="intellij.kotlin.codeInsight.shared" />
     <orderEntry type="module" module-name="kotlin.code-insight.intentions.shared" />
     <orderEntry type="module" module-name="kotlin.base.fe10.analysis" />
-    <orderEntry type="module" module-name="kotlin.code-insight.api" />
-    <orderEntry type="module" module-name="kotlin.base.psi" />
+    <orderEntry type="module" module-name="intellij.kotlin.codeInsight.api" />
+    <orderEntry type="module" module-name="intellij.kotlin.base.psi" />
     <orderEntry type="module" module-name="kotlin.base.fe10.code-insight" />
     <orderEntry type="module" module-name="intellij.platform.lang.impl" />
     <orderEntry type="module" module-name="kotlin.j2k.shared" />
     <orderEntry type="module" module-name="kotlin.j2k.k1.old" />
-    <orderEntry type="module" module-name="kotlin.base.analysis-api.utils" />
+    <orderEntry type="module" module-name="intellij.kotlin.base.analysis.utils" />
     <orderEntry type="module" module-name="kotlin.code-insight.inspections.shared" />
   </component>
 </module>

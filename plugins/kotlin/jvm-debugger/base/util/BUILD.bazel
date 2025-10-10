@@ -1,9 +1,9 @@
-### auto-generated section `build kotlin.jvm-debugger.base.util` start
+### auto-generated section `build intellij.kotlin.jvm.debugger.base.util` start
 load("@rules_jvm//:jvm.bzl", "jvm_library")
 
 jvm_library(
   name = "util",
-  module_name = "kotlin.jvm-debugger.base.util",
+  module_name = "intellij.kotlin.jvm.debugger.base.util",
   visibility = ["//visibility:public"],
   srcs = glob(["src/**/*.kt", "src/**/*.java", "src/**/*.form"], allow_empty = True),
   deps = [
@@ -28,4 +28,4 @@ jvm_library(
     "//java/debugger/impl",
   ]
 )
-### auto-generated section `build kotlin.jvm-debugger.base.util` end
+### auto-generated section `build intellij.kotlin.jvm.debugger.base.util` end

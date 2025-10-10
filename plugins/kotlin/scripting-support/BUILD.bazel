@@ -49,7 +49,7 @@ jvm_library(
     "//platform/vcs-impl",
     "//platform/vcs-impl:vcs-impl_test_lib",
     "//java/java-psi-api:psi",
-    "//plugins/kotlin/kotlin.ide:ide",
+    "//plugins/kotlin/kotlin.ide",
     "//plugins/kotlin/jvm/k1",
     "//plugins/kotlin/base/scripting/scripting.k1",
     "//plugins/kotlin/base/scripting/scripting.k1:scripting.k1_test_lib",

@@ -60,7 +60,7 @@ jvm_library(
     "//plugins/kotlin/core",
     "//plugins/kotlin/preferences",
     "//plugins/kotlin/frontend-independent",
-    "//plugins/kotlin/gradle/gradle-tooling",
+    "//plugins/kotlin/gradle/gradle-tooling:kotlin-gradle-tooling",
     "//plugins/kotlin/idea",
     "//plugins/kotlin/completion/impl-k1:kotlin-completion-impl-k1",
     "//plugins/kotlin/completion/tests-shared:kotlin-completion-tests-shared_test_lib",

@@ -1,4 +1,4 @@
-### auto-generated section `build kotlin.gradle.gradle-tooling.impl` start
+### auto-generated section `build intellij.kotlin.gradle.tooling.impl` start
 load("@rules_jvm//:jvm.bzl", "jvm_library", "jvm_provided_library", "resourcegroup")
 
 resourcegroup(
@@ -14,7 +14,7 @@ jvm_provided_library(
 
 jvm_library(
   name = "impl",
-  module_name = "kotlin.gradle.gradle-tooling.impl",
+  module_name = "intellij.kotlin.gradle.tooling.impl",
   visibility = ["//visibility:public"],
   srcs = glob(["src/**/*.kt", "src/**/*.java", "src/**/*.form"], allow_empty = True),
   resources = [":impl_resources"],
@@ -25,7 +25,7 @@ jvm_library(
     "@lib//:kotlin-tooling-core",
     "@lib//:kotlin-gradle-plugin-idea-proto",
     "@lib//:kotlin-gradle-plugin-idea",
-    "//plugins/kotlin/gradle/gradle-tooling",
+    "//plugins/kotlin/gradle/gradle-tooling:kotlin-gradle-tooling",
     "//plugins/kotlin/base/frontend-agnostic",
     "//plugins/kotlin/base/project-model",
     "//plugins/gradle/tooling-extension-api:toolingExtension",
@@ -46,7 +46,7 @@ jvm_library(
     "@lib//:kotlin-tooling-core",
     "@lib//:kotlin-gradle-plugin-idea-proto",
     "@lib//:kotlin-gradle-plugin-idea",
-    "//plugins/kotlin/gradle/gradle-tooling",
+    "//plugins/kotlin/gradle/gradle-tooling:kotlin-gradle-tooling",
     "//plugins/kotlin/base/frontend-agnostic",
     "//plugins/kotlin/base/project-model",
     "//plugins/gradle/tooling-extension-api:toolingExtension",
@@ -57,13 +57,13 @@ jvm_library(
     "//platform/extensions",
   ]
 )
-### auto-generated section `build kotlin.gradle.gradle-tooling.impl` end
+### auto-generated section `build intellij.kotlin.gradle.tooling.impl` end
 
-### auto-generated section `test kotlin.gradle.gradle-tooling.impl` start
+### auto-generated section `test intellij.kotlin.gradle.tooling.impl` start
 load("@community//build:tests-options.bzl", "jps_test")
 
 jps_test(
   name = "impl_test",
   runtime_deps = [":impl_test_lib"]
 )
-### auto-generated section `test kotlin.gradle.gradle-tooling.impl` end
+### auto-generated section `test intellij.kotlin.gradle.tooling.impl` end

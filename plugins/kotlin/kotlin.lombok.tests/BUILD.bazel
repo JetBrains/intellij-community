@@ -1,15 +1,15 @@
-### auto-generated section `build kotlin.k2.lombok.tests` start
+### auto-generated section `build intellij.kotlin.lombok.tests` start
 load("@rules_jvm//:jvm.bzl", "jvm_library")
 
 jvm_library(
-  name = "k2-lombok-tests",
+  name = "kotlin.lombok.tests",
   visibility = ["//visibility:public"],
   srcs = glob([], allow_empty = True)
 )
 
 jvm_library(
-  name = "k2-lombok-tests_test_lib",
-  module_name = "kotlin.k2.lombok.tests",
+  name = "kotlin.lombok.tests_test_lib",
+  module_name = "intellij.kotlin.lombok.tests",
   visibility = ["//visibility:public"],
   srcs = glob(["test/**/*.kt", "test/**/*.java", "test/**/*.form"], allow_empty = True),
   deps = [
@@ -30,13 +30,13 @@ jvm_library(
     "//java/openapi:java",
   ]
 )
-### auto-generated section `build kotlin.k2.lombok.tests` end
+### auto-generated section `build intellij.kotlin.lombok.tests` end
 
-### auto-generated section `test kotlin.k2.lombok.tests` start
+### auto-generated section `test intellij.kotlin.lombok.tests` start
 load("@community//build:tests-options.bzl", "jps_test")
 
 jps_test(
-  name = "k2-lombok-tests_test",
-  runtime_deps = [":k2-lombok-tests_test_lib"]
+  name = "kotlin.lombok.tests_test",
+  runtime_deps = [":kotlin.lombok.tests_test_lib"]
 )
-### auto-generated section `test kotlin.k2.lombok.tests` end
+### auto-generated section `test intellij.kotlin.lombok.tests` end

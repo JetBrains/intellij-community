@@ -1,4 +1,4 @@
-### auto-generated section `build kotlin.jvm-debugger.core` start
+### auto-generated section `build intellij.kotlin.jvm.debugger.core` start
 load("//build:compiler-options.bzl", "create_kotlinc_options")
 load("@rules_jvm//:jvm.bzl", "jvm_library", "resourcegroup")
 
@@ -19,7 +19,7 @@ resourcegroup(
 
 jvm_library(
   name = "core",
-  module_name = "kotlin.jvm-debugger.core",
+  module_name = "intellij.kotlin.jvm.debugger.core",
   visibility = ["//visibility:public"],
   srcs = glob(["src/**/*.kt", "src/**/*.java", "src/**/*.form"], allow_empty = True),
   resources = [":core_resources"],
@@ -72,4 +72,4 @@ jvm_library(
     "@lib//:kotlin-metadata",
   ]
 )
-### auto-generated section `build kotlin.jvm-debugger.core` end
+### auto-generated section `build intellij.kotlin.jvm.debugger.core` end

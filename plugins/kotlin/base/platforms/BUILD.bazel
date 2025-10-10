@@ -1,4 +1,4 @@
-### auto-generated section `build kotlin.base.platforms` start
+### auto-generated section `build intellij.kotlin.base.platforms` start
 load("@rules_jvm//:jvm.bzl", "jvm_library", "resourcegroup")
 
 resourcegroup(
@@ -9,7 +9,7 @@ resourcegroup(
 
 jvm_library(
   name = "platforms",
-  module_name = "kotlin.base.platforms",
+  module_name = "intellij.kotlin.base.platforms",
   visibility = ["//visibility:public"],
   srcs = glob(["src/**/*.kt", "src/**/*.java", "src/**/*.form"], allow_empty = True),
   resources = [":platforms_resources"],
@@ -33,4 +33,4 @@ jvm_library(
     "//java/idea-ui:ui",
   ]
 )
-### auto-generated section `build kotlin.base.platforms` end
+### auto-generated section `build intellij.kotlin.base.platforms` end

@@ -38,9 +38,9 @@ jvm_library(
     "//java/java-psi-api:psi",
     "//plugins/devkit/intellij.kotlin.devkit:kotlin-devkit",
     "//plugins/kotlin/refactorings/kotlin.refactorings.common:kotlin-refactorings-common",
-    "//plugins/kotlin/refactorings/kotlin.refactorings.move.k2:kotlin-refactorings-move-k2",
+    "//plugins/kotlin/refactorings/kotlin.refactorings.move.k2:kotlin-refactorings-move",
     "//plugins/devkit/devkit-core:core",
-    "//plugins/kotlin/code-insight/intentions-k2:kotlin-code-insight-intentions-k2",
+    "//plugins/kotlin/code-insight/intentions-k2:kotlin-codeInsight-intentions",
   ]
 )
 ### auto-generated section `build intellij.kotlin.devkit.k2` end

@@ -1,25 +1,25 @@
-### auto-generated section `build kotlin.compiler-plugins.kotlinx-serialization.k2` start
+### auto-generated section `build intellij.kotlin.compilerPlugins.serialization` start
 load("//build:compiler-options.bzl", "create_kotlinc_options")
 load("@rules_jvm//:jvm.bzl", "jvm_library", "resourcegroup")
 
 create_kotlinc_options(
-  name = "custom_k2",
+  name = "custom_kotlin-compilerPlugins-serialization",
   x_context_parameters = True
 )
 
 resourcegroup(
-  name = "k2_resources",
+  name = "kotlin-compilerPlugins-serialization_resources",
   srcs = glob(["resources/**/*"]),
   strip_prefix = "resources"
 )
 
 jvm_library(
-  name = "k2",
-  module_name = "kotlin.compiler-plugins.kotlinx-serialization.k2",
+  name = "kotlin-compilerPlugins-serialization",
+  module_name = "intellij.kotlin.compilerPlugins.serialization",
   visibility = ["//visibility:public"],
   srcs = glob(["src/**/*.kt", "src/**/*.java", "src/**/*.form"], allow_empty = True),
-  resources = [":k2_resources"],
-  kotlinc_opts = ":custom_k2",
+  resources = [":kotlin-compilerPlugins-serialization_resources"],
+  kotlinc_opts = ":custom_kotlin-compilerPlugins-serialization",
   deps = [
     "//plugins/kotlin/code-insight/api",
     "@lib//:kotlinc-kotlin-compiler-common",
@@ -34,14 +34,14 @@ jvm_library(
     "//platform/core-api:core",
     "//platform/core-impl",
     "//plugins/kotlin/compiler-plugins/kotlinx-serialization/common",
-    "//plugins/kotlin/base/analysis-api/analysis-api-utils:kotlin-base-analysis-api-utils",
+    "//plugins/kotlin/base/analysis-api/analysis-api-utils:kotlin-base-analysis-utils",
     "//java/java-psi-api:psi",
     "//platform/editor-ui-api:editor-ui",
     "//platform/refactoring",
     "//platform/util",
     "//plugins/kotlin/refactorings/kotlin.refactorings.common:kotlin-refactorings-common",
     "//plugins/kotlin/base/resources:kotlin-base-resources",
-    "//plugins/kotlin/refactorings/kotlin.refactorings.k2:kotlin-refactorings-k2",
+    "//plugins/kotlin/refactorings/kotlin.refactorings.k2:kotlin-refactorings",
   ]
 )
-### auto-generated section `build kotlin.compiler-plugins.kotlinx-serialization.k2` end
+### auto-generated section `build intellij.kotlin.compilerPlugins.serialization` end

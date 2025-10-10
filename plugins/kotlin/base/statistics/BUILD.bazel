@@ -1,9 +1,9 @@
-### auto-generated section `build kotlin.base.statistics` start
+### auto-generated section `build intellij.kotlin.base.statistics` start
 load("@rules_jvm//:jvm.bzl", "jvm_library")
 
 jvm_library(
   name = "statistics",
-  module_name = "kotlin.base.statistics",
+  module_name = "intellij.kotlin.base.statistics",
   visibility = ["//visibility:public"],
   srcs = glob(["src/**/*.kt", "src/**/*.java", "src/**/*.form"], allow_empty = True),
   deps = [
@@ -27,4 +27,4 @@ jvm_library(
     "//libraries/kotlinx/serialization/json",
   ]
 )
-### auto-generated section `build kotlin.base.statistics` end
+### auto-generated section `build intellij.kotlin.base.statistics` end

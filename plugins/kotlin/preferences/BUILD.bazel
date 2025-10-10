@@ -1,4 +1,4 @@
-### auto-generated section `build kotlin.preferences` start
+### auto-generated section `build intellij.kotlin.preferences` start
 load("@rules_jvm//:jvm.bzl", "jvm_library", "resourcegroup")
 
 resourcegroup(
@@ -9,7 +9,7 @@ resourcegroup(
 
 jvm_library(
   name = "preferences",
-  module_name = "kotlin.preferences",
+  module_name = "intellij.kotlin.preferences",
   visibility = ["//visibility:public"],
   srcs = glob(["src/**/*.kt", "src/**/*.java", "src/**/*.form"], allow_empty = True),
   resources = [":preferences_resources"],
@@ -28,4 +28,4 @@ jvm_library(
     "//plugins/kotlin/base/scripting/scripting.shared",
   ]
 )
-### auto-generated section `build kotlin.preferences` end
+### auto-generated section `build intellij.kotlin.preferences` end

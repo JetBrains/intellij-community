@@ -1,4 +1,4 @@
-### auto-generated section `build kotlin.base.code-insight` start
+### auto-generated section `build intellij.kotlin.base.codeInsight` start
 load("//build:compiler-options.bzl", "create_kotlinc_options")
 load("@rules_jvm//:jvm.bzl", "jvm_library", "resourcegroup")
 
@@ -22,7 +22,7 @@ resourcegroup(
 
 jvm_library(
   name = "code-insight",
-  module_name = "kotlin.base.code-insight",
+  module_name = "intellij.kotlin.base.codeInsight",
   visibility = ["//visibility:public"],
   srcs = glob(["src/**/*.kt", "src/**/*.java", "src/**/*.form"], allow_empty = True),
   resources = [":code-insight_resources"],
@@ -122,13 +122,13 @@ jvm_library(
   ],
   exports = ["//plugins/kotlin/base/code-insight/minimal"]
 )
-### auto-generated section `build kotlin.base.code-insight` end
+### auto-generated section `build intellij.kotlin.base.codeInsight` end
 
-### auto-generated section `test kotlin.base.code-insight` start
+### auto-generated section `test intellij.kotlin.base.codeInsight` start
 load("@community//build:tests-options.bzl", "jps_test")
 
 jps_test(
   name = "code-insight_test",
   runtime_deps = [":code-insight_test_lib"]
 )
-### auto-generated section `test kotlin.base.code-insight` end
+### auto-generated section `test intellij.kotlin.base.codeInsight` end

@@ -1,4 +1,4 @@
-### auto-generated section `build kotlin.highlighting.minimal` start
+### auto-generated section `build intellij.kotlin.highlighting.minimal` start
 load("@rules_jvm//:jvm.bzl", "jvm_library", "resourcegroup")
 
 resourcegroup(
@@ -9,7 +9,7 @@ resourcegroup(
 
 jvm_library(
   name = "kotlin-highlighting-minimal",
-  module_name = "kotlin.highlighting.minimal",
+  module_name = "intellij.kotlin.highlighting.minimal",
   visibility = ["//visibility:public"],
   srcs = glob(["src/**/*.kt", "src/**/*.java", "src/**/*.form"], allow_empty = True),
   resources = [":kotlin-highlighting-minimal_resources"],
@@ -27,4 +27,4 @@ jvm_library(
   ],
   runtime_deps = ["//plugins/kotlin/base/frontend-agnostic"]
 )
-### auto-generated section `build kotlin.highlighting.minimal` end
+### auto-generated section `build intellij.kotlin.highlighting.minimal` end

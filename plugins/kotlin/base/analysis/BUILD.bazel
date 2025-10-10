@@ -1,4 +1,4 @@
-### auto-generated section `build kotlin.base.analysis` start
+### auto-generated section `build intellij.kotlin.base.analysis` start
 load("//build:compiler-options.bzl", "create_kotlinc_options")
 load("@rules_jvm//:jvm.bzl", "jvm_library", "resourcegroup")
 
@@ -21,7 +21,7 @@ resourcegroup(
 
 jvm_library(
   name = "analysis",
-  module_name = "kotlin.base.analysis",
+  module_name = "intellij.kotlin.base.analysis",
   visibility = ["//visibility:public"],
   srcs = glob(["src/**/*.kt", "src/**/*.java", "src/**/*.form"], allow_empty = True),
   resources = [":analysis_resources"],
@@ -72,4 +72,4 @@ jvm_library(
     "//plugins/kotlin/base/scripting/scripting.shared",
   ]
 )
-### auto-generated section `build kotlin.base.analysis` end
+### auto-generated section `build intellij.kotlin.base.analysis` end

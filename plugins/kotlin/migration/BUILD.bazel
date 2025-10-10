@@ -1,4 +1,4 @@
-### auto-generated section `build kotlin.migration` start
+### auto-generated section `build intellij.kotlin.migration` start
 load("@rules_jvm//:jvm.bzl", "jvm_library", "resourcegroup")
 
 resourcegroup(
@@ -9,7 +9,7 @@ resourcegroup(
 
 jvm_library(
   name = "migration",
-  module_name = "kotlin.migration",
+  module_name = "intellij.kotlin.migration",
   visibility = ["//visibility:public"],
   srcs = glob(["src/**/*.kt", "src/**/*.java", "src/**/*.form"], allow_empty = True),
   resources = [":migration_resources"],
@@ -37,4 +37,4 @@ jvm_library(
     "//platform/statistics",
   ]
 )
-### auto-generated section `build kotlin.migration` end
+### auto-generated section `build intellij.kotlin.migration` end

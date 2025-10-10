@@ -49,7 +49,7 @@ jvm_library(
     "//plugins/kotlin/base/plugin:plugin_test_lib",
     "//platform/util/jdom",
     "//plugins/kotlin/base/test:test_test_lib",
-    "//plugins/kotlin/code-insight/fixes-k2:kotlin-code-insight-fixes-k2",
+    "//plugins/kotlin/code-insight/fixes-k2:kotlin-codeInsight-fixes",
   ]
 )
 ### auto-generated section `build kotlin.code-insight.inspections-shared.tests.k2` end

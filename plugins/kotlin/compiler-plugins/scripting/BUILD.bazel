@@ -1,4 +1,4 @@
-### auto-generated section `build kotlin.compiler-plugins.scripting` start
+### auto-generated section `build intellij.kotlin.compilerPlugins.scripting` start
 load("@rules_jvm//:jvm.bzl", "jvm_library", "resourcegroup")
 
 resourcegroup(
@@ -9,7 +9,7 @@ resourcegroup(
 
 jvm_library(
   name = "scripting",
-  module_name = "kotlin.compiler-plugins.scripting",
+  module_name = "intellij.kotlin.compilerPlugins.scripting",
   visibility = ["//visibility:public"],
   srcs = glob(["src/**/*.kt", "src/**/*.java", "src/**/*.form"], allow_empty = True),
   resources = [":scripting_resources"],
@@ -26,4 +26,4 @@ jvm_library(
     "//plugins/gradle:gradle-common",
   ]
 )
-### auto-generated section `build kotlin.compiler-plugins.scripting` end
+### auto-generated section `build intellij.kotlin.compilerPlugins.scripting` end

@@ -1,18 +1,18 @@
-### auto-generated section `build kotlin.base.compiler-configuration-ui` start
+### auto-generated section `build intellij.kotlin.base.compilerConfiguration.ui` start
 load("@rules_jvm//:jvm.bzl", "jvm_library", "resourcegroup")
 
 resourcegroup(
-  name = "compiler-configuration-ui_resources",
+  name = "kotlin-base-compilerConfiguration-ui_resources",
   srcs = glob(["resources/**/*"]),
   strip_prefix = "resources"
 )
 
 jvm_library(
-  name = "compiler-configuration-ui",
-  module_name = "kotlin.base.compiler-configuration-ui",
+  name = "kotlin-base-compilerConfiguration-ui",
+  module_name = "intellij.kotlin.base.compilerConfiguration.ui",
   visibility = ["//visibility:public"],
   srcs = glob(["src/**/*.kt", "src/**/*.java", "src/**/*.form"], allow_empty = True),
-  resources = [":compiler-configuration-ui_resources"],
+  resources = [":kotlin-base-compilerConfiguration-ui_resources"],
   deps = [
     "@lib//:kotlin-stdlib",
     "//libraries/kotlin/reflect",
@@ -40,4 +40,4 @@ jvm_library(
     "//platform/backend/workspace",
   ]
 )
-### auto-generated section `build kotlin.base.compiler-configuration-ui` end
+### auto-generated section `build intellij.kotlin.base.compilerConfiguration.ui` end

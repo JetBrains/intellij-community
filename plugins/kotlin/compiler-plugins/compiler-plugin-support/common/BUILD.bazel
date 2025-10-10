@@ -1,9 +1,9 @@
-### auto-generated section `build kotlin.compiler-plugins.compiler-plugin-support.common` start
+### auto-generated section `build intellij.kotlin.compilerPlugins.support` start
 load("@rules_jvm//:jvm.bzl", "jvm_library")
 
 jvm_library(
-  name = "common",
-  module_name = "kotlin.compiler-plugins.compiler-plugin-support.common",
+  name = "kotlin-compilerPlugins-support",
+  module_name = "intellij.kotlin.compilerPlugins.support",
   visibility = ["//visibility:public"],
   srcs = glob(["src/**/*.kt", "src/**/*.java", "src/**/*.form"], allow_empty = True),
   deps = [
@@ -22,4 +22,4 @@ jvm_library(
     "//plugins/kotlin/base/compiler-configuration",
   ]
 )
-### auto-generated section `build kotlin.compiler-plugins.compiler-plugin-support.common` end
+### auto-generated section `build intellij.kotlin.compilerPlugins.support` end

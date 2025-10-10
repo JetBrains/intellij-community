@@ -1,18 +1,18 @@
-### auto-generated section `build kotlin.gradle.gradle-java.k2` start
+### auto-generated section `build intellij.kotlin.gradle.java` start
 load("@rules_jvm//:jvm.bzl", "jvm_library", "resourcegroup")
 
 resourcegroup(
-  name = "k2_resources",
+  name = "kotlin-gradle-java_resources",
   srcs = glob(["resources/**/*"]),
   strip_prefix = "resources"
 )
 
 jvm_library(
-  name = "k2",
-  module_name = "kotlin.gradle.gradle-java.k2",
+  name = "kotlin-gradle-java",
+  module_name = "intellij.kotlin.gradle.java",
   visibility = ["//visibility:public"],
   srcs = glob(["src/**/*.kt", "src/**/*.java", "src/**/*.form"], allow_empty = True),
-  resources = [":k2_resources"],
+  resources = [":kotlin-gradle-java_resources"],
   deps = [
     "@lib//:kotlin-stdlib",
     "@lib//:kotlinc-kotlin-jps-common",
@@ -23,10 +23,10 @@ jvm_library(
 )
 
 jvm_library(
-  name = "k2_test_lib",
+  name = "kotlin-gradle-java_test_lib",
   visibility = ["//visibility:public"],
   srcs = glob(["test/**/*.kt", "test/**/*.java", "test/**/*.form"], allow_empty = True),
-  associates = [":k2"],
+  associates = [":kotlin-gradle-java"],
   deps = [
     "//platform/analysis-api:analysis",
     "//platform/core-api:core",
@@ -62,13 +62,13 @@ jvm_library(
     "//plugins/kotlin/fir/tests:tests_test_lib",
   ]
 )
-### auto-generated section `build kotlin.gradle.gradle-java.k2` end
+### auto-generated section `build intellij.kotlin.gradle.java` end
 
-### auto-generated section `test kotlin.gradle.gradle-java.k2` start
+### auto-generated section `test intellij.kotlin.gradle.java` start
 load("@community//build:tests-options.bzl", "jps_test")
 
 jps_test(
-  name = "k2_test",
-  runtime_deps = [":k2_test_lib"]
+  name = "kotlin-gradle-java_test",
+  runtime_deps = [":kotlin-gradle-java_test_lib"]
 )
-### auto-generated section `test kotlin.gradle.gradle-java.k2` end
+### auto-generated section `test intellij.kotlin.gradle.java` end

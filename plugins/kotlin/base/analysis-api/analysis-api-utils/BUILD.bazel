@@ -1,9 +1,9 @@
-### auto-generated section `build kotlin.base.analysis-api.utils` start
+### auto-generated section `build intellij.kotlin.base.analysis.utils` start
 load("//build:compiler-options.bzl", "create_kotlinc_options")
 load("@rules_jvm//:jvm.bzl", "jvm_library")
 
 create_kotlinc_options(
-  name = "custom_kotlin-base-analysis-api-utils",
+  name = "custom_kotlin-base-analysis-utils",
   opt_in = [
     "com.intellij.openapi.util.IntellijInternalApi",
     "org.jetbrains.kotlin.analysis.api.permissions.KaAllowProhibitedAnalyzeFromWriteAction",
@@ -14,11 +14,11 @@ create_kotlinc_options(
 )
 
 jvm_library(
-  name = "kotlin-base-analysis-api-utils",
-  module_name = "kotlin.base.analysis-api.utils",
+  name = "kotlin-base-analysis-utils",
+  module_name = "intellij.kotlin.base.analysis.utils",
   visibility = ["//visibility:public"],
   srcs = glob(["src/**/*.kt", "src/**/*.java", "src/**/*.form"], allow_empty = True),
-  kotlinc_opts = ":custom_kotlin-base-analysis-api-utils",
+  kotlinc_opts = ":custom_kotlin-base-analysis-utils",
   deps = [
     "@lib//:kotlin-stdlib",
     "//java/java-indexing-api:indexing",
@@ -40,4 +40,4 @@ jvm_library(
     "//platform/code-style-api:codeStyle",
   ]
 )
-### auto-generated section `build kotlin.base.analysis-api.utils` end
+### auto-generated section `build intellij.kotlin.base.analysis.utils` end

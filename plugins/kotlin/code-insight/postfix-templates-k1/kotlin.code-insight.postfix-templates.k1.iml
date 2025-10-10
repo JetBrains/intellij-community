@@ -32,8 +32,8 @@
     <orderEntry type="module" module-name="intellij.platform.core" />
     <orderEntry type="module" module-name="intellij.platform.editor.ui" />
     <orderEntry type="module" module-name="intellij.platform.refactoring" />
-    <orderEntry type="module" module-name="kotlin.base.util" />
-    <orderEntry type="module" module-name="kotlin.base.psi" />
+    <orderEntry type="module" module-name="intellij.kotlin.base.util" />
+    <orderEntry type="module" module-name="intellij.kotlin.base.psi" />
     <orderEntry type="module" module-name="kotlin.base.fe10.analysis" />
     <orderEntry type="module" module-name="kotlin.code-insight.live-templates.shared" />
     <orderEntry type="module" module-name="kotlin.code-insight.live-templates.k1" />
@@ -42,8 +42,8 @@
     <orderEntry type="module" module-name="kotlin.refactorings.common" />
     <orderEntry type="module" module-name="intellij.platform.lang.impl" />
     <orderEntry type="module" module-name="intellij.java.psi" />
-    <orderEntry type="module" module-name="kotlin.code-insight.impl-base" />
-    <orderEntry type="module" module-name="kotlin.base.code-insight" />
-    <orderEntry type="module" module-name="kotlin.code-insight.utils" />
+    <orderEntry type="module" module-name="intellij.kotlin.codeInsight.shared" />
+    <orderEntry type="module" module-name="intellij.kotlin.base.codeInsight" />
+    <orderEntry type="module" module-name="intellij.kotlin.codeInsight.utils" />
   </component>
 </module>

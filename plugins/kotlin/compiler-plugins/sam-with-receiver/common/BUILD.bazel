@@ -29,7 +29,7 @@ jvm_library(
     "//plugins/kotlin/base/project-structure",
     "//plugins/kotlin/base/analysis",
     "//platform/util",
-    "//plugins/kotlin/compiler-plugins/compiler-plugin-support/common",
+    "//plugins/kotlin/compiler-plugins/compiler-plugin-support/common:kotlin-compilerPlugins-support",
     "//platform/core-api:core",
     "//plugins/kotlin/base/scripting/scripting.k1",
   ]

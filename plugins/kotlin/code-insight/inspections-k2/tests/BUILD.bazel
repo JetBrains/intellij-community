@@ -1,4 +1,4 @@
-### auto-generated section `build kotlin.code-insight.inspections.k2.tests` start
+### auto-generated section `build intellij.kotlin.codeInsight.inspections.tests` start
 load("@rules_jvm//:jvm.bzl", "jvm_library")
 
 jvm_library(
@@ -9,7 +9,7 @@ jvm_library(
 
 jvm_library(
   name = "tests_test_lib",
-  module_name = "kotlin.code-insight.inspections.k2.tests",
+  module_name = "intellij.kotlin.codeInsight.inspections.tests",
   visibility = ["//visibility:public"],
   srcs = glob(["test/**/*.kt", "test/**/*.java", "test/**/*.form"], allow_empty = True),
   deps = [
@@ -33,8 +33,8 @@ jvm_library(
     "//plugins/kotlin/code-insight/api",
     "//plugins/kotlin/code-insight/utils",
     "//plugins/kotlin/idea/tests:tests_test_lib",
-    "//plugins/kotlin/highlighting/highlighting-k2:kotlin-highlighting-k2",
-    "//plugins/kotlin/highlighting/highlighting-k2:kotlin-highlighting-k2_test_lib",
+    "//plugins/kotlin/highlighting/highlighting-k2:kotlin-highlighting",
+    "//plugins/kotlin/highlighting/highlighting-k2:kotlin-highlighting_test_lib",
     "//plugins/kotlin/fir/tests:tests_test_lib",
     "//plugins/kotlin/tests-common:tests-common_test_lib",
     "//platform/core-impl",
@@ -47,7 +47,7 @@ jvm_library(
     "//platform/testFramework:testFramework_test_lib",
     "//plugins/kotlin/base/plugin",
     "//plugins/kotlin/base/plugin:plugin_test_lib",
-    "//plugins/kotlin/code-insight/inspections-k2:kotlin-code-insight-inspections-k2",
+    "//plugins/kotlin/code-insight/inspections-k2:kotlin-codeInsight-inspections",
     "@lib//:kotlinc-kotlin-compiler-common",
     "//plugins/kotlin/test-framework:test-framework_test_lib",
     "//platform/util/jdom",
@@ -57,18 +57,18 @@ jvm_library(
     "@lib//:kotlinc-kotlin-scripting-compiler-impl",
     "//plugins/kotlin/gradle/gradle-java",
     "//plugins/kotlin/gradle/gradle-java:gradle-java_test_lib",
-    "//plugins/kotlin/base/scripting/scripting.k2",
-    "//plugins/kotlin/base/scripting/scripting.k2:scripting.k2_test_lib",
+    "//plugins/kotlin/base/scripting/scripting.k2:kotlin-base-scripting",
+    "//plugins/kotlin/base/scripting/scripting.k2:kotlin-base-scripting_test_lib",
     "//plugins/kotlin/base/scripting/scripting.shared",
   ]
 )
-### auto-generated section `build kotlin.code-insight.inspections.k2.tests` end
+### auto-generated section `build intellij.kotlin.codeInsight.inspections.tests` end
 
-### auto-generated section `test kotlin.code-insight.inspections.k2.tests` start
+### auto-generated section `test intellij.kotlin.codeInsight.inspections.tests` start
 load("@community//build:tests-options.bzl", "jps_test")
 
 jps_test(
   name = "tests_test",
   runtime_deps = [":tests_test_lib"]
 )
-### auto-generated section `test kotlin.code-insight.inspections.k2.tests` end
+### auto-generated section `test intellij.kotlin.codeInsight.inspections.tests` end

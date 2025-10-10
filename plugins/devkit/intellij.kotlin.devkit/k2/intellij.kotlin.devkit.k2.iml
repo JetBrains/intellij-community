@@ -35,8 +35,8 @@
     <orderEntry type="module" module-name="intellij.java.psi" />
     <orderEntry type="module" module-name="intellij.kotlin.devkit" />
     <orderEntry type="module" module-name="kotlin.refactorings.common" />
-    <orderEntry type="module" module-name="kotlin.refactorings.move.k2" />
+    <orderEntry type="module" module-name="intellij.kotlin.refactorings.move" />
     <orderEntry type="module" module-name="intellij.devkit.core" />
-    <orderEntry type="module" module-name="kotlin.code-insight.intentions.k2" />
+    <orderEntry type="module" module-name="intellij.kotlin.codeInsight.intentions" />
   </component>
 </module>

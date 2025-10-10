@@ -3733,9 +3733,16 @@ jvm_import(
 )
 
 jvm_import(
-  name = "kotlin-base-fir-analysis-api-platform-ehcache-sizeof",
+  name = "kotlin-analysis-platform-ehcache-sizeof",
   jar = "@org_ehcache-sizeof-0_4_0_http//file",
   source_jar = "@org_ehcache-sizeof-0_4_0_http//file",
+  visibility = ["//visibility:public"]
+)
+
+jvm_import(
+  name = "kotlin-completion-ml-completion-ranking-kotlin",
+  jar = "@org_jetbrains_intellij_deps_completion-completion-ranking-kotlin-0_4_0_http//file",
+  source_jar = "@org_jetbrains_intellij_deps_completion-completion-ranking-kotlin-0_4_0_http//file",
   visibility = ["//visibility:public"]
 )
 
@@ -3764,13 +3771,6 @@ jvm_import(
   name = "kotlin-metadata",
   jar = "@org_jetbrains_kotlin-kotlin-metadata-jvm-2_2_20_http//file",
   source_jar = "@org_jetbrains_kotlin-kotlin-metadata-jvm-2_2_20_http//file",
-  visibility = ["//visibility:public"]
-)
-
-jvm_import(
-  name = "kotlin-ml-completion-completion-ranking-kotlin",
-  jar = "@org_jetbrains_intellij_deps_completion-completion-ranking-kotlin-0_4_0_http//file",
-  source_jar = "@org_jetbrains_intellij_deps_completion-completion-ranking-kotlin-0_4_0_http//file",
   visibility = ["//visibility:public"]
 )
 

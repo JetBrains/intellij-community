@@ -6,6 +6,6 @@
     <orderEntry type="inheritedJdk" />
     <orderEntry type="sourceFolder" forTests="false" />
     <orderEntry type="module" module-name="kotlin.tests-compose" />
-    <orderEntry type="module" module-name="kotlin.jvm-debugger.test.compose.k2" scope="RUNTIME" />
+    <orderEntry type="module" module-name="intellij.kotlin.jvm.debugger.test.compose" scope="RUNTIME" />
   </component>
 </module>

@@ -1,11 +1,11 @@
 - name: lib/completion-ranking-kotlin.jar
   library: completion-ranking-kotlin
-  module: kotlin.ml-completion
+  module: intellij.kotlin.completion.ml
   files:
   - name: $MAVEN_REPOSITORY$/org/jetbrains/intellij/deps/completion/completion-ranking-kotlin/0/completion-ranking-kotlin-0.jar
 - name: lib/ehcache.sizeof.jar
   library: ehcache.sizeof
-  module: kotlin.base.fir.analysis-api-platform
+  module: intellij.kotlin.analysis.platform
   files:
   - name: $MAVEN_REPOSITORY$/org/ehcache/sizeof/0/sizeof-0.jar
 - name: lib/frontend-split/kotlin-frontend.jar
@@ -28,7 +28,7 @@
   reason: withProjectLibrary
 - name: lib/kotlin-base-jps.jar
   modules:
-  - name: kotlin.base.jps
+  - name: intellij.kotlin.base.jps
 - name: lib/kotlin-gradle-tooling.jar
   projectLibraries:
   - name: kotlin-gradle-plugin-idea
@@ -41,14 +41,14 @@
     files:
     - name: $MAVEN_REPOSITORY$/org/jetbrains/kotlin/kotlin-tooling-core/1/kotlin-tooling-core-1.jar
   modules:
-  - name: kotlin.base.project-model
-  - name: kotlin.gradle.gradle-tooling.impl
+  - name: intellij.kotlin.base.projectModel
+  - name: intellij.kotlin.gradle.tooling.impl
 - name: lib/kotlin-plugin-shared.jar
   modules:
-  - name: kotlin.base.resources
-  - name: kotlin.base.code-insight.minimal
-  - name: kotlin.highlighting.minimal
-  - name: kotlin.formatter.minimal
+  - name: intellij.kotlin.base.resources
+  - name: intellij.kotlin.base.codeInsight.minimal
+  - name: intellij.kotlin.highlighting.minimal
+  - name: intellij.kotlin.formatter.minimal
 - name: lib/kotlin-plugin.jar
   projectLibraries:
   - name: kotlin-metadata
@@ -100,26 +100,26 @@
   - name: kotlin.plugin.common
   - name: kotlin.plugin.k1
   - name: kotlin.plugin.k2
-  - name: kotlin.base.util
-  - name: kotlin.base.indices
-  - name: kotlin.base.compiler-configuration
-  - name: kotlin.base.plugin
-  - name: kotlin.base.psi
-  - name: kotlin.base.kdoc
-  - name: kotlin.base.platforms
-  - name: kotlin.base.facet
-  - name: kotlin.base.project-structure
-  - name: kotlin.base.external-build-system
+  - name: intellij.kotlin.base.util
+  - name: intellij.kotlin.base.indices
+  - name: intellij.kotlin.base.compilerConfiguration
+  - name: intellij.kotlin.base.plugin
+  - name: intellij.kotlin.base.psi
+  - name: intellij.kotlin.base.kdoc
+  - name: intellij.kotlin.base.platforms
+  - name: intellij.kotlin.base.facet
+  - name: intellij.kotlin.base.projectStructure
+  - name: intellij.kotlin.base.externalSystem
   - name: kotlin.base.scripting.k1
-  - name: kotlin.base.scripting.k2
-  - name: kotlin.base.scripting.shared
-  - name: kotlin.base.analysis-api-platform
-  - name: kotlin.base.analysis
-  - name: kotlin.base.code-insight
-  - name: kotlin.base.analysis-api.utils
-  - name: kotlin.base.compiler-configuration-ui
+  - name: intellij.kotlin.base.scripting
+  - name: intellij.kotlin.base.scripting.shared
+  - name: intellij.kotlin.base.analysis.platform
+  - name: intellij.kotlin.base.analysis
+  - name: intellij.kotlin.base.codeInsight
+  - name: intellij.kotlin.base.analysis.utils
+  - name: intellij.kotlin.base.compilerConfiguration.ui
   - name: kotlin.base.obsolete-compat
-  - name: kotlin.base.statistics
+  - name: intellij.kotlin.base.statistics
   - name: kotlin.base.fe10.plugin
   - name: kotlin.base.fe10.analysis
   - name: kotlin.base.fe10.analysis-api-platform
@@ -128,160 +128,160 @@
   - name: kotlin.base.fe10.obsolete-compat
   - name: kotlin.base.fe10.project-structure
   - name: kotlin.core
-  - name: kotlin.ide
+  - name: intellij.kotlin.ide
   - name: kotlin.idea
   - name: kotlin.fir.frontend-independent
   - name: kotlin.jvm.shared
-  - name: kotlin.jvm.k2
+  - name: intellij.kotlin.jvm
   - name: kotlin.jvm.k1
-  - name: kotlin.compiler-reference-index
+  - name: intellij.kotlin.compilerReferenceIndex
   - name: kotlin.compiler-plugins.parcelize.common
   - name: kotlin.compiler-plugins.parcelize.k1
-  - name: kotlin.compiler-plugins.parcelize.k2
+  - name: intellij.kotlin.compilerPlugins.parcelize
   - name: kotlin.compiler-plugins.parcelize.gradle
   - name: kotlin.compiler-plugins.allopen.common.k1
   - name: kotlin.compiler-plugins.allopen.gradle
-  - name: kotlin.compiler-plugins.allopen.maven
-  - name: kotlin.compiler-plugins.compiler-plugin-support.common
+  - name: intellij.kotlin.compilerPlugins.allopen.maven
+  - name: intellij.kotlin.compilerPlugins.support
   - name: kotlin.compiler-plugins.compiler-plugin-support.gradle
-  - name: kotlin.compiler-plugins.compiler-plugin-support.maven
-  - name: kotlin.compiler-plugins.kapt
+  - name: intellij.kotlin.compilerPlugins.support.maven
+  - name: intellij.kotlin.compilerPlugins.kapt
   - name: kotlin.compiler-plugins.kotlinx-serialization.common
   - name: kotlin.compiler-plugins.kotlinx-serialization.gradle
-  - name: kotlin.compiler-plugins.kotlinx-serialization.k2
-  - name: kotlin.compiler-plugins.kotlinx-serialization.maven
-  - name: kotlin.compiler-plugins.kotlin-dataframe.maven
+  - name: intellij.kotlin.compilerPlugins.serialization
+  - name: intellij.kotlin.compilerPlugins.serialization.maven
+  - name: intellij.kotlin.compilerPlugins.dataframe.maven
   - name: kotlin.compiler-plugins.noarg.common
   - name: kotlin.compiler-plugins.noarg.gradle
-  - name: kotlin.compiler-plugins.noarg.maven
+  - name: intellij.kotlin.compilerPlugins.noarg.maven
   - name: kotlin.compiler-plugins.sam-with-receiver.common
   - name: kotlin.compiler-plugins.sam-with-receiver.gradle
-  - name: kotlin.compiler-plugins.sam-with-receiver.maven
+  - name: intellij.kotlin.compilerPlugins.samWithReceiver.maven
   - name: kotlin.compiler-plugins.assignment.common.k1
-  - name: kotlin.compiler-plugins.assignment.common.k2
+  - name: intellij.kotlin.compilerPlugins.assignment.fixes
   - name: kotlin.compiler-plugins.assignment.gradle
-  - name: kotlin.compiler-plugins.assignment.maven
+  - name: intellij.kotlin.compilerPlugins.assignment.maven
   - name: kotlin.compiler-plugins.lombok.gradle
-  - name: kotlin.compiler-plugins.lombok.maven
-  - name: kotlin.compiler-plugins.scripting
+  - name: intellij.kotlin.compilerPlugins.lombok.maven
+  - name: intellij.kotlin.compilerPlugins.scripting
   - name: kotlin.compiler-plugins.android-extensions-stubs
-  - name: kotlin.completion.api
+  - name: intellij.kotlin.completion.api
   - name: kotlin.completion.impl.shared
   - name: kotlin.completion.impl.k1
-  - name: kotlin.completion.impl.k2
-  - name: kotlin.maven
-  - name: kotlin.gradle.gradle-tooling
-  - name: kotlin.gradle.gradle
-  - name: kotlin.gradle.code-insight-common
+  - name: intellij.kotlin.completion.impl
+  - name: intellij.kotlin.maven
+  - name: intellij.kotlin.gradle.tooling
+  - name: intellij.kotlin.gradle.gradle
+  - name: intellij.kotlin.gradle.codeInsight.common
   - name: kotlin.gradle.gradle-java
   - name: kotlin.gradle.gradle-java.k1
-  - name: kotlin.gradle.gradle-java.k2
+  - name: intellij.kotlin.gradle.java
   - name: kotlin.gradle.scripting.k1
-  - name: kotlin.gradle.scripting.k2
+  - name: intellij.kotlin.gradle.scripting
   - name: kotlin.gradle.scripting.shared
-  - name: kotlin.gradle.code-insight-groovy
-  - name: kotlin.gradle.code-insight-toml
-  - name: kotlin.native
-  - name: kotlin.grazie
-  - name: kotlin.run-configurations.jvm
-  - name: kotlin.run-configurations.junit
+  - name: intellij.kotlin.gradle.codeInsight.groovy
+  - name: intellij.kotlin.gradle.codeInsight.toml
+  - name: intellij.kotlin.native
+  - name: intellij.kotlin.grazie
+  - name: intellij.kotlin.runConfigurations.jvm
+  - name: intellij.kotlin.runConfigurations.junit
   - name: kotlin.run-configurations.junit-fe10
-  - name: kotlin.run-configurations.testng
-  - name: kotlin.formatter
+  - name: intellij.kotlin.runConfigurations.testng
+  - name: intellij.kotlin.formatter
   - name: kotlin.repl
-  - name: kotlin.git
+  - name: intellij.kotlin.git
   - name: kotlin.base.injection
   - name: kotlin.injection.k1
-  - name: kotlin.injection.k2
+  - name: intellij.kotlin.injection
   - name: kotlin.scripting
-  - name: kotlin.coverage
-  - name: kotlin.ml-completion
-  - name: kotlin.copyright
-  - name: kotlin.spellchecker
-  - name: kotlin.jvm-decompiler
+  - name: intellij.kotlin.coverage
+  - name: intellij.kotlin.completion.ml
+  - name: intellij.kotlin.copyright
+  - name: intellij.kotlin.spellchecker
+  - name: intellij.kotlin.jvm.decompiler
   - name: kotlin.j2k.shared
   - name: kotlin.j2k.k1.new.post-processing
   - name: kotlin.j2k.k1.old
   - name: kotlin.j2k.k1.old.post-processing
   - name: kotlin.j2k.k1.new
-  - name: kotlin.j2k.k2
-  - name: kotlin.onboarding
-  - name: kotlin.onboarding.gradle
-  - name: kotlin.plugin-updater
-  - name: kotlin.preferences
-  - name: kotlin.project-configuration
-  - name: kotlin.project-wizard.cli
-  - name: kotlin.project-wizard.core
-  - name: kotlin.project-wizard.idea
+  - name: intellij.kotlin.j2k
+  - name: intellij.kotlin.onboarding
+  - name: intellij.kotlin.onboarding.gradle
+  - name: intellij.kotlin.plugin.updater
+  - name: intellij.kotlin.preferences
+  - name: intellij.kotlin.projectConfiguration
+  - name: intellij.kotlin.projectWizard.cli
+  - name: intellij.kotlin.projectWizard.core
+  - name: intellij.kotlin.projectWizard.idea
   - name: kotlin.project-wizard.idea.k1
-  - name: kotlin.project-wizard.maven
-  - name: kotlin.project-wizard.gradle
-  - name: kotlin.project-wizard.compose
-  - name: kotlin.jvm-debugger.base.util
-  - name: kotlin.jvm-debugger.core
+  - name: intellij.kotlin.projectWizard.maven
+  - name: intellij.kotlin.projectWizard.gradle
+  - name: intellij.kotlin.projectWizard.compose
+  - name: intellij.kotlin.jvm.debugger.base.util
+  - name: intellij.kotlin.jvm.debugger.core
   - name: kotlin.jvm-debugger.core-fe10
   - name: kotlin.jvm-debugger.evaluation
   - name: kotlin.jvm-debugger.evaluation.k1
-  - name: kotlin.jvm-debugger.evaluation.k2
-  - name: kotlin.jvm-debugger.coroutines
+  - name: intellij.kotlin.jvm.debugger.evaluation
+  - name: intellij.kotlin.jvm.debugger.coroutines
   - name: kotlin.jvm-debugger.sequence.k1
-  - name: kotlin.jvm-debugger.eval4j
+  - name: intellij.kotlin.jvm.debugger.eval4j
   - name: kotlin.uast.uast-kotlin-base
   - name: kotlin.uast.uast-kotlin
   - name: kotlin.uast.uast-kotlin-idea-base
   - name: kotlin.uast.uast-kotlin-idea
-  - name: kotlin.i18n
-  - name: kotlin.migration
+  - name: intellij.kotlin.i18n
+  - name: intellij.kotlin.migration
   - name: kotlin.inspections
   - name: kotlin.inspections-fe10
-  - name: kotlin.features-trainer
-  - name: kotlin.base.fir.analysis-api-platform
-  - name: kotlin.base.fir.code-insight
-  - name: kotlin.base.fir.project-structure
-  - name: kotlin.base.fir.scripting
-  - name: kotlin.code-insight.api
-  - name: kotlin.code-insight.utils
+  - name: intellij.kotlin.featuresTrainer
+  - name: intellij.kotlin.analysis.platform
+  - name: intellij.kotlin.codeInsight.base
+  - name: intellij.kotlin.projectStructure
+  - name: intellij.kotlin.scripting
+  - name: intellij.kotlin.codeInsight.api
+  - name: intellij.kotlin.codeInsight.utils
   - name: kotlin.code-insight.intentions.shared
   - name: kotlin.code-insight.inspections.shared
-  - name: kotlin.code-insight.impl-base
-  - name: kotlin.code-insight.descriptions
-  - name: kotlin.code-insight.fixes.k2
+  - name: intellij.kotlin.codeInsight.shared
+  - name: intellij.kotlin.codeInsight.descriptions
+  - name: intellij.kotlin.codeInsight.fixes
   - name: kotlin.code-insight.intentions.k1
-  - name: kotlin.code-insight.intentions.k2
+  - name: intellij.kotlin.codeInsight.intentions
   - name: kotlin.code-insight.inspections.k1
-  - name: kotlin.code-insight.inspections.k2
+  - name: intellij.kotlin.codeInsight.inspections
   - name: kotlin.code-insight.k1
-  - name: kotlin.code-insight.k2
+  - name: intellij.kotlin.codeInsight
   - name: kotlin.code-insight.override-implement.shared
   - name: kotlin.code-insight.override-implement.k1
-  - name: kotlin.code-insight.override-implement.k2
+  - name: intellij.kotlin.codeInsight.overrideImplement
   - name: kotlin.code-insight.live-templates.shared
   - name: kotlin.code-insight.live-templates.k1
-  - name: kotlin.code-insight.live-templates.k2
+  - name: intellij.kotlin.codeInsight.liveTemplates
   - name: kotlin.code-insight.postfix-templates.k1
-  - name: kotlin.code-insight.postfix-templates.k2
+  - name: intellij.kotlin.codeInsight.postfixTemplates
   - name: kotlin.code-insight.structural-search.k1
-  - name: kotlin.code-insight.structural-search.k2
+  - name: intellij.kotlin.codeInsight.structuralSearch
   - name: kotlin.code-insight.line-markers.shared
-  - name: kotlin.code-insight.line-markers.k2
+  - name: intellij.kotlin.codeInsight.lineMarkers
   - name: kotlin.fir
-  - name: kotlin.searching.k2
-  - name: kotlin.searching.base
+  - name: intellij.kotlin.searching
+  - name: intellij.kotlin.searching.base
   - name: kotlin.highlighting.shared
   - name: kotlin.highlighting.k1
-  - name: kotlin.highlighting.k2
-  - name: kotlin.uast.uast-kotlin.k2
-  - name: kotlin.uast.uast-kotlin-idea.k2
-  - name: kotlin.navigation
+  - name: intellij.kotlin.highlighting
+  - name: intellij.kotlin.uast
+  - name: intellij.kotlin.uast.idea
+  - name: intellij.kotlin.navigation
   - name: kotlin.refactorings.common
-  - name: kotlin.refactorings.k2
-  - name: kotlin.refactorings.move.k2
-  - name: kotlin.refactorings.rename.k2
-  - name: kotlin.performanceExtendedPlugin
+  - name: intellij.kotlin.refactorings
+  - name: intellij.kotlin.refactorings.move
+  - name: intellij.kotlin.refactorings.rename
+  - name: intellij.kotlin.performanceExtendedPlugin
   - name: kotlin.bundled-compiler-plugins-support
   - name: kotlin.jsr223
-  - name: kotlin.k2.internal
-  - name: kotlin.base.serialization
+  - name: intellij.kotlin.internal
+  - name: intellij.kotlin.base.serialization
   - name: kotlin-ultimate.common-native
   - name: kotlin-ultimate.javascript.debugger
   - name: kotlin-ultimate.javascript.nodeJs

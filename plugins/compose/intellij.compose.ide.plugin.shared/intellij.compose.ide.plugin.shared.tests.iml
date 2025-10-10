@@ -16,8 +16,8 @@
     <orderEntry type="module" module-name="intellij.platform.util" scope="TEST" />
     <orderEntry type="module" module-name="intellij.platform.util.jdom" scope="TEST" />
     <orderEntry type="module" module-name="kotlin.base.test" scope="TEST" />
-    <orderEntry type="module" module-name="kotlin.base.plugin" scope="TEST" />
-    <orderEntry type="module" module-name="kotlin.base.indices" scope="TEST" />
+    <orderEntry type="module" module-name="intellij.kotlin.base.plugin" scope="TEST" />
+    <orderEntry type="module" module-name="intellij.kotlin.base.indices" scope="TEST" />
     <orderEntry type="module" module-name="kotlin.tests-common" scope="TEST" />
     <orderEntry type="module" module-name="kotlin.test-framework" scope="TEST" />
     <orderEntry type="library" scope="TEST" name="kotlinc.kotlin-compiler-common" level="project" />
@@ -27,7 +27,7 @@
     <orderEntry type="library" scope="TEST" name="io.mockk" level="project" />
     <orderEntry type="library" scope="TEST" name="io.mockk.jvm" level="project" />
     <orderEntry type="library" scope="TEST" name="kotlin-test" level="project" />
-    <orderEntry type="module" module-name="kotlin.code-insight.api" scope="TEST" />
+    <orderEntry type="module" module-name="intellij.kotlin.codeInsight.api" scope="TEST" />
     <orderEntry type="module" module-name="intellij.platform.editor.ex" scope="TEST" />
     <orderEntry type="module" module-name="kotlin.gradle.gradle-java.tests.shared" scope="TEST" />
     <orderEntry type="module" module-name="intellij.gradle.tests" scope="TEST" />

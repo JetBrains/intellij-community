@@ -1,9 +1,9 @@
-### auto-generated section `build kotlin.base.indices` start
+### auto-generated section `build intellij.kotlin.base.indices` start
 load("@rules_jvm//:jvm.bzl", "jvm_library")
 
 jvm_library(
   name = "indices",
-  module_name = "kotlin.base.indices",
+  module_name = "intellij.kotlin.base.indices",
   visibility = ["//visibility:public"],
   srcs = glob(["src/**/*.kt", "src/**/*.java", "src/**/*.form"], allow_empty = True),
   deps = [
@@ -23,4 +23,4 @@ jvm_library(
     "//plugins/kotlin/base/plugin",
   ]
 )
-### auto-generated section `build kotlin.base.indices` end
+### auto-generated section `build intellij.kotlin.base.indices` end

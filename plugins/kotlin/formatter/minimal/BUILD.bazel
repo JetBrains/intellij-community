@@ -1,4 +1,4 @@
-### auto-generated section `build kotlin.formatter.minimal` start
+### auto-generated section `build intellij.kotlin.formatter.minimal` start
 load("@rules_jvm//:jvm.bzl", "jvm_library", "resourcegroup")
 
 resourcegroup(
@@ -15,7 +15,7 @@ resourcegroup(
 
 jvm_library(
   name = "minimal",
-  module_name = "kotlin.formatter.minimal",
+  module_name = "intellij.kotlin.formatter.minimal",
   visibility = ["//visibility:public"],
   srcs = glob(["src/**/*.kt", "src/**/*.java", "src/**/*.form"], allow_empty = True),
   resources = [
@@ -42,4 +42,4 @@ jvm_library(
   ],
   runtime_deps = ["//plugins/kotlin/base/frontend-agnostic"]
 )
-### auto-generated section `build kotlin.formatter.minimal` end
+### auto-generated section `build intellij.kotlin.formatter.minimal` end

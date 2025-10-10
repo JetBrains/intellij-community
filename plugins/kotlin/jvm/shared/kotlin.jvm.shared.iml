@@ -35,26 +35,26 @@
     <orderEntry type="module" module-name="intellij.libraries.gson" />
     <orderEntry type="library" name="kotlinc.kotlin-compiler-common" level="project" />
     <orderEntry type="module" module-name="intellij.platform.ide.impl" />
-    <orderEntry type="module" module-name="kotlin.base.compiler-configuration" />
-    <orderEntry type="module" module-name="kotlin.base.plugin" />
-    <orderEntry type="module" module-name="kotlin.base.project-model" />
-    <orderEntry type="module" module-name="kotlin.base.facet" />
-    <orderEntry type="module" module-name="kotlin.base.platforms" />
-    <orderEntry type="module" module-name="kotlin.base.project-structure" />
-    <orderEntry type="module" module-name="kotlin.base.analysis" />
-    <orderEntry type="module" module-name="kotlin.base.code-insight" />
-    <orderEntry type="module" module-name="kotlin.base.resources" />
+    <orderEntry type="module" module-name="intellij.kotlin.base.compilerConfiguration" />
+    <orderEntry type="module" module-name="intellij.kotlin.base.plugin" />
+    <orderEntry type="module" module-name="intellij.kotlin.base.projectModel" />
+    <orderEntry type="module" module-name="intellij.kotlin.base.facet" />
+    <orderEntry type="module" module-name="intellij.kotlin.base.platforms" />
+    <orderEntry type="module" module-name="intellij.kotlin.base.projectStructure" />
+    <orderEntry type="module" module-name="intellij.kotlin.base.analysis" />
+    <orderEntry type="module" module-name="intellij.kotlin.base.codeInsight" />
+    <orderEntry type="module" module-name="intellij.kotlin.base.resources" />
     <orderEntry type="module" module-name="kotlin.highlighting.shared" />
-    <orderEntry type="module" module-name="kotlin.base.compiler-configuration-ui" />
-    <orderEntry type="module" module-name="kotlin.base.statistics" />
-    <orderEntry type="module" module-name="kotlin.project-configuration" />
+    <orderEntry type="module" module-name="intellij.kotlin.base.compilerConfiguration.ui" />
+    <orderEntry type="module" module-name="intellij.kotlin.base.statistics" />
+    <orderEntry type="module" module-name="intellij.kotlin.projectConfiguration" />
     <orderEntry type="module" module-name="kotlin.fir.frontend-independent" />
     <orderEntry type="library" name="kotlinc.kotlin-jps-common" level="project" />
     <orderEntry type="module" module-name="intellij.platform.vcs" />
-    <orderEntry type="module" module-name="kotlin.base.psi" />
+    <orderEntry type="module" module-name="intellij.kotlin.base.psi" />
     <orderEntry type="module" module-name="kotlin.inspections" />
-    <orderEntry type="module" module-name="kotlin.formatter" />
-    <orderEntry type="module" module-name="kotlin.run-configurations.jvm" />
+    <orderEntry type="module" module-name="intellij.kotlin.formatter" />
+    <orderEntry type="module" module-name="intellij.kotlin.runConfigurations.jvm" />
     <orderEntry type="module" module-name="intellij.platform.externalSystem" />
     <orderEntry type="module" module-name="intellij.java.ui" />
     <orderEntry type="module" module-name="intellij.platform.boot" />
@@ -69,11 +69,11 @@
     <orderEntry type="module" module-name="intellij.java.impl" />
     <orderEntry type="module" module-name="intellij.xml.psi.impl" />
     <orderEntry type="module" module-name="intellij.platform.ide.util.io" />
-    <orderEntry type="module" module-name="kotlin.base.util" />
+    <orderEntry type="module" module-name="intellij.kotlin.base.util" />
     <orderEntry type="module" module-name="intellij.platform.core.ui" />
-    <orderEntry type="module" module-name="kotlin.base.indices" />
-    <orderEntry type="module" module-name="kotlin.code-insight.api" />
-    <orderEntry type="module" module-name="kotlin.ide" />
+    <orderEntry type="module" module-name="intellij.kotlin.base.indices" />
+    <orderEntry type="module" module-name="intellij.kotlin.codeInsight.api" />
+    <orderEntry type="module" module-name="intellij.kotlin.ide" />
     <orderEntry type="module" module-name="kotlin.jsr223" />
     <orderEntry type="module" module-name="intellij.platform.util.coroutines" />
     <orderEntry type="module" module-name="intellij.platform.core" />
@@ -83,6 +83,6 @@
     <orderEntry type="module" module-name="intellij.platform.ide.core" />
     <orderEntry type="module" module-name="intellij.platform.util" />
     <orderEntry type="module" module-name="intellij.platform.editor.ui" />
-    <orderEntry type="module" module-name="kotlin.base.scripting.shared" />
+    <orderEntry type="module" module-name="intellij.kotlin.base.scripting.shared" />
   </component>
 </module>
