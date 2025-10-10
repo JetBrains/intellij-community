@@ -30,7 +30,7 @@ public class XDebugSessionData extends UserDataHolderBase {
   /**
    * @deprecated Use {@link XDebugSessionData#XDebugSessionData(Project, String)} instead
    */
-  @Deprecated
+  @Deprecated(forRemoval = true)
   public XDebugSessionData(@NotNull List<XExpression> ignoredWatchExpressions,
                            @NotNull String configurationName) {
     myProject = null;

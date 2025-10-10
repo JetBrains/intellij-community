@@ -148,7 +148,7 @@ public class WatchesRootNode extends XValueContainerNode<XValueContainer> {
   /**
    * @deprecated Use {@link WatchesRootNode#getWatches()} instead.
    */
-  @Deprecated
+  @Deprecated(forRemoval = true)
   public List<XExpression> getWatchExpressions() {
     return StreamEx.of(getWatchChildren())
       .filter(node -> !(node instanceof ResultNode))

@@ -463,7 +463,7 @@ public final class JBCefApp {
   /**
    * @deprecated use {@link JBCefApp#getRemoteDebuggingPort(Consumer)} instead
    */
-  @Deprecated
+  @Deprecated(forRemoval = true)
   @Contract(pure = true)
   public @NotNull Integer getRemoteDebuggingPort() {
     if (myCefSettings == null) throw new UnsupportedOperationException();

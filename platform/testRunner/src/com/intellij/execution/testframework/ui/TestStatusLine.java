@@ -174,7 +174,7 @@ public class TestStatusLine extends NonOpaquePanel {
   /**
    * @deprecated Use {@link #setStatus(String)} with values from {@link JBUI.CurrentTheme.ProgressBar}.
    */
-  @Deprecated
+  @Deprecated(forRemoval = true)
   public void setStatusColor(Color color) {
     myProgressBar.setForeground(color);
   }
@@ -182,7 +182,7 @@ public class TestStatusLine extends NonOpaquePanel {
   /**
    * @deprecated Use {@link #getStatus()} instead.
    */
-  @Deprecated
+  @Deprecated(forRemoval = true)
   public Color getStatusColor() {
     return myProgressBar.getForeground();
   }

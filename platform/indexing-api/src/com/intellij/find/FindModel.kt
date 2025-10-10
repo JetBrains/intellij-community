@@ -443,6 +443,7 @@ open class FindModel : UserDataHolder, Cloneable {
     set(showInNewTabEnabled) {
     }
 
+  @ApiStatus.ScheduledForRemoval
   @Deprecated("and not used anymore")
   fun setOpenInNewTabVisible(showInNewTabVisible: Boolean) {
   }

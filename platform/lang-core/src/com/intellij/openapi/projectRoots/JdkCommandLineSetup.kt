@@ -34,6 +34,7 @@ import com.intellij.util.execution.ParametersListUtil
 import com.intellij.util.io.URLUtil
 import com.intellij.util.lang.JavaVersion
 import com.intellij.util.lang.UrlClassLoader
+import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.annotations.NonNls
 import org.jetbrains.concurrency.AsyncPromise
 import org.jetbrains.concurrency.Promise
@@ -164,6 +165,7 @@ class JdkCommandLineSetup(private val request: TargetEnvironmentRequest) {
    * @param localPort the local port that is listening for the incoming connections
    * @return the promised value with the host and port the process started on the target may connect to be directed to the local one
    */
+  @ApiStatus.ScheduledForRemoval
   @Deprecated("Use `TargetEnvironment.getLocalPortBindings` after constructing `TargetEnvironment` instead")
   fun requestLocalPortBinding(host: String, localPort: Int): TargetValue<HostPort> {
     val binding = TargetEnvironment.LocalPortBinding(localPort, target = null)

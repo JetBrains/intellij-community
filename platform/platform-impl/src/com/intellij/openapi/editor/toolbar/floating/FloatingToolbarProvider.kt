@@ -53,6 +53,7 @@ interface FloatingToolbarProvider {
       return EP_NAME.findExtensionOrFail(T::class.java)
     }
 
+    @ApiStatus.ScheduledForRemoval
     @Deprecated("Use the [ExtensionPointUtil.createExtensionDisposable] function directly")
     fun createExtensionDisposable(provider: FloatingToolbarProvider, parentDisposable: Disposable): Disposable {
       return EP_NAME.createExtensionDisposable(provider, parentDisposable)

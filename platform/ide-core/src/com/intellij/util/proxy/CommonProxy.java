@@ -151,7 +151,7 @@ public final class CommonProxy extends ProxySelector {
   /**
    * @deprecated see {@link com.intellij.util.net.JdkProxyCustomizer}
    */
-  @Deprecated
+  @Deprecated(forRemoval = true)
   public void removeCustom(final @NotNull String key) {}
 
   /**

@@ -150,6 +150,7 @@ class InlayTextMetrics(
   val spaceWidth: Int = EditorUtil.getPlainSpaceWidth(editor)
   private val editorComponent = editor.component
 
+  @ApiStatus.ScheduledForRemoval
   @Deprecated("Use InlayTextMetricsStorage.getCurrentStamp() to ensure actual metrics are used")
   fun isActual(size: Float, familyName: String) : Boolean {
     if (size != font.size2D) return false

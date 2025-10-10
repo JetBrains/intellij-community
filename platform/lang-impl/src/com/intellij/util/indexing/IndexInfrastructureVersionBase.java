@@ -162,7 +162,7 @@ public class IndexInfrastructureVersionBase {
    * @deprecated use {@link #getAllLanguageStubDescriptors} intead
    * @return
    */
-  @Deprecated
+  @Deprecated(forRemoval = true)
   public static @NotNull List<IFileElementType> getAllStubFileElementTypes() {
     return Arrays.stream(FileTypeManager.getInstance().getRegisteredFileTypes())
       .filter(type -> type instanceof LanguageFileType)

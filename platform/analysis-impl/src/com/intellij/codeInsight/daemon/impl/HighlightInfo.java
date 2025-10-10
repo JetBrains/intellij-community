@@ -668,7 +668,7 @@ public class HighlightInfo implements Segment {
     /**
      * @deprecated Do not use. Inspections set this id automatically when run
      */
-    @Deprecated
+    @Deprecated(forRemoval = true)
     @NotNull Builder inspectionToolId(@NotNull String inspectionTool);
 
     // only one allowed

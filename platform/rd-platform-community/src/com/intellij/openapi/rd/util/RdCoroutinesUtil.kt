@@ -319,6 +319,7 @@ suspend fun <T> withLongBackgroundContext(lifetime: Lifetime = Lifetime.Eternal,
 suspend fun <T> withBackgroundContext(lifetime: Lifetime = Lifetime.Eternal, action: suspend CoroutineScope.() -> T): T =
   withContext(lifetime, applicationThreadPool, action)
 
+@ApiStatus.ScheduledForRemoval
 @Deprecated("Api moved to Rd")
 suspend fun <T> lifetimedCoroutineScope(lifetime: Lifetime, action: suspend CoroutineScope.() -> T): T =
   com.jetbrains.rd.util.threading.coroutines.lifetimedCoroutineScope(lifetime, action)

@@ -38,7 +38,7 @@ public final class SearchContext {
   /**
    * @deprecated use {@link #inPlainText}
    */
-  @Deprecated
+  @Deprecated(forRemoval = true)
   public static final SearchContext IN_PLAIN_TEXT = new SearchContext("IN_PLAIN_TEXT", UsageSearchContext.IN_PLAIN_TEXT);
 
   private final @NonNls @NotNull String debugName;

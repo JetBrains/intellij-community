@@ -150,7 +150,7 @@ public class JBTerminalWidget extends JediTermWidget implements Disposable, UiCo
   /**
    * @deprecated use {@link JBTerminalSystemSettingsProviderBase#getTerminalFontSize()} instead
    */
-  @Deprecated
+  @Deprecated(forRemoval = true)
   public int getFontSize() {
     return Math.round(getSettingsProvider().getTerminalFontSize());
   }
@@ -158,7 +158,7 @@ public class JBTerminalWidget extends JediTermWidget implements Disposable, UiCo
   /**
    * @deprecated use {@link JBTerminalSystemSettingsProviderBase#getTerminalFontSize()} instead
    */
-  @Deprecated
+  @Deprecated(forRemoval = true)
   public float getFontSize2D() {
     return getSettingsProvider().getTerminalFontSize();
   }
@@ -166,7 +166,7 @@ public class JBTerminalWidget extends JediTermWidget implements Disposable, UiCo
   /**
    * @deprecated use {@link JBTerminalSystemSettingsProviderBase#setTerminalFontSize(float)} instead
    */
-  @Deprecated
+  @Deprecated(forRemoval = true)
   public void setFontSize(int fontSize) {
     getSettingsProvider().setTerminalFontSize(fontSize);
   }
@@ -174,7 +174,7 @@ public class JBTerminalWidget extends JediTermWidget implements Disposable, UiCo
   /**
    * @deprecated use {@link JBTerminalSystemSettingsProviderBase#setTerminalFontSize(float)} instead
    */
-  @Deprecated
+  @Deprecated(forRemoval = true)
   public void setFontSize(float fontSize) {
     getSettingsProvider().setTerminalFontSize(fontSize);
   }
@@ -182,7 +182,7 @@ public class JBTerminalWidget extends JediTermWidget implements Disposable, UiCo
   /**
    * @deprecated use {@link JBTerminalSystemSettingsProviderBase#resetTerminalFontSize()} instead
    */
-  @Deprecated
+  @Deprecated(forRemoval = true)
   public void resetFontSize() {
     getSettingsProvider().resetTerminalFontSize();
   }

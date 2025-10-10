@@ -364,7 +364,7 @@ public abstract class ParameterInfoControllerBase extends UserDataHolderBase imp
   /**
    * @deprecated Always false
    */
-  @Deprecated
+  @Deprecated(forRemoval = true)
   public static boolean areParameterTemplatesEnabledOnCompletion() {
     return false;
   }

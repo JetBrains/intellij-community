@@ -57,7 +57,7 @@ public class JBHtmlEditorKit extends HTMLEditorKit {
   /**
    * @deprecated use {@link HTMLEditorKitBuilder}
    */
-  @Deprecated
+  @Deprecated(forRemoval = true)
   public JBHtmlEditorKit(boolean noGapsBetweenParagraphs) {
     this(ExtendableHTMLViewFactory.DEFAULT, StyleSheetUtil.getDefaultStyleSheet(), false);
     if (noGapsBetweenParagraphs) {

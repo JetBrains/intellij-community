@@ -441,7 +441,7 @@ public final class KeymapUtil {
   /**
    * @deprecated use {@link #getShortcutsForMnemonicChar} or {@link #getShortcutsForMnemonicCode} instead
    */
-  @Deprecated
+  @Deprecated(forRemoval = true)
   public static @Nullable CustomShortcutSet getMnemonicAsShortcut(int mnemonic) {
     return getShortcutsForMnemonicCode(mnemonic);
   }
