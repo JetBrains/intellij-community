@@ -48,6 +48,9 @@ internal object LibrariesRequiredForWorkspace {
       "intellij.bazel.plugin" -> {
         listOf(bazelCommons)
       }
+      "intellij.bazel.sdkcompat" -> {
+        listOf(bazelCommons)
+      }
       else -> {
         emptyList()
       }
