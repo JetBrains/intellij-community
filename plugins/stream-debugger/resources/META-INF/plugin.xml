@@ -7,6 +7,11 @@
     <plugin id="com.intellij.java"/>
     <module name="intellij.debugger.streams.core"/>
   </dependencies>
+  <!--suppress PluginXmlValidity -->
+  <content namespace="jetbrains">
+    <!-- The implicit main module of the plugin depends on internal modules (intellij.debugger.streams.core), so it's required to set the namespace for it
+         todo: extract elements and dependencies to an explicit content module (see IJPL-212351) -->
+  </content>
 
   <description><![CDATA[
       <p>Visualizes chains of operations on Java streams.</p>

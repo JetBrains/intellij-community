@@ -26,6 +26,11 @@
     <module name="intellij.libraries.ktor.network.tls"/>
     <module name="intellij.libraries.ktor.client.cio"/>
   </dependencies>
+  <!--suppress PluginXmlValidity -->
+  <content namespace="jetbrains">
+    <!-- The implicit main module of the plugin depends on internal modules (intellij.libraries.ktor.client, intellij.libraries.ktor.io, intellij.libraries.kotlinx.io), so it's required to set the namespace for it
+         todo: extract elements and dependencies to an explicit content module (see IJPL-212351) -->
+  </content>
 
   <extensionPoints>
     <extensionPoint name="mcpToolsProvider" interface="com.intellij.mcpserver.McpToolsProvider" dynamic="true" />
