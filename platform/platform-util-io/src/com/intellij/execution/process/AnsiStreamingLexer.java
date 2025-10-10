@@ -157,6 +157,11 @@ public final class AnsiStreamingLexer {
         myEndOffset++;
         return true;
       }
+      case '>' -> { // https://vt100.net/docs/vt510-rm/DECKPNM.html
+        myElementType = CONTROL;
+        myEndOffset++;
+        return true;
+      }
       default -> {
         return false;
       }
