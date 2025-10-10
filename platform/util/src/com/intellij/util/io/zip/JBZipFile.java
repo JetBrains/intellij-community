@@ -105,7 +105,9 @@ public class JBZipFile implements Closeable {
     this(file, DEFAULT_CHARSET);
   }
 
-  @ApiStatus.Obsolete
+  /** @deprecated the constructor has dubious default value of the {@code readonly} parameter */
+  @Deprecated
+  @ApiStatus.ScheduledForRemoval
   @SuppressWarnings({"IO_FILE_USAGE", "UnnecessaryFullyQualifiedName"})
   public JBZipFile(java.io.File f) throws IOException {
     this(f, DEFAULT_CHARSET);
@@ -122,13 +124,16 @@ public class JBZipFile implements Closeable {
   }
 
   /**
-   * Opens the given file for reading, assuming the platform's
-   * native encoding for file names.
+   * Opens the given file for reading, assuming the platform's native encoding for file names.
    *
-   * @param f        file of the archive.
+   * @param file     file of the archive.
    * @param readonly true to open file as readonly
    * @throws IOException if an error occurs while reading the file.
    */
+  public JBZipFile(@NotNull Path file, boolean readonly) throws IOException {
+    this(file, DEFAULT_CHARSET, readonly);
+  }
+
   @ApiStatus.Obsolete
   @SuppressWarnings({"IO_FILE_USAGE", "UnnecessaryFullyQualifiedName"})
   public JBZipFile(@NotNull java.io.File f, boolean readonly) throws IOException {
@@ -147,14 +152,9 @@ public class JBZipFile implements Closeable {
     this(Paths.get(name), Charset.forName(encoding));
   }
 
-  /**
-   * Opens the given file for reading, assuming the specified encoding for file names.
-   *
-   * @param f        the archive.
-   * @param encoding the encoding to use for file names
-   * @throws IOException if an error occurs while reading the file.
-   */
-  @ApiStatus.Obsolete
+  /** @deprecated the constructor has dubious default value of the {@code readonly} parameter */
+  @Deprecated
+  @ApiStatus.ScheduledForRemoval
   @SuppressWarnings({"IO_FILE_USAGE", "UnnecessaryFullyQualifiedName"})
   public JBZipFile(java.io.File f, @NotNull String encoding) throws IOException {
     this(f, Charset.forName(encoding));
@@ -168,10 +168,12 @@ public class JBZipFile implements Closeable {
    * @throws IOException if an error occurs while reading the file.
    */
   public JBZipFile(@NotNull Path file, @NotNull Charset encoding) throws IOException {
-    this(file, encoding, false);
+    this(file, encoding, true);
   }
 
-  @ApiStatus.Obsolete
+  /** @deprecated the constructor has dubious default value of the {@code readonly} parameter */
+  @Deprecated
+  @ApiStatus.ScheduledForRemoval
   @SuppressWarnings({"IO_FILE_USAGE", "UnnecessaryFullyQualifiedName"})
   public JBZipFile(java.io.File f, @NotNull Charset encoding) throws IOException {
     this(f, encoding, false);

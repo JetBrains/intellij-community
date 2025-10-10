@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.idea.maven.utils
 
 import com.intellij.openapi.util.io.FileUtil
@@ -8,7 +8,6 @@ import org.jetbrains.annotations.ApiStatus.Obsolete
 import org.jetbrains.idea.maven.indices.IndicesBundle
 import org.jetbrains.idea.maven.model.MavenArtifact
 import org.jetbrains.idea.maven.model.MavenId
-import org.jetbrains.idea.maven.plugins.compatibility.MavenPluginM2ELifecycles
 import java.io.File
 import java.io.IOException
 import java.nio.file.Files
@@ -182,7 +181,7 @@ object MavenArtifactUtil {
     try {
       if (!Files.exists(file)) return null
 
-      JBZipFile(file.toFile()).use { jar ->
+      JBZipFile(file).use { jar ->
         val entry = jar.getEntry(MAVEN_PLUGIN_DESCRIPTOR)
         if (entry == null) {
           MavenLog.LOG.info(IndicesBundle.message("repository.plugin.corrupt", file))

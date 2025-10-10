@@ -531,6 +531,7 @@ c:com.intellij.util.io.zip.JBZipFile
 - <init>(java.nio.file.Path,java.nio.charset.Charset):V
 - <init>(java.nio.file.Path,java.nio.charset.Charset,Z):V
 - <init>(java.nio.file.Path,java.nio.charset.Charset,Z,com.intellij.util.ThreeState):V
+- <init>(java.nio.file.Path,Z):V
 com.intellij.util.keyFMap.KeyFMap
 - sf:EMPTY_MAP:com.intellij.util.keyFMap.KeyFMap
 - a:equalsByReference(com.intellij.util.keyFMap.KeyFMap):Z

@@ -129,7 +129,7 @@ internal class MavenWrapperSupport {
     val destinationCanonicalPath = unpackDir.toAbsolutePath().normalize()
     var errorUnpacking = true
     try {
-      JBZipFile(zip.toFile()).use { zipFile ->
+      JBZipFile(zip).use { zipFile ->
         for (entry in zipFile.entries) {
           val entryPath = unpackDir.resolve(entry.name)
           val canonicalPath = entryPath.toAbsolutePath().normalize()
