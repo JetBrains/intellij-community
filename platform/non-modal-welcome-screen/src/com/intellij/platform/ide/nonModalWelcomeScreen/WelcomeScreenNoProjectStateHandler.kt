@@ -6,9 +6,17 @@ import com.intellij.openapi.project.ProjectManager
 import com.intellij.openapi.wm.ex.NoProjectStateHandler
 import com.intellij.openapi.wm.ex.WelcomeScreenProjectProvider
 import com.intellij.openapi.wm.ex.getWelcomeScreenProjectProvider
+import com.intellij.util.PlatformUtils
 
 private class WelcomeScreenNoProjectStateHandler : NoProjectStateHandler {
   override fun createHandler(): (suspend () -> Project)? {
+    if (PlatformUtils.isJetBrainsClient()) {
+      // JetBrains Client doesn't have its own non-modal welcome screen.
+      // It opens a welcome project from the backend and then uses its
+      // implementation of `WelcomeScreenProjectProvider` to customize it.
+      return null
+    }
+
     val provider = getWelcomeScreenProjectProvider()
       ?.takeIf { isNonModalWelcomeScreenEnabled && ProjectManager.getInstanceIfCreated()?.openProjects.isNullOrEmpty() } ?: return null
     return {
