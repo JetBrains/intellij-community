@@ -2,6 +2,7 @@
 
 package org.jetbrains.plugins.textmate
 
+import com.intellij.ide.plugins.PluginManagerCore
 import com.intellij.notification.Notification
 import com.intellij.notification.NotificationAction
 import com.intellij.notification.NotificationType
@@ -377,7 +378,7 @@ class TextMateServiceImpl(private val myScope: CoroutineScope) : TextMateService
 }
 
 private val bundledBundlePath: Path
-  get() = PluginPathManager.getPluginHome(if (ApplicationManager.getApplication().isUnitTestMode) "textmate" else "textmate-plugin")
+  get() = PluginPathManager.getPluginHome(if (PluginManagerCore.isRunningFromSources()) "textmate" else "textmate-plugin")
     .toPath().resolve("lib/bundles").normalize()
 
 private fun fireFileTypesChangedEvent(reason: @NonNls String, update: Runnable) {
