@@ -51,6 +51,7 @@ private val LOG by lazy { fileLogger() }
 @Service(Service.Level.PROJECT)
 internal class BackendRecentFileEventsModel(private val project: Project, private val coroutineScope: CoroutineScope) {
   private val bufferSize = Registry.intValue("editor.navigation.history.stack.size").coerceIn(100, 1000)
+  private val updateDebounceMs = Registry.intValue("switcher.presentation.update.debounce.interval.ms").coerceIn(0, 10000)
 
   private val orderChangeEvents = Channel<OrderChangeEvent>(capacity = UNLIMITED)
   private val fileChangeEvents = Channel<List<VirtualFile>>(capacity = UNLIMITED)
@@ -178,7 +179,7 @@ internal class BackendRecentFileEventsModel(private val project: Project, privat
           try {
             processFileUpdateEvent(filesToUpdate, putOnTop = false)
 
-            delay(300.milliseconds) // debounce update events
+            delay(updateDebounceMs.milliseconds) // debounce update events
           }
           finally {
             isProcessing.set(false)
