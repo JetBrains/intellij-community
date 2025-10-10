@@ -4,7 +4,6 @@ import com.intellij.codeInsight.highlighting.BackgroundHighlightingUtil
 import com.intellij.openapi.Disposable
 import com.intellij.openapi.application.UiWithModelAccess
 import com.intellij.openapi.application.runReadAction
-import com.intellij.openapi.diagnostic.ExceptionWithAttachments
 import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.editor.Document
 import com.intellij.openapi.editor.Editor
@@ -112,17 +111,10 @@ object TerminalEditorFactory {
     CopyOnSelectionHandler.install(editor, settings)
 
     coroutineScope.awaitCancellationAndInvoke(Dispatchers.UiWithModelAccess) {
-      try {
+      // It might be already released by the platform logic in case of the project closing.
+      // So use an additional check to avoid double release exceptions.
+      if (!editor.isDisposed) {
         EditorFactory.getInstance().releaseEditor(editor)
-      }
-      catch (ex: Exception) {
-        val details = if (ex is ExceptionWithAttachments) {
-          ex.attachments.map { "${it.path}\n${it.displayText}" }
-        }
-        else emptyList()
-        // For some reason the call with passing attachments' array doesn't print all of them.
-        // So, pass the attachments as detail strings.
-        LOG.error("Error releasing editor", ex, *details.toTypedArray())
       }
     }
     return editor
