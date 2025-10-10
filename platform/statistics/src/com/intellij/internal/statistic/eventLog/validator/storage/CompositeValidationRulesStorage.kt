@@ -21,16 +21,19 @@ class CompositeValidationRulesStorage internal constructor(
   private val myTestRulesStorage: ValidationTestRulesPersistedStorage
 ) : MetadataStorage<EventLogBuild>, ValidationTestRulesStorageHolder {
 
+  private class TestGroupValidators(
+    private val testGroupRules: IEventGroupRules
+  ) : IGroupValidators<EventLogBuild> {
+    override val eventGroupRules: IEventGroupRules
+      get() = testGroupRules
+    override val versionFilter: IEventGroupsFilterRules<EventLogBuild>?
+      get() = null
+  }
+
   override fun getGroupValidators(groupId: String): IGroupValidators<EventLogBuild> {
     val testGroupRules = myTestRulesStorage.getGroupRules(groupId)
     if (testGroupRules != null) {
-      return object : IGroupValidators<EventLogBuild> {
-        override val eventGroupRules: IEventGroupRules
-          get() = testGroupRules
-        // TODO: do we need a versionFilter here?
-        override val versionFilter: IEventGroupsFilterRules<EventLogBuild>?
-          get() = null
-      }
+      return TestGroupValidators(testGroupRules)
     }
     return myMetadataStorage.getGroupValidators(groupId)
   }
