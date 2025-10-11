@@ -180,6 +180,9 @@ com.intellij.execution.filters.Filter
 - a:applyFilter(java.lang.String,I):com.intellij.execution.filters.Filter$Result
 a:com.intellij.execution.rmi.RemoteProcessSupport
 - p:publishPort(I,java.lang.Object):I
+f:com.intellij.execution.runners.ExecutionEnvironment
+- isAutoTriggered():Z
+- setAutoTriggered(Z):V
 com.intellij.execution.runners.ProcessProxy
 - a:attach(com.intellij.execution.process.ProcessHandler):V
 - canSendBreak():Z
