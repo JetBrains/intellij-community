@@ -37,7 +37,5 @@ interface NonIndexableTestEntity : WorkspaceEntity {
 fun MutableEntityStorage.modifyNonIndexableTestEntity(
   entity: NonIndexableTestEntity,
   modification: NonIndexableTestEntity.Builder.() -> Unit,
-): NonIndexableTestEntity {
-  return modifyEntity(NonIndexableTestEntity.Builder::class.java, entity, modification)
-}
+): NonIndexableTestEntity = modifyEntity(NonIndexableTestEntity.Builder::class.java, entity, modification)
 //endregion

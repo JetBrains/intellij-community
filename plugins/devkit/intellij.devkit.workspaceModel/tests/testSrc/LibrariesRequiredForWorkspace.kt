@@ -23,6 +23,11 @@ internal object LibrariesRequiredForWorkspace {
   private val riderModel = ModuleLibrary("intellij.rider.model.generated")
   private val riderRdClient = ModuleLibrary("intellij.rider.rdclient.dotnet")
   private val bazelCommons = ModuleLibrary("intellij.bazel.commons")
+  private val gradle = ModuleLibrary("intellij.gradle")
+  private val gradleToolingExtension = ModuleLibrary("intellij.gradle.toolingExtension")
+  private val gradleExternalSystemImpl = ModuleLibrary("intellij.platform.externalSystem.impl")
+  private val pyCommunity = ModuleLibrary("intellij.python.community")
+  private val cidrProjectModel = ModuleLibrary("intellij.cidr.projectModel")
 
   private val kotlinJpsCommon = JarLibrary("kotlinc-kotlin-jps-common", KotlinModuleKind::class.java)
   private val rdCore = JarLibrary("rd-core", IPrintable::class.java)
@@ -45,11 +50,20 @@ internal object LibrariesRequiredForWorkspace {
       "kotlin.base.facet" -> {
         listOf(intellijJava, kotlinJpsCommon)
       }
-      "intellij.bazel.plugin" -> {
-        listOf(bazelCommons)
-      }
       "intellij.bazel.sdkcompat" -> {
         listOf(bazelCommons)
+      }
+      "intellij.gradle" -> {
+        listOf(gradleToolingExtension, gradleExternalSystemImpl)
+      }
+      "intellij.gradle.tests" -> {
+        listOf(gradle, gradleToolingExtension)
+      }
+      "intellij.python.pyproject" -> {
+        listOf(pyCommunity)
+      }
+      "intellij.clion.openfolder" -> {
+        listOf(cidrProjectModel)
       }
       else -> {
         emptyList()

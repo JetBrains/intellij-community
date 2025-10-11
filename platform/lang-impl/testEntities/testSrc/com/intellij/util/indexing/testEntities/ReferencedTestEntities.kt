@@ -57,9 +57,7 @@ interface OneMoreWithReferenceTestEntity : WorkspaceEntity {
 fun MutableEntityStorage.modifyOneMoreWithReferenceTestEntity(
   entity: OneMoreWithReferenceTestEntity,
   modification: OneMoreWithReferenceTestEntity.Builder.() -> Unit,
-): OneMoreWithReferenceTestEntity {
-  return modifyEntity(OneMoreWithReferenceTestEntity.Builder::class.java, entity, modification)
-}
+): OneMoreWithReferenceTestEntity = modifyEntity(OneMoreWithReferenceTestEntity.Builder::class.java, entity, modification)
 //endregion
 
 interface WithReferenceTestEntity : WorkspaceEntityWithSymbolicId {
@@ -103,9 +101,7 @@ interface WithReferenceTestEntity : WorkspaceEntityWithSymbolicId {
 fun MutableEntityStorage.modifyWithReferenceTestEntity(
   entity: WithReferenceTestEntity,
   modification: WithReferenceTestEntity.Builder.() -> Unit,
-): WithReferenceTestEntity {
-  return modifyEntity(WithReferenceTestEntity.Builder::class.java, entity, modification)
-}
+): WithReferenceTestEntity = modifyEntity(WithReferenceTestEntity.Builder::class.java, entity, modification)
 //endregion
 
 
@@ -150,7 +146,5 @@ interface ReferredTestEntity : WorkspaceEntityWithSymbolicId {
 fun MutableEntityStorage.modifyReferredTestEntity(
   entity: ReferredTestEntity,
   modification: ReferredTestEntity.Builder.() -> Unit,
-): ReferredTestEntity {
-  return modifyEntity(ReferredTestEntity.Builder::class.java, entity, modification)
-}
+): ReferredTestEntity = modifyEntity(ReferredTestEntity.Builder::class.java, entity, modification)
 //endregion

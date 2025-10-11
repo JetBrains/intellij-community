@@ -64,6 +64,8 @@ jvm_library(
     "//platform/backend/workspace",
     "//platform/util/progress",
     "//platform/core-api:core",
+    "//platform/workspace/jps",
+    "//java/java-impl:impl",
   ]
 )
 ### auto-generated section `build intellij.devkit.workspaceModel` end

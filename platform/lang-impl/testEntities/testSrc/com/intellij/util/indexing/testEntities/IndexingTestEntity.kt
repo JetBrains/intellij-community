@@ -1,4 +1,4 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.util.indexing.testEntities
 
 import com.intellij.platform.workspace.storage.EntitySource
@@ -46,7 +46,5 @@ interface IndexingTestEntity : WorkspaceEntity {
 fun MutableEntityStorage.modifyIndexingTestEntity(
   entity: IndexingTestEntity,
   modification: IndexingTestEntity.Builder.() -> Unit,
-): IndexingTestEntity {
-  return modifyEntity(IndexingTestEntity.Builder::class.java, entity, modification)
-}
+): IndexingTestEntity = modifyEntity(IndexingTestEntity.Builder::class.java, entity, modification)
 //endregion

@@ -1,4 +1,4 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.java.workspace.entities
 
 import com.intellij.openapi.util.NlsSafe
@@ -73,9 +73,7 @@ interface ArtifactEntity : WorkspaceEntityWithSymbolicId {
 fun MutableEntityStorage.modifyArtifactEntity(
   entity: ArtifactEntity,
   modification: ArtifactEntity.Builder.() -> Unit,
-): ArtifactEntity {
-  return modifyEntity(ArtifactEntity.Builder::class.java, entity, modification)
-}
+): ArtifactEntity = modifyEntity(ArtifactEntity.Builder::class.java, entity, modification)
 //endregion
 
 interface ArtifactPropertiesEntity : WorkspaceEntity {
@@ -118,9 +116,7 @@ interface ArtifactPropertiesEntity : WorkspaceEntity {
 fun MutableEntityStorage.modifyArtifactPropertiesEntity(
   entity: ArtifactPropertiesEntity,
   modification: ArtifactPropertiesEntity.Builder.() -> Unit,
-): ArtifactPropertiesEntity {
-  return modifyEntity(ArtifactPropertiesEntity.Builder::class.java, entity, modification)
-}
+): ArtifactPropertiesEntity = modifyEntity(ArtifactPropertiesEntity.Builder::class.java, entity, modification)
 //endregion
 
 @Abstract interface PackagingElementEntity : WorkspaceEntity {
@@ -190,8 +186,7 @@ interface DirectoryPackagingElementEntity: CompositePackagingElementEntity {
 
   //region generated code
   @GeneratedCodeApiVersion(3)
-  interface Builder : WorkspaceEntity.Builder<DirectoryPackagingElementEntity>,
-                      CompositePackagingElementEntity.Builder<DirectoryPackagingElementEntity> {
+  interface Builder : WorkspaceEntity.Builder<DirectoryPackagingElementEntity>, CompositePackagingElementEntity.Builder<DirectoryPackagingElementEntity> {
     override var entitySource: EntitySource
     override var parentEntity: CompositePackagingElementEntity.Builder<out CompositePackagingElementEntity>?
     override var artifact: ArtifactEntity.Builder?
@@ -223,9 +218,7 @@ interface DirectoryPackagingElementEntity: CompositePackagingElementEntity {
 fun MutableEntityStorage.modifyDirectoryPackagingElementEntity(
   entity: DirectoryPackagingElementEntity,
   modification: DirectoryPackagingElementEntity.Builder.() -> Unit,
-): DirectoryPackagingElementEntity {
-  return modifyEntity(DirectoryPackagingElementEntity.Builder::class.java, entity, modification)
-}
+): DirectoryPackagingElementEntity = modifyEntity(DirectoryPackagingElementEntity.Builder::class.java, entity, modification)
 //endregion
 
 interface ArchivePackagingElementEntity: CompositePackagingElementEntity {
@@ -233,8 +226,7 @@ interface ArchivePackagingElementEntity: CompositePackagingElementEntity {
 
   //region generated code
   @GeneratedCodeApiVersion(3)
-  interface Builder : WorkspaceEntity.Builder<ArchivePackagingElementEntity>,
-                      CompositePackagingElementEntity.Builder<ArchivePackagingElementEntity> {
+  interface Builder : WorkspaceEntity.Builder<ArchivePackagingElementEntity>, CompositePackagingElementEntity.Builder<ArchivePackagingElementEntity> {
     override var entitySource: EntitySource
     override var parentEntity: CompositePackagingElementEntity.Builder<out CompositePackagingElementEntity>?
     override var artifact: ArtifactEntity.Builder?
@@ -266,16 +258,13 @@ interface ArchivePackagingElementEntity: CompositePackagingElementEntity {
 fun MutableEntityStorage.modifyArchivePackagingElementEntity(
   entity: ArchivePackagingElementEntity,
   modification: ArchivePackagingElementEntity.Builder.() -> Unit,
-): ArchivePackagingElementEntity {
-  return modifyEntity(ArchivePackagingElementEntity.Builder::class.java, entity, modification)
-}
+): ArchivePackagingElementEntity = modifyEntity(ArchivePackagingElementEntity.Builder::class.java, entity, modification)
 //endregion
 
 interface ArtifactRootElementEntity: CompositePackagingElementEntity {
   //region generated code
   @GeneratedCodeApiVersion(3)
-  interface Builder : WorkspaceEntity.Builder<ArtifactRootElementEntity>,
-                      CompositePackagingElementEntity.Builder<ArtifactRootElementEntity> {
+  interface Builder : WorkspaceEntity.Builder<ArtifactRootElementEntity>, CompositePackagingElementEntity.Builder<ArtifactRootElementEntity> {
     override var entitySource: EntitySource
     override var parentEntity: CompositePackagingElementEntity.Builder<out CompositePackagingElementEntity>?
     override var artifact: ArtifactEntity.Builder?
@@ -304,9 +293,7 @@ interface ArtifactRootElementEntity: CompositePackagingElementEntity {
 fun MutableEntityStorage.modifyArtifactRootElementEntity(
   entity: ArtifactRootElementEntity,
   modification: ArtifactRootElementEntity.Builder.() -> Unit,
-): ArtifactRootElementEntity {
-  return modifyEntity(ArtifactRootElementEntity.Builder::class.java, entity, modification)
-}
+): ArtifactRootElementEntity = modifyEntity(ArtifactRootElementEntity.Builder::class.java, entity, modification)
 //endregion
 
 interface ArtifactOutputPackagingElementEntity: PackagingElementEntity {
@@ -314,8 +301,7 @@ interface ArtifactOutputPackagingElementEntity: PackagingElementEntity {
 
   //region generated code
   @GeneratedCodeApiVersion(3)
-  interface Builder : WorkspaceEntity.Builder<ArtifactOutputPackagingElementEntity>,
-                      PackagingElementEntity.Builder<ArtifactOutputPackagingElementEntity> {
+  interface Builder : WorkspaceEntity.Builder<ArtifactOutputPackagingElementEntity>, PackagingElementEntity.Builder<ArtifactOutputPackagingElementEntity> {
     override var entitySource: EntitySource
     override var parentEntity: CompositePackagingElementEntity.Builder<out CompositePackagingElementEntity>?
     var artifact: ArtifactId?
@@ -343,9 +329,7 @@ interface ArtifactOutputPackagingElementEntity: PackagingElementEntity {
 fun MutableEntityStorage.modifyArtifactOutputPackagingElementEntity(
   entity: ArtifactOutputPackagingElementEntity,
   modification: ArtifactOutputPackagingElementEntity.Builder.() -> Unit,
-): ArtifactOutputPackagingElementEntity {
-  return modifyEntity(ArtifactOutputPackagingElementEntity.Builder::class.java, entity, modification)
-}
+): ArtifactOutputPackagingElementEntity = modifyEntity(ArtifactOutputPackagingElementEntity.Builder::class.java, entity, modification)
 
 @Parent
 var ArtifactOutputPackagingElementEntity.Builder.artifactEntity: ArtifactEntity.Builder?
@@ -361,8 +345,7 @@ interface ModuleOutputPackagingElementEntity : PackagingElementEntity {
 
   //region generated code
   @GeneratedCodeApiVersion(3)
-  interface Builder : WorkspaceEntity.Builder<ModuleOutputPackagingElementEntity>,
-                      PackagingElementEntity.Builder<ModuleOutputPackagingElementEntity> {
+  interface Builder : WorkspaceEntity.Builder<ModuleOutputPackagingElementEntity>, PackagingElementEntity.Builder<ModuleOutputPackagingElementEntity> {
     override var entitySource: EntitySource
     override var parentEntity: CompositePackagingElementEntity.Builder<out CompositePackagingElementEntity>?
     var module: ModuleId?
@@ -390,9 +373,7 @@ interface ModuleOutputPackagingElementEntity : PackagingElementEntity {
 fun MutableEntityStorage.modifyModuleOutputPackagingElementEntity(
   entity: ModuleOutputPackagingElementEntity,
   modification: ModuleOutputPackagingElementEntity.Builder.() -> Unit,
-): ModuleOutputPackagingElementEntity {
-  return modifyEntity(ModuleOutputPackagingElementEntity.Builder::class.java, entity, modification)
-}
+): ModuleOutputPackagingElementEntity = modifyEntity(ModuleOutputPackagingElementEntity.Builder::class.java, entity, modification)
 //endregion
 
 interface LibraryFilesPackagingElementEntity : PackagingElementEntity {
@@ -400,8 +381,7 @@ interface LibraryFilesPackagingElementEntity : PackagingElementEntity {
 
   //region generated code
   @GeneratedCodeApiVersion(3)
-  interface Builder : WorkspaceEntity.Builder<LibraryFilesPackagingElementEntity>,
-                      PackagingElementEntity.Builder<LibraryFilesPackagingElementEntity> {
+  interface Builder : WorkspaceEntity.Builder<LibraryFilesPackagingElementEntity>, PackagingElementEntity.Builder<LibraryFilesPackagingElementEntity> {
     override var entitySource: EntitySource
     override var parentEntity: CompositePackagingElementEntity.Builder<out CompositePackagingElementEntity>?
     var library: LibraryId?
@@ -429,9 +409,7 @@ interface LibraryFilesPackagingElementEntity : PackagingElementEntity {
 fun MutableEntityStorage.modifyLibraryFilesPackagingElementEntity(
   entity: LibraryFilesPackagingElementEntity,
   modification: LibraryFilesPackagingElementEntity.Builder.() -> Unit,
-): LibraryFilesPackagingElementEntity {
-  return modifyEntity(LibraryFilesPackagingElementEntity.Builder::class.java, entity, modification)
-}
+): LibraryFilesPackagingElementEntity = modifyEntity(LibraryFilesPackagingElementEntity.Builder::class.java, entity, modification)
 //endregion
 
 interface ModuleSourcePackagingElementEntity : PackagingElementEntity {
@@ -439,8 +417,7 @@ interface ModuleSourcePackagingElementEntity : PackagingElementEntity {
 
   //region generated code
   @GeneratedCodeApiVersion(3)
-  interface Builder : WorkspaceEntity.Builder<ModuleSourcePackagingElementEntity>,
-                      PackagingElementEntity.Builder<ModuleSourcePackagingElementEntity> {
+  interface Builder : WorkspaceEntity.Builder<ModuleSourcePackagingElementEntity>, PackagingElementEntity.Builder<ModuleSourcePackagingElementEntity> {
     override var entitySource: EntitySource
     override var parentEntity: CompositePackagingElementEntity.Builder<out CompositePackagingElementEntity>?
     var module: ModuleId?
@@ -468,9 +445,7 @@ interface ModuleSourcePackagingElementEntity : PackagingElementEntity {
 fun MutableEntityStorage.modifyModuleSourcePackagingElementEntity(
   entity: ModuleSourcePackagingElementEntity,
   modification: ModuleSourcePackagingElementEntity.Builder.() -> Unit,
-): ModuleSourcePackagingElementEntity {
-  return modifyEntity(ModuleSourcePackagingElementEntity.Builder::class.java, entity, modification)
-}
+): ModuleSourcePackagingElementEntity = modifyEntity(ModuleSourcePackagingElementEntity.Builder::class.java, entity, modification)
 //endregion
 
 interface ModuleTestOutputPackagingElementEntity : PackagingElementEntity {
@@ -478,8 +453,7 @@ interface ModuleTestOutputPackagingElementEntity : PackagingElementEntity {
 
   //region generated code
   @GeneratedCodeApiVersion(3)
-  interface Builder : WorkspaceEntity.Builder<ModuleTestOutputPackagingElementEntity>,
-                      PackagingElementEntity.Builder<ModuleTestOutputPackagingElementEntity> {
+  interface Builder : WorkspaceEntity.Builder<ModuleTestOutputPackagingElementEntity>, PackagingElementEntity.Builder<ModuleTestOutputPackagingElementEntity> {
     override var entitySource: EntitySource
     override var parentEntity: CompositePackagingElementEntity.Builder<out CompositePackagingElementEntity>?
     var module: ModuleId?
@@ -507,9 +481,7 @@ interface ModuleTestOutputPackagingElementEntity : PackagingElementEntity {
 fun MutableEntityStorage.modifyModuleTestOutputPackagingElementEntity(
   entity: ModuleTestOutputPackagingElementEntity,
   modification: ModuleTestOutputPackagingElementEntity.Builder.() -> Unit,
-): ModuleTestOutputPackagingElementEntity {
-  return modifyEntity(ModuleTestOutputPackagingElementEntity.Builder::class.java, entity, modification)
-}
+): ModuleTestOutputPackagingElementEntity = modifyEntity(ModuleTestOutputPackagingElementEntity.Builder::class.java, entity, modification)
 //endregion
 
 @Abstract interface FileOrDirectoryPackagingElementEntity : PackagingElementEntity {
@@ -523,8 +495,8 @@ fun MutableEntityStorage.modifyModuleTestOutputPackagingElementEntity(
     var filePath: VirtualFileUrl
   }
 
-  companion object :
-    EntityType<FileOrDirectoryPackagingElementEntity, Builder<FileOrDirectoryPackagingElementEntity>>(PackagingElementEntity) {
+  companion object : EntityType<FileOrDirectoryPackagingElementEntity, Builder<FileOrDirectoryPackagingElementEntity>>(
+    PackagingElementEntity) {
     @JvmOverloads
     @JvmStatic
     @JvmName("create")
@@ -547,8 +519,7 @@ fun MutableEntityStorage.modifyModuleTestOutputPackagingElementEntity(
 interface DirectoryCopyPackagingElementEntity : FileOrDirectoryPackagingElementEntity {
   //region generated code
   @GeneratedCodeApiVersion(3)
-  interface Builder : WorkspaceEntity.Builder<DirectoryCopyPackagingElementEntity>,
-                      FileOrDirectoryPackagingElementEntity.Builder<DirectoryCopyPackagingElementEntity> {
+  interface Builder : WorkspaceEntity.Builder<DirectoryCopyPackagingElementEntity>, FileOrDirectoryPackagingElementEntity.Builder<DirectoryCopyPackagingElementEntity> {
     override var entitySource: EntitySource
     override var parentEntity: CompositePackagingElementEntity.Builder<out CompositePackagingElementEntity>?
     override var filePath: VirtualFileUrl
@@ -578,9 +549,7 @@ interface DirectoryCopyPackagingElementEntity : FileOrDirectoryPackagingElementE
 fun MutableEntityStorage.modifyDirectoryCopyPackagingElementEntity(
   entity: DirectoryCopyPackagingElementEntity,
   modification: DirectoryCopyPackagingElementEntity.Builder.() -> Unit,
-): DirectoryCopyPackagingElementEntity {
-  return modifyEntity(DirectoryCopyPackagingElementEntity.Builder::class.java, entity, modification)
-}
+): DirectoryCopyPackagingElementEntity = modifyEntity(DirectoryCopyPackagingElementEntity.Builder::class.java, entity, modification)
 //endregion
 
 interface ExtractedDirectoryPackagingElementEntity: FileOrDirectoryPackagingElementEntity {
@@ -588,8 +557,7 @@ interface ExtractedDirectoryPackagingElementEntity: FileOrDirectoryPackagingElem
 
   //region generated code
   @GeneratedCodeApiVersion(3)
-  interface Builder : WorkspaceEntity.Builder<ExtractedDirectoryPackagingElementEntity>,
-                      FileOrDirectoryPackagingElementEntity.Builder<ExtractedDirectoryPackagingElementEntity> {
+  interface Builder : WorkspaceEntity.Builder<ExtractedDirectoryPackagingElementEntity>, FileOrDirectoryPackagingElementEntity.Builder<ExtractedDirectoryPackagingElementEntity> {
     override var entitySource: EntitySource
     override var parentEntity: CompositePackagingElementEntity.Builder<out CompositePackagingElementEntity>?
     override var filePath: VirtualFileUrl
@@ -622,9 +590,8 @@ interface ExtractedDirectoryPackagingElementEntity: FileOrDirectoryPackagingElem
 fun MutableEntityStorage.modifyExtractedDirectoryPackagingElementEntity(
   entity: ExtractedDirectoryPackagingElementEntity,
   modification: ExtractedDirectoryPackagingElementEntity.Builder.() -> Unit,
-): ExtractedDirectoryPackagingElementEntity {
-  return modifyEntity(ExtractedDirectoryPackagingElementEntity.Builder::class.java, entity, modification)
-}
+): ExtractedDirectoryPackagingElementEntity =
+  modifyEntity(ExtractedDirectoryPackagingElementEntity.Builder::class.java, entity, modification)
 //endregion
 
 interface FileCopyPackagingElementEntity : FileOrDirectoryPackagingElementEntity {
@@ -632,8 +599,7 @@ interface FileCopyPackagingElementEntity : FileOrDirectoryPackagingElementEntity
 
   //region generated code
   @GeneratedCodeApiVersion(3)
-  interface Builder : WorkspaceEntity.Builder<FileCopyPackagingElementEntity>,
-                      FileOrDirectoryPackagingElementEntity.Builder<FileCopyPackagingElementEntity> {
+  interface Builder : WorkspaceEntity.Builder<FileCopyPackagingElementEntity>, FileOrDirectoryPackagingElementEntity.Builder<FileCopyPackagingElementEntity> {
     override var entitySource: EntitySource
     override var parentEntity: CompositePackagingElementEntity.Builder<out CompositePackagingElementEntity>?
     override var filePath: VirtualFileUrl
@@ -664,9 +630,7 @@ interface FileCopyPackagingElementEntity : FileOrDirectoryPackagingElementEntity
 fun MutableEntityStorage.modifyFileCopyPackagingElementEntity(
   entity: FileCopyPackagingElementEntity,
   modification: FileCopyPackagingElementEntity.Builder.() -> Unit,
-): FileCopyPackagingElementEntity {
-  return modifyEntity(FileCopyPackagingElementEntity.Builder::class.java, entity, modification)
-}
+): FileCopyPackagingElementEntity = modifyEntity(FileCopyPackagingElementEntity.Builder::class.java, entity, modification)
 //endregion
 
 interface CustomPackagingElementEntity : CompositePackagingElementEntity {
@@ -675,8 +639,7 @@ interface CustomPackagingElementEntity : CompositePackagingElementEntity {
 
   //region generated code
   @GeneratedCodeApiVersion(3)
-  interface Builder : WorkspaceEntity.Builder<CustomPackagingElementEntity>,
-                      CompositePackagingElementEntity.Builder<CustomPackagingElementEntity> {
+  interface Builder : WorkspaceEntity.Builder<CustomPackagingElementEntity>, CompositePackagingElementEntity.Builder<CustomPackagingElementEntity> {
     override var entitySource: EntitySource
     override var parentEntity: CompositePackagingElementEntity.Builder<out CompositePackagingElementEntity>?
     override var artifact: ArtifactEntity.Builder?
@@ -711,9 +674,7 @@ interface CustomPackagingElementEntity : CompositePackagingElementEntity {
 fun MutableEntityStorage.modifyCustomPackagingElementEntity(
   entity: CustomPackagingElementEntity,
   modification: CustomPackagingElementEntity.Builder.() -> Unit,
-): CustomPackagingElementEntity {
-  return modifyEntity(CustomPackagingElementEntity.Builder::class.java, entity, modification)
-}
+): CustomPackagingElementEntity = modifyEntity(CustomPackagingElementEntity.Builder::class.java, entity, modification)
 //endregion
 
 /**
@@ -754,7 +715,5 @@ interface ArtifactsOrderEntity : WorkspaceEntity {
 fun MutableEntityStorage.modifyArtifactsOrderEntity(
   entity: ArtifactsOrderEntity,
   modification: ArtifactsOrderEntity.Builder.() -> Unit,
-): ArtifactsOrderEntity {
-  return modifyEntity(ArtifactsOrderEntity.Builder::class.java, entity, modification)
-}
+): ArtifactsOrderEntity = modifyEntity(ArtifactsOrderEntity.Builder::class.java, entity, modification)
 //endregion

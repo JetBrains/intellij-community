@@ -1,4 +1,4 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 
 package org.jetbrains.kotlin.idea.base.projectStructure.forwardDeclarations.impl
 
@@ -30,13 +30,13 @@ import org.jetbrains.kotlin.idea.base.projectStructure.forwardDeclarations.Kotli
 @GeneratedCodeApiVersion(3)
 @GeneratedCodeImplVersion(7)
 @OptIn(WorkspaceEntityInternalApi::class)
-internal class KotlinForwardDeclarationsWorkspaceEntityImpl(private val dataSource: KotlinForwardDeclarationsWorkspaceEntityData) :
-  KotlinForwardDeclarationsWorkspaceEntity, WorkspaceEntityBase(dataSource) {
+internal class KotlinForwardDeclarationsWorkspaceEntityImpl(private val dataSource: KotlinForwardDeclarationsWorkspaceEntityData) : KotlinForwardDeclarationsWorkspaceEntity, WorkspaceEntityBase(
+  dataSource) {
 
   private companion object {
-    internal val LIBRARY_CONNECTION_ID: ConnectionId = ConnectionId.create(
-      LibraryEntity::class.java, KotlinForwardDeclarationsWorkspaceEntity::class.java, ConnectionId.ConnectionType.ONE_TO_ONE, false
-    )
+    internal val LIBRARY_CONNECTION_ID: ConnectionId = ConnectionId.create(LibraryEntity::class.java,
+                                                                           KotlinForwardDeclarationsWorkspaceEntity::class.java,
+                                                                           ConnectionId.ConnectionType.ONE_TO_ONE, false)
 
     private val connections = listOf<ConnectionId>(
       LIBRARY_CONNECTION_ID,
@@ -64,9 +64,8 @@ internal class KotlinForwardDeclarationsWorkspaceEntityImpl(private val dataSour
   }
 
 
-  internal class Builder(result: KotlinForwardDeclarationsWorkspaceEntityData?) :
-    ModifiableWorkspaceEntityBase<KotlinForwardDeclarationsWorkspaceEntity, KotlinForwardDeclarationsWorkspaceEntityData>(result),
-    KotlinForwardDeclarationsWorkspaceEntity.Builder {
+  internal class Builder(result: KotlinForwardDeclarationsWorkspaceEntityData?) : ModifiableWorkspaceEntityBase<KotlinForwardDeclarationsWorkspaceEntity, KotlinForwardDeclarationsWorkspaceEntityData>(
+    result), KotlinForwardDeclarationsWorkspaceEntity.Builder {
     internal constructor() : this(KotlinForwardDeclarationsWorkspaceEntityData())
 
     override fun applyToBuilder(builder: MutableEntityStorage) {
@@ -128,8 +127,7 @@ internal class KotlinForwardDeclarationsWorkspaceEntityImpl(private val dataSour
     override fun relabel(dataSource: WorkspaceEntity, parents: Set<WorkspaceEntity>?) {
       dataSource as KotlinForwardDeclarationsWorkspaceEntity
       if (this.entitySource != dataSource.entitySource) this.entitySource = dataSource.entitySource
-      if (this.forwardDeclarationRoots != dataSource.forwardDeclarationRoots) this.forwardDeclarationRoots =
-        dataSource.forwardDeclarationRoots.toMutableSet()
+      if (this.forwardDeclarationRoots != dataSource.forwardDeclarationRoots) this.forwardDeclarationRoots = dataSource.forwardDeclarationRoots.toMutableSet()
       updateChildToParentReferences(parents)
     }
 
@@ -232,8 +230,7 @@ internal class KotlinForwardDeclarationsWorkspaceEntityData : WorkspaceEntityDat
 
   override fun getMetadata(): EntityMetadata {
     return MetadataStorageImpl.getMetadataByTypeFqn(
-      "org.jetbrains.kotlin.idea.base.projectStructure.forwardDeclarations.KotlinForwardDeclarationsWorkspaceEntity"
-    ) as EntityMetadata
+      "org.jetbrains.kotlin.idea.base.projectStructure.forwardDeclarations.KotlinForwardDeclarationsWorkspaceEntity") as EntityMetadata
   }
 
   override fun clone(): KotlinForwardDeclarationsWorkspaceEntityData {

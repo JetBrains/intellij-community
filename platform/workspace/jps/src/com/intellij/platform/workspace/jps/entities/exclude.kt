@@ -1,4 +1,4 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.platform.workspace.jps.entities
 
 import com.intellij.platform.workspace.storage.EntitySource
@@ -47,9 +47,7 @@ interface ExcludeUrlEntity : WorkspaceEntity {
 fun MutableEntityStorage.modifyExcludeUrlEntity(
   entity: ExcludeUrlEntity,
   modification: ExcludeUrlEntity.Builder.() -> Unit,
-): ExcludeUrlEntity {
-  return modifyEntity(ExcludeUrlEntity.Builder::class.java, entity, modification)
-}
+): ExcludeUrlEntity = modifyEntity(ExcludeUrlEntity.Builder::class.java, entity, modification)
 
 @Parent
 var ExcludeUrlEntity.Builder.contentRoot: ContentRootEntity.Builder?

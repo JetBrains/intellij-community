@@ -52,9 +52,7 @@ interface KotlinScriptLibraryEntity : WorkspaceEntityWithSymbolicId {
 fun MutableEntityStorage.modifyKotlinScriptLibraryEntity(
   entity: KotlinScriptLibraryEntity,
   modification: KotlinScriptLibraryEntity.Builder.() -> Unit,
-): KotlinScriptLibraryEntity {
-  return modifyEntity(KotlinScriptLibraryEntity.Builder::class.java, entity, modification)
-}
+): KotlinScriptLibraryEntity = modifyEntity(KotlinScriptLibraryEntity.Builder::class.java, entity, modification)
 //endregion
 
 

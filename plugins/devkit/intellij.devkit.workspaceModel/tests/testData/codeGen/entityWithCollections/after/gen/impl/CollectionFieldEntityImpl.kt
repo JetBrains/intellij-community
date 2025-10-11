@@ -22,8 +22,8 @@ import com.intellij.workspaceModel.test.api.CollectionFieldEntity
 @GeneratedCodeApiVersion(3)
 @GeneratedCodeImplVersion(7)
 @OptIn(WorkspaceEntityInternalApi::class)
-internal class CollectionFieldEntityImpl(private val dataSource: CollectionFieldEntityData) : CollectionFieldEntity,
-                                                                                              WorkspaceEntityBase(dataSource) {
+internal class CollectionFieldEntityImpl(private val dataSource: CollectionFieldEntityData) : CollectionFieldEntity, WorkspaceEntityBase(
+  dataSource) {
 
   private companion object {
 
@@ -62,8 +62,8 @@ internal class CollectionFieldEntityImpl(private val dataSource: CollectionField
   }
 
 
-  internal class Builder(result: CollectionFieldEntityData?) :
-    ModifiableWorkspaceEntityBase<CollectionFieldEntity, CollectionFieldEntityData>(result), CollectionFieldEntity.Builder {
+  internal class Builder(result: CollectionFieldEntityData?) : ModifiableWorkspaceEntityBase<CollectionFieldEntity, CollectionFieldEntityData>(
+    result), CollectionFieldEntity.Builder {
     internal constructor() : this(CollectionFieldEntityData())
 
     override fun applyToBuilder(builder: MutableEntityStorage) {

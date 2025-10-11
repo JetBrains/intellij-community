@@ -59,8 +59,8 @@ internal class ChildEntityImpl(private val dataSource: ChildEntityData) : ChildE
   }
 
 
-  internal class Builder(result: ChildEntityData?) : ModifiableWorkspaceEntityBase<ChildEntity, ChildEntityData>(result),
-                                                     ChildEntity.Builder {
+  internal class Builder(result: ChildEntityData?) : ModifiableWorkspaceEntityBase<ChildEntity, ChildEntityData>(
+    result), ChildEntity.Builder {
     internal constructor() : this(ChildEntityData())
 
     override fun applyToBuilder(builder: MutableEntityStorage) {

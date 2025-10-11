@@ -47,9 +47,7 @@ interface JavaProjectSettingsEntity : WorkspaceEntity {
 fun MutableEntityStorage.modifyJavaProjectSettingsEntity(
   entity: JavaProjectSettingsEntity,
   modification: JavaProjectSettingsEntity.Builder.() -> Unit,
-): JavaProjectSettingsEntity {
-  return modifyEntity(JavaProjectSettingsEntity.Builder::class.java, entity, modification)
-}
+): JavaProjectSettingsEntity = modifyEntity(JavaProjectSettingsEntity.Builder::class.java, entity, modification)
 
 var ProjectSettingsEntity.Builder.javaProjectSettings: JavaProjectSettingsEntity.Builder?
   by WorkspaceEntity.extensionBuilder(JavaProjectSettingsEntity::class.java)

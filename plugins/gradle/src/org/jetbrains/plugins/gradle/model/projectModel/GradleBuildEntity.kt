@@ -58,9 +58,7 @@ interface GradleBuildEntity : WorkspaceEntityWithSymbolicId {
 fun MutableEntityStorage.modifyGradleBuildEntity(
   entity: GradleBuildEntity,
   modification: GradleBuildEntity.Builder.() -> Unit,
-): GradleBuildEntity {
-  return modifyEntity(GradleBuildEntity.Builder::class.java, entity, modification)
-}
+): GradleBuildEntity = modifyEntity(GradleBuildEntity.Builder::class.java, entity, modification)
 
 var ExternalProjectEntity.Builder.gradleBuilds: List<GradleBuildEntity.Builder>
   by WorkspaceEntity.extensionBuilder(GradleBuildEntity::class.java)

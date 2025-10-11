@@ -41,7 +41,5 @@ interface GradleTestEntity : WorkspaceEntityWithSymbolicId {
 fun MutableEntityStorage.modifyGradleTestEntity(
   entity: GradleTestEntity,
   modification: GradleTestEntity.Builder.() -> Unit,
-): GradleTestEntity {
-  return modifyEntity(GradleTestEntity.Builder::class.java, entity, modification)
-}
+): GradleTestEntity = modifyEntity(GradleTestEntity.Builder::class.java, entity, modification)
 //endregion

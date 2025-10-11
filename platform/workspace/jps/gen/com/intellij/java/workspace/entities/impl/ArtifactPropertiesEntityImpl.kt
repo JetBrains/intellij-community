@@ -26,12 +26,13 @@ import org.jetbrains.annotations.NonNls
 @GeneratedCodeApiVersion(3)
 @GeneratedCodeImplVersion(7)
 @OptIn(WorkspaceEntityInternalApi::class)
-internal class ArtifactPropertiesEntityImpl(private val dataSource: ArtifactPropertiesEntityData) : ArtifactPropertiesEntity,
-                                                                                                    WorkspaceEntityBase(dataSource) {
+internal class ArtifactPropertiesEntityImpl(private val dataSource: ArtifactPropertiesEntityData) : ArtifactPropertiesEntity, WorkspaceEntityBase(
+  dataSource) {
 
   private companion object {
-    internal val ARTIFACT_CONNECTION_ID: ConnectionId =
-      ConnectionId.create(ArtifactEntity::class.java, ArtifactPropertiesEntity::class.java, ConnectionId.ConnectionType.ONE_TO_MANY, false)
+    internal val ARTIFACT_CONNECTION_ID: ConnectionId = ConnectionId.create(ArtifactEntity::class.java,
+                                                                            ArtifactPropertiesEntity::class.java,
+                                                                            ConnectionId.ConnectionType.ONE_TO_MANY, false)
 
     private val connections = listOf<ConnectionId>(
       ARTIFACT_CONNECTION_ID,
@@ -65,8 +66,8 @@ internal class ArtifactPropertiesEntityImpl(private val dataSource: ArtifactProp
   }
 
 
-  internal class Builder(result: ArtifactPropertiesEntityData?) :
-    ModifiableWorkspaceEntityBase<ArtifactPropertiesEntity, ArtifactPropertiesEntityData>(result), ArtifactPropertiesEntity.Builder {
+  internal class Builder(result: ArtifactPropertiesEntityData?) : ModifiableWorkspaceEntityBase<ArtifactPropertiesEntity, ArtifactPropertiesEntityData>(
+    result), ArtifactPropertiesEntity.Builder {
     internal constructor() : this(ArtifactPropertiesEntityData())
 
     override fun applyToBuilder(builder: MutableEntityStorage) {

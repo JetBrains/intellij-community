@@ -59,9 +59,7 @@ interface DependencySubstitutionEntity : WorkspaceEntity {
 fun MutableEntityStorage.modifyDependencySubstitutionEntity(
   entity: DependencySubstitutionEntity,
   modification: DependencySubstitutionEntity.Builder.() -> Unit,
-): DependencySubstitutionEntity {
-  return modifyEntity(DependencySubstitutionEntity.Builder::class.java, entity, modification)
-}
+): DependencySubstitutionEntity = modifyEntity(DependencySubstitutionEntity.Builder::class.java, entity, modification)
 
 @get:Internal
 @set:Internal

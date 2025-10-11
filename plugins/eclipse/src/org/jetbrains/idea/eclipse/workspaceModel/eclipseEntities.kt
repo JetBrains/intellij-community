@@ -1,4 +1,4 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.idea.eclipse.config
 
 import com.intellij.platform.workspace.jps.JpsFileDependentEntitySource
@@ -87,9 +87,7 @@ interface EclipseProjectPropertiesEntity : WorkspaceEntity {
 fun MutableEntityStorage.modifyEclipseProjectPropertiesEntity(
   entity: EclipseProjectPropertiesEntity,
   modification: EclipseProjectPropertiesEntity.Builder.() -> Unit,
-): EclipseProjectPropertiesEntity {
-  return modifyEntity(EclipseProjectPropertiesEntity.Builder::class.java, entity, modification)
-}
+): EclipseProjectPropertiesEntity = modifyEntity(EclipseProjectPropertiesEntity.Builder::class.java, entity, modification)
 
 var ModuleEntity.Builder.eclipseProperties: EclipseProjectPropertiesEntity.Builder?
   by WorkspaceEntity.extensionBuilder(EclipseProjectPropertiesEntity::class.java)

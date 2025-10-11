@@ -1,4 +1,4 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.platform.workspace.jps.entities
 
 import com.intellij.openapi.util.NlsSafe
@@ -54,9 +54,7 @@ interface FacetsOrderEntity : WorkspaceEntity {
 fun MutableEntityStorage.modifyFacetsOrderEntity(
   entity: FacetsOrderEntity,
   modification: FacetsOrderEntity.Builder.() -> Unit,
-): FacetsOrderEntity {
-  return modifyEntity(FacetsOrderEntity.Builder::class.java, entity, modification)
-}
+): FacetsOrderEntity = modifyEntity(FacetsOrderEntity.Builder::class.java, entity, modification)
 //endregion
 
 @get:Internal

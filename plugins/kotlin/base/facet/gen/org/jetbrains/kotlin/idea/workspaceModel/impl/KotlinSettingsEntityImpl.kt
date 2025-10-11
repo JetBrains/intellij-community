@@ -40,12 +40,12 @@ import org.jetbrains.kotlin.idea.workspaceModel.KotlinSettingsId
 @GeneratedCodeApiVersion(3)
 @GeneratedCodeImplVersion(7)
 @OptIn(WorkspaceEntityInternalApi::class)
-internal class KotlinSettingsEntityImpl(private val dataSource: KotlinSettingsEntityData) : KotlinSettingsEntity,
-                                                                                            WorkspaceEntityBase(dataSource) {
+internal class KotlinSettingsEntityImpl(private val dataSource: KotlinSettingsEntityData) : KotlinSettingsEntity, WorkspaceEntityBase(
+  dataSource) {
 
   private companion object {
-    internal val MODULE_CONNECTION_ID: ConnectionId =
-      ConnectionId.create(ModuleEntity::class.java, KotlinSettingsEntity::class.java, ConnectionId.ConnectionType.ONE_TO_MANY, false)
+    internal val MODULE_CONNECTION_ID: ConnectionId = ConnectionId.create(ModuleEntity::class.java, KotlinSettingsEntity::class.java,
+                                                                          ConnectionId.ConnectionType.ONE_TO_MANY, false)
 
     private val connections = listOf<ConnectionId>(
       MODULE_CONNECTION_ID,
@@ -197,8 +197,8 @@ internal class KotlinSettingsEntityImpl(private val dataSource: KotlinSettingsEn
   }
 
 
-  internal class Builder(result: KotlinSettingsEntityData?) :
-    ModifiableWorkspaceEntityBase<KotlinSettingsEntity, KotlinSettingsEntityData>(result), KotlinSettingsEntity.Builder {
+  internal class Builder(result: KotlinSettingsEntityData?) : ModifiableWorkspaceEntityBase<KotlinSettingsEntity, KotlinSettingsEntityData>(
+    result), KotlinSettingsEntity.Builder {
     internal constructor() : this(KotlinSettingsEntityData())
 
     override fun applyToBuilder(builder: MutableEntityStorage) {
@@ -325,26 +325,21 @@ internal class KotlinSettingsEntityImpl(private val dataSource: KotlinSettingsEn
       if (this.sourceRoots != dataSource.sourceRoots) this.sourceRoots = dataSource.sourceRoots.toMutableList()
       if (this.configFileItems != dataSource.configFileItems) this.configFileItems = dataSource.configFileItems.toMutableList()
       if (this.useProjectSettings != dataSource.useProjectSettings) this.useProjectSettings = dataSource.useProjectSettings
-      if (this.implementedModuleNames != dataSource.implementedModuleNames) this.implementedModuleNames =
-        dataSource.implementedModuleNames.toMutableList()
-      if (this.dependsOnModuleNames != dataSource.dependsOnModuleNames) this.dependsOnModuleNames =
-        dataSource.dependsOnModuleNames.toMutableList()
-      if (this.additionalVisibleModuleNames != dataSource.additionalVisibleModuleNames) this.additionalVisibleModuleNames =
-        dataSource.additionalVisibleModuleNames.toMutableSet()
+      if (this.implementedModuleNames != dataSource.implementedModuleNames) this.implementedModuleNames = dataSource.implementedModuleNames.toMutableList()
+      if (this.dependsOnModuleNames != dataSource.dependsOnModuleNames) this.dependsOnModuleNames = dataSource.dependsOnModuleNames.toMutableList()
+      if (this.additionalVisibleModuleNames != dataSource.additionalVisibleModuleNames) this.additionalVisibleModuleNames = dataSource.additionalVisibleModuleNames.toMutableSet()
       if (this.productionOutputPath != dataSource?.productionOutputPath) this.productionOutputPath = dataSource.productionOutputPath
       if (this.testOutputPath != dataSource?.testOutputPath) this.testOutputPath = dataSource.testOutputPath
       if (this.sourceSetNames != dataSource.sourceSetNames) this.sourceSetNames = dataSource.sourceSetNames.toMutableList()
       if (this.isTestModule != dataSource.isTestModule) this.isTestModule = dataSource.isTestModule
       if (this.externalProjectId != dataSource.externalProjectId) this.externalProjectId = dataSource.externalProjectId
       if (this.isHmppEnabled != dataSource.isHmppEnabled) this.isHmppEnabled = dataSource.isHmppEnabled
-      if (this.pureKotlinSourceFolders != dataSource.pureKotlinSourceFolders) this.pureKotlinSourceFolders =
-        dataSource.pureKotlinSourceFolders.toMutableList()
+      if (this.pureKotlinSourceFolders != dataSource.pureKotlinSourceFolders) this.pureKotlinSourceFolders = dataSource.pureKotlinSourceFolders.toMutableList()
       if (this.kind != dataSource.kind) this.kind = dataSource.kind
       if (this.compilerArguments != dataSource?.compilerArguments) this.compilerArguments = dataSource.compilerArguments
       if (this.compilerSettings != dataSource?.compilerSettings) this.compilerSettings = dataSource.compilerSettings
       if (this.targetPlatform != dataSource?.targetPlatform) this.targetPlatform = dataSource.targetPlatform
-      if (this.externalSystemRunTasks != dataSource.externalSystemRunTasks) this.externalSystemRunTasks =
-        dataSource.externalSystemRunTasks.toMutableList()
+      if (this.externalSystemRunTasks != dataSource.externalSystemRunTasks) this.externalSystemRunTasks = dataSource.externalSystemRunTasks.toMutableList()
       if (this.version != dataSource.version) this.version = dataSource.version
       if (this.flushNeeded != dataSource.flushNeeded) this.flushNeeded = dataSource.flushNeeded
       updateChildToParentReferences(parents)
@@ -863,11 +858,9 @@ internal class KotlinSettingsEntityData : WorkspaceEntityData<KotlinSettingsEnti
   }
 
   override fun createDetachedEntity(parents: List<WorkspaceEntity.Builder<*>>): WorkspaceEntity.Builder<*> {
-    return KotlinSettingsEntity(
-      moduleId, name, sourceRoots, configFileItems, useProjectSettings, implementedModuleNames, dependsOnModuleNames,
-      additionalVisibleModuleNames, sourceSetNames, isTestModule, externalProjectId, isHmppEnabled, pureKotlinSourceFolders, kind,
-      externalSystemRunTasks, version, flushNeeded, entitySource
-    ) {
+    return KotlinSettingsEntity(moduleId, name, sourceRoots, configFileItems, useProjectSettings, implementedModuleNames,
+                                dependsOnModuleNames, additionalVisibleModuleNames, sourceSetNames, isTestModule, externalProjectId,
+                                isHmppEnabled, pureKotlinSourceFolders, kind, externalSystemRunTasks, version, flushNeeded, entitySource) {
       this.productionOutputPath = this@KotlinSettingsEntityData.productionOutputPath
       this.testOutputPath = this@KotlinSettingsEntityData.testOutputPath
       this.compilerArguments = this@KotlinSettingsEntityData.compilerArguments

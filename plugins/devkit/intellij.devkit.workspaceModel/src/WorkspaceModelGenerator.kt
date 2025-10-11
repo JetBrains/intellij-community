@@ -2,6 +2,8 @@
 package com.intellij.devkit.workspaceModel
 
 import com.intellij.devkit.workspaceModel.codegen.writer.CodeWriter
+import com.intellij.java.workspace.entities.JavaSourceRootPropertiesEntity
+import com.intellij.java.workspace.entities.javaSourceRoots
 import com.intellij.openapi.application.EDT
 import com.intellij.openapi.application.WriteAction
 import com.intellij.openapi.components.Service
@@ -10,18 +12,22 @@ import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.module.Module
 import com.intellij.openapi.project.DumbService
 import com.intellij.openapi.project.Project
-import com.intellij.openapi.roots.ModuleRootManager
-import com.intellij.openapi.roots.SourceFolder
 import com.intellij.openapi.vfs.VfsUtil
-import com.intellij.openapi.vfs.VfsUtilCore
 import com.intellij.openapi.vfs.VirtualFile
+import com.intellij.platform.backend.workspace.toVirtualFileUrl
+import com.intellij.platform.backend.workspace.virtualFile
+import com.intellij.platform.backend.workspace.workspaceModel
+import com.intellij.platform.workspace.jps.entities.ModuleEntity
+import com.intellij.platform.workspace.jps.entities.SourceRootEntity
+import com.intellij.platform.workspace.jps.entities.modifyContentRootEntity
+import com.intellij.platform.workspace.storage.MutableEntityStorage
+import com.intellij.workspaceModel.ide.legacyBridge.findModuleEntity
+import com.intellij.workspaceModel.ide.legacyBridge.findSnapshotModuleEntity
+import com.intellij.workspaceModel.ide.legacyBridge.impl.java.JAVA_TEST_ROOT_ENTITY_TYPE_ID
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
-import org.jetbrains.jps.model.java.JavaSourceRootProperties
-import org.jetbrains.jps.model.java.JavaSourceRootType
-import org.jetbrains.jps.model.java.JpsJavaExtensionService
 import org.jetbrains.kotlin.config.ExplicitApiMode
 import org.jetbrains.kotlin.config.IKotlinFacetSettings
 import org.jetbrains.kotlin.config.additionalArgumentsAsList
@@ -50,89 +56,74 @@ class WorkspaceModelGenerator(private val project: Project, private val coroutin
   }
 
   private suspend fun onModule(module: Module) {
-    val acceptedSourceRoots = getSourceRoot(module)
-    if (acceptedSourceRoots.isEmpty()) {
+    //val acceptedSourceRoots = getSourceRoot(module)
+    val moduleEntity = module.findSnapshotModuleEntity() ?: module.findModuleEntity()
+    if (moduleEntity == null) {
+      LOG.info("Module entity not found")
+      return
+    }
+    val sourceRoots = getSourceRoots(moduleEntity)
+    if (sourceRoots.isEmpty()) {
       LOG.info("Acceptable module source roots not found")
       return
     }
-    acceptedSourceRoots.forEach { sourceRoot ->
+    sourceRoots.forEach { sourceRoot ->
+      if (sourceRoot.url.virtualFile == null)
+        return@forEach
       withContext(Dispatchers.EDT) {
         DumbService.getInstance(project).completeJustSubmittedTasks() // Waiting for smart mode
         CodeWriter.generate(
-          project, module, sourceRoot.file!!,
+          project, module, sourceRoot.url.virtualFile!!,
           processAbstractTypes = module.withAbstractTypes,
           explicitApiEnabled = module.explicitApiEnabled,
-          isTestSourceFolder = sourceRoot.isTestSource,
+          isTestSourceFolder = sourceRoot.rootTypeId == JAVA_TEST_ROOT_ENTITY_TYPE_ID,
           isTestModule = module.isTestModule, // TODO(It doesn't work for all modules)
-          targetFolderGenerator = { createGeneratedSourceFolder(module, sourceRoot) },
-          existingTargetFolder = { calculateExistingGenFolder(sourceRoot) }
+          targetFolderGenerator = {
+            WriteAction.compute<VirtualFile?, Throwable> {
+              var genSourceRot: SourceRootEntity? = null
+              project.workspaceModel.updateProjectModel("Create gen folder for ${moduleEntity.name}") {
+                genSourceRot = createGenSourceRoot(it, sourceRoot)
+              }
+              genSourceRot?.url?.virtualFile
+            }
+          },
+          existingTargetFolder = {
+            calculateExistingGenFolder(sourceRoot)
+          }
         )
       }
     }
   }
 
-  private fun calculateExistingGenFolder(sourceFolder: SourceFolder): VirtualFile? {
-    if (sourceFolder.contentEntry.file == sourceFolder.file) return null
-    return sourceFolder.file?.parent?.children?.find {
-      if (sourceFolder.isTestSource) {
-        it.name == TEST_GENERATED_FOLDER_NAME
-      } else {
-        it.name == GENERATED_FOLDER_NAME
-      }
+  private fun calculateExistingGenFolder(sourceRoot: SourceRootEntity): VirtualFile? {
+    val closest = sourceRoot.javaSourceRoots.firstOrNull { it.generated }
+    if (closest != null) {
+      return closest.sourceRoot.url.virtualFile
     }
-  }
-
-  private fun createGeneratedSourceFolder(module: Module, sourceFolder: SourceFolder): VirtualFile? {
-    // Create gen folder if it doesn't exist
-    val generatedFolder = WriteAction.compute<VirtualFile, RuntimeException> {
-      if (sourceFolder.isTestSource) {
-        VfsUtil.createDirectoryIfMissing(sourceFolder.file?.parent, TEST_GENERATED_FOLDER_NAME)
-      } else {
-        VfsUtil.createDirectoryIfMissing(sourceFolder.file?.parent, GENERATED_FOLDER_NAME)
-      }
+    val contentRoot = sourceRoot.contentRoot
+    val inContentRoot = contentRoot.sourceRoots.flatMap { it.javaSourceRoots }.firstOrNull { it.generated }
+    if (inContentRoot != null) {
+      return inContentRoot.sourceRoot.url.virtualFile
     }
-
-    val moduleRootManager = ModuleRootManager.getInstance(module)
-    val modifiableModel = moduleRootManager.modifiableModel
-    // Searching for the related content root
-    for (contentEntry in modifiableModel.contentEntries) {
-      val contentEntryFile = contentEntry.file
-      if (contentEntryFile != null && VfsUtilCore.isAncestor(contentEntryFile, generatedFolder, false)) {
-        // Checking if it already contains generation folder
-        val existingGenFolder = contentEntry.sourceFolders.firstOrNull {
-          (it.jpsElement.properties as? JavaSourceRootProperties)?.isForGeneratedSources == true &&
-          it.file == generatedFolder
-        }
-        if (existingGenFolder != null) return generatedFolder
-        // If it doesn't, create new get folder for the selected content root
-        val properties = JpsJavaExtensionService.getInstance().createSourceRootProperties("", true)
-        val sourceFolderType = if (sourceFolder.isTestSource) JavaSourceRootType.TEST_SOURCE else JavaSourceRootType.SOURCE
-        contentEntry.addSourceFolder(generatedFolder, sourceFolderType, properties)
-        WriteAction.run<RuntimeException>(modifiableModel::commit)
-        return generatedFolder
-      }
-    }
-    modifiableModel.dispose()
     return null
   }
 
-  private fun getSourceRoot(module: Module): List<SourceFolder> {
-    val moduleRootManager = ModuleRootManager.getInstance(module)
-    val contentEntries = moduleRootManager.contentEntries
-    //val contentEntryFile = contentEntry.file
-    //val sourceFolders = contentEntry.sourceFolders
-    //  if (contentEntryFile != null && VfsUtilCore.isAncestor(contentEntryFile, selectedFolder, false)) {
-    //    val sourceFolder = contentEntry.sourceFolders.firstOrNull { sourceRoot -> VfsUtil.isUnder(selectedFolder, setOf(sourceRoot.file)) }
-    //    if (sourceFolder != null) return sourceFolder
-    //  }
-    //}
-    return contentEntries.flatMap { it.sourceFolders.asIterable() }.filter {
-      if (it.file == null) return@filter false
-      if (it.rootType !is JavaSourceRootType)  return@filter false
-      val javaSourceRootProperties = it.jpsElement.properties as? JavaSourceRootProperties
-      if (javaSourceRootProperties == null) return@filter true
-      return@filter !javaSourceRootProperties.isForGeneratedSources
+  private fun createGenSourceRoot(storage: MutableEntityStorage, sourceRoot: SourceRootEntity): SourceRootEntity {
+    val genFolderName = if (sourceRoot.rootTypeId == JAVA_TEST_ROOT_ENTITY_TYPE_ID) TEST_GENERATED_FOLDER_NAME else GENERATED_FOLDER_NAME
+    val genFolderVirtualFile = VfsUtil.createDirectories("${sourceRoot.contentRoot.url.presentableUrl}/$genFolderName")
+    val javaSourceRoot = sourceRoot.javaSourceRoots.first()
+    val updatedContentRoot = storage.modifyContentRootEntity(sourceRoot.contentRoot) {
+      this.sourceRoots += SourceRootEntity(genFolderVirtualFile.toVirtualFileUrl(project.workspaceModel.getVirtualFileUrlManager()),
+                                           sourceRoot.rootTypeId, sourceRoot.entitySource) {
+        javaSourceRoots = listOf(JavaSourceRootPropertiesEntity(true, javaSourceRoot.packagePrefix, javaSourceRoot.entitySource))
+      }
     }
+    val result = updatedContentRoot.sourceRoots.last()
+    return result
+  }
+
+  private fun getSourceRoots(moduleEntity: ModuleEntity): List<SourceRootEntity> {
+    return moduleEntity.contentRoots.flatMap { it.sourceRoots.flatMap { it.javaSourceRoots } }.filter { !it.generated }.map { it.sourceRoot }.distinct()
   }
 
   private val Module.withAbstractTypes: Boolean

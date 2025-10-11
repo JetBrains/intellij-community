@@ -44,9 +44,7 @@ interface GradleModuleEntity : WorkspaceEntity {
 fun MutableEntityStorage.modifyGradleModuleEntity(
   entity: GradleModuleEntity,
   modification: GradleModuleEntity.Builder.() -> Unit,
-): GradleModuleEntity {
-  return modifyEntity(GradleModuleEntity.Builder::class.java, entity, modification)
-}
+): GradleModuleEntity = modifyEntity(GradleModuleEntity.Builder::class.java, entity, modification)
 
 var ModuleEntity.Builder.gradleModuleEntity: GradleModuleEntity.Builder?
   by WorkspaceEntity.extensionBuilder(GradleModuleEntity::class.java)

@@ -52,9 +52,7 @@ interface GradleVersionCatalogEntity : WorkspaceEntity {
 fun MutableEntityStorage.modifyGradleVersionCatalogEntity(
   entity: GradleVersionCatalogEntity,
   modification: GradleVersionCatalogEntity.Builder.() -> Unit,
-): GradleVersionCatalogEntity {
-  return modifyEntity(GradleVersionCatalogEntity.Builder::class.java, entity, modification)
-}
+): GradleVersionCatalogEntity = modifyEntity(GradleVersionCatalogEntity.Builder::class.java, entity, modification)
 
 var GradleBuildEntity.Builder.versionCatalogs: List<GradleVersionCatalogEntity.Builder>
   by WorkspaceEntity.extensionBuilder(GradleVersionCatalogEntity::class.java)

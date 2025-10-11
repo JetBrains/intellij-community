@@ -9,19 +9,28 @@ import com.intellij.platform.workspace.storage.metadata.model.StorageTypeMetadat
 import com.intellij.platform.workspace.storage.metadata.model.ValueTypeMetadata
 
 @OptIn(WorkspaceEntityInternalApi::class)
-internal object MetadataStorageImpl: MetadataStorageBase() {
-    override fun initializeMetadata() {
-        
-        var typeMetadata: StorageTypeMetadata
-        
-        typeMetadata = FinalClassMetadata.ObjectMetadata(fqName = "org.jetbrains.kotlin.gradle.scripting.shared.KotlinGradleScriptEntitySource", properties = listOf(OwnPropertyMetadata(isComputable = false, isKey = false, isOpen = false, name = "virtualFileUrl", valueType = ValueTypeMetadata.SimpleType.CustomType(isNullable = true, typeMetadata = FinalClassMetadata.KnownClass(fqName = "com.intellij.platform.workspace.storage.url.VirtualFileUrl")), withDefault = false)), supertypes = listOf("com.intellij.platform.workspace.storage.EntitySource"))
-        
-        addMetadata(typeMetadata)
-    }
+internal object MetadataStorageImpl : MetadataStorageBase() {
+  override fun initializeMetadata() {
 
-    override fun initializeMetadataHash() {
-        addMetadataHash(typeFqn = "com.intellij.platform.workspace.storage.EntitySource", metadataHash = -246015369)
-        addMetadataHash(typeFqn = "org.jetbrains.kotlin.gradle.scripting.shared.KotlinGradleScriptEntitySource", metadataHash = -536689739)
-    }
+    var typeMetadata: StorageTypeMetadata
+
+    typeMetadata = FinalClassMetadata.ObjectMetadata(fqName = "org.jetbrains.kotlin.gradle.scripting.shared.KotlinGradleScriptEntitySource",
+                                                     properties = listOf(
+                                                       OwnPropertyMetadata(isComputable = false, isKey = false, isOpen = false,
+                                                                           name = "virtualFileUrl",
+                                                                           valueType = ValueTypeMetadata.SimpleType.CustomType(
+                                                                             isNullable = true,
+                                                                             typeMetadata = FinalClassMetadata.KnownClass(
+                                                                               fqName = "com.intellij.platform.workspace.storage.url.VirtualFileUrl")),
+                                                                           withDefault = false)),
+                                                     supertypes = listOf("com.intellij.platform.workspace.storage.EntitySource"))
+
+    addMetadata(typeMetadata)
+  }
+
+  override fun initializeMetadataHash() {
+    addMetadataHash(typeFqn = "com.intellij.platform.workspace.storage.EntitySource", metadataHash = -246015369)
+    addMetadataHash(typeFqn = "org.jetbrains.kotlin.gradle.scripting.shared.KotlinGradleScriptEntitySource", metadataHash = -536689739)
+  }
 
 }

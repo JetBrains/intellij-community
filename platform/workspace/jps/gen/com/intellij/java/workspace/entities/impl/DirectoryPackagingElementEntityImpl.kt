@@ -33,21 +33,19 @@ import org.jetbrains.annotations.NonNls
 @GeneratedCodeApiVersion(3)
 @GeneratedCodeImplVersion(7)
 @OptIn(WorkspaceEntityInternalApi::class)
-internal class DirectoryPackagingElementEntityImpl(private val dataSource: DirectoryPackagingElementEntityData) :
-  DirectoryPackagingElementEntity, WorkspaceEntityBase(dataSource) {
+internal class DirectoryPackagingElementEntityImpl(private val dataSource: DirectoryPackagingElementEntityData) : DirectoryPackagingElementEntity, WorkspaceEntityBase(
+  dataSource) {
 
   private companion object {
-    internal val PARENTENTITY_CONNECTION_ID: ConnectionId = ConnectionId.create(
-      CompositePackagingElementEntity::class.java, PackagingElementEntity::class.java, ConnectionId.ConnectionType.ONE_TO_ABSTRACT_MANY,
-      true
-    )
-    internal val ARTIFACT_CONNECTION_ID: ConnectionId = ConnectionId.create(
-      ArtifactEntity::class.java, CompositePackagingElementEntity::class.java, ConnectionId.ConnectionType.ABSTRACT_ONE_TO_ONE, true
-    )
-    internal val CHILDREN_CONNECTION_ID: ConnectionId = ConnectionId.create(
-      CompositePackagingElementEntity::class.java, PackagingElementEntity::class.java, ConnectionId.ConnectionType.ONE_TO_ABSTRACT_MANY,
-      true
-    )
+    internal val PARENTENTITY_CONNECTION_ID: ConnectionId = ConnectionId.create(CompositePackagingElementEntity::class.java,
+                                                                                PackagingElementEntity::class.java,
+                                                                                ConnectionId.ConnectionType.ONE_TO_ABSTRACT_MANY, true)
+    internal val ARTIFACT_CONNECTION_ID: ConnectionId = ConnectionId.create(ArtifactEntity::class.java,
+                                                                            CompositePackagingElementEntity::class.java,
+                                                                            ConnectionId.ConnectionType.ABSTRACT_ONE_TO_ONE, true)
+    internal val CHILDREN_CONNECTION_ID: ConnectionId = ConnectionId.create(CompositePackagingElementEntity::class.java,
+                                                                            PackagingElementEntity::class.java,
+                                                                            ConnectionId.ConnectionType.ONE_TO_ABSTRACT_MANY, true)
 
     private val connections = listOf<ConnectionId>(
       PARENTENTITY_CONNECTION_ID,
@@ -83,9 +81,8 @@ internal class DirectoryPackagingElementEntityImpl(private val dataSource: Direc
   }
 
 
-  internal class Builder(result: DirectoryPackagingElementEntityData?) :
-    ModifiableWorkspaceEntityBase<DirectoryPackagingElementEntity, DirectoryPackagingElementEntityData>(result),
-    DirectoryPackagingElementEntity.Builder {
+  internal class Builder(result: DirectoryPackagingElementEntityData?) : ModifiableWorkspaceEntityBase<DirectoryPackagingElementEntity, DirectoryPackagingElementEntityData>(
+    result), DirectoryPackagingElementEntity.Builder {
     internal constructor() : this(DirectoryPackagingElementEntityData())
 
     override fun applyToBuilder(builder: MutableEntityStorage) {
@@ -159,17 +156,14 @@ internal class DirectoryPackagingElementEntityImpl(private val dataSource: Direc
         val _diff = diff
         return if (_diff != null) {
           @OptIn(EntityStorageInstrumentationApi::class)
-          ((_diff as MutableEntityStorageInstrumentation).getParentBuilder(
-            PARENTENTITY_CONNECTION_ID, this
-          ) as? CompositePackagingElementEntity.Builder<out CompositePackagingElementEntity>)
-          ?: (this.entityLinks[EntityLink(
-            false, PARENTENTITY_CONNECTION_ID
-          )] as? CompositePackagingElementEntity.Builder<out CompositePackagingElementEntity>)
+          ((_diff as MutableEntityStorageInstrumentation).getParentBuilder(PARENTENTITY_CONNECTION_ID,
+                                                                           this) as? CompositePackagingElementEntity.Builder<out CompositePackagingElementEntity>)
+          ?: (this.entityLinks[EntityLink(false,
+                                          PARENTENTITY_CONNECTION_ID)] as? CompositePackagingElementEntity.Builder<out CompositePackagingElementEntity>)
         }
         else {
-          this.entityLinks[EntityLink(
-            false, PARENTENTITY_CONNECTION_ID
-          )] as? CompositePackagingElementEntity.Builder<out CompositePackagingElementEntity>
+          this.entityLinks[EntityLink(false,
+                                      PARENTENTITY_CONNECTION_ID)] as? CompositePackagingElementEntity.Builder<out CompositePackagingElementEntity>
         }
       }
       set(value) {
@@ -241,8 +235,8 @@ internal class DirectoryPackagingElementEntityImpl(private val dataSource: Direc
         val _diff = diff
         return if (_diff != null) {
           @OptIn(EntityStorageInstrumentationApi::class)
-          ((_diff as MutableEntityStorageInstrumentation).getManyChildrenBuilders(CHILDREN_CONNECTION_ID, this)!!
-            .toList() as List<PackagingElementEntity.Builder<out PackagingElementEntity>>) +
+          ((_diff as MutableEntityStorageInstrumentation).getManyChildrenBuilders(CHILDREN_CONNECTION_ID,
+                                                                                  this)!!.toList() as List<PackagingElementEntity.Builder<out PackagingElementEntity>>) +
           (this.entityLinks[EntityLink(true, CHILDREN_CONNECTION_ID)] as? List<PackagingElementEntity.Builder<out PackagingElementEntity>>
            ?: emptyList())
         }
@@ -319,8 +313,7 @@ internal class DirectoryPackagingElementEntityData : WorkspaceEntityData<Directo
 
   override fun getMetadata(): EntityMetadata {
     return MetadataStorageImpl.getMetadataByTypeFqn(
-      "com.intellij.java.workspace.entities.DirectoryPackagingElementEntity"
-    ) as EntityMetadata
+      "com.intellij.java.workspace.entities.DirectoryPackagingElementEntity") as EntityMetadata
   }
 
   override fun getEntityInterface(): Class<out WorkspaceEntity> {
@@ -329,8 +322,7 @@ internal class DirectoryPackagingElementEntityData : WorkspaceEntityData<Directo
 
   override fun createDetachedEntity(parents: List<WorkspaceEntity.Builder<*>>): WorkspaceEntity.Builder<*> {
     return DirectoryPackagingElementEntity(directoryName, entitySource) {
-      this.parentEntity =
-        parents.filterIsInstance<CompositePackagingElementEntity.Builder<out CompositePackagingElementEntity>>().singleOrNull()
+      this.parentEntity = parents.filterIsInstance<CompositePackagingElementEntity.Builder<out CompositePackagingElementEntity>>().singleOrNull()
       this.artifact = parents.filterIsInstance<ArtifactEntity.Builder>().singleOrNull()
     }
   }

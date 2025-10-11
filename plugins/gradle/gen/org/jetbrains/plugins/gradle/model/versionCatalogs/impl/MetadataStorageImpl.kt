@@ -6,4 +6,4 @@ import com.intellij.platform.workspace.storage.metadata.MetadataStorageBridge
 import org.jetbrains.plugins.gradle.model.projectModel.impl.MetadataStorageImpl
 
 @OptIn(WorkspaceEntityInternalApi::class)
-internal object MetadataStorageImpl: MetadataStorageBridge(MetadataStorageImpl)
+internal object MetadataStorageImpl : MetadataStorageBridge(MetadataStorageImpl)

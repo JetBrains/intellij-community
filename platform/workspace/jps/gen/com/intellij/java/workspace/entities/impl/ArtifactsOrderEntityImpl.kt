@@ -22,8 +22,8 @@ import org.jetbrains.annotations.NonNls
 @GeneratedCodeApiVersion(3)
 @GeneratedCodeImplVersion(7)
 @OptIn(WorkspaceEntityInternalApi::class)
-internal class ArtifactsOrderEntityImpl(private val dataSource: ArtifactsOrderEntityData) : ArtifactsOrderEntity,
-                                                                                            WorkspaceEntityBase(dataSource) {
+internal class ArtifactsOrderEntityImpl(private val dataSource: ArtifactsOrderEntityData) : ArtifactsOrderEntity, WorkspaceEntityBase(
+  dataSource) {
 
   private companion object {
 
@@ -50,8 +50,8 @@ internal class ArtifactsOrderEntityImpl(private val dataSource: ArtifactsOrderEn
   }
 
 
-  internal class Builder(result: ArtifactsOrderEntityData?) :
-    ModifiableWorkspaceEntityBase<ArtifactsOrderEntity, ArtifactsOrderEntityData>(result), ArtifactsOrderEntity.Builder {
+  internal class Builder(result: ArtifactsOrderEntityData?) : ModifiableWorkspaceEntityBase<ArtifactsOrderEntity, ArtifactsOrderEntityData>(
+    result), ArtifactsOrderEntity.Builder {
     internal constructor() : this(ArtifactsOrderEntityData())
 
     override fun applyToBuilder(builder: MutableEntityStorage) {

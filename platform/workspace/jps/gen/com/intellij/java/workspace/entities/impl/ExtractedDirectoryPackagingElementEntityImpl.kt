@@ -27,14 +27,13 @@ import org.jetbrains.annotations.NonNls
 @GeneratedCodeApiVersion(3)
 @GeneratedCodeImplVersion(7)
 @OptIn(WorkspaceEntityInternalApi::class)
-internal class ExtractedDirectoryPackagingElementEntityImpl(private val dataSource: ExtractedDirectoryPackagingElementEntityData) :
-  ExtractedDirectoryPackagingElementEntity, WorkspaceEntityBase(dataSource) {
+internal class ExtractedDirectoryPackagingElementEntityImpl(private val dataSource: ExtractedDirectoryPackagingElementEntityData) : ExtractedDirectoryPackagingElementEntity, WorkspaceEntityBase(
+  dataSource) {
 
   private companion object {
-    internal val PARENTENTITY_CONNECTION_ID: ConnectionId = ConnectionId.create(
-      CompositePackagingElementEntity::class.java, PackagingElementEntity::class.java, ConnectionId.ConnectionType.ONE_TO_ABSTRACT_MANY,
-      true
-    )
+    internal val PARENTENTITY_CONNECTION_ID: ConnectionId = ConnectionId.create(CompositePackagingElementEntity::class.java,
+                                                                                PackagingElementEntity::class.java,
+                                                                                ConnectionId.ConnectionType.ONE_TO_ABSTRACT_MANY, true)
 
     private val connections = listOf<ConnectionId>(
       PARENTENTITY_CONNECTION_ID,
@@ -68,9 +67,8 @@ internal class ExtractedDirectoryPackagingElementEntityImpl(private val dataSour
   }
 
 
-  internal class Builder(result: ExtractedDirectoryPackagingElementEntityData?) :
-    ModifiableWorkspaceEntityBase<ExtractedDirectoryPackagingElementEntity, ExtractedDirectoryPackagingElementEntityData>(result),
-    ExtractedDirectoryPackagingElementEntity.Builder {
+  internal class Builder(result: ExtractedDirectoryPackagingElementEntityData?) : ModifiableWorkspaceEntityBase<ExtractedDirectoryPackagingElementEntity, ExtractedDirectoryPackagingElementEntityData>(
+    result), ExtractedDirectoryPackagingElementEntity.Builder {
     internal constructor() : this(ExtractedDirectoryPackagingElementEntityData())
 
     override fun applyToBuilder(builder: MutableEntityStorage) {
@@ -137,17 +135,14 @@ internal class ExtractedDirectoryPackagingElementEntityImpl(private val dataSour
         val _diff = diff
         return if (_diff != null) {
           @OptIn(EntityStorageInstrumentationApi::class)
-          ((_diff as MutableEntityStorageInstrumentation).getParentBuilder(
-            PARENTENTITY_CONNECTION_ID, this
-          ) as? CompositePackagingElementEntity.Builder<out CompositePackagingElementEntity>)
-          ?: (this.entityLinks[EntityLink(
-            false, PARENTENTITY_CONNECTION_ID
-          )] as? CompositePackagingElementEntity.Builder<out CompositePackagingElementEntity>)
+          ((_diff as MutableEntityStorageInstrumentation).getParentBuilder(PARENTENTITY_CONNECTION_ID,
+                                                                           this) as? CompositePackagingElementEntity.Builder<out CompositePackagingElementEntity>)
+          ?: (this.entityLinks[EntityLink(false,
+                                          PARENTENTITY_CONNECTION_ID)] as? CompositePackagingElementEntity.Builder<out CompositePackagingElementEntity>)
         }
         else {
-          this.entityLinks[EntityLink(
-            false, PARENTENTITY_CONNECTION_ID
-          )] as? CompositePackagingElementEntity.Builder<out CompositePackagingElementEntity>
+          this.entityLinks[EntityLink(false,
+                                      PARENTENTITY_CONNECTION_ID)] as? CompositePackagingElementEntity.Builder<out CompositePackagingElementEntity>
         }
       }
       set(value) {
@@ -228,8 +223,7 @@ internal class ExtractedDirectoryPackagingElementEntityData : WorkspaceEntityDat
 
   override fun getMetadata(): EntityMetadata {
     return MetadataStorageImpl.getMetadataByTypeFqn(
-      "com.intellij.java.workspace.entities.ExtractedDirectoryPackagingElementEntity"
-    ) as EntityMetadata
+      "com.intellij.java.workspace.entities.ExtractedDirectoryPackagingElementEntity") as EntityMetadata
   }
 
   override fun getEntityInterface(): Class<out WorkspaceEntity> {
@@ -238,8 +232,7 @@ internal class ExtractedDirectoryPackagingElementEntityData : WorkspaceEntityDat
 
   override fun createDetachedEntity(parents: List<WorkspaceEntity.Builder<*>>): WorkspaceEntity.Builder<*> {
     return ExtractedDirectoryPackagingElementEntity(filePath, pathInArchive, entitySource) {
-      this.parentEntity =
-        parents.filterIsInstance<CompositePackagingElementEntity.Builder<out CompositePackagingElementEntity>>().singleOrNull()
+      this.parentEntity = parents.filterIsInstance<CompositePackagingElementEntity.Builder<out CompositePackagingElementEntity>>().singleOrNull()
     }
   }
 

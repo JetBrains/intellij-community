@@ -43,7 +43,5 @@ interface ExternalProjectEntity: WorkspaceEntityWithSymbolicId {
 fun MutableEntityStorage.modifyExternalProjectEntity(
   entity: ExternalProjectEntity,
   modification: ExternalProjectEntity.Builder.() -> Unit,
-): ExternalProjectEntity {
-  return modifyEntity(ExternalProjectEntity.Builder::class.java, entity, modification)
-}
+): ExternalProjectEntity = modifyEntity(ExternalProjectEntity.Builder::class.java, entity, modification)
 //endregion

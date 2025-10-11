@@ -27,14 +27,13 @@ import org.jetbrains.annotations.NonNls
 @GeneratedCodeApiVersion(3)
 @GeneratedCodeImplVersion(7)
 @OptIn(WorkspaceEntityInternalApi::class)
-internal class FileCopyPackagingElementEntityImpl(private val dataSource: FileCopyPackagingElementEntityData) :
-  FileCopyPackagingElementEntity, WorkspaceEntityBase(dataSource) {
+internal class FileCopyPackagingElementEntityImpl(private val dataSource: FileCopyPackagingElementEntityData) : FileCopyPackagingElementEntity, WorkspaceEntityBase(
+  dataSource) {
 
   private companion object {
-    internal val PARENTENTITY_CONNECTION_ID: ConnectionId = ConnectionId.create(
-      CompositePackagingElementEntity::class.java, PackagingElementEntity::class.java, ConnectionId.ConnectionType.ONE_TO_ABSTRACT_MANY,
-      true
-    )
+    internal val PARENTENTITY_CONNECTION_ID: ConnectionId = ConnectionId.create(CompositePackagingElementEntity::class.java,
+                                                                                PackagingElementEntity::class.java,
+                                                                                ConnectionId.ConnectionType.ONE_TO_ABSTRACT_MANY, true)
 
     private val connections = listOf<ConnectionId>(
       PARENTENTITY_CONNECTION_ID,
@@ -68,9 +67,8 @@ internal class FileCopyPackagingElementEntityImpl(private val dataSource: FileCo
   }
 
 
-  internal class Builder(result: FileCopyPackagingElementEntityData?) :
-    ModifiableWorkspaceEntityBase<FileCopyPackagingElementEntity, FileCopyPackagingElementEntityData>(result),
-    FileCopyPackagingElementEntity.Builder {
+  internal class Builder(result: FileCopyPackagingElementEntityData?) : ModifiableWorkspaceEntityBase<FileCopyPackagingElementEntity, FileCopyPackagingElementEntityData>(
+    result), FileCopyPackagingElementEntity.Builder {
     internal constructor() : this(FileCopyPackagingElementEntityData())
 
     override fun applyToBuilder(builder: MutableEntityStorage) {
@@ -134,17 +132,14 @@ internal class FileCopyPackagingElementEntityImpl(private val dataSource: FileCo
         val _diff = diff
         return if (_diff != null) {
           @OptIn(EntityStorageInstrumentationApi::class)
-          ((_diff as MutableEntityStorageInstrumentation).getParentBuilder(
-            PARENTENTITY_CONNECTION_ID, this
-          ) as? CompositePackagingElementEntity.Builder<out CompositePackagingElementEntity>)
-          ?: (this.entityLinks[EntityLink(
-            false, PARENTENTITY_CONNECTION_ID
-          )] as? CompositePackagingElementEntity.Builder<out CompositePackagingElementEntity>)
+          ((_diff as MutableEntityStorageInstrumentation).getParentBuilder(PARENTENTITY_CONNECTION_ID,
+                                                                           this) as? CompositePackagingElementEntity.Builder<out CompositePackagingElementEntity>)
+          ?: (this.entityLinks[EntityLink(false,
+                                          PARENTENTITY_CONNECTION_ID)] as? CompositePackagingElementEntity.Builder<out CompositePackagingElementEntity>)
         }
         else {
-          this.entityLinks[EntityLink(
-            false, PARENTENTITY_CONNECTION_ID
-          )] as? CompositePackagingElementEntity.Builder<out CompositePackagingElementEntity>
+          this.entityLinks[EntityLink(false,
+                                      PARENTENTITY_CONNECTION_ID)] as? CompositePackagingElementEntity.Builder<out CompositePackagingElementEntity>
         }
       }
       set(value) {
@@ -233,8 +228,7 @@ internal class FileCopyPackagingElementEntityData : WorkspaceEntityData<FileCopy
   override fun createDetachedEntity(parents: List<WorkspaceEntity.Builder<*>>): WorkspaceEntity.Builder<*> {
     return FileCopyPackagingElementEntity(filePath, entitySource) {
       this.renamedOutputFileName = this@FileCopyPackagingElementEntityData.renamedOutputFileName
-      this.parentEntity =
-        parents.filterIsInstance<CompositePackagingElementEntity.Builder<out CompositePackagingElementEntity>>().singleOrNull()
+      this.parentEntity = parents.filterIsInstance<CompositePackagingElementEntity.Builder<out CompositePackagingElementEntity>>().singleOrNull()
     }
   }
 

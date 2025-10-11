@@ -216,7 +216,7 @@ internal class WorkspaceMetaModelBuilder(
       knownTypes: MutableMap<String, ValueType.Blob<*>>,
       hasParentAnnotation: Boolean,
     ): ValueType<*> {
-      if (type !is KaClassType) error("$type is not a class")
+      if (type !is KaClassType) error("$type is not a class in module ${compiledObjModule.name}")
       if (type.nullability == KaTypeNullability.NULLABLE) {
         val nonNullableType = type.withNullability(KaTypeNullability.NON_NULLABLE)
         return ValueType.Optional(convertType(nonNullableType, knownTypes, hasParentAnnotation))

@@ -9,33 +9,63 @@ import com.intellij.platform.workspace.storage.metadata.model.StorageTypeMetadat
 import com.intellij.platform.workspace.storage.metadata.model.ValueTypeMetadata
 
 @OptIn(WorkspaceEntityInternalApi::class)
-internal object MetadataStorageImpl: MetadataStorageBase() {
-    override fun initializeMetadata() {
-        val primitiveTypeIntNotNullable = ValueTypeMetadata.SimpleType.PrimitiveType(isNullable = false, type = "Int")
-        val primitiveTypeStringNotNullable = ValueTypeMetadata.SimpleType.PrimitiveType(isNullable = false, type = "String")
-        val primitiveTypeSetNotNullable = ValueTypeMetadata.SimpleType.PrimitiveType(isNullable = false, type = "Set")
-        val primitiveTypeListNotNullable = ValueTypeMetadata.SimpleType.PrimitiveType(isNullable = false, type = "List")
-        val primitiveTypeMapNotNullable = ValueTypeMetadata.SimpleType.PrimitiveType(isNullable = false, type = "Map")
+internal object MetadataStorageImpl : MetadataStorageBase() {
+  override fun initializeMetadata() {
+    val primitiveTypeIntNotNullable = ValueTypeMetadata.SimpleType.PrimitiveType(isNullable = false, type = "Int")
+    val primitiveTypeStringNotNullable = ValueTypeMetadata.SimpleType.PrimitiveType(isNullable = false, type = "String")
+    val primitiveTypeSetNotNullable = ValueTypeMetadata.SimpleType.PrimitiveType(isNullable = false, type = "Set")
+    val primitiveTypeListNotNullable = ValueTypeMetadata.SimpleType.PrimitiveType(isNullable = false, type = "List")
+    val primitiveTypeMapNotNullable = ValueTypeMetadata.SimpleType.PrimitiveType(isNullable = false, type = "Map")
 
-        var typeMetadata: StorageTypeMetadata
+    var typeMetadata: StorageTypeMetadata
 
-        typeMetadata = EntityMetadata(fqName = "com.intellij.workspaceModel.test.api.DefaultFieldEntity", entityDataFqName = "com.intellij.workspaceModel.test.api.impl.DefaultFieldEntityData", supertypes = listOf("com.intellij.platform.workspace.storage.WorkspaceEntity"), properties = listOf(OwnPropertyMetadata(isComputable = false, isKey = false, isOpen = false, name = "entitySource", valueType = ValueTypeMetadata.SimpleType.CustomType(isNullable = false, typeMetadata = FinalClassMetadata.KnownClass(fqName = "com.intellij.platform.workspace.storage.EntitySource")), withDefault = false),
-OwnPropertyMetadata(isComputable = false, isKey = false, isOpen = false, name = "version", valueType = primitiveTypeIntNotNullable, withDefault = false),
-OwnPropertyMetadata(isComputable = false, isKey = false, isOpen = false, name = "data", valueType = ValueTypeMetadata.SimpleType.CustomType(isNullable = false, typeMetadata = FinalClassMetadata.ClassMetadata(fqName = "com.intellij.workspaceModel.test.api.TestData", properties = listOf(OwnPropertyMetadata(isComputable = false, isKey = false, isOpen = false, name = "description", valueType = primitiveTypeStringNotNullable, withDefault = false),
-OwnPropertyMetadata(isComputable = false, isKey = false, isOpen = false, name = "name", valueType = primitiveTypeStringNotNullable, withDefault = false)), supertypes = listOf())), withDefault = false),
-OwnPropertyMetadata(isComputable = false, isKey = false, isOpen = false, name = "anotherVersion", valueType = primitiveTypeIntNotNullable, withDefault = true),
-OwnPropertyMetadata(isComputable = false, isKey = false, isOpen = false, name = "description", valueType = primitiveTypeStringNotNullable, withDefault = true),
-OwnPropertyMetadata(isComputable = false, isKey = false, isOpen = false, name = "defaultSet", valueType = ValueTypeMetadata.ParameterizedType(generics = listOf(primitiveTypeStringNotNullable), primitive = primitiveTypeSetNotNullable), withDefault = true),
-OwnPropertyMetadata(isComputable = false, isKey = false, isOpen = false, name = "defaultList", valueType = ValueTypeMetadata.ParameterizedType(generics = listOf(primitiveTypeStringNotNullable), primitive = primitiveTypeListNotNullable), withDefault = true),
-OwnPropertyMetadata(isComputable = false, isKey = false, isOpen = false, name = "defaultMap", valueType = ValueTypeMetadata.ParameterizedType(generics = listOf(primitiveTypeStringNotNullable,
-primitiveTypeStringNotNullable), primitive = primitiveTypeMapNotNullable), withDefault = true)), extProperties = listOf(), isAbstract = false)
+    typeMetadata = EntityMetadata(fqName = "com.intellij.workspaceModel.test.api.DefaultFieldEntity",
+                                  entityDataFqName = "com.intellij.workspaceModel.test.api.impl.DefaultFieldEntityData",
+                                  supertypes = listOf("com.intellij.platform.workspace.storage.WorkspaceEntity"), properties = listOf(
+        OwnPropertyMetadata(isComputable = false, isKey = false, isOpen = false, name = "entitySource",
+                            valueType = ValueTypeMetadata.SimpleType.CustomType(isNullable = false,
+                                                                                typeMetadata = FinalClassMetadata.KnownClass(
+                                                                                  fqName = "com.intellij.platform.workspace.storage.EntitySource")),
+                            withDefault = false),
+        OwnPropertyMetadata(isComputable = false, isKey = false, isOpen = false, name = "version", valueType = primitiveTypeIntNotNullable,
+                            withDefault = false),
+        OwnPropertyMetadata(isComputable = false, isKey = false, isOpen = false, name = "data",
+                            valueType = ValueTypeMetadata.SimpleType.CustomType(isNullable = false,
+                                                                                typeMetadata = FinalClassMetadata.ClassMetadata(
+                                                                                  fqName = "com.intellij.workspaceModel.test.api.TestData",
+                                                                                  properties = listOf(
+                                                                                    OwnPropertyMetadata(isComputable = false, isKey = false,
+                                                                                                        isOpen = false,
+                                                                                                        name = "description",
+                                                                                                        valueType = primitiveTypeStringNotNullable,
+                                                                                                        withDefault = false),
+                                                                                    OwnPropertyMetadata(isComputable = false, isKey = false,
+                                                                                                        isOpen = false, name = "name",
+                                                                                                        valueType = primitiveTypeStringNotNullable,
+                                                                                                        withDefault = false)),
+                                                                                  supertypes = listOf())), withDefault = false),
+        OwnPropertyMetadata(isComputable = false, isKey = false, isOpen = false, name = "anotherVersion",
+                            valueType = primitiveTypeIntNotNullable, withDefault = true),
+        OwnPropertyMetadata(isComputable = false, isKey = false, isOpen = false, name = "description",
+                            valueType = primitiveTypeStringNotNullable, withDefault = true),
+        OwnPropertyMetadata(isComputable = false, isKey = false, isOpen = false, name = "defaultSet",
+                            valueType = ValueTypeMetadata.ParameterizedType(generics = listOf(primitiveTypeStringNotNullable),
+                                                                            primitive = primitiveTypeSetNotNullable), withDefault = true),
+        OwnPropertyMetadata(isComputable = false, isKey = false, isOpen = false, name = "defaultList",
+                            valueType = ValueTypeMetadata.ParameterizedType(generics = listOf(primitiveTypeStringNotNullable),
+                                                                            primitive = primitiveTypeListNotNullable), withDefault = true),
+        OwnPropertyMetadata(isComputable = false, isKey = false, isOpen = false, name = "defaultMap",
+                            valueType = ValueTypeMetadata.ParameterizedType(generics = listOf(primitiveTypeStringNotNullable,
+                                                                                              primitiveTypeStringNotNullable),
+                                                                            primitive = primitiveTypeMapNotNullable), withDefault = true)),
+                                  extProperties = listOf(), isAbstract = false)
 
-        addMetadata(typeMetadata)
-    }
+    addMetadata(typeMetadata)
+  }
 
-    override fun initializeMetadataHash() {
-        addMetadataHash(typeFqn = "com.intellij.workspaceModel.test.api.DefaultFieldEntity", metadataHash = -116709851)
-        addMetadataHash(typeFqn = "com.intellij.workspaceModel.test.api.TestData", metadataHash = -898117917)
-    }
+  override fun initializeMetadataHash() {
+    addMetadataHash(typeFqn = "com.intellij.workspaceModel.test.api.DefaultFieldEntity", metadataHash = -116709851)
+    addMetadataHash(typeFqn = "com.intellij.workspaceModel.test.api.TestData", metadataHash = -898117917)
+  }
 
 }

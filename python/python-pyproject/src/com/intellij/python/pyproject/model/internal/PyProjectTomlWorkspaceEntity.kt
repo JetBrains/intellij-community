@@ -45,11 +45,9 @@ internal interface PyProjectTomlWorkspaceEntity : WorkspaceEntity {
 internal fun MutableEntityStorage.modifyPyProjectTomlWorkspaceEntity(
   entity: PyProjectTomlWorkspaceEntity,
   modification: PyProjectTomlWorkspaceEntity.Builder.() -> Unit,
-): PyProjectTomlWorkspaceEntity {
-  return modifyEntity(PyProjectTomlWorkspaceEntity.Builder::class.java, entity, modification)
-}
+): PyProjectTomlWorkspaceEntity = modifyEntity(PyProjectTomlWorkspaceEntity.Builder::class.java, entity, modification)
 
-internal var ModuleEntity.Builder.pyProjectTomlEntity: PyProjectTomlWorkspaceEntity.Builder
+internal var ModuleEntity.Builder.pyProjectTomlEntity: PyProjectTomlWorkspaceEntity.Builder?
   by WorkspaceEntity.extensionBuilder(PyProjectTomlWorkspaceEntity::class.java)
 //endregion
 

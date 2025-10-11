@@ -36,10 +36,10 @@ import org.jetbrains.annotations.NonNls
 internal class FacetEntityImpl(private val dataSource: FacetEntityData) : FacetEntity, WorkspaceEntityBase(dataSource) {
 
   private companion object {
-    internal val MODULE_CONNECTION_ID: ConnectionId =
-      ConnectionId.create(ModuleEntity::class.java, FacetEntity::class.java, ConnectionId.ConnectionType.ONE_TO_MANY, false)
-    internal val UNDERLYINGFACET_CONNECTION_ID: ConnectionId =
-      ConnectionId.create(FacetEntity::class.java, FacetEntity::class.java, ConnectionId.ConnectionType.ONE_TO_MANY, true)
+    internal val MODULE_CONNECTION_ID: ConnectionId = ConnectionId.create(ModuleEntity::class.java, FacetEntity::class.java,
+                                                                          ConnectionId.ConnectionType.ONE_TO_MANY, false)
+    internal val UNDERLYINGFACET_CONNECTION_ID: ConnectionId = ConnectionId.create(FacetEntity::class.java, FacetEntity::class.java,
+                                                                                   ConnectionId.ConnectionType.ONE_TO_MANY, true)
 
     private val connections = listOf<ConnectionId>(
       MODULE_CONNECTION_ID,
@@ -91,8 +91,8 @@ internal class FacetEntityImpl(private val dataSource: FacetEntityData) : FacetE
   }
 
 
-  internal class Builder(result: FacetEntityData?) : ModifiableWorkspaceEntityBase<FacetEntity, FacetEntityData>(result),
-                                                     FacetEntity.Builder {
+  internal class Builder(result: FacetEntityData?) : ModifiableWorkspaceEntityBase<FacetEntity, FacetEntityData>(
+    result), FacetEntity.Builder {
     internal constructor() : this(FacetEntityData())
 
     override fun applyToBuilder(builder: MutableEntityStorage) {

@@ -53,8 +53,8 @@ internal open class ParentEntityImpl(private val dataSource: ParentEntityData) :
   }
 
 
-  internal class Builder(result: ParentEntityData?) : ModifiableWorkspaceEntityBase<ParentEntity, ParentEntityData>(result),
-                                                      ParentEntity.Builder {
+  internal class Builder(result: ParentEntityData?) : ModifiableWorkspaceEntityBase<ParentEntity, ParentEntityData>(
+    result), ParentEntity.Builder {
     internal constructor() : this(ParentEntityData())
 
     override fun applyToBuilder(builder: MutableEntityStorage) {

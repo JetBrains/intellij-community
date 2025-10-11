@@ -24,8 +24,8 @@ import com.intellij.workspaceModel.test.api.SimpleSymbolicIdEntity
 @GeneratedCodeApiVersion(3)
 @GeneratedCodeImplVersion(7)
 @OptIn(WorkspaceEntityInternalApi::class)
-internal class SimpleSymbolicIdEntityImpl(private val dataSource: SimpleSymbolicIdEntityData) : SimpleSymbolicIdEntity,
-                                                                                                WorkspaceEntityBase(dataSource) {
+internal class SimpleSymbolicIdEntityImpl(private val dataSource: SimpleSymbolicIdEntityData) : SimpleSymbolicIdEntity, WorkspaceEntityBase(
+  dataSource) {
 
   private companion object {
 
@@ -71,8 +71,8 @@ internal class SimpleSymbolicIdEntityImpl(private val dataSource: SimpleSymbolic
   }
 
 
-  internal class Builder(result: SimpleSymbolicIdEntityData?) :
-    ModifiableWorkspaceEntityBase<SimpleSymbolicIdEntity, SimpleSymbolicIdEntityData>(result), SimpleSymbolicIdEntity.Builder {
+  internal class Builder(result: SimpleSymbolicIdEntityData?) : ModifiableWorkspaceEntityBase<SimpleSymbolicIdEntity, SimpleSymbolicIdEntityData>(
+    result), SimpleSymbolicIdEntity.Builder {
     internal constructor() : this(SimpleSymbolicIdEntityData())
 
     override fun applyToBuilder(builder: MutableEntityStorage) {

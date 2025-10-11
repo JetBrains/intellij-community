@@ -49,8 +49,8 @@ internal class ExcludeUrlEntityImpl(private val dataSource: ExcludeUrlEntityData
   }
 
 
-  internal class Builder(result: ExcludeUrlEntityData?) : ModifiableWorkspaceEntityBase<ExcludeUrlEntity, ExcludeUrlEntityData>(result),
-                                                          ExcludeUrlEntity.Builder {
+  internal class Builder(result: ExcludeUrlEntityData?) : ModifiableWorkspaceEntityBase<ExcludeUrlEntity, ExcludeUrlEntityData>(
+    result), ExcludeUrlEntity.Builder {
     internal constructor() : this(ExcludeUrlEntityData())
 
     override fun applyToBuilder(builder: MutableEntityStorage) {

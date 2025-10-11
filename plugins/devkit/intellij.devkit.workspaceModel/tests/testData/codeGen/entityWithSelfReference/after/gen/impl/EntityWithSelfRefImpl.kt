@@ -28,10 +28,10 @@ import com.intellij.workspaceModel.test.api.EntityWithSelfRef
 internal class EntityWithSelfRefImpl(private val dataSource: EntityWithSelfRefData) : EntityWithSelfRef, WorkspaceEntityBase(dataSource) {
 
   private companion object {
-    internal val PARENTREF_CONNECTION_ID: ConnectionId =
-      ConnectionId.create(EntityWithSelfRef::class.java, EntityWithSelfRef::class.java, ConnectionId.ConnectionType.ONE_TO_MANY, true)
-    internal val CHILDREN_CONNECTION_ID: ConnectionId =
-      ConnectionId.create(EntityWithSelfRef::class.java, EntityWithSelfRef::class.java, ConnectionId.ConnectionType.ONE_TO_MANY, true)
+    internal val PARENTREF_CONNECTION_ID: ConnectionId = ConnectionId.create(EntityWithSelfRef::class.java, EntityWithSelfRef::class.java,
+                                                                             ConnectionId.ConnectionType.ONE_TO_MANY, true)
+    internal val CHILDREN_CONNECTION_ID: ConnectionId = ConnectionId.create(EntityWithSelfRef::class.java, EntityWithSelfRef::class.java,
+                                                                            ConnectionId.ConnectionType.ONE_TO_MANY, true)
 
     private val connections = listOf<ConnectionId>(
       PARENTREF_CONNECTION_ID,
@@ -63,8 +63,8 @@ internal class EntityWithSelfRefImpl(private val dataSource: EntityWithSelfRefDa
   }
 
 
-  internal class Builder(result: EntityWithSelfRefData?) : ModifiableWorkspaceEntityBase<EntityWithSelfRef, EntityWithSelfRefData>(result),
-                                                           EntityWithSelfRef.Builder {
+  internal class Builder(result: EntityWithSelfRefData?) : ModifiableWorkspaceEntityBase<EntityWithSelfRef, EntityWithSelfRefData>(
+    result), EntityWithSelfRef.Builder {
     internal constructor() : this(EntityWithSelfRefData())
 
     override fun applyToBuilder(builder: MutableEntityStorage) {
@@ -189,8 +189,8 @@ internal class EntityWithSelfRefImpl(private val dataSource: EntityWithSelfRefDa
         val _diff = diff
         return if (_diff != null) {
           @OptIn(EntityStorageInstrumentationApi::class)
-          ((_diff as MutableEntityStorageInstrumentation).getManyChildrenBuilders(CHILDREN_CONNECTION_ID, this)!!
-            .toList() as List<EntityWithSelfRef.Builder>) +
+          ((_diff as MutableEntityStorageInstrumentation).getManyChildrenBuilders(CHILDREN_CONNECTION_ID,
+                                                                                  this)!!.toList() as List<EntityWithSelfRef.Builder>) +
           (this.entityLinks[EntityLink(true, CHILDREN_CONNECTION_ID)] as? List<EntityWithSelfRef.Builder> ?: emptyList())
         }
         else {

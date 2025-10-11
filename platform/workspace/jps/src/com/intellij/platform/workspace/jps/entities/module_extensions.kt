@@ -1,4 +1,4 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 @file:JvmName("ModuleExtensions")
 
 package com.intellij.platform.workspace.jps.entities
@@ -63,9 +63,7 @@ interface ModuleCustomImlDataEntity : WorkspaceEntity {
 fun MutableEntityStorage.modifyModuleCustomImlDataEntity(
   entity: ModuleCustomImlDataEntity,
   modification: ModuleCustomImlDataEntity.Builder.() -> Unit,
-): ModuleCustomImlDataEntity {
-  return modifyEntity(ModuleCustomImlDataEntity.Builder::class.java, entity, modification)
-}
+): ModuleCustomImlDataEntity = modifyEntity(ModuleCustomImlDataEntity.Builder::class.java, entity, modification)
 //endregion
 
 @get:Internal
@@ -116,9 +114,7 @@ interface ModuleGroupPathEntity : WorkspaceEntity {
 fun MutableEntityStorage.modifyModuleGroupPathEntity(
   entity: ModuleGroupPathEntity,
   modification: ModuleGroupPathEntity.Builder.() -> Unit,
-): ModuleGroupPathEntity {
-  return modifyEntity(ModuleGroupPathEntity.Builder::class.java, entity, modification)
-}
+): ModuleGroupPathEntity = modifyEntity(ModuleGroupPathEntity.Builder::class.java, entity, modification)
 //endregion
 
 @get:Internal
@@ -178,9 +174,7 @@ interface ExternalSystemModuleOptionsEntity : WorkspaceEntity {
 fun MutableEntityStorage.modifyExternalSystemModuleOptionsEntity(
   entity: ExternalSystemModuleOptionsEntity,
   modification: ExternalSystemModuleOptionsEntity.Builder.() -> Unit,
-): ExternalSystemModuleOptionsEntity {
-  return modifyEntity(ExternalSystemModuleOptionsEntity.Builder::class.java, entity, modification)
-}
+): ExternalSystemModuleOptionsEntity = modifyEntity(ExternalSystemModuleOptionsEntity.Builder::class.java, entity, modification)
 //endregion
 
 @get:Internal
@@ -228,9 +222,7 @@ interface TestModulePropertiesEntity : WorkspaceEntity {
 fun MutableEntityStorage.modifyTestModulePropertiesEntity(
   entity: TestModulePropertiesEntity,
   modification: TestModulePropertiesEntity.Builder.() -> Unit,
-): TestModulePropertiesEntity {
-  return modifyEntity(TestModulePropertiesEntity.Builder::class.java, entity, modification)
-}
+): TestModulePropertiesEntity = modifyEntity(TestModulePropertiesEntity.Builder::class.java, entity, modification)
 //endregion
 
 @get:Internal

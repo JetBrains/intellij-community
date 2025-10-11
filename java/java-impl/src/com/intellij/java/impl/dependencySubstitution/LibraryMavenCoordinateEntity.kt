@@ -51,9 +51,7 @@ public interface LibraryMavenCoordinateEntity : WorkspaceEntity {
 public fun MutableEntityStorage.modifyLibraryMavenCoordinateEntity(
   entity: LibraryMavenCoordinateEntity,
   modification: LibraryMavenCoordinateEntity.Builder.() -> Unit,
-): LibraryMavenCoordinateEntity {
-  return modifyEntity(LibraryMavenCoordinateEntity.Builder::class.java, entity, modification)
-}
+): LibraryMavenCoordinateEntity = modifyEntity(LibraryMavenCoordinateEntity.Builder::class.java, entity, modification)
 
 public var LibraryEntity.Builder.mavenCoordinates: LibraryMavenCoordinateEntity.Builder?
   by WorkspaceEntity.extensionBuilder(LibraryMavenCoordinateEntity::class.java)

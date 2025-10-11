@@ -9,19 +9,30 @@ import com.intellij.platform.workspace.storage.metadata.model.StorageTypeMetadat
 import com.intellij.platform.workspace.storage.metadata.model.ValueTypeMetadata
 
 @OptIn(WorkspaceEntityInternalApi::class)
-internal object MetadataStorageImpl: MetadataStorageBase() {
-    override fun initializeMetadata() {
+internal object MetadataStorageImpl : MetadataStorageBase() {
+  override fun initializeMetadata() {
 
-        var typeMetadata: StorageTypeMetadata
+    var typeMetadata: StorageTypeMetadata
 
-        typeMetadata = EntityMetadata(fqName = "com.intellij.workspaceModel.test.api.UnknownPropertyTypeEntity", entityDataFqName = "com.intellij.workspaceModel.test.api.impl.UnknownPropertyTypeEntityData", supertypes = listOf("com.intellij.platform.workspace.storage.WorkspaceEntity"), properties = listOf(OwnPropertyMetadata(isComputable = false, isKey = false, isOpen = false, name = "entitySource", valueType = ValueTypeMetadata.SimpleType.CustomType(isNullable = false, typeMetadata = FinalClassMetadata.KnownClass(fqName = "com.intellij.platform.workspace.storage.EntitySource")), withDefault = false),
-OwnPropertyMetadata(isComputable = false, isKey = false, isOpen = false, name = "date", valueType = ValueTypeMetadata.SimpleType.CustomType(isNullable = false, typeMetadata = FinalClassMetadata.KnownClass(fqName = "java.util.Date")), withDefault = false)), extProperties = listOf(), isAbstract = false)
+    typeMetadata = EntityMetadata(fqName = "com.intellij.workspaceModel.test.api.UnknownPropertyTypeEntity",
+                                  entityDataFqName = "com.intellij.workspaceModel.test.api.impl.UnknownPropertyTypeEntityData",
+                                  supertypes = listOf("com.intellij.platform.workspace.storage.WorkspaceEntity"), properties = listOf(
+        OwnPropertyMetadata(isComputable = false, isKey = false, isOpen = false, name = "entitySource",
+                            valueType = ValueTypeMetadata.SimpleType.CustomType(isNullable = false,
+                                                                                typeMetadata = FinalClassMetadata.KnownClass(
+                                                                                  fqName = "com.intellij.platform.workspace.storage.EntitySource")),
+                            withDefault = false),
+        OwnPropertyMetadata(isComputable = false, isKey = false, isOpen = false, name = "date",
+                            valueType = ValueTypeMetadata.SimpleType.CustomType(isNullable = false,
+                                                                                typeMetadata = FinalClassMetadata.KnownClass(
+                                                                                  fqName = "java.util.Date")), withDefault = false)),
+                                  extProperties = listOf(), isAbstract = false)
 
-        addMetadata(typeMetadata)
-    }
+    addMetadata(typeMetadata)
+  }
 
-    override fun initializeMetadataHash() {
-        addMetadataHash(typeFqn = "com.intellij.workspaceModel.test.api.UnknownPropertyTypeEntity", metadataHash = -79074108)
-    }
+  override fun initializeMetadataHash() {
+    addMetadataHash(typeFqn = "com.intellij.workspaceModel.test.api.UnknownPropertyTypeEntity", metadataHash = -79074108)
+  }
 
 }

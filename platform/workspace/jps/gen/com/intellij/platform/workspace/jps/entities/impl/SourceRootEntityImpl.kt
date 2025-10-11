@@ -28,8 +28,8 @@ import org.jetbrains.annotations.NonNls
 internal class SourceRootEntityImpl(private val dataSource: SourceRootEntityData) : SourceRootEntity, WorkspaceEntityBase(dataSource) {
 
   private companion object {
-    internal val CONTENTROOT_CONNECTION_ID: ConnectionId =
-      ConnectionId.create(ContentRootEntity::class.java, SourceRootEntity::class.java, ConnectionId.ConnectionType.ONE_TO_MANY, false)
+    internal val CONTENTROOT_CONNECTION_ID: ConnectionId = ConnectionId.create(ContentRootEntity::class.java, SourceRootEntity::class.java,
+                                                                               ConnectionId.ConnectionType.ONE_TO_MANY, false)
 
     private val connections = listOf<ConnectionId>(
       CONTENTROOT_CONNECTION_ID,
@@ -63,8 +63,8 @@ internal class SourceRootEntityImpl(private val dataSource: SourceRootEntityData
   }
 
 
-  internal class Builder(result: SourceRootEntityData?) : ModifiableWorkspaceEntityBase<SourceRootEntity, SourceRootEntityData>(result),
-                                                          SourceRootEntity.Builder {
+  internal class Builder(result: SourceRootEntityData?) : ModifiableWorkspaceEntityBase<SourceRootEntity, SourceRootEntityData>(
+    result), SourceRootEntity.Builder {
     internal constructor() : this(SourceRootEntityData())
 
     override fun applyToBuilder(builder: MutableEntityStorage) {

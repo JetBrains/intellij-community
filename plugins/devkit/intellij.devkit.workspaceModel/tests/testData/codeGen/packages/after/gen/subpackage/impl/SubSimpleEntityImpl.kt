@@ -56,8 +56,8 @@ internal class SubSimpleEntityImpl(private val dataSource: SubSimpleEntityData) 
   }
 
 
-  internal class Builder(result: SubSimpleEntityData?) : ModifiableWorkspaceEntityBase<SubSimpleEntity, SubSimpleEntityData>(result),
-                                                         SubSimpleEntity.Builder {
+  internal class Builder(result: SubSimpleEntityData?) : ModifiableWorkspaceEntityBase<SubSimpleEntity, SubSimpleEntityData>(
+    result), SubSimpleEntity.Builder {
     internal constructor() : this(SubSimpleEntityData())
 
     override fun applyToBuilder(builder: MutableEntityStorage) {

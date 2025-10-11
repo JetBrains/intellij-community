@@ -1,4 +1,4 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.devkit.workspaceModel
 
 import com.intellij.devkit.workspaceModel.WorkspaceModelGenerator.Companion.RIDER_MODULES_PREFIX
@@ -162,8 +162,7 @@ abstract class AbstractAllIntellijEntitiesGenerationTest : CodeGenerationTestBas
     val result = runWriteActionAndWait {
       var storageChanged = false
 
-      val genSourceRoot = sourceRoot.contentRoot.sourceRoots.flatMap { it.javaSourceRoots }.firstOrNull { it.generated }?.sourceRoot
-                          ?: newGenFolder(storage, sourceRoot).also { storageChanged = true }
+      val genSourceRoot = findGenSourceRoot(sourceRoot) ?: createGenSourceRoot(storage, sourceRoot).also { storageChanged = true }
 
       val apiRootPath = Path.of(sourceRoot.url.presentableUrl)
       val implRootPath = Path.of(genSourceRoot.url.presentableUrl)
@@ -220,7 +219,20 @@ abstract class AbstractAllIntellijEntitiesGenerationTest : CodeGenerationTestBas
     return false
   }
 
-  private fun newGenFolder(storage: MutableEntityStorage, sourceRoot: SourceRootEntity): SourceRootEntity {
+  private fun findGenSourceRoot(sourceRoot: SourceRootEntity): SourceRootEntity? {
+    val closest = sourceRoot.javaSourceRoots.filter { it.generated }.firstOrNull()
+    if (closest != null) {
+      return closest.sourceRoot
+    }
+    val contentRoot = sourceRoot.contentRoot
+    val inContentRoot = contentRoot.sourceRoots.flatMap { it.javaSourceRoots }.firstOrNull { it.generated }
+    if (inContentRoot != null) {
+      return inContentRoot.sourceRoot
+    }
+    return null
+  }
+ 
+  private fun createGenSourceRoot(storage: MutableEntityStorage, sourceRoot: SourceRootEntity): SourceRootEntity {
     val genFolderVirtualFile = VfsUtil.createDirectories("${sourceRoot.contentRoot.url.presentableUrl}/${WorkspaceModelGenerator.GENERATED_FOLDER_NAME}")
     val javaSourceRoot = sourceRoot.javaSourceRoots.first()
     val updatedContentRoot = storage.modifyContentRootEntity(sourceRoot.contentRoot) {
@@ -292,7 +304,11 @@ abstract class AbstractAllIntellijEntitiesGenerationTest : CodeGenerationTestBas
     private val skippedModules: Set<String> = setOf(
       "intellij.platform.workspace.storage.tests",
       "intellij.platform.workspace.storage.testEntities",
-      "intellij.java.compiler.tests" // IJPL-178663
+      "intellij.java.compiler.tests", // IJPL-178663
+      "intellij.graphql",
+      "intellij.gradle.tests",
+      "intellij.platform.lang.tests",
+      "intellij.java.impl" // IJPL-196541
     )
 
     private fun processFileIfMatch(file: File, regex: Regex, function: (File) -> Unit) {

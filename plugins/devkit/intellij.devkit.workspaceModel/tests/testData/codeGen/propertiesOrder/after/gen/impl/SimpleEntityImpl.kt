@@ -44,8 +44,8 @@ internal class SimpleEntityImpl(private val dataSource: SimpleEntityData) : Simp
   }
 
 
-  internal class Builder(result: SimpleEntityData?) : ModifiableWorkspaceEntityBase<SimpleEntity, SimpleEntityData>(result),
-                                                      SimpleEntity.Builder {
+  internal class Builder(result: SimpleEntityData?) : ModifiableWorkspaceEntityBase<SimpleEntity, SimpleEntityData>(
+    result), SimpleEntity.Builder {
     internal constructor() : this(SimpleEntityData())
 
     override fun applyToBuilder(builder: MutableEntityStorage) {

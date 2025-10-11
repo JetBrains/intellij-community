@@ -41,10 +41,10 @@ import org.jetbrains.annotations.NonNls
 internal class ModuleEntityImpl(private val dataSource: ModuleEntityData) : ModuleEntity, WorkspaceEntityBase(dataSource) {
 
   private companion object {
-    internal val CONTENTROOTS_CONNECTION_ID: ConnectionId =
-      ConnectionId.create(ModuleEntity::class.java, ContentRootEntity::class.java, ConnectionId.ConnectionType.ONE_TO_MANY, false)
-    internal val FACETS_CONNECTION_ID: ConnectionId =
-      ConnectionId.create(ModuleEntity::class.java, FacetEntity::class.java, ConnectionId.ConnectionType.ONE_TO_MANY, false)
+    internal val CONTENTROOTS_CONNECTION_ID: ConnectionId = ConnectionId.create(ModuleEntity::class.java, ContentRootEntity::class.java,
+                                                                                ConnectionId.ConnectionType.ONE_TO_MANY, false)
+    internal val FACETS_CONNECTION_ID: ConnectionId = ConnectionId.create(ModuleEntity::class.java, FacetEntity::class.java,
+                                                                          ConnectionId.ConnectionType.ONE_TO_MANY, false)
 
     private val connections = listOf<ConnectionId>(
       CONTENTROOTS_CONNECTION_ID,
@@ -90,8 +90,8 @@ internal class ModuleEntityImpl(private val dataSource: ModuleEntityData) : Modu
   }
 
 
-  internal class Builder(result: ModuleEntityData?) : ModifiableWorkspaceEntityBase<ModuleEntity, ModuleEntityData>(result),
-                                                      ModuleEntity.Builder {
+  internal class Builder(result: ModuleEntityData?) : ModifiableWorkspaceEntityBase<ModuleEntity, ModuleEntityData>(
+    result), ModuleEntity.Builder {
     internal constructor() : this(ModuleEntityData())
 
     override fun applyToBuilder(builder: MutableEntityStorage) {
@@ -230,8 +230,8 @@ internal class ModuleEntityImpl(private val dataSource: ModuleEntityData) : Modu
         val _diff = diff
         return if (_diff != null) {
           @OptIn(EntityStorageInstrumentationApi::class)
-          ((_diff as MutableEntityStorageInstrumentation).getManyChildrenBuilders(CONTENTROOTS_CONNECTION_ID, this)!!
-            .toList() as List<ContentRootEntity.Builder>) +
+          ((_diff as MutableEntityStorageInstrumentation).getManyChildrenBuilders(CONTENTROOTS_CONNECTION_ID,
+                                                                                  this)!!.toList() as List<ContentRootEntity.Builder>) +
           (this.entityLinks[EntityLink(true, CONTENTROOTS_CONNECTION_ID)] as? List<ContentRootEntity.Builder> ?: emptyList())
         }
         else {
@@ -277,8 +277,8 @@ internal class ModuleEntityImpl(private val dataSource: ModuleEntityData) : Modu
         val _diff = diff
         return if (_diff != null) {
           @OptIn(EntityStorageInstrumentationApi::class)
-          ((_diff as MutableEntityStorageInstrumentation).getManyChildrenBuilders(FACETS_CONNECTION_ID, this)!!
-            .toList() as List<FacetEntity.Builder>) +
+          ((_diff as MutableEntityStorageInstrumentation).getManyChildrenBuilders(FACETS_CONNECTION_ID,
+                                                                                  this)!!.toList() as List<FacetEntity.Builder>) +
           (this.entityLinks[EntityLink(true, FACETS_CONNECTION_ID)] as? List<FacetEntity.Builder> ?: emptyList())
         }
         else {

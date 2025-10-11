@@ -47,6 +47,7 @@ jvm_library(
     "//plugins/kotlin/tests-common:tests-common_test_lib",
     "@lib//:rd-core",
     "@lib//:rd-framework",
+    "//platform/util/jdom",
   ],
   runtime_deps = ["//plugins/devkit"]
 )

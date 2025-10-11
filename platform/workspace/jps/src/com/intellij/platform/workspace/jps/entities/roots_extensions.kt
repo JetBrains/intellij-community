@@ -1,4 +1,4 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 @file:JvmName("RootsExtensions")
 
 package com.intellij.platform.workspace.jps.entities
@@ -58,9 +58,7 @@ interface SourceRootOrderEntity : WorkspaceEntity {
 fun MutableEntityStorage.modifySourceRootOrderEntity(
   entity: SourceRootOrderEntity,
   modification: SourceRootOrderEntity.Builder.() -> Unit,
-): SourceRootOrderEntity {
-  return modifyEntity(SourceRootOrderEntity.Builder::class.java, entity, modification)
-}
+): SourceRootOrderEntity = modifyEntity(SourceRootOrderEntity.Builder::class.java, entity, modification)
 //endregion
 
 @get:Internal
@@ -111,9 +109,7 @@ interface CustomSourceRootPropertiesEntity : WorkspaceEntity {
 fun MutableEntityStorage.modifyCustomSourceRootPropertiesEntity(
   entity: CustomSourceRootPropertiesEntity,
   modification: CustomSourceRootPropertiesEntity.Builder.() -> Unit,
-): CustomSourceRootPropertiesEntity {
-  return modifyEntity(CustomSourceRootPropertiesEntity.Builder::class.java, entity, modification)
-}
+): CustomSourceRootPropertiesEntity = modifyEntity(CustomSourceRootPropertiesEntity.Builder::class.java, entity, modification)
 //endregion
 
 @get:Internal
@@ -163,9 +159,7 @@ interface ExcludeUrlOrderEntity : WorkspaceEntity {
 fun MutableEntityStorage.modifyExcludeUrlOrderEntity(
   entity: ExcludeUrlOrderEntity,
   modification: ExcludeUrlOrderEntity.Builder.() -> Unit,
-): ExcludeUrlOrderEntity {
-  return modifyEntity(ExcludeUrlOrderEntity.Builder::class.java, entity, modification)
-}
+): ExcludeUrlOrderEntity = modifyEntity(ExcludeUrlOrderEntity.Builder::class.java, entity, modification)
 //endregion
 
 @get:Internal

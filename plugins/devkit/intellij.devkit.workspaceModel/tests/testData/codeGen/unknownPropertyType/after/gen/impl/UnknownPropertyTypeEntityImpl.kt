@@ -19,8 +19,8 @@ import java.util.Date
 @GeneratedCodeApiVersion(3)
 @GeneratedCodeImplVersion(7)
 @OptIn(WorkspaceEntityInternalApi::class)
-internal class UnknownPropertyTypeEntityImpl(private val dataSource: UnknownPropertyTypeEntityData) : UnknownPropertyTypeEntity,
-                                                                                                      WorkspaceEntityBase(dataSource) {
+internal class UnknownPropertyTypeEntityImpl(private val dataSource: UnknownPropertyTypeEntityData) : UnknownPropertyTypeEntity, WorkspaceEntityBase(
+  dataSource) {
 
   private companion object {
 
@@ -47,8 +47,8 @@ internal class UnknownPropertyTypeEntityImpl(private val dataSource: UnknownProp
   }
 
 
-  internal class Builder(result: UnknownPropertyTypeEntityData?) :
-    ModifiableWorkspaceEntityBase<UnknownPropertyTypeEntity, UnknownPropertyTypeEntityData>(result), UnknownPropertyTypeEntity.Builder {
+  internal class Builder(result: UnknownPropertyTypeEntityData?) : ModifiableWorkspaceEntityBase<UnknownPropertyTypeEntity, UnknownPropertyTypeEntityData>(
+    result), UnknownPropertyTypeEntity.Builder {
     internal constructor() : this(UnknownPropertyTypeEntityData())
 
     override fun applyToBuilder(builder: MutableEntityStorage) {

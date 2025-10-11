@@ -1,4 +1,4 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.kotlin.idea.workspaceModel
 
 import com.intellij.openapi.util.NlsSafe
@@ -131,9 +131,11 @@ interface KotlinSettingsEntity : ModuleSettingsFacetBridgeEntity {
       return builder
     }
 
+    //region compatibility generated code
     @Deprecated(
       message = "This method is deprecated and will be removed in next major release",
-      replaceWith = ReplaceWith("invoke(moduleId, name, sourceRoots, configFileItems, useProjectSettings, implementedModuleNames, dependsOnModuleNames, additionalVisibleModuleNames, sourceSetNames, isTestModule, externalProjectId, isHmppEnabled, pureKotlinSourceFolders, kind, externalSystemRunTasks, version, flushNeeded, entitySource, init)"),
+      replaceWith = ReplaceWith(
+        "invoke(moduleId, name, sourceRoots, configFileItems, useProjectSettings, implementedModuleNames, dependsOnModuleNames, additionalVisibleModuleNames, sourceSetNames, isTestModule, externalProjectId, isHmppEnabled, pureKotlinSourceFolders, kind, externalSystemRunTasks, version, flushNeeded, entitySource, init)"),
     )
     @JvmOverloads
     @JvmStatic
@@ -158,7 +160,10 @@ interface KotlinSettingsEntity : ModuleSettingsFacetBridgeEntity {
       flushNeeded: Boolean,
       entitySource: EntitySource,
       init: (Builder.() -> Unit)? = null,
-    ): Builder = invoke(moduleId, name, sourceRoots, configFileItems, useProjectSettings, implementedModuleNames, dependsOnModuleNames, additionalVisibleModuleNames, sourceSetNames, isTestModule, externalProjectId, isHmppEnabled, pureKotlinSourceFolders, kind, externalSystemRunTasks, version, flushNeeded, entitySource, init)
+    ): Builder = invoke(moduleId, name, sourceRoots, configFileItems, useProjectSettings, implementedModuleNames, dependsOnModuleNames,
+                        additionalVisibleModuleNames, sourceSetNames, isTestModule, externalProjectId, isHmppEnabled,
+                        pureKotlinSourceFolders, kind, externalSystemRunTasks, version, flushNeeded, entitySource, init)
+    //endregion compatibility generated code
   }
   //endregion
 }
@@ -167,9 +172,7 @@ interface KotlinSettingsEntity : ModuleSettingsFacetBridgeEntity {
 fun MutableEntityStorage.modifyKotlinSettingsEntity(
   entity: KotlinSettingsEntity,
   modification: KotlinSettingsEntity.Builder.() -> Unit,
-): KotlinSettingsEntity {
-  return modifyEntity(KotlinSettingsEntity.Builder::class.java, entity, modification)
-}
+): KotlinSettingsEntity = modifyEntity(KotlinSettingsEntity.Builder::class.java, entity, modification)
 
 var ModuleEntity.Builder.kotlinSettings: List<KotlinSettingsEntity.Builder>
   by WorkspaceEntity.extensionBuilder(KotlinSettingsEntity::class.java)

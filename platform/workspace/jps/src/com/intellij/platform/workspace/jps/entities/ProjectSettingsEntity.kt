@@ -39,7 +39,5 @@ interface ProjectSettingsEntity : WorkspaceEntity {
 fun MutableEntityStorage.modifyProjectSettingsEntity(
   entity: ProjectSettingsEntity,
   modification: ProjectSettingsEntity.Builder.() -> Unit,
-): ProjectSettingsEntity {
-  return modifyEntity(ProjectSettingsEntity.Builder::class.java, entity, modification)
-}
+): ProjectSettingsEntity = modifyEntity(ProjectSettingsEntity.Builder::class.java, entity, modification)
 //endregion

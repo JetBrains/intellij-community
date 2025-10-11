@@ -22,12 +22,12 @@ import java.net.URL
 @GeneratedCodeApiVersion(3)
 @GeneratedCodeImplVersion(7)
 @OptIn(WorkspaceEntityInternalApi::class)
-internal class EntityWithManyImportsImpl(private val dataSource: EntityWithManyImportsData) : EntityWithManyImports,
-                                                                                              WorkspaceEntityBase(dataSource) {
+internal class EntityWithManyImportsImpl(private val dataSource: EntityWithManyImportsData) : EntityWithManyImports, WorkspaceEntityBase(
+  dataSource) {
 
   private companion object {
-    internal val FILES_CONNECTION_ID: ConnectionId =
-      ConnectionId.create(EntityWithManyImports::class.java, SimpleEntity::class.java, ConnectionId.ConnectionType.ONE_TO_MANY, false)
+    internal val FILES_CONNECTION_ID: ConnectionId = ConnectionId.create(EntityWithManyImports::class.java, SimpleEntity::class.java,
+                                                                         ConnectionId.ConnectionType.ONE_TO_MANY, false)
 
     private val connections = listOf<ConnectionId>(
       FILES_CONNECTION_ID,
@@ -68,8 +68,8 @@ internal class EntityWithManyImportsImpl(private val dataSource: EntityWithManyI
   }
 
 
-  internal class Builder(result: EntityWithManyImportsData?) :
-    ModifiableWorkspaceEntityBase<EntityWithManyImports, EntityWithManyImportsData>(result), EntityWithManyImports.Builder {
+  internal class Builder(result: EntityWithManyImportsData?) : ModifiableWorkspaceEntityBase<EntityWithManyImports, EntityWithManyImportsData>(
+    result), EntityWithManyImports.Builder {
     internal constructor() : this(EntityWithManyImportsData())
 
     override fun applyToBuilder(builder: MutableEntityStorage) {
@@ -167,8 +167,8 @@ internal class EntityWithManyImportsImpl(private val dataSource: EntityWithManyI
         val _diff = diff
         return if (_diff != null) {
           @OptIn(EntityStorageInstrumentationApi::class)
-          ((_diff as MutableEntityStorageInstrumentation).getManyChildrenBuilders(FILES_CONNECTION_ID, this)!!
-            .toList() as List<SimpleEntity.Builder>) +
+          ((_diff as MutableEntityStorageInstrumentation).getManyChildrenBuilders(FILES_CONNECTION_ID,
+                                                                                  this)!!.toList() as List<SimpleEntity.Builder>) +
           (this.entityLinks[EntityLink(true, FILES_CONNECTION_ID)] as? List<SimpleEntity.Builder> ?: emptyList())
         }
         else {

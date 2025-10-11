@@ -1,4 +1,4 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.idea.maven.importing.workspaceModel
 
 import com.intellij.platform.workspace.storage.EntitySource
@@ -43,7 +43,5 @@ interface MavenProjectsTreeSettingsEntity: WorkspaceEntity {
 fun MutableEntityStorage.modifyMavenProjectsTreeSettingsEntity(
   entity: MavenProjectsTreeSettingsEntity,
   modification: MavenProjectsTreeSettingsEntity.Builder.() -> Unit,
-): MavenProjectsTreeSettingsEntity {
-  return modifyEntity(MavenProjectsTreeSettingsEntity.Builder::class.java, entity, modification)
-}
+): MavenProjectsTreeSettingsEntity = modifyEntity(MavenProjectsTreeSettingsEntity.Builder::class.java, entity, modification)
 //endregion

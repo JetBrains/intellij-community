@@ -1,4 +1,4 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.ide.scratch.workspace.impl
 
 import com.intellij.ide.scratch.workspace.ScratchRootsEntity
@@ -23,8 +23,8 @@ import com.intellij.platform.workspace.storage.url.VirtualFileUrl
 @GeneratedCodeApiVersion(3)
 @GeneratedCodeImplVersion(7)
 @OptIn(WorkspaceEntityInternalApi::class)
-internal class ScratchRootsEntityImpl(private val dataSource: ScratchRootsEntityData) : ScratchRootsEntity,
-                                                                                        WorkspaceEntityBase(dataSource) {
+internal class ScratchRootsEntityImpl(private val dataSource: ScratchRootsEntityData) : ScratchRootsEntity, WorkspaceEntityBase(
+  dataSource) {
 
   private companion object {
 
@@ -51,8 +51,8 @@ internal class ScratchRootsEntityImpl(private val dataSource: ScratchRootsEntity
   }
 
 
-  internal class Builder(result: ScratchRootsEntityData?) :
-    ModifiableWorkspaceEntityBase<ScratchRootsEntity, ScratchRootsEntityData>(result), ScratchRootsEntity.Builder {
+  internal class Builder(result: ScratchRootsEntityData?) : ModifiableWorkspaceEntityBase<ScratchRootsEntity, ScratchRootsEntityData>(
+    result), ScratchRootsEntity.Builder {
     internal constructor() : this(ScratchRootsEntityData())
 
     override fun applyToBuilder(builder: MutableEntityStorage) {

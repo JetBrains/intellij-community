@@ -27,8 +27,8 @@ import com.intellij.workspaceModel.test.api.ReferredEntity
 internal class ReferredEntityImpl(private val dataSource: ReferredEntityData) : ReferredEntity, WorkspaceEntityBase(dataSource) {
 
   private companion object {
-    internal val CONTENTROOT_CONNECTION_ID: ConnectionId =
-      ConnectionId.create(ReferredEntity::class.java, ContentRootEntity::class.java, ConnectionId.ConnectionType.ONE_TO_ONE, false)
+    internal val CONTENTROOT_CONNECTION_ID: ConnectionId = ConnectionId.create(ReferredEntity::class.java, ContentRootEntity::class.java,
+                                                                               ConnectionId.ConnectionType.ONE_TO_ONE, false)
 
     private val connections = listOf<ConnectionId>(
       CONTENTROOT_CONNECTION_ID,
@@ -61,8 +61,8 @@ internal class ReferredEntityImpl(private val dataSource: ReferredEntityData) : 
   }
 
 
-  internal class Builder(result: ReferredEntityData?) : ModifiableWorkspaceEntityBase<ReferredEntity, ReferredEntityData>(result),
-                                                        ReferredEntity.Builder {
+  internal class Builder(result: ReferredEntityData?) : ModifiableWorkspaceEntityBase<ReferredEntity, ReferredEntityData>(
+    result), ReferredEntity.Builder {
     internal constructor() : this(ReferredEntityData())
 
     override fun applyToBuilder(builder: MutableEntityStorage) {

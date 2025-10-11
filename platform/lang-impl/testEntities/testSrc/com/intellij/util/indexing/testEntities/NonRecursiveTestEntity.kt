@@ -37,7 +37,5 @@ interface NonRecursiveTestEntity : WorkspaceEntity {
 fun MutableEntityStorage.modifyNonRecursiveTestEntity(
   entity: NonRecursiveTestEntity,
   modification: NonRecursiveTestEntity.Builder.() -> Unit,
-): NonRecursiveTestEntity {
-  return modifyEntity(NonRecursiveTestEntity.Builder::class.java, entity, modification)
-}
+): NonRecursiveTestEntity = modifyEntity(NonRecursiveTestEntity.Builder::class.java, entity, modification)
 //endregion

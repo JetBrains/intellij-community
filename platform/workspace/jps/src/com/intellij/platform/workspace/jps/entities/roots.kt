@@ -1,4 +1,4 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.platform.workspace.jps.entities
 
 import com.intellij.openapi.util.NlsSafe
@@ -61,9 +61,7 @@ interface ContentRootEntity : WorkspaceEntity {
 fun MutableEntityStorage.modifyContentRootEntity(
   entity: ContentRootEntity,
   modification: ContentRootEntity.Builder.() -> Unit,
-): ContentRootEntity {
-  return modifyEntity(ContentRootEntity.Builder::class.java, entity, modification)
-}
+): ContentRootEntity = modifyEntity(ContentRootEntity.Builder::class.java, entity, modification)
 
 @get:Internal
 @set:Internal
@@ -132,9 +130,7 @@ interface SourceRootEntity : WorkspaceEntity {
 fun MutableEntityStorage.modifySourceRootEntity(
   entity: SourceRootEntity,
   modification: SourceRootEntity.Builder.() -> Unit,
-): SourceRootEntity {
-  return modifyEntity(SourceRootEntity.Builder::class.java, entity, modification)
-}
+): SourceRootEntity = modifyEntity(SourceRootEntity.Builder::class.java, entity, modification)
 
 @get:Internal
 @set:Internal

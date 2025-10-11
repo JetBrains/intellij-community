@@ -1,4 +1,4 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 @file:ApiStatus.Internal
 package com.intellij.openapi.externalSystem.settings.workspaceModel
 
@@ -40,9 +40,7 @@ interface ExternalProjectsBuildClasspathEntity : WorkspaceEntity {
 fun MutableEntityStorage.modifyExternalProjectsBuildClasspathEntity(
   entity: ExternalProjectsBuildClasspathEntity,
   modification: ExternalProjectsBuildClasspathEntity.Builder.() -> Unit,
-): ExternalProjectsBuildClasspathEntity {
-  return modifyEntity(ExternalProjectsBuildClasspathEntity.Builder::class.java, entity, modification)
-}
+): ExternalProjectsBuildClasspathEntity = modifyEntity(ExternalProjectsBuildClasspathEntity.Builder::class.java, entity, modification)
 //endregion
 
 data class ExternalModuleBuildClasspathEntity(val path: String, val entries: List<String>)

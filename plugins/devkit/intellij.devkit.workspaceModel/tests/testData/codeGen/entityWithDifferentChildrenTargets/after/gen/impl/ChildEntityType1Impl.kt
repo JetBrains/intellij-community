@@ -27,8 +27,8 @@ import com.intellij.workspaceModel.test.api.EntityWithChildren
 internal class ChildEntityType1Impl(private val dataSource: ChildEntityType1Data) : ChildEntityType1, WorkspaceEntityBase(dataSource) {
 
   private companion object {
-    internal val PARENT_CONNECTION_ID: ConnectionId =
-      ConnectionId.create(EntityWithChildren::class.java, ChildEntityType1::class.java, ConnectionId.ConnectionType.ONE_TO_ONE, false)
+    internal val PARENT_CONNECTION_ID: ConnectionId = ConnectionId.create(EntityWithChildren::class.java, ChildEntityType1::class.java,
+                                                                          ConnectionId.ConnectionType.ONE_TO_ONE, false)
 
     private val connections = listOf<ConnectionId>(
       PARENT_CONNECTION_ID,
@@ -55,8 +55,8 @@ internal class ChildEntityType1Impl(private val dataSource: ChildEntityType1Data
   }
 
 
-  internal class Builder(result: ChildEntityType1Data?) : ModifiableWorkspaceEntityBase<ChildEntityType1, ChildEntityType1Data>(result),
-                                                          ChildEntityType1.Builder {
+  internal class Builder(result: ChildEntityType1Data?) : ModifiableWorkspaceEntityBase<ChildEntityType1, ChildEntityType1Data>(
+    result), ChildEntityType1.Builder {
     internal constructor() : this(ChildEntityType1Data())
 
     override fun applyToBuilder(builder: MutableEntityStorage) {

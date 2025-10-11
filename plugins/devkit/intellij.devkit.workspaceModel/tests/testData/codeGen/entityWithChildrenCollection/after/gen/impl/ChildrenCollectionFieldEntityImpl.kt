@@ -24,15 +24,14 @@ import com.intellij.workspaceModel.test.api.SimpleEntity
 @GeneratedCodeApiVersion(3)
 @GeneratedCodeImplVersion(7)
 @OptIn(WorkspaceEntityInternalApi::class)
-internal class ChildrenCollectionFieldEntityImpl(private val dataSource: ChildrenCollectionFieldEntityData) : ChildrenCollectionFieldEntity,
-                                                                                                              WorkspaceEntityBase(
-                                                                                                                dataSource
-                                                                                                              ) {
+internal class ChildrenCollectionFieldEntityImpl(private val dataSource: ChildrenCollectionFieldEntityData) : ChildrenCollectionFieldEntity, WorkspaceEntityBase(
+  dataSource) {
 
   private companion object {
-    internal val CHILDRENENTITIESCOLLECTION_CONNECTION_ID: ConnectionId = ConnectionId.create(
-      ChildrenCollectionFieldEntity::class.java, SimpleEntity::class.java, ConnectionId.ConnectionType.ONE_TO_MANY, false
-    )
+    internal val CHILDRENENTITIESCOLLECTION_CONNECTION_ID: ConnectionId = ConnectionId.create(ChildrenCollectionFieldEntity::class.java,
+                                                                                              SimpleEntity::class.java,
+                                                                                              ConnectionId.ConnectionType.ONE_TO_MANY,
+                                                                                              false)
 
     private val connections = listOf<ConnectionId>(
       CHILDRENENTITIESCOLLECTION_CONNECTION_ID,
@@ -60,9 +59,8 @@ internal class ChildrenCollectionFieldEntityImpl(private val dataSource: Childre
   }
 
 
-  internal class Builder(result: ChildrenCollectionFieldEntityData?) :
-    ModifiableWorkspaceEntityBase<ChildrenCollectionFieldEntity, ChildrenCollectionFieldEntityData>(result),
-    ChildrenCollectionFieldEntity.Builder {
+  internal class Builder(result: ChildrenCollectionFieldEntityData?) : ModifiableWorkspaceEntityBase<ChildrenCollectionFieldEntity, ChildrenCollectionFieldEntityData>(
+    result), ChildrenCollectionFieldEntity.Builder {
     internal constructor() : this(ChildrenCollectionFieldEntityData())
 
     override fun applyToBuilder(builder: MutableEntityStorage) {
@@ -147,8 +145,8 @@ internal class ChildrenCollectionFieldEntityImpl(private val dataSource: Childre
         val _diff = diff
         return if (_diff != null) {
           @OptIn(EntityStorageInstrumentationApi::class)
-          ((_diff as MutableEntityStorageInstrumentation).getManyChildrenBuilders(CHILDRENENTITIESCOLLECTION_CONNECTION_ID, this)!!
-            .toList() as List<SimpleEntity.Builder>) +
+          ((_diff as MutableEntityStorageInstrumentation).getManyChildrenBuilders(CHILDRENENTITIESCOLLECTION_CONNECTION_ID,
+                                                                                  this)!!.toList() as List<SimpleEntity.Builder>) +
           (this.entityLinks[EntityLink(true, CHILDRENENTITIESCOLLECTION_CONNECTION_ID)] as? List<SimpleEntity.Builder> ?: emptyList())
         }
         else {

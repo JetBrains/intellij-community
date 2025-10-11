@@ -1,4 +1,4 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 
 package org.jetbrains.kotlin.idea.base.projectStructure.forwardDeclarations
 
@@ -56,9 +56,8 @@ interface KotlinForwardDeclarationsWorkspaceEntity : WorkspaceEntity {
 fun MutableEntityStorage.modifyKotlinForwardDeclarationsWorkspaceEntity(
   entity: KotlinForwardDeclarationsWorkspaceEntity,
   modification: KotlinForwardDeclarationsWorkspaceEntity.Builder.() -> Unit,
-): KotlinForwardDeclarationsWorkspaceEntity {
-  return modifyEntity(KotlinForwardDeclarationsWorkspaceEntity.Builder::class.java, entity, modification)
-}
+): KotlinForwardDeclarationsWorkspaceEntity =
+  modifyEntity(KotlinForwardDeclarationsWorkspaceEntity.Builder::class.java, entity, modification)
 
 var LibraryEntity.Builder.kotlinForwardDeclarationsWorkspaceEntity: KotlinForwardDeclarationsWorkspaceEntity.Builder?
   by WorkspaceEntity.extensionBuilder(KotlinForwardDeclarationsWorkspaceEntity::class.java)

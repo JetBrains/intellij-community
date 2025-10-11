@@ -29,14 +29,13 @@ import org.jetbrains.annotations.NonNls
 @GeneratedCodeApiVersion(3)
 @GeneratedCodeImplVersion(7)
 @OptIn(WorkspaceEntityInternalApi::class)
-internal class ModuleTestOutputPackagingElementEntityImpl(private val dataSource: ModuleTestOutputPackagingElementEntityData) :
-  ModuleTestOutputPackagingElementEntity, WorkspaceEntityBase(dataSource) {
+internal class ModuleTestOutputPackagingElementEntityImpl(private val dataSource: ModuleTestOutputPackagingElementEntityData) : ModuleTestOutputPackagingElementEntity, WorkspaceEntityBase(
+  dataSource) {
 
   private companion object {
-    internal val PARENTENTITY_CONNECTION_ID: ConnectionId = ConnectionId.create(
-      CompositePackagingElementEntity::class.java, PackagingElementEntity::class.java, ConnectionId.ConnectionType.ONE_TO_ABSTRACT_MANY,
-      true
-    )
+    internal val PARENTENTITY_CONNECTION_ID: ConnectionId = ConnectionId.create(CompositePackagingElementEntity::class.java,
+                                                                                PackagingElementEntity::class.java,
+                                                                                ConnectionId.ConnectionType.ONE_TO_ABSTRACT_MANY, true)
 
     private val connections = listOf<ConnectionId>(
       PARENTENTITY_CONNECTION_ID,
@@ -64,9 +63,8 @@ internal class ModuleTestOutputPackagingElementEntityImpl(private val dataSource
   }
 
 
-  internal class Builder(result: ModuleTestOutputPackagingElementEntityData?) :
-    ModifiableWorkspaceEntityBase<ModuleTestOutputPackagingElementEntity, ModuleTestOutputPackagingElementEntityData>(result),
-    ModuleTestOutputPackagingElementEntity.Builder {
+  internal class Builder(result: ModuleTestOutputPackagingElementEntityData?) : ModifiableWorkspaceEntityBase<ModuleTestOutputPackagingElementEntity, ModuleTestOutputPackagingElementEntityData>(
+    result), ModuleTestOutputPackagingElementEntity.Builder {
     internal constructor() : this(ModuleTestOutputPackagingElementEntityData())
 
     override fun applyToBuilder(builder: MutableEntityStorage) {
@@ -126,17 +124,14 @@ internal class ModuleTestOutputPackagingElementEntityImpl(private val dataSource
         val _diff = diff
         return if (_diff != null) {
           @OptIn(EntityStorageInstrumentationApi::class)
-          ((_diff as MutableEntityStorageInstrumentation).getParentBuilder(
-            PARENTENTITY_CONNECTION_ID, this
-          ) as? CompositePackagingElementEntity.Builder<out CompositePackagingElementEntity>)
-          ?: (this.entityLinks[EntityLink(
-            false, PARENTENTITY_CONNECTION_ID
-          )] as? CompositePackagingElementEntity.Builder<out CompositePackagingElementEntity>)
+          ((_diff as MutableEntityStorageInstrumentation).getParentBuilder(PARENTENTITY_CONNECTION_ID,
+                                                                           this) as? CompositePackagingElementEntity.Builder<out CompositePackagingElementEntity>)
+          ?: (this.entityLinks[EntityLink(false,
+                                          PARENTENTITY_CONNECTION_ID)] as? CompositePackagingElementEntity.Builder<out CompositePackagingElementEntity>)
         }
         else {
-          this.entityLinks[EntityLink(
-            false, PARENTENTITY_CONNECTION_ID
-          )] as? CompositePackagingElementEntity.Builder<out CompositePackagingElementEntity>
+          this.entityLinks[EntityLink(false,
+                                      PARENTENTITY_CONNECTION_ID)] as? CompositePackagingElementEntity.Builder<out CompositePackagingElementEntity>
         }
       }
       set(value) {
@@ -257,8 +252,7 @@ internal class ModuleTestOutputPackagingElementEntityData : WorkspaceEntityData<
 
   override fun getMetadata(): EntityMetadata {
     return MetadataStorageImpl.getMetadataByTypeFqn(
-      "com.intellij.java.workspace.entities.ModuleTestOutputPackagingElementEntity"
-    ) as EntityMetadata
+      "com.intellij.java.workspace.entities.ModuleTestOutputPackagingElementEntity") as EntityMetadata
   }
 
   override fun getEntityInterface(): Class<out WorkspaceEntity> {
@@ -268,8 +262,7 @@ internal class ModuleTestOutputPackagingElementEntityData : WorkspaceEntityData<
   override fun createDetachedEntity(parents: List<WorkspaceEntity.Builder<*>>): WorkspaceEntity.Builder<*> {
     return ModuleTestOutputPackagingElementEntity(entitySource) {
       this.module = this@ModuleTestOutputPackagingElementEntityData.module
-      this.parentEntity =
-        parents.filterIsInstance<CompositePackagingElementEntity.Builder<out CompositePackagingElementEntity>>().singleOrNull()
+      this.parentEntity = parents.filterIsInstance<CompositePackagingElementEntity.Builder<out CompositePackagingElementEntity>>().singleOrNull()
     }
   }
 

@@ -83,8 +83,8 @@ internal class ChildEntityImpl(private val dataSource: ChildEntityData) : ChildE
   }
 
 
-  internal class Builder(result: ChildEntityData?) : ModifiableWorkspaceEntityBase<ChildEntity, ChildEntityData>(result),
-                                                     ChildEntity.Builder {
+  internal class Builder(result: ChildEntityData?) : ModifiableWorkspaceEntityBase<ChildEntity, ChildEntityData>(
+    result), ChildEntity.Builder {
     internal constructor() : this(ChildEntityData())
 
     override fun applyToBuilder(builder: MutableEntityStorage) {
@@ -151,8 +151,7 @@ internal class ChildEntityImpl(private val dataSource: ChildEntityData) : ChildE
       if (this.aBaseEntityProperty != dataSource.aBaseEntityProperty) this.aBaseEntityProperty = dataSource.aBaseEntityProperty
       if (this.dBaseEntityProperty != dataSource.dBaseEntityProperty) this.dBaseEntityProperty = dataSource.dBaseEntityProperty
       if (this.bBaseEntityProperty != dataSource.bBaseEntityProperty) this.bBaseEntityProperty = dataSource.bBaseEntityProperty
-      if (this.sealedDataClassProperty != dataSource.sealedDataClassProperty) this.sealedDataClassProperty =
-        dataSource.sealedDataClassProperty
+      if (this.sealedDataClassProperty != dataSource.sealedDataClassProperty) this.sealedDataClassProperty = dataSource.sealedDataClassProperty
       if (this.cChildEntityProperty != dataSource.cChildEntityProperty) this.cChildEntityProperty = dataSource.cChildEntityProperty
       updateChildToParentReferences(parents)
     }
@@ -356,10 +355,8 @@ internal class ChildEntityData : WorkspaceEntityData<ChildEntity>(), SoftLinkabl
   }
 
   override fun createDetachedEntity(parents: List<WorkspaceEntity.Builder<*>>): WorkspaceEntity.Builder<*> {
-    return ChildEntity(
-      name, moduleId, aBaseEntityProperty, dBaseEntityProperty, bBaseEntityProperty, sealedDataClassProperty, cChildEntityProperty,
-      entitySource
-    ) {
+    return ChildEntity(name, moduleId, aBaseEntityProperty, dBaseEntityProperty, bBaseEntityProperty, sealedDataClassProperty,
+                       cChildEntityProperty, entitySource) {
     }
   }
 

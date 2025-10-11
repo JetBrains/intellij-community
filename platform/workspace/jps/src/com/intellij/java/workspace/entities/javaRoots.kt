@@ -1,4 +1,4 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.java.workspace.entities
 
 import com.intellij.openapi.util.NlsSafe
@@ -52,9 +52,7 @@ interface JavaSourceRootPropertiesEntity : WorkspaceEntity {
 fun MutableEntityStorage.modifyJavaSourceRootPropertiesEntity(
   entity: JavaSourceRootPropertiesEntity,
   modification: JavaSourceRootPropertiesEntity.Builder.() -> Unit,
-): JavaSourceRootPropertiesEntity {
-  return modifyEntity(JavaSourceRootPropertiesEntity.Builder::class.java, entity, modification)
-}
+): JavaSourceRootPropertiesEntity = modifyEntity(JavaSourceRootPropertiesEntity.Builder::class.java, entity, modification)
 
 var SourceRootEntity.Builder.javaSourceRoots: List<JavaSourceRootPropertiesEntity.Builder>
   by WorkspaceEntity.extensionBuilder(JavaSourceRootPropertiesEntity::class.java)
@@ -105,9 +103,7 @@ interface JavaResourceRootPropertiesEntity: WorkspaceEntity {
 fun MutableEntityStorage.modifyJavaResourceRootPropertiesEntity(
   entity: JavaResourceRootPropertiesEntity,
   modification: JavaResourceRootPropertiesEntity.Builder.() -> Unit,
-): JavaResourceRootPropertiesEntity {
-  return modifyEntity(JavaResourceRootPropertiesEntity.Builder::class.java, entity, modification)
-}
+): JavaResourceRootPropertiesEntity = modifyEntity(JavaResourceRootPropertiesEntity.Builder::class.java, entity, modification)
 
 var SourceRootEntity.Builder.javaResourceRoots: List<JavaResourceRootPropertiesEntity.Builder>
   by WorkspaceEntity.extensionBuilder(JavaResourceRootPropertiesEntity::class.java)

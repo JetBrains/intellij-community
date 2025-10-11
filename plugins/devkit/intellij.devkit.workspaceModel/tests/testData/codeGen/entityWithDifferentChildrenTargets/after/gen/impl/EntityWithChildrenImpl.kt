@@ -25,14 +25,15 @@ import com.intellij.workspaceModel.test.api.EntityWithChildren
 @GeneratedCodeApiVersion(3)
 @GeneratedCodeImplVersion(7)
 @OptIn(WorkspaceEntityInternalApi::class)
-internal class EntityWithChildrenImpl(private val dataSource: EntityWithChildrenData) : EntityWithChildren,
-                                                                                        WorkspaceEntityBase(dataSource) {
+internal class EntityWithChildrenImpl(private val dataSource: EntityWithChildrenData) : EntityWithChildren, WorkspaceEntityBase(
+  dataSource) {
 
   private companion object {
-    internal val PROPERTYCHILD_CONNECTION_ID: ConnectionId =
-      ConnectionId.create(EntityWithChildren::class.java, ChildEntityType1::class.java, ConnectionId.ConnectionType.ONE_TO_ONE, false)
-    internal val TYPECHILD_CONNECTION_ID: ConnectionId =
-      ConnectionId.create(EntityWithChildren::class.java, ChildEntityType2::class.java, ConnectionId.ConnectionType.ONE_TO_ONE, false)
+    internal val PROPERTYCHILD_CONNECTION_ID: ConnectionId = ConnectionId.create(EntityWithChildren::class.java,
+                                                                                 ChildEntityType1::class.java,
+                                                                                 ConnectionId.ConnectionType.ONE_TO_ONE, false)
+    internal val TYPECHILD_CONNECTION_ID: ConnectionId = ConnectionId.create(EntityWithChildren::class.java, ChildEntityType2::class.java,
+                                                                             ConnectionId.ConnectionType.ONE_TO_ONE, false)
 
     private val connections = listOf<ConnectionId>(
       PROPERTYCHILD_CONNECTION_ID,
@@ -64,8 +65,8 @@ internal class EntityWithChildrenImpl(private val dataSource: EntityWithChildren
   }
 
 
-  internal class Builder(result: EntityWithChildrenData?) :
-    ModifiableWorkspaceEntityBase<EntityWithChildren, EntityWithChildrenData>(result), EntityWithChildren.Builder {
+  internal class Builder(result: EntityWithChildrenData?) : ModifiableWorkspaceEntityBase<EntityWithChildren, EntityWithChildrenData>(
+    result), EntityWithChildren.Builder {
     internal constructor() : this(EntityWithChildrenData())
 
     override fun applyToBuilder(builder: MutableEntityStorage) {
@@ -136,9 +137,8 @@ internal class EntityWithChildrenImpl(private val dataSource: EntityWithChildren
         val _diff = diff
         return if (_diff != null) {
           @OptIn(EntityStorageInstrumentationApi::class)
-          ((_diff as MutableEntityStorageInstrumentation).getOneChildBuilder(
-            PROPERTYCHILD_CONNECTION_ID, this
-          ) as? ChildEntityType1.Builder)
+          ((_diff as MutableEntityStorageInstrumentation).getOneChildBuilder(PROPERTYCHILD_CONNECTION_ID,
+                                                                             this) as? ChildEntityType1.Builder)
           ?: (this.entityLinks[EntityLink(true, PROPERTYCHILD_CONNECTION_ID)] as? ChildEntityType1.Builder)
         }
         else {

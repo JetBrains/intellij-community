@@ -36,14 +36,16 @@ import org.jetbrains.annotations.NonNls
 internal class ArtifactEntityImpl(private val dataSource: ArtifactEntityData) : ArtifactEntity, WorkspaceEntityBase(dataSource) {
 
   private companion object {
-    internal val ROOTELEMENT_CONNECTION_ID: ConnectionId = ConnectionId.create(
-      ArtifactEntity::class.java, CompositePackagingElementEntity::class.java, ConnectionId.ConnectionType.ABSTRACT_ONE_TO_ONE, true
-    )
-    internal val CUSTOMPROPERTIES_CONNECTION_ID: ConnectionId =
-      ConnectionId.create(ArtifactEntity::class.java, ArtifactPropertiesEntity::class.java, ConnectionId.ConnectionType.ONE_TO_MANY, false)
-    internal val ARTIFACTOUTPUTPACKAGINGELEMENT_CONNECTION_ID: ConnectionId = ConnectionId.create(
-      ArtifactEntity::class.java, ArtifactOutputPackagingElementEntity::class.java, ConnectionId.ConnectionType.ONE_TO_ONE, true
-    )
+    internal val ROOTELEMENT_CONNECTION_ID: ConnectionId = ConnectionId.create(ArtifactEntity::class.java,
+                                                                               CompositePackagingElementEntity::class.java,
+                                                                               ConnectionId.ConnectionType.ABSTRACT_ONE_TO_ONE, true)
+    internal val CUSTOMPROPERTIES_CONNECTION_ID: ConnectionId = ConnectionId.create(ArtifactEntity::class.java,
+                                                                                    ArtifactPropertiesEntity::class.java,
+                                                                                    ConnectionId.ConnectionType.ONE_TO_MANY, false)
+    internal val ARTIFACTOUTPUTPACKAGINGELEMENT_CONNECTION_ID: ConnectionId = ConnectionId.create(ArtifactEntity::class.java,
+                                                                                                  ArtifactOutputPackagingElementEntity::class.java,
+                                                                                                  ConnectionId.ConnectionType.ONE_TO_ONE,
+                                                                                                  true)
 
     private val connections = listOf<ConnectionId>(
       ROOTELEMENT_CONNECTION_ID,
@@ -98,8 +100,8 @@ internal class ArtifactEntityImpl(private val dataSource: ArtifactEntityData) : 
   }
 
 
-  internal class Builder(result: ArtifactEntityData?) : ModifiableWorkspaceEntityBase<ArtifactEntity, ArtifactEntityData>(result),
-                                                        ArtifactEntity.Builder {
+  internal class Builder(result: ArtifactEntityData?) : ModifiableWorkspaceEntityBase<ArtifactEntity, ArtifactEntityData>(
+    result), ArtifactEntity.Builder {
     internal constructor() : this(ArtifactEntityData())
 
     override fun applyToBuilder(builder: MutableEntityStorage) {
@@ -214,17 +216,14 @@ internal class ArtifactEntityImpl(private val dataSource: ArtifactEntityData) : 
         val _diff = diff
         return if (_diff != null) {
           @OptIn(EntityStorageInstrumentationApi::class)
-          ((_diff as MutableEntityStorageInstrumentation).getOneChildBuilder(
-            ROOTELEMENT_CONNECTION_ID, this
-          ) as? CompositePackagingElementEntity.Builder<out CompositePackagingElementEntity>)
-          ?: (this.entityLinks[EntityLink(
-            true, ROOTELEMENT_CONNECTION_ID
-          )] as? CompositePackagingElementEntity.Builder<out CompositePackagingElementEntity>)
+          ((_diff as MutableEntityStorageInstrumentation).getOneChildBuilder(ROOTELEMENT_CONNECTION_ID,
+                                                                             this) as? CompositePackagingElementEntity.Builder<out CompositePackagingElementEntity>)
+          ?: (this.entityLinks[EntityLink(true,
+                                          ROOTELEMENT_CONNECTION_ID)] as? CompositePackagingElementEntity.Builder<out CompositePackagingElementEntity>)
         }
         else {
-          this.entityLinks[EntityLink(
-            true, ROOTELEMENT_CONNECTION_ID
-          )] as? CompositePackagingElementEntity.Builder<out CompositePackagingElementEntity>
+          this.entityLinks[EntityLink(true,
+                                      ROOTELEMENT_CONNECTION_ID)] as? CompositePackagingElementEntity.Builder<out CompositePackagingElementEntity>
         }
       }
       set(value) {
@@ -259,8 +258,8 @@ internal class ArtifactEntityImpl(private val dataSource: ArtifactEntityData) : 
         val _diff = diff
         return if (_diff != null) {
           @OptIn(EntityStorageInstrumentationApi::class)
-          ((_diff as MutableEntityStorageInstrumentation).getManyChildrenBuilders(CUSTOMPROPERTIES_CONNECTION_ID, this)!!
-            .toList() as List<ArtifactPropertiesEntity.Builder>) +
+          ((_diff as MutableEntityStorageInstrumentation).getManyChildrenBuilders(CUSTOMPROPERTIES_CONNECTION_ID,
+                                                                                  this)!!.toList() as List<ArtifactPropertiesEntity.Builder>) +
           (this.entityLinks[EntityLink(true, CUSTOMPROPERTIES_CONNECTION_ID)] as? List<ArtifactPropertiesEntity.Builder> ?: emptyList())
         }
         else {
@@ -303,12 +302,10 @@ internal class ArtifactEntityImpl(private val dataSource: ArtifactEntityData) : 
         val _diff = diff
         return if (_diff != null) {
           @OptIn(EntityStorageInstrumentationApi::class)
-          ((_diff as MutableEntityStorageInstrumentation).getOneChildBuilder(
-            ARTIFACTOUTPUTPACKAGINGELEMENT_CONNECTION_ID, this
-          ) as? ArtifactOutputPackagingElementEntity.Builder)
-          ?: (this.entityLinks[EntityLink(
-            true, ARTIFACTOUTPUTPACKAGINGELEMENT_CONNECTION_ID
-          )] as? ArtifactOutputPackagingElementEntity.Builder)
+          ((_diff as MutableEntityStorageInstrumentation).getOneChildBuilder(ARTIFACTOUTPUTPACKAGINGELEMENT_CONNECTION_ID,
+                                                                             this) as? ArtifactOutputPackagingElementEntity.Builder)
+          ?: (this.entityLinks[EntityLink(true,
+                                          ARTIFACTOUTPUTPACKAGINGELEMENT_CONNECTION_ID)] as? ArtifactOutputPackagingElementEntity.Builder)
         }
         else {
           this.entityLinks[EntityLink(true, ARTIFACTOUTPUTPACKAGINGELEMENT_CONNECTION_ID)] as? ArtifactOutputPackagingElementEntity.Builder

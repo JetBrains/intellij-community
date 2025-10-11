@@ -67,8 +67,8 @@ internal class EntityWithUrlsImpl(private val dataSource: EntityWithUrlsData) : 
   }
 
 
-  internal class Builder(result: EntityWithUrlsData?) : ModifiableWorkspaceEntityBase<EntityWithUrls, EntityWithUrlsData>(result),
-                                                        EntityWithUrls.Builder {
+  internal class Builder(result: EntityWithUrlsData?) : ModifiableWorkspaceEntityBase<EntityWithUrls, EntityWithUrlsData>(
+    result), EntityWithUrls.Builder {
     internal constructor() : this(EntityWithUrlsData())
 
     override fun applyToBuilder(builder: MutableEntityStorage) {

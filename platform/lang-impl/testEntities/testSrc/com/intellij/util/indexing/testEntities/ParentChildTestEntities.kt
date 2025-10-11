@@ -1,4 +1,4 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.util.indexing.testEntities
 
 import com.intellij.platform.workspace.storage.EntitySource
@@ -51,9 +51,7 @@ interface ParentTestEntity : WorkspaceEntity {
 fun MutableEntityStorage.modifyParentTestEntity(
   entity: ParentTestEntity,
   modification: ParentTestEntity.Builder.() -> Unit,
-): ParentTestEntity {
-  return modifyEntity(ParentTestEntity.Builder::class.java, entity, modification)
-}
+): ParentTestEntity = modifyEntity(ParentTestEntity.Builder::class.java, entity, modification)
 //endregion
 
 interface ChildTestEntity : WorkspaceEntity {
@@ -92,9 +90,7 @@ interface ChildTestEntity : WorkspaceEntity {
 fun MutableEntityStorage.modifyChildTestEntity(
   entity: ChildTestEntity,
   modification: ChildTestEntity.Builder.() -> Unit,
-): ChildTestEntity {
-  return modifyEntity(ChildTestEntity.Builder::class.java, entity, modification)
-}
+): ChildTestEntity = modifyEntity(ChildTestEntity.Builder::class.java, entity, modification)
 //endregion
 
 /**
@@ -137,7 +133,5 @@ interface SiblingEntity : WorkspaceEntity {
 fun MutableEntityStorage.modifySiblingEntity(
   entity: SiblingEntity,
   modification: SiblingEntity.Builder.() -> Unit,
-): SiblingEntity {
-  return modifyEntity(SiblingEntity.Builder::class.java, entity, modification)
-}
+): SiblingEntity = modifyEntity(SiblingEntity.Builder::class.java, entity, modification)
 //endregion

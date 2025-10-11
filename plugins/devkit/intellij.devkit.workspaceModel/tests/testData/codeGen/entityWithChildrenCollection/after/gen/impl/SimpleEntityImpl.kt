@@ -27,9 +27,9 @@ import com.intellij.workspaceModel.test.api.SimpleEntity
 internal class SimpleEntityImpl(private val dataSource: SimpleEntityData) : SimpleEntity, WorkspaceEntityBase(dataSource) {
 
   private companion object {
-    internal val PARENT_CONNECTION_ID: ConnectionId = ConnectionId.create(
-      ChildrenCollectionFieldEntity::class.java, SimpleEntity::class.java, ConnectionId.ConnectionType.ONE_TO_MANY, false
-    )
+    internal val PARENT_CONNECTION_ID: ConnectionId = ConnectionId.create(ChildrenCollectionFieldEntity::class.java,
+                                                                          SimpleEntity::class.java, ConnectionId.ConnectionType.ONE_TO_MANY,
+                                                                          false)
 
     private val connections = listOf<ConnectionId>(
       PARENT_CONNECTION_ID,
@@ -67,8 +67,8 @@ internal class SimpleEntityImpl(private val dataSource: SimpleEntityData) : Simp
   }
 
 
-  internal class Builder(result: SimpleEntityData?) : ModifiableWorkspaceEntityBase<SimpleEntity, SimpleEntityData>(result),
-                                                      SimpleEntity.Builder {
+  internal class Builder(result: SimpleEntityData?) : ModifiableWorkspaceEntityBase<SimpleEntity, SimpleEntityData>(
+    result), SimpleEntity.Builder {
     internal constructor() : this(SimpleEntityData())
 
     override fun applyToBuilder(builder: MutableEntityStorage) {
@@ -167,9 +167,8 @@ internal class SimpleEntityImpl(private val dataSource: SimpleEntityData) : Simp
         val _diff = diff
         return if (_diff != null) {
           @OptIn(EntityStorageInstrumentationApi::class)
-          ((_diff as MutableEntityStorageInstrumentation).getParentBuilder(
-            PARENT_CONNECTION_ID, this
-          ) as? ChildrenCollectionFieldEntity.Builder)
+          ((_diff as MutableEntityStorageInstrumentation).getParentBuilder(PARENT_CONNECTION_ID,
+                                                                           this) as? ChildrenCollectionFieldEntity.Builder)
           ?: (this.entityLinks[EntityLink(false, PARENT_CONNECTION_ID)]!! as ChildrenCollectionFieldEntity.Builder)
         }
         else {
