@@ -762,9 +762,6 @@ internal class BazelBuildFileGenerator(
         if (resource.relativeOutputPath.isNotEmpty()) {
           option("add_prefix", resource.relativeOutputPath)
         }
-        if (hasOnlyTestResources(module)) {
-          visibility(arrayOf("//visibility:public"))
-        }
       }
 
       BazelLabel(name, module)
