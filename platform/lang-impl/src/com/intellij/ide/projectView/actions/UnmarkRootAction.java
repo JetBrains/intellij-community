@@ -24,8 +24,7 @@ import java.util.Set;
 public class UnmarkRootAction extends MarkRootActionBase {
   @Override
   protected void doUpdate(@NotNull AnActionEvent e, @Nullable Module module, @NotNull RootsSelection selection) {
-    if (!Registry.is("ide.hide.excluded.files") && !selection.mySelectedExcludeRoots.isEmpty()
-        && selection.mySelectedDirectories.isEmpty() && selection.mySelectedRoots.isEmpty()) {
+    if (!Registry.is("ide.hide.excluded.files") && module != null && canCancelExclusion(selection, module)) {
       e.getPresentation().setEnabledAndVisible(true);
       e.getPresentation().setText(LangBundle.messagePointer("mark.as.unmark.excluded"));
       return;
@@ -35,6 +34,14 @@ public class UnmarkRootAction extends MarkRootActionBase {
 
     String text = getActionText(e, module, selection);
     if (text != null) e.getPresentation().setText(text);
+  }
+
+  private static boolean canCancelExclusion(@NotNull RootsSelection selection, @NotNull Module module) {
+    return selection.mySelectedRoots.isEmpty() &&
+           selection.mySelectedExcludeRoots.size() + selection.mySelectedDirectories.size() > 0 &&
+           ContainerUtil.all(selection.mySelectedDirectories, dir -> {
+             return OptionalExclusionUtil.canCancelExclusion(module.getProject(), dir);
+           });
   }
 
   protected @Nullable @ActionText String getActionText(@NotNull AnActionEvent e, @Nullable Module module, @NotNull RootsSelection selection) {

@@ -23,6 +23,13 @@ object OptionalExclusionUtil {
   }
 
   @JvmStatic
+  fun canCancelExclusion(project: Project, fileOrDir: VirtualFile): Boolean {
+    return EP_NAME.extensionList.any {
+      it.canCancelExclusion(project, fileOrDir)
+    }
+  }
+
+  @JvmStatic
   fun cancelExclusion(project: Project, fileOrDir: VirtualFile): Boolean {
     var cancelled = false
     for (exclusionContributor in EP_NAME.extensionList) {

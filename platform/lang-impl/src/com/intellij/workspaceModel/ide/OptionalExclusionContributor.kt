@@ -30,6 +30,12 @@ interface OptionalExclusionContributor {
   fun requestExclusion(project: Project, fileOrDir: VirtualFile): Boolean
 
   /**
+   * Checks if an excluded file/directory can be unexcluded.
+   * It can be invoked on any thread with or without read action.
+   */
+  fun canCancelExclusion(project: Project, excludedFileOrDir: VirtualFile): Boolean
+
+  /**
    * Invoked when an excluded file/directory is requested to be unexcluded.
    * It can be invoked on any thread with or without read action.
    * If the implementation can handle the request, it should return `true` and cancel the exclusion asynchronously.
