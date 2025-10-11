@@ -16,6 +16,7 @@ import ai.grazie.utils.toLinkedSet
 import com.intellij.codeInspection.LocalInspectionToolSession
 import com.intellij.grazie.GrazieConfig
 import com.intellij.grazie.GrazieConfig.State.Processing
+import com.intellij.grazie.cloud.APIQueries
 import com.intellij.grazie.cloud.GrazieCloudConnector
 import com.intellij.grazie.ide.inspection.grammar.GrazieInspection.Companion.sortByPriority
 import com.intellij.grazie.mlec.LanguageHolder
@@ -183,8 +184,7 @@ object GrazieTextLevelSpellCheckingExtension {
       language: Language,
     ) : SentenceBatcher<SentenceWithProblems>(language, 32), Disposable {
       override suspend fun parse(sentences: List<SentenceWithExclusions>, project: Project): Map<SentenceWithExclusions, SentenceWithProblems>? {
-        return GrazieCloudConnector.EP_NAME.extensionList
-                 .firstNotNullOfOrNull { it.spell(sentences, language, project) }
+        return APIQueries.spell(sentences, language, project)
                  ?.zip(sentences)
                  ?.associate { it.second to it.first }
       }

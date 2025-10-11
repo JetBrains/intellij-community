@@ -193,6 +193,12 @@ private class ClassFileChecker(private val versionRules: List<Rule>,
       return
     }
 
+    // Check if relPath starts with any exception prefix
+    if (forbiddenSubPathExceptions.any { relPath.startsWith(it) }) {
+      Span.current().addEvent("$relPath matches an exception prefix and will be excepted from the forbidden sub paths check.")
+      return
+    }
+
     for (f in forbiddenSubPaths) {
       if (relPath.contains(f)) {
         errors.add("$relPath: .class file has a forbidden sub-path: $f")

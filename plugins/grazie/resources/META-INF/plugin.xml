@@ -51,6 +51,7 @@
     <applicationService serviceImplementation="com.intellij.grazie.GrazieConfig"/>
 
     <backgroundPostStartupActivity implementation="com.intellij.grazie.ide.notification.GrazieNotificationComponent"/>
+    <backgroundPostStartupActivity implementation="com.intellij.grazie.cloud.license.LicenseStartupActivity"/>
     <postStartupActivity implementation="com.intellij.grazie.spellcheck.engine.GrazieSpellCheckerEngine$SpellerLoadActivity"/>
 
     <!-- getDisplayName is overridden in GrazieInspection itself! Placeholder is required to suppress validation. -->
@@ -114,6 +115,9 @@
 
     <registryKey key="spellchecker.grazie.enabled" defaultValue="true" description="Enables Grazie text-level spellchecking"/>
     <registryKey key="spellchecker.cloud.enabled" defaultValue="true" description="Enables spellchecking via Cloud when it is available"/>
+    <registryKey key="grazie.enable.status.bar.widget" defaultValue="true" description="Controls if the new Grazie status bar widget is available"/>
+    <registryKey key="grazie.cloud.stage" defaultValue="PROD" description="Whether Grazie Pro should use PROD or STGN servers"/>
+    <registryKey key="grazie.cloud.production.url" defaultValue="https://api.jetbrains.ai/" description="Grazie Cloud production url"/>
     <registryKey key="grazie.skip.precommit.checks"
                  defaultValue="true"
                  description="Controls whether expensive linguistic checks should be performed during pre-commit code analysis"/>

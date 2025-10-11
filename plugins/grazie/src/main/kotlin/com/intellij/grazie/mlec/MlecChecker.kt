@@ -7,6 +7,7 @@ import ai.grazie.rules.settings.RuleSetting
 import ai.grazie.text.exclusions.SentenceWithExclusions
 import com.intellij.codeInspection.util.InspectionMessage
 import com.intellij.grazie.GrazieConfig
+import com.intellij.grazie.cloud.APIQueries
 import com.intellij.grazie.cloud.GrazieCloudConnector
 import com.intellij.grazie.rule.SentenceBatcher
 import com.intellij.grazie.text.*
@@ -147,8 +148,7 @@ class MlecChecker : ExternalTextChecker() {
         if (GrazieCloudConnector.isAfterRecentGecError()) {
           return emptyMap()
         }
-        return GrazieCloudConnector.EP_NAME.extensionList
-                 .firstNotNullOfOrNull { it.mlec(sentences, language, project) }
+        return APIQueries.mlec(sentences, language, project)
                  ?.zip(sentences)
                  ?.associate { it.second to it.first }
                ?: emptyMap()
@@ -160,7 +160,7 @@ class MlecChecker : ExternalTextChecker() {
         GrazieConfig.subscribe(this) {
           clearCache()
         }
-        GrazieCloudConnector.EP_NAME.forEachExtensionSafe { it.subscribeToAuthorizationStateEvents(this) { clearCache() } }
+        GrazieCloudConnector.subscribeToAuthorizationStateEvents(this) { clearCache() }
       }
     }
 

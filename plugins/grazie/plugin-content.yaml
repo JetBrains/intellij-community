@@ -1,3 +1,55 @@
+- name: lib/ai.grazie.api.gateway.client.jvm.jar
+  library: ai.grazie.api.gateway.client.jvm
+  module: intellij.grazie.core
+  files:
+  - name: $MAVEN_REPOSITORY$/ai/grazie/api/api-gateway-client-jvm/0/api-gateway-client-jvm-0.jar
+  - name: $MAVEN_REPOSITORY$/ai/grazie/api/api-gateway-api-jvm/0/api-gateway-api-jvm-0.jar
+  - name: $MAVEN_REPOSITORY$/ai/grazie/auth/gec-agg-model-public-jvm/0/gec-agg-model-public-jvm-0.jar
+  - name: $MAVEN_REPOSITORY$/ai/grazie/llm/llm-agg-api-model-jvm/0/llm-agg-api-model-jvm-0.jar
+  - name: $MAVEN_REPOSITORY$/ai/grazie/model/model-feedback-jvm/0/model-feedback-jvm-0.jar
+  - name: $MAVEN_REPOSITORY$/ai/grazie/model/model-indexing-jvm/0/model-indexing-jvm-0.jar
+  - name: $MAVEN_REPOSITORY$/ai/grazie/model/model-sum-jvm/0/model-sum-jvm-0.jar
+  - name: $MAVEN_REPOSITORY$/ai/grazie/model/model-llm-jvm/0/model-llm-jvm-0.jar
+  - name: $MAVEN_REPOSITORY$/ai/grazie/model/model-bdg-jvm/0/model-bdg-jvm-0.jar
+  - name: $MAVEN_REPOSITORY$/ai/grazie/model/model-nlp-jvm/0/model-nlp-jvm-0.jar
+  - name: $MAVEN_REPOSITORY$/ai/grazie/model/model-quota-jvm/0/model-quota-jvm-0.jar
+  - name: $MAVEN_REPOSITORY$/ai/grazie/model/model-license-jvm/0/model-license-jvm-0.jar
+  - name: $MAVEN_REPOSITORY$/ai/grazie/model/model-tone-formality-jvm/0/model-tone-formality-jvm-0.jar
+  - name: $MAVEN_REPOSITORY$/ai/grazie/model/model-gateway-jvm/0/model-gateway-jvm-0.jar
+  - name: $MAVEN_REPOSITORY$/ai/grazie/auth/auth-model-jvm/0/auth-model-jvm-0.jar
+  - name: $MAVEN_REPOSITORY$/ai/grazie/auth/product/auth-product-model-jvm/0/auth-product-model-jvm-0.jar
+  - name: $MAVEN_REPOSITORY$/ai/grazie/user/cfg/user-cfg-model-jvm/0/user-cfg-model-jvm-0.jar
+  - name: $MAVEN_REPOSITORY$/ai/grazie/utils/utils-jwt-jvm/0/utils-jwt-jvm-0.jar
+  - name: $MAVEN_REPOSITORY$/ai/grazie/user/strg/user-strg-model-jvm/0/user-strg-model-jvm-0.jar
+  - name: $MAVEN_REPOSITORY$/ai/grazie/indexing/indexing-server-api-jvm/0/indexing-server-api-jvm-0.jar
+  - name: $MAVEN_REPOSITORY$/ai/grazie/model/swagger-annotations-jvm/0/swagger-annotations-jvm-0.jar
+  - name: $MAVEN_REPOSITORY$/ai/grazie/client/client-common-jvm/0/client-common-jvm-0.jar
+  - name: $MAVEN_REPOSITORY$/ai/grazie/model/model-common-jvm/0/model-common-jvm-0.jar
+  - name: $MAVEN_REPOSITORY$/ai/grazie/model/model-auth-jvm/0/model-auth-jvm-0.jar
+  - name: $MAVEN_REPOSITORY$/ai/grazie/client/client-attribute-jvm/0/client-attribute-jvm-0.jar
+  - name: $MAVEN_REPOSITORY$/ai/grazie/model/model-cloud-jvm/0/model-cloud-jvm-0.jar
+  - name: $MAVEN_REPOSITORY$/ai/grazie/model/model-nmt-jvm/0/model-nmt-jvm-0.jar
+  - name: $MAVEN_REPOSITORY$/ai/grazie/model/model-nlc-jvm/0/model-nlc-jvm-0.jar
+  - name: $MAVEN_REPOSITORY$/ai/grazie/nlp/nlp-common-jvm/0/nlp-common-jvm-0.jar
+  - name: $MAVEN_REPOSITORY$/ai/grazie/model/model-def-jvm/0/model-def-jvm-0.jar
+  - name: $MAVEN_REPOSITORY$/ai/grazie/model/model-syn-jvm/0/model-syn-jvm-0.jar
+  - name: $MAVEN_REPOSITORY$/ai/grazie/model/model-qa-jvm/0/model-qa-jvm-0.jar
+  - name: $MAVEN_REPOSITORY$/ai/grazie/model/model-emb-jvm/0/model-emb-jvm-0.jar
+  - name: $MAVEN_REPOSITORY$/ai/grazie/model/model-task-jvm/0/model-task-jvm-0.jar
+  - name: $MAVEN_REPOSITORY$/ai/grazie/model/model-jet-jvm/0/model-jet-jvm-0.jar
+  - name: $MAVEN_REPOSITORY$/ai/grazie/model/model-chat-jvm/0/model-chat-jvm-0.jar
+  - name: $MAVEN_REPOSITORY$/ai/grazie/tasks/provider/model/tasks-provider-jet-completion-model-jvm/0/tasks-provider-jet-completion-model-jvm-0.jar
+  - name: $MAVEN_REPOSITORY$/ai/grazie/tasks/provider/tasks-provider-task-schema/0/tasks-provider-task-schema-0.jar
+  - name: $MAVEN_REPOSITORY$/ai/grazie/tasks/provider/llm/completion/tasks-provider-llm-completion-model-jvm/0/tasks-provider-llm-completion-model-jvm-0.jar
+  - name: $MAVEN_REPOSITORY$/ai/grazie/tasks/provider/model/tasks-provider-proxy-model-jvm/0/tasks-provider-proxy-model-jvm-0.jar
+  - name: $MAVEN_REPOSITORY$/ai/grazie/utils/utils-common-jvm/0/utils-common-jvm-0.jar
+  - name: $MAVEN_REPOSITORY$/ai/grazie/utils/utils-multiplatform-jvm/0/utils-multiplatform-jvm-0.jar
+- name: lib/ai.grazie.client.ktor.jvm.jar
+  library: ai.grazie.client.ktor.jvm
+  module: intellij.grazie.core
+  files:
+  - name: $MAVEN_REPOSITORY$/ai/grazie/client/client-ktor-jvm/0/client-ktor-jvm-0.jar
+  - name: $MAVEN_REPOSITORY$/ai/grazie/utils/utils-ktor-jvm/0/utils-ktor-jvm-0.jar
 - name: lib/ai.grazie.model.ner.jvm.jar
   library: ai.grazie.model.ner.jvm
   module: intellij.grazie.core
@@ -14,6 +66,16 @@
   - name: $MAVEN_REPOSITORY$/ai/grazie/grazie-rule-engine/0/grazie-rule-engine-0.jar
   - name: $MAVEN_REPOSITORY$/net/fellbaum/jemoji/1/jemoji-1.jar
   reason: <- intellij.grazie.core
+- name: lib/ai.grazie.tasks.library.api.jvm.jar
+  library: ai.grazie.tasks.library.api.jvm
+  module: intellij.grazie.core
+  files:
+  - name: $MAVEN_REPOSITORY$/ai/grazie/tasks-library/tasks-library-api-jvm/0/tasks-library-api-jvm-0.jar
+- name: lib/ai.grazie.tasks.library.model.jvm.jar
+  library: ai.grazie.tasks.library.model.jvm
+  module: intellij.grazie.core
+  files:
+  - name: $MAVEN_REPOSITORY$/ai/grazie/tasks-library/tasks-library-model-jvm/0/tasks-library-model-jvm-0.jar
 - name: lib/com.carrotsearch-hppc.jar
   library: com.carrotsearch:hppc
   module: intellij.grazie.core

@@ -24,7 +24,6 @@ import com.intellij.ui.dsl.builder.*
 import com.intellij.util.ui.AsyncProcessIcon
 import com.intellij.util.ui.JBDimension
 import kotlinx.coroutines.Dispatchers
-import kotlinx.coroutines.selects.select
 import kotlinx.coroutines.withContext
 import java.util.concurrent.ConcurrentHashMap
 import javax.swing.JLabel

@@ -1,18 +1,11 @@
 package com.intellij.grazie.cloud
 
-import ai.grazie.gec.model.problem.SentenceWithProblems
-import ai.grazie.ner.model.SentenceWithNERAnnotations
-import ai.grazie.nlp.langs.Language
-import ai.grazie.text.exclusions.SentenceWithExclusions
-import ai.grazie.tree.model.SentenceWithTreeDependencies
+import ai.grazie.api.gateway.client.SuspendableAPIGatewayClient
 import com.intellij.grazie.GrazieConfig.State.Processing
 import com.intellij.openapi.Disposable
 import com.intellij.openapi.extensions.ExtensionPointName
-import com.intellij.openapi.project.Project
-import com.intellij.openapi.util.TextRange
 
 interface GrazieCloudConnector {
-
   /**
    * Returns true if there is a connection to Grazie Cloud and [connectionType] is [Processing.Cloud].
    */
@@ -34,34 +27,9 @@ interface GrazieCloudConnector {
   fun askUserConsentForCloud(): Boolean
 
   /**
-   * Returns true if there was a recent error during the last GEC request.
+   * Returns the API Gateway client.
    */
-  fun isAfterRecentGecError(): Boolean
-
-  /**
-   * Rephrases the given [text] at the given [range] in the given [language].
-   */
-  fun rephrase(text: String, range: TextRange, language: Language, project: Project): List<String>?
-
-  /**
-   * Marks [sentences] with Named Entity Recognition Annotations for the given [language].
-   */
-  suspend fun nerAnnotations(language: Language, sentences: List<String>, project: Project): List<SentenceWithNERAnnotations>?
-
-  /**
-   * Returns syntactic dependency trees for the given [sentences] using specified language model and parser options.
-   */
-  suspend fun trees(language: Language, modelName: String, parserOptions: List<String>, sentences: List<String>, project: Project): List<SentenceWithTreeDependencies>?
-
-  /**
-   * Returns machine learning errors for the given [sentences] in the given [language].
-   */
-  suspend fun mlec(sentences: List<SentenceWithExclusions>, language: Language, project: Project): List<SentenceWithProblems>?
-
-  /**
-   * Returns spelling errors for the given [text] in the given [language].
-   */
-  suspend fun spell(sentences: List<SentenceWithExclusions>, language: Language, project: Project): List<SentenceWithProblems>?
+  fun api(): SuspendableAPIGatewayClient?
 
   /**
    * Subscribe to authorization state change events.
@@ -75,6 +43,12 @@ interface GrazieCloudConnector {
 
     fun seemsCloudConnected(): Boolean = EP_NAME.extensionList.any { it.seemsCloudConnected() }
 
-    fun isAfterRecentGecError(): Boolean = EP_NAME.extensionList.any { it.isAfterRecentGecError() }
+    fun isAfterRecentGecError(): Boolean = GrazieCloudConnectionState.isAfterRecentGecError()
+
+    fun api(): SuspendableAPIGatewayClient? = EP_NAME.extensionList.first().api()
+
+    fun subscribeToAuthorizationStateEvents(disposable: Disposable, listener: () -> Unit) = EP_NAME.forEachExtensionSafe {
+      it.subscribeToAuthorizationStateEvents(disposable, listener)
+    }
   }
 }

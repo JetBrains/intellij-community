@@ -4,7 +4,6 @@ package com.intellij.grazie.ide.language
 import com.intellij.grazie.GrazieConfig
 import com.intellij.grazie.GrazieTestBase
 import com.intellij.grazie.jlanguage.Lang
-import org.junit.jupiter.api.Test
 
 
 class MarkdownSupportTest : GrazieTestBase() {

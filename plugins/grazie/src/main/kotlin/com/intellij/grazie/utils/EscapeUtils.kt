@@ -3,7 +3,6 @@ package com.intellij.grazie.utils
 import com.intellij.codeInsight.CodeInsightUtilCore
 import com.intellij.grazie.text.TextContent
 import com.intellij.openapi.util.TextRange
-import org.jetbrains.annotations.ApiStatus
 
 fun TextContent.replaceBackslashEscapes(): TextContent {
   val text = this.replaceBackslashEscapedWhitespace()

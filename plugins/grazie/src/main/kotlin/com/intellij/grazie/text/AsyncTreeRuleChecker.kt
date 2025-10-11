@@ -4,7 +4,6 @@ import ai.grazie.gec.model.problem.concedeToOtherGrammarCheckers
 import ai.grazie.nlp.langs.Language
 import com.intellij.grazie.rule.ParsedSentence
 import com.intellij.grazie.text.TreeRuleChecker.TreeProblem
-import com.intellij.grazie.utils.HighlightingUtil
 import java.util.*
 
 sealed class AsyncTreeRuleChecker : ExternalTextChecker() {

@@ -129,7 +129,7 @@ object DependencyParser {
 
     init {
       GrazieConfig.subscribe(this) { clearCaches() }
-      GrazieCloudConnector.EP_NAME.forEachExtensionSafe { it.subscribeToAuthorizationStateEvents(this) { clearCaches() } }
+      GrazieCloudConnector.subscribeToAuthorizationStateEvents(this) { clearCaches() }
     }
 
     private fun clearCaches() {
@@ -154,11 +154,10 @@ object DependencyParser {
         val start = System.currentTimeMillis()
         val asyncLabels: Deferred<List<SentenceWithNERAnnotations>?>? =
           if (support.needsNer()) async {
-            GrazieCloudConnector.EP_NAME.extensionList.firstNotNullOfOrNull { it.nerAnnotations(language, sentenceStrings, project) }
+            APIQueries.nerAnnotations(language, sentenceStrings, project)
           } else null
 
-        val trees = GrazieCloudConnector.EP_NAME.extensionList
-          .firstNotNullOfOrNull { it.trees(language, support.cloudTreeModelName, support.cloudParserOptions, sentenceStrings, project) }
+        val trees = APIQueries.trees(language, support.cloudTreeModelName, support.cloudParserOptions, sentenceStrings, project)
         val labels = asyncLabels?.await()?.associateBy { it.text } ?: emptyMap()
 
         LOG.debug("Parsing servers responded in ${System.currentTimeMillis() - start}ms for ${sentenceStrings.size} sentences")

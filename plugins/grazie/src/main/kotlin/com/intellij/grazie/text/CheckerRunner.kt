@@ -42,7 +42,10 @@ import com.intellij.psi.PsiFile
 import com.intellij.psi.SmartPointerManager
 import com.intellij.psi.util.parents
 import com.intellij.psi.util.startOffset
-import kotlinx.coroutines.*
+import kotlinx.coroutines.CoroutineStart
+import kotlinx.coroutines.async
+import kotlinx.coroutines.awaitAll
+import kotlinx.coroutines.yield
 import org.jetbrains.annotations.ApiStatus
 
 private val problemsKey = Key.create<CachedResults>("grazie.text.problems")

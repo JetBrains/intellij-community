@@ -6,7 +6,6 @@ import com.intellij.codeInsight.intention.*
 import com.intellij.codeInsight.intention.CustomizableIntentionAction.RangeToHighlight
 import com.intellij.codeInsight.intention.choice.ChoiceTitleIntentionAction
 import com.intellij.codeInsight.intention.choice.ChoiceVariantIntentionAction
-import com.intellij.codeInsight.intention.EventTrackingIntentionAction
 import com.intellij.codeInsight.intention.preview.IntentionPreviewInfo
 import com.intellij.codeInsight.intention.preview.IntentionPreviewUtils
 import com.intellij.codeInspection.LocalQuickFix

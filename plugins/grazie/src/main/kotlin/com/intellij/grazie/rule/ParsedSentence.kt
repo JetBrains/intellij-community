@@ -7,7 +7,6 @@ import com.intellij.grazie.rule.ParsedSentence.Companion.findSentenceASAP
 import com.intellij.grazie.rule.ParsedSentence.Companion.findSentenceInFile
 import com.intellij.grazie.rule.ParsedSentence.Companion.getSentences
 import com.intellij.grazie.rule.SentenceBatcher.AsyncBatchParser
-import com.intellij.grazie.text.TextChecker
 import com.intellij.grazie.text.TextChecker.ProofreadingContext
 import com.intellij.grazie.text.TextContent
 import com.intellij.grazie.text.TextExtractor

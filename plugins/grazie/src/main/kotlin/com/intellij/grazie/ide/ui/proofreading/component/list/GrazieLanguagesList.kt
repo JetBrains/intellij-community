@@ -11,8 +11,11 @@ import com.intellij.grazie.ide.ui.components.utils.configure
 import com.intellij.grazie.jlanguage.Lang
 import com.intellij.grazie.utils.toSet
 import com.intellij.openapi.actionSystem.ActionToolbarPosition
-import com.intellij.ui.*
+import com.intellij.ui.AddDeleteListPanel
 import com.intellij.ui.CommonActionsPanel.Buttons
+import com.intellij.ui.LayeredIcon
+import com.intellij.ui.RowsDnDSupport
+import com.intellij.ui.ToolbarDecorator
 import com.intellij.ui.components.JBList
 import com.intellij.ui.popup.list.ListPopupImpl
 import com.intellij.util.ui.EditableModel

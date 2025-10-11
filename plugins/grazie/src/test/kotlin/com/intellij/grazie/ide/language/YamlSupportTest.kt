@@ -6,7 +6,6 @@ import com.intellij.grazie.jlanguage.Lang
 import com.intellij.grazie.spellcheck.engine.GrazieSpellCheckerEngine
 import com.intellij.grazie.text.TextContent
 import com.intellij.grazie.text.TextExtractor
-import com.intellij.openapi.components.service
 import com.intellij.tools.ide.metrics.benchmark.Benchmark
 
 class YamlSupportTest : GrazieTestBase() {

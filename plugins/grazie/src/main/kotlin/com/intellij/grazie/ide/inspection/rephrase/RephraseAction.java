@@ -7,6 +7,7 @@ import com.intellij.codeInspection.IntentionAndQuickFixAction;
 import com.intellij.codeInspection.util.IntentionFamilyName;
 import com.intellij.codeInspection.util.IntentionName;
 import com.intellij.grazie.GrazieBundle;
+import com.intellij.grazie.cloud.APIQueries;
 import com.intellij.grazie.cloud.GrazieCloudConnector;
 import com.intellij.grazie.detection.LangDetector;
 import com.intellij.grazie.ide.fus.GrazieFUSCounter;
@@ -39,7 +40,6 @@ import org.jetbrains.annotations.Nullable;
 import javax.swing.*;
 import java.util.Collections;
 import java.util.List;
-import java.util.Objects;
 
 @SuppressWarnings("IntentionDescriptionNotFoundInspection")
 public class RephraseAction extends IntentionAndQuickFixAction {
@@ -100,12 +100,7 @@ public class RephraseAction extends IntentionAndQuickFixAction {
         int rangeLength = textRange.getLength();
         GrazieFUSCounter.INSTANCE.reportRephraseRequested(iso, content.length(), rangeLength, wordRangeCount);
         TextRange wordBoundRange = Text.alignToWordBounds(textRange, content.toString());
-        List<String> rephrasedSentences = GrazieCloudConnector.Companion.getEP_NAME().getExtensionList()
-          .stream()
-          .map(connector -> connector.rephrase(content.toString(), wordBoundRange, iso, project))
-          .filter(Objects::nonNull)
-          .findFirst()
-          .orElse(null);
+        List<String> rephrasedSentences = APIQueries.getRephraser().rephrase(content.toString(), wordBoundRange, iso, project);
         if (rephrasedSentences == null) {
           return new SuggestionsWithLanguage(iso, Collections.emptyList(), content.length(), rangeLength, wordRangeCount);
         }

@@ -2,7 +2,9 @@
 package com.intellij.grazie.utils
 
 import ai.grazie.gec.model.problem.ProblemFix
+import com.intellij.openapi.progress.ProcessCanceledException
 import com.intellij.openapi.util.TextRange
+import kotlinx.coroutines.CancellationException
 import java.util.*
 
 fun ProblemFix.Part.Change.ijRange(): TextRange = TextRange(range.start, range.endExclusive)
@@ -18,3 +20,19 @@ val IntRange.length
 
 
 fun <T> Enumeration<T>.toSet() = toList().toSet()
+
+
+inline fun <R> catching(block: () -> R): Result<R> {
+  try {
+    return Result.success(block())
+  }
+  catch (exception: CancellationException) {
+    throw exception
+  }
+  catch (exception: ProcessCanceledException) {
+    throw exception
+  }
+  catch (exception: Throwable) {
+    return Result.failure(exception)
+  }
+}
