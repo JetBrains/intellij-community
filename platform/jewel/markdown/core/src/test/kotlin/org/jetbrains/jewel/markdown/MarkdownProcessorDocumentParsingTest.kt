@@ -1,6 +1,5 @@
 package org.jetbrains.jewel.markdown
 
-import org.jetbrains.jewel.foundation.code.MimeType
 import org.jetbrains.jewel.markdown.InlineMarkdown.Code
 import org.jetbrains.jewel.markdown.InlineMarkdown.Emphasis
 import org.jetbrains.jewel.markdown.InlineMarkdown.HardLineBreak
@@ -426,7 +425,7 @@ public class MarkdownProcessorDocumentParsingTest {
          * <pre><code class="language-foo+bar">foo
          * </code></pre>
          */
-        parsed.assertEquals(fencedCodeBlock("foo", MimeType.Known.fromMarkdownLanguageName("foo\\+bar")))
+        parsed.assertEquals(fencedCodeBlock("foo", "foo+bar"))
     }
 
     @Test
@@ -589,7 +588,7 @@ public class MarkdownProcessorDocumentParsingTest {
          * <pre><code class="language-föö">foo
          * </code></pre>
          */
-        parsed.assertEquals(fencedCodeBlock("foo", mimeType = MimeType.Known.fromMarkdownLanguageName("föö")))
+        parsed.assertEquals(fencedCodeBlock("foo", language = "föö"))
     }
 
     @Test
@@ -2530,7 +2529,7 @@ public class MarkdownProcessorDocumentParsingTest {
          * aaa
          * </code></pre>
          */
-        parsed.assertEquals(fencedCodeBlock("aaa\n aaa\naaa"))
+        parsed.assertEquals(fencedCodeBlock("aaa\n aaa\naaa", ""))
     }
 
     @Test
@@ -2726,9 +2725,7 @@ public class MarkdownProcessorDocumentParsingTest {
          * end
          * </code></pre>
          */
-        parsed.assertEquals(
-            fencedCodeBlock("def foo(x)\n  return 3\nend", mimeType = MimeType.Known.fromMarkdownLanguageName("ruby"))
-        )
+        parsed.assertEquals(fencedCodeBlock("def foo(x)\n  return 3\nend", language = "ruby"))
     }
 
     @Test
@@ -2752,9 +2749,7 @@ public class MarkdownProcessorDocumentParsingTest {
          * end
          * </code></pre>
          */
-        parsed.assertEquals(
-            fencedCodeBlock("def foo(x)\n  return 3\nend", mimeType = MimeType.Known.fromMarkdownLanguageName("ruby"))
-        )
+        parsed.assertEquals(fencedCodeBlock("def foo(x)\n  return 3\nend", language = "ruby startline=3 \$%@#\$"))
     }
 
     @Test
@@ -2772,7 +2767,7 @@ public class MarkdownProcessorDocumentParsingTest {
          * Expected HTML:
          * <pre><code class="language-;"></code></pre>
          */
-        parsed.assertEquals(fencedCodeBlock("", mimeType = MimeType.Known.fromMarkdownLanguageName(";")))
+        parsed.assertEquals(fencedCodeBlock("", language = ";"))
     }
 
     @Test
@@ -2811,7 +2806,7 @@ public class MarkdownProcessorDocumentParsingTest {
          * <pre><code class="language-aa">foo
          * </code></pre>
          */
-        parsed.assertEquals(fencedCodeBlock("foo", mimeType = MimeType.Known.fromMarkdownLanguageName("aa")))
+        parsed.assertEquals(fencedCodeBlock("foo", language = "aa ``` ~~~"))
     }
 
     @Test
