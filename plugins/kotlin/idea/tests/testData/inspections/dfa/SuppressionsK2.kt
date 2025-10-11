@@ -51,7 +51,7 @@ fun compilerWarningDuplicateWhen(x : X) {
     // Reported as a compiler warning: suppress
     when (x) {
         // Difference with K1: error messages text is different
-        is X -> {}
+        <warning descr="[USELESS_IS_CHECK] Check for instance is always 'true'.">is X</warning> -> {}
     }
 }
 fun nothingOrNull(s: String?): String? {
