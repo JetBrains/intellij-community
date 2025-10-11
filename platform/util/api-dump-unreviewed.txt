@@ -3934,7 +3934,6 @@ a:com.intellij.util.io.Decompressor
 - f:extract(java.io.File):V
 - f:extract(java.nio.file.Path):V
 - filter(java.util.function.Predicate):com.intellij.util.io.Decompressor
-- pa:nextEntry():com.intellij.util.io.Decompressor$Entry
 - pa:openEntryStream(com.intellij.util.io.Decompressor$Entry):java.io.InputStream
 - pa:openStream():V
 - overwrite(Z):com.intellij.util.io.Decompressor

@@ -1,11 +1,18 @@
 ### auto-generated section `build intellij.platform.eel.provider` start
-load("@rules_jvm//:jvm.bzl", "jvm_library")
+load("@rules_jvm//:jvm.bzl", "jvm_library", "resourcegroup")
+
+resourcegroup(
+  name = "eel-provider_resources",
+  srcs = glob(["resources/**/*"]),
+  strip_prefix = "resources"
+)
 
 jvm_library(
   name = "eel-provider",
   module_name = "intellij.platform.eel.provider",
   visibility = ["//visibility:public"],
   srcs = glob(["src/**/*.kt", "src/**/*.java", "src/**/*.form"], allow_empty = True),
+  resources = [":eel-provider_resources"],
   deps = [
     "//platform/eel",
     "//platform/util",

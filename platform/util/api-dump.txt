@@ -512,6 +512,8 @@ com.intellij.util.io.BaseDataReader$SleepingPolicy
 com.intellij.util.io.DataExternalizer
 - a:read(java.io.DataInput):java.lang.Object
 - a:save(java.io.DataOutput,java.lang.Object):V
+a:com.intellij.util.io.Decompressor
+- pa:nextEntry(Z):com.intellij.util.io.Decompressor$Entry
 com.intellij.util.io.KeyDescriptor
 - com.intellij.util.containers.hash.EqualityPolicy
 - com.intellij.util.io.DataExternalizer

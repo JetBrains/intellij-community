@@ -2,7 +2,6 @@
 package com.intellij.util.io;
 
 import com.intellij.openapi.diagnostic.Logger;
-import com.intellij.openapi.util.SystemInfo;
 import com.intellij.openapi.util.io.*;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.util.ArrayUtil;
@@ -71,14 +70,14 @@ public abstract class Decompressor {
     }
 
     @Override
-    protected Entry nextEntry() throws IOException {
+    protected Entry nextEntry(boolean isWindows) throws IOException {
       TarArchiveEntry te;
       while ((te = myStream.getNextEntry()) != null &&
              !((te.isFile() && !te.isLink()) // ignore hardlink
                || te.isDirectory()
                || te.isSymbolicLink())) /* skipping unsupported */;
       if (te == null) return null;
-      if (!SystemInfo.isWindows) return new Entry(te.getName(), type(te), te.getMode(), te.getLinkName(), te.getSize());
+      if (!isWindows) return new Entry(te.getName(), type(te), te.getMode(), te.getLinkName(), te.getSize());
       // UNIX permissions are ignored on Windows
       if (te.isSymbolicLink()) return new Entry(te.getName(), Entry.Type.SYMLINK, 0, te.getLinkName(), te.getSize());
       return new Entry(te.getName(), te.isDirectory(), te.getSize());
@@ -139,7 +138,7 @@ public abstract class Decompressor {
     }
 
     @Override
-    protected Entry nextEntry() {
+    protected Entry nextEntry(boolean isWindows) {
       myEntry = myEntries.hasMoreElements() ? myEntries.nextElement() : null;
       return myEntry == null ? null : new Entry(myEntry.getName(), myEntry.isDirectory(), myEntry.getSize());
     }
@@ -177,11 +176,11 @@ public abstract class Decompressor {
       }
 
       @Override
-      protected Entry nextEntry() throws IOException {
+      protected Entry nextEntry(boolean isWindows) throws IOException {
         myEntry = myEntries.hasMoreElements() ? myEntries.nextElement() : null;
         if (myEntry == null) return null;
         int platform = myEntry.getPlatform();
-        if (SystemInfo.isWindows) {
+        if (isWindows) {
           // UNIX permissions are ignored on Windows
           if (platform == ZipArchiveEntry.PLATFORM_UNIX) {
             return new Entry(myEntry.getName(), type(myEntry), 0, myZip.getUnixSymlink(myEntry), myEntry.getSize());
@@ -350,6 +349,7 @@ public abstract class Decompressor {
   }
 
   public final void extract(@NotNull Path outputDir) throws IOException {
+    boolean isWindows = ArchiveBackend.Companion.isWindows$intellij_platform_util(outputDir);
     openStream();
     try {
       Deque<Path> extractedPaths = new ArrayDeque<>();
@@ -359,14 +359,14 @@ public abstract class Decompressor {
       boolean proceedToNext = true;
 
       Entry entry = null;
-      while (!proceedToNext || (entry = nextEntry()) != null) {
+      while (!proceedToNext || (entry = nextEntry(isWindows)) != null) {
         if (proceedToNext && myFilter != null && !myFilter.test(entry)) {
           continue;
         }
 
         proceedToNext = true; // will be set to false if EH returns RETRY
         try {
-          Path processedEntry = processEntry(outputDir, entry);
+          Path processedEntry = processEntry(outputDir, entry, isWindows);
           if (processedEntry != null) {
             extractedPaths.push(processedEntry);
           }
@@ -405,7 +405,7 @@ public abstract class Decompressor {
   /**
    * @return Path to an extracted entity
    */
-  private @Nullable Path processEntry(@NotNull Path outputDir, Entry entry) throws IOException {
+  private @Nullable Path processEntry(@NotNull Path outputDir, Entry entry, boolean isWindows) throws IOException {
     if (myPathPrefix != null) {
       entry = mapPathPrefix(entry, myPathPrefix);
       if (entry == null) return null;
@@ -426,7 +426,7 @@ public abstract class Decompressor {
               StreamUtil.copy(inputStream, outputStream);
             }
             if (entry.mode != 0) {
-              setAttributes(entry.mode, outputFile);
+              setAttributes(entry.mode, outputFile, isWindows);
             }
           }
           finally {
@@ -507,8 +507,8 @@ public abstract class Decompressor {
     return FileUtilRt.splitPath(StringUtil.trimLeading(canonicalPath, '/'), '/');
   }
 
-  private static void setAttributes(int mode, Path outputFile) throws IOException {
-    if (SystemInfo.isWindows) {
+  private static void setAttributes(int mode, Path outputFile, boolean isWindows) throws IOException {
+    if (isWindows) {
       DosFileAttributeView attrs = Files.getFileAttributeView(outputFile, DosFileAttributeView.class);
       if (attrs != null) {
         if ((mode & Entry.DOS_READ_ONLY) != 0) attrs.setReadOnly(true);
@@ -527,7 +527,7 @@ public abstract class Decompressor {
   protected Decompressor() { }
 
   protected abstract void openStream() throws IOException;
-  protected abstract @Nullable Entry nextEntry() throws IOException;
+  protected abstract @Nullable Entry nextEntry(boolean isWindows) throws IOException;
   protected abstract InputStream openEntryStream(Entry entry) throws IOException;
   protected abstract void closeEntryStream(InputStream stream) throws IOException;
   protected abstract void closeStream() throws IOException;
