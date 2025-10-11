@@ -4,8 +4,7 @@ load("@rules_jvm//:jvm.bzl", "jvm_library", "resourcegroup")
 resourcegroup(
   name = "java-resources-en_test_resources",
   srcs = glob(["testResources/**/*"]),
-  strip_prefix = "testResources",
-  visibility = ["//visibility:public"]
+  strip_prefix = "testResources"
 )
 
 jvm_library(
