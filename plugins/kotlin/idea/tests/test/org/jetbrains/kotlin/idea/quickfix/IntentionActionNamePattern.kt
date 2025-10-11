@@ -18,7 +18,11 @@ class IntentionActionNamePattern(text: String) {
     else
         Pattern.compile(StringUtil.escapeToRegexp(text))
 
-    fun findActionByPattern(availableActions: List<IntentionAction>, acceptMatchByFamilyName: Boolean): IntentionAction? = availableActions.firstOrNull {
-        pattern.matcher(it.text).matches() || (acceptMatchByFamilyName && pattern.matcher(it.familyName).matches())
-    }
+    fun findActionByPattern(availableActions: List<IntentionAction>, acceptMatchByFamilyName: Boolean): IntentionAction? =
+        findActionsByPattern(availableActions, acceptMatchByFamilyName).firstOrNull()
+
+    fun findActionsByPattern(availableActions: List<IntentionAction>, acceptMatchByFamilyName: Boolean): List<IntentionAction> =
+        availableActions.filter {
+            pattern.matcher(it.text).matches() || (acceptMatchByFamilyName && pattern.matcher(it.familyName).matches())
+        }
 }

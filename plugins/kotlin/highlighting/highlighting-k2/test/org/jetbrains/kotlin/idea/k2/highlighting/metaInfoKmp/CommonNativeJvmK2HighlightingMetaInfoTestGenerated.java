@@ -326,6 +326,16 @@ public abstract class CommonNativeJvmK2HighlightingMetaInfoTestGenerated extends
             runTest("../../idea/tests/testData/highlighterMetaInfo/Labels.kt");
         }
 
+        @TestMetadata("mismatchPackageDirectory.kt")
+        public void testMismatchPackageDirectory() throws Exception {
+            runTest("../../idea/tests/testData/highlighterMetaInfo/mismatchPackageDirectory.kt");
+        }
+
+        @TestMetadata("mismatchPackageDirectoryFileLevelProblem.kt")
+        public void testMismatchPackageDirectoryFileLevelProblem() throws Exception {
+            runTest("../../idea/tests/testData/highlighterMetaInfo/mismatchPackageDirectoryFileLevelProblem.kt");
+        }
+
         @TestMetadata("NamedArguments.kt")
         public void testNamedArguments() throws Exception {
             runTest("../../idea/tests/testData/highlighterMetaInfo/NamedArguments.kt");

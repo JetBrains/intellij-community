@@ -6,6 +6,7 @@ import com.intellij.lang.annotation.HighlightSeverity
 import org.jetbrains.kotlin.codeMetaInfo.model.CodeMetaInfo
 import org.jetbrains.kotlin.codeMetaInfo.renderConfigurations.AbstractCodeMetaInfoRenderConfiguration
 import org.jetbrains.kotlin.idea.codeInsight.lineMarkers.shared.TestableLineMarkerNavigator
+import org.jetbrains.kotlin.idea.codeMetaInfo.models.FileLevelHighlightingCodeMetaInfo
 import org.jetbrains.kotlin.idea.codeMetaInfo.models.HighlightingCodeMetaInfo
 import org.jetbrains.kotlin.idea.codeMetaInfo.models.LineMarkerCodeMetaInfo
 
@@ -138,4 +139,18 @@ open class HighlightingConfiguration(
 
         return if (paramsString.isEmpty()) "" else "(\"$paramsString\")"
     }
+}
+
+class FileLevelHighlightingConfiguration(
+    val severityLevel: HighlightSeverity = HighlightSeverity.INFORMATION,
+) : AbstractCodeMetaInfoRenderConfiguration() {
+
+    override fun asString(codeMetaInfo: CodeMetaInfo): String =
+        if (codeMetaInfo !is FileLevelHighlightingCodeMetaInfo) {
+            ""
+        } else {
+            getTag() + getAttributesString(codeMetaInfo)
+        }
+
+    fun getTag(): String = "FILE_LEVEL_HIGHLIGHTING"
 }

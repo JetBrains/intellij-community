@@ -20,13 +20,17 @@ import com.intellij.openapi.externalSystem.service.project.ProjectDataManager
 import com.intellij.openapi.module.Module
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.projectRoots.Sdk
+import com.intellij.openapi.roots.DefaultSingleFileSourcesTracker
+import com.intellij.openapi.roots.SingleFileSourcesTracker
 import com.intellij.openapi.util.io.FileUtil
 import com.intellij.openapi.util.registry.Registry
 import com.intellij.openapi.util.text.StringUtil
 import com.intellij.openapi.vfs.VfsUtilCore
+import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.openapi.vfs.newvfs.impl.VfsRootAccess
 import com.intellij.pom.java.LanguageLevel
 import com.intellij.psi.PsiClassOwner
+import com.intellij.psi.PsiDirectory
 import com.intellij.psi.PsiFile
 import com.intellij.psi.PsiJavaFile
 import com.intellij.psi.PsiManager
@@ -56,6 +60,7 @@ import org.jetbrains.kotlin.idea.compiler.configuration.IdeKotlinVersion
 import org.jetbrains.kotlin.idea.compiler.configuration.KotlinCommonCompilerArgumentsHolder
 import org.jetbrains.kotlin.idea.compiler.configuration.KotlinCompilerSettings
 import org.jetbrains.kotlin.idea.compiler.configuration.KotlinPluginLayout
+import org.jetbrains.kotlin.idea.core.setImplicitPackagePrefix
 import org.jetbrains.kotlin.idea.facet.KotlinFacet
 import org.jetbrains.kotlin.idea.facet.configureFacet
 import org.jetbrains.kotlin.idea.facet.getOrCreateFacet
@@ -73,6 +78,7 @@ import org.jetbrains.kotlin.idea.test.CompilerTestDirectives.KOTLIN_COMPILER_VER
 import org.jetbrains.kotlin.idea.test.CompilerTestDirectives.LANGUAGE_VERSION_DIRECTIVE
 import org.jetbrains.kotlin.idea.test.CompilerTestDirectives.PROJECT_LANGUAGE_VERSION_DIRECTIVE
 import org.jetbrains.kotlin.idea.test.util.slashedPath
+import org.jetbrains.kotlin.name.FqName
 import org.jetbrains.kotlin.psi.KtFile
 import org.jetbrains.kotlin.utils.addIfNotNull
 import org.jetbrains.kotlin.utils.rethrow
@@ -400,6 +406,34 @@ fun withRegistry(registryKey: String, value: Any, parentDisposable: Disposable, 
         else -> registryValue.setValue(value.toString(), parentDisposable)
     }
     body()
+}
+
+fun PsiDirectory.withImplicitPackagePrefix(implicitPackagePrefix: String?, body: () -> Unit) {
+    implicitPackagePrefix?.let {
+        this.setImplicitPackagePrefix(FqName(implicitPackagePrefix))
+        project.registerServiceInstance(SingleFileSourcesTracker::class.java, object : SingleFileSourcesTracker {
+            override fun isSingleFileSource(file: VirtualFile): Boolean = false
+
+            override fun isSourceDirectoryInModule(
+                dir: VirtualFile,
+                module: Module
+            ): Boolean = false
+
+            override fun getSourceDirectoryIfExists(file: VirtualFile): VirtualFile? = null
+
+            override fun getPackageNameForSingleFileSource(file: VirtualFile): String? = implicitPackagePrefix
+
+        })
+    }
+    try {
+        body()
+    } finally {
+        implicitPackagePrefix?.let {
+            this.setImplicitPackagePrefix(null)
+            project.unregisterService(SingleFileSourcesTracker::class.java)
+            project.registerServiceInstance(SingleFileSourcesTracker::class.java, DefaultSingleFileSourcesTracker())
+        }
+    }
 }
 
 private fun configureCompilerOptions(fileText: String, project: Project, module: Module): Boolean {

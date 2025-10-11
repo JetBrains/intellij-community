@@ -9,13 +9,13 @@ import com.intellij.openapi.projectRoots.ProjectJdkTable
 import com.intellij.openapi.util.io.FileUtil
 import com.intellij.openapi.vfs.LocalFileSystem
 import org.jetbrains.kotlin.checkers.utils.clearFileFromDiagnosticMarkup
+import org.jetbrains.kotlin.idea.artifacts.TestKotlinArtifacts
 import org.jetbrains.kotlin.idea.base.externalSystem.KotlinBuildSystemFacade
 import org.jetbrains.kotlin.idea.base.externalSystem.KotlinBuildSystemSourceSet
 import org.jetbrains.kotlin.idea.base.platforms.KotlinCommonLibraryKind
 import org.jetbrains.kotlin.idea.base.platforms.KotlinJavaScriptLibraryKind
 import org.jetbrains.kotlin.idea.base.platforms.KotlinWasmJsLibraryKind
 import org.jetbrains.kotlin.idea.base.platforms.KotlinWasmWasiLibraryKind
-import org.jetbrains.kotlin.idea.artifacts.TestKotlinArtifacts
 import org.jetbrains.kotlin.idea.framework.KotlinSdkType
 import org.jetbrains.kotlin.idea.test.*
 import org.jetbrains.kotlin.idea.util.application.executeWriteCommand
@@ -44,7 +44,8 @@ import java.io.File
 // testRoot is supposed to contain several directories which contain module sources roots
 // configuration is based on those directories names
 fun AbstractMultiModuleTest.setupMppProjectFromDirStructure(testRoot: File) {
-    assert(testRoot.isDirectory) { testRoot.absolutePath + " must be a directory" }
+    assert(testRoot.exists()) { testRoot.canonicalFile.absolutePath + " must exist" }
+    assert(testRoot.isDirectory) { testRoot.canonicalFile.absolutePath + " must be a directory" }
     val dependencies = dependenciesFile(testRoot)
     if (dependencies.exists()) {
         setupMppProjectFromDependenciesFile(dependencies, testRoot)

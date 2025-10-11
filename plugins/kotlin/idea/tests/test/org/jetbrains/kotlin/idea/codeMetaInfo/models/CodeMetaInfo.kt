@@ -10,8 +10,9 @@ import org.jetbrains.kotlin.codeMetaInfo.model.DiagnosticCodeMetaInfo
 import org.jetbrains.kotlin.codeMetaInfo.renderConfigurations.AbstractCodeMetaInfoRenderConfiguration
 import org.jetbrains.kotlin.codeMetaInfo.renderConfigurations.DiagnosticCodeMetaInfoRenderConfiguration
 import org.jetbrains.kotlin.diagnostics.Diagnostic
-import org.jetbrains.kotlin.idea.base.codeInsight.handlers.fixers.start
 import org.jetbrains.kotlin.idea.base.codeInsight.handlers.fixers.end
+import org.jetbrains.kotlin.idea.base.codeInsight.handlers.fixers.start
+import org.jetbrains.kotlin.idea.codeMetaInfo.renderConfigurations.FileLevelHighlightingConfiguration
 import org.jetbrains.kotlin.idea.codeMetaInfo.renderConfigurations.HighlightingConfiguration
 import org.jetbrains.kotlin.idea.codeMetaInfo.renderConfigurations.LineMarkerConfiguration
 
@@ -32,8 +33,8 @@ class LineMarkerCodeMetaInfo(
     override fun asString(): String = renderConfiguration.asString(this)
 }
 
-class HighlightingCodeMetaInfo(
-    override val renderConfiguration: HighlightingConfiguration,
+abstract class AbstractHighlightingCodeMetaInfo(
+    override val renderConfiguration: AbstractCodeMetaInfoRenderConfiguration,
     val highlightingInfo: HighlightInfo
 ) : CodeMetaInfo {
     override val start: Int
@@ -41,12 +42,25 @@ class HighlightingCodeMetaInfo(
     override val end: Int
         get() = highlightingInfo.endOffset
 
-    override val tag: String
-        get() = renderConfiguration.getTag()
-
     override val attributes: MutableList<String> = mutableListOf()
 
     override fun asString(): String = renderConfiguration.asString(this)
+}
+
+class HighlightingCodeMetaInfo(
+    override val renderConfiguration: HighlightingConfiguration,
+    highlightingInfo: HighlightInfo
+) : AbstractHighlightingCodeMetaInfo(renderConfiguration, highlightingInfo) {
+    override val tag: String
+        get() = renderConfiguration.getTag()
+}
+
+class FileLevelHighlightingCodeMetaInfo(
+    override val renderConfiguration: FileLevelHighlightingConfiguration,
+    highlightingInfo: HighlightInfo
+) : AbstractHighlightingCodeMetaInfo(renderConfiguration, highlightingInfo) {
+    override val tag: String
+        get() = renderConfiguration.getTag()
 }
 
 class ParsedCodeMetaInfo(
@@ -97,8 +111,13 @@ fun createCodeMetaInfo(obj: Any, renderConfiguration: AbstractCodeMetaInfoRender
             obj.diagnostic.textRanges.map { DiagnosticCodeMetaInfo(it.start, it.end, renderConfiguration, obj.diagnostic) }
         }
         is HighlightInfo -> {
-            require(renderConfiguration is HighlightingConfiguration, ::errorMessage)
-            listOf(HighlightingCodeMetaInfo(renderConfiguration, obj))
+            val codeMetaInfo: CodeMetaInfo = when(renderConfiguration) {
+                is HighlightingConfiguration -> HighlightingCodeMetaInfo(renderConfiguration, obj)
+                is FileLevelHighlightingConfiguration -> FileLevelHighlightingCodeMetaInfo(renderConfiguration, obj)
+                else -> error(errorMessage())
+            }
+
+            listOf(codeMetaInfo)
         }
         is LineMarkerInfo<*> -> {
             require(renderConfiguration is LineMarkerConfiguration, ::errorMessage)

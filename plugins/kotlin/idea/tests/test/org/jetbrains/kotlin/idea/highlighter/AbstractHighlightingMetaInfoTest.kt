@@ -13,6 +13,7 @@ import org.jetbrains.kotlin.idea.test.KotlinMultiFileLightCodeInsightFixtureTest
 import org.jetbrains.kotlin.idea.test.kmp.KMPProjectDescriptorTestUtilities
 import org.jetbrains.kotlin.idea.test.kmp.KMPTest
 import org.jetbrains.kotlin.idea.test.withCustomCompilerOptions
+import org.jetbrains.kotlin.idea.test.withImplicitPackagePrefix
 import org.jetbrains.kotlin.psi.KtFile
 import org.jetbrains.kotlin.scripting.definitions.runReadAction
 import java.io.File
@@ -32,8 +33,11 @@ abstract class AbstractHighlightingMetaInfoTest : KotlinMultiFileLightCodeInsigh
             KMPProjectDescriptorTestUtilities.validateTest(files, testPlatform)
         }
 
-        val tools = InTextDirectivesUtils.findLinesWithPrefixesRemoved(runReadAction { psiFile.text }, AbstractHighlightingTest.TOOL_PREFIX)
+        val mainFileText = runReadAction<String> { psiFile.text }
+        val tools = InTextDirectivesUtils.findLinesWithPrefixesRemoved(mainFileText, AbstractHighlightingTest.TOOL_PREFIX)
         myFixture.enableInspections(*InspectionTestUtil.instantiateTools(tools.toSet()).toTypedArray())
+
+        val implicitPackagePrefix = InTextDirectivesUtils.findLineWithPrefixRemoved(mainFileText, "IMPLICIT_PACKAGE_PREFIX:")
 
         files.forEach {
             val fileText = runReadAction { it.text }
@@ -44,10 +48,13 @@ abstract class AbstractHighlightingMetaInfoTest : KotlinMultiFileLightCodeInsigh
 
         runInEdtAndWait {
             withCustomCompilerOptions(psiFile.text, project, module) {
-                if (psiFile is KtFile) {
-                    ensureFilesResolved(psiFile)
+                val directory = psiFile.parent!!
+                directory.withImplicitPackagePrefix(implicitPackagePrefix) {
+                    if (psiFile is KtFile) {
+                        ensureFilesResolved(psiFile)
+                    }
+                    checkHighlighting(psiFile, expectedHighlighting, globalDirectives, project)
                 }
-                checkHighlighting(psiFile, expectedHighlighting, globalDirectives, project)
             }
         }
     }

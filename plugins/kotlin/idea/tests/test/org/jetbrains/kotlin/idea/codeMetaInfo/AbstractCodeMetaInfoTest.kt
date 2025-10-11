@@ -47,6 +47,7 @@ import org.jetbrains.kotlin.idea.caches.resolve.AbstractMultiModuleIdeResolveTes
 import org.jetbrains.kotlin.idea.caches.resolve.getResolutionFacade
 import org.jetbrains.kotlin.idea.codeMetaInfo.models.HighlightingCodeMetaInfo
 import org.jetbrains.kotlin.idea.codeMetaInfo.models.getCodeMetaInfo
+import org.jetbrains.kotlin.idea.codeMetaInfo.renderConfigurations.FileLevelHighlightingConfiguration
 import org.jetbrains.kotlin.idea.codeMetaInfo.renderConfigurations.HighlightingConfiguration
 import org.jetbrains.kotlin.idea.codeMetaInfo.renderConfigurations.LineMarkerConfiguration
 import org.jetbrains.kotlin.idea.multiplatform.setupMppProjectFromDirStructure
@@ -129,6 +130,17 @@ class CodeMetaInfoTestCase(
         return getCodeMetaInfo(highlightingInfos, configuration, filterMetaInfo)
     }
 
+    private fun getFileLevelHighlightingCodeMetaInfos(configuration: FileLevelHighlightingConfiguration): Collection<CodeMetaInfo> {
+        if ("!CHECK_FILE_LEVEL_HIGHLIGHTING" in file.text)
+            return emptyList()
+
+        val fileLevelHighlights = (DaemonCodeAnalyzer.getInstance(project) as DaemonCodeAnalyzerImpl).getFileLevelHighlights(project, file)
+
+        val highlightingInfos = fileLevelHighlights.filterNot { it.severity < configuration.severityLevel }
+
+        return getCodeMetaInfo(highlightingInfos, configuration, filterMetaInfo)
+    }
+
     fun checkFile(expectedFile: File, project: Project, editor: Editor) {
         myProject = project
         myPsiManager = PsiManagerEx.getInstanceEx(myProject)
@@ -174,6 +186,10 @@ class CodeMetaInfoTestCase(
 
                     is HighlightingConfiguration -> {
                         codeMetaInfoForCheck.addAll(getHighlightingCodeMetaInfos(configuration))
+                    }
+
+                    is FileLevelHighlightingConfiguration -> {
+                        codeMetaInfoForCheck.addAll(getFileLevelHighlightingCodeMetaInfos(configuration))
                     }
 
                     is LineMarkerConfiguration -> {
@@ -319,7 +335,8 @@ abstract class AbstractCodeMetaInfoTest : AbstractMultiModuleTest() {
     open fun getConfigurations(): List<AbstractCodeMetaInfoRenderConfiguration> = listOf(
         DiagnosticCodeMetaInfoRenderConfiguration(),
         LineMarkerConfiguration(),
-        HighlightingConfiguration()
+        HighlightingConfiguration(),
+        FileLevelHighlightingConfiguration(),
     )
 
     protected open fun setupProject(testDataRoot: File) {

@@ -35,6 +35,7 @@ import com.intellij.util.containers.CollectionFactory
 import com.intellij.util.containers.ContainerUtil
 import com.intellij.util.indexing.DumbModeAccessType
 import com.intellij.util.indexing.FileBasedIndex
+import org.jetbrains.annotations.TestOnly
 import org.jetbrains.kotlin.idea.KotlinFileType
 import org.jetbrains.kotlin.idea.base.indices.KotlinPackageIndexUtils
 import org.jetbrains.kotlin.idea.base.projectStructure.ModuleInfoProvider
@@ -120,6 +121,13 @@ class ImplicitPackagePrefixCache(private val project: Project) {
     fun getPrefix(sourceRoot: VirtualFile): FqName {
         val implicitPackageMap = implicitPackageCache.getOrPut(sourceRoot) { analyzeImplicitPackagePrefixes(sourceRoot) }
         return implicitPackageMap.keys.singleOrNull() ?: FqName.ROOT
+    }
+
+    @TestOnly
+    fun setPrefix(sourceRoot: VirtualFile, fqName: FqName) {
+        val implicitPackageMap = implicitPackageCache.getOrPut(sourceRoot) { analyzeImplicitPackagePrefixes(sourceRoot) }
+        val toMutableList = implicitPackageMap.entries.first().value
+        implicitPackageCache[sourceRoot] = mutableMapOf(fqName to toMutableList)
     }
 
     internal fun clear() {
@@ -418,6 +426,16 @@ class PerModulePackageCacheService(private val project: Project) : Disposable {
     fun getImplicitPackagePrefix(sourceRoot: VirtualFile): FqName {
         checkPendingChanges()
         return implicitPackagePrefixCache.getPrefix(sourceRoot)
+    }
+
+    @TestOnly
+    fun setImplicitPackagePrefix(sourceRoot: VirtualFile, fqName: FqName?) {
+        checkPendingChanges()
+        if (fqName != null) {
+            implicitPackagePrefixCache.setPrefix(sourceRoot, fqName)
+        } else {
+            clear()
+        }
     }
 
     override fun dispose() {

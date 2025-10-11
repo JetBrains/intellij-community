@@ -26,6 +26,7 @@ import com.intellij.psi.search.GlobalSearchScope
 import com.intellij.psi.search.GlobalSearchScopesCore
 import com.intellij.util.Query
 import org.jetbrains.annotations.ApiStatus
+import org.jetbrains.annotations.TestOnly
 import org.jetbrains.jps.model.java.JavaModuleSourceRootTypes
 import org.jetbrains.jps.model.java.JavaSourceRootProperties
 import org.jetbrains.jps.model.module.JpsModuleSourceRootType
@@ -79,6 +80,14 @@ fun PsiDirectory.getImplicitPackagePrefix(): FqName? {
     return sourceRoot?.takeIf { !it.hasExplicitPackagePrefix(project) }?.let { sourceRoot ->
         @OptIn(K1ModeProjectStructureApi::class)
         PerModulePackageCacheService.getInstance(project).getImplicitPackagePrefix(sourceRoot)
+    }
+}
+
+@TestOnly
+fun PsiDirectory.setImplicitPackagePrefix(fqName: FqName?) {
+    sourceRoot?.let {
+        @OptIn(K1ModeProjectStructureApi::class)
+        PerModulePackageCacheService.getInstance(project).setImplicitPackagePrefix(it, fqName)
     }
 }
 

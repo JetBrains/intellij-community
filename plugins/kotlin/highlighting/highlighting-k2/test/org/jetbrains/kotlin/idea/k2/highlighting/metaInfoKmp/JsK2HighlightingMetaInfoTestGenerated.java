@@ -326,6 +326,16 @@ public abstract class JsK2HighlightingMetaInfoTestGenerated extends AbstractK2Hi
             runTest("../../idea/tests/testData/highlighterMetaInfo/Labels.kt");
         }
 
+        @TestMetadata("mismatchPackageDirectory.kt")
+        public void testMismatchPackageDirectory() throws Exception {
+            runTest("../../idea/tests/testData/highlighterMetaInfo/mismatchPackageDirectory.kt");
+        }
+
+        @TestMetadata("mismatchPackageDirectoryFileLevelProblem.kt")
+        public void testMismatchPackageDirectoryFileLevelProblem() throws Exception {
+            runTest("../../idea/tests/testData/highlighterMetaInfo/mismatchPackageDirectoryFileLevelProblem.kt");
+        }
+
         @TestMetadata("NamedArguments.kt")
         public void testNamedArguments() throws Exception {
             runTest("../../idea/tests/testData/highlighterMetaInfo/NamedArguments.kt");
