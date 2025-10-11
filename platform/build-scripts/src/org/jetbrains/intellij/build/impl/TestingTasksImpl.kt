@@ -89,27 +89,20 @@ internal class TestingTasksImpl(context: CompilationContext, private val options
   }
 
   private fun loadRunConfigurations(name: String): List<JUnitRunConfigurationProperties> {
-    return try {
-      val projectHome = context.paths.projectHome
-      val file = RunConfigurationProperties.findRunConfiguration(projectHome, name)
-      val configuration = RunConfigurationProperties.getConfiguration(file)
-      when (val type = RunConfigurationProperties.getConfigurationType(configuration)) {
-        JUnitRunConfigurationProperties.TYPE -> {
-          listOf(JUnitRunConfigurationProperties.loadRunConfiguration(file))
-        }
-        CompoundRunConfigurationProperties.TYPE -> {
-          val runConfiguration = CompoundRunConfigurationProperties.loadRunConfiguration(file)
-          runConfiguration.toRun.flatMap(::loadRunConfigurations)
-        }
-        else -> {
-          throw RuntimeException("Unsupported run configuration type '${type}' in run configuration '${name}' of project '${projectHome}'")
-        }
+    val projectHome = context.paths.projectHome
+    val file = RunConfigurationProperties.findRunConfiguration(projectHome, name)
+    val configuration = RunConfigurationProperties.getConfiguration(file)
+    return when (val type = RunConfigurationProperties.getConfigurationType(configuration)) {
+      JUnitRunConfigurationProperties.TYPE -> {
+        listOf(JUnitRunConfigurationProperties.loadRunConfiguration(file))
       }
-    }
-    catch (e: Exception) {
-      val description = e.message?.lineSequence()?.firstOrNull() ?: ""
-      context.messages.reportBuildProblem(description, identity = name)
-      emptyList()
+      CompoundRunConfigurationProperties.TYPE -> {
+        val runConfiguration = CompoundRunConfigurationProperties.loadRunConfiguration(file)
+        runConfiguration.toRun.flatMap(::loadRunConfigurations)
+      }
+      else -> {
+        throw RuntimeException("Unsupported run configuration type '${type}' in run configuration '${name}' of project '${projectHome}'")
+      }
     }
   }
 
