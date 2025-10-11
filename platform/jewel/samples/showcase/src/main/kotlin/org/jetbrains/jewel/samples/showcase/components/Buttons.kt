@@ -237,7 +237,9 @@ private fun SplitButtons() {
                 content = { Text("Split button") },
                 popupContainer = {
                     Column(Modifier.padding(8.dp), verticalArrangement = Arrangement.spacedBy(8.dp)) {
-                        Text("Generic popup content")
+                        Text(
+                            "Generic popup content with a bigger text that will check if the popup can handle it properly."
+                        )
                         Box(Modifier.size(24.dp), contentAlignment = Alignment.Center) {
                             Icon(
                                 key = AllIconsKeys.Nodes.ConfigFolder,
@@ -318,7 +320,7 @@ private fun SplitButtons() {
                                     JewelLogger.getInstance("Jewel").warn("Item clicked: $itemStr")
                                 },
                             ) {
-                                Text("Other Item ${it + 1}")
+                                Text("Other Item With More Chars - ${it + 1}")
                             }
                         }
                     }

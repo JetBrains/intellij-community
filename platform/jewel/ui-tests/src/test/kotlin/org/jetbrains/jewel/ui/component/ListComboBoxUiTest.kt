@@ -17,12 +17,14 @@ import androidx.compose.ui.test.ExperimentalTestApi
 import androidx.compose.ui.test.SemanticsNodeInteraction
 import androidx.compose.ui.test.assertHasClickAction
 import androidx.compose.ui.test.assertHasNoClickAction
+import androidx.compose.ui.test.assertHeightIsEqualTo
 import androidx.compose.ui.test.assertIsDisplayed
 import androidx.compose.ui.test.assertIsFocused
 import androidx.compose.ui.test.assertIsNotEnabled
 import androidx.compose.ui.test.assertIsSelected
 import androidx.compose.ui.test.assertTextContains
 import androidx.compose.ui.test.assertTextEquals
+import androidx.compose.ui.test.assertWidthIsEqualTo
 import androidx.compose.ui.test.hasAnyAncestor
 import androidx.compose.ui.test.hasContentDescription
 import androidx.compose.ui.test.hasTestTag
@@ -42,8 +44,13 @@ import androidx.compose.ui.test.pressKey
 import androidx.compose.ui.unit.dp
 import junit.framework.TestCase.assertEquals
 import org.jetbrains.jewel.foundation.lazy.rememberSelectableLazyListState
+import org.jetbrains.jewel.foundation.theme.JewelTheme
+import org.jetbrains.jewel.intui.standalone.styling.default
 import org.jetbrains.jewel.intui.standalone.theme.IntUiTheme
 import org.jetbrains.jewel.ui.component.interactions.performKeyPress
+import org.jetbrains.jewel.ui.component.styling.ComboBoxMetrics
+import org.jetbrains.jewel.ui.component.styling.ComboBoxStyle
+import org.jetbrains.jewel.ui.theme.comboBoxStyle
 import org.junit.Ignore
 import org.junit.Rule
 import org.junit.Test
@@ -901,6 +908,124 @@ class ListComboBoxUiTest {
         popupMenu.performKeyPress(Key.Escape)
     }
 
+    @Test
+    fun `popup width equals combobox width when nothing is set`() {
+        composeRule.setContent {
+            IntUiTheme {
+                ListComboBox(
+                    items = comboBoxItems,
+                    selectedIndex = 0,
+                    onSelectedItemChange = {},
+                    modifier = Modifier.testTag("ComboBox").width(200.dp),
+                    itemKeys = { index: Int, _: String -> index },
+                )
+            }
+        }
+
+        comboBox.assertIsDisplayed().performClick()
+        popupMenu.assertIsDisplayed()
+        composeRule.waitForIdle()
+
+        // The popup should have the same width as the combobox (200dp)
+        popupMenu.assertWidthIsEqualTo(200.dp)
+    }
+
+    @Test
+    fun `popup can have a width that is bigger than the combo box`() {
+        composeRule.setContent {
+            IntUiTheme {
+                ListComboBox(
+                    items = comboBoxItems,
+                    selectedIndex = 0,
+                    onSelectedItemChange = {},
+                    modifier = Modifier.testTag("ComboBox").width(200.dp),
+                    itemKeys = { index: Int, _: String -> index },
+                    maxPopupWidth = 500.dp,
+                )
+            }
+        }
+
+        comboBox.assertIsDisplayed().performClick()
+        popupMenu.assertIsDisplayed()
+
+        // The popup should have the width specified in popupModifier (500dp)
+        popupMenu.assertWidthIsEqualTo(500.dp)
+    }
+
+    @Test
+    fun `popup cannot be smaller than the combo box width when setting maxPopupWidth to a smaller value`() {
+        composeRule.setContent {
+            IntUiTheme {
+                ListComboBox(
+                    items = comboBoxItems,
+                    selectedIndex = 0,
+                    onSelectedItemChange = {},
+                    modifier = Modifier.testTag("ComboBox").width(200.dp),
+                    itemKeys = { index: Int, _: String -> index },
+                    // Will be ignored as it cannot be smaller than the combobox width
+                    maxPopupHeight = 100.dp,
+                )
+            }
+        }
+
+        comboBox.assertIsDisplayed().performClick()
+        popupMenu.assertIsDisplayed()
+
+        // The popup should have the combobox width (200dp) as minimum, not the smaller popupModifier width (100dp)
+        popupMenu.assertWidthIsEqualTo(200.dp)
+    }
+
+    @Test
+    fun `popup cannot be smaller than the combo box width by setting width in the popup modifier`() {
+        composeRule.setContent {
+            IntUiTheme {
+                ListComboBox(
+                    items = comboBoxItems,
+                    selectedIndex = 0,
+                    onSelectedItemChange = {},
+                    modifier = Modifier.testTag("ComboBox").width(200.dp),
+                    itemKeys = { index: Int, _: String -> index },
+                    // Will be ignored as it cannot be smaller than the combobox width
+                    popupModifier = Modifier.width(100.dp),
+                )
+            }
+        }
+
+        comboBox.assertIsDisplayed().performClick()
+        popupMenu.assertIsDisplayed()
+
+        // The popup should have the combobox width (200dp) as minimum, not the smaller popupModifier width (100dp)
+        popupMenu.assertWidthIsEqualTo(200.dp)
+    }
+
+    @Test
+    fun `popup max height from parameters should be respected`() {
+        composeRule.setContent {
+            IntUiTheme {
+                ListComboBox(
+                    items = List(10) { comboBoxItems }.flatten(),
+                    selectedIndex = 0,
+                    onSelectedItemChange = {},
+                    modifier = Modifier.testTag("ComboBox").width(200.dp),
+                    style =
+                        ComboBoxStyle(
+                            colors = JewelTheme.comboBoxStyle.colors,
+                            metrics = ComboBoxMetrics.default(maxPopupHeight = 200.dp), // Small size on theme
+                            icons = JewelTheme.comboBoxStyle.icons,
+                        ),
+                    itemKeys = { index: Int, _: String -> index },
+                    maxPopupHeight = 500.dp,
+                )
+            }
+        }
+
+        comboBox.assertIsDisplayed().performClick()
+        popupMenu.assertIsDisplayed()
+
+        // The popup should have the combobox width (200dp) as minimum, not the smaller popupModifier width (100dp)
+        popupMenu.assertHeightIsEqualTo(500.dp)
+    }
+
     private fun editableListComboBox(): SemanticsNodeInteraction {
         val focusRequester = FocusRequester()
         composeRule.setContent {
@@ -985,7 +1110,7 @@ class ListComboBoxUiTest {
             "Laughter",
             "Whisper",
             "Ocean",
-            "Serendipity lorem ipsum",
+            "Serendipity lorem ipsum dolor sit amet consectetur",
             "Umbrella",
             "Joy",
         )
