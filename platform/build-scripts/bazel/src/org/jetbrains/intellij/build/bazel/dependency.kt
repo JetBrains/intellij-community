@@ -494,6 +494,7 @@ private fun addDep(
           }
           else {
             val hasTestSource = !dependencyModuleDescriptor.testSources.isEmpty()
+            val hasTestResources = dependencyModuleDescriptor.testResources.isNotEmpty()
 
             if (isExported && hasTestSource) {
               println("Do not export test dependency (module=${dependentModule.module.name}, exported=${dependencyModuleDescriptor.module.name})")
@@ -510,7 +511,7 @@ private fun addDep(
                 exports.add(dependencyLabel)
               }
             }
-            if (hasTestSource) {
+            if (hasTestSource || hasTestResources) {
               if (hasSources) {
                 deps.add(getLabelForTest(dependencyLabel))
               }
