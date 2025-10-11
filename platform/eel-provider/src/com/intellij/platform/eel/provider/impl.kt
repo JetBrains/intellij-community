@@ -2,17 +2,16 @@
 package com.intellij.platform.eel.provider
 
 import com.intellij.openapi.application.ApplicationManager
-import com.intellij.openapi.util.SystemInfo
 import com.intellij.platform.eel.isWindows
 import com.intellij.util.io.ArchiveBackend
+import com.intellij.util.system.OS
 import java.nio.file.Path
-
 
 internal class ArchiveBackendImpl : ArchiveBackend {
   override fun isWindows(path: Path): Boolean =
     if (ApplicationManager.getApplication() == null) {
       // If app isn't loaded are called from some low-level thing and can't access eel without app anyway
-      SystemInfo.isWindows
+      OS.CURRENT == OS.Windows
     }
     else {
       path.getEelDescriptor().osFamily.isWindows

@@ -132,6 +132,7 @@ public abstract class Decompressor {
     private ZipEntry myEntry;
 
     @Override
+    @SuppressWarnings("IO_FILE_USAGE")
     protected void openStream() throws IOException {
       myZip = new ZipFile(mySource.toFile());
       myEntries = myZip.entries();
