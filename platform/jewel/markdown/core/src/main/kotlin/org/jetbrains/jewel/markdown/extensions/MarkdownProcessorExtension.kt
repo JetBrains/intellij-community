@@ -47,4 +47,8 @@ public interface MarkdownProcessorExtension {
      */
     public val delimitedInlineProcessorExtension: MarkdownDelimitedInlineProcessorExtension?
         get() = null
+
+    /** An extension for handling the translation of HTML blocks to Markdown blocks and inlines. */
+    public val htmlConverterExtension: MarkdownHtmlConverterExtension?
+        get() = null
 }

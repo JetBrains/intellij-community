@@ -33,6 +33,7 @@
 - sf:$stable:I
 - sf:INSTANCE:org.jetbrains.jewel.markdown.extensions.github.tables.GitHubTableProcessorExtension
 - getBlockProcessorExtension():org.jetbrains.jewel.markdown.extensions.MarkdownBlockProcessorExtension
+- getHtmlConverterExtension():org.jetbrains.jewel.markdown.extensions.MarkdownHtmlConverterExtension
 - getParserExtension():org.commonmark.parser.Parser$ParserExtension
 - getTextRendererExtension():org.commonmark.renderer.text.TextContentRenderer$TextContentRendererExtension
 *f:org.jetbrains.jewel.markdown.extensions.github.tables.GitHubTableRendererExtension

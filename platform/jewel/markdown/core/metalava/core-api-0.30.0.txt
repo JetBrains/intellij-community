@@ -260,6 +260,12 @@ package org.jetbrains.jewel.markdown.extensions {
     method public androidx.compose.ui.text.AnnotatedString render(org.jetbrains.jewel.markdown.InlineMarkdown.CustomDelimitedNode node, org.jetbrains.jewel.markdown.rendering.InlineMarkdownRenderer inlineRenderer, org.jetbrains.jewel.markdown.rendering.InlinesStyling inlinesStyling, boolean enabled, kotlin.jvm.functions.Function1<? super java.lang.String,kotlin.Unit>? onUrlClicked);
   }
 
+  @SuppressCompatibility @org.jetbrains.annotations.ApiStatus.Experimental @org.jetbrains.jewel.foundation.ExperimentalJewelApi public interface MarkdownHtmlConverterExtension {
+    method @SuppressCompatibility @org.jetbrains.annotations.ApiStatus.Experimental @org.jetbrains.jewel.foundation.ExperimentalJewelApi public java.util.Set<java.lang.String> getSupportedTags();
+    method @SuppressCompatibility @org.jetbrains.annotations.ApiStatus.Experimental @org.jetbrains.jewel.foundation.ExperimentalJewelApi public org.jetbrains.jewel.markdown.processing.html.HtmlElementConverter provideConverter(String tagName);
+    property @SuppressCompatibility @org.jetbrains.annotations.ApiStatus.Experimental @org.jetbrains.jewel.foundation.ExperimentalJewelApi public abstract java.util.Set<java.lang.String> supportedTags;
+  }
+
   public final class MarkdownKt {
     method @SuppressCompatibility @org.jetbrains.annotations.ApiStatus.Experimental @org.jetbrains.jewel.foundation.ExperimentalJewelApi public static androidx.compose.runtime.ProvidableCompositionLocal<org.jetbrains.jewel.markdown.rendering.MarkdownBlockRenderer> getLocalMarkdownBlockRenderer();
     method @SuppressCompatibility @org.jetbrains.annotations.ApiStatus.Experimental @org.jetbrains.jewel.foundation.ExperimentalJewelApi public static androidx.compose.runtime.ProvidableCompositionLocal<org.jetbrains.jewel.markdown.MarkdownMode> getLocalMarkdownMode();
@@ -282,10 +288,12 @@ package org.jetbrains.jewel.markdown.extensions {
   @SuppressCompatibility @org.jetbrains.annotations.ApiStatus.Experimental @org.jetbrains.jewel.foundation.ExperimentalJewelApi public interface MarkdownProcessorExtension {
     method public default org.jetbrains.jewel.markdown.extensions.MarkdownBlockProcessorExtension? getBlockProcessorExtension();
     method public default org.jetbrains.jewel.markdown.extensions.MarkdownDelimitedInlineProcessorExtension? getDelimitedInlineProcessorExtension();
+    method public default org.jetbrains.jewel.markdown.extensions.MarkdownHtmlConverterExtension? getHtmlConverterExtension();
     method public default org.commonmark.parser.Parser.ParserExtension? getParserExtension();
     method public default org.commonmark.renderer.text.TextContentRenderer.TextContentRendererExtension? getTextRendererExtension();
     property public default org.jetbrains.jewel.markdown.extensions.MarkdownBlockProcessorExtension? blockProcessorExtension;
     property public default org.jetbrains.jewel.markdown.extensions.MarkdownDelimitedInlineProcessorExtension? delimitedInlineProcessorExtension;
+    property public default org.jetbrains.jewel.markdown.extensions.MarkdownHtmlConverterExtension? htmlConverterExtension;
     property public default org.commonmark.parser.Parser.ParserExtension? parserExtension;
     property public default org.commonmark.renderer.text.TextContentRenderer.TextContentRendererExtension? textRendererExtension;
   }
@@ -310,8 +318,8 @@ package org.jetbrains.jewel.markdown.processing {
 
   @SuppressCompatibility @org.jetbrains.annotations.ApiStatus.Experimental @org.jetbrains.jewel.foundation.ExperimentalJewelApi public final class MarkdownProcessor {
     ctor public MarkdownProcessor();
-    ctor public MarkdownProcessor(optional java.util.List<? extends org.jetbrains.jewel.markdown.extensions.MarkdownProcessorExtension> extensions, optional org.jetbrains.jewel.markdown.MarkdownMode markdownMode, optional org.commonmark.parser.Parser commonMarkParser);
-    ctor public MarkdownProcessor(optional java.util.List<? extends org.jetbrains.jewel.markdown.extensions.MarkdownProcessorExtension> extensions, optional org.jetbrains.jewel.markdown.MarkdownMode markdownMode, optional org.commonmark.parser.Parser commonMarkParser, optional kotlin.jvm.functions.Function1<? super java.lang.String,org.jetbrains.jewel.foundation.code.MimeType?> languageRecognizer);
+    ctor public MarkdownProcessor(optional java.util.List<? extends org.jetbrains.jewel.markdown.extensions.MarkdownProcessorExtension> extensions, optional org.jetbrains.jewel.markdown.MarkdownMode markdownMode, optional org.commonmark.parser.Parser commonMarkParser, optional boolean convertHtml);
+    ctor public MarkdownProcessor(optional java.util.List<? extends org.jetbrains.jewel.markdown.extensions.MarkdownProcessorExtension> extensions, optional org.jetbrains.jewel.markdown.MarkdownMode markdownMode, optional org.commonmark.parser.Parser commonMarkParser, optional kotlin.jvm.functions.Function1<? super java.lang.String,org.jetbrains.jewel.foundation.code.MimeType?> languageRecognizer, optional boolean convertHtml);
     method public java.util.List<org.jetbrains.jewel.markdown.extensions.MarkdownBlockProcessorExtension> getBlockExtensions();
     method public java.util.List<org.jetbrains.jewel.markdown.extensions.MarkdownDelimitedInlineProcessorExtension> getDelimitedInlineExtensions();
     method public java.util.List<org.jetbrains.jewel.markdown.extensions.MarkdownProcessorExtension> getExtensions();
@@ -326,6 +334,65 @@ package org.jetbrains.jewel.markdown.processing {
   public final class ProcessingUtilKt {
     method @SuppressCompatibility @org.jetbrains.annotations.ApiStatus.Experimental @org.jetbrains.jewel.foundation.ExperimentalJewelApi public static java.util.List<org.jetbrains.jewel.markdown.InlineMarkdown> readInlineMarkdown(org.commonmark.node.Node, org.jetbrains.jewel.markdown.processing.MarkdownProcessor markdownProcessor);
     method @SuppressCompatibility @org.jetbrains.annotations.ApiStatus.Experimental @org.jetbrains.jewel.foundation.ExperimentalJewelApi public static org.jetbrains.jewel.markdown.InlineMarkdown? toInlineMarkdownOrNull(org.commonmark.node.Node, org.jetbrains.jewel.markdown.processing.MarkdownProcessor markdownProcessor);
+  }
+
+}
+
+package org.jetbrains.jewel.markdown.processing.html {
+
+  @SuppressCompatibility @org.jetbrains.annotations.ApiStatus.Experimental @org.jetbrains.jewel.foundation.ExperimentalJewelApi public interface HtmlElementConverter {
+    method @SuppressCompatibility @org.jetbrains.annotations.ApiStatus.Experimental @org.jetbrains.jewel.foundation.ExperimentalJewelApi public default org.jetbrains.jewel.markdown.MarkdownBlock? convert(org.jetbrains.jewel.markdown.processing.html.MarkdownHtmlElement.Element htmlElement, kotlin.jvm.functions.Function2<? super org.jetbrains.jewel.markdown.processing.html.MarkdownHtmlElement.Element,? super java.lang.Boolean,? extends java.util.List<? extends org.jetbrains.jewel.markdown.MarkdownBlock>> convertChildren, kotlin.jvm.functions.Function1<? super java.util.List<? extends org.jetbrains.jewel.markdown.processing.html.MarkdownHtmlElement>,? extends java.util.List<? extends org.jetbrains.jewel.markdown.InlineMarkdown>> convertInlines);
+    method @SuppressCompatibility @org.jetbrains.annotations.ApiStatus.Experimental @org.jetbrains.jewel.foundation.ExperimentalJewelApi public default java.util.List<org.jetbrains.jewel.markdown.InlineMarkdown>? convertInlines(org.jetbrains.jewel.markdown.processing.html.MarkdownHtmlElement element, kotlin.jvm.functions.Function0<? extends java.util.List<? extends org.jetbrains.jewel.markdown.InlineMarkdown>> convertSubInlines);
+  }
+
+  @SuppressCompatibility @org.jetbrains.annotations.ApiStatus.Experimental @org.jetbrains.jewel.foundation.ExperimentalJewelApi public sealed interface MarkdownHtmlElement {
+    method @SuppressCompatibility @org.jetbrains.annotations.ApiStatus.Experimental @org.jetbrains.jewel.foundation.ExperimentalJewelApi public String getHtmlContent();
+    property @SuppressCompatibility @org.jetbrains.annotations.ApiStatus.Experimental @org.jetbrains.jewel.foundation.ExperimentalJewelApi public abstract String htmlContent;
+    field public static final org.jetbrains.jewel.markdown.processing.html.MarkdownHtmlElement.Companion Companion;
+  }
+
+  public static final class MarkdownHtmlElement.Companion {
+  }
+
+  @SuppressCompatibility @org.jetbrains.annotations.ApiStatus.Experimental @org.jetbrains.jewel.foundation.ExperimentalJewelApi public static final class MarkdownHtmlElement.Element implements org.jetbrains.jewel.markdown.processing.html.MarkdownHtmlElement {
+    ctor public MarkdownHtmlElement.Element(String tag, boolean isBlock, java.util.Map<java.lang.String,java.lang.String> attributes, java.util.List<? extends org.jetbrains.jewel.markdown.processing.html.MarkdownHtmlElement> children, kotlin.ranges.IntRange lineRange, String htmlContent);
+    method public java.util.Map<java.lang.String,java.lang.String> getAttributes();
+    method public java.util.List<org.jetbrains.jewel.markdown.processing.html.MarkdownHtmlElement> getChildren();
+    method public String getHtmlContent();
+    method public kotlin.ranges.IntRange getLineRange();
+    method public String getTag();
+    method public boolean isBlock();
+    property public java.util.Map<java.lang.String,java.lang.String> attributes;
+    property public java.util.List<org.jetbrains.jewel.markdown.processing.html.MarkdownHtmlElement> children;
+    property public String htmlContent;
+    property public boolean isBlock;
+    property public kotlin.ranges.IntRange lineRange;
+    property public String tag;
+  }
+
+  @SuppressCompatibility @org.jetbrains.annotations.ApiStatus.Experimental @org.jetbrains.jewel.foundation.ExperimentalJewelApi public static final class MarkdownHtmlElement.Text implements org.jetbrains.jewel.markdown.processing.html.MarkdownHtmlElement {
+    ctor public MarkdownHtmlElement.Text(String htmlContent);
+    method public String getHtmlContent();
+    property public String htmlContent;
+  }
+
+  @SuppressCompatibility @org.jetbrains.annotations.ApiStatus.Experimental @org.jetbrains.jewel.foundation.ExperimentalJewelApi public sealed interface MarkdownHtmlElementConversionResult {
+  }
+
+  @SuppressCompatibility @org.jetbrains.annotations.ApiStatus.Experimental @org.jetbrains.jewel.foundation.ExperimentalJewelApi public static final class MarkdownHtmlElementConversionResult.Block implements org.jetbrains.jewel.markdown.processing.html.MarkdownHtmlElementConversionResult {
+    ctor public MarkdownHtmlElementConversionResult.Block(org.jetbrains.jewel.markdown.MarkdownBlock block);
+    method public org.jetbrains.jewel.markdown.MarkdownBlock getBlock();
+    property public org.jetbrains.jewel.markdown.MarkdownBlock block;
+  }
+
+  @SuppressCompatibility @org.jetbrains.annotations.ApiStatus.Experimental @org.jetbrains.jewel.foundation.ExperimentalJewelApi public static final class MarkdownHtmlElementConversionResult.Inlines implements org.jetbrains.jewel.markdown.processing.html.MarkdownHtmlElementConversionResult {
+    ctor public MarkdownHtmlElementConversionResult.Inlines(java.util.List<? extends org.jetbrains.jewel.markdown.InlineMarkdown> inlines);
+    method public java.util.List<org.jetbrains.jewel.markdown.InlineMarkdown> getInlines();
+    property public java.util.List<org.jetbrains.jewel.markdown.InlineMarkdown> inlines;
+  }
+
+  @SuppressCompatibility @org.jetbrains.annotations.ApiStatus.Experimental @org.jetbrains.jewel.foundation.ExperimentalJewelApi public static final class MarkdownHtmlElementConversionResult.None implements org.jetbrains.jewel.markdown.processing.html.MarkdownHtmlElementConversionResult {
+    field public static final org.jetbrains.jewel.markdown.processing.html.MarkdownHtmlElementConversionResult.None INSTANCE;
   }
 
 }
