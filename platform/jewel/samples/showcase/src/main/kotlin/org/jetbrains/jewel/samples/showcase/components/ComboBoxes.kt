@@ -13,7 +13,6 @@ import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableIntStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
-import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
@@ -25,7 +24,6 @@ import org.jetbrains.jewel.ui.component.EditableComboBox
 import org.jetbrains.jewel.ui.component.EditableListComboBox
 import org.jetbrains.jewel.ui.component.GroupHeader
 import org.jetbrains.jewel.ui.component.ListComboBox
-import org.jetbrains.jewel.ui.component.PopupContainer
 import org.jetbrains.jewel.ui.component.PopupManager
 import org.jetbrains.jewel.ui.component.SimpleListItem
 import org.jetbrains.jewel.ui.component.Text
@@ -218,7 +216,7 @@ private fun CustomComboBoxes() {
                 modifier = Modifier.widthIn(max = 200.dp),
                 popupManager = popupManager,
                 popupContent = {
-                    CustomPopupContent(popupManager) {
+                    CustomPopupContent {
                         selectedIndex = stringItems.indices.random()
                         popupManager.setPopupVisible(false)
                     }
@@ -236,7 +234,7 @@ private fun CustomComboBoxes() {
                 modifier = Modifier.widthIn(max = 200.dp),
                 popupManager = popupManager,
                 popupContent = {
-                    CustomPopupContent(popupManager) {
+                    CustomPopupContent {
                         selectedIndex = languageOptions.indices.random()
                         popupManager.setPopupVisible(false)
                     }
@@ -263,7 +261,7 @@ private fun CustomComboBoxes() {
                 modifier = Modifier.widthIn(max = 200.dp),
                 popupManager = popupManager,
                 popupContent = {
-                    CustomPopupContent(popupManager) {
+                    CustomPopupContent {
                         val newItemIndex = stringItems.indices.random()
                         state.edit { replace(0, originalText.length, stringItems[newItemIndex]) }
                         popupManager.setPopupVisible(false)
@@ -275,15 +273,10 @@ private fun CustomComboBoxes() {
 }
 
 @Composable
-private fun CustomPopupContent(popupManager: PopupManager, onButtonClick: () -> Unit) {
-    PopupContainer(onDismissRequest = { popupManager.setPopupVisible(false) }, horizontalAlignment = Alignment.Start) {
-        Column(
-            Modifier.padding(horizontal = 16.dp, vertical = 8.dp),
-            verticalArrangement = Arrangement.spacedBy(8.dp),
-        ) {
-            InfoText("Your custom content here!")
-            DefaultButton(onClick = onButtonClick) { Text("Pick a random item") }
-        }
+private fun CustomPopupContent(onButtonClick: () -> Unit) {
+    Column(Modifier.padding(horizontal = 16.dp, vertical = 8.dp), verticalArrangement = Arrangement.spacedBy(8.dp)) {
+        InfoText("Your custom content here!")
+        DefaultButton(onClick = onButtonClick) { Text("Pick a random item") }
     }
 }
 
