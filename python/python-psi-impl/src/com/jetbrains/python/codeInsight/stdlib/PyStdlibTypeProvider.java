@@ -10,6 +10,7 @@ import com.intellij.util.ObjectUtils;
 import com.intellij.util.containers.ContainerUtil;
 import com.jetbrains.python.PyNames;
 import com.jetbrains.python.codeInsight.dataflow.scope.ScopeUtil;
+import com.jetbrains.python.codeInsight.typing.PyTypingTypeProvider;
 import com.jetbrains.python.psi.*;
 import com.jetbrains.python.psi.PyKnownDecorator;
 import com.jetbrains.python.psi.impl.PyBuiltinCache;
@@ -74,6 +75,21 @@ public final class PyStdlibTypeProvider extends PyTypeProviderBase {
         return PyBuiltinCache.getInstance(referenceExpression).getBoolType();
       }
     }
+    else {
+      if ("value".equals(referenceExpression.getReferencedName())) {
+        final PyExpression qualifier = referenceExpression.getQualifier();
+        if (qualifier != null) {
+          // Get the type of the qualifier (the enum instance)
+          PyClassType enumType = as(context.getType(qualifier), PyClassType.class);
+          if (enumType != null && !enumType.isDefinition()) {
+            final PyClass enumClass = enumType.getPyClass();
+            if (isEnumLikeButNotBase(enumClass, context)) {
+              return getEnumValueType(enumClass, context);
+            }
+          }
+        }
+      }
+    }
 
     return null;
   }
@@ -101,6 +117,7 @@ public final class PyStdlibTypeProvider extends PyTypeProviderBase {
     if (enumAttributeType != null) {
       return enumAttributeType;
     }
+
     if (referenceTarget instanceof PyQualifiedNameOwner qualifiedNameOwner) {
       final String name = qualifiedNameOwner.getQualifiedName();
       if ((PyNames.TYPE_ENUM + ".name").equals(name)) {
@@ -109,28 +126,8 @@ public final class PyStdlibTypeProvider extends PyTypeProviderBase {
       else if ("enum.IntEnum.value".equals(name) && anchor instanceof PyReferenceExpression) {
         return Ref.create(PyBuiltinCache.getInstance(referenceTarget).getIntType());
       }
-      else if ((PyNames.TYPE_ENUM + ".value").equals(name) &&
-               anchor instanceof PyReferenceExpression anchorExpr && context.maySwitchToAST(anchor)) {
-        final PyExpression qualifier = anchorExpr.getQualifier();
-        // An enum value is retrieved programmatically, e.g. MyEnum[name].value, or just type-hinted
-        if (qualifier != null) {
-          PyClassType enumType = as(context.getType(qualifier), PyClassType.class);
-          if (enumType != null) {
-            PyClass enumClass = enumType.getPyClass();
-            if (isCustomEnum(enumClass, context)) {
-              PyTargetExpression firstEnumItem = ContainerUtil.getFirstItem(enumClass.getClassAttributes());
-              if (firstEnumItem != null) {
-                EnumAttributeInfo attributeInfo = getEnumAttributeInfo(enumClass, firstEnumItem, context);
-                if (attributeInfo != null) {
-                  return Ref.create(attributeInfo.assignedValueType);
-                }
-              }
-              else {
-                return Ref.create();
-              }
-            }
-          }
-        }
+      else if ("enum.StrEnum.value".equals(name) && anchor instanceof PyReferenceExpression) {
+        return Ref.create(PyBuiltinCache.getInstance(referenceTarget).getStrType());
       }
       else if ("enum.EnumMeta.__members__".equals(name)) {
         return Ref.create(PyTypeParser.getTypeByName(referenceTarget, "dict[str, unknown]", context));
@@ -348,6 +345,47 @@ public final class PyStdlibTypeProvider extends PyTypeProviderBase {
     return null;
   }
 
+  // Handle IntEnum/IntFlag, StrEnum, and fall back to assigned type or unknown
+  private static @Nullable PyType getEnumValueType(@NotNull PyClass enumClass, @NotNull TypeEvalContext context) {
+    PyBuiltinCache cache = PyBuiltinCache.getInstance(enumClass);
+
+    if (enumClass.isSubclass("enum.IntEnum", context) ||
+        enumClass.isSubclass("enum.IntFlag", context) ||
+        enumClass.isSubclass("enum.Flag", context)) {
+      return cache.getIntType();
+    }
+    if (enumClass.isSubclass("enum.StrEnum", context)) {
+      return cache.getStrType();
+    }
+
+    // If it's a mixin with basic scalar types - check str first for the failing test
+    if (enumClass.isSubclass("builtins.str", context) || enumClass.isSubclass("str", context)) {
+      return cache.getStrType();
+    }
+    if (enumClass.isSubclass("builtins.int", context) || enumClass.isSubclass("int", context)) {
+      return cache.getIntType();
+    }
+    if (enumClass.isSubclass("builtins.bytes", context) || enumClass.isSubclass("bytes", context)) {
+      return cache.getBytesType(LanguageLevel.forElement(enumClass));
+    }
+    if (enumClass.isSubclass("builtins.float", context) || enumClass.isSubclass("float", context)) {
+      return cache.getFloatType();
+    }
+    if (enumClass.isSubclass("builtins.bool", context) || enumClass.isSubclass("bool", context)) {
+      return cache.getBoolType();
+    }
+
+    // Fallback: Infer from first MEMBER's assigned value (not non-members like helpers/descriptors)
+    for (PyTargetExpression targetExpr : enumClass.getClassAttributes()) {
+      EnumAttributeInfo attributeInfo = getEnumAttributeInfo(enumClass, targetExpr, context);
+      if (attributeInfo != null && attributeInfo.attributeKind == EnumAttributeKind.MEMBER) {
+        return attributeInfo.assignedValueType;
+      }
+    }
+
+    return null;
+  }
+
   @Override
   public @Nullable Ref<PyType> getCallType(@NotNull PyFunction function, @NotNull PyCallSiteExpression callSite, @NotNull TypeEvalContext context) {
     final String qname = function.getQualifiedName();
@@ -449,8 +487,8 @@ public final class PyStdlibTypeProvider extends PyTypeProviderBase {
 
   @Override
   public @Nullable PyType getContextManagerVariableType(@NotNull PyClass contextManager,
-                                                        @NotNull PyExpression withExpression,
-                                                        @NotNull TypeEvalContext context) {
+                                                         @NotNull PyExpression withExpression,
+                                                         @NotNull TypeEvalContext context) {
     if ("contextlib.closing".equals(contextManager.getQualifiedName()) && withExpression instanceof PyCallExpression) {
       PyExpression closee = ((PyCallExpression)withExpression).getArgument(0, PyExpression.class);
       if (closee != null) {
@@ -462,5 +500,30 @@ public final class PyStdlibTypeProvider extends PyTypeProviderBase {
       return context.getType(withExpression);
     }
     return null;
+  }
+
+  @Override
+  public @Nullable List<@NotNull PyTypedResolveResult> getMemberTypes(@NotNull PyType type,
+                                                                      @NotNull String name,
+                                                                      @Nullable PyExpression location,
+                                                                      @NotNull AccessDirection direction,
+                                                                      @NotNull PyResolveContext resolveContext) {
+    if (!"value".equals(name)) return null;
+    TypeEvalContext context = resolveContext.getTypeEvalContext();
+    if (type instanceof PyClassType classType && !classType.isDefinition()) {
+      PyClass enumClass = classType.getPyClass();
+      if (isEnumLikeButNotBase(enumClass, context)) {
+        PyType valueType = getEnumValueType(enumClass, context);
+        if (valueType != null) {
+          return Collections.singletonList(new PyTypedResolveResult(null, valueType));
+        }
+      }
+    }
+    return null;
+  }
+
+  private static boolean isEnumLikeButNotBase(@NotNull PyClass enumClass, @NotNull TypeEvalContext context) {
+    return (isCustomEnum(enumClass, context) || enumClass.isSubclass(PyNames.TYPE_ENUM, context)) &&
+           !PyNames.TYPE_ENUM.equals(enumClass.getQualifiedName());
   }
 }
