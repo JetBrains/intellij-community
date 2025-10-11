@@ -910,6 +910,10 @@
     "name": "Access-Control-Allow-Origin"
   },
   {
+    "descr": "The <code><strong>Access-Control-Expose-Headers</strong></code> response header allows a server to indicate which response headers should be made available to scripts running in the browser in response to a cross-origin request.",
+    "name": "Access-Control-Expose-Headers"
+  },
+  {
     "descr": "The <strong><code>Access-Control-Max-Age</code></strong> response header indicates how long the results of a <a class=\"glossaryLink\" href=\"/en-US/docs/Glossary/preflight_request\" title=\"preflight request: A CORS preflight request is a CORS request that checks to see if the CORS protocol is understood and a server is aware using specific methods and headers.\">preflight request</a> (that is the information contained in the <a href=\"https://developer.mozilla.org/en-US/docs/Web/HTTP/Headers/Access-Control-Allow-Methods\" title=\"The Access-Control-Allow-Methods response header specifies the method or methods allowed when accessing the resource in response to a preflight request.\"><code>Access-Control-Allow-Methods</code></a> and <a href=\"https://developer.mozilla.org/en-US/docs/Web/HTTP/Headers/Access-Control-Allow-Headers\" title=\"The Access-Control-Allow-Headers response header is used in response to a preflight request which includes the Access-Control-Request-Headers to indicate which HTTP headers can be used during the actual request.\"><code>Access-Control-Allow-Headers</code></a> headers) can be cached.",
     "name": "Access-Control-Max-Age"
   },
