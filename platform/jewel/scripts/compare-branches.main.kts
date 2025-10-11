@@ -1,7 +1,7 @@
 #!/usr/bin/env kotlin
 @file:Suppress("RAW_RUN_BLOCKING")
 @file:DependsOn("com.github.ajalt.clikt:clikt-jvm:5.0.3")
-@file:Import("utils.main.kts") // Assuming utils.main.kts is needed for runCommand and getLatestReleaseDate
+@file:Import("utils.main.kts")
 
 import com.github.ajalt.clikt.command.SuspendingCliktCommand
 import com.github.ajalt.clikt.command.main
@@ -13,25 +13,38 @@ import com.github.ajalt.clikt.parameters.options.option
 import kotlin.system.exitProcess
 import kotlinx.coroutines.runBlocking
 import java.io.File
+import java.time.LocalDate
+import java.time.ZonedDateTime
+import java.time.format.DateTimeFormatter
 
+/** Configuration for the branch comparison script. Defines paths to check and git log formatting options. */
 private object Config {
+    /** Paths to monitor for changes - platform components and build files */
     val PATHS_TO_CHECK =
         listOf(
             "platform/jewel",
             "libraries/skiko",
+            "libraries/compose-runtime-desktop",
+            "libraries/compose-foundation-desktop",
             "libraries/compose-foundation-desktop-junit",
             "libraries/detekt-compose-rules",
-            "libraries/compose-foundation-desktop",
             "build",
         )
     const val DELIMITER = "::COMMIT::"
     const val GIT_LOG_FORMAT = "%H${DELIMITER}%s"
 }
 
-private data class CommitInfo(
-    val hash: String,
-    val subject: String,
-)
+/** Represents a git commit with its hash and subject line. */
+private data class CommitInfo(val hash: String, val subject: String)
+
+/** Result of parsing a git log line */
+private sealed class ParseResult {
+    data class Success(val commit: CommitInfo) : ParseResult()
+
+    object DateFiltered : ParseResult()
+
+    object ParseError : ParseResult()
+}
 
 private class CompareBranchesCommand : SuspendingCliktCommand() {
     private val verbose: Boolean by
@@ -39,6 +52,13 @@ private class CompareBranchesCommand : SuspendingCliktCommand() {
     private val jewelOnly: Boolean by
         option("--jewel-only", help = "Only prints commits whose subject contains the word 'jewel' (case insensitive).")
             .flag(default = false)
+    private val showHashes: Boolean by
+        option("--hash", help = "Show commit hashes in the output.").flag(default = false)
+    private val noBuildChanges: Boolean by
+        option("--no-build-changes", help = "Exclude commits that only affect the build/ directory.")
+            .flag(default = false)
+    private val buildOnly: Boolean by
+        option("--build-only", help = "Only check commits that affect the build/ directory.").flag(default = false)
     private val branch1: String by argument(help = "The first branch to compare.")
     private val branch2: String by argument(help = "The second branch to compare.")
     private val sinceDate: String by
@@ -63,10 +83,42 @@ private class CompareBranchesCommand : SuspendingCliktCommand() {
         "Compares commits affecting specific paths between two branches by commit message."
 
     override suspend fun run() {
+        // Validate mutually exclusive flags
+        if (noBuildChanges && buildOnly) {
+            printlnErr("Error: --no-build-changes and --build-only are mutually exclusive.")
+            exitProcess(1)
+        }
+
+        validateEnvironment()
+        val commits1 = fetchCommits(branch1)
+        val commits2 = fetchCommits(branch2)
+
+        if (verbose) {
+            println(
+                "📊 Found ${commits1.size} commits in '${branch1}' and ${commits2.size} commits in '${branch2}' since ${sinceDate}"
+            )
+
+            if (commits1.isNotEmpty()) {
+                println("\n--- Commits for '${branch1}' ---")
+                commits1.forEach(::printCommitInfoLine)
+                println()
+            }
+
+            if (commits2.isNotEmpty()) {
+                println("\n--- Commits for '${branch2}' ---")
+                commits2.forEach(::printCommitInfoLine)
+                println()
+            }
+        }
+
+        compareAndDisplayResults(commits1, commits2)
+    }
+
+    /** Validates the environment and prerequisites */
+    private suspend fun validateEnvironment() {
         print("⏳ Locating IntelliJ Community root...")
 
         val communityRoot = findCommunityRoot()
-
         if (communityRoot == null || !communityRoot.isDirectory) {
             println()
             printlnErr(
@@ -78,11 +130,13 @@ private class CompareBranchesCommand : SuspendingCliktCommand() {
 
         println(" DONE: ${communityRoot.absolutePath}")
 
+        // Validate git repository
         if (!isDirectoryGitRepo(communityRoot)) {
             printlnErr("Error: Not a git repository.")
             exitProcess(1)
         }
 
+        // Validate branches exist
         if (!branchExists(branch1, communityRoot)) {
             printlnErr("Error: Branch '$branch1' not found.")
             exitProcess(1)
@@ -93,9 +147,17 @@ private class CompareBranchesCommand : SuspendingCliktCommand() {
             exitProcess(1)
         }
 
-        // Ensure all paths to check exist
+        // Determine which paths to check based on flags
+        val pathsToCheck =
+            when {
+                noBuildChanges -> Config.PATHS_TO_CHECK.filter { it != "build" }
+                buildOnly -> listOf("build")
+                else -> Config.PATHS_TO_CHECK
+            }
+
+        // Validate paths exist
         var anyPathMissing = false
-        for (path in Config.PATHS_TO_CHECK) {
+        for (path in pathsToCheck) {
             val file = File(communityRoot, path)
             if (!file.isDirectory()) {
                 printlnErr("Error: Path to check does not exist: $path")
@@ -104,51 +166,136 @@ private class CompareBranchesCommand : SuspendingCliktCommand() {
         }
         if (anyPathMissing) exitProcess(1)
 
-        println(
-            "🔍 Comparing commits for paths '${Config.PATHS_TO_CHECK.joinToString()}' between " +
-            "'$branch1' and '$branch2' since $sinceDate..."
-        )
+        // Display comparison parameters
+        println("🔍 Comparing commits between '$branch1' and '$branch2' since $sinceDate for paths:")
+        pathsToCheck.forEach { println("  - $it") }
+        if (jewelOnly) println("[Only including commits explicitly tagged as Jewel]")
+        if (noBuildChanges) println("[Excluding build/ directory changes]")
+        if (buildOnly) println("[Only including build/ directory changes]")
+        println()
+    }
 
-        val pathsArg = Config.PATHS_TO_CHECK.joinToString(separator = " ") { "-- $it" }
+    /**
+     * Fetches commits for a given branch, filtering by author date.
+     *
+     * Uses the author date instead of the commit date to properly handle cherry-picks.
+     */
+    private suspend fun fetchCommits(branch: String): List<CommitInfo> {
+        val communityRoot = findCommunityRoot()!!
+        val pathsToCheck =
+            when {
+                noBuildChanges -> Config.PATHS_TO_CHECK.filter { it != "build" }
+                buildOnly -> listOf("build")
+                else -> Config.PATHS_TO_CHECK
+            }
+        val pathsArg = pathsToCheck.joinToString(separator = " ") { "-- $it" }
 
-        val gitLogCommand1 = "git log $branch1 --after=$sinceDate --pretty=format:'${Config.GIT_LOG_FORMAT}' $pathsArg"
-        val commits1 =
-            runCommand(gitLogCommand1, communityRoot)
-                .output
-                .lines()
-                .filter { it.isNotBlank() }
-                .map { parseCommitLine(it) }
+        println("📋 Fetching commits from '$branch'...")
 
-        val gitLogCommand2 = "git log $branch2 --after=$sinceDate --pretty=format:'${Config.GIT_LOG_FORMAT}' $pathsArg"
-        val commits2 =
-            runCommand(gitLogCommand2, communityRoot)
-                .output
-                .lines()
-                .filter { it.isNotBlank() }
-                .map { parseCommitLine(it) }
+        val result =
+            runCommand("git log $branch --pretty=format:'${Config.GIT_LOG_FORMAT},%ai' $pathsArg", communityRoot)
+        val allLines = result.output.lines()
+        val nonBlankLines = allLines.filter { it.isNotBlank() }
 
         if (verbose) {
-            if (commits1.isNotEmpty()) {
-                println("\n--- Commits for '$branch1' ---")
-                commits1.forEach(::printCommitInfoLine)
-                println()
-            }
-            if (commits2.isNotEmpty()) {
-                println("\n--- Commits for '$branch2' ---")
-                commits2.forEach(::printCommitInfoLine)
-                println()
+            println("  📊 Raw output: ${allLines.size} lines total, ${nonBlankLines.size} non-blank")
+        }
+
+        // Parse commit messages and filter by author date
+        val commits = mutableListOf<CommitInfo>()
+        val unparseable = mutableListOf<String>()
+        var dateFilteredCount = 0
+
+        nonBlankLines.forEach { line ->
+            when (val result = parseCommitWithDateResult(line)) {
+                is ParseResult.Success -> commits.add(result.commit)
+                is ParseResult.DateFiltered -> dateFilteredCount++
+                is ParseResult.ParseError -> unparseable.add(line)
             }
         }
 
+        if (verbose) {
+            println("  ✅ Parsed ${commits.size} commits, filtered out $dateFilteredCount commits by date")
+        }
+
+        // Report truly unparseable commits only
+        if (unparseable.isNotEmpty()) {
+            printlnWarn(
+                "  ⚠️  Warning: ${unparseable.size} commits from '$branch' could not be parsed due to format issues:"
+            )
+            for (line in unparseable.take(5)) { // Only show the first 5 to avoid spam
+                println("    • ${line.take(100)}${if (line.length > 100) "..." else ""}")
+            }
+            if (unparseable.size > 5) {
+                println("    ... and ${unparseable.size - 5} more")
+            }
+        }
+
+        return commits
+    }
+
+    /** Parses a git log line and returns a ParseResult indicating success, date filtering, or parse error */
+    private fun parseCommitWithDateResult(line: String): ParseResult {
+        // Remove surrounding quotes first
+        val cleanLine = line.trim().removeSurrounding("'")
+
+        // Author dates have a consistent format: YYYY-MM-DD HH:MM:SS +ZZZZ
+        // Use regex to find the author date at the end of the line
+        val authorDateRegex = Regex("""^(.+),(\d{4}-\d{2}-\d{2} \d{2}:\d{2}:\d{2} [+\-]\d{4})$""")
+        val matchResult = authorDateRegex.find(cleanLine) ?: return ParseResult.ParseError
+
+        val commitPart = matchResult.groupValues[1]
+        val authorDatePart = matchResult.groupValues[2]
+
+        val commit = parseCommitLine(commitPart)
+
+        // Filter by author date (handles cherry-picks correctly) using proper date parsing
+        return if (isCommitAfterDate(authorDatePart, sinceDate)) {
+            ParseResult.Success(commit)
+        } else {
+            ParseResult.DateFiltered
+        }
+    }
+
+    /**
+     * Compares author date with since date using proper datetime parsing. Handles timezone-aware comparison properly.
+     */
+    private fun isCommitAfterDate(authorDateStr: String, sinceDateStr: String): Boolean {
+        return try {
+            // Parse the git author date (format: "2025-09-25 12:37:32 +0200")
+            val authorDate = ZonedDateTime.parse(authorDateStr, DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss Z"))
+
+            // Parse the "since" date (format: "2025-08-25" -> start of day in local timezone)
+            val sinceDate =
+                LocalDate.parse(sinceDateStr, DateTimeFormatter.ofPattern("yyyy-MM-dd"))
+                    .atStartOfDay()
+                    .atZone(authorDate.zone) // Use same timezone as author for fair comparison
+
+            authorDate.isAfter(sinceDate) || authorDate.isEqual(sinceDate)
+        } catch (e: Exception) {
+            printlnWarn(
+                "    Warning: Failed to parse dates - author: '$authorDateStr', since: '$sinceDateStr' (${e.message})"
+            )
+            // Fallback to string comparison if parsing fails
+            authorDateStr >= sinceDateStr
+        }
+    }
+
+    /**
+     * Compares commits between branches and displays results. Cherry-picked commits with identical subjects are
+     * considered the same.
+     */
+    private fun compareAndDisplayResults(commits1: List<CommitInfo>, commits2: List<CommitInfo>) {
         val horizontalLine = "------------------------------------------------------------------"
         println(horizontalLine)
 
+        // Find commits unique to branch1 (by comparing normalized subjects)
         val branch2Subjects = commits2.map { it.subject }.toSet()
         val commitsInBranch1Only = commits1.filter { (_, subject) -> subject !in branch2Subjects }
 
         if (verbose) {
-            println("Commits in '$branch1' but not '$branch2':")
-            println(commitsInBranch1Only.joinToString("\n"))
+            println("Analyzing commits in '$branch1' but not '$branch2':")
+            println("  Raw list: ${commitsInBranch1Only.joinToString { it.subject }}")
             println()
         }
 
@@ -162,12 +309,13 @@ private class CompareBranchesCommand : SuspendingCliktCommand() {
         println()
         println(horizontalLine)
 
+        // Find commits unique to branch2
         val branch1Subjects = commits1.map { it.subject }.toSet()
         val commitsInBranch2Only = commits2.filter { (_, subject) -> subject !in branch1Subjects }
 
         if (verbose) {
-            println("All commits in '$branch2' but not '$branch1':")
-            println(commitsInBranch2Only.joinToString("\n"))
+            println("Analyzing commits in '$branch2' but not '$branch1':")
+            println("  Raw list: ${commitsInBranch2Only.joinToString { it.subject }}")
             println()
         }
 
@@ -182,6 +330,7 @@ private class CompareBranchesCommand : SuspendingCliktCommand() {
         println(horizontalLine)
     }
 
+    /** Parses a git log line to extract commit hash and subject */
     private fun parseCommitLine(commitLine: String): CommitInfo {
         val (hash, subject) = commitLine.split(Config.DELIMITER)
         if (subject.isBlank()) {
@@ -190,14 +339,17 @@ private class CompareBranchesCommand : SuspendingCliktCommand() {
         return CommitInfo(hash.trim('\''), normalizeSubject(subject.trim('\'')))
     }
 
+    /** Prints a formatted commit line with hash and subject, highlighting Jewel commits */
     private fun printCommitInfoLine(commitInfo: CommitInfo) {
         val isJewelCommit = commitInfo.subject.contains("jewel", ignoreCase = true)
         if (jewelOnly && !isJewelCommit) return
 
         val output = buildString {
             append("  - ")
-            append(commitInfo.hash.take(7))
-            append(" | ")
+            if (showHashes) {
+                append(commitInfo.hash.take(7))
+                append(" | ")
+            }
             append(commitInfo.subject)
         }
 
@@ -208,10 +360,12 @@ private class CompareBranchesCommand : SuspendingCliktCommand() {
         }
     }
 
+    /**
+     * Normalizes commit subjects by removing cherry-pick prefixes. This ensures cherry-picked commits match their
+     * original counterparts.
+     */
     private fun normalizeSubject(subject: String): String =
-        subject
-            .replaceFirst(Regex("""^(cherry picked from commit [0-9a-f]+):? """, RegexOption.IGNORE_CASE), "")
-            .trim()
+        subject.replaceFirst(Regex("""^(cherry picked from commit [0-9a-f]+):? """, RegexOption.IGNORE_CASE), "").trim()
 }
 
 runBlocking { CompareBranchesCommand().main(args) }
