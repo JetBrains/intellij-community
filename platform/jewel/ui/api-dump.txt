@@ -577,6 +577,25 @@ org.jetbrains.jewel.ui.component.MenuScope
 f:org.jetbrains.jewel.ui.component.PopupContainerKt
 - sf:PopupContainer(kotlin.jvm.functions.Function0,androidx.compose.ui.Alignment$Horizontal,androidx.compose.ui.Modifier,org.jetbrains.jewel.ui.component.styling.PopupContainerStyle,androidx.compose.ui.window.PopupProperties,androidx.compose.ui.window.PopupPositionProvider,kotlin.jvm.functions.Function2,androidx.compose.runtime.Composer,I,I):V
 f:org.jetbrains.jewel.ui.component.PopupKt
+- sf:Popup(androidx.compose.ui.window.PopupPositionProvider,androidx.compose.foundation.shape.CornerSize,kotlin.jvm.functions.Function0,androidx.compose.ui.window.PopupProperties,kotlin.jvm.functions.Function1,kotlin.jvm.functions.Function1,kotlin.jvm.functions.Function2,androidx.compose.runtime.Composer,I,I):V
+- sf:Popup(androidx.compose.ui.window.PopupPositionProvider,kotlin.jvm.functions.Function0,androidx.compose.ui.window.PopupProperties,kotlin.jvm.functions.Function1,kotlin.jvm.functions.Function1,kotlin.jvm.functions.Function2,androidx.compose.runtime.Composer,I,I):V
+- sf:getLocalPopupRenderer():androidx.compose.runtime.ProvidableCompositionLocal
+f:org.jetbrains.jewel.ui.component.PopupManager
+- sf:$stable:I
+- <init>():V
+- <init>(kotlin.jvm.functions.Function1,java.lang.String):V
+- b:<init>(kotlin.jvm.functions.Function1,java.lang.String,I,kotlin.jvm.internal.DefaultConstructorMarker):V
+- equals(java.lang.Object):Z
+- f:getName():java.lang.String
+- f:getOnPopupVisibleChange():kotlin.jvm.functions.Function1
+- hashCode():I
+- f:isPopupVisible():androidx.compose.runtime.State
+- f:setPopupVisible(Z):V
+- f:togglePopupVisibility():V
+org.jetbrains.jewel.ui.component.PopupRenderer
+- sf:Companion:org.jetbrains.jewel.ui.component.PopupRenderer$Companion
+- a:Popup(androidx.compose.ui.window.PopupPositionProvider,androidx.compose.ui.window.PopupProperties,kotlin.jvm.functions.Function0,kotlin.jvm.functions.Function1,kotlin.jvm.functions.Function1,androidx.compose.foundation.shape.CornerSize,kotlin.jvm.functions.Function2,androidx.compose.runtime.Composer,I):V
+f:org.jetbrains.jewel.ui.component.PopupRenderer$Companion
 f:org.jetbrains.jewel.ui.component.RadioButtonKt
 - sf:RadioButton(Z,kotlin.jvm.functions.Function0,androidx.compose.ui.Modifier,Z,org.jetbrains.jewel.ui.Outline,androidx.compose.foundation.interaction.MutableInteractionSource,org.jetbrains.jewel.ui.component.styling.RadioButtonStyle,androidx.compose.ui.text.TextStyle,androidx.compose.ui.Alignment$Vertical,androidx.compose.runtime.Composer,I,I):V
 - sf:RadioButtonRow(java.lang.String,Z,kotlin.jvm.functions.Function0,androidx.compose.ui.Modifier,Z,org.jetbrains.jewel.ui.Outline,androidx.compose.foundation.interaction.MutableInteractionSource,org.jetbrains.jewel.ui.component.styling.RadioButtonStyle,androidx.compose.ui.text.TextStyle,androidx.compose.ui.Alignment$Vertical,androidx.compose.runtime.Composer,I,I):V
