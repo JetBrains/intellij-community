@@ -1,4 +1,10 @@
 <keymap name="Visual Studio" parent="$default" version="1" disable-mnemonics="false">
+  <action id="EditorCloneCaretAbove">
+    <keyboard-shortcut first-keystroke="shift alt up" />
+  </action>
+  <action id="EditorCloneCaretBelow">
+    <keyboard-shortcut first-keystroke="shift alt down" />
+  </action>
   <action id="StepOut">
     <keyboard-shortcut first-keystroke="shift F11"/>
   </action>
