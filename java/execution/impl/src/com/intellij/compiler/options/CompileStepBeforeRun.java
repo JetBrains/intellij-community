@@ -1,4 +1,4 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.compiler.options;
 
 import com.intellij.execution.*;
@@ -181,7 +181,11 @@ public final class CompileStepBeforeRun extends BeforeRunTaskProvider<CompileSte
                 projectTask = new EmptyCompileScopeBuildTaskImpl(true);
               }
             }
-            ProjectTaskContext context = new ProjectTaskContext(ExecutionManagerImpl.EXECUTION_SESSION_ID_KEY.get(env), configuration);
+            ProjectTaskContext context = new ProjectTaskContext(
+              ExecutionManagerImpl.EXECUTION_SESSION_ID_KEY.get(env),
+              configuration,
+              env.isAutoTriggered()
+            );
             env.copyUserDataTo(context);
             return new Pair<>(context, projectTask);
           }).expireWith(myProject).executeSynchronously();
