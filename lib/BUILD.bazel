@@ -3067,15 +3067,15 @@ jvm_import(
 
 jvm_import(
   name = "jediterm-core",
-  jar = "@org_jetbrains_jediterm-jediterm-core-3_55_http//file",
-  source_jar = "@org_jetbrains_jediterm-jediterm-core-3_55_http//file",
+  jar = "@org_jetbrains_jediterm-jediterm-core-3_56_http//file",
+  source_jar = "@org_jetbrains_jediterm-jediterm-core-3_56_http//file",
   visibility = ["//visibility:public"]
 )
 
 jvm_import(
   name = "jediterm-ui",
-  jar = "@org_jetbrains_jediterm-jediterm-ui-3_55_http//file",
-  source_jar = "@org_jetbrains_jediterm-jediterm-ui-3_55_http//file",
+  jar = "@org_jetbrains_jediterm-jediterm-ui-3_56_http//file",
+  source_jar = "@org_jetbrains_jediterm-jediterm-ui-3_56_http//file",
   visibility = ["//visibility:public"]
 )
 
