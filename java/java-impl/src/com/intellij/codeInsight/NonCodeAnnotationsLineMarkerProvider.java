@@ -43,6 +43,7 @@ import org.jetbrains.annotations.Nullable;
 import javax.swing.*;
 import java.awt.event.MouseEvent;
 import java.util.*;
+import java.util.regex.Pattern;
 import java.util.stream.Collectors;
 
 import static com.intellij.lang.documentation.QuickDocHighlightingHelper.CODE_BLOCK_PREFIX;
@@ -50,6 +51,7 @@ import static com.intellij.lang.documentation.QuickDocHighlightingHelper.CODE_BL
 
 public abstract class NonCodeAnnotationsLineMarkerProvider extends LineMarkerProviderDescriptor {
   protected enum LineMarkerType { External, InferredNullability, InferredContract }
+  private static final Pattern CODE_TAG_PATTERN = Pattern.compile("</?code>");
 
   private static LineMarkerType getAnnotationLineMarkerType(Collection<? extends AnnotationDocGenerator> nonCodeAnnotations) {
     if (ContainerUtil.find(nonCodeAnnotations, (anno) -> !anno.isInferred()) != null) {
@@ -117,7 +119,9 @@ public abstract class NonCodeAnnotationsLineMarkerProvider extends LineMarkerPro
 
     String tooltip = XmlStringUtil.wrapInHtml(
       "<p>" + NonCodeAnnotationGenerator.getNonCodeHeaderAvailable(nonCodeAnnotations) + CommonXmlStrings.NBSP + JavaBundle.message("non.code.annotations.explanation.full.signature") + "\n" +
-      CODE_BLOCK_PREFIX + JavaDocInfoGeneratorFactory.create(owner.getProject(), owner).generateSignature(owner).replaceAll("</?code>", "") + CODE_BLOCK_SUFFIX);
+      CODE_BLOCK_PREFIX +
+      CODE_TAG_PATTERN.matcher(JavaDocInfoGeneratorFactory.create(owner.getProject(), owner).generateSignature(owner)).replaceAll("") +
+      CODE_BLOCK_SUFFIX);
     return new LineMarkerInfo<>(element, element.getTextRange(), AllIcons.Gutter.ExtAnnotation, __ -> tooltip, MyIconGutterHandler.INSTANCE,
                                 GutterIconRenderer.Alignment.RIGHT);
   }

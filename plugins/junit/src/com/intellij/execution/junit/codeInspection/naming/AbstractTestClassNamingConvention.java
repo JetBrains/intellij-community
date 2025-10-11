@@ -29,10 +29,10 @@ public final class AbstractTestClassNamingConvention extends NamingConvention<Ps
   private static final int DEFAULT_MIN_LENGTH = 12;
   private static final int DEFAULT_MAX_LENGTH = 64;
   public static final @NonNls String ABSTRACT_TEST_CLASS_NAMING_CONVENTION_SHORT_NAME = "JUnitAbstractTestClassNamingConvention";
-
+  public static final @NonNls NamingConventionBean DEFAULT_BEAN = new NamingConventionBean("[A-Z][A-Za-z\\d]*TestCase", DEFAULT_MIN_LENGTH, DEFAULT_MAX_LENGTH);
   @Override
   public NamingConventionBean createDefaultBean() {
-    return new NamingConventionBean("[A-Z][A-Za-z\\d]*TestCase", DEFAULT_MIN_LENGTH, DEFAULT_MAX_LENGTH);
+    return DEFAULT_BEAN;
   }
 
   @Override

@@ -19,11 +19,13 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Unmodifiable;
 
 import java.util.*;
+import java.util.regex.Pattern;
 
 /**
  * @author lesya
  */
 public final class ColorSettingsUtil {
+  private static final Pattern UNDERSCORE_PATTERN = Pattern.compile("_");
   private ColorSettingsUtil() {
   }
 
@@ -80,7 +82,7 @@ public final class ColorSettingsUtil {
        new Pair<>(CodeInsightColors.RUNTIME_ERROR, OptionsBundle.message("options.java.attribute.descriptor.runtime"))
     ));
 
-    attributes.add(new Pair<>(TextAttributesKey.find("REASSIGNED_LOCAL_VARIABLE_ATTRIBUTES"), 
+    attributes.add(new Pair<>(TextAttributesKey.find("REASSIGNED_LOCAL_VARIABLE_ATTRIBUTES"),
                               OptionsBundle.message("options.language.defaults.reassigned.local.variable")));
 
     for (SeveritiesProvider provider : SeveritiesProvider.EP_NAME.getExtensionList()) {
@@ -102,6 +104,6 @@ public final class ColorSettingsUtil {
   private static @NotNull @NlsContexts.AttributeDescriptor String toDisplayName(@NotNull TextAttributesKey attributesKey) {
     return OptionsBundle.message(
       "options.java.attribute.descriptor.errors.group",
-      StringUtil.capitalize(StringUtil.toLowerCase(attributesKey.getExternalName()).replaceAll("_", " ")));
+      StringUtil.capitalize(UNDERSCORE_PATTERN.matcher(StringUtil.toLowerCase(attributesKey.getExternalName())).replaceAll(" ")));
   }
 }

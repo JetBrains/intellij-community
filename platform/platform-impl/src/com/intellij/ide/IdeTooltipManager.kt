@@ -174,6 +174,7 @@ class IdeTooltipManager(coroutineScope: CoroutineScope) : Disposable {
   companion object {
     @JvmField
     internal val TOOLTIP_COLOR_KEY: ColorKey = ColorKey.createColorKey("TOOLTIP", null)
+    private val CODE_FONT_SIZE_REGEX = Regex("code \\{font-size:[0-9.]*pt;}")
 
     private val CUSTOM_TOOLTIP = Key.create<IdeTooltip>("custom.tooltip")
     private val DUMMY_LISTENER = MouseEventAdapter<Void?>(null)
@@ -218,7 +219,7 @@ class IdeTooltipManager(coroutineScope: CoroutineScope) : Disposable {
       }
 
       // Remove <style> rule for <code> added by prepareHintText() call
-      val text = HintUtil.prepareHintText(html, hintHint).replaceFirst(Regex("code \\{font-size:[0-9.]*pt;}"), "")
+      val text = HintUtil.prepareHintText(html, hintHint).replaceFirst(CODE_FONT_SIZE_REGEX, "")
 
       if (hintHint.isOwnBorderAllowed) {
         setBorder(pane)

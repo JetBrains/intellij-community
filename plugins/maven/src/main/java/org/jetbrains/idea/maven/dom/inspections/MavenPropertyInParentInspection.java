@@ -4,13 +4,13 @@ package org.jetbrains.idea.maven.dom.inspections;
 import com.intellij.codeInspection.*;
 import com.intellij.codeInspection.util.IntentionFamilyName;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.xml.XmlElement;
 import com.intellij.psi.xml.XmlFile;
 import com.intellij.psi.xml.XmlTag;
 import com.intellij.psi.xml.XmlText;
+import com.intellij.util.text.VersionComparatorUtil;
 import com.intellij.util.xml.DomFileElement;
 import com.intellij.util.xml.DomManager;
 import com.intellij.util.xml.GenericDomValue;
@@ -66,7 +66,7 @@ public final class MavenPropertyInParentInspection extends XmlSuppressableInspec
   }
 
   private static boolean isMaven35OrMore(@NotNull PsiFile file) {
-    return StringUtil.compareVersionNumbers(MavenDomUtil.getMavenVersion(file.getVirtualFile(), file.getProject()), "3.5") >= 0;
+    return VersionComparatorUtil.compare(MavenDomUtil.getMavenVersion(file.getVirtualFile(), file.getProject()), "3.5") >= 0;
 
   }
 

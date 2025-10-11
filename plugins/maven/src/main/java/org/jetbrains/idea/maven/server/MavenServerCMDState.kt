@@ -28,6 +28,7 @@ import com.intellij.platform.diagnostic.telemetry.impl.agent.TelemetryAgentProvi
 import com.intellij.platform.diagnostic.telemetry.impl.agent.TelemetryAgentResolver.getAgentLocation
 import com.intellij.platform.diagnostic.telemetry.rt.context.TelemetryContext
 import com.intellij.util.PathUtil
+import com.intellij.util.text.VersionComparatorUtil
 import org.jdom.Element
 import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.annotations.NonNls
@@ -195,7 +196,7 @@ open class MavenServerCMDState(
 
   protected fun collectRTLibraries(mavenVersion: String?): MutableCollection<String?> {
     val classPath: MutableSet<String?> = LinkedHashSet<String?>()
-    if (StringUtil.compareVersionNumbers(mavenVersion, "3.1") < 0) {
+    if (VersionComparatorUtil.compare(mavenVersion, "3.1") < 0) {
       classPath.add(PathUtil.getJarPathForClass(Logger::class.java))
       classPath.add(PathUtil.getJarPathForClass(JDK14LoggerFactory::class.java))
     }

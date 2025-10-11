@@ -36,12 +36,14 @@ import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Objects;
+import java.util.regex.Pattern;
 
 @ApiStatus.Internal
 public abstract class ScopeChooserAction extends ActionGroup implements CustomComponentAction, DumbAware, SearchEverywhereToggleAction {
   static final char CHOOSE = 'O';
   static final char TOGGLE = 'P';
   static final String TOGGLE_ACTION_NAME = "toggleProjectScope";
+  private static final Pattern FIRST_TOGGLE_CHOOSE = Pattern.compile("(?i)([" + TOGGLE + CHOOSE + "])");
 
   protected ScopeChooserAction() {
     setPopup(true);
@@ -130,7 +132,7 @@ public abstract class ScopeChooserAction extends ActionGroup implements CustomCo
   public void update(@NotNull AnActionEvent e) {
     ScopeDescriptor selection = getSelectedScope();
     String name = StringUtil.trimMiddle(StringUtil.notNullize(selection.getDisplayName()), 30);
-    String text = StringUtil.escapeMnemonics(name).replaceFirst("(?i)([" + TOGGLE + CHOOSE + "])", "_$1");
+    String text = FIRST_TOGGLE_CHOOSE.matcher(StringUtil.escapeMnemonics(name)).replaceFirst("_$1");
     e.getPresentation().setText(text);
     e.getPresentation().setIcon(OffsetIcon.getOriginalIcon(selection.getIcon()));
     String shortcutText = KeymapUtil.getKeystrokeText(KeyStroke.getKeyStroke(

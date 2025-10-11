@@ -6,10 +6,12 @@ import com.intellij.util.text.Matcher;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.Arrays;
+import java.util.regex.Pattern;
 
 public final class WordPrefixMatcher implements Matcher {
   private final String[] myPatternWords;
   private final String[] myFallbackPatternWords;
+  private static final Pattern WORD_SPLIT_PATTERN = Pattern.compile("[\\s-/]");
 
   public WordPrefixMatcher(String pattern) {
     myPatternWords = splitToWords(pattern);
@@ -24,7 +26,7 @@ public final class WordPrefixMatcher implements Matcher {
   }
 
   private static @NotNull String[] splitToWords(@NotNull String string) {
-    return string.split("[\\s-/]");
+    return WORD_SPLIT_PATTERN.split(string);
   }
 
   private static boolean matches(String[] patternWords, String[] nameWords) {

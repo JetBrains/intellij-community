@@ -27,10 +27,10 @@ public final class InstanceMethodNamingConvention extends NamingConvention<PsiMe
   private static final int DEFAULT_MIN_LENGTH = 4;
   private static final int DEFAULT_MAX_LENGTH = 32;
   public static final @NonNls String INSTANCE_METHOD_NAMING_CONVENTION = "InstanceMethodNamingConvention";
-
+  private static final @NonNls NamingConventionBean DEFAULT_BEAN = new NamingConventionBean("[a-z][A-Za-z\\d]*", DEFAULT_MIN_LENGTH, DEFAULT_MAX_LENGTH);
   @Override
   public NamingConventionBean createDefaultBean() {
-    return new NamingConventionBean("[a-z][A-Za-z\\d]*", DEFAULT_MIN_LENGTH, DEFAULT_MAX_LENGTH);
+    return DEFAULT_BEAN;
   }
 
   @Override

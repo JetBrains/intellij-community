@@ -10,6 +10,7 @@ import com.intellij.openapi.vfs.LocalFileSystem
 import com.intellij.openapi.vfs.VfsUtilCore
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.platform.diagnostic.telemetry.helpers.useWithScope
+import com.intellij.util.text.VersionComparatorUtil
 import org.jdom.Element
 import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.idea.maven.dom.MavenDomProjectProcessorUtils.DEFAULT_RELATIVE_PATH
@@ -279,7 +280,7 @@ class MavenProjectReader(
     return projectFile.parent.children.filter { it.hasPomFile() }.map { it.name }
   }
 
-  private fun isMaven4Model(modelVersion: String?): Boolean = modelVersion != null && StringUtil.compareVersionNumbers(modelVersion, MODEL_VERSION_4_0_0) > 0
+  private fun isMaven4Model(modelVersion: String?): Boolean = modelVersion != null && VersionComparatorUtil.compare(modelVersion, MODEL_VERSION_4_0_0) > 0
 
   private fun findModules(xmlModel: Element): List<String> = findChildrenValuesByPath(xmlModel, "modules", "module")
 

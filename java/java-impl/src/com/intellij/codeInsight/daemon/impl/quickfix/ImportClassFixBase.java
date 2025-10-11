@@ -57,6 +57,7 @@ public abstract class ImportClassFixBase<T extends PsiElement, R extends PsiRefe
   private final PsiFile myContainingPsiFile;
   private final boolean myInContent;
   private final ThreeState extensionsAllowToChangeFileSilently;
+  private static final Pattern NO_AUTO_IMPORT_PATTERN = Pattern.compile(DaemonCodeAnalyzerSettings.getInstance().NO_AUTO_IMPORT_PATTERN);
 
   @RequiresBackgroundThread
   @RequiresReadLock
@@ -96,7 +97,7 @@ public abstract class ImportClassFixBase<T extends PsiElement, R extends PsiRefe
     }
     // ok, something did change. but can we still import? (in case of auto-import there maybe multiple fixes wanting to be executed)
     List<? extends PsiClass> classesToImport = getClassesToImport(true);
-    return myContainingPsiFile.isValid() && !classesToImport.isEmpty() && 
+    return myContainingPsiFile.isValid() && !classesToImport.isEmpty() &&
            !isClassDefinitelyPositivelyImportedAlready(myContainingPsiFile, classesToImport.get(0));
   }
 
@@ -407,8 +408,7 @@ public abstract class ImportClassFixBase<T extends PsiElement, R extends PsiRefe
     try {
       String name = getQualifiedName(myReferenceElement);
       if (name != null) {
-        Pattern pattern = Pattern.compile(DaemonCodeAnalyzerSettings.getInstance().NO_AUTO_IMPORT_PATTERN);
-        Matcher matcher = pattern.matcher(name);
+        Matcher matcher = NO_AUTO_IMPORT_PATTERN.matcher(name);
         if (matcher.matches()) {
           return true;
         }

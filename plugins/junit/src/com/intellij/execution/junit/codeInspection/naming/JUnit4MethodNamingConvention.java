@@ -6,6 +6,7 @@ import com.intellij.codeInspection.naming.NamingConventionBean;
 import com.intellij.psi.PsiMethod;
 import com.siyeh.InspectionGadgetsBundle;
 import com.siyeh.ig.psiutils.TestUtils;
+import org.jetbrains.annotations.NonNls;
 
 import java.util.List;
 
@@ -13,6 +14,7 @@ import java.util.List;
  * @author Bas Leijdekkers
  */
 public final class JUnit4MethodNamingConvention extends NamingConvention<PsiMethod> {
+  private static final @NonNls NamingConventionBean DEFAULT_BEAN = new NamingConventionBean("[a-z][A-Za-z_\\d]*", 4, 64);
   @Override
   public String getElementDescription() {
     return InspectionGadgetsBundle.message("junit4.method.naming.convention.element.description");
@@ -30,6 +32,6 @@ public final class JUnit4MethodNamingConvention extends NamingConvention<PsiMeth
 
   @Override
   public NamingConventionBean createDefaultBean() {
-    return new NamingConventionBean("[a-z][A-Za-z_\\d]*", 4, 64);
+    return DEFAULT_BEAN;
   }
 }

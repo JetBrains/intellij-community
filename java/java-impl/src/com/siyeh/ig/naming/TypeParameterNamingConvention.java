@@ -20,15 +20,17 @@ import com.intellij.codeInspection.naming.NamingConventionBean;
 import com.intellij.psi.PsiClass;
 import com.intellij.psi.PsiTypeParameter;
 import com.siyeh.InspectionGadgetsBundle;
+import org.jetbrains.annotations.NonNls;
 
 public final class TypeParameterNamingConvention extends NamingConvention<PsiClass> {
 
   private static final int DEFAULT_MIN_LENGTH = 1;
   private static final int DEFAULT_MAX_LENGTH = 1;
+  private static final @NonNls NamingConventionBean DEFAULT_BEAN = new NamingConventionBean("[A-Z][A-Za-z\\d]*", DEFAULT_MIN_LENGTH, DEFAULT_MAX_LENGTH);
 
   @Override
   public NamingConventionBean createDefaultBean() {
-    return new NamingConventionBean("[A-Z][A-Za-z\\d]*", DEFAULT_MIN_LENGTH, DEFAULT_MAX_LENGTH);
+    return DEFAULT_BEAN;
   }
 
   @Override
