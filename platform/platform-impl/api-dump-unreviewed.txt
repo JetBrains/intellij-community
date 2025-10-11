@@ -7739,7 +7739,6 @@ f:com.intellij.openapi.fileEditor.impl.HTMLEditorProvider$Companion
 - bs:openEditor$default(com.intellij.openapi.fileEditor.impl.HTMLEditorProvider$Companion,com.intellij.openapi.project.Project,java.lang.String,java.lang.String,java.lang.String,I,java.lang.Object):V
 f:com.intellij.openapi.fileEditor.impl.HTMLEditorProvider$Request
 - sf:Companion:com.intellij.openapi.fileEditor.impl.HTMLEditorProvider$Request$Companion
-- sf:html(java.lang.String):com.intellij.openapi.fileEditor.impl.HTMLEditorProvider$Request
 - sf:url(java.lang.String):com.intellij.openapi.fileEditor.impl.HTMLEditorProvider$Request
 - f:withQueryHandler(com.intellij.openapi.fileEditor.impl.HTMLEditorProvider$JsQueryHandler):com.intellij.openapi.fileEditor.impl.HTMLEditorProvider$Request
 - f:withTimeoutHtml(java.lang.String):com.intellij.openapi.fileEditor.impl.HTMLEditorProvider$Request

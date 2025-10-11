@@ -743,8 +743,15 @@ com.intellij.openapi.fileEditor.impl.EditorWindowHolder
 c:com.intellij.openapi.fileEditor.impl.EditorsSplitters
 - p:isPaintingOrigin():Z
 - p:paintChildren(java.awt.Graphics):V
+f:com.intellij.openapi.fileEditor.impl.HTMLEditorProvider
+- sf:openEditor(com.intellij.openapi.project.Project,java.lang.String,com.intellij.openapi.fileEditor.impl.HTMLEditorProvider$Request,com.intellij.openapi.fileTypes.FileType):com.intellij.openapi.fileEditor.FileEditor
+f:com.intellij.openapi.fileEditor.impl.HTMLEditorProvider$Companion
+- f:openEditor(com.intellij.openapi.project.Project,java.lang.String,com.intellij.openapi.fileEditor.impl.HTMLEditorProvider$Request,com.intellij.openapi.fileTypes.FileType):com.intellij.openapi.fileEditor.FileEditor
 com.intellij.openapi.fileEditor.impl.HTMLEditorProvider$JsQueryHandler
 - a:query(J,java.lang.String,kotlin.coroutines.Continuation):java.lang.Object
+f:com.intellij.openapi.fileEditor.impl.HTMLEditorProvider$Request$Companion
+- f:html(java.lang.String,java.lang.String):com.intellij.openapi.fileEditor.impl.HTMLEditorProvider$Request
+- bs:html$default(com.intellij.openapi.fileEditor.impl.HTMLEditorProvider$Request$Companion,java.lang.String,java.lang.String,I,java.lang.Object):com.intellij.openapi.fileEditor.impl.HTMLEditorProvider$Request
 com.intellij.openapi.fileEditor.impl.text.CodeFoldingState
 - a:equals(java.lang.Object):Z
 - a:hashCode():I
