@@ -3,6 +3,7 @@ package com.jetbrains.python.debugger
 
 class PyUserTypeRenderer(
   val toType: String,
+  val subclassMatch: Boolean,
   val typeCanonicalImportPath: String,
   val typeQualifiedName: String,
   val typeSourceFile: String,

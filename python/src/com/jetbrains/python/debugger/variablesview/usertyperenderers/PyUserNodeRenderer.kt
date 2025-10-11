@@ -10,6 +10,7 @@ import java.io.Serializable
 class PyUserNodeRenderer(var isEnabled: Boolean, existingNames: List<String>?) {
   var name: String = getNewRendererName(existingNames)
   var toType: String = "object"
+  var subclassMatch: Boolean = false
   var typeCanonicalImportPath = ""
   var typeQualifiedName: String = ""
   var typeSourceFile: String = ""
@@ -21,6 +22,7 @@ class PyUserNodeRenderer(var isEnabled: Boolean, existingNames: List<String>?) {
     val renderer = PyUserNodeRenderer(isEnabled, null)
     renderer.name = name
     renderer.toType = toType
+    renderer.subclassMatch = subclassMatch
     renderer.typeCanonicalImportPath = typeCanonicalImportPath
     renderer.typeQualifiedName = typeQualifiedName
     renderer.typeSourceFile = typeSourceFile
@@ -56,6 +58,7 @@ class PyUserNodeRenderer(var isEnabled: Boolean, existingNames: List<String>?) {
     return other.isEnabled == isEnabled &&
            other.name == name &&
            other.toType == toType &&
+           other.subclassMatch == subclassMatch &&
            other.valueRenderer == valueRenderer &&
            other.childrenRenderer == childrenRenderer
   }
@@ -66,6 +69,7 @@ class PyUserNodeRenderer(var isEnabled: Boolean, existingNames: List<String>?) {
     val children = childrenRenderer.children.map { PyUserTypeRenderer.ChildInfo(it.expression) }
     return PyUserTypeRenderer(
       toType,
+      subclassMatch,
       typeCanonicalImportPath,
       typeQualifiedName,
       typeSourceFile,
