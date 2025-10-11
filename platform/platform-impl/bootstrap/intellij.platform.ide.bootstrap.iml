@@ -40,7 +40,7 @@
     <orderEntry type="module" module-name="intellij.platform.util.jdom" />
     <orderEntry type="library" name="jna" level="project" />
     <orderEntry type="module" module-name="intellij.libraries.hash4j" />
-    <orderEntry type="library" name="jbr-api" level="project" />
+    <orderEntry type="module" module-name="intellij.libraries.jbr" />
     <orderEntry type="library" name="googlecode.plist.dd" level="project" />
     <orderEntry type="library" name="netty-codec-http" level="project" />
     <orderEntry type="module" module-name="intellij.platform.eel.impl" />

@@ -184,7 +184,7 @@ jvm_library(
     "//libraries/aalto-xml",
     "//platform/util/xmlDom",
     "//platform/util/zip",
-    "@lib//:jbr-api",
+    "//libraries/jbr",
     "//libraries/jsvg",
     "//platform/util/rt-java8",
     "//libraries/hash4j",

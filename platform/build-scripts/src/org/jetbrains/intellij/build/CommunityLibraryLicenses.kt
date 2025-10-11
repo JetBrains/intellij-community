@@ -565,6 +565,9 @@ object CommunityLibraryLicenses {
     LibraryLicense("Jarchivelib", libraryName = "rauschig.jarchivelib", url = "https://github.com/thrau/jarchivelib")
       .apache("https://github.com/thrau/jarchivelib/blob/master/LICENSE"),
 
+    LibraryLicense("Java-WebSocket", libraryName = "Java-WebSocket", url = "https://github.com/TooTallNate/Java-WebSocket")
+      .mit("https://github.com/TooTallNate/Java-WebSocket/blob/master/LICENSE"),
+
     LibraryLicense(libraryName = "Java Compatibility", url = "https://github.com/JetBrains/intellij-deps-java-compatibility")
       .gpl2ce("https://github.com/JetBrains/intellij-deps-java-compatibility/raw/master/LICENSE"),
 

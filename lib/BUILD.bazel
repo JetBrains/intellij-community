@@ -776,13 +776,6 @@ jvm_import(
 )
 
 jvm_import(
-  name = "blockmap",
-  jar = "@org_jetbrains_intellij-blockmap-1_0_7_http//file",
-  source_jar = "@org_jetbrains_intellij-blockmap-1_0_7_http//file",
-  visibility = ["//visibility:public"]
-)
-
-jvm_import(
   name = "bouncy-castle-pgp",
   jar = "@org_bouncycastle-bcpg-jdk18on-1_81_http//file",
   source_jar = "@org_bouncycastle-bcpg-jdk18on-1_81_http//file",
@@ -2520,13 +2513,6 @@ jvm_import(
   visibility = ["//visibility:public"]
 )
 
-jvm_import(
-  name = "ini4j",
-  jar = "@org_jetbrains_intellij_deps-ini4j-0_5_5-2_http//file",
-  source_jar = "@org_jetbrains_intellij_deps-ini4j-0_5_5-2_http//file",
-  visibility = ["//visibility:public"]
-)
-
 java_library(
   name = "intellij-plugin-structure",
   exports = [
@@ -2794,6 +2780,13 @@ jvm_import(
 )
 
 jvm_import(
+  name = "java-_web_socket",
+  jar = "@org_java-websocket-Java-WebSocket-1_6_0_http//file",
+  source_jar = "@org_java-websocket-Java-WebSocket-1_6_0_http//file",
+  visibility = ["//visibility:public"]
+)
+
+jvm_import(
   name = "java-aether_dependency_resolver-org-apache-maven-resolver-maven-resolver-connector-basic",
   jar = "@org_apache_maven_resolver-maven-resolver-connector-basic-1_9_22_http//file",
   source_jar = "@org_apache_maven_resolver-maven-resolver-connector-basic-1_9_22_http//file",
@@ -3052,13 +3045,6 @@ jvm_import(
 )
 
 jvm_import(
-  name = "jcef",
-  jar = "@org_jetbrains_intellij_deps_jcef-jcef-137_0_17-gf354b0e-chromium-137_0_7151_104-api-1_20-253-b13_http//file",
-  source_jar = "@org_jetbrains_intellij_deps_jcef-jcef-137_0_17-gf354b0e-chromium-137_0_7151_104-api-1_20-253-b13_http//file",
-  visibility = ["//visibility:public"]
-)
-
-jvm_import(
   name = "jcip",
   jar = "@net_jcip-jcip-annotations-1_0_http//file",
   source_jar = "@net_jcip-jcip-annotations-1_0_http//file",
@@ -3069,13 +3055,6 @@ jvm_import(
   name = "jediterm-core",
   jar = "@org_jetbrains_jediterm-jediterm-core-3_56_http//file",
   source_jar = "@org_jetbrains_jediterm-jediterm-core-3_56_http//file",
-  visibility = ["//visibility:public"]
-)
-
-jvm_import(
-  name = "jediterm-ui",
-  jar = "@org_jetbrains_jediterm-jediterm-ui-3_56_http//file",
-  source_jar = "@org_jetbrains_jediterm-jediterm-ui-3_56_http//file",
   visibility = ["//visibility:public"]
 )
 
@@ -3474,13 +3453,6 @@ jvm_import(
   name = "jsr305",
   jar = "@com_google_code_findbugs-jsr305-3_0_2_http//file",
   source_jar = "@com_google_code_findbugs-jsr305-3_0_2_http//file",
-  visibility = ["//visibility:public"]
-)
-
-jvm_import(
-  name = "jsvg",
-  jar = "@com_github_weisj-jsvg-1_3_0-jb_8_http//file",
-  source_jar = "@com_github_weisj-jsvg-1_3_0-jb_8_http//file",
   visibility = ["//visibility:public"]
 )
 
@@ -4774,6 +4746,13 @@ jvm_import(
 )
 
 jvm_import(
+  name = "libraries-blockmap-blockmap",
+  jar = "@org_jetbrains_intellij-blockmap-1_0_7_http//file",
+  source_jar = "@org_jetbrains_intellij-blockmap-1_0_7_http//file",
+  visibility = ["//visibility:public"]
+)
+
+jvm_import(
   name = "libraries-cglib-cglib",
   jar = "@cglib-cglib-nodep-3_3_0-nodep_http//file",
   source_jar = "@cglib-cglib-nodep-3_3_0-nodep_http//file",
@@ -5518,6 +5497,13 @@ jvm_import(
 )
 
 jvm_import(
+  name = "libraries-ini4j-ini4j",
+  jar = "@org_jetbrains_intellij_deps-ini4j-0_5_5-2_http//file",
+  source_jar = "@org_jetbrains_intellij_deps-ini4j-0_5_5-2_http//file",
+  visibility = ["//visibility:public"]
+)
+
+jvm_import(
   name = "libraries-jackson-jr-objects-jackson-jr-objects",
   jar = "@com_fasterxml_jackson_jr-jackson-jr-objects-2_19_0_http//file",
   source_jar = "@com_fasterxml_jackson_jr-jackson-jr-objects-2_19_0_http//file",
@@ -5525,9 +5511,30 @@ jvm_import(
 )
 
 jvm_import(
+  name = "libraries-jcef-jcef",
+  jar = "@org_jetbrains_intellij_deps_jcef-jcef-137_0_17-gf354b0e-chromium-137_0_7151_104-api-1_20-253-b13_http//file",
+  source_jar = "@org_jetbrains_intellij_deps_jcef-jcef-137_0_17-gf354b0e-chromium-137_0_7151_104-api-1_20-253-b13_http//file",
+  visibility = ["//visibility:public"]
+)
+
+jvm_import(
+  name = "libraries-jediterm-ui-jediterm-ui",
+  jar = "@org_jetbrains_jediterm-jediterm-ui-3_56_http//file",
+  source_jar = "@org_jetbrains_jediterm-jediterm-ui-3_56_http//file",
+  visibility = ["//visibility:public"]
+)
+
+jvm_import(
   name = "libraries-jettison-jettison",
   jar = "@org_codehaus_jettison-jettison-1_5_4_http//file",
   source_jar = "@org_codehaus_jettison-jettison-1_5_4_http//file",
+  visibility = ["//visibility:public"]
+)
+
+jvm_import(
+  name = "libraries-jsvg-jsvg",
+  jar = "@com_github_weisj-jsvg-1_3_0-jb_8_http//file",
+  source_jar = "@com_github_weisj-jsvg-1_3_0-jb_8_http//file",
   visibility = ["//visibility:public"]
 )
 
@@ -5595,6 +5602,34 @@ jvm_import(
   source_jar = "@org_jetbrains_kotlinx-kotlinx-serialization-core-jvm-1_8_1_http//file"
 )
 
+java_library(
+  name = "libraries-miglayout-swing-miglayout-swing",
+  exports = [
+    ":com_miglayout-miglayout-swing-11_4_2_http_import",
+    ":com_miglayout-miglayout-core-11_4_2_http_import",
+  ],
+  visibility = ["//visibility:public"]
+)
+
+jvm_import(
+  name = "com_miglayout-miglayout-swing-11_4_2_http_import",
+  jar = "@com_miglayout-miglayout-swing-11_4_2_http//file",
+  source_jar = "@com_miglayout-miglayout-swing-11_4_2_http//file"
+)
+
+jvm_import(
+  name = "com_miglayout-miglayout-core-11_4_2_http_import",
+  jar = "@com_miglayout-miglayout-core-11_4_2_http//file",
+  source_jar = "@com_miglayout-miglayout-core-11_4_2_http//file"
+)
+
+jvm_import(
+  name = "libraries-mvstore-mvstore",
+  jar = "@com_h2database-h2-mvstore-2_3_232_http//file",
+  source_jar = "@com_h2database-h2-mvstore-2_3_232_http//file",
+  visibility = ["//visibility:public"]
+)
+
 jvm_import(
   name = "libraries-pty4j-pty4j",
   jar = "@org_jetbrains_pty4j-pty4j-0_13_11_http//file",
@@ -5614,6 +5649,34 @@ jvm_import(
   jar = "@org_jetbrains_skiko-skiko-awt-runtime-all-0_9_24_http//file",
   source_jar = "@org_jetbrains_skiko-skiko-awt-runtime-all-0_9_24_http//file",
   visibility = ["//visibility:public"]
+)
+
+java_library(
+  name = "libraries-sshj-_s_s_h_j",
+  exports = [
+    ":org_jetbrains_intellij_deps-sshj-0_38_0-idea2_http_import",
+    ":com_hierynomus-asn-one-0_6_0_http_import",
+    ":net_i2p_crypto-eddsa-0_3_0_http_import",
+  ],
+  visibility = ["//visibility:public"]
+)
+
+jvm_import(
+  name = "org_jetbrains_intellij_deps-sshj-0_38_0-idea2_http_import",
+  jar = "@org_jetbrains_intellij_deps-sshj-0_38_0-idea2_http//file",
+  source_jar = "@org_jetbrains_intellij_deps-sshj-0_38_0-idea2_http//file"
+)
+
+jvm_import(
+  name = "com_hierynomus-asn-one-0_6_0_http_import",
+  jar = "@com_hierynomus-asn-one-0_6_0_http//file",
+  source_jar = "@com_hierynomus-asn-one-0_6_0_http//file"
+)
+
+jvm_import(
+  name = "net_i2p_crypto-eddsa-0_3_0_http_import",
+  jar = "@net_i2p_crypto-eddsa-0_3_0_http//file",
+  source_jar = "@net_i2p_crypto-eddsa-0_3_0_http//file"
 )
 
 java_library(
@@ -7964,27 +8027,6 @@ jvm_import(
 )
 
 java_library(
-  name = "miglayout-swing",
-  exports = [
-    ":com_miglayout-miglayout-swing-11_4_2_http_import",
-    ":com_miglayout-miglayout-core-11_4_2_http_import",
-  ],
-  visibility = ["//visibility:public"]
-)
-
-jvm_import(
-  name = "com_miglayout-miglayout-swing-11_4_2_http_import",
-  jar = "@com_miglayout-miglayout-swing-11_4_2_http//file",
-  source_jar = "@com_miglayout-miglayout-swing-11_4_2_http//file"
-)
-
-jvm_import(
-  name = "com_miglayout-miglayout-core-11_4_2_http_import",
-  jar = "@com_miglayout-miglayout-core-11_4_2_http//file",
-  source_jar = "@com_miglayout-miglayout-core-11_4_2_http//file"
-)
-
-java_library(
   name = "mockito",
   exports = [
     ":org_mockito-mockito-core-5_19_0_http_import",
@@ -8023,13 +8065,6 @@ jvm_import(
   name = "mockito-kotlin",
   jar = "@org_mockito_kotlin-mockito-kotlin-6_0_0_http//file",
   source_jar = "@org_mockito_kotlin-mockito-kotlin-6_0_0_http//file",
-  visibility = ["//visibility:public"]
-)
-
-jvm_import(
-  name = "mvstore",
-  jar = "@com_h2database-h2-mvstore-2_3_232_http//file",
-  source_jar = "@com_h2database-h2-mvstore-2_3_232_http//file",
   visibility = ["//visibility:public"]
 )
 

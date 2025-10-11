@@ -52,7 +52,7 @@ jvm_library(
     "//platform/indexing-impl",
     "//libraries/jsoup",
     "//platform/util/jdom",
-    "@lib//:jcef",
+    "//libraries/jcef",
     "//platform/indexing-api:indexing",
     ":platform_lang-impl_provided",
     ":platform_execution-impl_provided",

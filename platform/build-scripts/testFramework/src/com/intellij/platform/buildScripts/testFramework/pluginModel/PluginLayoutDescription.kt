@@ -1,12 +1,15 @@
 // Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.platform.buildScripts.testFramework.pluginModel
 
+import com.intellij.platform.plugins.testFramework.resolveModuleSet
 import com.intellij.platform.distributionContent.testFramework.FileEntry
 import com.intellij.platform.distributionContent.testFramework.deserializeContentData
+import org.jetbrains.jps.model.JpsProject
 import org.jetbrains.jps.model.java.JpsJavaExtensionService
 import org.jetbrains.jps.model.module.JpsModule
 import org.jetbrains.jps.util.JpsPathUtil
 import java.nio.file.Path
+import kotlin.io.path.Path
 import kotlin.io.path.exists
 import kotlin.io.path.readText
 
@@ -34,10 +37,11 @@ data class PluginLayoutDescription(
 
 fun createLayoutProviderByContentYamlFiles(
   ideContentYamlPath: Path,
+  ultimateHome: Path,
   mainModuleOfCorePlugin: String,
   corePluginDescriptorPath: String,
   nameOfTestWhichGeneratesFiles: String,
-  project: org.jetbrains.jps.model.JpsProject,
+  project: JpsProject,
 ): PluginLayoutProvider {
   return YamlFileBasedPluginLayoutProvider(
     ideContentYamlPath = ideContentYamlPath,
@@ -45,6 +49,7 @@ fun createLayoutProviderByContentYamlFiles(
     corePluginDescriptorPath = corePluginDescriptorPath,
     nameOfTestWhichGeneratesFiles = nameOfTestWhichGeneratesFiles,
     project = project,
+    ultimateHome = ultimateHome,
   )
 }
 
@@ -53,7 +58,8 @@ private class YamlFileBasedPluginLayoutProvider(
   private val mainModuleOfCorePlugin: String,
   private val corePluginDescriptorPath: String,
   private val nameOfTestWhichGeneratesFiles: String,
-  private val project: org.jetbrains.jps.model.JpsProject,
+  private val project: JpsProject,
+  private val ultimateHome: Path,
 ) : PluginLayoutProvider {
   private val ideContentData by lazy {
     deserializeContentData(ideContentYamlPath.readText())
@@ -66,9 +72,16 @@ private class YamlFileBasedPluginLayoutProvider(
   private fun loadMergedContentData(): List<FileEntry> {
     val baseEntries = ideContentData.toMutableList()
 
-    // Collect productModules and productEmbeddedModules separately
-    val productModuleNames = ideContentData.flatMap { it.productModules }.distinct()
-    val productEmbeddedModuleNames = ideContentData.flatMap { it.productEmbeddedModules }.distinct()
+    // Collect productModules and productEmbeddedModules separately, expanding module sets
+    val productModuleNames = ideContentData
+      .flatMap { it.productModules }
+      .flatMap { moduleName -> resolveModuleSet(moduleName, ultimateHome) }
+      .distinct()
+
+    val productEmbeddedModuleNames = ideContentData
+      .flatMap { it.productEmbeddedModules }
+      .flatMap { moduleName -> resolveModuleSet(moduleName, ultimateHome) }
+      .distinct()
 
     if (productModuleNames.isEmpty() && productEmbeddedModuleNames.isEmpty()) {
       return baseEntries
@@ -80,7 +93,7 @@ private class YamlFileBasedPluginLayoutProvider(
     }
 
     // Process productEmbeddedModules with "dist.all/lib/module-{moduleName}.jar" pattern
-    for (moduleName in productEmbeddedModuleNames) {
+    for (moduleName in (productEmbeddedModuleNames + productModuleNames)) {
       loadAndMergeModuleContent(moduleName, "dist.all/lib/module-$moduleName.jar", baseEntries)
     }
 

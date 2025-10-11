@@ -609,20 +609,6 @@ http_file(
 )
 
 http_file(
-  name = "org_jetbrains_intellij-blockmap-1_0_7_http",
-  url = "https://cache-redirector.jetbrains.com/repo1.maven.org/maven2/org/jetbrains/intellij/blockmap/1.0.7/blockmap-1.0.7.jar",
-  sha256 = "7e3f98d3370551fea909ceb952e4797108a3a5ef67a1d7b5fb03a036eab24df9",
-  downloaded_file_path = "blockmap-1.0.7.jar"
-)
-
-http_file(
-  name = "org_jetbrains_intellij-blockmap-1_0_7-sources_http",
-  url = "https://cache-redirector.jetbrains.com/repo1.maven.org/maven2/org/jetbrains/intellij/blockmap/1.0.7/blockmap-1.0.7-sources.jar",
-  sha256 = "bac026c62cee8c3a1395f6004b6e84b44e23cd8de9606350b55a1599b4a62bda",
-  downloaded_file_path = "blockmap-1.0.7-sources.jar"
-)
-
-http_file(
   name = "org_bouncycastle-bcpg-jdk18on-1_81_http",
   url = "https://cache-redirector.jetbrains.com/repo1.maven.org/maven2/org/bouncycastle/bcpg-jdk18on/1.81/bcpg-jdk18on-1.81.jar",
   sha256 = "ac2ddae3a844c1e2378604616dbe7cc17c64caaf9115d8c9c3b29db8b2982411",
@@ -3612,20 +3598,6 @@ http_file(
 )
 
 http_file(
-  name = "org_jetbrains_intellij_deps-ini4j-0_5_5-2_http",
-  url = "https://cache-redirector.jetbrains.com/packages.jetbrains.team/maven/p/ij/intellij-dependencies/org/jetbrains/intellij/deps/ini4j/0.5.5-2/ini4j-0.5.5-2.jar",
-  sha256 = "6d342a8599aed6e2871c638c87e2533647d6a32aec1e0feaa871133ae21517a4",
-  downloaded_file_path = "ini4j-0.5.5-2.jar"
-)
-
-http_file(
-  name = "org_jetbrains_intellij_deps-ini4j-0_5_5-2-sources_http",
-  url = "https://cache-redirector.jetbrains.com/packages.jetbrains.team/maven/p/ij/intellij-dependencies/org/jetbrains/intellij/deps/ini4j/0.5.5-2/ini4j-0.5.5-2-sources.jar",
-  sha256 = "babe6eec1943f77eb82d67f1fb3010ae3e20cd135d70d9dbc69f33117fd07b39",
-  downloaded_file_path = "ini4j-0.5.5-2-sources.jar"
-)
-
-http_file(
   name = "org_jetbrains_intellij_plugins-structure-intellij-3_316_http",
   url = "https://cache-redirector.jetbrains.com/repo1.maven.org/maven2/org/jetbrains/intellij/plugins/structure-intellij/3.316/structure-intellij-3.316.jar",
   sha256 = "0efe45aca820a2f722f29a49e5ffe5cd14f06c51ad60842247fcb15f8048e28a",
@@ -4060,6 +4032,20 @@ http_file(
 )
 
 http_file(
+  name = "org_java-websocket-Java-WebSocket-1_6_0_http",
+  url = "https://cache-redirector.jetbrains.com/repo1.maven.org/maven2/org/java-websocket/Java-WebSocket/1.6.0/Java-WebSocket-1.6.0.jar",
+  sha256 = "eae29213e4f16515639c28957200f011b3967fffcada1962cf0255d24919c22f",
+  downloaded_file_path = "Java-WebSocket-1.6.0.jar"
+)
+
+http_file(
+  name = "org_java-websocket-Java-WebSocket-1_6_0-sources_http",
+  url = "https://cache-redirector.jetbrains.com/repo1.maven.org/maven2/org/java-websocket/Java-WebSocket/1.6.0/Java-WebSocket-1.6.0-sources.jar",
+  sha256 = "0c64cd898770928467810e8ab4eeb6b99b76b40affda402faa6995f2def4eeef",
+  downloaded_file_path = "Java-WebSocket-1.6.0-sources.jar"
+)
+
+http_file(
   name = "org_apache_maven_resolver-maven-resolver-connector-basic-1_9_22_http",
   url = "https://cache-redirector.jetbrains.com/repo1.maven.org/maven2/org/apache/maven/resolver/maven-resolver-connector-basic/1.9.22/maven-resolver-connector-basic-1.9.22.jar",
   sha256 = "4ab68bdec97eec318b2a3bd27e7c954e316f890df92d544b68afd0bf666c9588",
@@ -4459,20 +4445,6 @@ http_file(
 )
 
 http_file(
-  name = "org_jetbrains_intellij_deps_jcef-jcef-137_0_17-gf354b0e-chromium-137_0_7151_104-api-1_20-253-b13_http",
-  url = "https://cache-redirector.jetbrains.com/packages.jetbrains.team/maven/p/ij/intellij-dependencies/org/jetbrains/intellij/deps/jcef/jcef/137.0.17-gf354b0e-chromium-137.0.7151.104-api-1.20-253-b13/jcef-137.0.17-gf354b0e-chromium-137.0.7151.104-api-1.20-253-b13.jar",
-  sha256 = "7ff53ee6af9a9b3dcf9ce5366b9e803398d61460840a4232fa7bf3b9ef1388e5",
-  downloaded_file_path = "jcef-137.0.17-gf354b0e-chromium-137.0.7151.104-api-1.20-253-b13.jar"
-)
-
-http_file(
-  name = "org_jetbrains_intellij_deps_jcef-jcef-137_0_17-gf354b0e-chromium-137_0_7151_104-api-1_20-253-b13-sources_http",
-  url = "https://cache-redirector.jetbrains.com/packages.jetbrains.team/maven/p/ij/intellij-dependencies/org/jetbrains/intellij/deps/jcef/jcef/137.0.17-gf354b0e-chromium-137.0.7151.104-api-1.20-253-b13/jcef-137.0.17-gf354b0e-chromium-137.0.7151.104-api-1.20-253-b13-sources.jar",
-  sha256 = "8354fc6df3124878f3c2af12ae1d050e919cf8b6e83fdd7a8e6fb26368456745",
-  downloaded_file_path = "jcef-137.0.17-gf354b0e-chromium-137.0.7151.104-api-1.20-253-b13-sources.jar"
-)
-
-http_file(
   name = "net_jcip-jcip-annotations-1_0_http",
   url = "https://cache-redirector.jetbrains.com/repo1.maven.org/maven2/net/jcip/jcip-annotations/1.0/jcip-annotations-1.0.jar",
   sha256 = "be5805392060c71474bf6c9a67a099471274d30b83eef84bfc4e0889a4f1dcc0",
@@ -4498,20 +4470,6 @@ http_file(
   url = "https://cache-redirector.jetbrains.com/packages.jetbrains.team/maven/p/ij/intellij-dependencies/org/jetbrains/jediterm/jediterm-core/3.56/jediterm-core-3.56-sources.jar",
   sha256 = "5c95a274bf4ab1ec27c4eb6461eeee8b48e9eddf077adca4fcc31e01a072c9f0",
   downloaded_file_path = "jediterm-core-3.56-sources.jar"
-)
-
-http_file(
-  name = "org_jetbrains_jediterm-jediterm-ui-3_56_http",
-  url = "https://cache-redirector.jetbrains.com/packages.jetbrains.team/maven/p/ij/intellij-dependencies/org/jetbrains/jediterm/jediterm-ui/3.56/jediterm-ui-3.56.jar",
-  sha256 = "782e87c6843f144ed446d6ba6f33b55a6e71f31cf441ad34fdf98508ae1fa6a7",
-  downloaded_file_path = "jediterm-ui-3.56.jar"
-)
-
-http_file(
-  name = "org_jetbrains_jediterm-jediterm-ui-3_56-sources_http",
-  url = "https://cache-redirector.jetbrains.com/packages.jetbrains.team/maven/p/ij/intellij-dependencies/org/jetbrains/jediterm/jediterm-ui/3.56/jediterm-ui-3.56-sources.jar",
-  sha256 = "09314f61e15ae3410101ecc6380740d809bf710d93164ac72538e40d5e6f2e3b",
-  downloaded_file_path = "jediterm-ui-3.56-sources.jar"
 )
 
 http_file(
@@ -5149,20 +5107,6 @@ http_file(
   url = "https://cache-redirector.jetbrains.com/repo1.maven.org/maven2/com/google/code/findbugs/jsr305/3.0.2/jsr305-3.0.2-sources.jar",
   sha256 = "1c9e85e272d0708c6a591dc74828c71603053b48cc75ae83cce56912a2aa063b",
   downloaded_file_path = "jsr305-3.0.2-sources.jar"
-)
-
-http_file(
-  name = "com_github_weisj-jsvg-1_3_0-jb_8_http",
-  url = "https://cache-redirector.jetbrains.com/packages.jetbrains.team/maven/p/ij/intellij-dependencies/com/github/weisj/jsvg/1.3.0-jb.8/jsvg-1.3.0-jb.8.jar",
-  sha256 = "da76eba4122036f4372008564b0db192c8649a57c7a896ae565a1adfcc31f0b0",
-  downloaded_file_path = "jsvg-1.3.0-jb.8.jar"
-)
-
-http_file(
-  name = "com_github_weisj-jsvg-1_3_0-jb_8-sources_http",
-  url = "https://cache-redirector.jetbrains.com/packages.jetbrains.team/maven/p/ij/intellij-dependencies/com/github/weisj/jsvg/1.3.0-jb.8/jsvg-1.3.0-jb.8-sources.jar",
-  sha256 = "74a0a6226b3d24406ac090910b9c2a9ec6ac50a85b8952df44ea58bb927a7ef3",
-  downloaded_file_path = "jsvg-1.3.0-jb.8-sources.jar"
 )
 
 http_file(
@@ -6790,6 +6734,20 @@ http_file(
 )
 
 http_file(
+  name = "org_jetbrains_intellij-blockmap-1_0_7_http",
+  url = "https://cache-redirector.jetbrains.com/repo1.maven.org/maven2/org/jetbrains/intellij/blockmap/1.0.7/blockmap-1.0.7.jar",
+  sha256 = "7e3f98d3370551fea909ceb952e4797108a3a5ef67a1d7b5fb03a036eab24df9",
+  downloaded_file_path = "blockmap-1.0.7.jar"
+)
+
+http_file(
+  name = "org_jetbrains_intellij-blockmap-1_0_7-sources_http",
+  url = "https://cache-redirector.jetbrains.com/repo1.maven.org/maven2/org/jetbrains/intellij/blockmap/1.0.7/blockmap-1.0.7-sources.jar",
+  sha256 = "bac026c62cee8c3a1395f6004b6e84b44e23cd8de9606350b55a1599b4a62bda",
+  downloaded_file_path = "blockmap-1.0.7-sources.jar"
+)
+
+http_file(
   name = "cglib-cglib-nodep-3_3_0-nodep_http",
   url = "https://cache-redirector.jetbrains.com/repo1.maven.org/maven2/cglib/cglib-nodep/3.3.0/cglib-nodep-3.3.0.jar",
   sha256 = "3366d2c88fb576e486d830f521184e8f1839f8c15dcd2151a3f6e1f62b0b37a0",
@@ -7973,6 +7931,20 @@ http_file(
 )
 
 http_file(
+  name = "org_jetbrains_intellij_deps-ini4j-0_5_5-2_http",
+  url = "https://cache-redirector.jetbrains.com/packages.jetbrains.team/maven/p/ij/intellij-dependencies/org/jetbrains/intellij/deps/ini4j/0.5.5-2/ini4j-0.5.5-2.jar",
+  sha256 = "6d342a8599aed6e2871c638c87e2533647d6a32aec1e0feaa871133ae21517a4",
+  downloaded_file_path = "ini4j-0.5.5-2.jar"
+)
+
+http_file(
+  name = "org_jetbrains_intellij_deps-ini4j-0_5_5-2-sources_http",
+  url = "https://cache-redirector.jetbrains.com/packages.jetbrains.team/maven/p/ij/intellij-dependencies/org/jetbrains/intellij/deps/ini4j/0.5.5-2/ini4j-0.5.5-2-sources.jar",
+  sha256 = "babe6eec1943f77eb82d67f1fb3010ae3e20cd135d70d9dbc69f33117fd07b39",
+  downloaded_file_path = "ini4j-0.5.5-2-sources.jar"
+)
+
+http_file(
   name = "com_fasterxml_jackson_jr-jackson-jr-objects-2_19_0_http",
   url = "https://cache-redirector.jetbrains.com/repo1.maven.org/maven2/com/fasterxml/jackson/jr/jackson-jr-objects/2.19.0/jackson-jr-objects-2.19.0.jar",
   sha256 = "1fbd56f47b0a35031585fa0444b81f1f284ebe4a8752a86f42d0c092c4d693e7",
@@ -7987,6 +7959,34 @@ http_file(
 )
 
 http_file(
+  name = "org_jetbrains_intellij_deps_jcef-jcef-137_0_17-gf354b0e-chromium-137_0_7151_104-api-1_20-253-b13_http",
+  url = "https://cache-redirector.jetbrains.com/packages.jetbrains.team/maven/p/ij/intellij-dependencies/org/jetbrains/intellij/deps/jcef/jcef/137.0.17-gf354b0e-chromium-137.0.7151.104-api-1.20-253-b13/jcef-137.0.17-gf354b0e-chromium-137.0.7151.104-api-1.20-253-b13.jar",
+  sha256 = "7ff53ee6af9a9b3dcf9ce5366b9e803398d61460840a4232fa7bf3b9ef1388e5",
+  downloaded_file_path = "jcef-137.0.17-gf354b0e-chromium-137.0.7151.104-api-1.20-253-b13.jar"
+)
+
+http_file(
+  name = "org_jetbrains_intellij_deps_jcef-jcef-137_0_17-gf354b0e-chromium-137_0_7151_104-api-1_20-253-b13-sources_http",
+  url = "https://cache-redirector.jetbrains.com/packages.jetbrains.team/maven/p/ij/intellij-dependencies/org/jetbrains/intellij/deps/jcef/jcef/137.0.17-gf354b0e-chromium-137.0.7151.104-api-1.20-253-b13/jcef-137.0.17-gf354b0e-chromium-137.0.7151.104-api-1.20-253-b13-sources.jar",
+  sha256 = "8354fc6df3124878f3c2af12ae1d050e919cf8b6e83fdd7a8e6fb26368456745",
+  downloaded_file_path = "jcef-137.0.17-gf354b0e-chromium-137.0.7151.104-api-1.20-253-b13-sources.jar"
+)
+
+http_file(
+  name = "org_jetbrains_jediterm-jediterm-ui-3_56_http",
+  url = "https://cache-redirector.jetbrains.com/packages.jetbrains.team/maven/p/ij/intellij-dependencies/org/jetbrains/jediterm/jediterm-ui/3.56/jediterm-ui-3.56.jar",
+  sha256 = "782e87c6843f144ed446d6ba6f33b55a6e71f31cf441ad34fdf98508ae1fa6a7",
+  downloaded_file_path = "jediterm-ui-3.56.jar"
+)
+
+http_file(
+  name = "org_jetbrains_jediterm-jediterm-ui-3_56-sources_http",
+  url = "https://cache-redirector.jetbrains.com/packages.jetbrains.team/maven/p/ij/intellij-dependencies/org/jetbrains/jediterm/jediterm-ui/3.56/jediterm-ui-3.56-sources.jar",
+  sha256 = "09314f61e15ae3410101ecc6380740d809bf710d93164ac72538e40d5e6f2e3b",
+  downloaded_file_path = "jediterm-ui-3.56-sources.jar"
+)
+
+http_file(
   name = "org_codehaus_jettison-jettison-1_5_4_http",
   url = "https://cache-redirector.jetbrains.com/repo1.maven.org/maven2/org/codehaus/jettison/jettison/1.5.4/jettison-1.5.4.jar",
   sha256 = "fc3a68a7c17688ee50817340fef265d8d3f6c192c92bbee00d17f18a6d3dfeda",
@@ -7998,6 +7998,20 @@ http_file(
   url = "https://cache-redirector.jetbrains.com/repo1.maven.org/maven2/org/codehaus/jettison/jettison/1.5.4/jettison-1.5.4-sources.jar",
   sha256 = "bc7643e6bdb8c3a2995a4420d150ae5b414902eafedbadfdb4cf94c5de31469c",
   downloaded_file_path = "jettison-1.5.4-sources.jar"
+)
+
+http_file(
+  name = "com_github_weisj-jsvg-1_3_0-jb_8_http",
+  url = "https://cache-redirector.jetbrains.com/packages.jetbrains.team/maven/p/ij/intellij-dependencies/com/github/weisj/jsvg/1.3.0-jb.8/jsvg-1.3.0-jb.8.jar",
+  sha256 = "da76eba4122036f4372008564b0db192c8649a57c7a896ae565a1adfcc31f0b0",
+  downloaded_file_path = "jsvg-1.3.0-jb.8.jar"
+)
+
+http_file(
+  name = "com_github_weisj-jsvg-1_3_0-jb_8-sources_http",
+  url = "https://cache-redirector.jetbrains.com/packages.jetbrains.team/maven/p/ij/intellij-dependencies/com/github/weisj/jsvg/1.3.0-jb.8/jsvg-1.3.0-jb.8-sources.jar",
+  sha256 = "74a0a6226b3d24406ac090910b9c2a9ec6ac50a85b8952df44ea58bb927a7ef3",
+  downloaded_file_path = "jsvg-1.3.0-jb.8-sources.jar"
 )
 
 http_file(
@@ -8071,6 +8085,48 @@ http_file(
 )
 
 http_file(
+  name = "com_miglayout-miglayout-swing-11_4_2_http",
+  url = "https://cache-redirector.jetbrains.com/repo1.maven.org/maven2/com/miglayout/miglayout-swing/11.4.2/miglayout-swing-11.4.2.jar",
+  sha256 = "036b8532021092afcc7159d3756086a5fbe19f6014ac8474817d55d1289af756",
+  downloaded_file_path = "miglayout-swing-11.4.2.jar"
+)
+
+http_file(
+  name = "com_miglayout-miglayout-core-11_4_2_http",
+  url = "https://cache-redirector.jetbrains.com/repo1.maven.org/maven2/com/miglayout/miglayout-core/11.4.2/miglayout-core-11.4.2.jar",
+  sha256 = "1c23f628d8f2a7a1b72c8f634c6775d1a8fd0100fcf05bf50d7a2ac8dafb0e62",
+  downloaded_file_path = "miglayout-core-11.4.2.jar"
+)
+
+http_file(
+  name = "com_miglayout-miglayout-swing-11_4_2-sources_http",
+  url = "https://cache-redirector.jetbrains.com/repo1.maven.org/maven2/com/miglayout/miglayout-swing/11.4.2/miglayout-swing-11.4.2-sources.jar",
+  sha256 = "70cc167a5a3d72b8534c5c1d8633d78b00c2fc07c4e3dfa163ec0e4cb49a45e0",
+  downloaded_file_path = "miglayout-swing-11.4.2-sources.jar"
+)
+
+http_file(
+  name = "com_miglayout-miglayout-core-11_4_2-sources_http",
+  url = "https://cache-redirector.jetbrains.com/repo1.maven.org/maven2/com/miglayout/miglayout-core/11.4.2/miglayout-core-11.4.2-sources.jar",
+  sha256 = "933dfa0ee061a3c6ac990613b4a82eb075c8c2d9415945fee7932be002631311",
+  downloaded_file_path = "miglayout-core-11.4.2-sources.jar"
+)
+
+http_file(
+  name = "com_h2database-h2-mvstore-2_3_232_http",
+  url = "https://cache-redirector.jetbrains.com/repo1.maven.org/maven2/com/h2database/h2-mvstore/2.3.232/h2-mvstore-2.3.232.jar",
+  sha256 = "2c8225cd73b2394382b9d0016d9278a00291562224a594eef00c00a6ac50bc04",
+  downloaded_file_path = "h2-mvstore-2.3.232.jar"
+)
+
+http_file(
+  name = "com_h2database-h2-mvstore-2_3_232-sources_http",
+  url = "https://cache-redirector.jetbrains.com/repo1.maven.org/maven2/com/h2database/h2-mvstore/2.3.232/h2-mvstore-2.3.232-sources.jar",
+  sha256 = "48642b96b9fcb08f22326e10edad49fde210ae5884febeb06a0b107bba3f9478",
+  downloaded_file_path = "h2-mvstore-2.3.232-sources.jar"
+)
+
+http_file(
   name = "org_jetbrains_pty4j-pty4j-0_13_11_http",
   url = "https://cache-redirector.jetbrains.com/repo1.maven.org/maven2/org/jetbrains/pty4j/pty4j/0.13.11/pty4j-0.13.11.jar",
   sha256 = "0329ee5520f3b0177a0b2bdefac3c4c69cc9d3915e4f210a8bf39be7ab3887c8",
@@ -8110,6 +8166,48 @@ http_file(
   url = "https://cache-redirector.jetbrains.com/packages.jetbrains.team/maven/p/ij/intellij-dependencies/org/jetbrains/skiko/skiko-awt-runtime-all/0.9.24/skiko-awt-runtime-all-0.9.24-sources.jar",
   sha256 = "bbb8cc041e5ef6f8ca0d54fbe6fce0d49026423b353b97b5a459bdebcfd3efd7",
   downloaded_file_path = "skiko-awt-runtime-all-0.9.24-sources.jar"
+)
+
+http_file(
+  name = "org_jetbrains_intellij_deps-sshj-0_38_0-idea2_http",
+  url = "https://cache-redirector.jetbrains.com/packages.jetbrains.team/maven/p/ij/intellij-dependencies/org/jetbrains/intellij/deps/sshj/0.38.0-idea2/sshj-0.38.0-idea2.jar",
+  sha256 = "bd0bf08b2b4aca35a87ec2bee62920fb0478d5b21c97f6ece04739bf5b4aeefc",
+  downloaded_file_path = "sshj-0.38.0-idea2.jar"
+)
+
+http_file(
+  name = "com_hierynomus-asn-one-0_6_0_http",
+  url = "https://cache-redirector.jetbrains.com/repo1.maven.org/maven2/com/hierynomus/asn-one/0.6.0/asn-one-0.6.0.jar",
+  sha256 = "e4f70fd92849b52240048b8ebace0c9a17d3bb7b9c882b3c7778cec3458495f5",
+  downloaded_file_path = "asn-one-0.6.0.jar"
+)
+
+http_file(
+  name = "net_i2p_crypto-eddsa-0_3_0_http",
+  url = "https://cache-redirector.jetbrains.com/repo1.maven.org/maven2/net/i2p/crypto/eddsa/0.3.0/eddsa-0.3.0.jar",
+  sha256 = "4dda1120db856640dbec04140ed23242215a075fe127bdefa0dcfa29fb31267d",
+  downloaded_file_path = "eddsa-0.3.0.jar"
+)
+
+http_file(
+  name = "org_jetbrains_intellij_deps-sshj-0_38_0-idea2-sources_http",
+  url = "https://cache-redirector.jetbrains.com/packages.jetbrains.team/maven/p/ij/intellij-dependencies/org/jetbrains/intellij/deps/sshj/0.38.0-idea2/sshj-0.38.0-idea2-sources.jar",
+  sha256 = "6edb3bada2723021e851b71908ae297646e2b887cae07d15eae8dfec23f1a3f0",
+  downloaded_file_path = "sshj-0.38.0-idea2-sources.jar"
+)
+
+http_file(
+  name = "com_hierynomus-asn-one-0_6_0-sources_http",
+  url = "https://cache-redirector.jetbrains.com/repo1.maven.org/maven2/com/hierynomus/asn-one/0.6.0/asn-one-0.6.0-sources.jar",
+  sha256 = "4a1c44c43d335d93f22d95c096e088bc4a4a11a45fd0f0df1d2e02a245708487",
+  downloaded_file_path = "asn-one-0.6.0-sources.jar"
+)
+
+http_file(
+  name = "net_i2p_crypto-eddsa-0_3_0-sources_http",
+  url = "https://cache-redirector.jetbrains.com/repo1.maven.org/maven2/net/i2p/crypto/eddsa/0.3.0/eddsa-0.3.0-sources.jar",
+  sha256 = "fe33da9ed0cec6b24bb4ab3dd14f11e01822496f8e4ee9c9bb7da0ad5961eea4",
+  downloaded_file_path = "eddsa-0.3.0-sources.jar"
 )
 
 http_file(
@@ -11452,34 +11550,6 @@ http_file(
 )
 
 http_file(
-  name = "com_miglayout-miglayout-swing-11_4_2_http",
-  url = "https://cache-redirector.jetbrains.com/repo1.maven.org/maven2/com/miglayout/miglayout-swing/11.4.2/miglayout-swing-11.4.2.jar",
-  sha256 = "036b8532021092afcc7159d3756086a5fbe19f6014ac8474817d55d1289af756",
-  downloaded_file_path = "miglayout-swing-11.4.2.jar"
-)
-
-http_file(
-  name = "com_miglayout-miglayout-core-11_4_2_http",
-  url = "https://cache-redirector.jetbrains.com/repo1.maven.org/maven2/com/miglayout/miglayout-core/11.4.2/miglayout-core-11.4.2.jar",
-  sha256 = "1c23f628d8f2a7a1b72c8f634c6775d1a8fd0100fcf05bf50d7a2ac8dafb0e62",
-  downloaded_file_path = "miglayout-core-11.4.2.jar"
-)
-
-http_file(
-  name = "com_miglayout-miglayout-swing-11_4_2-sources_http",
-  url = "https://cache-redirector.jetbrains.com/repo1.maven.org/maven2/com/miglayout/miglayout-swing/11.4.2/miglayout-swing-11.4.2-sources.jar",
-  sha256 = "70cc167a5a3d72b8534c5c1d8633d78b00c2fc07c4e3dfa163ec0e4cb49a45e0",
-  downloaded_file_path = "miglayout-swing-11.4.2-sources.jar"
-)
-
-http_file(
-  name = "com_miglayout-miglayout-core-11_4_2-sources_http",
-  url = "https://cache-redirector.jetbrains.com/repo1.maven.org/maven2/com/miglayout/miglayout-core/11.4.2/miglayout-core-11.4.2-sources.jar",
-  sha256 = "933dfa0ee061a3c6ac990613b4a82eb075c8c2d9415945fee7932be002631311",
-  downloaded_file_path = "miglayout-core-11.4.2-sources.jar"
-)
-
-http_file(
   name = "org_mockito-mockito-core-5_19_0_http",
   url = "https://cache-redirector.jetbrains.com/repo1.maven.org/maven2/org/mockito/mockito-core/5.19.0/mockito-core-5.19.0.jar",
   sha256 = "d875ff234a4b72e0eedfe170dd804797a4b87ba4c76207c9659d6f46b527877b",
@@ -11547,20 +11617,6 @@ http_file(
   url = "https://cache-redirector.jetbrains.com/repo1.maven.org/maven2/org/mockito/kotlin/mockito-kotlin/6.0.0/mockito-kotlin-6.0.0-sources.jar",
   sha256 = "766d88d3fb0d2abc707f57ca6e15a5e337eff7e428631cd1c639f1b736b2c78f",
   downloaded_file_path = "mockito-kotlin-6.0.0-sources.jar"
-)
-
-http_file(
-  name = "com_h2database-h2-mvstore-2_3_232_http",
-  url = "https://cache-redirector.jetbrains.com/repo1.maven.org/maven2/com/h2database/h2-mvstore/2.3.232/h2-mvstore-2.3.232.jar",
-  sha256 = "2c8225cd73b2394382b9d0016d9278a00291562224a594eef00c00a6ac50bc04",
-  downloaded_file_path = "h2-mvstore-2.3.232.jar"
-)
-
-http_file(
-  name = "com_h2database-h2-mvstore-2_3_232-sources_http",
-  url = "https://cache-redirector.jetbrains.com/repo1.maven.org/maven2/com/h2database/h2-mvstore/2.3.232/h2-mvstore-2.3.232-sources.jar",
-  sha256 = "48642b96b9fcb08f22326e10edad49fde210ae5884febeb06a0b107bba3f9478",
-  downloaded_file_path = "h2-mvstore-2.3.232-sources.jar"
 )
 
 http_file(

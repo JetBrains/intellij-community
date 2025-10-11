@@ -85,6 +85,6 @@
     <orderEntry type="module" module-name="intellij.platform.jewel.samples.showcase" />
     <orderEntry type="library" scope="RUNTIME" name="jna" level="project" />
     <orderEntry type="module" module-name="intellij.platform.icons" />
-    <orderEntry type="library" name="jbr-api" level="project" />
+    <orderEntry type="module" module-name="intellij.libraries.jbr" />
   </component>
 </module>

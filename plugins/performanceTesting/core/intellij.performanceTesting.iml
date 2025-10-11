@@ -56,7 +56,7 @@
     <orderEntry type="module" module-name="intellij.platform.usageView.impl" />
     <orderEntry type="module" module-name="intellij.tools.ide.starter.bus" />
     <orderEntry type="module" module-name="intellij.platform.eel.provider" />
-    <orderEntry type="library" name="jbr-api" level="project" />
+    <orderEntry type="module" module-name="intellij.libraries.jbr" />
     <orderEntry type="library" name="github.oshi.core" level="project" />
   </component>
 </module>

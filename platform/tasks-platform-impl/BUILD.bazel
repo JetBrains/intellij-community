@@ -35,7 +35,6 @@ jvm_library(
     "//platform/util/text-matching",
     "//platform/statistics",
     "//platform/bookmarks",
-  ],
-  exports = ["//platform/statistics"]
+  ]
 )
 ### auto-generated section `build intellij.platform.tasks.impl` end

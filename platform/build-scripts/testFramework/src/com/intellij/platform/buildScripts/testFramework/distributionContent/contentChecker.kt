@@ -12,6 +12,8 @@ import org.jetbrains.annotations.ApiStatus
 import java.nio.file.Files
 import java.nio.file.NoSuchFileException
 import java.nio.file.Path
+import kotlin.io.path.createParentDirectories
+import kotlin.math.exp
 
 @ApiStatus.Internal
 fun checkThatContentIsNotChanged(
@@ -56,7 +58,6 @@ fun checkThatContentIsNotChanged(
 
   val fileName = projectHome.relativize(expectedFile).toString()
 
-  @Suppress("SpellCheckingInspection")
   val resultMessage = if (isReviewRequired) {
     "Distribution content has changed.\n" +
     "If you are sure that the difference is as expected, ask $suggestedReviewer to approve changes.\n\n" +
@@ -75,6 +76,48 @@ fun checkThatContentIsNotChanged(
     "When the patches is applied, please also run PatronusConfigYamlConsistencyTest to ensure the Patronus configuration is up to date.\n\n" +
     "Patch:\n${DiffUtils.generateUnifiedDiff(fileName, fileName, expectedLines, patch, 3).joinToString(separator = "\n")}"
   }
+
+  throw FileComparisonFailedError(resultMessage, expectedString, actualString, expectedFile.toString())
+}
+
+
+@ApiStatus.Internal
+fun checkThatModuleListIsNotChanged(
+  actual: List<String>,
+  expectedFile: Path,
+  projectHome: Path,
+  suggestedReviewer: String? = null,
+) {
+  val expected = try {
+    Files.readAllLines(expectedFile)
+  }
+  catch (_: SerializationException) {
+    emptyList()
+  }
+  catch (_: NoSuchFileException) {
+    expectedFile.createParentDirectories()
+    Files.createFile(expectedFile)
+    emptyList()
+  }
+
+  if (actual == expected) {
+    return
+  }
+
+  val expectedString = expected.joinToString(separator = "\n")
+  val actualString = actual.joinToString(separator = "\n")
+
+  val patch = DiffUtils.diff(expected, actual)
+
+  val fileName = projectHome.relativize(expectedFile).toString()
+
+  val resultMessage = "Distribution content has changed.\n" +
+                      "If you are sure that the difference is as expected, ask $suggestedReviewer to approve changes.\n\n" +
+                      "Please do not push changes without approval.\n" +
+                      "For more details, please visit https://youtrack.jetbrains.com/articles/IDEA-A-80/Distribution-Content-Approving.\n\n" +
+                      "Snapshots for other products may require update, please run 'All Packaging Tests' run configuration to run all packaging tests.\n\n" +
+                      "When the patches is applied, please also run PatronusConfigYamlConsistencyTest to ensure the Patronus configuration is up to date.\n\n" +
+                      "Patch:\n${DiffUtils.generateUnifiedDiff(fileName, fileName, expected, patch, 3).joinToString(separator = "\n")}"
 
   throw FileComparisonFailedError(resultMessage, expectedString, actualString, expectedFile.toString())
 }

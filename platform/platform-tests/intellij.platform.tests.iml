@@ -75,7 +75,7 @@
     <orderEntry type="module" module-name="intellij.platform.ide.concurrency" />
     <orderEntry type="library" scope="TEST" name="kotlinx-coroutines-core" level="project" />
     <orderEntry type="module" module-name="intellij.libraries.fastutil" scope="TEST" />
-    <orderEntry type="library" scope="TEST" name="jcef" level="project" />
+    <orderEntry type="module" module-name="intellij.libraries.jcef" scope="TEST" />
     <orderEntry type="module" module-name="intellij.platform.util.classLoader" scope="TEST" />
     <orderEntry type="library" scope="TEST" name="netty-buffer" level="project" />
     <orderEntry type="module" module-name="intellij.libraries.lz4" scope="TEST" />

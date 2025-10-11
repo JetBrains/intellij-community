@@ -609,7 +609,7 @@
       </library>
     </orderEntry>
     <orderEntry type="module" module-name="intellij.libraries.javax.activation" />
-    <orderEntry type="library" name="javax.annotation-api" level="project" />
+    <orderEntry type="module" module-name="intellij.libraries.javax.annotation" />
     <orderEntry type="library" name="jaxb-api" level="project" />
     <orderEntry type="library" name="jaxb-runtime" level="project" />
     <orderEntry type="module-library">

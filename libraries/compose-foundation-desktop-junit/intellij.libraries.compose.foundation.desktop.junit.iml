@@ -9,7 +9,7 @@
     <orderEntry type="sourceFolder" forTests="false" />
     <orderEntry type="module" module-name="intellij.libraries.compose.foundation.desktop" scope="TEST" />
     <orderEntry type="module" module-name="intellij.libraries.skiko" scope="TEST" />
-    <orderEntry type="library" scope="TEST" name="jbr-api" level="project" />
+    <orderEntry type="module" module-name="intellij.libraries.jbr" scope="TEST" />
     <orderEntry type="module-library" exported="" scope="TEST">
       <library name="org.jetbrains.compose.ui.ui.test.junit4.desktop" type="repository">
         <properties maven-id="org.jetbrains.compose.ui:ui-test-junit4-desktop:1.9.0-beta03">

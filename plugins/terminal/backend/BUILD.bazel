@@ -20,7 +20,7 @@ jvm_library(
     "//platform/ide-core-impl",
     "//platform/projectModel-api:projectModel",
     "//plugins/terminal",
-    "@lib//:jediterm-core",
+    "//libraries/jediterm-core",
     "//libraries/jediterm-ui",
     "//libraries/pty4j",
     "//platform/util/coroutines",

@@ -1,0 +1,64 @@
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+package com.intellij.platform.plugins.testFramework
+
+import com.intellij.openapi.util.JDOMUtil
+import org.jdom.Namespace
+import java.nio.file.Path
+import kotlin.io.path.exists
+
+/**
+ * Resolves a module set name into a list of actual module names, recursively following x-include references.
+ *
+ * If the moduleName starts with "intellij.moduleSets.", attempts to find and parse the corresponding XML file
+ * in community/platform/platform-resources/src/META-INF/, then recursively resolves any nested module sets
+ * referenced via x-include.
+ *
+ * @param moduleSetName the name like "intellij.moduleSets.debugger.streams"
+ * @param ultimateRoot the root directory of the ultimate repository
+ * @return list of actual module names from the module set XML and all nested module sets, or singleton list with original name if not a module set
+ */
+fun resolveModuleSet(moduleSetName: String, ultimateRoot: Path): List<String> {
+  if (!moduleSetName.startsWith("intellij.moduleSets.")) {
+    return listOf(moduleSetName)
+  }
+
+  val xmlFileName = "$moduleSetName.xml"
+  val xmlPath = ultimateRoot.resolve("community/platform/platform-resources/src/META-INF/$xmlFileName")
+  if (!xmlPath.exists()) {
+    error("Module set XML file not found: $xmlPath")
+  }
+
+  return resolveModuleSetRecursive(xmlPath, ultimateRoot, HashSet())
+}
+
+private fun resolveModuleSetRecursive(xmlPath: Path, ultimateRoot: Path, visited: MutableSet<Path>): List<String> {
+  // Prevent infinite loops
+  if (xmlPath in visited) {
+    throw IllegalStateException("Circular x-include reference: $xmlPath")
+  }
+
+  visited.add(xmlPath)
+
+  val doc = JDOMUtil.load(xmlPath)
+  val result = mutableListOf<String>()
+
+  // Extract modules from <content> tag
+  val contentElement = doc.getChild("content")
+  if (contentElement != null) {
+    contentElement.getChildren("module")
+      .mapNotNullTo(result) { it.getAttribute("name")?.value }
+  }
+
+  // Recursively resolve x-include references to other module sets
+  for (includeElement in doc.getChildren("include", JDOMUtil.XINCLUDE_NAMESPACE)) {
+    val href = includeElement.getAttribute("href")?.value
+    if (href != null && href.startsWith("/META-INF/intellij.moduleSets.")) {
+      // extract module set name from href like "/META-INF/intellij.moduleSets.essential.xml"
+      val includedModuleSetName = href.substringAfterLast('/').substringBeforeLast(".xml")
+      val includedXmlPath = ultimateRoot.resolve("community/platform/platform-resources/src/META-INF/$includedModuleSetName.xml")
+      result.addAll(resolveModuleSetRecursive(includedXmlPath, ultimateRoot, visited))
+    }
+  }
+
+  return result
+}

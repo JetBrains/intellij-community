@@ -40,7 +40,7 @@
     <orderEntry type="module" module-name="intellij.platform.jps.model" />
     <orderEntry type="module" module-name="intellij.platform.jps.model.serialization" />
     <orderEntry type="module" module-name="intellij.platform.jps.model.impl" />
-    <orderEntry type="library" name="javax.annotation-api" level="project" />
+    <orderEntry type="module" module-name="intellij.libraries.javax.annotation" />
     <orderEntry type="module-library">
       <library name="qdox-java-parser" type="repository">
         <properties include-transitive-deps="false" maven-id="com.thoughtworks.qdox:qdox:2.2.0">

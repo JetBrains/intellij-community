@@ -36,8 +36,8 @@ import java.util.SortedSet
  * List of modules which are included in lib/app.jar in all IntelliJ-based IDEs and loaded by the core classloader.
  * 
  * **Please don't add new modules here!**
- * 
- * If you need to add a module to all IDEs, register it as a content module in essential-modules.xml, see [this article](https://youtrack.jetbrains.com/articles/IJPL-A-956) for 
+ *
+ * If you need to add a module to all IDEs, register it as a content module in intellij.moduleSets.essential.xml, see [this article](https://youtrack.jetbrains.com/articles/IJPL-A-956) for
  * details. You can use 'loading="embedded"' to make it still loaded by the core classloader if needed.
  */
 @Suppress("RemoveRedundantQualifierName")
@@ -209,8 +209,6 @@ internal suspend fun createPlatformLayout(projectLibrariesUsedByPlugins: SortedS
 
   // used by intellij.database.jdbcConsole - put to a small util module
   layout.withProjectLibrary(libraryName = "jbr-api", jarName = UTIL_JAR)
-  // used by JPS (portable or new storage), not in util-8 as mvstore requires Java 1
-  layout.withProjectLibrary(libraryName = "mvstore", jarName = UTIL_JAR)
   // platform-loader.jar is loaded by JVM classloader as part of loading our custom PathClassLoader class - reduce file size
   addModule(PLATFORM_LOADER_JAR, sequenceOf(
     "intellij.platform.util.rt.java8",
@@ -556,11 +554,12 @@ private suspend fun processAndGetProductPluginContentModules(
     ) { "Cannot find product plugin descriptor in '$productPluginSourceModuleName' module" }
 
     val xml = JDOMUtil.load(file)
-    val result = embedAndCollectProductModules(file = file, xml = xml, xIncludePathResolver = xIncludePathResolver, context = context)
+    resolveNonXIncludeElement(original = xml, base = file, pathResolver = xIncludePathResolver, trackSourceFile = true)
+    val result = collectAndEmbedProductModules(root = xml, xIncludePathResolver = xIncludePathResolver, context = context)
     val data = JDOMUtil.write(xml)
     val fileName = file.fileName.toString()
     layout.withPatch { moduleOutputPatcher, _, _ ->
-      moduleOutputPatcher.patchModuleOutput(productPluginSourceModuleName, "META-INF/$fileName", data)
+      moduleOutputPatcher.patchModuleOutput(moduleName = productPluginSourceModuleName, path = "META-INF/$fileName", content = data)
     }
 
     result
@@ -617,15 +616,10 @@ fun createXIncludePathResolver(includedPlatformModulesPartialList: List<String>,
   }
 }
 
-private suspend fun embedAndCollectProductModules(file: Path, xIncludePathResolver: XIncludePathResolver, xml: Element, context: BuildContext): Set<ModuleItem> {
-  resolveNonXIncludeElement(original = xml, base = file, pathResolver = xIncludePathResolver)
-  return collectAndEmbedProductModules(root = xml, xIncludePathResolver = xIncludePathResolver, context = context)
-}
-
 suspend fun embedContentModules(file: Path, xIncludePathResolver: XIncludePathResolver, xml: Element, layout: PluginLayout?, context: BuildContext) {
   val frontendModuleFilter = context.getFrontendModuleFilter()
   val contentModuleFilter = context.getContentModuleFilter()
-  resolveNonXIncludeElement(original = xml, base = file, pathResolver = xIncludePathResolver)
+  resolveNonXIncludeElement(original = xml, base = file, pathResolver = xIncludePathResolver, trackSourceFile = false)
 
   val moduleElements = xml.getChildren("content").flatMap { it.getChildren("module") }
   for (moduleElement in moduleElements) {
@@ -698,14 +692,19 @@ private suspend fun collectAndEmbedProductModules(root: Element, xIncludePathRes
     else {
       "modules/$moduleName.jar"
     }
+
+    // Extract module set from parent <content> element's source-file attribute
+    val contentElement = moduleElement.parentElement
+    val moduleSet = contentElement?.getAttributeValue(SOURCE_FILE_ATTRIBUTE)?.removeSuffix(".xml")
     result.add(ModuleItem(
       moduleName = moduleName,
       relativeOutputFile = relativeOutFile,
       reason = if (isEmbedded) ModuleIncludeReasons.PRODUCT_EMBEDDED_MODULES else ModuleIncludeReasons.PRODUCT_MODULES,
+      moduleSet = moduleSet,
     ))
     PRODUCT_MODULE_IMPL_COMPOSITION.get(moduleName)?.let {
       it.mapTo(result) { subModuleName ->
-        ModuleItem(moduleName = subModuleName, relativeOutputFile = relativeOutFile, reason = ModuleIncludeReasons.PRODUCT_MODULES)
+        ModuleItem(moduleName = subModuleName, relativeOutputFile = relativeOutFile, reason = ModuleIncludeReasons.PRODUCT_MODULES, moduleSet = moduleSet)
       }
     }
 

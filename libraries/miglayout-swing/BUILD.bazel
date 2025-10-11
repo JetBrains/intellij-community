@@ -12,7 +12,7 @@ jvm_library(
   visibility = ["//visibility:public"],
   srcs = glob([], allow_empty = True),
   resources = [":miglayout-swing_resources"],
-  exports = ["@lib//:miglayout-swing"],
-  runtime_deps = ["@lib//:miglayout-swing"]
+  exports = ["@lib//:libraries-miglayout-swing-miglayout-swing"],
+  runtime_deps = ["@lib//:libraries-miglayout-swing-miglayout-swing"]
 )
 ### auto-generated section `build intellij.libraries.miglayout.swing` end

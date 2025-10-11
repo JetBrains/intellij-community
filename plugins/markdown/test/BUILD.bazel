@@ -55,7 +55,7 @@ jvm_library(
     "//xml/langInjection",
     "//platform/platform-tests:tests_test_lib",
     "//libraries/jsoup",
-    "@lib//:jcef",
+    "//libraries/jcef",
     "@lib//:assert_j",
     "//platform/util-ex",
     "//libraries/markdown",

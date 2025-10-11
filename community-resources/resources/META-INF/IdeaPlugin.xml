@@ -25,8 +25,8 @@
     <module name="intellij.platform.tips"/>
   </content>
 
-  <xi:include href="/META-INF/common-ide-modules.xml"/>
-  <xi:include href="/META-INF/rd-common-modules.xml"/>
+  <xi:include href="/META-INF/intellij.moduleSets.ide.common.xml"/>
+  <xi:include href="/META-INF/intellij.moduleSets.rd.common.xml"/>
 
   <!--suppress XmlPathReference -->
   <xi:include href="/META-INF/community-extensions.xml">

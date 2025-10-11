@@ -25,7 +25,7 @@ jvm_library(
     "//platform/execution-impl",
     "//platform/util/coroutines",
     "//platform/editor-ui-ex:editor-ex",
-    "@lib//:jediterm-core",
+    "//libraries/jediterm-core",
     "//libraries/jediterm-ui",
     "//platform/core-ui",
     "//platform/code-style-api:codeStyle",

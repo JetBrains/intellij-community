@@ -1,5 +1,5 @@
 // Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
-@file:Suppress("IO_FILE_USAGE")
+@file:Suppress("IO_FILE_USAGE", "ReplaceGetOrSet")
 
 package org.jetbrains.intellij.build.impl.projectStructureMapping
 
@@ -25,9 +25,27 @@ internal fun getIncludedModules(entries: Sequence<DistributionFileEntry>): Seque
 }
 
 internal fun buildJarContentReport(contentReport: ContentReport, zipFileWriter: ZipFileWriter, buildPaths: BuildPaths, context: BuildContext) {
-  val (platformData, productModuleMap) = buildPlatformContentReport(contentReport, buildPaths, context.getDistFiles(os = null, arch = null, libcImpl = null))
+  val (fileToEntry, productModules) = groupPlatformEntries(contentReport = contentReport, buildPaths = buildPaths)
+
+  val moduleSets = productModules
+    .filter { it.first.moduleSet != null }
+    .groupByTo(TreeMap()) { it.first.moduleSet!! }
+
+  val platformData = buildPlatformContentReport(
+    contentReport = contentReport,
+    buildPaths = buildPaths,
+    distFiles = context.getDistFiles(os = null, arch = null, libcImpl = null),
+    fileToEntry = fileToEntry,
+    productModules = productModules,
+    moduleSets = moduleSets,
+  )
   zipFileWriter.uncompressedData("platform.yaml", platformData)
-  zipFileWriter.uncompressedData("product-modules.yaml", buildProductModuleContentReport(productModuleMap, buildPaths))
+  zipFileWriter.uncompressedData("product-modules.yaml", buildProductModuleContentReport(productModules, buildPaths))
+
+  for ((moduleSetName, modules) in moduleSets) {
+    zipFileWriter.uncompressedData("moduleSets/$moduleSetName.yaml", modules.asSequence().map { it.first.moduleName }.sorted().joinToString("\n"))
+  }
+
   zipFileWriter.uncompressedData("bundled-plugins.yaml", buildPluginContentReport(contentReport.bundledPlugins, buildPaths))
   zipFileWriter.uncompressedData("non-bundled-plugins.yaml", buildPluginContentReport(contentReport.nonBundledPlugins, buildPaths))
 }
@@ -107,7 +125,7 @@ private fun buildPluginContentReport(pluginToEntries: List<Pair<PluginBuildDescr
   return out.toByteArray()
 }
 
-private fun buildProductModuleContentReport(productModuleMap: List<Pair<ModuleItem, MutableList<DistributionFileEntry>>>, buildPaths: BuildPaths): ByteArray {
+private fun buildProductModuleContentReport(productModuleMap: List<Pair<ModuleItem, List<DistributionFileEntry>>>, buildPaths: BuildPaths): ByteArray {
   val out = ByteArrayOutputStream()
   val writer = createYamlGenerator(out)
 
@@ -172,29 +190,12 @@ private fun buildPlatformContentReport(
   contentReport: ContentReport,
   buildPaths: BuildPaths,
   distFiles: Collection<DistFile>,
-): Pair<ByteArray, List<Pair<ModuleItem, MutableList<DistributionFileEntry>>>> {
+  fileToEntry: Map<String, List<DistributionFileEntry>>,
+  productModules: List<Pair<ModuleItem, List<DistributionFileEntry>>>,
+  moduleSets: Map<String, List<Pair<ModuleItem, List<DistributionFileEntry>>>>,
+): ByteArray {
   val out = ByteArrayOutputStream()
   val writer = createYamlGenerator(out)
-  val fileToEntry = TreeMap<String, MutableList<DistributionFileEntry>>()
-  val fileToPresentablePath = HashMap<Path, String>()
-
-  val productModuleToEntries = HashMap<ModuleItem, MutableList<DistributionFileEntry>>()
-
-  for (entry in contentReport.platform) {
-    if (entry is ModuleOwnedFileEntry) {
-      val owner = entry.owner
-      if (owner != null && ModuleIncludeReasons.isProductModule(owner.reason)) {
-        productModuleToEntries.computeIfAbsent(owner) { mutableListOf() }.add(entry)
-        continue
-      }
-    }
-
-    val presentablePath = fileToPresentablePath.computeIfAbsent(entry.path) {
-      shortenAndNormalizePath(it, buildPaths)
-    }
-    fileToEntry.computeIfAbsent(presentablePath) { mutableListOf() }.add(entry)
-  }
-
   writer.writeStartArray()
   for ((filePath, fileEntries) in fileToEntry) {
     writer.writeStartObject()
@@ -229,10 +230,8 @@ private fun buildPlatformContentReport(
     }
   }
 
-  val productModules = productModuleToEntries.toList().sortedBy { it.first.moduleName }
-
-  writeProductModules(writer = writer, productModules = productModules, kind = ModuleIncludeReasons.PRODUCT_MODULES)
-  writeProductModules(writer = writer, productModules = productModules, kind = ModuleIncludeReasons.PRODUCT_EMBEDDED_MODULES)
+  writeProductModules(writer = writer, productModules = productModules, moduleSets = moduleSets, kind = ModuleIncludeReasons.PRODUCT_MODULES)
+  writeProductModules(writer = writer, productModules = productModules, moduleSets = moduleSets, kind = ModuleIncludeReasons.PRODUCT_EMBEDDED_MODULES)
 
   writer.writeObjectField("name", "plugins")
   run {
@@ -248,17 +247,48 @@ private fun buildPlatformContentReport(
 
   writer.writeEndArray()
   writer.close()
-  return out.toByteArray() to productModules
+  return out.toByteArray()
+}
+
+private fun groupPlatformEntries(
+  contentReport: ContentReport,
+  buildPaths: BuildPaths,
+): Pair<Map<String, List<DistributionFileEntry>>, List<Pair<ModuleItem, List<DistributionFileEntry>>>> {
+  val fileToEntry = TreeMap<String, MutableList<DistributionFileEntry>>()
+  val productModuleToEntries = HashMap<ModuleItem, MutableList<DistributionFileEntry>>()
+  val fileToPresentablePath = HashMap<Path, String>()
+  for (entry in contentReport.platform) {
+    if (entry is ModuleOwnedFileEntry) {
+      val owner = entry.owner
+      if (owner != null && ModuleIncludeReasons.isProductModule(owner.reason)) {
+        productModuleToEntries.computeIfAbsent(owner) { mutableListOf() }.add(entry)
+        continue
+      }
+    }
+
+    val presentablePath = fileToPresentablePath.computeIfAbsent(entry.path) {
+      shortenAndNormalizePath(it, buildPaths)
+    }
+    fileToEntry.computeIfAbsent(presentablePath) { mutableListOf() }.add(entry)
+  }
+  return fileToEntry to productModuleToEntries.toList().sortedBy { it.first.moduleName }
 }
 
 private fun writeProductModules(
   writer: YAMLGenerator,
-  productModules: List<Pair<ModuleItem, MutableList<DistributionFileEntry>>>,
+  productModules: List<Pair<ModuleItem, List<DistributionFileEntry>>>,
   kind: String,
+  moduleSets: Map<String, List<Pair<ModuleItem, List<DistributionFileEntry>>>>,
 ) {
   writer.writeArrayFieldStart(if (kind == ModuleIncludeReasons.PRODUCT_MODULES) "productModules" else "productEmbeddedModules")
+  if (kind == ModuleIncludeReasons.PRODUCT_MODULES) {
+    for (moduleSetName in moduleSets.keys) {
+      writer.writeString(moduleSetName)
+    }
+  }
+
   for ((item) in productModules) {
-    if (item.reason == kind) {
+    if (item.moduleSet == null && item.reason == kind) {
       writer.writeString(item.moduleName)
     }
   }

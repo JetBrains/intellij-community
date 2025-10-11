@@ -89,7 +89,7 @@ jvm_library(
     "//platform/platform-impl/concurrency",
     "@lib//:kotlinx-coroutines-core",
     "//libraries/fastutil",
-    "@lib//:jcef",
+    "//libraries/jcef",
     "//platform/util-class-loader:util-classLoader",
     "@lib//:netty-buffer",
     "//libraries/lz4",

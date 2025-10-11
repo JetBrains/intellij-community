@@ -18,7 +18,7 @@ jvm_library(
     "//platform/platform-impl/bootstrap",
     "//platform/boot",
     "//platform/ide-core-impl",
-    "@lib//:jbr-api",
+    "//libraries/jbr",
     "//platform/runtime/product",
     "//platform/diagnostic",
     "//platform/runtime/repository",

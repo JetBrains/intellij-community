@@ -1,6 +1,0 @@
-<idea-plugin xmlns:xi="http://www.w3.org/2001/XInclude">
-  <xi:include href="/META-INF/libs-core.xml"/>
-  <xi:include href="/META-INF/libs-ktor.xml"/>
-  <xi:include href="/META-INF/libs-misc.xml"/>
-  <xi:include href="/META-INF/libs-temporary-bundled.xml"/>
-</idea-plugin>

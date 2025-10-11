@@ -34,6 +34,7 @@ private data class ContentReportList(
   @JvmField val productModules: List<PluginContentReport>,
   @JvmField val bundled: List<PluginContentReport>,
   @JvmField val nonBundled: List<PluginContentReport>,
+  @JvmField val moduleSets: Map<String, List<String>>,
 )
 
 @ApiStatus.Internal
@@ -55,7 +56,7 @@ fun createContentCheckTests(
         result = it
       },
       homePath = projectHomePath,
-      buildTools = buildTools
+      buildTools = buildTools,
     )
     result
   }
@@ -73,6 +74,17 @@ fun createContentCheckTests(
         suggestedReviewer = suggestedReviewer,
       )
     })
+
+    for ((moduleSetName, moduleSetData) in contentList.moduleSets) {
+      yield(DynamicTest.dynamicTest("${testInfo.spanName}(moduleSet:$moduleSetName)") {
+        checkThatModuleListIsNotChanged(
+          actual = moduleSetData,
+          expectedFile = projectHome.resolve("build/expected/moduleSets/$moduleSetName.yaml"),
+          projectHome = projectHome,
+          suggestedReviewer = suggestedReviewer,
+        )
+      })
+    }
 
     val project = packageResult.jpsProject
 
@@ -167,7 +179,8 @@ private fun getPluginContentKey(item: PluginContentReport): String = item.mainMo
 
 private fun computePackageResult(
   productProperties: ProductProperties,
-  testInfo: TestInfo, contentConsumer: (PackageResult) -> Unit,
+  testInfo: TestInfo,
+  contentConsumer: (PackageResult) -> Unit,
   homePath: Path,
   buildTools: ProprietaryBuildTools = ProprietaryBuildTools.DUMMY,
 ) {
@@ -207,12 +220,22 @@ private fun computePackageResult(
           }
         }
 
+        // auto-discover all module set files from zip
+        val moduleSets = zip.entries
+          .asSequence()
+          .filter { it.name.startsWith("moduleSets/") && it.name.endsWith(".yaml") }
+          .associate {
+            val moduleSetName = it.name.removePrefix("moduleSets/").removeSuffix(".yaml")
+            moduleSetName to it.getData(zip).decodeToString().lines()
+          }
+
         contentConsumer(PackageResult(
           content = ContentReportList(
             platform = getPlatformData("platform.yaml"),
             productModules = getData("product-modules.yaml"),
             bundled = getData("bundled-plugins.yaml"),
             nonBundled = getData("non-bundled-plugins.yaml"),
+            moduleSets = moduleSets,
           ),
           jpsProject = context.project,
           projectHome = context.paths.projectHome,

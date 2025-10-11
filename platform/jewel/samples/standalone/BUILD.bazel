@@ -48,7 +48,7 @@ jvm_library(
     "//libraries/compose-foundation-desktop",
     "//platform/jewel/samples/showcase",
     "//platform/icons",
-    "@lib//:jbr-api",
+    "//libraries/jbr",
   ],
   runtime_deps = [
     "@lib//:platform-jewel-samples-standalone-org-lwjgl-lwjgl-tinyfd",

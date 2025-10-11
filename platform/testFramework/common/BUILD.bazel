@@ -27,7 +27,7 @@ jvm_library(
     "//platform/bootstrap/coroutine",
     "@lib//:kotlin-stdlib",
     "@lib//:kotlinx-coroutines-core",
-    "@lib//:jbr-api",
+    "//libraries/jbr",
     "//platform/editor-ui-api:editor-ui",
     "//platform/indexing-impl",
     "//platform/boot",

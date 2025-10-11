@@ -37,8 +37,8 @@
     <orderEntry type="module" module-name="intellij.platform.jewel.ui" />
     <orderEntry type="module" module-name="intellij.libraries.compose.foundation.desktop" />
     <orderEntry type="module" module-name="intellij.platform.jewel.foundation" />
-    <orderEntry type="module" module-name="intellij.platform.jewel.intUi.standalone" exported="" />
+    <orderEntry type="module" module-name="intellij.platform.jewel.intUi.standalone" />
+    <orderEntry type="module" module-name="intellij.libraries.jbr" />
     <orderEntry type="library" name="jna" level="project" />
-    <orderEntry type="library" exported="" name="jbr-api" level="project" />
   </component>
 </module>

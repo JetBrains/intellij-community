@@ -17,6 +17,6 @@
     <orderEntry type="module" module-name="intellij.platform.core.ui" />
     <orderEntry type="module" module-name="intellij.libraries.jediterm.ui" />
     <orderEntry type="module" module-name="intellij.sh.core" />
-    <orderEntry type="library" name="jediterm-core" level="project" />
+    <orderEntry type="module" module-name="intellij.libraries.jediterm.core" />
   </component>
 </module>

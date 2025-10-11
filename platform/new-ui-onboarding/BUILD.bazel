@@ -26,7 +26,7 @@ jvm_library(
     "//libraries/kotlinx/serialization/json",
     "//platform/projectModel-api:projectModel",
     "//platform/statistics",
-    "@lib//:jcef",
+    "//libraries/jcef",
   ]
 )
 ### auto-generated section `build intellij.platform.ide.newUiOnboarding` end

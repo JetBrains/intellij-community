@@ -12,7 +12,7 @@ jvm_library(
   visibility = ["//visibility:public"],
   srcs = glob([], allow_empty = True),
   resources = [":jsvg_resources"],
-  exports = ["@lib//:jsvg"],
-  runtime_deps = ["@lib//:jsvg"]
+  exports = ["@lib//:libraries-jsvg-jsvg"],
+  runtime_deps = ["@lib//:libraries-jsvg-jsvg"]
 )
 ### auto-generated section `build intellij.libraries.jsvg` end

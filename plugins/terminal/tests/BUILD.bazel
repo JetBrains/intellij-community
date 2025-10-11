@@ -40,7 +40,7 @@ jvm_library(
     "//plugins/sh/plugin",
     "//platform/code-style-api:codeStyle",
     "@lib//:assert_j",
-    "@lib//:jediterm-core",
+    "//libraries/jediterm-core",
     "//libraries/jediterm-ui",
     "//libraries/pty4j",
     "//libraries/guava",

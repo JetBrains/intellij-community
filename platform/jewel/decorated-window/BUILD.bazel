@@ -35,12 +35,8 @@ jvm_library(
     "//libraries/compose-foundation-desktop",
     "//platform/jewel/foundation",
     "//platform/jewel/int-ui/int-ui-standalone:jewel-intUi-standalone",
+    "//libraries/jbr",
     "@lib//:jna",
-    "@lib//:jbr-api",
-  ],
-  exports = [
-    "//platform/jewel/int-ui/int-ui-standalone:jewel-intUi-standalone",
-    "@lib//:jbr-api",
   ],
   plugins = ["@lib//:compose-plugin"]
 )

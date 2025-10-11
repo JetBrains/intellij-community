@@ -50,7 +50,7 @@ jvm_library(
     "//python/python-sdk:sdk",
     "//platform/util/jdom",
     "//platform/platform-impl:ide-impl",
-    "@lib//:jcef",
+    "//libraries/jcef",
     "//plugins/restructuredtext",
     "//platform/ui.jcef",
     ":platform_lang-impl_provided",

@@ -12,7 +12,7 @@ jvm_library(
   visibility = ["//visibility:public"],
   srcs = glob([], allow_empty = True),
   resources = [":mvstore_resources"],
-  exports = ["@lib//:mvstore"],
-  runtime_deps = ["@lib//:mvstore"]
+  exports = ["@lib//:libraries-mvstore-mvstore"],
+  runtime_deps = ["@lib//:libraries-mvstore-mvstore"]
 )
 ### auto-generated section `build intellij.libraries.mvstore` end

@@ -28,7 +28,7 @@ jvm_library(
     "//jps/model-api:model",
     "//jps/model-serialization",
     "//jps/model-impl",
-    "@lib//:javax-annotation-api",
+    "//libraries/javax/annotation",
     "@lib//:platform-jps-build-qdox-java-parser",
     "//libraries/gson",
     "//libraries/fastutil",

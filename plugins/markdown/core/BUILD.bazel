@@ -34,7 +34,7 @@ jvm_library(
     "//platform/refactoring",
     "//platform/built-in-server:builtInServer-impl",
     "//platform/editor-ui-ex:editor-ex",
-    "@lib//:jcef",
+    "//libraries/jcef",
     "//libraries/jsoup",
     "@lib//:netty-buffer",
     "//platform/core-ui",

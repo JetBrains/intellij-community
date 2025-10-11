@@ -40,7 +40,7 @@ jvm_library(
     "//platform/util/jdom",
     "@lib//:jna",
     "//libraries/hash4j",
-    "@lib//:jbr-api",
+    "//libraries/jbr",
     "@lib//:googlecode-plist-dd",
     "@lib//:netty-codec-http",
     "//platform/eel-impl",

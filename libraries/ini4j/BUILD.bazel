@@ -12,7 +12,7 @@ jvm_library(
   visibility = ["//visibility:public"],
   srcs = glob([], allow_empty = True),
   resources = [":ini4j_resources"],
-  exports = ["@lib//:ini4j"],
-  runtime_deps = ["@lib//:ini4j"]
+  exports = ["@lib//:libraries-ini4j-ini4j"],
+  runtime_deps = ["@lib//:libraries-ini4j-ini4j"]
 )
 ### auto-generated section `build intellij.libraries.ini4j` end

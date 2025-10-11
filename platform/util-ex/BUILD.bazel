@@ -11,7 +11,7 @@ jvm_library(
     "//libraries/kotlin/reflect",
     "//platform/util",
     "//platform/util/jdom",
-    "@lib//:jcip",
+    "//libraries/jcip",
     "@lib//:kotlinx-coroutines-core",
     "//libraries/fastutil",
     "@lib//:netty-buffer",

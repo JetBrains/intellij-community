@@ -354,6 +354,7 @@ libraries/asm
 libraries/asm-tools
 libraries/assertj-core
 libraries/automaton
+libraries/blockmap
 libraries/bouncy-castle-pgp
 libraries/bouncy-castle-provider
 libraries/caffeine
@@ -393,8 +394,14 @@ libraries/jackson/dataformat-yaml
 libraries/jackson/jackson
 libraries/jackson/jr-objects
 libraries/jackson/module-kotlin
-libraries/javax-activation
+libraries/java-websocket
+libraries/javax/activation
+libraries/javax/annotation
 libraries/jaxen
+libraries/jbr
+libraries/jcef
+libraries/jcip
+libraries/jediterm-core
 libraries/jediterm-ui
 libraries/jettison
 libraries/jsonpath
@@ -405,6 +412,8 @@ libraries/junit5
 libraries/junit5-launcher
 libraries/junit5-params
 libraries/junit5-pioneer
+libraries/jvm-native-trusted-roots
+libraries/jzlib
 libraries/kotlin/reflect
 libraries/kotlin/test
 libraries/kotlin/test-assertions-core-jvm
@@ -438,6 +447,7 @@ libraries/skiko
 libraries/snakeyaml
 libraries/snakeyaml-engine
 libraries/sshd-osgi
+libraries/sshj
 libraries/stream
 libraries/system-stubs-jupiter
 libraries/testcontainers

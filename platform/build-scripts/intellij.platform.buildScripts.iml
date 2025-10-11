@@ -70,7 +70,7 @@
     <orderEntry type="module" module-name="intellij.libraries.kotlinx.collections.immutable" />
     <orderEntry type="library" name="kotlinx-coroutines-core" level="project" />
     <orderEntry type="library" name="opentelemetry-extension-kotlin" level="project" />
-    <orderEntry type="library" name="blockmap" level="project" />
+    <orderEntry type="module" module-name="intellij.libraries.blockmap" />
     <orderEntry type="module" module-name="intellij.libraries.commons.io" />
     <orderEntry type="module" module-name="intellij.libraries.bouncy.castle.provider" />
     <orderEntry type="module-library">
@@ -213,7 +213,7 @@
       </library>
     </orderEntry>
     <orderEntry type="module" module-name="intellij.libraries.hash4j" />
-    <orderEntry type="library" name="jbr-api" level="project" />
+    <orderEntry type="module" module-name="intellij.libraries.jbr" />
     <orderEntry type="module" module-name="intellij.libraries.kotlinx.serialization.protobuf" />
     <orderEntry type="module" module-name="intellij.libraries.jackson.module.kotlin" scope="RUNTIME" />
     <orderEntry type="module" module-name="intellij.libraries.jackson.dataformat.yaml" />

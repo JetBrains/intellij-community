@@ -22,7 +22,7 @@ jvm_library(
     "//platform/core-ui",
     "//libraries/jediterm-ui",
     "//plugins/sh/core",
-    "@lib//:jediterm-core",
+    "//libraries/jediterm-core",
   ],
   runtime_deps = ["//platform/backend"]
 )

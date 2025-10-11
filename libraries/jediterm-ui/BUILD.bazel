@@ -12,7 +12,7 @@ jvm_library(
   visibility = ["//visibility:public"],
   srcs = glob([], allow_empty = True),
   resources = [":jediterm-ui_resources"],
-  exports = ["@lib//:jediterm-ui"],
-  runtime_deps = ["@lib//:jediterm-ui"]
+  exports = ["@lib//:libraries-jediterm-ui-jediterm-ui"],
+  runtime_deps = ["@lib//:libraries-jediterm-ui-jediterm-ui"]
 )
 ### auto-generated section `build intellij.libraries.jediterm.ui` end

@@ -25,7 +25,7 @@ jvm_library(
     "//platform/projectModel-api:projectModel",
     "//platform/vcs-impl",
     "//platform/projectModel-impl",
-    "@lib//:jzlib",
+    "//libraries/jzlib",
     "@lib//:kotlin-stdlib",
     "@lib//:slf4j-api",
     "@lib//:slf4j-jdk14",
@@ -49,8 +49,6 @@ jvm_library(
     "@lib//:jetbrains-intellij-deps-eclipse-jgit",
     "@lib//:settings_repository-eclipse-jgit-ssh-apache-agent",
     "@lib//:settings_repository-eclipse-jgit-ssh-apache",
-    "@lib//:jzlib",
-    "@lib//:apache-sshd-osgi",
   ]
 )
 ### auto-generated section `build intellij.settingsRepository` end

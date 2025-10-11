@@ -30,7 +30,7 @@ jvm_library(
     "//platform/remote-core",
     "//platform/remote-servers/api:remoteServers",
     "//platform/remote-servers/impl",
-    "@lib//:jediterm-core",
+    "//libraries/jediterm-core",
     "//libraries/jediterm-ui",
     "//platform/execution-impl",
     "//libraries/winp",

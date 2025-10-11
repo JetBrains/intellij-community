@@ -33,6 +33,7 @@ jvm_library(
     "//platform/editor-ui-ex:editor-ex",
     "//platform/analysis-impl",
     "//platform/util/progress",
+    "//libraries/jcef",
     "//platform/lang-api:lang",
     "//platform/backend/workspace",
     "//platform/workspace/jps",
@@ -54,7 +55,7 @@ jvm_library(
     "//platform/workspace/storage",
     "//platform/platform-impl/concurrency",
     "//platform/platform-impl/update-checker",
-    "@lib//:jbr-api",
+    "//libraries/jbr",
   ]
 )
 ### auto-generated section `build intellij.platform.ide.internal` end

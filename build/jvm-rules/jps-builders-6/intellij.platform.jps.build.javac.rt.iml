@@ -10,7 +10,7 @@
     <orderEntry type="inheritedJdk" />
     <orderEntry type="sourceFolder" forTests="false" />
     <orderEntry type="library" name="jetbrains-annotations" level="project" />
-    <orderEntry type="library" name="javax.annotation-api" level="project" />
+    <orderEntry type="module" module-name="intellij.libraries.javax.annotation" />
     <orderEntry type="library" name="jps-javac-extension" level="project" />
     <orderEntry type="library" name="protobuf" level="project" />
     <orderEntry type="library" scope="PROVIDED" name="netty-jps" level="project" />

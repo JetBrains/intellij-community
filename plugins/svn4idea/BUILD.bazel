@@ -36,7 +36,7 @@ jvm_library(
     "//libraries/ini4j",
     "//libraries/oro-matcher",
     "@lib//:jaxb-api",
-    "//libraries/javax-activation",
+    "//libraries/javax/activation",
     "//libraries/stream",
     "//platform/statistics",
     "//platform/lvcs-api:lvcs",

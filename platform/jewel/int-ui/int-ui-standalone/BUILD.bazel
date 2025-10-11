@@ -35,7 +35,7 @@ jvm_library(
     "//platform/jewel/ui",
     "//libraries/compose-foundation-desktop",
     "//platform/jewel/foundation",
-    "@lib//:jbr-api",
+    "//libraries/jbr",
   ],
   plugins = ["@lib//:compose-plugin"]
 )

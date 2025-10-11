@@ -44,7 +44,7 @@ jvm_library(
     "//libraries/fastutil",
     "//platform/core-ui",
     "//platform/platform-util-io-impl:ide-util-io-impl",
-    "@lib//:jediterm-core",
+    "//libraries/jediterm-core",
     "//libraries/jediterm-ui",
     "//libraries/pty4j",
     "//platform/execution",
@@ -97,7 +97,7 @@ jvm_library(
     "//platform/util/concurrency:concurrency_test_lib",
     "@lib//:assert_j",
     "//platform/core-ui",
-    "@lib//:jediterm-core",
+    "//libraries/jediterm-core",
     "//libraries/jediterm-ui",
   ]
 )
