@@ -2,9 +2,7 @@
 package com.intellij.platform.plugins.testFramework
 
 import com.intellij.openapi.util.JDOMUtil
-import org.jdom.Namespace
 import java.nio.file.Path
-import kotlin.io.path.exists
 
 /**
  * Resolves a module set name into a list of actual module names, recursively following x-include references.
@@ -24,10 +22,6 @@ fun resolveModuleSet(moduleSetName: String, ultimateRoot: Path): List<String> {
 
   val xmlFileName = "$moduleSetName.xml"
   val xmlPath = ultimateRoot.resolve("community/platform/platform-resources/src/META-INF/$xmlFileName")
-  if (!xmlPath.exists()) {
-    error("Module set XML file not found: $xmlPath")
-  }
-
   return resolveModuleSetRecursive(xmlPath, ultimateRoot, HashSet())
 }
 
