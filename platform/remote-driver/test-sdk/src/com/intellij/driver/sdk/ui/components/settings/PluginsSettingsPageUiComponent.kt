@@ -61,6 +61,7 @@ class PluginsSettingsPageUiComponent(data: ComponentData) : UiComponent(data) {
     val errorNotice = x { byType("com.intellij.ide.plugins.newui.ErrorComponent") }
     val updateButton = x { byAccessibleName("Update") }
     val restartIdeButton = x { byAccessibleName("Restart IDE") }
+    val errorComponent = x { byType("com.intellij.ide.plugins.newui.ErrorComponent") }
 
     fun getPluginDescriptor(): PluginDescriptor =
       checkNotNull(driver.getPlugin(listPluginComponent.getPluginModel().pluginId.getIdString())) { "Plugin $name not found" }
