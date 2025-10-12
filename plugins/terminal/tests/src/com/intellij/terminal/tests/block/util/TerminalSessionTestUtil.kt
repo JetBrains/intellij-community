@@ -10,6 +10,7 @@ import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.Disposer
 import com.intellij.openapi.util.registry.Registry
 import com.intellij.openapi.util.text.StringUtil
+import com.intellij.terminal.pty.PtyProcessTtyConnector
 import com.intellij.terminal.tests.block.testApps.LINE_SEPARATOR
 import com.intellij.terminal.tests.reworked.util.TerminalTestUtil
 import com.intellij.testFramework.fixtures.BasePlatformTestCase
@@ -59,8 +60,8 @@ internal object TerminalSessionTestUtil {
       .build()
     val configuredOptions = runner.configureStartupOptions(baseOptions)
     assumeBlockShellIntegration(configuredOptions)
-    val process = runner.createProcess(configuredOptions)
-    val ttyConnector = runner.createTtyConnector(process)
+    val ttyConnector = runner.createTtyConnector(configuredOptions)
+    val process = (ttyConnector as PtyProcessTtyConnector).process
 
     val session = BlockTerminalSession(runner.settingsProvider, BlockTerminalColorPalette(), configuredOptions.shellIntegration!!)
     Disposer.register(parentDisposable) {

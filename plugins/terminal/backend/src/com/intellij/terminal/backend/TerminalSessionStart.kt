@@ -33,8 +33,7 @@ fun startTerminalProcess(
 ): Pair<TtyConnector, ShellStartupOptions> {
   val runner = ReworkedLocalTerminalRunner(project)
   val configuredOptions = runner.configureStartupOptions(options)
-  val process = runner.createProcess(configuredOptions)
-  val connector = runner.createTtyConnector(process)
+  val connector = runner.createTtyConnector(configuredOptions)
 
   return connector to configuredOptions
 }

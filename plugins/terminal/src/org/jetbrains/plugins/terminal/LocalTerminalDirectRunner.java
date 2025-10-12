@@ -1,17 +1,14 @@
 // Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.plugins.terminal;
 
-import com.intellij.execution.process.LocalProcessService;
-import com.intellij.execution.process.LocalPtyOptions;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.Project;
+import com.intellij.terminal.pty.PtyProcessTtyConnector;
 import com.intellij.util.ArrayUtil;
 import com.intellij.util.TimeoutUtil;
-import com.intellij.util.containers.CollectionFactory;
 import com.jediterm.core.util.TermSize;
 import com.jediterm.terminal.TtyConnector;
 import com.pty4j.PtyProcess;
-import kotlin.Pair;
 import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -32,8 +29,7 @@ import java.util.*;
 import java.util.concurrent.ExecutionException;
 import java.util.stream.Collectors;
 
-import static org.jetbrains.plugins.terminal.TerminalStartupKt.shouldUseEelApi;
-import static org.jetbrains.plugins.terminal.TerminalStartupKt.startProcess;
+import static org.jetbrains.plugins.terminal.TerminalStartupKt.*;
 
 public class LocalTerminalDirectRunner extends AbstractTerminalRunner<PtyProcess> {
   private static final Logger LOG = Logger.getInstance(LocalTerminalDirectRunner.class);
@@ -43,19 +39,6 @@ public class LocalTerminalDirectRunner extends AbstractTerminalRunner<PtyProcess
   public static final List<String> LOGIN_CLI_OPTIONS = List.of(LOGIN_CLI_OPTION, "-l");
 
   protected final Charset myDefaultCharset;
-
-  /**
-   * A workaround to pass some additional information ({@link ShellProcessHolder})
-   * from {@link #createProcess(ShellStartupOptions)} to {@link #createTtyConnector(PtyProcess)}.
-   * <p>
-   * This map references {@code PtyProcess} objects weakly, so no memory leaks are possible
-   * as long as {@code ShellProcessHolder} and {@code PtyProcess} are not strongly reachable
-   * from other GC roots.
-   * <p>
-   * TODO merge {@link #createProcess(ShellStartupOptions)} and {@link #createTtyConnector(PtyProcess)} into
-   *     a single {@code createTtyConnector(ShellStartupOptions)} and remove this workaround
-   */
-  private final Map<PtyProcess, ShellProcessHolder> myProcessHolderMap = CollectionFactory.createConcurrentWeakMap();
 
   public LocalTerminalDirectRunner(Project project) {
     super(project);
@@ -96,8 +79,18 @@ public class LocalTerminalDirectRunner extends AbstractTerminalRunner<PtyProcess
       .build();
   }
 
+  /**
+   * @deprecated use {@link #createTtyConnector(ShellStartupOptions)} instead
+   * Kept due to external usages.
+   */
+  @SuppressWarnings("removal")
+  @Deprecated(forRemoval = true)
   @Override
   public @NotNull PtyProcess createProcess(@NotNull ShellStartupOptions options) throws ExecutionException {
+    return doCreateProcess(options).getPtyProcess();
+  }
+
+  private @NotNull ShellProcessHolder doCreateProcess(@NotNull ShellStartupOptions options) throws ExecutionException {
     String[] command = ArrayUtil.toStringArray(options.getShellCommand());
     Map<String, String> envs = options.getEnvVariables();
     TermSize initialTermSize = options.getInitialTermSize();
@@ -125,29 +118,20 @@ public class LocalTerminalDirectRunner extends AbstractTerminalRunner<PtyProcess
     }
     try {
       long startNano = System.nanoTime();
-      PtyProcess process;
+      ShellProcessHolder processHolder;
       if (workingDirPath != null && shouldUseEelApi()) {
-        Pair<PtyProcess, ShellProcessHolder> processPair = startProcess(
+        processHolder = startProcess(
           List.of(command), envs, workingDirPath, Objects.requireNonNull(initialTermSize)
         );
-        myProcessHolderMap.put(processPair.getFirst(), processPair.getSecond());
-        process = processPair.getFirst();
       }
       else {
-        process = (PtyProcess)LocalProcessService.getInstance().startPtyProcess(
-          List.of(command),
-          workingDir,
-          envs,
-          LocalPtyOptions.defaults().builder()
-            .initialColumns(initialTermSize != null ? initialTermSize.getColumns() : -1)
-            .initialRows(initialTermSize != null ? initialTermSize.getRows() : -1)
-            .build(),
-          false
+        processHolder = startLocalProcess(
+          List.of(command), envs, workingDir, Objects.requireNonNull(initialTermSize)
         );
       }
-      LOG.info("Started " + process.getClass().getName() + " in " + TimeoutUtil.getDurationMillis(startNano) + " ms from "
-               + stringifyProcessInfo(command, workingDir, initialTermSize, envs, !LOG.isDebugEnabled()));
-      return process;
+      LOG.info("Started " + processHolder.getPtyProcess().getClass().getName() + " in " + TimeoutUtil.getDurationMillis(startNano)
+               + " ms from " + stringifyProcessInfo(command, workingDir, initialTermSize, envs, !LOG.isDebugEnabled()));
+      return processHolder;
     }
     catch (Exception e) {
       throw new ExecutionException("Failed to start " + stringifyProcessInfo(command, workingDir, initialTermSize, envs, false), e);
@@ -194,14 +178,21 @@ public class LocalTerminalDirectRunner extends AbstractTerminalRunner<PtyProcess
     }
   }
 
-  @ApiStatus.Internal
-  protected @Nullable ShellProcessHolder getHolder(@NotNull PtyProcess process) {
-    return myProcessHolderMap.remove(process);
+  @Override
+  public @NotNull TtyConnector createTtyConnector(@NotNull ShellStartupOptions startupOptions) throws ExecutionException {
+    ShellProcessHolder processHolder = doCreateProcess(startupOptions);
+    return new LocalTerminalTtyConnector(processHolder, myDefaultCharset);
   }
 
+  /**
+   * @deprecated use {@link #createTtyConnector(ShellStartupOptions)} instead
+   * Kept due to external usages.
+   */
+  @SuppressWarnings("removal")
+  @Deprecated(forRemoval = true)
   @Override
   public @NotNull TtyConnector createTtyConnector(@NotNull PtyProcess process) {
-    return new LocalTerminalTtyConnector(process, myDefaultCharset, getHolder(process));
+    return new PtyProcessTtyConnector(process, myDefaultCharset);
   }
 
   @Override

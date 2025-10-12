@@ -15,6 +15,7 @@ import com.intellij.platform.eel.path.EelPath
 import com.intellij.platform.eel.provider.LocalEelDescriptor
 import com.intellij.platform.eel.provider.asEelPath
 import com.intellij.platform.eel.provider.getEelDescriptor
+import com.intellij.platform.eel.provider.localEel
 import com.intellij.platform.eel.provider.utils.EelProcessExecutionResult
 import com.intellij.platform.eel.provider.utils.awaitProcessResult
 import com.intellij.platform.eel.provider.utils.stderrString
@@ -31,7 +32,6 @@ import kotlinx.coroutines.withTimeoutOrNull
 import org.jetbrains.plugins.terminal.runner.LocalTerminalStartCommandBuilder
 import org.jetbrains.plugins.terminal.util.ShellNameUtil
 import org.jetbrains.plugins.terminal.util.terminalApplicationScope
-import java.lang.ref.WeakReference
 import java.nio.file.InvalidPathException
 import java.nio.file.Path
 import java.time.Duration
@@ -69,15 +69,14 @@ internal fun startProcess(
   envs: Map<String, String>,
   initialWorkingDirectory: Path,
   initialTermSize: TermSize,
-): Pair<PtyProcess, ShellProcessHolder> {
+): ShellProcessHolder {
   return runBlockingMaybeCancellable {
     val context = buildStartupEelContext(initialWorkingDirectory, command)
     val eelApi = context.eelDescriptor.toEelApi()
     val remoteCommand = convertCommandToRemote(eelApi, command)
     val workingDirectory = context.workingDirectoryProvider(eelApi)
     val process = doStartProcess(eelApi, remoteCommand, envs, workingDirectory, initialTermSize)
-    val ptyProcess = process.convertToJavaProcess() as PtyProcess
-    ptyProcess to ShellProcessHolder(process.pid, WeakReference(ptyProcess), eelApi)
+    ShellProcessHolder(process, eelApi)
   }
 }
 
@@ -174,6 +173,20 @@ private fun getWslDistributionNameFromCommand(command: List<String>): String? {
 }
 
 @Throws(ExecuteProcessException::class)
+internal fun startLocalProcess(
+  command: List<String>,
+  envs: Map<String, String>,
+  workingDirectory: String,
+  initialTermSize: TermSize,
+): ShellProcessHolder {
+  return runBlockingMaybeCancellable {
+    val eelWorkingDirectory = EelPath.parse(workingDirectory, LocalEelDescriptor)
+    val eelProcess = doStartProcess(localEel, command, envs, eelWorkingDirectory, initialTermSize)
+    ShellProcessHolder(eelProcess, localEel)
+  }
+}
+
+@Throws(ExecuteProcessException::class)
 private suspend fun doStartProcess(
   eelApi: EelApi,
   command: List<String>,
@@ -193,14 +206,15 @@ private suspend fun doStartProcess(
 internal fun shouldUseEelApi(): Boolean = Registry.`is`("terminal.use.EelApi", true)
 
 internal class ShellProcessHolder(
-  private val shellPid: EelApi.Pid,
-  private val ptyProcessRef: WeakReference<PtyProcess>,
+  eelProcess: EelProcess,
   private val eelApi: EelApi,
 ) {
   val isPosix: Boolean get() = eelApi.platform.isPosix
 
+  val ptyProcess: PtyProcess = eelProcess.convertToJavaProcess() as PtyProcess
+  private val shellPid: EelApi.Pid = eelProcess.pid
+
   fun terminatePosixShell() {
-    val ptyProcess = ptyProcessRef.get() ?: return
     terminalApplicationScope().launch(Dispatchers.IO) {
       if (!ptyProcess.isAlive) {
         log.debug { "Shell process ${processInfo(ptyProcess)} is already terminated" }
