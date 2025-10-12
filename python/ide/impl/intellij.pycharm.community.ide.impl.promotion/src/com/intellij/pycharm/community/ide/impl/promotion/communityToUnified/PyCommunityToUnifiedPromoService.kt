@@ -3,13 +3,14 @@ package com.intellij.pycharm.community.ide.impl.promotion.communityToUnified
 
 import com.intellij.ide.util.PropertiesComponent
 import com.intellij.openapi.application.ApplicationInfo
-import com.intellij.openapi.application.PathManager
 import com.intellij.openapi.components.Service
 import com.intellij.openapi.components.service
 import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.updateSettings.UpdateStrategyCustomization
-import com.intellij.openapi.updateSettings.impl.*
-import com.intellij.openapi.util.JDOMUtil
+import com.intellij.openapi.updateSettings.impl.PlatformUpdates
+import com.intellij.openapi.updateSettings.impl.UpdateCheckerFacade
+import com.intellij.openapi.updateSettings.impl.UpdateSettings
+import com.intellij.openapi.updateSettings.impl.UpdateStrategy
 import com.intellij.openapi.util.registry.Registry
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
@@ -18,8 +19,6 @@ import kotlinx.coroutines.sync.withLock
 import kotlinx.coroutines.time.withTimeout
 import kotlinx.coroutines.withContext
 import org.jetbrains.annotations.ApiStatus
-import java.nio.file.Files
-import java.nio.file.Path
 import java.time.Duration
 
 /**
@@ -101,51 +100,12 @@ internal class PyCommunityToUnifiedPromoService(val serviceScope: CoroutineScope
     }.getOrElse { null }
   }
 
-  private fun readMockUpdateIfEnabled(): PlatformUpdates.Loaded? {
-    return try {
-      if (!Registry.`is`("py.promo.use.test.update", false)) return null
-      val path: Path = Path.of(PathManager.getHomePath(), "py_promo_test.xml")
-      if (!Files.isRegularFile(path)) {
-        LOG.info("Mock PY promo update enabled, but file not found: $path")
-        null
-      }
-      else {
-        val text = Files.readString(path)
-        val currentBuild = ApplicationInfo.getInstance().build
-        val productCode = currentBuild.productCode
-        val node = JDOMUtil.load(text)
-                     .getChild("product")
-                     ?.getChild("channel")
-                   ?: throw IllegalArgumentException("//channel missing")
-        val channel = UpdateChannel(node, productCode)
-        val newBuild = channel.builds.firstOrNull()
-                       ?: throw IllegalArgumentException("//build missing")
-        val patches = newBuild.patches.firstOrNull()
-          ?.let { UpdateChain(listOf(it.fromBuild, newBuild.number), it.size) }
-
-        return PlatformUpdates.Loaded(newBuild, channel, patches)
-      }
-    }
-    catch (t: Throwable) {
-      LOG.warn("Failed to read/parse mock PY promo update", t)
-      null
-    }
-  }
-
   private suspend fun findAvailableUpdate(): PlatformUpdates.Loaded? {
     return withContext(Dispatchers.IO) {
       lock.withLock {
         withTimeout(Duration.ofSeconds(5)) {
           if (availableUpdate != null) {
             return@withTimeout availableUpdate
-          }
-
-          // Try mocked update if registry flag is enabled
-          readMockUpdateIfEnabled()?.let { mockUpdate ->
-            if (mockUpdate.newBuild.number.productCode == "PY") {
-              availableUpdate = mockUpdate
-              return@withTimeout mockUpdate
-            }
           }
 
           val updateCheckerFacade = service<UpdateCheckerFacade>()
