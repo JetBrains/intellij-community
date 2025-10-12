@@ -61,12 +61,12 @@ internal fun generateDeps(
   val runtimeDeps = mutableListOf<BazelLabel>()
   val provided = mutableListOf<BazelLabel>()
 
-  if (isTest && module.sources.isNotEmpty()) {
-    if (hasSources) {
+  if (isTest) {
+    if (hasSources && module.sources.isNotEmpty()) {
       // associates also is a dependency
       associates.add(BazelLabel(":${module.targetName}", module))
     }
-    else {
+    else if (module.sources.isNotEmpty() || module.resources.isNotEmpty()) {
       runtimeDeps.add(BazelLabel(":${module.targetName}", module))
     }
   }
