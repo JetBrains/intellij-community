@@ -1,4 +1,4 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.util.io;
 
 import com.intellij.util.ArrayUtilRt;
@@ -126,14 +126,14 @@ public class PersistentBTreeEnumerator<Data> extends PersistentEnumeratorBase<Da
             initialSize,
             lockContext,
             VALUE_PAGE_SIZE,
-            true,
+            /*valuesAreBufferAligned: */ true,
             IOUtil.useNativeByteOrderForByteBuffers()
           ),
           dataDescriptor,
           initialSize,
           new Version(baseVersion() + version),
           new RecordBufferHandler(),
-          false
+          /*doCoaching: */ false
     );
 
     myInlineKeysNoMapping = dataDescriptor instanceof InlineKeyDescriptor;
@@ -164,7 +164,8 @@ public class PersistentBTreeEnumerator<Data> extends PersistentEnumeratorBase<Da
       try {
         close();  // cleanup already initialized state
       }
-      catch (Throwable ignored) {
+      catch (Throwable closeEx) {
+        e.addSuppressed(closeEx);
       }
       throw new CorruptedException("PersistentEnumerator storage corrupted " + file, e);
     }
