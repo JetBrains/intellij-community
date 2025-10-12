@@ -35,6 +35,12 @@ import static com.intellij.util.SystemProperties.getLongProperty;
 import static java.util.concurrent.TimeUnit.MINUTES;
 import static java.util.concurrent.TimeUnit.SECONDS;
 
+/**
+ * Asks user to increase IDE heap size if significant memory pressure is detected.
+ * <p>
+ * Detects memory pressure by subscribing to {@link LowMemoryWatcher}, and throttles and averaging its events over a larger
+ * time period, to separate a long-term memory deficit.
+ */
 @ApiStatus.Internal
 @VisibleForTesting
 public final class LowMemoryNotifier implements Disposable {
@@ -44,7 +50,7 @@ public final class LowMemoryNotifier implements Disposable {
 
   //@formatter:off
   private static final long SUMMARISING_WINDOW_MS = getLongProperty("LowMemoryNotifier.SUMMARISING_WINDOW_MS", MINUTES.toMillis(15));
-  private static final long THROTTLING_PERIOD_MS = getLongProperty("LowMemoryNotifier.THROTTLING_PERIOD_MS", SECONDS.toMillis(15));
+  private static final long THROTTLING_PERIOD_MS = getLongProperty("LowMemoryNotifier.THROTTLING_PERIOD_MS", SECONDS.toMillis(20));
   private static final double LONG_TERM_MEMORY_DEFICIT_THRESHOLD = getFloatProperty("LowMemoryNotifier.LONG_TERM_MEMORY_DEFICIT_THRESHOLD", 5);
   //@formatter:on
 

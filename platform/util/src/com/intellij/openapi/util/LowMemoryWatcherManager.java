@@ -49,9 +49,9 @@ public final class LowMemoryWatcherManager {
   private static final long WINDOW_SIZE_MS = getLongProperty("LowMemoryWatcherManager.WINDOW_SIZE_MS", SECONDS.toMillis(90));
   /**
    * GC load (returned by {@link GcTracker}) which is 'too much', i.e. GC is overloaded.
-   * Default 0.1 means that if GC takes > 10% of CPU time then it is considered overloaded.
+   * Default 0.1 means that if GC takes > 10% of CPU time (averaged over {@link #WINDOW_SIZE_MS}) then GC is considered overloaded.
    */
-  private static final double GC_LOAD_THRESHOLD = getFloatProperty("LowMemoryWatcherManager.GC_LOAD_THRESHOLD", 0.1f);
+  private static final double GC_LOAD_THRESHOLD = getFloatProperty("LowMemoryWatcherManager.GC_LOAD_THRESHOLD", 0.15f);
 
   /** Period of GC tracker updates. If <0 -- disable regular updates, update only on memory threshold violation (legacy behavior) */
   private static final long REGULAR_TRACKER_UPDATE_PERIOD_MS = getLongProperty("LowMemoryWatcherManager.REGULAR_TRACKER_UPDATE_PERIOD_MS", SECONDS.toMillis(15));
@@ -60,7 +60,7 @@ public final class LowMemoryWatcherManager {
   private static final boolean NOTIFY_LISTENERS_SYNCHRONOUSLY = getBooleanProperty("low.memory.watcher.sync", false);
 
   /** Skip same-priority events if more often than this */
-  private static final long THROTTLING_PERIOD_MS = getLongProperty("LowMemoryWatcherManager.THROTTLING_PERIOD_MS", 200);
+  private static final long THROTTLING_PERIOD_MS = getLongProperty("LowMemoryWatcherManager.THROTTLING_PERIOD_MS", 300);
 
   //@formatter:on
 
@@ -97,7 +97,7 @@ public final class LowMemoryWatcherManager {
         long accumulatedGcTime = fetchMajorGcDurationAccumulated();
         double gcLoadScore = gcTracker.gcLoadScore(System.currentTimeMillis(), accumulatedGcTime);
         //Not just 'after GC', but 'memory subsystem is overloaded':
-        //  (a lot of time spent on GC recently) AND (memory still low after GC)
+        //  (significant time spent on GC recently) AND (memory still low after GC)
         boolean gcOverloaded = (gcLoadScore > GC_LOAD_THRESHOLD) && memoryCollectionThreshold;
 
         if (LOG.isDebugEnabled()) {
@@ -162,16 +162,16 @@ public final class LowMemoryWatcherManager {
           ((NotificationEmitter)ManagementFactory.getMemoryMXBean()).addNotificationListener(mxLowMemoryListener, null, null);
 
 
-          //Setup regular gcTracker update: it is not _required_, but it is useful to update GcTracker not only at memory
-          // threshold violation, but also with some regularity -- to reduce variance caused by coarse updates granularity:
-
-          //By some reason, LowMemoryWatcherManager is not a service, but is initialized explicitly, as a part of
-          // AppScheduledExecutorService, (or other services in headless). This means that AppScheduledExecutorService
-          // itself is not fully initialized then LowMemoryWatcherManager ctor is called, hence we can't schedule
-          // that regular task in LowMemoryWatcherManager ctor, as a sane person would do -- instead we schedule it here,
-          // in a submitted task. I feel really sorry for that :(
-          //TODO RC: reconsider LowMemoryWatcherManager initialization -- e.g. make it a proper service?
           if (REGULAR_TRACKER_UPDATE_PERIOD_MS > 0) {
+            //Setup regular gcTracker update: it is not _required_, but it is useful to update GcTracker not only at memory
+            // threshold violation, but also with some regularity -- to reduce variance caused by coarse updates granularity:
+
+            //By some reason, LowMemoryWatcherManager is not a service, but is initialized explicitly, as a part of
+            // AppScheduledExecutorService, (or other services in headless). This means that AppScheduledExecutorService
+            // itself is not fully initialized then LowMemoryWatcherManager ctor is called, hence we can't schedule
+            // that regular task in LowMemoryWatcherManager ctor, as a sane person would do -- instead we schedule it here,
+            // in a submitted task. I feel really sorry for that :(
+            //TODO RC: reconsider LowMemoryWatcherManager initialization -- e.g. make it a proper service?
             if (backendExecutorService instanceof ScheduledExecutorService) {
               ScheduledExecutorService scheduler = (ScheduledExecutorService)backendExecutorService;
               LOG.info("Schedule GC-time updating: each " + REGULAR_TRACKER_UPDATE_PERIOD_MS + "ms");
