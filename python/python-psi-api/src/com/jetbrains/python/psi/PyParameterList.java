@@ -59,6 +59,15 @@ public interface PyParameterList extends PyAstParameterList, PyElement, StubBase
   @NotNull
   String getPresentableText(boolean includeDefaultValue, @Nullable TypeEvalContext context);
 
+  /**
+   * @deprecated migrate to `getContainingCallable`
+   */
+  @Deprecated
   @Nullable
-  PyFunction getContainingFunction();
+  default PyFunction getContainingFunction() {
+    return getContainingCallable() instanceof PyFunction function ? function : null;
+  }
+
+  @Nullable
+  PyCallable getContainingCallable();
 }

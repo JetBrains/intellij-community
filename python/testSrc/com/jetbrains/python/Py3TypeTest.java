@@ -3,6 +3,7 @@ package com.jetbrains.python;
 
 import com.intellij.idea.TestFor;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.util.RecursionManager;
 import com.intellij.psi.PsiFile;
 import com.jetbrains.python.fixtures.PyTestCase;
 import com.jetbrains.python.inspections.PyTypeCheckerInspectionTest;
@@ -4194,6 +4195,118 @@ public class Py3TypeTest extends PyTestCase {
           """);
       });
     });
+  }
+
+  @TestFor(issues="PY-28130")
+  public void testLambdaParameterUsesAssignmentContext() {
+    doTest("int", """
+      from typing import Callable
+      
+      _: Callable[[int], object] = lambda expr: expr
+      """);
+  }
+
+  @TestFor(issues="PY-28130")
+  public void testLambdaParameterUsesAssignmentContextSplitDefinition() {
+    doTest("int", """
+      from typing import Callable
+      
+      a: Callable[[int], int]
+      a = lambda expr: expr
+      """);
+  }
+
+  @TestFor(issues="PY-28130")
+  public void testLambdaParameterUsesAssignmentContextSplitDefinitionClass() {
+    doTest("int", """
+      from typing import Callable
+      
+      class C:
+        attr: Callable[[int], str]
+        def __init__(self):
+          self.attr = lambda expr: str(expr)
+      """);
+  }
+
+  @TestFor(issues="PY-28130")
+  public void testLambdaParameterUsesParameterContext() {
+    doTest("int", """
+      from typing import Callable
+      
+      def f(fn: Callable[[int], object]): ...
+      
+      f(lambda expr: expr)
+      """);
+  }
+
+  @TestFor(issues="PY-28130")
+  public void testLambdaParameterUsesReturnContext() {
+    doTest("int", """
+      from typing import Callable
+      
+      def f() -> Callable[[int], object]:
+        return lambda expr: expr
+      """);
+  }
+
+  @TestFor(issues="PY-28130")
+  public void testLambdaUsesGenericContext() {
+    doTest("int", """
+      from typing import Callable
+      
+      def f[T](t: T, fn: Callable[[T], object]) -> T:
+      
+      f(1, lambda expr: expr)
+      """);
+  }
+
+  @TestFor(issues="PY-28130")
+  public void testLambdaUsesGenericContextReceiver() {
+    doTest("int", """
+      from typing import Callable
+      
+      class A[T]:
+          def f(self, fn: Callable[[T], object]) -> T:
+      
+      A[int]().f(lambda expr: expr)
+      """);
+  }
+
+  @TestFor(issues="PY-28130")
+  public void testLambdaParameterDoesntEndlessRecursion() {
+    RecursionManager.assertOnRecursionPrevention(myFixture.getTestRootDisposable());
+    doTest("Any", "_ = lambda expr: expr");
+  }
+
+  @TestFor(issues="PY-28130")
+  public void testLambdaAsNonAnnotatedFunctionReturnValue() {
+    RecursionManager.assertOnRecursionPrevention(myFixture.getTestRootDisposable());
+    doTest("(x: Any) -> UnsafeUnion[int, Any]", """
+      def f():
+          return lambda x: x + 1
+      expr = f()
+      """);
+  }
+
+  @TestFor(issues="PY-28130")
+  public void testLambdaAsNonAnnotatedVariableValue() {
+    RecursionManager.assertOnRecursionPrevention(myFixture.getTestRootDisposable());
+    doTest("(x: Any) -> UnsafeUnion[int, Any]", """
+      t = lambda x: x + 1
+      expr = t
+      """);
+  }
+
+  @TestFor(issues="PY-28130")
+  public void testLambdaAsNonAnnotatedParameterValue() {
+    RecursionManager.assertOnRecursionPrevention(myFixture.getTestRootDisposable());
+    doTest("Any", """
+      from typing import Callable
+      
+      def f(fn): ...
+      
+      f(lambda expr: 42)
+      """);
   }
 
   private void doTest(final String expectedType, final String text) {
