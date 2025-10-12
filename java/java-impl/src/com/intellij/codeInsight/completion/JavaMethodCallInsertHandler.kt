@@ -13,7 +13,6 @@ import com.intellij.codeInsight.hint.api.impls.MethodParameterInfoHandler
 import com.intellij.codeInsight.hints.ParameterHintsPass
 import com.intellij.codeInsight.lookup.Lookup
 import com.intellij.codeInsight.lookup.LookupElement
-import com.intellij.featureStatistics.FeatureUsageTracker
 import com.intellij.injected.editor.EditorWindow
 import com.intellij.openapi.Disposable
 import com.intellij.openapi.editor.Document
@@ -75,7 +74,7 @@ public class JavaMethodCallInsertHandler(
     ImportQualifyAndInsertTypeParametersHandler.create(needImportOrQualify, needExplicitTypeParameters, item),
     MethodCallInstallerHandler(),
     MethodCallRegistrationHandler(),
-    NegationInsertHandler(),
+    createNegationInsertHandler(item),
     afterHandler,
     ArgumentLiveTemplateInsertHandler(canStartArgumentLiveTemplate),
     ShowParameterInfoInsertHandler(),
@@ -286,14 +285,9 @@ private class ImportQualifyAndInsertTypeParametersHandler private constructor(
   }
 }
 
-private class NegationInsertHandler : InsertHandler<JavaMethodCallElement> {
-  override fun handleInsert(context: InsertionContext, item: JavaMethodCallElement) {
-    if (context.completionChar != '!' || !item.isNegatable) return
-    val methodCall = findInsertedCall(item, context) ?: return
-    context.setAddCompletionChar(false)
-    FeatureUsageTracker.getInstance().triggerFeatureUsed(EXCLAMATION_FINISH)
-    context.document.insertString(methodCall.textRange.startOffset, "!")
-  }
+private fun createNegationInsertHandler(item: JavaMethodCallElement): InsertHandler<in JavaMethodCallElement>? {
+  if (!item.isNegatable) return null
+  return NegationInsertHandler()
 }
 
 private class ArgumentLiveTemplateInsertHandler(

@@ -82,6 +82,7 @@
     <completion.frontendFriendlyInsertHandler implementationClass="com.intellij.codeInsight.completion.method.DiamondInsertHandler"/>
     <completion.frontendFriendlyInsertHandler implementationClass="com.intellij.codeInsight.completion.method.RefStartInsertHandler"/>
     <completion.frontendFriendlyInsertHandler implementationClass="com.intellij.codeInsight.completion.method.MethodCallInstallerHandler"/>
+    <completion.frontendFriendlyInsertHandler implementationClass="com.intellij.codeInsight.completion.method.NegationInsertHandler"/>
 
   </extensions>
 </idea-plugin>
