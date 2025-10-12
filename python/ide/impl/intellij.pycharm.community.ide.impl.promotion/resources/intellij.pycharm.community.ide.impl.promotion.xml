@@ -101,10 +101,6 @@
     <postStartupActivity
       implementation="com.intellij.pycharm.community.ide.impl.promotion.communityToUnified.PyCommunityToUnifiedShowPromoActivity"/>
     <!--TODO delete later-->
-    <registryKey key="py.promo.use.test.update"
-                 defaultValue="false"
-                 description="Use py_promo_test.xml from IDE home to mock a platform update for PyCharm promo"/>
-    <!--TODO delete later-->
     <registryKey key="py.promo.remind.later.interval.seconds"
                  defaultValue="259200"
                  description="PyCharm promo remind-later fallback delay in seconds"/>
