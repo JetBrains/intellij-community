@@ -111,6 +111,18 @@ public class JavaStructureViewTest extends LightJavaStructureViewTestCaseBase {
   private static int getFieldsCount() {
     return ANNO_FIELD_COUNT + FIELD_COUNT;
   }
+  
+  public void testColons() {
+    doTest("""
+             class X {
+               public static final String colons = "a:b:c:";
+             }""",
+           """
+             -Test.java
+              -X
+               colons: String = "a:b:c:"
+             """);
+  }
 
   public void testSuperTypeGrouping() {
     doTest("""

@@ -25,11 +25,11 @@ public abstract class JavaVariableBaseTreeElement<T extends PsiVariable> extends
     if (field == null) return "";
 
     final boolean dumb = DumbService.isDumb(field.getProject());
-    return StringUtil.replace(formatVariable(
-      field,
-      SHOW_NAME | (dumb ? 0 : SHOW_TYPE) | TYPE_AFTER | (dumb ? 0 : SHOW_INITIALIZER),
-      PsiSubstitutor.EMPTY
-    ), ":", ": ");
+    final String text = formatVariable(field,
+                                 SHOW_NAME | (dumb ? 0 : SHOW_TYPE) | TYPE_AFTER | (dumb ? 0 : SHOW_INITIALIZER),
+                                 PsiSubstitutor.EMPTY);
+    final int colon = text.indexOf(':');
+    return colon >= 0 ? text.substring(0, colon + 1) + ' ' + text.substring(colon + 1) : text;
   }
 
   @Override
