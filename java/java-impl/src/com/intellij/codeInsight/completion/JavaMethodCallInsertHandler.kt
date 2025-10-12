@@ -172,12 +172,6 @@ public class JavaMethodCallInsertHandler(
   }
 }
 
-private class RefStartInsertHandler : InsertHandler<LookupElement> {
-  override fun handleInsert(context: InsertionContext, item: LookupElement) {
-    JavaMethodCallInsertHandlerHelper.installRefStartKey(context, item)
-  }
-}
-
 private fun createDiamondInsertHandler(item: JavaMethodCallElement): InsertHandler<LookupElement>? {
   val method = item.getObject().takeIf { it.isConstructor } ?: return null
   val containingClass = method.containingClass ?: return null

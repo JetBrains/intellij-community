@@ -33,7 +33,7 @@ object JavaMethodCallInsertHandlerHelper {
     return element.getUserData(callKey)
   }
 
-  fun installRefStartKey(context: InsertionContext, item: LookupElement) {
+  internal fun installRefStartKey(context: InsertionContext, item: LookupElement) {
     val refStart = OffsetKey.create("refStart", true)
     context.offsetMap.addOffset(refStart, context.startOffset)
     item.putUserData(refStartKey, refStart)
