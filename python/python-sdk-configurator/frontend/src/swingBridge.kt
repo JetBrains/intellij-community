@@ -5,7 +5,7 @@ import com.intellij.openapi.project.Project
 import com.intellij.openapi.ui.DialogWrapper
 import com.intellij.python.sdkConfigurator.common.ModuleName
 import com.intellij.python.sdkConfigurator.common.ModulesDTO
-import com.intellij.python.sdkConfigurator.frontend.components.CheckboxList
+import com.intellij.python.sdkConfigurator.frontend.components.ModuleList
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
 import org.jetbrains.jewel.bridge.compose
@@ -36,7 +36,7 @@ private class MyDialog(project: Project, private val viewModel: ModulesViewModel
   override fun createCenterPanel(): JComponent {
     enableNewSwingCompositing()
     return compose(focusOnClickInside = true, content = {
-      CheckboxList(viewModel.checkBoxItems, viewModel.checked, viewModel::clicked)
+      ModuleList(viewModel.checkBoxItems, viewModel.checked, viewModel::clicked)
     })
   }
 }
