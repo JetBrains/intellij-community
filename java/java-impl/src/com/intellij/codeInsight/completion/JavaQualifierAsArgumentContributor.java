@@ -329,7 +329,12 @@ public final class JavaQualifierAsArgumentContributor extends CompletionContribu
     public void handleInsert(@NotNull InsertionContext context) {
       JavaContributorCollectors.logInsertHandle(context.getProject(), JavaContributorCollectors.STATIC_QUALIFIER_TYPE,
                                                 myIsSmart ? CompletionType.SMART : CompletionType.BASIC);
-      new MyInsertHandler().handleInsert(context, this);
+      var handler = new JavaMethodCallInsertHandler(needExplicitTypeParameters(),
+                                                    new BeforeInsertHandler(),
+                                                    new AfterInsertHandler(),
+                                                    myShouldImportOrQualify,
+                                                    false);
+      handler.handleInsert(context, this);
     }
 
     @Override
@@ -390,35 +395,17 @@ public final class JavaQualifierAsArgumentContributor extends CompletionContribu
       }
     }
 
-    private class MyInsertHandler extends JavaMethodCallInsertHandler<JavaQualifierAsParameterMethodCallElement> {
-      private MyInsertHandler() {
-        super(new BeforeInsertHandler(), new AfterInsertHandler());
-      }
-
+    private class BeforeInsertHandler implements InsertHandler<JavaMethodCallElement> {
       @Override
-      protected boolean needImportOrQualify() {
-        return myShouldImportOrQualify;
-      }
-
-      @Override
-      protected boolean canStartArgumentLiveTemplate() {
-        return false;
-      }
-    }
-
-    private class BeforeInsertHandler implements InsertHandler<JavaQualifierAsParameterMethodCallElement> {
-      @Override
-      public void handleInsert(@NotNull InsertionContext context,
-                               @NotNull JavaQualifierAsArgumentContributor.JavaQualifierAsParameterMethodCallElement item) {
+      public void handleInsert(@NotNull InsertionContext context, @NotNull JavaMethodCallElement item) {
         TextRange range = myOldQualifierExpression.getTextRange();
         context.getDocument().deleteString(range.getStartOffset(), range.getEndOffset() + 1);
         context.commitDocument();
       }
     }
-    private class AfterInsertHandler implements InsertHandler<JavaQualifierAsParameterMethodCallElement> {
+    private class AfterInsertHandler implements InsertHandler<JavaMethodCallElement> {
       @Override
-      public void handleInsert(@NotNull InsertionContext context,
-                               @NotNull JavaQualifierAsArgumentContributor.JavaQualifierAsParameterMethodCallElement item) {
+      public void handleInsert(@NotNull InsertionContext context, @NotNull JavaMethodCallElement item) {
         PsiCallExpression call = JavaMethodCallInsertHandler.findInsertedCall(item, context);
         context.commitDocument();
         PsiDocumentManager.getInstance(context.getProject()).doPostponedOperationsAndUnblockDocument(context.getDocument());

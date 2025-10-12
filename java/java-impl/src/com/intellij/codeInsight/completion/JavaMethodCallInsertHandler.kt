@@ -2,7 +2,10 @@
 package com.intellij.codeInsight.completion
 
 import com.intellij.codeInsight.CodeInsightSettings
+import com.intellij.codeInsight.completion.CodeCompletionFeatures.EXCLAMATION_FINISH
+import com.intellij.codeInsight.completion.JavaMethodCallInsertHandler.Companion.findCallAtOffset
 import com.intellij.codeInsight.completion.JavaMethodCallInsertHandler.Companion.findInsertedCall
+import com.intellij.codeInsight.completion.JavaMethodCallInsertHandler.Companion.showParameterHints
 import com.intellij.codeInsight.completion.util.MethodParenthesesHandler
 import com.intellij.codeInsight.hint.ParameterInfoControllerBase
 import com.intellij.codeInsight.hint.ShowParameterInfoContext
@@ -24,171 +27,66 @@ import com.intellij.psi.util.PsiTreeUtil
 import com.intellij.util.ThreeState
 import kotlin.math.min
 
-public open class JavaMethodCallInsertHandler<MethodCallElement : JavaMethodCallElement>(
+public class JavaMethodCallInsertHandler(
+  needExplicitTypeParameters: Boolean,
+
   /**
    * Called before insertion methods. Performs any necessary pre-processing or setup.
    */
-  private val beforeHandler: InsertHandler<MethodCallElement>? = null,
+  beforeHandler: InsertHandler<JavaMethodCallElement>? = null,
 
   /**
    * Called after insertion methods. Performs any necessary post-processing or cleanup.
    *
    * Use [findInsertedCall] to get PsiCallExpression representing the inserted code, or null if no code was inserted
    */
-  private val afterHandler: InsertHandler<MethodCallElement>? = null,
+  afterHandler: InsertHandler<JavaMethodCallElement>? = null,
 
-) : InsertHandler<MethodCallElement> {
-  override fun handleInsert(context: InsertionContext, item: MethodCallElement) {
-    val document = context.document
-    val file = context.file
-    val method = item.getObject()
-
-    val allItems: Array<LookupElement> = context.elements
-    val hasParams = if (method.getParameterList().isEmpty) ThreeState.NO else MethodParenthesesHandler.overloadsHaveParameters(allItems, method)
-    if (method.isConstructor()) {
-      val aClass = method.getContainingClass()
-      if (aClass != null && aClass.getTypeParameters().size > 0) {
-        document.insertString(context.tailOffset, "<>")
-      }
-    }
-    JavaCompletionUtil.insertParentheses(context, item, false, hasParams, false)
-
-    val offset = context.startOffset
-    val refStart = context.trackOffset(offset, true)
-    beforeHandler?.handleInsert(context, item)
-    if (item.isNeedExplicitTypeParameters) {
-      qualifyMethodCall(item, file, context.getOffset(refStart), document)
-      insertExplicitTypeParameters(item, context, refStart)
-    }
-    else if (item.helper != null) {
-      context.commitDocument()
-      importOrQualify(item, document, file, method, context.getOffset(refStart))
-    }
-
-    var methodCall = findCallAtOffset(context, context.getOffset(refStart))
-    // make sure this is the method call we've just added, not the enclosing one
-    if (methodCall != null) {
-      val completedElement = (methodCall as? PsiMethodCallExpression)?.getMethodExpression()?.getReferenceNameElement()
-      val completedElementRange = completedElement?.getTextRange()
-      if (completedElementRange == null || completedElementRange.startOffset != context.getOffset(refStart)) {
-        methodCall = null
-      }
-    }
-    if (methodCall != null) {
-      CompletionMemory.registerChosenMethod(method, methodCall)
-      handleNegation(context, document, methodCall, item.isNegatable)
-    }
-
-    item.putUserData(callKey, methodCall)
-    afterHandler?.handleInsert(context, item)
-
-    if (canStartArgumentLiveTemplate()) {
-      JavaMethodCallElement.startArgumentLiveTemplate(context, method)
-    }
-    showParameterHints(item, context, method, methodCall)
-  }
+  /**
+   * Determines if import or qualification is needed.
+   *
+   * @return true if import or qualification is needed, false otherwise
+   */
+  needImportOrQualify: Boolean = true,
 
   /**
    * Checks if the argument live template can be started.
    * see registry key java.completion.argument.live.template.description.
    * This option allows to prevent running templates if this key is enabled
-   * 
-   * @return true if the argument live template can be started, otherwise false.
+   *
+   * true if the argument live template can be started, otherwise false.
    */
-  protected open fun canStartArgumentLiveTemplate(): Boolean {
-    return true
-  }
-
-  private fun importOrQualify(
-    item: MethodCallElement,
-    document: Document,
-    file: PsiFile,
-    method: PsiMethod,
-    startOffset: Int,
-  ) {
-    if (!needImportOrQualify()) {
-      return
-    }
-    if (item.willBeImported()) {
-      val containingClass = item.containingClass
-      if (method.isConstructor()) {
-        val newExpression = PsiTreeUtil.findElementOfClassAtOffset(file, startOffset, PsiNewExpression::class.java, false)
-        if (newExpression != null) {
-          val ref = newExpression.getClassReference()
-          if (ref != null && containingClass != null && !ref.isReferenceTo(containingClass)) {
-            ref.bindToElement(containingClass)
-            return
-          }
-        }
-      }
-      else {
-        val ref = PsiTreeUtil.findElementOfClassAtOffset(file, startOffset, PsiReferenceExpression::class.java, false)
-        if (ref != null && containingClass != null && !ref.isReferenceTo(method)) {
-          ref.bindToElementViaStaticImport(containingClass)
-        }
-        return
-      }
-    }
-
-    qualifyMethodCall(item, file, startOffset, document)
-  }
+  canStartArgumentLiveTemplate: Boolean = true,
+) : InsertHandler<JavaMethodCallElement> {
 
   /**
-   * Determines if import or qualification is needed.
-   * 
-   * @return true if import or qualification is needed, false otherwise
+   * tracks the start offset of the reference, needs movableToRight=true to correctly handle insertion of a qualifier
    */
-  protected open fun needImportOrQualify(): Boolean {
-    return true
-  }
+  private val myHandlers: List<InsertHandler<in JavaMethodCallElement>> = listOfNotNull(
+    RefStartInsertHandler(),
+    DiamondInsertHandler(),
+    ParenthInsertHandler(),
+    beforeHandler,
+    ImportQualifyAndInsertTypeParametersHandler(needImportOrQualify, needExplicitTypeParameters),
+    MethodCallInstallerHandler(),
+    MethodCallRegistrationHandler(),
+    NegationInsertHandler(),
+    afterHandler,
+    ArgumentLiveTemplateInsertHandler(canStartArgumentLiveTemplate),
+    ShowParameterInfoInsertHandler(),
+  )
 
-  private fun qualifyMethodCall(item: MethodCallElement, file: PsiFile, startOffset: Int, document: Document) {
-    val reference = file.findReferenceAt(startOffset)
-    if (reference is PsiReferenceExpression && reference.isQualified()) {
-      return
-    }
-
-    val method = item.getObject()
-    if (method.isConstructor()) return
-    if (!method.hasModifierProperty(PsiModifier.STATIC)) {
-      document.insertString(startOffset, "this.")
-      return
-    }
-
-    val containingClass = item.containingClass ?: return
-
-    document.insertString(startOffset, ".")
-    JavaCompletionUtil.insertClassReference(containingClass, file, startOffset)
-  }
-
-  private fun insertExplicitTypeParameters(
-    item: MethodCallElement,
-    context: InsertionContext,
-    refStart: OffsetKey,
-  ) {
-    context.commitDocument()
-
-    val typeParams = JavaMethodCallElement.getTypeParamsText(false, item.getObject(), item.inferenceSubstitutor)
-    if (typeParams != null) {
-      context.document.insertString(context.getOffset(refStart), typeParams)
-      JavaCompletionUtil.shortenReference(context.file, context.getOffset(refStart))
-    }
-  }
-
-  private fun handleNegation(
-    context: InsertionContext,
-    document: Document,
-    methodCall: PsiCallExpression,
-    negatable: Boolean,
-  ) {
-    if (context.completionChar == '!' && negatable) {
-      context.setAddCompletionChar(false)
-      FeatureUsageTracker.getInstance().triggerFeatureUsed(CodeCompletionFeatures.EXCLAMATION_FINISH)
-      document.insertString(methodCall.getTextRange().startOffset, "!")
-    }
+  override fun handleInsert(context: InsertionContext, item: JavaMethodCallElement) {
+    myHandlers.forEach { it.handleInsert(context, item) }
   }
 
   public companion object {
+    @JvmStatic
+    public fun getReferenceStartOffset(context: InsertionContext, item: LookupElement): Int {
+      val refStartKey = requireNotNull(item.getUserData(refStartKey)) { "refStartKey must have been set" }
+      return context.offsetMap.getOffset(refStartKey)
+    }
+
     @JvmStatic
     public fun findCallAtOffset(context: InsertionContext, offset: Int): PsiCallExpression? {
       context.commitDocument()
@@ -206,15 +104,15 @@ public open class JavaMethodCallInsertHandler<MethodCallElement : JavaMethodCall
           context.completionChar == Lookup.COMPLETE_STATEMENT_SELECT_CHAR ||
           context.completionChar == Lookup.REPLACE_SELECT_CHAR ||
           methodCall == null ||
-          methodCall.getContainingFile() is PsiCodeFragment ||
+          methodCall.containingFile is PsiCodeFragment ||
           element.getUserData(JavaMethodMergingContributor.MERGED_ELEMENT) != null
       ) {
         return
       }
-      val parameterList = method.getParameterList()
-      val parametersCount = parameterList.getParametersCount()
-      val parameterOwner = methodCall.getArgumentList()
-      if (parameterOwner == null || (parameterOwner.getText() != "()") || parametersCount == 0) {
+      val parameterList = method.parameterList
+      val parametersCount = parameterList.parametersCount
+      val parameterOwner = methodCall.argumentList
+      if ((parameterOwner == null) || (parameterOwner.getText() != "()") || (parametersCount == 0)) {
         return
       }
 
@@ -276,7 +174,169 @@ public open class JavaMethodCallInsertHandler<MethodCallElement : JavaMethodCall
     public fun findInsertedCall(element: LookupElement, context: InsertionContext): PsiCallExpression? {
       return element.getUserData(callKey)
     }
-
-    private val callKey = Key.create<PsiCallExpression>("JavaMethodCallInsertHandler.call")
   }
 }
+
+private class RefStartInsertHandler : InsertHandler<LookupElement> {
+  override fun handleInsert(context: InsertionContext, item: LookupElement) {
+    val refStart = OffsetKey.create("refStart", true)
+    context.offsetMap.addOffset(refStart, context.startOffset)
+    item.putUserData(refStartKey, refStart)
+  }
+}
+
+private class DiamondInsertHandler : InsertHandler<JavaMethodCallElement> {
+  override fun handleInsert(context: InsertionContext, item: JavaMethodCallElement) {
+    val method = item.getObject().takeIf { it.isConstructor } ?: return
+    if (method.containingClass?.typeParameters?.isNotEmpty() != true) return
+    context.document.insertString(context.tailOffset, "<>")
+  }
+}
+
+private class ParenthInsertHandler : InsertHandler<JavaMethodCallElement> {
+  override fun handleInsert(context: InsertionContext, item: JavaMethodCallElement) {
+    val method = item.getObject()
+    val allItems = context.elements
+    val hasParams = if (method.parameterList.isEmpty) ThreeState.NO else MethodParenthesesHandler.overloadsHaveParameters(allItems, method)
+    JavaCompletionUtil.insertParentheses(context, item, false, hasParams, false)
+  }
+}
+
+private class ImportQualifyAndInsertTypeParametersHandler(
+  private val needImportOrQualify: Boolean,
+  private val needExplicitTypeParameters: Boolean,
+) : InsertHandler<JavaMethodCallElement> {
+  override fun handleInsert(context: InsertionContext, item: JavaMethodCallElement) {
+    val document = context.document
+    val file = context.file
+    val method = item.getObject()
+
+    if (needExplicitTypeParameters) {
+      qualifyMethodCall(item, file, JavaMethodCallInsertHandler.getReferenceStartOffset(context, item), document)
+      insertExplicitTypeParameters(item, context)
+    }
+    else if (item.helper != null) {
+      context.commitDocument()
+      importOrQualify(item, document, file, method, JavaMethodCallInsertHandler.getReferenceStartOffset(context, item))
+    }
+  }
+
+  private fun importOrQualify(
+    item: JavaMethodCallElement,
+    document: Document,
+    file: PsiFile,
+    method: PsiMethod,
+    startOffset: Int,
+  ) {
+    if (!needImportOrQualify) {
+      return
+    }
+    if (item.willBeImported()) {
+      val containingClass = item.containingClass
+      if (method.isConstructor()) {
+        val newExpression = PsiTreeUtil.findElementOfClassAtOffset(file, startOffset, PsiNewExpression::class.java, false)
+        if (newExpression != null) {
+          val ref = newExpression.classReference
+          if (ref != null && containingClass != null && !ref.isReferenceTo(containingClass)) {
+            ref.bindToElement(containingClass)
+            return
+          }
+        }
+      }
+      else {
+        val ref = PsiTreeUtil.findElementOfClassAtOffset(file, startOffset, PsiReferenceExpression::class.java, false)
+        if (ref != null && containingClass != null && !ref.isReferenceTo(method)) {
+          ref.bindToElementViaStaticImport(containingClass)
+        }
+        return
+      }
+    }
+
+    qualifyMethodCall(item, file, startOffset, document)
+  }
+
+  private fun qualifyMethodCall(item: JavaMethodCallElement, file: PsiFile, startOffset: Int, document: Document) {
+    val reference = file.findReferenceAt(startOffset)
+    if (reference is PsiReferenceExpression && reference.isQualified()) {
+      return
+    }
+
+    val method = item.getObject()
+    if (method.isConstructor()) return
+    if (!method.hasModifierProperty(PsiModifier.STATIC)) {
+      document.insertString(startOffset, "this.")
+      return
+    }
+
+    val containingClass = item.containingClass ?: return
+
+    document.insertString(startOffset, ".")
+    JavaCompletionUtil.insertClassReference(containingClass, file, startOffset)
+  }
+
+  private fun insertExplicitTypeParameters(
+    item: JavaMethodCallElement,
+    context: InsertionContext,
+  ) {
+    context.commitDocument()
+
+    val typeParams = JavaMethodCallElement.getTypeParamsText(false, item.getObject(), item.inferenceSubstitutor)
+    if (typeParams != null) {
+      context.document.insertString(JavaMethodCallInsertHandler.getReferenceStartOffset(context, item), typeParams)
+      JavaCompletionUtil.shortenReference(context.file, JavaMethodCallInsertHandler.getReferenceStartOffset(context, item))
+    }
+  }
+}
+
+private class NegationInsertHandler : InsertHandler<JavaMethodCallElement> {
+  override fun handleInsert(context: InsertionContext, item: JavaMethodCallElement) {
+    if (context.completionChar != '!' || !item.isNegatable) return
+    val methodCall = findInsertedCall(item, context) ?: return
+    context.setAddCompletionChar(false)
+    FeatureUsageTracker.getInstance().triggerFeatureUsed(EXCLAMATION_FINISH)
+    context.document.insertString(methodCall.textRange.startOffset, "!")
+  }
+}
+
+private class ArgumentLiveTemplateInsertHandler(
+  private val canStartArgumentLiveTemplate: Boolean,
+) : InsertHandler<JavaMethodCallElement> {
+  override fun handleInsert(context: InsertionContext, item: JavaMethodCallElement) {
+    if (!canStartArgumentLiveTemplate) return
+    val method = item.getObject()
+    JavaMethodCallElement.startArgumentLiveTemplate(context, method)
+  }
+}
+
+private class ShowParameterInfoInsertHandler : InsertHandler<JavaMethodCallElement> {
+  override fun handleInsert(context: InsertionContext, item: JavaMethodCallElement) {
+    val method = item.getObject()
+    val methodCall = findInsertedCall(item, context)
+    showParameterHints(item, context, method, methodCall)
+  }
+}
+
+private class MethodCallInstallerHandler : InsertHandler<LookupElement> {
+  override fun handleInsert(context: InsertionContext, item: LookupElement) {
+    val methodCall = findCallAtOffset(context, JavaMethodCallInsertHandler.getReferenceStartOffset(context, item)) ?: return
+
+    // make sure this is the method call we've just added, not the enclosing one
+    val completedElement = (methodCall as? PsiMethodCallExpression)?.methodExpression?.referenceNameElement
+    val completedElementRange = completedElement?.textRange ?: return
+    if (completedElementRange.startOffset != JavaMethodCallInsertHandler.getReferenceStartOffset(context, item)) return
+
+    item.putUserData(callKey, methodCall)
+  }
+}
+
+private class MethodCallRegistrationHandler : InsertHandler<JavaMethodCallElement> {
+  override fun handleInsert(context: InsertionContext, item: JavaMethodCallElement) {
+    val method = item.getObject()
+    val methodCall = findInsertedCall(item, context) ?: return
+    CompletionMemory.registerChosenMethod(method, methodCall)
+  }
+}
+
+private val callKey = Key.create<PsiCallExpression>("JavaMethodCallInsertHandler.call")
+private val refStartKey = Key.create<OffsetKey>("JavaMethodCallInsertHandler.refStart")
+

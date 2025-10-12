@@ -76,7 +76,7 @@ public class JavaMethodCallElement extends LookupItem<PsiMethod> implements Type
     return myNegatable;
   }
 
-  boolean isNeedExplicitTypeParameters() {
+  protected boolean needExplicitTypeParameters() {
     return myNeedExplicitTypeParameters;
   }
 
@@ -166,7 +166,8 @@ public class JavaMethodCallElement extends LookupItem<PsiMethod> implements Type
 
   @Override
   public void handleInsert(@NotNull InsertionContext context) {
-    new JavaMethodCallInsertHandler<>().handleInsert(context, this);
+    var handler = new JavaMethodCallInsertHandler(myNeedExplicitTypeParameters, null, null, true, true);
+    handler.handleInsert(context, this);
   }
 
   public static final Key<PsiMethod> ARGUMENT_TEMPLATE_ACTIVE = Key.create("ARGUMENT_TEMPLATE_ACTIVE");
