@@ -72,6 +72,16 @@ fun setServiceViewImplementationForNextIdeRun(shouldEnableSplitImplementation: B
     Registry.get("xdebugger.toolwindow.split.remdev").setValue(true)
   }
   Registry.get("docker.split.service.view.enabled").setValue(shouldEnableSplitImplementation)
-  // enable when merged
-  //Registry.get("docker.registry.split.service.view.enabled").setValue(shouldEnableSplitImplementation)
+  Registry.get("docker.registry.split.service.view.enabled").setValue(shouldEnableSplitImplementation)
+}
+
+@ApiStatus.Internal
+fun getServiceViewRegistryFlagsState(): Map<String, Boolean> {
+  return mapOf(
+    "services.view.split.enabled" to Registry.`is`("services.view.split.enabled"),
+    "services.view.split.run.luxing.enabled" to Registry.`is`("services.view.split.run.luxing.enabled"),
+    "xdebugger.toolwindow.split.remdev" to Registry.`is`("xdebugger.toolwindow.split.remdev"),
+    "docker.split.service.view.enabled" to Registry.`is`("docker.split.service.view.enabled"),
+    "docker.registry.split.service.view.enabled" to Registry.`is`("docker.registry.split.service.view.enabled"),
+  )
 }
