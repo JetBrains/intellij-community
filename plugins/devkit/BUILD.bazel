@@ -35,16 +35,14 @@ jvm_library(
   module_name = "intellij.devkit.plugin.main",
   visibility = ["//visibility:public"],
   srcs = glob([], allow_empty = True),
-  deps = [
-    "//plugins/devkit/devkit-kotlin-tests:kotlin-tests_test_lib",
-    "//plugins/devkit/intellij.devkit.workspaceModel/tests:tests_test_lib",
-  ],
   runtime_deps = [
     "//plugins/devkit:devkit-plugin-main-noKotlin",
     "//plugins/devkit/intellij.kotlin.devkit:kotlin-devkit",
     "//plugins/devkit/intellij.kotlin.devkit/k1",
     "//plugins/devkit/intellij.kotlin.devkit/k2",
+    "//plugins/devkit/devkit-kotlin-tests:kotlin-tests_test_lib",
     "//plugins/devkit/intellij.devkit.workspaceModel:workspaceModel",
+    "//plugins/devkit/intellij.devkit.workspaceModel/tests:tests_test_lib",
     "//plugins/devkit/intellij.devkit.compose:compose",
   ]
 )
@@ -79,7 +77,6 @@ jvm_library(
   module_name = "intellij.devkit.plugin.main.noKotlin",
   visibility = ["//visibility:public"],
   srcs = glob([], allow_empty = True),
-  deps = ["//plugins/devkit/devkit-java-tests:java-tests_test_lib"],
   runtime_deps = [
     "//plugins/devkit",
     "//plugins/devkit/devkit-core:core",
@@ -93,6 +90,7 @@ jvm_library(
     "//plugins/devkit/jps-plugin:jps",
     "//plugins/devkit/runtimeModuleRepository/jps",
     "//plugins/devkit/intellij.devkit.scaffolding:scaffolding",
+    "//plugins/devkit/devkit-java-tests:java-tests_test_lib",
     "//plugins/devkit/intellij.devkit.stacktrace:stacktrace",
     "//plugins/devkit/api-dump",
     "//plugins/devkit/api-dump-lang:apiDump-lang",
