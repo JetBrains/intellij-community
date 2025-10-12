@@ -7,7 +7,7 @@
           <value>
             <SchemaInfo>
               <option name="name" value="editorconfig" />
-              <option name="relativePathToSchema" value="plugins\editorconfig\resources\schemas\descriptorFormatSchema.json" />
+              <option name="relativePathToSchema" value="plugins/editorconfig/backend/resources/schemas/descriptorFormatSchema.json" />
               <option name="patterns">
                 <list>
                   <Item>
