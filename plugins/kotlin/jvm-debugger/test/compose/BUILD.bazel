@@ -54,6 +54,8 @@ jvm_library(
     "@lib//:kotlinc-compose-compiler-plugin",
     "//android/streaming",
     "//plugins/kotlin/tests-compose:tests-compose_test_lib",
+    "//android/adt-ui",
+    "//android/adt-ui:adt-ui_test_lib",
   ]
 )
 ### auto-generated section `build kotlin.jvm-debugger.test.compose.k2` end
