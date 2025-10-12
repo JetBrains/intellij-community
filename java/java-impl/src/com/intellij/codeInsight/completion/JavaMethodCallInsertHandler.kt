@@ -72,7 +72,7 @@ public class JavaMethodCallInsertHandler(
     createDiamondInsertHandler(item),
     ParenthInsertHandler(),
     beforeHandler,
-    ImportQualifyAndInsertTypeParametersHandler(needImportOrQualify, needExplicitTypeParameters),
+    ImportQualifyAndInsertTypeParametersHandler.create(needImportOrQualify, needExplicitTypeParameters, item),
     MethodCallInstallerHandler(),
     MethodCallRegistrationHandler(),
     NegationInsertHandler(),
@@ -194,10 +194,22 @@ private class ParenthInsertHandler : InsertHandler<JavaMethodCallElement> {
   }
 }
 
-private class ImportQualifyAndInsertTypeParametersHandler(
+private class ImportQualifyAndInsertTypeParametersHandler private constructor(
   private val needImportOrQualify: Boolean,
   private val needExplicitTypeParameters: Boolean,
 ) : InsertHandler<JavaMethodCallElement> {
+
+  companion object {
+    fun create(
+      needImportOrQualify: Boolean,
+      needExplicitTypeParameters: Boolean,
+      item: JavaMethodCallElement,
+    ): InsertHandler<JavaMethodCallElement>? {
+      if (!needExplicitTypeParameters && item.helper == null) return null
+      return ImportQualifyAndInsertTypeParametersHandler(needImportOrQualify, needExplicitTypeParameters)
+    }
+  }
+
   override fun handleInsert(context: InsertionContext, item: JavaMethodCallElement) {
     val document = context.document
     val file = context.file
