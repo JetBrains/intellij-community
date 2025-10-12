@@ -3,6 +3,10 @@
 Module sets are collections of modules that can be referenced as a single entity in product configurations.
 All module set files follow the naming pattern: `intellij.moduleSets.<category>.<subcategory>.xml`
 
+## Creating a New Module Set
+
+See `/create-module-set` slash command for detailed instructions on creating a new module set.
+
 ## IDE Module Sets
 
 ### [intellij.moduleSets.ide.common.xml](intellij.moduleSets.ide.common.xml)
@@ -108,3 +112,11 @@ A set of debugger stream tracing modules for Ultimate Edition IDEs.
 Includes core stream tracing functionality, shared utilities, and backend integration.
 
 This set is used by Rider, Aqua, and Ultimate.
+
+### [intellij.moduleSets.ssh.xml](intellij.moduleSets.ssh.xml)
+
+A set of SSH-related modules for remote development and deployment features.
+
+Currently includes SSH UI components (`intellij.platform.ssh.ui`).
+
+This set is used by all commercial IDEs, PyCharm Pro, Gateway, JetBrains Client, and Ultimate editions.

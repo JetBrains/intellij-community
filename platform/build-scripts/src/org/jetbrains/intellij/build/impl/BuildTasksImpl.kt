@@ -94,7 +94,7 @@ internal class BuildTasksImpl(private val context: BuildContextImpl) : BuildTask
     val distState = createDistributionBuilderState(pluginsToPublish, context)
     context.compileModules(null)
 
-    buildProjectArtifacts(distState.platform, getEnabledPluginModules(distState.pluginsToPublish, context), context)
+    buildProjectArtifacts(platform = distState.platform, enabledPluginModules = getEnabledPluginModules(distState.pluginsToPublish, context), context = context)
 
     val searchableOptionSet = buildSearchableOptions(context.createProductRunner(mainPluginModules + dependencyModules), context)
     buildNonBundledPlugins(
@@ -135,11 +135,11 @@ internal class BuildTasksImpl(private val context: BuildContextImpl) : BuildTask
       builder.copyFilesForOsDistribution(targetDirectory, arch)
       context.bundledRuntime.extractTo(currentOs, arch, targetLibcImpl, targetDirectory.resolve("jbr"))
       updateExecutablePermissions(targetDirectory, builder.generateExecutableFilesMatchers(includeRuntime = true, arch, targetLibcImpl).keys)
-      builder.checkExecutablePermissions(targetDirectory, root = "", includeRuntime = true, arch, targetLibcImpl)
+      builder.checkExecutablePermissions(distribution = targetDirectory, root = "", includeRuntime = true, arch = arch, libc = targetLibcImpl)
       builder.writeProductInfoFile(targetDirectory, arch)
     }
     else {
-      copyDistFiles(context, targetDirectory, currentOs, arch, targetLibcImpl)
+      copyDistFiles(context = context, newDir = targetDirectory, os = currentOs, arch = arch, libcImpl = targetLibcImpl)
     }
   }
 }
@@ -413,7 +413,12 @@ internal suspend fun createDistributionState(context: BuildContext): Distributio
       filterPluginsToPublish(pluginsToPublish, context)
 
       // update enabledPluginModules to reflect changes in pluginsToPublish - used for buildProjectArtifacts
-      distributionState(pluginsToPublish, projectLibrariesUsedByPlugins, getEnabledPluginModules(pluginsToPublish, context), context)
+      distributionState(
+        pluginsToPublish = pluginsToPublish,
+        projectLibrariesUsedByPlugins = projectLibrariesUsedByPlugins,
+        enabledPluginModules = getEnabledPluginModules(pluginsToPublish, context),
+        context = context,
+      )
     }
     else {
       val platform = createPlatformLayout(context)
@@ -472,12 +477,17 @@ suspend fun buildDistributions(context: BuildContext): Unit = block("build distr
     if (!context.shouldBuildDistributions()) {
       Span.current().addEvent("skip building product distributions because 'intellij.build.target.os' property is set to '${BuildOptions.OS_NONE}'")
       val pluginsToPublish = getPluginLayoutsByJpsModuleNames(
-        context.productProperties.productLayout.pluginModulesToPublish,
-        context.productProperties.productLayout,
+        modules = context.productProperties.productLayout.pluginModulesToPublish,
+        productLayout = context.productProperties.productLayout,
         toPublish = true
       )
       buildNonBundledPlugins(
-        pluginsToPublish, context.options.compressZipFiles, buildPlatformLibJob = null, distributionState, buildSearchableOptions(context), context
+        pluginsToPublish = pluginsToPublish,
+        compressPluginArchive = context.options.compressZipFiles,
+        buildPlatformLibJob = null,
+        state = distributionState,
+        searchableOptionSet = buildSearchableOptions(context),
+        context = context
       )
       return@coroutineScope
     }
@@ -494,11 +504,11 @@ suspend fun buildDistributions(context: BuildContext): Unit = block("build distr
 
     val distDirs = buildOsSpecificDistributions(context)
 
-    lookForJunkFiles(context, listOf(context.paths.distAllDir) + distDirs.map { it.outDir })
+    lookForJunkFiles(context = context, paths = listOf(context.paths.distAllDir) + distDirs.map { it.outDir })
 
     launch(Dispatchers.IO + CoroutineName("generate software bill of materials")) {
       context.executeStep(spanBuilder("generate software bill of materials"), SoftwareBillOfMaterials.STEP_ID) {
-        SoftwareBillOfMaterialsImpl(context, distributions = distDirs, distributionFiles = contentReport.bundled().toList()).generate()
+        SoftwareBillOfMaterialsImpl(context = context, distributions = distDirs, distributionFiles = contentReport.bundled().toList()).generate()
       }
     }
 
