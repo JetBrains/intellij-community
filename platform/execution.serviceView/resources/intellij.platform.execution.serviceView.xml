@@ -11,9 +11,7 @@
                     dynamic="true"/>
   </extensionPoints>
   <extensions defaultExtensionNs="com.intellij">
-    <registryKey defaultValue="true" description="Enable monolith services toolwindow on backend"
-                 key="services.view.monolith.enabled" restartRequired="true"/>
-    <registryKey defaultValue="false" description="Enable split services toolwindow on frontend"
+    <registryKey defaultValue="false" description="Enable split services toolwindow in split mode"
                  key="services.view.split.enabled" restartRequired="true"/>
 
     <actionPromoter implementation="com.intellij.platform.execution.serviceView.ServiceViewActionPromoter"/>

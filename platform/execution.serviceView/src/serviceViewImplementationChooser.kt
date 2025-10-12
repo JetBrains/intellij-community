@@ -11,22 +11,14 @@ import org.jetbrains.annotations.ApiStatus
 //        and the corresponding classes must be moved to frontend modules of their plugins
 fun shouldEnableServicesViewInCurrentEnvironment(): Boolean {
   val isServicesEnabled = when {
-    isFrontendAndSplitRegistryEnabled() -> true
-    isBackendAndMonolithRegistryEnabled() -> true
     IdeProductMode.isMonolith -> true
+    IdeProductMode.isFrontend && isNewFrontendServiceViewEnabled() -> true
+    IdeProductMode.isBackend && isOldMonolithServiceViewEnabled() -> true
     else -> false
   }
   fileLogger().debug("Services implementation is ${if (isServicesEnabled) "enabled" else "disabled"} in current environment. " +
                      "Is frontend: ${IdeProductMode.isFrontend}, is monolith: ${IdeProductMode.isMonolith}, is backend: ${IdeProductMode.isBackend}.")
   return isServicesEnabled
-}
-
-private fun isBackendAndMonolithRegistryEnabled(): Boolean {
-  return IdeProductMode.isBackend && isOldMonolithServiceViewEnabled()
-}
-
-private fun isFrontendAndSplitRegistryEnabled(): Boolean {
-  return IdeProductMode.isFrontend && isNewFrontendServiceViewEnabled()
 }
 
 @ApiStatus.Internal
@@ -36,14 +28,14 @@ fun isNewFrontendServiceViewEnabled(): Boolean {
   // Otherwise we have to maintain even more registry flag combinations compatible which does not make sense
   if (isSplitDebuggerEnabledInTestsCopyPaste()) return true
 
-  return Registry.`is`("services.view.split.enabled")
+  return isSplitServicesRegistryFlagOn()
 }
 
 @ApiStatus.Internal
 fun isOldMonolithServiceViewEnabled(): Boolean {
   if (isSplitDebuggerEnabledInTestsCopyPaste()) return false
 
-  return Registry.`is`("services.view.monolith.enabled")
+  return IdeProductMode.isMonolith || !isSplitServicesRegistryFlagOn()
 }
 
 private fun isSplitDebuggerEnabledInTestsCopyPaste(): Boolean {
@@ -51,8 +43,20 @@ private fun isSplitDebuggerEnabledInTestsCopyPaste(): Boolean {
   return testProperty?.toBoolean() ?: false
 }
 
+private fun isSplitServicesRegistryFlagOn(): Boolean {
+  return shouldEnableSplitServiceViewCachedRegistryValue
+}
+
 // dedicated key for the RUN toolwindow since it is not properly split
 @ApiStatus.Internal
 fun isShowLuxedRunToolwindowInServicesView(): Boolean {
-  return Registry.`is`("services.view.split.run.luxing.enabled", true)
+  return shouldEnableLuxedRunToolwindowInServiceViewCachedRegistryValue
+}
+
+private val shouldEnableSplitServiceViewCachedRegistryValue by lazy {
+  Registry.`is`("services.view.split.enabled")
+}
+
+private val shouldEnableLuxedRunToolwindowInServiceViewCachedRegistryValue by lazy {
+  Registry.`is`("services.view.split.run.luxing.enabled", true)
 }
