@@ -4,6 +4,7 @@ package org.jetbrains.plugins.terminal
 import com.intellij.execution.wsl.WSLDistribution
 import com.intellij.execution.wsl.WslPath
 import com.intellij.openapi.diagnostic.Logger
+import com.intellij.openapi.diagnostic.debug
 import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.progress.runBlockingMaybeCancellable
 import com.intellij.openapi.util.SystemInfo
@@ -185,6 +186,7 @@ private suspend fun doStartProcess(
     .env(envs)
     .workingDirectory(workingDirectory)
     .interactionOptions(EelExecApi.Pty(initialTermSize.columns, initialTermSize.rows, true))
+  @Suppress("checkedExceptions")
   return execOptions.eelIt()
 }
 
@@ -200,19 +202,49 @@ internal class ShellProcessHolder(
   fun terminatePosixShell() {
     val ptyProcess = ptyProcessRef.get() ?: return
     terminalApplicationScope().launch(Dispatchers.IO) {
-      val killProcess = eelApi.exec.spawnProcess("kill").args("-HUP", shellPid.value.toString()).eelIt()
-      val exitCode = withTimeoutOrNull(5.seconds) {
-        ptyProcess.awaitExit()
+      if (!ptyProcess.isAlive) {
+        log.debug { "Shell process ${processInfo(ptyProcess)} is already terminated" }
+        return@launch
       }
-      if (exitCode == null) {
+      log.debug { "Sending SIGHUP to shell process ${processInfo(ptyProcess)}" }
+      val killProcess = try {
+        eelApi.exec.spawnProcess("kill").args("-HUP", shellPid.value.toString()).eelIt()
+      }
+      catch (e: ExecuteProcessException) {
+        log.warn("Unable to send SIGHUP to ${processInfo(ptyProcess)}", e)
+        return@launch
+      }
+      if (ptyProcess.awaitExit(5.seconds) == null) {
         val killProcessResult = withTimeoutOrNull(1.seconds) {
           killProcess.awaitProcessResult()
         }
-        log.info("${ptyProcess::class.java.simpleName}(pid:$shellPid) hasn't been terminated by SIGHUP, performing forceful termination. " +
-                 "\"kill -HUP $shellPid\" => ${killProcessResult?.stringify()}")
-        ptyProcess.destroyForcibly()
+        if (ptyProcess.isAlive) {
+          log.info("Shell process ${processInfo(ptyProcess)} hasn't been terminated by SIGHUP, performing forceful termination. " +
+                   "\"kill -HUP $shellPid\" => ${killProcessResult?.stringify()}")
+          ptyProcess.destroyForcibly()
+        }
+      }
+      val exitCode = ptyProcess.awaitExit(2.seconds)
+      if (exitCode != null) {
+        log.debug { "Shell process ${processInfo(ptyProcess)} has been terminated with exit code $exitCode" }
+      }
+      else {
+        log.warn("Shell process ${processInfo(ptyProcess)} has not been terminated!")
       }
     }
+  }
+
+  /**
+   * @return The exit value of the process if it exits within the timeout or null otherwise.
+   */
+  private suspend fun Process.awaitExit(timeout: kotlin.time.Duration): Int? {
+    return withTimeoutOrNull(timeout) {
+      this@awaitExit.awaitExit()
+    }
+  }
+
+  private fun processInfo(process: PtyProcess): String {
+    return "${process::class.java.name}($shellPid)"
   }
 
   private fun EelProcessExecutionResult.stringify(): String {
