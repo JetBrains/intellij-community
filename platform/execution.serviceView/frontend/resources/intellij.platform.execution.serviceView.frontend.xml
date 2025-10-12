@@ -3,4 +3,9 @@
     <module name="intellij.platform.frontend"/>
     <module name="intellij.platform.execution.serviceView"/>
   </dependencies>
+  <actions>
+    <action class="com.intellij.platform.execution.serviceView.frontend.SwitchServiceViewImplementationAction"
+            id="ServiceView.SwitchImplementation"
+            icon="AllIcons.Toolwindows.ToolWindowServices"/>
+  </actions>
 </idea-plugin>

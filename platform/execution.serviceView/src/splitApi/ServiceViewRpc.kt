@@ -24,6 +24,8 @@ interface ServiceViewRpc : RemoteApi<Unit> {
   suspend fun findServices(fileId: VirtualFileId, projectId: ProjectId): List<String>
   suspend fun loadConfigurationTypes(projectId: ProjectId): ServiceViewConfigurationTypeSettings?
   suspend fun saveConfigurationTypes(projectId: ProjectId, includedTypes: Set<String>)
+
+  suspend fun changeServiceViewImplementationForNextIdeRun(shouldEnableSplitImplementation: Boolean)
 }
 
 @ApiStatus.Internal

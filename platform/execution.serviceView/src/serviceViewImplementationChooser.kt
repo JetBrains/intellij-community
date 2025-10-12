@@ -39,7 +39,7 @@ fun isOldMonolithServiceViewEnabled(): Boolean {
 }
 
 private fun isSplitDebuggerEnabledInTestsCopyPaste(): Boolean {
-  val testProperty = System.getProperty("xdebugger.toolwindow.split.for.tests")
+  val testProperty = System.getProperty("c.for.tests")
   return testProperty?.toBoolean() ?: false
 }
 
@@ -59,4 +59,19 @@ private val shouldEnableSplitServiceViewCachedRegistryValue by lazy {
 
 private val shouldEnableLuxedRunToolwindowInServiceViewCachedRegistryValue by lazy {
   Registry.`is`("services.view.split.run.luxing.enabled", true)
+}
+
+// mutating state of current services implementation
+@ApiStatus.Internal
+fun setServiceViewImplementationForNextIdeRun(shouldEnableSplitImplementation: Boolean) {
+  Registry.get("services.view.split.enabled").setValue(shouldEnableSplitImplementation)
+  Registry.get("services.view.split.run.luxing.enabled").setValue(shouldEnableSplitImplementation)
+
+  if (shouldEnableSplitImplementation) {
+    // do not disable debugger since it is a separate functionality, only enable it if services are enabled as well
+    Registry.get("xdebugger.toolwindow.split.remdev").setValue(true)
+  }
+  Registry.get("docker.split.service.view.enabled").setValue(shouldEnableSplitImplementation)
+  // enable when merged
+  //Registry.get("docker.registry.split.service.view.enabled").setValue(shouldEnableSplitImplementation)
 }
