@@ -11,7 +11,7 @@
                     dynamic="true"/>
   </extensionPoints>
   <extensions defaultExtensionNs="com.intellij">
-    <registryKey defaultValue="false" description="Enable split services toolwindow in split mode"
+    <registryKey defaultValue="true" description="Enable split services toolwindow in split mode for IDE explicitly listed in `services.view.split.products`"
                  key="services.view.split.enabled" restartRequired="true"/>
     <registryKey defaultValue="IU"
                  description="Comma separated list of IDE product codes where split service view toolwindow implementation is eligible to work"
