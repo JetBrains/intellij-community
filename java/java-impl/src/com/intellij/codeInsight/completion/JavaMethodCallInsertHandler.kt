@@ -2,6 +2,7 @@
 package com.intellij.codeInsight.completion
 
 import com.intellij.codeInsight.CodeInsightSettings
+import com.intellij.codeInsight.TailTypes
 import com.intellij.codeInsight.completion.JavaMethodCallElement.areParameterTemplatesEnabledOnCompletion
 import com.intellij.codeInsight.completion.JavaMethodCallInsertHandler.Companion.needParameterHints
 import com.intellij.codeInsight.completion.JavaMethodCallInsertHandler.Companion.showParameterHints
@@ -70,7 +71,7 @@ public class JavaMethodCallInsertHandler(
   private val myHandlers: List<InsertHandler<in JavaMethodCallElement>> = listOfNotNull(
     RefStartInsertHandler(),
     createDiamondInsertHandler(item),
-    ParenthInsertHandler(),
+    ParenthInsertHandler.create(item),
     beforeHandler,
     ImportQualifyAndInsertTypeParametersHandler.create(needImportOrQualify, needExplicitTypeParameters, item),
     MethodCallInstallerHandler(),
@@ -192,12 +193,28 @@ private fun createDiamondInsertHandler(item: JavaMethodCallElement): InsertHandl
   return DiamondInsertHandler()
 }
 
-private class ParenthInsertHandler : InsertHandler<JavaMethodCallElement> {
+private class ParenthInsertHandler private constructor(
+  private val hasParameters: Boolean,
+  private val hasTailType: Boolean,
+) : InsertHandler<JavaMethodCallElement>, FrontendConvertibleInsertHandler<JavaMethodCallElement> {
   override fun handleInsert(context: InsertionContext, item: JavaMethodCallElement) {
     val method = item.getObject()
     val allItems = context.elements
-    val hasParams = if (method.parameterList.isEmpty) ThreeState.NO else MethodParenthesesHandler.overloadsHaveParameters(allItems, method)
-    JavaCompletionUtil.insertParentheses(context, item, false, hasParams, false)
+    val hasParams = if (hasParameters) MethodParenthesesHandler.overloadsHaveParameters(allItems, method) else ThreeState.NO
+    FrontendFriendlyParenthesesInsertHandler.insertParenthesesForJavaMethod(item, context, hasParams)
+  }
+
+  override fun asFrontendFriendly(): FrontendFriendlyInsertHandler? {
+    if (hasTailType) return null
+    return FrontendFriendlyParenthesesInsertHandler(hasParameters)
+  }
+
+  companion object {
+    fun create(item: JavaMethodCallElement): InsertHandler<JavaMethodCallElement> {
+      val method = item.getObject()
+      val hasTailType = item.tailType != TailTypes.unknownType()
+      return ParenthInsertHandler(!method.parameterList.isEmpty, hasTailType)
+    }
   }
 }
 

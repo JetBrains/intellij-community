@@ -1,2 +1,7 @@
 <idea-plugin visibility="internal">
+  <extensions defaultExtensionNs="com.intellij">
+    <!--suppress PluginXmlRegistrationCheck -->
+    <projectService serviceInterface="com.intellij.codeInsight.AutoPopupControllerHelper"
+                    serviceImplementation="com.intellij.platform.completion.common.AutoPopupControllerHelperImpl"/>
+  </extensions>
 </idea-plugin>

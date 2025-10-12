@@ -1019,7 +1019,7 @@ public final class JavaCompletionContributor extends CompletionContributor imple
 
   static boolean shouldInsertSemicolon(PsiElement position) {
     return position.getParent() instanceof PsiMethodReferenceExpression &&
-           JavaCompletionUtil.insertSemicolon(position.getParent().getParent());
+           JavaFrontendCompletionUtil.insertSemicolon(position.getParent().getParent());
   }
 
   private static @Unmodifiable List<LookupElement> processLabelReference(PsiLabelReference reference) {
