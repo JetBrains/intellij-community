@@ -214,6 +214,7 @@ class MarkdownPreviewFileEditor(
 
   @RequiresEdt
   private suspend fun updateHtml() {
+    logger.info("MarkdownPreviewFileEditor: updateHtml")
     val panel = this.panel ?: run {
       logger.warn("MarkdownPreviewFileEditor: panel is null, cannot update preview")
       return
@@ -256,6 +257,7 @@ class MarkdownPreviewFileEditor(
 
   @RequiresEdt
   private suspend fun attachHtmlPanel() {
+    logger.info("MarkdownPreviewFileEditor: attachHtmlPanel")
     val settings = MarkdownSettings.getInstance(project)
     val panelProvider = retrievePanelProvider(settings)
     val panel = panelProvider.createHtmlPanel(project, file)
