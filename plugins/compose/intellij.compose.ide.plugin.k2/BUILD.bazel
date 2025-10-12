@@ -47,6 +47,12 @@ create_kotlinc_options(
 )
 
 jvm_library(
+  name = "ide-plugin-k2-tests",
+  visibility = ["//visibility:public"],
+  srcs = glob([], allow_empty = True)
+)
+
+jvm_library(
   name = "ide-plugin-k2-tests_test_lib",
   visibility = ["//visibility:public"],
   srcs = glob(["tests/**/*.kt", "tests/**/*.java", "tests/**/*.form"], allow_empty = True),

@@ -372,7 +372,39 @@ jvm_library(
   module_name = "intellij.python.community.impl",
   visibility = ["//visibility:public"],
   srcs = glob([], allow_empty = True),
-  resources = [":python-community-impl_test_resources"]
+  resources = [":python-community-impl_test_resources"],
+  exports = [
+    "//python/openapi:community",
+    "//python/openapi:community_test_lib",
+    "//platform/ide-core-impl",
+    "//RegExpSupport:regexp",
+    "//RegExpSupport:regexp_test_lib",
+    "//platform/testRunner",
+    "//platform/testRunner:testRunner_test_lib",
+    "//python/python-psi-impl:psi-impl",
+  ],
+  runtime_deps = [
+    ":python-community-impl",
+    "//platform/util/concurrency:concurrency_test_lib",
+    "//python/openapi:community_test_lib",
+    "//RegExpSupport:regexp_test_lib",
+    "//platform/testRunner:testRunner_test_lib",
+    "//platform/smRunner:smRunner_test_lib",
+    "//spellchecker:spellchecker_test_lib",
+    "//platform/xdebugger-impl:debugger-impl_test_lib",
+    "@lib//ant/lib:ant-antlr-provided",
+    "//python/python-sdk:sdk_test_lib",
+    "//platform/statistics:statistics_test_lib",
+    "//platform/backend/observation:observation_test_lib",
+    "//python/python-venv:community-impl-venv_test_lib",
+    "//python/python-exec-service:community-execService_test_lib",
+    "//python/services/system-python:system-python_test_lib",
+    "//python/services/internal-impl:python-community-services-internal-impl_test_lib",
+    "@lib//:io-github-z4kn4fein-semver-jvm-provided",
+    "//python/python-pyproject:pyproject_test_lib",
+    "//python/python-exec-service/execService.python:execService.python_test_lib",
+    "//python/interpreters:interpreters_test_lib",
+  ]
 )
 ### auto-generated section `build intellij.python.community.impl` end
 
