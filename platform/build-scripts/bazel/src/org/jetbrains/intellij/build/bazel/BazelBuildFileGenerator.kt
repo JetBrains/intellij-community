@@ -335,12 +335,15 @@ internal class BazelBuildFileGenerator(
     val result = ModuleList(community = community, ultimate = ultimate, skippedModules = skippedModules)
     for (module in (community + ultimate)) {
       val hasSources = module.sources.isNotEmpty()
-      if (hasSources || module.testSources.isEmpty()) {
+      val hasResources = module.resources.isNotEmpty()
+      val hasTestSources = module.testSources.isNotEmpty()
+      val hasTestResources = module.testResources.isNotEmpty()
+
+      if (hasSources || hasResources || !hasTestSources) {
         result.deps.put(module, generateDeps(m2Repo, module = module, isTest = false, context = this, hasSources = hasSources))
       }
 
-      val hasTestSources = module.testSources.isNotEmpty()
-      if (hasTestSources || isTestClasspathModule(module)) {
+      if (hasTestSources || hasTestResources || isTestClasspathModule(module)) {
         result.testDeps.put(module, generateDeps(m2Repo = m2Repo, module = module, hasSources = hasTestSources, isTest = true, context = this))
       }
     }
