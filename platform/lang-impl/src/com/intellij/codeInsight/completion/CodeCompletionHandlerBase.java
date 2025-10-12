@@ -455,7 +455,7 @@ public class CodeCompletionHandlerBase {
     return AutoCompletionDecision.SHOW_LOOKUP;
   }
 
-  private static @Nullable AutoCompletionPolicy getAutocompletionPolicy(@NotNull LookupElement element) {
+  private static @NotNull AutoCompletionPolicy getAutocompletionPolicy(@NotNull LookupElement element) {
     return element.getAutoCompletionPolicy();
   }
 
