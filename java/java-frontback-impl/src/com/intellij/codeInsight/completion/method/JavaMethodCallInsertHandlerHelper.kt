@@ -39,7 +39,7 @@ object JavaMethodCallInsertHandlerHelper {
     item.putUserData(refStartKey, refStart)
   }
 
-  fun installCall(context: InsertionContext, item: LookupElement) {
+  internal fun installCall(context: InsertionContext, item: LookupElement) {
     val methodCall = findCallAtOffset(context, getReferenceStartOffset(context, item)) ?: return
 
     // make sure this is the method call we've just added, not the enclosing one

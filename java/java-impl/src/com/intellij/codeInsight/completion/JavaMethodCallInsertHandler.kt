@@ -314,12 +314,6 @@ private class ShowParameterInfoInsertHandler : InsertHandler<JavaMethodCallEleme
   }
 }
 
-private class MethodCallInstallerHandler : InsertHandler<LookupElement> {
-  override fun handleInsert(context: InsertionContext, item: LookupElement) {
-    JavaMethodCallInsertHandlerHelper.installCall(context, item)
-  }
-}
-
 private class MethodCallRegistrationHandler : InsertHandler<JavaMethodCallElement> {
   override fun handleInsert(context: InsertionContext, item: JavaMethodCallElement) {
     val method = item.getObject()
