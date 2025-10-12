@@ -1,6 +1,7 @@
 // Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.platform.execution.serviceView
 
+import com.intellij.openapi.application.impl.ApplicationInfoImpl
 import com.intellij.openapi.diagnostic.fileLogger
 import com.intellij.openapi.util.registry.Registry
 import com.intellij.platform.ide.productMode.IdeProductMode
@@ -28,7 +29,7 @@ fun isNewFrontendServiceViewEnabled(): Boolean {
   // Otherwise we have to maintain even more registry flag combinations compatible which does not make sense
   if (isSplitDebuggerEnabledInTestsCopyPaste()) return true
 
-  return isSplitServicesRegistryFlagOn()
+  return isSplitServicesRegistryFlagOn() && isCurrentProductSupportSplitServiceView()
 }
 
 @ApiStatus.Internal
@@ -62,6 +63,14 @@ private val shouldEnableLuxedRunToolwindowInServiceViewCachedRegistryValue by la
 }
 
 // mutating state of current services implementation
+@ApiStatus.Internal
+fun isCurrentProductSupportSplitServiceView(): Boolean {
+  val value = Registry.stringValue("services.view.split.products")
+  val productCodes = value.split(",").toSet()
+  val currentProductCode = ApplicationInfoImpl.getShadowInstanceImpl().build.productCode
+  return currentProductCode in productCodes
+}
+
 @ApiStatus.Internal
 fun setServiceViewImplementationForNextIdeRun(shouldEnableSplitImplementation: Boolean) {
   Registry.get("services.view.split.enabled").setValue(shouldEnableSplitImplementation)

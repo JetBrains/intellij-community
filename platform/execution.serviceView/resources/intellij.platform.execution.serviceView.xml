@@ -13,6 +13,9 @@
   <extensions defaultExtensionNs="com.intellij">
     <registryKey defaultValue="false" description="Enable split services toolwindow in split mode"
                  key="services.view.split.enabled" restartRequired="true"/>
+    <registryKey defaultValue="IU"
+                 description="Comma separated list of IDE product codes where split service view toolwindow implementation is eligible to work"
+                 key="services.view.split.products" restartRequired="true"/>
 
     <actionPromoter implementation="com.intellij.platform.execution.serviceView.ServiceViewActionPromoter"/>
     <navbar implementation="com.intellij.platform.execution.serviceView.ServiceViewNavBarExtension"/>
