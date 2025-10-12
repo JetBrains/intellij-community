@@ -62,8 +62,13 @@ internal fun generateDeps(
   val provided = mutableListOf<BazelLabel>()
 
   if (isTest && module.sources.isNotEmpty()) {
-    // associates also is a dependency
-    associates.add(BazelLabel(":${module.targetName}", module))
+    if (hasSources) {
+      // associates also is a dependency
+      associates.add(BazelLabel(":${module.targetName}", module))
+    }
+    else {
+      runtimeDeps.add(BazelLabel(":${module.targetName}", module))
+    }
   }
 
   val testModuleProperties = context.javaExtensionService.getTestModuleProperties(module.module)
