@@ -314,11 +314,16 @@ private class ShowParameterInfoInsertHandler : InsertHandler<JavaMethodCallEleme
   }
 }
 
-private class MethodCallRegistrationHandler : InsertHandler<JavaMethodCallElement> {
+private class MethodCallRegistrationHandler : InsertHandler<JavaMethodCallElement>, FrontendConvertibleInsertHandler<JavaMethodCallElement> {
   override fun handleInsert(context: InsertionContext, item: JavaMethodCallElement) {
     val method = item.getObject()
     val methodCall = findInsertedCall(item, context) ?: return
     CompletionMemory.registerChosenMethod(method, methodCall)
+  }
+
+  override fun asFrontendFriendly(): FrontendFriendlyInsertHandler {
+    //TODO IJPL-207762 registering functionality is off on frontend, can be implemented separately if needed
+    return NoOpFrontendFriendlyInsertHandler
   }
 }
 
