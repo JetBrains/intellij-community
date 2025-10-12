@@ -333,7 +333,8 @@ public final class JavaQualifierAsArgumentContributor extends CompletionContribu
                                                     new BeforeInsertHandler(),
                                                     new AfterInsertHandler(),
                                                     myShouldImportOrQualify,
-                                                    false);
+                                                    false,
+                                                    this);
       handler.handleInsert(context, this);
     }
 

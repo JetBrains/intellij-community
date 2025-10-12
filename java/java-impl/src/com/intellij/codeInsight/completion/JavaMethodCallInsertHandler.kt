@@ -57,7 +57,13 @@ public class JavaMethodCallInsertHandler(
    * true if the argument live template can be started, otherwise false.
    */
   canStartArgumentLiveTemplate: Boolean = true,
-) : InsertHandler<JavaMethodCallElement> {
+
+  /**
+   * The element to be handled.
+   * It is expected that the element is fully set up and ready for insertion.
+   */
+  item: JavaMethodCallElement,
+) : InsertHandler<JavaMethodCallElement>, FrontendConvertibleInsertHandler<JavaMethodCallElement> {
 
   /**
    * tracks the start offset of the reference, needs movableToRight=true to correctly handle insertion of a qualifier
@@ -78,6 +84,17 @@ public class JavaMethodCallInsertHandler(
 
   override fun handleInsert(context: InsertionContext, item: JavaMethodCallElement) {
     myHandlers.forEach { it.handleInsert(context, item) }
+  }
+
+  public override fun asFrontendFriendly(): FrontendFriendlyInsertHandler? {
+    val convertedChildren = myHandlers
+      .mapNotNull { child -> child.asFrontendFriendly() }
+
+    if (convertedChildren.size != myHandlers.size) return null
+
+    val operational = convertedChildren.filterNot { it is NoOpFrontendFriendlyInsertHandler }
+
+    return CompositeFrontendFriendlyInsertHandler("JavaMethodCallInsertHandler#frontendFriendly", operational)
   }
 
   public companion object {

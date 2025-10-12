@@ -34,7 +34,7 @@ import java.util.List;
 import java.util.Objects;
 import java.util.concurrent.atomic.AtomicInteger;
 
-public class JavaMethodCallElement extends LookupItem<PsiMethod> implements TypedLookupItem, StaticallyImportable {
+public class JavaMethodCallElement extends LookupItem<PsiMethod> implements TypedLookupItem, StaticallyImportable, FrontendFriendlyLookupElement {
   public static final ClassConditionKey<JavaMethodCallElement> CLASS_CONDITION_KEY = ClassConditionKey.create(JavaMethodCallElement.class);
   public static final Key<Boolean> COMPLETION_HINTS = Key.create("completion.hints");
   private final @Nullable PsiClass myContainingClass;
@@ -166,11 +166,22 @@ public class JavaMethodCallElement extends LookupItem<PsiMethod> implements Type
 
   @Override
   public void handleInsert(@NotNull InsertionContext context) {
-    var handler = new JavaMethodCallInsertHandler(myNeedExplicitTypeParameters, null, null, true, true);
+    var handler = createInsertHandler();
     handler.handleInsert(context, this);
   }
 
+  private @NotNull JavaMethodCallInsertHandler createInsertHandler() {
+    return new JavaMethodCallInsertHandler(myNeedExplicitTypeParameters, null, null, true, true, this);
+  }
+
+  @Override
+  public @Nullable FrontendFriendlyInsertHandler getFrontendFriendlyInsertHandler() {
+    JavaMethodCallInsertHandler handler = createInsertHandler();
+    return handler.asFrontendFriendly();
+  }
+
   public static final Key<PsiMethod> ARGUMENT_TEMPLATE_ACTIVE = Key.create("ARGUMENT_TEMPLATE_ACTIVE");
+
   private static @NotNull Template createArgTemplate(PsiMethod method,
                                                      int caretOffset,
                                                      PsiExpressionList argList,
