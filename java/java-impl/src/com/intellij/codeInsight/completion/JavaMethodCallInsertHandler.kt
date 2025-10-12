@@ -2,7 +2,7 @@
 package com.intellij.codeInsight.completion
 
 import com.intellij.codeInsight.CodeInsightSettings
-import com.intellij.codeInsight.completion.CodeCompletionFeatures.EXCLAMATION_FINISH
+import com.intellij.codeInsight.completion.JavaMethodCallElement.areParameterTemplatesEnabledOnCompletion
 import com.intellij.codeInsight.completion.JavaMethodCallInsertHandler.Companion.showParameterHints
 import com.intellij.codeInsight.completion.method.*
 import com.intellij.codeInsight.completion.method.JavaMethodCallInsertHandlerHelper.findInsertedCall
@@ -76,7 +76,7 @@ public class JavaMethodCallInsertHandler(
     MethodCallRegistrationHandler(),
     createNegationInsertHandler(item),
     afterHandler,
-    ArgumentLiveTemplateInsertHandler(canStartArgumentLiveTemplate),
+    ArgumentLiveTemplateInsertHandler.create(canStartArgumentLiveTemplate),
     ShowParameterInfoInsertHandler(),
   )
 
@@ -290,13 +290,17 @@ private fun createNegationInsertHandler(item: JavaMethodCallElement): InsertHand
   return NegationInsertHandler()
 }
 
-private class ArgumentLiveTemplateInsertHandler(
-  private val canStartArgumentLiveTemplate: Boolean,
-) : InsertHandler<JavaMethodCallElement> {
+private class ArgumentLiveTemplateInsertHandler : InsertHandler<JavaMethodCallElement> {
   override fun handleInsert(context: InsertionContext, item: JavaMethodCallElement) {
-    if (!canStartArgumentLiveTemplate) return
     val method = item.getObject()
     JavaMethodCallElement.startArgumentLiveTemplate(context, method)
+  }
+
+  companion object {
+    fun create(canStartArgumentLiveTemplate: Boolean): InsertHandler<in JavaMethodCallElement>? {
+      if (!canStartArgumentLiveTemplate || !areParameterTemplatesEnabledOnCompletion()) return null
+      return ArgumentLiveTemplateInsertHandler()
+    }
   }
 }
 
