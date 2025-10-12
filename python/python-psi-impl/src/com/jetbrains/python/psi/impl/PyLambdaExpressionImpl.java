@@ -5,17 +5,12 @@ import com.intellij.lang.ASTNode;
 import com.intellij.util.containers.ContainerUtil;
 import com.jetbrains.python.codeInsight.controlflow.ControlFlowCache;
 import com.jetbrains.python.codeInsight.typing.PyTypingTypeProvider;
-import com.jetbrains.python.psi.PyCallSiteExpression;
-import com.jetbrains.python.psi.PyElementVisitor;
-import com.jetbrains.python.psi.PyExpression;
-import com.jetbrains.python.psi.PyLambdaExpression;
+import com.jetbrains.python.psi.*;
 import com.jetbrains.python.psi.types.*;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import java.util.List;
-import java.util.Map;
-import java.util.Optional;
+import java.util.*;
 
 import static com.intellij.util.containers.ContainerUtil.map;
 
@@ -38,9 +33,48 @@ public class PyLambdaExpressionImpl extends PyElementImpl implements PyLambdaExp
         return type;
       }
     }
-    return PyFunctionTypeImpl.create(this, context);
-  }
 
+    @Nullable PyType expected = PyTypeChecker.getExpectedType(this, context);
+
+    if (expected instanceof PyCallableType expectedCallable) {
+      var params = new ArrayList<PyCallableParameter>();
+      var rawActualParams = getParameterList().getParameters();
+      var rawExpectedParams = expectedCallable.getParameters(context);
+      if (rawExpectedParams != null) {
+        // commence actual parameter to expected parameter mapping
+        // currently we only map positional arguments TODO: PY-85576
+        var actualParams = ContainerUtil.filter(rawActualParams, element -> !(element instanceof PySlashParameter));
+        var expectedParams = ContainerUtil.filter(rawExpectedParams, element -> !(element.isPositionOnlySeparator()));
+        var supported = true;
+
+        for (var x : ContainerUtil.zip(actualParams, expectedParams)) {
+          var rawActualParameter = x.first;
+          var expectedParameter = x.second;
+          if (!(rawActualParameter instanceof PyNamedParameter actualParameter)) {
+            supported = false;
+            break;
+          }
+          if (
+            actualParameter.isPositionalContainer() ||
+            actualParameter.isKeywordContainer() ||
+            expectedParameter.isPositionalContainer() ||
+            expectedParameter.isKeywordContainer() ||
+            expectedParameter.isKeywordOnlySeparator()
+          ) {
+            supported = false;
+            break;
+          }
+          params.add(PyCallableParameterImpl.psi(actualParameter, expectedParameter.getArgumentType(context)));
+        }
+        if (supported) {
+          return new PyFunctionTypeImpl(this, params);
+        }
+      }
+    }
+    return new PyFunctionTypeImpl(
+      this, map(getParameterList().getParameters(), param -> PyCallableParameterImpl.psi(param, null))
+    );
+  }
 
   @Override
   public @NotNull List<PyCallableParameter> getParameters(@NotNull TypeEvalContext context) {

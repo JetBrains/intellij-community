@@ -40,7 +40,7 @@ public class PyFunctionTypeImpl implements PyFunctionType {
   }
 
   private final @NotNull PyCallable myCallable;
-  private final @NotNull List<PyCallableParameter> myParameters;
+  private final @NotNull List<@NotNull PyCallableParameter> myParameters;
 
   /**
    * @deprecated Use {@link PyFunctionTypeImpl#create(PyCallable, TypeEvalContext)}
@@ -50,7 +50,7 @@ public class PyFunctionTypeImpl implements PyFunctionType {
     this(callable, ContainerUtil.map(callable.getParameterList().getParameters(), PyCallableParameterImpl::psi));
   }
 
-  public PyFunctionTypeImpl(@NotNull PyCallable callable, @NotNull List<PyCallableParameter> parameters) {
+  public PyFunctionTypeImpl(@NotNull PyCallable callable, @NotNull List<@NotNull PyCallableParameter> parameters) {
     myCallable = callable;
     myParameters = parameters;
   }
@@ -66,7 +66,7 @@ public class PyFunctionTypeImpl implements PyFunctionType {
   }
 
   @Override
-  public @Nullable List<PyCallableParameter> getParameters(@NotNull TypeEvalContext context) {
+  public @Nullable List<@NotNull PyCallableParameter> getParameters(@NotNull TypeEvalContext context) {
     return myParameters;
   }
 

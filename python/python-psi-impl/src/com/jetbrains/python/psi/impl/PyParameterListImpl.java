@@ -126,9 +126,9 @@ public class PyParameterListImpl extends PyBaseElementImpl<PyParameterListStub> 
   }
 
   @Override
-  public @Nullable PyFunction getContainingFunction() {
+  public @Nullable PyCallable getContainingCallable() {
     final PsiElement parent = getParentByStub();
-    return parent instanceof PyFunction ? (PyFunction)parent : null;
+    return parent instanceof PyCallable callable ? callable : null;
   }
 
   @Override
