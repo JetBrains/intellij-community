@@ -17,7 +17,6 @@ import com.jetbrains.python.codeInsight.typing.PyProtocolsKt;
 import com.jetbrains.python.codeInsight.typing.PyTypingTypeProvider;
 import com.jetbrains.python.psi.*;
 import com.jetbrains.python.psi.impl.PyBuiltinCache;
-import com.jetbrains.python.psi.impl.PyLambdaExpressionImpl;
 import com.jetbrains.python.psi.impl.PyPsiUtils;
 import com.jetbrains.python.psi.impl.PyTypeProvider;
 import com.jetbrains.python.psi.resolve.PyResolveContext;
@@ -649,19 +648,7 @@ public final class PyTypeChecker {
 
         PyType subclassElementType = dropSelfIfNeeded(actual, subclassElementMember.getType(), matchContext.context);
         subclassElementType = substitute(subclassElementType, substitutions, matchContext.context);
-        boolean matched = match(protocolElementType, subclassElementType, protocolContext).orElse(true);
-        if (!matched) return false;
-        if (!(protocolElementType instanceof PyCallableType callableProtocolElement) ||
-            !(subclassElementType instanceof PyCallableType callableSubclassElement)) {
-          return matched;
-        }
-        var protocolReturnType = callableProtocolElement.getReturnType(protocolContext.context);
-        if (protocolReturnType instanceof PySelfType) {
-          var subclassReturnType = callableSubclassElement.getReturnType(protocolContext.context);
-          if (subclassReturnType instanceof PySelfType) return true;
-          return match(actual, subclassReturnType, matchContext).orElse(true);
-        }
-        return matched;
+        return match(protocolElementType, subclassElementType, protocolContext).orElse(true);
       });
 
       if (!elementResult) {
