@@ -6,7 +6,6 @@ import com.intellij.openapi.application.readAction
 import com.intellij.openapi.application.readActionBlocking
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.Key
-import com.intellij.openapi.util.ThrowableComputable
 import com.intellij.openapi.util.registry.Registry
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.openapi.vfs.VirtualFileWithId
@@ -146,15 +145,11 @@ private fun scheduleFullScanning(
   }
   else CompletableDeferred(Unit)
   val parameters = CompletableDeferred(ScanningIterators(indexingReason, null, null, fullScanningType))
-  ApplicationManager.getApplication().invokeAndWait {
-    ApplicationManager.getApplication().runWriteIntentReadAction(ThrowableComputable { // makes scanning to be scheduled immediately
-      UnindexedFilesScanner(project, true, isFilterUpToDate,
-                            someDirtyFilesScheduledForIndexing.asCompletableFuture(),
-                            forceCheckingForOutdatedIndexesUsingFileModCount = notSeenIds !is AllNotSeenDirtyFileIds,
-                            scanningParameters = parameters)
-        .queue()
-    })
-  }
+  UnindexedFilesScanner(project, true, isFilterUpToDate,
+                        someDirtyFilesScheduledForIndexing.asCompletableFuture(),
+                        forceCheckingForOutdatedIndexesUsingFileModCount = notSeenIds !is AllNotSeenDirtyFileIds,
+                        scanningParameters = parameters)
+    .queue()
   return someDirtyFilesScheduledForIndexing
 }
 
@@ -178,14 +173,10 @@ private fun scheduleDirtyFilesScanning(
                          DirtyFilesIndexableFilesIterator(projectDirtyFilesFromOrphanQueue, true))
 
   val scanningIterators = CompletableDeferred(ScanningIterators(indexingReason, iterators, null, partialScanningType))
-  ApplicationManager.getApplication().invokeAndWait {
-    ApplicationManager.getApplication().runWriteIntentReadAction(ThrowableComputable { // makes scanning to be scheduled immediately
-      UnindexedFilesScanner(project, true, true,
-                            projectDirtyFiles.asCompletableFuture(),
-                            scanningParameters = scanningIterators)
-        .queue()
-    })
-  }
+  UnindexedFilesScanner(project, true, true,
+                        projectDirtyFiles.asCompletableFuture(),
+                        scanningParameters = scanningIterators)
+    .queue()
   return projectDirtyFiles
 }
 
