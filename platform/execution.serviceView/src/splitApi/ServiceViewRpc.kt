@@ -25,7 +25,7 @@ interface ServiceViewRpc : RemoteApi<Unit> {
   suspend fun loadConfigurationTypes(projectId: ProjectId): ServiceViewConfigurationTypeSettings?
   suspend fun saveConfigurationTypes(projectId: ProjectId, includedTypes: Set<String>)
 
-  suspend fun changeServiceViewImplementationForNextIdeRun(shouldEnableSplitImplementation: Boolean)
+  suspend fun changeServiceViewImplementationForNextIdeRunAndRestart(shouldEnableSplitImplementation: Boolean)
 }
 
 @ApiStatus.Internal

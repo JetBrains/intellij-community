@@ -14,6 +14,7 @@ import com.intellij.openapi.project.DumbAwareToggleAction
 import com.intellij.openapi.ui.Messages
 import com.intellij.openapi.util.registry.Registry
 import com.intellij.platform.execution.serviceView.getServiceViewRegistryFlagsState
+import com.intellij.platform.execution.serviceView.isCurrentProductSupportSplitServiceView
 import com.intellij.platform.execution.serviceView.setServiceViewImplementationForNextIdeRun
 import com.intellij.platform.execution.serviceView.splitApi.ServiceViewRpc
 import com.intellij.platform.ide.productMode.IdeProductMode
@@ -29,7 +30,7 @@ internal class SwitchServiceViewImplementationAction : DumbAwareToggleAction(), 
 
   override fun update(e: AnActionEvent) {
     super.update(e)
-    e.presentation.isEnabledAndVisible = IdeProductMode.isFrontend
+    e.presentation.isEnabledAndVisible = IdeProductMode.isFrontend && isCurrentProductSupportSplitServiceView()
   }
 
   override fun isSelected(e: AnActionEvent): Boolean {
@@ -38,9 +39,6 @@ internal class SwitchServiceViewImplementationAction : DumbAwareToggleAction(), 
 
   override fun setSelected(e: AnActionEvent, state: Boolean) {
     currentThreadCoroutineScope().launch {
-      setServiceViewImplementationForNextIdeRun(state)
-      ServiceViewRpc.getInstance().changeServiceViewImplementationForNextIdeRun(state)
-
       val app = ApplicationManagerEx.getApplicationEx()
       val restartAllowed = withContext(Dispatchers.EDT) {
         if (app == null) {
@@ -48,13 +46,17 @@ internal class SwitchServiceViewImplementationAction : DumbAwareToggleAction(), 
           return@withContext false
         }
 
-        val affectedRegistryFlagsAfterChange = getServiceViewRegistryFlagsState().entries
+        val affectedRegistryFlagsPatch = getServiceViewRegistryFlagsState().entries
           .joinToString(prefix = "\n", separator = ",\n", postfix = "\n") { (key, value) ->
-            "- $key = $value"
+            val patchedValueToOffer = when {
+              key.startsWith("xdebugger") -> value
+              else -> !value
+            }
+            "- $key = $patchedValueToOffer"
           }
-        thisLogger().warn("Service View registry flags after change:\n$affectedRegistryFlagsAfterChange")
+        thisLogger().warn("Service View registry flags patch to apply:\n$affectedRegistryFlagsPatch")
 
-        val detailedChangeInfo = ActionsBundle.message("action.ServiceView.SwitchImplementation.restart.confirmation.text", affectedRegistryFlagsAfterChange)
+        val detailedChangeInfo = ActionsBundle.message("action.ServiceView.SwitchImplementation.restart.confirmation.text", affectedRegistryFlagsPatch)
         val standardRestartDialogText = IdeBundle.message(if (app.isRestartCapable()) "dialog.message.restart.ide" else "dialog.message.restart.alt")
         val answer = Messages.showYesNoDialog(
           detailedChangeInfo + standardRestartDialogText,
@@ -67,7 +69,9 @@ internal class SwitchServiceViewImplementationAction : DumbAwareToggleAction(), 
         return@withContext answer == Messages.YES
       }
       if (!restartAllowed) return@launch
-      app.restart(true)
+
+      setServiceViewImplementationForNextIdeRun(state)
+      ServiceViewRpc.getInstance().changeServiceViewImplementationForNextIdeRunAndRestart(state)
     }
   }
 }

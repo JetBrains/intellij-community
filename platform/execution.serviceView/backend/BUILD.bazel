@@ -25,6 +25,8 @@ jvm_library(
     "//platform/kernel/backend",
     "//platform/execution",
     "@lib//:jetbrains-annotations",
+    "//platform/core-impl",
+    "//platform/util",
   ]
 )
 ### auto-generated section `build intellij.platform.execution.serviceView.backend` end

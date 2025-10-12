@@ -6,6 +6,7 @@ import com.intellij.execution.dashboard.RunDashboardManagerProxy
 import com.intellij.ide.ui.icons.rpcId
 import com.intellij.ide.vfs.VirtualFileId
 import com.intellij.ide.vfs.virtualFile
+import com.intellij.openapi.application.ex.ApplicationManagerEx
 import com.intellij.openapi.application.readAction
 import com.intellij.openapi.extensions.ExtensionPointName
 import com.intellij.openapi.project.Project
@@ -65,7 +66,8 @@ internal class ServiceViewRpcImpl : ServiceViewRpc {
     RunDashboardManagerProxy.getInstance(project).types = includedTypes
   }
 
-  override suspend fun changeServiceViewImplementationForNextIdeRun(shouldEnableSplitImplementation: Boolean) {
+  override suspend fun changeServiceViewImplementationForNextIdeRunAndRestart(shouldEnableSplitImplementation: Boolean) {
     setServiceViewImplementationForNextIdeRun(shouldEnableSplitImplementation)
+    ApplicationManagerEx.getApplicationEx().restart(true)
   }
 }

@@ -1,6 +1,7 @@
 // Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.platform.execution.serviceView
 
+import com.intellij.openapi.application.ex.ApplicationInfoEx
 import com.intellij.openapi.application.impl.ApplicationInfoImpl
 import com.intellij.openapi.diagnostic.fileLogger
 import com.intellij.openapi.util.registry.Registry
@@ -67,7 +68,12 @@ private val shouldEnableLuxedRunToolwindowInServiceViewCachedRegistryValue by la
 fun isCurrentProductSupportSplitServiceView(): Boolean {
   val value = Registry.stringValue("services.view.split.products")
   val productCodes = value.split(",").toSet()
-  val currentProductCode = ApplicationInfoImpl.getShadowInstanceImpl().build.productCode
+  val currentProductCode = if (IdeProductMode.isFrontend) {
+    ApplicationInfoEx.getInstanceEx().fullIdeProductCode
+  }
+  else {
+    ApplicationInfoImpl.getShadowInstanceImpl().build.productCode
+  }
   return currentProductCode in productCodes
 }
 
