@@ -27,7 +27,6 @@ jvm_library(
     "//platform/core-ui",
     "//python/ide/customization.shared",
     "//platform/platform-impl/update-checker",
-    "//platform/util/jdom",
   ],
   runtime_deps = [":pycharm-community-ide-impl-promotion_resources"]
 )
