@@ -4037,6 +4037,11 @@ public abstract class K1QuickFixTestGenerated extends AbstractK1QuickFixTest {
             KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
         }
 
+        @TestMetadata("annotationCallOutsideOfAnnotation.kt")
+        public void testAnnotationCallOutsideOfAnnotation() throws Exception {
+            runTest("testData/quickfix/convertCollectionLiteralToIntArrayOf/annotationCallOutsideOfAnnotation.kt");
+        }
+
         @TestMetadata("companionObject.kt")
         public void testCompanionObject() throws Exception {
             runTest("testData/quickfix/convertCollectionLiteralToIntArrayOf/companionObject.kt");

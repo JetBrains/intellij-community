@@ -128,7 +128,7 @@ internal class ConvertLambdaToReferenceIntention :
             val valueParameters = symbol.valueParameters
             val arguments = outerCallExpression.valueArguments.filter { it !is KtLambdaArgument }
             val hadDefaultValues = valueParameters.size - 1 > arguments.size
-            val useNamedArguments = valueParameters.any { it.hasDefaultValue } && hadDefaultValues || arguments.any { it.isNamed() }
+            val useNamedArguments = valueParameters.any { it.hasDeclaredDefaultValue } && hadDefaultValues || arguments.any { it.isNamed() }
 
             val newArgumentList = psiFactory.buildValueArgumentList {
                 appendFixedText("(")
@@ -318,6 +318,7 @@ private fun KtExpression.isReferenceToPackage(): Boolean {
     return symbols.any { it is KaPackageSymbol }
 }
 
+@OptIn(KaExperimentalApi::class)
 context(_: KaSession)
 private fun isConvertibleCallInLambdaByAnalyze(
     callableExpression: KtExpression,
@@ -361,7 +362,7 @@ private fun isConvertibleCallInLambdaByAnalyze(
     if (noBoundReferences && hasReceiver && explicitReceiver == null) return false
 
     val callableArgumentsCount = (callableExpression as? KtCallExpression)?.valueArguments?.size ?: 0
-    if (symbol is KaFunctionSymbol && symbol.valueParameters.size != callableArgumentsCount && (lambdaExpression.parentValueArgument() == null || (symbol as? KaFunctionSymbol)?.valueParameters?.none { it.hasDefaultValue } == true)) return false
+    if (symbol is KaFunctionSymbol && symbol.valueParameters.size != callableArgumentsCount && (lambdaExpression.parentValueArgument() == null || (symbol as? KaFunctionSymbol)?.valueParameters?.none { it.hasDeclaredDefaultValue } == true)) return false
 
     if (!lambdaExpression.isArgument() && symbol is KaNamedFunctionSymbol && symbol.overloadedFunctions(lambdaExpression).size > 1) {
         val property = lambdaExpression.getStrictParentOfType<KtProperty>()

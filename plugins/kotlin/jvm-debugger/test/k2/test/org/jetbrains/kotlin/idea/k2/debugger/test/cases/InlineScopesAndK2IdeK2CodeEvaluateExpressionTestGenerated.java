@@ -2670,6 +2670,35 @@ public abstract class InlineScopesAndK2IdeK2CodeEvaluateExpressionTestGenerated 
             }
 
             @RunWith(JUnit3RunnerWithInners.class)
+            @TestMetadata("../testData/evaluation/multipleBreakpoints/inlineLambda/defaultValues")
+            public static class DefaultValues extends AbstractInlineScopesAndK2IdeK2CodeEvaluateExpressionTest {
+                @java.lang.Override
+                @org.jetbrains.annotations.NotNull
+                public final KotlinPluginMode getPluginMode() {
+                    return KotlinPluginMode.K2;
+                }
+
+                private void runTest(String testDataFilePath) throws Exception {
+                    KotlinTestUtils.runTest(this::doMultipleBreakpointsTest, this, TargetBackend.JVM_IR_WITH_IR_EVALUATOR, testDataFilePath);
+                }
+
+                @TestMetadata("defaultValueDownByStack.kt")
+                public void testDefaultValueDownByStack() throws Exception {
+                    runTest("../testData/evaluation/multipleBreakpoints/inlineLambda/defaultValues/defaultValueDownByStack.kt");
+                }
+
+                @TestMetadata("defaultValueInEnclosingFun.kt")
+                public void testDefaultValueInEnclosingFun() throws Exception {
+                    runTest("../testData/evaluation/multipleBreakpoints/inlineLambda/defaultValues/defaultValueInEnclosingFun.kt");
+                }
+
+                @TestMetadata("ignoredDefaultValueInEnclosingFun.kt")
+                public void testIgnoredDefaultValueInEnclosingFun() throws Exception {
+                    runTest("../testData/evaluation/multipleBreakpoints/inlineLambda/defaultValues/ignoredDefaultValueInEnclosingFun.kt");
+                }
+            }
+
+            @RunWith(JUnit3RunnerWithInners.class)
             @TestMetadata("../testData/evaluation/multipleBreakpoints/inlineLambda/functionTypeArgs")
             public abstract static class FunctionTypeArgs extends AbstractInlineScopesAndK2IdeK2CodeEvaluateExpressionTest {
                 @RunWith(JUnit3RunnerWithInners.class)

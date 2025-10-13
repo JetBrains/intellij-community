@@ -72,6 +72,7 @@ internal object FunctionLookupElementFactory {
         return createLookupElement(signature, lookupObject, useFqNameInTailText = aliasName != null)
     }
 
+    @OptIn(KaExperimentalApi::class)
     context(_: KaSession)
     internal fun getTrailingFunctionSignature(
         signature: KaFunctionSignature<*>,
@@ -79,7 +80,7 @@ internal object FunctionLookupElementFactory {
     ): KaVariableSignature<KaValueParameterSymbol>? {
         val valueParameters = signature.valueParameters
         if (checkDefaultValues &&
-            !valueParameters.dropLast(1).all { it.symbol.hasDefaultValue }
+            !valueParameters.dropLast(1).all { it.symbol.hasDeclaredDefaultValue }
         ) return null
 
         return valueParameters.lastOrNull()

@@ -1,8 +1,9 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.kotlin.idea.k2.codeinsight.fixes
 
 import com.intellij.modcommand.ActionContext
 import com.intellij.modcommand.ModPsiUpdater
+import com.intellij.psi.PsiElement
 import com.intellij.psi.SmartPsiElementPointer
 import com.intellij.psi.createSmartPointer
 import org.jetbrains.kotlin.analysis.api.KaSession
@@ -28,12 +29,12 @@ internal object SurroundWithNullCheckFixFactory {
 
     val argumentTypeMismatchFactory = KotlinQuickFixFactory.ModCommandBased { diagnostic: KaFirDiagnostic.ArgumentTypeMismatch ->
         if (!diagnostic.isMismatchDueToNullability) return@ModCommandBased emptyList()
-        createQuickFixIfApplicableToTypeMismatch(diagnostic)
+        createQuickFixIfApplicableToTypeMismatch(diagnostic.psi)
     }
 
     val assignmentTypeMismatchFactory = KotlinQuickFixFactory.ModCommandBased { diagnostic: KaFirDiagnostic.AssignmentTypeMismatch ->
         if (!diagnostic.isMismatchDueToNullability) return@ModCommandBased emptyList()
-        createQuickFixIfApplicableToTypeMismatch(diagnostic)
+        createQuickFixIfApplicableToTypeMismatch(diagnostic.expression)
     }
 
     val iteratorOnNullableFactory = KotlinQuickFixFactory.ModCommandBased { diagnostic: KaFirDiagnostic.IteratorOnNullable ->
@@ -48,7 +49,7 @@ internal object SurroundWithNullCheckFixFactory {
 
     val nullabilityMismatchBasedOnJavaAnnotationsFactory =
         KotlinQuickFixFactory.ModCommandBased { diagnostic: KaFirDiagnostic.NullabilityMismatchBasedOnJavaAnnotations ->
-            createQuickFixIfApplicableToTypeMismatch(diagnostic)
+            createQuickFixIfApplicableToTypeMismatch(diagnostic.psi)
         }
 
     val receiverNullabilityMismatchBasedOnJavaAnnotationsFactory =
@@ -114,8 +115,8 @@ internal object SurroundWithNullCheckFixFactory {
         )
     }
 
-    private fun createQuickFixIfApplicableToTypeMismatch(diagnostic: KaFirDiagnostic<*>): List<SurroundWithNullCheckFix> {
-        val nullableExpression = diagnostic.psi as? KtReferenceExpression ?: return emptyList()
+    private fun createQuickFixIfApplicableToTypeMismatch(psi: PsiElement?): List<SurroundWithNullCheckFix> {
+        val nullableExpression = psi as? KtReferenceExpression ?: return emptyList()
         val root = SurroundWithNullCheckUtils.getRootExpressionIfApplicable(nullableExpression) ?: return emptyList()
         val elementContext = ElementContext(nullableExpression.createSmartPointer())
         return listOf(

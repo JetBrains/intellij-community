@@ -78,11 +78,12 @@ class SuspiciousCallableReferenceInLambdaInspection : KotlinApplicableInspection
         )
     }
 
+    @OptIn(KaExperimentalApi::class)
     private fun shouldUseNamedArguments(
         params: List<KaValueParameterSymbol>,
         args: List<KtValueArgument>
     ): Boolean {
-        val hasDefaults = params.any { it.hasDefaultValue }
+        val hasDefaults = params.any { it.hasDeclaredDefaultValue }
         val argsAreNamed = args.any { it.isNamed() }
         return hasDefaults && params.size - 1 > args.size || argsAreNamed
     }

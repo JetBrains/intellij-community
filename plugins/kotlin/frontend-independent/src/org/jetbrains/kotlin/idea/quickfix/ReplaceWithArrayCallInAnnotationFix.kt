@@ -39,9 +39,13 @@ class ReplaceWithArrayCallInAnnotationFix(element: KtExpression) : PsiUpdateModC
 
     companion object : QuickFixesPsiBasedFactory<PsiElement>(PsiElement::class, PsiElementSuitabilityCheckers.ALWAYS_SUITABLE) {
         override fun doCreateQuickFix(psiElement: PsiElement): List<IntentionAction> {
-            val element = psiElement as? KtExpression ?: return emptyList()
+            val expression = when (psiElement) {
+                is KtValueArgument -> psiElement.getArgumentExpression()
+                is KtExpression -> psiElement
+                else -> null
+            } ?: return emptyList()
             return listOf(
-                ReplaceWithArrayCallInAnnotationFix(element).asIntention()
+                ReplaceWithArrayCallInAnnotationFix(expression).asIntention()
             )
         }
     }
