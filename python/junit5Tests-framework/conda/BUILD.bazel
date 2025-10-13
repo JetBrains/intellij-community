@@ -23,6 +23,7 @@ jvm_library(
     "@lib//:kotlin-stdlib",
     "//python/junit5Tests-framework:community-junit5Tests-framework_test_lib",
     "//python:python-community-impl",
+    "//python:python-community-impl_test_lib",
     "//python/setup-test-environment/conda",
     "@lib//:junit5",
     "@lib//:jetbrains-annotations",
