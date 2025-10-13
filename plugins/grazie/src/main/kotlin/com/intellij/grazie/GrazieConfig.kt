@@ -114,7 +114,7 @@ class GrazieConfig : PersistentStateComponent<GrazieConfig.State>, ModificationT
       get() = enabledLanguages.asSequence().filter { isMissingLanguage(it) }.toCollection(CollectionFactory.createSmallMemoryFootprintLinkedSet())
 
     val processing: Processing
-      get() = explicitlyChosenProcessing ?: if (GrazieCloudConnector.EP_NAME.extensionList.firstOrNull()?.isCloudEnabledByDefault() == true) Cloud else Local
+      get() = explicitlyChosenProcessing ?: if (GrazieCloudConnector.isCloudEnabledByDefault()) Cloud else Local
 
     override fun increment(): State = copy(version = version.next() ?: error("Attempt to increment latest version $version"))
 

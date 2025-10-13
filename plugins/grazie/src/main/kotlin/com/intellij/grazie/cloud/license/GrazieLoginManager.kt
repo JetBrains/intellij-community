@@ -5,6 +5,7 @@ import ai.grazie.nlp.langs.Language
 import com.intellij.grazie.GrazieBundle
 import com.intellij.grazie.GrazieScope
 import com.intellij.grazie.cloud.GrazieCloudConfig
+import com.intellij.grazie.cloud.GrazieCloudConnector
 import com.intellij.grazie.cloud.GrazieHttpClientManager
 import com.intellij.grazie.icons.GrazieIcons
 import com.intellij.grazie.utils.catching
@@ -20,12 +21,10 @@ import com.intellij.openapi.ui.Messages
 import com.intellij.platform.ide.provisioner.ProvisionedServiceConfigurationResult
 import com.intellij.platform.ide.provisioner.ProvisionedServiceRegistry
 import com.intellij.platform.ide.provisioner.endpoint.AuthTokenResult
-import com.intellij.ui.LicensingFacade
-import com.intellij.ui.LicensingFacade.LicenseStateListener
+import com.intellij.ui.JBAccountInfoService.AuthStateListener
 import com.intellij.util.ExceptionUtil
 import com.intellij.util.application
 import kotlinx.coroutines.CoroutineScope
-import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.*
 import kotlinx.coroutines.launch
 import org.jetbrains.annotations.TestOnly
@@ -63,10 +62,10 @@ private val logger = logger<GrazieLoginManager>()
 
 @Service(Service.Level.APP)
 class GrazieLoginManager(coroutineScope: CoroutineScope) {
-  private val licenseState = MutableStateFlow(LicenseState.obtain())
+  private val licenseState = MutableStateFlow<LicenseState>(LicenseState.Empty)
   private val loginState = MutableStateFlow<GrazieLoginState>(GrazieLoginState.NoJba)
   private val enterpriseState = MutableStateFlow<EnterpriseState?>(null)
-  private var initialized = AtomicBoolean(false)
+  private val initialized = AtomicBoolean(false)
 
   init {
     coroutineScope.launch {
@@ -91,7 +90,6 @@ class GrazieLoginManager(coroutineScope: CoroutineScope) {
     }
 
     coroutineScope.launch {
-      while (LicensingFacade.getInstance() == null) delay(50)
       updateLicense()
 
       licenseState.collectLatest { license ->
@@ -100,9 +98,9 @@ class GrazieLoginManager(coroutineScope: CoroutineScope) {
         initialized.set(true)
       }
     }
-    application.messageBus.connect(coroutineScope).subscribe(LicenseStateListener.TOPIC, LicenseStateListener {
+    application.messageBus.connect(coroutineScope).subscribe(AuthStateListener.TOPIC, AuthStateListener {
       logger.debug { "Scheduling license and login manager updates on licensing state change" }
-      updateLicense()
+      coroutineScope.launch { updateLicense() }
     })
   }
 
@@ -143,14 +141,17 @@ class GrazieLoginManager(coroutineScope: CoroutineScope) {
   @Suppress("UnstableApiUsage")
   private fun isChina() = RegionSettings.getRegion() == Region.CHINA
 
-  private suspend fun computeLoginState(skipCloudLogin: Boolean = false) {
+  private suspend fun computeLoginState(force: Boolean = false, skipCloudLogin: Boolean = false) {
+    if (GrazieCloudConnector.hasAdditionalConnectors()) return
     val es = enterpriseState.first { it != null }!!
     if (es.isAIEnterpriseEnabled()) {
       setState(GrazieLoginState.Enterprise(if (es.error == null) checkNlpServiceAvailability(es) else es))
       return
     }
 
-    val accountToken = JbaToken.obtain()
+    var accountToken = JbaToken.obtain()
+    if (accountToken == null && force) openLogInDialog()
+    accountToken = JbaToken.obtain()
     if (accountToken == null) {
       setState(GrazieLoginState.NoJba)
       return
@@ -241,12 +242,12 @@ class GrazieLoginManager(coroutineScope: CoroutineScope) {
     computeLoginState(skipCloudLogin = true)
   }
 
-  suspend fun logInToCloud(): GrazieLoginState {
-    computeLoginState()
+  suspend fun logInToCloud(force: Boolean): GrazieLoginState {
+    computeLoginState(force)
     return loginState.value
   }
 
-  private fun updateLicense() {
+  private suspend fun updateLicense() {
     val license = LicenseState.obtain()
     logger.trace("Updating license with: $license")
     if (license != licenseState.value && (license == LicenseState.NoLicense || license == LicenseState.Invalid)) {
@@ -271,18 +272,22 @@ class GrazieLoginManager(coroutineScope: CoroutineScope) {
       getInstance().logOutFromCloud()
     }
 
-    suspend fun logInToCloud(): GrazieLoginState {
-      return getInstance().logInToCloud()
+    suspend fun logInToCloud(force: Boolean): GrazieLoginState {
+      return getInstance().logInToCloud(force)
     }
 
     @JvmStatic
     fun getInstance(): GrazieLoginManager = service<GrazieLoginManager>()
 
-    fun subscribe(disposable: Disposable, listener: (GrazieLoginState) -> Unit) {
+    fun subscribeWithState(disposable: Disposable, listener: (GrazieLoginState) -> Unit) {
       GrazieScope.coroutineScope().launchDisposable(disposable) {
-        state().collect {
-          listener(it)
-        }
+        state().collect { listener(it) }
+      }
+    }
+
+    fun subscribe(disposable: Disposable, listener: () -> Unit) {
+      GrazieScope.coroutineScope().launchDisposable(disposable) {
+        state().collect { listener() }
       }
     }
   }
@@ -312,16 +317,13 @@ private suspend fun obtainLicense(token: JbaToken): LicenseState.Valid? {
   check(!external.suspended) { "Issued license is suspended" }
   check(!external.outdated) { "Issued license is outdated" }
 
-  logger.debug("Requested IDE license activation dialog")
-  // In some cases the license dialog won't be shown, and the license will be automatically fetched
-  // and possibly activated, even if the license has been granted after the IDE start.
-  openGzlActivationDialog()
-
-  // now let's wait for the user interaction with the license dialog that should result in:
-  // the license being activated,
-  // license change events fired,
-  // the background login process being restarted and finished successfully
+  // The user will be able to log in to the cloud via Grazie Icon on the status bar
   return null
+}
+
+internal suspend fun performJbaLogin(): JbaToken? {
+  openLogInDialog()
+  return JbaToken.obtain()
 }
 
 internal fun ensureTermsOfServiceShown(): Boolean {

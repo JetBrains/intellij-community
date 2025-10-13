@@ -193,7 +193,7 @@ object GrazieTextLevelSpellCheckingExtension {
 
       init {
         GrazieConfig.subscribe(this) { clearCache() }
-        GrazieCloudConnector.EP_NAME.forEachExtensionSafe { it.subscribeToAuthorizationStateEvents(this) { clearCache() } }
+        GrazieCloudConnector.subscribeToAuthorizationStateEvents(this) { clearCache() }
       }
     }
 

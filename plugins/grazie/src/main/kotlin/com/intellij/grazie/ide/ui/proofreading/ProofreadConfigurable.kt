@@ -31,8 +31,12 @@ import javax.swing.JLabel
 class ProofreadConfigurable : BoundSearchableConfigurable(
   OptionsBundle.message("configurable.group.proofread.settings.display.name"),
   "reference.settings.ide.settings.proofreading",
-  "proofread"
+  ID
 ) {
+  companion object {
+    const val ID: String = "proofread"
+  }
+
   private val languages by lazy { GrazieLanguagesComponent(::download) }
   private val project by lazy { guessCurrentProject(languages.component) }
 
@@ -116,25 +120,26 @@ class ProofreadConfigurable : BoundSearchableConfigurable(
         GrazieConfig.subscribe(disposable!!) { updateAvailability() }
       }
 
-      if (GrazieCloudConnector.hasCloudConnector()) {
-        row {
-          checkBox(GrazieBundle.message("grazie.settings.use.advanced.spelling.checkbox"))
-            .bindSelected(
-              getter = { GrazieConfig.get().processing == Processing.Cloud },
-              setter = { isSelected ->
-                val selectedProcessing = if (isSelected) Processing.Cloud else Processing.Local
-                if (GrazieConfig.get().processing != selectedProcessing || GrazieConfig.get().explicitlyChosenProcessing != null) {
-                  GrazieConfig.update { state -> state.copy(explicitlyChosenProcessing = selectedProcessing) }
-                }
-              }
-            )
-            .onChanged { checkBox ->
-              if (checkBox.isSelected && GrazieConfig.get().explicitlyChosenProcessing == null) {
-                val agreement = GrazieCloudConnector.EP_NAME.extensionList.first().askUserConsentForCloud()
-                if (!agreement) checkBox.isSelected = false
+      row {
+        checkBox(GrazieBundle.message("grazie.settings.use.advanced.spelling.checkbox"))
+          .bindSelected(
+            getter = { GrazieConfig.get().processing == Processing.Cloud },
+            setter = { isSelected ->
+              val selectedProcessing = if (isSelected) Processing.Cloud else Processing.Local
+              if (GrazieConfig.get().processing != selectedProcessing || GrazieConfig.get().explicitlyChosenProcessing != null) {
+                GrazieConfig.update { state -> state.copy(explicitlyChosenProcessing = selectedProcessing) }
               }
             }
-        }
+          )
+          .onChanged { checkBox ->
+            if (checkBox.isSelected && GrazieConfig.get().explicitlyChosenProcessing == null) {
+              val agreement = GrazieCloudConnector.askUserConsentForCloud()
+              if (!agreement) checkBox.isSelected = false
+            }
+            if (checkBox.isSelected && !GrazieCloudConnector.isAuthorized()) {
+              GrazieCloudConnector.connect(project)
+            }
+          }
       }
     }
   }
