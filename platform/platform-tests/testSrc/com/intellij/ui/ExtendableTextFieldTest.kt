@@ -7,6 +7,7 @@ import com.intellij.testFramework.junit5.TestApplication
 import com.intellij.ui.components.fields.ExtendableTextComponent
 import com.intellij.ui.components.fields.ExtendableTextField
 import org.junit.jupiter.api.Test
+import org.junit.jupiter.api.assertDoesNotThrow
 import javax.swing.JButton
 import kotlin.test.assertEquals
 import kotlin.test.assertTrue
@@ -42,5 +43,16 @@ class ExtendableTextFieldTest {
 
     val buttons = textField.components.filterIsInstance<JButton>()
     assertTrue(buttons.isEmpty())
+  }
+}
+
+class ExtendableTextFieldTestWithoutApplication {
+  @Test
+  fun `adding extension doesn't throw without application`() {
+    assertDoesNotThrow {
+      val textField = ExtendableTextField()
+      val extension = ExtendableTextComponent.Extension.create(AllIcons.General.Add, AllIcons.General.Add, "Add", true) {}
+      textField.addExtension(extension)
+    }
   }
 }
