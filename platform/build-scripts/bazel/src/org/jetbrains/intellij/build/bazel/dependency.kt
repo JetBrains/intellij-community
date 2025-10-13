@@ -419,16 +419,27 @@ private fun addDep(
   isExported: Boolean,
 ) {
   if (isTest) {
+    val hasProductionDependentModule = dependentModule.sources.isNotEmpty() || dependentModule.resources.isNotEmpty()
     when (scope) {
       JpsJavaDependencyScope.COMPILE -> {
-        deps.add(dependencyLabel)
+        if (hasSources) {
+          deps.add(dependencyLabel)
+        }
+        else if (!hasProductionDependentModule) {
+          runtimeDeps.add(dependencyLabel)
+        }
         if (isExported) {  // e.g. //debugger/intellij.java.debugger.rpc.tests:java-debugger-rpc-tests_test_lib
           exports.add(dependencyLabel)
         }
 
         if (dependencyModuleDescriptor != null && !dependencyModuleDescriptor.testSources.isEmpty()) {
           if (needsBackwardCompatibleTestDependency(dependencyModuleDescriptor.module.name, dependentModule)) {
-            deps.add(getLabelForTest(dependencyLabel))
+            if (hasSources) {
+              deps.add(getLabelForTest(dependencyLabel))
+            }
+            else {
+              runtimeDeps.add(getLabelForTest(dependencyLabel))
+            }
             if (isExported) {  // e.g. //CIDR-appcode/appcode-coverage:appcode-coverage_test_lib
               exports.add(getLabelForTest(dependencyLabel))
             }
@@ -437,7 +448,12 @@ private fun addDep(
       }
       JpsJavaDependencyScope.TEST, JpsJavaDependencyScope.PROVIDED -> {
         if (dependencyModuleDescriptor == null) {
-          deps.add(dependencyLabel)
+          if (hasSources) {
+            deps.add(dependencyLabel)
+          }
+          else {
+            runtimeDeps.add(dependencyLabel)
+          }
           if (isExported) {  // e.g. //python/junit5Tests:junit5Tests_test_lib
             exports.add(dependencyLabel)
           }
@@ -458,13 +474,23 @@ private fun addDep(
             }
 
             if (!dependencyModuleDescriptor.sources.isEmpty() || !hasTestSource) {
-              deps.add(dependencyLabel)
+              if (hasSources) {
+                deps.add(dependencyLabel)
+              }
+              else {
+                runtimeDeps.add(dependencyLabel)
+              }
               if (isExported) {  // e.g. @community//python/python-venv:community-impl-venv_test_lib
                 exports.add(dependencyLabel)
               }
             }
             if (hasTestSource) {
-              deps.add(getLabelForTest(dependencyLabel))
+              if (hasSources) {
+                deps.add(getLabelForTest(dependencyLabel))
+              }
+              else {
+                runtimeDeps.add(getLabelForTest(dependencyLabel))
+              }
               if (isExported) {  // e.g. //remote-dev/cwm-guest/plugins/java-frontend:java-frontend-split_test_lib
                 exports.add(getLabelForTest(dependencyLabel))
               }
@@ -473,7 +499,7 @@ private fun addDep(
         }
       }
       JpsJavaDependencyScope.RUNTIME -> {
-        if (dependentModule.sources.isEmpty()) {
+        if (!hasProductionDependentModule) {
           runtimeDeps.add(dependencyLabel)
         }
       }
