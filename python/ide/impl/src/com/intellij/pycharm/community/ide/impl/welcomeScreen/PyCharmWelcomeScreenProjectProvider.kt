@@ -5,15 +5,18 @@ import com.intellij.openapi.project.Project
 import com.intellij.openapi.project.ex.ProjectEx
 import com.intellij.openapi.wm.ex.WelcomeScreenProjectProvider
 import com.intellij.pycharm.community.ide.impl.miscProject.impl.MISC_PROJECT_NAME
+import com.intellij.pycharm.community.ide.impl.miscProject.impl.MISC_PROJECT_WITH_WELCOME_NAME
 import com.intellij.pycharm.community.ide.impl.miscProject.impl.miscProjectDefaultPath
 import java.nio.file.Path
 
 private class PyCharmWelcomeScreenProjectProvider : WelcomeScreenProjectProvider() {
-  override fun getWelcomeScreenProjectName(): String = MISC_PROJECT_NAME
+  override fun getWelcomeScreenProjectName(): String = MISC_PROJECT_WITH_WELCOME_NAME
 
   override fun getWelcomeScreenProjectPath(): Path = miscProjectDefaultPath
 
-  override fun doIsWelcomeScreenProject(project: Project): Boolean = project.name == MISC_PROJECT_NAME
+  override fun doIsWelcomeScreenProject(project: Project): Boolean {
+    return project.name == MISC_PROJECT_WITH_WELCOME_NAME || project.name == MISC_PROJECT_NAME
+  }
 
   override fun doIsForceDisabledFileColors(): Boolean = true
 
@@ -23,8 +26,8 @@ private class PyCharmWelcomeScreenProjectProvider : WelcomeScreenProjectProvider
     val project = super.doCreateOrOpenWelcomeScreenProject(path)
     // The name might be a MiscProject, since we are reusing that project.
     // We have to rename it to Welcome.
-    if (project.name != MISC_PROJECT_NAME && project is ProjectEx) {
-      project.setProjectName(MISC_PROJECT_NAME)
+    if (project.name != MISC_PROJECT_WITH_WELCOME_NAME && project is ProjectEx) {
+      project.setProjectName(MISC_PROJECT_WITH_WELCOME_NAME)
       project.save()
     }
     return project

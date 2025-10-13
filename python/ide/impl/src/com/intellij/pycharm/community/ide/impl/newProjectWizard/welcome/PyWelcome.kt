@@ -31,6 +31,7 @@ import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.openapi.wm.ToolWindowId
 import com.intellij.openapi.wm.ToolWindowManager
 import com.intellij.openapi.wm.ex.ToolWindowManagerListener
+import com.intellij.openapi.wm.ex.WelcomeScreenProjectProvider
 import com.intellij.platform.DirectoryProjectConfigurator
 import com.intellij.psi.PsiDocumentManager
 import com.intellij.psi.PsiFile
@@ -57,7 +58,7 @@ internal class PyWelcomeConfigurator : DirectoryProjectConfigurator {
     get() = false
 
   override fun configureProject(project: Project, baseDir: VirtualFile, moduleRef: Ref<Module>, isProjectCreatedWithWizard: Boolean) {
-    if (isProjectCreatedWithWizard || isInsideTempDirectory(baseDir)) {
+    if (isProjectCreatedWithWizard || isInsideTempDirectory(baseDir) || WelcomeScreenProjectProvider.isWelcomeScreenProject(project)) {
       return
     }
 
