@@ -19,6 +19,7 @@ import com.intellij.xdebugger.impl.ui.tree.nodes.XValueNodeImpl;
 import com.jetbrains.python.PydevBundle;
 import com.jetbrains.python.debugger.pydev.PyDebugCallback;
 import com.jetbrains.python.debugger.render.PyNodeRenderer;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -62,7 +63,7 @@ public class PyDebugValue extends XNamedValue {
   private final @Nullable String myTypeQualifier;
   protected @Nullable String myValue;
   private final boolean myContainer;
-  private final @Nullable String myShape;
+  protected final @Nullable String myShape;
   private final @Nullable String myArrayElementType;
   private final boolean myIsReturnedVal;
   private final boolean myIsIPythonHidden;
@@ -97,6 +98,21 @@ public class PyDebugValue extends XNamedValue {
                       @Nullable String typeRendererId,
                       final @NotNull PyFrameAccessor frameAccessor) {
     this(name, type, typeQualifier, value, container, shape, isReturnedVal, isIPythonHidden, errorOnEval, typeRendererId, null,
+         frameAccessor);
+  }
+
+  @ApiStatus.Internal
+  public PyDebugValue(final @NotNull String name,
+                      final @Nullable String type,
+                      @Nullable String typeQualifier,
+                      final @Nullable String value,
+                      @Nullable String shape,
+                      boolean isReturnedVal,
+                      boolean isIPythonHidden,
+                      boolean errorOnEval,
+                      @Nullable String typeRendererId,
+                      final @NotNull PyFrameAccessor frameAccessor) {
+    this(name, type, typeQualifier, value, EVALUATOR_POSTFIXES.containsKey(type), shape, isReturnedVal, isIPythonHidden, errorOnEval, typeRendererId, null,
          frameAccessor);
   }
 
@@ -850,5 +866,9 @@ public class PyDebugValue extends XNamedValue {
       getDescriptor().setRenderer(null);
     }
     return value;
+  }
+
+  public static Map<String, String> getEvaluatorPostfixes() {
+    return EVALUATOR_POSTFIXES;
   }
 }

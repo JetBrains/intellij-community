@@ -95,6 +95,7 @@ from _pydevd_bundle._debug_adapter.pydevd_schema import (
 )
 from _pydevd_bundle._debug_adapter import pydevd_base_schema, pydevd_schema
 from _pydevd_bundle.pydevd_net_command import NetCommand
+from _pydevd_bundle.custom.pydevd_tables import exec_table_command
 from _pydevd_bundle.pydevd_xml import ExceptionOnEvaluate
 from _pydevd_bundle.pydevd_constants import ForkSafeLock, NULL
 from _pydevd_bundle.pydevd_daemon_thread import PyDBDaemonThread
@@ -132,6 +133,7 @@ from io import StringIO
 
 # CMD_XXX constants imported for backward compatibility
 from _pydevd_bundle.pydevd_comm_constants import *  # @UnusedWildImport
+from _pydevd_bundle.custom import pydevd_vars as pydevd_custom_vars
 
 # Socket import aliases:
 AF_INET, AF_INET6, SOCK_STREAM, SHUT_WR, SOL_SOCKET, IPPROTO_TCP, socket = (
@@ -875,7 +877,7 @@ class InternalGetArray(InternalThreadCommand):
         try:
             frame = dbg.find_frame(self.thread_id, self.frame_id)
             var = pydevd_vars.eval_in_context(self.name, frame.f_globals, frame.f_locals, py_db=dbg)
-            xml = pydevd_vars.table_like_struct_to_xml(var, self.name, self.roffset, self.coffset, self.rows, self.cols, self.format)
+            xml = pydevd_custom_vars.table_like_struct_to_xml(var, self.name, self.roffset, self.coffset, self.rows, self.cols, self.format)
             cmd = dbg.cmd_factory.make_get_array_message(self.sequence, xml)
             dbg.writer.add_command(cmd)
         except:
@@ -1928,3 +1930,43 @@ class GetValueAsyncThreadConsole(AbstractGetValueAsyncThread):
     def send_result(self, xml):
         if self.frame_accessor is not None:
             self.frame_accessor.ReturnFullValue(self.seq, xml.getvalue())
+
+#=======================================================================================================================
+# InternalDataViewerAction
+#=======================================================================================================================
+class InternalTableCommand(InternalThreadCommand):
+    def __init__(self, sequence, thread_id, frame_id, init_command, command_type,
+                 start_index, end_index, format):
+        InternalThreadCommand.__init__(self, thread_id)
+        self.sequence = sequence
+        self.frame_id = frame_id
+        self.init_command = init_command
+        self.command_type = command_type
+        self.start_index = start_index
+        self.end_index = end_index
+        self.format = format
+
+    def do_it(self, dbg):
+        try:
+            pydev_log.info(f"WE ARE IN INTERNAL TABLE COMMAND, thread_id: {self.thread_id}, frame_id: {self.frame_id}" )
+            frame = dbg.find_frame(self.thread_id, self.frame_id)
+            pydev_log.info("frame = dbg.find_frame(self.thread_id, self.frame_id)")
+            pydev_log.info(f"frame {frame}")
+
+            success, res = self.exec_command(frame)
+            if success:
+                pydev_log.info("success")
+                cmd = dbg.cmd_factory.make_get_table_message(self.sequence, res)
+                dbg.writer.add_command(cmd)
+            else:
+                pydev_log.info(f"error, no success, res: {res}")
+                cmd = dbg.cmd_factory.make_error_message(self.sequence, str(res))
+                dbg.writer.add_command(cmd)
+        except Exception as e:
+            cmd = dbg.cmd_factory.make_error_message(self.sequence, get_exception_traceback_str())
+            dbg.writer.add_command(cmd)
+
+    def exec_command(self, frame):
+        return exec_table_command(self.init_command, self.command_type,
+                                  self.start_index, self.end_index, self.format,
+                                  frame.f_globals, frame.f_locals)

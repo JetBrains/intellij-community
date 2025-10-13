@@ -1,6 +1,5 @@
 from __future__ import nested_scopes
 import traceback
-import warnings
 from _pydev_bundle import pydev_log
 from _pydev_bundle._pydev_saved_modules import thread, threading
 from _pydev_bundle import _pydev_saved_modules
@@ -22,6 +21,7 @@ from _pydevd_bundle.pydevd_constants import (
     PYDEVD_WARN_SLOW_RESOLVE_TIMEOUT,
     get_global_debugger,
 )
+from _pydevd_bundle.custom.pydevd_asyncio_provider import get_eval_async_expression_in_context
 
 
 def save_main_module(file, module_name):

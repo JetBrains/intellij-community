@@ -7,7 +7,7 @@ import socket as socket_module
 from _pydev_bundle._pydev_imports_tipper import TYPE_IMPORT, TYPE_CLASS, TYPE_FUNCTION, TYPE_ATTR, TYPE_BUILTIN, TYPE_PARAM
 from _pydev_bundle.pydev_is_thread_alive import is_thread_alive
 from _pydev_bundle.pydev_override import overrides
-from _pydevd_bundle._debug_adapter import pydevd_schema
+from _pydevd_bundle._debug_adapter import pydevd_schema, pydevd_base_schema
 from _pydevd_bundle._debug_adapter.pydevd_schema import (
     ModuleEvent,
     ModuleEventBody,
@@ -55,6 +55,13 @@ from _pydevd_bundle import pydevd_frame_utils, pydevd_constants, pydevd_utils
 import linecache
 from io import StringIO
 from _pydev_bundle import pydev_log
+
+from _pydevd_bundle._debug_adapter.pydevd_schema import \
+    GetTableResponseBody
+from _pydevd_bundle.pydevd_comm_constants import CMD_TABLE_EXEC
+
+from _pydevd_bundle._debug_adapter.pydevd_schema import \
+    GetArrayResponseBody
 
 
 class ModulesManager(object):
@@ -584,3 +591,27 @@ This may mean a number of things:
     def make_exit_command(self, py_db):
         event = pydevd_schema.TerminatedEvent(pydevd_schema.TerminatedEventBody())
         return NetCommand(CMD_EXIT, 0, event, is_json=True)
+
+    @overrides(NetCommandFactory.make_get_table_message)
+    def make_get_table_message(self, seq, res):
+        try:
+            body = GetTableResponseBody(result=res)
+            pydev_log.info(f"RESPONSE BODY: {body}")
+            response = pydevd_schema.GetTableResponse(request_seq=seq, success=True, body=body)
+            pydev_log.info(f"RESPONSE: {response}")
+            return NetCommand(CMD_RETURN, 0, response, is_json=True)
+        except Exception as e:
+            pydev_log.exception(f"Error while building getTable response: {e}")
+            err_response = pydevd_schema.GetTableResponse(request_seq=seq, success=False, body={})
+            return NetCommand(CMD_RETURN, 0, err_response, is_json=True)
+
+    @overrides(NetCommandFactory.make_get_array_message)
+    def make_get_array_message(self, seq, res):
+        try:
+            body = GetArrayResponseBody(result=res)
+            response = pydevd_schema.GetArrayResponse(request_seq=seq, success=True, body=body)
+            return NetCommand(CMD_RETURN, 0, response, is_json=True)
+        except Exception as e:
+            pydev_log.exception(f"Error while building getTable response: {e}")
+            err_response = pydevd_schema.GetArrayResponse(request_seq=seq, success=False, body={})
+            return NetCommand(CMD_RETURN, 0, err_response, is_json=True)

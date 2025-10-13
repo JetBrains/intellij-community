@@ -42,6 +42,7 @@ from _pydevd_bundle.pydevd_comm_constants import (
     VERSION_STRING,
     CMD_RELOAD_CODE,
     CMD_LOAD_SOURCE_FROM_FRAME_ID,
+    CMD_TABLE_EXEC,
 )
 from _pydevd_bundle.pydevd_constants import (
     DebugInfoHolder,
@@ -556,3 +557,7 @@ This may mean a number of things:
 
     def make_exit_command(self, py_db):
         return NULL_EXIT_COMMAND
+
+    def make_get_table_message(self, seq, res):
+        res_xml = "<xml>" + res + "</xml>"
+        return NetCommand(CMD_TABLE_EXEC, seq, res_xml)

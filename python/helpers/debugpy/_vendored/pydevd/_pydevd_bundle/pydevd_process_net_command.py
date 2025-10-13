@@ -231,6 +231,22 @@ class _PyDevCommandProcessor(object):
 
         self.api.request_get_array(py_db, seq, roffset, coffset, rows, cols, format, thread_id, frame_id, scope, attrs)
 
+    def cmd_table_exec(self, py_db, cmd_id, seq, text):
+        try:
+            parameters = text.split('\t')
+            thread_id, frame_id, init_command, command_type = parameters[:4]
+
+            start_index, end_index, format = None, None, None
+
+            if len(parameters) >= 7:
+                start_index = int(parameters[4])
+                end_index = int(parameters[5])
+                format = parameters[6]
+
+            self.api.request_get_table(py_db, seq, thread_id, frame_id, init_command, command_type, start_index, end_index, format)
+        except:
+            traceback.print_exc()
+
     def cmd_show_return_values(self, py_db, cmd_id, seq, text):
         show_return_values = text.split("\t")[1]
         self.api.set_show_return_values(py_db, int(show_return_values) == 1)

@@ -1352,3 +1352,50 @@ class PyDevJsonCommandProcessor(object):
 
         response = pydevd_base_schema.build_response(request)
         return NetCommand(CMD_RETURN, 0, response, is_json=True)
+
+    def on_gettable_request(self, py_db, request):
+        args = request.arguments
+        thread_id = args.threadId
+        frame_id = args.frameId
+        init_command = args.command
+        command_type = args.commandType
+        start_index = args.start
+        end_index = args.end
+        df_format = args.format
+        error_msg = self.api.request_get_table(py_db, request.seq, thread_id, frame_id, init_command, command_type, start_index, end_index, df_format)
+        if error_msg:
+            response = pydevd_base_schema.build_response(
+                request,
+                kwargs={
+                    "body": {},
+                    "success": False,
+                    "message": error_msg,
+                },
+            )
+            pydev_log.error("ERR WHILE EXECUTING GETTABLE" + error_msg)
+            return NetCommand(CMD_RETURN, 0, response, is_json=True)
+        return None
+
+    def on_getarray_request(self, py_db, request):
+        args = request.arguments
+        thread_id = args.threadId
+        frame_id = args.frameId
+        row_offset = args.rowOffset
+        col_offset = args.colOffset
+        rows = args.rows
+        cols = args.cols
+        fmt = args.format
+        attrs = args.variableName
+        error_msg = self.api.request_get_array(py_db, request.seq, row_offset, col_offset, rows, cols, fmt, thread_id, frame_id, None, attrs)
+        if error_msg:
+            response = pydevd_base_schema.build_response(
+                request,
+                kwargs={
+                    "body": {},
+                    "success": False,
+                    "message": error_msg,
+                },
+            )
+            pydev_log.error("ERR WHILE EXECUTING GETTABLE" + error_msg)
+            return NetCommand(CMD_RETURN, 0, response, is_json=True)
+        return None

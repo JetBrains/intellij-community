@@ -25,6 +25,7 @@ from _pydevd_bundle.pydevd_comm import (
     internal_get_exception_details_json,
     internal_step_in_thread,
     internal_smart_step_into,
+    InternalTableCommand
 )
 from _pydevd_bundle.pydevd_comm_constants import (
     CMD_THREAD_SUSPEND,
@@ -339,6 +340,10 @@ class PyDevdAPI(object):
 
     def request_get_array(self, py_db, seq, roffset, coffset, rows, cols, fmt, thread_id, frame_id, scope, attrs):
         int_cmd = InternalGetArray(seq, roffset, coffset, rows, cols, fmt, thread_id, frame_id, scope, attrs)
+        py_db.post_internal_command(int_cmd, thread_id)
+
+    def request_get_table(self, py_db, seq, thread_id, frame_id, init_command, command_type, start_index, end_index, format):
+        int_cmd = InternalTableCommand(seq, thread_id, frame_id, init_command, command_type, start_index, end_index, format)
         py_db.post_internal_command(int_cmd, thread_id)
 
     def request_load_full_value(self, py_db, seq, thread_id, frame_id, vars):

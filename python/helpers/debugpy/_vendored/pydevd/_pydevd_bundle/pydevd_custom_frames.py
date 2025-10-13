@@ -1,3 +1,5 @@
+#  Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+
 from _pydevd_bundle.pydevd_constants import get_current_thread_id, Null, ForkSafeLock
 from pydevd_file_utils import get_abs_path_real_path_and_base_from_frame
 from _pydev_bundle._pydev_saved_modules import thread, threading
