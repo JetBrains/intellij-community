@@ -39,7 +39,7 @@ kotlin {
     jvmToolchain { languageVersion = JavaLanguageVersion.of(jdkLevel) }
 
     compilerOptions {
-        freeCompilerArgs.add("-Xcontext-receivers")
+        freeCompilerArgs.add("-Xcontext-parameters")
         jvmTarget.set(JvmTarget.fromTarget(jdkLevel))
     }
 
