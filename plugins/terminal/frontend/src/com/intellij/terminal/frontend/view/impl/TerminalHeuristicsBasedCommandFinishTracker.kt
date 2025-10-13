@@ -15,7 +15,7 @@ import kotlinx.coroutines.FlowPreview
 import kotlinx.coroutines.channels.BufferOverflow
 import kotlinx.coroutines.flow.*
 import kotlinx.coroutines.launch
-import org.jetbrains.plugins.terminal.block.reworked.TerminalLine
+import org.jetbrains.plugins.terminal.block.reworked.TerminalLineIndex
 import org.jetbrains.plugins.terminal.block.reworked.TerminalOffset
 import org.jetbrains.plugins.terminal.block.reworked.TerminalOutputModel
 import org.jetbrains.plugins.terminal.block.reworked.TerminalOutputModelListener
@@ -142,7 +142,7 @@ internal class TerminalHeuristicsBasedCommandFinishTracker(
   }
 
   private data class LineInfo(
-    val line: TerminalLine,
+    val line: TerminalLineIndex,
     val promptText: String,
   )
 

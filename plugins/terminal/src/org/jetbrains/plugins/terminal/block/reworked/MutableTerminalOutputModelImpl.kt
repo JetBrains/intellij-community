@@ -45,23 +45,23 @@ sealed class AbstractTerminalOutputModelImpl(
   override val startOffset: TerminalOffset
     get() = relativeOffset(0)
 
-  override val firstLine: TerminalLine
-    get() = TerminalLineImpl(trimmedLinesCount)
+  override val firstLine: TerminalLineIndex
+    get() = TerminalLineIndexImpl(trimmedLinesCount)
 
-  override val lastLine: TerminalLine
-    get() = TerminalLineImpl(trimmedLinesCount + lineCount - 1)
+  override val lastLine: TerminalLineIndex
+    get() = TerminalLineIndexImpl(trimmedLinesCount + lineCount - 1)
 
   protected fun relativeOffset(offset: Int): TerminalOffset = TerminalOffsetImpl(trimmedCharsCount + offset)
 
   override fun absoluteOffset(offset: Long): TerminalOffset = TerminalOffsetImpl(offset)
 
-  override fun absoluteLine(line: Long): TerminalLine = TerminalLineImpl(line)
+  override fun absoluteLine(line: Long): TerminalLineIndex = TerminalLineIndexImpl(line)
 
-  override fun lineByOffset(offset: TerminalOffset): TerminalLine = TerminalLineImpl(trimmedLinesCount + document.getLineNumber(offset.toRelative()))
+  override fun lineByOffset(offset: TerminalOffset): TerminalLineIndex = TerminalLineIndexImpl(trimmedLinesCount + document.getLineNumber(offset.toRelative()))
 
-  override fun startOffset(line: TerminalLine): TerminalOffset = relativeOffset(document.getLineStartOffset(line.toRelative()))
+  override fun startOffset(line: TerminalLineIndex): TerminalOffset = relativeOffset(document.getLineStartOffset(line.toRelative()))
 
-  override fun endOffset(line: TerminalLine, includeEOL: Boolean): TerminalOffset {
+  override fun endOffset(line: TerminalLineIndex, includeEOL: Boolean): TerminalOffset {
     var result = document.getLineEndOffset(line.toRelative())
     if (includeEOL && result < textLength) {
       ++result
@@ -80,7 +80,7 @@ sealed class AbstractTerminalOutputModelImpl(
 
   protected fun TerminalOffset.toRelative(): Int = (this - startOffset).toInt()
 
-  private fun TerminalLine.toRelative(): Int = (this - firstLine).toInt()
+  private fun TerminalLineIndex.toRelative(): Int = (this - firstLine).toInt()
 }
 
 /**
@@ -572,11 +572,11 @@ private data class TerminalOffsetImpl(private val absolute: Long) : TerminalOffs
 @TestOnly
 val ZERO_TERMINAL_OFFSET: TerminalOffset = TerminalOffsetImpl(0L)
 
-private data class TerminalLineImpl(private val absolute: Long) : TerminalLine {
-  override fun compareTo(other: TerminalLine): Int = toAbsolute().compareTo(other.toAbsolute())
+private data class TerminalLineIndexImpl(private val absolute: Long) : TerminalLineIndex {
+  override fun compareTo(other: TerminalLineIndex): Int = toAbsolute().compareTo(other.toAbsolute())
   override fun toAbsolute(): Long = absolute
-  override fun plus(lineCount: Long): TerminalLine = TerminalLineImpl(absolute + lineCount)
-  override fun minus(other: TerminalLine): Long = toAbsolute() - other.toAbsolute()
+  override fun plus(lineCount: Long): TerminalLineIndex = TerminalLineIndexImpl(absolute + lineCount)
+  override fun minus(other: TerminalLineIndex): Long = toAbsolute() - other.toAbsolute()
   override fun toString(): String = "${toAbsolute()}L"
 }
 

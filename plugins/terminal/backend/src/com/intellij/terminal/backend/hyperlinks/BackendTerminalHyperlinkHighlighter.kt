@@ -221,9 +221,9 @@ private data class TaskState(
 
 private fun newHighlightTask(
   outputModel: TerminalOutputModel,
-  startLine: TerminalLine,
+  startLine: TerminalLineIndex,
 ): HighlightTask {
-  val endLineInclusive: TerminalLine = outputModel.lastLine
+  val endLineInclusive: TerminalLineIndex = outputModel.lastLine
   val startOffset: TerminalOffset = outputModel.startOffset(startLine)
   return HighlightTask(
     startLine.toAbsolute(),
@@ -278,12 +278,12 @@ private class HighlightTaskRunner(
   val topResults = LinkedBlockingDeque<TaskResult>()
   val bottomResults = LinkedBlockingDeque<TaskResult>()
 
-  private val topStartLine: TerminalLine = outputModel.absoluteLine(task.startAbsoluteLine)
-  private val bottomStartLine: TerminalLine = (lastLine() + 1 - BATCH_SIZE)
+  private val topStartLine: TerminalLineIndex = outputModel.absoluteLine(task.startAbsoluteLine)
+  private val bottomStartLine: TerminalLineIndex = (lastLine() + 1 - BATCH_SIZE)
     .coerceAtLeast(firstLine())
     .coerceAtLeast(topStartLine)
-  private val topStopLineInclusive: TerminalLine = bottomStartLine - 1
-  private val bottomStopLineInclusive: TerminalLine = lastLine()
+  private val topStopLineInclusive: TerminalLineIndex = bottomStartLine - 1
+  private val bottomStopLineInclusive: TerminalLineIndex = lastLine()
 
   var currentAbsoluteLine: Long = topStartLine.toAbsolute()
 
@@ -294,8 +294,8 @@ private class HighlightTaskRunner(
   private fun firstLine() = outputModel.firstLine
   private fun lastLine() = outputModel.lastLine
   
-  private operator fun TerminalLine.plus(count: Int) = outputModel.absoluteLine(toAbsolute() + count)
-  private operator fun TerminalLine.minus(count: Int) = outputModel.absoluteLine(toAbsolute() - count)
+  private operator fun TerminalLineIndex.plus(count: Int) = outputModel.absoluteLine(toAbsolute() + count)
+  private operator fun TerminalLineIndex.minus(count: Int) = outputModel.absoluteLine(toAbsolute() - count)
 
   suspend fun run() {
     try {
@@ -436,8 +436,8 @@ private class HyperlinkProcessor(
   suspend fun processBatch(
     outputModel: TerminalOutputModelSnapshot,
     filter: CompositeFilter,
-    startLine: TerminalLine,
-    endLine: TerminalLine,
+    startLine: TerminalLineIndex,
+    endLine: TerminalLineIndex,
   ): List<TerminalFilterResultInfoDto> =
     readAction {
       mutableListOf<TerminalFilterResultInfoDto>().also { results ->
@@ -501,7 +501,7 @@ private class HypertextFromFrozenTerminalOutputModelAdapter(private val model: T
   override fun getLineText(lineIndex: Int): String = model.getLineText(model.relativeLine(lineIndex))
 }
 
-private fun TerminalOutputModelSnapshot.getLineText(line: TerminalLine): String =
+private fun TerminalOutputModelSnapshot.getLineText(line: TerminalLineIndex): String =
   getText(startOffset(line), endOffset(line, includeEOL = true))
 
 /**
@@ -515,6 +515,6 @@ private fun TerminalOutputModelSnapshot.getLineText(line: TerminalLine): String 
 private const val BATCH_SIZE = 200
 private val LOG = logger<BackendTerminalHyperlinkHighlighter>()
 
-private fun TerminalOutputModelSnapshot.relativeLine(lineIndex: Int): TerminalLine = firstLine + lineIndex.toLong()
-private fun TerminalLine.toRelative(model: TerminalOutputModel): Int = (this - model.firstLine).toInt()
+private fun TerminalOutputModelSnapshot.relativeLine(lineIndex: Int): TerminalLineIndex = firstLine + lineIndex.toLong()
+private fun TerminalLineIndex.toRelative(model: TerminalOutputModel): Int = (this - model.firstLine).toInt()
 private fun TerminalOffset.toRelative(model: TerminalOutputModel): Int = (this - model.startOffset).toInt()

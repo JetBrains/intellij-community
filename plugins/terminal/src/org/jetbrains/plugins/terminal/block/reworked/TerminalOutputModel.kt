@@ -31,9 +31,9 @@ sealed interface TerminalOutputModel {
 
   val startOffset: TerminalOffset
 
-  val firstLine: TerminalLine
+  val firstLine: TerminalLineIndex
 
-  val lastLine: TerminalLine
+  val lastLine: TerminalLineIndex
 
   fun addListener(parentDisposable: Disposable, listener: TerminalOutputModelListener)
 
@@ -41,13 +41,13 @@ sealed interface TerminalOutputModel {
 
   fun absoluteOffset(offset: Long): TerminalOffset
 
-  fun absoluteLine(line: Long): TerminalLine
+  fun absoluteLine(line: Long): TerminalLineIndex
 
-  fun lineByOffset(offset: TerminalOffset): TerminalLine
+  fun lineByOffset(offset: TerminalOffset): TerminalLineIndex
 
-  fun startOffset(line: TerminalLine): TerminalOffset
+  fun startOffset(line: TerminalLineIndex): TerminalOffset
 
-  fun endOffset(line: TerminalLine, includeEOL: Boolean = false): TerminalOffset
+  fun endOffset(line: TerminalLineIndex, includeEOL: Boolean = false): TerminalOffset
 
   fun getText(start: TerminalOffset, end: TerminalOffset): String
 
@@ -74,10 +74,10 @@ sealed interface TerminalOffset : Comparable<TerminalOffset> {
 }
 
 @ApiStatus.Experimental
-sealed interface TerminalLine : Comparable<TerminalLine> {
+sealed interface TerminalLineIndex : Comparable<TerminalLineIndex> {
   fun toAbsolute(): Long
-  operator fun plus(lineCount: Long): TerminalLine
-  operator fun minus(other: TerminalLine): Long
+  operator fun plus(lineCount: Long): TerminalLineIndex
+  operator fun minus(other: TerminalLineIndex): Long
 }
 
 @get:ApiStatus.Experimental
