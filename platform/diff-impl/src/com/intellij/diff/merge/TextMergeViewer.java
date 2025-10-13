@@ -1,4 +1,4 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.diff.merge;
 
 import com.intellij.diff.DiffContext;
@@ -90,9 +90,7 @@ public class TextMergeViewer implements MergeTool.MergeViewer {
 
     components.closeHandler = () -> {
       boolean exit = MergeUtil.showExitWithoutApplyingChangesDialog(this, myMergeRequest, myMergeContext, myViewer.isContentModified());
-      if (exit) {
-        myViewer.logMergeCancelled();
-      }
+      myViewer.logMergeCancelled(myViewer.myContentModified, exit);
       return exit;
     };
 
