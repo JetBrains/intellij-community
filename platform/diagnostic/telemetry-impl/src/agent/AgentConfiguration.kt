@@ -1,8 +1,8 @@
 // Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.platform.diagnostic.telemetry.impl.agent
 
-import com.intellij.ide.plugins.PluginModuleId
 import com.intellij.ide.plugins.PluginManagerCore
+import com.intellij.ide.plugins.PluginModuleId
 import com.intellij.platform.diagnostic.telemetry.rt.context.TelemetryContext
 import org.jetbrains.annotations.ApiStatus
 import java.net.URI
@@ -138,7 +138,7 @@ data class AgentConfiguration(
   }
 
   private fun getAgentExtensionPath(): Path? {
-    val moduleDescriptor = PluginManagerCore.getPluginSet().findEnabledModule(PluginModuleId(AGENT_EXTENSION_MODULE_NAME))
+    val moduleDescriptor = PluginManagerCore.getPluginSet().findEnabledModule(PluginModuleId(AGENT_EXTENSION_MODULE_NAME, PluginModuleId.JETBRAINS_NAMESPACE))
                            ?: return null
     return moduleDescriptor.jarFiles?.first {
       it.fileName.toString() == "$AGENT_EXTENSION_MODULE_NAME.jar"

@@ -260,7 +260,7 @@ class PluginSetBuilder(@JvmField val unsortedPlugins: Set<PluginMainDescriptor>)
       "backend" -> "intellij.platform.frontend"
       "frontend" -> "intellij.platform.backend"
       else -> null
-    }?.let { PluginModuleId(it) }
+    }?.let { PluginModuleId(it, PluginModuleId.JETBRAINS_NAMESPACE) }
   }
 
   private fun markModuleAsEnabled(moduleId: PluginModuleId, moduleDescriptor: ContentModuleDescriptor) {

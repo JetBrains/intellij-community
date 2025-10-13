@@ -175,7 +175,7 @@ open class LambdaTestHost(coroutineScope: CoroutineScope) {
         val testModuleId = System.getProperty(TEST_MODULE_ID_PROPERTY_NAME)
                            ?: error("Test module ID '$TEST_MODULE_ID_PROPERTY_NAME' is not specified")
 
-        val testPlugin = PluginManagerCore.getPluginSet().findEnabledModule(PluginModuleId(testModuleId))
+        val testPlugin = PluginManagerCore.getPluginSet().findEnabledModule(PluginModuleId(testModuleId, PluginModuleId.JETBRAINS_NAMESPACE))
                          ?: error("Test plugin with test module '$testModuleId' is not found")
 
         LOG.info("Test class will be loaded from '${testPlugin.pluginId}' plugin")

@@ -729,13 +729,14 @@ private fun readDependencies(reader: XMLStreamReader2, builder: PluginDescriptor
     when (elementName) {
       PluginXmlConst.DEPENDENCIES_MODULE_ELEM -> {
         var name: String? = null
+        var namespace: String? = null
         for (i in 0 until reader.attributeCount) {
-          if (reader.getAttributeLocalName(i) == PluginXmlConst.DEPENDENCIES_MODULE_NAME_ATTR) {
-            name = interner.name(reader.getAttributeValue(i))
-            break
+          when (reader.getAttributeLocalName(i)) {
+            PluginXmlConst.DEPENDENCIES_MODULE_NAME_ATTR -> name = interner.name(reader.getAttributeValue(i))
+            PluginXmlConst.DEPENDENCIES_MODULE_NAMESPACE_ATTR -> namespace = interner.name(reader.getAttributeValue(i))
           }
         }
-        builder.addDependency(DependenciesElement.ModuleDependency(name!!))
+        builder.addDependency(DependenciesElement.ModuleDependency(name!!, namespace))
       }
       PluginXmlConst.DEPENDENCIES_PLUGIN_ELEM -> {
         var id: String? = null

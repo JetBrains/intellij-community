@@ -65,7 +65,9 @@ fun PluginSpec.buildXml(config: PluginPackagingConfig = PluginPackagingConfig())
     if (moduleDependencies.isNotEmpty() || pluginMainModuleDependencies.isNotEmpty()) {
       appendLine("<dependencies>")
       for (module in moduleDependencies) {
-        appendLine("""<module name="${module}" />""")
+        append("""<module name="${module.name}"""")
+        if (module.namespace != null) append(""" namespace="${module.namespace}"""")
+        appendLine(""" />""")
       }
       for (plugin in pluginMainModuleDependencies) {
         appendLine("""<plugin id="${plugin}" />""")

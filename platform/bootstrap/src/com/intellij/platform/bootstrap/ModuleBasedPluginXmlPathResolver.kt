@@ -45,11 +45,11 @@ internal class ModuleBasedPluginXmlPathResolver(
           val reasonsWhyNotLoaded = notLoadedModuleIds[moduleId] ?: emptyList()
           if (reasonsWhyNotLoaded.isNotEmpty()) {
             for (reason in reasonsWhyNotLoaded) {
-              addDependency(DependenciesElement.ModuleDependency(reason.stringId))
+              addDependency(DependenciesElement.ModuleDependency(reason.stringId, null))
             }
           }
           else {
-            addDependency(DependenciesElement.ModuleDependency("incompatible.with.product.mode.or.unresolved"))
+            addDependency(DependenciesElement.ModuleDependency("incompatible.with.product.mode.or.unresolved", null))
           }
         }
       }

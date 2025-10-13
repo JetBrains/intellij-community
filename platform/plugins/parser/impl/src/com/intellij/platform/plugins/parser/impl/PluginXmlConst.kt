@@ -66,6 +66,7 @@ object PluginXmlConst {
   const val DEPENDENCIES_ELEM: String = "dependencies"
   const val DEPENDENCIES_MODULE_ELEM: String = "module"
   const val DEPENDENCIES_MODULE_NAME_ATTR: String = "name"
+  const val DEPENDENCIES_MODULE_NAMESPACE_ATTR: String = "namespace"
   const val DEPENDENCIES_PLUGIN_ELEM: String = "plugin"
   const val DEPENDENCIES_PLUGIN_ID_ATTR: String = "id"
 
