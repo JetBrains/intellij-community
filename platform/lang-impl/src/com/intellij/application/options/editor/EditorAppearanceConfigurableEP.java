@@ -3,6 +3,7 @@ package com.intellij.application.options.editor;
 
 import com.intellij.openapi.options.ConfigurableEP;
 import com.intellij.openapi.options.UnnamedConfigurable;
+import org.jetbrains.annotations.ApiStatus;
 
 /**
  * To provide additional options in Editor | Appearance section register implementation of
@@ -14,5 +15,6 @@ import com.intellij.openapi.options.UnnamedConfigurable;
  * <p>
  * A new instance of the specified class will be created each time then the Settings dialog is opened
  */
-final class EditorAppearanceConfigurableEP extends ConfigurableEP<UnnamedConfigurable> {
+@ApiStatus.Internal
+public final class EditorAppearanceConfigurableEP extends ConfigurableEP<UnnamedConfigurable> {
 }
