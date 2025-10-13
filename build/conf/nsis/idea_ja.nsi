@@ -34,6 +34,6 @@ LangString uninstall_previous_installations_silent ${LANG_JAPANESE} "サイレ�
 LangString uninstaller_relocated ${LANG_JAPANESE} "アンインストールする際に ${MUI_PRODUCT} のインストールフォルダーが検出されませんでした。uninstall.exe がインストールフォルダーから移動された可能性があります。"
 LangString choose_empty_folder ${LANG_JAPANESE} "$INSTDIR が空ではありません。$\n空のフォルダーを選択してください。"
 LangString application_running ${LANG_JAPANESE} "${MUI_PRODUCT} が動作中です。アプリケーションを閉じた後に OK をクリックしてアンインストールを再試行するか、キャンセルを押して中断してください。"
-LangString unsupported_win_version ${LANG_JAPANESE} "This ${MUI_PRODUCT} build requires Windows 10 1607 or newer."
-LangString arch_mismatch ${LANG_JAPANESE} "This ${MUI_PRODUCT} build requires $R1 version of Windows."  ; $R1 = x64 or ARM64
+LangString unsupported_win_version ${LANG_JAPANESE} "この ${MUI_PRODUCT} ビルドには、Windows 10 1607 以降が必要です。"
+LangString arch_mismatch ${LANG_JAPANESE} "この ${MUI_PRODUCT} ビルドには、$R1 バージョンの Windows が必要です。"  ; $R1 = x64 or ARM64
 LangString out_of_disk_space ${LANG_JAPANESE} "エラー: ディスク空き容量が不足しています！"
