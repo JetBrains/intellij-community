@@ -28,10 +28,6 @@ jvm_library(
   module_name = "intellij.platform.frontend.main",
   visibility = ["//visibility:public"],
   srcs = glob([], allow_empty = True),
-  deps = [
-    "//platform/execution-impl/frontend",
-    "//platform/remote-topics/frontend",
-  ],
   runtime_deps = [
     "//platform/main/intellij.platform.main:main",
     "//platform/navbar/frontend",
@@ -41,8 +37,10 @@ jvm_library(
     "//platform/bookmarks/frontend",
     "//platform/recentFiles/frontend",
     "//platform/pluginManager/frontend",
+    "//platform/execution-impl/frontend",
     "//platform/execution.dashboard/frontend",
     "//platform/execution.serviceView/frontend",
+    "//platform/remote-topics/frontend",
     "//platform/buildView/frontend",
     "//platform/completion/frontend",
   ]

@@ -87,8 +87,7 @@ jvm_library(
     "//plugins/kotlin/base/scripting/scripting.k1",
     "//plugins/kotlin/base/scripting/scripting.k1:scripting.k1_test_lib",
     "//plugins/kotlin/base/scripting/scripting.shared",
-  ],
-  runtime_deps = ["//plugins/kotlin/compiler-plugins/lombok/gradle"]
+  ]
 )
 ### auto-generated section `build kotlin.performance-tests` end
 
