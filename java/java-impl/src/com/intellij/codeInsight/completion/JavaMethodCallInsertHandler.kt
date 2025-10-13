@@ -69,7 +69,7 @@ public class JavaMethodCallInsertHandler(
    */
   private val myHandlers: List<InsertHandler<in JavaMethodCallElement>> = listOfNotNull(
     RefStartInsertHandler(),
-    DiamondInsertHandler(),
+    createDiamondInsertHandler(item),
     ParenthInsertHandler(),
     beforeHandler,
     ImportQualifyAndInsertTypeParametersHandler(needImportOrQualify, needExplicitTypeParameters),
@@ -178,12 +178,11 @@ private class RefStartInsertHandler : InsertHandler<LookupElement> {
   }
 }
 
-private class DiamondInsertHandler : InsertHandler<JavaMethodCallElement> {
-  override fun handleInsert(context: InsertionContext, item: JavaMethodCallElement) {
-    val method = item.getObject().takeIf { it.isConstructor } ?: return
-    if (method.containingClass?.typeParameters?.isNotEmpty() != true) return
-    context.document.insertString(context.tailOffset, "<>")
-  }
+private fun createDiamondInsertHandler(item: JavaMethodCallElement): InsertHandler<LookupElement>? {
+  val method = item.getObject().takeIf { it.isConstructor } ?: return null
+  val containingClass = method.containingClass ?: return null
+  if (containingClass.typeParameters.isEmpty()) return null
+  return DiamondInsertHandler()
 }
 
 private class ParenthInsertHandler : InsertHandler<JavaMethodCallElement> {
