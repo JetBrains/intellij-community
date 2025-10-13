@@ -13,10 +13,11 @@ internal object ImportOldConfigsUsagesCollector : CounterUsagesCollector() {
   }
 
   enum class InitialImportScenario {
-    CLEAN_CONFIGS, IMPORTED_FROM_PREVIOUS_VERSION, IMPORT_SETTINGS_ACTION, RESTORE_DEFAULT_ACTION, SHOW_DIALOG_REQUESTED_BY_PROPERTY
+    CLEAN_CONFIGS, IMPORTED_FROM_PREVIOUS_VERSION, IMPORT_SETTINGS_ACTION, RESTORE_DEFAULT_ACTION,
+    SHOW_DIALOG_REQUESTED_BY_PROPERTY, SHOW_DIALOG_NO_CONFIGS_FOUND
   }
 
-  private val GROUP = EventLogGroup("import.old.config", 5)
+  private val GROUP = EventLogGroup("import.old.config", 6)
 
   private val IMPORT_DIALOG_SHOWN_EVENT =
     GROUP.registerEvent("import.dialog.shown", Enum("selected", ImportOldConfigType::class.java), Boolean("config_folder_exists"))
