@@ -1,10 +1,11 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInsight.lookup;
 
 import com.intellij.codeInsight.completion.InsertHandler;
 import com.intellij.codeInsight.completion.InsertionContext;
 import com.intellij.openapi.util.ClassConditionKey;
 import com.intellij.psi.PsiElement;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.annotations.Unmodifiable;
@@ -274,5 +275,11 @@ public abstract class LookupElementDecorator<T extends LookupElement> extends Lo
       result = 31 * result + myVisagiste.getClass().hashCode();
       return result;
     }
+  }
+
+  /** a way to check if `element` is exactly InsertingDecorator */
+  @ApiStatus.Internal
+  public static boolean isDecoratedWithInsertHandler(@NotNull LookupElement element) {
+    return element instanceof InsertingDecorator;
   }
 }

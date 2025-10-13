@@ -711,6 +711,8 @@ public class LookupImpl extends LightweightHint implements LookupEx, Disposable,
                                         int prefixLength) {
     String lookupString = LookupUtil.getCaseCorrectedLookupString(item, matcher, itemPattern);
 
+    item.putUserData(CodeCompletionHandlerBase.ITEM_PATTERN_AND_PREFIX_LENGTH, new FinishCompletionInfo(itemPattern, prefixLength));
+
     editor.getCaretModel().runForEachCaret(__ -> {
       EditorModificationUtilEx.deleteSelectedText(editor);
       int caretOffset = editor.getCaretModel().getOffset();

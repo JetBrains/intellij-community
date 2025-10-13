@@ -335,7 +335,8 @@ public final class CompletionProgressIndicator extends ProgressIndicatorBase imp
   public void dispose() {
   }
 
-  private static int findReplacementOffset(int selectionEndOffset, @NotNull PsiReference reference) {
+  @ApiStatus.Internal
+  public static int findReplacementOffset(int selectionEndOffset, @NotNull PsiReference reference) {
     final List<TextRange> ranges = ReferenceRange.getAbsoluteRanges(reference);
     for (TextRange range : ranges) {
       if (range.contains(selectionEndOffset)) {
