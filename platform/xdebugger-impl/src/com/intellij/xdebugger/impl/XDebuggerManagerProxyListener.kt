@@ -12,10 +12,10 @@ import com.intellij.xdebugger.impl.frame.asProxy
 import org.jetbrains.annotations.ApiStatus
 
 /**
- * Frontend-side analogue of [com.intellij.xdebugger.XDebuggerManagerListener]
+ * [XDebugSessionProxy] analogue of [com.intellij.xdebugger.XDebuggerManagerListener]
  */
 @ApiStatus.Internal
-interface FrontendXDebuggerManagerListener {
+interface XDebuggerManagerProxyListener {
   fun sessionStarted(session: XDebugSessionProxy) {}
   fun sessionStopped(session: XDebugSessionProxy) {}
   fun activeSessionChanged(previousSession: XDebugSessionProxy?, currentSession: XDebugSessionProxy?) {}
@@ -23,8 +23,8 @@ interface FrontendXDebuggerManagerListener {
   companion object {
     @JvmField
     @Topic.ProjectLevel
-    val TOPIC: Topic<FrontendXDebuggerManagerListener> =
-      Topic("FrontendXDebuggerManager events", FrontendXDebuggerManagerListener::class.java)
+    val TOPIC: Topic<XDebuggerManagerProxyListener> =
+      Topic("XDebuggerManagerListener proxy events", XDebuggerManagerProxyListener::class.java)
   }
 }
 
@@ -38,19 +38,19 @@ private class MonolithListenerAdapter : XDebuggerManagerListener {
   override fun processStarted(debugProcess: XDebugProcess) {
     if (!shouldTriggerListener) return
     val session = debugProcess.session
-    session.project.messageBus.syncPublisher(FrontendXDebuggerManagerListener.TOPIC).sessionStarted(session.asProxy())
+    session.project.messageBus.syncPublisher(XDebuggerManagerProxyListener.TOPIC).sessionStarted(session.asProxy())
   }
 
   override fun processStopped(debugProcess: XDebugProcess) {
     if (!shouldTriggerListener) return
     val session = debugProcess.session
-    session.project.messageBus.syncPublisher(FrontendXDebuggerManagerListener.TOPIC).sessionStopped(session.asProxy())
+    session.project.messageBus.syncPublisher(XDebuggerManagerProxyListener.TOPIC).sessionStopped(session.asProxy())
   }
 
   override fun currentSessionChanged(previousSession: XDebugSession?, currentSession: XDebugSession?) {
     if (!shouldTriggerListener) return
     val project = previousSession?.project ?: currentSession?.project ?: return
-    project.messageBus.syncPublisher(FrontendXDebuggerManagerListener.TOPIC).activeSessionChanged(previousSession?.asProxy(),
-                                                                                                  currentSession?.asProxy())
+    project.messageBus.syncPublisher(XDebuggerManagerProxyListener.TOPIC).activeSessionChanged(previousSession?.asProxy(),
+                                                                                               currentSession?.asProxy())
   }
 }

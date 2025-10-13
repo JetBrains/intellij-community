@@ -10,6 +10,7 @@ import com.intellij.xdebugger.frame.XExecutionStack
 import com.intellij.xdebugger.frame.XValue
 import com.intellij.xdebugger.impl.breakpoints.XBreakpointManagerImpl
 import com.intellij.xdebugger.impl.breakpoints.XBreakpointManagerProxy
+import com.intellij.xdebugger.impl.breakpoints.asProxy
 import com.intellij.xdebugger.impl.frame.XDebugManagerProxy
 import com.intellij.xdebugger.impl.frame.XDebugSessionProxy
 import com.intellij.xdebugger.impl.frame.asProxy
@@ -33,7 +34,7 @@ private class MonolithXDebugManagerProxy : XDebugManagerProxy {
   }
 
   override suspend fun <T> withId(value: XValue, session: XDebugSessionProxy, block: suspend (XValueId) -> T): T {
-    val sessionImpl = (session as XDebugSessionProxy.Monolith).session as XDebugSessionImpl
+    val sessionImpl = (session as XDebugSessionProxy.Monolith).session
     return withCoroutineScopeForId(block) { scope ->
       BackendXValueModel(scope, sessionImpl, value, precomputePresentation = false).id
     }
@@ -43,7 +44,7 @@ private class MonolithXDebugManagerProxy : XDebugManagerProxy {
   override fun getXValueId(value: XValue): XValueId? = null
 
   override suspend fun <T> withId(stack: XExecutionStack, session: XDebugSessionProxy, block: suspend (XExecutionStackId) -> T): T {
-    val sessionImpl = (session as XDebugSessionProxy.Monolith).session as XDebugSessionImpl
+    val sessionImpl = (session as XDebugSessionProxy.Monolith).session
     return withCoroutineScopeForId(block) { scope ->
       stack.getOrStoreGlobally(scope, sessionImpl)
     }
@@ -60,7 +61,8 @@ private class MonolithXDebugManagerProxy : XDebugManagerProxy {
   }
 
   override fun getBreakpointManagerProxy(project: Project): XBreakpointManagerProxy {
-    return XBreakpointManagerProxy.Monolith(XDebuggerManager.getInstance(project).breakpointManager as XBreakpointManagerImpl)
+    val manager = XDebuggerManager.getInstance(project).breakpointManager as XBreakpointManagerImpl
+    return manager.asProxy()
   }
 
   override fun getDebuggerExecutionPointManager(project: Project): XDebuggerExecutionPointManager? {

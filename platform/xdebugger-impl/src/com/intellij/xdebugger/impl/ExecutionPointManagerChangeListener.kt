@@ -8,11 +8,11 @@ import com.intellij.xdebugger.XDebugSessionListener
 import com.intellij.xdebugger.impl.breakpoints.XBreakpointProxy
 import com.intellij.xdebugger.impl.frame.XDebugManagerProxy
 import com.intellij.xdebugger.impl.frame.XDebugSessionProxy
-import com.intellij.xdebugger.impl.util.MonolithUtils
+import com.intellij.xdebugger.impl.util.XDebugMonolithUtils
 import kotlinx.coroutines.launch
 
 
-private class ExecutionPointManagerChangeListener(val project: Project) : FrontendXDebuggerManagerListener {
+private class ExecutionPointManagerChangeListener(val project: Project) : XDebuggerManagerProxyListener {
   init {
     val breakpointsManager = XDebugManagerProxy.getInstance().getBreakpointManagerProxy(project)
 
@@ -59,7 +59,7 @@ private fun updateAfterActiveSessionChanged(
 ) {
   val executionPointManager = XDebugManagerProxy.getInstance().getDebuggerExecutionPointManager(project) ?: return
   if (currentSession != null) {
-    val xDebugSession = MonolithUtils.findSessionById(currentSession.id)
+    val xDebugSession = XDebugMonolithUtils.findSessionById(currentSession.id)
     if (xDebugSession != null) {
       executionPointManager.alternativeSourceKindFlow = xDebugSession.alternativeSourceKindState
       updateExecutionPosition(project, xDebugSession.currentSourceKind)

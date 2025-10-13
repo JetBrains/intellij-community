@@ -16,9 +16,8 @@ import com.intellij.xdebugger.impl.rpc.models.findValue
 import org.jetbrains.annotations.ApiStatus
 
 @ApiStatus.Internal
-object MonolithUtils {
-  @JvmStatic
-  fun isMonolith(): Boolean = FrontendApplicationInfo.getFrontendType() is FrontendType.Monolith
+object XDebugMonolithUtils {
+  private fun isMonolithOrBackend(): Boolean = FrontendApplicationInfo.getFrontendType() is FrontendType.Monolith
 
   /**
    * Provides access to the backend debug session by its ID.
@@ -27,7 +26,7 @@ object MonolithUtils {
    */
   @JvmStatic
   fun findSessionById(sessionId: XDebugSessionId): XDebugSessionImpl? {
-    if (!isMonolith()) return null
+    if (!isMonolithOrBackend()) return null
     return sessionId.findValue()
   }
 
@@ -37,7 +36,7 @@ object MonolithUtils {
    * Use this method only for components that should be available in monolith only.
    */
   fun findXValueById(xValueId: XValueId): XValue? {
-    if (!isMonolith()) return null
+    if (!isMonolithOrBackend()) return null
     return BackendXValueModel.findById(xValueId)?.xValue
   }
 
@@ -47,7 +46,7 @@ object MonolithUtils {
    * Use this method only for components that should be available in monolith only.
    */
   fun findBreakpointTypeById(id: String): XBreakpointType<*, *>? {
-    if (!isMonolith()) return null
+    if (!isMonolithOrBackend()) return null
     return XBreakpointUtil.findType(id)
   }
 
@@ -58,7 +57,7 @@ object MonolithUtils {
    */
   @JvmStatic
   fun findBreakpointById(breakpointId: XBreakpointId): XBreakpointBase<*, *, *>? {
-    if (!isMonolith()) return null
+    if (!isMonolithOrBackend()) return null
     return breakpointId.findValue()
   }
 }

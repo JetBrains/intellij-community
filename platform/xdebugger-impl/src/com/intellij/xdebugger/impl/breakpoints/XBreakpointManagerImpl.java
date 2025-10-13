@@ -46,7 +46,7 @@ import java.util.function.Function;
 
 import static com.intellij.util.progress.CancellationUtil.withLockMaybeCancellable;
 import static com.intellij.xdebugger.impl.breakpoints.XBreakpointProxyKt.asProxy;
-import static com.intellij.xdebugger.impl.frame.XDebugSessionProxy.useFeLineBreakpointProxy;
+import static com.intellij.xdebugger.impl.frame.XDebugSessionProxy.useFeProxy;
 
 @ApiStatus.Internal
 public final class XBreakpointManagerImpl implements XBreakpointManager {
@@ -79,7 +79,7 @@ public final class XBreakpointManagerImpl implements XBreakpointManager {
     myDebuggerManager = debuggerManager;
     myCoroutineScope = coroutineScope;
     myDependentBreakpointManager = new XDependentBreakpointManager(this, messageBusConnection);
-    myLineBreakpointManager = new XLineBreakpointManager(project, coroutineScope, !useFeLineBreakpointProxy());
+    myLineBreakpointManager = new XLineBreakpointManager(project, coroutineScope, !useFeProxy());
 
     XBreakpointType.EXTENSION_POINT_NAME.addExtensionPointListener(new ExtensionPointListener<>() {
       @SuppressWarnings("unchecked")

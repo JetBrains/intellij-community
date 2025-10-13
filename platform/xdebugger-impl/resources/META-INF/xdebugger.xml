@@ -261,6 +261,6 @@
     <listener class="com.intellij.xdebugger.impl.MonolithListenerAdapter"
               topic="com.intellij.xdebugger.XDebuggerManagerListener"/>
     <listener class="com.intellij.xdebugger.impl.ExecutionPointManagerChangeListener"
-              topic="com.intellij.xdebugger.impl.FrontendXDebuggerManagerListener"/>
+              topic="com.intellij.xdebugger.impl.XDebuggerManagerProxyListener"/>
   </projectListeners>
 </idea-plugin>

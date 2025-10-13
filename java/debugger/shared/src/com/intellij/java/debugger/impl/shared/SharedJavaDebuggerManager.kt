@@ -6,7 +6,7 @@ import com.intellij.openapi.components.Service
 import com.intellij.openapi.components.service
 import com.intellij.openapi.project.Project
 import com.intellij.platform.util.coroutines.childScope
-import com.intellij.xdebugger.impl.FrontendXDebuggerManagerListener
+import com.intellij.xdebugger.impl.XDebuggerManagerProxyListener
 import com.intellij.xdebugger.impl.frame.XDebugManagerProxy
 import com.intellij.xdebugger.impl.frame.XDebugSessionProxy
 import com.intellij.xdebugger.impl.rpc.XDebugSessionId
@@ -36,7 +36,7 @@ internal class SharedJavaDebuggerManager(private val project: Project, private v
         }
       }
     }
-    project.messageBus.connect(cs).subscribe(FrontendXDebuggerManagerListener.TOPIC, object : FrontendXDebuggerManagerListener {
+    project.messageBus.connect(cs).subscribe(XDebuggerManagerProxyListener.TOPIC, object : XDebuggerManagerProxyListener {
       override fun sessionStopped(session: XDebugSessionProxy) {
         synchronousExecutor.trySend {
           debugSessions.remove(session.id)?.close()

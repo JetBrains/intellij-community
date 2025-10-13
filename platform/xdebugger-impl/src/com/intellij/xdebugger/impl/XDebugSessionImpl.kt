@@ -61,7 +61,6 @@ import com.intellij.xdebugger.impl.breakpoints.XLineBreakpointImpl
 import com.intellij.xdebugger.impl.evaluate.ValueLookupManagerController
 import com.intellij.xdebugger.impl.frame.*
 import com.intellij.xdebugger.impl.frame.XDebugSessionProxy.Companion.showFeWarnings
-import com.intellij.xdebugger.impl.frame.XDebugSessionProxy.Companion.useFeLineBreakpointProxy
 import com.intellij.xdebugger.impl.frame.XDebugSessionProxy.Companion.useFeProxy
 import com.intellij.xdebugger.impl.inline.DebuggerInlayListener
 import com.intellij.xdebugger.impl.inline.InlineDebugRenderer
@@ -209,7 +208,7 @@ class XDebugSessionImpl @JvmOverloads constructor(
     get() = myTabInitDataFlow.filterNotNull()
 
   override fun getRunContentDescriptor(): RunContentDescriptor {
-    if (useFeProxy() && showFeWarnings()) {
+    if (showFeWarnings()) {
       LOG.error("RunContentDescriptor should not be used in split mode from XDebugSession")
     }
     return getInitializedRunContentDescriptor()
@@ -429,7 +428,7 @@ class XDebugSessionImpl @JvmOverloads constructor(
   @OptIn(ExperimentalCoroutinesApi::class)
   val sessionTab: XDebugSessionTab?
     get() {
-      if (useFeProxy() && showFeWarnings()) {
+      if (showFeWarnings()) {
         // See "TODO [Debugger.sessionTab]" to see usages which are not yet properly migrated.
         LOG.error("Debug tab should not be used in split mode from XDebugSession")
       }
@@ -874,8 +873,8 @@ class XDebugSessionImpl @JvmOverloads constructor(
       }
     }
     val debuggerManager = myDebuggerManager.breakpointManager
-    if (useFeLineBreakpointProxy() && breakpoint is XLineBreakpointImpl<*>) {
-      // for useFeLineBreakpointProxy we call update directly since visual presentation is disabled on the backend
+    if (useFeProxy() && breakpoint is XLineBreakpointImpl<*>) {
+      // for useFeProxy we call update directly since visual presentation is disabled on the backend
       breakpoint.fireBreakpointPresentationUpdated(this)
     }
     else {

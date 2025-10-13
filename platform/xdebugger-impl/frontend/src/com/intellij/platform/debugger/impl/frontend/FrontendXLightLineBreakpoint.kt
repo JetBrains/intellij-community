@@ -4,12 +4,11 @@ package com.intellij.platform.debugger.impl.frontend
 import com.intellij.openapi.application.EDT
 import com.intellij.openapi.editor.markup.GutterIconRenderer
 import com.intellij.openapi.project.Project
-import com.intellij.openapi.util.TextRange
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.platform.util.coroutines.childScope
 import com.intellij.xdebugger.impl.XLineBreakpointInstallationInfo
 import com.intellij.xdebugger.impl.breakpoints.*
-import com.intellij.xdebugger.impl.frame.XDebugSessionProxy.Companion.useFeLineBreakpointProxy
+import com.intellij.xdebugger.impl.frame.XDebugSessionProxy.Companion.useFeProxy
 import kotlinx.coroutines.*
 import javax.swing.Icon
 
@@ -22,7 +21,7 @@ internal class FrontendXLightLineBreakpoint(
 ) : XLightLineBreakpointProxy {
   private val cs = parentCs.childScope("FrontendXLightLineBreakpoint")
 
-  private val visualRepresentation = XBreakpointVisualRepresentation(cs, this, useFeLineBreakpointProxy(), breakpointManager)
+  private val visualRepresentation = XBreakpointVisualRepresentation(cs, this, useFeProxy(), breakpointManager)
 
   init {
     // TODO IJPL-185322: let's add loading icon if light breakpoint is alive for more than ~300ms
