@@ -445,7 +445,10 @@ class PluginMainDescriptor(
     parent = this,
     raw = subBuilder.build(),
     moduleId = module.moduleId,
-    moduleLoadingRule = module.loadingRule,
+    moduleLoadingRule = module.determineLoadingRule( // FIXME this call should happen in init phase, not while parsing
+      initContextForLoadingRuleDetermination,
+      id
+    ),
     descriptorPath = descriptorPath
   )
 
@@ -511,6 +514,9 @@ class PluginMainDescriptor(
         reporter(PluginXmlConst.CONTENT_MODULE_VISIBILITY_ATTR)
       }
     }
+
+    // FIXME this should not exist
+    private val initContextForLoadingRuleDetermination: PluginInitializationContext by lazy { ProductPluginInitContext() }
   }
 }
 
