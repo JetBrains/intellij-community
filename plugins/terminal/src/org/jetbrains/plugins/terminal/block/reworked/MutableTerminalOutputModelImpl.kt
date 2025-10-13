@@ -547,7 +547,7 @@ class TerminalOutputModelSnapshotImpl(
 
 private fun immutableTextImpl(document: Document): CharSequence = document.immutableCharSequence
 
-private fun lineCountImpl(document: Document): Int = document.lineCount
+private fun lineCountImpl(document: Document): Int = document.lineCount.let { if (it > 0) it else 1 }
 
 private fun modificationStampImpl(document: Document): Long = document.modificationStamp
 

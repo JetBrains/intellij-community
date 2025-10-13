@@ -18,6 +18,9 @@ import org.jetbrains.plugins.terminal.block.reworked.TerminalLineIndex
 import org.jetbrains.plugins.terminal.block.reworked.TerminalOffset
 import org.jetbrains.plugins.terminal.block.reworked.TerminalOutputModel
 import org.jetbrains.plugins.terminal.block.reworked.TerminalOutputModelListener
+import org.jetbrains.plugins.terminal.block.reworked.endOffset
+import org.jetbrains.plugins.terminal.block.reworked.lastLine
+import org.jetbrains.plugins.terminal.block.reworked.textLength
 import org.jetbrains.plugins.terminal.block.ui.BlockTerminalColorPalette
 import org.jetbrains.plugins.terminal.session.StyleRange
 import org.jetbrains.plugins.terminal.session.TerminalOutputModelState
@@ -399,6 +402,36 @@ internal class TerminalOutputModelTest : BasePlatformTestCase() {
     assertThat(line0 + 2L).isEqualTo(line2)
     assertThat(line2 - 1L).isEqualTo(line1)
     assertThat(line2 - 2L).isEqualTo(line0)
+  }
+
+  @Test
+  fun `empty model state`() {
+    val sut = TerminalTestUtil.createOutputModel(100)
+    assertThat(sut.textLength).isZero()
+    assertThat(sut.lineCount).isOne()
+    assertThat(sut.startOffset).isEqualTo(TerminalOffset.ZERO)
+    assertThat(sut.startOffset).isEqualTo(sut.endOffset)
+    assertThat(sut.getText(sut.startOffset, sut.endOffset)).isEmpty()
+    assertThat(sut.firstLine).isEqualTo(TerminalLineIndex.ZERO)
+    assertThat(sut.firstLine).isEqualTo(sut.lastLine)
+    assertThat(sut.getStartOfLine(sut.firstLine)).isEqualTo(sut.startOffset)
+    assertThat(sut.getEndOfLine(sut.firstLine)).isEqualTo(sut.startOffset)
+    assertThat(sut.getLineByOffset(sut.startOffset)).isEqualTo(sut.firstLine)
+  }
+
+  @Test
+  fun `empty snapshot state`() {
+    val sut = TerminalTestUtil.createOutputModel(100).takeSnapshot()
+    assertThat(sut.textLength).isZero()
+    assertThat(sut.lineCount).isOne()
+    assertThat(sut.startOffset).isEqualTo(TerminalOffset.ZERO)
+    assertThat(sut.startOffset).isEqualTo(sut.endOffset)
+    assertThat(sut.getText(sut.startOffset, sut.endOffset)).isEmpty()
+    assertThat(sut.firstLine).isEqualTo(TerminalLineIndex.ZERO)
+    assertThat(sut.firstLine).isEqualTo(sut.lastLine)
+    assertThat(sut.getStartOfLine(sut.firstLine)).isEqualTo(sut.startOffset)
+    assertThat(sut.getEndOfLine(sut.firstLine)).isEqualTo(sut.startOffset)
+    assertThat(sut.getLineByOffset(sut.startOffset)).isEqualTo(sut.firstLine)
   }
 }
 
