@@ -3,6 +3,7 @@ package com.jetbrains.python.packaging.repository
 
 import com.intellij.openapi.Disposable
 import com.intellij.openapi.application.ApplicationManager
+import com.intellij.openapi.diagnostic.thisLogger
 import com.intellij.util.cancelOnDispose
 import com.jetbrains.python.NON_INTERACTIVE_ROOT_TRACE_CONTEXT
 import com.jetbrains.python.packaging.PyPackageVersion
@@ -16,7 +17,7 @@ import kotlinx.coroutines.Job
 import org.jetbrains.annotations.ApiStatus
 
 @ApiStatus.Experimental
-abstract class PythonRepositoryManagerBase() : PythonRepositoryManager, Disposable.Default {
+abstract class PythonRepositoryManagerBase : PythonRepositoryManager, Disposable.Default {
   protected val initializationJob: Job by lazy {
     PyPackageCoroutine.launch(project, NON_INTERACTIVE_ROOT_TRACE_CONTEXT, start = CoroutineStart.LAZY) {
       initCaches()
@@ -54,12 +55,20 @@ abstract class PythonRepositoryManagerBase() : PythonRepositoryManager, Disposab
   }
 
   override suspend fun findPackageSpecification(requirement: PyRequirement, repository: PyPackageRepository?): PythonRepositoryPackageSpecification? {
+    waitForInit()
     if (repository != null) {
       return repository.findPackageSpecification(requirement)
     }
-    waitForInit()
-    return repositories.firstNotNullOfOrNull { it.findPackageSpecification(requirement) }
+    val found = repositories.firstNotNullOfOrNull { it.findPackageSpecification(requirement) }
+    if (found == null) {
+      thisLogger().debug("Package specification not found for $requirement. Tried repositories: ${
+        repositories.joinToString(",") { "${it.name}: packages=${it.getPackages().size}" }
+      }")
+      return found
+    }
+    return found
   }
+
 
   //Some test on EDT so need to be inited on first create
   protected fun shouldBeInitInstantly(): Boolean = ApplicationManager.getApplication().isUnitTestMode
