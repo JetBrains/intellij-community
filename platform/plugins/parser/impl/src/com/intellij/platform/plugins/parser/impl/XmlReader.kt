@@ -1,5 +1,6 @@
 // Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 @file:JvmName("XmlReader")
+@file:Suppress("ReplacePutWithAssignment")
 
 package com.intellij.platform.plugins.parser.impl
 
@@ -823,7 +824,8 @@ private fun readInclude(
     consumer.pushIncludeBase(LoadPathUtil.getChildBaseDir(base = consumer.includeBase, relativePath = path))
     try {
       consumer.consume(loadedXInclude.inputStream, loadedXInclude.diagnosticReferenceLocation)
-    } finally {
+    }
+    finally {
       consumer.popIncludeBase()
     }
     return

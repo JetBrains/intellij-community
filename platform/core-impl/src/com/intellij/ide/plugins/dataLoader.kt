@@ -25,11 +25,11 @@ class LocalFsDataLoader(@JvmField val basePath: Path) : DataLoader {
     get() = true
 
   override fun load(path: String, pluginDescriptorSourceOnly: Boolean): InputStream? {
-    return try {
-      Files.newInputStream(basePath.resolve(path))
+    try {
+      return Files.newInputStream(basePath.resolve(path))
     }
-    catch (e: NoSuchFileException) {
-      null
+    catch (_: NoSuchFileException) {
+      return null
     }
   }
 

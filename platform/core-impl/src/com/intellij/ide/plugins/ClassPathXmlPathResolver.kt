@@ -28,10 +28,7 @@ class ClassPathXmlPathResolver(
     else {
       input = classLoader.getResourceAsStream(path)
     }
-    if (input == null) {
-      return null
-    }
-    return XIncludeLoader.LoadedXIncludeReference(input, dataLoader.toString())
+    return XIncludeLoader.LoadedXIncludeReference(input ?: return null, dataLoader.toString())
   }
 
   override fun resolveModuleFile(readContext: PluginDescriptorReaderContext, dataLoader: DataLoader, path: String): PluginDescriptorBuilder {
