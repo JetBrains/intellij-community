@@ -7,8 +7,10 @@ import com.intellij.psi.PsiElement
 import com.intellij.psi.util.PsiTreeUtil
 import org.jetbrains.kotlin.analysis.api.KaSession
 import org.jetbrains.kotlin.analysis.api.analyze
-import org.jetbrains.kotlin.analysis.api.components.resolveToCallCandidates
+import org.jetbrains.kotlin.analysis.api.components.resolveToCall
+import org.jetbrains.kotlin.analysis.api.resolution.KaErrorCallInfo
 import org.jetbrains.kotlin.analysis.api.resolution.KaFunctionCall
+import org.jetbrains.kotlin.analysis.api.resolution.successfulFunctionCallOrNull
 import org.jetbrains.kotlin.analysis.api.types.KaErrorType
 import org.jetbrains.kotlin.idea.codeinsight.utils.addTypeArguments
 import org.jetbrains.kotlin.idea.codeinsight.utils.getRenderedTypeArguments
@@ -33,8 +35,27 @@ internal var UserDataHolder.argList: TypeArgsWithOffset? by UserDataProperty(Key
 
 context(_: KaSession)
 internal fun addParamTypesIfNeeded(position: PsiElement): PsiElement? {
-    if (!callExprToUpdateExists(position)) return null
-    return addParamTypes(position)
+    val callBeforeDot = position.getCallBeforeDot() ?: return null
+
+    // Type arguments are already specified, no need to add them
+    if (callBeforeDot.typeArguments.isNotEmpty()) return null
+
+    val resolvedCall = callBeforeDot.resolveToCall()
+    // The call is already successfully resolved, no type arguments are needed
+    if (resolvedCall !is KaErrorCallInfo) return null
+    // If there is no call with an error type, then we cannot fix it by adding explicit types
+    if (!resolvedCall.hasCandidateWithErrorTypes()) return null
+
+    // We attempt to fix the unresolved call by restoring the type arguments it had before adding the `.`
+    val fixedPosition = addParamTypes(position)
+    val newCallBeforeDot = fixedPosition.getCallBeforeDot() ?: return null
+
+    // If the call now resolves successfully, then we return the new position
+    analyze(newCallBeforeDot) {
+        return fixedPosition.takeIf {
+            newCallBeforeDot.resolveToCall()?.successfulFunctionCallOrNull() != null
+        }
+    }
 }
 
 context(_: KaSession)
@@ -98,7 +119,7 @@ private fun addParamTypes(position: PsiElement): PsiElement {
     val fileCopy = position.containingFile.copy() as KtFile
     val positionInCopy = PsiTreeUtil.findSameElementInCopy(position, fileCopy)
     val callAndDiff = getCallWithParamTypesToAdd(positionInCopy) ?: return position
-    val (callExpression, dotExprWithoutCaret, _) = callAndDiff
+    val (callExpression, _, _) = callAndDiff
     analyze(fileCopy) {
         if (getRenderedTypeArguments(callExpression) == null) return position
 
@@ -112,8 +133,7 @@ private fun addParamTypes(position: PsiElement): PsiElement {
     }
 }
 
-context(_: KaSession)
-private fun callExprToUpdateExists(position: PsiElement): Boolean {
+private fun PsiElement.getCallBeforeDot(): KtCallExpression? {
     /*
      Case: call().IntellijIdeaRulezzz or call()?.IntellijIdeaRulezzz or smth.call()?.IntellijIdeaRulezzz
      'position' points to the caret - IntellijIdeaRulezzz and on PSI level it looks as follows:
@@ -123,19 +143,17 @@ private fun callExprToUpdateExists(position: PsiElement): Boolean {
      ..............KtNameReferenceExpression [IntellijIdeaRulezzz]
      ..................LeafPsiElement [IntellijIdeaRulezzz] (*)
      */
-    val afterDotExprWithCaret = position.parent as? KtNameReferenceExpression ?: return false
-    val callBeforeDot = afterDotExprWithCaret.getPreviousInQualifiedChain() as? KtCallExpression ?: return false
-    return callBeforeDot.requiresTypeParams()
+    val afterDotExprWithCaret = parent as? KtNameReferenceExpression ?: return null
+    return afterDotExprWithCaret.getPreviousInQualifiedChain() as? KtCallExpression
 }
 
-context(_: KaSession)
-private fun KtCallExpression.requiresTypeParams(): Boolean {
-    if (typeArguments.isNotEmpty()) return false
+private fun KaFunctionCall<*>.hasErrorTypeArgument(): Boolean {
+    return typeArgumentsMapping.any { (_, type) -> type is KaErrorType }
+}
 
-    val callCandidates = resolveToCallCandidates().mapNotNull { it.candidate as? KaFunctionCall<*> }
-    if (callCandidates.isEmpty()) return false
-
-    return callCandidates.any { it.typeArgumentsMapping.any { type -> type.value is KaErrorType } }
+private fun KaErrorCallInfo.hasCandidateWithErrorTypes(): Boolean {
+    val candidates = candidateCalls.filterIsInstance<KaFunctionCall<*>>()
+    return candidates.any { it.hasErrorTypeArgument() }
 }
 
 private fun KtExpression.getPreviousInQualifiedChain(): KtExpression? {

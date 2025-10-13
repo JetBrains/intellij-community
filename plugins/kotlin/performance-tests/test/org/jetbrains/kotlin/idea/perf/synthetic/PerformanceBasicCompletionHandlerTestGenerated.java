@@ -1401,6 +1401,11 @@ public abstract class PerformanceBasicCompletionHandlerTestGenerated extends Abs
             runTest("../completion/testData/handlers/basic/typeArgsForCall/HasExpectedType.kt");
         }
 
+        @TestMetadata("NoTypeArgumentsForOverloadWithError.kt")
+        public void testNoTypeArgumentsForOverloadWithError() throws Exception {
+            runTest("../completion/testData/handlers/basic/typeArgsForCall/NoTypeArgumentsForOverloadWithError.kt");
+        }
+
         @TestMetadata("NotAllTypeArgumentsFromParameters.kt")
         public void testNotAllTypeArgumentsFromParameters() throws Exception {
             runTest("../completion/testData/handlers/basic/typeArgsForCall/NotAllTypeArgumentsFromParameters.kt");
@@ -1454,6 +1459,11 @@ public abstract class PerformanceBasicCompletionHandlerTestGenerated extends Abs
         @TestMetadata("TypeArgumentsFromReturnType4.kt")
         public void testTypeArgumentsFromReturnType4() throws Exception {
             runTest("../completion/testData/handlers/basic/typeArgsForCall/TypeArgumentsFromReturnType4.kt");
+        }
+
+        @TestMetadata("TypeForUnrelatedOverloadWIthoutError.kt")
+        public void testTypeForUnrelatedOverloadWIthoutError() throws Exception {
+            runTest("../completion/testData/handlers/basic/typeArgsForCall/TypeForUnrelatedOverloadWIthoutError.kt");
         }
     }
 
