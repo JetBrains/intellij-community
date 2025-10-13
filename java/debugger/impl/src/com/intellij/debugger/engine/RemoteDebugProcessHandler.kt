@@ -1,82 +1,65 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
-package com.intellij.debugger.engine;
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+package com.intellij.debugger.engine
 
-import com.intellij.debugger.DebuggerManager;
-import com.intellij.execution.process.ProcessHandler;
-import com.intellij.openapi.project.Project;
+import com.intellij.debugger.DebuggerManager
+import com.intellij.execution.process.ProcessHandler
+import com.intellij.openapi.project.Project
+import com.intellij.util.AwaitCancellationAndInvoke
+import java.io.OutputStream
+import java.util.concurrent.atomic.AtomicBoolean
 
-import java.io.OutputStream;
-import java.util.concurrent.atomic.AtomicBoolean;
+open class RemoteDebugProcessHandler @JvmOverloads constructor(
+  private val myProject: Project,
+  private val myAutoRestart: Boolean = false,
+) : ProcessHandler() {
+  private val myClosedByUser = AtomicBoolean()
 
-public class RemoteDebugProcessHandler extends ProcessHandler {
-  private final Project myProject;
-  private final boolean myAutoRestart;
-  private final AtomicBoolean myClosedByUser = new AtomicBoolean();
-
-  public RemoteDebugProcessHandler(Project project) {
-    this(project, false);
-  }
-
-  public RemoteDebugProcessHandler(Project project, boolean autoRestart) {
-    myProject = project;
-    myAutoRestart = autoRestart;
-  }
-
-  @Override
-  public void startNotify() {
-    final DebugProcessListener listener = new DebugProcessAdapterImpl() {
+  @OptIn(AwaitCancellationAndInvoke::class)
+  override fun startNotify() {
+    val listener: DebugProcessListener = object : DebugProcessAdapterImpl() {
       //executed in manager thread
-      @Override
-      public void processDetached(DebugProcessImpl process, boolean closedByUser) {
+      override fun processDetached(process: DebugProcessImpl, closedByUser: Boolean) {
         if (!myAutoRestart || closedByUser || myClosedByUser.get()) {
-          process.removeDebugProcessListener(this);
-          notifyProcessDetached();
+          process.removeDebugProcessListener(this)
+          notifyProcessDetached()
         }
         else {
-          process.reattach(process.getSession().getDebugEnvironment());
+          process.reattach(process.session.debugEnvironment)
         }
       }
-    };
-    DebugProcess debugProcess = DebuggerManager.getInstance(myProject).getDebugProcess(this);
-    debugProcess.addDebugProcessListener(listener);
+    }
+    val debugProcess = DebuggerManager.getInstance(myProject).getDebugProcess(this)
+    debugProcess.addDebugProcessListener(listener)
     try {
-      super.startNotify();
+      super.startNotify()
     }
     finally {
       // in case we added our listener too late, we may have lost processDetached notification,
       // so check here if process is detached
       if (debugProcess.isDetached()) {
-        debugProcess.removeDebugProcessListener(listener);
-        notifyProcessDetached();
+        debugProcess.removeDebugProcessListener(listener)
+        notifyProcessDetached()
       }
     }
   }
 
-  @Override
-  protected void destroyProcessImpl() {
-    myClosedByUser.set(true);
-    DebugProcess debugProcess = DebuggerManager.getInstance(myProject).getDebugProcess(this);
+  override fun destroyProcessImpl() {
+    myClosedByUser.set(true)
+    val debugProcess = DebuggerManager.getInstance(myProject).getDebugProcess(this)
     if (debugProcess != null) {
-      debugProcess.stop(true);
+      debugProcess.stop(true)
     }
   }
 
-  @Override
-  protected void detachProcessImpl() {
-    myClosedByUser.set(true);
-    DebugProcess debugProcess = DebuggerManager.getInstance(myProject).getDebugProcess(this);
+  override fun detachProcessImpl() {
+    myClosedByUser.set(true)
+    val debugProcess = DebuggerManager.getInstance(myProject).getDebugProcess(this)
     if (debugProcess != null) {
-      debugProcess.stop(false);
+      debugProcess.stop(false)
     }
   }
 
-  @Override
-  public boolean detachIsDefault() {
-    return true;
-  }
+  override fun detachIsDefault(): Boolean = true
 
-  @Override
-  public OutputStream getProcessInput() {
-    return null;
-  }
+  override fun getProcessInput(): OutputStream? = null
 }
