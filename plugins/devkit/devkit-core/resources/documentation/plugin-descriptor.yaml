@@ -482,6 +482,15 @@ elements:
                           required: yes
                         description: |
                           The name of the module to depend on.
+                    - attribute:
+                        name: namespace
+                        description: |
+                          Specifies the [namespace](#attribute:idea-plugin__content__namespace) where the referenced module is defined. 
+                          
+                          If the namespace is not specified explicitly, the dependency is resolved as follows:
+                          - if a content module with the specified [name](#attribute:idea-plugin__dependencies__name) exists in the plugin
+                            where the current module is defined, the dependency resolved to that module.
+                          - otherwise, the module is searched in the default `jetbrains` namespace.
               - element:
                   name: plugin
                   description: |
