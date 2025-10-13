@@ -516,7 +516,15 @@ class PluginMainDescriptor(
     }
 
     // FIXME this should not exist
-    private val initContextForLoadingRuleDetermination: PluginInitializationContext by lazy { ProductPluginInitContext() }
+    @Volatile
+    private var initContextForLoadingRuleDetermination: PluginInitializationContext = ProductPluginInitContext()
+
+    // FIXME this should not exist
+    @ApiStatus.Internal
+    @TestOnly
+    fun setInitContextForLoadingRuleDetermination(initContext: PluginInitializationContext) {
+      initContextForLoadingRuleDetermination = initContext
+    }
   }
 }
 
