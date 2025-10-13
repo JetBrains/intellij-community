@@ -35,6 +35,7 @@
     "Island": {
       "arc": 20,
       "borderWidth": 4,
+      "borderWidth.compact": 3,
       "inactiveAlpha": 0.44,
       "inactiveAlphaInStatusBar": {
         "os.mac": 0.2,
