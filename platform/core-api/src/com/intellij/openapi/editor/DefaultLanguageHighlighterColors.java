@@ -74,9 +74,6 @@ public final class DefaultLanguageHighlighterColors {
   public static final TextAttributesKey AI_INLAY_BUTTON_HOVERED = TextAttributesKey.createTextAttributesKey("AI_INLAY_BUTTON_HOVERED");
   public static final TextAttributesKey INLAY_BUTTON_HINT = TextAttributesKey.createTextAttributesKey("INLAY_BUTTON_HINT");
   public static final TextAttributesKey INLAY_TEXT_WITHOUT_BACKGROUND = TextAttributesKey.createTextAttributesKey("INLAY_TEXT_WITHOUT_BACKGROUND");
-  public static final TextAttributesKey KUBERNETES_INLAY_ERROR = TextAttributesKey.createTextAttributesKey("KUBERNETES_INLAY_ERROR");
-  public static final TextAttributesKey KUBERNETES_INLAY_SUCCESS = TextAttributesKey.createTextAttributesKey("KUBERNETES_INLAY_SUCCESS");
-  public static final TextAttributesKey KUBERNETES_INLAY_INTERMEDIATE = TextAttributesKey.createTextAttributesKey("KUBERNETES_INLAY_INTERMEDIATE");
   public static final ColorKey INLINE_REFACTORING_SETTINGS_DEFAULT = ColorKey.createColorKey("INLINE_REFACTORING_SETTINGS_DEFAULT");
   public static final ColorKey INLINE_REFACTORING_SETTINGS_FOCUSED = ColorKey.createColorKey("INLINE_REFACTORING_SETTINGS_FOCUSED");
   public static final ColorKey INLINE_REFACTORING_SETTINGS_HOVERED = ColorKey.createColorKey("INLINE_REFACTORING_SETTINGS_HOVERED");
