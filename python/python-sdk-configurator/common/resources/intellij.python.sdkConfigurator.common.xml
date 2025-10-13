@@ -1,2 +1,5 @@
 <idea-plugin>
+  <extensions defaultExtensionNs="com.intellij">
+    <registryKey defaultValue="false" description="Configure SDK for modules which lack thereof in automatic manner" key="intellij.python.sdkConfigurator.auto" restartRequired="false"/>
+  </extensions>
 </idea-plugin>

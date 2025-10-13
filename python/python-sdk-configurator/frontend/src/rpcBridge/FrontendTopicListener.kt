@@ -7,13 +7,13 @@ import com.intellij.openapi.project.Project
 import com.intellij.platform.project.projectId
 import com.intellij.platform.rpc.topics.ProjectRemoteTopic
 import com.intellij.platform.rpc.topics.ProjectRemoteTopicListener
-import com.intellij.python.sdkConfigurator.common.ModulesDTO
-import com.intellij.python.sdkConfigurator.common.SHOW_SDK_CONFIG_UI_TOPIC
+import com.intellij.python.sdkConfigurator.common.impl.ModulesDTO
+import com.intellij.python.sdkConfigurator.common.impl.SHOW_SDK_CONFIG_UI_TOPIC
 import com.intellij.python.sdkConfigurator.frontend.askUser
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.launch
 
-internal class TopicListener : ProjectRemoteTopicListener<ModulesDTO> {
+internal class FrontendTopicListener : ProjectRemoteTopicListener<ModulesDTO> {
   override val topic: ProjectRemoteTopic<ModulesDTO> = SHOW_SDK_CONFIG_UI_TOPIC
 
   override fun handleEvent(project: Project, event: ModulesDTO) {

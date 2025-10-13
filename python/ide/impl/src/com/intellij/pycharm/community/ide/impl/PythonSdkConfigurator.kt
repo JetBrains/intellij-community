@@ -6,6 +6,7 @@ import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.application.EDT
 import com.intellij.openapi.diagnostic.debug
 import com.intellij.openapi.diagnostic.thisLogger
+import com.intellij.openapi.extensions.ExtensionNotApplicableException
 import com.intellij.openapi.module.Module
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.project.ProjectManager
@@ -25,6 +26,7 @@ import com.intellij.platform.ide.progress.withBackgroundProgress
 import com.intellij.platform.util.progress.reportRawProgress
 import com.intellij.python.community.services.systemPython.SystemPython
 import com.intellij.python.community.services.systemPython.SystemPythonService
+import com.intellij.python.sdkConfigurator.common.enableSDKAutoConfigurator
 import com.jetbrains.python.PyBundle
 import com.jetbrains.python.packaging.utils.PyPackageCoroutine
 import com.jetbrains.python.sdk.*
@@ -41,6 +43,13 @@ import java.nio.file.Path
 
 
 class PythonSdkConfigurator : DirectoryProjectConfigurator {
+  init {
+    // new SDK configurator obsoletes this engine
+    if (enableSDKAutoConfigurator) {
+      throw ExtensionNotApplicableException.create()
+    }
+  }
+
   override fun configureProject(project: Project, baseDir: VirtualFile, moduleRef: Ref<Module>, isProjectCreatedWithWizard: Boolean) {
     val sdk = project.pythonSdk
     thisLogger().debug { "Input: $sdk, $isProjectCreatedWithWizard" }

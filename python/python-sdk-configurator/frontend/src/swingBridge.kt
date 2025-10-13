@@ -3,8 +3,8 @@ package com.intellij.python.sdkConfigurator.frontend
 import com.intellij.openapi.application.EDT
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.ui.DialogWrapper
-import com.intellij.python.sdkConfigurator.common.ModuleName
-import com.intellij.python.sdkConfigurator.common.ModulesDTO
+import com.intellij.python.sdkConfigurator.common.impl.ModuleName
+import com.intellij.python.sdkConfigurator.common.impl.ModulesDTO
 import com.intellij.python.sdkConfigurator.frontend.components.ModuleList
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext

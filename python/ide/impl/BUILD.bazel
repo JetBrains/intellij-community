@@ -66,6 +66,7 @@ jvm_library(
     "//python/common",
     "//platform/non-modal-welcome-screen/backend",
     "//python/python-exec-service:community-execService",
+    "//python/python-sdk-configurator/common",
   ],
   runtime_deps = ["//python/python-features-trainer:featuresTrainer"],
   plugins = ["@lib//:compose-plugin"]
@@ -138,6 +139,7 @@ jvm_library(
     "//platform/non-modal-welcome-screen/backend",
     "//python/python-exec-service:community-execService",
     "//python/python-exec-service:community-execService_test_lib",
+    "//python/python-sdk-configurator/common",
   ],
   plugins = ["@lib//:compose-plugin"]
 )

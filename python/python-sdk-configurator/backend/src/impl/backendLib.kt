@@ -1,5 +1,8 @@
 package com.intellij.python.sdkConfigurator.backend.impl
 
+import com.intellij.openapi.components.Service
+import com.intellij.openapi.components.Service.Level
+import com.intellij.openapi.components.service
 import com.intellij.openapi.diagnostic.fileLogger
 import com.intellij.openapi.module.Module
 import com.intellij.openapi.project.Project
@@ -7,15 +10,37 @@ import com.intellij.openapi.project.modules
 import com.intellij.openapi.roots.ModuleRootManager
 import com.intellij.openapi.roots.ModuleRootModificationUtil
 import com.intellij.platform.ide.progress.withBackgroundProgress
+import com.intellij.platform.rpc.topics.sendToClient
 import com.intellij.python.pyproject.model.api.SuggestedSdk
 import com.intellij.python.pyproject.model.api.suggestSdk
-import com.intellij.python.sdkConfigurator.common.ModuleName
+import com.intellij.python.sdkConfigurator.common.impl.ModuleName
+import com.intellij.python.sdkConfigurator.common.impl.ModulesDTO
+import com.intellij.python.sdkConfigurator.common.impl.SHOW_SDK_CONFIG_UI_TOPIC
 import com.jetbrains.python.Result
 import com.jetbrains.python.sdk.configuration.PyProjectSdkConfigurationExtension
 import com.jetbrains.python.sdk.getOrCreateAdditionalData
 import com.jetbrains.python.sdk.setAssociationToPath
+import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.launch
+import kotlinx.coroutines.sync.Mutex
+import kotlinx.coroutines.sync.withLock
 import kotlinx.coroutines.withContext
+
+private val askUserMutex = Mutex()
+
+// TODO: DOC
+internal fun configureSdkAskingUser(project: Project) {
+  project.service<MyService>().scope.launch(Dispatchers.Default) {
+    askUserMutex.withLock {
+      val moduleToSuggestedSdk = getModulesWithoutSDK(project)
+      if (moduleToSuggestedSdk.modules.isNotEmpty()) {
+        // No need to send empty list
+        SHOW_SDK_CONFIG_UI_TOPIC.sendToClient(project, moduleToSuggestedSdk)
+      }
+    }
+  }
+}
 
 /**
  * Configures SDK for modules without SDK in automatic manner trying to fix as many modules as possible.
@@ -85,6 +110,15 @@ internal suspend fun configureSdkAutomatically(project: Project, modulesOnly: Se
   }
 }
 
+private suspend fun getModulesWithoutSDK(project: Project): ModulesDTO =
+  ModulesDTO(project.modules.filter { ModuleRootManager.getInstance(it).sdk == null }.associate { module ->
+    val parent = when (val r = module.suggestSdk()) {
+      null, is SuggestedSdk.PyProjectIndependent -> null
+      is SuggestedSdk.SameAs -> r.parentModule
+    }
+    Pair(module.name, parent?.name)
+  })
+
 private suspend fun configureSdkForModule(module: Module, configurators: List<PyProjectSdkConfigurationExtension>, checkForIntention: Boolean): Boolean {
   for (extension in configurators) {
     if (checkForIntention && extension.getIntention(module) == null) {
@@ -108,3 +142,7 @@ private suspend fun configureSdkForModule(module: Module, configurators: List<Py
 }
 
 private val logger = fileLogger()
+
+
+@Service(Level.PROJECT)
+private class MyService(val scope: CoroutineScope)

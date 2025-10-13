@@ -80,5 +80,6 @@
     <orderEntry type="module" module-name="intellij.python.common" />
     <orderEntry type="module" module-name="intellij.platform.ide.nonModalWelcomeScreen.backend" />
     <orderEntry type="module" module-name="intellij.python.community.execService" />
+    <orderEntry type="module" module-name="intellij.python.sdkConfigurator.common" />
   </component>
 </module>
