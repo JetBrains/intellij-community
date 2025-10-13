@@ -1,13 +1,17 @@
 package org.jetbrains.plugins.terminal.block.reworked.hyperlinks
 
+import com.intellij.execution.filters.ConsoleFilterProviderEx
 import com.intellij.execution.filters.Filter
 import com.intellij.execution.filters.OpenFileHyperlinkInfo
 import com.intellij.openapi.editor.markup.EffectType
 import com.intellij.openapi.editor.markup.TextAttributes
 import com.intellij.openapi.project.Project
+import com.intellij.openapi.util.registry.Registry
 import com.intellij.openapi.util.text.StringUtil
 import com.intellij.openapi.vfs.LocalFileSystem
+import com.intellij.psi.search.GlobalSearchScope
 import com.intellij.ui.JBColor
+import org.jetbrains.plugins.terminal.hyperlinks.TerminalFilterScope
 import java.awt.Font
 
 internal enum class ParsingState {
@@ -21,7 +25,10 @@ internal enum class ParsingState {
  *  output, sync output, run test output, built-in terminal emulator, etc. Therefore, we manually parse the string instead of using regex
  *  for maximum performance.
  */
-internal class GenericFileFilter(private val project: Project, private val localFileSystem: LocalFileSystem) : Filter {
+internal class TerminalGenericFileFilter(
+  private val project: Project,
+  private val localFileSystem: LocalFileSystem
+) : Filter {
   companion object {
     /**
      *  Max filename considered during parsing. Do not confuse with file path, which may contain several file names separated by '/' or '\'.
@@ -226,3 +233,15 @@ private fun String.takeWhileFromIndex(index: Int, predicate: (Char) -> Boolean):
 private val EMPTY_ATTRS: TextAttributes = TextAttributes(null, null, null, null, Font.PLAIN)
 
 private val HOVERED_ATTRS: TextAttributes = TextAttributes(null, null, JBColor.BLACK, EffectType.LINE_UNDERSCORE, Font.PLAIN)
+
+
+internal class TerminalGenericFileFilterProvider : ConsoleFilterProviderEx {
+  override fun getDefaultFilters(project: Project, scope: GlobalSearchScope): Array<out Filter> {
+    if (scope is TerminalFilterScope && Registry.`is`("terminal.generic.hyperlinks", false)) {
+      return arrayOf(TerminalGenericFileFilter(project, LocalFileSystem.getInstance()))
+    }
+    return emptyArray()
+  }
+
+  override fun getDefaultFilters(project: Project): Array<out Filter?> = emptyArray()
+}
