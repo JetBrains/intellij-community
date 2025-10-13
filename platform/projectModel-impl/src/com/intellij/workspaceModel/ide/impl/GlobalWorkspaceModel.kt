@@ -401,33 +401,30 @@ private fun JpsGlobalFileEntitySource.copy(manager: VirtualFileUrlManager): JpsG
 @VisibleForTesting
 @Service(Service.Level.APP)
 class GlobalWorkspaceModelRegistry {
-  companion object {
-    const val GLOBAL_WORKSPACE_MODEL_LOCAL_CACHE_ID: String = "Local"
-  }
-
   private val environmentToModel = ConcurrentHashMap<EelMachine, GlobalWorkspaceModel>()
 
   fun getGlobalModel(eelMachine: EelMachine): GlobalWorkspaceModel {
     val protectedMachine = if (Registry.`is`("ide.workspace.model.per.environment.model.separation")) eelMachine else LocalEelMachine
-    val internalName = if (protectedMachine is LocalEelMachine) {
-      GLOBAL_WORKSPACE_MODEL_LOCAL_CACHE_ID
+    val internalEnvironmentName = if (protectedMachine is LocalEelMachine) {
+      InternalEnvironmentName.Local
     }
     else {
-      EelProvider.EP_NAME.extensionList.firstNotNullOfOrNull { eelProvider ->
+      val name = EelProvider.EP_NAME.extensionList.firstNotNullOfOrNull { eelProvider ->
         eelProvider.getInternalName(protectedMachine)
       }
       ?: throw IllegalArgumentException("Descriptor $protectedMachine must be registered before using in Workspace Model")
+      InternalEnvironmentName.of(name)
     }
-    return environmentToModel.computeIfAbsent(protectedMachine) { GlobalWorkspaceModel(protectedMachine, InternalEnvironmentNameImpl(internalName)) }
+    return environmentToModel.computeIfAbsent(protectedMachine) { GlobalWorkspaceModel(protectedMachine, internalEnvironmentName) }
   }
 
   fun getGlobalModelByEnvironmentName(name: InternalEnvironmentName): GlobalWorkspaceModel {
-    val protectedName = if (Registry.`is`("ide.workspace.model.per.environment.model.separation")) name.name else GLOBAL_WORKSPACE_MODEL_LOCAL_CACHE_ID
-    val machine = if (protectedName == GLOBAL_WORKSPACE_MODEL_LOCAL_CACHE_ID) {
+    val protectedName = if (Registry.`is`("ide.workspace.model.per.environment.model.separation")) name else InternalEnvironmentName.Local
+    val machine = if (protectedName == InternalEnvironmentName.Local) {
       LocalEelMachine
     }
     else {
-      EelProvider.EP_NAME.extensionList.firstNotNullOf { eelProvider -> eelProvider.getEelMachineByInternalName(protectedName) }
+      EelProvider.EP_NAME.extensionList.firstNotNullOf { eelProvider -> eelProvider.getEelMachineByInternalName(protectedName.name) }
     }
     val model = getGlobalModel(machine)
     return model
@@ -448,6 +445,3 @@ class GlobalWorkspaceModelRegistry {
   }
 
 }
-
-@ApiStatus.Internal
-class InternalEnvironmentNameImpl(override val name: String) : InternalEnvironmentName
