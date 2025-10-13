@@ -47,16 +47,13 @@
     <!--For test only TODO delete later-->
     <action class="com.intellij.pycharm.community.ide.impl.promotion.communityToUnified.actions.ShowPyCommunityToUnifiedTooltipAction"
             id="ShowPyCommunityToUnifiedTooltipAction"
-            text="Community To Unified Tooltip"
-            description="For testing purposes"/>
+            internal="true"/>
     <action class="com.intellij.pycharm.community.ide.impl.promotion.communityToUnified.actions.ShowPyCommunityToUnifiedPromoDialogAction"
             id="ShowPyCommunityToUnifiedPromoDialogAction"
-            text="Community To Unified Modal Promo"
-            description="For testing purposes"/>
+            internal="true"/>
     <action class="com.intellij.pycharm.community.ide.impl.promotion.communityToUnified.actions.ResetCommunityToUnifiedPromoStateAction"
-            id="ShowPyCommunityToUnifiedMainUpdateDialogAction"
-            text="Reset Community To Unified Promo State"
-            description="For testing purposes"/>
+            id="ResetCommunityToUnifiedPromoStateAction"
+            internal="true"/>
 
   </actions>
 
