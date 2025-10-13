@@ -100,20 +100,22 @@ public final class WatchRootsManager {
   void updateSymlink(int fileId, @NotNull String linkPath, @Nullable String linkTarget) {
     synchronized (myLock) {
       SymlinkData oldDataById = mySymlinksById.get(fileId);
+
+
+      //both vars are for error diagnostics only:
       SymlinkData oldDataByPath = mySymlinksByPath.get(linkPath);
-
-
+      SymlinkData oldDataByOldPath = null;
       if (oldDataById != null) {
         if (FileUtil.pathsEqual(oldDataById.path, linkPath) && FileUtil.pathsEqual(oldDataById.target, linkTarget)) {
           // avoiding costly removal and re-addition of the request in case of a no-op update
           return;
         }
         mySymlinksById.remove(fileId);
-        mySymlinksByPath.remove(oldDataById.path);
+        oldDataByOldPath = mySymlinksByPath.remove(oldDataById.path);
         oldDataById.removeRequest(this);
       }
 
-      if (!isDataConsistent(fileId, linkPath, linkTarget, oldDataById, oldDataByPath)) {
+      if (!isDataConsistent(fileId, linkPath, linkTarget, oldDataById, oldDataByPath, oldDataByOldPath)) {
         return;
       }
 
@@ -132,7 +134,8 @@ public final class WatchRootsManager {
                                           @NotNull String linkPath,
                                           @Nullable String linkTarget,
                                           @Nullable SymlinkData oldDataById,
-                                          @Nullable SymlinkData oldDataByPath) {
+                                          @Nullable SymlinkData oldDataByNewPath,
+                                          @Nullable SymlinkData oldDataByOldPath) {
     //TODO RC: How inconsistency could arise:
     //         1) seems like one of the reasons is case-sensitivity: in this class we assume that local file-system
     //            case-sensitivity is constant (=SystemInfoRt.isFileSystemCaseSensitive) but it is not always true:
@@ -142,35 +145,57 @@ public final class WatchRootsManager {
     //         But these could be not all the reasons, so better improve diagnostics!
 
     if (oldDataById != null
-        && oldDataByPath == null
+        && oldDataByNewPath == null
         && !FileUtil.pathsEqual(oldDataById.path, linkPath)) {
       //likely a move/rename of the link, or one of it's parents.
       // Report an error, because we should have updated the symlink then move/rename happens, not some time after,
       // by occasion -- so this branch is just to be able to see the % of all errors are due to move/rename
       LOG.error("Symlink update is inconsistent: likely missed move/rename. Existing symlink data by id: \n" +
                 oldDataById + "\n" +
-                ", existing symlink data by path is null\n" +
+                "existing symlink data by new path[" + linkPath + "]: {null}\n" +
+                "existing symlink data by old path[" + oldDataById.path + "]:\n" +
+                oldDataByOldPath + "\n" +
                 "incoming symlink: \n" +
                 "{#" + fileId + ", " + linkPath + " -> " + linkTarget + "}, " +
                 "default caseSensitivity: " + SystemInfoRt.isFileSystemCaseSensitive);
       return true;
     }
-    else if (oldDataById != oldDataByPath) {
+    else if (oldDataById != null
+             && oldDataByNewPath == null) {
+      //This also likely a move/rename: the path has changed, but WatchRootsManager wasn't notified about it.
+      // Report an error, because we should have updated the symlink then move/rename happens, not some time after,
+      // by occasion -- so this branch is just to be able to see the % of all errors are due to move/rename
+      LOG.error("Symlink update is inconsistent: likely missed move/rename. Existing symlink data by id: \n" +
+                oldDataById + "\n" +
+                " != existing symlink data by new path[" + linkPath + "]: {null}\n" +
+                "existing symlink data by old path[" + oldDataById.path + "]:\n" +
+                oldDataByOldPath + "\n" +
+                "incoming symlink: \n" +
+                "{#" + fileId + ", " + linkPath + " -> " + linkTarget + "}, " +
+                "default caseSensitivity: " + SystemInfoRt.isFileSystemCaseSensitive);
+      return true;
+    }
+    else if (oldDataById != oldDataByNewPath) {
       LOG.error("Symlink update is inconsistent. Existing symlink data by id: \n" +
                 oldDataById + "\n" +
-                " != existing symlink data by path: \n" +
-                oldDataByPath + "\n" +
+                " != existing symlink data by new path[" + linkPath + "]:\n" +
+                oldDataByNewPath + "\n" +
+                "existing symlink data by old path:\n" +
+                oldDataByOldPath + "\n" +
                 "incoming symlink: \n" +
                 "{#" + fileId + ", " + linkPath + " -> " + linkTarget + "}, " +
                 "default caseSensitivity: " + SystemInfoRt.isFileSystemCaseSensitive);
       return false;
     }
-    else if (oldDataByPath != null && !FileUtil.pathsEqual(oldDataByPath.path, linkPath)) {
+    else if (oldDataByNewPath != null && !FileUtil.pathsEqual(oldDataByNewPath.path, linkPath)) {
       LOG.error("Symlink update is inconsistent. Existing symlink data by id: \n" +
                 oldDataById + "\n" +
-                " == existing symlink data by path: \n" +
-                oldDataByPath + "\n" +
-                "but dataByPath.path != incoming linkPath. incoming symlink: \n" +
+                " == existing symlink data by path[" + linkPath + "]: \n" +
+                oldDataByNewPath + "\n" +
+                "but dataByPath.path != incoming linkPath.\n" +
+                "existing symlink data by old path:\n" +
+                oldDataByOldPath + "\n" +
+                "incoming symlink: \n" +
                 "{#" + fileId + ", " + linkPath + " -> " + linkTarget + "}, " +
                 "default caseSensitivity: " + SystemInfoRt.isFileSystemCaseSensitive);
       return false;
