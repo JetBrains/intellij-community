@@ -120,7 +120,7 @@ internal class BuildTasksImpl(private val context: BuildContextImpl) : BuildTask
     BundledMavenDownloader.downloadMaven3Libs(context.paths.communityHomeDirRoot)
     BundledMavenDownloader.downloadMavenDistribution(context.paths.communityHomeDirRoot)
     BundledMavenDownloader.downloadMavenTelemetryDependencies(context.paths.communityHomeDirRoot)
-    buildDistribution(context, isUpdateFromSources = true)
+    buildDistribution(context = context, isUpdateFromSources = true)
     val arch = if (SystemInfoRt.isMac && CpuArch.isIntel64() && CpuArch.isEmulated()) {
       JvmArchitecture.aarch64
     }
@@ -293,7 +293,7 @@ private suspend fun buildOsSpecificDistributions(context: BuildContext): List<Di
 
     spanBuilder("Adjust executable permissions on common dist").use {
       val matchers = SUPPORTED_DISTRIBUTIONS.mapNotNull {
-        getOsDistributionBuilder(it.os, it.libcImpl, context)
+        getOsDistributionBuilder(os = it.os, libcImpl = it.libcImpl, context = context)
       }.flatMap { builder ->
         JvmArchitecture.entries.flatMap { arch ->
           builder.generateExecutableFilesMatchers(includeRuntime = true, arch).keys
@@ -373,7 +373,7 @@ private suspend fun buildSourcesArchive(contentReport: ContentReport, context: B
 
 internal suspend fun createDistributionState(context: BuildContext): DistributionBuilderState {
   val productLayout = context.productProperties.productLayout
-  val pluginsToPublish = getPluginLayoutsByJpsModuleNames(productLayout.pluginModulesToPublish, productLayout, toPublish = true)
+  val pluginsToPublish = getPluginLayoutsByJpsModuleNames(modules = productLayout.pluginModulesToPublish, productLayout = productLayout, toPublish = true)
   filterPluginsToPublish(pluginsToPublish, context)
 
   val enabledPluginModules = getEnabledPluginModules(pluginsToPublish, context)
@@ -381,7 +381,12 @@ internal suspend fun createDistributionState(context: BuildContext): Distributio
   val projectLibrariesUsedByPlugins = computeProjectLibsUsedByPlugins(enabledPluginModules, context)
 
   if (!context.shouldBuildDistributions() || context.isStepSkipped(BuildOptions.PROVIDED_MODULES_LIST_STEP)) {
-    return distributionState(pluginsToPublish, projectLibrariesUsedByPlugins, enabledPluginModules, context)
+    return distributionState(
+      pluginsToPublish = pluginsToPublish,
+      projectLibrariesUsedByPlugins = projectLibrariesUsedByPlugins,
+      enabledPluginModules = enabledPluginModules,
+      context = context
+    )
   }
 
   return spanBuilder("collecting compatible plugins").use {
@@ -392,8 +397,8 @@ internal suspend fun createDistributionState(context: BuildContext): Distributio
       // it's necessary to use the dev build to get correct paths in 'layout' data
 
       context.createProductRunner().runProduct(
-        listOf("listBundledPlugins", providedModuleFile.toString()),
-        additionalVmProperties = additionalProperties()
+        args = listOf("listBundledPlugins", providedModuleFile.toString()),
+        additionalVmProperties = additionalProperties(),
       )
 
       context.productProperties.customizeBuiltinModules(context = context, builtinModulesFile = providedModuleFile)
@@ -467,7 +472,8 @@ suspend fun buildDistributions(context: BuildContext): Unit = block("build distr
   copyDependenciesFile(context)
 
   logFreeDiskSpace("before compilation", context)
-  context.compileModules(moduleNames = null) // compile all
+  // compile all
+  context.compileModules(moduleNames = null)
   logFreeDiskSpace("after compilation", context)
 
   val distributionState = context.distributionState()
@@ -896,7 +902,7 @@ private suspend fun checkClassFiles(root: Path, context: BuildContext, isDistAll
     }
 
     if (versionCheckerConfig.isNotEmpty() || forbiddenSubPaths.isNotEmpty()) {
-      checkClassFiles(versionCheckerConfig, forbiddenSubPaths, forbiddenSubPathExceptions, root)
+      checkClassFiles(versionCheckConfig = versionCheckerConfig, forbiddenSubPaths = forbiddenSubPaths, forbiddenSubPathExceptions = forbiddenSubPathExceptions, root = root)
     }
 
     if (forbiddenSubPaths.isNotEmpty()) {
@@ -917,15 +923,17 @@ private fun checkPlatformSpecificPluginResources(pluginLayouts: List<PluginLayou
   }
 }
 
-fun getOsDistributionBuilder(os: OsFamily, libcImpl: LibcImpl, context: BuildContext, ideaProperties: CharSequence? = null): OsSpecificDistributionBuilder? = when (os) {
-  OsFamily.WINDOWS -> context.windowsDistributionCustomizer?.let {
-    WindowsDistributionBuilder(context, customizer = it, ideaProperties)
-  }
-  OsFamily.MACOS -> context.macDistributionCustomizer?.let {
-    MacDistributionBuilder(context, customizer = it, ideaProperties)
-  }
-  OsFamily.LINUX -> context.linuxDistributionCustomizer?.let {
-    LinuxDistributionBuilder(context, customizer = it, ideaProperties, targetLibcImpl = libcImpl as LinuxLibcImpl)
+fun getOsDistributionBuilder(os: OsFamily, libcImpl: LibcImpl, context: BuildContext, ideaProperties: CharSequence? = null): OsSpecificDistributionBuilder? {
+  return when (os) {
+    OsFamily.WINDOWS -> context.windowsDistributionCustomizer?.let {
+      WindowsDistributionBuilder(context, customizer = it, ideaProperties)
+    }
+    OsFamily.MACOS -> context.macDistributionCustomizer?.let {
+      MacDistributionBuilder(context, customizer = it, ideaProperties)
+    }
+    OsFamily.LINUX -> context.linuxDistributionCustomizer?.let {
+      LinuxDistributionBuilder(context, customizer = it, ideaProperties, targetLibcImpl = libcImpl as LinuxLibcImpl)
+    }
   }
 }
 

@@ -235,44 +235,47 @@ private fun computePackageResult(
             }
           }
 
-        contentConsumer(PackageResult(
-          content = ContentReportList(
-            platform = getPlatformData("platform.yaml"),
-            productModules = getData("product-modules.yaml"),
-            bundled = getData("bundled-plugins.yaml"),
-            nonBundled = getData("non-bundled-plugins.yaml"),
-            moduleSets = moduleSets,
-          ),
-          jpsProject = context.project,
-          projectHome = context.paths.projectHome,
-        ))
+        contentConsumer(
+          PackageResult(
+            content = ContentReportList(
+              platform = getPlatformData("platform.yaml"),
+              productModules = getData("product-modules.yaml"),
+              bundled = getData("bundled-plugins.yaml"),
+              nonBundled = getData("non-bundled-plugins.yaml"),
+              moduleSets = moduleSets,
+            ),
+            jpsProject = context.project,
+            projectHome = context.paths.projectHome,
+          )
+        )
       }
+    },
+    buildOptionsCustomizer = {
+      // reproducible content report
+      it.randomSeedNumber = 42
+      it.skipCustomResourceGenerators = true
+      it.targetOs = OsFamily.ALL
+      it.targetArch = null
+      it.buildStepsToSkip += listOf(
+        BuildOptions.MAVEN_ARTIFACTS_STEP,
+        BuildOptions.SEARCHABLE_OPTIONS_INDEX_STEP,
+        BuildOptions.BROKEN_PLUGINS_LIST_STEP,
+        BuildOptions.FUS_METADATA_BUNDLE_STEP,
+        BuildOptions.SCRAMBLING_STEP,
+        BuildOptions.PREBUILD_SHARED_INDEXES,
+        BuildOptions.SOURCES_ARCHIVE_STEP,
+        BuildOptions.VERIFY_CLASS_FILE_VERSIONS,
+        BuildOptions.ARCHIVE_PLUGINS,
+        BuildOptions.WINDOWS_EXE_INSTALLER_STEP,
+        BuildOptions.REPAIR_UTILITY_BUNDLE_STEP,
+        SoftwareBillOfMaterials.STEP_ID,
+        BuildOptions.LINUX_ARTIFACTS_STEP,
+        BuildOptions.THIRD_PARTY_LIBRARIES_LIST_STEP,
+        BuildOptions.LOCALIZE_STEP,
+        BuildOptions.VALIDATE_PLUGINS_TO_BE_PUBLISHED,
+        "JupyterFrontEndResourcesGenerator",
+      )
+      it.useReleaseCycleRelatedBundlingRestrictionsForContentReport = false
     }
-  ) {
-    // reproducible content report
-    it.randomSeedNumber = 42
-    it.skipCustomResourceGenerators = true
-    it.targetOs = OsFamily.ALL
-    it.targetArch = null
-    it.buildStepsToSkip += listOf(
-      BuildOptions.MAVEN_ARTIFACTS_STEP,
-      BuildOptions.SEARCHABLE_OPTIONS_INDEX_STEP,
-      BuildOptions.BROKEN_PLUGINS_LIST_STEP,
-      BuildOptions.FUS_METADATA_BUNDLE_STEP,
-      BuildOptions.SCRAMBLING_STEP,
-      BuildOptions.PREBUILD_SHARED_INDEXES,
-      BuildOptions.SOURCES_ARCHIVE_STEP,
-      BuildOptions.VERIFY_CLASS_FILE_VERSIONS,
-      BuildOptions.ARCHIVE_PLUGINS,
-      BuildOptions.WINDOWS_EXE_INSTALLER_STEP,
-      BuildOptions.REPAIR_UTILITY_BUNDLE_STEP,
-      SoftwareBillOfMaterials.STEP_ID,
-      BuildOptions.LINUX_ARTIFACTS_STEP,
-      BuildOptions.THIRD_PARTY_LIBRARIES_LIST_STEP,
-      BuildOptions.LOCALIZE_STEP,
-      BuildOptions.VALIDATE_PLUGINS_TO_BE_PUBLISHED,
-      "JupyterFrontEndResourcesGenerator",
-    )
-    it.useReleaseCycleRelatedBundlingRestrictionsForContentReport = false
-  }
+  )
 }

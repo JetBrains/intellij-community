@@ -392,8 +392,8 @@ abstract class ProductProperties {
    * If `true`, a distribution contains libraries and launcher script for running IDE in Remote Development mode.
    */
   @ApiStatus.Internal
-  open suspend fun addRemoteDevelopmentLibraries(buildContext: BuildContext): Boolean {
-    return buildContext.getBundledPluginModules().contains("intellij.remoteDevServer")
+  open suspend fun addRemoteDevelopmentLibraries(context: BuildContext): Boolean {
+    return context.getBundledPluginModules().contains("intellij.remoteDevServer")
   }
 
   /**
@@ -510,4 +510,3 @@ abstract class ProductProperties {
  * > Please use characters, numbers, and '.'/'-'/'_' symbols only and keep it reasonably short.
  */
 private val PLUGIN_ID_REGEX: Regex = "^[\\w.-]+$".toRegex()
-
