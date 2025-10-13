@@ -27,7 +27,6 @@ import com.intellij.util.application
 import com.intellij.util.asDisposable
 import com.intellij.util.concurrency.annotations.RequiresBackgroundThread
 import com.intellij.util.concurrency.annotations.RequiresEdt
-import com.intellij.util.ui.EdtInvocationManager.invokeLaterIfNeeded
 import kotlinx.coroutines.*
 import kotlinx.coroutines.flow.collectLatest
 import org.jetbrains.annotations.ApiStatus
@@ -57,11 +56,11 @@ class CommitChangesViewWithToolbarPanel(
 
   init {
     refresher.start()
-  }
-
-  @CalledInAny
-  fun setBusy(busy: Boolean) {
-    invokeLaterIfNeeded { changesView.setPaintBusy(busy) }
+    cs.launch(Dispatchers.UI) {
+      refresher.getPendingTasksFlow().collect {
+        isBusy -> changesView.setPaintBusy(isBusy)
+      }
+    }
   }
 
   @RequiresEdt
@@ -120,7 +119,6 @@ class CommitChangesViewWithToolbarPanel(
 
   @CalledInAny
   private fun scheduleRefresh(withDelay: Boolean, @RequiresBackgroundThread callback: Runnable? = null) {
-    setBusy(true)
     if (withDelay) {
       refresher.request()
     }
@@ -130,7 +128,6 @@ class CommitChangesViewWithToolbarPanel(
     cs.launch {
       refresher.awaitNotBusy()
       callback?.run()
-      setBusy(false)
     }
   }
 

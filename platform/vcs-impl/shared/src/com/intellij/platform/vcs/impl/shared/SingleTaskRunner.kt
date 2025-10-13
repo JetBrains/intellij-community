@@ -7,6 +7,7 @@ import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.progress.checkCanceled
 import kotlinx.coroutines.*
 import kotlinx.coroutines.channels.Channel
+import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.combine
 import kotlinx.coroutines.flow.first
@@ -28,6 +29,8 @@ class SingleTaskRunner(
   private val busy = MutableStateFlow(false)
 
   private val runNow = Channel<Unit>(capacity = Channel.CONFLATED)
+
+  fun getPendingTasksFlow(): Flow<Boolean> = requested.combine(busy) { requested, busy -> !requested && !busy }
 
   private val processorJob = cs.launch(Dispatchers.Default, CoroutineStart.LAZY) {
     try {
@@ -73,7 +76,7 @@ class SingleTaskRunner(
    * Await the state where the task is not executed and there are no requests to do so.
    */
   suspend fun awaitNotBusy() {
-    requested.combine(busy) { requested, busy -> !requested && !busy }.first { it }
+    getPendingTasksFlow().first { it }
   }
 
   companion object {

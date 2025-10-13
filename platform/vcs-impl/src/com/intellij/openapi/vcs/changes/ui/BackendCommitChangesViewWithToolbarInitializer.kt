@@ -38,7 +38,6 @@ internal class BackendCommitChangesViewWithToolbarInitializer : CommitChangesVie
     }
 
     override fun changedFileStatusChanged() {
-      panel.setBusy(false)
       panel.scheduleRefresh()
       val changeListManager = ChangeListManagerImpl.getInstanceImpl(panel.project)
       ChangesViewManager.getInstance(panel.project).updateProgressComponent(changeListManager.getAdditionalUpdateInfo())
