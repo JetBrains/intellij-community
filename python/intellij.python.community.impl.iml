@@ -188,5 +188,6 @@
     <orderEntry type="module" module-name="intellij.python.community.helpersLocator" />
     <orderEntry type="module" module-name="intellij.python.community.execService.python" />
     <orderEntry type="module" module-name="intellij.python.community.interpreters" />
+    <orderEntry type="module" module-name="intellij.python.sdkConfigurator.common" />
   </component>
 </module>
