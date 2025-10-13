@@ -895,6 +895,7 @@ object EelPathUtils {
         }
       }
 
+      LOG.trace("Merge hash by path comparing source: $localEntry to target: $remoteEntry")
       if (localEntry == null && remoteEntry == null) {
         break
       }
@@ -1295,6 +1296,7 @@ object EelPathUtils {
         semaphore.acquire()
         launch(Dispatchers.IO) {
           try {
+            LOG.trace("Applying diff operation: $diffOp")
             when (diffOp) {
               is DiffOperation.Create, is DiffOperation.ReplaceFile -> {
                 if (diffOp is DiffOperation.ReplaceFile) Files.delete(diffOp.remoteFile.path.asNioPath())
