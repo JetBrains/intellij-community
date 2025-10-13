@@ -35,7 +35,6 @@ import com.intellij.openapi.wm.ToolWindowManager
 import com.intellij.openapi.wm.ex.ToolWindowManagerListener
 import com.intellij.openapi.wm.impl.content.SingleContentSupplier
 import com.intellij.openapi.wm.impl.content.ToolWindowContentUi
-import com.intellij.ui.AppUIUtil
 import com.intellij.ui.ExperimentalUI
 import com.intellij.ui.content.*
 import com.intellij.ui.content.Content.CLOSE_LISTENER_KEY
@@ -43,11 +42,8 @@ import com.intellij.ui.docking.DockManager
 import com.intellij.ui.icons.loadIconCustomVersionOrScale
 import com.intellij.util.SmartList
 import com.intellij.util.ui.EmptyIcon
-import com.intellij.util.ui.UIUtil
-import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.*
 import kotlinx.coroutines.future.await
-import kotlinx.coroutines.launch
-import kotlinx.coroutines.withContext
 import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.annotations.NotNull
 import java.awt.KeyboardFocusManager
@@ -55,7 +51,6 @@ import java.util.concurrent.ConcurrentHashMap
 import java.util.concurrent.ConcurrentLinkedDeque
 import java.util.function.Predicate
 import javax.swing.Icon
-import kotlin.concurrent.Volatile
 
 @ApiStatus.Internal
 @JvmField
@@ -313,15 +308,20 @@ class RunContentManagerImpl(private val project: Project) : RunContentManager {
     if (processHandler != null) {
       val processAdapter = object : ProcessListener {
         /**
-         * Events from [ProcessHandler] may be received on different threads, and this depends on the specific implementation.
-         * Therefore, we must ensure the visibility of actual values.
+         * Events from [ProcessHandler] may be received on different threads,
+         * and this depends on the specific implementation.
+         * We must ensure the setup part of `startNotified` is handled
+         * before `processTerminated`,
+         * otherwise it can happen that the UI content will not be shown at all
+         * if the session ended too fast.
          */
         @Volatile
         var processTerminated = false
+        private var startNotifiedJob: Job? = null
 
         override fun startNotified(event: ProcessEvent) {
-          UIUtil.invokeLaterIfNeeded {
-            if (!processTerminated) {
+          startNotifiedJob = descriptor.coroutineScope.launch {
+            withContext(Dispatchers.EDT) {
               content.icon = getLiveIndicator(descriptor.icon)
               var toolWindowIcon = toolWindowIdToBaseIcon[toolWindowId]
               if (ExperimentalUI.isNewUI() && toolWindowIcon is ScalableIcon) {
@@ -333,30 +333,39 @@ class RunContentManagerImpl(private val project: Project) : RunContentManager {
 
           descriptor.coroutineScope.launch {
             val pid = processHandler.nativePid?.await() ?: return@launch
-            withContext(Dispatchers.EDT) {
-              content.description = ExecutionBundle.message("process.id.tooltip", pid)
-            }
+              withContext(Dispatchers.EDT) {
+                if (!processTerminated) {
+                  content.description = ExecutionBundle.message("process.id.tooltip", pid)
+                }
+              }
           }
 
           descriptor.coroutineScope.launch {
             descriptor.iconProperty.collect {
-              withContext(Dispatchers.EDT) {
-                content.icon = getLiveIndicator(it)
-              }
+                withContext(Dispatchers.EDT) {
+                  if (!processTerminated) {
+                    content.icon = getLiveIndicator(it)
+                  }
+                }
             }
           }
         }
 
         override fun processTerminated(event: ProcessEvent) {
+          // Stop receiving async icon/descriptor updates immediately
           processTerminated = true
-          AppUIUtil.invokeLaterIfProjectAlive(project) {
-            val manager = getContentManagerByToolWindowId(toolWindowId) ?: return@invokeLaterIfProjectAlive
-            val alive = isAlive(manager)
-            setToolWindowIcon(alive, toolWindow!!)
-            // Since it's a terminated state, it's okay to stick with the last available one
-            val icon = descriptor.icon
-            content.icon = if (icon == null) executor.disabledIcon else IconLoader.getTransparentIcon(icon)
-            content.description = null
+          descriptor.coroutineScope.launch {
+            startNotifiedJob?.join()
+            withContext(Dispatchers.EDT) {
+              if (project.isDisposed) return@withContext
+              val manager = getContentManagerByToolWindowId(toolWindowId) ?: return@withContext
+              val alive = isAlive(manager)
+              setToolWindowIcon(alive, toolWindow!!)
+              // Since it's a terminated state, it's okay to stick with the last available one
+              val icon = descriptor.icon
+              content.icon = if (icon == null) executor.disabledIcon else IconLoader.getTransparentIcon(icon)
+              content.description = null
+            }
           }
         }
       }
