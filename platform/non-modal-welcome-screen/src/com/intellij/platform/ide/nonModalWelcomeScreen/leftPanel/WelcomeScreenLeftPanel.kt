@@ -8,6 +8,7 @@ import com.intellij.ide.dnd.DnDSupport
 import com.intellij.ide.dnd.FileCopyPasteUtil
 import com.intellij.ide.projectView.impl.ProjectViewImpl
 import com.intellij.ide.projectView.impl.ProjectViewPane
+import com.intellij.openapi.fileEditor.FileEditorManager
 import com.intellij.openapi.fileEditor.FileEditorManagerEvent
 import com.intellij.openapi.fileEditor.FileEditorManagerListener
 import com.intellij.openapi.project.Project
@@ -41,10 +42,16 @@ internal class WelcomeScreenLeftPanel(private val project: Project) : ProjectVie
   private var recentProjectTreeComponent: JComponent? = null
 
   init {
+    // Sync initial visibility based on currently selected file
+    syncPaneVisibilityWithCurrentEditor()
     project.messageBus.connect().subscribe(FileEditorManagerListener.FILE_EDITOR_MANAGER, object : FileEditorManagerListener {
       override fun selectionChanged(event: FileEditorManagerEvent) {
-        if (event.newFile?.fileType is WelcomeScreenRightTabVirtualFile.WelcomeScreenFileType) {
+        val isWelcome = event.newFile?.fileType is WelcomeScreenRightTabVirtualFile.WelcomeScreenFileType
+        if (isWelcome) {
+          ensurePaneVisible(true)
           ProjectViewImpl.getInstance(project).changeView(ID)
+        } else {
+          ensurePaneVisible(false)
         }
       }
     })
@@ -56,9 +63,9 @@ internal class WelcomeScreenLeftPanel(private val project: Project) : ProjectVie
 
   override fun getIcon(): Icon = IconManager.getInstance().getPlatformIcon(PlatformIcons.Folder)
 
-  override fun isInitiallyVisible(): Boolean = isWelcomeScreenProject(project)
+  override fun isInitiallyVisible(): Boolean = isWelcomeScreenProject(project) && isWelcomeFileSelected()
 
-  override fun isDefaultPane(project: Project): Boolean = isWelcomeScreenProject(project)
+  override fun isDefaultPane(project: Project): Boolean = isWelcomeScreenProject(project) && isWelcomeFileSelected()
 
   override fun getWeight(): Int = -10 // TODO: Increase weight?
 
@@ -122,6 +129,30 @@ internal class WelcomeScreenLeftPanel(private val project: Project) : ProjectVie
   override fun dispose() {
     recentProjectTreeComponent = null
     super.dispose()
+  }
+
+  private fun isWelcomeFileSelected(): Boolean {
+    val selected = FileEditorManager.getInstance(project).selectedFiles.firstOrNull()
+    return selected?.fileType is WelcomeScreenRightTabVirtualFile.WelcomeScreenFileType
+  }
+
+  private fun ensurePaneVisible(visible: Boolean) {
+    val projectView = ProjectViewImpl.getInstance(project)
+    val existing = projectView.getProjectViewPaneById(ID)
+    if (visible) {
+      if (existing == null) {
+        // Re-add this pane so that its tab appears
+        projectView.addProjectPane(this)
+      }
+    } else {
+      if (existing != null) {
+        projectView.removeProjectPane(existing)
+      }
+    }
+  }
+
+  private fun syncPaneVisibilityWithCurrentEditor() {
+    ensurePaneVisible(isWelcomeFileSelected())
   }
 
   private fun searchPanel(recentProjectTree: RecentProjectFilteringTree) = panel {
