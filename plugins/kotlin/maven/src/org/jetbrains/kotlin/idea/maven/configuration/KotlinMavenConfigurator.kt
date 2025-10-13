@@ -222,7 +222,6 @@ abstract class KotlinMavenConfigurator protected constructor(
                             queueSyncIfNeeded(project)
                             val notificationHolder = KotlinMavenAutoConfigurationNotificationHolder.getInstance(project)
                             addUndoAutoconfigurationListener(project, listOf(module), isAutoConfig = true, notificationHolder)
-                            OpenFileAction.openFile(file.virtualFile, project)
                             notificationHolder
                                 .showAutoConfiguredNotification(module.name, changedBuildFiles.calculateChanges())
 
