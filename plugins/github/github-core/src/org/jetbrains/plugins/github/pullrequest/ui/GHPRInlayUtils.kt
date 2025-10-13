@@ -235,7 +235,7 @@ internal object GHPRInlayUtils {
   }
 
   @OptIn(ExperimentalCoroutinesApi::class)
-  fun installInlaysDimming(cs: CoroutineScope, model: CodeReviewEditorInlaysModel<*>) {
+  fun installInlaysDimming(cs: CoroutineScope, model: CodeReviewEditorInlaysModel<*>, locationToLine: ((DiffLineLocation) -> Int?)?) {
     cs.launchNow {
       model.inlays
         .map { it.filterIsInstance<GHPREditorMappedComponentModel>() }
@@ -248,13 +248,25 @@ internal object GHPRInlayUtils {
           val rangesToDim = inlayStates
             .filter { it.shouldShowOutline }
             .mapNotNull {
-              val (_, lines) = it.range ?: return@mapNotNull null
-              lines.first..<lines.last
+              val (side, lines) = it.range ?: return@mapNotNull null
+              if (locationToLine != null) {
+                val startLine = locationToLine(side to lines.first) ?: return@mapNotNull null
+                val endLine = locationToLine(side to lines.last) ?: return@mapNotNull null
+                startLine..<endLine
+              }
+              else {
+                lines.first..<lines.last
+              }
             }
 
           inlayStates.forEach { (vm, _, range) ->
-            val (_, lines) = range ?: return@forEach
-            val onLine = lines.last
+            val (side, lines) = range ?: return@forEach
+            val onLine = if (locationToLine != null) {
+              locationToLine(side to lines.last) ?: return@forEach
+            }
+            else {
+              lines.last
+            }
 
             vm.setDimmed(rangesToDim.any { dimRange -> dimRange.contains(onLine) })
           }

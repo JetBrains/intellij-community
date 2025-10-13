@@ -104,7 +104,7 @@ internal class GHPRReviewDiffExtension : DiffExtension() {
               }
               .collect()
           }
-          GHPRInlayUtils.installInlaysDimming(cs, this@apply)
+          GHPRInlayUtils.installInlaysDimming(cs, this@apply, locationToLine)
           editor.project?.let { project ->
             GHPRInlayUtils.installInlaysFocusTracker(cs, this@apply, project)
           }
