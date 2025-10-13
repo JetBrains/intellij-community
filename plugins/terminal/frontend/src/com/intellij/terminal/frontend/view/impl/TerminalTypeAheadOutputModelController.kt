@@ -207,7 +207,7 @@ private fun MutableTerminalOutputModel.insertAtCursor(string: String) {
   withTypeAhead {
     val remainingLinePart = getRemainingLinePart()
     val replaceLength = string.length.coerceAtMost(remainingLinePart.length)
-    val replaceOffset = cursorOffsetState.value
+    val replaceOffset = cursorOffset
     replaceContent(replaceOffset, replaceLength, string, emptyList())
     // Do not reuse the cursorOffsetState.value because replaceContent might change it.
     // Instead, compute the new offset using the absolute offsets.

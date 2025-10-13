@@ -24,11 +24,6 @@ sealed interface TerminalOutputModel {
 
   val cursorOffset: TerminalOffset
 
-  /**
-   * Offset in the document where the cursor is located now.
-   */
-  val cursorOffsetState: StateFlow<TerminalOffset>
-
   val startOffset: TerminalOffset
 
   val firstLine: TerminalLineIndex

@@ -10,9 +10,6 @@ import com.intellij.openapi.editor.impl.FrozenDocument
 import com.intellij.openapi.util.TextRange
 import com.intellij.terminal.TerminalColorPalette
 import com.intellij.util.EventDispatcher
-import kotlinx.coroutines.flow.MutableStateFlow
-import kotlinx.coroutines.flow.StateFlow
-import kotlinx.coroutines.flow.asStateFlow
 import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.annotations.VisibleForTesting
 import org.jetbrains.plugins.terminal.block.output.HighlightingInfo
@@ -32,11 +29,7 @@ class MutableTerminalOutputModelImpl(
   private val maxOutputLength: Int,
 ) : MutableTerminalOutputModel {
 
-  private val mutableCursorOffsetState: MutableStateFlow<TerminalOffset> = MutableStateFlow(TerminalOffset.of(0))
-  override val cursorOffsetState: StateFlow<TerminalOffset> = mutableCursorOffsetState.asStateFlow()
-
-  override val cursorOffset: TerminalOffset
-    get() = cursorOffsetState.value
+  override var cursorOffset: TerminalOffset = TerminalOffset.ZERO
 
   private val highlightingsModel = HighlightingsModel()
 
@@ -147,8 +140,8 @@ class MutableTerminalOutputModelImpl(
   }
 
   override fun updateCursorPosition(offset: TerminalOffset) {
-    val oldValue = mutableCursorOffsetState.value
-    mutableCursorOffsetState.value = offset
+    val oldValue = cursorOffset
+    this.cursorOffset = offset
     dispatcher.multicaster.cursorOffsetChanged(TerminalCursorOffsetChangedImpl(this, oldValue, offset))
   }
 
@@ -204,7 +197,7 @@ class MutableTerminalOutputModelImpl(
     // It'll update itself later to the correct position anyway, but having the incorrect value can cause exceptions before that.
     val newLength = document.textLength
     val docEndOffset = relativeOffset(newLength)
-    if (mutableCursorOffsetState.value > docEndOffset) {
+    if (cursorOffset > docEndOffset) {
       updateCursorPosition(docEndOffset)
     }
   }
@@ -293,7 +286,7 @@ class MutableTerminalOutputModelImpl(
       trimmedLinesCount = trimmedLinesCount,
       trimmedCharsCount = trimmedCharsCount,
       firstLineTrimmedCharsCount = firstLineTrimmedCharsCount,
-      cursorOffset = cursorOffsetState.value.toRelative(),
+      cursorOffset = cursorOffset.toRelative(),
       highlightings = highlightingsModel.dumpState()
     )
   }

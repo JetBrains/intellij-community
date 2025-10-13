@@ -37,9 +37,13 @@ import com.intellij.util.asDisposable
 import com.intellij.util.awaitCancellationAndInvoke
 import com.intellij.util.ui.components.BorderLayoutPanel
 import kotlinx.coroutines.*
+import kotlinx.coroutines.channels.awaitClose
+import kotlinx.coroutines.channels.trySendBlocking
+import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
+import kotlinx.coroutines.flow.callbackFlow
 import kotlinx.coroutines.flow.map
 import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.annotations.VisibleForTesting
@@ -429,7 +433,7 @@ class TerminalViewImpl(
         val offset = model.cursorOffset.toRelative(model)
         editor.offsetToLogicalPosition(offset)
       },
-      cursorOffsetFlow = model.cursorOffsetState.map { it.toRelative(model) },
+      cursorOffsetFlow = model.cursorOffsetFlow.map { it.toRelative(model) },
       sendInputString = { text -> terminalInput.sendString(text) },
     )
 
@@ -630,3 +634,15 @@ class TerminalViewImpl(
 }
 
 internal fun TerminalOffset.toRelative(model: TerminalOutputModel): Int = (this - model.startOffset).toInt()
+
+@get:ApiStatus.Internal
+@get:VisibleForTesting
+val TerminalOutputModel.cursorOffsetFlow: Flow<TerminalOffset>
+  get() = callbackFlow {
+    addListener(asDisposable(), object : TerminalOutputModelListener {
+      override fun cursorOffsetChanged(event: TerminalCursorOffsetChanged) {
+        trySendBlocking(event.newOffset)
+      }
+    })
+    awaitClose()
+  }
