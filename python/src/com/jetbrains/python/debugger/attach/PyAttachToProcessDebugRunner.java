@@ -97,7 +97,7 @@ public class PyAttachToProcessDebugRunner extends PyDebugRunner {
           pyDebugProcess.setPositionConverter(new PyLocalPositionConverter());
 
 
-          createConsoleCommunicationAndSetupActions(myProject, result, pyDebugProcess, session);
+          createConsoleCommunication(myProject, result, pyDebugProcess, session);
 
           return pyDebugProcess;
         }

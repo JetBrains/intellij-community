@@ -9,15 +9,17 @@ import com.intellij.openapi.vfs.encoding.EncodingProjectManager;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.util.PsiUtilCore;
 import com.intellij.util.Function;
+import com.intellij.xdebugger.XDebugProcess;
 import com.jetbrains.python.console.actions.CommandQueueForPythonConsoleService;
 import com.jetbrains.python.console.pydev.AbstractConsoleCommunication;
 import com.jetbrains.python.console.pydev.InterpreterResponse;
 import com.jetbrains.python.console.pydev.PydevCompletionVariant;
-import com.jetbrains.python.debugger.PyDebugProcess;
+import com.jetbrains.python.debugger.PyDebugProcessWithConsole;
 import com.jetbrains.python.debugger.PyDebuggerEditorsProvider;
 import com.jetbrains.python.debugger.PyDebuggerException;
 import com.jetbrains.python.debugger.pydev.PyDebugCallback;
 import com.jetbrains.python.psi.impl.PyExpressionCodeFragmentImpl;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 
 import java.io.IOException;
@@ -25,16 +27,17 @@ import java.io.OutputStream;
 import java.nio.charset.Charset;
 import java.util.List;
 
-public class PythonDebugConsoleCommunication extends AbstractConsoleCommunication {
+public class PythonDebugConsoleCommunication<T extends XDebugProcess & PyDebugProcessWithConsole> extends AbstractConsoleCommunication {
   private static final Logger LOG = Logger.getInstance(PythonDebugConsoleCommunication.class);
-  private final PyDebugProcess myDebugProcess;
+  private final T myDebugProcess;
   private boolean myNeedsMore = false;
   private boolean firstExecution = true;
   private final @NotNull PythonConsoleView myConsoleView;
   private boolean isExecuting = false;
 
+  @ApiStatus.Internal
   public PythonDebugConsoleCommunication(@NotNull Project project,
-                                         @NotNull PyDebugProcess debugProcess,
+                                         @NotNull T debugProcess,
                                          @NotNull PythonConsoleView consoleView) {
     super(project);
     myDebugProcess = debugProcess;
@@ -42,7 +45,7 @@ public class PythonDebugConsoleCommunication extends AbstractConsoleCommunicatio
   }
 
   /**
-   * Set context for static code completion in Debugger Console
+   * Set context for static code completion in the Debugger Console
    */
   public void setContext() {
     if (PsiUtilCore.getPsiFile(myProject, myConsoleView.getVirtualFile()) instanceof PyExpressionCodeFragmentImpl editorPsiFile) {
@@ -71,7 +74,7 @@ public class PythonDebugConsoleCommunication extends AbstractConsoleCommunicatio
     return isExecuting;
   }
 
-  protected void exec(ConsoleCodeFragment command, final PyDebugCallback<Pair<String, Boolean>> callback) {
+  protected void exec(ConsoleCodeFragment command, final PyDebugCallback<? super Pair<String, Boolean>> callback) {
     if (firstExecution) {
       firstExecution = false;
       myConsoleView.addConsoleFolding(true, false);
@@ -106,7 +109,7 @@ public class PythonDebugConsoleCommunication extends AbstractConsoleCommunicatio
       final OutputStream processInput = myDebugProcess.getProcessHandler().getProcessInput();
       if (processInput != null) {
         try {
-          final Charset defaultCharset = EncodingProjectManager.getInstance(myDebugProcess.getProject()).getDefaultCharset();
+          final Charset defaultCharset = EncodingProjectManager.getInstance(myProject).getDefaultCharset();
           processInput.write((code.getText()).getBytes(defaultCharset));
           processInput.flush();
 
