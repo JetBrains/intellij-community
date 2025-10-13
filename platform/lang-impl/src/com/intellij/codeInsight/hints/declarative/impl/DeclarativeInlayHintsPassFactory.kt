@@ -10,6 +10,7 @@ import com.intellij.codeInsight.daemon.impl.TextEditorHighlightingPassRegistrarI
 import com.intellij.codeInsight.daemon.impl.analysis.HighlightingLevelManager
 import com.intellij.codeInsight.hints.InlayHintsSettings
 import com.intellij.codeInsight.hints.declarative.*
+import com.intellij.diff.util.DiffUtil
 import com.intellij.openapi.editor.Editor
 import com.intellij.openapi.editor.EditorFactory
 import com.intellij.openapi.project.DumbAware
@@ -72,7 +73,7 @@ class DeclarativeInlayHintsPassFactory : TextEditorHighlightingPassFactory, Text
 
   override fun createHighlightingPass(psiFile: PsiFile, editor: Editor): DeclarativeInlayHintsPass? {
     if (!Registry.`is`("inlays.declarative.hints")) return null
-    if (editor.isOneLineMode) return null
+    if (editor.isOneLineMode || DiffUtil.isDiffEditor(editor)) return null
     if (!HighlightingLevelManager.getInstance(psiFile.project).shouldHighlight(psiFile)) return null
 
     val stamp = editor.getUserData(PSI_MODIFICATION_STAMP)
