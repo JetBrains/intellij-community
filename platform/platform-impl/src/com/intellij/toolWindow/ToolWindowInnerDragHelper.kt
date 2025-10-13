@@ -3,6 +3,8 @@ package com.intellij.toolWindow
 
 import com.intellij.ide.DataManager
 import com.intellij.openapi.Disposable
+import com.intellij.openapi.application.WriteIntentReadAction
+import com.intellij.openapi.application.invokeLater
 import com.intellij.openapi.fileEditor.impl.EditorWindow
 import com.intellij.openapi.util.registry.Registry
 import com.intellij.openapi.wm.IdeGlassPaneUtil
@@ -324,10 +326,12 @@ internal class ToolWindowInnerDragHelper(parent: Disposable, val pane: JComponen
     else {
       val manager = sourceDecorator.contentManager
       val index = manager.getIndexOfContent(content) + 1
-      SwingUtilities.invokeLater {
+      invokeLater {
         try {
           sourceDecorator.isSplitUnsplitInProgress = true
-          manager.removeContent(content, false)
+          WriteIntentReadAction.run {
+            manager.removeContent(content, false)
+          }
           sourceDecorator.setDropInfoIndex(index, myDraggingTab!!.width)
         }
         finally {
