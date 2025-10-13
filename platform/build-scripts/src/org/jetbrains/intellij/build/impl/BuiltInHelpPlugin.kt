@@ -127,12 +127,13 @@ private suspend fun buildResourcesForHelpPlugin(resourceRoot: Path, classPath: L
       }
     }
 
-    supportedLanguages.forEach { (lang, descriptor) ->
-      writeNewZipWithoutIndex(file = assetJar, compress = true) { zipCreator ->
+    writeNewZipWithoutIndex(file = assetJar, compress = true) { zipCreator ->
+      supportedLanguages.forEach { (lang, descriptor) ->
         val rootDir = resourceRoot.resolve(descriptor.resPath)
         if (rootDir.exists()) {
           val archiver = ZipArchiver()
           archiver.setRootDir(rootDir)
+          Span.current().addEvent("adding \"${lang}\" to the resulting ZIP.")
 
           descriptor.resList.forEach { resDir ->
             archiveDir(
@@ -140,6 +141,8 @@ private suspend fun buildResourcesForHelpPlugin(resourceRoot: Path, classPath: L
               addFile = { archiver.addFile(it, zipCreator) })
           }
         }
+        else
+          Span.current().addEvent("skip adding \"${lang}\" to the resulting ZIP because it was not supplied.")
       }
     }
   }
