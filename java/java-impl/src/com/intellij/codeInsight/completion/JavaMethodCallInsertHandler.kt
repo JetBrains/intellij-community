@@ -3,9 +3,9 @@ package com.intellij.codeInsight.completion
 
 import com.intellij.codeInsight.CodeInsightSettings
 import com.intellij.codeInsight.completion.CodeCompletionFeatures.EXCLAMATION_FINISH
-import com.intellij.codeInsight.completion.JavaMethodCallInsertHandler.Companion.findCallAtOffset
-import com.intellij.codeInsight.completion.JavaMethodCallInsertHandler.Companion.findInsertedCall
 import com.intellij.codeInsight.completion.JavaMethodCallInsertHandler.Companion.showParameterHints
+import com.intellij.codeInsight.completion.method.*
+import com.intellij.codeInsight.completion.method.JavaMethodCallInsertHandlerHelper.findInsertedCall
 import com.intellij.codeInsight.completion.util.MethodParenthesesHandler
 import com.intellij.codeInsight.hint.ParameterInfoControllerBase
 import com.intellij.codeInsight.hint.ShowParameterInfoContext
@@ -18,7 +18,6 @@ import com.intellij.injected.editor.EditorWindow
 import com.intellij.openapi.Disposable
 import com.intellij.openapi.editor.Document
 import com.intellij.openapi.util.Disposer
-import com.intellij.openapi.util.Key
 import com.intellij.openapi.util.registry.Registry
 import com.intellij.openapi.util.text.StringUtil
 import com.intellij.psi.*
@@ -99,18 +98,6 @@ public class JavaMethodCallInsertHandler(
 
   public companion object {
     @JvmStatic
-    public fun getReferenceStartOffset(context: InsertionContext, item: LookupElement): Int {
-      val refStartKey = requireNotNull(item.getUserData(refStartKey)) { "refStartKey must have been set" }
-      return context.offsetMap.getOffset(refStartKey)
-    }
-
-    @JvmStatic
-    public fun findCallAtOffset(context: InsertionContext, offset: Int): PsiCallExpression? {
-      context.commitDocument()
-      return PsiTreeUtil.findElementOfClassAtOffset(context.file, offset, PsiCallExpression::class.java, false)
-    }
-
-    @JvmStatic
     public fun showParameterHints(
       element: LookupElement,
       context: InsertionContext,
@@ -182,23 +169,12 @@ public class JavaMethodCallInsertHandler(
         }
       }
     }
-
-    /**
-     * Use [findInsertedCall] to get PsiCallExpression representing the inserted code, or null if no code was inserted
-     * Can be called in [afterHandler]
-     */
-    @JvmStatic
-    public fun findInsertedCall(element: LookupElement, context: InsertionContext): PsiCallExpression? {
-      return element.getUserData(callKey)
-    }
   }
 }
 
 private class RefStartInsertHandler : InsertHandler<LookupElement> {
   override fun handleInsert(context: InsertionContext, item: LookupElement) {
-    val refStart = OffsetKey.create("refStart", true)
-    context.offsetMap.addOffset(refStart, context.startOffset)
-    item.putUserData(refStartKey, refStart)
+    JavaMethodCallInsertHandlerHelper.installRefStartKey(context, item)
   }
 }
 
@@ -229,12 +205,12 @@ private class ImportQualifyAndInsertTypeParametersHandler(
     val method = item.getObject()
 
     if (needExplicitTypeParameters) {
-      qualifyMethodCall(item, file, JavaMethodCallInsertHandler.getReferenceStartOffset(context, item), document)
+      qualifyMethodCall(item, file, JavaMethodCallInsertHandlerHelper.getReferenceStartOffset(context, item), document)
       insertExplicitTypeParameters(item, context)
     }
     else if (item.helper != null) {
       context.commitDocument()
-      importOrQualify(item, document, file, method, JavaMethodCallInsertHandler.getReferenceStartOffset(context, item))
+      importOrQualify(item, document, file, method, JavaMethodCallInsertHandlerHelper.getReferenceStartOffset(context, item))
     }
   }
 
@@ -299,8 +275,8 @@ private class ImportQualifyAndInsertTypeParametersHandler(
 
     val typeParams = JavaMethodCallElement.getTypeParamsText(false, item.getObject(), item.inferenceSubstitutor)
     if (typeParams != null) {
-      context.document.insertString(JavaMethodCallInsertHandler.getReferenceStartOffset(context, item), typeParams)
-      JavaCompletionUtil.shortenReference(context.file, JavaMethodCallInsertHandler.getReferenceStartOffset(context, item))
+      context.document.insertString(JavaMethodCallInsertHandlerHelper.getReferenceStartOffset(context, item), typeParams)
+      JavaCompletionUtil.shortenReference(context.file, JavaMethodCallInsertHandlerHelper.getReferenceStartOffset(context, item))
     }
   }
 }
@@ -335,14 +311,7 @@ private class ShowParameterInfoInsertHandler : InsertHandler<JavaMethodCallEleme
 
 private class MethodCallInstallerHandler : InsertHandler<LookupElement> {
   override fun handleInsert(context: InsertionContext, item: LookupElement) {
-    val methodCall = findCallAtOffset(context, JavaMethodCallInsertHandler.getReferenceStartOffset(context, item)) ?: return
-
-    // make sure this is the method call we've just added, not the enclosing one
-    val completedElement = (methodCall as? PsiMethodCallExpression)?.methodExpression?.referenceNameElement
-    val completedElementRange = completedElement?.textRange ?: return
-    if (completedElementRange.startOffset != JavaMethodCallInsertHandler.getReferenceStartOffset(context, item)) return
-
-    item.putUserData(callKey, methodCall)
+    JavaMethodCallInsertHandlerHelper.installCall(context, item)
   }
 }
 
@@ -353,7 +322,4 @@ private class MethodCallRegistrationHandler : InsertHandler<JavaMethodCallElemen
     CompletionMemory.registerChosenMethod(method, methodCall)
   }
 }
-
-private val callKey = Key.create<PsiCallExpression>("JavaMethodCallInsertHandler.call")
-private val refStartKey = Key.create<OffsetKey>("JavaMethodCallInsertHandler.refStart")
 

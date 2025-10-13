@@ -3,6 +3,7 @@ package com.intellij.codeInsight.completion;
 
 import com.intellij.codeInsight.ExpectedTypeInfo;
 import com.intellij.codeInsight.ExpectedTypesProvider;
+import com.intellij.codeInsight.completion.method.JavaMethodCallInsertHandlerHelper;
 import com.intellij.codeInsight.completion.util.MethodParenthesesHandler;
 import com.intellij.codeInsight.generation.*;
 import com.intellij.codeInsight.intention.impl.TypeExpression;
@@ -246,7 +247,7 @@ public final class ConstructorInsertHandler implements InsertHandler<LookupEleme
     JavaCompletionUtil.insertParentheses(context, delegate, false, hasParams, forAnonymous);
 
     if (constructor != null) {
-      PsiCallExpression call = JavaMethodCallInsertHandler.findCallAtOffset(context, refEnd.getStartOffset());
+      PsiCallExpression call = JavaMethodCallInsertHandlerHelper.findCallAtOffset(context, refEnd.getStartOffset());
       if (call != null) {
         CompletionMemory.registerChosenMethod(constructor, call);
       }
