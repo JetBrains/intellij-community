@@ -358,7 +358,7 @@ class PluginDependenciesValidator private constructor(
       isBundled = pluginLayout.mainJpsModule in mainModulesOfBundledPlugins,
       useCoreClassLoader = false
     )
-    val embeddedContentModules = descriptor.content.modules.filter { it.loadingRule == ModuleLoadingRule.EMBEDDED }.map { it.moduleId }
+    val embeddedContentModules = descriptor.content.modules.filter { it.defaultLoadingRule == ModuleLoadingRule.EMBEDDED }.map { it.moduleId }
     val customConfigFileToModule = descriptor.content.modules.mapNotNull { 
       moduleItem -> moduleItem.configFile?.let { it to moduleItem.moduleId.id.substringBefore('/') }
     }.toMap()
