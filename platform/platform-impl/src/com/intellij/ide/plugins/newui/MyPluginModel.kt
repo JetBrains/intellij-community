@@ -407,11 +407,13 @@ open class MyPluginModel(project: Project?) : InstalledPluginsTableModel(project
     showErrors: Boolean,
     restartRequired: Boolean,
   ) {
-    val info: InstallPluginInfo = finishInstall(descriptor)
+    val info: InstallPluginInfo? = finishInstall(descriptor)
 
     if (myInstallingWithUpdatesPlugins.isEmpty()) {
       myTopController!!.showProgress(false)
     }
+
+    if (info == null) return
 
     val pluginId = descriptor.pluginId
     val marketplaceComponents = myMarketplacePluginComponentMap[pluginId]
@@ -1070,8 +1072,8 @@ open class MyPluginModel(project: Project?) : InstalledPluginsTableModel(project
     }
 
     @JvmStatic
-    private fun finishInstall(descriptor: PluginUiModel): InstallPluginInfo {
-      val info = myInstallingInfos.remove(descriptor.pluginId)!!
+    private fun finishInstall(descriptor: PluginUiModel): InstallPluginInfo? {
+      val info = myInstallingInfos.remove(descriptor.pluginId) ?: return null
       info.close()
       myInstallingWithUpdatesPlugins.remove(descriptor.pluginId)
       if (info.install) {
