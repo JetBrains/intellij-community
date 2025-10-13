@@ -38,14 +38,13 @@ class BuildIssueEventBuilderImpl : BuildIssueEventBuilder {
   override fun withIssue(issue: BuildIssue): BuildIssueEventBuilderImpl =
     apply { this.issue = issue }
 
-  override fun build(): BuildIssueEventImpl {
-    return BuildIssueEventImpl(
+  override fun build(): BuildIssueEventImpl =
+    BuildIssueEventImpl(
       id,
       parentId,
       time,
       hint,
-      kind ?: throw IllegalStateException("The BuildIssueEvent's 'kind' property should be defined"),
-      issue ?: throw IllegalStateException("The BuildIssueEvent's 'issue' property should be defined")
+      issue ?: throw IllegalStateException("The BuildIssueEvent's 'issue' property should be defined"),
+      kind ?: throw IllegalStateException("The BuildIssueEvent's 'kind' property should be defined")
     )
-  }
 }

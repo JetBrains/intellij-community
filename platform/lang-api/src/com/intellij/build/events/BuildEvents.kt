@@ -4,9 +4,9 @@ package com.intellij.build.events
 import com.intellij.build.eventBuilders.*
 import com.intellij.openapi.components.service
 import com.intellij.util.application
-import org.jetbrains.annotations.ApiStatus.Experimental
+import org.jetbrains.annotations.ApiStatus.Internal
 
-@Experimental
+@Internal
 interface BuildEvents {
 
   fun startBuild(): StartBuildEventBuilder

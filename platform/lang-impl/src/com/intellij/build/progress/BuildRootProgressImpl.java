@@ -14,11 +14,8 @@ public final class BuildRootProgressImpl extends AbstractBuildProgress {
 
   private @Nullable BuildProgressDescriptor myDescriptor;
 
-  public BuildRootProgressImpl(
-    @NotNull BuildEvents buildEvents,
-    @NotNull BuildProgressListener buildProgressListener
-  ) {
-    super(buildEvents, buildProgressListener);
+  public BuildRootProgressImpl(@NotNull BuildProgressListener buildProgressListener) {
+    super(buildProgressListener);
   }
 
   @Override
@@ -60,21 +57,20 @@ public final class BuildRootProgressImpl extends AbstractBuildProgress {
   @Override
   public @NotNull BuildProgress<BuildProgressDescriptor> start(@NotNull String message, @NotNull BuildProgressDescriptor descriptor) {
     myDescriptor = descriptor;
-    return event(myBuildEvents.startBuild()
-      .withParentId(getParentId())
-      .withMessage(message)
-      .withBuildDescriptor(descriptor.getBuildDescriptor())
-      .build());
+    return event(
+      StartBuildEvent.builder(message, descriptor.getBuildDescriptor())
+        .withParentId(getParentId())
+        .build()
+    );
   }
 
   @Override
   public @NotNull BuildProgress<BuildProgressDescriptor> finish(long timeStamp, @NotNull String message, @NotNull EventResult result) {
-    return event(myBuildEvents.finishBuild()
-      .withStartBuildId(getBuildId())
-      .withParentId(getParentId())
-      .withTime(timeStamp)
-      .withMessage(message)
-      .withResult(result)
-      .build());
+    return event(
+      FinishBuildEvent.builder(getBuildId(), message, result)
+        .withParentId(getParentId())
+        .withTime(timeStamp)
+        .build()
+    );
   }
 }

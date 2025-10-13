@@ -15,12 +15,11 @@ public class ChildBuildProgressImpl extends AbstractBuildProgress {
   private final @NotNull BuildProgress<BuildProgressDescriptor> myParentProgress;
 
   ChildBuildProgressImpl(
-    @NotNull BuildEvents buildEvents,
     @NotNull BuildProgressListener listener,
     @NotNull BuildProgressDescriptor descriptor,
     @NotNull BuildProgress<BuildProgressDescriptor> parentProgress
   ) {
-    super(buildEvents, listener);
+    super(listener);
     myDescriptor = descriptor;
     myParentProgress = parentProgress;
   }
@@ -62,22 +61,21 @@ public class ChildBuildProgressImpl extends AbstractBuildProgress {
 
   @Override
   public @NotNull BuildProgress<BuildProgressDescriptor> start(@NotNull String message, @NotNull BuildProgressDescriptor descriptor) {
-    return event(myBuildEvents.start()
-      .withId(getStartId())
-      .withParentId(getParentId())
-      .withMessage(message)
-      .build());
+    return event(
+      StartEvent.builder(getStartId(), message)
+        .withParentId(getParentId())
+        .build()
+    );
   }
 
   @Override
   public @NotNull BuildProgress<BuildProgressDescriptor> finish(long timeStamp, @NotNull String message, @NotNull EventResult result) {
-    event(myBuildEvents.finish()
-      .withStartId(getStartId())
-      .withParentId(getParentId())
-      .withTime(timeStamp)
-      .withMessage(message)
-      .withResult(result)
-      .build());
+    event(
+      FinishEvent.builder(getStartId(), message, result)
+        .withParentId(getParentId())
+        .withTime(timeStamp)
+        .build()
+    );
     return myParentProgress;
   }
 }

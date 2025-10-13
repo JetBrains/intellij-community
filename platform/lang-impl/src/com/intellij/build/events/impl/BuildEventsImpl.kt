@@ -3,32 +3,30 @@ package com.intellij.build.events.impl
 
 import com.intellij.build.eventBuilders.impl.*
 import com.intellij.build.events.BuildEvents
-import org.jetbrains.annotations.ApiStatus.Internal
 
-@Internal
-class BuildEventsImpl : BuildEvents {
+private class BuildEventsImpl : BuildEvents {
 
-  override fun startBuild(): StartBuildEventBuilderImpl = StartBuildEventBuilderImpl()
+  override fun startBuild() = StartBuildEventBuilderImpl()
 
-  override fun finishBuild(): FinishBuildEventBuilderImpl = FinishBuildEventBuilderImpl()
+  override fun finishBuild() = FinishBuildEventBuilderImpl()
 
-  override fun start(): StartEventBuilderImpl = StartEventBuilderImpl()
+  override fun start() = StartEventBuilderImpl()
 
-  override fun finish(): FinishEventBuilderImpl = FinishEventBuilderImpl()
+  override fun finish() = FinishEventBuilderImpl()
 
-  override fun output(): OutputBuildEventBuilderImpl = OutputBuildEventBuilderImpl()
+  override fun output() = OutputBuildEventBuilderImpl()
 
-  override fun progress(): ProgressBuildEventBuilderImpl = ProgressBuildEventBuilderImpl()
+  override fun progress() = ProgressBuildEventBuilderImpl()
 
-  override fun message(): MessageEventBuilderImpl = MessageEventBuilderImpl()
+  override fun message() = MessageEventBuilderImpl()
 
-  override fun fileMessage(): FileMessageEventBuilderImpl = FileMessageEventBuilderImpl()
+  override fun fileMessage() = FileMessageEventBuilderImpl()
 
-  override fun buildIssue(): BuildIssueEventBuilderImpl = BuildIssueEventBuilderImpl()
+  override fun buildIssue() = BuildIssueEventBuilderImpl()
 
-  override fun fileDownload(): FileDownloadEventBuilderImpl = FileDownloadEventBuilderImpl()
+  override fun fileDownload() = FileDownloadEventBuilderImpl()
 
-  override fun fileDownloaded(): FileDownloadedEventBuilderImpl = FileDownloadedEventBuilderImpl()
+  override fun fileDownloaded() = FileDownloadedEventBuilderImpl()
 
-  override fun presentable(): PresentableBuildEventBuilderImpl = PresentableBuildEventBuilderImpl()
+  override fun presentable() = PresentableBuildEventBuilderImpl()
 }

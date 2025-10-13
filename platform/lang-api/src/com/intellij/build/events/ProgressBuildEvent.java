@@ -15,6 +15,9 @@
  */
 package com.intellij.build.events;
 
+import com.intellij.build.eventBuilders.ProgressBuildEventBuilder;
+import com.intellij.build.events.BuildEventsNls.Message;
+import org.jetbrains.annotations.CheckReturnValue;
 import org.jetbrains.annotations.NotNull;
 
 /**
@@ -41,4 +44,14 @@ public interface ProgressBuildEvent extends BuildEvent {
    * @return The measure used to express the amount of work.
    */
   @NotNull String getUnit();
+
+  @CheckReturnValue
+  static @NotNull ProgressBuildEventBuilder builder(
+    @NotNull Object startId,
+    @NotNull @Message String message
+  ) {
+    return BuildEvents.getInstance().progress()
+      .withStartId(startId)
+      .withMessage(message);
+  }
 }

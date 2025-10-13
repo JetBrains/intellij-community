@@ -13,7 +13,7 @@ import org.jetbrains.annotations.CheckReturnValue
 @NonExtendable
 interface StartEventBuilder {
 
-  @CheckReturnValue
+  @CheckReturnValue // mandatory field
   fun withId(id: Any): StartEventBuilder
 
   @CheckReturnValue

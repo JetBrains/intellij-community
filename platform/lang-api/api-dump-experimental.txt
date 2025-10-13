@@ -139,25 +139,9 @@
 - a:consoleToolbarActions():com.intellij.openapi.actionSystem.ActionGroup
 - a:getExecutionConsole():com.intellij.execution.ui.ExecutionConsole
 - a:getNodeIcon():javax.swing.Icon
-*:com.intellij.build.events.BuildEvents
-- *sf:Companion:com.intellij.build.events.BuildEvents$Companion
-- a:buildIssue():com.intellij.build.eventBuilders.BuildIssueEventBuilder
-- a:fileDownload():com.intellij.build.eventBuilders.FileDownloadEventBuilder
-- a:fileDownloaded():com.intellij.build.eventBuilders.FileDownloadedEventBuilder
-- a:fileMessage():com.intellij.build.eventBuilders.FileMessageEventBuilder
-- a:finish():com.intellij.build.eventBuilders.FinishEventBuilder
-- a:finishBuild():com.intellij.build.eventBuilders.FinishBuildEventBuilder
-- s:getInstance():com.intellij.build.events.BuildEvents
-- a:message():com.intellij.build.eventBuilders.MessageEventBuilder
-- a:output():com.intellij.build.eventBuilders.OutputBuildEventBuilder
-- a:presentable():com.intellij.build.eventBuilders.PresentableBuildEventBuilder
-- a:progress():com.intellij.build.eventBuilders.ProgressBuildEventBuilder
-- a:start():com.intellij.build.eventBuilders.StartEventBuilder
-- a:startBuild():com.intellij.build.eventBuilders.StartBuildEventBuilder
-*f:com.intellij.build.events.BuildEvents$Companion
-- f:getInstance():com.intellij.build.events.BuildEvents
 *:com.intellij.build.events.BuildIssueEvent
 - com.intellij.build.events.MessageEvent
+- s:builder(com.intellij.build.issue.BuildIssue,com.intellij.build.events.MessageEvent$Kind):com.intellij.build.eventBuilders.BuildIssueEventBuilder
 - a:getDescription():java.lang.String
 - a:getIssue():com.intellij.build.issue.BuildIssue
 *:com.intellij.build.events.DerivedResult
@@ -167,6 +151,7 @@
 *:com.intellij.build.events.DuplicateMessageAware
 *:com.intellij.build.events.PresentableBuildEvent
 - com.intellij.build.events.BuildEvent
+- s:builder(java.lang.String,com.intellij.build.events.BuildEventPresentationData):com.intellij.build.eventBuilders.PresentableBuildEventBuilder
 - a:getPresentationData():com.intellij.build.events.BuildEventPresentationData
 com.intellij.build.events.StartBuildEvent
 - com.intellij.build.events.StartEvent
