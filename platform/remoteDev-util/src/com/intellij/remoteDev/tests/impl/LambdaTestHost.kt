@@ -8,6 +8,7 @@ import com.intellij.diagnostic.dumpCoroutines
 import com.intellij.diagnostic.enableCoroutineDump
 import com.intellij.ide.impl.ProjectUtil
 import com.intellij.ide.plugins.PluginManagerCore
+import com.intellij.ide.plugins.PluginModuleDescriptor
 import com.intellij.ide.plugins.PluginModuleId
 import com.intellij.notification.Notification
 import com.intellij.notification.NotificationType
@@ -49,8 +50,11 @@ import java.io.ObjectInputStream
 import java.io.ObjectStreamClass
 import java.net.InetAddress
 import java.time.LocalTime
+import java.util.*
+import java.util.function.Consumer
 import javax.imageio.ImageIO
 import javax.swing.JFrame
+import kotlin.reflect.KClass
 import kotlin.reflect.full.companionObject
 import kotlin.reflect.full.isSubclassOf
 import kotlin.time.Duration.Companion.milliseconds
@@ -140,6 +144,28 @@ open class LambdaTestHost(coroutineScope: CoroutineScope) {
     }
   }
 
+  private fun findLambdaClasses(lambdaReference: String, testPlugin: PluginModuleDescriptor, ideContext: LambdaIdeContext): List<NamedLambda<*>> {
+    val className = if (lambdaReference.contains(".Companion")) {
+      lambdaReference.substringBeforeLast(".").removeSuffix(".Companion")
+    }
+    else lambdaReference
+
+    val testClass = Class.forName(className, true, testPlugin.pluginClassLoader).kotlin
+
+    val companionClasses: Collection<KClass<*>> = testClass.companionObject?.nestedClasses ?: listOf()
+    val nestedClasses: Collection<KClass<*>> = testClass.nestedClasses
+
+    val namedLambdas = (companionClasses + nestedClasses + testClass)
+      .filter { it.isSubclassOf(NamedLambda::class) }
+      .map { it.constructors.single().call(ideContext) as NamedLambda<*> }
+
+    LOG.info("Found ${namedLambdas.size} lambda classes: ${namedLambdas.joinToString(", ") { it.name() }}")
+
+    check(namedLambdas.isNotEmpty()) { "Can't find any named lambda in the test class '${testClass.qualifiedName}'" }
+
+    return namedLambdas
+  }
+
   private fun createProtocol(hostAddress: InetAddress, port: Int) {
     enableCoroutineDump()
 
@@ -189,17 +215,8 @@ open class LambdaTestHost(coroutineScope: CoroutineScope) {
 
         // Advice for processing events
         session.runLambda.setSuspend(sessionBgtDispatcher) { _, parameters ->
-
           val lambdaReference = parameters.reference
-          val className = lambdaReference.substringBeforeLast(".").removeSuffix(".Companion")
-
-          val testClass = Class.forName(className, true, testPlugin.pluginClassLoader).kotlin
-          val testClassCompanionObject = testClass.companionObject
-          val namedLambdas = testClassCompanionObject
-                               ?.nestedClasses
-                               ?.filter { it.isSubclassOf(NamedLambda::class) }
-                               ?.map { it.constructors.single().call(ideContext) as NamedLambda<*> }
-                             ?: error("Can't find any named lambda in the test class '${testClass.qualifiedName}'")
+          val namedLambdas = findLambdaClasses(lambdaReference = lambdaReference, testPlugin = testPlugin, ideContext = ideContext)
 
           try {
             val ideAction = namedLambdas.singleOrNull { it.name() == lambdaReference } ?: run {
@@ -260,8 +277,8 @@ open class LambdaTestHost(coroutineScope: CoroutineScope) {
                 val old = Thread.currentThread().contextClassLoader
                 Thread.currentThread().contextClassLoader = testPlugin.pluginClassLoader
                 try {
-                  val bytes = java.util.Base64.getDecoder().decode(serializedLambda.serializedDataBase64)
-                  ClassLoaderObjectInputStream(bytes.inputStream(), testPlugin.pluginClassLoader!!).use { it.readObject() } as java.util.function.Consumer<Application>
+                  val bytes = Base64.getDecoder().decode(serializedLambda.serializedDataBase64)
+                  ClassLoaderObjectInputStream(bytes.inputStream(), testPlugin.pluginClassLoader!!).use { it.readObject() } as Consumer<Application>
                 }
                 finally {
                   Thread.currentThread().contextClassLoader = old
