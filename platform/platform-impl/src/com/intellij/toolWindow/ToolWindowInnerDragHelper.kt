@@ -55,6 +55,7 @@ internal class ToolWindowInnerDragHelper(parent: Disposable, val pane: JComponen
       val decorator = InternalDecoratorImpl.findTopLevelDecorator(child)
       val editorSupport = getEditorSupport(decorator)
       if (decorator != null &&
+          (canReorderTabs() || decorator.toolWindow.canSplitTabs()) &&
           child is ContentTabLabel &&
           (child.parent is ToolWindowContentUi.TabPanel ||
            Registry.`is`("debugger.new.tool.window.layout.dnd", false) && child.parent is SingleContentLayout.TabAdapter) &&
@@ -74,7 +75,7 @@ internal class ToolWindowInnerDragHelper(parent: Disposable, val pane: JComponen
     return when (curLocation) {
       is DropLocation.ToolWindow -> {
         val component = curLocation.decorator
-        val canDrop = currentDropIndex != -1 || curLocation.decorator.toolWindow.canSplitTabs()
+        val canDrop = currentDropIndex != -1 && canReorderTabs() || curLocation.decorator.toolWindow.canSplitTabs()
         component.contains(point.getPoint(component)) && canDrop
       }
       is DropLocation.Editor -> {
@@ -374,7 +375,7 @@ internal class ToolWindowInnerDragHelper(parent: Disposable, val pane: JComponen
 
     val content = myDraggingTab?.content
     curDropLocation = when {
-      decorator != null && decorator == sourceDecorator -> {
+      decorator != null && decorator == sourceDecorator && canReorderTabs() -> {
         // Drop into the same tool window decorator - always allowed.
         DropLocation.ToolWindow(decorator)
       }
@@ -407,7 +408,7 @@ internal class ToolWindowInnerDragHelper(parent: Disposable, val pane: JComponen
 
   private fun highlightToolWindowDropArea(decorator: InternalDecoratorImpl, point: RelativePoint) {
     currentDropIndex = getTabIndex(point)
-    if (currentDropIndex != -1) {
+    if (currentDropIndex != -1 && (canReorderTabs() || decorator.toolWindow.canSplitTabs())) {
       decorator.setDropInfoIndex(currentDropIndex, dragImageView!!.size.width)
       currentDropSide = -1
       highlighter.bounds = Rectangle()
@@ -449,6 +450,10 @@ internal class ToolWindowInnerDragHelper(parent: Disposable, val pane: JComponen
       ToolWindowContentUi.getToolWindowInEditorSupport(sourceDecorator.toolWindow)
     }
     else null
+  }
+
+  private fun canReorderTabs(): Boolean {
+    return Registry.`is`("ide.allow.tool.window.tabs.reorder", false)
   }
 
   private sealed interface DropLocation {
