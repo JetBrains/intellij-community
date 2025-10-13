@@ -83,7 +83,8 @@ open class LambdaTestHost(coroutineScope: CoroutineScope) {
      */
     const val TEST_MODULE_ID_PROPERTY_NAME: String = "lambda.test.module"
 
-    abstract class NamedLambda<T : LambdaIdeContext>(private val lambdaIdeContext: T) {
+    // TODO: plugin: PluginModuleDescriptor might be passed as a context parameter and not via constructor
+    abstract class NamedLambda<T : LambdaIdeContext>(protected val lambdaIdeContext: T, protected val plugin: PluginModuleDescriptor) {
       fun name(): String = this::class.qualifiedName ?: error("Can't get qualified name of lambda $this")
       abstract suspend fun T.lambda(args: List<LambdaRdKeyValueEntry>): Any
       suspend fun runLambda(args: List<LambdaRdKeyValueEntry>) {
@@ -102,7 +103,6 @@ open class LambdaTestHost(coroutineScope: CoroutineScope) {
         return Class.forName(desc.name, false, classLoader)
       }
     }
-
   }
 
   open fun setUpTestLoggingFactory(sessionLifetime: Lifetime, session: LambdaRdTestSession) {
@@ -158,7 +158,7 @@ open class LambdaTestHost(coroutineScope: CoroutineScope) {
 
     val namedLambdas = (companionClasses + nestedClasses + testClass)
       .filter { it.isSubclassOf(NamedLambda::class) }
-      .map { it.constructors.single().call(ideContext) as NamedLambda<*> }
+      .map { it.constructors.single().call(ideContext, testPlugin) as NamedLambda<*> }
 
     LOG.info("Found ${namedLambdas.size} lambda classes: ${namedLambdas.joinToString(", ") { it.name() }}")
 
