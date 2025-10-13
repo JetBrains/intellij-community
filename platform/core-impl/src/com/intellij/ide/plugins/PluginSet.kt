@@ -14,7 +14,7 @@ class PluginSet internal constructor(
   private val sortedModulesWithDependencies: ModulesWithDependencies,
   @JvmField val allPlugins: Set<PluginMainDescriptor>,
   @JvmField val enabledPlugins: List<PluginMainDescriptor>,
-  private val enabledModuleMap: Map<PluginModuleId, PluginModuleDescriptor>,
+  private val enabledModuleMap: Map<PluginModuleId, ContentModuleDescriptor>,
   private val enabledPluginAndV1ModuleMap: Map<PluginId, PluginModuleDescriptor>,
   private val enabledModules: List<PluginModuleDescriptor>,
 ) {
@@ -28,7 +28,7 @@ class PluginSet internal constructor(
   }
 
   @TestOnly
-  fun getUnsortedEnabledModules(): Collection<PluginModuleDescriptor> = Java11Shim.INSTANCE.copyOf(enabledModuleMap.values)
+  fun getUnsortedEnabledModules(): Collection<ContentModuleDescriptor> = Java11Shim.INSTANCE.copyOf(enabledModuleMap.values)
 
   fun isPluginInstalled(id: PluginId): Boolean = findInstalledPlugin(id) != null
 
@@ -38,7 +38,7 @@ class PluginSet internal constructor(
 
   fun findEnabledPlugin(id: PluginId): PluginModuleDescriptor? = enabledPluginAndV1ModuleMap.get(id)
 
-  fun findEnabledModule(moduleId: PluginModuleId): PluginModuleDescriptor? = enabledModuleMap.get(moduleId)
+  fun findEnabledModule(moduleId: PluginModuleId): ContentModuleDescriptor? = enabledModuleMap.get(moduleId)
 
   fun isModuleEnabled(id: PluginModuleId): Boolean = enabledModuleMap.containsKey(id)
 

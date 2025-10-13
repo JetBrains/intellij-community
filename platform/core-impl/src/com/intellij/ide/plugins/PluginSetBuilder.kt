@@ -29,7 +29,7 @@ class PluginSetBuilder(@JvmField val unsortedPlugins: Set<PluginMainDescriptor>)
   }
   
   private val enabledPluginIds = HashMap<PluginId, PluginModuleDescriptor>(unsortedPlugins.size)
-  private val enabledModuleV2Ids = HashMap<PluginModuleId, PluginModuleDescriptor>(unsortedPlugins.size * 2)
+  private val enabledModuleV2Ids = HashMap<PluginModuleId, ContentModuleDescriptor>(unsortedPlugins.size * 2)
 
   internal fun checkPluginCycles(errors: MutableList<PluginLoadingError>) {
     if (builder.isAcyclic) {

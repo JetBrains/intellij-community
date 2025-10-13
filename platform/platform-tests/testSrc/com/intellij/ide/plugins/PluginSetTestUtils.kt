@@ -39,7 +39,7 @@ fun PluginSet.getEnabledPlugins(vararg ids: String): List<IdeaPluginDescriptorIm
 
 fun PluginSet.getPlugin(id: String): PluginMainDescriptor = allPlugins.single { id == it.pluginId.idString }
 
-fun PluginSet.getEnabledModule(id: String): IdeaPluginDescriptorImpl =
+fun PluginSet.getEnabledModule(id: String): ContentModuleDescriptor =
   findEnabledModule(PluginModuleId(id)) ?: throw AssertionError("Module '$id' not found")
 
-fun PluginSet.getEnabledModules(vararg ids: String): List<IdeaPluginDescriptorImpl> = ids.map { getEnabledModule(it) }
+fun PluginSet.getEnabledModules(vararg ids: String): List<ContentModuleDescriptor> = ids.map { getEnabledModule(it) }
