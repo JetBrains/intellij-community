@@ -54,14 +54,7 @@ private class GlobalSdkBridgesLoader(private val eelMachine: EelMachine) : Globa
     thisLogger().debug("Initial load of SDKs")
 
     for ((entity, sdkBridge) in sdks) {
-      if (shouldSkipEntityProcessing(entity)) {
-        // The SDKs are populated from a single file for now. All loaded SDK entities go to the same entity storage
-        // We want to avoid having alien SDKs in storages, hence we filter them
-        mutableStorage.removeEntity(entity)
-      }
-      else {
-        mutableStorage.mutableSdkMap.addIfAbsent(entity, sdkBridge)
-      }
+      mutableStorage.mutableSdkMap.addIfAbsent(entity, sdkBridge)
     }
     return {}
   }
@@ -72,10 +65,6 @@ private class GlobalSdkBridgesLoader(private val eelMachine: EelMachine) : Globa
     val addChanges = sdkChanges.filterIsInstance<EntityChange.Added<SdkEntity>>()
 
     for (addChange in addChanges) {
-      if (shouldSkipEntityProcessing(addChange.newEntity)) {
-        continue
-      }
-
       // Will initialize the bridge if missing
       builder.mutableSdkMap.getOrPutDataByEntity(addChange.newEntity) {
         val sdkEntityCopy = SdkBridgeImpl.createEmptySdkEntity("", "", "")
