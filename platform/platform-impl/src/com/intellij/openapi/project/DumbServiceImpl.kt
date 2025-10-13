@@ -100,7 +100,7 @@ open class DumbServiceImpl @NonInjectable @VisibleForTesting constructor(
           // without redispatching, because it can be invoked from completeJustSubmittedTasks
           decrementDumbCounterBlocking()
         }
-        else if (Registry.`is`("ide.dumb.service.use.background.write.action")) {
+        else if (Registry.`is`("ide.dumb.service.use.background.write.action") && modality == ModalityState.nonModal()) {
           scope.launch(modality.asContextElement() + Dispatchers.Default) {
             dumbTaskLaunchers.remove(this@DumbTaskLauncher)
             decrementDumbCounterSuspending()
@@ -411,8 +411,8 @@ open class DumbServiceImpl @NonInjectable @VisibleForTesting constructor(
     if (ApplicationManager.getApplication().isDispatchThread) {
       queueTaskOnEdt(task, modality, trace)
     }
-    else if (Registry.`is`("ide.dumb.service.use.background.write.action")) {
-      queueTaskOnBackground(task, modality, trace)
+    else if (Registry.`is`("ide.dumb.service.use.background.write.action") && modality == ModalityState.nonModal()) {
+      queueTaskOnBackground(task, trace)
     } else {
       invokeLaterOnEdtInScheduledTasksScope(start = CoroutineStart.ATOMIC) {
         try {
@@ -461,8 +461,8 @@ open class DumbServiceImpl @NonInjectable @VisibleForTesting constructor(
     }
   }
 
-  private fun queueTaskOnBackground(task: DumbModeTask, modality: ModalityState, trace: Throwable) {
-    scheduledTasksScope.launch(modality.asContextElement() + Dispatchers.Default) {
+  private fun queueTaskOnBackground(task: DumbModeTask, trace: Throwable) {
+    scheduledTasksScope.launch(Dispatchers.Default) {
       // First, increment dumb mode, then add the task.
       // If increment failed, task execution will not be scheduled, and we will be stuck in dumb mode.
       // In unit tests, much safer behavior is to ignore the task.
@@ -471,11 +471,13 @@ open class DumbServiceImpl @NonInjectable @VisibleForTesting constructor(
 
       latestReceipt.set(taskQueue.addTask(task))
 
-      // we want to invoke LATER. I.e. right now one can invoke completeJustSubmittedTasks and
-      // drain the queue synchronously under modal progress
-      val launcher = DumbTaskLauncher(modality)
+      val launcher = DumbTaskLauncher(ModalityState.nonModal())
       dumbTaskLaunchers.add(launcher)
       launcher.launch()
+    }.invokeOnCompletion { cause ->
+      if (cause is CancellationException) {
+        Disposer.dispose(task)
+      }
     }
   }
 
