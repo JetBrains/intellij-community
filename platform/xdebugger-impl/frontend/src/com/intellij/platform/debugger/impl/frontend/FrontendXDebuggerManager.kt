@@ -19,6 +19,7 @@ import com.intellij.platform.project.projectId
 import com.intellij.ui.content.ContentManagerEvent
 import com.intellij.ui.content.ContentManagerListener
 import com.intellij.util.asDisposable
+import com.intellij.xdebugger.SplitDebuggerMode
 import com.intellij.xdebugger.impl.XDebuggerManagerProxyListener
 import com.intellij.xdebugger.impl.frame.XDebugSessionProxy
 import com.intellij.xdebugger.impl.rpc.XDebugSessionId
@@ -91,7 +92,7 @@ class FrontendXDebuggerManager(private val project: Project, private val cs: Cor
   private fun initSessions() = cs.launch {
     // When the registry flag is not set, we would prefer to have XDebugSessionProxy.Monolith in a listener
     // see com.intellij.xdebugger.impl.MonolithListenerAdapter
-    val shouldTriggerListener = XDebugSessionProxy.useFeProxy()
+    val shouldTriggerListener = SplitDebuggerMode.isSplitDebugger()
     durableWithStateReset(block = {
       val (sessionsList, eventFlow) = XDebuggerManagerApi.getInstance().sessions(project.projectId())
       for (sessionDto in sessionsList) {

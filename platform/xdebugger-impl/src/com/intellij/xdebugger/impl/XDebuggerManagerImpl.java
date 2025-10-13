@@ -51,7 +51,6 @@ import com.intellij.xdebugger.*;
 import com.intellij.xdebugger.impl.actions.XDebuggerActions;
 import com.intellij.xdebugger.impl.breakpoints.XBreakpointManagerImpl;
 import com.intellij.xdebugger.impl.evaluate.ValueLookupManagerController;
-import com.intellij.xdebugger.impl.frame.XDebugSessionProxy;
 import com.intellij.xdebugger.impl.pinned.items.XDebuggerPinToTopManager;
 import com.intellij.xdebugger.impl.settings.ShowBreakpointsOverLineNumbersAction;
 import com.intellij.xdebugger.impl.settings.XDebuggerSettingManagerImpl;
@@ -111,7 +110,7 @@ public final class XDebuggerManagerImpl extends XDebuggerManager implements Pers
     myWatchesManager = new XDebuggerWatchesManager(project, coroutineScope);
     myPinToTopManager = new XDebuggerPinToTopManager(coroutineScope);
 
-    if (!XDebugSessionProxy.useFeProxy() || AppMode.isRemoteDevHost()) {
+    if (!SplitDebuggerMode.isSplitDebugger() || AppMode.isRemoteDevHost()) {
       startContentSelectionListening(messageBusConnection);
     }
 

@@ -21,7 +21,6 @@ import com.intellij.xdebugger.impl.XDebugSessionImpl
 import com.intellij.xdebugger.impl.XDebuggerManagerImpl
 import com.intellij.xdebugger.impl.XDebuggerUtilImpl.reshowInlayRunToCursor
 import com.intellij.xdebugger.impl.breakpoints.XBreakpointBase
-import com.intellij.xdebugger.impl.frame.XDebugSessionProxy.Companion.useFeProxy
 import com.intellij.xdebugger.impl.rpc.XDebugSessionId
 import com.intellij.xdebugger.impl.rpc.models.findValue
 import com.intellij.xdebugger.impl.settings.XDebuggerSettingManagerImpl
@@ -69,7 +68,7 @@ internal class BackendXDebuggerManagerApi : XDebuggerManagerApi {
       currentSession.getBreakpointsMutedFlow().toRpc(),
     )
 
-    val consoleView = if (useFeProxy()) {
+    val consoleView = if (SplitDebuggerMode.isSplitDebugger()) {
       currentSession.consoleView!!.toRpc(currentSession.tabCoroutineScope, debugProcess)
     }
     else {

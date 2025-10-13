@@ -12,8 +12,6 @@ import com.intellij.openapi.actionSystem.DefaultActionGroup
 import com.intellij.openapi.application.EDT
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.NlsSafe
-import com.intellij.openapi.util.registry.Registry
-import com.intellij.xdebugger.SplitDebuggerMode
 import com.intellij.xdebugger.XDebugSession
 import com.intellij.xdebugger.XDebugSessionListener
 import com.intellij.xdebugger.XSourcePosition
@@ -119,14 +117,6 @@ interface XDebugSessionProxy {
   companion object {
     @JvmField
     val DEBUG_SESSION_PROXY_KEY: DataKey<XDebugSessionProxy> = DataKey.create("XDebugSessionProxy")
-
-    @JvmStatic
-    fun useFeProxy(): Boolean {
-      return SplitDebuggerMode.useFeProxy()
-    }
-
-    @JvmStatic
-    fun showFeWarnings(): Boolean = useFeProxy() && Registry.`is`("xdebugger.toolwindow.split.warnings")
   }
 
   class Monolith internal constructor(val session: XDebugSessionImpl) : XDebugSessionProxy {

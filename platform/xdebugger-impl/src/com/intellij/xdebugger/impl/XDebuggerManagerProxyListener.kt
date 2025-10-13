@@ -4,6 +4,7 @@ package com.intellij.xdebugger.impl
 import com.intellij.frontend.FrontendApplicationInfo
 import com.intellij.frontend.FrontendType
 import com.intellij.util.messages.Topic
+import com.intellij.xdebugger.SplitDebuggerMode
 import com.intellij.xdebugger.XDebugProcess
 import com.intellij.xdebugger.XDebugSession
 import com.intellij.xdebugger.XDebuggerManagerListener
@@ -32,7 +33,7 @@ private class MonolithListenerAdapter : XDebuggerManagerListener {
   private val shouldTriggerListener: Boolean
     get() {
       val frontendType = FrontendApplicationInfo.getFrontendType()
-      return !XDebugSessionProxy.useFeProxy() && frontendType is FrontendType.Monolith
+      return !SplitDebuggerMode.isSplitDebugger() && frontendType is FrontendType.Monolith
     }
 
   override fun processStarted(debugProcess: XDebugProcess) {

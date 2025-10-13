@@ -8,12 +8,15 @@ import org.jetbrains.annotations.ApiStatus
 @ApiStatus.Internal
 object SplitDebuggerMode {
   @JvmStatic
-  fun useFeProxy(): Boolean = useFeProxyCachedValue
+  fun isSplitDebugger(): Boolean = isSplitDebuggerCachedValue
+
+  @JvmStatic
+  fun showSplitWarnings(): Boolean = isSplitDebugger() && Registry.`is`("xdebugger.toolwindow.split.warnings")
 
   const val SPLIT_DEBUGGER_KEY: String = "xdebugger.toolwindow.split"
 }
 
-private val useFeProxyCachedValue by lazy {
+private val isSplitDebuggerCachedValue by lazy {
   Registry.`is`("xdebugger.toolwindow.split") || XDebuggerSplitModeEnabler.EP_NAME.extensionList.any { it.useSplitDebuggerMode() }
 }
 

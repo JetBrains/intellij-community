@@ -10,6 +10,7 @@ import com.intellij.openapi.vfs.LocalFileSystem;
 import com.intellij.openapi.vfs.VfsUtilCore;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.vfs.VirtualFileManager;
+import com.intellij.xdebugger.SplitDebuggerMode;
 import com.intellij.xdebugger.XDebuggerUtil;
 import com.intellij.xdebugger.XSourcePosition;
 import com.intellij.xdebugger.breakpoints.XBreakpointProperties;
@@ -20,9 +21,6 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.io.File;
-
-import static com.intellij.xdebugger.impl.breakpoints.XBreakpointProxyKt.asProxy;
-import static com.intellij.xdebugger.impl.frame.XDebugSessionProxy.useFeProxy;
 
 @ApiStatus.Internal
 public final class XLineBreakpointImpl<P extends XBreakpointProperties> extends XBreakpointBase<XLineBreakpoint<P>, P, LineBreakpointState>
@@ -39,7 +37,9 @@ public final class XLineBreakpointImpl<P extends XBreakpointProperties> extends 
                              final @Nullable P properties, LineBreakpointState state) {
     super(type, breakpointManager, properties, state);
     myType = type;
-    myVisualRepresentation = new XBreakpointVisualRepresentation(getCoroutineScope(), asProxy(this), !useFeProxy(),
+    myVisualRepresentation = new XBreakpointVisualRepresentation(getCoroutineScope(),
+                                                                 XBreakpointProxyKt.asProxy(this),
+                                                                 !SplitDebuggerMode.isSplitDebugger(),
                                                                  XBreakpointManagerProxyKt.asProxy(breakpointManager));
   }
 

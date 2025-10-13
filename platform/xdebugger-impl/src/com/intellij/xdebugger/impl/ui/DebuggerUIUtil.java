@@ -75,7 +75,6 @@ import java.awt.event.*;
 
 import static com.intellij.openapi.wm.IdeFocusManager.getGlobalInstance;
 import static com.intellij.xdebugger.impl.breakpoints.XBreakpointProxyKt.asProxy;
-import static com.intellij.xdebugger.impl.frame.XDebugSessionProxy.showFeWarnings;
 
 public final class DebuggerUIUtil {
   public static final @NonNls String FULL_VALUE_POPUP_DIMENSION_KEY = "XDebugger.FullValuePopup";
@@ -554,7 +553,7 @@ public final class DebuggerUIUtil {
    * Use {@link DebuggerUIUtil#getSessionProxy(AnActionEvent)} instead.
    */
   public static @Nullable XDebugSession getSession(@NotNull AnActionEvent e) {
-    if (showFeWarnings() && FrontendApplicationInfo.INSTANCE.getFrontendType() instanceof FrontendType.Remote) {
+    if (SplitDebuggerMode.showSplitWarnings() && FrontendApplicationInfo.INSTANCE.getFrontendType() instanceof FrontendType.Remote) {
       LOG.error("In Split mode DebuggerUIUtil#getSession(AnActionEvent) should not be called from the frontend. " +
                 "Please use DebuggerUIUtil#getSessionProxy(AnActionEvent) instead.");
     }

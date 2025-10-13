@@ -37,6 +37,7 @@ import com.intellij.ui.content.tabs.PinToolwindowTabAction;
 import com.intellij.util.ObjectUtils;
 import com.intellij.util.SystemProperties;
 import com.intellij.util.ui.UIUtil;
+import com.intellij.xdebugger.SplitDebuggerMode;
 import com.intellij.xdebugger.XDebugSessionListener;
 import com.intellij.xdebugger.XDebuggerBundle;
 import com.intellij.xdebugger.impl.XDebugSessionImpl;
@@ -54,8 +55,6 @@ import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.function.Consumer;
-
-import static com.intellij.xdebugger.impl.frame.XDebugSessionProxy.useFeProxy;
 
 /**
  * Note: could be stored in frontend, but it kept in shared due to compatibility issues.
@@ -224,7 +223,7 @@ public class XDebugSessionTab extends DebuggerSessionTabBase {
 
   protected final void createDefaultTabs(XDebugSessionProxy session) {
     myUi.addContent(createFramesContent(session), 0, PlaceInGrid.left, false);
-    if (Registry.is("debugger.new.threads.view") || useFeProxy()) {
+    if (Registry.is("debugger.new.threads.view") || SplitDebuggerMode.isSplitDebugger()) {
       Content threadsContent = createThreadsContent(session);
       myUi.addContent(threadsContent, 0, PlaceInGrid.right, true);
     }

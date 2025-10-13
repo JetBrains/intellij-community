@@ -60,8 +60,6 @@ import com.intellij.xdebugger.impl.breakpoints.XDependentBreakpointListener
 import com.intellij.xdebugger.impl.breakpoints.XLineBreakpointImpl
 import com.intellij.xdebugger.impl.evaluate.ValueLookupManagerController
 import com.intellij.xdebugger.impl.frame.*
-import com.intellij.xdebugger.impl.frame.XDebugSessionProxy.Companion.showFeWarnings
-import com.intellij.xdebugger.impl.frame.XDebugSessionProxy.Companion.useFeProxy
 import com.intellij.xdebugger.impl.inline.DebuggerInlayListener
 import com.intellij.xdebugger.impl.inline.InlineDebugRenderer
 import com.intellij.xdebugger.impl.mixedmode.XMixedModeCombinedDebugProcess
@@ -208,7 +206,7 @@ class XDebugSessionImpl @JvmOverloads constructor(
     get() = myTabInitDataFlow.filterNotNull()
 
   override fun getRunContentDescriptor(): RunContentDescriptor {
-    if (showFeWarnings()) {
+    if (SplitDebuggerMode.showSplitWarnings()) {
       LOG.error("RunContentDescriptor should not be used in split mode from XDebugSession")
     }
     return getInitializedRunContentDescriptor()
@@ -231,7 +229,7 @@ class XDebugSessionImpl @JvmOverloads constructor(
 
 
   private val isTabInitialized: Boolean
-    get() = myTabInitDataFlow.value != null && (useFeProxy() || mySessionTab.isCompleted)
+    get() = myTabInitDataFlow.value != null && (SplitDebuggerMode.isSplitDebugger() || mySessionTab.isCompleted)
 
   private fun assertSessionTabInitialized() {
     if (myShowToolWindowOnSuspendOnly && !this.isTabInitialized) {
@@ -428,7 +426,7 @@ class XDebugSessionImpl @JvmOverloads constructor(
   @OptIn(ExperimentalCoroutinesApi::class)
   val sessionTab: XDebugSessionTab?
     get() {
-      if (showFeWarnings()) {
+      if (SplitDebuggerMode.showSplitWarnings()) {
         // See "TODO [Debugger.sessionTab]" to see usages which are not yet properly migrated.
         LOG.error("Debug tab should not be used in split mode from XDebugSession")
       }
@@ -440,9 +438,9 @@ class XDebugSessionImpl @JvmOverloads constructor(
     get() = mySessionTab
 
   override fun getUI(): RunnerLayoutUi? {
-    return if (useFeProxy()) {
+    return if (SplitDebuggerMode.isSplitDebugger()) {
       // See "TODO [Debugger.RunnerLayoutUi]" to see usages which are not yet properly migrated.
-      if (showFeWarnings()) {
+      if (SplitDebuggerMode.showSplitWarnings()) {
         LOG.error("RunnerLayoutUi should not be used in split mode from XDebugSession")
       }
       null
@@ -465,7 +463,7 @@ class XDebugSessionImpl @JvmOverloads constructor(
     val withFramesCustomization = debugProcess.allowFramesViewCustomization()
     val defaultFramesViewKey: String? = debugProcess.getDefaultFramesViewKey()
 
-    if (useFeProxy()) {
+    if (SplitDebuggerMode.isSplitDebugger()) {
       val localTabScope = tabCoroutineScope.childScope("ExecutionEnvironmentDto")
       val tabClosedChannel = Channel<Unit>(capacity = 1)
       val additionalTabComponentManager = XDebugSessionAdditionalTabComponentManager(localTabScope)
@@ -559,7 +557,7 @@ class XDebugSessionImpl @JvmOverloads constructor(
   }
 
   fun showSessionTab() {
-    if (!useFeProxy()) {
+    if (!SplitDebuggerMode.isSplitDebugger()) {
       sessionTab?.showTab()
     }
   }
@@ -873,7 +871,7 @@ class XDebugSessionImpl @JvmOverloads constructor(
       }
     }
     val debuggerManager = myDebuggerManager.breakpointManager
-    if (useFeProxy() && breakpoint is XLineBreakpointImpl<*>) {
+    if (SplitDebuggerMode.isSplitDebugger() && breakpoint is XLineBreakpointImpl<*>) {
       // for useFeProxy we call update directly since visual presentation is disabled on the backend
       breakpoint.fireBreakpointPresentationUpdated(this)
     }
@@ -1021,7 +1019,7 @@ class XDebugSessionImpl @JvmOverloads constructor(
           initSessionTab(null, true)
         }
         val topFrameIsAbsent = topFramePosition == null
-        if (useFeProxy()) {
+        if (SplitDebuggerMode.isSplitDebugger()) {
           myPausedEvents.tryEmit(XDebugSessionPausedInfo(attract, topFrameIsAbsent))
         }
         else {

@@ -5,6 +5,7 @@ import com.intellij.frontend.FrontendApplicationInfo
 import com.intellij.frontend.FrontendType
 import com.intellij.idea.AppMode
 import com.intellij.openapi.project.Project
+import com.intellij.xdebugger.SplitDebuggerMode
 import com.intellij.xdebugger.XDebuggerManager
 import com.intellij.xdebugger.frame.XExecutionStack
 import com.intellij.xdebugger.frame.XValue
@@ -30,7 +31,7 @@ private class MonolithXDebugManagerProxy : XDebugManagerProxy {
   }
 
   override fun isEnabled(): Boolean {
-    return !XDebugSessionProxy.useFeProxy() || FrontendApplicationInfo.getFrontendType() is FrontendType.Monolith
+    return !SplitDebuggerMode.isSplitDebugger() || FrontendApplicationInfo.getFrontendType() is FrontendType.Monolith
   }
 
   override suspend fun <T> withId(value: XValue, session: XDebugSessionProxy, block: suspend (XValueId) -> T): T {
@@ -66,7 +67,7 @@ private class MonolithXDebugManagerProxy : XDebugManagerProxy {
   }
 
   override fun getDebuggerExecutionPointManager(project: Project): XDebuggerExecutionPointManager? {
-    if (AppMode.isRemoteDevHost() && XDebugSessionProxy.useFeProxy()) {
+    if (AppMode.isRemoteDevHost() && SplitDebuggerMode.isSplitDebugger()) {
       return null
     }
     return XDebuggerExecutionPointManager.getInstance(project)
