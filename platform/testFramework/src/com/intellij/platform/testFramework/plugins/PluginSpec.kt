@@ -99,9 +99,6 @@ class PluginSpecBuilder(
   )
 }
 
-/**
- * @param configFile null to embed into main plugin.xml
- */
 class ContentModuleSpec internal constructor(
   val moduleId: String,
   val loadingRule: ModuleLoadingRule,
