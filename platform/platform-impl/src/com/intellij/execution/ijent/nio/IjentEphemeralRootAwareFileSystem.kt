@@ -224,7 +224,7 @@ class IjentEphemeralRootAwareFileSystemProvider(
   }
 
   override fun copy(source: Path, target: Path, vararg options: CopyOption?) {
-    if (source.getEelDescriptor() == target.getEelDescriptor()) {
+    if (source.getEelDescriptor() == target.getEelDescriptor() && source.fileSystem == target.fileSystem) {
       super.copy(source, target, *options)
     }
     else {
@@ -233,7 +233,7 @@ class IjentEphemeralRootAwareFileSystemProvider(
   }
 
   override fun move(source: Path, target: Path, vararg options: CopyOption?) {
-    if (source.getEelDescriptor() == target.getEelDescriptor()) {
+    if (source.getEelDescriptor() == target.getEelDescriptor() && source.fileSystem == target.fileSystem) {
       super.move(source, target, *options)
     }
     else {

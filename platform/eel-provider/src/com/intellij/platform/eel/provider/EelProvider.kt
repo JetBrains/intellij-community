@@ -236,7 +236,7 @@ interface EelProvider {
   /**
    * Returns the descriptor for some path or `null` if this provider doesn't support such paths.
    */
-  fun getEelDescriptor(path: @MultiRoutingFileSystemPath Path): EelDescriptor?
+  fun getEelDescriptor(path: Path): EelDescriptor?
 
   fun getMountProvider(eelDescriptor: EelDescriptor): EelMountProvider? = null
 
