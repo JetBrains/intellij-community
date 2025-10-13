@@ -64,7 +64,7 @@ sealed class IdeaPluginDescriptorImpl(
   abstract val useIdeaClassLoader: Boolean
 
   /**
-   * aka `<depends>` elements from the plugin.xml
+   * Aka `<depends>` elements from the plugin.xml
    *
    * Note that it's different from [moduleDependencies]
    */
@@ -133,7 +133,7 @@ sealed class IdeaPluginDescriptorImpl(
       val keys = rawMap.keys.toTypedArray()
       keys.sortWith(extensionPointNameComparator)
       for (key in keys) {
-        result.put(key, rawMap[key]!!)
+        result[key] = rawMap[key]!!
       }
       return result
     }
@@ -408,7 +408,10 @@ class PluginMainDescriptor(
     if (pluginId != PluginManagerCore.CORE_ID) {
       return pluginAliases
     }
-    return pluginAliases + IdeaPluginOsRequirement.getHostOsModuleIds() + productModeAliasesForCorePlugin()
+    return pluginAliases +
+           IdeaPluginOsRequirement.getHostOsModuleIds() +
+           IdeaPluginCpuArchRequirement.getHostCpuArchModuleIds() +
+           productModeAliasesForCorePlugin()
   }
 
   internal fun createContentModule(

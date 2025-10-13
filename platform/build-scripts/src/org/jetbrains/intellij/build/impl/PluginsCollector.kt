@@ -72,7 +72,9 @@ private fun isPluginCompatible(
     nonCheckedModules.remove(declaredModule)
   }
   for (requiredDependency in plugin.requiredDependencies) {
-    if (availableModulesAndPlugins.contains(requiredDependency) || requiredDependency.startsWith("com.intellij.modules.os.")) {
+    if (availableModulesAndPlugins.contains(requiredDependency)
+        || requiredDependency.startsWith("com.intellij.modules.os.")
+        || requiredDependency.startsWith("com.intellij.modules.arch.")) {
       continue
     }
 

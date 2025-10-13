@@ -19,6 +19,7 @@ import com.intellij.testFramework.TestDataPath
 import com.intellij.testFramework.UsefulTestCase
 import com.intellij.testFramework.rules.TempDirectory
 import com.intellij.util.TriConsumer
+import com.intellij.util.system.CpuArch
 import com.intellij.util.system.OS
 import com.intellij.util.xml.dom.NoOpXmlInterner
 import com.intellij.util.xml.dom.XmlElement
@@ -144,6 +145,14 @@ class PluginManagerTest {
   }
 
   @Test
+  fun compatibilityCpu() {
+    assertEquals(CpuArch.CURRENT == CpuArch.X86, checkCompatibility("com.intellij.modules.arch.x86"))
+    assertEquals(CpuArch.CURRENT == CpuArch.X86_64, checkCompatibility("com.intellij.modules.arch.x86_64"))
+    assertEquals(CpuArch.CURRENT == CpuArch.ARM32, checkCompatibility("com.intellij.modules.arch.arm32"))
+    assertEquals(CpuArch.CURRENT == CpuArch.ARM64, checkCompatibility("com.intellij.modules.arch.arm64"))
+  }
+
+  @Test
   fun convertExplicitBigNumberInUntilBuildToStar() {
     assertConvertsTo(null, null)
     assertConvertsTo("145", "145")
@@ -173,7 +182,7 @@ class PluginManagerTest {
    HTTP Client (main)
    HTTP Client (intellij.restClient.microservicesUI, depends on Endpoints)
 
-   But graph is correct - HTTP Client (main) it is node that doesn't depend on Endpoints (main),
+   But the graph is correct - HTTP Client (main) it is a node that doesn't depend on Endpoints (main),
    so no reason for DFSTBuilder to put it after.
    See CachingSemiGraph.getSortedPlugins for a solution.
   */
@@ -442,7 +451,7 @@ class PluginManagerTest {
         path: String,
       ): PluginDescriptorBuilder {
         if (autoGenerateModuleDescriptor.get() && path.startsWith("intellij.")) {
-          val element = moduleMap.get(path)
+          val element = moduleMap[path]
           if (element != null) {
             try {
               return readModuleDescriptorForTest(elementAsBytes(element))

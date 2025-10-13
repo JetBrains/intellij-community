@@ -2,6 +2,7 @@
 package com.intellij.ide.plugins.newui
 
 import com.intellij.ide.plugins.*
+import com.intellij.ide.plugins.PluginManagerCore.getUnfulfilledCpuArchRequirement
 import com.intellij.ide.plugins.PluginManagerCore.getUnfulfilledOsRequirement
 import com.intellij.ide.plugins.api.ReviewsPageContainer
 import com.intellij.openapi.extensions.PluginId
@@ -25,6 +26,7 @@ class PluginUiModelAdapter(
   override val isIncompatibleWithCurrentOs: Boolean
     get() {
       return getUnfulfilledOsRequirement(pluginDescriptor) != null
+             || getUnfulfilledCpuArchRequirement(pluginDescriptor) != null
     }
 
   override val isIncompatible: Boolean

@@ -409,7 +409,6 @@ f:com.intellij.ide.plugins.PluginManagerCore
 - sf:getPluginByClassName(java.lang.String):com.intellij.openapi.extensions.PluginId
 - sf:getPluginNameAndVendor(com.intellij.ide.plugins.IdeaPluginDescriptor):java.lang.String
 - sf:getPlugins():com.intellij.ide.plugins.IdeaPluginDescriptor[]
-- f:getUnfulfilledOsRequirement(com.intellij.ide.plugins.IdeaPluginDescriptor):com.intellij.ide.plugins.IdeaPluginOsRequirement
 - sf:invalidatePlugins():V
 - sf:isCompatible(com.intellij.ide.plugins.IdeaPluginDescriptor):Z
 - f:isCompatible(com.intellij.ide.plugins.IdeaPluginDescriptor,com.intellij.openapi.util.BuildNumber):Z
