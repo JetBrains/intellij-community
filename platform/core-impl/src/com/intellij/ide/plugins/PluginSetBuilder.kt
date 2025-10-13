@@ -110,11 +110,12 @@ class PluginSetBuilder(@JvmField val unsortedPlugins: Set<PluginMainDescriptor>)
     val isDisabledDueToPackagePrefixConflict = HashMap<PluginModuleId, IdeaPluginDescriptorImpl>()
 
     fun registerLoadingError(plugin: IdeaPluginDescriptorImpl, disabledModule: ContentModuleDescriptor) {
-      loadingErrors.add(createCannotLoadError2(
-        descriptor = plugin,
-        dependencyPluginId = disabledModuleToProblematicPlugin.get(disabledModule.moduleId)
-                             ?: disabledModule.parent.pluginId,
-        isNotifyUser = !plugin.isImplementationDetail))
+      loadingErrors.add(PluginDependencyIsNotInstalled(
+        plugin = plugin,
+        dependencyNameOrId = (disabledModuleToProblematicPlugin.get(disabledModule.moduleId)
+                              ?: disabledModule.parent.pluginId).idString,
+        shouldNotifyUser = !plugin.isImplementationDetail,
+      ))
     }
     fun markRequiredModulesAsDisabled(plugin: PluginMainDescriptor) {
       for (module in plugin.contentModules) {
@@ -356,20 +357,6 @@ private fun createCannotLoadError(
   val dependency = errors.get(dependencyPluginId)?.plugin
   return if (dependency != null) {
     PluginDependencyCannotBeLoaded(descriptor, dependency.name ?: dependencyIdString, isNotifyUser)
-  } else {
-    PluginDependencyIsNotInstalled(descriptor, dependencyIdString, isNotifyUser)
-  }
-}
-
-private fun createCannotLoadError2(
-  descriptor: IdeaPluginDescriptorImpl,
-  dependencyPluginId: PluginId,
-  isNotifyUser: Boolean,
-): PluginNonLoadReason {
-  val dependencyIdString = dependencyPluginId.idString
-  val dependency = null
-  return if (dependency != null) {
-    PluginDependencyCannotBeLoaded(descriptor, dependencyIdString, isNotifyUser)
   } else {
     PluginDependencyIsNotInstalled(descriptor, dependencyIdString, isNotifyUser)
   }
