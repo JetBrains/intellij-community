@@ -31,6 +31,7 @@ object PluginXmlConst {
   const val IDEA_VERSION_ELEM: String = "idea-version"
   const val IDEA_VERSION_SINCE_ATTR: String = "since-build"
   const val IDEA_VERSION_UNTIL_ATTR: String = "until-build"
+  const val IDEA_VERSION_STRICT_UNTIL_ATTR: String = "strict-until-build"
 
   const val VENDOR_ELEM: String = "vendor"
   const val VENDOR_URL_ATTR: String = "url"

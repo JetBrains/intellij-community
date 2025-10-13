@@ -221,6 +221,7 @@ sealed class IdeaPluginDescriptorImpl(
       if (raw.version != null) reporter(PluginXmlConst.VERSION_ELEM)
       if (raw.sinceBuild != null) reporter(PluginXmlConst.IDEA_VERSION_SINCE_ATTR)
       if (raw.untilBuild != null) reporter(PluginXmlConst.IDEA_VERSION_UNTIL_ATTR)
+      if (raw.strictUntilBuild != null) reporter(PluginXmlConst.IDEA_VERSION_STRICT_UNTIL_ATTR)
 
       if (raw.vendor != null) reporter(PluginXmlConst.VENDOR_ELEM)
       if (raw.vendorUrl != null) reporter(PluginXmlConst.VENDOR_URL_ATTR)
@@ -268,7 +269,7 @@ class PluginMainDescriptor(
   private val version: String? = raw.version
   private val sinceBuild: String? = raw.sinceBuild
   @Suppress("DEPRECATION")
-  private val untilBuild: String? = UntilBuildDeprecation.nullizeIfTargetsMinimalApiOrLater(raw.untilBuild, raw.name ?: raw.id)
+  private val untilBuild: String? = raw.strictUntilBuild ?: UntilBuildDeprecation.nullizeIfTargetsMinimalApiOrLater(raw.untilBuild, raw.name ?: raw.id)
 
   @Volatile
   private var loadedDescriptionText: @Nls String? = null

@@ -43,10 +43,12 @@ fun PluginSpec.buildXml(config: PluginPackagingConfig = PluginPackagingConfig())
     appendLine(">")
     if (id != null) appendLine("<id>$id</id>")
     if (name != null) appendLine("<name>$name</name>")
-    when {
-      sinceBuild != null && untilBuild != null -> appendLine("""<idea-version since-build="${sinceBuild}" until-build="${untilBuild}"/>""")
-      sinceBuild != null -> appendLine("""<idea-version since-build="${sinceBuild}"/>""")
-      untilBuild != null -> appendLine("""<idea-version until-build="${untilBuild}"/>""")
+    if (sinceBuild != null || untilBuild != null || strictUntilBuild != null) {
+      append("<idea-version")
+      if (sinceBuild != null) append(""" since-build="${sinceBuild}"""")
+      if (untilBuild != null) append(""" until-build="${untilBuild}"""")
+      if (strictUntilBuild != null) append(""" strict-until-build="${strictUntilBuild}"""")
+      appendLine("/>")
     }
     if (category != null) appendLine("<category>$category</category>")
     if (version != null) appendLine("<version>$version</version>")

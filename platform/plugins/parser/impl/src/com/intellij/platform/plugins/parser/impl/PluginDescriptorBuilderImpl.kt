@@ -15,9 +15,8 @@ internal class PluginDescriptorBuilderImpl : PluginDescriptorBuilder {
 
   override var version: String? = null
   override var sinceBuild: String? = null
-  @Deprecated("Deprecated since 2025.2, the value is disregarded if its major part is at least 251. " +
-              "Nonetheless, IDE consults since-until constraints taken directly from the Marketplace, so they can be set there if you need it.")
   override var untilBuild: String? = null
+  override var strictUntilBuild: String? = null
 
   override var `package`: String? = null
   override var isSeparateJar: Boolean = false
@@ -128,6 +127,7 @@ internal class PluginDescriptorBuilderImpl : PluginDescriptorBuilder {
     version = version,
     sinceBuild = sinceBuild,
     untilBuild = untilBuild,
+    strictUntilBuild = strictUntilBuild,
     `package` = `package`,
     isSeparateJar = isSeparateJar,
     url = url,

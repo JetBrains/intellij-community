@@ -485,6 +485,25 @@ class PluginDescriptorTest {
     assertThat(errors.joinToString { it.message ?: "" }).contains("visibility", "has no effect")
   }
 
+  @Test
+  fun `strict-until-build attribute`() {
+    plugin {
+      strictUntilBuild = "253.0"
+    }.buildDir(pluginDirPath)
+    val plugin = loadDescriptorInTest(pluginDirPath)
+    assertThat(plugin.untilBuild).isEqualTo("253.0")
+  }
+
+  @Test
+  fun `strict-until-build attribute overrides until-build attribute`() {
+    plugin {
+      untilBuild = "252.0"
+      strictUntilBuild = "253.0"
+    }.buildDir(pluginDirPath)
+    val plugin = loadDescriptorInTest(pluginDirPath)
+    assertThat(plugin.untilBuild).isEqualTo("253.0")
+  }
+
   // todo this is rather about plugin set loading, probably needs to be moved out
   @Test
   fun `only one instance of a plugin is loaded if it's duplicated`() {

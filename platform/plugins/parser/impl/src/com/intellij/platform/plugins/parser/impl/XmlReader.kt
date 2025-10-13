@@ -254,6 +254,7 @@ private fun readIdeaVersion(reader: XMLStreamReader2, builder: PluginDescriptorB
     when (reader.getAttributeLocalName(i)) {
       PluginXmlConst.IDEA_VERSION_SINCE_ATTR -> builder.sinceBuild = getNullifiedAttributeValue(reader, i)
       PluginXmlConst.IDEA_VERSION_UNTIL_ATTR -> builder.untilBuild = getNullifiedAttributeValue(reader, i)
+      PluginXmlConst.IDEA_VERSION_STRICT_UNTIL_ATTR -> builder.strictUntilBuild = getNullifiedAttributeValue(reader, i)
     }
   }
   reader.skipElement()
