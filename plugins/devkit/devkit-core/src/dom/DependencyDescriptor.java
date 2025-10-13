@@ -47,5 +47,9 @@ public interface DependencyDescriptor extends DomElement {
     @NameValue(referencable = false)
     @Convert(ModuleDescriptorNameConverter.class)
     GenericAttributeValue<IdeaPlugin> getName();
+
+    @NotNull
+    @Stubbed
+    GenericAttributeValue<String> getNamespace();
   }
 }

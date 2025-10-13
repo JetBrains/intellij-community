@@ -15,7 +15,7 @@
   </content>
 
   <dependencies>
-    <module name="dependencies.module"/>
+    <module name="dependencies.module" namespace="custom"/>
     <plugin id="dependencies.plugin.id"/>
   </dependencies>
 
