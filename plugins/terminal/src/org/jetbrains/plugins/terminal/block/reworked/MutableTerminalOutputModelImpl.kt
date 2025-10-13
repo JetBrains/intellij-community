@@ -27,53 +27,47 @@ import kotlin.math.max
 @ApiStatus.Internal
 sealed class AbstractTerminalOutputModelImpl(
   val document: Document,
-) : TerminalOutputModelSnapshot {
+) {
 
   abstract val trimmedCharsCount: Long
 
   abstract val trimmedLinesCount: Long
 
-  override val immutableText: CharSequence
+  val immutableText: CharSequence
     get() = document.immutableCharSequence
 
-  override val lineCount: Int
+  val lineCount: Int
     get() = document.lineCount
 
-  override val modificationStamp: Long
+  val modificationStamp: Long
     get() = document.modificationStamp
 
-  override val startOffset: TerminalOffset
+  val startOffset: TerminalOffset
     get() = relativeOffset(0)
 
-  override val firstLine: TerminalLineIndex
+  val firstLine: TerminalLineIndex
     get() = TerminalLineIndexImpl(trimmedLinesCount)
 
   protected fun relativeOffset(offset: Int): TerminalOffset = TerminalOffsetImpl(trimmedCharsCount + offset)
 
-  override fun absoluteOffset(offset: Long): TerminalOffset = TerminalOffsetImpl(offset)
+  fun absoluteOffset(offset: Long): TerminalOffset = TerminalOffsetImpl(offset)
 
-  override fun absoluteLine(line: Long): TerminalLineIndex = TerminalLineIndexImpl(line)
+  fun absoluteLine(line: Long): TerminalLineIndex = TerminalLineIndexImpl(line)
 
-  override fun lineByOffset(offset: TerminalOffset): TerminalLineIndex = TerminalLineIndexImpl(trimmedLinesCount + document.getLineNumber(offset.toRelative()))
+  fun lineByOffset(offset: TerminalOffset): TerminalLineIndex = TerminalLineIndexImpl(trimmedLinesCount + document.getLineNumber(offset.toRelative()))
 
-  override fun startOffset(line: TerminalLineIndex): TerminalOffset = relativeOffset(document.getLineStartOffset(line.toRelative()))
+  fun startOffset(line: TerminalLineIndex): TerminalOffset = relativeOffset(document.getLineStartOffset(line.toRelative()))
 
-  override fun endOffset(line: TerminalLineIndex, includeEOL: Boolean): TerminalOffset {
+  fun endOffset(line: TerminalLineIndex, includeEOL: Boolean): TerminalOffset {
     var result = document.getLineEndOffset(line.toRelative())
-    if (includeEOL && result < textLength) {
+    if (includeEOL && result < document.textLength) {
       ++result
     }
     return relativeOffset(result)
   }
 
-  override fun getText(start: TerminalOffset, end: TerminalOffset): String =
+  fun getText(start: TerminalOffset, end: TerminalOffset): String =
     document.getText(TextRange(start.toRelative(), end.toRelative()))
-
-  override fun snapshot(): TerminalOutputModelSnapshot = this
-
-  override fun addListener(parentDisposable: Disposable, listener: TerminalOutputModelListener) {
-    // Do nothing, because the model is immutable, and therefore no events can be fired.
-  }
 
   protected fun TerminalOffset.toRelative(): Int = (this - startOffset).toInt()
 
@@ -88,15 +82,6 @@ class MutableTerminalOutputModelImpl(
   document: Document,
   private val maxOutputLength: Int,
 ) : AbstractTerminalOutputModelImpl(document), MutableTerminalOutputModel {
-
-  override val immutableText: CharSequence
-    get() = document.immutableCharSequence
-
-  override val lineCount: Int
-    get() = document.lineCount
-
-  override val modificationStamp: Long
-    get() = document.modificationStamp
 
   private val mutableCursorOffsetState: MutableStateFlow<TerminalOffset> = MutableStateFlow(absoluteOffset(0))
   override val cursorOffsetState: StateFlow<TerminalOffset> = mutableCursorOffsetState.asStateFlow()
@@ -545,6 +530,8 @@ class TerminalOutputModelSnapshotImpl(
   override val cursorOffset: TerminalOffset,
 ) : AbstractTerminalOutputModelImpl(document), TerminalOutputModelSnapshot {
 
+  override fun snapshot(): TerminalOutputModelSnapshot = this
+
   override val cursorOffsetState: StateFlow<TerminalOffset> = MutableStateFlow(cursorOffset).asStateFlow()
 
   override fun getHighlightings(): TerminalOutputHighlightingsSnapshot {
@@ -553,6 +540,10 @@ class TerminalOutputModelSnapshotImpl(
 
   override fun getHighlightingAt(documentOffset: TerminalOffset): HighlightingInfo? {
     throw UnsupportedOperationException("Not implemented for performance reasons")
+  }
+
+  override fun addListener(parentDisposable: Disposable, listener: TerminalOutputModelListener) {
+    // Do nothing, because the model is immutable, and therefore no events can be fired.
   }
 }
 
