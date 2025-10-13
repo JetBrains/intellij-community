@@ -77,6 +77,7 @@ sealed interface TerminalOffset : Comparable<TerminalOffset> {
 sealed interface TerminalLineIndex : Comparable<TerminalLineIndex> {
   fun toAbsolute(): Long
   operator fun plus(lineCount: Long): TerminalLineIndex
+  operator fun minus(lineCount: Long): TerminalLineIndex
   operator fun minus(other: TerminalLineIndex): Long
 }
 

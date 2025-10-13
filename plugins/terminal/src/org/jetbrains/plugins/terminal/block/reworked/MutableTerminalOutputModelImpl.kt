@@ -576,6 +576,7 @@ private data class TerminalLineIndexImpl(private val absolute: Long) : TerminalL
   override fun compareTo(other: TerminalLineIndex): Int = toAbsolute().compareTo(other.toAbsolute())
   override fun toAbsolute(): Long = absolute
   override fun plus(lineCount: Long): TerminalLineIndex = TerminalLineIndexImpl(absolute + lineCount)
+  override fun minus(lineCount: Long): TerminalLineIndex = TerminalLineIndexImpl(absolute - lineCount)
   override fun minus(other: TerminalLineIndex): Long = toAbsolute() - other.toAbsolute()
   override fun toString(): String = "${toAbsolute()}L"
 }

@@ -10,6 +10,7 @@ import com.intellij.testFramework.fixtures.BasePlatformTestCase
 import com.jediterm.terminal.TextStyle
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.runBlocking
+import org.assertj.core.api.Assertions.assertThat
 import org.jetbrains.plugins.terminal.block.output.HighlightingInfo
 import org.jetbrains.plugins.terminal.block.output.TerminalOutputHighlightingsSnapshot
 import org.jetbrains.plugins.terminal.block.output.TextStyleAdapter
@@ -363,6 +364,40 @@ internal class TerminalOutputModelTest : BasePlatformTestCase() {
     val expectedHighlightings = listOf(highlighting(0, 5), highlighting(5, 10))
     val expectedHighlightingsSnapshot = TerminalOutputHighlightingsSnapshot(newModel.document, expectedHighlightings)
     assertEquals(expectedHighlightingsSnapshot, newModel.getHighlightings())
+  }
+
+  @Test
+  fun `offset arithmetics`(): Unit = runBlocking(Dispatchers.EDT) {
+    val sut = TerminalTestUtil.createOutputModel(maxLength = 1000)
+    val offset0 = sut.absoluteOffset(0L)
+    val offset1 = sut.absoluteOffset(1L)
+    val offset2 = sut.absoluteOffset(2L)
+    assertThat(offset0).isLessThan(offset1)
+    assertThat(offset1).isGreaterThan(offset0)
+    assertThat(offset0).isNotEqualTo(offset1)
+    assertThat(offset2 - offset1).isEqualTo(1L)
+    assertThat(offset2 - offset2).isZero()
+    assertThat(offset0 + 1L).isEqualTo(offset1)
+    assertThat(offset0 + 2L).isEqualTo(offset2)
+    assertThat(offset2 - 1L).isEqualTo(offset1)
+    assertThat(offset2 - 2L).isEqualTo(offset0)
+  }
+
+  @Test
+  fun `line arithmetics`(): Unit = runBlocking(Dispatchers.EDT) {
+    val sut = TerminalTestUtil.createOutputModel(maxLength = 1000)
+    val line0 = sut.absoluteLine(0L)
+    val line1 = sut.absoluteLine(1L)
+    val line2 = sut.absoluteLine(2L)
+    assertThat(line0).isLessThan(line1)
+    assertThat(line1).isGreaterThan(line0)
+    assertThat(line0).isNotEqualTo(line1)
+    assertThat(line2 - line1).isEqualTo(1L)
+    assertThat(line2 - line2).isZero()
+    assertThat(line0 + 1L).isEqualTo(line1)
+    assertThat(line0 + 2L).isEqualTo(line2)
+    assertThat(line2 - 1L).isEqualTo(line1)
+    assertThat(line2 - 2L).isEqualTo(line0)
   }
 }
 
