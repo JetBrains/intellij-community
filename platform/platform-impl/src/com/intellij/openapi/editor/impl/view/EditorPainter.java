@@ -1,7 +1,10 @@
 // Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.editor.impl.view;
 
+import com.intellij.diagnostic.PluginException;
+import com.intellij.ide.plugins.PluginManager;
 import com.intellij.openapi.application.AccessToken;
+import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.*;
 import com.intellij.openapi.editor.colors.EditorColors;
 import com.intellij.openapi.editor.colors.EditorColorsManager;
@@ -17,6 +20,7 @@ import com.intellij.openapi.editor.impl.*;
 import com.intellij.openapi.editor.impl.softwrap.SoftWrapDrawingType;
 import com.intellij.openapi.editor.markup.*;
 import com.intellij.openapi.editor.markup.TextAttributesEffectsBuilder.EffectDescriptor;
+import com.intellij.openapi.extensions.PluginDescriptor;
 import com.intellij.openapi.options.advanced.AdvancedSettings;
 import com.intellij.openapi.util.Key;
 import com.intellij.openapi.util.TextRange;
@@ -53,6 +57,8 @@ import java.util.function.Consumer;
 
 //@ApiStatus.Internal
 public final class EditorPainter implements TextDrawingCallback {
+
+  private static final Logger LOG = Logger.getInstance(EditorPainter.class);
 
   private static final Color CARET_LIGHT = Gray._255;
   private static final Color CARET_DARK = Gray._0;
@@ -633,7 +639,12 @@ public final class EditorPainter implements TextDrawingCallback {
           CustomHighlighterRenderer customRenderer = highlighter.getCustomRenderer();
           if (customRenderer == null) continue;
           try (AccessToken ignore = SlowOperations.reportOnceIfViolatedFor(customRenderer)) {
-            customRenderer.paint(myEditor, highlighter, myGraphics);
+            try {
+              customRenderer.paint(myEditor, highlighter, myGraphics);
+            } catch (Exception e) {
+              PluginDescriptor descriptor =  PluginManager.getPluginByClass(customRenderer.getClass());
+              LOG.error(new PluginException("Failed to perform custom painting", e, descriptor != null ? descriptor.getPluginId() : null));
+            }
           }
         }
         myGraphics.translate(0, -myYShift);
