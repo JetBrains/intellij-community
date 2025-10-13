@@ -501,8 +501,8 @@ internal class BackendTerminalHyperlinkHighlighterTest : BasePlatformTestCase() 
       for (i in actualLinks.indices) {
         val actual = actualLinks[i]
         val expected = expectedLinks[i]
-        val actualStartOffset = outputModel.absoluteOffset(actual.absoluteStartOffset)
-        val actualEndOffset = outputModel.absoluteOffset(actual.absoluteEndOffset)
+        val actualStartOffset = TerminalOffset.of(actual.absoluteStartOffset)
+        val actualEndOffset = TerminalOffset.of(actual.absoluteEndOffset)
         if (i == 0 && actualStartOffset < outputModel.startOffset) continue // partially trimmed link, we may not be able to locate it
         val expectedStartOffset = expected.locator.locateOffset(outputModel)
         val expectedEndOffset = expectedStartOffset + expected.locator.length.toLong()
@@ -527,8 +527,8 @@ internal class BackendTerminalHyperlinkHighlighterTest : BasePlatformTestCase() 
         val expected = expectedHighlightings[i]
         val expectedStartOffset = expected.locator.locateOffset(outputModel)
         val expectedEndOffset = expectedStartOffset + expected.locator.length.toLong()
-        val actualStartOffset = outputModel.absoluteOffset(actual.absoluteStartOffset)
-        val actualEndOffset = outputModel.absoluteOffset(actual.absoluteEndOffset)
+        val actualStartOffset = TerminalOffset.of(actual.absoluteStartOffset)
+        val actualEndOffset = TerminalOffset.of(actual.absoluteEndOffset)
         val expectedLayer = HighlighterLayer.CONSOLE_FILTER
 
         val description = "at $i actual highlight $actual expected highlight $expected"
@@ -548,8 +548,8 @@ internal class BackendTerminalHyperlinkHighlighterTest : BasePlatformTestCase() 
         val expected = expectedInlays[i]
         val expectedStartOffset = expected.locator.locateOffset(outputModel)
         val expectedEndOffset = expectedStartOffset + expected.locator.length.toLong()
-        val actualStartOffset = outputModel.absoluteOffset(actual.absoluteStartOffset)
-        val actualEndOffset = outputModel.absoluteOffset(actual.absoluteEndOffset)
+        val actualStartOffset = TerminalOffset.of(actual.absoluteStartOffset)
+        val actualEndOffset = TerminalOffset.of(actual.absoluteEndOffset)
 
         val description = "at $i actual inlay $actual expected inlay $expected"
         assertThat(actualStartOffset).`as`(description).isEqualTo(expectedStartOffset)

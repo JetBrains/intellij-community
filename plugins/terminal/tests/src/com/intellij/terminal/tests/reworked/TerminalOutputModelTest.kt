@@ -14,6 +14,7 @@ import org.assertj.core.api.Assertions.assertThat
 import org.jetbrains.plugins.terminal.block.output.HighlightingInfo
 import org.jetbrains.plugins.terminal.block.output.TerminalOutputHighlightingsSnapshot
 import org.jetbrains.plugins.terminal.block.output.TextStyleAdapter
+import org.jetbrains.plugins.terminal.block.reworked.TerminalLineIndex
 import org.jetbrains.plugins.terminal.block.reworked.TerminalOffset
 import org.jetbrains.plugins.terminal.block.reworked.TerminalOutputModel
 import org.jetbrains.plugins.terminal.block.reworked.TerminalOutputModelListener
@@ -368,10 +369,9 @@ internal class TerminalOutputModelTest : BasePlatformTestCase() {
 
   @Test
   fun `offset arithmetics`(): Unit = runBlocking(Dispatchers.EDT) {
-    val sut = TerminalTestUtil.createOutputModel(maxLength = 1000)
-    val offset0 = sut.absoluteOffset(0L)
-    val offset1 = sut.absoluteOffset(1L)
-    val offset2 = sut.absoluteOffset(2L)
+    val offset0 = TerminalOffset.of(0L)
+    val offset1 = TerminalOffset.of(1L)
+    val offset2 = TerminalOffset.of(2L)
     assertThat(offset0).isLessThan(offset1)
     assertThat(offset1).isGreaterThan(offset0)
     assertThat(offset0).isNotEqualTo(offset1)
@@ -385,10 +385,9 @@ internal class TerminalOutputModelTest : BasePlatformTestCase() {
 
   @Test
   fun `line arithmetics`(): Unit = runBlocking(Dispatchers.EDT) {
-    val sut = TerminalTestUtil.createOutputModel(maxLength = 1000)
-    val line0 = sut.absoluteLine(0L)
-    val line1 = sut.absoluteLine(1L)
-    val line2 = sut.absoluteLine(2L)
+    val line0 = TerminalLineIndex.of(0L)
+    val line1 = TerminalLineIndex.of(1L)
+    val line2 = TerminalLineIndex.of(2L)
     assertThat(line0).isLessThan(line1)
     assertThat(line1).isGreaterThan(line0)
     assertThat(line0).isNotEqualTo(line1)

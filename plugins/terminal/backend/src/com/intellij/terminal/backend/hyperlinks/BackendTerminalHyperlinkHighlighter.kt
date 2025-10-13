@@ -22,6 +22,8 @@ import kotlinx.coroutines.flow.*
 import org.jetbrains.annotations.TestOnly
 import org.jetbrains.plugins.terminal.block.hyperlinks.CompositeFilterWrapper
 import org.jetbrains.plugins.terminal.block.reworked.*
+import org.jetbrains.plugins.terminal.block.reworked.TerminalLineIndex
+import org.jetbrains.plugins.terminal.block.reworked.TerminalOffset
 import org.jetbrains.plugins.terminal.session.TerminalHyperlinkId
 import org.jetbrains.plugins.terminal.session.TerminalHyperlinksChangedEvent
 import org.jetbrains.plugins.terminal.session.TerminalHyperlinksHeartbeatEvent
@@ -106,7 +108,7 @@ internal class BackendTerminalHyperlinkHighlighter(
           startLine
         }
         else {
-          min(model.absoluteLine(existingPendingTask.startAbsoluteLine), startLine).coerceAtLeast(model.firstLine)
+          min(TerminalLineIndex.of(existingPendingTask.startAbsoluteLine), startLine).coerceAtLeast(model.firstLine)
         }
         val newPendingTask = newHighlightTask(model, dirtyRegionStart)
         LOG.debug { "The model updated from offset $startOffset (line $startLine), the new task is $newPendingTask" }
@@ -131,7 +133,7 @@ internal class BackendTerminalHyperlinkHighlighter(
     val currentFilter = filterWrapper.getFilter()
     val currentTaskRunner = checkNotNull(currentTaskRunner) { "The task runner must be present since we have results" }
     if (currentTaskRunner.filter !== currentFilter) return false
-    if (outputModel.absoluteOffset(taskResult.absoluteStartOffset) < outputModel.startOffset) return false // trimmed
+    if (TerminalOffset.of(taskResult.absoluteStartOffset) < outputModel.startOffset) return false // trimmed
     val pendingTask = pendingTask
     return if (pendingTask == null) {
       true // No updates since the current task started, therefore, all results are valid
@@ -242,9 +244,9 @@ private data class HighlightTask(
 
 private fun HighlightTask.toString(outputModel: TerminalOutputModelSnapshot): String =
   "HighlightTask(" +
-  "startLine=${outputModel.absoluteLine(startAbsoluteLine)}," +
-  "startOffset=${outputModel.absoluteOffset(startAbsoluteOffset)}, " +
-  "endLineInclusive=${outputModel.absoluteLine(endAbsoluteLineInclusive)})"
+  "startLine=${TerminalLineIndex.of(startAbsoluteLine)}," +
+  "startOffset=${TerminalOffset.of(startAbsoluteOffset)}, " +
+  "endLineInclusive=${TerminalLineIndex.of(endAbsoluteLineInclusive)})"
 
 private fun describe(outputModel: TerminalOutputModelSnapshot) = buildString {
   append("OutputModel(trimmedChars=")
@@ -278,7 +280,7 @@ private class HighlightTaskRunner(
   val topResults = LinkedBlockingDeque<TaskResult>()
   val bottomResults = LinkedBlockingDeque<TaskResult>()
 
-  private val topStartLine: TerminalLineIndex = outputModel.absoluteLine(task.startAbsoluteLine)
+  private val topStartLine: TerminalLineIndex = TerminalLineIndex.of(task.startAbsoluteLine)
   private val bottomStartLine: TerminalLineIndex = (lastLine() + 1 - BATCH_SIZE)
     .coerceAtLeast(firstLine())
     .coerceAtLeast(topStartLine)
@@ -293,9 +295,9 @@ private class HighlightTaskRunner(
 
   private fun firstLine() = outputModel.firstLine
   private fun lastLine() = outputModel.lastLine
-  
-  private operator fun TerminalLineIndex.plus(count: Int) = outputModel.absoluteLine(toAbsolute() + count)
-  private operator fun TerminalLineIndex.minus(count: Int) = outputModel.absoluteLine(toAbsolute() - count)
+
+  private operator fun TerminalLineIndex.plus(count: Int) = TerminalLineIndex.of(toAbsolute() + count)
+  private operator fun TerminalLineIndex.minus(count: Int) = TerminalLineIndex.of(toAbsolute() - count)
 
   suspend fun run() {
     try {
@@ -416,8 +418,8 @@ private class HighlightTaskRunner(
       return@buildString
     }
     append(results.size).append(" results with offsets ")
-    val minOffset = outputModel.absoluteOffset(results.minOf { it.absoluteStartOffset })
-    val maxOffset = outputModel.absoluteOffset(results.maxOf { it.absoluteEndOffset })
+    val minOffset = TerminalOffset.of(results.minOf { it.absoluteStartOffset })
+    val maxOffset = TerminalOffset.of(results.maxOf { it.absoluteEndOffset })
     append(minOffset).append("-").append(maxOffset)
     val minLine = outputModel.lineByOffset(minOffset)
     val maxLine = outputModel.lineByOffset(maxOffset)

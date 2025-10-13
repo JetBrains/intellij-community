@@ -14,7 +14,6 @@ import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import org.jetbrains.annotations.ApiStatus
-import org.jetbrains.annotations.TestOnly
 import org.jetbrains.annotations.VisibleForTesting
 import org.jetbrains.plugins.terminal.block.output.HighlightingInfo
 import org.jetbrains.plugins.terminal.block.output.TerminalOutputHighlightingsSnapshot
@@ -46,15 +45,11 @@ sealed class AbstractTerminalOutputModelImpl(
     get() = relativeOffset(0)
 
   val firstLine: TerminalLineIndex
-    get() = TerminalLineIndexImpl(trimmedLinesCount)
+    get() = TerminalLineIndex.of(trimmedLinesCount)
 
-  protected fun relativeOffset(offset: Int): TerminalOffset = TerminalOffsetImpl(trimmedCharsCount + offset)
+  protected fun relativeOffset(offset: Int): TerminalOffset = TerminalOffset.of(trimmedCharsCount + offset)
 
-  fun absoluteOffset(offset: Long): TerminalOffset = TerminalOffsetImpl(offset)
-
-  fun absoluteLine(line: Long): TerminalLineIndex = TerminalLineIndexImpl(line)
-
-  fun lineByOffset(offset: TerminalOffset): TerminalLineIndex = TerminalLineIndexImpl(trimmedLinesCount + document.getLineNumber(offset.toRelative()))
+  fun lineByOffset(offset: TerminalOffset): TerminalLineIndex = TerminalLineIndex.of(trimmedLinesCount + document.getLineNumber(offset.toRelative()))
 
   fun startOffset(line: TerminalLineIndex): TerminalOffset = relativeOffset(document.getLineStartOffset(line.toRelative()))
 
@@ -83,7 +78,7 @@ class MutableTerminalOutputModelImpl(
   private val maxOutputLength: Int,
 ) : AbstractTerminalOutputModelImpl(document), MutableTerminalOutputModel {
 
-  private val mutableCursorOffsetState: MutableStateFlow<TerminalOffset> = MutableStateFlow(absoluteOffset(0))
+  private val mutableCursorOffsetState: MutableStateFlow<TerminalOffset> = MutableStateFlow(TerminalOffset.of(0))
   override val cursorOffsetState: StateFlow<TerminalOffset> = mutableCursorOffsetState.asStateFlow()
 
   override val cursorOffset: TerminalOffset
@@ -545,28 +540,6 @@ class TerminalOutputModelSnapshotImpl(
   override fun addListener(parentDisposable: Disposable, listener: TerminalOutputModelListener) {
     // Do nothing, because the model is immutable, and therefore no events can be fired.
   }
-}
-
-private data class TerminalOffsetImpl(private val absolute: Long) : TerminalOffset {
-  override fun compareTo(other: TerminalOffset): Int = toAbsolute().compareTo(other.toAbsolute())
-  override fun toAbsolute(): Long = absolute
-  override fun plus(charCount: Long): TerminalOffset = TerminalOffsetImpl(absolute + charCount)
-  override fun minus(charCount: Long): TerminalOffset = plus(-charCount)
-  override fun minus(other: TerminalOffset): Long = toAbsolute() - other.toAbsolute()
-  override fun toString(): String = "${toAbsolute()}L"
-}
-
-@ApiStatus.Internal
-@TestOnly
-val ZERO_TERMINAL_OFFSET: TerminalOffset = TerminalOffsetImpl(0L)
-
-private data class TerminalLineIndexImpl(private val absolute: Long) : TerminalLineIndex {
-  override fun compareTo(other: TerminalLineIndex): Int = toAbsolute().compareTo(other.toAbsolute())
-  override fun toAbsolute(): Long = absolute
-  override fun plus(lineCount: Long): TerminalLineIndex = TerminalLineIndexImpl(absolute + lineCount)
-  override fun minus(lineCount: Long): TerminalLineIndex = TerminalLineIndexImpl(absolute - lineCount)
-  override fun minus(other: TerminalLineIndex): Long = toAbsolute() - other.toAbsolute()
-  override fun toString(): String = "${toAbsolute()}L"
 }
 
 private val LOG = logger<MutableTerminalOutputModelImpl>()

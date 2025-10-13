@@ -37,10 +37,6 @@ sealed interface TerminalOutputModel {
 
   fun snapshot(): TerminalOutputModelSnapshot
 
-  fun absoluteOffset(offset: Long): TerminalOffset
-
-  fun absoluteLine(line: Long): TerminalLineIndex
-
   fun lineByOffset(offset: TerminalOffset): TerminalLineIndex
 
   fun startOffset(line: TerminalLineIndex): TerminalOffset
@@ -65,6 +61,9 @@ sealed interface TerminalOutputModelSnapshot : TerminalOutputModel
 
 @ApiStatus.Experimental
 sealed interface TerminalOffset : Comparable<TerminalOffset> {
+  companion object {
+    @JvmStatic fun of(absoluteOffset: Long): TerminalOffset = TerminalOffsetImpl(absoluteOffset)
+  }
   fun toAbsolute(): Long
   operator fun plus(charCount: Long): TerminalOffset
   operator fun minus(charCount: Long): TerminalOffset
@@ -73,6 +72,9 @@ sealed interface TerminalOffset : Comparable<TerminalOffset> {
 
 @ApiStatus.Experimental
 sealed interface TerminalLineIndex : Comparable<TerminalLineIndex> {
+  companion object {
+    @JvmStatic fun of(absoluteOffset: Long): TerminalLineIndex = TerminalLineIndexImpl(absoluteOffset)
+  }
   fun toAbsolute(): Long
   operator fun plus(lineCount: Long): TerminalLineIndex
   operator fun minus(lineCount: Long): TerminalLineIndex
@@ -90,3 +92,22 @@ val TerminalOutputModel.endOffset: TerminalOffset
 @get:ApiStatus.Experimental
 val TerminalOutputModel.lastLine: TerminalLineIndex
   get() = firstLine + (lineCount - 1).toLong()
+
+
+private data class TerminalOffsetImpl(private val absolute: Long) : TerminalOffset {
+  override fun compareTo(other: TerminalOffset): Int = toAbsolute().compareTo(other.toAbsolute())
+  override fun toAbsolute(): Long = absolute
+  override fun plus(charCount: Long): TerminalOffset = TerminalOffsetImpl(absolute + charCount)
+  override fun minus(charCount: Long): TerminalOffset = plus(-charCount)
+  override fun minus(other: TerminalOffset): Long = toAbsolute() - other.toAbsolute()
+  override fun toString(): String = "${toAbsolute()}L"
+}
+
+private data class TerminalLineIndexImpl(private val absolute: Long) : TerminalLineIndex {
+  override fun compareTo(other: TerminalLineIndex): Int = toAbsolute().compareTo(other.toAbsolute())
+  override fun toAbsolute(): Long = absolute
+  override fun plus(lineCount: Long): TerminalLineIndex = TerminalLineIndexImpl(absolute + lineCount)
+  override fun minus(lineCount: Long): TerminalLineIndex = TerminalLineIndexImpl(absolute - lineCount)
+  override fun minus(other: TerminalLineIndex): Long = toAbsolute() - other.toAbsolute()
+  override fun toString(): String = "${toAbsolute()}L"
+}

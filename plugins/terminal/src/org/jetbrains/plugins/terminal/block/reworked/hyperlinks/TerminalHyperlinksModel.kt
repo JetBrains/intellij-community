@@ -120,7 +120,7 @@ class TerminalHyperlinksModel(private val debugName: String, private val outputM
       maxOfOrNull { it.id.value },
     )
 
-  private fun Long.toTerminalOffset(): TerminalOffset = outputModel.absoluteOffset(this)
+  private fun Long.toTerminalOffset(): TerminalOffset = TerminalOffset.of(this)
 
 }
 
