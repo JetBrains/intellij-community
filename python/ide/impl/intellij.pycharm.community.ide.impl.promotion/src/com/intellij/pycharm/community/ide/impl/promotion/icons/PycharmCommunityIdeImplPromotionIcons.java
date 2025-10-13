@@ -21,6 +21,6 @@ public final class PycharmCommunityIdeImplPromotionIcons {
   }
 
   public static final class Images {
-    /** 384x242 */ public static final @NotNull Icon Popup_img = load("promo/images/popup_img.svg", -1065917548, 0);
+    /** 384x242 */ public static final @NotNull Icon Popup_img = load("promo/images/popup_img.svg", 986597622, 0);
   }
 }
