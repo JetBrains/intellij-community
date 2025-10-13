@@ -4431,17 +4431,17 @@ http_file(
 )
 
 http_file(
-  name = "org_jetbrains_runtime-jbr-api-1_6_0_http",
-  url = "https://cache-redirector.jetbrains.com/repo1.maven.org/maven2/org/jetbrains/runtime/jbr-api/1.6.0/jbr-api-1.6.0.jar",
-  sha256 = "0ef4d299ddca95aab7a41799693781175bdca348864fa912eb21eab0d9bb0d2d",
-  downloaded_file_path = "jbr-api-1.6.0.jar"
+  name = "org_jetbrains_runtime-jbr-api-1_9_0_http",
+  url = "https://cache-redirector.jetbrains.com/repo1.maven.org/maven2/org/jetbrains/runtime/jbr-api/1.9.0/jbr-api-1.9.0.jar",
+  sha256 = "7e37284e33b5b304ee6174dcaa92db949b257cc4c8991ca865e7daf5113d8279",
+  downloaded_file_path = "jbr-api-1.9.0.jar"
 )
 
 http_file(
-  name = "org_jetbrains_runtime-jbr-api-1_6_0-sources_http",
-  url = "https://cache-redirector.jetbrains.com/repo1.maven.org/maven2/org/jetbrains/runtime/jbr-api/1.6.0/jbr-api-1.6.0-sources.jar",
-  sha256 = "c9e956af6a2a79560ba570adaeb2d2d53cf81ca8c47e7e7608e96d0bf9e32637",
-  downloaded_file_path = "jbr-api-1.6.0-sources.jar"
+  name = "org_jetbrains_runtime-jbr-api-1_9_0-sources_http",
+  url = "https://cache-redirector.jetbrains.com/repo1.maven.org/maven2/org/jetbrains/runtime/jbr-api/1.9.0/jbr-api-1.9.0-sources.jar",
+  sha256 = "70381d761a95c275eb9c09ab0dbf506d07f1ae61ece96a013219da19cbba80b8",
+  downloaded_file_path = "jbr-api-1.9.0-sources.jar"
 )
 
 http_file(

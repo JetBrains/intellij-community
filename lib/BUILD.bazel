@@ -3039,8 +3039,8 @@ jvm_import(
 
 jvm_import(
   name = "jbr-api",
-  jar = "@org_jetbrains_runtime-jbr-api-1_6_0_http//file",
-  source_jar = "@org_jetbrains_runtime-jbr-api-1_6_0_http//file",
+  jar = "@org_jetbrains_runtime-jbr-api-1_9_0_http//file",
+  source_jar = "@org_jetbrains_runtime-jbr-api-1_9_0_http//file",
   visibility = ["//visibility:public"]
 )
 
