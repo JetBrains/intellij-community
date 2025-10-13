@@ -89,7 +89,7 @@ fun PluginSpec.buildXml(config: PluginPackagingConfig = PluginPackagingConfig())
           ModuleLoadingRule.REQUIRED -> "loading=\"required\" "
           ModuleLoadingRule.EMBEDDED -> "loading=\"embedded\" "
           ModuleLoadingRule.ON_DEMAND -> "loading=\"on-demand\" "
-        }
+        } + module.requiredIfAvailable?.let { "required-if-available=\"$it\" " }.orEmpty()
         val tag = """module name="${module.moduleId}" $loadingAttribute"""
         if (module.embedToPluginXml) {
           appendLine("<$tag><![CDATA[${module.spec.buildXml(config)}]]></module>")

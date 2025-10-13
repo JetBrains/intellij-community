@@ -47,7 +47,12 @@ fun PluginSpecBuilder.content(namespace: String? = null, body: ContentScope.() -
   scope.body()
 }
 
-fun ContentScope.module(moduleId: String, loadingRule: ModuleLoadingRule = ModuleLoadingRule.OPTIONAL, body: PluginSpecBuilder.() -> Unit) {
+fun ContentScope.module(
+  moduleId: String,
+  loadingRule: ModuleLoadingRule = ModuleLoadingRule.OPTIONAL,
+  requiredIfAvailable: String? = null,
+  body: PluginSpecBuilder.() -> Unit,
+) {
   val moduleBuilder = PluginSpecBuilder()
   moduleBuilder.body()
   if (namespace != null) {
@@ -56,7 +61,7 @@ fun ContentScope.module(moduleId: String, loadingRule: ModuleLoadingRule = Modul
     }
     plugin.namespace = namespace
   }
-  plugin.content += ContentModuleSpec(moduleId, loadingRule, moduleBuilder.build())
+  plugin.content += ContentModuleSpec(moduleId, loadingRule, requiredIfAvailable, moduleBuilder.build())
 }
 
 fun PluginSpecBuilder.extensions(@Language("XML") xml: String, ns: String = "com.intellij") {

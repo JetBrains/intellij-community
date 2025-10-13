@@ -102,6 +102,7 @@ class PluginSpecBuilder(
 class ContentModuleSpec internal constructor(
   val moduleId: String,
   val loadingRule: ModuleLoadingRule,
+  val requiredIfAvailable: String?,
   val spec: PluginSpec,
 )
 
