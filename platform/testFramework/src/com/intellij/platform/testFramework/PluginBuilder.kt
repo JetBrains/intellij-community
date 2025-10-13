@@ -128,7 +128,7 @@ class PluginBuilder() {
     moduleFile: String = "$moduleId.xml",
   ): PluginBuilder {
     subDescriptors.add(SubDescriptor(moduleFile, moduleDescriptor))
-    content.add(PluginContentDescriptor.ModuleItem(moduleId = PluginModuleId(moduleId, PluginModuleId.JETBRAINS_NAMESPACE), configFile = null, descriptorContent = null, loadingRule = loadingRule))
+    content.add(PluginContentDescriptor.ModuleItem(moduleId = PluginModuleId(moduleId, PluginModuleId.JETBRAINS_NAMESPACE), configFile = null, descriptorContent = null, loadingRule = loadingRule, requiredIfAvailable = null))
     return this
   }
 
