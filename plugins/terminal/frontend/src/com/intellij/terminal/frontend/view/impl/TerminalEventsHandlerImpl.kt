@@ -284,18 +284,21 @@ internal open class TerminalEventsHandlerImpl(
       // mousePressed() handles mouse wheel using SCROLLDOWN and SCROLLUP buttons
       mousePressed(x, y, event)
     }
-    else if (terminalState.isAlternateScreenBuffer && settings.simulateMouseScrollWithArrowKeysInAlternativeScreen()) {
-      //Send Arrow keys instead
-      val arrowKeys = if (event.wheelRotation < 0) {
-        encodingManager.getCode(KeyEvent.VK_UP, 0)
+    else if (terminalState.isAlternateScreenBuffer &&
+             settings.simulateMouseScrollWithArrowKeysInAlternativeScreen() &&
+             !event.isShiftDown /* skip horizontal scrolls */) {
+      // Send Arrow keys instead
+      val arrowKeys: ByteArray? = when {
+        event.wheelRotation < 0 -> encodingManager.getCode(KeyEvent.VK_UP, 0)
+        event.wheelRotation > 0 -> encodingManager.getCode(KeyEvent.VK_DOWN, 0)
+        else -> null
       }
-      else {
-        encodingManager.getCode(KeyEvent.VK_DOWN, 0)
+      if (arrowKeys != null) {
+        repeat(abs(event.unitsToScroll)) {
+          terminalInput.sendBytes(arrowKeys)
+        }
+        event.consume()
       }
-      for (i in 0 until abs(event.unitsToScroll)) {
-        terminalInput.sendBytes(arrowKeys!!)
-      }
-      event.consume()
     }
   }
 
