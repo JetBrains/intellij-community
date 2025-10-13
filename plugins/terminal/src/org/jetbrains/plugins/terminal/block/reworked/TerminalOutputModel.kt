@@ -83,6 +83,7 @@ sealed interface TerminalOutputModelSnapshot {
 sealed interface TerminalOffset : Comparable<TerminalOffset> {
   companion object {
     @JvmStatic fun of(absoluteOffset: Long): TerminalOffset = TerminalOffsetImpl(absoluteOffset)
+    @JvmField val ZERO: TerminalOffset = of(0L)
   }
   fun toAbsolute(): Long
   operator fun plus(charCount: Long): TerminalOffset
@@ -94,6 +95,7 @@ sealed interface TerminalOffset : Comparable<TerminalOffset> {
 sealed interface TerminalLineIndex : Comparable<TerminalLineIndex> {
   companion object {
     @JvmStatic fun of(absoluteOffset: Long): TerminalLineIndex = TerminalLineIndexImpl(absoluteOffset)
+    @JvmField val ZERO: TerminalLineIndex = of(0L)
   }
   fun toAbsolute(): Long
   operator fun plus(lineCount: Long): TerminalLineIndex
