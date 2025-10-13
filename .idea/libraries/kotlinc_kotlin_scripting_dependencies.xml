@@ -1,11 +1,18 @@
 <component name="libraryTable">
-  <library name="kotlinc.kotlin-scripting-dependencies">
+  <library name="kotlinc.kotlin-scripting-dependencies" type="repository">
+    <properties include-transitive-deps="false" maven-id="org.jetbrains.kotlin:kotlin-scripting-dependencies:2.3.20-dev-334">
+      <verification>
+        <artifact url="file://$MAVEN_REPOSITORY$/org/jetbrains/kotlin/kotlin-scripting-dependencies/2.3.20-dev-334/kotlin-scripting-dependencies-2.3.20-dev-334.jar">
+          <sha256sum>a1e1287266096f6def186e34ad4142e32be97f086d3e4d499a61f411d3de6196</sha256sum>
+        </artifact>
+      </verification>
+    </properties>
     <CLASSES>
-      <root url="jar://$PROJECT_DIR$/lib/kotlin-snapshot/org/jetbrains/kotlin/kotlin-scripting-dependencies/2.3.255-dev-255/kotlin-scripting-dependencies-2.3.255-dev-255.jar!/" />
+      <root url="jar://$MAVEN_REPOSITORY$/org/jetbrains/kotlin/kotlin-scripting-dependencies/2.3.20-dev-334/kotlin-scripting-dependencies-2.3.20-dev-334.jar!/" />
     </CLASSES>
     <JAVADOC />
     <SOURCES>
-      <root url="jar://$PROJECT_DIR$/lib/kotlin-snapshot/org/jetbrains/kotlin/kotlin-scripting-dependencies/2.3.255-dev-255/kotlin-scripting-dependencies-2.3.255-dev-255-sources.jar!/" />
+      <root url="jar://$MAVEN_REPOSITORY$/org/jetbrains/kotlin/kotlin-scripting-dependencies/2.3.20-dev-334/kotlin-scripting-dependencies-2.3.20-dev-334-sources.jar!/" />
     </SOURCES>
   </library>
 </component>
