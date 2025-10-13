@@ -878,12 +878,15 @@ open class MyPluginModel(project: Project?) : InstalledPluginsTableModel(project
     }
   }
 
+  @OptIn(DelicateCoroutinesApi::class)
   private suspend fun doRestart(component: Component) {
     if (PluginManagerConfigurable.showRestartDialog() == Messages.YES) {
       needRestart = true
       createShutdownCallback = false
       closeDialogAndApplyIfNeeded(component)
-      ApplicationManagerEx.getApplicationEx().restart(true)
+      GlobalScope.launch(CoroutineName("Plugin Manager restart")) {
+        ApplicationManagerEx.getApplicationEx().restart(true)
+      }
     }
   }
 
