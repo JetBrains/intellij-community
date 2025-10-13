@@ -1,4 +1,4 @@
-cmake_minimum_required(VERSION 3.1)
+cmake_minimum_required(VERSION 3.24)
 project(fsnotifier C)
 
 if(NOT APPLE)
@@ -9,7 +9,10 @@ set(CMAKE_C_STANDARD 11)
 set(CMAKE_OSX_ARCHITECTURES "x86_64;arm64")
 set(CMAKE_OSX_DEPLOYMENT_TARGET 10.9)
 
-add_compile_options("-fmodules" "-flto=full" "-Wall" "-Wextra" "-Wpedantic" "-Wno-newline-eof")
 add_executable(fsnotifier fsnotifier.c)
+target_compile_options(fsnotifier PRIVATE "-O2" "-Wall" "-Wextra" "-Wpedantic")
+target_link_options(fsnotifier PRIVATE "-flto=full")
+target_link_libraries(fsnotifier PRIVATE "$<LINK_LIBRARY:FRAMEWORK,CoreFoundation>" "$<LINK_LIBRARY:FRAMEWORK,CoreServices>")
 
-install(TARGETS fsnotifier DESTINATION ${CMAKE_CURRENT_LIST_DIR}/../../../bin/mac)
+cmake_path(SET install_dir NORMALIZE ${CMAKE_CURRENT_LIST_DIR}/../../../bin/mac)
+install(TARGETS fsnotifier DESTINATION ${install_dir})
