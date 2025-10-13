@@ -48,9 +48,6 @@ sealed class AbstractTerminalOutputModelImpl(
   override val firstLine: TerminalLineIndex
     get() = TerminalLineIndexImpl(trimmedLinesCount)
 
-  override val lastLine: TerminalLineIndex
-    get() = TerminalLineIndexImpl(trimmedLinesCount + lineCount - 1)
-
   protected fun relativeOffset(offset: Int): TerminalOffset = TerminalOffsetImpl(trimmedCharsCount + offset)
 
   override fun absoluteOffset(offset: Long): TerminalOffset = TerminalOffsetImpl(offset)

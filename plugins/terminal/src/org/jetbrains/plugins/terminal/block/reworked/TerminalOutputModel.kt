@@ -33,8 +33,6 @@ sealed interface TerminalOutputModel {
 
   val firstLine: TerminalLineIndex
 
-  val lastLine: TerminalLineIndex
-
   fun addListener(parentDisposable: Disposable, listener: TerminalOutputModelListener)
 
   fun snapshot(): TerminalOutputModelSnapshot
@@ -88,3 +86,7 @@ val TerminalOutputModel.textLength: Int
 @get:ApiStatus.Experimental
 val TerminalOutputModel.endOffset: TerminalOffset
   get() = startOffset + textLength.toLong()
+
+@get:ApiStatus.Experimental
+val TerminalOutputModel.lastLine: TerminalLineIndex
+  get() = firstLine + (lineCount - 1).toLong()
