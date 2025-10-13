@@ -23,60 +23,14 @@ import org.jetbrains.plugins.terminal.session.StyleRange
 import org.jetbrains.plugins.terminal.session.TerminalOutputModelState
 import kotlin.math.max
 
-@ApiStatus.Internal
-sealed class AbstractTerminalOutputModelImpl(
-  val document: Document,
-) {
-
-  abstract val trimmedCharsCount: Long
-
-  abstract val trimmedLinesCount: Long
-
-  val immutableText: CharSequence
-    get() = document.immutableCharSequence
-
-  val lineCount: Int
-    get() = document.lineCount
-
-  val modificationStamp: Long
-    get() = document.modificationStamp
-
-  val startOffset: TerminalOffset
-    get() = relativeOffset(0)
-
-  val firstLine: TerminalLineIndex
-    get() = TerminalLineIndex.of(trimmedLinesCount)
-
-  protected fun relativeOffset(offset: Int): TerminalOffset = TerminalOffset.of(trimmedCharsCount + offset)
-
-  fun getLineByOffset(offset: TerminalOffset): TerminalLineIndex = TerminalLineIndex.of(trimmedLinesCount + document.getLineNumber(offset.toRelative()))
-
-  fun getStartOfLine(line: TerminalLineIndex): TerminalOffset = relativeOffset(document.getLineStartOffset(line.toRelative()))
-
-  fun getEndOfLine(line: TerminalLineIndex, includeEOL: Boolean): TerminalOffset {
-    var result = document.getLineEndOffset(line.toRelative())
-    if (includeEOL && result < document.textLength) {
-      ++result
-    }
-    return relativeOffset(result)
-  }
-
-  fun getText(start: TerminalOffset, end: TerminalOffset): String =
-    document.getText(TextRange(start.toRelative(), end.toRelative()))
-
-  protected fun TerminalOffset.toRelative(): Int = (this - startOffset).toInt()
-
-  private fun TerminalLineIndex.toRelative(): Int = (this - firstLine).toInt()
-}
-
 /**
  * [maxOutputLength] limits the length of the document. Zero means unlimited length.
  */
 @ApiStatus.Internal
 class MutableTerminalOutputModelImpl(
-  document: Document,
+  override val document: Document,
   private val maxOutputLength: Int,
-) : AbstractTerminalOutputModelImpl(document), MutableTerminalOutputModel {
+) : MutableTerminalOutputModel {
 
   private val mutableCursorOffsetState: MutableStateFlow<TerminalOffset> = MutableStateFlow(TerminalOffset.of(0))
   override val cursorOffsetState: StateFlow<TerminalOffset> = mutableCursorOffsetState.asStateFlow()
@@ -89,10 +43,10 @@ class MutableTerminalOutputModelImpl(
   private val dispatcher = EventDispatcher.create(TerminalOutputModelListener::class.java)
 
   @VisibleForTesting
-  override var trimmedLinesCount: Long = 0
+  var trimmedLinesCount: Long = 0
 
   @VisibleForTesting
-  override var trimmedCharsCount: Long = 0
+  var trimmedCharsCount: Long = 0
 
   @VisibleForTesting
   var firstLineTrimmedCharsCount: Int = 0
@@ -100,6 +54,42 @@ class MutableTerminalOutputModelImpl(
   private var contentUpdateInProgress: Boolean = false
 
   private var isTypeAhead: Boolean = false
+
+  override val immutableText: CharSequence
+    get() = document.immutableCharSequence
+
+  override val lineCount: Int
+    get() = document.lineCount
+
+  override val modificationStamp: Long
+    get() = document.modificationStamp
+
+  override val startOffset: TerminalOffset
+    get() = relativeOffset(0)
+
+  override val firstLine: TerminalLineIndex
+    get() = TerminalLineIndex.of(trimmedLinesCount)
+
+  private fun relativeOffset(offset: Int): TerminalOffset = TerminalOffset.of(trimmedCharsCount + offset)
+
+  override fun getLineByOffset(offset: TerminalOffset): TerminalLineIndex = TerminalLineIndex.of(trimmedLinesCount + document.getLineNumber(offset.toRelative()))
+
+  override fun getStartOfLine(line: TerminalLineIndex): TerminalOffset = relativeOffset(document.getLineStartOffset(line.toRelative()))
+
+  override fun getEndOfLine(line: TerminalLineIndex, includeEOL: Boolean): TerminalOffset {
+    var result = document.getLineEndOffset(line.toRelative())
+    if (includeEOL && result < document.textLength) {
+      ++result
+    }
+    return relativeOffset(result)
+  }
+
+  override fun getText(start: TerminalOffset, end: TerminalOffset): String =
+    document.getText(TextRange(start.toRelative(), end.toRelative()))
+
+  private fun TerminalOffset.toRelative(): Int = (this - startOffset).toInt()
+
+  private fun TerminalLineIndex.toRelative(): Int = (this - firstLine).toInt()
 
   override fun takeSnapshot(): TerminalOutputModelSnapshot =
     TerminalOutputModelSnapshotImpl((document as DocumentImpl).freeze(), trimmedCharsCount, trimmedLinesCount, cursorOffset)
@@ -519,27 +509,47 @@ class MutableTerminalOutputModelImpl(
 
 @ApiStatus.Internal
 class TerminalOutputModelSnapshotImpl(
-  document: FrozenDocument,
-  override val trimmedCharsCount: Long,
-  override val trimmedLinesCount: Long,
+  private val document: FrozenDocument,
+  private val trimmedCharsCount: Long,
+  private val trimmedLinesCount: Long,
   override val cursorOffset: TerminalOffset,
-) : AbstractTerminalOutputModelImpl(document), TerminalOutputModelSnapshot {
+) : TerminalOutputModelSnapshot {
 
-  override fun takeSnapshot(): TerminalOutputModelSnapshot = this
+  override val immutableText: CharSequence
+    get() = document.immutableCharSequence
 
-  override val cursorOffsetState: StateFlow<TerminalOffset> = MutableStateFlow(cursorOffset).asStateFlow()
+  override val lineCount: Int
+    get() = document.lineCount
 
-  override fun getHighlightings(): TerminalOutputHighlightingsSnapshot {
-    throw UnsupportedOperationException("Not implemented for performance reasons")
+  override val modificationStamp: Long
+    get() = document.modificationStamp
+
+  override val startOffset: TerminalOffset
+    get() = relativeOffset(0)
+
+  override val firstLine: TerminalLineIndex
+    get() = TerminalLineIndex.of(trimmedLinesCount)
+
+  private fun relativeOffset(offset: Int): TerminalOffset = TerminalOffset.of(trimmedCharsCount + offset)
+
+  override fun getLineByOffset(offset: TerminalOffset): TerminalLineIndex = TerminalLineIndex.of(trimmedLinesCount + document.getLineNumber(offset.toRelative()))
+
+  override fun getStartOfLine(line: TerminalLineIndex): TerminalOffset = relativeOffset(document.getLineStartOffset(line.toRelative()))
+
+  override fun getEndOfLine(line: TerminalLineIndex, includeEOL: Boolean): TerminalOffset {
+    var result = document.getLineEndOffset(line.toRelative())
+    if (includeEOL && result < document.textLength) {
+      ++result
+    }
+    return relativeOffset(result)
   }
 
-  override fun getHighlightingAt(documentOffset: TerminalOffset): HighlightingInfo? {
-    throw UnsupportedOperationException("Not implemented for performance reasons")
-  }
+  override fun getText(start: TerminalOffset, end: TerminalOffset): String =
+    document.getText(TextRange(start.toRelative(), end.toRelative()))
 
-  override fun addListener(parentDisposable: Disposable, listener: TerminalOutputModelListener) {
-    // Do nothing, because the model is immutable, and therefore no events can be fired.
-  }
+  private fun TerminalOffset.toRelative(): Int = (this - startOffset).toInt()
+
+  private fun TerminalLineIndex.toRelative(): Int = (this - firstLine).toInt()
 }
 
 private val LOG = logger<MutableTerminalOutputModelImpl>()

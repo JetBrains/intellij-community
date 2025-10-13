@@ -57,7 +57,27 @@ sealed interface TerminalOutputModel {
 }
 
 @ApiStatus.Experimental
-sealed interface TerminalOutputModelSnapshot : TerminalOutputModel
+sealed interface TerminalOutputModelSnapshot {
+  val immutableText: CharSequence
+
+  val lineCount: Int
+
+  val modificationStamp: Long
+
+  val cursorOffset: TerminalOffset
+
+  val startOffset: TerminalOffset
+
+  val firstLine: TerminalLineIndex
+
+  fun getLineByOffset(offset: TerminalOffset): TerminalLineIndex
+
+  fun getStartOfLine(line: TerminalLineIndex): TerminalOffset
+
+  fun getEndOfLine(line: TerminalLineIndex, includeEOL: Boolean = false): TerminalOffset
+
+  fun getText(start: TerminalOffset, end: TerminalOffset): String
+}
 
 @ApiStatus.Experimental
 sealed interface TerminalOffset : Comparable<TerminalOffset> {
@@ -91,6 +111,18 @@ val TerminalOutputModel.endOffset: TerminalOffset
 
 @get:ApiStatus.Experimental
 val TerminalOutputModel.lastLine: TerminalLineIndex
+  get() = firstLine + (lineCount - 1).toLong()
+
+@get:ApiStatus.Experimental
+val TerminalOutputModelSnapshot.textLength: Int
+  get() = immutableText.length
+
+@get:ApiStatus.Experimental
+val TerminalOutputModelSnapshot.endOffset: TerminalOffset
+  get() = startOffset + textLength.toLong()
+
+@get:ApiStatus.Experimental
+val TerminalOutputModelSnapshot.lastLine: TerminalLineIndex
   get() = firstLine + (lineCount - 1).toLong()
 
 

@@ -240,13 +240,12 @@ private data class HighlightTask(
   val endAbsoluteLineInclusive: Long,
 ) {
   fun hasWorkToDo(): Boolean = endAbsoluteLineInclusive >= startAbsoluteLine
+  override fun toString(): String =
+    "HighlightTask(" +
+    "startLine=${TerminalLineIndex.of(startAbsoluteLine)}," +
+    "startOffset=${TerminalOffset.of(startAbsoluteOffset)}, " +
+    "endLineInclusive=${TerminalLineIndex.of(endAbsoluteLineInclusive)})"
 }
-
-private fun HighlightTask.toString(outputModel: TerminalOutputModelSnapshot): String =
-  "HighlightTask(" +
-  "startLine=${TerminalLineIndex.of(startAbsoluteLine)}," +
-  "startOffset=${TerminalOffset.of(startAbsoluteOffset)}, " +
-  "endLineInclusive=${TerminalLineIndex.of(endAbsoluteLineInclusive)})"
 
 private fun describe(outputModel: TerminalOutputModelSnapshot) = buildString {
   append("OutputModel(trimmedChars=")
@@ -302,7 +301,7 @@ private class HighlightTaskRunner(
   suspend fun run() {
     try {
       LOG.debug {
-        "Started the task ${task.toString(outputModel)} " +
+        "Started the task ${task} " +
         "on the output model ${describe(outputModel)}, "
         "will process lines $topStartLine-$topStopLineInclusive at the top " +
         "and $bottomStartLine-$bottomStopLineInclusive at the bottom"
@@ -490,7 +489,7 @@ private class HyperlinkProcessor(
 
 }
 
-private fun TerminalOutputModel.relativeOffset(offset: Int): TerminalOffset = startOffset + offset.toLong()
+private fun TerminalOutputModelSnapshot.relativeOffset(offset: Int): TerminalOffset = startOffset + offset.toLong()
 
 private fun TerminalOutputModelSnapshot.asHypertext(): HypertextInput = HypertextFromFrozenTerminalOutputModelAdapter(this)
 
@@ -518,5 +517,5 @@ private const val BATCH_SIZE = 200
 private val LOG = logger<BackendTerminalHyperlinkHighlighter>()
 
 private fun TerminalOutputModelSnapshot.relativeLine(lineIndex: Int): TerminalLineIndex = firstLine + lineIndex.toLong()
-private fun TerminalLineIndex.toRelative(model: TerminalOutputModel): Int = (this - model.firstLine).toInt()
-private fun TerminalOffset.toRelative(model: TerminalOutputModel): Int = (this - model.startOffset).toInt()
+private fun TerminalLineIndex.toRelative(model: TerminalOutputModelSnapshot): Int = (this - model.firstLine).toInt()
+private fun TerminalOffset.toRelative(model: TerminalOutputModelSnapshot): Int = (this - model.startOffset).toInt()
