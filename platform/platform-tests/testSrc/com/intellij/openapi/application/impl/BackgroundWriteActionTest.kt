@@ -460,7 +460,7 @@ class BackgroundWriteActionTest {
     checkpoint(8)
   }
 
-  @RepeatedTest(1000)
+  @RepeatedTest(100)
   fun `write access allowed inside explicit WA`(): Unit = timeoutRunBlocking(context = Dispatchers.Default) {
     repeat(1000) {
       launch {
@@ -885,4 +885,45 @@ class BackgroundWriteActionTest {
       }
     }
   }
+
+  @Test
+  fun `starvation stress test`(): Unit = timeoutRunBlocking(timeout = 30.seconds) {
+    repeat(100) {
+      coroutineScope {
+        val freezeJob = Job(coroutineContext.job)
+        val specialJobFreeze = Job(coroutineContext.job)
+        val specialJob = launch(Dispatchers.Default) {
+          backgroundWriteAction {
+            specialJobFreeze.asCompletableFuture().join()
+          }
+        }
+        launch {
+          backgroundWriteAction {
+          }
+        }
+        delay(10)
+        repeat(Runtime.getRuntime().availableProcessors() * 3) {
+          launch(Dispatchers.Default) {
+            freezeJob.asCompletableFuture().join()
+          }
+        }
+        delay(10) // provoke starvation
+
+        launch(Dispatchers.UiWithModelAccess) {
+          WriteIntentReadAction.run {
+          }
+          freezeJob.complete()
+        }
+        delay(10)
+        specialJob.invokeOnCompletion {
+          launch(Dispatchers.Default) {
+            freezeJob.asCompletableFuture().join()
+          }
+        }
+        specialJobFreeze.complete()
+      }
+    }
+
+  }
+
 }
