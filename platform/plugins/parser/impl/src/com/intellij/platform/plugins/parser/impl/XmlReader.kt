@@ -413,13 +413,13 @@ private fun readExtensionPoints(
     if (elementName != PluginXmlConst.EXTENSION_POINT_ELEM) {
       if (elementName == PluginXmlConst.INCLUDE_ELEM && reader.namespaceURI == PluginXmlConst.XINCLUDE_NAMESPACE_URI) {
         val partial = PluginDescriptorFromXmlStreamConsumer.withIncludeBase(
-          consumer.readContext,
-          consumer.xIncludeLoader,
-          consumer.includeBase,
+          readContext = consumer.readContext,
+          xIncludeLoader = consumer.xIncludeLoader,
+          includeBase = consumer.includeBase,
         )
         readInclude(
-          partial,
-          reader,
+          consumer = partial,
+          reader = reader,
           allowedPointer = PluginXmlConst.EXTENSION_POINTS_XINCLUDE_VALUE
         )
         LOG.warn("`include` is supported only on a root level (${reader.location})")

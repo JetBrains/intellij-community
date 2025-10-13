@@ -72,10 +72,9 @@ class ClassPathXmlPathResolver(
       }
     }
 
-    return PluginDescriptorFromXmlStreamConsumer(readContext, toXIncludeLoader(dataLoader)).let {
-      it.consume(resource, dataLoader.toString())
-      it.getBuilder()
-    }
+    val consumer = PluginDescriptorFromXmlStreamConsumer(readContext, toXIncludeLoader(dataLoader))
+    consumer.consume(resource, dataLoader.toString())
+    return consumer.getBuilder()
   }
 
   override fun resolvePath(readContext: PluginDescriptorReaderContext, dataLoader: DataLoader, relativePath: String): PluginDescriptorBuilder? {

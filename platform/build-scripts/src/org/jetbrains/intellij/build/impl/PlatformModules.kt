@@ -400,7 +400,7 @@ fun collectExportedLibrariesFromLibraryModules(
 
 private fun getProductModuleJarName(moduleName: String, context: BuildContext, frontendModuleFilter: FrontendModuleFilter): String {
   return when {
-    isModuleCloseSource(moduleName, context = context) -> if (frontendModuleFilter.isBackendModule(moduleName)) PRODUCT_BACKEND_JAR else PRODUCT_JAR
+    isModuleCloseSource(moduleName = moduleName, context = context) -> if (frontendModuleFilter.isBackendModule(moduleName)) PRODUCT_BACKEND_JAR else PRODUCT_JAR
     else -> PlatformJarNames.getPlatformModuleJarName(moduleName, frontendModuleFilter)
   }
 }
@@ -456,8 +456,8 @@ private fun isModuleCloseSource(moduleName: String, context: BuildContext): Bool
     return false
   }
 
-  return sourceRoots.any { moduleSourceRoot ->
-    !moduleSourceRoot.path.startsWith(context.paths.communityHomeDir)
+  return sourceRoots.any {
+    !it.path.startsWith(context.paths.communityHomeDir)
   }
 }
 
