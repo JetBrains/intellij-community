@@ -8,6 +8,7 @@ import com.intellij.openapi.extensions.PluginId
 import com.intellij.openapi.util.BuildNumber
 import com.intellij.util.PlatformUtils
 import org.jetbrains.annotations.ApiStatus
+import org.jetbrains.annotations.VisibleForTesting
 
 @ApiStatus.Internal
 class ProductPluginInitContext(
@@ -66,29 +67,32 @@ class ProductPluginInitContext(
 
   override val environmentConfiguredModules: Map<PluginModuleId, EnvironmentConfiguredModuleData> by lazy {
     buildMap {
-      configureAppModeModules()
+      configureAppModeModules(currentProductModeId)
     }
   }
 
-  private fun MutableMap<PluginModuleId, EnvironmentConfiguredModuleData>.configureAppModeModules() {
-    val frontendSplit = PluginModuleId("intellij.platform.frontend.split", PluginModuleId.JETBRAINS_NAMESPACE)
-    val frontend = PluginModuleId("intellij.platform.frontend", PluginModuleId.JETBRAINS_NAMESPACE)
-    val backend = PluginModuleId("intellij.platform.backend", PluginModuleId.JETBRAINS_NAMESPACE)
+  companion object {
+    @VisibleForTesting
+    internal fun MutableMap<PluginModuleId, EnvironmentConfiguredModuleData>.configureAppModeModules(productModeId: String) {
+      val frontendSplit = PluginModuleId("intellij.platform.frontend.split", PluginModuleId.JETBRAINS_NAMESPACE)
+      val frontend = PluginModuleId("intellij.platform.frontend", PluginModuleId.JETBRAINS_NAMESPACE)
+      val backend = PluginModuleId("intellij.platform.backend", PluginModuleId.JETBRAINS_NAMESPACE)
 
-    val unavailableAppModeModuleId = when (currentProductModeId) {
-      /** intellij.platform.backend.split is currently available in 'monolith' mode because it's used as a backend in CodeWithMe */
-      "monolith" -> frontendSplit
-      "backend" -> frontend
-      "frontend" -> backend
-      else -> null
-    }
+      val unavailableAppModeModuleId = when (productModeId) {
+        /** intellij.platform.backend.split is currently available in 'monolith' mode because it's used as a backend in CodeWithMe */
+        "monolith" -> frontendSplit
+        "backend" -> frontend
+        "frontend" -> backend
+        else -> null
+      }
 
-    for (moduleId in listOf(frontend, backend, frontendSplit)) {
-      val unavailabilityReason = if (moduleId == unavailableAppModeModuleId) {
-        UnsuitableAppModeModuleUnavailabilityReason(moduleId, currentProductModeId)
-      } else null
-      val replaced = put(moduleId, EnvironmentConfiguredModuleData(unavailabilityReason))
-      check(replaced == null) { "oh no: $moduleId" }
+      for (moduleId in listOf(frontend, backend, frontendSplit)) {
+        val unavailabilityReason = if (moduleId == unavailableAppModeModuleId) {
+          UnsuitableAppModeModuleUnavailabilityReason(moduleId, productModeId)
+        } else null
+        val replaced = put(moduleId, EnvironmentConfiguredModuleData(unavailabilityReason))
+        check(replaced == null) { "$moduleId is already registered as environment-configured module" }
+      }
     }
   }
 }
