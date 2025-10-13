@@ -901,6 +901,12 @@
       id="EditorDeleteLine.checkHandler"
     />
 
+    <registryKey key="remdev.completion.on.frontend"
+                 defaultValue="false"
+                 description="Enables frontend completion support"
+                 restartRequired="true"
+    />
+
     <typedHandler implementation="com.intellij.codeInsight.inline.completion.listeners.typing.InlineCompletionTypedHandlerDelegate"/>
 
     <registryKey key="editor.action.caretMovement.UpDownIgnoreSelectionBoundaries" defaultValue="false"
