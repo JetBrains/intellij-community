@@ -55,7 +55,6 @@ internal class ToolWindowInnerDragHelper(parent: Disposable, val pane: JComponen
       val decorator = InternalDecoratorImpl.findTopLevelDecorator(child)
       val editorSupport = getEditorSupport(decorator)
       if (decorator != null &&
-          decorator.toolWindow.canSplitTabs() &&
           child is ContentTabLabel &&
           (child.parent is ToolWindowContentUi.TabPanel ||
            Registry.`is`("debugger.new.tool.window.layout.dnd", false) && child.parent is SingleContentLayout.TabAdapter) &&
@@ -72,14 +71,18 @@ internal class ToolWindowInnerDragHelper(parent: Disposable, val pane: JComponen
 
   override fun canFinishDragging(component: JComponent, point: RelativePoint): Boolean {
     val curLocation = curDropLocation
-    return if (curLocation != null) {
-      val component = when (curLocation) {
-        is DropLocation.ToolWindow -> curLocation.decorator
-        is DropLocation.Editor -> curLocation.window.component
+    return when (curLocation) {
+      is DropLocation.ToolWindow -> {
+        val component = curLocation.decorator
+        val canDrop = currentDropIndex != -1 || curLocation.decorator.toolWindow.canSplitTabs()
+        component.contains(point.getPoint(component)) && canDrop
       }
-      component.contains(point.getPoint(component))
+      is DropLocation.Editor -> {
+        val component = curLocation.window.component
+        component.contains(point.getPoint(component))
+      }
+      else -> false
     }
-    else false
   }
 
   override fun processMousePressed(event: MouseEvent) {
@@ -371,8 +374,16 @@ internal class ToolWindowInnerDragHelper(parent: Disposable, val pane: JComponen
 
     val content = myDraggingTab?.content
     curDropLocation = when {
-      decorator != null -> DropLocation.ToolWindow(decorator)
+      decorator != null && decorator == sourceDecorator -> {
+        // Drop into the same tool window decorator - always allowed.
+        DropLocation.ToolWindow(decorator)
+      }
+      decorator != null && decorator.toolWindow.canSplitTabs() -> {
+        // Drop into another decorator of the tool window - allowed only if the tool window allows tab splits.
+        DropLocation.ToolWindow(decorator)
+      }
       editorWindow != null && content != null && getEditorSupport(sourceDecorator)?.canOpenInEditor(editorWindow.manager.project, content) == true -> {
+        // Drop into the editor - allowed only if the tool window provides necessary support.
         DropLocation.Editor(editorWindow)
       }
       else -> null
@@ -395,18 +406,26 @@ internal class ToolWindowInnerDragHelper(parent: Disposable, val pane: JComponen
   }
 
   private fun highlightToolWindowDropArea(decorator: InternalDecoratorImpl, point: RelativePoint) {
-    currentDropSide = TabsUtil.getDropSideFor(point.getPoint(decorator), decorator)
-    val dropArea = Rectangle(decorator.size)
-    TabsUtil.updateBoundsWithDropSide(dropArea, currentDropSide)
-    dropArea.bounds = SwingUtilities.convertRectangle(decorator, dropArea, pane.rootPane.glassPane)
     currentDropIndex = getTabIndex(point)
     if (currentDropIndex != -1) {
       decorator.setDropInfoIndex(currentDropIndex, dragImageView!!.size.width)
+      currentDropSide = -1
       highlighter.bounds = Rectangle()
+    }
+    else if (decorator.toolWindow.canSplitTabs()) {
+      currentDropSide = TabsUtil.getDropSideFor(point.getPoint(decorator), decorator)
+      val dropArea = Rectangle(decorator.size)
+      TabsUtil.updateBoundsWithDropSide(dropArea, currentDropSide)
+      dropArea.bounds = SwingUtilities.convertRectangle(decorator, dropArea, pane.rootPane.glassPane)
+
+      decorator.setDropInfoIndex(-1, 0)
+      highlighter.bounds = dropArea
     }
     else {
       decorator.setDropInfoIndex(-1, 0)
-      highlighter.bounds = dropArea
+      currentDropIndex = -1
+      currentDropSide = -1
+      highlighter.bounds = Rectangle()
     }
   }
 
