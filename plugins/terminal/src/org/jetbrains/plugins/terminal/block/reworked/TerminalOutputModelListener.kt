@@ -16,4 +16,17 @@ interface TerminalOutputModelListener : EventListener {
    * @param startOffset offset from which document was updated.
    */
   fun afterContentChanged(model: TerminalOutputModel, startOffset: TerminalOffset, isTypeAhead: Boolean) {}
+
+  fun cursorOffsetChanged(event: TerminalCursorOffsetChanged) {}
+}
+
+@ApiStatus.Experimental
+sealed interface TerminalOutputModelEvent {
+  val model: TerminalOutputModel
+}
+
+@ApiStatus.Experimental
+sealed interface TerminalCursorOffsetChanged : TerminalOutputModelEvent {
+  val oldOffset: TerminalOffset
+  val newOffset: TerminalOffset
 }

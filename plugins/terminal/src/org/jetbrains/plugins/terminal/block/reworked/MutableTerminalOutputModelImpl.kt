@@ -143,11 +143,13 @@ class MutableTerminalOutputModelImpl(
 
     val newCursorOffset = lineStartOffset + trimmedColumnIndex
     LOG.debug { "Updated the cursor position to $newCursorOffset" }
-    mutableCursorOffsetState.value = relativeOffset(newCursorOffset)
+    updateCursorPosition(relativeOffset(newCursorOffset))
   }
 
   override fun updateCursorPosition(offset: TerminalOffset) {
+    val oldValue = mutableCursorOffsetState.value
     mutableCursorOffsetState.value = offset
+    dispatcher.multicaster.cursorOffsetChanged(TerminalCursorOffsetChangedImpl(this, oldValue, offset))
   }
 
   /** Returns offset from which document was updated */
@@ -203,7 +205,7 @@ class MutableTerminalOutputModelImpl(
     val newLength = document.textLength
     val docEndOffset = relativeOffset(newLength)
     if (mutableCursorOffsetState.value > docEndOffset) {
-      mutableCursorOffsetState.value = docEndOffset
+      updateCursorPosition(docEndOffset)
     }
   }
 
@@ -303,7 +305,7 @@ class MutableTerminalOutputModelImpl(
       firstLineTrimmedCharsCount = state.firstLineTrimmedCharsCount
       document.setText(state.text)
       highlightingsModel.restoreFromState(state.highlightings)
-      mutableCursorOffsetState.value = relativeOffset(state.cursorOffset)
+      updateCursorPosition(relativeOffset(state.cursorOffset))
 
       0  // the document is changed from right from the start
     }
@@ -575,5 +577,11 @@ private fun getTextImpl(
   relativeStart: Int,
   relativeEnd: Int,
 ): String = document.getText(TextRange(relativeStart, relativeEnd))
+
+private data class TerminalCursorOffsetChangedImpl(
+  override val model: MutableTerminalOutputModelImpl,
+  override val oldOffset: TerminalOffset,
+  override val newOffset: TerminalOffset,
+) : TerminalCursorOffsetChanged
 
 private val LOG = logger<MutableTerminalOutputModelImpl>()
