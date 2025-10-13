@@ -66,6 +66,16 @@ jvm_library(
   module_name = "intellij.restructuredtext",
   visibility = ["//visibility:public"],
   srcs = glob([], allow_empty = True),
-  resources = [":restructuredtext_test_resources"]
+  resources = [":restructuredtext_test_resources"],
+  runtime_deps = [
+    ":restructuredtext",
+    "//platform/lang-impl",
+    "//platform/execution-impl",
+    "//platform/testFramework",
+    "//platform/testFramework:testFramework_test_lib",
+    "//platform/core-ui",
+    "//spellchecker",
+    "//spellchecker:spellchecker_test_lib",
+  ]
 )
 ### auto-generated section `build intellij.restructuredtext` end

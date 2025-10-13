@@ -11,7 +11,20 @@ jvm_library(
   name = "performance-tests",
   visibility = ["//visibility:public"],
   srcs = glob([], allow_empty = True),
-  resources = [":performance-tests_resources"]
+  resources = [":performance-tests_resources"],
+  runtime_deps = [
+    "@lib//:kotlin-stdlib",
+    "@lib//:kotlinc-kotlin-scripting-compiler-impl",
+    "//platform/usageView",
+    "//plugins/kotlin/base/platforms",
+    "//plugins/kotlin/base/facet",
+    "//plugins/kotlin/base/analysis",
+    "//plugins/kotlin/base/fe10/analysis",
+    "//plugins/kotlin/base/fe10/code-insight",
+    "//plugins/kotlin/preferences",
+    "//plugins/kotlin/compiler-plugins/lombok/gradle",
+    "//plugins/kotlin/completion/impl-k1:kotlin-completion-impl-k1",
+  ]
 )
 
 jvm_library(
@@ -87,7 +100,8 @@ jvm_library(
     "//plugins/kotlin/base/scripting/scripting.k1",
     "//plugins/kotlin/base/scripting/scripting.k1:scripting.k1_test_lib",
     "//plugins/kotlin/base/scripting/scripting.shared",
-  ]
+  ],
+  runtime_deps = [":performance-tests"]
 )
 ### auto-generated section `build kotlin.performance-tests` end
 
