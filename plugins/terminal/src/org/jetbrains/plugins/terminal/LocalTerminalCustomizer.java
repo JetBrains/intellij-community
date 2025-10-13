@@ -4,10 +4,14 @@ package org.jetbrains.plugins.terminal;
 import com.intellij.openapi.extensions.ExtensionPointName;
 import com.intellij.openapi.options.UnnamedConfigurable;
 import com.intellij.openapi.project.Project;
+import com.intellij.platform.eel.EelDescriptor;
+import com.intellij.platform.eel.provider.LocalEelDescriptor;
 import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
+import java.util.Arrays;
+import java.util.List;
 import java.util.Map;
 
 public abstract class LocalTerminalCustomizer {
@@ -17,13 +21,33 @@ public abstract class LocalTerminalCustomizer {
   /**
    * May alter the command to be run in terminal and/or adjust starting environment
    *
-   * @param command original command to run
-   * @param envs    mutable map of environment variables
+   * @param project          current project
+   * @param workingDirectory working directory
+   * @param shellCommand     original command to run
+   * @param envs             mutable map of environment variables
+   * @param eelDescriptor    descriptor of the environment (in the local case, it's {@link LocalEelDescriptor})
    * @return new command to run. Original {@code command} should be returned if no alterations performed
-   * @apiNote terminal starting shell session with user-specified shell. Under the hood we are running shell with custom rcfile, e.g.:
-   * {@code /usr/bin/bash --rcfile PATH_TO/bash-integration.bash}. See the {@code bash-integration.bash} script
+   * @apiNote terminal starting shell session with the user-specified shell.
+   * Note, if the shell integration is enabled, the passed in parameters ({@code shellCommand}, {@code envs}) may be altered.
+   * For example, Bash can be run with custom rcfile, e.g.:
+   * {@code /usr/bin/bash --rcfile PATH_TO/bash-integration.bash}.
+   * See the {@code bash-integration.bash} script
    * for more information on how to alter the execution process.
    */
+  public @NotNull List<String> customizeCommandAndEnvironment(
+    @NotNull Project project,
+    @Nullable String workingDirectory,
+    @NotNull List<String> shellCommand,
+    @NotNull Map<String, String> envs,
+    @NotNull EelDescriptor eelDescriptor
+  ) {
+    return Arrays.asList(customizeCommandAndEnvironment(project, workingDirectory, shellCommand.toArray(String[]::new), envs));
+  }
+
+  /**
+   * @deprecated use {@link #customizeCommandAndEnvironment(Project, String, List, Map, EelDescriptor)}
+   */
+  @Deprecated
   public String[] customizeCommandAndEnvironment(@NotNull Project project,
                                                  @Nullable String workingDirectory,
                                                  @NotNull String[] command,

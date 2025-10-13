@@ -3,9 +3,11 @@ package org.jetbrains.plugins.terminal;
 
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.Project;
+import com.intellij.platform.eel.EelDescriptor;
 import com.intellij.terminal.pty.PtyProcessTtyConnector;
 import com.intellij.util.ArrayUtil;
 import com.intellij.util.TimeoutUtil;
+import com.intellij.util.containers.ContainerUtil;
 import com.jediterm.core.util.TermSize;
 import com.jediterm.terminal.TtyConnector;
 import com.pty4j.PtyProcess;
@@ -62,11 +64,12 @@ public class LocalTerminalDirectRunner extends AbstractTerminalRunner<PtyProcess
   }
 
   private @NotNull ShellStartupOptions applyTerminalCustomizers(@NotNull ShellStartupOptions options) {
-    String[] command = ArrayUtil.toStringArray(options.getShellCommand());
+    List<String> shellCommand = ContainerUtil.notNullize(options.getShellCommand());
+    EelDescriptor eelDescriptor = findEelDescriptor(options.getWorkingDirectory(), shellCommand);
     Map<String, String> envs = ShellStartupOptionsKt.createEnvVariablesMap(options.getEnvVariables());
-    for (LocalTerminalCustomizer customizer : LocalTerminalCustomizer.EP_NAME.getExtensions()) {
+    for (LocalTerminalCustomizer customizer : LocalTerminalCustomizer.EP_NAME.getExtensionList()) {
       try {
-        command = customizer.customizeCommandAndEnvironment(myProject, options.getWorkingDirectory(), command, envs);
+        shellCommand = customizer.customizeCommandAndEnvironment(myProject, options.getWorkingDirectory(), shellCommand, envs, eelDescriptor);
       }
       catch (Exception e) {
         LOG.error("Exception during customization of the terminal session", e);
@@ -74,7 +77,7 @@ public class LocalTerminalDirectRunner extends AbstractTerminalRunner<PtyProcess
     }
 
     return options.builder()
-      .shellCommand(Arrays.asList(command))
+      .shellCommand(shellCommand)
       .envVariables(envs)
       .build();
   }
