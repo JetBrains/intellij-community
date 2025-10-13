@@ -39,7 +39,7 @@ import java.util.Map;
 import java.util.Objects;
 
 import static com.intellij.database.datagrid.GridUtil.createFormatterConfig;
-import static com.intellij.database.datagrid.mutating.ColumnDescriptor.Attribute.HIGHLIGHTED;
+import static com.intellij.database.datagrid.mutating.ColumnDescriptor.Attribute.INDEX;
 import static com.intellij.database.run.ui.DataAccessType.DATA_WITH_MUTATIONS;
 import static com.intellij.database.run.ui.grid.renderers.DefaultTextRendererFactory.TextRenderer.hasInlay;
 
@@ -199,7 +199,7 @@ public final class DefaultTextRendererFactory implements GridCellRendererFactory
       boolean selected = myGrid.getSelectionModel().isSelected(rowIdx, columnIdx);
       GridColumn column = getColumn(modelColumn, myGrid);
       TextAttributes attributes = getAttributes(value, editor.getColorsScheme(), selected,
-                                                column != null && column.getAttributes().contains(HIGHLIGHTED));
+                                                column != null && column.getAttributes().contains(INDEX));
 
       ModelIndex<GridRow> modelRow = rowIdx.toModel(myGrid);
 
