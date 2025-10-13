@@ -145,16 +145,15 @@ object SuvorovProgress {
         processInvocationEventsWithoutDialog(awaitedValue, Int.MAX_VALUE)
       }
       "NiceOverlay" -> {
-        if (title.get() != null) {
-          showPotemkinProgress(awaitedValue, true)
-        }
         val currentFocusedPane = KeyboardFocusManager.getCurrentKeyboardFocusManager().focusedWindow?.let(SwingUtilities::getRootPane)
         // IJPL-203107 in remote development, there is no graphics for a component
         if (currentFocusedPane == null || GraphicsUtil.safelyGetGraphics(currentFocusedPane) == null) {
           // can happen also in tests
           processInvocationEventsWithoutDialog(awaitedValue, Int.MAX_VALUE)
         }
-        else {
+        else if (title.get() != null) {
+          showPotemkinProgress(awaitedValue, true)
+        } else {
           showNiceOverlay(awaitedValue, currentFocusedPane)
         }
       }
