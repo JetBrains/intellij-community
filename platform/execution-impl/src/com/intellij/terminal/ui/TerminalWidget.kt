@@ -91,10 +91,12 @@ interface TerminalWidget : ComponentContainer {
   @RequiresEdt(generateAssertion = false)
   fun addTerminationCallback(onTerminated: Runnable, parentDisposable: Disposable)
 
+  @get:ApiStatus.Internal
   @Deprecated("TerminalSession was moved to the terminal plugin: org.jetbrains.plugins.terminal.session.TerminalSession")
   val session: TerminalSession?
     get() = throw UnsupportedOperationException("Deprecated")
 
+  @ApiStatus.Internal
   @Deprecated("TerminalSession was moved to the terminal plugin: org.jetbrains.plugins.terminal.session.TerminalSession")
   fun connectToSession(session: TerminalSession) {
     throw UnsupportedOperationException("Deprecated")
