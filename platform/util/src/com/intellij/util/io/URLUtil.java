@@ -39,7 +39,7 @@ public final class URLUtil {
   public static final Pattern DATA_URI_PATTERN_OPTIMIZED = Pattern.compile("data:[^,;]+/[^,;]+(?:;charset[=:][^,;]+)?(;base64)?,(.+)");
   public static final Pattern URL_PATTERN_OPTIMIZED = Pattern.compile("\\b(?:mailto:|(?:news|(?:ht|f)tps?)://|(?<![\\p{L}0-9_.])www\\.)[-A-Za-z0-9+$&@#/%?=~_|!:,.;]*[-A-Za-z0-9+$&@#/%=~_|]");
   public static final Pattern URL_WITH_PARENS_PATTERN_OPTIMIZED = Pattern.compile("\\b(?:mailto:|(?:news|(?:ht|f)tps?)://|(?<![\\p{L}0-9_.])www\\.)[-A-Za-z0-9+$&@#/%?=~_|!:,.;()]*[-A-Za-z0-9+$&@#/%=~_|()]");
-  public static final Pattern FILE_URL_PATTERN_OPTIMIZED = Pattern.compile("\\bfile:///[-A-Za-z0-9+$&@#/%?=~_|!:,.;]*[-A-Za-z0-9+$&@#/%=~_|]");
+  public static final Pattern FILE_URL_PATTERN_OPTIMIZED = Pattern.compile("\\bfile:(?:///|/)[-A-Za-z0-9+$&@#/%?=~_|!:,.;]*[-A-Za-z0-9+$&@#/%=~_|]");
 
   public static final Pattern HREF_PATTERN = Pattern.compile("<a(?:\\s+href\\s*=\\s*[\"']([^\"']*)[\"'])?\\s*>([^<]*)</a>");
 
@@ -49,7 +49,7 @@ public final class URLUtil {
    * If {@code false}, then the line contains no URL, otherwise the heavier {@link #URL_PATTERN} check should be used.
    */
   public static boolean canContainUrl(@NotNull String line) {
-    return line.contains("mailto:") || line.contains(SCHEME_SEPARATOR) || line.contains("www.");
+    return line.contains("mailto:") || line.contains(SCHEME_SEPARATOR) || line.contains("www.") || line.contains("file:/");
   }
 
   /**
