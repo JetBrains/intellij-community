@@ -574,7 +574,7 @@ object PluginManagerCore {
 
     val additionalErrors = pluginSetBuilder.computeEnabledModuleMap(
       incompletePlugins = loadingResult.getIncompleteIdMap().values,
-      currentProductModeEvaluator = initContext::currentProductModeId, 
+      initContext = initContext,
       disabler = { descriptor, disabledModuleToProblematicPlugin ->
       val loadingError = pluginSetBuilder.initEnableState(
         descriptor = descriptor,
