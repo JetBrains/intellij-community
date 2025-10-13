@@ -2,8 +2,9 @@
 package com.intellij.workspaceModel.ide.impl
 
 import com.intellij.ide.plugins.PluginManagerCore
-import com.intellij.ide.plugins.PluginModuleId
 import com.intellij.ide.plugins.cl.PluginAwareClassLoader
+import com.intellij.ide.plugins.contentModuleId
+import com.intellij.ide.plugins.contentModules
 import com.intellij.openapi.application.ApplicationInfo
 import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.diagnostic.logger
@@ -123,15 +124,15 @@ class WorkspaceModelCacheSerializer(vfuManager: VirtualFileUrlManager, urlRelati
     }
 
     override fun getClassLoader(pluginId: String?, moduleId: String?): ClassLoader? {
-      if (moduleId != null) {
-        return PluginManagerCore.getPluginSet().findEnabledModule(PluginModuleId(moduleId))!!.classLoader
-      }
       val id = pluginId?.let { PluginId.getId(it) }
       if (id != null && !PluginManagerCore.isPluginInstalled(id)) {
          return null
       }
 
       val plugin = PluginManagerCore.getPlugin(id)
+      if (plugin != null && moduleId != null) {
+        plugin.contentModules.find { it.contentModuleId == moduleId }?.let { return it.pluginClassLoader }
+      }
       return plugin?.pluginClassLoader ?: ApplicationManager::class.java.classLoader
     }
   }

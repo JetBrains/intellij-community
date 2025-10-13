@@ -161,7 +161,7 @@ open class DistributedTestHost(coroutineScope: CoroutineScope) {
 
           // Create test class
           val testModuleId = System.getProperty("distributed.test.module", "intellij.rdct.tests.distributed._test")
-          val testModule = PluginManagerCore.getPluginSet().findEnabledModule(PluginModuleId(testModuleId))
+          val testModule = PluginManagerCore.getPluginSet().findEnabledModule(PluginModuleId(testModuleId, PluginModuleId.JETBRAINS_NAMESPACE))
                            ?: error("Test module '$testModuleId' is not found")
 
           LOG.info("Test class will be loaded from '${testModule.pluginId}' plugin")

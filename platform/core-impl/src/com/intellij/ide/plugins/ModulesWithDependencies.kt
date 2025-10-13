@@ -11,9 +11,9 @@ private val PLATFORM_PLUGIN_ALIAS_ID = PluginId.getId("com.intellij.modules.plat
 private val LANG_PLUGIN_ALIAS_ID = PluginId.getId("com.intellij.modules.lang")
 private val VCS_ALIAS_ID = PluginId.getId("com.intellij.modules.vcs")
 private val RIDER_ALIAS_ID = PluginId.getId("com.intellij.modules.rider")
-private val RIDER_MODULE_ID = PluginModuleId("intellij.rider")
+private val RIDER_MODULE_ID = PluginModuleId("intellij.rider", PluginModuleId.JETBRAINS_NAMESPACE)
 private val JSON_ALIAS_ID = PluginId.getId("com.intellij.modules.json")
-private val JSON_BACKEND_MODULE_ID = PluginModuleId("intellij.json.backend")
+private val JSON_BACKEND_MODULE_ID = PluginModuleId("intellij.json.backend", PluginModuleId.JETBRAINS_NAMESPACE)
 
 internal class ModulesWithDependencies(val modules: List<PluginModuleDescriptor>,
                                        val directDependencies: Map<PluginModuleDescriptor, List<PluginModuleDescriptor>>) {
@@ -175,7 +175,7 @@ private val contentModulesExtractedInCorePluginWhichCanBeUsedFromExternalPlugins
   "intellij.spellchecker.xml",
   "intellij.relaxng",
   "intellij.spellchecker",
-).map { PluginModuleId(it) }
+).map { PluginModuleId(it, PluginModuleId.JETBRAINS_NAMESPACE) }
 
 /**
  * List of content modules from the core plugin which should be automatically added as dependencies third-party plugins and plugins with dependency on `com.intellij.modules.vcs`
@@ -188,9 +188,9 @@ private val vcsApiContentModules = listOf(
   "intellij.platform.vcs.log",
   "intellij.platform.vcs.log.graph",
   "intellij.platform.vcs.log.impl",
-).map { PluginModuleId(it) }
+).map { PluginModuleId(it, PluginModuleId.JETBRAINS_NAMESPACE) }
 
-private val COLLABORATION_TOOLS_MODULE_ID = PluginModuleId("intellij.platform.collaborationTools")
+private val COLLABORATION_TOOLS_MODULE_ID = PluginModuleId("intellij.platform.collaborationTools", PluginModuleId.JETBRAINS_NAMESPACE)
 
 /**
  * List of content modules from the core plugin which should be automatically added as dependencies to all plugins with dependency on `org.jetbrains.completion.full.line` plugin
@@ -200,7 +200,7 @@ private val fullLineApiContentModules = listOf(
   "intellij.fullLine.core",
   "intellij.fullLine.local",
   "intellij.fullLine.core.impl",
-).map { PluginModuleId(it) }
+).map { PluginModuleId(it, PluginModuleId.JETBRAINS_NAMESPACE) }
 
 private fun collectDirectDependenciesInOldFormat(
   rootDescriptor: IdeaPluginDescriptorImpl,

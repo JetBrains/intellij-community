@@ -33,14 +33,14 @@ internal class ClassLoaderConfiguratorTest {
     val kotlinGradleJava = kotlin.createContentModuleInTest(
       subBuilder = emptyBuilder,
       descriptorPath = "",
-      module = PluginContentDescriptor.ModuleItem(moduleId = PluginModuleId("kotlin.gradle.gradle-java"),
+      module = PluginContentDescriptor.ModuleItem(moduleId = PluginModuleId("kotlin.gradle.gradle-java", PluginModuleId.JETBRAINS_NAMESPACE),
                                                   loadingRule = ModuleLoadingRule.OPTIONAL,
                                                   configFile = null,
                                                   descriptorContent = null))
     val kotlinCompilerGradle = kotlin.createContentModuleInTest(
       subBuilder = emptyBuilder,
       descriptorPath = "",
-      module = PluginContentDescriptor.ModuleItem(moduleId = PluginModuleId("kotlin.compiler-plugins.annotation-based-compiler-support.gradle"),
+      module = PluginContentDescriptor.ModuleItem(moduleId = PluginModuleId("kotlin.compiler-plugins.annotation-based-compiler-support.gradle", PluginModuleId.JETBRAINS_NAMESPACE),
                                                   loadingRule = ModuleLoadingRule.OPTIONAL,
                                                   configFile = null,
                                                   descriptorContent = null))
@@ -62,7 +62,7 @@ internal class ClassLoaderConfiguratorTest {
       return plugin.createContentModuleInTest(
         subBuilder = PluginDescriptorBuilder.builder().apply { `package` = moduleId },
         descriptorPath = "",
-        module = PluginContentDescriptor.ModuleItem(moduleId = PluginModuleId(moduleId), configFile = null, descriptorContent = null, loadingRule = ModuleLoadingRule.OPTIONAL),
+        module = PluginContentDescriptor.ModuleItem(moduleId = PluginModuleId(moduleId, PluginModuleId.JETBRAINS_NAMESPACE), configFile = null, descriptorContent = null, loadingRule = ModuleLoadingRule.OPTIONAL),
       )
     }
     val modules = arrayOf(

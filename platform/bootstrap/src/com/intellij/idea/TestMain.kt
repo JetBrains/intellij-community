@@ -60,7 +60,8 @@ fun main(rawArgs: Array<String>) {
     Logger.setFactory(initialFactory)
   }
 
-  val testModule = pluginSet.findEnabledModule(PluginModuleId(testEntryPointModule)) ?: error("module ${testEntryPointModule} not found in product layout")
+  val testModule = pluginSet.findEnabledModule(PluginModuleId(testEntryPointModule, PluginModuleId.JETBRAINS_NAMESPACE))
+                   ?: error("module ${testEntryPointModule} not found in product layout")
   val testMainClassLoader = if (!testAdditionalModules.isNullOrEmpty()) {
     PathClassLoader(UrlClassLoader.build().files(testAdditionalModules.split(File.pathSeparator).map(Path::of)).parent(testModule.classLoader))
   }

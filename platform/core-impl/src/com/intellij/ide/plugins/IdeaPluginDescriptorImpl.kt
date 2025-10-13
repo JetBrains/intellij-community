@@ -39,7 +39,8 @@ sealed class IdeaPluginDescriptorImpl(
   val incompatiblePlugins: List<PluginId> = raw.incompatibleWith.map(PluginId::getId)
   open val pluginAliases: List<PluginId> = raw.pluginAliases.map(PluginId::getId)
 
-  val moduleDependencies: ModuleDependencies = raw.dependencies.let(::convertDependencies)
+  abstract val moduleDependencies: ModuleDependencies
+
   val packagePrefix: String? = raw.`package`
 
   val appContainerDescriptor: ContainerDescriptor = raw.appElementsContainer.convert()
@@ -167,16 +168,29 @@ sealed class IdeaPluginDescriptorImpl(
       }
     }
 
-    private fun convertDependencies(dependencies: List<DependenciesElement>): ModuleDependencies {
+    @JvmStatic
+    protected fun convertDependencies(dependencies: List<DependenciesElement>, parent: PluginMainDescriptor?): ModuleDependencies {
       if (dependencies.isEmpty()) {
         return ModuleDependencies.EMPTY
       }
       val moduleDeps = ArrayList<PluginModuleId>()
       val pluginDeps = ArrayList<PluginId>()
+      var cachedContentModuleIds: Set<String>? = null
       for (dep in dependencies) {
         when (dep) {
           is DependenciesElement.PluginDependency -> pluginDeps.add(PluginId.getId(dep.pluginId))
-          is DependenciesElement.ModuleDependency -> moduleDeps.add(PluginModuleId(dep.moduleName))
+          is DependenciesElement.ModuleDependency -> {
+            val namespace =
+              dep.namespace
+              ?: run {
+                if (cachedContentModuleIds == null) {
+                  cachedContentModuleIds = parent?.content?.modules?.mapTo(HashSet()) { it.moduleId.id } ?: emptySet()
+                }
+                if (dep.moduleName in cachedContentModuleIds) parent!!.namespace ?: parent.implicitNamespaceForPrivateModules else null
+              }
+              ?: PluginModuleId.JETBRAINS_NAMESPACE
+            moduleDeps.add(PluginModuleId(dep.moduleName, namespace))
+          }
           else -> LOG.error("Unknown dependency type: $dep")
         }
       }
@@ -303,20 +317,29 @@ class PluginMainDescriptor(
   override val pluginAliases: List<PluginId> = super.pluginAliases.let(::addCorePluginAliases)
 
   /**
+   * Explicitly set namespace for content modules of the plugin
+   */
+  val namespace: String? = raw.namespace
+
+  /**
+   * Implicit namespace used in [PluginModuleId] instances for dependencies between plugins modules if the explicit [namespace] is not set.
+   * Currently, it's not necessary to specify the namespace explicitly if all modules are private and don't depend on internal modules, but it's still convenient to have some
+   * namespace for debugging and logging.
+   */
+  internal val implicitNamespaceForPrivateModules by lazy { $$"$${id.idString}_$implicit" }
+
+  /**
    * this is an implementation detail required during descriptor loading, use [contentModules] instead
    */
   @VisibleForTesting
   val content: PluginContentDescriptor =
-    raw.contentModules.takeIf { it.isNotEmpty() }?.let { PluginContentDescriptor(convertContentModules(it)) }
+    raw.contentModules.takeIf { it.isNotEmpty() }?.let { PluginContentDescriptor(convertContentModules(it, namespace ?: implicitNamespaceForPrivateModules)) }
     ?: PluginContentDescriptor.EMPTY
-
-  /**
-   * Specifies namespace for content modules of the plugin
-   */
-  val namespace: String? = raw.namespace
 
   val contentModules: List<ContentModuleDescriptor>
     get() = content.modules.map { it.descriptor }
+
+  override val moduleDependencies: ModuleDependencies = convertDependencies(raw.dependencies, this)
 
   init {
     reportMainDescriptorUnexpectedElements(raw) { logUnexpectedElement(it) }
@@ -437,14 +460,14 @@ class PluginMainDescriptor(
 
   @ApiStatus.Internal
   companion object {
-    private fun convertContentModules(contentElements: List<ContentModuleElement>): List<PluginContentDescriptor.ModuleItem> {
+    private fun convertContentModules(contentElements: List<ContentModuleElement>, namespace: String): List<PluginContentDescriptor.ModuleItem> {
       return contentElements.map { elem ->
         val index = elem.name.lastIndexOf('/')
         val configFile: String? = if (index != -1) {
           "${elem.name.substring(0, index)}.${elem.name.substring(index + 1)}.xml"
         } else null
         PluginContentDescriptor.ModuleItem(
-          moduleId = PluginModuleId(elem.name),
+          moduleId = PluginModuleId(elem.name, namespace),
           configFile = configFile,
           descriptorContent = elem.embeddedDescriptorContent,
           loadingRule = elem.loadingRule.convert())
@@ -503,6 +526,8 @@ class DependsSubDescriptor(
   override val useCoreClassLoader: Boolean
     get() = parent.useCoreClassLoader
   override val isIndependentFromCoreClassLoader: Boolean = raw.isIndependentFromCoreClassLoader
+
+  override val moduleDependencies: ModuleDependencies = convertDependencies(raw.dependencies, null)
 
   private val rawResourceBundleBaseName: String? = raw.resourceBundleBaseName
 
@@ -570,6 +595,8 @@ class ContentModuleDescriptor(
   val moduleId: PluginModuleId = moduleId
   val moduleLoadingRule: ModuleLoadingRule = moduleLoadingRule
   val visibility: ModuleVisibility = raw.moduleVisibility.convert()
+
+  override val moduleDependencies: ModuleDependencies = convertDependencies(raw.dependencies, parent)
 
   override val useCoreClassLoader: Boolean
     get() = parent.useCoreClassLoader
