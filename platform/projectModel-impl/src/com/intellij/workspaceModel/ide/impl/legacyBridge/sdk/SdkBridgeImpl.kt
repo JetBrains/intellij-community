@@ -32,7 +32,6 @@ import com.intellij.workspaceModel.ide.impl.GlobalWorkspaceModel
 import org.jdom.Element
 import org.jetbrains.annotations.ApiStatus
 import java.util.function.Function
-import kotlin.io.path.Path
 
 
 // SdkBridgeImpl.clone called from com.intellij.openapi.roots.ui.configuration.projectRoot.ProjectSdksModel.reset
@@ -148,7 +147,7 @@ class SdkBridgeImpl(private var sdkEntityBuilder: SdkEntity.Builder) : UserDataH
   private fun createSerializer(): JpsSdkEntitySerializer {
     val sortedRootTypes = OrderRootType.getSortedRootTypes().mapNotNull { it.sdkRootName }
     return JpsGlobalEntitiesSerializers.createSdkSerializer(getVirtualFileUrlManager(), sortedRootTypes,
-                                                            Path(PathManager.getOptionsPath()))
+                                                            PathManager.getOptionsDir())
   }
 
   fun getRawSdkAdditionalData(): String = sdkEntityBuilder.additionalData
