@@ -137,7 +137,7 @@ private suspend fun buildResourcesForHelpPlugin(resourceRoot: Path, classPath: L
 
           descriptor.resList.forEach { resDir ->
             archiveDir(
-              startDir = resourceRoot.resolve(resDir),
+              startDir = rootDir.resolve(resDir),
               addFile = { archiver.addFile(it, zipCreator) })
           }
         }
