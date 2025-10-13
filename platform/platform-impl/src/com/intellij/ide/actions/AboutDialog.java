@@ -46,6 +46,7 @@ import com.intellij.util.PlatformUtils;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.system.OS;
 import com.intellij.util.ui.*;
+import com.jetbrains.JBR;
 import com.jetbrains.cef.JCefAppConfig;
 import com.jetbrains.cef.JCefVersionDetails;
 import org.jetbrains.annotations.NotNull;
@@ -334,6 +335,15 @@ public final class AboutDialog extends DialogWrapper {
 
     if (UIUtil.isMetalRendering()) {
       text.append("Metal Rendering is ON\n");
+    }
+
+    if (JBR.isVulkanSupported()) {
+      text.append("Vulkan Rendering is ON:\n");
+      text.append("  Presentation is ").append(JBR.getVulkan().isPresentationEnabled() ? "ON" : "OFF").append("\n");
+      for (var device : JBR.getVulkan().getDevices()) {
+        text.append("  ").append(device.getName()).append(" (").append(device.getTypeString()).append("), caps=0x")
+          .append(Integer.toHexString(device.getCapabilities())).append("\n");
+      }
     }
 
     var changedValues = Registry.getAll().stream().filter(RegistryValue::isChangedFromDefault).toList();
