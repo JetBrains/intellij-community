@@ -1,6 +1,7 @@
 // Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.ide.plugins
 
+import com.intellij.ide.plugins.PluginInitializationContext.EnvironmentConfiguredModuleData
 import com.intellij.openapi.application.PathManager
 import com.intellij.openapi.application.impl.ApplicationInfoImpl
 import com.intellij.openapi.extensions.PluginId
@@ -62,4 +63,32 @@ class ProductPluginInitContext(
 
   override val currentProductModeId: String
     get() = ProductLoadingStrategy.strategy.currentModeId
+
+  override val environmentConfiguredModules: Map<PluginModuleId, EnvironmentConfiguredModuleData> by lazy {
+    buildMap {
+      configureAppModeModules()
+    }
+  }
+
+  private fun MutableMap<PluginModuleId, EnvironmentConfiguredModuleData>.configureAppModeModules() {
+    val frontendSplit = PluginModuleId("intellij.platform.frontend.split", PluginModuleId.JETBRAINS_NAMESPACE)
+    val frontend = PluginModuleId("intellij.platform.frontend", PluginModuleId.JETBRAINS_NAMESPACE)
+    val backend = PluginModuleId("intellij.platform.backend", PluginModuleId.JETBRAINS_NAMESPACE)
+
+    val unavailableAppModeModuleId = when (currentProductModeId) {
+      /** intellij.platform.backend.split is currently available in 'monolith' mode because it's used as a backend in CodeWithMe */
+      "monolith" -> frontendSplit
+      "backend" -> frontend
+      "frontend" -> backend
+      else -> null
+    }
+
+    for (moduleId in listOf(frontend, backend, frontendSplit)) {
+      val unavailabilityReason = if (moduleId == unavailableAppModeModuleId) {
+        UnsuitableAppModeModuleUnavailabilityReason(moduleId, currentProductModeId)
+      } else null
+      val replaced = put(moduleId, EnvironmentConfiguredModuleData(unavailabilityReason))
+      check(replaced == null) { "oh no: $moduleId" }
+    }
+  }
 }

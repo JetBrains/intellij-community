@@ -45,6 +45,17 @@ interface PluginInitializationContext {
    */
   val currentProductModeId: String
 
+  /**
+   * A map consisting of special modules that are configured by the environment (app mode, OS-specific modules, etc.).
+   * If a module is in this map, it is considered to be special and its state is determined
+   * by [EnvironmentConfiguredModuleData] rather than by normal plugin/module loading rules.
+   */
+  val environmentConfiguredModules: Map<PluginModuleId, EnvironmentConfiguredModuleData>
+
+  class EnvironmentConfiguredModuleData(val unavailabilityReason: EnvironmentDependentModuleUnavailabilityReason?) {
+    val isAvailable: Boolean get() = unavailabilityReason == null
+  }
+
   @ApiStatus.Internal
   companion object {
     @TestOnly
@@ -72,6 +83,7 @@ interface PluginInitializationContext {
         override val disablePluginLoadingCompletely: Boolean = disablePluginLoadingCompletely
         override val pluginsPerProjectConfig: PluginsPerProjectConfig? = null
         override val currentProductModeId: String = currentProductModeId
+        override val environmentConfiguredModules: Map<PluginModuleId, EnvironmentConfiguredModuleData> = emptyMap() // TODO adjust existing and write new tests for this
       }
   }
 }
