@@ -10,6 +10,7 @@ import com.intellij.util.io.Compressor
 import com.intellij.util.io.createParentDirectories
 import com.intellij.util.io.write
 import org.intellij.lang.annotations.Language
+import org.jetbrains.annotations.ApiStatus
 import java.io.ByteArrayOutputStream
 import java.io.OutputStream
 import java.nio.file.Files
@@ -29,8 +30,11 @@ private object PluginBuilderConsts {
 private val pluginIdCounter = AtomicInteger()
 
 /**
+ * for removal in 26.1
+ *
  * use [com.intellij.platform.testFramework.plugins.plugin] instead
  */
+@ApiStatus.ScheduledForRemoval
 @Deprecated("Use PluginSpec instead")
 class PluginBuilder() {
   private data class ExtensionBlock(val ns: String, val text: String)
@@ -248,7 +252,7 @@ class PluginBuilder() {
       if (content.isNotEmpty()) {
         append("\n<content>\n  ")
         content.joinTo(this, separator = "\n  ") { moduleItem ->
-          val loadingAttribute = when (moduleItem.loadingRule) {
+          val loadingAttribute = when (moduleItem.defaultLoadingRule) {
             ModuleLoadingRule.OPTIONAL -> ""
             ModuleLoadingRule.REQUIRED -> "loading=\"required\" "
             ModuleLoadingRule.EMBEDDED -> "loading=\"embedded\" "
