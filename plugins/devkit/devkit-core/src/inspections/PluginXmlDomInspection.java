@@ -647,40 +647,51 @@ public final class PluginXmlDomInspection extends DevKitPluginXmlInspectionBase 
     highlightAttributeNotUsedAnymore(ideaVersion.getMin(), holder);
     //noinspection deprecation
     highlightAttributeNotUsedAnymore(ideaVersion.getMax(), holder);
-    highlightUntilBuild(ideaVersion, holder);
+    highlightUntilBuild(ideaVersion, ideaVersion.getUntilBuild(), "until-build", holder);
+    highlightUntilBuild(ideaVersion, ideaVersion.getStrictUntilBuild(), "strict-until-build", holder);
 
     GenericAttributeValue<BuildNumber> sinceBuild = ideaVersion.getSinceBuild();
-    GenericAttributeValue<BuildNumber> untilBuild = ideaVersion.getUntilBuild();
-    if (!DomUtil.hasXml(sinceBuild) &&
-        !DomUtil.hasXml(untilBuild)) {
-      return;
-    }
-
-    BuildNumber sinceBuildNumber = sinceBuild.getValue();
-    BuildNumber untilBuildNumber = untilBuild.getValue();
-    if (sinceBuildNumber == null || untilBuildNumber == null) return;
-
-    int compare = Comparing.compare(sinceBuildNumber, untilBuildNumber);
-    if (compare > 0) {
-      holder.createProblem(untilBuild, DevKitBundle.message("inspections.plugin.xml.until.build.must.be.greater.than.since.build"));
+    if (DomUtil.hasXml(sinceBuild)) {
+      BuildNumber sinceBuildNumber = sinceBuild.getValue();
+      if (sinceBuildNumber != null) {
+        checkUntilBuildGreaterThanSinceBuild(ideaVersion.getUntilBuild(), "until-build", sinceBuildNumber, holder);
+        checkUntilBuildGreaterThanSinceBuild(ideaVersion.getStrictUntilBuild(), "strict-until-build", sinceBuildNumber, holder);
+      }
     }
   }
 
-  private static void highlightUntilBuild(IdeaVersion ideaVersion, DomElementAnnotationHolder holder) {
-    String untilBuild = ideaVersion.getUntilBuild().getStringValue();
-    if (untilBuild != null && isStarSupported(ideaVersion.getSinceBuild().getStringValue())) {
-      Matcher matcher = PluginManager.EXPLICIT_BIG_NUMBER_PATTERN.matcher(untilBuild);
+  private static void checkUntilBuildGreaterThanSinceBuild(GenericAttributeValue<BuildNumber> untilBuild,
+                                                           @NonNls String untilAttributeName, BuildNumber sinceBuildNumber,
+                                                           DomElementAnnotationHolder holder) {
+    if (DomUtil.hasXml(untilBuild)) {
+      BuildNumber untilBuildNumber = untilBuild.getValue();
+      if (untilBuildNumber != null) {
+        int compare = Comparing.compare(sinceBuildNumber, untilBuildNumber);
+        if (compare > 0) {
+          holder.createProblem(untilBuild, DevKitBundle.message("inspections.plugin.xml.until.build.must.be.greater.than.since.build", untilAttributeName));
+        }
+      }
+    }
+  }
+
+  private static void highlightUntilBuild(IdeaVersion ideaVersion,
+                                          GenericAttributeValue<BuildNumber> untilBuild,
+                                          @NonNls String attributeName,
+                                          DomElementAnnotationHolder holder) {
+    String untilBuildValue = untilBuild.getStringValue();
+    if (untilBuildValue != null && isStarSupported(ideaVersion.getSinceBuild().getStringValue())) {
+      Matcher matcher = PluginManager.EXPLICIT_BIG_NUMBER_PATTERN.matcher(untilBuildValue);
       if (matcher.matches()) {
         holder.createProblem(
-          ideaVersion.getUntilBuild(),
-          DevKitBundle.message("inspections.plugin.xml.until.build.use.asterisk.instead.of.big.number", matcher.group(2)),
-          new CorrectUntilBuildAttributeFix(PluginManager.convertExplicitBigNumberInUntilBuildToStar(untilBuild)));
+          untilBuild,
+          DevKitBundle.message("inspections.plugin.xml.until.build.use.asterisk.instead.of.big.number", matcher.group(2), attributeName),
+          new CorrectUntilBuildAttributeFix(PluginManager.convertExplicitBigNumberInUntilBuildToStar(untilBuildValue)));
       }
-      if (untilBuild.matches("\\d+")) {
-        int branch = Integer.parseInt(untilBuild);
+      if (untilBuildValue.matches("\\d+")) {
+        int branch = Integer.parseInt(untilBuildValue);
         String corrected = (branch - 1) + ".*";
-        holder.createProblem(ideaVersion.getUntilBuild(),
-                             DevKitBundle.message("inspections.plugin.xml.until.build.misleading.plain.number", untilBuild, corrected),
+        holder.createProblem(untilBuild,
+                             DevKitBundle.message("inspections.plugin.xml.until.build.misleading.plain.number", untilBuildValue, corrected, attributeName),
                              new CorrectUntilBuildAttributeFix(corrected));
       }
     }

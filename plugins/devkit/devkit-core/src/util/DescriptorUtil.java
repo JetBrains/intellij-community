@@ -5,6 +5,7 @@ import com.intellij.openapi.application.WriteAction;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.project.DumbService;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.util.BuildNumber;
 import com.intellij.openapi.vfs.ReadonlyStatusHandler;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.PsiClass;
@@ -26,6 +27,7 @@ import org.jetbrains.annotations.Unmodifiable;
 import org.jetbrains.idea.devkit.DevKitBundle;
 import org.jetbrains.idea.devkit.dom.Dependency;
 import org.jetbrains.idea.devkit.dom.IdeaPlugin;
+import org.jetbrains.idea.devkit.dom.IdeaVersion;
 import org.jetbrains.idea.devkit.dom.productModules.ProductModulesElement;
 import org.jetbrains.idea.devkit.dom.templates.TemplateSet;
 import org.jetbrains.idea.devkit.module.PluginModuleType;
@@ -105,6 +107,14 @@ public final class DescriptorUtil {
   public static @Nullable IdeaPlugin getIdeaPlugin(@NotNull XmlFile file) {
     final DomFileElement<IdeaPlugin> plugin = getIdeaPluginFileElement(file);
     return plugin != null ? plugin.getRootElement() : null;
+  }
+
+  public static @Nullable BuildNumber getActualUntilBuild(@NotNull IdeaVersion ideaVersion) {
+    BuildNumber strictUntilBuild = ideaVersion.getStrictUntilBuild().getValue();
+    if (strictUntilBuild != null) {
+      return strictUntilBuild;
+    }
+    return ideaVersion.getUntilBuild().getValue();
   }
 
   public static boolean isProductModulesXml(@Nullable PsiFile file) {

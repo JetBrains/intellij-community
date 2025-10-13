@@ -582,6 +582,10 @@ public class PluginXmlFunctionalTest extends JavaCodeInsightFixtureTestCase {
     doHighlightingTest("pluginWith9999InUntilBuild.xml");
   }
 
+  public void testPluginWith9999InStrictUntilBuild() {
+    doHighlightingTest("pluginWith9999InStrictUntilBuild.xml");
+  }
+
   public void testPluginForOldIdeWith9999InUntilBuild() {
     doHighlightingTest("pluginForOldIdeWith9999InUntilBuild.xml");
   }
@@ -802,6 +806,10 @@ public class PluginXmlFunctionalTest extends JavaCodeInsightFixtureTestCase {
 
   public void testPluginWithSinceBuildGreaterThanUntilBuild() {
     doHighlightingTest("pluginWithSinceBuildGreaterThanUntilBuild.xml");
+  }
+
+  public void testPluginWithSinceBuildGreaterThanStrictUntilBuild() {
+    doHighlightingTest("pluginWithSinceBuildGreaterThanStrictUntilBuild.xml");
   }
 
   public void testProductDescriptor() {

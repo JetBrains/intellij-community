@@ -156,7 +156,8 @@ public final class PluginDescriptorStructureUtil {
   private static @Nullable String getIdeaVersionLocation(IdeaVersion element) {
     String since = element.getSinceBuild().getStringValue();
     if (StringUtil.isNotEmpty(since)) {
-      String until = element.getUntilBuild().getStringValue();
+      String strictUntil = element.getStrictUntilBuild().getStringValue();
+      String until = strictUntil != null ? strictUntil : element.getUntilBuild().getStringValue();
       return since + " - " + (StringUtil.isNotEmpty(until) ? until : "...");
     }
     return null;
