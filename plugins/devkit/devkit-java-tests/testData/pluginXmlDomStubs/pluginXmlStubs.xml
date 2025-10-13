@@ -11,11 +11,11 @@
   <module value="myModule"/>
 
   <content>
-    <module name="module.name" package="module.package"/>
+    <module name="module.name"/>
   </content>
 
   <dependencies>
-    <module name="dependencies.module" package="dependencies.module.package"/>
+    <module name="dependencies.module"/>
     <plugin id="dependencies.plugin.id"/>
   </dependencies>
 
