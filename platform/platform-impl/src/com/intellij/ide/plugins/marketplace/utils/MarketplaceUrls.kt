@@ -57,17 +57,19 @@ object MarketplaceUrls {
   ).addParameters(mapOf("build" to IDE_BUILD_FOR_REQUEST))
 
   @Deprecated("Use getSearchPluginsUpdatesUrl() instead")
-  fun getSearchCompatibleUpdatesUrl() = Urls.newFromEncoded("${getPluginManagerUrl()}/api/search/compatibleUpdates").toExternalForm()
+  fun getSearchCompatibleUpdatesUrl(): String = Urls.newFromEncoded("${getPluginManagerUrl()}/api/search/compatibleUpdates").toExternalForm()
 
-  fun getSearchPluginsUpdatesUrl() = Urls.newFromEncoded("${getPluginManagerUrl()}/api/search/updates/compatible").toExternalForm()
+  fun getSearchPluginsUpdatesUrl(): String = Urls.newFromEncoded("${getPluginManagerUrl()}/api/search/updates/compatible").toExternalForm()
 
-  fun getSearchNearestUpdate() = Urls.newFromEncoded("${getPluginManagerUrl()}/api/search/updates/nearest").toExternalForm()
+  fun getSearchNearestUpdate(): String = Urls.newFromEncoded("${getPluginManagerUrl()}/api/search/updates/nearest").toExternalForm()
 
   fun getSearchPluginsUrl(query: String, count: Int, includeIncompatible: Boolean): Url {
     val params = mapOf(
       "build" to IDE_BUILD_FOR_REQUEST,
       "max" to count.toString(),
-      "all" to includeIncompatible.toString()
+      "all" to includeIncompatible.toString(),
+      "os" to buildEncodedOsParameter(),
+      "arch" to buildEncodedArchParameter()
     )
     return Urls.newFromEncoded(
       "${getPluginManagerUrl()}/api/search/plugins?$query"
@@ -118,4 +120,12 @@ object MarketplaceUrls {
   }
 
   private fun PluginId.urlEncode(): String = URLUtil.encodeURIComponent(idString)
+}
+
+internal fun buildEncodedOsParameter(): String? {
+  return URLEncoder.encode("${OS.CURRENT} ${OS.CURRENT.version()}", StandardCharsets.UTF_8)
+}
+
+internal fun buildEncodedArchParameter(): String? {
+  return URLEncoder.encode(CpuArch.CURRENT.name, StandardCharsets.UTF_8)
 }

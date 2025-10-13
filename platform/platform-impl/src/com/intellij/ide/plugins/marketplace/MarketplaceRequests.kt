@@ -9,6 +9,8 @@ import com.intellij.ide.plugins.PluginInfoProvider
 import com.intellij.ide.plugins.PluginNode
 import com.intellij.ide.plugins.auth.PluginRepositoryAuthService
 import com.intellij.ide.plugins.marketplace.utils.MarketplaceUrls
+import com.intellij.ide.plugins.marketplace.utils.buildEncodedArchParameter
+import com.intellij.ide.plugins.marketplace.utils.buildEncodedOsParameter
 import com.intellij.ide.plugins.newui.PluginUiModel
 import com.intellij.ide.plugins.newui.PluginUiModelAdapter
 import com.intellij.ide.plugins.newui.PluginUiModelBuilderFactory
@@ -38,7 +40,6 @@ import com.intellij.util.io.HttpRequests
 import com.intellij.util.io.RequestBuilder
 import com.intellij.util.io.computeDetached
 import com.intellij.util.io.write
-import com.intellij.util.system.OS
 import com.intellij.util.ui.IoErrorText
 import com.intellij.util.withQuery
 import kotlinx.coroutines.CoroutineScope
@@ -210,12 +211,9 @@ class MarketplaceRequests(private val coroutineScope: CoroutineScope) : PluginIn
       updateCheck: Boolean = false,
     ): List<IdeCompatibleUpdate> {
       try {
-        if (ids.isEmpty()) {
-          return emptyList()
-        }
+        if (ids.isEmpty()) return emptyList()
 
         val url = URI(MarketplaceUrls.getSearchPluginsUpdatesUrl())
-        val os = URLEncoder.encode("${OS.CURRENT} ${OS.CURRENT.version()}", StandardCharsets.UTF_8)
         val machineId = if (LoadingState.COMPONENTS_LOADED.isOccurred) {
           MachineIdManager.getAnonymizedMachineId("JetBrainsUpdates") // same as regular updates
             .takeIf { !PropertiesComponent.getInstance().getBoolean(UpdateCheckerFacade.MACHINE_ID_DISABLED_PROPERTY, false) }
@@ -223,7 +221,8 @@ class MarketplaceRequests(private val coroutineScope: CoroutineScope) : PluginIn
 
         val query = buildString {
           append("build=${ApplicationInfoImpl.orFromPluginCompatibleBuild(buildNumber)}")
-          append("&os=$os")
+          append("&os=${buildEncodedOsParameter()}")
+          append("&arch=${buildEncodedArchParameter()}")
           if (machineId != null && updateCheck) {
             append("&mid=$machineId")
           }
@@ -265,12 +264,17 @@ class MarketplaceRequests(private val coroutineScope: CoroutineScope) : PluginIn
       throwExceptions: Boolean = false,
     ): List<NearestUpdate> {
       try {
-        if (ids.isEmpty()) {
-          return emptyList()
-        }
+        if (ids.isEmpty()) return emptyList()
 
         val data = objectMapper.writeValueAsString(CompatibleUpdateRequest(ids, buildNumber))
-        return HttpRequests.post(MarketplaceUrls.getSearchNearestUpdate(), HttpRequests.JSON_CONTENT_TYPE).run {
+        val baseUrl = URI(MarketplaceUrls.getSearchNearestUpdate())
+        val query = buildString {
+          append("os=${buildEncodedOsParameter()}")
+          append("&arch=${buildEncodedArchParameter()}")
+        }
+        val url = baseUrl.withQuery(query).toString()
+
+        return HttpRequests.post(url, HttpRequests.JSON_CONTENT_TYPE).run {
           productNameAsUserAgent()
           throwStatusCodeException(throwExceptions)
           connect {
@@ -541,11 +545,12 @@ class MarketplaceRequests(private val coroutineScope: CoroutineScope) : PluginIn
   fun executePluginSearch(query: String, count: Int, includeUpgradeToCommercialIde: Boolean): List<PluginUiModel> {
     val activeProductCode = ApplicationInfoImpl.getShadowInstanceImpl().build.productCode
     val suggestedIdeCode = PluginAdvertiserService.getSuggestedCommercialIdeCode(activeProductCode)
-
     val includeIncompatible = includeUpgradeToCommercialIde && suggestedIdeCode != null
 
-    val marketplaceSearchPluginData = HttpRequests
-      .request(MarketplaceUrls.getSearchPluginsUrl(query, count, includeIncompatible))
+    val marketplaceSearchPluginData = HttpRequests.request(
+      MarketplaceUrls.getSearchPluginsUrl(query, count, includeIncompatible)
+    )
+      .productNameAsUserAgent()
       .setHeadersViaTuner()
       .throwStatusCodeException(false)
       .connect {
@@ -747,10 +752,15 @@ class MarketplaceRequests(private val coroutineScope: CoroutineScope) : PluginIn
       val data = objectMapper.writeValueAsString(CompatibleUpdateForModuleRequest(module))
 
       @Suppress("DEPRECATION")
-      return HttpRequests.post(
-        MarketplaceUrls.getSearchCompatibleUpdatesUrl(),
-        HttpRequests.JSON_CONTENT_TYPE,
-      ).productNameAsUserAgent()
+      val baseUrl = URI(MarketplaceUrls.getSearchCompatibleUpdatesUrl())
+      val query = buildString {
+        append("os=${buildEncodedOsParameter()}")
+        append("&arch=${buildEncodedArchParameter()}")
+      }
+      val url = baseUrl.withQuery(query).toString()
+
+      return HttpRequests.post(url, HttpRequests.JSON_CONTENT_TYPE)
+        .productNameAsUserAgent()
         .throwStatusCodeException(false)
         .connect {
           it.write(data)
