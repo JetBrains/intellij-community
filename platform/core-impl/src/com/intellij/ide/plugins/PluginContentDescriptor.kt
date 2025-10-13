@@ -17,6 +17,7 @@ class PluginContentDescriptor(@JvmField val modules: List<ModuleItem>) {
     val configFile: String?,
     internal val descriptorContent: CharArray?,
     val loadingRule: ModuleLoadingRule,
+    private val requiredIfAvailable: PluginModuleId?,
   ) {
     /**
      * all content module descriptors are assigned during plugin descriptor loading

@@ -470,7 +470,9 @@ class PluginMainDescriptor(
           moduleId = PluginModuleId(elem.name, namespace),
           configFile = configFile,
           descriptorContent = elem.embeddedDescriptorContent,
-          loadingRule = elem.loadingRule.convert())
+          loadingRule = elem.loadingRule.convert(),
+          requiredIfAvailable = elem.requiredIfAvailable?.let { PluginModuleId(it, PluginModuleId.JETBRAINS_NAMESPACE) },
+        )
       }
     }
     
