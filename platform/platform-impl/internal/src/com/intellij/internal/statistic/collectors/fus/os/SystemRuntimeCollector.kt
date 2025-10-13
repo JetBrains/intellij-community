@@ -19,6 +19,7 @@ import com.intellij.util.currentJavaVersion
 import com.intellij.util.system.CpuArch
 import com.intellij.util.ui.UIUtil
 import com.sun.management.OperatingSystemMXBean
+import com.jetbrains.JBR
 import org.jetbrains.annotations.ApiStatus
 import java.io.IOException
 import java.lang.management.ManagementFactory
@@ -29,14 +30,14 @@ import kotlin.math.roundToInt
 
 @ApiStatus.Internal
 class SystemRuntimeCollector : ApplicationUsagesCollector() {
-  private val GROUP = EventLogGroup("system.runtime", 21)
+  private val GROUP = EventLogGroup("system.runtime", 22)
 
   private val COLLECTORS = listOf("Serial", "Parallel", "CMS", "G1", "Z", "Shenandoah", "Epsilon", "Other")
   private val ARCHITECTURES = listOf("x86", "x86_64", "arm64", "other", "unknown")
   private val VENDORS = listOf("JetBrains", "Apple", "Oracle", "Sun", "IBM", "Azul", "Other")
   private val VM_OPTIONS = listOf("Xmx", "Xms", "SoftRefLRUPolicyMSPerMB", "ReservedCodeCacheSize")
   private val SYSTEM_PROPERTIES = listOf("splash", "nosplash")
-  private val RENDERING_PIPELINES = listOf("Metal", "OpenGL")
+  private val RENDERING_PIPELINES = listOf("Metal", "Vulkan", "Other")
   @Suppress("SpellCheckingInspection")
   private val OS_VMS = listOf("none", "xen", "kvm", "vmware", "hyperv", "other", "unknown")
 
@@ -94,7 +95,7 @@ class SystemRuntimeCollector : ApplicationUsagesCollector() {
     val (javaAgents, nativeAgents) = countAgents()
     result += AGENTS_COUNT.metric(javaAgents, nativeAgents)
 
-    // proper detection is implemented only for macOS
+    // proper detection is implemented only for Metal and Vulkan
     if (SystemInfo.isMac) result += RENDERING.metric(getRenderingPipelineName())
 
     result += OS_VM.metric(getOsVirtualization())
@@ -143,7 +144,10 @@ class SystemRuntimeCollector : ApplicationUsagesCollector() {
     return "Other"
   }
 
-  private fun getRenderingPipelineName() = if (UIUtil.isMetalRendering()) "Metal" else "OpenGL"
+  private fun getRenderingPipelineName() =
+    if (UIUtil.isMetalRendering()) "Metal"
+    else if (JBR.isVulkanSupported() && JBR.getVulkan().isPresentationEnabled) "Vulkan"
+    else "Other"
 
   private fun getJavaVendor(): String =
     when {
