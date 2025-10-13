@@ -12,9 +12,6 @@ import com.intellij.openapi.vfs.VfsUtilCore;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.platform.eel.EelDescriptor;
 import com.intellij.platform.eel.EelPlatformKt;
-import com.intellij.platform.eel.provider.EelProviderUtil;
-import com.intellij.platform.eel.provider.LocalEelDescriptor;
-import com.intellij.platform.eel.provider.utils.EelUtilsKt;
 import com.intellij.terminal.ui.TerminalWidget;
 import com.intellij.util.EnvironmentRestorer;
 import com.intellij.util.SystemProperties;
@@ -122,15 +119,7 @@ public final class LocalOptionsConfigurer {
     Map<String, String> envs = isWindows ? CollectionFactory.createCaseInsensitiveStringMap() : new HashMap<>();
     EnvironmentVariablesData envData = TerminalProjectOptionsProvider.getInstance(project).getEnvData();
     if (envData.isPassParentEnvs()) {
-      if (eelDescriptor == LocalEelDescriptor.INSTANCE) {
-        // Use the default environment variables when running locally.
-        // Calling `fetchLoginShellEnvVariables(eelDescriptor)` retrieves shell environment variables
-        // via `com.intellij.util.EnvironmentUtil.getEnvironmentMap`, which can break PATH.
-        envs.putAll(System.getenv());
-      }
-      else {
-        envs.putAll(fetchLoginShellEnvVariables(eelDescriptor));
-      }
+      envs.putAll(TerminalStartupKt.fetchMinimalEnvironmentVariablesBlocking(eelDescriptor));
       EnvironmentRestorer.restoreOverriddenVars(envs);
       if (envs.isEmpty()) {
         LOG.warn("Empty parent environment for " + shellCommand + " on (" + eelDescriptor.getMachine().getName() + ")");
@@ -201,9 +190,5 @@ public final class LocalOptionsConfigurer {
 
   private static @NotNull String getShellPath(@NotNull Project project) {
     return TerminalProjectOptionsProvider.getInstance(project).getShellPath();
-  }
-
-  private static Map<String, String> fetchLoginShellEnvVariables(@NotNull EelDescriptor eelDescriptor) {
-    return EelUtilsKt.fetchLoginShellEnvVariablesBlocking(EelProviderUtil.toEelApiBlocking(eelDescriptor).getExec());
   }
 }

@@ -168,7 +168,7 @@ class TerminalProjectOptionsProvider(val project: Project) : PersistentStateComp
       return "powershell.exe"
     }
     val eelApi = eelDescriptor.toEelApi()
-    val envs = if (eelDescriptor == LocalEelDescriptor) System.getenv() else eelApi.exec.fetchLoginShellEnvVariables()
+    val envs = eelApi.fetchMinimalEnvironmentVariables()
     val candidates = listOfNotNull(
       envs["SHELL"],
       "/bin/zsh".takeIf { eelApi.platform.isMac },
