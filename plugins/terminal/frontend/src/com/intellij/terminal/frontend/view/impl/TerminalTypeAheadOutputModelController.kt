@@ -20,7 +20,9 @@ import org.jetbrains.plugins.terminal.block.util.TerminalDataContextUtils.isRewo
 import org.jetbrains.plugins.terminal.session.TerminalContentUpdatedEvent
 import org.jetbrains.plugins.terminal.session.TerminalCursorPositionChangedEvent
 import org.jetbrains.plugins.terminal.session.TerminalOutputEvent
+import org.jetbrains.plugins.terminal.view.TerminalShellIntegration
 import java.lang.Runnable
+import java.util.concurrent.CompletableFuture
 
 /**
  * Implementation of the [TerminalOutputModelController] that supports type-ahead.
@@ -34,7 +36,7 @@ import java.lang.Runnable
 internal class TerminalTypeAheadOutputModelController(
   private val project: Project,
   private val outputModel: MutableTerminalOutputModel,
-  private val blocksModel: TerminalBlocksModel,
+  private val shellIntegrationFuture: CompletableFuture<TerminalShellIntegration>,
   coroutineScope: CoroutineScope,
 ) : TerminalOutputModelController, TerminalTypeAhead {
   override val model: MutableTerminalOutputModel = outputModel
@@ -56,7 +58,9 @@ internal class TerminalTypeAheadOutputModelController(
   }
 
   private fun isTypeAheadEnabled(): Boolean {
-    return Registry.`is`("terminal.type.ahead", false) && blocksModel.isCommandTypingMode()
+    val enabledInRegistry = Registry.`is`("terminal.type.ahead", false)
+    val inCommandTypingMode = shellIntegrationFuture.getNow(null)?.blocksModel?.isCommandTypingMode() == true
+    return enabledInRegistry && inCommandTypingMode
   }
 
   override fun type(string: String) {
@@ -73,7 +77,8 @@ internal class TerminalTypeAheadOutputModelController(
   override fun backspace() {
     if (!isTypeAheadEnabled()) return
 
-    val lastBlock = blocksModel.blocks.lastOrNull()
+    val shellIntegration = shellIntegrationFuture.getNow(null)!!  // isTypeAheadEnabled should guarantee that it is available
+    val lastBlock = shellIntegration.blocksModel.blocks.lastOrNull()
     val cursorOffset = outputModel.cursorOffset
     val commandStartOffset = lastBlock?.commandStartOffset
     if (lastBlock == null || (commandStartOffset != null && cursorOffset <= commandStartOffset) || cursorOffset == outputModel.startOffset) {
