@@ -56,36 +56,34 @@ class MutableTerminalOutputModelImpl(
   private var isTypeAhead: Boolean = false
 
   override val immutableText: CharSequence
-    get() = document.immutableCharSequence
+    get() = immutableTextImpl(document)
 
   override val lineCount: Int
-    get() = document.lineCount
+    get() = lineCountImpl(document)
 
   override val modificationStamp: Long
-    get() = document.modificationStamp
+    get() = modificationStampImpl(document)
 
   override val startOffset: TerminalOffset
-    get() = relativeOffset(0)
+    get() = TerminalOffset.of(trimmedCharsCount)
 
   override val firstLine: TerminalLineIndex
     get() = TerminalLineIndex.of(trimmedLinesCount)
 
-  private fun relativeOffset(offset: Int): TerminalOffset = TerminalOffset.of(trimmedCharsCount + offset)
+  private fun relativeOffset(offset: Int): TerminalOffset =
+    TerminalOffset.of(trimmedCharsCount + offset)
 
-  override fun getLineByOffset(offset: TerminalOffset): TerminalLineIndex = TerminalLineIndex.of(trimmedLinesCount + document.getLineNumber(offset.toRelative()))
+  override fun getLineByOffset(offset: TerminalOffset): TerminalLineIndex =
+    getLineByOffsetImpl(trimmedLinesCount, document, offset.toRelative())
 
-  override fun getStartOfLine(line: TerminalLineIndex): TerminalOffset = relativeOffset(document.getLineStartOffset(line.toRelative()))
+  override fun getStartOfLine(line: TerminalLineIndex): TerminalOffset =
+    getStartOfLineImpl(trimmedCharsCount, document, line.toRelative())
 
-  override fun getEndOfLine(line: TerminalLineIndex, includeEOL: Boolean): TerminalOffset {
-    var result = document.getLineEndOffset(line.toRelative())
-    if (includeEOL && result < document.textLength) {
-      ++result
-    }
-    return relativeOffset(result)
-  }
+  override fun getEndOfLine(line: TerminalLineIndex, includeEOL: Boolean): TerminalOffset =
+    getEndOfLineImpl(trimmedCharsCount, document, line.toRelative(), includeEOL)
 
   override fun getText(start: TerminalOffset, end: TerminalOffset): String =
-    document.getText(TextRange(start.toRelative(), end.toRelative()))
+    getTextImpl(document, start.toRelative(), end.toRelative())
 
   private fun TerminalOffset.toRelative(): Int = (this - startOffset).toInt()
 
@@ -516,40 +514,66 @@ class TerminalOutputModelSnapshotImpl(
 ) : TerminalOutputModelSnapshot {
 
   override val immutableText: CharSequence
-    get() = document.immutableCharSequence
+    get() = immutableTextImpl(document)
 
   override val lineCount: Int
-    get() = document.lineCount
+    get() = lineCountImpl(document)
 
   override val modificationStamp: Long
-    get() = document.modificationStamp
+    get() = modificationStampImpl(document)
 
   override val startOffset: TerminalOffset
-    get() = relativeOffset(0)
+    get() = TerminalOffset.of(trimmedCharsCount)
 
   override val firstLine: TerminalLineIndex
     get() = TerminalLineIndex.of(trimmedLinesCount)
 
-  private fun relativeOffset(offset: Int): TerminalOffset = TerminalOffset.of(trimmedCharsCount + offset)
+  override fun getLineByOffset(offset: TerminalOffset): TerminalLineIndex =
+    getLineByOffsetImpl(trimmedLinesCount, document, offset.toRelative())
 
-  override fun getLineByOffset(offset: TerminalOffset): TerminalLineIndex = TerminalLineIndex.of(trimmedLinesCount + document.getLineNumber(offset.toRelative()))
+  override fun getStartOfLine(line: TerminalLineIndex): TerminalOffset =
+    getStartOfLineImpl(trimmedCharsCount, document, line.toRelative())
 
-  override fun getStartOfLine(line: TerminalLineIndex): TerminalOffset = relativeOffset(document.getLineStartOffset(line.toRelative()))
-
-  override fun getEndOfLine(line: TerminalLineIndex, includeEOL: Boolean): TerminalOffset {
-    var result = document.getLineEndOffset(line.toRelative())
-    if (includeEOL && result < document.textLength) {
-      ++result
-    }
-    return relativeOffset(result)
-  }
+  override fun getEndOfLine(line: TerminalLineIndex, includeEOL: Boolean): TerminalOffset =
+    getEndOfLineImpl(trimmedCharsCount, document, line.toRelative(), includeEOL)
 
   override fun getText(start: TerminalOffset, end: TerminalOffset): String =
-    document.getText(TextRange(start.toRelative(), end.toRelative()))
+    getTextImpl(document, start.toRelative(), end.toRelative())
 
   private fun TerminalOffset.toRelative(): Int = (this - startOffset).toInt()
 
   private fun TerminalLineIndex.toRelative(): Int = (this - firstLine).toInt()
 }
+
+private fun immutableTextImpl(document: Document): CharSequence = document.immutableCharSequence
+
+private fun lineCountImpl(document: Document): Int = document.lineCount
+
+private fun modificationStampImpl(document: Document): Long = document.modificationStamp
+
+private fun getLineByOffsetImpl(trimmedLinesCount: Long, document: Document, relativeOffset: Int): TerminalLineIndex =
+  TerminalLineIndex.of(trimmedLinesCount + document.getLineNumber(relativeOffset))
+
+private fun getStartOfLineImpl(trimmedCharsCount: Long, document: Document, relativeLine: Int): TerminalOffset =
+  TerminalOffset.of(trimmedCharsCount + document.getLineStartOffset(relativeLine))
+
+private fun getEndOfLineImpl(
+  trimmedCharsCount: Long,
+  document: Document,
+  relativeLine: Int,
+  includeEOL: Boolean,
+): TerminalOffset {
+  var result = document.getLineEndOffset(relativeLine)
+  if (includeEOL && result < document.textLength) {
+    ++result
+  }
+  return TerminalOffset.of(trimmedCharsCount + result)
+}
+
+private fun getTextImpl(
+  document: Document,
+  relativeStart: Int,
+  relativeEnd: Int,
+): String = document.getText(TextRange(relativeStart, relativeEnd))
 
 private val LOG = logger<MutableTerminalOutputModelImpl>()
