@@ -18,6 +18,7 @@ import com.intellij.platform.ijent.fs.IjentFileSystemApi
 import com.intellij.platform.ijent.fs.IjentFileSystemPosixApi
 import kotlinx.coroutines.*
 import kotlinx.coroutines.flow.Flow
+import kotlinx.coroutines.flow.flow
 import java.util.concurrent.atomic.AtomicReference
 
 /**
@@ -113,8 +114,19 @@ private class IjentFailSafeFileSystemPosixApiImpl(
     }
   }
 
-  override suspend fun walkDirectory(options: EelFileSystemApi.WalkDirectoryOptions): Flow<WalkDirectoryEntryResult> {
-    return holder.withDelegateRetrying { walkDirectory(options) }
+  override suspend fun walkDirectory(options: EelFileSystemApi.WalkDirectoryOptions): Flow<WalkDirectoryEntryResult> = flow {
+    val seen = HashSet<EelPath>()
+    holder.withDelegateRetrying {
+      walkDirectory(options).collect { entry ->
+        val path = when (entry) {
+          is WalkDirectoryEntryResult.Error -> entry.error.where
+          is WalkDirectoryEntryResult.Ok -> entry.value.path
+        }
+        if (seen.add(path)) {
+          emit(entry)
+        }
+      }
+    }
   }
 
   override suspend fun listDirectory(
