@@ -90,7 +90,7 @@ fun loadDescriptorFromDir(
 ): PluginMainDescriptor? {
   try {
     val dataLoader = LocalFsDataLoader(dir)
-    val input = Files.newInputStream(dir.resolve(descriptorRelativePath))
+    val input = Files.readAllBytes(dir.resolve(descriptorRelativePath))
     val descriptor = loadDescriptorFromStream(
       input = input,
       loadingContext = loadingContext,
@@ -163,7 +163,7 @@ fun loadDescriptorFromJar(
 }
 
 private fun loadDescriptorFromStream(
-  input: InputStream,
+  input: ByteArray,
   loadingContext: PluginDescriptorLoadingContext,
   pathResolver: PathResolver,
   dataLoader: DataLoader,
@@ -783,7 +783,7 @@ private class MixedDirAndJarDataLoader(
   override val emptyDescriptorIfCannotResolve: Boolean
     get() = true
 
-  override fun load(path: String, pluginDescriptorSourceOnly: Boolean): InputStream? {
+  override fun load(path: String, pluginDescriptorSourceOnly: Boolean): ByteArray? {
     val effectivePath = if (path[0] == '/') path.substring(1) else path
     for ((index, item) in files.withIndex()) {
       if (jarOnly || item.path.endsWith(".jar")) {
@@ -798,7 +798,7 @@ private class MixedDirAndJarDataLoader(
       }
       else {
         try {
-          return Files.newInputStream(item.file.resolve(effectivePath))
+          return Files.readAllBytes(item.file.resolve(effectivePath))
         }
         catch (_: NoSuchFileException) {
         }
@@ -1173,12 +1173,12 @@ internal fun testOrDeprecatedLoadDescriptorFromResource(
   val dataLoader: DataLoader
   val basePath: Path
   try {
-    val input: InputStream
+    val input: ByteArray
     when {
       URLUtil.FILE_PROTOCOL == resource.protocol -> {
         basePath = file.parent.parent
         dataLoader = LocalFsDataLoader(basePath)
-        input = Files.newInputStream(file)
+        input = Files.readAllBytes(file)
       }
       URLUtil.JAR_PROTOCOL == resource.protocol -> {
         val resolver = pool.load(file)

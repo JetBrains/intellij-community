@@ -65,7 +65,7 @@ internal class ModuleBasedPluginXmlPathResolver(
   override fun loadXIncludeReference(
     dataLoader: DataLoader,
     path: String,
-  ): XIncludeLoader.LoadedXIncludeReference? {
+  ): LoadedXIncludeReference? {
     return fallbackResolver.loadXIncludeReference(
       dataLoader = dataLoader,
       path = path,

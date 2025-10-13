@@ -2,7 +2,6 @@
 package com.intellij.ide.plugins
 
 import org.jetbrains.annotations.ApiStatus
-import java.io.InputStream
 import java.nio.file.Files
 import java.nio.file.NoSuchFileException
 import java.nio.file.Path
@@ -14,7 +13,7 @@ interface DataLoader {
 
   fun isExcludedFromSubSearch(jarFile: Path): Boolean = false
 
-  fun load(path: String, pluginDescriptorSourceOnly: Boolean): InputStream?
+  fun load(path: String, pluginDescriptorSourceOnly: Boolean): ByteArray?
 
   override fun toString(): String
 }
@@ -24,9 +23,9 @@ class LocalFsDataLoader(@JvmField val basePath: Path) : DataLoader {
   override val emptyDescriptorIfCannotResolve: Boolean
     get() = true
 
-  override fun load(path: String, pluginDescriptorSourceOnly: Boolean): InputStream? {
+  override fun load(path: String, pluginDescriptorSourceOnly: Boolean): ByteArray? {
     try {
-      return Files.newInputStream(basePath.resolve(path))
+      return Files.readAllBytes(basePath.resolve(path))
     }
     catch (_: NoSuchFileException) {
       return null

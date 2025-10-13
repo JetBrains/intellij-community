@@ -22,6 +22,7 @@ import com.intellij.openapi.util.IntellijInternalApi
 import com.intellij.openapi.util.text.HtmlChunk
 import com.intellij.platform.ide.bootstrap.ZipFilePoolImpl
 import com.intellij.platform.plugins.parser.impl.LoadPathUtil
+import com.intellij.platform.plugins.parser.impl.LoadedXIncludeReference
 import com.intellij.platform.plugins.parser.impl.PluginDescriptorBuilder
 import com.intellij.platform.plugins.parser.impl.PluginDescriptorFromXmlStreamConsumer
 import com.intellij.platform.plugins.parser.impl.PluginDescriptorReaderContext
@@ -29,8 +30,8 @@ import com.intellij.platform.plugins.parser.impl.XIncludeLoader
 import com.intellij.platform.plugins.parser.impl.consume
 import com.intellij.platform.plugins.testFramework.PluginSetTestBuilder
 import com.intellij.platform.plugins.testFramework.isModuleSetPath
-import com.intellij.platform.plugins.testFramework.resolveModuleSetPath
 import com.intellij.platform.plugins.testFramework.loadRawPluginDescriptorInTest
+import com.intellij.platform.plugins.testFramework.resolveModuleSetPath
 import com.intellij.platform.runtime.product.ProductMode
 import com.intellij.util.lang.UrlClassLoader
 import org.jetbrains.intellij.build.BuildPaths
@@ -40,9 +41,8 @@ import org.jetbrains.jps.model.java.JpsJavaDependencyScope
 import org.jetbrains.jps.model.java.JpsJavaExtensionService
 import org.jetbrains.jps.model.module.JpsModule
 import org.jetbrains.jps.model.module.JpsModuleSourceRoot
-import java.io.InputStream
+import java.nio.file.Files
 import java.nio.file.Path
-import kotlin.io.path.exists
 import kotlin.io.path.inputStream
 import kotlin.io.path.name
 import kotlin.io.path.pathString
@@ -323,19 +323,19 @@ class PluginDependenciesValidator private constructor(
   private fun getModuleName(outputDir: Path): String? = outputDir.name.takeIf { outputDir.parent.name == "module-output" }
 
   private inner class PluginMainModuleFromSourceXIncludeLoader(private val layout: PluginLayoutDescription): XIncludeLoader {
-    override fun loadXIncludeReference(path: String): XIncludeLoader.LoadedXIncludeReference? {
+    override fun loadXIncludeReference(path: String): LoadedXIncludeReference? {
       // Handle external library paths
       if (path in options.pathsIncludedFromLibrariesViaXiInclude || path.startsWith("META-INF/tips-")) {
         //todo: support loading from libraries
-        return XIncludeLoader.LoadedXIncludeReference("<idea-plugin/>".byteInputStream(), "dummy tag for external $path")
+        return LoadedXIncludeReference("<idea-plugin/>".encodeToByteArray(), "dummy tag for external $path")
       }
 
       // Handle module set files using shared resolution logic
       if (isModuleSetPath(path)) {
         val fileName = path.substringAfterLast('/')
         val resolvedPath = resolveModuleSetPath(fileName, BuildPaths.ULTIMATE_HOME)
-        if (resolvedPath.exists()) {
-          return XIncludeLoader.LoadedXIncludeReference(resolvedPath.inputStream(), resolvedPath.pathString)
+        if (Files.exists(resolvedPath)) {
+          return LoadedXIncludeReference(Files.readAllBytes(resolvedPath), resolvedPath.pathString)
         }
       }
 
@@ -345,7 +345,7 @@ class PluginDependenciesValidator private constructor(
         .mapNotNull { project.findModuleByName(it) }
         .flatMap { it.productionSourceRoots }
         .firstNotNullOfOrNull { it.findFile(path) }
-        ?.let { XIncludeLoader.LoadedXIncludeReference(it.inputStream(), it.pathString) }
+        ?.let { LoadedXIncludeReference(Files.readAllBytes(it), it.pathString) }
     }
 
     override fun toString(): String {
@@ -357,10 +357,10 @@ class PluginDependenciesValidator private constructor(
     private val jpsModule: JpsModule,
     private val parentXIncludeLoader: PluginMainModuleFromSourceXIncludeLoader,
   ): XIncludeLoader {
-    override fun loadXIncludeReference(path: String): XIncludeLoader.LoadedXIncludeReference? {
+    override fun loadXIncludeReference(path: String): LoadedXIncludeReference? {
       val file = jpsModule.productionSourceRoots.firstNotNullOfOrNull { it.findFile(path) }
       if (file != null) {
-        return XIncludeLoader.LoadedXIncludeReference(file.inputStream(), file.pathString)
+        return LoadedXIncludeReference(Files.readAllBytes(file), file.pathString)
       }
       return parentXIncludeLoader.loadXIncludeReference(path)
     }
@@ -379,7 +379,7 @@ class PluginDependenciesValidator private constructor(
 
     private val embeddedContentModules = embeddedContentModules.toSet()
 
-    override fun loadXIncludeReference(dataLoader: DataLoader, path: String): XIncludeLoader.LoadedXIncludeReference? {
+    override fun loadXIncludeReference(dataLoader: DataLoader, path: String): LoadedXIncludeReference? {
       return xIncludeLoader.loadXIncludeReference(path)
     }
 
@@ -437,7 +437,7 @@ private fun JpsModuleSourceRoot.findFile(relativePath: String): Path? {
 }
 
 private class LoadFromSourceDataLoader(private val mainPluginModule: JpsModule) : DataLoader {
-  override fun load(path: String, pluginDescriptorSourceOnly: Boolean): InputStream {
+  override fun load(path: String, pluginDescriptorSourceOnly: Boolean): ByteArray {
     TODO("not implemented")
   }
 

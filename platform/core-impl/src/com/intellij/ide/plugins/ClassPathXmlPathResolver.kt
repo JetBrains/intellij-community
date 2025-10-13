@@ -8,8 +8,6 @@ import com.intellij.util.lang.UrlClassLoader
 import com.intellij.util.xml.dom.createNonCoalescingXmlStreamReader
 import org.codehaus.stax2.XMLStreamReader2
 import org.jetbrains.annotations.ApiStatus.Internal
-import java.io.ByteArrayInputStream
-import java.io.InputStream
 
 @Internal
 class ClassPathXmlPathResolver(
@@ -20,15 +18,15 @@ class ClassPathXmlPathResolver(
   override val isFlat: Boolean
     get() = true
 
-  override fun loadXIncludeReference(dataLoader: DataLoader, path: String): XIncludeLoader.LoadedXIncludeReference? {
-    val input: InputStream?
+  override fun loadXIncludeReference(dataLoader: DataLoader, path: String): LoadedXIncludeReference? {
+    val input: ByteArray?
     if (classLoader is UrlClassLoader) {
-      input = classLoader.getResourceAsBytes(path, true)?.let(::ByteArrayInputStream)
+      input = classLoader.getResourceAsBytes(path, true)
     }
     else {
-      input = classLoader.getResourceAsStream(path)
+      input = classLoader.getResourceAsStream(path)?.use { it.readBytes() }
     }
-    return XIncludeLoader.LoadedXIncludeReference(input ?: return null, dataLoader.toString())
+    return LoadedXIncludeReference(input ?: return null, dataLoader.toString())
   }
 
   override fun resolveModuleFile(readContext: PluginDescriptorReaderContext, dataLoader: DataLoader, path: String): PluginDescriptorBuilder {

@@ -16,8 +16,7 @@ internal class NonShareableJavaZipFilePool : ZipEntryResolverPool {
   override fun load(file: Path): EntryResolver = object : EntryResolver {
     private val zipFile = JBZipFile(file)
 
-    override fun loadZipEntry(path: String): InputStream? =
-      zipFile.getEntry(if (path[0] == '/') path.substring(1) else path)?.inputStream
+    override fun loadZipEntry(path: String): ByteArray? = zipFile.getEntry(if (path[0] == '/') path.substring(1) else path)?.inputStream?.use(InputStream::readBytes)
 
     override fun close() = zipFile.close()
   }
