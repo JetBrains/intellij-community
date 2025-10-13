@@ -49,11 +49,11 @@ sealed class AbstractTerminalOutputModelImpl(
 
   protected fun relativeOffset(offset: Int): TerminalOffset = TerminalOffset.of(trimmedCharsCount + offset)
 
-  fun lineByOffset(offset: TerminalOffset): TerminalLineIndex = TerminalLineIndex.of(trimmedLinesCount + document.getLineNumber(offset.toRelative()))
+  fun getLineByOffset(offset: TerminalOffset): TerminalLineIndex = TerminalLineIndex.of(trimmedLinesCount + document.getLineNumber(offset.toRelative()))
 
-  fun startOffset(line: TerminalLineIndex): TerminalOffset = relativeOffset(document.getLineStartOffset(line.toRelative()))
+  fun getStartOfLine(line: TerminalLineIndex): TerminalOffset = relativeOffset(document.getLineStartOffset(line.toRelative()))
 
-  fun endOffset(line: TerminalLineIndex, includeEOL: Boolean): TerminalOffset {
+  fun getEndOfLine(line: TerminalLineIndex, includeEOL: Boolean): TerminalOffset {
     var result = document.getLineEndOffset(line.toRelative())
     if (includeEOL && result < document.textLength) {
       ++result
@@ -101,7 +101,7 @@ class MutableTerminalOutputModelImpl(
 
   private var isTypeAhead: Boolean = false
 
-  override fun snapshot(): TerminalOutputModelSnapshot =
+  override fun takeSnapshot(): TerminalOutputModelSnapshot =
     TerminalOutputModelSnapshotImpl((document as DocumentImpl).freeze(), trimmedCharsCount, trimmedLinesCount, cursorOffset)
 
   override fun updateContent(absoluteLineIndex: Long, text: String, styles: List<StyleRange>) {
@@ -525,7 +525,7 @@ class TerminalOutputModelSnapshotImpl(
   override val cursorOffset: TerminalOffset,
 ) : AbstractTerminalOutputModelImpl(document), TerminalOutputModelSnapshot {
 
-  override fun snapshot(): TerminalOutputModelSnapshot = this
+  override fun takeSnapshot(): TerminalOutputModelSnapshot = this
 
   override val cursorOffsetState: StateFlow<TerminalOffset> = MutableStateFlow(cursorOffset).asStateFlow()
 

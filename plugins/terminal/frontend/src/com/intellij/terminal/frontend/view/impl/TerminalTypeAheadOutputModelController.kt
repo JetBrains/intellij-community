@@ -226,8 +226,8 @@ private fun MutableTerminalOutputModel.backspace() {
 
 private fun TerminalOutputModel.getRemainingLinePart(): @NlsSafe String {
   val cursorOffset = cursorOffset
-  val line = lineByOffset(cursorOffset)
-  val lineEnd = endOffset(line)
+  val line = getLineByOffset(cursorOffset)
+  val lineEnd = getEndOfLine(line)
   val remainingLinePart = getText(cursorOffset, lineEnd)
   return remainingLinePart
 }

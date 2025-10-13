@@ -35,13 +35,13 @@ sealed interface TerminalOutputModel {
 
   fun addListener(parentDisposable: Disposable, listener: TerminalOutputModelListener)
 
-  fun snapshot(): TerminalOutputModelSnapshot
+  fun takeSnapshot(): TerminalOutputModelSnapshot
 
-  fun lineByOffset(offset: TerminalOffset): TerminalLineIndex
+  fun getLineByOffset(offset: TerminalOffset): TerminalLineIndex
 
-  fun startOffset(line: TerminalLineIndex): TerminalOffset
+  fun getStartOfLine(line: TerminalLineIndex): TerminalOffset
 
-  fun endOffset(line: TerminalLineIndex, includeEOL: Boolean = false): TerminalOffset
+  fun getEndOfLine(line: TerminalLineIndex, includeEOL: Boolean = false): TerminalOffset
 
   fun getText(start: TerminalOffset, end: TerminalOffset): String
 

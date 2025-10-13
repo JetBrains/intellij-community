@@ -103,7 +103,7 @@ internal class BackendTerminalHyperlinkHighlighter(
     outputModel.addListener(coroutineScope.asDisposable(), object : TerminalOutputModelListener {
       override fun afterContentChanged(model: TerminalOutputModel, startOffset: TerminalOffset, isTypeAhead: Boolean) {
         val existingPendingTask = pendingTask
-        val startLine = model.lineByOffset(startOffset)
+        val startLine = model.getLineByOffset(startOffset)
         val dirtyRegionStart = if (existingPendingTask == null) {
           startLine
         }
@@ -175,7 +175,7 @@ internal class BackendTerminalHyperlinkHighlighter(
       isInAlternateBuffer = isInAlternateBuffer,
       task = pendingTask,
       filter = currentFilter,
-      outputModel = outputModel.snapshot(),
+      outputModel = outputModel.takeSnapshot(),
       continueCondition = { makesSenseToContinue(it) },
     )
     currentTaskState.value = TaskState(currentTaskRunner = newTaskRunner, pendingTask = null)
@@ -226,7 +226,7 @@ private fun newHighlightTask(
   startLine: TerminalLineIndex,
 ): HighlightTask {
   val endLineInclusive: TerminalLineIndex = outputModel.lastLine
-  val startOffset: TerminalOffset = outputModel.startOffset(startLine)
+  val startOffset: TerminalOffset = outputModel.getStartOfLine(startLine)
   return HighlightTask(
     startLine.toAbsolute(),
     startOffset.toAbsolute(),
@@ -421,8 +421,8 @@ private class HighlightTaskRunner(
     val minOffset = TerminalOffset.of(results.minOf { it.absoluteStartOffset })
     val maxOffset = TerminalOffset.of(results.maxOf { it.absoluteEndOffset })
     append(minOffset).append("-").append(maxOffset)
-    val minLine = outputModel.lineByOffset(minOffset)
-    val maxLine = outputModel.lineByOffset(maxOffset)
+    val minLine = outputModel.getLineByOffset(minOffset)
+    val maxLine = outputModel.getLineByOffset(maxOffset)
     append(", lines ").append(minLine).append("-").append(maxLine)
     append(" and IDs ")
     val minId = results.minOf { it.id.value }
@@ -498,13 +498,13 @@ private class HypertextFromFrozenTerminalOutputModelAdapter(private val model: T
   override val lineCount: Int
     get() = model.lineCount
 
-  override fun getLineStartOffset(lineIndex: Int): Int = model.startOffset(model.relativeLine(lineIndex)).toRelative(model)
+  override fun getLineStartOffset(lineIndex: Int): Int = model.getStartOfLine(model.relativeLine(lineIndex)).toRelative(model)
 
   override fun getLineText(lineIndex: Int): String = model.getLineText(model.relativeLine(lineIndex))
 }
 
 private fun TerminalOutputModelSnapshot.getLineText(line: TerminalLineIndex): String =
-  getText(startOffset(line), endOffset(line, includeEOL = true))
+  getText(getStartOfLine(line), getEndOfLine(line, includeEOL = true))
 
 /**
  * Indicates the number of lines processed in one batch.

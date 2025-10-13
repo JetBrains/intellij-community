@@ -82,7 +82,7 @@ internal class TerminalHeuristicsBasedCommandFinishTracker(
   private fun updateCurLineInfo() {
     val lineInfo = curLineInfo
     val cursorOffset = outputModel.cursorOffset
-    val cursorLine = outputModel.lineByOffset(cursorOffset)
+    val cursorLine = outputModel.getLineByOffset(cursorOffset)
     val textBeforeCursor = getTextBeforeCursor(cursorOffset)
 
     when {
@@ -108,7 +108,7 @@ internal class TerminalHeuristicsBasedCommandFinishTracker(
     // Then we can consider that command is finished
     modelUpdatesFlow.debounce(PROMPT_CHECKING_DELAY).first {
       val cursorOffset = outputModel.cursorOffset
-      val cursorLine = outputModel.lineByOffset(cursorOffset)
+      val cursorLine = outputModel.getLineByOffset(cursorOffset)
 
       cursorLine != lineInfo.line && getTextBeforeCursor(cursorOffset) == lineInfo.promptText
     }
@@ -119,8 +119,8 @@ internal class TerminalHeuristicsBasedCommandFinishTracker(
   }
 
   private fun getTextBeforeCursor(cursorOffset: TerminalOffset): String? {
-    val lineNumber = outputModel.lineByOffset(cursorOffset)
-    val lineStartOffset = outputModel.startOffset(lineNumber)
+    val lineNumber = outputModel.getLineByOffset(cursorOffset)
+    val lineStartOffset = outputModel.getStartOfLine(lineNumber)
 
     val length = cursorOffset - lineStartOffset
     return if (length <= MAX_LINE_LENGTH) {
