@@ -8,13 +8,9 @@ import org.jetbrains.annotations.ApiStatus
 @ApiStatus.Internal
 object SplitDebuggerMode {
   @JvmStatic
-  fun useFeProxy(): Boolean {
-    val testProperty = System.getProperty("xdebugger.toolwindow.split.for.tests")
-    if (testProperty != null) {
-      return testProperty.toBoolean()
-    }
-    return useFeProxyCachedValue
-  }
+  fun useFeProxy(): Boolean = useFeProxyCachedValue
+
+  const val SPLIT_DEBUGGER_KEY: String = "xdebugger.toolwindow.split"
 }
 
 private val useFeProxyCachedValue by lazy {
