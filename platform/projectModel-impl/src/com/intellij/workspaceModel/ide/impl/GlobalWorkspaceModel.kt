@@ -48,7 +48,33 @@ import kotlin.system.measureTimeMillis
 
 @OptIn(EntityStorageInstrumentationApi::class)
 @ApiStatus.Internal
+class GlobalWorkspaceModels internal constructor() {
+  internal var virtualFileManager: VirtualFileUrlManager = IdeVirtualFileUrlManagerImpl()
+
+  internal val globalWorkspaceModelCache = GlobalWorkspaceModelCache.getInstance()?.apply {
+    setVirtualFileUrlManager(virtualFileManager)
+  }
+
+  /**
+   * Returns instance of [VirtualFileUrlManager] which should be used to create [VirtualFileUrl] instances to be stored in entities added in
+   * the global application-level storage.
+   * It's important not to use this function for entities stored in the main [WorkspaceModel][WorkspaceModel]
+   * storage, because this would create a memory leak: these instances won't be removed when the project is closed.
+   */
+  @ApiStatus.Internal
+  fun getVirtualFileUrlManager(): VirtualFileUrlManager = virtualFileManager
+
+  @TestOnly
+  fun resetVirtualFileUrlManager() {
+    virtualFileManager = IdeVirtualFileUrlManagerImpl()
+    globalWorkspaceModelCache?.setVirtualFileUrlManager(virtualFileManager)
+  }
+}
+
+@OptIn(EntityStorageInstrumentationApi::class)
+@ApiStatus.Internal
 class GlobalWorkspaceModel internal constructor(
+  private val globalWorkspaceModels: GlobalWorkspaceModels,
   /**
    * Despite the prefix `Global`, the IDE can have multiple workspace models per isolated environment, such as WSL and Docker containers.
    *
@@ -68,11 +94,6 @@ class GlobalWorkspaceModel internal constructor(
 
   // Marker indicating that changes came from global storage
   internal var isFromGlobalWorkspaceModel: Boolean = false
-  private var virtualFileManager: VirtualFileUrlManager = IdeVirtualFileUrlManagerImpl()
-  private val globalWorkspaceModelCache = GlobalWorkspaceModelCache.getInstance()?.apply {
-    setVirtualFileUrlManager(virtualFileManager)
-    registerCachePartition(internalEnvironmentName)
-  }
   private val globalEntitiesFilter = { entitySource: EntitySource -> entitySource is GlobalStorageEntitySource }
 
   val entityStorage: VersionedEntityStorageImpl
@@ -88,7 +109,9 @@ class GlobalWorkspaceModel internal constructor(
   init {
     LOG.debug { "Loading global workspace model" }
 
-    val cache = globalWorkspaceModelCache
+    val cache = globalWorkspaceModels.globalWorkspaceModelCache?.apply {
+      registerCachePartition(internalEnvironmentName)
+    }
     val mutableEntityStorage: MutableEntityStorage = when {
       cache != null -> {
         val activity = StartUpMeasurer.startActivity("global cache loading")
@@ -112,7 +135,7 @@ class GlobalWorkspaceModel internal constructor(
     entityStorage = VersionedEntityStorageImpl(ImmutableEntityStorage.empty())
 
     val callback = JpsGlobalModelSynchronizer.getInstance()
-      .apply { setVirtualFileUrlManager(virtualFileManager) }
+      .apply { setVirtualFileUrlManager(globalWorkspaceModels.virtualFileManager) }
       .loadInitialState(internalEnvironmentName, mutableEntityStorage, entityStorage, loadedFromCache)
     val changes = (mutableEntityStorage as MutableEntityStorageInstrumentation).collectChanges()
     entityStorage.replace(mutableEntityStorage.toSnapshot(), changes, mutableEntityStorage.collectSymbolicEntityIdsChanges(), {}, {})
@@ -175,12 +198,11 @@ class GlobalWorkspaceModel internal constructor(
    * storage, because this would create a memory leak: these instances won't be removed when the project is closed.
    */
   @ApiStatus.Internal
-  fun getVirtualFileUrlManager(): VirtualFileUrlManager = virtualFileManager
+  fun getVirtualFileUrlManager(): VirtualFileUrlManager = globalWorkspaceModels.virtualFileManager
 
   @TestOnly
   fun resetVirtualFileUrlManager() {
-    virtualFileManager = IdeVirtualFileUrlManagerImpl()
-    globalWorkspaceModelCache?.setVirtualFileUrlManager(virtualFileManager)
+    globalWorkspaceModels.resetVirtualFileUrlManager()
   }
 
   @RequiresWriteLock
@@ -206,7 +228,7 @@ class GlobalWorkspaceModel internal constructor(
 
     GlobalEntityBridgeAndEventHandler.getAllGlobalEntityHandlers(eelMachine).forEach { it.handleChangedEvents(change) }
 
-    globalWorkspaceModelCache?.scheduleCacheSave()
+    globalWorkspaceModels.globalWorkspaceModelCache?.scheduleCacheSave()
     isFromGlobalWorkspaceModel = true
     for (project in ProjectManager.getInstance().openProjects) {
       if (project.isDisposed || project.getEelDescriptor().machine != eelMachine) {
@@ -249,7 +271,7 @@ class GlobalWorkspaceModel internal constructor(
 
     filteredProject = sourceProject
     val entitiesCopyAtBuilder = copyEntitiesToEmptyStorage(WorkspaceModel.getInstance(sourceProject).currentSnapshot,
-                                                           virtualFileManager)
+                                                           globalWorkspaceModels.virtualFileManager)
     updateModel("Sync entities from project ${sourceProject.name} with global storage") { builder ->
       builder.replaceBySource(globalEntitiesFilter, entitiesCopyAtBuilder)
     }
@@ -401,6 +423,7 @@ private fun JpsGlobalFileEntitySource.copy(manager: VirtualFileUrlManager): JpsG
 @VisibleForTesting
 @Service(Service.Level.APP)
 class GlobalWorkspaceModelRegistry {
+  private val globalWorkspaceModels: GlobalWorkspaceModels by lazy { GlobalWorkspaceModels() }
   private val environmentToModel = ConcurrentHashMap<EelMachine, GlobalWorkspaceModel>()
 
   fun getGlobalModel(eelMachine: EelMachine): GlobalWorkspaceModel {
@@ -415,7 +438,7 @@ class GlobalWorkspaceModelRegistry {
       ?: throw IllegalArgumentException("Descriptor $protectedMachine must be registered before using in Workspace Model")
       InternalEnvironmentName.of(name)
     }
-    return environmentToModel.computeIfAbsent(protectedMachine) { GlobalWorkspaceModel(protectedMachine, internalEnvironmentName) }
+    return environmentToModel.computeIfAbsent(protectedMachine) { GlobalWorkspaceModel(globalWorkspaceModels, protectedMachine, internalEnvironmentName) }
   }
 
   fun getGlobalModelByEnvironmentName(name: InternalEnvironmentName): GlobalWorkspaceModel {
