@@ -29,6 +29,9 @@ class PluginContentDescriptor(@JvmField val modules: List<ModuleItem>) {
 
     fun requireDescriptor(): ContentModuleDescriptor = _descriptor ?: throw IllegalStateException("Descriptor is not set for $this")
 
+    /** note: the effective loading rule depends on the app environment context (e.g., frontend/backend/monolith mode) */
+    val defaultLoadingRule: ModuleLoadingRule get() = loadingRule
+
     /**
      * after the plugin is loaded, all descriptors are set
      */
