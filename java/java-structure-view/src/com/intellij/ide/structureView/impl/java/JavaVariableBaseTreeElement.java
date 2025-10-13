@@ -3,7 +3,6 @@ package com.intellij.ide.structureView.impl.java;
 
 import com.intellij.ide.util.treeView.smartTree.SortableTreeElement;
 import com.intellij.openapi.project.DumbService;
-import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.PsiSubstitutor;
 import com.intellij.psi.PsiVariable;
 import org.jetbrains.annotations.ApiStatus;
@@ -25,11 +24,9 @@ public abstract class JavaVariableBaseTreeElement<T extends PsiVariable> extends
     if (field == null) return "";
 
     final boolean dumb = DumbService.isDumb(field.getProject());
-    final String text = formatVariable(field,
-                                 SHOW_NAME | (dumb ? 0 : SHOW_TYPE) | TYPE_AFTER | (dumb ? 0 : SHOW_INITIALIZER),
-                                 PsiSubstitutor.EMPTY);
-    final int colon = text.indexOf(':');
-    return colon >= 0 ? text.substring(0, colon + 1) + ' ' + text.substring(colon + 1) : text;
+    return formatVariable(field,
+                          SHOW_NAME | (dumb ? 0 : SHOW_TYPE) | TYPE_AFTER | (dumb ? 0 : SHOW_INITIALIZER),
+                          PsiSubstitutor.EMPTY);
   }
 
   @Override

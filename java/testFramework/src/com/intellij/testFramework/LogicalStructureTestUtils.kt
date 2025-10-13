@@ -1,4 +1,4 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.testFramework
 
 import com.intellij.ide.projectView.PresentationData
@@ -70,7 +70,7 @@ fun assertLogicalStructure(
   expectedRoot.expectedStructureInitializer()
   if (!expectedRoot.isEqualTo(actualRoot, false)) {
     expectedRoot.synchronizeImportantElements(actualRoot)
-    throw ComparisonFailure("The models are not equals: ",
+    throw ComparisonFailure("The models are not equal: ",
                             expectedRoot.print("", false),
                             actualRoot.print("", false))
   }

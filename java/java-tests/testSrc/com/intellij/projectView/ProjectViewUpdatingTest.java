@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.projectView;
 
 import com.intellij.ide.projectView.PresentationData;
@@ -184,9 +184,9 @@ public class ProjectViewUpdatingTest extends BaseProjectViewTestCase {
           -PsiDirectory: package1
            -[Class1]
             +InnerClass
-            getValue():int
-            myField1:boolean
-            myField2:boolean
+            getValue(): int
+            myField1: boolean
+            myField2: boolean
            +Class2
        +External Libraries
       """, true);
@@ -212,9 +212,9 @@ public class ProjectViewUpdatingTest extends BaseProjectViewTestCase {
           -PsiDirectory: package1
            -[Class1]
             +InnerClass
-            getValue():int
-            myField1:boolean
-            myField2:boolean
+            getValue(): int
+            myField1: boolean
+            myField2: boolean
            +Class2
        +External Libraries
       """, true);
@@ -233,9 +233,9 @@ public class ProjectViewUpdatingTest extends BaseProjectViewTestCase {
           -PsiDirectory: package1
            -Class1
             +InnerClass
-            getValue():int
-            myField1:boolean
-            [myField2:boolean]
+            getValue(): int
+            myField1: boolean
+            [myField2: boolean]
            +Class2
        +External Libraries
       """, true);
@@ -263,9 +263,9 @@ public class ProjectViewUpdatingTest extends BaseProjectViewTestCase {
           -PsiDirectory: package1
            -Class1
             +InnerClass
-            getValue():int
-            [_firstField:boolean]
-            myField1:boolean
+            getValue(): int
+            [_firstField: boolean]
+            myField1: boolean
            +Class2
        +External Libraries
       """, true);
@@ -444,7 +444,7 @@ public class ProjectViewUpdatingTest extends BaseProjectViewTestCase {
                           "  -PsiDirectory: src\n" +
                           "   -PsiDirectory: name\n" + // com.company.name
                           "    -I\n" +
-                          "     m():void\n");
+                          "     m(): void\n");
 
     directory = createSubdirectory(directory, "a");
     // PSI listener is notified synchronously and starts modifying new tree model
@@ -458,7 +458,7 @@ public class ProjectViewUpdatingTest extends BaseProjectViewTestCase {
                           "    PsiDirectory: a\n" +
                           "    -PsiDirectory: name\n" +
                           "     -I\n" +
-                          "      m():void\n");
+                          "      m(): void\n");
 
     directory = createSubdirectory(directory, "b");
 
@@ -468,7 +468,7 @@ public class ProjectViewUpdatingTest extends BaseProjectViewTestCase {
                           "    PsiDirectory: b\n" + // a.b
                           "    -PsiDirectory: name\n" +
                           "     -I\n" +
-                          "      m():void\n");
+                          "      m(): void\n");
 
     directory = createSubdirectory(directory, "z");
 
@@ -478,7 +478,7 @@ public class ProjectViewUpdatingTest extends BaseProjectViewTestCase {
                           "    PsiDirectory: z\n" + // a.b.z
                           "    -PsiDirectory: name\n" +
                           "     -I\n" +
-                          "      m():void\n");
+                          "      m(): void\n");
   }
 
   private static void assertTreeEqual(@NotNull JTree tree, @NotNull String expected) {
