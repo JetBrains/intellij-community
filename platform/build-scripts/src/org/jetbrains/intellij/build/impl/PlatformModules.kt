@@ -605,7 +605,6 @@ private suspend fun processAndGetProductPluginContentModules(
 @Suppress("RemoveRedundantQualifierName")
 private val excludedPaths = java.util.Set.of(
   "/META-INF/ultimate.xml",
-  "/META-INF/ultimate-services.xml",
   "/META-INF/cwmBackendConnection.xml",
   "/META-INF/cwmConnectionFrontend.xml",
   "/META-INF/clientUltimate.xml",

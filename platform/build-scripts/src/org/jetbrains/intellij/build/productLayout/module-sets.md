@@ -29,7 +29,17 @@ A set of modules common to all ultimate IDEs.
 
 Includes observability features (coverage, profiling), IDE infrastructure (new UI onboarding, import settings, DAP, tips, registry cloud), and Language Server Protocol support.
 
+Includes the [commercial](#intellijmodulesetscommercialxml) module set.
+
 This set is used by WebStorm, GoLand, RustRover, RubyMine, PhpStorm, CLion, DataGrip, Rider, PyCharm Pro, Aqua, and Ultimate.
+
+### [intellij.moduleSets.commercial.xml](intellij.moduleSets.commercial.xml)
+
+A set of commercial platform modules required by all JetBrains commercial IDEs.
+
+Includes the commercial platform module and licensing functionality.
+
+This set is included in the [ide.ultimate](#intellijmodulesetsideultimatexml) set.
 
 ### [intellij.moduleSets.ide.trial.xml](intellij.moduleSets.ide.trial.xml)
 
