@@ -7,6 +7,7 @@ import com.intellij.ide.IdeBundle
 import com.intellij.ide.gdpr.Consent
 import com.intellij.ide.gdpr.ConsentOptions
 import com.intellij.ide.gdpr.ConsentSettingsUi
+import com.intellij.ide.gdpr.localConsents.LocalConsentOptions
 import com.intellij.ide.gdpr.trace.TraceConsentManager
 import com.intellij.ide.plugins.PluginManagerCore
 import com.intellij.ide.ui.UISettings
@@ -361,6 +362,11 @@ object AppUIUtil {
   }
 
   @JvmStatic
+  fun loadLocalConsentsAsConsentsForEditing(): List<Consent> {
+    return LocalConsentOptions.getLocalConsents()
+  }
+
+  @JvmStatic
   fun saveConsents(consents: List<Consent>) {
     if (consents.isEmpty()) {
       return
@@ -383,6 +389,11 @@ object AppUIUtil {
     else {
       options.setConsents(consents)
     }
+  }
+
+  @JvmStatic
+  fun saveConsentsAsLocalConsents(consents: List<Consent>) {
+    LocalConsentOptions.setLocalConsents(consents)
   }
 
   /**
