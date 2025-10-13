@@ -164,8 +164,14 @@ private fun getMessageByCoordinate(s: String, classLoader: ClassLoader, locale: 
     return first ?: s
   }
 
-  if (result.size == 2 && result[0].contains("{0}")) {
-    return result[0].replace("{0}", result[1])
+  val parameterPlaceholder = "{0}"
+
+  if (result.size == 2 && result[0].contains(parameterPlaceholder)) {
+    return result[0].replace(parameterPlaceholder, result[1])
+  }
+  else if (result.isNotEmpty() && result.last().contains(parameterPlaceholder)) {
+    val lastResult = result.last().replace(parameterPlaceholder, "")
+    return result.dropLast(1).joinToString(separator = "") + lastResult
   }
 
   return result.joinToString(separator = "")
