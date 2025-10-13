@@ -313,11 +313,19 @@ internal open class TerminalEventsHandlerImpl(
     return when {
       SwingUtilities.isLeftMouseButton(event) -> MouseButtonCodes.LEFT
       SwingUtilities.isMiddleMouseButton(event) -> MouseButtonCodes.MIDDLE
-      SwingUtilities.isRightMouseButton(
-        event) -> MouseButtonCodes.NONE  //we don't handle right mouse button as it used for the context menu invocation
-      event is MouseWheelEvent -> if (event.wheelRotation > 0) MouseButtonCodes.SCROLLUP else MouseButtonCodes.SCROLLDOWN
+      SwingUtilities.isRightMouseButton(event) -> {
+        // we don't handle the right mouse button as it used for the context menu invocation
+        MouseButtonCodes.NONE
+      }  
+      event is MouseWheelEvent -> wheelRotationToButtonCode(event.wheelRotation)
       else -> return MouseButtonCodes.NONE
     }
+  }
+
+  private fun wheelRotationToButtonCode(wheelRotation: Int): Int = when {
+    wheelRotation > 0 -> MouseButtonCodes.SCROLLUP
+    wheelRotation < 0 -> MouseButtonCodes.SCROLLDOWN
+    else -> MouseButtonCodes.NONE
   }
 
   private fun applyModifierKeys(event: MouseEvent, cb: Int): Int {
