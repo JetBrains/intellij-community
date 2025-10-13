@@ -810,9 +810,14 @@
     <extensionPoint qualifiedName="Pythonid.PythonPackageRequirementsTreeExtractorProvider"
                     interface="com.jetbrains.python.packaging.packageRequirements.PythonPackageRequirementsTreeExtractorProvider"
                     dynamic="true"/>
+
+    <extensionPoint qualifiedName="Pythonid.pyRunToolProvider"
+                    interface="com.jetbrains.python.run.features.PyRunToolProvider"
+                    dynamic="true"/>
   </extensionPoints>
 
   <extensions defaultExtensionNs="Pythonid">
+    <pyRunToolProvider implementation="com.jetbrains.python.sdk.uv.run.UvRunToolProvider"/>
     <evoTreeElementProvider id="UvEvoProvider"
                             order="first"
                             implementation="com.jetbrains.python.uv.sdk.evolution.UvSelectSdkProvider"/>

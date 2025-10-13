@@ -19,6 +19,7 @@ import com.jetbrains.python.run.AbstractPyCommonOptionsForm;
 import com.jetbrains.python.run.PyCommonOptionsFormData;
 import com.jetbrains.python.sdk.PySdkListCellRenderer;
 import com.jetbrains.python.sdk.legacy.PythonSdkUtil;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -160,6 +161,18 @@ public class PyIdeCommonOptionsForm implements AbstractPyCommonOptionsForm {
       return modules[0];
     }
     return null;
+  }
+
+  @ApiStatus.Internal
+  @Override
+  public @Nullable Boolean getUseRunTool() {
+    return null;
+  }
+
+  @ApiStatus.Internal
+  @Override
+  public void setUseRunTool(@Nullable Boolean useRunTool) {
+
   }
 
   @Override

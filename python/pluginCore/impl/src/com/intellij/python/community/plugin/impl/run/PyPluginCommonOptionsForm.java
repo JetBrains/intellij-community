@@ -17,6 +17,7 @@ import com.jetbrains.python.run.AbstractPyCommonOptionsForm;
 import com.jetbrains.python.run.PyCommonOptionsFormData;
 import com.jetbrains.python.sdk.PreferredSdkComparator;
 import com.jetbrains.python.sdk.legacy.PythonSdkUtil;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -168,6 +169,18 @@ public class PyPluginCommonOptionsForm implements AbstractPyCommonOptionsForm {
   @Override
   public Module getModule() {
     return content.moduleComboBox.getSelectedModule();
+  }
+
+  @ApiStatus.Internal
+  @Override
+  public @Nullable Boolean getUseRunTool() {
+    return null;
+  }
+
+  @ApiStatus.Internal
+  @Override
+  public void setUseRunTool(@Nullable Boolean useRunTool) {
+
   }
 
   @Override
