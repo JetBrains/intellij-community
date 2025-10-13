@@ -89,7 +89,6 @@ jvm_library(
     "//jps/model-api:model",
     "//platform/lang-core",
     "//platform/lang-impl",
-    "//libraries/cli-parser",
     "//platform/projectModel-api:projectModel",
     "//platform/platform-impl/concurrency",
     "//platform/testFramework",
@@ -132,6 +131,7 @@ jvm_library(
     "//platform/eel-provider",
     "//libraries/jbr",
     "@lib//:github-oshi-core",
+    ":libraries_cli-parser_provided",
   ]
 )
 ### auto-generated section `build intellij.performanceTesting` end

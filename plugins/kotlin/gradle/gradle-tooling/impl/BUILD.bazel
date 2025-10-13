@@ -54,7 +54,7 @@ jvm_library(
     "@lib//:junit4",
     "@lib//:kotlin-test-junit",
     "@lib//:kotlin-test",
-    "//platform/extensions",
+    ":platform_extensions_provided",
   ]
 )
 ### auto-generated section `build intellij.kotlin.gradle.tooling.impl` end
