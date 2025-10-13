@@ -5,13 +5,7 @@ import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.kotlin.analysis.api.KaContextParameterApi
 import org.jetbrains.kotlin.analysis.api.KaSession
 import org.jetbrains.kotlin.analysis.api.analyze
-import org.jetbrains.kotlin.analysis.api.components.containingDeclaration
-import org.jetbrains.kotlin.analysis.api.components.isUnitType
-import org.jetbrains.kotlin.analysis.api.components.resolveToCall
-import org.jetbrains.kotlin.analysis.api.components.resolveToSymbol
-import org.jetbrains.kotlin.analysis.api.components.resolveToSymbols
-import org.jetbrains.kotlin.analysis.api.components.returnType
-import org.jetbrains.kotlin.analysis.api.components.type
+import org.jetbrains.kotlin.analysis.api.components.*
 import org.jetbrains.kotlin.analysis.api.resolution.*
 import org.jetbrains.kotlin.analysis.api.symbols.*
 import org.jetbrains.kotlin.analysis.api.types.KaFunctionType
@@ -99,17 +93,18 @@ fun KtCallExpression.isImplicitInvokeCall(): Boolean? {
  *      A.foo() // symbol for `A`, and not for `A.Companion`, is returned
  * }
  * ```
+ * 
+ * For typealiased companion object references, returns `null`. 
+ * In this case, [KaSession.resolveToSymbol] already returns the symbol for the typealias, not for the companion object.
  */
 @OptIn(KaContextParameterApi::class)
 context(_: KaSession)
 fun KtReference.resolveCompanionObjectShortReferenceToContainingClassSymbol(): KaNamedClassSymbol? {
     if (this !is KtSimpleNameReference) return null
+    if (!isImplicitReferenceToCompanion()) return null
 
     val symbol = this.resolveToSymbol()
     if (symbol !is KaClassSymbol || symbol.classKind != KaClassKind.COMPANION_OBJECT) return null
-
-    // class name reference resolves to companion
-    if (expression.name == symbol.name?.asString()) return null
 
     val containingSymbol = symbol.containingDeclaration as? KaNamedClassSymbol
     return containingSymbol?.takeIf { it.companionObject == symbol }
