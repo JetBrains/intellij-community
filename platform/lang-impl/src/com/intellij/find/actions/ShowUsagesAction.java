@@ -48,6 +48,7 @@ import com.intellij.openapi.options.advanced.AdvancedSettings;
 import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.progress.util.ProgressIndicatorBase;
 import com.intellij.openapi.project.DumbAwareAction;
+import com.intellij.openapi.project.DumbService;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.DialogPanel;
 import com.intellij.openapi.ui.OnePixelDivider;
@@ -690,6 +691,17 @@ public final class ShowUsagesAction extends AnAction implements PopupAction, Hin
     MessageBusConnection messageBusConnection = project.getMessageBus().connect(usageView);
     messageBusConnection.subscribe(UsageFilteringRuleProvider.RULES_CHANGED, () -> rulesChanged(usageView, pingEDT, popup));
 
+    if (Registry.is("ide.usages.popup.analyzing.indicator.enable")) {
+      messageBusConnection.subscribe(DumbService.DUMB_MODE, new DumbService.DumbModeListener() {
+        @Override
+        public void exitDumbMode() {
+          ApplicationManager.getApplication().invokeLater(() -> {
+            showUsagesPopupData.header.disposeAnalyzingIcon();
+          });
+        }
+      });
+    }
+
     AtomicLong firstUsageAddedTS = new AtomicLong();
     AtomicBoolean tooManyResults = new AtomicBoolean();
     GlobalSearchScope everythingScope = GlobalSearchScope.everythingScope(project);
@@ -732,9 +744,10 @@ public final class ShowUsagesAction extends AnAction implements PopupAction, Hin
     UsageSearcher usageSearcher = actionHandler.createUsageSearcher();
     long searchStarted = System.nanoTime();
     CompletableFuture<Collection<Usage>> result = new CompletableFuture<>();
+
     FindUsagesManager.startProcessUsages(indicator, project, usageSearcher, collect, () -> ApplicationManager.getApplication().invokeLater(
       () -> {
-        showUsagesPopupData.header.disposeProcessIcon();
+        showUsagesPopupData.header.disposeSearchProcessIcon();
         pingEDT.ping(); // repaint status
         synchronized (usages) {
           findUsageSpan.setAttribute("number", usages.size());
