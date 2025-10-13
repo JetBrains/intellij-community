@@ -9,6 +9,7 @@ import org.jetbrains.plugins.terminal.block.reworked.TerminalOutputModel
 import org.jetbrains.plugins.terminal.session.TerminalGridSize
 import org.jetbrains.plugins.terminal.view.TerminalOutputModelsSet
 import org.jetbrains.plugins.terminal.view.TerminalSendTextBuilder
+import org.jetbrains.plugins.terminal.view.TerminalShellIntegration
 import javax.swing.JComponent
 
 @ApiStatus.Experimental
@@ -35,6 +36,10 @@ interface TerminalView {
   fun sendText(text: String)
 
   fun createSendTextBuilder(): TerminalSendTextBuilder
+
+  fun getShellIntegration(): TerminalShellIntegration?
+
+  suspend fun awaitShellIntegrationInitialized(): TerminalShellIntegration
 
   // todo
 
