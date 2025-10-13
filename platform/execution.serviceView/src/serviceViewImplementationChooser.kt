@@ -29,7 +29,7 @@ fun isNewFrontendServiceViewEnabled(): Boolean {
   // when it comes to testing either the debugger or service view.
   // Otherwise we have to maintain even more registry flag combinations compatible which does not make sense
   if (isSplitDebuggerEnabledInTestsCopyPaste()) return true
-
+  if (IdeProductMode.isMonolith) return false
   return isSplitServicesRegistryFlagOn() && isCurrentProductSupportSplitServiceView()
 }
 
