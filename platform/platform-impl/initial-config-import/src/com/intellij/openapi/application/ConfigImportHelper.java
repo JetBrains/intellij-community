@@ -13,9 +13,8 @@ import com.intellij.ide.startup.StartupActionScriptManager.ActionCommand;
 import com.intellij.ide.ui.laf.LookAndFeelThemeAdapterKt;
 import com.intellij.idea.AppMode;
 import com.intellij.openapi.application.impl.ApplicationInfoImpl;
-import com.intellij.openapi.application.migrations.Localization242Kt;
+import com.intellij.openapi.application.migrations.Localization242;
 import com.intellij.openapi.application.migrations.NotebooksMigration242;
-import com.intellij.openapi.application.migrations.PluginMigrationKt;
 import com.intellij.openapi.application.migrations.SpaceMigration252;
 import com.intellij.openapi.components.StoragePathMacros;
 import com.intellij.openapi.diagnostic.Logger;
@@ -917,8 +916,8 @@ public final class ConfigImportHelper {
     updateVMOptions(newConfigDir, log);
   }
 
-  public static void migrateLocalization(Path oldConfigDir, Path oldPluginsDir) {
-    Localization242Kt.enableL10nIfPluginInstalled(parseVersionFromConfig(oldConfigDir), oldPluginsDir);
+  public static void migrateLocalization(@NotNull Path oldConfigDir, @NotNull Path oldPluginsDir) {
+    Localization242.INSTANCE.enableL10nIfPluginInstalled(parseVersionFromConfig(oldConfigDir), oldPluginsDir);
   }
 
   private static List<ActionCommand> loadStartupActionScript(Path oldConfigDir, @Nullable Path oldIdeHome, Path oldPluginsDir) throws IOException {
@@ -1086,7 +1085,7 @@ public final class ConfigImportHelper {
     var downloadIds = toDownload.stream()
       .map(descriptor -> descriptor.getPluginId().getIdString())
       .collect(Collectors.joining("\n"));
-    var resultFile = newConfigDir.resolve(PluginMigrationKt.MIGRATION_INSTALLED_PLUGINS_TXT);
+    var resultFile = newConfigDir.resolve(InitialConfigImportState.MIGRATION_INSTALLED_PLUGINS_TXT);
     try {
       Files.writeString(resultFile, downloadIds);
     }

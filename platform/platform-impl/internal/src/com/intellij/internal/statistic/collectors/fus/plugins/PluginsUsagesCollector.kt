@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.internal.statistic.collectors.fus.plugins
 
 import com.intellij.ide.plugins.DisabledPluginsState.Companion.getDisabledIds
@@ -10,15 +10,16 @@ import com.intellij.internal.statistic.eventLog.events.EventFields
 import com.intellij.internal.statistic.service.fus.collectors.ApplicationUsagesCollector
 import com.intellij.internal.statistic.utils.getPluginInfoByDescriptor
 import com.intellij.internal.statistic.utils.getPluginInfoById
-import com.intellij.openapi.application.migrations.getMigrationInstalledPluginIds
+import com.intellij.openapi.application.InitialConfigImportState
+import com.intellij.openapi.application.PathManager
+import com.intellij.openapi.extensions.PluginId
+import java.nio.file.Files
 
 internal class PluginsUsagesCollector : ApplicationUsagesCollector() {
   private val GROUP = EventLogGroup("plugins", 11)
   private val DISABLED_PLUGIN = GROUP.registerEvent("disabled.plugin", EventFields.PluginInfo)
   private val ENABLED_NOT_BUNDLED_PLUGIN = GROUP.registerEvent("enabled.not.bundled.plugin", EventFields.PluginInfo)
-  private val UNSAFE_PLUGIN = GROUP.registerEvent("unsafe.plugin",
-                                                  EventFields.String("unsafe_id", emptyList()), EventFields.Boolean("enabled"))
-
+  private val UNSAFE_PLUGIN = GROUP.registerEvent("unsafe.plugin", EventFields.String("unsafe_id", emptyList()), EventFields.Boolean("enabled"))
   private val MIGRATION_INSTALLED_PLUGIN = GROUP.registerEvent("migration.installed.plugin", EventFields.PluginInfo)
   private val INCOMPATIBLE_PLUGIN = GROUP.registerEvent("incompatible.plugin", EventFields.PluginInfo)
 
@@ -32,45 +33,45 @@ internal class PluginsUsagesCollector : ApplicationUsagesCollector() {
     addAll(getIncompatiblePlugins())
   }
 
-  private fun getIncompatiblePlugins(): Collection<MetricEvent> {
-    return PluginManagerCore.getPluginSet().allPlugins
+  private fun getIncompatiblePlugins(): Collection<MetricEvent> =
+    PluginManagerCore.getPluginSet().allPlugins
       .filter { !it.isBundled && isIncompatible(it) }
       .map { INCOMPATIBLE_PLUGIN.metric(getPluginInfoById(it.pluginId)) }
-  }
 
-  private fun isIncompatible(it: IdeaPluginDescriptorImpl): Boolean {
-    return runCatching {
+  private fun isIncompatible(it: IdeaPluginDescriptorImpl): Boolean =
+    runCatching {
       PluginManagerCore.isIncompatible(it) // sometimes we cannot parse build numbers
     }.getOrDefault(true)
-  }
 
-  private fun getMigrationInstalledPlugins(): Collection<MetricEvent> {
-    return getMigrationInstalledPluginIds()
+  private fun getMigrationInstalledPlugins(): Collection<MetricEvent> =
+    getMigrationInstalledPluginIds()
       .distinct()
       .map { MIGRATION_INSTALLED_PLUGIN.metric(getPluginInfoById(it)) }
       .toSet()
-  }
 
-  private fun getDisabledPlugins(): Set<MetricEvent> {
-    return getDisabledIds()
+  private fun getMigrationInstalledPluginIds(): Collection<PluginId> =
+    runCatching {
+      val migratedPluginsPath = PathManager.getConfigDir().resolve(InitialConfigImportState.MIGRATION_INSTALLED_PLUGINS_TXT)
+      Files.readAllLines(migratedPluginsPath).distinct().map { PluginId.getId(it) }
+    }.getOrDefault(emptyList())
+
+  private fun getDisabledPlugins(): Set<MetricEvent> =
+    getDisabledIds()
       .map { DISABLED_PLUGIN.metric(getPluginInfoById(it)) }
       .toSet()
-  }
 
-  private fun getEnabledNonBundledPlugins(): Set<MetricEvent> {
-    return PluginManagerCore.loadedPlugins
+  private fun getEnabledNonBundledPlugins(): Set<MetricEvent> =
+    PluginManagerCore.loadedPlugins
       .filter { it.isEnabled && !it.isBundled }
       .map { getPluginInfoByDescriptor(it) }
       .map(ENABLED_NOT_BUNDLED_PLUGIN::metric)
       .toSet()
-  }
 
-  private fun getNotBundledPlugins(): Set<MetricEvent> {
-    return PluginManagerCore.plugins.asSequence()
+  private fun getNotBundledPlugins(): Set<MetricEvent> =
+    PluginManagerCore.plugins.asSequence()
       .filter { !it.isBundled && !getPluginInfoByDescriptor(it).isSafeToReport() }
       // This will be validated by list of plugin ids from server
       // and ONLY provided ids will be reported
       .map { UNSAFE_PLUGIN.metric(it.pluginId.idString, it.isEnabled) }
       .toSet()
-  }
 }

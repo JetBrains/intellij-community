@@ -15,6 +15,7 @@ object InitialConfigImportState {
   const val CONFIG_IMPORTED_IN_CURRENT_SESSION_KEY: String = "intellij.config.imported.in.current.session"
   const val CUSTOM_MARKER_FILE_NAME: String = "migrate.config"
   const val FRONTEND_PLUGINS_TO_MIGRATE_DIR_NAME: String = "frontend-to-migrate"
+  const val MIGRATION_INSTALLED_PLUGINS_TXT: String = "migration_installed_plugins.txt"
 
   // copy of `ConfigImportHelper#OPTIONS`
   private val OPTIONS: Array<String> = arrayOf(
