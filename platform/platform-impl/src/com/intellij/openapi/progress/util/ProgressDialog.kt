@@ -255,10 +255,12 @@ class ProgressDialog(
       if (window.isShowing) {
         return object : MyDialogWrapper(window) {
           override fun useLightPopup(): Boolean = false
+          override fun canRecordDialogId(): Boolean = false
         }
       }
       return object : MyDialogWrapper(progressWindow.myProject) {
         override fun useLightPopup(): Boolean = false
+        override fun canRecordDialogId(): Boolean = false
       }
     }
     // GTW-1384 - If the parent window is JOptionPane.getRootFrame() then invoke DialogWrapper(Component) instead of DialogWrapper(Project)
