@@ -2,8 +2,8 @@ package com.intellij.python.sdkConfigurator.frontend
 
 import androidx.compose.runtime.mutableStateSetOf
 import androidx.compose.runtime.snapshots.SnapshotStateSet
-import com.intellij.python.sdkConfigurator.common.ModuleName
-import com.intellij.python.sdkConfigurator.common.ModulesDTO
+import com.intellij.python.sdkConfigurator.common.impl.ModuleName
+import com.intellij.python.sdkConfigurator.common.impl.ModulesDTO
 import kotlinx.collections.immutable.ImmutableList
 import kotlinx.collections.immutable.PersistentMap
 import kotlinx.collections.immutable.persistentListOf

@@ -1,4 +1,4 @@
-package com.intellij.python.sdkConfigurator.common
+package com.intellij.python.sdkConfigurator.common.impl
 
 import com.intellij.platform.project.ProjectId
 import com.intellij.platform.rpc.topics.ProjectRemoteTopic
@@ -6,8 +6,11 @@ import fleet.rpc.RemoteApi
 import fleet.rpc.Rpc
 import kotlinx.serialization.Serializable
 
+/**
+ * Front calls back
+ */
 @Rpc
-interface SdkConfiguratorApi : RemoteApi<Unit> {
+interface SdkConfiguratorBackEndApi : RemoteApi<Unit> {
   /***
    * Configure SDK for all modules in [projectId] if their names in [onlyModules]
    */
@@ -17,7 +20,7 @@ interface SdkConfiguratorApi : RemoteApi<Unit> {
 typealias ModuleName = String
 
 /**
- * Ask user to choose from [ModulesDTO] and then call [SdkConfiguratorApi.configureSdkAutomatically]
+ * Ask user to choose from [ModulesDTO] and then call [SdkConfiguratorBackEndApi.configureSdkAutomatically]
  */
 val SHOW_SDK_CONFIG_UI_TOPIC: ProjectRemoteTopic<ModulesDTO> = ProjectRemoteTopic("PySDKConfigurationUITopic", ModulesDTO.serializer())
 

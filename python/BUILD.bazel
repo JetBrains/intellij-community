@@ -353,6 +353,7 @@ jvm_library(
     "//python/impl.helperLocator:community-helpersLocator",
     "//python/python-exec-service/execService.python",
     "//python/interpreters",
+    "//python/python-sdk-configurator/common",
   ],
   exports = [
     "//python/openapi:community",

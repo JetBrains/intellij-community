@@ -12,6 +12,6 @@
   </dependencies>
   <extensions defaultExtensionNs="com.intellij">
     <platform.rpc.projectRemoteTopicListener
-      implementation="com.intellij.python.sdkConfigurator.frontend.rpcBridge.TopicListener"/>
+      implementation="com.intellij.python.sdkConfigurator.frontend.rpcBridge.FrontendTopicListener"/>
   </extensions>
 </idea-plugin>

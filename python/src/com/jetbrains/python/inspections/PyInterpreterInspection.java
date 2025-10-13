@@ -45,7 +45,10 @@ import com.jetbrains.python.psi.LanguageLevel;
 import com.jetbrains.python.psi.PyFile;
 import com.jetbrains.python.psi.impl.PyBuiltinCache;
 import com.jetbrains.python.psi.types.TypeEvalContext;
-import com.jetbrains.python.sdk.*;
+import com.jetbrains.python.sdk.PyDetectedSdk;
+import com.jetbrains.python.sdk.PySdkExtKt;
+import com.jetbrains.python.sdk.PySdkPopupFactory;
+import com.jetbrains.python.sdk.PythonSdkType;
 import com.jetbrains.python.sdk.conda.PyCondaSdkCustomizer;
 import com.jetbrains.python.sdk.configuration.PyProjectSdkConfiguration;
 import com.jetbrains.python.sdk.configuration.PyProjectSdkConfigurationExtension;
@@ -68,6 +71,9 @@ import java.util.concurrent.TimeoutException;
 import java.util.function.Function;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
+
+import static com.intellij.python.sdkConfigurator.common.PublicApiKt.detectSdkForModulesIn;
+
 
 public final class PyInterpreterInspection extends PyInspection {
 
@@ -332,7 +338,7 @@ public final class PyInterpreterInspection extends PyInspection {
 
     private final @Nullable Module myModule;
 
-    public  InterpreterSettingsQuickFix(@Nullable Module module) {
+    public InterpreterSettingsQuickFix(@Nullable Module module) {
       myModule = module;
     }
 
@@ -429,7 +435,9 @@ public final class PyInterpreterInspection extends PyInspection {
 
     @Override
     public void applyFix(@NotNull Project project, @NotNull ProblemDescriptor descriptor) {
-      PyProjectSdkConfiguration.INSTANCE.configureSdkUsingExtension(myModule, myExtension);
+      if (! detectSdkForModulesIn(project)) {
+        PyProjectSdkConfiguration.INSTANCE.configureSdkUsingExtension(myModule, myExtension);
+      }
     }
 
     @Override

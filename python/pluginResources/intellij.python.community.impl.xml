@@ -19,6 +19,7 @@
     <module name="intellij.python.community.impl.installer"/>
     <module name="intellij.python.community.impl.venv"/>
     <module name="intellij.python.community.services.systemPython"/>
+    <module name="intellij.python.sdkConfigurator.common"/>
   </dependencies>
 
   <resource-bundle>messages.PyBundle</resource-bundle>
