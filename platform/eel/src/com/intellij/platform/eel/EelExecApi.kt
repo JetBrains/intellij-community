@@ -113,15 +113,20 @@ sealed interface EelExecApi {
   suspend fun fetchLoginShellEnvVariables(): Map<String, String> =
     when (this) {
       is EelExecPosixApi -> {
-        var now = 0L
-        // The previous implementation used the same timeout, and in the previous implementation it was chosen as a wild guess.
-        val cacheDuration = 10_000_000_000L
-        val expireAt = cacheForObsoleteEnvVarExpireAt.compute(descriptor) { _, expireAt ->
-          now = System.nanoTime()
-          if (expireAt != null && expireAt <= now) expireAt
-          else now + cacheDuration
-        }!!
-        environmentVariables().loginInteractive().onlyActual(expireAt <= now).eelIt().await()
+        if (this is LocalEelExecApi) {
+          environmentVariables().minimal().eelIt().await()
+        }
+        else {
+          var now = 0L
+          // The previous implementation used the same timeout, and in the previous implementation it was chosen as a wild guess.
+          val cacheDuration = 10_000_000_000L
+          val expireAt = cacheForObsoleteEnvVarExpireAt.compute(descriptor) { _, expireAt ->
+            now = System.nanoTime()
+            if (expireAt != null && expireAt <= now) expireAt
+            else now + cacheDuration
+          }!!
+          environmentVariables().loginInteractive().onlyActual(expireAt <= now).eelIt().await()
+        }
       }
       is EelExecWindowsApi -> environmentVariables().eelIt().await()
     }
@@ -403,5 +408,9 @@ suspend fun EelExecApi.getShell(): Pair<EelPath, String> {
   }
   return Pair(EelPath.parse(shell, descriptor), cmdArg)
 }
+
+/** Hopefully, it's a temporary workaround. */
+@ApiStatus.Internal
+interface LocalEelExecApi
 
 private val cacheForObsoleteEnvVarExpireAt = Collections.synchronizedMap(WeakHashMap<EelDescriptor, Long>())

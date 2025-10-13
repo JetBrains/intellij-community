@@ -39,7 +39,7 @@ import kotlin.io.path.*
 class EelLocalExecPosixApi(
   private val platform: EelPlatform.Posix,
   private val userInfo: EelUserPosixInfo,
-) : EelExecPosixApi {
+) : EelExecPosixApi, LocalEelExecApi {
   override suspend fun spawnProcess(
     generatedBuilder: EelExecApi.ExecuteProcessOptions,
   ): EelPosixProcess {
@@ -183,7 +183,7 @@ class EelLocalExecPosixApi(
 }
 
 @ApiStatus.Internal
-class EelLocalExecWindowsApi : EelExecWindowsApi {
+class EelLocalExecWindowsApi : EelExecWindowsApi, LocalEelExecApi {
   override suspend fun spawnProcess(
     generatedBuilder: EelExecApi.ExecuteProcessOptions,
   ): EelWindowsProcess {

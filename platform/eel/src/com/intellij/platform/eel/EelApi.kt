@@ -13,6 +13,9 @@ import org.jetbrains.annotations.ApiStatus
 @ApiStatus.Experimental
 interface LocalEelApi : EelApi
 
+/**
+ * The entry point of Eel API.
+ */
 @ApiStatus.Experimental
 interface EelApi {
   @get:ApiStatus.Experimental
