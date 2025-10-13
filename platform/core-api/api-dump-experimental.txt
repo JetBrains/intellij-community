@@ -210,13 +210,8 @@ com.intellij.openapi.application.Application
 - *:isWriteThread():Z
 - *:runWriteIntentReadAction(com.intellij.openapi.util.ThrowableComputable):java.lang.Object
 f:com.intellij.openapi.application.CoroutinesKt
-- *sf:backgroundWriteAction(kotlin.jvm.functions.Function0,kotlin.coroutines.Continuation):java.lang.Object
 - *sf:getEdtImmediate(kotlinx.coroutines.Dispatchers):kotlin.coroutines.CoroutineContext
-- *sf:getUI(kotlinx.coroutines.Dispatchers):kotlin.coroutines.CoroutineContext
 - *sf:getUiImmediate(kotlinx.coroutines.Dispatchers):kotlin.coroutines.CoroutineContext
-- *sf:getUiWithModelAccess(kotlinx.coroutines.Dispatchers):kotlin.coroutines.CoroutineContext
-- *sf:getUiWithModelAccessImmediate(kotlinx.coroutines.Dispatchers):kotlin.coroutines.CoroutineContext
-- *sf:readAndBackgroundWriteAction(kotlin.jvm.functions.Function1,kotlin.coroutines.Continuation):java.lang.Object
 - *sf:readAndBackgroundWriteActionUndispatched(kotlin.jvm.functions.Function1,kotlin.coroutines.Continuation):java.lang.Object
 - *sf:readAndEdtWriteActionUndispatched(kotlin.jvm.functions.Function1,kotlin.coroutines.Continuation):java.lang.Object
 - *sf:writeAction(kotlin.jvm.functions.Function0,kotlin.coroutines.Continuation):java.lang.Object

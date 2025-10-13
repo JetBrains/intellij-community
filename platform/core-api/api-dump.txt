@@ -449,6 +449,20 @@ com.intellij.openapi.application.BaseExpirableExecutor
 - a:expireWith(com.intellij.openapi.Disposable):com.intellij.openapi.application.BaseExpirableExecutor
 - a:submit(java.lang.Runnable):org.jetbrains.concurrency.CancellablePromise
 - a:submit(java.util.concurrent.Callable):org.jetbrains.concurrency.CancellablePromise
+f:com.intellij.openapi.application.CoroutinesKt
+- sf:backgroundWriteAction(kotlin.jvm.functions.Function0,kotlin.coroutines.Continuation):java.lang.Object
+- sf:constrainedReadAction(com.intellij.openapi.application.ReadConstraint[],kotlin.jvm.functions.Function0,kotlin.coroutines.Continuation):java.lang.Object
+- sf:constrainedReadActionBlocking(com.intellij.openapi.application.ReadConstraint[],kotlin.jvm.functions.Function0,kotlin.coroutines.Continuation):java.lang.Object
+- sf:constrainedReadAndWriteAction(com.intellij.openapi.application.ReadConstraint[],kotlin.jvm.functions.Function1,kotlin.coroutines.Continuation):java.lang.Object
+- sf:edtWriteAction(kotlin.jvm.functions.Function0,kotlin.coroutines.Continuation):java.lang.Object
+- sf:getEDT(kotlinx.coroutines.Dispatchers):kotlin.coroutines.CoroutineContext
+- sf:getUI(kotlinx.coroutines.Dispatchers):kotlin.coroutines.CoroutineContext
+- sf:readAction(kotlin.jvm.functions.Function0,kotlin.coroutines.Continuation):java.lang.Object
+- sf:readActionBlocking(kotlin.jvm.functions.Function0,kotlin.coroutines.Continuation):java.lang.Object
+- sf:readAndBackgroundWriteAction(kotlin.jvm.functions.Function1,kotlin.coroutines.Continuation):java.lang.Object
+- sf:readAndEdtWriteAction(kotlin.jvm.functions.Function1,kotlin.coroutines.Continuation):java.lang.Object
+- sf:smartReadAction(com.intellij.openapi.project.Project,kotlin.jvm.functions.Function0,kotlin.coroutines.Continuation):java.lang.Object
+- sf:smartReadActionBlocking(com.intellij.openapi.project.Project,kotlin.jvm.functions.Function0,kotlin.coroutines.Continuation):java.lang.Object
 com.intellij.openapi.application.ModalityStateListener
 - java.util.EventListener
 - beforeModalityStateChanged(Z,java.lang.Object):V

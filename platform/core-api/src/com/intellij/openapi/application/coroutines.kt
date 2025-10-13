@@ -161,7 +161,6 @@ suspend fun <T> readAndWriteAction(action: ReadAndWriteScope.() -> ReadResult<T>
 /**
  * Same as [readAndEdtWriteAction], but invokes write actions on a background thread instead of EDT.
  */
-@Experimental
 suspend fun <T> readAndBackgroundWriteAction(action: ReadAndWriteScope.() -> ReadResult<T>): T {
   return readWriteActionSupport().executeReadAndWriteAction(emptyArray(), false, false, action)
 }
@@ -293,19 +292,13 @@ suspend fun <T> writeAction(action: () -> T): T {
  * Runs given [action] under [write lock][com.intellij.openapi.application.Application.runWriteAction].
  *
  * This function dispatches the [action] by [Dispatchers.Default] within the [context modality state][asContextElement].
- * Acquiring the write-lock happens in blocking manner,
- * i.e. [runWriteAction][com.intellij.openapi.application.Application.runWriteAction] call will block
- * until all currently running read actions are finished.
+ * The lock is acquired in suspending manner, so the calling coroutine will be suspended during the acquisition.
  *
- * NB This function is an API stub.
- * The implementation will change once running write actions would be allowed on other threads.
- * This function exists to make it possible to use it in suspending contexts
- * before the platform is ready to handle write actions differently.
+ * A pending background write action can be diagnosed by an inspection of _coroutine dumps_.
  *
  * @see readAndBackgroundWriteAction
  * @see com.intellij.openapi.command.writeCommandAction
  */
-@Experimental
 suspend fun <T> backgroundWriteAction(action: () -> T): T {
   return readWriteActionSupport().runWriteAction(action)
 }
@@ -343,12 +336,27 @@ private fun readWriteActionSupport() = ApplicationManager.getApplication().getSe
 fun ModalityState.asContextElement(): CoroutineContext = asContextElement()
 
 /**
- * UI dispatcher which dispatches onto Swing event dispatching thread within the [context modality state][asContextElement].
- * The computations scheduled by this dispatcher **are protected** by the Write-Intent lock, and they are allowed to upgrade to write actions.
+ * A coroutine dispatcher that executes coroutines on the AWT Event Dispatching Thread
+ * within the [context modality state][asContextElement] and with write-intent lock acquired.
+ *
+ * Use-cases:
+ * - Use this dispatcher if you are working with the legacy IntelliJ Platform model code (PSI, VFS, Documents) which requires model access on EDT.
+ * - Use [Dispatchers.UI] if you are working with the UI and you do not touch the IntelliJ Platform model.
+ *
+ * ### Locking Behavior
+ * This dispatcher is different from [Dispatchers.UI] in the aspect of handling the Read/Write lock:
+ * the computations scheduled by this dispatcher **are protected by the Write-Intent lock** (see [Application]),
+ * hence they are allowed to acquire write actions atomically.
+ *
+ * ### Ordering Guarantees
+ * This dispatcher is fair: two `launch(Dispatchers.EDT)` are executed in the order of their scheduling.
+ *
+ * _NB:_ There are no ordering guarantees between `launch(Dispatchers.EDT)` and `launch(Dispatchers.UI)` coroutines:
+ * when scheduled sequentially, either one can execute first.
+ *
+ * ### Modality Behavior
  *
  * If no context modality state is specified, then the coroutine is dispatched within [ModalityState.nonModal] modality state.
- *
- * Prefer [Dispatchers.UI] for computations on EDT.
  */
 @Suppress("UnusedReceiverParameter")
 val Dispatchers.EDT: CoroutineContext get() = coroutineSupport().uiDispatcher(UiDispatcherKind.LEGACY, false)
@@ -367,15 +375,28 @@ val Dispatchers.EDT: CoroutineContext get() = coroutineSupport().uiDispatcher(Ui
 fun Dispatchers.ui(kind: UiDispatcherKind = UiDispatcherKind.STRICT, immediate: Boolean = false): CoroutineContext = coroutineSupport().uiDispatcher(kind, immediate)
 
 /**
- * UI dispatcher which dispatches onto Swing event dispatching thread within the [context modality state][asContextElement].
- * The computations scheduled by this dispatcher are **not** protected by any lock, and it is forbidden to initiate Read or Write actions.
+ * A coroutine dispatcher that executes coroutines on the AWT Event Dispatching Thread
+ * within the [context modality state][asContextElement] and without write-intent lock acquired.
+ *
+ * Use-cases:
+ * - Use this dispatcher if you are working with the UI and you do not touch the IntelliJ Platform model.
+ * - Use [Dispatchers.EDT] if you are working with the IntelliJ Platform model on EDT.
+ *
+ * ### Locking Behavior
+ * This dispatcher is different from [Dispatchers.EDT] in the aspect of handling the Read/Write lock:
+ * the computations scheduled by this dispatcher **are not protected by the Write-Intent lock** (see [Application]),
+ * and it is forbidden to initiate read or write actions inside.
+ *
+ * ### Ordering Guarantees
+ * This dispatcher is fair: two `launch(Dispatchers.UI)` are executed in the order of their scheduling.
+ *
+ * _NB:_ There are no ordering guarantees between `launch(Dispatchers.EDT)` and `launch(Dispatchers.UI)` coroutines:
+ * when scheduled sequentially, either one can execute first.
+ *
+ * ### Modality Behavior
  *
  * If no context modality state is specified, then the coroutine is dispatched within [ModalityState.nonModal] modality state.
- *
- * Use [Dispatchers.UI] when in doubt, use [Dispatchers.Main] if the coroutine doesn't care about IntelliJ Platform model (PSI, VFS, etc.),
- * e.g., when it can be executed outside of IJ process.
  */
-@get:Experimental
 @Suppress("UnusedReceiverParameter")
 val Dispatchers.UI: CoroutineContext get() = coroutineSupport().uiDispatcher(kind = UiDispatcherKind.STRICT, immediate = false)
 
@@ -385,7 +406,7 @@ val Dispatchers.UI: CoroutineContext get() = coroutineSupport().uiDispatcher(kin
  *
  * If no context modality state is specified, then the coroutine is dispatched within [ModalityState.nonModal] modality state.
  */
-@get:Experimental
+@get:Internal
 @Suppress("UnusedReceiverParameter")
 val Dispatchers.UiWithModelAccess: CoroutineContext get() = coroutineSupport().uiDispatcher(kind = UiDispatcherKind.RELAX, immediate = false)
 
@@ -407,7 +428,7 @@ val Dispatchers.UiImmediate: CoroutineContext get() = coroutineSupport().uiDispa
  * The version of [Dispatchers.UiWithModelAccess] which has properties of [MainCoroutineDispatcher.immediate]
  */
 @Suppress("UnusedReceiverParameter")
-@get:Experimental
+@get:Internal
 val Dispatchers.UiWithModelAccessImmediate: CoroutineContext get() = coroutineSupport().uiDispatcher(kind = UiDispatcherKind.RELAX, immediate = true)
 
 private fun coroutineSupport() = ApplicationManager.getApplication().getService(CoroutineSupport::class.java)
