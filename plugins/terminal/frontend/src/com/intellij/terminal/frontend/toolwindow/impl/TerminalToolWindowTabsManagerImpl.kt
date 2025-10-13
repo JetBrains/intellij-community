@@ -179,7 +179,7 @@ internal class TerminalToolWindowTabsManagerImpl(
     manager.addContent(tab.content)
 
     val selectTab = {
-      manager.setSelectedContent(tab.content)
+      manager.setSelectedContent(tab.content, requestFocus)
     }
     if (requestFocus && !toolWindow.isActive) {
       toolWindow.activate(selectTab, false, false)
