@@ -8,8 +8,8 @@ from pycharm.behave_runner import _register_null_formatter
 
 def test_scenarios_to_run():
     my_config = configuration.Configuration()
-    helpers_root = Path(__file__).parent.parent.parent
-    path = helpers_root / "testResources" / "behave_examples" / "feature_with_rules"
+    helpers_root = Path(__file__).parent.parent.parent.parent
+    path = helpers_root / "helpersTestResources" / "behave_examples" / "feature_with_rules"
     my_config.paths = [str(path / "rule.feature")]
     base_dir = str(path)
 
