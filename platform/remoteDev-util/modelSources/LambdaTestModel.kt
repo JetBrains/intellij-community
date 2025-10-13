@@ -43,10 +43,15 @@ object LambdaTestModel : Ext(LambdaTestRoot) {
     field("cause", LambdaRdTestSessionExceptionCause.nullable)
   }
 
+  private val LambdaRdKeyValueEntry = structdef {
+    field("key", string)
+    field("value", string)
+  }
 
   private val LambdaRdTestActionParameters = structdef {
     field("reference", string)
-    field("parameters", immutableList(string).nullable)
+    // Can't use maps in struct
+    field("parameters", immutableList(LambdaRdKeyValueEntry).nullable)
   }
 
   private val LambdaRdSerializedLambdaParameters = structdef {

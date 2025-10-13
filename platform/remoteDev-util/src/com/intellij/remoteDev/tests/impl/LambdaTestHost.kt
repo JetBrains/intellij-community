@@ -26,6 +26,7 @@ import com.intellij.remoteDev.tests.impl.utils.getArtifactsFileName
 import com.intellij.remoteDev.tests.impl.utils.runLogged
 import com.intellij.remoteDev.tests.impl.utils.waitSuspending
 import com.intellij.remoteDev.tests.modelGenerated.LambdaRdIdeType
+import com.intellij.remoteDev.tests.modelGenerated.LambdaRdKeyValueEntry
 import com.intellij.remoteDev.tests.modelGenerated.LambdaRdTestSession
 import com.intellij.remoteDev.tests.modelGenerated.lambdaTestModel
 import com.intellij.ui.AppIcon
@@ -83,9 +84,9 @@ open class LambdaTestHost(coroutineScope: CoroutineScope) {
     const val TEST_MODULE_ID_PROPERTY_NAME: String = "lambda.test.module"
 
     abstract class NamedLambda<T : LambdaIdeContext>(private val lambdaIdeContext: T) {
-      fun name(): String = this::class.qualifiedName ?: error("Can't get qualified name of lambda")
-      abstract suspend fun T.lambda(vararg args: Any?): Any
-      suspend fun runLambda(vararg args: Any?) {
+      fun name(): String = this::class.qualifiedName ?: error("Can't get qualified name of lambda $this")
+      abstract suspend fun T.lambda(args: List<LambdaRdKeyValueEntry>): Any
+      suspend fun runLambda(args: List<LambdaRdKeyValueEntry>) {
         with(lambdaIdeContext) {
           lambda(args = args)
         }
@@ -242,7 +243,7 @@ open class LambdaTestHost(coroutineScope: CoroutineScope) {
               assert(ClientId.current == clientId) { "ClientId '${ClientId.current}' should equal $clientId one when after request focus" }
 
               runLogged(parameters.reference, 1.minutes) {
-                ideAction.runLambda(parameters.parameters)
+                ideAction.runLambda(parameters.parameters ?: listOf())
               }
 
               // Assert state

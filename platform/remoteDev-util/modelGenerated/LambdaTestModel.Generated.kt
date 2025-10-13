@@ -32,6 +32,7 @@ class LambdaTestModel private constructor(
             serializers.register(LazyCompanionMarshaller(RdId(-8183511780297815289), classLoader, "com.intellij.remoteDev.tests.modelGenerated.LambdaRdTestSessionStackTraceElement"))
             serializers.register(LazyCompanionMarshaller(RdId(-1877965166079974414), classLoader, "com.intellij.remoteDev.tests.modelGenerated.LambdaRdTestSessionExceptionCause"))
             serializers.register(LazyCompanionMarshaller(RdId(-1075846985405547849), classLoader, "com.intellij.remoteDev.tests.modelGenerated.LambdaRdTestSessionException"))
+            serializers.register(LazyCompanionMarshaller(RdId(-2689813143368761580), classLoader, "com.intellij.remoteDev.tests.modelGenerated.LambdaRdKeyValueEntry"))
             serializers.register(LazyCompanionMarshaller(RdId(-3702464714964495074), classLoader, "com.intellij.remoteDev.tests.modelGenerated.LambdaRdTestActionParameters"))
             serializers.register(LazyCompanionMarshaller(RdId(8102378001204643169), classLoader, "com.intellij.remoteDev.tests.modelGenerated.LambdaRdSerializedLambdaParameters"))
             serializers.register(LazyCompanionMarshaller(RdId(3210199037986225272), classLoader, "com.intellij.remoteDev.tests.modelGenerated.LambdaRdTestSession"))
@@ -56,7 +57,7 @@ class LambdaTestModel private constructor(
         
         private val __LambdaRdTestSessionNullableSerializer = LambdaRdTestSession.nullable()
         
-        const val serializationHash = 5786835075688093446L
+        const val serializationHash = 2450638521984673762L
         
     }
     override val serializersOwner: ISerializersOwner get() = LambdaTestModel
@@ -194,6 +195,71 @@ enum class LambdaRdIdeType {
 /**
  * #### Generated from [LambdaTestModel.kt]
  */
+data class LambdaRdKeyValueEntry (
+    val key: String,
+    val value: String
+) : IPrintable {
+    //companion
+    
+    companion object : IMarshaller<LambdaRdKeyValueEntry> {
+        override val _type: KClass<LambdaRdKeyValueEntry> = LambdaRdKeyValueEntry::class
+        override val id: RdId get() = RdId(-2689813143368761580)
+        
+        @Suppress("UNCHECKED_CAST")
+        override fun read(ctx: SerializationCtx, buffer: AbstractBuffer): LambdaRdKeyValueEntry  {
+            val key = buffer.readString()
+            val value = buffer.readString()
+            return LambdaRdKeyValueEntry(key, value)
+        }
+        
+        override fun write(ctx: SerializationCtx, buffer: AbstractBuffer, value: LambdaRdKeyValueEntry)  {
+            buffer.writeString(value.key)
+            buffer.writeString(value.value)
+        }
+        
+        
+    }
+    //fields
+    //methods
+    //initializer
+    //secondary constructor
+    //equals trait
+    override fun equals(other: Any?): Boolean  {
+        if (this === other) return true
+        if (other == null || other::class != this::class) return false
+        
+        other as LambdaRdKeyValueEntry
+        
+        if (key != other.key) return false
+        if (value != other.value) return false
+        
+        return true
+    }
+    //hash code trait
+    override fun hashCode(): Int  {
+        var __r = 0
+        __r = __r*31 + key.hashCode()
+        __r = __r*31 + value.hashCode()
+        return __r
+    }
+    //pretty print
+    override fun print(printer: PrettyPrinter)  {
+        printer.println("LambdaRdKeyValueEntry (")
+        printer.indent {
+            print("key = "); key.print(printer); println()
+            print("value = "); value.print(printer); println()
+        }
+        printer.print(")")
+    }
+    //deepClone
+    //contexts
+    //threading
+}
+
+
+/**
+ * #### Generated from [LambdaTestModel.kt]
+ */
 data class LambdaRdSerializedLambdaParameters (
     val clazzName: String,
     val methodName: String,
@@ -267,7 +333,7 @@ data class LambdaRdSerializedLambdaParameters (
  */
 data class LambdaRdTestActionParameters (
     val reference: String,
-    val parameters: List<String>?
+    val parameters: List<LambdaRdKeyValueEntry>?
 ) : IPrintable {
     //companion
     
@@ -278,13 +344,13 @@ data class LambdaRdTestActionParameters (
         @Suppress("UNCHECKED_CAST")
         override fun read(ctx: SerializationCtx, buffer: AbstractBuffer): LambdaRdTestActionParameters  {
             val reference = buffer.readString()
-            val parameters = buffer.readNullable { buffer.readList { buffer.readString() } }
+            val parameters = buffer.readNullable { buffer.readList { LambdaRdKeyValueEntry.read(ctx, buffer) } }
             return LambdaRdTestActionParameters(reference, parameters)
         }
         
         override fun write(ctx: SerializationCtx, buffer: AbstractBuffer, value: LambdaRdTestActionParameters)  {
             buffer.writeString(value.reference)
-            buffer.writeNullable(value.parameters) { buffer.writeList(it) { v -> buffer.writeString(v) } }
+            buffer.writeNullable(value.parameters) { buffer.writeList(it) { v -> LambdaRdKeyValueEntry.write(ctx, buffer, v) } }
         }
         
         
