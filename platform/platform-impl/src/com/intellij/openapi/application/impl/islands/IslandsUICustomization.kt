@@ -58,8 +58,10 @@ import java.awt.event.WindowAdapter
 import java.awt.event.WindowEvent
 import java.awt.geom.Area
 import java.awt.geom.RoundRectangle2D
+import java.util.function.Supplier
 import javax.swing.JComponent
 import javax.swing.JFrame
+import javax.swing.SwingConstants
 import javax.swing.SwingUtilities
 import javax.swing.border.Border
 
@@ -520,8 +522,10 @@ internal class IslandsUICustomization : InternalUICustomization() {
       super.paintComponent(g)
 
       if (isManyIslandEnabled) {
+        val isTop = UISettings.getInstance().editorTabPlacement == SwingConstants.TOP
+
         val rect = Rectangle(size)
-        JBInsets.removeFrom(rect, JBInsets.create(0, 7))
+        JBInsets.removeFrom(rect, if (isTop) JBInsets.create(0, 7) else JBInsets(6, 7, 2, 7))
 
         g as Graphics2D
 
@@ -552,7 +556,18 @@ internal class IslandsUICustomization : InternalUICustomization() {
 
     if (enabled) {
       component.border = null
-      parent.border = JBUI.Borders.empty(2, 10)
+
+      @Suppress("UseDPIAwareInsets")
+      val supplier = Supplier {
+        if (UISettings.getInstance().editorTabPlacement == SwingConstants.TOP) {
+          Insets(2, 10, 2, 10)
+        }
+        else {
+          Insets(8, 10, 4, 10)
+        }
+      }
+      @Suppress("UNCHECKED_CAST")
+      parent.border = JBUI.Borders.empty(JBInsets.create(supplier as Supplier<Insets?>, supplier.get()))
     }
     else {
       component.border = originalBorder
