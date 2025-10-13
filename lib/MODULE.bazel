@@ -4088,73 +4088,101 @@ http_file(
 )
 
 http_file(
-  name = "org_jacoco-org_jacoco_ant-0_8_13-_ant_http",
-  url = "https://cache-redirector.jetbrains.com/repo1.maven.org/maven2/org/jacoco/org.jacoco.ant/0.8.13/org.jacoco.ant-0.8.13.jar",
-  sha256 = "6434b8552ff3d0e4a2fbbd13a6efb124e0c9ca453817c62c03de8390d87ffd11",
-  downloaded_file_path = "org.jacoco.ant-0.8.13.jar"
+  name = "org_jacoco-org_jacoco_ant-0_8_14-_ant_http",
+  url = "https://cache-redirector.jetbrains.com/repo1.maven.org/maven2/org/jacoco/org.jacoco.ant/0.8.14/org.jacoco.ant-0.8.14.jar",
+  sha256 = "9fff68954d5de3aad2bf838eaf886ed67d2c22a2d6c6f095548bade8c45caeae",
+  downloaded_file_path = "org.jacoco.ant-0.8.14.jar"
 )
 
 http_file(
-  name = "org_jacoco-org_jacoco_core-0_8_13-_core_http",
-  url = "https://cache-redirector.jetbrains.com/repo1.maven.org/maven2/org/jacoco/org.jacoco.core/0.8.13/org.jacoco.core-0.8.13.jar",
-  sha256 = "514c23df6cfd015d7d83c10a792e35ab68a7b7e82f3d6a3a4481762c132e33a9",
-  downloaded_file_path = "org.jacoco.core-0.8.13.jar"
+  name = "org_jacoco-org_jacoco_core-0_8_14-_core_http",
+  url = "https://cache-redirector.jetbrains.com/repo1.maven.org/maven2/org/jacoco/org.jacoco.core/0.8.14/org.jacoco.core-0.8.14.jar",
+  sha256 = "28abbf0eea5a08e4f24097f2fbac663ca17c341c25c3a04d90d6cd325943c995",
+  downloaded_file_path = "org.jacoco.core-0.8.14.jar"
 )
 
 http_file(
-  name = "org_ow2_asm-asm-commons-9_8_http",
-  url = "https://cache-redirector.jetbrains.com/repo1.maven.org/maven2/org/ow2/asm/asm-commons/9.8/asm-commons-9.8.jar",
-  sha256 = "3301a1c1cb4c59fcc5292648dac1d7c5aed4c0f067dfbe88873b8cdfe77404f4",
-  downloaded_file_path = "asm-commons-9.8.jar"
+  name = "org_ow2_asm-asm-9_9_http",
+  url = "https://cache-redirector.jetbrains.com/repo1.maven.org/maven2/org/ow2/asm/asm/9.9/asm-9.9.jar",
+  sha256 = "03d99a74ad1ee5c71334ef67437f4ef4fe3488caa7c96d8645abc73c8e2017d4",
+  downloaded_file_path = "asm-9.9.jar"
 )
 
 http_file(
-  name = "org_jacoco-org_jacoco_report-0_8_13-_report_http",
-  url = "https://cache-redirector.jetbrains.com/repo1.maven.org/maven2/org/jacoco/org.jacoco.report/0.8.13/org.jacoco.report-0.8.13.jar",
-  sha256 = "8133280a0aa44358be9d136b52370342f455ccb944aae07438220a77662578a2",
-  downloaded_file_path = "org.jacoco.report-0.8.13.jar"
+  name = "org_ow2_asm-asm-commons-9_9_http",
+  url = "https://cache-redirector.jetbrains.com/repo1.maven.org/maven2/org/ow2/asm/asm-commons/9.9/asm-commons-9.9.jar",
+  sha256 = "db2f6f26150bbe7c126606b4a1151836bcc22a1e05a423b3585698bece995ff8",
+  downloaded_file_path = "asm-commons-9.9.jar"
 )
 
 http_file(
-  name = "org_jacoco-org_jacoco_agent-0_8_13-_agent_http",
-  url = "https://cache-redirector.jetbrains.com/repo1.maven.org/maven2/org/jacoco/org.jacoco.agent/0.8.13/org.jacoco.agent-0.8.13.jar",
-  sha256 = "9db3c9d5d74fa870b261b64a3082412e1bd6e22e9fa98f4737b1bff8af9cc64d",
-  downloaded_file_path = "org.jacoco.agent-0.8.13.jar"
+  name = "org_ow2_asm-asm-tree-9_9_http",
+  url = "https://cache-redirector.jetbrains.com/repo1.maven.org/maven2/org/ow2/asm/asm-tree/9.9/asm-tree-9.9.jar",
+  sha256 = "42178f3775c9c63f9e5e1446747d29b4eca4d91bd6e75e5c43cfa372a47d38c6",
+  downloaded_file_path = "asm-tree-9.9.jar"
 )
 
 http_file(
-  name = "org_jacoco-org_jacoco_ant-0_8_13-_ant-sources_http",
-  url = "https://cache-redirector.jetbrains.com/repo1.maven.org/maven2/org/jacoco/org.jacoco.ant/0.8.13/org.jacoco.ant-0.8.13-sources.jar",
-  sha256 = "3f4414193d2a6549ea77b5e1032be48b2030737bce514a6ec50e4f5a1cb6b7fc",
-  downloaded_file_path = "org.jacoco.ant-0.8.13-sources.jar"
+  name = "org_jacoco-org_jacoco_report-0_8_14-_report_http",
+  url = "https://cache-redirector.jetbrains.com/repo1.maven.org/maven2/org/jacoco/org.jacoco.report/0.8.14/org.jacoco.report-0.8.14.jar",
+  sha256 = "a3e2026060ab8b8d5c650706406234bb4c033dfd5376afeb8b1666e8ed27c453",
+  downloaded_file_path = "org.jacoco.report-0.8.14.jar"
 )
 
 http_file(
-  name = "org_jacoco-org_jacoco_core-0_8_13-_core-sources_http",
-  url = "https://cache-redirector.jetbrains.com/repo1.maven.org/maven2/org/jacoco/org.jacoco.core/0.8.13/org.jacoco.core-0.8.13-sources.jar",
-  sha256 = "5ebc4e70a0b6ac54be8cbb6a526dc8904123d7f2bd4553239dc9076898008e5a",
-  downloaded_file_path = "org.jacoco.core-0.8.13-sources.jar"
+  name = "org_jacoco-org_jacoco_agent-0_8_14-_agent_http",
+  url = "https://cache-redirector.jetbrains.com/repo1.maven.org/maven2/org/jacoco/org.jacoco.agent/0.8.14/org.jacoco.agent-0.8.14.jar",
+  sha256 = "20be9853385bdfc65a5929643412d09243d14514304b89ba23a265158cc8792b",
+  downloaded_file_path = "org.jacoco.agent-0.8.14.jar"
 )
 
 http_file(
-  name = "org_ow2_asm-asm-commons-9_8-sources_http",
-  url = "https://cache-redirector.jetbrains.com/repo1.maven.org/maven2/org/ow2/asm/asm-commons/9.8/asm-commons-9.8-sources.jar",
-  sha256 = "a2bd3ba563c5f2e19eea66df99437ef81d69a0dcb3def07028442a273a2da562",
-  downloaded_file_path = "asm-commons-9.8-sources.jar"
+  name = "org_jacoco-org_jacoco_ant-0_8_14-_ant-sources_http",
+  url = "https://cache-redirector.jetbrains.com/repo1.maven.org/maven2/org/jacoco/org.jacoco.ant/0.8.14/org.jacoco.ant-0.8.14-sources.jar",
+  sha256 = "c6a7e71b8b80a3f51d19153092cfb1ad3f5985c1653ff864710ff5b3e6bd27a6",
+  downloaded_file_path = "org.jacoco.ant-0.8.14-sources.jar"
 )
 
 http_file(
-  name = "org_jacoco-org_jacoco_report-0_8_13-_report-sources_http",
-  url = "https://cache-redirector.jetbrains.com/repo1.maven.org/maven2/org/jacoco/org.jacoco.report/0.8.13/org.jacoco.report-0.8.13-sources.jar",
-  sha256 = "d326237792109c8095a64f96578c6b7457e2082712f7d293a41d6e19a71c0be5",
-  downloaded_file_path = "org.jacoco.report-0.8.13-sources.jar"
+  name = "org_jacoco-org_jacoco_core-0_8_14-_core-sources_http",
+  url = "https://cache-redirector.jetbrains.com/repo1.maven.org/maven2/org/jacoco/org.jacoco.core/0.8.14/org.jacoco.core-0.8.14-sources.jar",
+  sha256 = "1550fd5081ecd2c2ad053994c23d91a4cef6dcbed4c4dac95130e7d75fa9cd3c",
+  downloaded_file_path = "org.jacoco.core-0.8.14-sources.jar"
 )
 
 http_file(
-  name = "org_jacoco-org_jacoco_agent-0_8_13-_agent-sources_http",
-  url = "https://cache-redirector.jetbrains.com/repo1.maven.org/maven2/org/jacoco/org.jacoco.agent/0.8.13/org.jacoco.agent-0.8.13-sources.jar",
-  sha256 = "c23cdc6c09294359f7ec1559791a94e2550ecfabbe58571d02318b2811200f9c",
-  downloaded_file_path = "org.jacoco.agent-0.8.13-sources.jar"
+  name = "org_ow2_asm-asm-9_9-sources_http",
+  url = "https://cache-redirector.jetbrains.com/repo1.maven.org/maven2/org/ow2/asm/asm/9.9/asm-9.9-sources.jar",
+  sha256 = "e37000a2a0bc9f0bef373714ad7dde4082212351847b74618d483057a4ae186c",
+  downloaded_file_path = "asm-9.9-sources.jar"
+)
+
+http_file(
+  name = "org_ow2_asm-asm-commons-9_9-sources_http",
+  url = "https://cache-redirector.jetbrains.com/repo1.maven.org/maven2/org/ow2/asm/asm-commons/9.9/asm-commons-9.9-sources.jar",
+  sha256 = "218bbb648e24578a385cb6b6a21ceff222a2a8f8b2d5f6a256a8099dd336dc76",
+  downloaded_file_path = "asm-commons-9.9-sources.jar"
+)
+
+http_file(
+  name = "org_ow2_asm-asm-tree-9_9-sources_http",
+  url = "https://cache-redirector.jetbrains.com/repo1.maven.org/maven2/org/ow2/asm/asm-tree/9.9/asm-tree-9.9-sources.jar",
+  sha256 = "9d1fe261fa1d29904ca9dbc76878396e76bc225191676a8c16ad2669a205321a",
+  downloaded_file_path = "asm-tree-9.9-sources.jar"
+)
+
+http_file(
+  name = "org_jacoco-org_jacoco_report-0_8_14-_report-sources_http",
+  url = "https://cache-redirector.jetbrains.com/repo1.maven.org/maven2/org/jacoco/org.jacoco.report/0.8.14/org.jacoco.report-0.8.14-sources.jar",
+  sha256 = "80ac2fac212d6a4583b7f025dc7b602f384a9dfcdbccd0e9cb78c415e9f5ffc6",
+  downloaded_file_path = "org.jacoco.report-0.8.14-sources.jar"
+)
+
+http_file(
+  name = "org_jacoco-org_jacoco_agent-0_8_14-_agent-sources_http",
+  url = "https://cache-redirector.jetbrains.com/repo1.maven.org/maven2/org/jacoco/org.jacoco.agent/0.8.14/org.jacoco.agent-0.8.14-sources.jar",
+  sha256 = "8a643b749deb255d7a42c445c3053c9ec263e27103becdaaf88cedda44357255",
+  downloaded_file_path = "org.jacoco.agent-0.8.14-sources.jar"
 )
 
 http_file(
