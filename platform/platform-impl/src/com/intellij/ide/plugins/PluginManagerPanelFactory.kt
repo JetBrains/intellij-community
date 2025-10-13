@@ -52,9 +52,7 @@ object PluginManagerPanelFactory {
       try {
         for (query in queries) {
           val result = pluginManager.executeMarketplaceQuery(query, 18, false)
-          if (result.error == null) {
-            marketplaceData[query] = result
-          }
+          marketplaceData[query] = result
         }
       }
       catch (e: Exception) {
