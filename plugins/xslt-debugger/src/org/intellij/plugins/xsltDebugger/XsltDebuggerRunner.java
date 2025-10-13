@@ -15,6 +15,7 @@ import com.intellij.xdebugger.XDebugProcess;
 import com.intellij.xdebugger.XDebugProcessStarter;
 import com.intellij.xdebugger.XDebugSession;
 import com.intellij.xdebugger.XDebuggerManager;
+import com.intellij.xdebugger.impl.XDebugSessionImpl;
 import org.intellij.lang.xpath.xslt.run.XsltCommandLineState;
 import org.intellij.lang.xpath.xslt.run.XsltRunConfiguration;
 import org.intellij.plugins.xsltDebugger.impl.XsltDebugProcess;
@@ -60,6 +61,6 @@ public class XsltDebuggerRunner implements ProgramRunner<RunnerSettings> {
           }
         }
       });
-    return debugSession.getRunContentDescriptor();
+    return ((XDebugSessionImpl)debugSession).getInitializedRunContentDescriptor();
   }
 }

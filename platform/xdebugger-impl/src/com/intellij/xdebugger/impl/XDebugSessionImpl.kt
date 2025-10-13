@@ -212,10 +212,24 @@ class XDebugSessionImpl @JvmOverloads constructor(
     if (useFeProxy() && showFeWarnings()) {
       LOG.error("RunContentDescriptor should not be used in split mode from XDebugSession")
     }
+    return getInitializedRunContentDescriptor()
+  }
+
+  /**
+   * This method relies on creation of a mock [RunContentDescriptor] ob backend when in split mode.
+   */
+  @ApiStatus.Internal
+  fun getInitializedRunContentDescriptor(): RunContentDescriptor {
     val descriptor = myRunContentDescriptor
     LOG.assertTrue(descriptor != null, "Run content descriptor is not initialized yet!")
     return descriptor!!
   }
+
+  @ApiStatus.Internal
+  fun getRunContentDescriptorIfInitialized(): RunContentDescriptor? {
+    return myRunContentDescriptor
+  }
+
 
   private val isTabInitialized: Boolean
     get() = myTabInitDataFlow.value != null && (useFeProxy() || mySessionTab.isCompleted)
@@ -1099,11 +1113,6 @@ class XDebugSessionImpl @JvmOverloads constructor(
       // Tab was not created during session running
       tabCoroutineScope.cancel()
     }
-  }
-
-  @ApiStatus.Internal
-  fun getRunContentDescriptorIfInitialized(): RunContentDescriptor? {
-    return myRunContentDescriptor
   }
 
   private fun removeBreakpointListeners() {
