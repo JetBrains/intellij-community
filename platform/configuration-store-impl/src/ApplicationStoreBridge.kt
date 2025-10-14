@@ -9,6 +9,7 @@ import com.intellij.openapi.components.PathMacroManager
 import com.intellij.openapi.components.PathMacroMap
 import com.intellij.openapi.components.StateSplitterEx
 import com.intellij.openapi.components.impl.stores.stateStore
+import com.intellij.openapi.util.registry.Registry
 import com.intellij.platform.diagnostic.telemetry.helpers.MillisecondsMeasurer
 import com.intellij.platform.workspace.jps.serialization.impl.JpsAppFileContentWriter
 import com.intellij.platform.workspace.jps.serialization.impl.JpsFileContentReader
@@ -28,7 +29,7 @@ internal class AppStorageContentReader : JpsFileContentReader {
     return loadComponentTimeMs.addMeasuredTime {
       val filePath = JpsPathUtil.urlToPath(fileUrl)
       val element: Element? = if (isApplicationLevelFile(filePath)) {
-        val storageSpec = FileStorageAnnotation(PathUtilRt.getFileName(filePath), false, StateSplitterEx::class.java)
+        val storageSpec = FileStorageAnnotation(getCollapsedPath(filePath), false, StateSplitterEx::class.java)
         @Suppress("UNCHECKED_CAST")
         (ApplicationManager.getApplication().stateStore.storageManager.getStateStorage(storageSpec) as StateStorageBase<StateMap>)
           .getStorageData()
@@ -77,7 +78,7 @@ internal class AppStorageContentWriter(private val session: SaveSessionProducerM
     saveComponentTimeMs.addMeasuredTime {
       val filePath = JpsPathUtil.urlToPath(fileUrl)
       if (isApplicationLevelFile(filePath)) {
-        val storageSpec = FileStorageAnnotation(PathUtilRt.getFileName(filePath), false, StateSplitterEx::class.java)
+        val storageSpec = FileStorageAnnotation(getCollapsedPath(filePath), false, StateSplitterEx::class.java)
 
         @Suppress("UNCHECKED_CAST")
         val storage = ApplicationManager.getApplication().stateStore.storageManager.getStateStorage(storageSpec) as StateStorageBase<StateMap>
@@ -102,3 +103,35 @@ internal class AppStorageContentWriter(private val session: SaveSessionProducerM
 }
 
 private fun isApplicationLevelFile(filePath: String): Boolean = Path.of(filePath).startsWith(PathManager.getOptionsDir())
+
+/**
+ * Relativizes the given [filePath] against the IDE options directory.
+ *
+ * When the per-environment workspace model separation is enabled
+ * (`ide.workspace.model.per.environment.model.separation`), this method returns the
+ * path of [filePath] relative to [PathManager.getOptionsDir]. This keeps the
+ * directory structure (environment-specific subdirectories) under the options root.
+ *
+ * When the flag is disabled, only the last path segment (the file name) is returned.
+ * This preserves the legacy, flat layout used by application-level storages.
+ *
+ * Preconditions:
+ * - Callers must ensure that [filePath] points inside [PathManager.getOptionsDir].
+ *   Use [isApplicationLevelFile] before calling. If the path lies outside, a
+ *   `Path.relativize` call would be invalid.
+ *
+ * Notes:
+ * - The returned string uses the platform's default path separator because it is
+ *   produced by `Path.toString()`.
+ *
+ * @param filePath an absolute path to a file under [PathManager.getOptionsDir]
+ * @return a relative path (when the flag is enabled) or just the file name (when disabled)
+ * @see PathManager.getOptionsDir
+ */
+private fun getCollapsedPath(filePath: String): String =
+  if (Registry.`is`("ide.workspace.model.per.environment.model.separation")) {
+    PathManager.getOptionsDir().relativize(Path.of(filePath)).toString()
+  }
+  else {
+    PathUtilRt.getFileName(filePath)
+  }
