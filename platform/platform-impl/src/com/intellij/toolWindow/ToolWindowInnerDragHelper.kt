@@ -2,6 +2,7 @@
 package com.intellij.toolWindow
 
 import com.intellij.ide.DataManager
+import com.intellij.idea.AppModeAssertions
 import com.intellij.openapi.Disposable
 import com.intellij.openapi.application.WriteIntentReadAction
 import com.intellij.openapi.application.invokeLater
@@ -457,7 +458,7 @@ internal class ToolWindowInnerDragHelper(parent: Disposable, val pane: JComponen
   }
 
   private fun canReorderTabs(): Boolean {
-    return Registry.`is`("ide.allow.tool.window.tabs.reorder", false)
+    return AppModeAssertions.isMonolith() && Registry.`is`("ide.allow.tool.window.tabs.reorder", false)
   }
 
   private sealed interface DropLocation {
