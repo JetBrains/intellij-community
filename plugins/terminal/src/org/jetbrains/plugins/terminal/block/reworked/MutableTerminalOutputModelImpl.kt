@@ -148,6 +148,7 @@ class MutableTerminalOutputModelImpl(
   }
 
   override fun updateCursorPosition(offset: TerminalOffset) {
+    if (cursorOffset == offset) return
     val oldValue = cursorOffset
     this.cursorOffset = offset
     dispatcher.multicaster.cursorOffsetChanged(TerminalCursorOffsetChangeEventImpl(this, oldValue, offset))
