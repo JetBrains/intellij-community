@@ -5,6 +5,7 @@ import com.intellij.collaboration.async.mapStateInNow
 import com.intellij.collaboration.async.stateInNow
 import com.intellij.collaboration.ui.FocusableViewModel
 import com.intellij.collaboration.ui.codereview.timeline.thread.CodeReviewTrackableItemViewModel
+import com.intellij.collaboration.util.getOrNull
 import com.intellij.openapi.project.Project
 import com.intellij.platform.util.coroutines.childScope
 import com.intellij.util.asSafely
@@ -68,7 +69,8 @@ class GitLabNoteViewModelImpl(
 
   override val discussionState: StateFlow<GitLabDiscussionStateContainer> = isMainNote.map {
     if (it) {
-      val outdated = note.asSafely<GitLabMergeRequestNote>()?.positionMapping?.map { mapping ->
+      val outdated = note.asSafely<GitLabMergeRequestNote>()?.positionMapping?.map { mappingResult ->
+        val mapping = mappingResult.getOrNull()
         mapping is GitLabMergeRequestNotePositionMapping.Outdated || mapping is GitLabMergeRequestNotePositionMapping.Obsolete
       } ?: flowOf(false)
       GitLabDiscussionStateContainer(note.resolved, outdated)
