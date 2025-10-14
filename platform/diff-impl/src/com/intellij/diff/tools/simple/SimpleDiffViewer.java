@@ -29,6 +29,7 @@ import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.editor.ScrollType;
 import com.intellij.openapi.editor.event.DocumentEvent;
 import com.intellij.openapi.editor.ex.EditorEx;
+import com.intellij.openapi.editor.ex.util.EditorScrollingPositionKeeper;
 import com.intellij.openapi.progress.ProcessCanceledException;
 import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.project.DumbAwareAction;
@@ -40,6 +41,7 @@ import com.intellij.ui.DirtyUI;
 import com.intellij.util.concurrency.annotations.RequiresEdt;
 import com.intellij.util.concurrency.annotations.RequiresWriteLock;
 import com.intellij.util.containers.ContainerUtil;
+import kotlin.enums.EnumEntries;
 import org.jetbrains.annotations.*;
 
 import javax.swing.*;
@@ -67,6 +69,8 @@ public class SimpleDiffViewer extends TwosideTextDiffViewer {
 
   protected boolean aligningViewModeSupported;
 
+  private final EditorScrollingPositionKeeper @NotNull [] myPositionKeepers = new EditorScrollingPositionKeeper[Side.getEntries().size()];
+
 
   public SimpleDiffViewer(@NotNull DiffContext context, @NotNull DiffRequest request) {
     super(context, (ContentDiffRequest)request);
@@ -83,8 +87,15 @@ public class SimpleDiffViewer extends TwosideTextDiffViewer {
 
     myTextDiffProvider = DiffUtil.createTextDiffProvider(getProject(), getRequest(), getTextSettings(), this::rediff, this);
 
-    for (Side side : Side.values()) {
-      DiffUtil.installLineConvertor(getEditor(side), getContent(side), myFoldingModel, side.getIndex());
+    EnumEntries<@NotNull Side> sides = Side.getEntries();
+    for (int i = 0; i < sides.size(); i++) {
+      Side side = sides.get(i);
+      EditorEx editor = getEditor(side);
+      EditorScrollingPositionKeeper positionKeeper = new EditorScrollingPositionKeeper(editor);
+      Disposer.register(this, positionKeeper);
+      myPositionKeepers[i] = positionKeeper;
+
+      DiffUtil.installLineConvertor(editor, getContent(side), myFoldingModel, side.getIndex());
     }
   }
 
@@ -248,7 +259,8 @@ public class SimpleDiffViewer extends TwosideTextDiffViewer {
     List<SimpleDiffChange> nonSkipped = changes != null ? ContainerUtil.filter(changes, it -> !it.isSkipped()) : null;
     FoldingModelSupport.Data foldingState = myFoldingModel.createState(nonSkipped, getFoldingModelSettings());
 
-    return () -> {
+    return () -> runPreservingScrollingPosition(() -> {
+
       myFoldingModel.updateContext(myRequest, getFoldingModelSettings());
 
       clearDiffPresentation();
@@ -271,7 +283,19 @@ public class SimpleDiffViewer extends TwosideTextDiffViewer {
 
       myContentPanel.repaintDivider();
       myStatusPanel.update();
-    };
+    });
+  }
+
+  private void runPreservingScrollingPosition(@NotNull Runnable action) {
+    for (EditorScrollingPositionKeeper keeper : myPositionKeepers) {
+      keeper.savePosition();
+    }
+
+    action.run();
+
+    for (EditorScrollingPositionKeeper keeper : myPositionKeepers) {
+      keeper.restorePosition(true);
+    }
   }
 
   protected @NotNull Runnable applyNotification(final @Nullable JComponent notification) {
