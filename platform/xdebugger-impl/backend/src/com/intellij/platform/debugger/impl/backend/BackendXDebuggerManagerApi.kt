@@ -7,7 +7,6 @@ import com.intellij.openapi.application.EDT
 import com.intellij.openapi.editor.impl.EditorId
 import com.intellij.openapi.editor.impl.findEditorOrNull
 import com.intellij.platform.debugger.impl.rpc.*
-import com.intellij.platform.debugger.impl.rpc.XFrontendDebuggerCapabilities
 import com.intellij.platform.execution.impl.backend.createProcessHandlerDto
 import com.intellij.platform.project.ProjectId
 import com.intellij.platform.project.findProject
@@ -23,6 +22,7 @@ import com.intellij.xdebugger.impl.XDebuggerUtilImpl.reshowInlayRunToCursor
 import com.intellij.xdebugger.impl.breakpoints.XBreakpointBase
 import com.intellij.xdebugger.impl.rpc.XDebugSessionId
 import com.intellij.xdebugger.impl.rpc.models.findValue
+import com.intellij.xdebugger.impl.rpc.toRpc
 import com.intellij.xdebugger.impl.settings.XDebuggerSettingManagerImpl
 import fleet.rpc.core.toRpc
 import kotlinx.coroutines.*

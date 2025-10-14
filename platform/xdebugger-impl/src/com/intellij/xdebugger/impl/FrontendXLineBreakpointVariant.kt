@@ -1,8 +1,8 @@
 // Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.xdebugger.impl
 
-import com.intellij.ide.ui.icons.icon
 import com.intellij.ide.rpc.util.textRange
+import com.intellij.ide.ui.icons.icon
 import com.intellij.openapi.components.Service
 import com.intellij.openapi.components.service
 import com.intellij.openapi.editor.Editor
@@ -16,6 +16,7 @@ import com.intellij.xdebugger.impl.breakpoints.XLineBreakpointTypeProxy
 import com.intellij.xdebugger.impl.frame.XDebugManagerProxy
 import com.intellij.xdebugger.impl.rpc.XBreakpointId
 import com.intellij.xdebugger.impl.rpc.XBreakpointTypeId
+import com.intellij.xdebugger.impl.rpc.toRpc
 import fleet.util.channels.use
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.channels.Channel
