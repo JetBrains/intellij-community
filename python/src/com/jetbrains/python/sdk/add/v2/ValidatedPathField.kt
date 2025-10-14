@@ -46,16 +46,24 @@ import kotlinx.coroutines.flow.collectLatest
 import kotlinx.coroutines.flow.debounce
 import kotlinx.coroutines.flow.map
 import org.jetbrains.annotations.Nls
+import java.awt.AlphaComposite
+import java.awt.Component
+import java.awt.Graphics
+import java.awt.Graphics2D
 import java.awt.event.ActionListener
 import java.awt.event.KeyEvent
+import java.util.concurrent.atomic.AtomicLong
+import javax.swing.Icon
 import javax.swing.JTextField
 import javax.swing.KeyStroke
 import javax.swing.event.DocumentEvent
 import kotlin.concurrent.atomics.AtomicBoolean
 import kotlin.concurrent.atomics.ExperimentalAtomicApi
+import kotlin.math.cos
+import kotlin.time.Duration.Companion.minutes
 
 private class ValidationSuccessExtension<T>(val validationInfo: T) : ExtendableTextComponent.Extension {
-  override fun getIcon(hovered: Boolean): javax.swing.Icon = AllIcons.General.GreenCheckmark
+  override fun getIcon(hovered: Boolean): Icon = AllIcons.General.GreenCheckmark
   override fun getTooltip(): @NlsContexts.Tooltip String? {
     val tooltip = when (validationInfo) {
       is Unit -> null
@@ -66,16 +74,66 @@ private class ValidationSuccessExtension<T>(val validationInfo: T) : ExtendableT
 }
 
 private object ValidationErrorExtension : ExtendableTextComponent.Extension {
-  override fun getIcon(hovered: Boolean): javax.swing.Icon = AllIcons.Status.FailedInProgress
+  override fun getIcon(hovered: Boolean): Icon = AllIcons.Status.FailedInProgress
 }
 
 private object ValidationInProgressExtension : ExtendableTextComponent.Extension {
-  override fun getIcon(hovered: Boolean): javax.swing.Icon = AnimatedIcon.Default()
+  override fun getIcon(hovered: Boolean): Icon = AnimatedIcon.Default()
   override fun getTooltip(): @NlsContexts.Tooltip String {
     return message("python.add.sdk.wait.for.validation")
   }
 }
 
+private class DebounceCounterIcon(val icon: Icon, val period: Int) : Icon {
+  private val time: AtomicLong = AtomicLong(System.currentTimeMillis())
+
+  fun reset() {
+    time.set(System.currentTimeMillis())
+  }
+
+  override fun getIconWidth(): Int {
+    return icon.iconWidth
+  }
+
+  override fun getIconHeight(): Int {
+    return icon.iconHeight
+  }
+
+  override fun paintIcon(c: Component?, g: Graphics?, x: Int, y: Int) {
+    assert(period > 0) { "unexpected" }
+    val time = (System.currentTimeMillis() - this.time.get()) % period
+    val alpha = ((cos(2 * Math.PI * time / period) + 1) / 2).toFloat()
+    if (alpha > 0) {
+      if (alpha < 1 && g is Graphics2D) {
+        val g2d = g.create() as Graphics2D
+        try {
+          g2d.composite = AlphaComposite.SrcAtop.derive(alpha)
+          icon.paintIcon(c, g2d, x, y)
+        }
+        finally {
+          g2d.dispose()
+        }
+      }
+      else {
+        icon.paintIcon(c, g, x, y)
+      }
+    }
+  }
+}
+
+private class AnimatedFadingIcon(private val icon: DebounceCounterIcon) : AnimatedIcon(50, icon) {
+  fun reset() {
+    icon.reset()
+  }
+
+  companion object {
+    fun build(icon: Icon, period: Int = VALIDATION_DELAY * 2): AnimatedFadingIcon {
+      return AnimatedFadingIcon(DebounceCounterIcon(icon, period))
+    }
+  }
+}
+
+private const val VALIDATION_DELAY = 2000
 
 @OptIn(FlowPreview::class, ExperimentalAtomicApi::class)
 class ValidatedPathField<T, P : PathHolder, V : ValidatedPath<T, P>>(
@@ -87,43 +145,60 @@ class ValidatedPathField<T, P : PathHolder, V : ValidatedPath<T, P>>(
   val pathValidator: suspend (P) -> V,
 ) : TextFieldWithBrowseButton() {
   private lateinit var scope: CoroutineScope
-  private val textInputFlow = MutableStateFlow("")
+  private val textInputFlow: MutableStateFlow<String?> = MutableStateFlow(null)
   private var validationJob: Deferred<Unit>? = null
-  private val owner = AtomicBoolean(false)
+
+  /**
+   * Single Back Property is shared across multiple forms,
+   * only one of them should run a validation process after user input applied.
+   * Editor Mode means the user changed the value and the value wasn't delivered from upstream.
+   */
+  private val editorMode = AtomicBoolean(false)
+
+  /**
+   * There are several UIs for the same back property,
+   * this method emulates the validation job for the current field when the user switches to another form.
+   */
+  private fun runJobFor3rdPartyValidation() {
+    scope.launch { resetValidationJob { delay(1.minutes) } }
+  }
+
+  private suspend fun resetValidationJob(block: suspend CoroutineScope.() -> Unit) {
+    validationJob?.cancelAndJoin()
+
+    validationJob = scope.async(Dispatchers.EDT) {
+      isEnabled = false
+      isValidationActiveProperty.set(true)
+      block()
+    }.apply {
+      invokeOnCompletion {
+        isEnabled = true
+        isValidationActiveProperty.set(false)
+      }
+    }
+  }
 
   private val validationAction = object : DumbAwareAction(AllIcons.Gutter.SuggestedRefactoringBulb) {
     fun doValidate() {
-      if (!owner.load()) return
+      if (!editorMode.load()) return
 
       scope.launch {
-        validationJob?.cancelAndJoin()
-
-        isEnabled = false
-        validationJob = scope.async(Dispatchers.EDT) {
-          isValidationActiveProperty.set(true)
-
+        resetValidationJob {
           val exec = withContext(Dispatchers.IO) {
             val path = fileSystem.parsePath(text).getOr { error ->
               //TODO HANDLE PATH ERRORS
               return@withContext null
             }
-
             pathValidator.invoke(path)
           }
-
           backProperty.set(exec)
-        }
-
-        validationJob?.invokeOnCompletion {
-          isEnabled = true
-          isValidationActiveProperty.set(false)
         }
       }
     }
 
     override fun actionPerformed(e: AnActionEvent) {
       with(textField as ExtendableTextComponent) {
-        if (extensions.contains(runValidationExtension)) {
+        if (extensions.contains(validationWaitExtension)) {
           doValidate()
         }
       }
@@ -132,8 +207,9 @@ class ValidatedPathField<T, P : PathHolder, V : ValidatedPath<T, P>>(
     registerCustomShortcutSet(CustomShortcutSet(KeyStroke.getKeyStroke(KeyEvent.VK_ENTER, 0)), this@ValidatedPathField)
   }
 
-  private val runValidationExtension: ExtendableTextComponent.Extension = ExtendableTextComponent.Extension.create(
-    AllIcons.Gutter.SuggestedRefactoringBulb, message("python.add.sdk.wait.for.validation")
+  private val validationWaitIcon = AnimatedFadingIcon.build(AllIcons.Gutter.SuggestedRefactoringBulb)
+  private val validationWaitExtension: ExtendableTextComponent.Extension = ExtendableTextComponent.Extension.create(
+    validationWaitIcon, message("python.add.sdk.wait.for.validation")
   ) {
     validationAction.doValidate()
   }
@@ -145,7 +221,7 @@ class ValidatedPathField<T, P : PathHolder, V : ValidatedPath<T, P>>(
 
     override fun setText(component: JTextField, text: @NlsSafe String) {
       component.text = text
-      owner.store(true)
+      editorMode.store(true)
       validationAction.doValidate()
     }
   }
@@ -162,37 +238,18 @@ class ValidatedPathField<T, P : PathHolder, V : ValidatedPath<T, P>>(
     })
   }
 
-
-  fun initialize(scope: CoroutineScope) {
-    this.scope = scope
-
-    scope.launch {
-      textInputFlow
-        .debounce(100)
-        .map {
-          if (backProperty.get()?.pathHolder?.toString() != it) {
-            owner.store(true)
-            backProperty.set(null)
-          }
-          it
-        }
-        .debounce(2000)
-        .collectLatest {
-          validationAction.doValidate()
-        }
-    }
-
+  private fun registerPropertyCallbacks() {
     backProperty.afterChange(scope.asDisposable()) { validatedPath ->
       if (validatedPath == null) {
         isValidationActiveProperty.set(true)
-        if (!owner.load()) isEnabled = false
+        if (!editorMode.load()) runJobFor3rdPartyValidation()
         return@afterChange
       }
 
-      val validatedPathText = validatedPath.pathHolder?.toString() ?: ""
-      text = validatedPathText
-      isEnabled = true
-      isValidationActiveProperty.set(false)
+      if (validatedPath.pathHolder != null) {
+        text = validatedPath.pathHolder.toString()
+      }
+      validationJob?.cancel()
     }
 
     isValidationActiveProperty.afterChange(scope.asDisposable()) { isValidationActive ->
@@ -204,11 +261,11 @@ class ValidatedPathField<T, P : PathHolder, V : ValidatedPath<T, P>>(
             addExtension(ValidationInProgressExtension)
           }
           else {
-            addExtension(runValidationExtension)
+            addExtension(validationWaitExtension)
           }
         }
         else {
-          owner.store(false)
+          editorMode.store(false)
           if (browseFolderActionLister != null) {
             setButtonVisible(true)
           }
@@ -223,6 +280,33 @@ class ValidatedPathField<T, P : PathHolder, V : ValidatedPath<T, P>>(
           }
         }
       }
+    }
+  }
+
+  fun initialize(scope: CoroutineScope) {
+    this.scope = scope
+    registerPropertyCallbacks()
+    runJobFor3rdPartyValidation() // initial validation is processed by the common v2 model
+
+    scope.launch {
+      textInputFlow
+        .debounce(50) // setText method is a combination of two calls - remove + insert, should count them as 1
+        .map {
+          if (it == null) return@map null
+
+          if (!editorMode.load() && backProperty.get()?.pathHolder?.toString() != it) {
+            editorMode.store(true)
+            backProperty.set(null)
+          }
+
+          validationWaitIcon.reset()
+          it
+        }
+        .debounce(VALIDATION_DELAY.toLong())
+        .collectLatest {
+          if (it == null) return@collectLatest
+          validationAction.doValidate()
+        }
     }
   }
 
