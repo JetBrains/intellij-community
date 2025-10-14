@@ -1,20 +1,28 @@
 // Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.xdebugger.impl.rpc
 
+import com.intellij.ide.rpc.util.textRange
+import com.intellij.ide.rpc.util.toRpc
 import com.intellij.ide.vfs.rpcId
 import com.intellij.ide.vfs.virtualFile
+import com.intellij.openapi.application.runReadAction
 import com.intellij.openapi.project.Project
+import com.intellij.openapi.util.TextRange
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.platform.debugger.impl.rpc.XSourcePositionDto
 import com.intellij.platform.debugger.impl.shared.XDebuggerUtilImplShared
 import com.intellij.pom.Navigatable
 import com.intellij.xdebugger.XSourcePosition
+import com.intellij.xdebugger.impl.ui.ExecutionPointHighlighter
 import org.jetbrains.annotations.ApiStatus
 
 
 @ApiStatus.Internal
 fun XSourcePosition.toRpc(): XSourcePositionDto {
-  return XSourcePositionDto(line, offset, file.rpcId(), this)
+  return runReadAction {
+    val textRangeDto = (this as? ExecutionPointHighlighter.HighlighterProvider)?.highlightRange?.toRpc()
+    XSourcePositionDto(line, offset, file.rpcId(), textRangeDto, this)
+  }
 }
 
 @ApiStatus.Internal
@@ -26,7 +34,7 @@ fun XSourcePositionDto.sourcePosition(): XSourcePosition {
   return SerializedXSourcePosition(this)
 }
 
-private class SerializedXSourcePosition(private val dto: XSourcePositionDto) : XSourcePosition {
+private class SerializedXSourcePosition(private val dto: XSourcePositionDto) : XSourcePosition, ExecutionPointHighlighter.HighlighterProvider {
   private val virtualFile = dto.fileId.virtualFile()
 
   override fun getLine(): Int {
@@ -44,4 +52,6 @@ private class SerializedXSourcePosition(private val dto: XSourcePositionDto) : X
   override fun createNavigatable(project: Project): Navigatable {
     return XDebuggerUtilImplShared.createNavigatable(project, this)
   }
+
+  override fun getHighlightRange(): TextRange? = dto.textRangeDto?.textRange()
 }
