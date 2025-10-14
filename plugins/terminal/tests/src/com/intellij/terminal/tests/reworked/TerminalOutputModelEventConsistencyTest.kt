@@ -66,7 +66,7 @@ internal class TerminalOutputModelEventConsistencyTest : BasePlatformTestCase() 
       }
     })
     block(sut)
-    assertThat(mirror.toString()).isEqualTo(sut.immutableText.toString())
+    assertThat(mirror.toString()).isEqualTo(sut.getText(sut.startOffset, sut.endOffset).toString())
   }
 }
 
