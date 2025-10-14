@@ -25,7 +25,7 @@ import org.jetbrains.jewel.ui.theme.treeStyle
 @ApiStatus.Experimental
 @ExperimentalJewelApi
 @Composable
-@Deprecated("Use LazyTree with 'interactionSource' parameter instead")
+@Deprecated("Use LazyTree with 'interactionSource' parameter instead", level = DeprecationLevel.HIDDEN)
 public fun <T> LazyTree(
     tree: Tree<T>,
     modifier: Modifier = Modifier,
