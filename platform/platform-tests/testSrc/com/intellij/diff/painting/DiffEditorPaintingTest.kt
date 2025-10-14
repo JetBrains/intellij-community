@@ -120,6 +120,7 @@ class DiffEditorPaintingTest : EditorPaintingTestCase() {
     checkResultWithGutter()
   }
 
+  // TODO: move inlay inside 'changed area', as it's related to the changed text?
   fun testRangeWithInlayBelow1() {
     initText("foo\nbar\nbiz")
     editor.inlayModel.addBlockElement(9, true, true, 0, MyInlayRenderer())
@@ -148,6 +149,7 @@ class DiffEditorPaintingTest : EditorPaintingTestCase() {
     checkResultWithGutter()
   }
 
+  // TODO: move inlay inside 'changed area', as it's related to the changed text?
   fun testRangeWithInlayAbove1() {
     initText("foo\nbar\nbiz")
     editor.inlayModel.addBlockElement(5, false, true, 0, MyInlayRenderer())
@@ -166,6 +168,48 @@ class DiffEditorPaintingTest : EditorPaintingTestCase() {
     initText("foo\nbar\nbiz\nbuzz")
     editor.inlayModel.addBlockElement(7, true, false, 0, MyInlayRenderer())
     DiffDrawUtil.createHighlighter(editor, 1, 3, MyDiffType, false)
+    checkResultWithGutter()
+  }
+
+  fun testRangeWithInlayBelow1_excluded() {
+    initText("foo\nbar\nbiz")
+    editor.inlayModel.addBlockElement(9, true, true, 0, MyInlayRenderer())
+    DiffDrawUtil.createHighlighter(editor, 1, 2, MyDiffType,
+                                   DiffDrawUtil.PaintMode.EXCLUDED_EDITOR, DiffDrawUtil.PaintMode.EXCLUDED_GUTTER)
+    checkResultWithGutter()
+  }
+
+  // FIXME: gutter-editor ranges are inconsistent
+  fun testRangeWithInlayBelow2_excluded() {
+    initText("foo\nbar\nbiz")
+    editor.inlayModel.addBlockElement(7, true, false, 0, MyInlayRenderer())
+    DiffDrawUtil.createHighlighter(editor, 1, 2, MyDiffType,
+                                   DiffDrawUtil.PaintMode.EXCLUDED_EDITOR, DiffDrawUtil.PaintMode.EXCLUDED_GUTTER)
+    checkResultWithGutter()
+  }
+
+  // FIXME: gutter-editor ranges are inconsistent
+  fun testRangeWithInlayAbove1_excluded() {
+    initText("foo\nbar\nbiz")
+    editor.inlayModel.addBlockElement(5, false, true, 0, MyInlayRenderer())
+    DiffDrawUtil.createHighlighter(editor, 1, 2, MyDiffType,
+                                   DiffDrawUtil.PaintMode.EXCLUDED_EDITOR, DiffDrawUtil.PaintMode.EXCLUDED_GUTTER)
+    checkResultWithGutter()
+  }
+
+  fun testRangeWithInlayAbove2_excluded() {
+    initText("foo\nbar\nbiz")
+    editor.inlayModel.addBlockElement(2, false, false, 0, MyInlayRenderer())
+    DiffDrawUtil.createHighlighter(editor, 1, 2, MyDiffType,
+                                   DiffDrawUtil.PaintMode.EXCLUDED_EDITOR, DiffDrawUtil.PaintMode.EXCLUDED_GUTTER)
+    checkResultWithGutter()
+  }
+
+  fun testRangeWithInlayInside_excluded() {
+    initText("foo\nbar\nbiz\nbuzz")
+    editor.inlayModel.addBlockElement(7, true, false, 0, MyInlayRenderer())
+    DiffDrawUtil.createHighlighter(editor, 1, 3, MyDiffType,
+                                   DiffDrawUtil.PaintMode.EXCLUDED_EDITOR, DiffDrawUtil.PaintMode.EXCLUDED_GUTTER)
     checkResultWithGutter()
   }
 
