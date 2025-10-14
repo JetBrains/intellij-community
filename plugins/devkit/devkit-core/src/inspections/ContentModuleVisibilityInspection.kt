@@ -81,26 +81,51 @@ internal class ContentModuleVisibilityInspection : DevKitPluginXmlInspectionBase
     currentModuleIncludingPlugin: IdeaPlugin,
     currentModuleNamespace: String?,
   ): @Nls String? {
-    return when {
-      dependencyNamespace == null -> message(
-        "inspection.content.module.visibility.internal.dependency.namespace.missing",
-        dependencyValue.stringValue, dependencyIncludingPlugin.getUniqueFileName(),
-        getModuleName(currentXmlFile), currentModuleNamespace, currentModuleIncludingPlugin.getUniqueFileName()
-      )
-      currentModuleNamespace == null -> message(
-        "inspection.content.module.visibility.internal.current.namespace.missing",
-        dependencyValue.stringValue, dependencyNamespace, dependencyIncludingPlugin.getUniqueFileName(),
-        getModuleName(currentXmlFile), currentModuleIncludingPlugin.getUniqueFileName()
-      )
-      else -> message(
-        "inspection.content.module.visibility.internal",
-        dependencyValue.stringValue, dependencyNamespace, dependencyIncludingPlugin.getUniqueFileName(),
-        getModuleName(currentXmlFile), currentModuleNamespace, currentModuleIncludingPlugin.getUniqueFileName()
-      )
+    val currentIdeaPlugin = DescriptorUtil.getIdeaPlugin(currentXmlFile)
+    return if (currentIdeaPlugin != null && isActualPluginDescriptor(currentIdeaPlugin, currentXmlFile)) {
+      when {
+        dependencyNamespace == null -> message(
+          "inspection.content.module.visibility.internal.declared.in.plugin.dependency.namespace.missing",
+          dependencyValue.stringValue, dependencyIncludingPlugin.getUniqueFileName(),
+          currentModuleIncludingPlugin.getIdOrUniqueFileName(), currentModuleNamespace
+        )
+        currentModuleNamespace == null -> message(
+          "inspection.content.module.visibility.internal.declared.in.plugin.current.namespace.missing",
+          dependencyValue.stringValue, dependencyNamespace, dependencyIncludingPlugin.getUniqueFileName(),
+          currentModuleIncludingPlugin.getIdOrUniqueFileName()
+        )
+        else -> message(
+          "inspection.content.module.visibility.internal.declared.in.plugin",
+          dependencyValue.stringValue, dependencyNamespace, dependencyIncludingPlugin.getUniqueFileName(),
+          currentModuleIncludingPlugin.getIdOrUniqueFileName(), currentModuleNamespace
+        )
+      }
+    } else {
+      when {
+        dependencyNamespace == null -> message(
+          "inspection.content.module.visibility.internal.dependency.namespace.missing",
+          dependencyValue.stringValue, dependencyIncludingPlugin.getUniqueFileName(),
+          getModuleName(currentXmlFile), currentModuleNamespace, currentModuleIncludingPlugin.getUniqueFileName()
+        )
+        currentModuleNamespace == null -> message(
+          "inspection.content.module.visibility.internal.current.namespace.missing",
+          dependencyValue.stringValue, dependencyNamespace, dependencyIncludingPlugin.getUniqueFileName(),
+          getModuleName(currentXmlFile), currentModuleIncludingPlugin.getUniqueFileName()
+        )
+        else -> message(
+          "inspection.content.module.visibility.internal",
+          dependencyValue.stringValue, dependencyNamespace, dependencyIncludingPlugin.getUniqueFileName(),
+          getModuleName(currentXmlFile), currentModuleNamespace, currentModuleIncludingPlugin.getUniqueFileName()
+        )
+      }
     }
   }
 
   private fun getPluginXmlFilesIncludingFileAsContentModule(xmlFile: XmlFile, scope: GlobalSearchScope): Collection<IdeaPlugin> {
+    val ideaPlugin = DescriptorUtil.getIdeaPlugin(xmlFile)
+    if (ideaPlugin != null && isActualPluginDescriptor(ideaPlugin, xmlFile)) {
+      return listOf(ideaPlugin)
+    }
     val moduleVirtualFile = xmlFile.virtualFile ?: return emptyList()
     val psiManager = xmlFile.manager
     return PluginIdDependenciesIndex.findFilesIncludingContentModule(moduleVirtualFile, scope)
