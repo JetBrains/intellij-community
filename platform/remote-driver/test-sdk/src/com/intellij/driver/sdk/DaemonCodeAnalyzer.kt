@@ -23,7 +23,7 @@ interface HighlightInfo {
   fun getDescription(): String
   fun getSeverity(): HighlightSeverity
   fun getText(): String
-  fun getHighlighter(): RangeHighlighterEx
+  fun getHighlighter(): RangeHighlighterEx?
   fun fromRangeHighlighter(rangeHighlighter: RangeHighlighter): HighlightInfo?
 }
 
