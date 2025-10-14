@@ -15,7 +15,7 @@ sealed interface TerminalOutputModel {
     val DATA_KEY: DataKey<TerminalOutputModel> = DataKey.create("TerminalOutputModel")
   }
 
-  val immutableText: CharSequence
+  val textLength: Int
 
   val lineCount: Int
 
@@ -52,7 +52,7 @@ sealed interface TerminalOutputModel {
 
 @ApiStatus.Experimental
 sealed interface TerminalOutputModelSnapshot {
-  val immutableText: CharSequence
+  val textLength: Int
 
   val lineCount: Int
 
@@ -98,20 +98,12 @@ sealed interface TerminalLineIndex : Comparable<TerminalLineIndex> {
 }
 
 @get:ApiStatus.Experimental
-val TerminalOutputModel.textLength: Int
-  get() = immutableText.length
-
-@get:ApiStatus.Experimental
 val TerminalOutputModel.endOffset: TerminalOffset
   get() = startOffset + textLength.toLong()
 
 @get:ApiStatus.Experimental
 val TerminalOutputModel.lastLineIndex: TerminalLineIndex
   get() = firstLineIndex + (lineCount - 1).toLong()
-
-@get:ApiStatus.Experimental
-val TerminalOutputModelSnapshot.textLength: Int
-  get() = immutableText.length
 
 @get:ApiStatus.Experimental
 val TerminalOutputModelSnapshot.endOffset: TerminalOffset

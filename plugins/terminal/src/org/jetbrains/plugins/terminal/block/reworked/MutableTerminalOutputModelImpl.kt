@@ -46,8 +46,8 @@ class MutableTerminalOutputModelImpl(
 
   private var isTypeAhead: Boolean = false
 
-  override val immutableText: CharSequence
-    get() = immutableTextImpl(document)
+  override val textLength: Int
+    get() = document.textLength
 
   override val lineCount: Int
     get() = lineCountImpl(document)
@@ -343,7 +343,7 @@ class MutableTerminalOutputModelImpl(
 
   override fun restoreFromState(state: TerminalOutputModelState) {
     changeDocumentContent {
-      val oldText = immutableText
+      val oldText = document.immutableCharSequence
       trimmedLinesCount = state.trimmedLinesCount
       trimmedCharsCount = state.trimmedCharsCount
       firstLineTrimmedCharsCount = state.firstLineTrimmedCharsCount
@@ -520,9 +520,8 @@ class TerminalOutputModelSnapshotImpl(
   private val trimmedLinesCount: Long,
   override val cursorOffset: TerminalOffset,
 ) : TerminalOutputModelSnapshot {
-
-  override val immutableText: CharSequence
-    get() = immutableTextImpl(document)
+  override val textLength: Int
+    get() = document.textLength
 
   override val lineCount: Int
     get() = lineCountImpl(document)
@@ -552,8 +551,6 @@ class TerminalOutputModelSnapshotImpl(
 
   private fun TerminalLineIndex.toRelative(): Int = (this - firstLineIndex).toInt()
 }
-
-private fun immutableTextImpl(document: Document): CharSequence = document.immutableCharSequence
 
 private fun lineCountImpl(document: Document): Int = document.lineCount.let { if (it > 0) it else 1 }
 
