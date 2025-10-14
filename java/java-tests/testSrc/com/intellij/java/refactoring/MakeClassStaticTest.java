@@ -25,11 +25,12 @@ import com.intellij.refactoring.makeStatic.MakeClassStaticProcessor;
 import com.intellij.refactoring.makeStatic.MakeStaticUtil;
 import com.intellij.refactoring.makeStatic.Settings;
 import com.intellij.refactoring.util.VariableData;
+import com.intellij.testFramework.LightJavaCodeInsightTestCase;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.ArrayList;
 
-public class MakeClassStaticTest extends LightRefactoringTestCase {
+public class MakeClassStaticTest extends LightJavaCodeInsightTestCase {
   private static final String TEST_ROOT = "/refactoring/makeClassStatic/";
 
   @NotNull

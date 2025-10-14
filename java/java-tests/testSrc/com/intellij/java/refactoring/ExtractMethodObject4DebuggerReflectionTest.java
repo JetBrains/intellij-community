@@ -11,13 +11,14 @@ import com.intellij.refactoring.extractMethod.PrepareFailedException;
 import com.intellij.refactoring.extractMethodObject.ExtractLightMethodObjectHandler;
 import com.intellij.refactoring.extractMethodObject.LightMethodObjectExtractedData;
 import com.intellij.testFramework.IdeaTestUtil;
+import com.intellij.testFramework.LightJavaCodeInsightTestCase;
 import com.intellij.testFramework.UsefulTestCase;
 import org.jetbrains.annotations.NotNull;
 
 /**
  * @author Vitaliy.Bibaev
  */
-public class ExtractMethodObject4DebuggerReflectionTest extends LightRefactoringTestCase {
+public class ExtractMethodObject4DebuggerReflectionTest extends LightJavaCodeInsightTestCase {
 
   @Override
   protected Sdk getProjectJDK() {

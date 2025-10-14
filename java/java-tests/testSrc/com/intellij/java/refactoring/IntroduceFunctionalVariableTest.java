@@ -7,12 +7,13 @@ import com.intellij.refactoring.extractMethod.ExtractMethodProcessor;
 import com.intellij.refactoring.extractMethod.InputVariables;
 import com.intellij.refactoring.introduceVariable.IntroduceFunctionalVariableHandler;
 import com.intellij.refactoring.util.CommonRefactoringUtil;
+import com.intellij.testFramework.LightJavaCodeInsightTestCase;
 import com.intellij.testFramework.MapDataContext;
 import com.intellij.testFramework.TestDataPath;
 import org.jetbrains.annotations.NotNull;
 
 @TestDataPath("$CONTENT_ROOT/testData")
-public class IntroduceFunctionalVariableTest extends LightRefactoringTestCase  {
+public class IntroduceFunctionalVariableTest extends LightJavaCodeInsightTestCase {
   
   @NotNull
   @Override

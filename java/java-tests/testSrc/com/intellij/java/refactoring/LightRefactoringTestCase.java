@@ -17,5 +17,9 @@ package com.intellij.java.refactoring;
 
 import com.intellij.testFramework.LightJavaCodeInsightTestCase;
 
+/**
+ * @deprecated Use {@link LightJavaCodeInsightTestCase} instead.
+ */
+@Deprecated(forRemoval = true)
 public abstract class LightRefactoringTestCase extends LightJavaCodeInsightTestCase {
 }

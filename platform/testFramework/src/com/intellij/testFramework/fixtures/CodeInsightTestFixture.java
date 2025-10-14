@@ -73,7 +73,7 @@ import java.util.function.Predicate;
  * @see <a href="https://plugins.jetbrains.com/docs/intellij/tests-and-fixtures.html">Tests and Fixtures</a>
  * @see <a href="https://plugins.jetbrains.com/docs/intellij/testing-highlighting.html">Testing Highlighting</a>
  * @see IdeaTestFixtureFactory#createCodeInsightFixture(IdeaProjectTestFixture)
- */
+ */ 
 public interface CodeInsightTestFixture extends IdeaProjectTestFixture {
   String CARET_MARKER = EditorTestUtil.CARET_TAG;
   String ERROR_MARKER = "error";
