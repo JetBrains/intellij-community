@@ -174,7 +174,7 @@ public class UndoManagerImpl extends UndoManager {
 
   public boolean isActive() {
     UndoClientState state = getClientState();
-    return state != null && state.isActive();
+    return state != null && state.isActiveForCurrentProject();
   }
 
   public void addDocumentAsAffected(@NotNull Document document) {
@@ -342,33 +342,44 @@ public class UndoManagerImpl extends UndoManager {
 
   @ApiStatus.Internal
   protected void onCommandStarted(
-    @Nullable Project project,
-    @NotNull UndoConfirmationPolicy undoConfirmationPolicy,
-    boolean recordOriginalReference
+    @Nullable Project commandProject,
+    @Nullable @Command String commandName,
+    @Nullable Object commandGroupId,
+    @NotNull UndoConfirmationPolicy confirmationPolicy,
+    boolean recordOriginalReference,
+    boolean isTransparent
   ) {
     UndoClientState state = getClientState();
     if (state == null || !state.isInsideCommand()) {
       for (UndoProvider undoProvider : getUndoProviders()) {
-        undoProvider.commandStarted(project);
+        undoProvider.commandStarted(commandProject);
       }
     }
     if (state != null) {
-      state.commandStarted(project, getEditorProvider(), undoConfirmationPolicy, recordOriginalReference);
+      state.commandStarted(
+        commandProject,
+        commandName,
+        commandGroupId,
+        getEditorProvider(),
+        confirmationPolicy,
+        recordOriginalReference,
+        isTransparent
+      );
     }
   }
 
   void onCommandFinished(
-    @Nullable Project project,
+    @Nullable Project commandProject,
     @Nullable @Command String commandName,
     @Nullable Object commandGroupId
   ) {
     UndoClientState state = getClientState();
     if (state != null) {
-      state.commandFinished(getEditorProvider(), commandName, commandGroupId);
+      state.commandFinished(commandProject, commandName, commandGroupId);
     }
     if (state == null || !state.isInsideCommand()) {
       for (UndoProvider undoProvider : getUndoProviders()) {
-        undoProvider.commandFinished(project);
+        undoProvider.commandFinished(commandProject);
       }
     }
   }
@@ -437,7 +448,7 @@ public class UndoManagerImpl extends UndoManager {
   public void flushCurrentCommandMerger() {
     UndoClientState state = getClientState();
     if (state != null) {
-      state.flushCurrentCommand(UndoCommandFlushReason.MANAGER_FORCE);
+      state.flushCommandMerger(UndoCommandFlushReason.MANAGER_FORCE);
     }
   }
 

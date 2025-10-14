@@ -50,7 +50,7 @@ abstract class UndoRedo {
     this.sharedStacksHolderReversed = sharedStacksHolderReversed;
     this.isRedo = isRedo;
     this.undoProblemReport = new UndoProblemReport(project, isRedo);
-    this.undoableGroup = stacksHolder.getLastAction(getDocRefs());
+    this.undoableGroup = Objects.requireNonNull(stacksHolder.getLastAction(getDocRefs()), "undo is not available");
   }
 
   protected abstract @DialogTitle String getActionName();
@@ -226,7 +226,6 @@ abstract class UndoRedo {
         IdeBundle.message("undo.command.local.name") + undoableGroup.getCommandName(),
         localActions, // only action that changes file locally
         undoableGroup.getConfirmationPolicy(),
-        stacksHolder,
         undoableGroup.getStateBefore(),
         undoableGroup.getStateAfter(),
         null,
@@ -241,7 +240,6 @@ abstract class UndoRedo {
         undoableGroup.getCommandName(),
         nonLocalActions, // all action except local
         undoableGroup.getConfirmationPolicy(),
-        stacksHolder,
         undoableGroup.getStateBefore(),
         undoableGroup.getStateAfter(),
         null,
