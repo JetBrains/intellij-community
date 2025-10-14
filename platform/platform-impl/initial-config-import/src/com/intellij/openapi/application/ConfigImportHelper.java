@@ -14,6 +14,7 @@ import com.intellij.ide.ui.laf.LookAndFeelThemeAdapterKt;
 import com.intellij.idea.AppMode;
 import com.intellij.openapi.application.impl.ApplicationInfoImpl;
 import com.intellij.openapi.application.migrations.Localization242;
+import com.intellij.openapi.application.migrations.BigDataToolsMigration253;
 import com.intellij.openapi.application.migrations.NotebooksMigration242;
 import com.intellij.openapi.application.migrations.SpaceMigration252;
 import com.intellij.openapi.components.StoragePathMacros;
@@ -1073,6 +1074,7 @@ public final class ConfigImportHelper {
     // Note that migrations are not taken into account for IDE updates through Toolbox
     new NotebooksMigration242().migratePlugins(options);
     new SpaceMigration252().migratePlugins(options);
+    new BigDataToolsMigration253().migratePlugins(options);
   }
 
   private static void migrateGlobalPlugins(
