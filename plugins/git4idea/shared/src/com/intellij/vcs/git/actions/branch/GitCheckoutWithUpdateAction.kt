@@ -12,8 +12,10 @@ import com.intellij.vcs.git.branch.popup.GitBranchesPopupKeys
 import com.intellij.vcs.git.repo.GitRepositoryModel
 import com.intellij.vcs.git.rpc.GitOperationsApi
 import git4idea.GitStandardLocalBranch
+import org.jetbrains.annotations.ApiStatus
 
-internal class GitCheckoutWithUpdateAction : DumbAwareAction(), ActionRemoteBehaviorSpecification.FrontendOtherwiseBackend {
+@ApiStatus.Internal
+class GitCheckoutWithUpdateAction : DumbAwareAction(), ActionRemoteBehaviorSpecification.FrontendOtherwiseBackend {
   override fun getActionUpdateThread(): ActionUpdateThread = ActionUpdateThread.BGT
 
   override fun update(e: AnActionEvent) {
