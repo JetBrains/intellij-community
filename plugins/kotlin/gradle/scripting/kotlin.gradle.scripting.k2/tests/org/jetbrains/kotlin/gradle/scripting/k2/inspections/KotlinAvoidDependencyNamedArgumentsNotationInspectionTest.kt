@@ -88,7 +88,83 @@ class KotlinAvoidDependencyNamedArgumentsNotationInspectionTest : K2GradleCodeIn
             """
             val verRef = "1.0"
             dependencies { 
-                implementation(group = "org.gradle", name = "gradle-core", version = verRef)
+                implementation$WARNING_START(group = "org.gradle", name = "gradle-core", version = verRef)$WARNING_END
+            }
+            """.trimIndent(),
+            """
+            val verRef = "1.0"
+            dependencies { 
+                implementation(group = "org.gradle", name = "gradle-core", version = verRef)<caret>
+            }
+            """.trimIndent(),
+            $$"""
+            val verRef = "1.0"
+            dependencies { 
+                implementation("org.gradle:gradle-core:$verRef")
+            }
+            """.trimIndent()
+        )
+    }
+
+    @ParameterizedTest
+    @BaseGradleVersionSource
+    fun testNonLiteralArguments(gradleVersion: GradleVersion) {
+        runTest(
+            gradleVersion,
+            """
+            val groupRef = "org.gradle"
+            val groupRefRef = groupRef
+            val nameRef = "gradle-core"
+            val verRef = "1.0"
+            dependencies { 
+                implementation$WARNING_START(group = groupRefRef, name = nameRef, version = verRef)$WARNING_END
+            }
+            """.trimIndent(),
+            """
+            val groupRef = "org.gradle"
+            val groupRefRef = groupRef
+            val nameRef = "gradle-core"
+            val verRef = "1.0"
+            dependencies { 
+                implementation(group = groupRefRef, name = nameRef, version = verRef)<caret>
+            }
+            """.trimIndent(),
+            $$"""
+            val groupRef = "org.gradle"
+            val groupRefRef = groupRef
+            val nameRef = "gradle-core"
+            val verRef = "1.0"
+            dependencies { 
+                implementation("$groupRefRef:$nameRef:$verRef")
+            }
+            """.trimIndent()
+        )
+    }
+
+    @ParameterizedTest
+    @BaseGradleVersionSource
+    fun testNonLiteralArgumentsRequiringBraces(gradleVersion: GradleVersion) {
+        runTest(
+            gradleVersion,
+            """
+            fun getVer() = "1.0"
+            dependencies { 
+                val groupObject = object { fun getGroup() = "org.gradle" }
+                implementation$WARNING_START(group = groupObject.getGroup(), name = "gradle-core", version = getVer())$WARNING_END
+            }
+            """.trimIndent(),
+            """
+            fun getVer() = "1.0"
+            dependencies { 
+                val groupObject = object { fun getGroup() = "org.gradle" }
+                implementation(group = groupObject.getGroup(), name = "gradle-core", version = getVer())<caret>
+            }
+            """.trimIndent(),
+            $$"""
+            fun getVer() = "1.0"
+            dependencies { 
+                val groupObject = object { fun getGroup() = "org.gradle" }
+                implementation("${groupObject.getGroup()}:gradle-core:${getVer()}")
             }
             """.trimIndent()
         )
@@ -383,6 +459,38 @@ class KotlinAvoidDependencyNamedArgumentsNotationInspectionTest : K2GradleCodeIn
             """
             dependencies { 
                 implementation("org.gradle:gradle-core:1.0")
+            }
+            """.trimIndent()
+        )
+    }
+
+    @ParameterizedTest
+    @BaseGradleVersionSource
+    fun testMultipleDependenciesBlocks(gradleVersion: GradleVersion) {
+        runTest(
+            gradleVersion,
+            """
+            dependencies { 
+                implementation$WARNING_START(group = "org.gradle", name = "gradle-core", version = "1.0")$WARNING_END
+            }
+            dependencies { 
+                implementation$WARNING_START(group = "org.gradle", name = "gradle-core-other", version = "1.0")$WARNING_END
+            }
+            """.trimIndent(),
+            """
+            dependencies { 
+                implementation(group = "org.gradle", name = "gradle-core", version = "1.0")<caret>
+            }
+            dependencies { 
+                implementation(group = "org.gradle", name = "gradle-core-other", version = "1.0")
+            }
+            """.trimIndent(),
+            """
+            dependencies { 
+                implementation("org.gradle:gradle-core:1.0")
+            }
+            dependencies { 
+                implementation(group = "org.gradle", name = "gradle-core-other", version = "1.0")
             }
             """.trimIndent()
         )

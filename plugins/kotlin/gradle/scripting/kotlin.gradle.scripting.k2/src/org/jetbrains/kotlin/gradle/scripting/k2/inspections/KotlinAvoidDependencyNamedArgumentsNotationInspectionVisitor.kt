@@ -25,9 +25,7 @@ class KotlinAvoidDependencyNamedArgumentsNotationInspectionVisitor(private val h
         if (args.size !in 2..3) return
         val ids = args.mapNotNull { it.getArgumentName()?.asName?.identifier }
         if (!setOf("group", "name", "version").containsAll(ids)) return
-        // check that all values are string literals
-        val values = args.map { it.getArgumentExpression() }
-        if (values.any { it !is KtStringTemplateExpression }) return
+
         holder.registerProblem(
             argList,
             GradleInspectionBundle.message("inspection.message.avoid.dependency.named.arguments.notation.descriptor"),
