@@ -3,6 +3,7 @@ package com.intellij.terminal.frontend.toolwindow.impl
 import com.intellij.openapi.Disposable
 import com.intellij.openapi.actionSystem.ActionGroup
 import com.intellij.openapi.actionSystem.ActionManager
+import com.intellij.openapi.application.EDT
 import com.intellij.openapi.application.ModalityState
 import com.intellij.openapi.application.UI
 import com.intellij.openapi.application.UiWithModelAccess
@@ -220,7 +221,7 @@ internal class TerminalToolWindowTabsManagerImpl(
       TerminalTabsManagerApi.getInstance().createNewTerminalTab(project.projectId()).id
     }
 
-    terminal.coroutineScope.awaitCancellationAndInvoke(Dispatchers.IO) {
+    terminal.coroutineScope.awaitCancellationAndInvoke(Dispatchers.EDT) {
       // Backend terminal session tab lifecycle is not directly bound to the terminal frontend lifecycle.
       // We need to close the backend session when the terminal is closed explicitly.
       // And don't need it when a user is closing the project leaving the terminal tabs opened: to be able to reconnect back.
@@ -228,7 +229,12 @@ internal class TerminalToolWindowTabsManagerImpl(
       // It is not easy to determine whether it is explicit closing or not, so we use the heuristic.
       val isProjectClosing = getToolWindow().contentManager.isDisposed
       if (!isProjectClosing) {
-        TerminalTabsManagerApi.getInstance().closeTerminalTab(project.projectId(), backendTabId)
+        // Do not block frontend terminal scope cancellation by backend session termination request.
+        coroutineScope.launch(Dispatchers.IO) {
+          durable {
+            TerminalTabsManagerApi.getInstance().closeTerminalTab(project.projectId(), backendTabId)
+          }
+        }
       }
     }
 
