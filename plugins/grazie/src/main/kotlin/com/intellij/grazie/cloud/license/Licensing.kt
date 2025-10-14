@@ -20,7 +20,7 @@ internal sealed interface LicenseState {
       try {
         val jbaService = JBAccountInfoService.getInstance() ?: return Empty
         val licenses = jbaService.getAvailableLicenses(GrazieLicenseCode).await() ?: return NoLicense
-        if (licenses !is LicenseList) return NoLicense
+        if (licenses !is LicenseList) return Empty
 
         // Iterate over all Grazie licenses and pick the most relevant one.
         // Order to check: `STANDARD` -> `TRIAL` -> `FREE`.

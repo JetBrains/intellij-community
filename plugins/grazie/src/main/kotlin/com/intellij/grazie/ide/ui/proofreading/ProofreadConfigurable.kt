@@ -1,9 +1,14 @@
+@file:Suppress("DialogTitleCapitalization")
+
 package com.intellij.grazie.ide.ui.proofreading
 
 import com.intellij.grazie.GrazieBundle
 import com.intellij.grazie.GrazieConfig
 import com.intellij.grazie.GrazieConfig.State.Processing
+import com.intellij.grazie.GrazieScope
 import com.intellij.grazie.cloud.GrazieCloudConnector
+import com.intellij.grazie.cloud.license.GrazieLoginManager
+import com.intellij.grazie.icons.GrazieIcons
 import com.intellij.grazie.ide.ui.components.dsl.msg
 import com.intellij.grazie.ide.ui.proofreading.component.GrazieLanguagesComponent
 import com.intellij.grazie.jlanguage.Lang
@@ -11,9 +16,12 @@ import com.intellij.grazie.remote.GrazieRemote
 import com.intellij.grazie.remote.GrazieRemote.getLanguagesBasedOnUserAgreement
 import com.intellij.grazie.remote.LanguageDownloader
 import com.intellij.ide.DataManager
+import com.intellij.openapi.Disposable
 import com.intellij.openapi.application.EDT
 import com.intellij.openapi.application.ModalityState
 import com.intellij.openapi.application.asContextElement
+import com.intellij.openapi.diagnostic.debug
+import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.options.BoundSearchableConfigurable
 import com.intellij.openapi.options.OptionsBundle
 import com.intellij.openapi.options.ex.Settings
@@ -21,18 +29,22 @@ import com.intellij.openapi.project.guessCurrentProject
 import com.intellij.openapi.ui.DialogPanel
 import com.intellij.profile.codeInspection.ui.ErrorsConfigurable
 import com.intellij.ui.dsl.builder.*
+import com.intellij.ui.layout.ComponentPredicate
 import com.intellij.util.ui.AsyncProcessIcon
 import com.intellij.util.ui.JBDimension
 import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
 import java.util.concurrent.ConcurrentHashMap
 import javax.swing.JLabel
+
+private val logger = logger<ProofreadConfigurable>()
 
 class ProofreadConfigurable : BoundSearchableConfigurable(
   OptionsBundle.message("configurable.group.proofread.settings.display.name"),
   "reference.settings.ide.settings.proofreading",
   ID
-) {
+), Disposable {
   companion object {
     const val ID: String = "proofread"
   }
@@ -92,6 +104,7 @@ class ProofreadConfigurable : BoundSearchableConfigurable(
           }
         }
       }
+      cloudSettings()
       generalSettings()
     }
 
@@ -119,28 +132,49 @@ class ProofreadConfigurable : BoundSearchableConfigurable(
         updateAvailability()
         GrazieConfig.subscribe(disposable!!) { updateAvailability() }
       }
+    }
+  }
 
-      row {
-        checkBox(GrazieBundle.message("grazie.settings.use.advanced.spelling.checkbox"))
-          .bindSelected(
-            getter = { GrazieConfig.get().processing == Processing.Cloud },
-            setter = { isSelected ->
-              val selectedProcessing = if (isSelected) Processing.Cloud else Processing.Local
-              if (GrazieConfig.get().processing != selectedProcessing || GrazieConfig.get().explicitlyChosenProcessing != null) {
-                GrazieConfig.update { state -> state.copy(explicitlyChosenProcessing = selectedProcessing) }
-              }
-            }
-          )
-          .onChanged { checkBox ->
-            if (checkBox.isSelected && GrazieConfig.get().explicitlyChosenProcessing == null) {
-              val agreement = GrazieCloudConnector.askUserConsentForCloud()
-              if (!agreement) checkBox.isSelected = false
-            }
-            if (checkBox.isSelected && !GrazieCloudConnector.isAuthorized()) {
-              GrazieCloudConnector.connect(project)
-            }
+  private fun Panel.cloudSettings() {
+    row {
+      label(GrazieBundle.message("grazie.status.bar.widget.language.processing.label.text"))
+
+      icon(GrazieIcons.Stroke.GrazieCloudProcessing)
+        .visibleIf(GrazieListeningComponentPredicate(this@ProofreadConfigurable) { isLoggedIn })
+      label(GrazieBundle.message("grazie.status.bar.widget.cloud.processing.label.text"))
+        .visibleIf(GrazieListeningComponentPredicate(this@ProofreadConfigurable) { isLoggedIn })
+      link(GrazieBundle.message("grazie.status.bar.widget.disable.cloud.link.text")) {
+        GrazieConfig.update { state -> state.copy(explicitlyChosenProcessing = Processing.Local) }
+      }.visibleIf(GrazieListeningComponentPredicate(this@ProofreadConfigurable) { isLoggedIn })
+      link(GrazieBundle.message("grazie.settings.logout.action.text")) {
+        GrazieScope.coroutineScope().launch { GrazieLoginManager.getInstance().logOutFromCloud() }
+      }.visibleIf(GrazieListeningComponentPredicate(this@ProofreadConfigurable) {
+        isLoggedIn && !GrazieCloudConnector.hasAdditionalConnectors()
+      })
+
+      icon(GrazieIcons.Stroke.Grazie)
+        .visibleIf(GrazieListeningComponentPredicate(this@ProofreadConfigurable) { !isLoggedIn })
+      label(GrazieBundle.message("grazie.status.bar.widget.local.processing.label.text"))
+        .visibleIf(GrazieListeningComponentPredicate(this@ProofreadConfigurable) { !isLoggedIn })
+      link(GrazieBundle.message("grazie.status.bar.widget.enable.cloud.link.text")) {
+        if (!GrazieCloudConnector.askUserConsentForCloud()) return@link
+        logger.debug { "Connect to Grazie Cloud button started from settings" }
+        if (!GrazieCloudConnector.isAuthorized() && !GrazieCloudConnector.connect(project)) return@link
+        GrazieConfig.update { state -> state.copy(explicitlyChosenProcessing = Processing.Cloud) }
+      }.visibleIf(GrazieListeningComponentPredicate(this@ProofreadConfigurable) { !isLoggedIn })
+    }
+    row {
+      val commentText = GrazieBundle.message("grazie.status.bar.widget.cloud.comment.text")
+      // Reserve the space for comment to prevent "jumping" UI
+      comment("")
+        .applyToComponent {
+          GrazieConfig.subscribe(disposable!!) {
+            text = if (!isLoggedIn) commentText else ""
           }
-      }
+          GrazieCloudConnector.subscribeToAuthorizationStateEvents(disposable!!) {
+            text = if (!isLoggedIn) commentText else ""
+          }
+        }
     }
   }
 
@@ -182,4 +216,18 @@ class ProofreadConfigurable : BoundSearchableConfigurable(
       }
     }
   }
+
+  override fun dispose(): Unit = Unit
+
+  private class GrazieListeningComponentPredicate(private val disposable: Disposable, private val invoker: () -> Boolean) : ComponentPredicate() {
+    override fun addListener(listener: (Boolean) -> Unit) {
+      GrazieConfig.subscribe(disposable) { listener(invoke()) }
+      GrazieCloudConnector.subscribeToAuthorizationStateEvents(disposable) { listener(invoke()) }
+    }
+
+    override fun invoke(): Boolean = invoker()
+  }
+
+  private val isLoggedIn: Boolean
+    get() = GrazieConfig.get().processing == Processing.Cloud && GrazieCloudConnector.isAuthorized()
 }
