@@ -2,6 +2,7 @@
 package com.intellij.ide.gdpr;
 
 import com.intellij.ide.ConsentOptionsProvider;
+import com.intellij.ide.gdpr.localConsents.LocalConsentOptions;
 import com.intellij.ide.gdpr.ui.consents.AiDataCollectionExternalSettings;
 import com.intellij.ui.LicensingFacade;
 import org.jetbrains.annotations.NotNull;
@@ -72,8 +73,8 @@ final class ConsentOptionsProviderImpl implements ConsentOptionsProvider {
     }
     DataCollectionAgreement dataCollectionAgreement = DataCollectionAgreement.getInstance();
     ConsentOptions.Permission traceDataCollectionPermission = metadata.charAt(METADATA_LICENSE_TYPE_INDEX) == 'F'
-                                                              ? ConsentOptions.getInstance().getTraceDataCollectionNonComPermission()
-                                                              : ConsentOptions.getInstance().getTraceDataCollectionComPermission();
+                                                              ? LocalConsentOptions.INSTANCE.getTraceDataCollectionNonComPermission()
+                                                              : LocalConsentOptions.INSTANCE.getTraceDataCollectionComPermission();
     return dataCollectionAgreement == DataCollectionAgreement.YES ||
            traceDataCollectionPermission == ConsentOptions.Permission.YES;
   }
