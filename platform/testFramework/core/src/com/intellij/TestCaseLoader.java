@@ -410,7 +410,7 @@ public class TestCaseLoader {
   }
 
   protected static ClassLoader getClassLoader() {
-    return TestCaseLoader.class.getClassLoader();
+    return Thread.currentThread().getContextClassLoader();
   }
 
   public List<Throwable> getClassLoadingErrors() {
