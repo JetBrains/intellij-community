@@ -11,7 +11,10 @@ import com.intellij.openapi.vcs.*;
 import com.intellij.openapi.vcs.history.VcsRevisionNumber;
 import com.intellij.openapi.vfs.CharsetToolkit;
 import com.intellij.openapi.vfs.encoding.EncodingRegistry;
+import com.intellij.util.concurrency.ThreadingAssertions;
+import com.intellij.util.concurrency.annotations.RequiresBackgroundThread;
 import com.intellij.vcsUtil.VcsUtil;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.Contract;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -70,13 +73,17 @@ public final class ContentRevisionCache {
     return myCache.getIfPresent(new Key(path, number, vcsKey, type));
   }
 
+  @RequiresBackgroundThread
   public static byte @NotNull [] loadAsBytes(@NotNull FilePath path,
                                              Throwable2Computable<byte @NotNull [], ? extends VcsException, ? extends IOException> loader)
     throws VcsException, IOException {
+    ThreadingAssertions.assertBackgroundThread();
+
     checkLocalFileSize(path);
     return loader.compute();
   }
 
+  @RequiresBackgroundThread
   public static byte @NotNull [] getOrLoadAsBytes(@NotNull Project project,
                                                   @NotNull FilePath path,
                                                   @NotNull VcsRevisionNumber number,
@@ -85,18 +92,28 @@ public final class ContentRevisionCache {
                                                   @NotNull Throwable2Computable<byte @NotNull [], ? extends VcsException, ? extends IOException> loader)
     throws VcsException, IOException {
     ContentRevisionCache cache = ProjectLevelVcsManager.getInstance(project).getContentRevisionCache();
+    byte[] bytes = getFromCache(project, path, number, vcsKey, type);
+    if (bytes != null) {
+      return bytes;
+    }
+
+    bytes = loadAsBytes(path, loader);
+    cache.put(path, number, vcsKey, type, bytes);
+    return bytes;
+  }
+
+  @ApiStatus.Internal
+  public static byte @Nullable [] getFromCache(@NotNull Project project,
+                                                @NotNull FilePath path,
+                                                @NotNull VcsRevisionNumber number,
+                                                @NotNull VcsKey vcsKey,
+                                                @NotNull UniqueType type) {
+    ContentRevisionCache cache = ProjectLevelVcsManager.getInstance(project).getContentRevisionCache();
     byte[] bytes = cache.getBytes(path, number, vcsKey, type);
     if (bytes != null) {
       return bytes;
     }
     bytes = cache.getFromConstantCache(path, number, vcsKey, type);
-    if (bytes != null) {
-      return bytes;
-    }
-
-    checkLocalFileSize(path);
-    bytes = loader.compute();
-    cache.put(path, number, vcsKey, type, bytes);
     return bytes;
   }
 

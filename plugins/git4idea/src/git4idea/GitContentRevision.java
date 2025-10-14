@@ -1,6 +1,7 @@
 // Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package git4idea;
 
+import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.vcs.FilePath;
 import com.intellij.openapi.vcs.VcsException;
@@ -11,6 +12,7 @@ import com.intellij.openapi.vcs.history.VcsRevisionNumber;
 import com.intellij.openapi.vcs.impl.ContentRevisionCache;
 import com.intellij.openapi.vfs.LocalFileSystem;
 import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.util.ui.EDT;
 import com.intellij.vcsUtil.VcsFileUtil;
 import com.intellij.vcsUtil.VcsUtil;
 import git4idea.diff.GitSubmoduleContentRevision;
@@ -29,6 +31,8 @@ import java.nio.charset.Charset;
 import static com.intellij.openapi.vcs.impl.ContentRevisionCache.UniqueType.REPOSITORY_CONTENT;
 
 public class GitContentRevision implements ByteBackedContentRevision {
+  private static final Logger LOG = Logger.getInstance(GitContentRevision.class);
+
   protected final @NotNull FilePath myFile;
   private final @NotNull GitRevisionNumber myRevision;
   private final @NotNull Project myProject;
@@ -61,6 +65,11 @@ public class GitContentRevision implements ByteBackedContentRevision {
       return null;
     }
     try {
+      if (EDT.isCurrentThreadEdt()) {
+        LOG.error("GitContentRevision.getContentAsBytes() should not be called from EDT", new Throwable());
+        return ContentRevisionCache.getFromCache(myProject, myFile, myRevision, GitVcs.getKey(), REPOSITORY_CONTENT);
+      }
+
       if (!GitUtil.isHashString(myRevision.getRev())) {
         // do not cache contents for 'HEAD' or branch/tag references
         return ContentRevisionCache.loadAsBytes(myFile, this::loadContent);

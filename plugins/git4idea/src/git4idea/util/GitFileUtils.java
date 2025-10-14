@@ -10,11 +10,15 @@ import com.intellij.openapi.vcs.VcsException;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.util.ArrayUtil;
 import com.intellij.util.ObjectUtils;
+import com.intellij.util.concurrency.annotations.RequiresBackgroundThread;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.vcsUtil.VcsFileUtil;
 import com.intellij.vcsUtil.VcsUtil;
 import git4idea.GitUtil;
-import git4idea.commands.*;
+import git4idea.commands.Git;
+import git4idea.commands.GitBinaryHandler;
+import git4idea.commands.GitCommand;
+import git4idea.commands.GitLineHandler;
 import git4idea.config.GitExecutableManager;
 import git4idea.config.GitVersion;
 import git4idea.index.GitIndexUtil;
@@ -264,6 +268,7 @@ public final class GitFileUtils {
    * @return the content of file if file is found
    * @throws VcsException if there is a problem with running git
    */
+  @RequiresBackgroundThread
   public static byte @NotNull [] getFileContent(@Nullable Project project,
                                                 @NotNull VirtualFile root,
                                                 @NotNull @NonNls String revisionOrBranch,
