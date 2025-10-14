@@ -59,10 +59,11 @@ data class DevBuildServerSettings(
       }
   }
 
-  fun apply(mainModule: String, args: MutableList<String>) {
+  fun apply(mainClass: String, mainModule: String, args: MutableList<String>) {
     args.addAll(jvmArgs.map {
       it.replace($$"$TEST_MODULE_NAME$", mainModule)
     })
-    args.add(mainClass)
+    args.add("-Didea.dev.build.test.entry.point.class=$mainClass")
+    args.add(this.mainClass)
   }
 }

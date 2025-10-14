@@ -859,6 +859,7 @@ internal class TestingTasksImpl(context: CompilationContext, private val options
     envVariables: Map<String, String>,
     bootstrapClasspath: List<String>,
     testClasspath: List<String>,
+    devBuildServerSettings: DevBuildServerSettings?,
   ) {
     val pattern = Pattern.compile(FileUtil.convertAntToRegexp(options.batchTestIncludes!!))
     val testClasses = getTestClassesForModule(mainModule = mainModule, filteringPattern = pattern)
@@ -896,7 +897,7 @@ internal class TestingTasksImpl(context: CompilationContext, private val options
             testClasspath = testClasspath,
             suiteName = qName,
             methodName = null,
-            devBuildSettings = null,
+            devBuildSettings = devBuildServerSettings,
           )
           noTests = exitCode == NO_TESTS_ERROR
         }
@@ -913,7 +914,7 @@ internal class TestingTasksImpl(context: CompilationContext, private val options
               testClasspath = testClasspath,
               suiteName = qName,
               methodName = method,
-              devBuildSettings = null,
+              devBuildSettings = devBuildServerSettings,
             )
             noTests = noTests && exitCode == NO_TESTS_ERROR
           }
@@ -931,7 +932,7 @@ internal class TestingTasksImpl(context: CompilationContext, private val options
             testClasspath = testClasspath,
             suiteName = qName,
             methodName = null,
-            devBuildSettings = null
+            devBuildSettings = devBuildServerSettings,
           )
           noTests = exitCode == NO_TESTS_ERROR
         }
@@ -977,6 +978,7 @@ internal class TestingTasksImpl(context: CompilationContext, private val options
             envVariables = envVariables,
             bootstrapClasspath = bootstrapClasspath,
             testClasspath = testClasspath,
+            devBuildServerSettings = devBuildServerSettings,
           )
         }
     }
@@ -1051,7 +1053,7 @@ internal class TestingTasksImpl(context: CompilationContext, private val options
                 testClasspath = testClasspath,
                 suiteName = testClassName,
                 methodName = null,
-                devBuildSettings = null,
+                devBuildSettings = devBuildServerSettings,
               )
             }
             if (exitCode == NO_TESTS_ERROR) throw NoTestsFound()
@@ -1093,7 +1095,7 @@ internal class TestingTasksImpl(context: CompilationContext, private val options
                 testClasspath = testClasspath,
                 suiteName = "__classes__",
                 methodName = classes.joinToString(";"),
-                devBuildSettings = null,
+                devBuildSettings = devBuildServerSettings,
               )
             }
             if (exitCode == NO_TESTS_ERROR) throw NoTestsFound()
@@ -1169,7 +1171,7 @@ internal class TestingTasksImpl(context: CompilationContext, private val options
                 testClasspath = testClasspath,
                 suiteName = options.bootstrapSuite,
                 methodName = null,
-                devBuildSettings = null,
+                devBuildSettings = devBuildServerSettings,
               )
             }
           }
@@ -1254,7 +1256,7 @@ internal class TestingTasksImpl(context: CompilationContext, private val options
     methodName: String?,
     devBuildSettings: DevBuildServerSettings?,
   ): Int {
-    val useDevMode = devBuildSettings != null && devBuildSettings.mainClass.isNotEmpty() && suiteName == null
+    val useDevMode = devBuildSettings != null && devBuildSettings.mainClass.isNotEmpty()
     if (useDevMode) {
       val bootClasspath = context.getModuleRuntimeClasspath(module = context.findRequiredModule(IJENT_BOOT_CLASSPATH_MODULE), forTests = false)
       val classpath = context.getModuleRuntimeClasspath(module = context.findRequiredModule(devBuildSettings.mainClassModule), forTests = false)
@@ -1342,11 +1344,12 @@ internal class TestingTasksImpl(context: CompilationContext, private val options
     args += "--add-opens"
     args += "java.base/java.nio.file.spi=ALL-UNNAMED"
 
+    val mainClass = if (suiteName == null) "com.intellij.tests.JUnit5TeamCityRunnerForTestsOnClasspath" else "com.intellij.tests.JUnit5TeamCityRunnerForTestAllSuite"
     if (devBuildModeSettings == null) {
-      args.add(if (suiteName == null) "com.intellij.tests.JUnit5TeamCityRunnerForTestsOnClasspath" else "com.intellij.tests.JUnit5TeamCityRunnerForTestAllSuite")
+      args.add(mainClass)
     }
     else {
-      devBuildModeSettings.apply(mainModule, args)
+      devBuildModeSettings.apply(mainClass, mainModule, args)
     }
 
     if (suiteName != null) {
