@@ -86,7 +86,7 @@ open class LambdaTestHost(coroutineScope: CoroutineScope) {
     // TODO: plugin: PluginModuleDescriptor might be passed as a context parameter and not via constructor
     abstract class NamedLambda<T : LambdaIdeContext>(protected val lambdaIdeContext: T, protected val plugin: PluginModuleDescriptor) {
       fun name(): String = this::class.qualifiedName ?: error("Can't get qualified name of lambda $this")
-      abstract suspend fun T.lambda(args: List<LambdaRdKeyValueEntry>): Any
+      abstract suspend fun T.lambda(args: List<LambdaRdKeyValueEntry>): Any?
       suspend fun runLambda(args: List<LambdaRdKeyValueEntry>) {
         with(lambdaIdeContext) {
           lambda(args = args)
