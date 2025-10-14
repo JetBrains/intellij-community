@@ -5,10 +5,14 @@ import com.intellij.openapi.util.NlsSafe
 import org.jetbrains.annotations.ApiStatus
 
 @ApiStatus.Internal
-sealed interface EnvironmentDependentModuleUnavailabilityReason
+sealed interface EnvironmentDependentModuleUnavailabilityReason {
+  val logMessage: String
+}
 
 @ApiStatus.Internal
-class UnsuitableAppModeModuleUnavailabilityReason(
+class UnsuitableProductModeModuleUnavailabilityReason(
   val moduleId: PluginModuleId,
-  val appMode: @NlsSafe String,
-) : EnvironmentDependentModuleUnavailabilityReason
+  val productMode: @NlsSafe String,
+) : EnvironmentDependentModuleUnavailabilityReason {
+  override val logMessage: String get() = "Module '${moduleId.id}' is not available in '$productMode' product mode"
+}

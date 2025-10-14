@@ -126,10 +126,13 @@ class PluginSetBuilder(@JvmField val unsortedPlugins: Set<PluginMainDescriptor>)
     }
 
     m@ for (module in sortedModulesWithDependencies.modules) {
-      if (module is ContentModuleDescriptor && initContext.environmentConfiguredModules[module.moduleId]?.unavailabilityReason != null) {
-        module.isMarkedForLoading = false
-        logMessages.add("Module ${module.moduleId.id} is disabled because it is not compatible with the current product mode")
-        continue
+      if (module is ContentModuleDescriptor) {
+        val envConfiguredModule = initContext.environmentConfiguredModules[module.moduleId]
+        if (envConfiguredModule?.unavailabilityReason != null) {
+          module.isMarkedForLoading = false
+          logMessages.add(envConfiguredModule.unavailabilityReason.logMessage)
+          continue
+        }
       }
 
       if (module.useIdeaClassLoader && !canExtendIdeaClassLoader) {
