@@ -40,7 +40,7 @@ It's a *react* method. (Fine, as it's emphasized)
 They are stored in the <GRAMMAR_ERROR descr="POSSESSIVE_APOSTROPHE">images</GRAMMAR_ERROR> directory.
 They are stored in the **images** directory. (Shouldn't suggest inserting apostrophe inside markup)
 
-Defined field String name = "John<STYLE_SUGGESTION descr="EN_QUOTES">"</STYLE_SUGGESTION>
+Defined field String name = "John"
 System.out.println(<STYLE_SUGGESTION descr="EN_QUOTES">"</STYLE_SUGGESTION>Hello <STYLE_SUGGESTION descr="EN_QUOTES">"</STYLE_SUGGESTION> + name)
 foo(<GRAMMAR_ERROR descr="THE_PUNCT">a,</GRAMMAR_ERROR> <GRAMMAR_ERROR descr="THE_PUNCT">the,</GRAMMAR_ERROR> an)
 

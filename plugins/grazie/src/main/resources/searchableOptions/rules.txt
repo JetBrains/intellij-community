@@ -551,6 +551,7 @@ Has (as) far as I can tell
 Have a bless (blessed) day
 Hawaiian
 He (The|Her) question is whether we can extract...
+He (and me -> I)
 He bought one that work (works) underwater
 He complaint/restraint (complained/restrained)
 He doesn't live here, do(es) he?
@@ -2578,6 +2579,7 @@ point being is that (point is that/point being that)
 political gaff (gaffe)
 political gaffs (gaffes)
 posess vs possess
+possessive apostrophe for noun ending with 'x'
 possessive case after with(out)/at/in/to/...
 pre 2010 (pre-2010)
 precedent / precedence
