@@ -3,21 +3,24 @@ package org.jetbrains.idea.devkit.inspections
 
 import com.intellij.psi.PsiFile
 import com.intellij.testFramework.PsiTestUtil
+import com.intellij.testFramework.fixtures.CodeInsightTestFixture
 import com.intellij.testFramework.fixtures.JavaCodeInsightFixtureTestCase
 import org.intellij.lang.annotations.Language
 import org.jetbrains.idea.devkit.module.PluginModuleType
 
-class ContentModuleVisibilityInspectionTest : JavaCodeInsightFixtureTestCase() {
-
+abstract class ContentModuleVisibilityInspectionTestBase : JavaCodeInsightFixtureTestCase() {
   override fun setUp() {
     super.setUp()
     // it is required for correct recognizing if the project is a plugin project (see PsiUtil.IDE_PROJECT_MARKER_CLASS):
     myFixture.addClass("package com.intellij.ui.components; public class JBList {}")
     myFixture.enableInspections(ContentModuleVisibilityInspection())
   }
+}
+
+class ContentModuleVisibilityInspectionTest : ContentModuleVisibilityInspectionTestBase() {
 
   fun `test should report private module dependency from internal module`() {
-    addModuleWithPluginDescriptor(
+    myFixture.addModuleWithPluginDescriptor(
       "com.example.plugin.with.privatemodule",
       "com.example.plugin.with.privatemodule/META-INF/plugin.xml",
       """
@@ -28,7 +31,7 @@ class ContentModuleVisibilityInspectionTest : JavaCodeInsightFixtureTestCase() {
         </content>
       </idea-plugin>
       """.trimIndent())
-    addModuleWithPluginDescriptor(
+    myFixture.addModuleWithPluginDescriptor(
       "com.example.privatemodule",
       "com.example.privatemodule/com.example.privatemodule.xml",
       """
@@ -36,7 +39,7 @@ class ContentModuleVisibilityInspectionTest : JavaCodeInsightFixtureTestCase() {
       </idea-plugin>
       """.trimIndent())
 
-    addModuleWithPluginDescriptor(
+    myFixture.addModuleWithPluginDescriptor(
       "com.example.plugin.with.internalmodule",
       "com.example.plugin.with.internalmodule/META-INF/plugin.xml",
       """
@@ -47,7 +50,7 @@ class ContentModuleVisibilityInspectionTest : JavaCodeInsightFixtureTestCase() {
         </content>
       </idea-plugin>
       """.trimIndent())
-    val testedFile = addModuleWithPluginDescriptor(
+    val testedFile = myFixture.addModuleWithPluginDescriptor(
       "com.example.internalmodule",
       "com.example.internalmodule/com.example.internalmodule.xml",
       """
@@ -61,7 +64,7 @@ class ContentModuleVisibilityInspectionTest : JavaCodeInsightFixtureTestCase() {
   }
 
   fun `test should report private module dependency from public module`() {
-    addModuleWithPluginDescriptor(
+    myFixture.addModuleWithPluginDescriptor(
       "com.example.plugin.with.privatemodule",
       "com.example.plugin.with.privatemodule/META-INF/plugin.xml",
       """
@@ -72,7 +75,7 @@ class ContentModuleVisibilityInspectionTest : JavaCodeInsightFixtureTestCase() {
         </content>
       </idea-plugin>
       """.trimIndent())
-    addModuleWithPluginDescriptor(
+    myFixture.addModuleWithPluginDescriptor(
       "com.example.privatemodule",
       "com.example.privatemodule/com.example.privatemodule.xml",
       """
@@ -80,7 +83,7 @@ class ContentModuleVisibilityInspectionTest : JavaCodeInsightFixtureTestCase() {
       </idea-plugin>
       """.trimIndent())
 
-    addModuleWithPluginDescriptor(
+    myFixture.addModuleWithPluginDescriptor(
       "com.example.plugin.with.publicmodule",
       "com.example.plugin.with.publicmodule/META-INF/plugin.xml",
       """
@@ -91,7 +94,7 @@ class ContentModuleVisibilityInspectionTest : JavaCodeInsightFixtureTestCase() {
         </content>
       </idea-plugin>
       """.trimIndent())
-    val testedFile = addModuleWithPluginDescriptor(
+    val testedFile = myFixture.addModuleWithPluginDescriptor(
       "com.example.publicmodule",
       "com.example.publicmodule/com.example.publicmodule.xml",
       """
@@ -105,7 +108,7 @@ class ContentModuleVisibilityInspectionTest : JavaCodeInsightFixtureTestCase() {
   }
 
   fun `test should report internal module with different namespace`() {
-    addModuleWithPluginDescriptor(
+    myFixture.addModuleWithPluginDescriptor(
       "com.example.plugin.with.internalmodule",
       "com.example.plugin.with.internalmodule/META-INF/plugin.xml",
       """
@@ -116,7 +119,7 @@ class ContentModuleVisibilityInspectionTest : JavaCodeInsightFixtureTestCase() {
         </content>
       </idea-plugin>
       """.trimIndent())
-    addModuleWithPluginDescriptor(
+    myFixture.addModuleWithPluginDescriptor(
       "com.example.internalmodule",
       "com.example.internalmodule/com.example.internalmodule.xml",
       """
@@ -124,7 +127,7 @@ class ContentModuleVisibilityInspectionTest : JavaCodeInsightFixtureTestCase() {
       </idea-plugin>
       """.trimIndent())
 
-    addModuleWithPluginDescriptor(
+    myFixture.addModuleWithPluginDescriptor(
       "com.example.plugin.with.currentmodule",
       "com.example.plugin.with.currentmodule/META-INF/plugin.xml",
       """
@@ -135,7 +138,7 @@ class ContentModuleVisibilityInspectionTest : JavaCodeInsightFixtureTestCase() {
         </content>
       </idea-plugin>
       """.trimIndent())
-    val testedFile = addModuleWithPluginDescriptor(
+    val testedFile = myFixture.addModuleWithPluginDescriptor(
       "com.example.currentmodule",
       "com.example.currentmodule/com.example.currentmodule.xml",
       """
@@ -149,7 +152,7 @@ class ContentModuleVisibilityInspectionTest : JavaCodeInsightFixtureTestCase() {
   }
 
   fun `test should report internal module without namespace`() {
-    addModuleWithPluginDescriptor(
+    myFixture.addModuleWithPluginDescriptor(
       "com.example.plugin.with.internalmodule",
       "com.example.plugin.with.internalmodule/META-INF/plugin.xml",
       """
@@ -160,7 +163,7 @@ class ContentModuleVisibilityInspectionTest : JavaCodeInsightFixtureTestCase() {
         </content>
       </idea-plugin>
       """.trimIndent())
-    addModuleWithPluginDescriptor(
+    myFixture.addModuleWithPluginDescriptor(
       "com.example.internalmodule",
       "com.example.internalmodule/com.example.internalmodule.xml",
       """
@@ -168,7 +171,7 @@ class ContentModuleVisibilityInspectionTest : JavaCodeInsightFixtureTestCase() {
       </idea-plugin>
       """.trimIndent())
 
-    addModuleWithPluginDescriptor(
+    myFixture.addModuleWithPluginDescriptor(
       "com.example.plugin.with.currentmodule",
       "com.example.plugin.with.currentmodule/META-INF/plugin.xml",
       """
@@ -179,7 +182,7 @@ class ContentModuleVisibilityInspectionTest : JavaCodeInsightFixtureTestCase() {
         </content>
       </idea-plugin>
       """.trimIndent())
-    val testedFile = addModuleWithPluginDescriptor(
+    val testedFile = myFixture.addModuleWithPluginDescriptor(
       "com.example.currentmodule",
       "com.example.currentmodule/com.example.currentmodule.xml",
       """
@@ -193,7 +196,7 @@ class ContentModuleVisibilityInspectionTest : JavaCodeInsightFixtureTestCase() {
   }
 
   fun `test should report internal module when current module has no namespace`() {
-    addModuleWithPluginDescriptor(
+    myFixture.addModuleWithPluginDescriptor(
       "com.example.plugin.with.internalmodule",
       "com.example.plugin.with.internalmodule/META-INF/plugin.xml",
       """
@@ -204,7 +207,7 @@ class ContentModuleVisibilityInspectionTest : JavaCodeInsightFixtureTestCase() {
         </content>
       </idea-plugin>
       """.trimIndent())
-    addModuleWithPluginDescriptor(
+    myFixture.addModuleWithPluginDescriptor(
       "com.example.internalmodule",
       "com.example.internalmodule/com.example.internalmodule.xml",
       """
@@ -212,7 +215,7 @@ class ContentModuleVisibilityInspectionTest : JavaCodeInsightFixtureTestCase() {
       </idea-plugin>
       """.trimIndent())
 
-    addModuleWithPluginDescriptor(
+    myFixture.addModuleWithPluginDescriptor(
       "com.example.plugin.with.currentmodule",
       "com.example.plugin.with.currentmodule/META-INF/plugin.xml",
       """
@@ -223,7 +226,7 @@ class ContentModuleVisibilityInspectionTest : JavaCodeInsightFixtureTestCase() {
         </content>
       </idea-plugin>
       """.trimIndent())
-    val testedFile = addModuleWithPluginDescriptor(
+    val testedFile = myFixture.addModuleWithPluginDescriptor(
       "com.example.currentmodule",
       "com.example.currentmodule/com.example.currentmodule.xml",
       """
@@ -237,7 +240,7 @@ class ContentModuleVisibilityInspectionTest : JavaCodeInsightFixtureTestCase() {
   }
 
   fun `test should report private module included via xi-include`() {
-    addModuleWithPluginDescriptor(
+    myFixture.addModuleWithPluginDescriptor(
       "com.example.plugin.with.privatemodule",
       "com.example.plugin.with.privatemodule/META-INF/plugin.xml",
       """
@@ -247,7 +250,7 @@ class ContentModuleVisibilityInspectionTest : JavaCodeInsightFixtureTestCase() {
       </idea-plugin>
       """.trimIndent())
 
-    addXmlFile(
+    myFixture.addXmlFile(
       "com.example.plugin.with.privatemodule/META-INF/privatemodules.xml",
       """
       <idea-plugin>
@@ -257,7 +260,7 @@ class ContentModuleVisibilityInspectionTest : JavaCodeInsightFixtureTestCase() {
       </idea-plugin>
       """.trimIndent())
 
-    addModuleWithPluginDescriptor(
+    myFixture.addModuleWithPluginDescriptor(
       "com.example.privatemodule",
       "com.example.privatemodule/com.example.privatemodule.xml",
       """
@@ -265,7 +268,7 @@ class ContentModuleVisibilityInspectionTest : JavaCodeInsightFixtureTestCase() {
       </idea-plugin>
       """.trimIndent())
 
-    addModuleWithPluginDescriptor(
+    myFixture.addModuleWithPluginDescriptor(
       "com.example.plugin.with.publicmodule",
       "com.example.plugin.with.publicmodule/META-INF/plugin.xml",
       """
@@ -277,7 +280,7 @@ class ContentModuleVisibilityInspectionTest : JavaCodeInsightFixtureTestCase() {
       </idea-plugin>
       """.trimIndent())
 
-    val testedFile = addModuleWithPluginDescriptor(
+    val testedFile = myFixture.addModuleWithPluginDescriptor(
       "com.example.publicmodule",
       "com.example.publicmodule/com.example.publicmodule.xml",
       """
@@ -292,7 +295,7 @@ class ContentModuleVisibilityInspectionTest : JavaCodeInsightFixtureTestCase() {
   }
 
   fun `test should report private module included via multiple xi-includes`() {
-    addModuleWithPluginDescriptor(
+    myFixture.addModuleWithPluginDescriptor(
       "com.example.plugin.with.privatemodule",
       "com.example.plugin.with.privatemodule/META-INF/plugin.xml",
       """
@@ -302,7 +305,7 @@ class ContentModuleVisibilityInspectionTest : JavaCodeInsightFixtureTestCase() {
       </idea-plugin>
       """.trimIndent())
 
-    addXmlFile(
+    myFixture.addXmlFile(
       "com.example.plugin.with.privatemodule/META-INF/modules.xml",
       """
       <idea-plugin xmlns:xi="http://www.w3.org/2001/XInclude">
@@ -310,7 +313,7 @@ class ContentModuleVisibilityInspectionTest : JavaCodeInsightFixtureTestCase() {
       </idea-plugin>
       """.trimIndent())
 
-    addXmlFile(
+    myFixture.addXmlFile(
       "com.example.plugin.with.privatemodule/META-INF/privatemodules.xml",
       """
       <idea-plugin>
@@ -320,7 +323,7 @@ class ContentModuleVisibilityInspectionTest : JavaCodeInsightFixtureTestCase() {
       </idea-plugin>
       """.trimIndent())
 
-    addModuleWithPluginDescriptor(
+    myFixture.addModuleWithPluginDescriptor(
       "com.example.privatemodule",
       "com.example.privatemodule/com.example.privatemodule.xml",
       """
@@ -328,7 +331,7 @@ class ContentModuleVisibilityInspectionTest : JavaCodeInsightFixtureTestCase() {
       </idea-plugin>
       """.trimIndent())
 
-    addModuleWithPluginDescriptor(
+    myFixture.addModuleWithPluginDescriptor(
       "com.example.plugin.with.publicmodule",
       "com.example.plugin.with.publicmodule/META-INF/plugin.xml",
       """
@@ -340,7 +343,7 @@ class ContentModuleVisibilityInspectionTest : JavaCodeInsightFixtureTestCase() {
       </idea-plugin>
       """.trimIndent())
 
-    val testedFile = addModuleWithPluginDescriptor(
+    val testedFile = myFixture.addModuleWithPluginDescriptor(
       "com.example.publicmodule",
       "com.example.publicmodule/com.example.publicmodule.xml",
       """
@@ -355,7 +358,7 @@ class ContentModuleVisibilityInspectionTest : JavaCodeInsightFixtureTestCase() {
   }
 
   fun `test should not report public module`() {
-    addModuleWithPluginDescriptor(
+    myFixture.addModuleWithPluginDescriptor(
       "com.example.plugin.with.publicmodule",
       "com.example.plugin.with.publicmodule/META-INF/plugin.xml",
       """
@@ -366,7 +369,7 @@ class ContentModuleVisibilityInspectionTest : JavaCodeInsightFixtureTestCase() {
         </content>
       </idea-plugin>
       """.trimIndent())
-    addModuleWithPluginDescriptor(
+    myFixture.addModuleWithPluginDescriptor(
       "com.example.publicmodule",
       "com.example.publicmodule/com.example.publicmodule.xml",
       """
@@ -374,7 +377,7 @@ class ContentModuleVisibilityInspectionTest : JavaCodeInsightFixtureTestCase() {
       </idea-plugin>
       """.trimIndent())
 
-    addModuleWithPluginDescriptor(
+    myFixture.addModuleWithPluginDescriptor(
       "com.example.plugin.with.currentmodule",
       "com.example.plugin.with.currentmodule/META-INF/plugin.xml",
       """
@@ -385,7 +388,7 @@ class ContentModuleVisibilityInspectionTest : JavaCodeInsightFixtureTestCase() {
         </content>
       </idea-plugin>
       """.trimIndent())
-    val testedFile = addModuleWithPluginDescriptor(
+    val testedFile = myFixture.addModuleWithPluginDescriptor(
       "com.example.currentmodule",
       "com.example.currentmodule/com.example.currentmodule.xml",
       """
@@ -399,7 +402,7 @@ class ContentModuleVisibilityInspectionTest : JavaCodeInsightFixtureTestCase() {
   }
 
   fun `test should not report internal module with same namespace`() {
-    addModuleWithPluginDescriptor(
+    myFixture.addModuleWithPluginDescriptor(
       "com.example.plugin.with.internalmodule",
       "com.example.plugin.with.internalmodule/META-INF/plugin.xml",
       """
@@ -410,7 +413,7 @@ class ContentModuleVisibilityInspectionTest : JavaCodeInsightFixtureTestCase() {
         </content>
       </idea-plugin>
       """.trimIndent())
-    addModuleWithPluginDescriptor(
+    myFixture.addModuleWithPluginDescriptor(
       "com.example.internalmodule",
       "com.example.internalmodule/com.example.internalmodule.xml",
       """
@@ -418,7 +421,7 @@ class ContentModuleVisibilityInspectionTest : JavaCodeInsightFixtureTestCase() {
       </idea-plugin>
       """.trimIndent())
 
-    addModuleWithPluginDescriptor(
+    myFixture.addModuleWithPluginDescriptor(
       "com.example.plugin.with.currentmodule",
       "com.example.plugin.with.currentmodule/META-INF/plugin.xml",
       """
@@ -429,7 +432,7 @@ class ContentModuleVisibilityInspectionTest : JavaCodeInsightFixtureTestCase() {
         </content>
       </idea-plugin>
       """.trimIndent())
-    val testedFile = addModuleWithPluginDescriptor(
+    val testedFile = myFixture.addModuleWithPluginDescriptor(
       "com.example.currentmodule",
       "com.example.currentmodule/com.example.currentmodule.xml",
       """
@@ -443,7 +446,7 @@ class ContentModuleVisibilityInspectionTest : JavaCodeInsightFixtureTestCase() {
   }
 
   fun `test should not report private module in same plugin`() {
-    addModuleWithPluginDescriptor(
+    myFixture.addModuleWithPluginDescriptor(
       "com.example.plugin",
       "com.example.plugin/META-INF/plugin.xml",
       """
@@ -455,7 +458,7 @@ class ContentModuleVisibilityInspectionTest : JavaCodeInsightFixtureTestCase() {
       </idea-plugin>
       """.trimIndent())
 
-    addModuleWithPluginDescriptor(
+    myFixture.addModuleWithPluginDescriptor(
       "com.example.privatemodule",
       "com.example.privatemodule/com.example.privatemodule.xml",
       """
@@ -463,7 +466,7 @@ class ContentModuleVisibilityInspectionTest : JavaCodeInsightFixtureTestCase() {
       </idea-plugin>
       """.trimIndent())
 
-    val testedFile = addModuleWithPluginDescriptor(
+    val testedFile = myFixture.addModuleWithPluginDescriptor(
       "com.example.anothermodule",
       "com.example.anothermodule/com.example.anothermodule.xml",
       """
@@ -477,7 +480,7 @@ class ContentModuleVisibilityInspectionTest : JavaCodeInsightFixtureTestCase() {
   }
 
   fun `test should not report when both modules included in same plugin`() {
-    addModuleWithPluginDescriptor(
+    myFixture.addModuleWithPluginDescriptor(
       "com.example.plugin",
       "com.example.plugin/META-INF/plugin.xml",
       """
@@ -489,7 +492,7 @@ class ContentModuleVisibilityInspectionTest : JavaCodeInsightFixtureTestCase() {
       </idea-plugin>
       """.trimIndent())
 
-    addModuleWithPluginDescriptor(
+    myFixture.addModuleWithPluginDescriptor(
       "com.example.internalmodule",
       "com.example.internalmodule/com.example.internalmodule.xml",
       """
@@ -497,7 +500,7 @@ class ContentModuleVisibilityInspectionTest : JavaCodeInsightFixtureTestCase() {
       </idea-plugin>
       """.trimIndent())
 
-    val testedFile = addModuleWithPluginDescriptor(
+    val testedFile = myFixture.addModuleWithPluginDescriptor(
       "com.example.currentmodule",
       "com.example.currentmodule/com.example.currentmodule.xml",
       """
@@ -511,7 +514,7 @@ class ContentModuleVisibilityInspectionTest : JavaCodeInsightFixtureTestCase() {
   }
 
   fun `test should not report private module included via xi-include`() {
-    addModuleWithPluginDescriptor(
+    myFixture.addModuleWithPluginDescriptor(
       "com.example.plugin.with.privatemodule",
       "com.example.plugin.with.privatemodule/META-INF/plugin.xml",
       """
@@ -524,7 +527,7 @@ class ContentModuleVisibilityInspectionTest : JavaCodeInsightFixtureTestCase() {
       </idea-plugin>
       """.trimIndent())
 
-    addXmlFile(
+    myFixture.addXmlFile(
       "com.example.plugin.with.privatemodule/META-INF/privatemodules.xml",
       """
       <idea-plugin>
@@ -534,7 +537,7 @@ class ContentModuleVisibilityInspectionTest : JavaCodeInsightFixtureTestCase() {
       </idea-plugin>
       """.trimIndent())
 
-    addModuleWithPluginDescriptor(
+    myFixture.addModuleWithPluginDescriptor(
       "com.example.privatemodule",
       "com.example.privatemodule/com.example.privatemodule.xml",
       """
@@ -542,7 +545,7 @@ class ContentModuleVisibilityInspectionTest : JavaCodeInsightFixtureTestCase() {
       </idea-plugin>
       """.trimIndent())
 
-    val testedFile = addModuleWithPluginDescriptor(
+    val testedFile = myFixture.addModuleWithPluginDescriptor(
       "com.example.publicmodule",
       "com.example.publicmodule/com.example.publicmodule.xml",
       """
@@ -557,7 +560,7 @@ class ContentModuleVisibilityInspectionTest : JavaCodeInsightFixtureTestCase() {
   }
 
   fun `test should not report private module included via multiple xi-includes`() {
-    addModuleWithPluginDescriptor(
+    myFixture.addModuleWithPluginDescriptor(
       "com.example.plugin.with.privatemodule",
       "com.example.plugin.with.privatemodule/META-INF/plugin.xml",
       """
@@ -570,7 +573,7 @@ class ContentModuleVisibilityInspectionTest : JavaCodeInsightFixtureTestCase() {
       </idea-plugin>
       """.trimIndent())
 
-    addXmlFile(
+    myFixture.addXmlFile(
       "com.example.plugin.with.privatemodule/META-INF/modules.xml",
       """
       <idea-plugin xmlns:xi="http://www.w3.org/2001/XInclude">
@@ -578,7 +581,7 @@ class ContentModuleVisibilityInspectionTest : JavaCodeInsightFixtureTestCase() {
       </idea-plugin>
       """.trimIndent())
 
-    addXmlFile(
+    myFixture.addXmlFile(
       "com.example.plugin.with.privatemodule/META-INF/privatemodules.xml",
       """
       <idea-plugin>
@@ -588,7 +591,7 @@ class ContentModuleVisibilityInspectionTest : JavaCodeInsightFixtureTestCase() {
       </idea-plugin>
       """.trimIndent())
 
-    addModuleWithPluginDescriptor(
+    myFixture.addModuleWithPluginDescriptor(
       "com.example.privatemodule",
       "com.example.privatemodule/com.example.privatemodule.xml",
       """
@@ -596,7 +599,7 @@ class ContentModuleVisibilityInspectionTest : JavaCodeInsightFixtureTestCase() {
       </idea-plugin>
       """.trimIndent())
 
-    val testedFile = addModuleWithPluginDescriptor(
+    val testedFile = myFixture.addModuleWithPluginDescriptor(
       "com.example.publicmodule",
       "com.example.publicmodule/com.example.publicmodule.xml",
       """
@@ -610,20 +613,139 @@ class ContentModuleVisibilityInspectionTest : JavaCodeInsightFixtureTestCase() {
     testHighlighting(testedFile)
   }
 
-  private fun addModuleWithPluginDescriptor(
-    moduleName: String,
-    pluginDescriptorFilePath: String,
-    @Language("XML") pluginDescriptorContent: String,
-  ): PsiFile {
-    PsiTestUtil.addModule(project, PluginModuleType.getInstance(), moduleName, myFixture.tempDirFixture.findOrCreateDir(moduleName))
-    return addXmlFile(pluginDescriptorFilePath, pluginDescriptorContent)
-  }
-
-  private fun addXmlFile(relativePath: String, @Language("XML") fileText: String): PsiFile {
-    return myFixture.addFileToProject(relativePath, fileText)
-  }
-
   private fun testHighlighting(testedFile: PsiFile) {
     myFixture.testHighlighting(true, true, true, testedFile.virtualFile)
   }
+}
+
+class ChangeModuleModuleVisibilityFix : ContentModuleVisibilityInspectionTestBase() {
+
+  fun `test fix change visibility to internal`() {
+    myFixture.addModuleWithPluginDescriptor(
+      "com.example.plugin.with.privatemodule",
+      "com.example.plugin.with.privatemodule/META-INF/plugin.xml",
+      """
+      <idea-plugin>
+        <id>com.example.plugin.with.privatemodule</id>
+        <content>
+          <module name="com.example.privatemodule"/>
+        </content>
+      </idea-plugin>
+      """.trimIndent())
+    myFixture.addModuleWithPluginDescriptor(
+      "com.example.privatemodule",
+      "com.example.privatemodule/com.example.privatemodule.xml",
+      // visibility="private" by default
+      """
+      <idea-plugin>
+      </idea-plugin>
+      """.trimIndent())
+
+    myFixture.addModuleWithPluginDescriptor(
+      "com.example.plugin.with.publicmodule",
+      "com.example.plugin.with.publicmodule/META-INF/plugin.xml",
+      """
+      <idea-plugin>
+        <id>com.example.plugin.with.publicmodule</id>
+        <content>
+          <module name="com.example.publicmodule"/>
+        </content>
+      </idea-plugin>
+      """.trimIndent())
+    val testedFile = myFixture.addModuleWithPluginDescriptor(
+      "com.example.publicmodule",
+      "com.example.publicmodule/com.example.publicmodule.xml",
+      """
+      <idea-plugin visibility="public">
+        <dependencies>
+          <module name="com.example.pri<caret>vatemodule"/>
+        </dependencies>
+      </idea-plugin>
+      """.trimIndent())
+    myFixture.configureFromExistingVirtualFile(testedFile.virtualFile)
+
+    val intention = myFixture.findSingleIntention("Make module 'com.example.privatemodule' internal")
+    myFixture.launchAction(intention)
+
+    myFixture.checkResult(
+      "com.example.privatemodule/com.example.privatemodule.xml",
+      //language=XML
+      """
+      <idea-plugin visibility="internal">
+      </idea-plugin>
+      """.trimIndent(),
+      false
+    )
+  }
+
+  fun `test fix change visibility to public`() {
+    myFixture.addModuleWithPluginDescriptor(
+      "com.example.plugin.with.privatemodule",
+      "com.example.plugin.with.privatemodule/META-INF/plugin.xml",
+      """
+      <idea-plugin>
+        <id>com.example.plugin.with.privatemodule</id>
+        <content>
+          <module name="com.example.privatemodule"/>
+        </content>
+      </idea-plugin>
+      """.trimIndent())
+    myFixture.addModuleWithPluginDescriptor(
+      "com.example.privatemodule",
+      "com.example.privatemodule/com.example.privatemodule.xml",
+      """
+      <idea-plugin visibility="private">
+      </idea-plugin>
+      """.trimIndent())
+
+    myFixture.addModuleWithPluginDescriptor(
+      "com.example.plugin.with.publicmodule",
+      "com.example.plugin.with.publicmodule/META-INF/plugin.xml",
+      """
+      <idea-plugin>
+        <id>com.example.plugin.with.publicmodule</id>
+        <content>
+          <module name="com.example.publicmodule"/>
+        </content>
+      </idea-plugin>
+      """.trimIndent())
+    val testedFile = myFixture.addModuleWithPluginDescriptor(
+      "com.example.publicmodule",
+      "com.example.publicmodule/com.example.publicmodule.xml",
+      """
+      <idea-plugin visibility="public">
+        <dependencies>
+          <module name="com.example.pri<caret>vatemodule"/>
+        </dependencies>
+      </idea-plugin>
+      """.trimIndent())
+    myFixture.configureFromExistingVirtualFile(testedFile.virtualFile)
+
+    val intention = myFixture.findSingleIntention("Make module 'com.example.privatemodule' public")
+    myFixture.launchAction(intention)
+
+    myFixture.checkResult(
+      "com.example.privatemodule/com.example.privatemodule.xml",
+      //language=XML
+      """
+      <idea-plugin visibility="public">
+      </idea-plugin>
+      """.trimIndent(),
+      false
+    )
+  }
+
+}
+
+private fun CodeInsightTestFixture.addModuleWithPluginDescriptor(
+  moduleName: String,
+  pluginDescriptorFilePath: String,
+  @Language("XML") pluginDescriptorContent: String,
+): PsiFile {
+  PsiTestUtil.addModule(project, PluginModuleType.getInstance(), moduleName, tempDirFixture.findOrCreateDir(moduleName))
+  return addXmlFile(pluginDescriptorFilePath, pluginDescriptorContent)
+}
+
+private fun CodeInsightTestFixture.addXmlFile(relativePath: String, @Language("XML") fileText: String): PsiFile {
+  return addFileToProject(relativePath, fileText)
 }
