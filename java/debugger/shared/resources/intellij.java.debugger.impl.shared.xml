@@ -20,6 +20,13 @@
                  description="Use split Debugger implementation for remote dev"
                  key="xdebugger.toolwindow.split.remdev"
                  restartRequired="true"/>
+
+    <registryKey defaultValue="true"
+                 overrides="true"
+                 description="Debugger implementation for split mode. Enable it in monolith as well to have the same experience as in RD."
+                 key="xdebugger.toolwindow.split"
+                 restartRequired="true"/>
+
   </extensions>
   <actions resource-bundle="messages.JavaDebuggerSharedBundle">
     <action id="Debugger.AsyncStacks" class="com.intellij.java.debugger.impl.shared.actions.AsyncStacksToggleAction">
