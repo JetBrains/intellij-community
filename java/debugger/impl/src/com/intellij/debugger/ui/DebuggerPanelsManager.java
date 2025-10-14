@@ -51,7 +51,7 @@ public final class DebuggerPanelsManager {
           return JavaDebugProcess.create(session, debuggerSession);
         }
       });
-    return ((XDebugSessionImpl)debugSession).getInitializedRunContentDescriptor();
+    return ((XDebugSessionImpl)debugSession).getMockRunContentDescriptor();
   }
 
   public static DebuggerPanelsManager getInstance(Project project) {

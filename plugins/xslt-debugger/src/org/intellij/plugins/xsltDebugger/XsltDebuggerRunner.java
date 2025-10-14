@@ -61,6 +61,6 @@ public class XsltDebuggerRunner implements ProgramRunner<RunnerSettings> {
           }
         }
       });
-    return ((XDebugSessionImpl)debugSession).getInitializedRunContentDescriptor();
+    return ((XDebugSessionImpl)debugSession).getMockRunContentDescriptor();
   }
 }

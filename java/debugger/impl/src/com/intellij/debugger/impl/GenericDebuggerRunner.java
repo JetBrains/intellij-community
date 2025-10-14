@@ -174,7 +174,7 @@ public class GenericDebuggerRunner implements JvmPatchableProgramRunner<GenericD
             return JavaDebugProcess.create(session, debuggerSession);
           }
         });
-        RunContentDescriptor descriptor = ((XDebugSessionImpl)session).getInitializedRunContentDescriptor();
+        RunContentDescriptor descriptor = ((XDebugSessionImpl)session).getMockRunContentDescriptor();
         result.set(descriptor);
       }
       catch (ProcessCanceledException ignored) {

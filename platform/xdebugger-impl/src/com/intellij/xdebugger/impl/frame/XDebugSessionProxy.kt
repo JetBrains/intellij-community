@@ -121,7 +121,7 @@ interface XDebugSessionProxy {
 
   class Monolith internal constructor(val session: XDebugSessionImpl) : XDebugSessionProxy {
     override val runContentDescriptorId: RunContentDescriptorIdImpl?
-      get() = session.getRunContentDescriptorIfInitialized()?.id as RunContentDescriptorIdImpl?
+      get() = session.getMockRunContentDescriptorIfInitialized()?.id as RunContentDescriptorIdImpl?
 
     override val project: Project
       get() = session.project

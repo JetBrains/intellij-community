@@ -325,7 +325,7 @@ public class PyDebugRunner implements ProgramRunner<RunnerSettings> {
       session = createXDebugSession(environment, pyState, serverSocket, result);
     }
     initSession(session, state, environment.getExecutor());
-    return ((XDebugSessionImpl)session).getInitializedRunContentDescriptor();
+    return ((XDebugSessionImpl)session).getMockRunContentDescriptor();
   }
 
   /**
@@ -355,7 +355,7 @@ public class PyDebugRunner implements ProgramRunner<RunnerSettings> {
           session.addSessionListener(sessionListener);
         }
         initSession(session, state, environment.getExecutor());
-        return ((XDebugSessionImpl)session).getInitializedRunContentDescriptor();
+        return ((XDebugSessionImpl)session).getMockRunContentDescriptor();
       }));
   }
 

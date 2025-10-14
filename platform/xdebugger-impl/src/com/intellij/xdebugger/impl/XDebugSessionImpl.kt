@@ -118,7 +118,7 @@ class XDebugSessionImpl @JvmOverloads constructor(
   private var myValueMarkers: XValueMarkers<*, *>? = null
   private val mySessionName: @Nls String = sessionName
   private val mySessionTab = CompletableDeferred<XDebugSessionTab>()
-  private var myRunContentDescriptor: RunContentDescriptor? = null
+  private var myMockRunContentDescriptor: RunContentDescriptor? = null
   val sessionData: XDebugSessionData
 
   @ApiStatus.Internal
@@ -209,22 +209,27 @@ class XDebugSessionImpl @JvmOverloads constructor(
     if (SplitDebuggerMode.showSplitWarnings()) {
       LOG.error("RunContentDescriptor should not be used in split mode from XDebugSession")
     }
-    return getInitializedRunContentDescriptor()
+    return getMockRunContentDescriptor()
   }
 
   /**
-   * This method relies on creation of a mock [RunContentDescriptor] ob backend when in split mode.
+   * This method relies on creation of a mock [RunContentDescriptor] on backend when in split mode.
+   * The descriptor returned from this method is not registered in the [com.intellij.execution.ui.RunContentManagerImpl] and is not shown in the UI.
+   * To access the UI-visible [RunContentDescriptor], use [XDebugSessionProxy.sessionTab] instead.
    */
   @ApiStatus.Internal
-  fun getInitializedRunContentDescriptor(): RunContentDescriptor {
-    val descriptor = myRunContentDescriptor
+  fun getMockRunContentDescriptor(): RunContentDescriptor {
+    val descriptor = getMockRunContentDescriptorIfInitialized()
     LOG.assertTrue(descriptor != null, "Run content descriptor is not initialized yet!")
     return descriptor!!
   }
 
+  /**
+   * @see getMockRunContentDescriptor
+   */
   @ApiStatus.Internal
-  fun getRunContentDescriptorIfInitialized(): RunContentDescriptor? {
-    return myRunContentDescriptor
+  fun getMockRunContentDescriptorIfInitialized(): RunContentDescriptor? {
+    return myMockRunContentDescriptor
   }
 
 
@@ -504,7 +509,7 @@ class XDebugSessionImpl @JvmOverloads constructor(
             Disposer.dispose(mockDescriptor)
           }
         }
-        myRunContentDescriptor = mockDescriptor
+        myMockRunContentDescriptor = mockDescriptor
         myDebugProcess!!.sessionInitialized()
       }
       else {
@@ -518,6 +523,7 @@ class XDebugSessionImpl @JvmOverloads constructor(
         val tab = XDebugSessionTab.create(proxy, myIcon, executionEnvironment?.let { BackendExecutionEnvironmentProxy(it) }, contentToReuse,
                                           forceNewDebuggerUi, withFramesCustomization, defaultFramesViewKey)
         tabInitialized(tab)
+        myMockRunContentDescriptor = tab.runContentDescriptor
         myDebugProcess!!.sessionInitialized()
         if (shouldShowTab) {
           tab.showTab()
@@ -536,7 +542,6 @@ class XDebugSessionImpl @JvmOverloads constructor(
   @ApiStatus.Internal
   fun tabInitialized(sessionTab: XDebugSessionTab) {
     mySessionTab.complete(sessionTab)
-    myRunContentDescriptor = sessionTab.runContentDescriptor
   }
 
   private fun disableSlaveBreakpoints() {

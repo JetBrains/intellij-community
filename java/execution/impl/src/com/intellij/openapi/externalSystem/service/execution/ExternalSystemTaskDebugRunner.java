@@ -154,7 +154,7 @@ public class ExternalSystemTaskDebugRunner extends GenericDebuggerRunner {
           return jvmProcessToDebug(session, state, env);
         }
       });
-      result = ((XDebugSessionImpl)session).getInitializedRunContentDescriptor();
+      result = ((XDebugSessionImpl)session).getMockRunContentDescriptor();
     }
     catch (ExecutionException e) {
       if (!e.getMessage().equals(ATTACH_VM_FAILED)) {
