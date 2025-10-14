@@ -39,12 +39,7 @@ import com.intellij.util.ui.components.BorderLayoutPanel
 import kotlinx.coroutines.*
 import kotlinx.coroutines.channels.awaitClose
 import kotlinx.coroutines.channels.trySendBlocking
-import kotlinx.coroutines.flow.Flow
-import kotlinx.coroutines.flow.MutableStateFlow
-import kotlinx.coroutines.flow.StateFlow
-import kotlinx.coroutines.flow.asStateFlow
-import kotlinx.coroutines.flow.callbackFlow
-import kotlinx.coroutines.flow.map
+import kotlinx.coroutines.flow.*
 import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.annotations.VisibleForTesting
 import org.jetbrains.plugins.terminal.TerminalPanelMarker
@@ -640,7 +635,7 @@ internal fun TerminalOffset.toRelative(model: TerminalOutputModel): Int = (this 
 val TerminalOutputModel.cursorOffsetFlow: Flow<TerminalOffset>
   get() = callbackFlow {
     addListener(asDisposable(), object : TerminalOutputModelListener {
-      override fun cursorOffsetChanged(event: TerminalCursorOffsetChanged) {
+      override fun cursorOffsetChanged(event: TerminalCursorOffsetChangeEvent) {
         trySendBlocking(event.newOffset)
       }
     })

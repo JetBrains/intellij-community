@@ -14,14 +14,7 @@ import org.assertj.core.api.Assertions.assertThat
 import org.jetbrains.plugins.terminal.block.output.HighlightingInfo
 import org.jetbrains.plugins.terminal.block.output.TerminalOutputHighlightingsSnapshot
 import org.jetbrains.plugins.terminal.block.output.TextStyleAdapter
-import org.jetbrains.plugins.terminal.block.reworked.TerminalContentChanged
-import org.jetbrains.plugins.terminal.block.reworked.TerminalLineIndex
-import org.jetbrains.plugins.terminal.block.reworked.TerminalOffset
-import org.jetbrains.plugins.terminal.block.reworked.TerminalOutputModel
-import org.jetbrains.plugins.terminal.block.reworked.TerminalOutputModelListener
-import org.jetbrains.plugins.terminal.block.reworked.endOffset
-import org.jetbrains.plugins.terminal.block.reworked.lastLine
-import org.jetbrains.plugins.terminal.block.reworked.textLength
+import org.jetbrains.plugins.terminal.block.reworked.*
 import org.jetbrains.plugins.terminal.block.ui.BlockTerminalColorPalette
 import org.jetbrains.plugins.terminal.session.StyleRange
 import org.jetbrains.plugins.terminal.session.TerminalOutputModelState
@@ -188,9 +181,9 @@ internal class TerminalOutputModelTest : BasePlatformTestCase() {
   @Test
   fun `update events ignore unchanged prefix and suffix - only line`(): Unit = runBlocking(Dispatchers.EDT)  {
     val model = TerminalTestUtil.createOutputModel()
-    val events = mutableListOf<TerminalContentChanged>()
+    val events = mutableListOf<TerminalContentChangeEvent>()
     model.addListener(testRootDisposable, object : TerminalOutputModelListener {
-      override fun afterContentChanged(event: TerminalContentChanged) {
+      override fun afterContentChanged(event: TerminalContentChangeEvent) {
         events += event
       }
     })
@@ -204,9 +197,9 @@ internal class TerminalOutputModelTest : BasePlatformTestCase() {
   @Test
   fun `update events ignore unchanged prefix and suffix - second line`(): Unit = runBlocking(Dispatchers.EDT)  {
     val model = TerminalTestUtil.createOutputModel()
-    val events = mutableListOf<TerminalContentChanged>()
+    val events = mutableListOf<TerminalContentChangeEvent>()
     model.addListener(testRootDisposable, object : TerminalOutputModelListener {
-      override fun afterContentChanged(event: TerminalContentChanged) {
+      override fun afterContentChanged(event: TerminalContentChangeEvent) {
         events += event
       }
     })
@@ -221,9 +214,9 @@ internal class TerminalOutputModelTest : BasePlatformTestCase() {
   @Test
   fun `update events ignore unchanged prefix and suffix - longer line, both sides match`(): Unit = runBlocking(Dispatchers.EDT)  {
     val model = TerminalTestUtil.createOutputModel()
-    val events = mutableListOf<TerminalContentChanged>()
+    val events = mutableListOf<TerminalContentChangeEvent>()
     model.addListener(testRootDisposable, object : TerminalOutputModelListener {
-      override fun afterContentChanged(event: TerminalContentChanged) {
+      override fun afterContentChanged(event: TerminalContentChangeEvent) {
         events += event
       }
     })
@@ -238,9 +231,9 @@ internal class TerminalOutputModelTest : BasePlatformTestCase() {
   @Test
   fun `update events ignore unchanged prefix and suffix - shorter line, both sides match`(): Unit = runBlocking(Dispatchers.EDT)  {
     val model = TerminalTestUtil.createOutputModel()
-    val events = mutableListOf<TerminalContentChanged>()
+    val events = mutableListOf<TerminalContentChangeEvent>()
     model.addListener(testRootDisposable, object : TerminalOutputModelListener {
-      override fun afterContentChanged(event: TerminalContentChanged) {
+      override fun afterContentChanged(event: TerminalContentChangeEvent) {
         events += event
       }
     })
@@ -255,9 +248,9 @@ internal class TerminalOutputModelTest : BasePlatformTestCase() {
   @Test
   fun `update events ignore unchanged prefix and suffix - no-op change`(): Unit = runBlocking(Dispatchers.EDT)  {
     val model = TerminalTestUtil.createOutputModel()
-    val events = mutableListOf<TerminalContentChanged>()
+    val events = mutableListOf<TerminalContentChangeEvent>()
     model.addListener(testRootDisposable, object : TerminalOutputModelListener {
-      override fun afterContentChanged(event: TerminalContentChanged) {
+      override fun afterContentChanged(event: TerminalContentChangeEvent) {
         events += event
       }
     })
@@ -271,9 +264,9 @@ internal class TerminalOutputModelTest : BasePlatformTestCase() {
   @Test
   fun `update events ignore unchanged prefix and suffix - trimmed offsets`(): Unit = runBlocking(Dispatchers.EDT)  {
     val model = TerminalTestUtil.createOutputModel(maxLength = 5)
-    val events = mutableListOf<TerminalContentChanged>()
+    val events = mutableListOf<TerminalContentChangeEvent>()
     model.addListener(testRootDisposable, object : TerminalOutputModelListener {
-      override fun afterContentChanged(event: TerminalContentChanged) {
+      override fun afterContentChanged(event: TerminalContentChangeEvent) {
         events += event
       }
     })

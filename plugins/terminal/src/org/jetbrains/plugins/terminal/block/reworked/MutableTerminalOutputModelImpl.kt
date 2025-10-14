@@ -150,7 +150,7 @@ class MutableTerminalOutputModelImpl(
   override fun updateCursorPosition(offset: TerminalOffset) {
     val oldValue = cursorOffset
     this.cursorOffset = offset
-    dispatcher.multicaster.cursorOffsetChanged(TerminalCursorOffsetChangedImpl(this, oldValue, offset))
+    dispatcher.multicaster.cursorOffsetChanged(TerminalCursorOffsetChangeEventImpl(this, oldValue, offset))
   }
 
   private fun ensureDocumentHasLine(lineIndex: TerminalLineIndex) {
@@ -267,7 +267,7 @@ class MutableTerminalOutputModelImpl(
       contentUpdateInProgress = false
     }
 
-    dispatcher.multicaster.afterContentChanged(TerminalContentChangedImpl(
+    dispatcher.multicaster.afterContentChanged(TerminalContentChangeEventImpl(
       this,
       change.offset,
       change.oldText,
@@ -280,7 +280,7 @@ class MutableTerminalOutputModelImpl(
     if (isTrimNeeded()) {
       val startBeforeTrimming = startOffset
       val trimmedSequence = trimToSize()
-      dispatcher.multicaster.afterContentChanged(TerminalContentChangedImpl(
+      dispatcher.multicaster.afterContentChanged(TerminalContentChangeEventImpl(
         this,
         startBeforeTrimming,
         trimmedSequence,
@@ -585,19 +585,19 @@ private fun getTextImpl(
   relativeEnd: Int,
 ): String = document.getText(TextRange(relativeStart, relativeEnd))
 
-private data class TerminalContentChangedImpl(
+private data class TerminalContentChangeEventImpl(
   override val model: MutableTerminalOutputModelImpl,
   override val offset: TerminalOffset,
   override val oldText: CharSequence,
   override val newText: CharSequence,
   override val isTypeAhead: Boolean,
   override val isTrimming: Boolean,
-) : TerminalContentChanged
+) : TerminalContentChangeEvent
 
-private data class TerminalCursorOffsetChangedImpl(
+private data class TerminalCursorOffsetChangeEventImpl(
   override val model: MutableTerminalOutputModelImpl,
   override val oldOffset: TerminalOffset,
   override val newOffset: TerminalOffset,
-) : TerminalCursorOffsetChanged
+) : TerminalCursorOffsetChangeEvent
 
 private val LOG = logger<MutableTerminalOutputModelImpl>()

@@ -23,11 +23,7 @@ import com.jediterm.terminal.CursorShape
 import kotlinx.coroutines.*
 import org.jetbrains.plugins.terminal.TerminalOptionsProvider
 import org.jetbrains.plugins.terminal.TerminalUtil
-import org.jetbrains.plugins.terminal.block.reworked.TerminalCursorOffsetChanged
-import org.jetbrains.plugins.terminal.block.reworked.TerminalOffset
-import org.jetbrains.plugins.terminal.block.reworked.TerminalOutputModel
-import org.jetbrains.plugins.terminal.block.reworked.TerminalOutputModelListener
-import org.jetbrains.plugins.terminal.block.reworked.TerminalSessionModel
+import org.jetbrains.plugins.terminal.block.reworked.*
 import java.awt.Color
 import java.awt.Font
 import java.awt.Graphics2D
@@ -55,7 +51,7 @@ internal class TerminalCursorPainter private constructor(
     updateCursor(curCursorState)
 
     outputModel.addListener(coroutineScope.asDisposable(), object : TerminalOutputModelListener {
-      override fun cursorOffsetChanged(event: TerminalCursorOffsetChanged) {
+      override fun cursorOffsetChanged(event: TerminalCursorOffsetChangeEvent) {
         curCursorState = curCursorState.copy(offset = event.newOffset)
         updateCursor(curCursorState)
       }

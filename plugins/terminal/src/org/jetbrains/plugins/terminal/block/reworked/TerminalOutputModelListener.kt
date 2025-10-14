@@ -17,9 +17,9 @@ interface TerminalOutputModelListener : EventListener {
    */
   fun afterContentChanged(model: TerminalOutputModel, startOffset: TerminalOffset, isTypeAhead: Boolean) {}
 
-  fun afterContentChanged(event: TerminalContentChanged) {}
+  fun afterContentChanged(event: TerminalContentChangeEvent) {}
 
-  fun cursorOffsetChanged(event: TerminalCursorOffsetChanged) {}
+  fun cursorOffsetChanged(event: TerminalCursorOffsetChangeEvent) {}
 }
 
 @ApiStatus.Experimental
@@ -28,7 +28,7 @@ sealed interface TerminalOutputModelEvent {
 }
 
 @ApiStatus.Experimental
-sealed interface TerminalContentChanged : TerminalOutputModelEvent {
+sealed interface TerminalContentChangeEvent : TerminalOutputModelEvent {
   val offset: TerminalOffset
   val oldText: CharSequence
   val newText: CharSequence
@@ -37,7 +37,7 @@ sealed interface TerminalContentChanged : TerminalOutputModelEvent {
 }
 
 @ApiStatus.Experimental
-sealed interface TerminalCursorOffsetChanged : TerminalOutputModelEvent {
+sealed interface TerminalCursorOffsetChangeEvent : TerminalOutputModelEvent {
   val oldOffset: TerminalOffset
   val newOffset: TerminalOffset
 }
