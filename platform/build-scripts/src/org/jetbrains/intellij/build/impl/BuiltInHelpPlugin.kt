@@ -132,12 +132,12 @@ private suspend fun buildResourcesForHelpPlugin(resourceRoot: Path, classPath: L
       archiver.setRootDir(resourceRoot)
 
       supportedLanguages.forEach { (lang, descriptor) ->
-        val rootDir = resourceRoot.resolve(descriptor.resPath)
-        if (rootDir.exists()) {
+        val langRootDir = resourceRoot.resolve(descriptor.resPath)
+        if (langRootDir.exists()) {
           Span.current().addEvent("adding \"${lang}\" to the resulting ZIP.")
           descriptor.resList.forEach { resDir ->
             archiveDir(
-              startDir = rootDir,
+              startDir = langRootDir.resolve(resDir),
               addFile = { archiver.addFile(it, zipCreator) })
           }
         }
