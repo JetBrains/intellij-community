@@ -13111,6 +13111,40 @@ public abstract class LocalInspectionTestGenerated extends AbstractLocalInspecti
         }
 
         @RunWith(JUnit3RunnerWithInners.class)
+        @TestMetadata("testData/inspectionsLocal/replaceIsEmptyWithIfEmpty/comments")
+        public static class Comments extends AbstractLocalInspectionTest {
+            @java.lang.Override
+            @org.jetbrains.annotations.NotNull
+            public final KotlinPluginMode getPluginMode() {
+                return KotlinPluginMode.K1;
+            }
+
+            private void runTest(String testDataFilePath) throws Exception {
+                KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
+            }
+
+            @TestMetadata("ifBlockWithComments.kt")
+            public void testIfBlockWithComments() throws Exception {
+                runTest("testData/inspectionsLocal/replaceIsEmptyWithIfEmpty/comments/ifBlockWithComments.kt");
+            }
+
+            @TestMetadata("ifBlockWithComments2.kt")
+            public void testIfBlockWithComments2() throws Exception {
+                runTest("testData/inspectionsLocal/replaceIsEmptyWithIfEmpty/comments/ifBlockWithComments2.kt");
+            }
+
+            @TestMetadata("ifBlockWithComments3.kt")
+            public void testIfBlockWithComments3() throws Exception {
+                runTest("testData/inspectionsLocal/replaceIsEmptyWithIfEmpty/comments/ifBlockWithComments3.kt");
+            }
+
+            @TestMetadata("ifBlockWithComments4.kt")
+            public void testIfBlockWithComments4() throws Exception {
+                runTest("testData/inspectionsLocal/replaceIsEmptyWithIfEmpty/comments/ifBlockWithComments4.kt");
+            }
+        }
+
+        @RunWith(JUnit3RunnerWithInners.class)
         @TestMetadata("testData/inspectionsLocal/replaceIsEmptyWithIfEmpty/intArray")
         public static class IntArray extends AbstractLocalInspectionTest {
             @java.lang.Override
