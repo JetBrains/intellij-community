@@ -18,7 +18,6 @@ import org.jetbrains.plugins.terminal.block.output.TextStyleAdapter
 import org.jetbrains.plugins.terminal.block.ui.BlockTerminalColorPalette
 import org.jetbrains.plugins.terminal.session.StyleRange
 import org.jetbrains.plugins.terminal.session.TerminalOutputModelState
-import kotlin.math.max
 
 /**
  * [maxOutputLength] limits the length of the document. Zero means unlimited length.
@@ -95,15 +94,35 @@ class MutableTerminalOutputModelImpl(
         firstLineTrimmedCharsCount = 0
       }
 
-      val documentLineIndex = (absoluteLineIndex - trimmedLinesCount).toInt()
-      doUpdateContent(documentLineIndex, text, styles)
+      LOG.debug {
+        "Content update from the relative line = ${absoluteLineIndex - trimmedLinesCount} (absolute ${absoluteLineIndex}), " +
+        "length = ${text.length}, " +
+        "current length = ${document.textLength} chars, ${document.lineCount} lines, " +
+        "currently trimmed = $trimmedCharsCount chars, $trimmedLinesCount lines"
+      }
+
+      val startLine = TerminalLineIndex.of(absoluteLineIndex)
+      if (startLine <= lastLine) {
+        val startOffset = getStartOfLine(startLine)
+        doReplaceContent(startOffset, (endOffset - startOffset).toInt(), text, styles)
+      }
+      else {
+        val linesCountToAdd = (startLine - lastLine).toInt()
+        val linesToAdd = "\n".repeat(linesCountToAdd)
+        doReplaceContent(endOffset, 0, linesToAdd + text, styles.map {
+          // styles are relative to the original insertion index, so we must shift them
+          it.copy(
+            startOffset = it.startOffset + linesCountToAdd,
+            endOffset = it.endOffset + linesCountToAdd,
+          )
+        })
+      }
     }
   }
 
   override fun replaceContent(offset: TerminalOffset, length: Int, text: String, newStyles: List<StyleRange>) {
     changeDocumentContent(isTypeAhead) { 
-      val relativeStartOffset = offset.toRelative()
-      doReplaceContent(relativeStartOffset, length, text, newStyles)
+      doReplaceContent(offset, length, text, newStyles)
     }
   }
 
@@ -130,7 +149,10 @@ class MutableTerminalOutputModelImpl(
         document.insertString(lineEndOffset, spaces)
         LOG.debug { "Added $spacesToAdd spaces to make the column valid" }
         highlightingsModel.insertEmptyHighlightings(lineEndOffset, spacesToAdd)
-        lineEndOffset
+        ModelChange(
+          relativeOffset(lineEndOffset),
+          relativeOffset(lineEndOffset + spacesToAdd),
+        )
       }
     }
 
@@ -145,34 +167,6 @@ class MutableTerminalOutputModelImpl(
     dispatcher.multicaster.cursorOffsetChanged(TerminalCursorOffsetChangedImpl(this, oldValue, offset))
   }
 
-  /** Returns offset from which document was updated */
-  private fun doUpdateContent(documentLineIndex: Int, text: String, styles: List<StyleRange>): Int {
-    LOG.debug {
-      "Content update from the relative line = $documentLineIndex (absolute ${documentLineIndex + trimmedLinesCount}), " +
-      "length = ${text.length}, " +
-      "current length = ${document.textLength} chars, ${document.lineCount} lines, " +
-      "currently trimmed = $trimmedCharsCount chars, $trimmedLinesCount lines"
-    }
-    ensureDocumentHasLine(documentLineIndex)
-
-    val replaceStartOffset = document.getLineStartOffset(documentLineIndex)
-    document.replaceString(replaceStartOffset, document.textLength, text)
-    ensureCorrectCursorOffset()
-
-    highlightingsModel.removeAfter(replaceStartOffset)
-    highlightingsModel.addHighlightings(replaceStartOffset, styles)
-
-    val trimmedCount = trimToSize()
-
-    LOG.debug {
-      "Content updated from relative offset = $replaceStartOffset, " +
-      "new length = ${document.textLength} chars, ${document.lineCount} lines, " +
-      "currently trimmed = $trimmedCharsCount chars, $trimmedLinesCount lines"
-    }
-
-    return max(0, replaceStartOffset - trimmedCount)
-  }
-
   private fun ensureDocumentHasLine(documentLineIndex: Int) {
     if (documentLineIndex > 0 && documentLineIndex >= document.lineCount) {
       val newLinesToAdd = documentLineIndex - document.lineCount + 1
@@ -183,13 +177,16 @@ class MutableTerminalOutputModelImpl(
   }
 
   /** Returns offset from which document was updated */
-  private fun doReplaceContent(relativeStartOffset: Int, length: Int, text: String, styles: List<StyleRange>): Int {
+  private fun doReplaceContent(startOffset: TerminalOffset, length: Int, text: String, styles: List<StyleRange>): ModelChange {
+    val relativeStartOffset = startOffset.toRelative()
     val relativeEndOffset = relativeStartOffset + length
     document.replaceString(relativeStartOffset, relativeEndOffset, text)
     highlightingsModel.updateHighlightings(relativeStartOffset, length, text.length, styles)
-    val trimmedCount = trimToSize()
     ensureCorrectCursorOffset()
-    return max(0, relativeStartOffset - trimmedCount)
+    return ModelChange(
+      relativeOffset(relativeStartOffset.coerceIn(0, textLength)),
+      relativeOffset(relativeEndOffset.coerceIn(0, textLength)),
+    )
   }
 
   private fun ensureCorrectCursorOffset() {
@@ -237,18 +234,28 @@ class MutableTerminalOutputModelImpl(
    * Document changes in this model are allowed only inside [block] of this function.
    * [block] should return an offset from which document content was changed.
    */
-  private fun changeDocumentContent(isTypeAhead: Boolean = false, block: () -> Int) {
+  private fun changeDocumentContent(isTypeAhead: Boolean = false, block: () -> ModelChange) {
     dispatcher.multicaster.beforeContentChanged(this)
 
     contentUpdateInProgress = true
-    val changeStartOffset = try {
+    val change = try {
       block()
     }
     finally {
       contentUpdateInProgress = false
     }
 
-    dispatcher.multicaster.afterContentChanged(this, relativeOffset(changeStartOffset), isTypeAhead)
+    val trimmedCount = trimToSize()
+
+    val effectiveStartOffset = change.startOffset.coerceAtLeast(startOffset)
+
+    dispatcher.multicaster.afterContentChanged(this, effectiveStartOffset, isTypeAhead)
+
+    LOG.debug {
+      "Content updated from offset = $effectiveStartOffset, " +
+      "new length = ${document.textLength} chars, ${document.lineCount} lines, " +
+      "currently trimmed = $trimmedCharsCount (+$trimmedCount) chars, $trimmedLinesCount lines"
+    }
   }
 
   override fun getHighlightings(): TerminalOutputHighlightingsSnapshot {
@@ -300,7 +307,7 @@ class MutableTerminalOutputModelImpl(
       highlightingsModel.restoreFromState(state.highlightings)
       updateCursorPosition(relativeOffset(state.cursorOffset))
 
-      0  // the document is changed from right from the start
+      ModelChange(startOffset, endOffset)  // the document is changed from right from the start
     }
   }
 
@@ -360,19 +367,6 @@ class MutableTerminalOutputModelImpl(
       else null
     }
 
-    fun addHighlightings(documentOffset: Int, styles: List<StyleRange>) {
-      val absoluteOffset = documentOffset + trimmedCharsCount
-
-      check(styleRanges.isEmpty() || styleRanges.last().endOffset <= absoluteOffset) { "New highlightings overlap with existing" }
-
-      val adjustedStyles = styles.map {
-        it.copy(startOffset = absoluteOffset + it.startOffset, endOffset = absoluteOffset + it.endOffset)
-      }
-      styleRanges.addAll(adjustedStyles)
-
-      highlightingsSnapshot = null
-    }
-
     /**
      * Moves all highlightings that start after [documentOffset] by [length].
      * If [documentOffset] is inside some highlighting, this highlighting won't be changed.
@@ -391,17 +385,6 @@ class MutableTerminalOutputModelImpl(
 
         highlightingsSnapshot = null
       }
-    }
-
-    fun removeAfter(documentOffset: Int) {
-      val absoluteOffset = documentOffset + trimmedCharsCount
-      val styleIndex = styleRanges.binarySearch { it.endOffset.compareTo(absoluteOffset) }
-      val removeFromIndex = if (styleIndex < 0) -styleIndex - 1 else styleIndex + 1
-      for (ind in (styleRanges.size - 1) downTo removeFromIndex) {
-        styleRanges.removeAt(ind)
-      }
-
-      highlightingsSnapshot = null
     }
 
     fun removeBefore(documentOffset: Int) {
@@ -499,6 +482,11 @@ class MutableTerminalOutputModelImpl(
     }
   }
 }
+
+private data class ModelChange(
+  val startOffset: TerminalOffset,
+  val endOffset: TerminalOffset,
+)
 
 @ApiStatus.Internal
 class TerminalOutputModelSnapshotImpl(
