@@ -37,7 +37,8 @@ abstract class XmlElementStorage protected constructor(
   @JvmField protected val rootElementName: String?,
   private val pathMacroSubstitutor: PathMacroSubstitutor? = null,
   storageRoamingType: RoamingType,
-  private val provider: StreamProvider? = null
+  private val provider: StreamProvider? = null,
+  private val listener: OperationListener? = null
 ) : StateStorageBase<StateMap>() {
   final override val saveStorageDataOnReload: Boolean
     get() = provider == null || provider.saveStorageDataOnReload
@@ -257,34 +258,30 @@ abstract class XmlElementStorage protected constructor(
       override suspend fun save(events: MutableList<VFileEvent>?) {
         var isSavedLocally = false
         val provider = storage.provider
+        val listener = storage.listener
 
         if (elements == null) {
-          if (provider == null || !provider.delete(storage.fileSpec, storage.roamingType)) {
+          if (provider != null && provider.delete(storage.fileSpec, storage.roamingType)) {
+            listener?.onDelete(storage.fileSpec)
+          }
+          else {
             isSavedLocally = true
-            if (writer == null) {
-              remove(events)
-            }
-            else {
-              saveLocally(dataWriter = writer, events = events)
-            }
+            removeOrSaveLocally(events)
           }
         }
         else if (provider != null && provider.isApplicable(storage.fileSpec, storage.roamingType)) {
           // we should use standard line-separator (\n) - stream provider can share file content on any OS
+          val content = writer!!.toBufferExposingByteArray(LineSeparator.LF).toByteArray()
           provider.write(
             fileSpec = storage.fileSpec,
-            content = writer!!.toBufferExposingByteArray(LineSeparator.LF).toByteArray(),
+            content = content,
             roamingType = storage.roamingType,
           )
+          listener?.onWrite(storage.fileSpec, content)
         }
         else {
           isSavedLocally = true
-          if (writer == null) {
-            remove(events)
-          }
-          else {
-            saveLocally(dataWriter = writer, events = events)
-          }
+          removeOrSaveLocally(events)
         }
 
         if (!isSavedLocally) {
@@ -292,6 +289,17 @@ abstract class XmlElementStorage protected constructor(
         }
 
         storage.setStates(originalStates, stateMap)
+      }
+
+      private fun removeOrSaveLocally(events: MutableList<VFileEvent>?) {
+        if (writer == null) {
+          remove(events)
+          storage.listener?.onDelete(storage.fileSpec)
+        }
+        else {
+          saveLocally(dataWriter = writer, events = events)
+          storage.listener?.onWrite(storage.fileSpec, writer.toBufferExposingByteArray(LineSeparator.LF).toByteArray())
+        }
       }
     }
 

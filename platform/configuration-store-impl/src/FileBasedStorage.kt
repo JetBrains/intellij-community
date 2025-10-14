@@ -46,7 +46,8 @@ abstract class FileBasedStorage internal constructor(
   pathMacroManager: PathMacroSubstitutor? = null,
   roamingType: RoamingType,
   provider: StreamProvider? = null,
-) : XmlElementStorage(fileSpec = fileSpec, rootElementName = rootElementName, pathMacroSubstitutor = pathMacroManager, storageRoamingType = roamingType, provider = provider) {
+  listener: OperationListener? = null
+) : XmlElementStorage(fileSpec = fileSpec, rootElementName = rootElementName, pathMacroSubstitutor = pathMacroManager, storageRoamingType = roamingType, provider = provider, listener = listener) {
   @Volatile private var cachedVirtualFile: VirtualFile? = null
 
   private var lineSeparator: LineSeparator? = null
