@@ -26,7 +26,7 @@ public class ReplaceTypeWithWrongImportFixTest extends LightJavaCodeInsightFixtu
                                 
                                 void call(B<String> b){}
                                 """);
-    IntentionAction intention = myFixture.findSingleIntention("Replace a constructor call type to 'bar.p2.A<String>'");
+    IntentionAction intention = myFixture.findSingleIntention("Replace a constructor call type with 'bar.p2.A<String>'");
     assertEquals(myFixture.getIntentionPreviewText(intention),
                  """
                    import bar.p1.A;
@@ -63,7 +63,7 @@ public class ReplaceTypeWithWrongImportFixTest extends LightJavaCodeInsightFixtu
                                     B<? extends Object> b = new A<caret><String>("1");
                                 }
                                 """);
-    myFixture.launchAction(myFixture.findSingleIntention("Replace a variable type to 'bar.p1.B<? extends java.lang.Object>'"));
+    myFixture.launchAction(myFixture.findSingleIntention("Replace a variable type with 'bar.p1.B<? extends java.lang.Object>'"));
     myFixture.checkResult("""
                             import bar.p1.A;
                             import bar.p1.B;
@@ -109,7 +109,7 @@ public class ReplaceTypeWithWrongImportFixTest extends LightJavaCodeInsightFixtu
                                     B b = new A<caret><String>("1");
                                 }
                                 """);
-    myFixture.launchAction(myFixture.findSingleIntention("Replace a variable type to 'bar.p1.B<java.lang.String>'"));
+    myFixture.launchAction(myFixture.findSingleIntention("Replace a variable type with 'bar.p1.B<java.lang.String>'"));
     myFixture.checkResult("""
                             import bar.p1.A;
                             import bar.p1.B;
@@ -135,7 +135,7 @@ public class ReplaceTypeWithWrongImportFixTest extends LightJavaCodeInsightFixtu
                                   return new A<String>("1");
                                 }
                                 """);
-    myFixture.launchAction(myFixture.findSingleIntention("Replace a variable type to 'bar.p1.B<java.lang.String>'"));
+    myFixture.launchAction(myFixture.findSingleIntention("Replace a variable type with 'bar.p1.B<java.lang.String>'"));
     myFixture.checkResult("""
                             import bar.p1.A;
                             import bar.p1.B;
@@ -161,7 +161,7 @@ public class ReplaceTypeWithWrongImportFixTest extends LightJavaCodeInsightFixtu
                                     B<? extends Object> b = new A<caret><String>("1");
                                 }
                                 """);
-    myFixture.launchAction(myFixture.findSingleIntention("Replace a constructor call type to 'bar.p2.A<String>'"));
+    myFixture.launchAction(myFixture.findSingleIntention("Replace a constructor call type with 'bar.p2.A<String>'"));
     myFixture.checkResult("""
                             import bar.p2.A;
                             import bar.p2.B;
@@ -194,7 +194,7 @@ public class ReplaceTypeWithWrongImportFixTest extends LightJavaCodeInsightFixtu
                                     B<? extends Object> b = new A<caret><String>("1");
                                 }
                                 """);
-    assertEmpty(myFixture.filterAvailableIntentions("Replace a constructor call type to 'bar.p3.A<String>'"));
+    assertEmpty(myFixture.filterAvailableIntentions("Replace a constructor call type with 'bar.p3.A<String>'"));
   }
 
   public void testFixConstructorTypeClassNotAssignable() {
@@ -219,7 +219,7 @@ public class ReplaceTypeWithWrongImportFixTest extends LightJavaCodeInsightFixtu
                                     B<? extends Object> b = new A<caret><String>("1");
                                 }
                                 """);
-    assertEmpty(myFixture.filterAvailableIntentions("Replace a constructor call type to 'bar.p3.A<String>'"));
+    assertEmpty(myFixture.filterAvailableIntentions("Replace a constructor call type with 'bar.p3.A<String>'"));
   }
 
   public void testFixConstructorTypeClassUnavailable() {
@@ -244,7 +244,7 @@ public class ReplaceTypeWithWrongImportFixTest extends LightJavaCodeInsightFixtu
                                     B<? extends Object> b = new A<caret><String>("1");
                                 }
                                 """);
-    assertEmpty(myFixture.filterAvailableIntentions("Replace a constructor call type to 'bar.p3.A<String>'"));
+    assertEmpty(myFixture.filterAvailableIntentions("Replace a constructor call type with 'bar.p3.A<String>'"));
   }
 
   public void testFixConstructorTypeClassDefaultConstructor() {
@@ -276,7 +276,7 @@ public class ReplaceTypeWithWrongImportFixTest extends LightJavaCodeInsightFixtu
                                 }
                                 """);
 
-    myFixture.launchAction(myFixture.findSingleIntention("Replace a constructor call type to 'bar.p3.A<String>'"));
+    myFixture.launchAction(myFixture.findSingleIntention("Replace a constructor call type with 'bar.p3.A<String>'"));
     myFixture.checkResult("""
                             import bar.p3.A;
                             import bar.p3.B;
@@ -298,7 +298,7 @@ public class ReplaceTypeWithWrongImportFixTest extends LightJavaCodeInsightFixtu
                                 }
                                 """);
 
-    myFixture.launchAction(myFixture.findSingleIntention("Replace a constructor call type to 'bar.p2.A<>'"));
+    myFixture.launchAction(myFixture.findSingleIntention("Replace a constructor call type with 'bar.p2.A<>'"));
     myFixture.checkResult("""
                             import bar.p2.A;
                             import bar.p2.B;
@@ -330,7 +330,7 @@ public class ReplaceTypeWithWrongImportFixTest extends LightJavaCodeInsightFixtu
                                     B<? extends Object> b = new A<caret><String>("1");
                                 }
                                 """);
-    assertEmpty(myFixture.filterAvailableIntentions("Replace a constructor call type to 'bar.p3.A<String>'"));
+    assertEmpty(myFixture.filterAvailableIntentions("Replace a constructor call type with 'bar.p3.A<String>'"));
   }
 
   public void testFixConstructorTypeNoAvailableClass() {
@@ -349,7 +349,7 @@ public class ReplaceTypeWithWrongImportFixTest extends LightJavaCodeInsightFixtu
                                     B<? extends Object> b = new A<caret><String>("1");
                                 }
                                 """);
-    assertEmpty(myFixture.filterAvailableIntentions("Replace a constructor call type to 'bar.p3.A<String>'"));
+    assertEmpty(myFixture.filterAvailableIntentions("Replace a constructor call type with 'bar.p3.A<String>'"));
   }
 
   private void addClasses() {
