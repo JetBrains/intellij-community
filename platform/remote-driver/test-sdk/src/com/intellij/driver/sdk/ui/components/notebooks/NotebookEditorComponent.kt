@@ -227,7 +227,6 @@ class NotebookEditorUiComponent(private val data: ComponentData) : JEditorUiComp
       val timesAfter = infos.map { it.getExecutionTimeInMsSafe() }
 
       infos.isNotEmpty()
-      && infos.size == notebookCellEditors.size
       && timesAfter.all { it != null }
       && timesBefore == timesAfter
     }
