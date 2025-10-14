@@ -123,8 +123,8 @@ class TerminalViewImpl(
     get() = getCurEditor().calculateTerminalSize()
   override val title: TerminalTitle = TerminalTitle()
 
-  //@VisibleForTesting
-  override fun getActiveOutputModel(): TerminalOutputModel{
+  @VisibleForTesting
+  override fun getActiveOutputModel(): TerminalOutputModel {
     return outputModels.active.value
   }
   private val mutableOutputModels: TerminalOutputModelsSetImpl
@@ -599,6 +599,12 @@ class TerminalViewImpl(
     init {
       addToCenter(layeredPane)
       updateFocusListeners(initialContent, initialContent)
+    }
+
+    @Suppress("unused")
+    @VisibleForTesting
+    private fun getActiveOutputModel(): TerminalOutputModel {
+      return outputModels.active.value
     }
 
     override fun uiDataSnapshot(sink: DataSink) {

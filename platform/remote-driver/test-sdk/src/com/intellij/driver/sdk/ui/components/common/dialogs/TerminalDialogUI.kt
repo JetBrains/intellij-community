@@ -11,7 +11,7 @@ import com.intellij.driver.sdk.waitFor
 import org.intellij.lang.annotations.Language
 
 
-fun Finder.terminal(@Language("xpath") xpath: String = "//div[contains(@class, 'TerminalPanel') or contains(@class, 'ConsoleTerminalWidget')]") =
+fun Finder.terminal(@Language("xpath") xpath: String = "//div[contains(@class, 'TerminalPanel') or contains(@class, 'ConsoleTerminalWidget')]"): TerminalDialogUI =
   x(xpath, TerminalDialogUI::class.java)
 
 fun Finder.terminal(action: TerminalDialogUI.() -> Unit) {
@@ -30,11 +30,7 @@ class TerminalDialogUI(data: ComponentData) : UiComponent(data) {
     waitFound()
   }
 
-  val terminalView: TerminalView
-    get() = driver.cast(component, TerminalView::class)
-  val terminalOutputModel: TerminalOutputModel get() = terminalView.outputModels.active.value
-  val cursorOffset: Long get() = terminalOutputModel.cursorOffset.toAbsolute()
-
+  val terminalView: TerminalViewImpl by lazy { driver.cast(component, TerminalViewImpl::class) }
 
 
 
@@ -58,20 +54,10 @@ class RdPortForwardingPanelWidget(data: ComponentData) : UiComponent(data) {
     get() = x { byJavaClass("com.jetbrains.thinclient.portForwarding.ui.ForwardedPortDropDownLink") }
 }
 
-@Remote("com.intellij.terminal.frontend.view.TerminalView",  plugin = "org.jetbrains.plugins.terminal/intellij.terminal.frontend")
-interface TerminalView {
-  fun getActiveOutputModel(): TerminalOutputModel
-  val outputModels: TerminalOutputModelsSet
-}
-
-@Remote("org.jetbrains.plugins.terminal.view.TerminalOutputModelsSet",  plugin = "org.jetbrains.plugins.terminal")
-interface TerminalOutputModelsSet {
-  val active: StateFlow<TerminalOutputModel>
-}
-
-@Remote("kotlinx.coroutines.flow.StateFlow")
-interface StateFlow<out T> {
-  val value: T
+@Suppress("InjectedReferences")
+@Remote("com.intellij.terminal.frontend.view.impl.TerminalViewImpl\$TerminalPanel", plugin = "org.jetbrains.plugins.terminal/intellij.terminal.frontend")
+interface TerminalViewImpl {
+  fun getActiveOutputModel() : TerminalOutputModel
 }
 
 @Remote("org.jetbrains.plugins.terminal.block.reworked.TerminalOutputModel")
