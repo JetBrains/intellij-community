@@ -239,6 +239,115 @@ class ContentModuleVisibilityInspectionTest : ContentModuleVisibilityInspectionT
     testHighlighting(testedFile)
   }
 
+  fun `test should report internal module dependency directly from plugin`() {
+    myFixture.addModuleWithPluginDescriptor(
+      "com.example.plugin.with.internalmodule",
+      "com.example.plugin.with.internalmodule/META-INF/plugin.xml",
+      """
+      <idea-plugin>
+        <id>com.example.plugin.with.internalmodule</id>
+        <content namespace="another-namespace">
+          <module name="com.example.internalmodule"/>
+        </content>
+      </idea-plugin>
+      """.trimIndent())
+    myFixture.addModuleWithPluginDescriptor(
+      "com.example.internalmodule",
+      "com.example.internalmodule/com.example.internalmodule.xml",
+      """
+      <idea-plugin visibility="internal">
+      </idea-plugin>
+      """.trimIndent())
+
+    val testedFile = myFixture.addModuleWithPluginDescriptor(
+      "com.example.plugin",
+      "com.example.plugin/META-INF/plugin.xml",
+      """
+      <idea-plugin>
+        <id>com.example.plugin</id>
+        <dependencies>
+          <module name="<error descr="The 'com.example.internalmodule' module is internal and declared in namespace 'another-namespace' in 'com.example.plugin.with.internalmodule/…/plugin.xml', so it cannot be accessed from plugin 'com.example.plugin', which is declared in namespace 'test-namespace'">com.example.internalmodule</error>"/>
+        </dependencies>
+        <content namespace="test-namespace">
+          <!-- to register namespace for the plugin -->
+        </content>
+      </idea-plugin>
+      """.trimIndent())
+    testHighlighting(testedFile)
+  }
+
+  fun `test should report internal module dependency directly from plugin when current plugin is declared without namespace`() {
+    myFixture.addModuleWithPluginDescriptor(
+      "com.example.plugin.with.internalmodule",
+      "com.example.plugin.with.internalmodule/META-INF/plugin.xml",
+      """
+      <idea-plugin>
+        <id>com.example.plugin.with.internalmodule</id>
+        <content namespace="another-namespace">
+          <module name="com.example.internalmodule"/>
+        </content>
+      </idea-plugin>
+      """.trimIndent())
+    myFixture.addModuleWithPluginDescriptor(
+      "com.example.internalmodule",
+      "com.example.internalmodule/com.example.internalmodule.xml",
+      """
+      <idea-plugin visibility="internal">
+      </idea-plugin>
+      """.trimIndent())
+
+    val testedFile = myFixture.addModuleWithPluginDescriptor(
+      "com.example.plugin",
+      "com.example.plugin/META-INF/plugin.xml",
+      """
+      <idea-plugin>
+        <id>com.example.plugin</id>
+        <dependencies>
+          <module name="<error descr="The 'com.example.internalmodule' module is internal and declared in namespace 'another-namespace' in 'com.example.plugin.with.internalmodule/…/plugin.xml', so it cannot be accessed from plugin 'com.example.plugin', which is declared without a namespace">com.example.internalmodule</error>"/>
+        </dependencies>
+        <!-- no namespace -->
+      </idea-plugin>
+      """.trimIndent())
+    testHighlighting(testedFile)
+  }
+
+  fun `test should report internal module dependency directly from plugin when dependency declared without namespace`() {
+    myFixture.addModuleWithPluginDescriptor(
+      "com.example.plugin.with.internalmodule",
+      "com.example.plugin.with.internalmodule/META-INF/plugin.xml",
+      """
+      <idea-plugin>
+        <id>com.example.plugin.with.internalmodule</id>
+        <content>
+          <module name="com.example.internalmodule"/>
+        </content>
+      </idea-plugin>
+      """.trimIndent())
+    myFixture.addModuleWithPluginDescriptor(
+      "com.example.internalmodule",
+      "com.example.internalmodule/com.example.internalmodule.xml",
+      """
+      <idea-plugin visibility="internal">
+      </idea-plugin>
+      """.trimIndent())
+
+    val testedFile = myFixture.addModuleWithPluginDescriptor(
+      "com.example.plugin",
+      "com.example.plugin/META-INF/plugin.xml",
+      """
+      <idea-plugin>
+        <id>com.example.plugin</id>
+        <dependencies>
+          <module name="<error descr="The 'com.example.internalmodule' module is internal and declared without namespace in 'com.example.plugin.with.internalmodule/…/plugin.xml', so it cannot be accessed from plugin 'com.example.plugin', which is declared in namespace 'test-namespace'">com.example.internalmodule</error>"/>
+        </dependencies>
+        <content namespace="test-namespace">
+          <!-- to register namespace for the plugin -->
+        </content>
+      </idea-plugin>
+      """.trimIndent())
+    testHighlighting(testedFile)
+  }
+
   fun `test should report private module included via xi-include`() {
     myFixture.addModuleWithPluginDescriptor(
       "com.example.plugin.with.privatemodule",
@@ -440,6 +549,43 @@ class ContentModuleVisibilityInspectionTest : ContentModuleVisibilityInspectionT
         <dependencies>
           <module name="com.example.internalmodule"/>
         </dependencies>
+      </idea-plugin>
+      """.trimIndent())
+    testHighlighting(testedFile)
+  }
+
+  fun `test should not report internal module dependency directly from plugin`() {
+    myFixture.addModuleWithPluginDescriptor(
+      "com.example.plugin.with.internalmodule",
+      "com.example.plugin.with.internalmodule/META-INF/plugin.xml",
+      """
+      <idea-plugin>
+        <id>com.example.plugin.with.internalmodule</id>
+        <content namespace="test-namespace">
+          <module name="com.example.internalmodule"/>
+        </content>
+      </idea-plugin>
+      """.trimIndent())
+    myFixture.addModuleWithPluginDescriptor(
+      "com.example.internalmodule",
+      "com.example.internalmodule/com.example.internalmodule.xml",
+      """
+      <idea-plugin visibility="internal">
+      </idea-plugin>
+      """.trimIndent())
+
+    val testedFile = myFixture.addModuleWithPluginDescriptor(
+      "com.example.plugin",
+      "com.example.plugin/META-INF/plugin.xml",
+      """
+      <idea-plugin>
+        <id>com.example.plugin</id>
+        <dependencies>
+          <module name="com.example.internalmodule"/>
+        </dependencies>
+        <content namespace="test-namespace">
+          <!-- to register namespace for the plugin -->
+        </content>
       </idea-plugin>
       """.trimIndent())
     testHighlighting(testedFile)
