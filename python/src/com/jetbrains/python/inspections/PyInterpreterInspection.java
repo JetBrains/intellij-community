@@ -72,7 +72,7 @@ import java.util.function.Function;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
-import static com.intellij.python.sdkConfigurator.common.PublicApiKt.detectSdkForModulesIn;
+import static com.jetbrains.python.inspections.PyInterpreterInspectionExKt.detectSdkForModulesForJvmIn;
 
 
 public final class PyInterpreterInspection extends PyInspection {
@@ -431,7 +431,7 @@ public final class PyInterpreterInspection extends PyInspection {
 
     @Override
     public void applyFix(@NotNull Project project, @NotNull ProblemDescriptor descriptor) {
-      if (!detectSdkForModulesIn(project)) {
+      if (!detectSdkForModulesForJvmIn(project)) {
         PyProjectSdkConfiguration.INSTANCE.configureSdkUsingCreateSdkInfo(myModule, myCreateSdkInfo);
       }
     }

@@ -30,9 +30,20 @@ import kotlinx.coroutines.withContext
 
 private val askUserMutex = Mutex()
 
-// TODO: DOC
-internal fun configureSdkAskingUser(project: Project) {
+/**
+ * Same as [configureSdkAutomatically] but in a separate coroutine
+ */
+internal fun configureSdkAskingUserBg(project: Project) {
   project.service<MyService>().scope.launch(Dispatchers.Default) {
+    configureSdkAskingUser(project)
+  }
+}
+
+/**
+ * Ask user for list of modules and configure them
+ */
+internal suspend fun configureSdkAskingUser(project: Project) {
+  withContext(Dispatchers.Default) {
     askUserMutex.withLock {
       val moduleToSuggestedSdk = getModulesWithoutSDK(project)
       if (moduleToSuggestedSdk.modules.isNotEmpty()) {

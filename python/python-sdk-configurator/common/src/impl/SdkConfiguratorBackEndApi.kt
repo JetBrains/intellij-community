@@ -1,9 +1,11 @@
 package com.intellij.python.sdkConfigurator.common.impl
 
 import com.intellij.platform.project.ProjectId
+import com.intellij.platform.rpc.RemoteApiProviderService
 import com.intellij.platform.rpc.topics.ProjectRemoteTopic
 import fleet.rpc.RemoteApi
 import fleet.rpc.Rpc
+import fleet.rpc.remoteApiDescriptor
 import kotlinx.serialization.Serializable
 
 /**
@@ -12,9 +14,14 @@ import kotlinx.serialization.Serializable
 @Rpc
 interface SdkConfiguratorBackEndApi : RemoteApi<Unit> {
   /***
-   * Configure SDK for all modules in [projectId] if their names in [onlyModules]
+   * Configure SDK for all modules in [projectId] if their names in [onlyModules] unconditionally
    */
   suspend fun configureSdkAutomatically(projectId: ProjectId, onlyModules: Set<ModuleName>)
+
+  /**
+   * Ask user about modules, then call [configureSdkAutomatically]
+   */
+  suspend fun configureAskingUser(projectId: ProjectId)
 }
 
 typealias ModuleName = String
@@ -30,3 +37,8 @@ val SHOW_SDK_CONFIG_UI_TOPIC: ProjectRemoteTopic<ModulesDTO> = ProjectRemoteTopi
 @Serializable
 data class ModulesDTO(val modules: Map<ModuleName, ModuleName?>) {
 }
+
+/**
+ * [SdkConfiguratorBackEndApi] instance
+ */
+suspend fun SdkConfiguratorBackEndApi(): SdkConfiguratorBackEndApi = RemoteApiProviderService.resolve(remoteApiDescriptor<SdkConfiguratorBackEndApi>())
