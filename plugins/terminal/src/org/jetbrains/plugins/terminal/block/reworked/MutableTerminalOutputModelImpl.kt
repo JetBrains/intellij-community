@@ -168,12 +168,14 @@ class MutableTerminalOutputModelImpl(
   private fun doReplaceContent(startOffset: TerminalOffset, length: Int, text: String, styles: List<StyleRange>): ModelChange {
     val relativeStartOffset = startOffset.toRelative()
     val relativeEndOffset = relativeStartOffset + length
+    val oldText = document.immutableCharSequence.subSequence(relativeStartOffset, relativeEndOffset)
     document.replaceString(relativeStartOffset, relativeEndOffset, text)
     highlightingsModel.updateHighlightings(relativeStartOffset, length, text.length, styles)
     ensureCorrectCursorOffset()
     return ModelChange(
-      relativeOffset(relativeStartOffset.coerceIn(0, textLength)),
-      relativeOffset(relativeEndOffset.coerceIn(0, textLength)),
+      startOffset,
+      oldText,
+      text
     )
   }
 
@@ -188,15 +190,15 @@ class MutableTerminalOutputModelImpl(
   }
 
   /** Returns trimmed characters count */
-  private fun trimToSize(): Int {
+  private fun trimToSize(): CharSequence {
     return if (maxOutputLength > 0 && document.textLength > maxOutputLength) {
       trimToSize(maxOutputLength)
     }
-    else 0
+    else ""
   }
 
   /** Returns trimmed characters count */
-  private fun trimToSize(maxLength: Int): Int {
+  private fun trimToSize(maxLength: Int): CharSequence {
     val textLength = document.textLength
     check(textLength > maxLength) { "This method should be called only if text length $textLength is greater than max length $maxLength" }
 
@@ -210,12 +212,13 @@ class MutableTerminalOutputModelImpl(
     // TODO: TerminalBlocksModelImpl uses a document listener and relies on this value being already updated, need to migrate it to a model listener
     trimmedCharsCount += removeUntilOffset
 
+    val trimmedPart = document.immutableCharSequence.subSequence(0, removeUntilOffset)
     document.deleteString(0, removeUntilOffset)
 
     trimmedLinesCount += lineCountBefore - document.lineCount
     firstLineTrimmedCharsCount = removeUntilOffset - futureFirstLineStart
 
-    return removeUntilOffset
+    return trimmedPart
   }
 
   /**
@@ -234,16 +237,37 @@ class MutableTerminalOutputModelImpl(
       contentUpdateInProgress = false
     }
 
-    val trimmedCount = trimToSize()
+    dispatcher.multicaster.afterContentChanged(TerminalContentChangedImpl(
+      this,
+      change.offset,
+      change.oldText,
+      change.newText,
+      isTypeAhead,
+      false
+    ))
 
-    val effectiveStartOffset = change.startOffset.coerceAtLeast(startOffset)
+    val startBeforeTrimming = startOffset
+    val trimmedSequence = trimToSize()
+
+    if (trimmedSequence.isNotEmpty()) {
+      dispatcher.multicaster.afterContentChanged(TerminalContentChangedImpl(
+        this,
+        startBeforeTrimming,
+        trimmedSequence,
+        "",
+        isTypeAhead,
+        true
+      ))
+    }
+
+    val effectiveStartOffset = change.offset.coerceAtLeast(startOffset)
 
     dispatcher.multicaster.afterContentChanged(this, effectiveStartOffset, isTypeAhead)
 
     LOG.debug {
       "Content updated from offset = $effectiveStartOffset, " +
       "new length = ${document.textLength} chars, ${document.lineCount} lines, " +
-      "currently trimmed = $trimmedCharsCount (+$trimmedCount) chars, $trimmedLinesCount lines"
+      "currently trimmed = $trimmedCharsCount (+${trimmedSequence.length}) chars, $trimmedLinesCount lines"
     }
   }
 
@@ -289,6 +313,7 @@ class MutableTerminalOutputModelImpl(
 
   override fun restoreFromState(state: TerminalOutputModelState) {
     changeDocumentContent {
+      val oldText = immutableText
       trimmedLinesCount = state.trimmedLinesCount
       trimmedCharsCount = state.trimmedCharsCount
       firstLineTrimmedCharsCount = state.firstLineTrimmedCharsCount
@@ -296,7 +321,7 @@ class MutableTerminalOutputModelImpl(
       highlightingsModel.restoreFromState(state.highlightings)
       updateCursorPosition(relativeOffset(state.cursorOffset))
 
-      ModelChange(startOffset, endOffset)  // the document is changed from right from the start
+      ModelChange(startOffset, oldText, state.text)  // the document is changed from right from the start
     }
   }
 
@@ -453,8 +478,9 @@ class MutableTerminalOutputModelImpl(
 }
 
 private data class ModelChange(
-  val startOffset: TerminalOffset,
-  val endOffset: TerminalOffset,
+  val offset: TerminalOffset,
+  val oldText: CharSequence,
+  val newText: CharSequence,
 )
 
 @ApiStatus.Internal
@@ -527,6 +553,15 @@ private fun getTextImpl(
   relativeStart: Int,
   relativeEnd: Int,
 ): String = document.getText(TextRange(relativeStart, relativeEnd))
+
+private data class TerminalContentChangedImpl(
+  override val model: MutableTerminalOutputModelImpl,
+  override val offset: TerminalOffset,
+  override val oldText: CharSequence,
+  override val newText: CharSequence,
+  override val isTypeAhead: Boolean,
+  override val isTrimming: Boolean,
+) : TerminalContentChanged
 
 private data class TerminalCursorOffsetChangedImpl(
   override val model: MutableTerminalOutputModelImpl,
