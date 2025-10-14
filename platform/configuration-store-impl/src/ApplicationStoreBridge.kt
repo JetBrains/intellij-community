@@ -45,8 +45,6 @@ internal class AppStorageContentReader : JpsFileContentReader {
     return PathMacroManager.getInstance(ApplicationManager.getApplication()).expandMacroMap
   }
 
-  private fun isApplicationLevelFile(filePath: String): Boolean = Path.of(filePath).startsWith(PathManager.getOptionsDir())
-
   companion object {
     private val loadComponentTimeMs = MillisecondsMeasurer()
 
@@ -101,6 +99,6 @@ internal class AppStorageContentWriter(private val session: SaveSessionProducerM
   override suspend fun saveSession() {
     session.save(saveResult = SaveResult(), collectVfsEvents = false)
   }
-
-  private fun isApplicationLevelFile(filePath: String): Boolean = Path.of(filePath).startsWith(PathManager.getOptionsDir())
 }
+
+private fun isApplicationLevelFile(filePath: String): Boolean = Path.of(filePath).startsWith(PathManager.getOptionsDir())
