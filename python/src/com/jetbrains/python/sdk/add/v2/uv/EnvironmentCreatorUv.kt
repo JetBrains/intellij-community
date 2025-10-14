@@ -45,7 +45,7 @@ import kotlin.io.path.exists
 import kotlin.io.path.readText
 
 
-internal class EnvironmentCreatorUv<P: PathHolder>(
+internal class EnvironmentCreatorUv<P : PathHolder>(
   model: PythonMutableTargetAddInterpreterModel<P>,
   private val module: Module?,
   errorSink: ErrorSink,
@@ -120,13 +120,13 @@ internal class EnvironmentCreatorUv<P: PathHolder>(
           )
         }
 
-        if (executable == null) {
-          return@onEach
-        }
-
         versionComboBox.removeAllItems()
         versionComboBox.addItem(null)
         versionComboBox.selectedItem = null
+
+        if (executable?.validationResult?.successOrNull == null) {
+          return@onEach
+        }
 
         try {
           loading.set(true)
