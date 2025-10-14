@@ -29,6 +29,7 @@ import com.intellij.driver.sdk.ui.ui
 import com.intellij.driver.sdk.wait
 import com.intellij.driver.sdk.waitFor
 import com.intellij.driver.sdk.waitForCodeAnalysis
+import com.intellij.driver.sdk.waitForIndicators
 import org.intellij.lang.annotations.Language
 import kotlin.time.Duration
 import kotlin.time.Duration.Companion.milliseconds
@@ -197,6 +198,16 @@ class NotebookEditorUiComponent(private val data: ComponentData) : JEditorUiComp
       && infos.all {
         it.getParent().x { contains(byAttribute("defaulticon", "greenCheckmark.svg")) }.present()
       }
+    }
+  }
+
+  /**
+   * Combined action that runs all cells, wait for their execution, and waits for the indexes to update.
+   */
+  fun runAllCellsAndWaitIndexesUpdated(timeout: Duration = 1.minutes, indicatorsTimeout: Duration = timeout): Unit = step("Executing cells and wait for indexes") {
+    runAllCellsAndWaitExecuted(timeout)
+    step("Waiting for indicators after execution") {
+      driver.waitForIndicators(indicatorsTimeout)
     }
   }
 
