@@ -13,7 +13,6 @@ import org.junit.jupiter.api.extension.RegisterExtension
 
 /**
  * A wrapper around [LightJavaCodeInsightFixtureTestCase] that is JUnit 5-compatible.
- * 
  * @see LightJavaCodeInsightFixtureTestCase
  * @see LightJavaCodeInsightFixtureTestCase4
  */
