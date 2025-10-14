@@ -125,6 +125,11 @@
     <listener class="org.jetbrains.kotlin.idea.maven.KotlinMavenImportListener"
               topic="org.jetbrains.idea.maven.project.MavenImportListener"/>
   </projectListeners>
+  <applicationListeners>
+    <listener class="org.jetbrains.kotlin.idea.maven.configuration.KotlinConfiguratorMavenSyncListener"
+              topic="org.jetbrains.idea.maven.project.MavenSyncListener"
+              activeInTestMode="false" activeInHeadlessMode="false"/>
+  </applicationListeners>
   <actions>
     <group id="KotlinMavenGenerate">
       <separator />
