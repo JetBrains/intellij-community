@@ -258,6 +258,10 @@ internal suspend fun <P: PathHolder> PythonSelectableInterpreter<P>.setupSdk(
 class VersionFormatException : Exception()
 
 data class Version(val value: String) {
+  override fun toString(): String {
+    return value
+  }
+
   companion object {
     fun parse(versionString: String): Version {
       return Version(versionString)
