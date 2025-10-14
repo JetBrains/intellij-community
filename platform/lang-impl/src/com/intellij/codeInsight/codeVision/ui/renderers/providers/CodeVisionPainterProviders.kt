@@ -50,7 +50,11 @@ private class ZombieCodeVisionEntryPainter : DefaultCodeVisionPainter<ZombieCode
     val debug = Registry.`is`("cache.markup.debug")
     if (debug) "${result}?" else result
   })
-)
+) {
+  override fun shouldBeDelimited(entry: ZombieCodeVisionEntry): Boolean {
+    return entry.shouldBeDelimited
+  }
+}
 
 internal fun CodeVisionEntry.painter(): ICodeVisionEntryBasePainter<CodeVisionEntry> {
   return INSTANCE.getPainter(this@painter)

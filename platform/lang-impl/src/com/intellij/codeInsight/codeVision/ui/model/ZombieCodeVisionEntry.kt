@@ -13,6 +13,7 @@ class ZombieCodeVisionEntry(
   icon: Icon?,
   val count: Int?,
   val text: String = longPresentation,
+  val shouldBeDelimited: Boolean = true
 ) : CodeVisionEntry(providerId, icon, longPresentation, tooltip, emptyList()) {
 
   override fun toString() = "ZombieCodeVisionEntry('$text')"
