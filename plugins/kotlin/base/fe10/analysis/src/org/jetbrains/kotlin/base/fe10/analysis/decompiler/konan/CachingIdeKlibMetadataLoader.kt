@@ -7,19 +7,20 @@ import com.intellij.util.PathUtil
 import org.jetbrains.kotlin.analysis.decompiler.konan.KlibLoadingMetadataCache
 import org.jetbrains.kotlin.konan.file.File as KFile
 import org.jetbrains.kotlin.library.KotlinLibrary
+import org.jetbrains.kotlin.library.MetadataKotlinLibraryLayout
 import org.jetbrains.kotlin.library.impl.KotlinLibraryImpl
+import org.jetbrains.kotlin.library.metadata.CustomMetadataProtoLoader
 import org.jetbrains.kotlin.library.metadata.KlibMetadataProtoBuf
-import org.jetbrains.kotlin.library.metadata.PackageAccessHandler
 import org.jetbrains.kotlin.metadata.ProtoBuf
 
-internal object CachingIdeKlibMetadataLoader : PackageAccessHandler {
+internal object CachingIdeKlibMetadataLoader : CustomMetadataProtoLoader {
     override fun loadModuleHeader(library: KotlinLibrary): KlibMetadataProtoBuf.Header {
-        val virtualFile = getVirtualFile(library, library.moduleHeaderFile)
+        val virtualFile = getVirtualFile(library, library.metadataLayout.moduleHeaderFile)
         return virtualFile?.let { cache.getCachedModuleHeader(virtualFile) } ?: KlibMetadataProtoBuf.Header.getDefaultInstance()
     }
 
     override fun loadPackageFragment(library: KotlinLibrary, packageFqName: String, partName: String): ProtoBuf.PackageFragment {
-        val virtualFile = getVirtualFile(library, library.packageFragmentFile(packageFqName, partName))
+        val virtualFile = getVirtualFile(library, library.metadataLayout.packageFragmentFile(packageFqName, partName))
         return virtualFile?.let { cache.getCachedPackageFragment(virtualFile) } ?: ProtoBuf.PackageFragment.getDefaultInstance()
     }
 
@@ -36,15 +37,12 @@ internal object CachingIdeKlibMetadataLoader : PackageAccessHandler {
         return StandardFileSystems.local().findFileByPath(fullPath)
     }
 
-    private val cache
+    private val cache: KlibLoadingMetadataCache
         get() = KlibLoadingMetadataCache.getInstance()
 
-    private val KotlinLibrary.moduleHeaderFile
-        get() = (this as KotlinLibraryImpl).metadata.access.layout.moduleHeaderFile
-
-    private fun KotlinLibrary.packageFragmentFile(packageFqName: String, partName: String) =
-        (this as KotlinLibraryImpl).metadata.access.layout.packageFragmentFile(packageFqName, partName)
-
-    private val KotlinLibrary.isZipped
+    private val KotlinLibrary.isZipped: Boolean
         get() = (this as KotlinLibraryImpl).base.access.layout.isZipped
+
+    private val KotlinLibrary.metadataLayout: MetadataKotlinLibraryLayout
+        get() = (this as KotlinLibraryImpl).metadata.access.layout
 }
