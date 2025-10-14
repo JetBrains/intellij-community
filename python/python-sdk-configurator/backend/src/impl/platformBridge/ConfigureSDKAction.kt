@@ -4,6 +4,7 @@ import com.intellij.openapi.actionSystem.ActionUpdateThread
 import com.intellij.openapi.actionSystem.AnAction
 import com.intellij.openapi.actionSystem.AnActionEvent
 import com.intellij.python.sdkConfigurator.backend.impl.configureSdkAskingUser
+import com.intellij.python.sdkConfigurator.backend.impl.configureSdkAskingUserBg
 import com.intellij.python.sdkConfigurator.common.enableSDKAutoConfigurator
 
 internal class ConfigureSDKAction : AnAction() {
@@ -13,7 +14,7 @@ internal class ConfigureSDKAction : AnAction() {
     if (!enableSDKAutoConfigurator) {
       return
     }
-    configureSdkAskingUser(project)
+    configureSdkAskingUserBg(project)
   }
 
   override fun update(e: AnActionEvent) {

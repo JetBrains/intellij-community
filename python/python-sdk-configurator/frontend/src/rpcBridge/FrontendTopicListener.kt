@@ -9,6 +9,7 @@ import com.intellij.platform.rpc.topics.ProjectRemoteTopic
 import com.intellij.platform.rpc.topics.ProjectRemoteTopicListener
 import com.intellij.python.sdkConfigurator.common.impl.ModulesDTO
 import com.intellij.python.sdkConfigurator.common.impl.SHOW_SDK_CONFIG_UI_TOPIC
+import com.intellij.python.sdkConfigurator.common.impl.SdkConfiguratorBackEndApi
 import com.intellij.python.sdkConfigurator.frontend.askUser
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.launch
@@ -22,7 +23,7 @@ internal class FrontendTopicListener : ProjectRemoteTopicListener<ModulesDTO> {
       // Ask user to choose modules, then ask backend to configure it
       askUser(project, event) { modulesChosenByUser ->
         scope.launch {
-          getBackendApi().configureSdkAutomatically(project.projectId(), modulesChosenByUser)
+          SdkConfiguratorBackEndApi().configureSdkAutomatically(project.projectId(), modulesChosenByUser)
         }
       }
     }

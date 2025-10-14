@@ -16,10 +16,6 @@
     <rpc.backend.remoteApiProvider implementation="com.intellij.python.sdkConfigurator.backend.impl.rpcBridge.ApiProvider"/>
   </extensions>
 
-  <extensions defaultExtensionNs="com.intellij">
-    <platform.rpc.projectRemoteTopicListener
-      implementation="com.intellij.python.sdkConfigurator.backend.impl.rpcBridge.BackendTopicListener"/>
-  </extensions>
   <actions>
     <action class="com.intellij.python.sdkConfigurator.backend.impl.platformBridge.ConfigureSDKAction" id="ConfigureSDKAction"/>
   </actions>
