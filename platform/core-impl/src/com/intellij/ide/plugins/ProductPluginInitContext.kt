@@ -67,13 +67,13 @@ class ProductPluginInitContext(
 
   override val environmentConfiguredModules: Map<PluginModuleId, EnvironmentConfiguredModuleData> by lazy {
     buildMap {
-      configureAppModeModules(currentProductModeId)
+      configureProductModeModules(currentProductModeId)
     }
   }
 
   companion object {
     @VisibleForTesting
-    internal fun MutableMap<PluginModuleId, EnvironmentConfiguredModuleData>.configureAppModeModules(productModeId: String) {
+    internal fun MutableMap<PluginModuleId, EnvironmentConfiguredModuleData>.configureProductModeModules(productModeId: String) {
       val frontendSplit = PluginModuleId("intellij.platform.frontend.split", PluginModuleId.JETBRAINS_NAMESPACE)
       val frontend = PluginModuleId("intellij.platform.frontend", PluginModuleId.JETBRAINS_NAMESPACE)
       val backend = PluginModuleId("intellij.platform.backend", PluginModuleId.JETBRAINS_NAMESPACE)
