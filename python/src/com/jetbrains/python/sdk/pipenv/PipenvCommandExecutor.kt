@@ -8,6 +8,7 @@ import com.intellij.openapi.util.SystemInfo
 import com.intellij.platform.eel.provider.asNioPath
 import com.intellij.platform.eel.provider.localEel
 import com.intellij.platform.eel.where
+import com.intellij.python.community.impl.pipenv.pipenvPath
 import com.jetbrains.python.PyBundle
 import com.jetbrains.python.PythonBinary
 import com.jetbrains.python.errorProcessing.PyResult
@@ -29,15 +30,6 @@ suspend fun runPipEnv(dirPath: Path?, vararg args: String): PyResult<String> {
   val executable = getPipEnvExecutable().getOr { return it }
   return runExecutableWithProgress(executable, dirPath, 10.minutes, args = args)
 }
-
-/**
- * The user-set persisted a path to the pipenv executable.
- */
-var PropertiesComponent.pipEnvPath: @SystemDependent String?
-  get() = getValue(PipEnvFileHelper.PIPENV_PATH_SETTING)
-  set(value) {
-    setValue(PipEnvFileHelper.PIPENV_PATH_SETTING, value)
-  }
 
 /**
  * Detects the pipenv executable in `$PATH`.
@@ -66,7 +58,7 @@ fun detectPipEnvExecutableOrNull(): Path? {
  */
 @Internal
 suspend fun getPipEnvExecutable(): PyResult<Path> =
-  PropertiesComponent.getInstance().pipEnvPath?.let { PyResult.success(Path.of(it)) } ?: detectPipEnvExecutable()
+  PropertiesComponent.getInstance().pipenvPath?.let { PyResult.success(Path.of(it)) } ?: detectPipEnvExecutable()
 
 /**
  * Sets up the pipenv environment under the modal progress window.

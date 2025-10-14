@@ -2,10 +2,12 @@
 package com.jetbrains.python.packaging.conda.environmentYml.format
 
 import com.charleskorn.kaml.*
+import com.intellij.openapi.application.runReadAction
 import com.intellij.openapi.diagnostic.thisLogger
 import com.intellij.openapi.fileEditor.FileDocumentManager
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.openapi.vfs.readText
+import com.intellij.util.concurrency.annotations.RequiresBackgroundThread
 import com.jetbrains.python.packaging.PyRequirement
 import com.jetbrains.python.packaging.PyRequirementParser
 import com.jetbrains.python.packaging.parser.RequirementsParserHelper
@@ -15,12 +17,16 @@ import org.jetbrains.annotations.ApiStatus
 
 @ApiStatus.Internal
 object CondaEnvironmentYmlParser {
-  fun readNameFromFile(file: VirtualFile): String? {
-    val text = FileDocumentManager.getInstance().getDocument(file)?.text ?: return null
+  fun readNameFromFile(file: VirtualFile): String? = readFieldFromFile(file, "name")
+  fun readPrefixFromFile(file: VirtualFile): String? = readFieldFromFile(file, "prefix")
+
+  @RequiresBackgroundThread
+  private fun readFieldFromFile(file: VirtualFile, field: String): String? = runReadAction {
+    val text = FileDocumentManager.getInstance().getDocument(file)?.text ?: return@runReadAction null
     val yaml = Yaml(configuration = YamlConfiguration(strictMode = false))
     val environment: YamlMap = yaml.parseToYamlNode(text).yamlMap
 
-    return environment.get<YamlScalar>("name")?.yamlScalar?.content
+    environment.get<YamlScalar>(field)?.yamlScalar?.content
   }
 
   fun fromFile(file: VirtualFile): List<PyRequirement>? {

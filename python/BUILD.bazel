@@ -333,6 +333,7 @@ jvm_library(
     "//platform/platform-impl/ui",
     "//libraries/jackson/module-kotlin:libraries-jackson-module-kotlin",
     "//python/poetry",
+    "//python/pipenv",
     "//python/installer",
     "//platform/eel",
     "//platform/eel-provider",

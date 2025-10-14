@@ -10,6 +10,7 @@
     <module name="intellij.python.community.execService.python"/>
     <module name="intellij.python.community.interpreters"/>
     <module name="intellij.python.community.impl.poetry"/>
+    <module name="intellij.python.community.impl.pipenv"/>
     <module name="intellij.python.hatch"/>
     <module name="intellij.python.pydev"/>
     <module name="intellij.python.sdk.ui"/>
@@ -83,6 +84,7 @@
   <extensions defaultExtensionNs="com.intellij.python.pyproject.model">
     <tool implementation="com.jetbrains.python.projectModel.poetry.PoetryTool"/>
     <tool implementation="com.jetbrains.python.projectModel.uv.UvTool"/>
+    <tool implementation="com.jetbrains.python.projectModel.hatch.HatchTool"/>
   </extensions>
 
   <projectListeners>

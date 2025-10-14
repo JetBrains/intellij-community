@@ -36,14 +36,14 @@ private class AutoconfigSelectSdkProvider() : EvoSelectSdkProvider {
     text = PySdkUiBundle.message("evo.sdk.status.bar.popup.shortcuts.best.options"),
     icon = AllIcons.General.Layout
   ) {
-    val extensions = PyProjectSdkConfigurationExtension.EP_NAME.extensionsIfPointIsRegistered.mapNotNull {
-      it.getIntention(evoModuleSdk.module)?.let { intention -> it to intention }
+    val createSdkInfos = PyProjectSdkConfigurationExtension.EP_NAME.extensionsIfPointIsRegistered.mapNotNull {
+      it.checkEnvironmentAndPrepareSdkCreator(evoModuleSdk.module)
     }
 
     val section = EvoTreeSection(
       label = null,
-      elements = extensions.mapIndexed { idx, (extension, intention) ->
-        EvoTreeLeafElement(RunConfiguratorAction(intention, idx))
+      elements = createSdkInfos.mapIndexed { idx, createSdkInfo ->
+        EvoTreeLeafElement(RunConfiguratorAction(createSdkInfo.intentionName, idx))
       }
     )
 

@@ -168,6 +168,7 @@
     <orderEntry type="module" module-name="intellij.platform.ide.ui" />
     <orderEntry type="module" module-name="intellij.libraries.jackson.module.kotlin" />
     <orderEntry type="module" module-name="intellij.python.community.impl.poetry" />
+    <orderEntry type="module" module-name="intellij.python.community.impl.pipenv" />
     <orderEntry type="module" module-name="intellij.python.community.impl.installer" />
     <orderEntry type="module" module-name="intellij.platform.eel" />
     <orderEntry type="module" module-name="intellij.platform.eel.provider" />
