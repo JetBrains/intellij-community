@@ -1,6 +1,10 @@
 // Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.idea.devkit.inspections
 
+import com.intellij.codeInspection.LocalQuickFix
+import com.intellij.codeInspection.ProblemDescriptor
+import com.intellij.codeInspection.util.IntentionFamilyName
+import com.intellij.codeInspection.util.IntentionName
 import com.intellij.ide.highlighter.XmlFileType
 import com.intellij.openapi.fileEditor.UniqueVFilePathBuilder
 import com.intellij.openapi.project.Project
@@ -12,6 +16,7 @@ import com.intellij.psi.util.parentOfType
 import com.intellij.psi.xml.XmlFile
 import com.intellij.psi.xml.XmlTag
 import com.intellij.util.xml.DomElement
+import com.intellij.util.xml.DomUtil
 import com.intellij.util.xml.GenericAttributeValue
 import com.intellij.util.xml.highlighting.DomElementAnnotationHolder
 import com.intellij.util.xml.highlighting.DomHighlightingHelper
@@ -128,13 +133,16 @@ internal class ContentModuleVisibilityInspection : DevKitPluginXmlInspectionBase
       if (dependencyIncludingPlugins.contains(currentModuleIncludingPlugin)) continue // are included in the same plugin
       for (dependencyIncludingPlugin in dependencyIncludingPlugins) {
         if (currentModuleIncludingPlugin != dependencyIncludingPlugin) {
+          val dependencyModuleName = getModuleName(dependencyXmlFile)
           holder.createProblem(
             dependencyValue,
             message(
               "inspection.content.module.visibility.private",
-              getModuleName(dependencyXmlFile), dependencyIncludingPlugin.getIdOrUniqueFileName(),
+              dependencyModuleName, dependencyIncludingPlugin.getIdOrUniqueFileName(),
               getModuleName(currentXmlFile), currentModuleIncludingPlugin.getIdOrUniqueFileName()
-            )
+            ),
+            ChangeModuleModuleVisibilityFix(dependencyModuleName, ContentModuleVisibility.INTERNAL),
+            ChangeModuleModuleVisibilityFix(dependencyModuleName, ContentModuleVisibility.PUBLIC)
           )
           return // report only one problem at once
         }
@@ -190,6 +198,25 @@ internal class ContentModuleVisibilityInspection : DevKitPluginXmlInspectionBase
 
   private fun IdeaPlugin.getIdOrUniqueFileName(): String {
     return pluginId ?: getUniqueFileName()
+  }
+
+  private class ChangeModuleModuleVisibilityFix(
+    private val moduleName: String,
+    private val visibility: ContentModuleVisibility,
+  ) : LocalQuickFix {
+
+    override fun getFamilyName(): @IntentionFamilyName String =
+      message("inspection.content.module.visibility.private.fix.change.visibility.family.name")
+
+    override fun getName(): @IntentionName String =
+      message("inspection.content.module.visibility.private.fix.change.visibility.to.internal.name", moduleName, visibility.value)
+
+    override fun applyFix(project: Project, descriptor: ProblemDescriptor) {
+      @Suppress("UNCHECKED_CAST")
+      val dependency = DomUtil.getDomElement(descriptor.psiElement) as? GenericAttributeValue<IdeaPlugin> ?: return
+      val dependencyIdeaPlugin = dependency.value ?: return
+      dependencyIdeaPlugin.contentModuleVisibility.value = visibility
+    }
   }
 
 }
