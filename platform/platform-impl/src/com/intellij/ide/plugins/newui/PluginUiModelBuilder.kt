@@ -58,7 +58,7 @@ interface PluginUiModelBuilderFactory {
   companion object {
     @JvmStatic
     fun getInstance(): PluginUiModelBuilderFactory {
-      if (Registry.`is`("reworked.plugin.manager.enabled", false)) {
+      if (UiPluginManager.isCombinedPluginManagerEnabled()) {
         return PluginDtoModelBuilderFactory
       }
       else {

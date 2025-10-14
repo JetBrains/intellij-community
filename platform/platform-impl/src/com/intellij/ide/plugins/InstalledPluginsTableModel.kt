@@ -51,7 +51,7 @@ open class InstalledPluginsTableModel @JvmOverloads constructor(
       sessionInitializedDeferred.complete(Unit)
     }
     else {
-      if (Registry.`is`("reworked.plugin.manager.enabled", false)) {
+      if (UiPluginManager.isCombinedPluginManagerEnabled()) {
         coroutineScope.launch(Dispatchers.IO) {
           val pluginManager = UiPluginManager.getInstance()
           initSessionPlugins(pluginManager.initSession(mySessionId),
@@ -103,7 +103,7 @@ open class InstalledPluginsTableModel @JvmOverloads constructor(
   }
 
   private fun getModificationTracker(): SessionModificationTracker {
-    if (Registry.`is`("reworked.plugin.manager.enabled", false)) {
+    if (UiPluginManager.isCombinedPluginManagerEnabled()) {
       return AsyncSessionModificationTracker(mySessionId.toString(), coroutineScope)
     }
     else {

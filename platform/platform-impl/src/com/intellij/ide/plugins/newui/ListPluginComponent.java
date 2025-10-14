@@ -127,7 +127,7 @@ public final class ListPluginComponent extends JPanel {
       .isPluginRequiresUltimateButItIsDisabled(pluginModelFacade.getModel().getSessionId(), pluginUiModel.getPluginId());
     myIsDisableAllowed = pluginUiModel.isDisableAllowed() && !myIsNotFreeInFreeMode;
     pluginModelFacade.addComponent(this);
-    myCustomizer = Registry.is("reworked.plugin.manager.enabled", false) ? PluginManagerCustomizer.getInstance() : null;
+    myCustomizer = UiPluginManager.isCombinedPluginManagerEnabled() ? PluginManagerCustomizer.getInstance() : null;
     setOpaque(true);
     setBorder(JBUI.Borders.empty(10));
     setLayout(myLayout);
