@@ -163,7 +163,8 @@ public abstract class DebugProcessImpl extends UserDataHolderBase implements Deb
 
   final ThreadBlockedMonitor myThreadBlockedMonitor = new ThreadBlockedMonitor(this, disposable);
 
-  final SteppingProgressTracker mySteppingProgressTracker = new SteppingProgressTracker(this);
+  @ApiStatus.Internal
+  public final SteppingProgressTracker mySteppingProgressTracker = new SteppingProgressTracker(this);
 
   protected final @NotNull RunToCursorManager myRunToCursorManager;
 
@@ -215,7 +216,6 @@ public abstract class DebugProcessImpl extends UserDataHolderBase implements Deb
         DebuggerStatistics.logProcessStatistics(process);
       }
     });
-    mySteppingProgressTracker.installListeners();
   }
 
   private DebuggerManagerThreadImpl createManagerThread() {
@@ -2987,6 +2987,11 @@ public abstract class DebugProcessImpl extends UserDataHolderBase implements Deb
     if (myReturnValueWatcher != null) {
       myReturnValueWatcher.enable(thread.getThreadReference());
     }
+  }
+
+  @ApiStatus.Internal
+  public boolean isSteppingInProgress() {
+    return mySteppingProgressTracker.isSteppingInProgress();
   }
 
   void stopWatchingMethodReturn() {

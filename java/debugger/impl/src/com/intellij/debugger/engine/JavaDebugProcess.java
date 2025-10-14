@@ -118,12 +118,13 @@ public class JavaDebugProcess extends XDebugProcess {
         if (event == DebuggerSession.Event.CONTEXT) {
           DebuggerSession debuggerSession = newContext.getDebuggerSession();
           ThreadReferenceProxyImpl steppingThreadProxy = newContext.getThreadProxy();
-          if (debuggerSession != null && steppingThreadProxy != null && debuggerSession.getState() == DebuggerSession.State.IN_STEPPING) {
+          if (debuggerSession != null && debuggerSession.getState() == DebuggerSession.State.IN_STEPPING) {
             DebugProcessImpl debugProcess = debuggerSession.getProcess();
             debugProcess.getManagerThread().schedule(new DebuggerCommandImpl() {
               @Override
               protected void action() {
-                JavaExecutionStack stack = new JavaExecutionStack(steppingThreadProxy, debugProcess, true);
+                JavaExecutionStack stack = steppingThreadProxy != null ?
+                                           new JavaExecutionStack(steppingThreadProxy, debugProcess, true) : null;
                 getSession().positionReached(new JavaSteppingSuspendContext(debugProcess, stack));
               }
             });

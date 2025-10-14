@@ -624,7 +624,7 @@ public abstract class ExecutionWithDebuggerToolsTestCase extends ExecutionTestCa
     public void resumed(SuspendContextImpl suspendContext) {
       SuspendContextImpl pausedContext = myDebugProcess.getSuspendManager().getPausedContext();
       // do not switch context on resume inside stepping
-      if (pausedContext != null && myDebugProcess.getSession().getSteppingThread(suspendContext) == null) {
+      if (pausedContext != null && !myDebugProcess.isSteppingInProgress()) {
         paused(pausedContext);
       }
     }

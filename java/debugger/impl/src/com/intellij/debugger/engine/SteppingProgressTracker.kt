@@ -17,17 +17,18 @@ private data class TrackedSteppingData(val stepCompetedStatus: CompletableDeferr
 internal class SteppingProgressTracker(private val debuggerProcessImpl: DebugProcessImpl) {
   private val trackedStepping = mutableListOf<TrackedSteppingData>()
 
-  fun installListeners() {
-    debuggerProcessImpl.addDebugProcessListener(object : DebugProcessListener {
-      override fun paused(suspendContext: SuspendContext) {
-        val thread = suspendContext.thread
-        val completedSteps = trackedStepping.filter { it.threadFilter(thread, suspendContext as SuspendContextImpl) }
-        for ((stepCompetedStatus, _) in completedSteps) {
-            stepCompetedStatus.complete(Unit)
-        }
-        trackedStepping.removeAll(completedSteps)
-      }
-    })
+  val isSteppingInProgress: Boolean get() = trackedStepping.isNotEmpty()
+
+  /** returns true iff the [suspendContext] is the end of ongoing stepping */
+  fun onPaused(suspendContext: SuspendContext): Boolean {
+    val thread = suspendContext.thread
+    val completedSteps = trackedStepping.filter { it.threadFilter(thread, suspendContext as SuspendContextImpl) }
+    for ((stepCompetedStatus, _) in completedSteps) {
+      stepCompetedStatus.complete(Unit)
+    }
+
+    trackedStepping.removeAll(completedSteps)
+    return completedSteps.isNotEmpty()
   }
 
   fun addStepping(stepCompetedStatus: CompletableDeferred<Unit>, threadFilter: (ThreadReferenceProxy?, SuspendContextImpl) -> Boolean) {
