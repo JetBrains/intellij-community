@@ -1673,6 +1673,26 @@ public class Py3TypeTest extends PyTestCase {
     doTest("int", "expr = round(True, 1)");
   }
 
+  public void testReplaceDefinitionInMethod() {
+    doTest("type[Derived]",
+           """
+             class Base:
+                 def cls(self):
+                     return self.__class__
+             class Derived(Base):
+                 pass
+             expr = Derived.cls(Derived())""");
+
+    doTest("type[Derived]",
+           """
+             class Base:
+                 def cls(self):
+                     return self.__class__
+             class Derived(Base):
+                 pass
+             expr = Derived().cls()""");
+  }
+
   // PY-29665
   public void testRawBytesLiteral() {
     doTest("bytes", "expr = rb'raw bytes'");
