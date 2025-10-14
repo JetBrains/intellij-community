@@ -516,9 +516,6 @@ public abstract class TestObject extends JavaTestFrameworkRunnableState<JUnitCon
                                                 @NotNull List<String> classPath,
                                                 @NotNull RepositoryLibraryProperties properties) throws CantRunException {
     Collection<OrderRoot> roots;
-    if (DumbService.isDumb(project)) {
-      throw new CantRunException(JUnitBundle.message("downloading.tests.disabled.during.index.update.error.message"));
-    }
     //noinspection IncorrectCancellationExceptionHandling
     try {
       Application application = ApplicationManager.getApplication();
