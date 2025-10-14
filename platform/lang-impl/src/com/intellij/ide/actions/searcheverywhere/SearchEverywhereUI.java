@@ -1083,7 +1083,8 @@ public final class SearchEverywhereUI extends BigPopupUI implements UiDataProvid
     return SearchEverywhereManager.getInstance(myProject).isPreviewEnabled();
   }
 
-  private static boolean isPreviewActive() {
+  @ApiStatus.Internal
+  public static boolean isPreviewActive() {
     return UISettings.getInstance().getShowPreviewInSearchEverywhere();
   }
 
