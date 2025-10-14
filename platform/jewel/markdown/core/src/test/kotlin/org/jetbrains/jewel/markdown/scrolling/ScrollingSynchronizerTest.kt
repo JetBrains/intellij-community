@@ -795,6 +795,7 @@ public class ScrollingSynchronizerTest {
                             warning = Color.Black,
                         ),
                     panelBackground = Color.White,
+                    toolwindowBackground = Color.White,
                 ),
             globalMetrics = GlobalMetrics(outlineWidth = 10.dp, rowHeight = 24.dp),
             defaultTextStyle = TextStyle.Default,

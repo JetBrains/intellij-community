@@ -32,6 +32,7 @@ f:org.jetbrains.jewel.foundation.GlobalColors
 - f:getOutlines():org.jetbrains.jewel.foundation.OutlineColors
 - f:getPanelBackground-0d7_KjU():J
 - f:getText():org.jetbrains.jewel.foundation.TextColors
+- f:getToolwindowBackground-0d7_KjU():J
 - hashCode():I
 f:org.jetbrains.jewel.foundation.GlobalColors$Companion
 f:org.jetbrains.jewel.foundation.GlobalColorsKt
