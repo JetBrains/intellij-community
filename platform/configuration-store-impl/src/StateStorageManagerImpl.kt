@@ -55,6 +55,12 @@ open class StateStorageManagerImpl(
     compoundStreamProvider.removeStreamProvider(aClass)
   }
 
+  private var compoundOperationListener = CompoundOperationListener()
+
+  override fun addOperationListener(listener: OperationListener) {
+    compoundOperationListener.addOperationListener(listener)
+  }
+
   // access under storageLock
   private var isUseVfsListener = when (componentManager) {
     null -> ThreeState.NO
@@ -268,6 +274,7 @@ open class StateStorageManagerImpl(
       roamingType = roamingType,
       pathMacroManager = macroSubstitutor.takeIf { usePathMacroManager },
       provider = compoundStreamProvider,
+      listener = compoundOperationListener,
       controller = controller,
     )
   }
@@ -280,6 +287,7 @@ open class StateStorageManagerImpl(
     roamingType: RoamingType,
     pathMacroManager: PathMacroSubstitutor?,
     provider: StreamProvider?,
+    listener: OperationListener?,
     override val controller: SettingsController?,
   ) : FileBasedStorage(
     file = file,
@@ -288,6 +296,7 @@ open class StateStorageManagerImpl(
     pathMacroManager = pathMacroManager,
     roamingType = roamingType,
     provider = provider,
+    listener = listener,
   ), StorageVirtualFileTracker.TrackedStorage {
     override val isUseXmlProlog: Boolean
       get() = rootElementName != null && storageManager.isUseXmlProlog && !isSpecialStorage(fileSpec)

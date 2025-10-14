@@ -309,6 +309,11 @@ bf:com.intellij.ide.plugins.marketplace.IdeCompatibleUpdate$$serializer
 - f:deserialize(kotlinx.serialization.encoding.Decoder):com.intellij.ide.plugins.marketplace.IdeCompatibleUpdate
 - f:getDescriptor():kotlinx.serialization.descriptors.SerialDescriptor
 - f:serialize(kotlinx.serialization.encoding.Encoder,com.intellij.ide.plugins.marketplace.IdeCompatibleUpdate):V
+com.intellij.ide.settings.fileBasedSync.FileBasedSettingsSyncListProvider
+- sf:Companion:com.intellij.ide.settings.fileBasedSync.FileBasedSettingsSyncListProvider$Companion
+- a:getSettingsFileList():java.util.List
+f:com.intellij.ide.settings.fileBasedSync.FileBasedSettingsSyncListProvider$Companion
+- f:getEP_NAME():com.intellij.openapi.extensions.ExtensionPointName
 f:com.intellij.ide.startup.StartupActionScriptManager
 - s:addActionCommand(com.intellij.ide.startup.StartupActionScriptManager$ActionCommand):V
 - s:addActionCommands(java.util.List):V
