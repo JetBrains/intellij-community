@@ -748,7 +748,10 @@ public final class SearchReplaceComponent extends EditorHeaderComponent implemen
           Rectangle r = new Rectangle(x, y, width, height);
           boolean fillBackground = JBColor.isBright();
           Color bgColor = fillBackground ? UIUtil.getTextFieldBackground() : null;
-          paintDarculaSearchArea((Graphics2D)g, r, (JComponent)c, bgColor, fillBackground, c.isEnabled());
+          if (c instanceof SearchTextArea area) {
+            c = area.getTextArea();
+          }
+          paintDarculaSearchArea((Graphics2D)g, r, (JComponent)c, bgColor, fillBackground, c.isEnabled(), true);
         }
       });
     }
