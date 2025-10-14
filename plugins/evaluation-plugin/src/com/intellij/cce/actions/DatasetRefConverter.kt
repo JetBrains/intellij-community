@@ -70,7 +70,7 @@ class DatasetRefConverter {
 
     val fileContentProvider = object : FileContentProvider {
       override fun getContent(path: String): String {
-        return FilesHelper.getFile(project, path).readText()
+        return FilesHelper.getFile(project, path)!!.readText()
       }
     }
 
