@@ -57,7 +57,7 @@ private const val ID_HORIZONTAL_SCROLLBAR = "VerticallyScrollableContainer_horiz
  *
  * Provides a container with a vertical scrollbar that matches the platform's native appearance. On macOS, the scrollbar
  * appears next to the content, while on Windows/Linux it overlays the content. The scrollbar's visibility and behavior
- * adapts to the platform conventions.
+ * adapt to the platform conventions.
  *
  * **Guidelines:** [on IJP SDK webhelp](https://plugins.jetbrains.com/docs/intellij/scrollbar.html)
  *
@@ -111,7 +111,7 @@ public fun VerticallyScrollableContainer(
  *
  * Provides a container with a vertical scrollbar that matches the platform's native appearance. On macOS, the scrollbar
  * appears next to the content, while on Windows/Linux it overlays the content. The scrollbar's visibility and behavior
- * adapts to the platform conventions.
+ * adapt to the platform conventions.
  *
  * **Guidelines:** [on IJP SDK webhelp](https://plugins.jetbrains.com/docs/intellij/scrollbar.html)
  *
@@ -213,7 +213,7 @@ internal fun TextAreaScrollableContainer(
  *
  * Provides a container with a vertical scrollbar that matches the platform's native appearance. On macOS, the scrollbar
  * appears next to the content, while on Windows/Linux it overlays the content. The scrollbar's visibility and behavior
- * adapts to the platform conventions.
+ * adapt to the platform conventions.
  *
  * **Guidelines:** [on IJP SDK webhelp](https://plugins.jetbrains.com/docs/intellij/scrollbar.html)
  *
@@ -242,6 +242,7 @@ internal fun TextAreaScrollableContainer(
         "VerticallyScrollableContainer(scrollState as ScrollableState, modifier, " +
             "scrollbarModifier, style, reverseLayout, scrollbarEnabled, scrollbarInteractionSource, content)"
     ),
+    level = DeprecationLevel.HIDDEN,
 )
 @Composable
 public fun VerticallyScrollableContainer(
@@ -274,7 +275,7 @@ public fun VerticallyScrollableContainer(
  *
  * Provides a container with a vertical scrollbar that matches the platform's native appearance. On macOS, the scrollbar
  * appears next to the content, while on Windows/Linux it overlays the content. The scrollbar's visibility and behavior
- * adapts to the platform conventions.
+ * adapt to the platform conventions.
  *
  * **Guidelines:** [on IJP SDK webhelp](https://plugins.jetbrains.com/docs/intellij/scrollbar.html)
  *
@@ -303,6 +304,7 @@ public fun VerticallyScrollableContainer(
         "VerticallyScrollableContainer(scrollState as ScrollableState, modifier, " +
             "scrollbarModifier, style, reverseLayout, scrollbarEnabled, scrollbarInteractionSource, content)"
     ),
+    level = DeprecationLevel.HIDDEN,
 )
 @Composable
 public fun VerticallyScrollableContainer(
@@ -336,7 +338,7 @@ public fun VerticallyScrollableContainer(
  *
  * Provides a container with a vertical scrollbar that matches the platform's native appearance. On macOS, the scrollbar
  * appears next to the content, while on Windows/Linux it overlays the content. The scrollbar's visibility and behavior
- * adapts to the platform conventions.
+ * adapt to the platform conventions.
  *
  * **Guidelines:** [on IJP SDK webhelp](https://plugins.jetbrains.com/docs/intellij/scrollbar.html)
  *
@@ -403,7 +405,7 @@ public fun VerticallyScrollableContainer(
  *
  * Provides a container with a horizontal scrollbar that matches the platform's native appearance. On macOS, the
  * scrollbar appears below the content, while on Windows/Linux it overlays the content. The scrollbar's visibility and
- * behavior adapts to the platform conventions.
+ * behavior adapt to the platform conventions.
  *
  * **Guidelines:** [on IJP SDK webhelp](https://plugins.jetbrains.com/docs/intellij/scrollbar.html)
  *
@@ -417,7 +419,8 @@ public fun VerticallyScrollableContainer(
  * @param scrollbarModifier Modifier to be applied to the scrollbar
  * @param scrollState The state object to control and observe scrolling
  * @param style The visual styling configuration for the scrollbar
- * @param reverseLayout Whether the scrollbar should be displayed on the opposite side
+ * @param reverseLayout Reverse the direction of scrolling, when `true`, 0 [ScrollState.value] will mean bottom, when
+ *   `false`, 0 [ScrollState.value] will mean top
  * @param scrollbarEnabled Whether the scrollbar is enabled or not. Note that this does not prevent the actual scrolling
  *   but only disables the scrollbars. To disable the scroll, use the overload with a `userScrollEnabled` parameter.
  * @param scrollbarInteractionSource Source of interactions for the scrollbar
@@ -456,7 +459,7 @@ public fun HorizontallyScrollableContainer(
  *
  * Provides a container with a horizontal scrollbar that matches the platform's native appearance. On macOS, the
  * scrollbar appears below the content, while on Windows/Linux it overlays the content. The scrollbar's visibility and
- * behavior adapts to the platform conventions.
+ * behavior adapt to the platform conventions.
  *
  * **Guidelines:** [on IJP SDK webhelp](https://plugins.jetbrains.com/docs/intellij/scrollbar.html)
  *
@@ -470,7 +473,8 @@ public fun HorizontallyScrollableContainer(
  * @param scrollbarModifier Modifier to be applied to the scrollbar
  * @param scrollState The state object to control and observe scrolling
  * @param style The visual styling configuration for the scrollbar
- * @param reverseLayout Whether the scrollbar should be displayed on the opposite sidean bottom, when
+ * @param reverseLayout Reverse the direction of scrolling, when `true`, 0 [ScrollState.value] will mean bottom, when
+ *   `false`, 0 [ScrollState.value] will mean top
  * @param userScrollEnabled Whether scrolling is enabled or not
  * @param scrollbarEnabled Whether scrollbars are enabled or not; usually matches [userScrollEnabled]
  * @param scrollbarInteractionSource Source of interactions for the scrollbar
@@ -527,7 +531,7 @@ public fun HorizontallyScrollableContainer(
  *
  * Provides a container with a horizontal scrollbar that matches the platform's native appearance. On macOS, the
  * scrollbar appears below the content, while on Windows/Linux it overlays the content. The scrollbar's visibility and
- * behavior adapts to the platform conventions.
+ * behavior adapt to the platform conventions.
  *
  * **Guidelines:** [on IJP SDK webhelp](https://plugins.jetbrains.com/docs/intellij/scrollbar.html)
  *
@@ -556,6 +560,7 @@ public fun HorizontallyScrollableContainer(
         "HorizontallyScrollableContainer(scrollState as ScrollableState, modifier, " +
             "scrollbarModifier, style, reverseLayout, scrollbarEnabled, scrollbarInteractionSource, content)"
     ),
+    level = DeprecationLevel.HIDDEN,
 )
 @Composable
 public fun HorizontallyScrollableContainer(
@@ -588,7 +593,7 @@ public fun HorizontallyScrollableContainer(
  *
  * Provides a container with a horizontal scrollbar that matches the platform's native appearance. On macOS, the
  * scrollbar appears below the content, while on Windows/Linux it overlays the content. The scrollbar's visibility and
- * behavior adapts to the platform conventions.
+ * behavior adapt to the platform conventions.
  *
  * **Guidelines:** [on IJP SDK webhelp](https://plugins.jetbrains.com/docs/intellij/scrollbar.html)
  *
@@ -617,6 +622,7 @@ public fun HorizontallyScrollableContainer(
         "HorizontallyScrollableContainer(scrollState as ScrollableState, modifier, " +
             "scrollbarModifier, style, reverseLayout, scrollbarEnabled, scrollbarInteractionSource, content)"
     ),
+    level = DeprecationLevel.HIDDEN,
 )
 @Composable
 public fun HorizontallyScrollableContainer(
@@ -650,7 +656,7 @@ public fun HorizontallyScrollableContainer(
  *
  * Provides a container with a horizontal scrollbar that matches the platform's native appearance. On macOS, the
  * scrollbar appears below the content, while on Windows/Linux it overlays the content. The scrollbar's visibility and
- * behavior adapts to the platform conventions.
+ * behavior adapt to the platform conventions.
  *
  * **Guidelines:** [on IJP SDK webhelp](https://plugins.jetbrains.com/docs/intellij/scrollbar.html)
  *
@@ -908,7 +914,7 @@ private fun computeContentConstraints(
  * [`JewelTheme.scrollbarStyle.scrollbarVisibility.trackThicknessExpanded`][ScrollbarVisibility.trackThicknessExpanded].
  *
  * Returns a padding value that ensures content remains fully visible when scrollbars are present. The value depends on
- * the platform (macOS vs Windows/Linux) and the scrollbar visibility style:
+ * the platform (macOS vs. Windows/Linux) and the scrollbar visibility style:
  * - For macOS with always-visible scrollbars: returns 0 as the layout already accounts for the space
  * - For macOS with auto-hiding scrollbars: returns the maximum scrollbar thickness
  * - For Windows/Linux: returns the maximum scrollbar thickness plus 1.dp, as scrollbars overlay content

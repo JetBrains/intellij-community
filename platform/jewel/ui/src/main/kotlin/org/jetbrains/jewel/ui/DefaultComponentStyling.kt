@@ -115,7 +115,7 @@ public class DefaultComponentStyling(
     public val speedSearchStyle: SpeedSearchStyle,
     public val searchMatchStyle: SearchMatchStyle,
 ) : ComponentStyling {
-    @Deprecated("Use the variant with speedSearchStyle.", level = DeprecationLevel.ERROR)
+    @Deprecated("Use the variant with speedSearchStyle.", level = DeprecationLevel.HIDDEN)
     public constructor(
         checkboxStyle: CheckboxStyle,
         chipStyle: ChipStyle,
@@ -188,7 +188,7 @@ public class DefaultComponentStyling(
         fallbackSearchMatchStyle(),
     )
 
-    @Deprecated("Use the variant with transparentIconButtonStyle.", level = DeprecationLevel.ERROR)
+    @Deprecated("Use the variant with transparentIconButtonStyle.", level = DeprecationLevel.HIDDEN)
     public constructor(
         checkboxStyle: CheckboxStyle,
         chipStyle: ChipStyle,

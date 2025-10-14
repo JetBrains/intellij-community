@@ -9,7 +9,7 @@ import org.jetbrains.jewel.ui.component.styling.TooltipColors
 import org.jetbrains.jewel.ui.component.styling.TooltipMetrics
 import org.jetbrains.jewel.ui.component.styling.TooltipStyle
 
-@Deprecated("Please, use the overload with [TooltipAutoHideBehavior].")
+@Deprecated("Please, use the overload with [TooltipAutoHideBehavior].", level = DeprecationLevel.HIDDEN)
 public fun TooltipStyle.Companion.light(
     intUiTooltipColors: TooltipColors = TooltipColors.light(),
     intUiTooltipMetrics: TooltipMetrics = TooltipMetrics.defaults(regularDisappearDelay = 10000.milliseconds),
@@ -27,7 +27,7 @@ public fun TooltipStyle.Companion.light(
 ): TooltipStyle =
     TooltipStyle(colors = intUiTooltipColors, metrics = intUiTooltipMetrics, autoHideBehavior = autoHideBehavior)
 
-@Deprecated("Please, use the overload with [TooltipAutoHideBehavior].")
+@Deprecated("Please, use the overload with [TooltipAutoHideBehavior].", level = DeprecationLevel.HIDDEN)
 public fun TooltipStyle.Companion.dark(
     intUiTooltipColors: TooltipColors = TooltipColors.dark(),
     intUiTooltipMetrics: TooltipMetrics = TooltipMetrics.defaults(regularDisappearDelay = 10000.milliseconds),
