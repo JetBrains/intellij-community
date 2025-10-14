@@ -1,4 +1,4 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.wm.impl.customFrameDecorations.header
 
 import com.intellij.diagnostic.LoadingState
@@ -142,7 +142,7 @@ object CustomWindowHeaderUtil {
   fun getPreferredWindowHeaderHeight(isCompactHeader: Boolean): Int = JBUI.scale(
     when {
       isCompactHeader -> HEADER_HEIGHT_DFM
-      UISettings.getInstance().compactMode -> HEADER_HEIGHT_COMPACT
+      UISettings.shadowInstance.compactMode -> HEADER_HEIGHT_COMPACT
       else -> HEADER_HEIGHT_NORMAL
     }
   )
