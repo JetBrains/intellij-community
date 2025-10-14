@@ -6839,13 +6839,6 @@ http_file(
 )
 
 http_file(
-  name = "com_squareup_okio-okio-jvm-3_11_0_http",
-  url = "https://cache-redirector.jetbrains.com/repo1.maven.org/maven2/com/squareup/okio/okio-jvm/3.11.0/okio-jvm-3.11.0.jar",
-  sha256 = "2d22541a192f901a45c95274567d6957ac1ed613d49e41db4e5e5d86139cf022",
-  downloaded_file_path = "okio-jvm-3.11.0.jar"
-)
-
-http_file(
   name = "io_coil-kt_coil3-coil-compose-core-jvm-3_2_0_http",
   url = "https://cache-redirector.jetbrains.com/repo1.maven.org/maven2/io/coil-kt/coil3/coil-compose-core-jvm/3.2.0/coil-compose-core-jvm-3.2.0.jar",
   sha256 = "a74b96cb179fe8f872d4e9f03468e0477d32787e9b6430a9d137aafb76012a60",
@@ -6871,13 +6864,6 @@ http_file(
   url = "https://cache-redirector.jetbrains.com/repo1.maven.org/maven2/io/coil-kt/coil3/coil-core-jvm/3.2.0/coil-core-jvm-3.2.0-sources.jar",
   sha256 = "c0086b413bc0abf66c5727adc73ccb8fb0340cd505ef46ec85db5b8b9c7b5958",
   downloaded_file_path = "coil-core-jvm-3.2.0-sources.jar"
-)
-
-http_file(
-  name = "com_squareup_okio-okio-jvm-3_11_0-sources_http",
-  url = "https://cache-redirector.jetbrains.com/repo1.maven.org/maven2/com/squareup/okio/okio-jvm/3.11.0/okio-jvm-3.11.0-sources.jar",
-  sha256 = "4cc11c760166d43da9653a5c27ddbf58a510bb8f35ff1aa3a1676206e56a0e4e",
-  downloaded_file_path = "okio-jvm-3.11.0-sources.jar"
 )
 
 http_file(
@@ -6937,24 +6923,10 @@ http_file(
 )
 
 http_file(
-  name = "org_jetbrains_skiko-skiko-awt-0_9_4_http",
-  url = "https://cache-redirector.jetbrains.com/repo1.maven.org/maven2/org/jetbrains/skiko/skiko-awt/0.9.4/skiko-awt-0.9.4.jar",
-  sha256 = "8e26ab1ae75f65786f6b973a66e89a2836d199a5561c4c2edbc1f3f67ad2197f",
-  downloaded_file_path = "skiko-awt-0.9.4.jar"
-)
-
-http_file(
   name = "io_coil-kt_coil3-coil-test-jvm-3_2_0-sources_http",
   url = "https://cache-redirector.jetbrains.com/repo1.maven.org/maven2/io/coil-kt/coil3/coil-test-jvm/3.2.0/coil-test-jvm-3.2.0-sources.jar",
   sha256 = "dabc717837fe8b897f0ad526f47c097483983794c6b0b46eeec868ccfe2a7273",
   downloaded_file_path = "coil-test-jvm-3.2.0-sources.jar"
-)
-
-http_file(
-  name = "org_jetbrains_skiko-skiko-awt-0_9_4-sources_http",
-  url = "https://cache-redirector.jetbrains.com/repo1.maven.org/maven2/org/jetbrains/skiko/skiko-awt/0.9.4/skiko-awt-0.9.4-sources.jar",
-  sha256 = "a4b1b3cf0855f8095b161df523dfbd0bea7684a29b0914a5d85d1680f8f68f58",
-  downloaded_file_path = "skiko-awt-0.9.4-sources.jar"
 )
 
 http_file(

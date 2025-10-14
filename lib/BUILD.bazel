@@ -4784,7 +4784,6 @@ java_library(
     ":io_coil-kt_coil3-coil-compose-jvm-3_2_0_http_import",
     ":io_coil-kt_coil3-coil-jvm-3_2_0_http_import",
     ":io_coil-kt_coil3-coil-core-jvm-3_2_0_http_import",
-    ":com_squareup_okio-okio-jvm-3_11_0_http_import",
     ":io_coil-kt_coil3-coil-compose-core-jvm-3_2_0_http_import",
   ],
   visibility = ["//visibility:public"]
@@ -4809,12 +4808,6 @@ jvm_import(
 )
 
 jvm_import(
-  name = "com_squareup_okio-okio-jvm-3_11_0_http_import",
-  jar = "@com_squareup_okio-okio-jvm-3_11_0_http//file",
-  source_jar = "@com_squareup_okio-okio-jvm-3_11_0_http//file"
-)
-
-jvm_import(
   name = "io_coil-kt_coil3-coil-compose-core-jvm-3_2_0_http_import",
   jar = "@io_coil-kt_coil3-coil-compose-core-jvm-3_2_0_http//file",
   source_jar = "@io_coil-kt_coil3-coil-compose-core-jvm-3_2_0_http//file"
@@ -4824,8 +4817,6 @@ java_library(
   name = "libraries-coil-io-coil-kt-coil3-network-ktor3-jvm",
   exports = [
     ":io_coil-kt_coil3-coil-network-ktor3-jvm-3_2_0_http_import",
-    ":io_coil-kt_coil3-coil-core-jvm-3_2_0_http_import",
-    ":com_squareup_okio-okio-jvm-3_11_0_http_import",
     ":io_coil-kt_coil3-coil-network-core-jvm-3_2_0_http_import",
   ],
   visibility = ["//visibility:public"]
@@ -4843,43 +4834,18 @@ jvm_import(
   source_jar = "@io_coil-kt_coil3-coil-network-core-jvm-3_2_0_http//file"
 )
 
-java_library(
+jvm_import(
   name = "libraries-coil-io-coil-kt-coil3-svg-jvm",
-  exports = [
-    ":io_coil-kt_coil3-coil-svg-jvm-3_2_0_http_import",
-    ":io_coil-kt_coil3-coil-core-jvm-3_2_0_http_import",
-    ":com_squareup_okio-okio-jvm-3_11_0_http_import",
-  ],
-  visibility = ["//visibility:public"]
-)
-
-jvm_import(
-  name = "io_coil-kt_coil3-coil-svg-jvm-3_2_0_http_import",
   jar = "@io_coil-kt_coil3-coil-svg-jvm-3_2_0_http//file",
-  source_jar = "@io_coil-kt_coil3-coil-svg-jvm-3_2_0_http//file"
-)
-
-java_library(
-  name = "libraries-coil-io-coil-kt-coil3-test-jvm",
-  exports = [
-    ":io_coil-kt_coil3-coil-test-jvm-3_2_0_http_import",
-    ":io_coil-kt_coil3-coil-core-jvm-3_2_0_http_import",
-    ":org_jetbrains_skiko-skiko-awt-0_9_4_http_import",
-    ":com_squareup_okio-okio-jvm-3_11_0_http_import",
-  ],
+  source_jar = "@io_coil-kt_coil3-coil-svg-jvm-3_2_0_http//file",
   visibility = ["//visibility:public"]
 )
 
 jvm_import(
-  name = "io_coil-kt_coil3-coil-test-jvm-3_2_0_http_import",
+  name = "libraries-coil-io-coil-kt-coil3-test-jvm",
   jar = "@io_coil-kt_coil3-coil-test-jvm-3_2_0_http//file",
-  source_jar = "@io_coil-kt_coil3-coil-test-jvm-3_2_0_http//file"
-)
-
-jvm_import(
-  name = "org_jetbrains_skiko-skiko-awt-0_9_4_http_import",
-  jar = "@org_jetbrains_skiko-skiko-awt-0_9_4_http//file",
-  source_jar = "@org_jetbrains_skiko-skiko-awt-0_9_4_http//file"
+  source_jar = "@io_coil-kt_coil3-coil-test-jvm-3_2_0_http//file",
+  visibility = ["//visibility:public"]
 )
 
 jvm_import(
