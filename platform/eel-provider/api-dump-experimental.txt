@@ -24,6 +24,11 @@ f:com.intellij.platform.eel.provider.EelProviderUtil
 *:com.intellij.platform.eel.provider.LocalWindowsEelApi
 - com.intellij.platform.eel.EelWindowsApi
 - com.intellij.platform.eel.LocalEelApi
+*f:com.intellij.platform.eel.provider.nioHelpers.EelFiles
+- sf:INSTANCE:com.intellij.platform.eel.provider.nioHelpers.EelFiles
+- sf:readAllBytes(java.nio.file.Path):B[]
+- sf:readString(java.nio.file.Path):java.lang.String
+- sf:readString(java.nio.file.Path,java.nio.charset.Charset):java.lang.String
 f:com.intellij.platform.eel.provider.utils.EelChannelUtilsKt
 - *sf:asEelChannel(java.io.OutputStream):com.intellij.platform.eel.channels.EelSendChannel
 - *sf:asEelChannel(java.nio.channels.WritableByteChannel):com.intellij.platform.eel.channels.EelSendChannel
