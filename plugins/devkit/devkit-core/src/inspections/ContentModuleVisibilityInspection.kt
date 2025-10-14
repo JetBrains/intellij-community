@@ -57,7 +57,10 @@ internal class ContentModuleVisibilityInspection : DevKitPluginXmlInspectionBase
         if (currentModuleNamespace != dependencyNamespace) {
           holder.createProblem(
             dependencyValue,
-            getInternalVisibilityProblemMessage(dependencyValue, dependencyIncludingPlugin, currentXmlFile, currentModuleIncludingPlugin)
+            getInternalVisibilityProblemMessage(
+              dependencyValue, dependencyIncludingPlugin, dependencyNamespace,
+              currentXmlFile, currentModuleIncludingPlugin, currentModuleNamespace
+            )
           )
           return // report only one problem at once
         }
@@ -68,11 +71,11 @@ internal class ContentModuleVisibilityInspection : DevKitPluginXmlInspectionBase
   private fun getInternalVisibilityProblemMessage(
     dependencyValue: GenericAttributeValue<IdeaPlugin?>,
     dependencyIncludingPlugin: IdeaPlugin,
+    dependencyNamespace: String?,
     currentXmlFile: XmlFile,
     currentModuleIncludingPlugin: IdeaPlugin,
+    currentModuleNamespace: String?,
   ): @Nls String? {
-    val dependencyNamespace = dependencyIncludingPlugin.namespace
-    val currentModuleNamespace = currentModuleIncludingPlugin.namespace
     return when {
       dependencyNamespace == null -> message(
         "inspection.content.module.visibility.internal.dependency.namespace.missing",
