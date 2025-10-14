@@ -37,7 +37,7 @@ sealed interface TerminalOutputModel {
 
   fun getEndOfLine(line: TerminalLineIndex, includeEOL: Boolean = false): TerminalOffset
 
-  fun getText(start: TerminalOffset, end: TerminalOffset): String
+  fun getText(start: TerminalOffset, end: TerminalOffset): CharSequence
 
   /**
    * Returns document ranges with corresponding text attributes.
@@ -70,7 +70,7 @@ sealed interface TerminalOutputModelSnapshot {
 
   fun getEndOfLine(line: TerminalLineIndex, includeEOL: Boolean = false): TerminalOffset
 
-  fun getText(start: TerminalOffset, end: TerminalOffset): String
+  fun getText(start: TerminalOffset, end: TerminalOffset): CharSequence
 }
 
 @ApiStatus.Experimental

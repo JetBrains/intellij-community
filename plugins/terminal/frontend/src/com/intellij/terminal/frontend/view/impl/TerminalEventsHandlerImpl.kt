@@ -417,7 +417,7 @@ internal open class TerminalEventsHandlerImpl(
     return Character.isLetterOrDigit(char) || char == '-'
   }
 
-  private fun TerminalOutputModel.getTextAfterCursor(): @NlsSafe String = getText(cursorOffset, endOffset)
+  private fun TerminalOutputModel.getTextAfterCursor(): @NlsSafe CharSequence = getText(cursorOffset, endOffset)
 
   companion object {
     private val LOG = Logger.getInstance(TerminalEventsHandlerImpl::class.java)

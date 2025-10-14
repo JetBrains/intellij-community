@@ -91,10 +91,10 @@ internal class TerminalHeuristicsBasedCommandFinishTracker(
         curLineInfo = null
       }
       lineInfo?.line != cursorLine -> {
-        curLineInfo = LineInfo(cursorLine, textBeforeCursor)
+        curLineInfo = LineInfo(cursorLine, textBeforeCursor.toString())
       }
       !textBeforeCursor.startsWith(lineInfo.promptText) -> {
-        curLineInfo = lineInfo.copy(promptText = textBeforeCursor)
+        curLineInfo = lineInfo.copy(promptText = textBeforeCursor.toString())
       }
     }
 
@@ -119,7 +119,7 @@ internal class TerminalHeuristicsBasedCommandFinishTracker(
     LOG.debug { "Command finish detected" }
   }
 
-  private fun getTextBeforeCursor(cursorOffset: TerminalOffset): String? {
+  private fun getTextBeforeCursor(cursorOffset: TerminalOffset): CharSequence? {
     val lineNumber = outputModel.getLineByOffset(cursorOffset)
     val lineStartOffset = outputModel.getStartOfLine(lineNumber)
 
