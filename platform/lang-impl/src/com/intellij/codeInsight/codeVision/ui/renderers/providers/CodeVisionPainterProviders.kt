@@ -63,7 +63,7 @@ private class ZombieCodeVisionEntryPainter : DefaultCodeVisionPainter<ZombieCode
   }
 }
 
-class ZeroWidthCodeVisionEntryPainter : ICodeVisionEntryBasePainter<ZeroWidthCodeVisionEntry> {
+private class ZeroWidthCodeVisionEntryPainter : ICodeVisionEntryBasePainter<ZeroWidthCodeVisionEntry> {
 
   override fun paint(
     editor: Editor,

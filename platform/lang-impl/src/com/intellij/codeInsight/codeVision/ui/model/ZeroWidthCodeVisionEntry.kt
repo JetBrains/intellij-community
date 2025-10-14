@@ -2,7 +2,9 @@
 package com.intellij.codeInsight.codeVision.ui.model
 
 import com.intellij.codeInsight.codeVision.CodeVisionEntry
+import org.jetbrains.annotations.ApiStatus
 
+@ApiStatus.Internal
 class ZeroWidthCodeVisionEntry(
   providerId: String
 ) : CodeVisionEntry(
