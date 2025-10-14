@@ -19,6 +19,7 @@ import com.intellij.xdebugger.impl.rpc.models.BackendXValueModel
 import com.intellij.xdebugger.impl.rpc.models.findValue
 import com.intellij.xdebugger.impl.rpc.models.getOrStoreGlobally
 import com.intellij.xdebugger.impl.rpc.models.toXValueDto
+import com.intellij.xdebugger.impl.rpc.toRpc
 import fleet.rpc.core.toRpc
 import kotlinx.coroutines.*
 import kotlinx.coroutines.channels.*

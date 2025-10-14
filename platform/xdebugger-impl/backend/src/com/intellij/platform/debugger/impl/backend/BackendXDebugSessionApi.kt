@@ -28,10 +28,7 @@ import com.intellij.xdebugger.impl.XDebugSessionImpl
 import com.intellij.xdebugger.impl.XSteppingSuspendContext
 import com.intellij.xdebugger.impl.frame.ColorState
 import com.intellij.xdebugger.impl.frame.XDebuggerFramesList
-import com.intellij.xdebugger.impl.rpc.XDebugSessionDataId
-import com.intellij.xdebugger.impl.rpc.XDebugSessionId
-import com.intellij.xdebugger.impl.rpc.XExecutionStackId
-import com.intellij.xdebugger.impl.rpc.XStackFrameId
+import com.intellij.xdebugger.impl.rpc.*
 import com.intellij.xdebugger.impl.rpc.models.findValue
 import com.intellij.xdebugger.impl.rpc.models.getOrStoreGlobally
 import com.intellij.xdebugger.impl.rpc.models.storeGlobally

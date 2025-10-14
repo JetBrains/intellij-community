@@ -18,6 +18,7 @@ import com.intellij.xdebugger.frame.*
 import com.intellij.xdebugger.frame.presentation.XValuePresentation
 import com.intellij.xdebugger.impl.pinned.items.PinToTopMemberValue
 import com.intellij.xdebugger.impl.pinned.items.PinToTopParentValue
+import com.intellij.xdebugger.impl.rpc.sourcePosition
 import com.intellij.xdebugger.impl.ui.XValueTextProvider
 import com.intellij.xdebugger.impl.ui.tree.XValueExtendedPresentation
 import com.intellij.xdebugger.impl.ui.tree.nodes.XValueNodeEx
