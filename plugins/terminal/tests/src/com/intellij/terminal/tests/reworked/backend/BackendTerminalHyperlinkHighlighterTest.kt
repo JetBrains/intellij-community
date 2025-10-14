@@ -629,7 +629,7 @@ internal class BackendTerminalHyperlinkHighlighterTest : BasePlatformTestCase() 
       val length: Int get() = substring.length
 
       fun locateOffset(model: TerminalOutputModel): TerminalOffset {
-        val line = model.firstLine + line.toLong()
+        val line = model.firstLineIndex + line.toLong()
         val lineStart = model.getStartOfLine(line)
         val lineEnd = model.getEndOfLine(line)
         val lineText = model.getText(lineStart, lineEnd)

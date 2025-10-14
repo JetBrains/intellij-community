@@ -4,7 +4,6 @@ package org.jetbrains.plugins.terminal.block.reworked
 import com.intellij.openapi.Disposable
 import com.intellij.openapi.actionSystem.DataKey
 import com.intellij.openapi.util.Key
-import kotlinx.coroutines.flow.StateFlow
 import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.plugins.terminal.block.output.HighlightingInfo
 import org.jetbrains.plugins.terminal.block.output.TerminalOutputHighlightingsSnapshot
@@ -26,7 +25,7 @@ sealed interface TerminalOutputModel {
 
   val startOffset: TerminalOffset
 
-  val firstLine: TerminalLineIndex
+  val firstLineIndex: TerminalLineIndex
 
   fun addListener(parentDisposable: Disposable, listener: TerminalOutputModelListener)
 
@@ -63,7 +62,7 @@ sealed interface TerminalOutputModelSnapshot {
 
   val startOffset: TerminalOffset
 
-  val firstLine: TerminalLineIndex
+  val firstLineIndex: TerminalLineIndex
 
   fun getLineByOffset(offset: TerminalOffset): TerminalLineIndex
 
@@ -107,8 +106,8 @@ val TerminalOutputModel.endOffset: TerminalOffset
   get() = startOffset + textLength.toLong()
 
 @get:ApiStatus.Experimental
-val TerminalOutputModel.lastLine: TerminalLineIndex
-  get() = firstLine + (lineCount - 1).toLong()
+val TerminalOutputModel.lastLineIndex: TerminalLineIndex
+  get() = firstLineIndex + (lineCount - 1).toLong()
 
 @get:ApiStatus.Experimental
 val TerminalOutputModelSnapshot.textLength: Int
@@ -119,8 +118,8 @@ val TerminalOutputModelSnapshot.endOffset: TerminalOffset
   get() = startOffset + textLength.toLong()
 
 @get:ApiStatus.Experimental
-val TerminalOutputModelSnapshot.lastLine: TerminalLineIndex
-  get() = firstLine + (lineCount - 1).toLong()
+val TerminalOutputModelSnapshot.lastLineIndex: TerminalLineIndex
+  get() = firstLineIndex + (lineCount - 1).toLong()
 
 
 private data class TerminalOffsetImpl(private val absolute: Long) : TerminalOffset {

@@ -541,11 +541,11 @@ internal class TerminalOutputModelTest : BasePlatformTestCase() {
     assertThat(sut.startOffset).isEqualTo(TerminalOffset.ZERO)
     assertThat(sut.startOffset).isEqualTo(sut.endOffset)
     assertThat(sut.getText(sut.startOffset, sut.endOffset)).isEmpty()
-    assertThat(sut.firstLine).isEqualTo(TerminalLineIndex.ZERO)
-    assertThat(sut.firstLine).isEqualTo(sut.lastLine)
-    assertThat(sut.getStartOfLine(sut.firstLine)).isEqualTo(sut.startOffset)
-    assertThat(sut.getEndOfLine(sut.firstLine)).isEqualTo(sut.startOffset)
-    assertThat(sut.getLineByOffset(sut.startOffset)).isEqualTo(sut.firstLine)
+    assertThat(sut.firstLineIndex).isEqualTo(TerminalLineIndex.ZERO)
+    assertThat(sut.firstLineIndex).isEqualTo(sut.lastLineIndex)
+    assertThat(sut.getStartOfLine(sut.firstLineIndex)).isEqualTo(sut.startOffset)
+    assertThat(sut.getEndOfLine(sut.firstLineIndex)).isEqualTo(sut.startOffset)
+    assertThat(sut.getLineByOffset(sut.startOffset)).isEqualTo(sut.firstLineIndex)
   }
 
   @Test
@@ -556,11 +556,11 @@ internal class TerminalOutputModelTest : BasePlatformTestCase() {
     assertThat(sut.startOffset).isEqualTo(TerminalOffset.ZERO)
     assertThat(sut.startOffset).isEqualTo(sut.endOffset)
     assertThat(sut.getText(sut.startOffset, sut.endOffset)).isEmpty()
-    assertThat(sut.firstLine).isEqualTo(TerminalLineIndex.ZERO)
-    assertThat(sut.firstLine).isEqualTo(sut.lastLine)
-    assertThat(sut.getStartOfLine(sut.firstLine)).isEqualTo(sut.startOffset)
-    assertThat(sut.getEndOfLine(sut.firstLine)).isEqualTo(sut.startOffset)
-    assertThat(sut.getLineByOffset(sut.startOffset)).isEqualTo(sut.firstLine)
+    assertThat(sut.firstLineIndex).isEqualTo(TerminalLineIndex.ZERO)
+    assertThat(sut.firstLineIndex).isEqualTo(sut.lastLineIndex)
+    assertThat(sut.getStartOfLine(sut.firstLineIndex)).isEqualTo(sut.startOffset)
+    assertThat(sut.getEndOfLine(sut.firstLineIndex)).isEqualTo(sut.startOffset)
+    assertThat(sut.getLineByOffset(sut.startOffset)).isEqualTo(sut.firstLineIndex)
   }
 }
 
