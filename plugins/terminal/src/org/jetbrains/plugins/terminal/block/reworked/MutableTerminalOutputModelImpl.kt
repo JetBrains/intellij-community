@@ -59,7 +59,7 @@ class MutableTerminalOutputModelImpl(
   override val startOffset: TerminalOffset
     get() = TerminalOffset.of(trimmedCharsCount)
 
-  override val firstLine: TerminalLineIndex
+  override val firstLineIndex: TerminalLineIndex
     get() = TerminalLineIndex.of(trimmedLinesCount)
 
   private fun relativeOffset(offset: Int): TerminalOffset =
@@ -79,7 +79,7 @@ class MutableTerminalOutputModelImpl(
 
   private fun TerminalOffset.toRelative(): Int = (this - startOffset).toInt()
 
-  private fun TerminalLineIndex.toRelative(): Int = (this - firstLine).toInt()
+  private fun TerminalLineIndex.toRelative(): Int = (this - firstLineIndex).toInt()
 
   override fun takeSnapshot(): TerminalOutputModelSnapshot =
     TerminalOutputModelSnapshotImpl((document as DocumentImpl).freeze(), trimmedCharsCount, trimmedLinesCount, cursorOffset)
@@ -126,7 +126,7 @@ class MutableTerminalOutputModelImpl(
     ensureDocumentHasLine(lineIndex)
     val lineStartOffset = getStartOfLine(lineIndex)
     val lineEndOffset = getEndOfLine(lineIndex)
-    val trimmedCharsInLine = if (lineIndex == firstLine) firstLineTrimmedCharsCount else 0
+    val trimmedCharsInLine = if (lineIndex == firstLineIndex) firstLineTrimmedCharsCount else 0
     // columnIndex comes from the backend model, which doesn't know about trimming,
     // so for the first line the index may be off, we need to apply correction
     val trimmedColumnIndex = columnIndex - trimmedCharsInLine
@@ -155,9 +155,9 @@ class MutableTerminalOutputModelImpl(
   }
 
   private fun ensureDocumentHasLine(lineIndex: TerminalLineIndex) {
-    if (lineIndex > lastLine) {
+    if (lineIndex > lastLineIndex) {
       changeDocumentContent {
-        val newLinesToAdd = (lineIndex - lastLine).toInt()
+        val newLinesToAdd = (lineIndex - lastLineIndex).toInt()
         val newLines = "\n".repeat(newLinesToAdd)
         LOG.debug { "Add $newLinesToAdd lines to make the line valid" }
         doReplaceContentIgnoringEqualPrefixAndOrSuffix(endOffset, 0, newLines, emptyList())
@@ -534,7 +534,7 @@ class TerminalOutputModelSnapshotImpl(
   override val startOffset: TerminalOffset
     get() = TerminalOffset.of(trimmedCharsCount)
 
-  override val firstLine: TerminalLineIndex
+  override val firstLineIndex: TerminalLineIndex
     get() = TerminalLineIndex.of(trimmedLinesCount)
 
   override fun getLineByOffset(offset: TerminalOffset): TerminalLineIndex =
@@ -551,7 +551,7 @@ class TerminalOutputModelSnapshotImpl(
 
   private fun TerminalOffset.toRelative(): Int = (this - startOffset).toInt()
 
-  private fun TerminalLineIndex.toRelative(): Int = (this - firstLine).toInt()
+  private fun TerminalLineIndex.toRelative(): Int = (this - firstLineIndex).toInt()
 }
 
 private fun immutableTextImpl(document: Document): CharSequence = document.immutableCharSequence
