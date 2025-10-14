@@ -29,6 +29,7 @@ import com.intellij.openapi.util.UserDataHolderBase
 import com.intellij.openapi.util.registry.Registry
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.ui.awt.RelativePoint
+import com.intellij.util.PlatformUtils
 import com.intellij.util.concurrency.annotations.RequiresEdt
 import com.intellij.util.ui.StartupUiUtil
 import com.intellij.util.ui.UIUtil
@@ -195,16 +196,18 @@ class MarkdownPreviewFileEditor(
       }
       else {
         settings.previewPanelProviderInfo = availableProvider.providerInfo
-        Notifications.Bus.notify(
-          Notification(
-            "Markdown",
-            MarkdownBundle.message("markdown.settings.notification.title"),
-            MarkdownBundle.message("markdown.settings.preview.provider.not.available", providerInfo.name, availableProvider.providerInfo.name),
-            NotificationType.WARNING
-          ),
-          project
-        )
-        logger.warn("Cannot use preview panel provider '${providerInfo.name}'. Using the first one that is available: ${preferredProvider.providerInfo.name}")
+        if (PlatformUtils.getPlatformPrefix() != "AndroidStudio") {
+          Notifications.Bus.notify(
+            Notification(
+              "Markdown",
+              MarkdownBundle.message("markdown.settings.notification.title"),
+              MarkdownBundle.message("markdown.settings.preview.provider.not.available", providerInfo.name, availableProvider.providerInfo.name),
+              NotificationType.WARNING
+            ),
+            project
+          )
+          logger.warn("Cannot use preview panel provider '${providerInfo.name}'. Using the first one that is available: ${preferredProvider.providerInfo.name}")
+        }
         preferredProvider = availableProvider
       }
     }
