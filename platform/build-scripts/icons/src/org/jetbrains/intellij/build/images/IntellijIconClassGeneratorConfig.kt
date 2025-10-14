@@ -199,6 +199,11 @@ class IntellijIconClassGeneratorConfig : IconClasses() {
         packageName = "com.intellij.designer",
       )
 
+      "intellij.r.psi" -> IntellijIconClassGeneratorModuleConfig(
+        className = "RIcons",
+        packageName = "com.intellij.r.psi.icons",
+      )
+
       else -> super.getConfigForModule(moduleName)
     }
   }
