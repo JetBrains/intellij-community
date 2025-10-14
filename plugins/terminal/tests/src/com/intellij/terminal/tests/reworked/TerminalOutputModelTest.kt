@@ -14,6 +14,7 @@ import org.assertj.core.api.Assertions.assertThat
 import org.jetbrains.plugins.terminal.block.output.HighlightingInfo
 import org.jetbrains.plugins.terminal.block.output.TerminalOutputHighlightingsSnapshot
 import org.jetbrains.plugins.terminal.block.output.TextStyleAdapter
+import org.jetbrains.plugins.terminal.block.reworked.TerminalContentChanged
 import org.jetbrains.plugins.terminal.block.reworked.TerminalLineIndex
 import org.jetbrains.plugins.terminal.block.reworked.TerminalOffset
 import org.jetbrains.plugins.terminal.block.reworked.TerminalOutputModel
@@ -182,6 +183,105 @@ internal class TerminalOutputModelTest : BasePlatformTestCase() {
       tuvwxyz
     """.trimIndent(), model.document.text)
     assertEquals(listOf(firstStartOffset, secondStartOffset), startOffsets)
+  }
+
+  @Test
+  fun `update events ignore unchanged prefix and suffix - only line`(): Unit = runBlocking(Dispatchers.EDT)  {
+    val model = TerminalTestUtil.createOutputModel()
+    val events = mutableListOf<TerminalContentChanged>()
+    model.addListener(testRootDisposable, object : TerminalOutputModelListener {
+      override fun afterContentChanged(event: TerminalContentChanged) {
+        events += event
+      }
+    })
+    model.update(0, "some long text")
+    model.update(0, "some even longer text")
+    assertThat(events.last().offset).isEqualTo(TerminalOffset.of(5))
+    assertThat(events.last().oldText.toString()).isEqualTo("long")
+    assertThat(events.last().newText.toString()).isEqualTo("even longer")
+  }
+
+  @Test
+  fun `update events ignore unchanged prefix and suffix - second line`(): Unit = runBlocking(Dispatchers.EDT)  {
+    val model = TerminalTestUtil.createOutputModel()
+    val events = mutableListOf<TerminalContentChanged>()
+    model.addListener(testRootDisposable, object : TerminalOutputModelListener {
+      override fun afterContentChanged(event: TerminalContentChanged) {
+        events += event
+      }
+    })
+    model.update(0, "some long text")
+    model.update(1, "another line")
+    model.update(1, "another long line")
+    assertThat(events.last().offset).isEqualTo(TerminalOffset.of(24))
+    assertThat(events.last().oldText.toString()).isEqualTo("")
+    assertThat(events.last().newText.toString()).isEqualTo("ong l")
+  }
+
+  @Test
+  fun `update events ignore unchanged prefix and suffix - longer line, both sides match`(): Unit = runBlocking(Dispatchers.EDT)  {
+    val model = TerminalTestUtil.createOutputModel()
+    val events = mutableListOf<TerminalContentChanged>()
+    model.addListener(testRootDisposable, object : TerminalOutputModelListener {
+      override fun afterContentChanged(event: TerminalContentChanged) {
+        events += event
+      }
+    })
+    model.update(0, "some long text")
+    model.update(1, "another line")
+    model.update(1, "another line, long line")
+    assertThat(events.last().offset).isEqualTo(TerminalOffset.of(27))
+    assertThat(events.last().oldText.toString()).isEqualTo("")
+    assertThat(events.last().newText.toString()).isEqualTo(", long line")
+  }
+
+  @Test
+  fun `update events ignore unchanged prefix and suffix - shorter line, both sides match`(): Unit = runBlocking(Dispatchers.EDT)  {
+    val model = TerminalTestUtil.createOutputModel()
+    val events = mutableListOf<TerminalContentChanged>()
+    model.addListener(testRootDisposable, object : TerminalOutputModelListener {
+      override fun afterContentChanged(event: TerminalContentChanged) {
+        events += event
+      }
+    })
+    model.update(0, "some long text")
+    model.update(1, "another line, long line")
+    model.update(1, "another line")
+    assertThat(events.last().offset).isEqualTo(TerminalOffset.of(27))
+    assertThat(events.last().oldText.toString()).isEqualTo(", long line")
+    assertThat(events.last().newText.toString()).isEqualTo("")
+  }
+
+  @Test
+  fun `update events ignore unchanged prefix and suffix - no-op change`(): Unit = runBlocking(Dispatchers.EDT)  {
+    val model = TerminalTestUtil.createOutputModel()
+    val events = mutableListOf<TerminalContentChanged>()
+    model.addListener(testRootDisposable, object : TerminalOutputModelListener {
+      override fun afterContentChanged(event: TerminalContentChanged) {
+        events += event
+      }
+    })
+    model.update(0, "some long text")
+    model.update(0, "some long text")
+    // no assertion for the offset because it can technically be anywhere
+    assertThat(events.last().oldText).isEmpty()
+    assertThat(events.last().newText).isEmpty()
+  }
+
+  @Test
+  fun `update events ignore unchanged prefix and suffix - trimmed offsets`(): Unit = runBlocking(Dispatchers.EDT)  {
+    val model = TerminalTestUtil.createOutputModel(maxLength = 5)
+    val events = mutableListOf<TerminalContentChanged>()
+    model.addListener(testRootDisposable, object : TerminalOutputModelListener {
+      override fun afterContentChanged(event: TerminalContentChanged) {
+        events += event
+      }
+    })
+    model.update(0, "012345")
+    model.update(0, "12x45")
+    assertThat(events.last().offset).isEqualTo(TerminalOffset.of(3))
+    assertThat(events.last().oldText.toString()).isEqualTo("3")
+    assertThat(events.last().newText.toString()).isEqualTo("x")
   }
 
   @Test

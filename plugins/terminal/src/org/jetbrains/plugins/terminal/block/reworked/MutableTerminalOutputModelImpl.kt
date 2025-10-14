@@ -92,7 +92,7 @@ class MutableTerminalOutputModelImpl(
         trimmedLinesCount = 0
         trimmedCharsCount = 0
         firstLineTrimmedCharsCount = 0
-        doReplaceContent(TerminalOffset.ZERO, textLength, "", emptyList())
+        doReplaceContentIgnoringEqualPrefixAndOrSuffix(TerminalOffset.ZERO, textLength, "", emptyList())
       }
     }
 
@@ -107,13 +107,13 @@ class MutableTerminalOutputModelImpl(
     ensureDocumentHasLine(startLine)
     changeDocumentContent {
       val startOffset = getStartOfLine(startLine)
-      doReplaceContent(startOffset, (endOffset - startOffset).toInt(), text, styles)
+      doReplaceContentIgnoringEqualPrefixAndOrSuffix(startOffset, (endOffset - startOffset).toInt(), text, styles)
     }
   }
 
   override fun replaceContent(offset: TerminalOffset, length: Int, text: String, newStyles: List<StyleRange>) {
     changeDocumentContent(isTypeAhead) { 
-      doReplaceContent(offset, length, text, newStyles)
+      doReplaceContentIgnoringEqualPrefixAndOrSuffix(offset, length, text, newStyles)
     }
   }
 
@@ -138,7 +138,7 @@ class MutableTerminalOutputModelImpl(
       val spaces = " ".repeat(spacesToAdd)
       changeDocumentContent {
         LOG.debug { "Added $spacesToAdd spaces to make the column valid" }
-        doReplaceContent(lineEndOffset, 0, spaces, emptyList())
+        doReplaceContentIgnoringEqualPrefixAndOrSuffix(lineEndOffset, 0, spaces, emptyList())
       }
     }
 
@@ -159,24 +159,59 @@ class MutableTerminalOutputModelImpl(
         val newLinesToAdd = (lineIndex - lastLine).toInt()
         val newLines = "\n".repeat(newLinesToAdd)
         LOG.debug { "Add $newLinesToAdd lines to make the line valid" }
-        doReplaceContent(endOffset, 0, newLines, emptyList())
+        doReplaceContentIgnoringEqualPrefixAndOrSuffix(endOffset, 0, newLines, emptyList())
       }
     }
   }
 
-  /** Returns offset from which document was updated */
-  private fun doReplaceContent(startOffset: TerminalOffset, length: Int, text: String, styles: List<StyleRange>): ModelChange {
+  private fun doReplaceContentIgnoringEqualPrefixAndOrSuffix(startOffset: TerminalOffset, length: Int, newText: String, styles: List<StyleRange>): ModelChange {
+    val endOffset = startOffset + length.toLong()
+    val effectiveStartOffset = findFirstChangeOffset(startOffset, length, newText)
+    val skipPrefix = (effectiveStartOffset - startOffset).toInt()
+    val effectiveEndOffset = findLastChangeOffset(effectiveStartOffset, length - skipPrefix, newText, skipPrefix) + 1 // exclusive
+    val skipSuffix = (endOffset - effectiveEndOffset).toInt()
+    val effectiveLength = length - skipPrefix - skipSuffix
+    val effectiveNewText = newText.subSequence(skipPrefix, newText.length - skipSuffix)
+    val change = doReplaceContent(effectiveStartOffset, effectiveLength, effectiveNewText)
+    highlightingsModel.updateHighlightings(startOffset.toRelative(), length, newText.length, styles)
+    ensureCorrectCursorOffset()
+    return change
+  }
+
+  private fun doReplaceContent(startOffset: TerminalOffset, length: Int, newText: CharSequence): ModelChange {
     val relativeStartOffset = startOffset.toRelative()
     val relativeEndOffset = relativeStartOffset + length
     val oldText = document.immutableCharSequence.subSequence(relativeStartOffset, relativeEndOffset)
-    document.replaceString(relativeStartOffset, relativeEndOffset, text)
-    highlightingsModel.updateHighlightings(relativeStartOffset, length, text.length, styles)
-    ensureCorrectCursorOffset()
+    document.replaceString(relativeStartOffset, relativeEndOffset, newText)
     return ModelChange(
       startOffset,
       oldText,
-      text
+      newText
     )
+  }
+
+  private fun findFirstChangeOffset(startOffset: TerminalOffset, length: Int, newText: String): TerminalOffset {
+    val relativeStartOffset = startOffset.toRelative()
+    var srcIndex = relativeStartOffset
+    var dstIndex = 0
+    val text = document.immutableCharSequence
+    while (srcIndex < relativeStartOffset + length && dstIndex < newText.length && text[srcIndex] == newText[dstIndex]) {
+      ++srcIndex
+      ++dstIndex
+    }
+    return relativeOffset(srcIndex)
+  }
+
+  private fun findLastChangeOffset(startOffset: TerminalOffset, length: Int, newText: String, newTextStart: Int): TerminalOffset {
+    val relativeStartOffset = startOffset.toRelative()
+    var srcIndex = relativeStartOffset + length - 1
+    var dstIndex = newText.length - 1
+    val text = document.immutableCharSequence
+    while (srcIndex >= relativeStartOffset && dstIndex >= newTextStart && text[srcIndex] == newText[dstIndex]) {
+      --srcIndex
+      --dstIndex
+    }
+    return relativeOffset(srcIndex)
   }
 
   private fun ensureCorrectCursorOffset() {
@@ -189,21 +224,16 @@ class MutableTerminalOutputModelImpl(
     }
   }
 
+  private fun isTrimNeeded(): Boolean = maxOutputLength > 0 && document.textLength > maxOutputLength
+
   /** Returns trimmed characters count */
   private fun trimToSize(): CharSequence {
-    return if (maxOutputLength > 0 && document.textLength > maxOutputLength) {
-      trimToSize(maxOutputLength)
-    }
-    else ""
-  }
-
-  /** Returns trimmed characters count */
-  private fun trimToSize(maxLength: Int): CharSequence {
+    check(maxOutputLength > 0) { "trimToSize should only be called if trimming is enabled" }
     val textLength = document.textLength
-    check(textLength > maxLength) { "This method should be called only if text length $textLength is greater than max length $maxLength" }
+    check(textLength > maxOutputLength) { "This method should be called only if text length $textLength is greater than max length $maxOutputLength" }
 
     val lineCountBefore = document.lineCount
-    val removeUntilOffset = textLength - maxLength
+    val removeUntilOffset = textLength - maxOutputLength
     val futureFirstLineNumber = document.getLineNumber(removeUntilOffset)
     val futureFirstLineStart = document.getLineStartOffset(futureFirstLineNumber)
 
@@ -246,10 +276,10 @@ class MutableTerminalOutputModelImpl(
       false
     ))
 
-    val startBeforeTrimming = startOffset
-    val trimmedSequence = trimToSize()
-
-    if (trimmedSequence.isNotEmpty()) {
+    var trimmed = 0
+    if (isTrimNeeded()) {
+      val startBeforeTrimming = startOffset
+      val trimmedSequence = trimToSize()
       dispatcher.multicaster.afterContentChanged(TerminalContentChangedImpl(
         this,
         startBeforeTrimming,
@@ -258,6 +288,7 @@ class MutableTerminalOutputModelImpl(
         isTypeAhead,
         true
       ))
+      trimmed = trimmedSequence.length
     }
 
     val effectiveStartOffset = change.offset.coerceAtLeast(startOffset)
@@ -267,7 +298,7 @@ class MutableTerminalOutputModelImpl(
     LOG.debug {
       "Content updated from offset = $effectiveStartOffset, " +
       "new length = ${document.textLength} chars, ${document.lineCount} lines, " +
-      "currently trimmed = $trimmedCharsCount (+${trimmedSequence.length}) chars, $trimmedLinesCount lines"
+      "currently trimmed = $trimmedCharsCount (+$trimmed) chars, $trimmedLinesCount lines"
     }
   }
 
