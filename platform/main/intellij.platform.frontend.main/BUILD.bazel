@@ -19,6 +19,7 @@ jvm_library(
     "//platform/execution.serviceView/frontend",
     "//platform/remote-topics/frontend",
     "//platform/buildView/frontend",
+    "//platform/completion/frontend",
   ]
 )
 
@@ -43,6 +44,7 @@ jvm_library(
     "//platform/execution.dashboard/frontend",
     "//platform/execution.serviceView/frontend",
     "//platform/buildView/frontend",
+    "//platform/completion/frontend",
   ]
 )
 ### auto-generated section `build intellij.platform.frontend.main` end

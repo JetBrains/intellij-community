@@ -38,6 +38,7 @@
     <orderEntry type="module" module-name="intellij.platform.completion.common" />
     <orderEntry type="module" module-name="intellij.platform.kernel" />
     <orderEntry type="module" module-name="intellij.platform.rpc.backend" />
-    <orderEntry type="module" module-name="intellij.platform.backend" />
+    <orderEntry type="module" module-name="intellij.platform.backend" scope="RUNTIME" />
+    <orderEntry type="module" module-name="intellij.platform.backend.main" scope="RUNTIME" />
   </component>
 </module>
