@@ -20,10 +20,11 @@
     <orderEntry type="library" exported="" scope="TEST" name="Gradle" level="project" />
     <orderEntry type="module" module-name="intellij.kotlin.base.plugin" scope="TEST" />
     <orderEntry type="module" module-name="intellij.kotlin.gradle.codeInsight.groovy" scope="TEST" />
-    <orderEntry type="module" module-name="intellij.kotlin.gradle.code-insight-common" scope="TEST" />
+    <orderEntry type="module" module-name="intellij.kotlin.gradle.codeInsight.common" scope="TEST" />
     <orderEntry type="module" module-name="intellij.groovy" scope="TEST" />
     <orderEntry type="module" module-name="intellij.gradle" scope="TEST" />
     <orderEntry type="module" module-name="intellij.gradle.tests" scope="TEST" />
     <orderEntry type="module" module-name="intellij.kotlin.base.facet" scope="TEST" />
+    <orderEntry type="module" module-name="intellij.platform.analysis" scope="TEST" />
   </component>
 </module>
