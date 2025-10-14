@@ -36,7 +36,7 @@ class RedundantKotlinStdLibInspectionTest : GradleCodeInsightTestCase() {
     @ParameterizedTest
     @BaseGradleVersionSource
     fun testSameVersion(gradleVersion: GradleVersion) {
-        runTest(gradleVersion, SAME_VERSION_FIXTURE) {
+        runTest(gradleVersion, DEFAULT_FIXTURE) {
             testHighlighting(
                 """
                 plugins { id 'org.jetbrains.kotlin.jvm' version '2.2.0' }
@@ -51,7 +51,7 @@ class RedundantKotlinStdLibInspectionTest : GradleCodeInsightTestCase() {
     @ParameterizedTest
     @BaseGradleVersionSource
     fun testDifferentVersion(gradleVersion: GradleVersion) {
-        runTest(gradleVersion, DIFFERENT_VERSION_FIXTURE) {
+        runTest(gradleVersion, DEFAULT_FIXTURE) {
             testHighlighting(
                 """
                 plugins { id 'org.jetbrains.kotlin.jvm' version '2.2.0' }
@@ -65,28 +65,13 @@ class RedundantKotlinStdLibInspectionTest : GradleCodeInsightTestCase() {
 
     @ParameterizedTest
     @BaseGradleVersionSource
-    fun testPluginIdNoVersion(gradleVersion: GradleVersion) {
-        runTest(gradleVersion, SAME_VERSION_FIXTURE) {
-            testHighlighting(
-                """
-                plugins { id 'org.jetbrains.kotlin.jvm' }
-                dependencies { 
-                    <warning>api 'org.jetbrains.kotlin:kotlin-stdlib:2.2.0'</warning>
-                }
-                """.trimIndent()
-            )
-        }
-    }
-
-    @ParameterizedTest
-    @BaseGradleVersionSource
     fun testDependencyNoVersion(gradleVersion: GradleVersion) {
-        runTest(gradleVersion, SAME_VERSION_FIXTURE) {
+        runTest(gradleVersion, DEFAULT_FIXTURE) {
             testHighlighting(
                 """
                 plugins { id 'org.jetbrains.kotlin.jvm' version '2.2.0' }
                 dependencies { 
-                    <warning>api 'org.jetbrains.kotlin:kotlin-stdlib'</warning>
+                    api 'org.jetbrains.kotlin:kotlin-stdlib'
                 }
                 """.trimIndent()
             )
@@ -96,7 +81,7 @@ class RedundantKotlinStdLibInspectionTest : GradleCodeInsightTestCase() {
     @ParameterizedTest
     @BaseGradleVersionSource
     fun testDependencyNamedArguments(gradleVersion: GradleVersion) {
-        runTest(gradleVersion, SAME_VERSION_FIXTURE) {
+        runTest(gradleVersion, DEFAULT_FIXTURE) {
             testHighlighting(
                 """
                 plugins { id 'org.jetbrains.kotlin.jvm' version '2.2.0' }
@@ -111,12 +96,12 @@ class RedundantKotlinStdLibInspectionTest : GradleCodeInsightTestCase() {
     @ParameterizedTest
     @BaseGradleVersionSource
     fun testDependencyNamedArgumentsNoVersion(gradleVersion: GradleVersion) {
-        runTest(gradleVersion, SAME_VERSION_FIXTURE) {
+        runTest(gradleVersion, DEFAULT_FIXTURE) {
             testHighlighting(
                 """
                 plugins { id 'org.jetbrains.kotlin.jvm' version '2.2.0' }
                 dependencies { 
-                    <warning>api group: 'org.jetbrains.kotlin', name: 'kotlin-stdlib'</warning>
+                    api group: 'org.jetbrains.kotlin', name: 'kotlin-stdlib'
                 }
                 """.trimIndent()
             )
@@ -126,7 +111,7 @@ class RedundantKotlinStdLibInspectionTest : GradleCodeInsightTestCase() {
     @ParameterizedTest
     @BaseGradleVersionSource
     fun testDifferentConfiguration(gradleVersion: GradleVersion) {
-        runTest(gradleVersion, SAME_VERSION_FIXTURE) {
+        runTest(gradleVersion, DEFAULT_FIXTURE) {
             testHighlighting(
                 """
                 plugins { id 'org.jetbrains.kotlin.jvm' version '2.2.0' }
@@ -141,7 +126,7 @@ class RedundantKotlinStdLibInspectionTest : GradleCodeInsightTestCase() {
     @ParameterizedTest
     @BaseGradleVersionSource
     fun testCustomConfiguration(gradleVersion: GradleVersion) {
-        runTest(gradleVersion, SAME_VERSION_FIXTURE) {
+        runTest(gradleVersion, DEFAULT_FIXTURE) {
             testHighlighting(
                 """
                 plugins { id 'org.jetbrains.kotlin.jvm' version '2.2.0' }
@@ -153,197 +138,11 @@ class RedundantKotlinStdLibInspectionTest : GradleCodeInsightTestCase() {
         }
     }
 
-    @ParameterizedTest
-    @BaseGradleVersionSource
-    fun testNoKotlinPlugin(gradleVersion: GradleVersion) {
-        runTest(gradleVersion, JAVA_PLUGIN_WITH_KOTLIN_STDLIB_FIXTURE) {
-            testHighlighting(
-                """
-                plugins { id 'java' }
-                dependencies { 
-                    api 'org.jetbrains.kotlin:kotlin-stdlib:2.2.0'
-                }
-                """.trimIndent()
-            )
-        }
-    }
-
-    @ParameterizedTest
-    @BaseGradleVersionSource
-    fun testPluginFromVersionCatalog(gradleVersion: GradleVersion) {
-        runTest(gradleVersion, SAME_VERSION_FIXTURE) {
-            testHighlighting(
-                """
-                plugins { alias(libs.plugins.kotlinJvm) }
-                dependencies { 
-                    <warning>api 'org.jetbrains.kotlin:kotlin-stdlib:2.2.0'</warning>
-                }
-                """.trimIndent()
-            )
-        }
-    }
-
-    @ParameterizedTest
-    @BaseGradleVersionSource
-    fun testPluginFromVersionCatalogFull(gradleVersion: GradleVersion) {
-        runTest(gradleVersion, SAME_VERSION_FIXTURE) {
-            testHighlighting(
-                """
-                plugins { alias(libs.plugins.kotlinJvmFull) }
-                dependencies { 
-                    <warning>api 'org.jetbrains.kotlin:kotlin-stdlib:2.2.0'</warning>
-                }
-                """.trimIndent()
-            )
-        }
-    }
-
-    @ParameterizedTest
-    @BaseGradleVersionSource
-    fun testPluginFromVersionCatalogFullWithVersionReference(gradleVersion: GradleVersion) {
-        runTest(gradleVersion, SAME_VERSION_FIXTURE) {
-            testHighlighting(
-                """
-                plugins { alias(libs.plugins.kotlinJvmFullRef) }
-                dependencies { 
-                    <warning>api 'org.jetbrains.kotlin:kotlin-stdlib:2.2.0'</warning>
-                }
-                """.trimIndent()
-            )
-        }
-    }
-
-    @ParameterizedTest
-    @BaseGradleVersionSource
-    fun testPluginIdNotApplied(gradleVersion: GradleVersion) {
-        runTest(gradleVersion, NOT_APPLIED_FIXTURE) {
-            testHighlighting(
-                """
-                plugins { 
-                    id 'org.jetbrains.kotlin.jvm' version '2.2.0' apply false 
-                    id 'java'
-                }
-                dependencies { 
-                    api 'org.jetbrains.kotlin:kotlin-stdlib:2.2.0'
-                }
-                """.trimIndent()
-            )
-        }
-    }
-
-    @ParameterizedTest
-    @BaseGradleVersionSource
-    fun testPluginFromVersionCatalogNotApplied(gradleVersion: GradleVersion) {
-        runTest(gradleVersion, NOT_APPLIED_FIXTURE) {
-            testHighlighting(
-                """
-                plugins { 
-                    alias(libs.plugins.kotlinJvm) apply false
-                    id 'java'
-                }
-                dependencies { 
-                    api 'org.jetbrains.kotlin:kotlin-stdlib:2.2.0'
-                }
-                """.trimIndent()
-            )
-        }
-    }
-
-    @ParameterizedTest
-    @BaseGradleVersionSource
-    fun testDependencyFromVersionCatalog(gradleVersion: GradleVersion) {
-        runTest(gradleVersion, SAME_VERSION_FIXTURE) {
-            testHighlighting(
-                """
-                plugins { id 'org.jetbrains.kotlin.jvm' version '2.2.0' }
-                dependencies { 
-                    <warning>api libs.kotlin.std.lib1</warning>
-                }
-                """.trimIndent()
-            )
-        }
-    }
-
-    @ParameterizedTest
-    @BaseGradleVersionSource
-    fun testDependencyFromVersionCatalogNoVersion(gradleVersion: GradleVersion) {
-        runTest(gradleVersion, SAME_VERSION_FIXTURE) {
-            testHighlighting(
-                """
-                plugins { id 'org.jetbrains.kotlin.jvm' version '2.2.0' }
-                dependencies { 
-                    <warning>api libs.kotlin.std.lib2</warning>
-                }
-                """.trimIndent()
-            )
-        }
-    }
-
-    @ParameterizedTest
-    @BaseGradleVersionSource
-    fun testDependencyFromVersionCatalogModuleAndVersion(gradleVersion: GradleVersion) {
-        runTest(gradleVersion, SAME_VERSION_FIXTURE) {
-            testHighlighting(
-                """
-                plugins { id 'org.jetbrains.kotlin.jvm' version '2.2.0' }
-                dependencies { 
-                    <warning>api libs.kotlin.std.lib3</warning>
-                }
-                """.trimIndent()
-            )
-        }
-    }
-
-    @ParameterizedTest
-    @BaseGradleVersionSource
-    fun testDependencyFromVersionCatalogFull(gradleVersion: GradleVersion) {
-        runTest(gradleVersion, SAME_VERSION_FIXTURE) {
-            testHighlighting(
-                """
-                plugins { id 'org.jetbrains.kotlin.jvm' version '2.2.0' }
-                dependencies { 
-                    <warning>api libs.kotlin.std.lib4</warning>
-                }
-                """.trimIndent()
-            )
-        }
-    }
-
-    @ParameterizedTest
-    @BaseGradleVersionSource
-    fun testDependencyFromVersionCatalogFullVersionReference(gradleVersion: GradleVersion) {
-        runTest(gradleVersion, SAME_VERSION_FIXTURE) {
-            testHighlighting(
-                """
-                plugins { id 'org.jetbrains.kotlin.jvm' version '2.2.0' }
-                dependencies { 
-                    <warning>api libs.kotlin.std.lib5</warning>
-                }
-                """.trimIndent()
-            )
-        }
-    }
-
-    @ParameterizedTest
-    @BaseGradleVersionSource
-    fun testDependencyFromVersionCatalogMultilineString(gradleVersion: GradleVersion) {
-        runTest(gradleVersion, SAME_VERSION_FIXTURE) {
-            testHighlighting(
-                """
-                plugins { id 'org.jetbrains.kotlin.jvm' version '2.2.0' }
-                dependencies { 
-                    <warning>api libs.kotlin.std.multiline</warning>
-                }
-                """.trimIndent()
-            )
-        }
-    }
-
     // should not warn as the overriding kotlin-stdlib dependency is a bit different
     @ParameterizedTest
     @BaseGradleVersionSource
     fun testDependencyWithExtraArgumentsInClosure(gradleVersion: GradleVersion) {
-        runTest(gradleVersion, SAME_VERSION_FIXTURE) {
+        runTest(gradleVersion, DEFAULT_FIXTURE) {
             testHighlighting(
                 """
                 plugins { id 'org.jetbrains.kotlin.jvm' version '2.2.0' }
@@ -361,7 +160,7 @@ class RedundantKotlinStdLibInspectionTest : GradleCodeInsightTestCase() {
     @ParameterizedTest
     @BaseGradleVersionSource
     fun testDependencyWithExtraArgumentsInMap(gradleVersion: GradleVersion) {
-        runTest(gradleVersion, SAME_VERSION_FIXTURE) {
+        runTest(gradleVersion, DEFAULT_FIXTURE) {
             testHighlighting(
                 """
                 plugins { id 'org.jetbrains.kotlin.jvm' version '2.2.0' }
@@ -376,7 +175,7 @@ class RedundantKotlinStdLibInspectionTest : GradleCodeInsightTestCase() {
     @ParameterizedTest
     @BaseGradleVersionSource
     fun testDependencyListSingleStrings(gradleVersion: GradleVersion) {
-        runTest(gradleVersion, SAME_VERSION_FIXTURE) {
+        runTest(gradleVersion, DEFAULT_FIXTURE) {
             testHighlighting(
                 """
                 plugins { id 'org.jetbrains.kotlin.jvm' version '2.2.0' }
@@ -390,8 +189,23 @@ class RedundantKotlinStdLibInspectionTest : GradleCodeInsightTestCase() {
 
     @ParameterizedTest
     @BaseGradleVersionSource
+    fun testDependencyListSingleStringsInBrackets(gradleVersion: GradleVersion) {
+        runTest(gradleVersion, DEFAULT_FIXTURE) {
+            testHighlighting(
+                """
+                plugins { id 'org.jetbrains.kotlin.jvm' version '2.2.0' }
+                dependencies { 
+                    api(<warning>['org.jetbrains.kotlin:kotlin-stdlib:2.2.0']</warning>, ['com.fasterxml.jackson.core:jackson-databind:2.17.0'])
+                }
+                """.trimIndent()
+            )
+        }
+    }
+
+    @ParameterizedTest
+    @BaseGradleVersionSource
     fun testDependencyListMaps(gradleVersion: GradleVersion) {
-        runTest(gradleVersion, SAME_VERSION_FIXTURE) {
+        runTest(gradleVersion, DEFAULT_FIXTURE) {
             testHighlighting(
                 """
                 plugins { id 'org.jetbrains.kotlin.jvm' version '2.2.0' }
@@ -411,7 +225,7 @@ class RedundantKotlinStdLibInspectionTest : GradleCodeInsightTestCase() {
     @ParameterizedTest
     @BaseGradleVersionSource
     fun testDependencyListMapsExtraArguments(gradleVersion: GradleVersion) {
-        runTest(gradleVersion, SAME_VERSION_FIXTURE) {
+        runTest(gradleVersion, DEFAULT_FIXTURE) {
             testHighlighting(
                 """
                 plugins { id 'org.jetbrains.kotlin.jvm' version '2.2.0' }
@@ -441,10 +255,274 @@ class RedundantKotlinStdLibInspectionTest : GradleCodeInsightTestCase() {
         }
     }
 
+    // VERSION CATALOG RESOLVING TESTS
+
+    @ParameterizedTest
+    @BaseGradleVersionSource
+    fun testDependencyFromVersionCatalog(gradleVersion: GradleVersion) {
+        runTest(gradleVersion, DEFAULT_FIXTURE) {
+            testHighlighting(
+                """
+                plugins { id 'org.jetbrains.kotlin.jvm' version '2.2.0' }
+                dependencies { 
+                    <warning>api libs.kotlin.std.lib1</warning>
+                }
+                """.trimIndent()
+            )
+        }
+    }
+
+    @ParameterizedTest
+    @BaseGradleVersionSource
+    fun testDependencyFromVersionCatalogNoVersion(gradleVersion: GradleVersion) {
+        runTest(gradleVersion, DEFAULT_FIXTURE) {
+            testHighlighting(
+                """
+                plugins { id 'org.jetbrains.kotlin.jvm' version '2.2.0' }
+                dependencies { 
+                    api libs.kotlin.std.lib2
+                }
+                """.trimIndent()
+            )
+        }
+    }
+
+    @ParameterizedTest
+    @BaseGradleVersionSource
+    fun testDependencyFromVersionCatalogModuleAndVersion(gradleVersion: GradleVersion) {
+        runTest(gradleVersion, DEFAULT_FIXTURE) {
+            testHighlighting(
+                """
+                plugins { id 'org.jetbrains.kotlin.jvm' version '2.2.0' }
+                dependencies { 
+                    <warning>api libs.kotlin.std.lib3</warning>
+                }
+                """.trimIndent()
+            )
+        }
+    }
+
+    @ParameterizedTest
+    @BaseGradleVersionSource
+    fun testDependencyFromVersionCatalogFull(gradleVersion: GradleVersion) {
+        runTest(gradleVersion, DEFAULT_FIXTURE) {
+            testHighlighting(
+                """
+                plugins { id 'org.jetbrains.kotlin.jvm' version '2.2.0' }
+                dependencies { 
+                    <warning>api libs.kotlin.std.lib4</warning>
+                }
+                """.trimIndent()
+            )
+        }
+    }
+
+    @ParameterizedTest
+    @BaseGradleVersionSource
+    fun testDependencyFromVersionCatalogFullVersionReference(gradleVersion: GradleVersion) {
+        runTest(gradleVersion, DEFAULT_FIXTURE) {
+            testHighlighting(
+                """
+                plugins { id 'org.jetbrains.kotlin.jvm' version '2.2.0' }
+                dependencies { 
+                    <warning>api libs.kotlin.std.lib5</warning>
+                }
+                """.trimIndent()
+            )
+        }
+    }
+
+    @ParameterizedTest
+    @BaseGradleVersionSource
+    fun testDependencyFromVersionCatalogMultilineString(gradleVersion: GradleVersion) {
+        runTest(gradleVersion, DEFAULT_FIXTURE) {
+            testHighlighting(
+                """
+                plugins { id 'org.jetbrains.kotlin.jvm' version '2.2.0' }
+                dependencies { 
+                    <warning>api libs.kotlin.std.multiline</warning>
+                }
+                """.trimIndent()
+            )
+        }
+    }
+
+    @ParameterizedTest
+    @BaseGradleVersionSource
+    fun testDependencyFromVersionCatalogCustomConfiguration(gradleVersion: GradleVersion) {
+        runTest(gradleVersion, DEFAULT_FIXTURE) {
+            testHighlighting(
+                """
+                plugins { id 'org.jetbrains.kotlin.jvm' version '2.2.0' }
+                dependencies { 
+                    <warning>customConf libs.kotlin.std.lib1</warning>
+                }
+                """.trimIndent()
+            )
+        }
+    }
+
+    @ParameterizedTest
+    @BaseGradleVersionSource
+    fun testDependencyListVersionCatalog(gradleVersion: GradleVersion) {
+        runTest(gradleVersion, DEFAULT_FIXTURE) {
+            testHighlighting(
+                """
+                plugins { id 'org.jetbrains.kotlin.jvm' version '2.2.0' }
+                dependencies { 
+                    api <warning>libs.kotlin.std.lib1</warning>, 'com.fasterxml.jackson.core:jackson-databind:2.17.0'
+                }
+                """.trimIndent()
+            )
+        }
+    }
+
+    @ParameterizedTest
+    @BaseGradleVersionSource
+    fun testDependencyListVersionCatalogInBrackets(gradleVersion: GradleVersion) {
+        runTest(gradleVersion, DEFAULT_FIXTURE) {
+            testHighlighting(
+                """
+                plugins { id 'org.jetbrains.kotlin.jvm' version '2.2.0' }
+                dependencies { 
+                    api(<warning>[libs.kotlin.std.lib1]</warning>, ['com.fasterxml.jackson.core:jackson-databind:2.17.0'])
+                }
+                """.trimIndent()
+            )
+        }
+    }
+
+    // PLUGIN DETECTION
+
+    @ParameterizedTest
+    @BaseGradleVersionSource
+    fun testNoPlugin(gradleVersion: GradleVersion) {
+        runTest(gradleVersion, DEFAULT_FIXTURE) {
+            testHighlighting(
+                """
+                dependencies { 
+                    api 'org.jetbrains.kotlin:kotlin-stdlib:2.2.0'
+                }
+                """.trimIndent()
+            )
+        }
+    }
+
+    @ParameterizedTest
+    @BaseGradleVersionSource
+    fun testDifferentPlugin(gradleVersion: GradleVersion) {
+        runTest(gradleVersion, DEFAULT_FIXTURE) {
+            testHighlighting(
+                """
+                plugins { id 'java' }
+                dependencies { 
+                    api 'org.jetbrains.kotlin:kotlin-stdlib:2.2.0'
+                }
+                """.trimIndent()
+            )
+        }
+    }
+
+    @ParameterizedTest
+    @BaseGradleVersionSource
+    fun testPluginIdNoVersion(gradleVersion: GradleVersion) {
+        runTest(gradleVersion, DEFAULT_FIXTURE) {
+            testHighlighting(
+                """
+                plugins { id 'org.jetbrains.kotlin.jvm' }
+                dependencies { 
+                    api 'org.jetbrains.kotlin:kotlin-stdlib:2.2.0'
+                }
+                """.trimIndent()
+            )
+        }
+    }
+
+    @ParameterizedTest
+    @BaseGradleVersionSource
+    fun testPluginFromVersionCatalog(gradleVersion: GradleVersion) {
+        runTest(gradleVersion, DEFAULT_FIXTURE) {
+            testHighlighting(
+                """
+                plugins { alias(libs.plugins.kotlinJvm) }
+                dependencies { 
+                    <warning>api 'org.jetbrains.kotlin:kotlin-stdlib:2.2.0'</warning>
+                }
+                """.trimIndent()
+            )
+        }
+    }
+
+    @ParameterizedTest
+    @BaseGradleVersionSource
+    fun testPluginFromVersionCatalogFull(gradleVersion: GradleVersion) {
+        runTest(gradleVersion, DEFAULT_FIXTURE) {
+            testHighlighting(
+                """
+                plugins { alias(libs.plugins.kotlinJvmFull) }
+                dependencies { 
+                    <warning>api 'org.jetbrains.kotlin:kotlin-stdlib:2.2.0'</warning>
+                }
+                """.trimIndent()
+            )
+        }
+    }
+
+    @ParameterizedTest
+    @BaseGradleVersionSource
+    fun testPluginFromVersionCatalogFullWithVersionReference(gradleVersion: GradleVersion) {
+        runTest(gradleVersion, DEFAULT_FIXTURE) {
+            testHighlighting(
+                """
+                plugins { alias(libs.plugins.kotlinJvmFullRef) }
+                dependencies { 
+                    <warning>api 'org.jetbrains.kotlin:kotlin-stdlib:2.2.0'</warning>
+                }
+                """.trimIndent()
+            )
+        }
+    }
+
+    @ParameterizedTest
+    @BaseGradleVersionSource
+    fun testPluginIdNotApplied(gradleVersion: GradleVersion) {
+        runTest(gradleVersion, DEFAULT_FIXTURE) {
+            testHighlighting(
+                """
+                plugins { 
+                    id 'org.jetbrains.kotlin.jvm' version '2.2.0' apply false 
+                }
+                dependencies { 
+                    api 'org.jetbrains.kotlin:kotlin-stdlib:2.2.0'
+                }
+                """.trimIndent()
+            )
+        }
+    }
+
+    @ParameterizedTest
+    @BaseGradleVersionSource
+    fun testPluginFromVersionCatalogNotApplied(gradleVersion: GradleVersion) {
+        runTest(gradleVersion, DEFAULT_FIXTURE) {
+            testHighlighting(
+                """
+                plugins { 
+                    alias(libs.plugins.kotlinJvm) apply false
+                }
+                dependencies { 
+                    api 'org.jetbrains.kotlin:kotlin-stdlib:2.2.0'
+                }
+                """.trimIndent()
+            )
+        }
+    }
+
+    // QUICK FIX TESTS
+
     @ParameterizedTest
     @BaseGradleVersionSource
     fun testQuickFixRemove(gradleVersion: GradleVersion) {
-        runTest(gradleVersion, SAME_VERSION_FIXTURE) {
+        runTest(gradleVersion, DEFAULT_FIXTURE) {
             testIntention(
                 """
                 plugins { id 'org.jetbrains.kotlin.jvm' version '2.2.0' }
@@ -465,7 +543,7 @@ class RedundantKotlinStdLibInspectionTest : GradleCodeInsightTestCase() {
     @ParameterizedTest
     @BaseGradleVersionSource
     fun testQuickFixRemoveSingleStringFromList(gradleVersion: GradleVersion) {
-        runTest(gradleVersion, SAME_VERSION_FIXTURE) {
+        runTest(gradleVersion, DEFAULT_FIXTURE) {
             testIntention(
                 """
                 plugins { id 'org.jetbrains.kotlin.jvm' version '2.2.0' }
@@ -487,7 +565,7 @@ class RedundantKotlinStdLibInspectionTest : GradleCodeInsightTestCase() {
     @ParameterizedTest
     @BaseGradleVersionSource
     fun testQuickFixRemoveMapFromList(gradleVersion: GradleVersion) {
-        runTest(gradleVersion, SAME_VERSION_FIXTURE) {
+        runTest(gradleVersion, DEFAULT_FIXTURE) {
             testIntention(
                 """
                 plugins { id 'org.jetbrains.kotlin.jvm' version '2.2.0' }
@@ -514,9 +592,9 @@ class RedundantKotlinStdLibInspectionTest : GradleCodeInsightTestCase() {
     }
 
     companion object {
-        private val SAME_VERSION_FIXTURE = GradleTestFixtureBuilder.create("redundant_kotlin_stdlib") { gradleVersion ->
+        private val DEFAULT_FIXTURE = GradleTestFixtureBuilder.create("redundant_kotlin_stdlib") { gradleVersion ->
             withFile(
-                "gradle/libs.versions.toml", """
+                "gradle/libs.versions.toml", /* language=TOML */ """
                 [versions]
                 kotlin = "2.2.0"
                 [plugins]
@@ -533,7 +611,7 @@ class RedundantKotlinStdLibInspectionTest : GradleCodeInsightTestCase() {
                 :kotlin-stdlib
                 :2.2.0
                 ""${'"'}
-            """.trimIndent()
+                """.trimIndent()
             )
             withBuildFile(gradleVersion) {
                 withKotlinJvmPlugin("2.2.0")
@@ -544,41 +622,12 @@ class RedundantKotlinStdLibInspectionTest : GradleCodeInsightTestCase() {
                 }
             }
         }
-        private val DIFFERENT_VERSION_FIXTURE = GradleTestFixtureBuilder.create("different_kotlin_stdlib") { gradleVersion ->
-            withBuildFile(gradleVersion) {
-                withKotlinJvmPlugin("2.2.0")
-                addApiDependency("org.jetbrains.kotlin:kotlin-stdlib:2.1.0")
-            }
-        }
-        private val JAVA_PLUGIN_WITH_KOTLIN_STDLIB_FIXTURE = GradleTestFixtureBuilder.create("just_kotlin_stdlib") { gradleVersion ->
-            withBuildFile(gradleVersion) {
-                withJavaPlugin()
-                addApiDependency("org.jetbrains.kotlin:kotlin-stdlib:2.2.0")
-                withPrefix {
-                    call("configurations") {
-                        code("api")
-                    }
-                }
-            }
-        }
         private val DISABLED_DEFAULT_STDLIB_FIXTURE = GradleTestFixtureBuilder.create("disabled_default_stdlib") { gradleVersion ->
             withBuildFile(gradleVersion) {
                 withKotlinJvmPlugin("2.2.0")
                 addApiDependency("org.jetbrains.kotlin:kotlin-stdlib:2.2.0")
             }
             withFile("gradle.properties", "kotlin.stdlib.default.dependency=false")
-        }
-        private val NOT_APPLIED_FIXTURE = GradleTestFixtureBuilder.create("not_applied_kotlin_jvm") { gradleVersion ->
-            withBuildFile(gradleVersion) {
-                withPlugin { code("id 'org.jetbrains.kotlin.jvm' version '2.2.0' apply false") }
-                withJavaPlugin()
-                withPrefix {
-                    call("configurations") {
-                        code("api")
-                    }
-                }
-                addApiDependency("org.jetbrains.kotlin:kotlin-stdlib:2.2.0")
-            }
         }
     }
 }
