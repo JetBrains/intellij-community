@@ -2,10 +2,8 @@
 package org.jetbrains.plugins.gradle.codeInspection.groovy
 
 import com.intellij.codeInspection.ProblemsHolder
-import com.intellij.psi.CommonClassNames
 import com.intellij.psi.OriginInfoAwareElement
 import com.intellij.psi.PsiElement
-import com.intellij.psi.util.InheritanceUtil
 import org.jetbrains.plugins.gradle.codeInspection.GradleInspectionBundle
 import org.jetbrains.plugins.gradle.codeInspection.fix.GradleDependencyNamedArgumentsFix
 import org.jetbrains.plugins.gradle.service.resolve.GradleDependencyHandlerContributor
@@ -13,8 +11,6 @@ import org.jetbrains.plugins.groovy.lang.psi.GroovyElementVisitor
 import org.jetbrains.plugins.groovy.lang.psi.api.auxiliary.GrListOrMap
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.arguments.GrNamedArgument
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrMethodCall
-import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.literals.GrLiteral
-import org.jetbrains.plugins.groovy.lang.psi.util.GroovyCommonClassNames
 
 class GroovyAvoidDependencyNamedArgumentsNotationInspectionVisitor(private val holder: ProblemsHolder) : GroovyElementVisitor() {
   override fun visitMethodCall(call: GrMethodCall) {
@@ -24,15 +20,14 @@ class GroovyAvoidDependencyNamedArgumentsNotationInspectionVisitor(private val h
     }
     val arguments = call.argumentList.expressionArguments
     if (arguments.isEmpty()) {
-      if (!isReplaceableWithSingleString(call.namedArguments.asList())) return
+      if (hasUnexpectedNamedArguments(call.namedArguments.asList())) return
 
       registerProblem(call.argumentList)
     }
     else {
       for (argument in arguments) {
-        if (!InheritanceUtil.isInheritor(argument.type, CommonClassNames.JAVA_UTIL_MAP)) continue
-        if (argument !is GrListOrMap) continue
-        if (!isReplaceableWithSingleString(argument.namedArguments.asList())) continue
+        if (argument !is GrListOrMap || !argument.isMap) continue
+        if (hasUnexpectedNamedArguments(argument.namedArguments.asList())) continue
 
         registerProblem(argument)
       }
@@ -47,21 +42,12 @@ class GroovyAvoidDependencyNamedArgumentsNotationInspectionVisitor(private val h
     )
   }
 
-  private fun isReplaceableWithSingleString(namedArguments: List<GrNamedArgument>): Boolean {
-    val namedArgumentsNames = namedArguments.map { it.labelName }
+  private fun hasUnexpectedNamedArguments(namedArguments: List<GrNamedArgument>): Boolean {
+    val namedArgumentsNames = namedArguments.map { it.labelName }.toSet()
     when (namedArgumentsNames.size) {
-      2 -> if (!namedArgumentsNames.containsAll(setOf("group", "name"))) return false
-      3 -> if (!namedArgumentsNames.containsAll(setOf("group", "name", "version"))) return false
-      else -> return false
-    }
-    // check that all named arguments are string literals
-    for (argument in namedArguments.map { it.expression }) {
-      if (argument !is GrLiteral) return false
-      val type = argument.type ?: return false
-      if (
-        !InheritanceUtil.isInheritor(type, CommonClassNames.JAVA_LANG_CHAR_SEQUENCE) &&
-        !type.equalsToText(GroovyCommonClassNames.GROOVY_LANG_GSTRING)
-      ) return false
+      2 -> if (namedArgumentsNames == setOf("group", "name")) return false
+      3 -> if (namedArgumentsNames == setOf("group", "name", "version")) return false
+      else -> return true
     }
     return true
   }

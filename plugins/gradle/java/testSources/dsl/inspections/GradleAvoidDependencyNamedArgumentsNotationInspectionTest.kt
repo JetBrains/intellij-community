@@ -118,15 +118,60 @@ class GradleAvoidDependencyNamedArgumentsNotationInspectionTest : GradleCodeInsi
 
   @ParameterizedTest
   @BaseGradleVersionSource
-  fun testNonLiteralArgument(gradleVersion: GradleVersion) {
+  fun testVariableArgument(gradleVersion: GradleVersion) {
     runTest(gradleVersion) {
       testHighlighting(
         """
         var verRef = '1.0'
         dependencies {
-          implementation group: 'org.gradle', name: 'gradle-core', version: verRef
+          implementation ${WARNING_START}group: 'org.gradle', name: 'gradle-core', version: verRef$WARNING_END
         }
         """.trimIndent()
+      )
+      testIntention(
+        """
+        var verRef = '1.0'
+        dependencies {
+          implementation group: 'org.gradle', name: 'gradle-core', version: verRef<caret>
+        }
+        """.trimIndent(),
+        $$"""
+        var verRef = '1.0'
+        dependencies {
+          implementation "org.gradle:gradle-core:$verRef"
+        }
+        """.trimIndent(),
+        "Simplify"
+      )
+    }
+  }
+
+  @ParameterizedTest
+  @BaseGradleVersionSource
+  fun testFunctionArgument(gradleVersion: GradleVersion) {
+    runTest(gradleVersion) {
+      testHighlighting(
+        """
+        def verFun() { return '1.0' }
+        dependencies {
+          implementation <weak_warning>group: 'org.gradle', name: 'gradle-core', version: verFun()</weak_warning>
+        }
+        """.trimIndent()
+      )
+      testIntention(
+        """
+        def verFun() { return '1.0' }
+        dependencies {
+          implementation group: 'org.gradle', name: 'gradle-core', version: verFun()<caret>
+        }
+        """.trimIndent(),
+        $$"""
+        def verFun() { return '1.0' }
+        dependencies {
+          implementation "org.gradle:gradle-core:${verFun()}"
+        }
+        """.trimIndent(),
+        "Simplify"
       )
     }
   }
@@ -488,7 +533,7 @@ class GradleAvoidDependencyNamedArgumentsNotationInspectionTest : GradleCodeInsi
 
   @ParameterizedTest
   @BaseGradleVersionSource
-  fun testListOfMapsWithVariables(gradleVersion: GradleVersion) {
+  fun testListOfMapsWithVariableArguments(gradleVersion: GradleVersion) {
     runTest(gradleVersion) {
       testHighlighting(
         $"""
@@ -496,11 +541,76 @@ class GradleAvoidDependencyNamedArgumentsNotationInspectionTest : GradleCodeInsi
         def name = 'guava'
         dependencies {
           implementation(
-                  [group: 'org.gradle', name: 'gradle-core', version: ver],
-                  [group: 'com.google.guava', name: name, version: '32.1.3-jre']
+                  $WARNING_START[group: 'org.gradle', name: 'gradle-core', version: ver]$WARNING_END,
+                  $WARNING_START[group: 'com.google.guava', name: name, version: '32.1.3-jre']$WARNING_END
           )
         }
         """.trimIndent()
+      )
+      testIntention(
+        """
+        def ver = '1.0'
+        def name = 'guava'
+        dependencies {
+          implementation(
+                  [group: 'org.gradle', name: 'gradle-core', version: ver]<caret>,
+                  [group: 'com.google.guava', name: name, version: '32.1.3-jre']
+          )
+        }
+        """.trimIndent(),
+        $$"""
+        def ver = '1.0'
+        def name = 'guava'
+        dependencies {
+          implementation(
+                  "org.gradle:gradle-core:$ver",
+                  [group: 'com.google.guava', name: name, version: '32.1.3-jre']
+          )
+        }
+        """.trimIndent(),
+        "Simplify"
+      )
+    }
+  }
+
+  @ParameterizedTest
+  @BaseGradleVersionSource
+  fun testListOfMapsWithFunctionArguments(gradleVersion: GradleVersion) {
+    runTest(gradleVersion) {
+      testHighlighting(
+        $"""
+        static def ver() { return '1.0' }
+        def name() { return 'guava' }
+        dependencies {
+          implementation(
+                  $WARNING_START[group: 'org.gradle', name: 'gradle-core', version: ver()]$WARNING_END,
+                  $WARNING_START[group: 'com.google.guava', name: name(), version: '32.1.3-jre']$WARNING_END
+          )
+        }
+        """.trimIndent()
+      )
+      testIntention(
+        """
+        static def ver() { return '1.0' }
+        def name() { return 'guava' }
+        dependencies {
+          implementation(
+                  [group: 'org.gradle', name: 'gradle-core', version: ver()]<caret>,
+                  [group: 'com.google.guava', name: name(), version: '32.1.3-jre']
+          )
+        }
+        """.trimIndent(),
+        $$"""
+        static def ver() { return '1.0' }
+        def name() { return 'guava' }
+        dependencies {
+          implementation(
+                  "org.gradle:gradle-core:${ver()}",
+                  [group: 'com.google.guava', name: name(), version: '32.1.3-jre']
+          )
+        }
+        """.trimIndent(),
+        "Simplify"
       )
     }
   }
