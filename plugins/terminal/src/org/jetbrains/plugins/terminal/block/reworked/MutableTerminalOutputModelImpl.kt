@@ -85,38 +85,29 @@ class MutableTerminalOutputModelImpl(
     TerminalOutputModelSnapshotImpl((document as DocumentImpl).freeze(), trimmedCharsCount, trimmedLinesCount, cursorOffset)
 
   override fun updateContent(absoluteLineIndex: Long, text: String, styles: List<StyleRange>) {
-    changeDocumentContent {
-      // If absolute line index is far in the past - in the already trimmed part of the output,
-      // then it means that the terminal was cleared, and we should reset to the initial state.
-      if (absoluteLineIndex < trimmedLinesCount) {
+    // If absolute line index is far in the past - in the already trimmed part of the output,
+    // then it means that the terminal was cleared, and we should reset to the initial state.
+    if (absoluteLineIndex < trimmedLinesCount) {
+      changeDocumentContent {
         trimmedLinesCount = 0
         trimmedCharsCount = 0
         firstLineTrimmedCharsCount = 0
+        doReplaceContent(TerminalOffset.ZERO, textLength, "", emptyList())
       }
+    }
 
-      LOG.debug {
-        "Content update from the relative line = ${absoluteLineIndex - trimmedLinesCount} (absolute ${absoluteLineIndex}), " +
-        "length = ${text.length}, " +
-        "current length = ${document.textLength} chars, ${document.lineCount} lines, " +
-        "currently trimmed = $trimmedCharsCount chars, $trimmedLinesCount lines"
-      }
+    LOG.debug {
+      "Content update from the relative line = ${absoluteLineIndex - trimmedLinesCount} (absolute ${absoluteLineIndex}), " +
+      "length = ${text.length}, " +
+      "current length = ${document.textLength} chars, ${document.lineCount} lines, " +
+      "currently trimmed = $trimmedCharsCount chars, $trimmedLinesCount lines"
+    }
 
-      val startLine = TerminalLineIndex.of(absoluteLineIndex)
-      if (startLine <= lastLine) {
-        val startOffset = getStartOfLine(startLine)
-        doReplaceContent(startOffset, (endOffset - startOffset).toInt(), text, styles)
-      }
-      else {
-        val linesCountToAdd = (startLine - lastLine).toInt()
-        val linesToAdd = "\n".repeat(linesCountToAdd)
-        doReplaceContent(endOffset, 0, linesToAdd + text, styles.map {
-          // styles are relative to the original insertion index, so we must shift them
-          it.copy(
-            startOffset = it.startOffset + linesCountToAdd,
-            endOffset = it.endOffset + linesCountToAdd,
-          )
-        })
-      }
+    val startLine = TerminalLineIndex.of(absoluteLineIndex)
+    ensureDocumentHasLine(startLine)
+    changeDocumentContent {
+      val startOffset = getStartOfLine(startLine)
+      doReplaceContent(startOffset, (endOffset - startOffset).toInt(), text, styles)
     }
   }
 
@@ -127,38 +118,33 @@ class MutableTerminalOutputModelImpl(
   }
 
   override fun updateCursorPosition(absoluteLineIndex: Long, columnIndex: Int) {
-    val documentLineIndex = (absoluteLineIndex - trimmedLinesCount).toInt()
+    val lineIndex = TerminalLineIndex.of(absoluteLineIndex)
     LOG.debug {
-      "Updating the cursor position to absolute line = $absoluteLineIndex (relative $documentLineIndex), " +
+      "Updating the cursor position to absolute line = $absoluteLineIndex (relative ${lineIndex.toRelative()}), " +
       "column = $columnIndex"
     }
-    ensureDocumentHasLine(documentLineIndex)
-    val lineStartOffset = document.getLineStartOffset(documentLineIndex)
-    val lineEndOffset = document.getLineEndOffset(documentLineIndex)
-    val trimmedCharsInLine = if (documentLineIndex == 0) firstLineTrimmedCharsCount else 0
+    ensureDocumentHasLine(lineIndex)
+    val lineStartOffset = getStartOfLine(lineIndex)
+    val lineEndOffset = getEndOfLine(lineIndex)
+    val trimmedCharsInLine = if (lineIndex == firstLine) firstLineTrimmedCharsCount else 0
     // columnIndex comes from the backend model, which doesn't know about trimming,
     // so for the first line the index may be off, we need to apply correction
     val trimmedColumnIndex = columnIndex - trimmedCharsInLine
-    val lineLength = lineEndOffset - lineStartOffset
+    val lineLength = (lineEndOffset - lineStartOffset).toInt()
 
     // Add spaces to the line if the cursor position is out of line bounds
     if (trimmedColumnIndex > lineLength) {
       val spacesToAdd = trimmedColumnIndex - lineLength
       val spaces = " ".repeat(spacesToAdd)
       changeDocumentContent {
-        document.insertString(lineEndOffset, spaces)
         LOG.debug { "Added $spacesToAdd spaces to make the column valid" }
-        highlightingsModel.insertEmptyHighlightings(lineEndOffset, spacesToAdd)
-        ModelChange(
-          relativeOffset(lineEndOffset),
-          relativeOffset(lineEndOffset + spacesToAdd),
-        )
+        doReplaceContent(lineEndOffset, 0, spaces, emptyList())
       }
     }
 
-    val newCursorOffset = lineStartOffset + trimmedColumnIndex
+    val newCursorOffset = lineStartOffset + trimmedColumnIndex.toLong()
     LOG.debug { "Updated the cursor position to $newCursorOffset" }
-    updateCursorPosition(relativeOffset(newCursorOffset))
+    updateCursorPosition(newCursorOffset)
   }
 
   override fun updateCursorPosition(offset: TerminalOffset) {
@@ -167,12 +153,14 @@ class MutableTerminalOutputModelImpl(
     dispatcher.multicaster.cursorOffsetChanged(TerminalCursorOffsetChangedImpl(this, oldValue, offset))
   }
 
-  private fun ensureDocumentHasLine(documentLineIndex: Int) {
-    if (documentLineIndex > 0 && documentLineIndex >= document.lineCount) {
-      val newLinesToAdd = documentLineIndex - document.lineCount + 1
-      val newLines = "\n".repeat(newLinesToAdd)
-      document.insertString(document.textLength, newLines)
-      LOG.debug { "Added $newLinesToAdd lines to make the line valid" }
+  private fun ensureDocumentHasLine(lineIndex: TerminalLineIndex) {
+    if (lineIndex > lastLine) {
+      changeDocumentContent {
+        val newLinesToAdd = (lineIndex - lastLine).toInt()
+        val newLines = "\n".repeat(newLinesToAdd)
+        LOG.debug { "Add $newLinesToAdd lines to make the line valid" }
+        doReplaceContent(endOffset, 0, newLines, emptyList())
+      }
     }
   }
 
@@ -237,6 +225,7 @@ class MutableTerminalOutputModelImpl(
   private fun changeDocumentContent(isTypeAhead: Boolean = false, block: () -> ModelChange) {
     dispatcher.multicaster.beforeContentChanged(this)
 
+    check(!contentUpdateInProgress) { "Recursive content updates aren't supported, schedule an update in a separate event if needed" }
     contentUpdateInProgress = true
     val change = try {
       block()
@@ -365,26 +354,6 @@ class MutableTerminalOutputModelImpl(
         )
       }
       else null
-    }
-
-    /**
-     * Moves all highlightings that start after [documentOffset] by [length].
-     * If [documentOffset] is inside some highlighting, this highlighting won't be changed.
-     */
-    fun insertEmptyHighlightings(documentOffset: Int, length: Int) {
-      val absoluteOffset = documentOffset + trimmedCharsCount
-
-      val styleIndex = styleRanges.binarySearch { it.startOffset.compareTo(absoluteOffset) }
-      val updateFromIndex = if (styleIndex < 0) -styleIndex - 1 else styleIndex
-
-      if (updateFromIndex < styleRanges.size) {
-        for (ind in (updateFromIndex until styleRanges.size)) {
-          val cur = styleRanges[ind]
-          styleRanges[ind] = cur.copy(startOffset = cur.startOffset + length, endOffset = cur.endOffset + length)
-        }
-
-        highlightingsSnapshot = null
-      }
     }
 
     fun removeBefore(documentOffset: Int) {
