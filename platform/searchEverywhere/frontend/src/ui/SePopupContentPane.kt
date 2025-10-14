@@ -653,15 +653,14 @@ class SePopupContentPane(
 
   private fun onMouseClicked(e: MouseEvent) {
     val multiSelectMode = e.isShiftDown || UIUtil.isControlKeyDown(e)
-    //val isPreviewDoubleClick = !SearchEverywhereUI.isPreviewActive() || !SearchEverywhereUI.hasPreviewProvider(myHeader.getSelectedTab()) || e.clickCount == 2
+    val isPreviewDisabledOrDoubleClick = !SearchEverywhereUI.isPreviewActive() || vmState.value?.currentTab?.isPreviewEnabled?.getValueOrNull() == false || e.clickCount == 2
 
-    if (e.button == MouseEvent.BUTTON1 && !multiSelectMode) {
+    if (e.button == MouseEvent.BUTTON1 && !multiSelectMode && isPreviewDisabledOrDoubleClick) {
       e.consume()
       val i: Int = resultList.locationToIndex(e.point)
       if (i > -1) {
         resultList.setSelectedIndex(i)
         val modifiers = e.modifiersEx
-
         coroutineScope.launch {
           withContext(Dispatchers.EDT) {
             elementsSelected(intArrayOf(i), modifiers)
