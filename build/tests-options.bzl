@@ -68,9 +68,7 @@ TEST_FRAMEWORK_DEPS = [
   "@community//platform/util:util-tests_test_lib",
 
   "@lib//:junit5Vintage",
-  "@lib//:junit5Vintage-provided",
   "@lib//:junit4",
-  "@lib//:junit4-provided",
 ]
 
 # needed to avoid runtime duplications in jps_test of community/platform/util/BUILD.bazel
