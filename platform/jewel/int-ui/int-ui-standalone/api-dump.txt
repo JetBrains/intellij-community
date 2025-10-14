@@ -645,19 +645,23 @@ f:org.jetbrains.jewel.intui.standalone.styling.IntUiWarningBannerColorFactory
 - f:light--OWjLjI(J,J):org.jetbrains.jewel.ui.component.styling.BannerColors
 - bs:light--OWjLjI$default(org.jetbrains.jewel.intui.standalone.styling.IntUiWarningBannerColorFactory,J,J,I,java.lang.Object):org.jetbrains.jewel.ui.component.styling.BannerColors
 f:org.jetbrains.jewel.intui.standalone.theme.IntUiGlobalColorsKt
+- sf:dark-VT9Kpxs(org.jetbrains.jewel.foundation.GlobalColors$Companion,org.jetbrains.jewel.foundation.BorderColors,org.jetbrains.jewel.foundation.OutlineColors,org.jetbrains.jewel.foundation.TextColors,J,J):org.jetbrains.jewel.foundation.GlobalColors
+- bs:dark-VT9Kpxs$default(org.jetbrains.jewel.foundation.GlobalColors$Companion,org.jetbrains.jewel.foundation.BorderColors,org.jetbrains.jewel.foundation.OutlineColors,org.jetbrains.jewel.foundation.TextColors,J,J,I,java.lang.Object):org.jetbrains.jewel.foundation.GlobalColors
 - sf:dark-jdqzblg(org.jetbrains.jewel.foundation.OutlineColors$Companion,J,J,J,J,J):org.jetbrains.jewel.foundation.OutlineColors
 - sf:dark-jdqzblg(org.jetbrains.jewel.foundation.TextColors$Companion,J,J,J,J,J):org.jetbrains.jewel.foundation.TextColors
 - bs:dark-jdqzblg$default(org.jetbrains.jewel.foundation.OutlineColors$Companion,J,J,J,J,J,I,java.lang.Object):org.jetbrains.jewel.foundation.OutlineColors
 - bs:dark-jdqzblg$default(org.jetbrains.jewel.foundation.TextColors$Companion,J,J,J,J,J,I,java.lang.Object):org.jetbrains.jewel.foundation.TextColors
-- sf:dark-xwkQ0AY(org.jetbrains.jewel.foundation.GlobalColors$Companion,org.jetbrains.jewel.foundation.BorderColors,org.jetbrains.jewel.foundation.OutlineColors,org.jetbrains.jewel.foundation.TextColors,J):org.jetbrains.jewel.foundation.GlobalColors
+- bsf:dark-xwkQ0AY(org.jetbrains.jewel.foundation.GlobalColors$Companion,org.jetbrains.jewel.foundation.BorderColors,org.jetbrains.jewel.foundation.OutlineColors,org.jetbrains.jewel.foundation.TextColors,J):org.jetbrains.jewel.foundation.GlobalColors
 - bs:dark-xwkQ0AY$default(org.jetbrains.jewel.foundation.GlobalColors$Companion,org.jetbrains.jewel.foundation.BorderColors,org.jetbrains.jewel.foundation.OutlineColors,org.jetbrains.jewel.foundation.TextColors,J,I,java.lang.Object):org.jetbrains.jewel.foundation.GlobalColors
 - sf:dark-zSO0fhY(org.jetbrains.jewel.foundation.BorderColors$Companion,J,J,J):org.jetbrains.jewel.foundation.BorderColors
 - bs:dark-zSO0fhY$default(org.jetbrains.jewel.foundation.BorderColors$Companion,J,J,J,I,java.lang.Object):org.jetbrains.jewel.foundation.BorderColors
+- sf:light-VT9Kpxs(org.jetbrains.jewel.foundation.GlobalColors$Companion,org.jetbrains.jewel.foundation.BorderColors,org.jetbrains.jewel.foundation.OutlineColors,org.jetbrains.jewel.foundation.TextColors,J,J):org.jetbrains.jewel.foundation.GlobalColors
+- bs:light-VT9Kpxs$default(org.jetbrains.jewel.foundation.GlobalColors$Companion,org.jetbrains.jewel.foundation.BorderColors,org.jetbrains.jewel.foundation.OutlineColors,org.jetbrains.jewel.foundation.TextColors,J,J,I,java.lang.Object):org.jetbrains.jewel.foundation.GlobalColors
 - sf:light-jdqzblg(org.jetbrains.jewel.foundation.OutlineColors$Companion,J,J,J,J,J):org.jetbrains.jewel.foundation.OutlineColors
 - sf:light-jdqzblg(org.jetbrains.jewel.foundation.TextColors$Companion,J,J,J,J,J):org.jetbrains.jewel.foundation.TextColors
 - bs:light-jdqzblg$default(org.jetbrains.jewel.foundation.OutlineColors$Companion,J,J,J,J,J,I,java.lang.Object):org.jetbrains.jewel.foundation.OutlineColors
 - bs:light-jdqzblg$default(org.jetbrains.jewel.foundation.TextColors$Companion,J,J,J,J,J,I,java.lang.Object):org.jetbrains.jewel.foundation.TextColors
-- sf:light-xwkQ0AY(org.jetbrains.jewel.foundation.GlobalColors$Companion,org.jetbrains.jewel.foundation.BorderColors,org.jetbrains.jewel.foundation.OutlineColors,org.jetbrains.jewel.foundation.TextColors,J):org.jetbrains.jewel.foundation.GlobalColors
+- bsf:light-xwkQ0AY(org.jetbrains.jewel.foundation.GlobalColors$Companion,org.jetbrains.jewel.foundation.BorderColors,org.jetbrains.jewel.foundation.OutlineColors,org.jetbrains.jewel.foundation.TextColors,J):org.jetbrains.jewel.foundation.GlobalColors
 - bs:light-xwkQ0AY$default(org.jetbrains.jewel.foundation.GlobalColors$Companion,org.jetbrains.jewel.foundation.BorderColors,org.jetbrains.jewel.foundation.OutlineColors,org.jetbrains.jewel.foundation.TextColors,J,I,java.lang.Object):org.jetbrains.jewel.foundation.GlobalColors
 - sf:light-zSO0fhY(org.jetbrains.jewel.foundation.BorderColors$Companion,J,J,J):org.jetbrains.jewel.foundation.BorderColors
 - bs:light-zSO0fhY$default(org.jetbrains.jewel.foundation.BorderColors$Companion,J,J,J,I,java.lang.Object):org.jetbrains.jewel.foundation.BorderColors
