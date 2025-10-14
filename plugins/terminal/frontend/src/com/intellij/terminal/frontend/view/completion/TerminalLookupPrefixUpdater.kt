@@ -96,7 +96,7 @@ class TerminalLookupPrefixUpdater private constructor(
     if (caretOffset < startOffset) {
       return null  // It looks like the lookup is not valid
     }
-    return model.getText(startOffset, caretOffset)
+    return model.getText(startOffset, caretOffset).toString()
   }
 
   private fun truncatePrefix(times: Int) {

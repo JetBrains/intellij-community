@@ -66,7 +66,7 @@ internal class TerminalCommandSpecCompletionContributorGen2 : CompletionContribu
 
     val document = parameters.editor.document
     val caretOffset = parameters.editor.caretModel.offset
-    val command = outputModel.getText(commandStartOffset, outputModel.startOffset + caretOffset.toLong())
+    val command = outputModel.getText(commandStartOffset, outputModel.startOffset + caretOffset.toLong()).toString()
     val tokens = shellSupport.getCommandTokens(parameters.editor.project!!, command) ?: return
     val allTokens = if (caretOffset != 0 && document.getText(TextRange.create(caretOffset - 1, caretOffset)) == " ") {
       tokens + ""  // user inserted space after the last token, so add empty incomplete token as last

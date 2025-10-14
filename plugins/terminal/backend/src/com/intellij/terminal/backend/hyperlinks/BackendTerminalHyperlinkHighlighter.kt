@@ -514,7 +514,7 @@ private class HypertextFromFrozenTerminalOutputModelAdapter(private val model: T
 }
 
 private fun TerminalOutputModelSnapshot.getLineText(line: TerminalLineIndex): String =
-  getText(getStartOfLine(line), getEndOfLine(line, includeEOL = true))
+  getText(getStartOfLine(line), getEndOfLine(line, includeEOL = true)).toString()
 
 /**
  * Indicates the number of lines processed in one batch.

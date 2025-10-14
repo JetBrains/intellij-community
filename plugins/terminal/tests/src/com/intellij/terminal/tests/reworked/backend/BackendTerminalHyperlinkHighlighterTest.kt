@@ -498,7 +498,7 @@ internal class BackendTerminalHyperlinkHighlighterTest : BasePlatformTestCase() 
       awaitEventProcessing()
       val actualLinks = backendFacade.dumpState().hyperlinks.filterIsInstance<TerminalHyperlinkInfo>().map { link ->
         ActualLinkWrapper(
-          outputModel.getText(TerminalOffset.of(link.absoluteStartOffset), TerminalOffset.of(link.absoluteEndOffset)),
+          outputModel.getText(TerminalOffset.of(link.absoluteStartOffset), TerminalOffset.of(link.absoluteEndOffset)).toString(),
           link,
         )
       }
@@ -532,7 +532,7 @@ internal class BackendTerminalHyperlinkHighlighterTest : BasePlatformTestCase() 
       awaitEventProcessing()
       val actualHighlightings = backendFacade.dumpState().hyperlinks.filterIsInstance<TerminalHighlightingInfo>().map { highlighting ->
         ActualHighlightingWrapper(
-          outputModel.getText(TerminalOffset.of(highlighting.absoluteStartOffset), TerminalOffset.of(highlighting.absoluteEndOffset)),
+          outputModel.getText(TerminalOffset.of(highlighting.absoluteStartOffset), TerminalOffset.of(highlighting.absoluteEndOffset)).toString(),
           highlighting,
         )
       }
@@ -632,7 +632,7 @@ internal class BackendTerminalHyperlinkHighlighterTest : BasePlatformTestCase() 
         val line = model.firstLineIndex + line.toLong()
         val lineStart = model.getStartOfLine(line)
         val lineEnd = model.getEndOfLine(line)
-        val lineText = model.getText(lineStart, lineEnd)
+        val lineText = model.getText(lineStart, lineEnd).toString()
         val column = lineText.indexOfSingle(substring)
         return lineStart + column.toLong()
       }

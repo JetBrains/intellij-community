@@ -7,7 +7,6 @@ import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.editor.Document
 import com.intellij.openapi.editor.impl.DocumentImpl
 import com.intellij.openapi.editor.impl.FrozenDocument
-import com.intellij.openapi.util.TextRange
 import com.intellij.terminal.TerminalColorPalette
 import com.intellij.util.EventDispatcher
 import org.jetbrains.annotations.ApiStatus
@@ -74,7 +73,7 @@ class MutableTerminalOutputModelImpl(
   override fun getEndOfLine(line: TerminalLineIndex, includeEOL: Boolean): TerminalOffset =
     getEndOfLineImpl(trimmedCharsCount, document, line.toRelative(), includeEOL)
 
-  override fun getText(start: TerminalOffset, end: TerminalOffset): String =
+  override fun getText(start: TerminalOffset, end: TerminalOffset): CharSequence =
     getTextImpl(document, start.toRelative(), end.toRelative())
 
   private fun TerminalOffset.toRelative(): Int = (this - startOffset).toInt()
@@ -546,7 +545,7 @@ class TerminalOutputModelSnapshotImpl(
   override fun getEndOfLine(line: TerminalLineIndex, includeEOL: Boolean): TerminalOffset =
     getEndOfLineImpl(trimmedCharsCount, document, line.toRelative(), includeEOL)
 
-  override fun getText(start: TerminalOffset, end: TerminalOffset): String =
+  override fun getText(start: TerminalOffset, end: TerminalOffset): CharSequence =
     getTextImpl(document, start.toRelative(), end.toRelative())
 
   private fun TerminalOffset.toRelative(): Int = (this - startOffset).toInt()
@@ -583,7 +582,7 @@ private fun getTextImpl(
   document: Document,
   relativeStart: Int,
   relativeEnd: Int,
-): String = document.getText(TextRange(relativeStart, relativeEnd))
+): CharSequence = document.immutableCharSequence.subSequence(relativeStart, relativeEnd)
 
 private data class TerminalContentChangeEventImpl(
   override val model: MutableTerminalOutputModelImpl,

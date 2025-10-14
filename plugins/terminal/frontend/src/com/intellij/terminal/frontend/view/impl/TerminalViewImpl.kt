@@ -463,7 +463,7 @@ class TerminalViewImpl(
         // When resizing the terminal, the blocks model may fall out of sync for a short time.
         // These updates will never trigger a completion, so we return early to avoid reading out of bounds.
         if (lastBlockCommandStartIndex >= model.endOffset) return
-        val curCommandText = model.getText(lastBlockCommandStartIndex, model.endOffset).trim()
+        val curCommandText = model.getText(lastBlockCommandStartIndex, model.endOffset).trim().toString()
 
         if (event.isTypeAhead) {
           // Trim because of differing whitespace between terminal and type ahead
