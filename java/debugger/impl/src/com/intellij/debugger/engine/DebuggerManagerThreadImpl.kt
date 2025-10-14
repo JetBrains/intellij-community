@@ -22,6 +22,8 @@ import com.intellij.openapi.util.NlsContexts.ProgressTitle
 import com.intellij.platform.ide.progress.withBackgroundProgress
 import com.intellij.platform.util.coroutines.childScope
 import com.intellij.platform.util.progress.withProgressText
+import com.intellij.util.AwaitCancellationAndInvoke
+import com.intellij.util.awaitCancellationAndInvoke
 import com.intellij.util.concurrency.AppExecutorUtil
 import com.sun.jdi.VMDisconnectedException
 import kotlinx.coroutines.*
@@ -316,6 +318,12 @@ class DebuggerManagerThreadImpl @ApiStatus.Internal @JvmOverloads constructor(
   @ApiStatus.Internal
   fun cancelScope() {
     coroutineScope.cancel()
+  }
+
+  @ApiStatus.Internal
+  @OptIn(AwaitCancellationAndInvoke::class)
+  fun afterScopeCancellation(callback: Runnable) {
+    coroutineScope.awaitCancellationAndInvoke { callback.run() }
   }
 
   companion object {

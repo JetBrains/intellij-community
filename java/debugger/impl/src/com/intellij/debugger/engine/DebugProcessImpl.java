@@ -2616,7 +2616,8 @@ public abstract class DebugProcessImpl extends UserDataHolderBase implements Deb
 
   private void reattach(RemoteConnection connection, Runnable detachVm, Runnable attachVm) {
     if (!myIsStopped.get()) {
-      getManagerThread().schedule(new DebuggerCommandImpl() {
+      DebuggerManagerThreadImpl debuggerManagerThread = getManagerThread();
+      debuggerManagerThread.schedule(new DebuggerCommandImpl() {
         @Override
         protected void action() {
           detachVm.run();
@@ -2626,7 +2627,8 @@ public abstract class DebugProcessImpl extends UserDataHolderBase implements Deb
 
         @Override
         protected void commandCancelled() {
-          doReattach(); // if the original process is already finished
+          // if the original process is already finished
+          debuggerManagerThread.afterScopeCancellation(this::doReattach);
         }
 
         private void doReattach() {
