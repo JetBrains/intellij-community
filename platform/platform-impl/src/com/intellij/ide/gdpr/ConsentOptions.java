@@ -249,22 +249,6 @@ public final class ConsentOptions implements ModificationTracker {
     setPermission(AI_DATA_COLLECTION_OPTION_ID, permitted);
   }
 
-  public @NotNull Permission getTraceDataCollectionNonComPermission() {
-    return getPermission(TRACE_DATA_COLLECTION_NON_COM_OPTION_ID);
-  }
-
-  public void setTraceDataCollectionNonComPermission(boolean permitted) {
-    setPermission(TRACE_DATA_COLLECTION_NON_COM_OPTION_ID, permitted);
-  }
-
-  public @NotNull Permission getTraceDataCollectionComPermission() {
-    return getPermission(TRACE_DATA_COLLECTION_COM_OPTION_ID);
-  }
-
-  public void setTraceDataCollectionComPermission(boolean permitted) {
-    setPermission(TRACE_DATA_COLLECTION_COM_OPTION_ID, permitted);
-  }
-
   private Permission getPermission(String consentId) {
     var confirmedConsent = getConfirmedConsent(consentId);
     return confirmedConsent == null? Permission.UNDEFINED : confirmedConsent.isAccepted()? Permission.YES : Permission.NO;
