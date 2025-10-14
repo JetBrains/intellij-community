@@ -963,13 +963,8 @@ public final class ConfigImportHelper {
 
     if (options.importSettings != null) {
       options.importSettings.processPluginsToMigrate(
-        newConfigDir,
-        oldConfigDir,
-        oldPluginsDir,
-        options,
-        brokenPluginVersions,
-        pluginsToMigrate,
-        pluginsToDownload);
+        newConfigDir, oldConfigDir, oldPluginsDir, options, brokenPluginVersions, pluginsToMigrate, pluginsToDownload
+      );
     }
 
     if (!PlatformUtils.isJetBrainsClient()) {
