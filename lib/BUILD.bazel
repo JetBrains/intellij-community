@@ -3219,8 +3219,8 @@ jvm_import(
 
 jvm_import(
   name = "jetbrains-mlapi-catboost",
-  jar = "@com_jetbrains_mlapi-mlapi-catboost-0_2_0_http//file",
-  source_jar = "@com_jetbrains_mlapi-mlapi-catboost-0_2_0_http//file",
+  jar = "@com_jetbrains_mlapi-mlapi-catboost-0_2_1_http//file",
+  source_jar = "@com_jetbrains_mlapi-mlapi-catboost-0_2_1_http//file",
   visibility = ["//visibility:public"]
 )
 
@@ -3232,8 +3232,8 @@ jvm_import(
 
 jvm_import(
   name = "jetbrains-mlapi-core",
-  jar = "@com_jetbrains_mlapi-mlapi-core-0_2_0_http//file",
-  source_jar = "@com_jetbrains_mlapi-mlapi-core-0_2_0_http//file",
+  jar = "@com_jetbrains_mlapi-mlapi-core-0_2_1_http//file",
+  source_jar = "@com_jetbrains_mlapi-mlapi-core-0_2_1_http//file",
   visibility = ["//visibility:public"]
 )
 

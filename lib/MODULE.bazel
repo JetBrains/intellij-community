@@ -4753,17 +4753,17 @@ http_file(
 )
 
 http_file(
-  name = "com_jetbrains_mlapi-mlapi-catboost-0_2_0_http",
-  url = "https://cache-redirector.jetbrains.com/packages.jetbrains.team/maven/p/ij/intellij-dependencies/com/jetbrains/mlapi/mlapi-catboost/0.2.0/mlapi-catboost-0.2.0.jar",
-  sha256 = "81d40889aba4f259f59787bf9d953501668fc4f49081c75792618bba1cc6c661",
-  downloaded_file_path = "mlapi-catboost-0.2.0.jar"
+  name = "com_jetbrains_mlapi-mlapi-catboost-0_2_1_http",
+  url = "https://cache-redirector.jetbrains.com/packages.jetbrains.team/maven/p/ij/intellij-dependencies/com/jetbrains/mlapi/mlapi-catboost/0.2.1/mlapi-catboost-0.2.1.jar",
+  sha256 = "de75176f3c95433d8da2b95dcdd233b6d9e3cca39f6e2baedb01d4932f911c85",
+  downloaded_file_path = "mlapi-catboost-0.2.1.jar"
 )
 
 http_file(
-  name = "com_jetbrains_mlapi-mlapi-catboost-0_2_0-sources_http",
-  url = "https://cache-redirector.jetbrains.com/packages.jetbrains.team/maven/p/ij/intellij-dependencies/com/jetbrains/mlapi/mlapi-catboost/0.2.0/mlapi-catboost-0.2.0-sources.jar",
-  sha256 = "7da5d2518a30d2777d0238eb88cb6ebb7327d957889d6ba259d1e73afc264660",
-  downloaded_file_path = "mlapi-catboost-0.2.0-sources.jar"
+  name = "com_jetbrains_mlapi-mlapi-catboost-0_2_1-sources_http",
+  url = "https://cache-redirector.jetbrains.com/packages.jetbrains.team/maven/p/ij/intellij-dependencies/com/jetbrains/mlapi/mlapi-catboost/0.2.1/mlapi-catboost-0.2.1-sources.jar",
+  sha256 = "610ffc781625e9954748bb675d883d38b67179196e7882c6490c6ef044e1c998",
+  downloaded_file_path = "mlapi-catboost-0.2.1-sources.jar"
 )
 
 http_file(
@@ -4774,17 +4774,17 @@ http_file(
 )
 
 http_file(
-  name = "com_jetbrains_mlapi-mlapi-core-0_2_0_http",
-  url = "https://cache-redirector.jetbrains.com/packages.jetbrains.team/maven/p/ij/intellij-dependencies/com/jetbrains/mlapi/mlapi-core/0.2.0/mlapi-core-0.2.0.jar",
-  sha256 = "6e07a48c74982f31a55b5099791e45b6af42a8e540c591732a10f8493abb56fe",
-  downloaded_file_path = "mlapi-core-0.2.0.jar"
+  name = "com_jetbrains_mlapi-mlapi-core-0_2_1_http",
+  url = "https://cache-redirector.jetbrains.com/packages.jetbrains.team/maven/p/ij/intellij-dependencies/com/jetbrains/mlapi/mlapi-core/0.2.1/mlapi-core-0.2.1.jar",
+  sha256 = "02da615dd0adac62f2d87db878f587529e8d2cb82b3a65ed8b5466a518324180",
+  downloaded_file_path = "mlapi-core-0.2.1.jar"
 )
 
 http_file(
-  name = "com_jetbrains_mlapi-mlapi-core-0_2_0-sources_http",
-  url = "https://cache-redirector.jetbrains.com/packages.jetbrains.team/maven/p/ij/intellij-dependencies/com/jetbrains/mlapi/mlapi-core/0.2.0/mlapi-core-0.2.0-sources.jar",
-  sha256 = "ac917198906a6dfac091713d55d29ebe0ce347df9b3537bd458f6fcdab3af5c8",
-  downloaded_file_path = "mlapi-core-0.2.0-sources.jar"
+  name = "com_jetbrains_mlapi-mlapi-core-0_2_1-sources_http",
+  url = "https://cache-redirector.jetbrains.com/packages.jetbrains.team/maven/p/ij/intellij-dependencies/com/jetbrains/mlapi/mlapi-core/0.2.1/mlapi-core-0.2.1-sources.jar",
+  sha256 = "0691cb777ddb5a6881ad2fd31676becee9974b6eea6c10b30295e56890448a28",
+  downloaded_file_path = "mlapi-core-0.2.1-sources.jar"
 )
 
 http_file(
