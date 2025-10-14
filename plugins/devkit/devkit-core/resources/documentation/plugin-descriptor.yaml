@@ -623,19 +623,6 @@ elements:
                             **This option isn't implemented yet and currently behaves the same way as `optional`.**
                         defaultValue: |
                           `optional`
-                    - attribute:
-                        name: os
-                        description: |
-                          Allows restricting the loading of a module to specific operating system.
-                          Supported values:
-                          - `freebsd`
-                          - `linux`
-                          - `mac`
-                          - `unix`
-                          - `windows`
-                          
-                          For example, `os="windows"` allows the module to load only on Windows.
-
         - element:
             name: extensions
             references:
