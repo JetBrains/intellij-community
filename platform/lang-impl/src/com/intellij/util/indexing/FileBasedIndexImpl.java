@@ -710,7 +710,8 @@ public final class FileBasedIndexImpl extends FileBasedIndexEx {
 
         // TODO-ank: Should we catch and ignore CancellationException here to allow other lines to execute?
         IndexingStamp.close();
-        IndexingFlag.unlockAllFiles(); // TODO-ank: IndexingFlag should also be closed, because indexes might be cleared (IDEA-336540)
+        IndexingFlag.unlockAllFiles();
+        IndexingFlag.close();
         // TODO-ank: review all the remaining usages of fast file attributes (IDEA-336540)
 
         List<ThrowableRunnable<?>> indexDisposeTasks = new ArrayList<>();
