@@ -1,14 +1,14 @@
 // Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.kotlin.gradle.scripting.k2.inspections
 
+import com.intellij.psi.util.PsiTreeUtil
+import com.intellij.psi.util.descendants
 import org.jetbrains.kotlin.analysis.api.analyze
 import org.jetbrains.kotlin.analysis.api.resolution.singleFunctionCallOrNull
 import org.jetbrains.kotlin.analysis.api.resolution.symbol
 import org.jetbrains.kotlin.analysis.api.types.symbol
 import org.jetbrains.kotlin.name.FqName
-import org.jetbrains.kotlin.psi.KtCallExpression
-import org.jetbrains.kotlin.psi.KtExpression
-import org.jetbrains.kotlin.psi.KtValueArgumentList
+import org.jetbrains.kotlin.psi.*
 import org.jetbrains.plugins.gradle.service.resolve.GradleCommonClassNames.GRADLE_API_ARTIFACTS_DEPENDENCY
 import org.jetbrains.plugins.gradle.service.resolve.GradleCommonClassNames.GRADLE_API_ARTIFACTS_EXTERNAL_MODULE_DEPENDENCY
 
@@ -55,3 +55,16 @@ internal fun findNamedOrPositionalArgument(element: KtValueArgumentList, paramet
     } ?: element.arguments.getOrNull(expectedIndex)
     return argument?.getArgumentExpression()
 }
+
+internal fun KtFile.findScriptInitializers(startsWith: String): Sequence<KtScriptInitializer> =
+    this.descendants(false) { it !is KtScriptInitializer }.filterIsInstance<KtScriptInitializer>().filter { it.text.startsWith(startsWith) }
+
+internal fun KtFile.findScriptInitializer(startsWith: String): KtScriptInitializer? =
+    this.findScriptInitializers(startsWith).firstOrNull()
+
+internal fun KtScriptInitializer.getBlock(): KtBlockExpression? =
+    PsiTreeUtil.findChildOfType(this, KtCallExpression::class.java)?.getBlock()
+
+internal fun KtCallExpression.getBlock(): KtBlockExpression? =
+    (valueArguments.singleOrNull()?.getArgumentExpression() as? KtLambdaExpression)?.bodyExpression
+        ?: lambdaArguments.lastOrNull()?.getLambdaExpression()?.bodyExpression

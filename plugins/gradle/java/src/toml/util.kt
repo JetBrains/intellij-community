@@ -212,6 +212,30 @@ fun getResolvedDependency(method: PsiMethod, context: PsiElement): String? {
   }
 }
 
+/**
+ * Tries to resolve a plugin from a synthetic accessor method.
+ * @return a string in the format of `<id>:<version>`,
+ * `<id>` if the version cannot be resolved or null if the plugin cannot be resolved
+ */
+fun getResolvedPlugin(method: PsiMethod, context: PsiElement): String? {
+  if (!isInVersionCatalogAccessor(method)) return null
+  val origin = findOriginInTomlFile(method, context) as? TomlKeyValue ?: return null
+  return when (val originValue = origin.value) {
+    is TomlLiteral -> originValue.text.cleanRawString()
+    is TomlInlineTable -> {
+      val id = originValue.entries.find { it.key.segments.size == 1 && it.key.segments.firstOrNull()?.name == "id" }?.value
+      if (id == null) return null
+      if (id !is TomlLiteral) return null
+      val idText = id.text.cleanRawString()
+
+      val versionEntry = originValue.entries.find { it.key.segments.firstOrNull()?.name == "version" } ?: return idText
+      val versionText = getResolvedVersion(versionEntry) ?: return idText
+      "$idText:$versionText"
+    }
+    else -> null
+  }
+}
+
 private fun getResolvedVersion(entry: TomlKeyValue): String? {
   if (entry.key.segments.firstOrNull()?.name != "version") return null
 
