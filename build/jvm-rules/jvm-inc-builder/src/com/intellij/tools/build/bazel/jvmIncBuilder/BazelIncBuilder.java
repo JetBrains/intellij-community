@@ -294,7 +294,7 @@ public class BazelIncBuilder {
         context, sourcesState, context.getResources(), modifiedLibraries, deletedLibraries
       );
     }
-    
+
     return context.hasErrors()? ExitCode.ERROR : ExitCode.OK;
   }
 
