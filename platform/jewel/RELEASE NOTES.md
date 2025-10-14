@@ -1,6 +1,6 @@
 # Jewel Release Notes
 
-## v0.31 (ETA 2025-10-06)
+## v0.31 (2025-10-14)
 
 | Min supported IJP versions | Compose Multiplatform version |
 |----------------------------|-------------------------------|
