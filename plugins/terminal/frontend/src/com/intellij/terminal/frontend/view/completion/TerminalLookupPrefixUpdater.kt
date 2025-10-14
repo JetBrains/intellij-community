@@ -15,8 +15,8 @@ import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.flow.update
 import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.annotations.TestOnly
+import org.jetbrains.plugins.terminal.block.reworked.TerminalContentChangeEvent
 import org.jetbrains.plugins.terminal.block.reworked.TerminalCursorOffsetChangeEvent
-import org.jetbrains.plugins.terminal.block.reworked.TerminalOffset
 import org.jetbrains.plugins.terminal.block.reworked.TerminalOutputModel
 import org.jetbrains.plugins.terminal.block.reworked.TerminalOutputModelListener
 
@@ -39,7 +39,7 @@ class TerminalLookupPrefixUpdater private constructor(
     })
 
     model.addListener(coroutineScope.asDisposable(), object : TerminalOutputModelListener {
-      override fun afterContentChanged(model: TerminalOutputModel, startOffset: TerminalOffset, isTypeAhead: Boolean) {
+      override fun afterContentChanged(event: TerminalContentChangeEvent) {
         pendingRequestsCount.update { it + 1 }
         prefixUpdateRequests.trySend(Unit)
       }

@@ -1,7 +1,7 @@
 package com.intellij.terminal.frontend.fus
 
 import com.intellij.openapi.diagnostic.thisLogger
-import org.jetbrains.plugins.terminal.block.reworked.TerminalOffset
+import org.jetbrains.plugins.terminal.block.reworked.TerminalContentChangeEvent
 import org.jetbrains.plugins.terminal.block.reworked.TerminalOutputModel
 import org.jetbrains.plugins.terminal.block.reworked.TerminalOutputModelListener
 import org.jetbrains.plugins.terminal.fus.ReworkedTerminalUsageCollector
@@ -11,8 +11,8 @@ internal class TerminalFusFirstOutputListener(private val startupFusInfo: Termin
   /** Guarded by EDT */
   private var reported = false
 
-  override fun afterContentChanged(model: TerminalOutputModel, startOffset: TerminalOffset, isTypeAhead: Boolean) {
-    if (!reported && hasAnyMeaningfulText(model)) {
+  override fun afterContentChanged(event: TerminalContentChangeEvent) {
+    if (!reported && hasAnyMeaningfulText(event.model)) {
       reportFirstOutputReceived()
       reported = true
     }

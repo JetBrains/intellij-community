@@ -395,11 +395,11 @@ class TerminalViewImpl(
         editor.isTerminalOutputScrollChangingActionInProgress = true
       }
 
-      override fun afterContentChanged(model: TerminalOutputModel, startOffset: TerminalOffset, isTypeAhead: Boolean) {
+      override fun afterContentChanged(event: TerminalContentChangeEvent) {
         editor.isTerminalOutputScrollChangingActionInProgress = false
 
         // Also repaint the changed part of the document to ensure that highlightings are properly painted.
-        editor.repaint(startOffset.toRelative(model), editor.document.textLength)
+        editor.repaint(if (event.isTrimming) 0 else event.offset.toRelative(model), editor.document.textLength)
 
         // Update the PSI file content
         val psiFile = PsiDocumentManager.getInstance(project).getPsiFile((model as MutableTerminalOutputModel).document) as? TerminalOutputPsiFile
@@ -455,7 +455,7 @@ class TerminalViewImpl(
       var commandText: String? = null
       var cursorPosition: Int? = null
 
-      override fun afterContentChanged(model: TerminalOutputModel, startOffset: TerminalOffset, isTypeAhead: Boolean) {
+      override fun afterContentChanged(event: TerminalContentChangeEvent) {
         val inlineCompletionTypingSession = InlineCompletion.getHandlerOrNull(editor)?.typingSessionTracker
         val lastBlock = editor.getUserData(TerminalBlocksModel.KEY)?.blocks?.lastOrNull() ?: return
         val lastBlockCommandStartIndex = lastBlock.commandStartOffset ?: lastBlock.startOffset
@@ -465,7 +465,7 @@ class TerminalViewImpl(
         if (lastBlockCommandStartIndex >= model.endOffset) return
         val curCommandText = model.getText(lastBlockCommandStartIndex, model.endOffset).trim()
 
-        if (isTypeAhead) {
+        if (event.isTypeAhead) {
           // Trim because of differing whitespace between terminal and type ahead
           commandText = curCommandText
           val newCursorOffset = model.cursorOffset.toRelative(model) + 1

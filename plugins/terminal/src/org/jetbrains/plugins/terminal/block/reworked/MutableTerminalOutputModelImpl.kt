@@ -278,6 +278,7 @@ class MutableTerminalOutputModelImpl(
 
     var trimmed = 0
     if (isTrimNeeded()) {
+      dispatcher.multicaster.beforeContentChanged(this)
       val startBeforeTrimming = startOffset
       val trimmedSequence = trimToSize()
       dispatcher.multicaster.afterContentChanged(TerminalContentChangeEventImpl(
@@ -292,8 +293,6 @@ class MutableTerminalOutputModelImpl(
     }
 
     val effectiveStartOffset = change.offset.coerceAtLeast(startOffset)
-
-    dispatcher.multicaster.afterContentChanged(this, effectiveStartOffset, isTypeAhead)
 
     LOG.debug {
       "Content updated from offset = $effectiveStartOffset, " +

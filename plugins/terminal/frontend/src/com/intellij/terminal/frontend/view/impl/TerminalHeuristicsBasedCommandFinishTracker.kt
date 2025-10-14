@@ -15,6 +15,7 @@ import kotlinx.coroutines.FlowPreview
 import kotlinx.coroutines.channels.BufferOverflow
 import kotlinx.coroutines.flow.*
 import kotlinx.coroutines.launch
+import org.jetbrains.plugins.terminal.block.reworked.TerminalContentChangeEvent
 import org.jetbrains.plugins.terminal.block.reworked.TerminalLineIndex
 import org.jetbrains.plugins.terminal.block.reworked.TerminalOffset
 import org.jetbrains.plugins.terminal.block.reworked.TerminalOutputModel
@@ -133,7 +134,7 @@ internal class TerminalHeuristicsBasedCommandFinishTracker(
     val flow = MutableSharedFlow<Unit>(extraBufferCapacity = 1, onBufferOverflow = BufferOverflow.DROP_OLDEST)
 
     outputModel.addListener(coroutineScope.asDisposable(), object : TerminalOutputModelListener {
-      override fun afterContentChanged(model: TerminalOutputModel, startOffset: TerminalOffset, isTypeAhead: Boolean) {
+      override fun afterContentChanged(event: TerminalContentChangeEvent) {
         check(flow.tryEmit(Unit))
       }
     })
