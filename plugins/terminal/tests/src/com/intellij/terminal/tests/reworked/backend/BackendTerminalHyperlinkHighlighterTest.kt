@@ -485,13 +485,13 @@ internal class BackendTerminalHyperlinkHighlighterTest : BasePlatformTestCase() 
     }
 
     suspend fun updateModel(fromLine: Long, newText: String) {
-      updateEvents.emit(listOf(TerminalContentUpdatedEvent(newText, emptyList(), fromLine)))
+      updateEvents.emit(listOf(TerminalContentUpdatedEvent(newText.ensureEOL(), emptyList(), fromLine)))
       pendingUpdateEventCount.update { it + 1 }
     }
 
     suspend fun assertText(expected: String) {
       awaitEventProcessing()
-      assertThat(document.text).isEqualTo(expected)
+      assertThat(document.text).isEqualTo(expected.ensureEOL())
     }
 
     suspend fun assertLinks(vararg expectedLinks: Link) {
@@ -691,6 +691,8 @@ internal class BackendTerminalHyperlinkHighlighterTest : BasePlatformTestCase() 
     }
   }
 }
+
+private fun String.ensureEOL(): String = if (isEmpty() || endsWith('\n')) this else this + '\n'
 
 private class InlayResultItem(
   highlightStartOffset: Int,
