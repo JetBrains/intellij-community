@@ -1458,6 +1458,300 @@ jvm_import(
   visibility = ["//visibility:public"]
 )
 
+java_library(
+  name = "fleet-aws-sdk-kotlin-s3-jvm",
+  exports = [
+    ":aws_sdk_kotlin-s3-jvm-1_0_69_http_import",
+    ":aws_sdk_kotlin-aws-config-jvm-1_0_69_http_import",
+    ":aws_smithy_kotlin-serde-json-jvm-1_0_16_http_import",
+    ":aws_smithy_kotlin-serde-form-url-jvm-1_0_16_http_import",
+    ":aws_smithy_kotlin-aws-json-protocols-jvm-1_0_16_http_import",
+    ":aws_sdk_kotlin-aws-core-jvm-1_0_69_http_import",
+    ":aws_sdk_kotlin-aws-endpoint-jvm-1_0_69_http_import",
+    ":aws_smithy_kotlin-http-client-jvm-1_0_16_http_import",
+    ":aws_smithy_kotlin-runtime-core-jvm-1_0_16_http_import",
+    ":com_squareup_okio-okio-jvm-3_6_0_http_import",
+    ":aws_smithy_kotlin-smithy-client-jvm-1_0_16_http_import",
+    ":aws_smithy_kotlin-telemetry-api-jvm-1_0_16_http_import",
+    ":aws_smithy_kotlin-aws-credentials-jvm-1_0_16_http_import",
+    ":aws_smithy_kotlin-aws-event-stream-jvm-1_0_16_http_import",
+    ":aws_sdk_kotlin-aws-http-jvm-1_0_69_http_import",
+    ":aws_smithy_kotlin-aws-protocol-core-jvm-1_0_16_http_import",
+    ":aws_smithy_kotlin-aws-signing-common-jvm-1_0_16_http_import",
+    ":aws_smithy_kotlin-aws-signing-default-jvm-1_0_16_http_import",
+    ":aws_smithy_kotlin-aws-xml-protocols-jvm-1_0_16_http_import",
+    ":aws_smithy_kotlin-http-jvm-1_0_16_http_import",
+    ":aws_smithy_kotlin-http-auth-jvm-1_0_16_http_import",
+    ":aws_smithy_kotlin-http-auth-api-jvm-1_0_16_http_import",
+    ":aws_smithy_kotlin-http-auth-aws-jvm-1_0_16_http_import",
+    ":aws_smithy_kotlin-http-client-engine-default-jvm-1_0_16_http_import",
+    ":aws_smithy_kotlin-http-client-engine-okhttp-jvm-1_0_16_http_import",
+    ":com_squareup_okhttp3-okhttp-jvm-5_0_0-alpha_11_http_import",
+    ":com_squareup_okhttp3-okhttp-coroutines-jvm-5_0_0-alpha_11_http_import",
+    ":aws_smithy_kotlin-identity-api-jvm-1_0_16_http_import",
+    ":aws_smithy_kotlin-serde-jvm-1_0_16_http_import",
+    ":aws_smithy_kotlin-serde-xml-jvm-1_0_16_http_import",
+    ":aws_smithy_kotlin-telemetry-defaults-jvm-1_0_16_http_import",
+    ":aws_smithy_kotlin-logging-slf4j2-jvm-1_0_16_http_import",
+  ],
+  visibility = ["//visibility:public"]
+)
+
+jvm_import(
+  name = "aws_sdk_kotlin-s3-jvm-1_0_69_http_import",
+  jar = "@aws_sdk_kotlin-s3-jvm-1_0_69_http//file",
+  source_jar = "@aws_sdk_kotlin-s3-jvm-1_0_69_http//file"
+)
+
+jvm_import(
+  name = "aws_sdk_kotlin-aws-config-jvm-1_0_69_http_import",
+  jar = "@aws_sdk_kotlin-aws-config-jvm-1_0_69_http//file",
+  source_jar = "@aws_sdk_kotlin-aws-config-jvm-1_0_69_http//file"
+)
+
+jvm_import(
+  name = "aws_smithy_kotlin-serde-json-jvm-1_0_16_http_import",
+  jar = "@aws_smithy_kotlin-serde-json-jvm-1_0_16_http//file",
+  source_jar = "@aws_smithy_kotlin-serde-json-jvm-1_0_16_http//file"
+)
+
+jvm_import(
+  name = "aws_smithy_kotlin-serde-form-url-jvm-1_0_16_http_import",
+  jar = "@aws_smithy_kotlin-serde-form-url-jvm-1_0_16_http//file",
+  source_jar = "@aws_smithy_kotlin-serde-form-url-jvm-1_0_16_http//file"
+)
+
+jvm_import(
+  name = "aws_smithy_kotlin-aws-json-protocols-jvm-1_0_16_http_import",
+  jar = "@aws_smithy_kotlin-aws-json-protocols-jvm-1_0_16_http//file",
+  source_jar = "@aws_smithy_kotlin-aws-json-protocols-jvm-1_0_16_http//file"
+)
+
+jvm_import(
+  name = "aws_sdk_kotlin-aws-core-jvm-1_0_69_http_import",
+  jar = "@aws_sdk_kotlin-aws-core-jvm-1_0_69_http//file",
+  source_jar = "@aws_sdk_kotlin-aws-core-jvm-1_0_69_http//file"
+)
+
+jvm_import(
+  name = "aws_sdk_kotlin-aws-endpoint-jvm-1_0_69_http_import",
+  jar = "@aws_sdk_kotlin-aws-endpoint-jvm-1_0_69_http//file",
+  source_jar = "@aws_sdk_kotlin-aws-endpoint-jvm-1_0_69_http//file"
+)
+
+jvm_import(
+  name = "aws_smithy_kotlin-http-client-jvm-1_0_16_http_import",
+  jar = "@aws_smithy_kotlin-http-client-jvm-1_0_16_http//file",
+  source_jar = "@aws_smithy_kotlin-http-client-jvm-1_0_16_http//file"
+)
+
+jvm_import(
+  name = "aws_smithy_kotlin-runtime-core-jvm-1_0_16_http_import",
+  jar = "@aws_smithy_kotlin-runtime-core-jvm-1_0_16_http//file",
+  source_jar = "@aws_smithy_kotlin-runtime-core-jvm-1_0_16_http//file"
+)
+
+jvm_import(
+  name = "com_squareup_okio-okio-jvm-3_6_0_http_import",
+  jar = "@com_squareup_okio-okio-jvm-3_6_0_http//file",
+  source_jar = "@com_squareup_okio-okio-jvm-3_6_0_http//file"
+)
+
+jvm_import(
+  name = "aws_smithy_kotlin-smithy-client-jvm-1_0_16_http_import",
+  jar = "@aws_smithy_kotlin-smithy-client-jvm-1_0_16_http//file",
+  source_jar = "@aws_smithy_kotlin-smithy-client-jvm-1_0_16_http//file"
+)
+
+jvm_import(
+  name = "aws_smithy_kotlin-telemetry-api-jvm-1_0_16_http_import",
+  jar = "@aws_smithy_kotlin-telemetry-api-jvm-1_0_16_http//file",
+  source_jar = "@aws_smithy_kotlin-telemetry-api-jvm-1_0_16_http//file"
+)
+
+jvm_import(
+  name = "aws_smithy_kotlin-aws-credentials-jvm-1_0_16_http_import",
+  jar = "@aws_smithy_kotlin-aws-credentials-jvm-1_0_16_http//file",
+  source_jar = "@aws_smithy_kotlin-aws-credentials-jvm-1_0_16_http//file"
+)
+
+jvm_import(
+  name = "aws_smithy_kotlin-aws-event-stream-jvm-1_0_16_http_import",
+  jar = "@aws_smithy_kotlin-aws-event-stream-jvm-1_0_16_http//file",
+  source_jar = "@aws_smithy_kotlin-aws-event-stream-jvm-1_0_16_http//file"
+)
+
+jvm_import(
+  name = "aws_sdk_kotlin-aws-http-jvm-1_0_69_http_import",
+  jar = "@aws_sdk_kotlin-aws-http-jvm-1_0_69_http//file",
+  source_jar = "@aws_sdk_kotlin-aws-http-jvm-1_0_69_http//file"
+)
+
+jvm_import(
+  name = "aws_smithy_kotlin-aws-protocol-core-jvm-1_0_16_http_import",
+  jar = "@aws_smithy_kotlin-aws-protocol-core-jvm-1_0_16_http//file",
+  source_jar = "@aws_smithy_kotlin-aws-protocol-core-jvm-1_0_16_http//file"
+)
+
+jvm_import(
+  name = "aws_smithy_kotlin-aws-signing-common-jvm-1_0_16_http_import",
+  jar = "@aws_smithy_kotlin-aws-signing-common-jvm-1_0_16_http//file",
+  source_jar = "@aws_smithy_kotlin-aws-signing-common-jvm-1_0_16_http//file"
+)
+
+jvm_import(
+  name = "aws_smithy_kotlin-aws-signing-default-jvm-1_0_16_http_import",
+  jar = "@aws_smithy_kotlin-aws-signing-default-jvm-1_0_16_http//file",
+  source_jar = "@aws_smithy_kotlin-aws-signing-default-jvm-1_0_16_http//file"
+)
+
+jvm_import(
+  name = "aws_smithy_kotlin-aws-xml-protocols-jvm-1_0_16_http_import",
+  jar = "@aws_smithy_kotlin-aws-xml-protocols-jvm-1_0_16_http//file",
+  source_jar = "@aws_smithy_kotlin-aws-xml-protocols-jvm-1_0_16_http//file"
+)
+
+jvm_import(
+  name = "aws_smithy_kotlin-http-jvm-1_0_16_http_import",
+  jar = "@aws_smithy_kotlin-http-jvm-1_0_16_http//file",
+  source_jar = "@aws_smithy_kotlin-http-jvm-1_0_16_http//file"
+)
+
+jvm_import(
+  name = "aws_smithy_kotlin-http-auth-jvm-1_0_16_http_import",
+  jar = "@aws_smithy_kotlin-http-auth-jvm-1_0_16_http//file",
+  source_jar = "@aws_smithy_kotlin-http-auth-jvm-1_0_16_http//file"
+)
+
+jvm_import(
+  name = "aws_smithy_kotlin-http-auth-api-jvm-1_0_16_http_import",
+  jar = "@aws_smithy_kotlin-http-auth-api-jvm-1_0_16_http//file",
+  source_jar = "@aws_smithy_kotlin-http-auth-api-jvm-1_0_16_http//file"
+)
+
+jvm_import(
+  name = "aws_smithy_kotlin-http-auth-aws-jvm-1_0_16_http_import",
+  jar = "@aws_smithy_kotlin-http-auth-aws-jvm-1_0_16_http//file",
+  source_jar = "@aws_smithy_kotlin-http-auth-aws-jvm-1_0_16_http//file"
+)
+
+jvm_import(
+  name = "aws_smithy_kotlin-http-client-engine-default-jvm-1_0_16_http_import",
+  jar = "@aws_smithy_kotlin-http-client-engine-default-jvm-1_0_16_http//file",
+  source_jar = "@aws_smithy_kotlin-http-client-engine-default-jvm-1_0_16_http//file"
+)
+
+jvm_import(
+  name = "aws_smithy_kotlin-http-client-engine-okhttp-jvm-1_0_16_http_import",
+  jar = "@aws_smithy_kotlin-http-client-engine-okhttp-jvm-1_0_16_http//file",
+  source_jar = "@aws_smithy_kotlin-http-client-engine-okhttp-jvm-1_0_16_http//file"
+)
+
+jvm_import(
+  name = "com_squareup_okhttp3-okhttp-jvm-5_0_0-alpha_11_http_import",
+  jar = "@com_squareup_okhttp3-okhttp-jvm-5_0_0-alpha_11_http//file",
+  source_jar = "@com_squareup_okhttp3-okhttp-jvm-5_0_0-alpha_11_http//file"
+)
+
+jvm_import(
+  name = "com_squareup_okhttp3-okhttp-coroutines-jvm-5_0_0-alpha_11_http_import",
+  jar = "@com_squareup_okhttp3-okhttp-coroutines-jvm-5_0_0-alpha_11_http//file",
+  source_jar = "@com_squareup_okhttp3-okhttp-coroutines-jvm-5_0_0-alpha_11_http//file"
+)
+
+jvm_import(
+  name = "aws_smithy_kotlin-identity-api-jvm-1_0_16_http_import",
+  jar = "@aws_smithy_kotlin-identity-api-jvm-1_0_16_http//file",
+  source_jar = "@aws_smithy_kotlin-identity-api-jvm-1_0_16_http//file"
+)
+
+jvm_import(
+  name = "aws_smithy_kotlin-serde-jvm-1_0_16_http_import",
+  jar = "@aws_smithy_kotlin-serde-jvm-1_0_16_http//file",
+  source_jar = "@aws_smithy_kotlin-serde-jvm-1_0_16_http//file"
+)
+
+jvm_import(
+  name = "aws_smithy_kotlin-serde-xml-jvm-1_0_16_http_import",
+  jar = "@aws_smithy_kotlin-serde-xml-jvm-1_0_16_http//file",
+  source_jar = "@aws_smithy_kotlin-serde-xml-jvm-1_0_16_http//file"
+)
+
+jvm_import(
+  name = "aws_smithy_kotlin-telemetry-defaults-jvm-1_0_16_http_import",
+  jar = "@aws_smithy_kotlin-telemetry-defaults-jvm-1_0_16_http//file",
+  source_jar = "@aws_smithy_kotlin-telemetry-defaults-jvm-1_0_16_http//file"
+)
+
+jvm_import(
+  name = "aws_smithy_kotlin-logging-slf4j2-jvm-1_0_16_http_import",
+  jar = "@aws_smithy_kotlin-logging-slf4j2-jvm-1_0_16_http//file",
+  source_jar = "@aws_smithy_kotlin-logging-slf4j2-jvm-1_0_16_http//file"
+)
+
+java_library(
+  name = "fleet-clikt",
+  exports = [
+    ":com_github_ajalt_clikt-clikt-jvm-5_0_3_http_import",
+    ":com_github_ajalt_mordant-mordant-jvm-3_0_1_http_import",
+    ":com_github_ajalt_mordant-mordant-core-jvm-3_0_1_http_import",
+    ":com_github_ajalt_colormath-colormath-jvm-3_6_0_http_import",
+  ],
+  visibility = ["//visibility:public"]
+)
+
+jvm_import(
+  name = "com_github_ajalt_clikt-clikt-jvm-5_0_3_http_import",
+  jar = "@com_github_ajalt_clikt-clikt-jvm-5_0_3_http//file",
+  source_jar = "@com_github_ajalt_clikt-clikt-jvm-5_0_3_http//file"
+)
+
+jvm_import(
+  name = "com_github_ajalt_mordant-mordant-jvm-3_0_1_http_import",
+  jar = "@com_github_ajalt_mordant-mordant-jvm-3_0_1_http//file",
+  source_jar = "@com_github_ajalt_mordant-mordant-jvm-3_0_1_http//file"
+)
+
+jvm_import(
+  name = "com_github_ajalt_mordant-mordant-core-jvm-3_0_1_http_import",
+  jar = "@com_github_ajalt_mordant-mordant-core-jvm-3_0_1_http//file",
+  source_jar = "@com_github_ajalt_mordant-mordant-core-jvm-3_0_1_http//file"
+)
+
+jvm_import(
+  name = "com_github_ajalt_colormath-colormath-jvm-3_6_0_http_import",
+  jar = "@com_github_ajalt_colormath-colormath-jvm-3_6_0_http//file",
+  source_jar = "@com_github_ajalt_colormath-colormath-jvm-3_6_0_http//file"
+)
+
+jvm_import(
+  name = "fleet-clikt-core",
+  jar = "@com_github_ajalt_clikt-clikt-core-jvm-5_0_3_http//file",
+  source_jar = "@com_github_ajalt_clikt-clikt-core-jvm-5_0_3_http//file",
+  visibility = ["//visibility:public"]
+)
+
+jvm_import(
+  name = "fleet-github-luben-zstd-jni",
+  jar = "@com_github_luben-zstd-jni-1_5_5-11_http//file",
+  source_jar = "@com_github_luben-zstd-jni-1_5_5-11_http//file",
+  visibility = ["//visibility:public"]
+)
+
+jvm_import(
+  name = "fleet-io-github-pdvrieze-xmlutil-core-jvm",
+  jar = "@io_github_pdvrieze_xmlutil-core-jvm-0_86_3_http//file",
+  source_jar = "@io_github_pdvrieze_xmlutil-core-jvm-0_86_3_http//file",
+  visibility = ["//visibility:public"]
+)
+
+jvm_import(
+  name = "fleet-io-github-pdvrieze-xmlutil-serialization-jvm",
+  jar = "@io_github_pdvrieze_xmlutil-serialization-jvm-0_86_3_http//file",
+  source_jar = "@io_github_pdvrieze_xmlutil-serialization-jvm-0_86_3_http//file",
+  visibility = ["//visibility:public"]
+)
+
 jvm_import(
   name = "fleet-io-ktor-client-cio",
   jar = "@io_ktor-ktor-client-cio-jvm-3_1_3_http//file",
@@ -1469,6 +1763,20 @@ jvm_import(
   name = "fleet-io-ktor-client-core",
   jar = "@io_ktor-ktor-client-core-jvm-3_1_3_http//file",
   source_jar = "@io_ktor-ktor-client-core-jvm-3_1_3_http//file",
+  visibility = ["//visibility:public"]
+)
+
+jvm_import(
+  name = "fleet-io-ktor-client-logging",
+  jar = "@io_ktor-ktor-client-logging-jvm-3_1_3_http//file",
+  source_jar = "@io_ktor-ktor-client-logging-jvm-3_1_3_http//file",
+  visibility = ["//visibility:public"]
+)
+
+jvm_import(
+  name = "fleet-io-ktor-client-mock",
+  jar = "@io_ktor-ktor-client-mock-jvm-3_1_3_http//file",
+  source_jar = "@io_ktor-ktor-client-mock-jvm-3_1_3_http//file",
   visibility = ["//visibility:public"]
 )
 
@@ -1570,10 +1878,66 @@ jvm_import(
   visibility = ["//visibility:public"]
 )
 
+java_library(
+  name = "fleet-jetbrains-intellij-idea-community-build-zip",
+  exports = [
+    ":com_jetbrains_intellij_idea-idea-community-build-zip-252_11244_http_import",
+    ":io_netty-netty-buffer-4_2_0_RC2_http_import",
+    ":io_netty-netty-common-4_2_0_RC2_http_import",
+    ":org_jetbrains_intellij_deps_fastutil-intellij-deps-fastutil-8_5_15-jb1_http_import",
+    ":com_dynatrace_hash4j-hash4j-0_20_0_http_import",
+  ],
+  visibility = ["//visibility:public"]
+)
+
+jvm_import(
+  name = "com_jetbrains_intellij_idea-idea-community-build-zip-252_11244_http_import",
+  jar = "@com_jetbrains_intellij_idea-idea-community-build-zip-252_11244_http//file",
+  source_jar = "@com_jetbrains_intellij_idea-idea-community-build-zip-252_11244_http//file"
+)
+
+jvm_import(
+  name = "io_netty-netty-buffer-4_2_0_RC2_http_import",
+  jar = "@io_netty-netty-buffer-4_2_0_RC2_http//file",
+  source_jar = "@io_netty-netty-buffer-4_2_0_RC2_http//file"
+)
+
+jvm_import(
+  name = "io_netty-netty-common-4_2_0_RC2_http_import",
+  jar = "@io_netty-netty-common-4_2_0_RC2_http//file",
+  source_jar = "@io_netty-netty-common-4_2_0_RC2_http//file"
+)
+
+jvm_import(
+  name = "org_jetbrains_intellij_deps_fastutil-intellij-deps-fastutil-8_5_15-jb1_http_import",
+  jar = "@org_jetbrains_intellij_deps_fastutil-intellij-deps-fastutil-8_5_15-jb1_http//file",
+  source_jar = "@org_jetbrains_intellij_deps_fastutil-intellij-deps-fastutil-8_5_15-jb1_http//file"
+)
+
+jvm_import(
+  name = "com_dynatrace_hash4j-hash4j-0_20_0_http_import",
+  jar = "@com_dynatrace_hash4j-hash4j-0_20_0_http//file",
+  source_jar = "@com_dynatrace_hash4j-hash4j-0_20_0_http//file"
+)
+
+jvm_import(
+  name = "fleet-jetbrains-intellij-platform-util-zip-squashed",
+  jar = "@com_jetbrains_intellij_platform-util-zip-squashed-252_16432_http//file",
+  source_jar = "@com_jetbrains_intellij_platform-util-zip-squashed-252_16432_http//file",
+  visibility = ["//visibility:public"]
+)
+
 jvm_import(
   name = "fleet-org-fusesource-jansi",
   jar = "@org_fusesource_jansi-jansi-2_4_1_http//file",
   source_jar = "@org_fusesource_jansi-jansi-2_4_1_http//file",
+  visibility = ["//visibility:public"]
+)
+
+jvm_import(
+  name = "fleet-tukaani-xz",
+  jar = "@org_tukaani-xz-1_9_http//file",
+  source_jar = "@org_tukaani-xz-1_9_http//file",
   visibility = ["//visibility:public"]
 )
 
@@ -8067,18 +8431,6 @@ java_library(
     ":io_netty-netty-common-4_2_0_RC2_http_import",
   ],
   visibility = ["//visibility:public"]
-)
-
-jvm_import(
-  name = "io_netty-netty-buffer-4_2_0_RC2_http_import",
-  jar = "@io_netty-netty-buffer-4_2_0_RC2_http//file",
-  source_jar = "@io_netty-netty-buffer-4_2_0_RC2_http//file"
-)
-
-jvm_import(
-  name = "io_netty-netty-common-4_2_0_RC2_http_import",
-  jar = "@io_netty-netty-common-4_2_0_RC2_http//file",
-  source_jar = "@io_netty-netty-common-4_2_0_RC2_http//file"
 )
 
 jvm_import(

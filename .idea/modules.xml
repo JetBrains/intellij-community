@@ -4,6 +4,15 @@
     <modules>
       <module fileurl="file://$PROJECT_DIR$/fleet/andel/fleet.andel.iml" filepath="$PROJECT_DIR$/fleet/andel/fleet.andel.iml" />
       <module fileurl="file://$PROJECT_DIR$/fleet/bifurcan/fleet.bifurcan.iml" filepath="$PROJECT_DIR$/fleet/bifurcan/fleet.bifurcan.iml" />
+      <module fileurl="file://$PROJECT_DIR$/fleet/build/authentication/fleet.build.authentication.iml" filepath="$PROJECT_DIR$/fleet/build/authentication/fleet.build.authentication.iml" />
+      <module fileurl="file://$PROJECT_DIR$/fleet/build/cli/fleet.build.cli.iml" filepath="$PROJECT_DIR$/fleet/build/cli/fleet.build.cli.iml" />
+      <module fileurl="file://$PROJECT_DIR$/fleet/build/codecache/fleet.build.codecache.iml" filepath="$PROJECT_DIR$/fleet/build/codecache/fleet.build.codecache.iml" />
+      <module fileurl="file://$PROJECT_DIR$/fleet/build/fs/fleet.build.fs.iml" filepath="$PROJECT_DIR$/fleet/build/fs/fleet.build.fs.iml" />
+      <module fileurl="file://$PROJECT_DIR$/fleet/build/http/fleet.build.http.iml" filepath="$PROJECT_DIR$/fleet/build/http/fleet.build.http.iml" />
+      <module fileurl="file://$PROJECT_DIR$/fleet/build/license/fleet.build.license.iml" filepath="$PROJECT_DIR$/fleet/build/license/fleet.build.license.iml" />
+      <module fileurl="file://$PROJECT_DIR$/fleet/build/platform/fleet.build.platform.iml" filepath="$PROJECT_DIR$/fleet/build/platform/fleet.build.platform.iml" />
+      <module fileurl="file://$PROJECT_DIR$/fleet/build/s3/fleet.build.s3.iml" filepath="$PROJECT_DIR$/fleet/build/s3/fleet.build.s3.iml" />
+      <module fileurl="file://$PROJECT_DIR$/fleet/build/sign/fleet.build.sign.iml" filepath="$PROJECT_DIR$/fleet/build/sign/fleet.build.sign.iml" />
       <module fileurl="file://$PROJECT_DIR$/fleet/bundles/fleet.bundles.iml" filepath="$PROJECT_DIR$/fleet/bundles/fleet.bundles.iml" />
       <module fileurl="file://$PROJECT_DIR$/fleet/codecache/fleet.codecache.iml" filepath="$PROJECT_DIR$/fleet/codecache/fleet.codecache.iml" />
       <module fileurl="file://$PROJECT_DIR$/fleet/codecache/test/fleet.codecache.test.iml" filepath="$PROJECT_DIR$/fleet/codecache/test/fleet.codecache.test.iml" />

@@ -221,6 +221,15 @@ commandInterface
 community-resources
 fleet/andel
 fleet/bifurcan
+fleet/build/authentication
+fleet/build/cli
+fleet/build/codecache
+fleet/build/fs
+fleet/build/http
+fleet/build/license
+fleet/build/platform
+fleet/build/s3
+fleet/build/sign
 fleet/bundles
 fleet/codecache
 fleet/codecache/test
