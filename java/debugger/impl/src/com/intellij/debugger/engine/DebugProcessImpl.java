@@ -2111,9 +2111,10 @@ public abstract class DebugProcessImpl extends UserDataHolderBase implements Deb
       if (myIgnoreBreakpoints) {
         DebuggerManagerEx.getInstanceEx(project).getBreakpointManager().disableBreakpoints(DebugProcessImpl.this);
       }
-      beforeSteppingAction(context);
       LightOrRealThreadInfo threadFilterFromContext = getThreadFilterFromContext(context);
       applyThreadFilter(threadFilterFromContext);
+      // It is important to notify about the stepping after the thread filtering is set
+      beforeSteppingAction(context);
       int breakpointSuspendPolicy = context.getSuspendPolicy();
       // In the case of the isAlwaysSuspendThreadBeforeSwitch mode, the switch will be performed for all breakpoints by engine
       if (!DebuggerUtils.isAlwaysSuspendThreadBeforeSwitch()) {
