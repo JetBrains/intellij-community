@@ -84,7 +84,7 @@ class GlobalWorkspaceModel internal constructor(
    * 2. Ensure that the namespace of "global" entities (such as SDKs and global libraries) is local to each environment.
    */
   private val eelMachine: EelMachine,
-  private val internalEnvironmentName: InternalEnvironmentName,
+  val internalEnvironmentName: InternalEnvironmentName,
 ) {
 
   /**
@@ -428,16 +428,7 @@ class GlobalWorkspaceModelRegistry {
 
   fun getGlobalModel(eelMachine: EelMachine): GlobalWorkspaceModel {
     val protectedMachine = if (Registry.`is`("ide.workspace.model.per.environment.model.separation")) eelMachine else LocalEelMachine
-    val internalEnvironmentName = if (protectedMachine is LocalEelMachine) {
-      InternalEnvironmentName.Local
-    }
-    else {
-      val name = EelProvider.EP_NAME.extensionList.firstNotNullOfOrNull { eelProvider ->
-        eelProvider.getInternalName(protectedMachine)
-      }
-      ?: throw IllegalArgumentException("Descriptor $protectedMachine must be registered before using in Workspace Model")
-      InternalEnvironmentName.of(name)
-    }
+    val internalEnvironmentName = protectedMachine.getInternalEnvironmentNameImpl()
     return environmentToModel.computeIfAbsent(protectedMachine) { GlobalWorkspaceModel(globalWorkspaceModels, protectedMachine, internalEnvironmentName) }
   }
 
@@ -468,3 +459,20 @@ class GlobalWorkspaceModelRegistry {
   }
 
 }
+
+@ApiStatus.Internal
+fun EelMachine.getInternalEnvironmentName(): InternalEnvironmentName {
+  val protectedMachine = if (Registry.`is`("ide.workspace.model.per.environment.model.separation")) this else LocalEelMachine
+  return protectedMachine.getInternalEnvironmentNameImpl()
+}
+
+private fun EelMachine.getInternalEnvironmentNameImpl(): InternalEnvironmentName =
+  if (this is LocalEelMachine) {
+    InternalEnvironmentName.Local
+  }
+  else {
+    val name = EelProvider.EP_NAME.extensionList.firstNotNullOfOrNull { eelProvider ->
+      eelProvider.getInternalName(eelMachine = this)
+    } ?: throw IllegalArgumentException("Descriptor $this must be registered before using in Workspace Model")
+    InternalEnvironmentName.of(name)
+  }
