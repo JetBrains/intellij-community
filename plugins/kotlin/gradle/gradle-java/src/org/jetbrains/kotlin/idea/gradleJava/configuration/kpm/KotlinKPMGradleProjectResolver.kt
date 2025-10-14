@@ -6,6 +6,7 @@ import com.intellij.openapi.externalSystem.model.ProjectKeys
 import com.intellij.openapi.externalSystem.model.project.*
 import com.intellij.openapi.externalSystem.util.ExternalSystemApiUtil
 import com.intellij.openapi.externalSystem.util.ExternalSystemConstants
+import com.intellij.openapi.externalSystem.util.ExternalSystemTelemetryUtil
 import com.intellij.openapi.externalSystem.util.Order
 import com.intellij.openapi.roots.DependencyScope
 import org.gradle.tooling.model.idea.IdeaModule
@@ -40,9 +41,11 @@ open class KotlinKPMGradleProjectResolver : AbstractProjectResolverExtension() {
     )
 
     override fun populateModuleExtraModels(gradleModule: IdeaModule, ideModule: DataNode<ModuleData>) {
-        if (ExternalSystemApiUtil.find(ideModule, BuildScriptClasspathData.KEY) == null) {
-            val buildScriptClasspathData = buildClasspathData(gradleModule, resolverCtx)
-            ideModule.createChild(BuildScriptClasspathData.KEY, buildScriptClasspathData)
+        ExternalSystemTelemetryUtil.runWithSpan(ideModule.data.owner, "kotlin_import_kmp_populateModuleExtraModels") {
+            if (ExternalSystemApiUtil.find(ideModule, BuildScriptClasspathData.KEY) == null) {
+                val buildScriptClasspathData = buildClasspathData(gradleModule, resolverCtx)
+                ideModule.createChild(BuildScriptClasspathData.KEY, buildScriptClasspathData)
+            }
         }
 
         super.populateModuleExtraModels(gradleModule, ideModule)
@@ -50,9 +53,11 @@ open class KotlinKPMGradleProjectResolver : AbstractProjectResolverExtension() {
 
     override fun createModule(gradleModule: IdeaModule, projectDataNode: DataNode<ProjectData>) =
         super.createModule(gradleModule, projectDataNode)?.also { mainModuleNode ->
-            val initializerContext = ModuleDataInitializer.Context.EMPTY
-            ModuleDataInitializer.EP_NAME.extensions.forEach { moduleDataInitializer ->
-                moduleDataInitializer.initialize(gradleModule, mainModuleNode, projectDataNode, resolverCtx, initializerContext)
+            ExternalSystemTelemetryUtil.runWithSpan(mainModuleNode.data.owner, "kotlin_import_kmp_createModule") {
+                val initializerContext = ModuleDataInitializer.Context.EMPTY
+                ModuleDataInitializer.EP_NAME.extensions.forEach { moduleDataInitializer ->
+                    moduleDataInitializer.initialize(gradleModule, mainModuleNode, projectDataNode, resolverCtx, initializerContext)
+                }
             }
         }
 
@@ -60,8 +65,10 @@ open class KotlinKPMGradleProjectResolver : AbstractProjectResolverExtension() {
         if (!modelExists(gradleModule)) {
             return super.populateModuleContentRoots(gradleModule, ideModule)
         }
-        ContentRootsCreator.EP_NAME.extensions.forEach { contentRootsCreator ->
-            contentRootsCreator.populateContentRoots(gradleModule, ideModule, resolverCtx)
+        ExternalSystemTelemetryUtil.runWithSpan(ideModule.data.owner, "kotlin_import_kmp_populateModuleContentRoots") {
+            ContentRootsCreator.EP_NAME.extensions.forEach { contentRootsCreator ->
+                contentRootsCreator.populateContentRoots(gradleModule, ideModule, resolverCtx)
+            }
         }
     }
 
@@ -69,7 +76,9 @@ open class KotlinKPMGradleProjectResolver : AbstractProjectResolverExtension() {
         if (!modelExists(gradleModule)) {
             return super.populateModuleDependencies(gradleModule, ideModule, ideProject)
         }
-        populateDependenciesByFragmentData(gradleModule, ideModule, ideProject, resolverCtx)
+        ExternalSystemTelemetryUtil.runWithSpan(ideModule.data.owner, "kotlin_import_kmp_populateModuleDependencies") {
+            populateDependenciesByFragmentData(gradleModule, ideModule, ideProject, resolverCtx)
+        }
     }
 
     private fun modelExists(gradleModule: IdeaModule): Boolean = resolverCtx.getIdeaKpmProject(gradleModule) != null
