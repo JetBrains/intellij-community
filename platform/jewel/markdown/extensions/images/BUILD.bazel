@@ -38,7 +38,6 @@ jvm_library(
     "//libraries/ktor/client",
     "//libraries/compose-foundation-desktop",
   ],
-  exports = ["//libraries/coil"],
   plugins = ["@lib//:compose-plugin"]
 )
 
@@ -63,7 +62,6 @@ jvm_library(
     "//libraries/ktor/client",
     "//libraries/compose-foundation-desktop",
   ],
-  exports = ["//libraries/coil"],
   plugins = ["@lib//:compose-plugin"]
 )
 ### auto-generated section `build intellij.platform.jewel.markdown.extensions.images` end
