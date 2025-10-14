@@ -3630,13 +3630,6 @@ jvm_import(
 )
 
 java_library(
-  name = "junit5Vintage-provided",
-  exports = [":junit5Vintage"],
-  neverlink = True,
-  visibility = ["//visibility:public"]
-)
-
-java_library(
   name = "junit6",
   exports = [
     ":org_junit_jupiter-junit-jupiter-api-6_0_0_http_import",

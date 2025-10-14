@@ -413,6 +413,7 @@ libraries/junit5
 libraries/junit5-launcher
 libraries/junit5-params
 libraries/junit5-pioneer
+libraries/junit5-vintage
 libraries/jvm-native-trusted-roots
 libraries/jzlib
 libraries/kotlin/reflect
