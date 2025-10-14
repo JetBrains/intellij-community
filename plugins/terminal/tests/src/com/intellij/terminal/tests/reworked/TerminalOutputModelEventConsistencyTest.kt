@@ -53,7 +53,7 @@ internal class TerminalOutputModelEventConsistencyTest : BasePlatformTestCase() 
     val mirror = StringBuilder()
     var trimmed = 0L
     sut.addListener(asDisposable(), object : TerminalOutputModelListener {
-      override fun afterContentChanged(event: TerminalContentChanged) {
+      override fun afterContentChanged(event: TerminalContentChangeEvent) {
         if (event.isTrimming) {
           mirror.delete(0, event.oldText.length)
           trimmed += event.oldText.length
