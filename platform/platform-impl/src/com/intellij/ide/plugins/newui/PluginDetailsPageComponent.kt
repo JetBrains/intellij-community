@@ -1517,7 +1517,7 @@ class PluginDetailsPageComponent @JvmOverloads constructor(
   }
 
   private fun createInstallButton(): PluginInstallButton {
-    if (Registry.`is`("reworked.plugin.manager.enabled", false)) {
+    if (UiPluginManager.isCombinedPluginManagerEnabled()) {
       val button = InstallOptionButton()
       setDefaultInstallAction(button)
       return button
