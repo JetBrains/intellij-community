@@ -4,7 +4,6 @@ package org.jetbrains.idea.devkit.inspections
 import com.intellij.ide.highlighter.XmlFileType
 import com.intellij.openapi.fileEditor.UniqueVFilePathBuilder
 import com.intellij.openapi.project.Project
-import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.psi.PsiReference
 import com.intellij.psi.search.GlobalSearchScope
 import com.intellij.psi.search.GlobalSearchScopesCore
@@ -53,8 +52,8 @@ internal class ContentModuleVisibilityInspection : DevKitPluginXmlInspectionBase
     for (currentModuleIncludingPlugin in currentModuleIncludingPlugins) {
       for (dependencyIncludingPlugin in dependencyIncludingPlugins) {
         if (currentModuleIncludingPlugin == dependencyIncludingPlugin) continue
-        val currentModuleNamespace = currentModuleIncludingPlugin.getNamespace()
-        val dependencyNamespace = dependencyIncludingPlugin.getNamespace()
+        val currentModuleNamespace = currentModuleIncludingPlugin.namespace
+        val dependencyNamespace = dependencyIncludingPlugin.namespace
         if (currentModuleNamespace != dependencyNamespace) {
           holder.createProblem(
             dependencyValue,
@@ -72,8 +71,8 @@ internal class ContentModuleVisibilityInspection : DevKitPluginXmlInspectionBase
     currentXmlFile: XmlFile,
     currentModuleIncludingPlugin: IdeaPlugin,
   ): @Nls String? {
-    val dependencyNamespace = dependencyIncludingPlugin.getNamespace()
-    val currentModuleNamespace = currentModuleIncludingPlugin.getNamespace()
+    val dependencyNamespace = dependencyIncludingPlugin.namespace
+    val currentModuleNamespace = currentModuleIncludingPlugin.namespace
     return when {
       dependencyNamespace == null -> message(
         "inspection.content.module.visibility.internal.dependency.namespace.missing",
@@ -96,19 +95,16 @@ internal class ContentModuleVisibilityInspection : DevKitPluginXmlInspectionBase
   private fun getPluginXmlFilesIncludingFileAsContentModule(xmlFile: XmlFile, scope: GlobalSearchScope): Collection<IdeaPlugin> {
     val moduleVirtualFile = xmlFile.virtualFile ?: return emptyList()
     val psiManager = xmlFile.manager
-    return findFilesIncludingContentModule(moduleVirtualFile, scope)
+    return PluginIdDependenciesIndex.findFilesIncludingContentModule(moduleVirtualFile, scope)
       .mapNotNull { psiManager.findFile(it) as? XmlFile }
       .mapNotNull { DescriptorUtil.getIdeaPlugin(it) }
   }
 
-  private fun findFilesIncludingContentModule(moduleVirtualFile: VirtualFile, scope: GlobalSearchScope): Collection<VirtualFile> {
-    return PluginIdDependenciesIndex.findFilesIncludingContentModule(moduleVirtualFile, scope)
-  }
-
-  private fun IdeaPlugin.getNamespace(): String? {
-    // all <content> must have the same namespace, so take it from the first:
-    return this.content.firstOrNull()?.namespace?.value
-  }
+  private val IdeaPlugin.namespace: String?
+    get() {
+      // all <content> must have the same namespace, so take it from the first:
+      return this.content.firstOrNull()?.namespace?.value
+    }
 
   private fun IdeaPlugin.getUniqueFileName(): String {
     return UniqueVFilePathBuilder.getInstance().getUniqueVirtualFilePath(xmlElement!!.project, xmlElement!!.containingFile.virtualFile)
@@ -150,7 +146,7 @@ internal class ContentModuleVisibilityInspection : DevKitPluginXmlInspectionBase
   private fun getPluginsIncludingFileAsContentModule(xmlFile: XmlFile, scope: GlobalSearchScope): Collection<IdeaPlugin> {
     val moduleVirtualFile = xmlFile.virtualFile ?: return emptyList()
     val psiManager = xmlFile.manager
-    return findFilesIncludingContentModule(moduleVirtualFile, scope)
+    return PluginIdDependenciesIndex.findFilesIncludingContentModule(moduleVirtualFile, scope)
       .mapNotNull { psiManager.findFile(it) as? XmlFile }
       .flatMap { getActualIncludingPlugins(it, scope) }
       .distinct()
