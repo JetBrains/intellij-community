@@ -108,7 +108,6 @@ class KotlinProjectConfigurationService(private val project: Project, private va
     /**
      * @return true if the sync is currently in-progress by the underlying external system.
      * Also see [isSyncing] for checking if the sync is queued or in progress.
-     * Note: This method does not work for Maven and always returns false, use [isSyncing] instead.
      */
     fun isSyncInProgress(): Boolean {
         return syncState.get().level == SyncState.Level.SyncInProgress
