@@ -96,8 +96,10 @@ internal fun isTrackingInfosExist(branchNames: List<String>, repositories: Colle
     .any { trackingBranchInfo -> branchNames.any { branchName -> branchName == trackingBranchInfo.localBranch.name } }
 
 internal fun hasRemotes(project: Project): Boolean {
-  return GitUtil.getRepositories(project).any { repository -> !repository.remotes.isEmpty() }
+  return hasAnyRemotes(GitUtil.getRepositories(project))
 }
+
+internal fun hasAnyRemotes(repositories: Collection<GitRepository>): Boolean = repositories.any { it.remotes.isNotEmpty() }
 
 internal fun hasTrackingConflicts(conflictingLocalBranches: Map<GitRepository, GitLocalBranch>,
                                   remoteBranchName: String): Boolean =

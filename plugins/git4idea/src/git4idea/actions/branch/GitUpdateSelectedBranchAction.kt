@@ -9,7 +9,7 @@ import git4idea.fetch.GitFetchSupport
 import git4idea.i18n.GitBundle
 import git4idea.repo.GitRepository
 import git4idea.ui.branch.GitBranchPopupActions.getSelectedBranchFullPresentation
-import git4idea.ui.branch.hasRemotes
+import git4idea.ui.branch.hasAnyRemotes
 import git4idea.ui.branch.isTrackingInfosExist
 import git4idea.ui.branch.updateBranches
 import java.util.*
@@ -21,7 +21,7 @@ class GitUpdateSelectedBranchAction
 
   override fun updateIfEnabledAndVisible(e: AnActionEvent, project: Project, repositories: List<GitRepository>, branch: GitBranch) {
     with(e.presentation) {
-      if (!hasRemotes(project)) {
+      if (!hasAnyRemotes(repositories)) {
         isEnabledAndVisible = false
         return
       }
