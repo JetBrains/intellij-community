@@ -11,6 +11,7 @@ import com.intellij.testFramework.*
 import com.intellij.testFramework.assertions.Assertions.assertThat
 import com.intellij.testFramework.rules.checkDefaultProjectAsTemplate
 import com.intellij.util.io.createDirectories
+import com.intellij.workspaceModel.ide.ProjectRootEntity
 import com.intellij.workspaceModel.ide.toPath
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.runBlocking
@@ -41,10 +42,10 @@ internal class OpenProjectTest(private val opener: Opener) {
     @Parameterized.Parameters(name = "{0}")
     fun params(): Iterable<Opener> {
       return listOf(
-        Opener("OpenFileAction-FolderAsProject", expectedModules = listOf($$"$ROOT$")) {
+        Opener("OpenFileAction-FolderAsProject", expectedModules = listOf($$"$ROOT$"), expectedRoots = listOf($$"$ROOT$")) {
           runBlocking { ProjectUtil.openExistingDir(it, null) }
         },
-        Opener("CLI-FolderAsProject", expectedModules = listOf($$"$ROOT$")) {
+        Opener("CLI-FolderAsProject", expectedModules = listOf($$"$ROOT$"), expectedRoots = listOf($$"$ROOT$")) {
           runBlocking { CommandLineProcessor.doOpenFileOrProject(it, false) }.project!!
         },
       )
@@ -122,6 +123,7 @@ internal class OpenProjectTest(private val opener: Opener) {
       val project = opener.opener(projectDir)!!
       project.useProject {
         assertThatProjectContainsModules(project, opener.getExpectedModules(projectDir))
+        assertThatProjectContainsRootEntities(project, opener.getExpectedRoots(projectDir))
         checkDefaultProjectAsTemplateTask(project, defaultProjectTemplateShouldBeApplied)
       }
     }
@@ -131,6 +133,7 @@ internal class OpenProjectTest(private val opener: Opener) {
 internal class Opener(
   private val name: String,
   val expectedModules: List<String>,
+  val expectedRoots: List<String>,
   val opener: (Path) -> Project?,
 ) {
   override fun toString() = name
@@ -144,6 +147,10 @@ internal class Opener(
   fun getExpectedModules(projectDir: Path): List<Path> {
     return expandPath(expectedModules, projectDir)
 
+  }
+
+  fun getExpectedRoots(projectDir: Path): List<Path> {
+    return expandPath(expectedRoots, projectDir)
   }
 }
 
@@ -160,4 +167,17 @@ private fun assertThatProjectContainsModules(project: Project, expectedModulePat
   assertThat(projectModulePaths)
     .`as`("Modules do not match expectations")
     .hasSameElementsAs(expectedModulePaths)
+}
+
+private fun assertThatProjectContainsRootEntities(project: Project, expectedRootPaths: List<Path>) {
+  val wsm = project.workspaceModel
+  val roots = wsm.currentSnapshot.entities(ProjectRootEntity::class.java).toList()
+
+  val projectRootPaths = roots
+    .map { it.root }
+    .map { it.toPath() }
+
+  assertThat(projectRootPaths)
+    .`as`("ProjectRootEntities do not match expectations")
+    .hasSameElementsAs(expectedRootPaths)
 }

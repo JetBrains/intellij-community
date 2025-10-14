@@ -185,7 +185,7 @@ object ProjectUtil {
     if (isValidProjectPath(file)) {
       LOG.info("Opening existing project with .idea at $file")
       // see OpenProjectTest.`open valid existing project dir with inability to attach using OpenFileAction` test about why `runConfigurators = true` is specified here
-      return (serviceAsync<ProjectManager>() as ProjectManagerEx).openProjectAsync(file, options.copy(runConfigurators = true))
+      return (serviceAsync<ProjectManager>() as ProjectManagerEx).openProjectAsync(file, options.copy(runConfigurators = true, projectRootDir = file))
     }
 
     if (!options.preventIprLookup && Files.isDirectory(file)) {
@@ -232,6 +232,7 @@ object ProjectUtil {
           isNewProject = true,
           useDefaultProjectAsTemplate = true,
           runConfigurators = true,
+          projectRootDir = file,
           beforeOpen = {
             it.putUserData(PROJECT_OPENED_BY_PLATFORM_PROCESSOR, true)
             options.beforeOpen?.invoke(it) ?: true
