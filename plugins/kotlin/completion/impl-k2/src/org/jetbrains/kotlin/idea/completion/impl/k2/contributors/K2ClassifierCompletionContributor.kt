@@ -5,6 +5,7 @@ import com.intellij.codeInsight.lookup.LookupElement
 import com.intellij.codeInsight.lookup.LookupElementBuilder
 import com.intellij.codeInsight.lookup.LookupElementPresentation
 import com.intellij.codeInsight.lookup.SuspendingLookupElementRenderer
+import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.application.readAction
 import com.intellij.psi.PsiDocumentManager
 import com.intellij.psi.PsiElement
@@ -214,6 +215,9 @@ internal open class K2ClassifierCompletionContributor : K2CompletionContributor<
                     }
                 }
         } else {
+            // We do not show items from index when there is no prefix because there would be too many.
+            // That means if the prefix changes at all (the only option is for it to grow in size), we must restart completion.
+            sectionContext.sink.restartCompletionOnAnyPrefixChange()
             emptySequence()
         }
 
