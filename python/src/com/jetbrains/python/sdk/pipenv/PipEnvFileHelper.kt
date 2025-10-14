@@ -15,7 +15,6 @@ import org.jetbrains.annotations.ApiStatus.Internal
 object PipEnvFileHelper {
   const val PIP_FILE: String = "Pipfile"
   const val PIP_FILE_LOCK: String = "Pipfile.lock"
-  const val PIPENV_PATH_SETTING: String = "PyCharm.Pipenv.Path"
 
   fun getPipFileLock(sdk: Sdk): VirtualFile? =
     sdk.associatedModulePath?.let { StandardFileSystems.local().findFileByPath(it)?.findChild(PIP_FILE_LOCK) }

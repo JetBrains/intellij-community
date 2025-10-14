@@ -28,11 +28,13 @@ import com.intellij.python.community.services.systemPython.SystemPython
 import com.intellij.python.community.services.systemPython.SystemPythonService
 import com.intellij.python.sdkConfigurator.common.enableSDKAutoConfigurator
 import com.jetbrains.python.PyBundle
+import com.jetbrains.python.getOrLogException
 import com.jetbrains.python.packaging.utils.PyPackageCoroutine
 import com.jetbrains.python.sdk.*
 import com.jetbrains.python.sdk.conda.PyCondaSdkCustomizer
+import com.jetbrains.python.sdk.configuration.CreateSdkInfo
 import com.jetbrains.python.sdk.configuration.PyProjectSdkConfiguration.setReadyToUseSdk
-import com.jetbrains.python.sdk.configuration.PyProjectSdkConfiguration.setSdkUsingExtension
+import com.jetbrains.python.sdk.configuration.PyProjectSdkConfiguration.setSdkUsingCreateSdkInfo
 import com.jetbrains.python.sdk.configuration.PyProjectSdkConfiguration.suppressTipAndInspectionsFor
 import com.jetbrains.python.sdk.configuration.PyProjectSdkConfigurationExtension
 import com.jetbrains.python.sdk.impl.PySdkBundle
@@ -65,22 +67,21 @@ class PythonSdkConfigurator : DirectoryProjectConfigurator {
     StartupManager.getInstance(project).runWhenProjectIsInitialized {
       PyPackageCoroutine.launch(project) {
         if (module.isDisposed) return@launch
-        val extension = findExtension(module)
-        val title = extension?.getIntention(module) ?: PySdkBundle.message("python.configuring.interpreter.progress")
-        withBackgroundProgress(project, title, true) {
-          val lifetime = extension?.let { suppressTipAndInspectionsFor(module, it) }
-          lifetime.use { configureSdk(project, module, extension) }
+        val sdkInfos = findSuitableCreateSdkInfos(module)
+        withBackgroundProgress(project, PySdkBundle.message("python.configuring.interpreter.progress"), true) {
+          val lifetime = suppressTipAndInspectionsFor(module, "all suitable extensions")
+          lifetime.use { configureSdk(project, module, sdkInfos) }
         }
       }
     }
   }
 
-  private suspend fun findExtension(module: Module): PyProjectSdkConfigurationExtension? = withContext(Dispatchers.Default) {
+  private suspend fun findSuitableCreateSdkInfos(module: Module): List<CreateSdkInfo> = withContext(Dispatchers.Default) {
     if (!TrustedProjects.isProjectTrusted(module.project) || ApplicationManager.getApplication().isUnitTestMode) {
-      null
+      emptyList()
     }
-    else PyProjectSdkConfigurationExtension.EP_NAME.extensionsIfPointIsRegistered.firstOrNull {
-      it.getIntention(module) != null && (!ApplicationManager.getApplication().isHeadlessEnvironment || it.supportsHeadlessModel())
+    else {
+      PyProjectSdkConfigurationExtension.EP_NAME.extensionsIfPointIsRegistered.mapNotNull { it.checkEnvironmentAndPrepareSdkCreator(module) }.sorted()
     }
   }
 
@@ -89,7 +90,7 @@ class PythonSdkConfigurator : DirectoryProjectConfigurator {
   suspend fun configureSdk(
     project: Project,
     module: Module,
-    extension: PyProjectSdkConfigurationExtension?,
+    createSdkInfos: List<CreateSdkInfo>,
   ): Unit = withContext(Dispatchers.Default) {
     val context = UserDataHolderBase()
 
@@ -107,13 +108,8 @@ class PythonSdkConfigurator : DirectoryProjectConfigurator {
     if (searchPreviousUsed(module, existingSdks, project))
       return@withContext
 
-    if (extension != null) {
-      val isExtensionSetup = setSdkUsingExtension(module, extension) {
-        withContext(Dispatchers.Default) {
-          extension.createAndAddSdkForConfigurator(module)
-        }
-      }
-      if (isExtensionSetup) return@withContext
+    for (createSdkInfo in createSdkInfos) {
+      if (setSdkUsingCreateSdkInfo(module, createSdkInfo, true)) return@withContext
     }
 
     if (setupSharedCondaEnv(module, existingSdks, project)) {
@@ -205,8 +201,11 @@ class PythonSdkConfigurator : DirectoryProjectConfigurator {
     if (fallback == null) {
       return false
     }
-    fallback.createAndAddSdkForConfigurator(module)
-    return true
+    val sdkCreator = fallback.checkEnvironmentAndPrepareSdkCreator(module)?.sdkCreator
+    if (sdkCreator == null) {
+      return false
+    }
+    return sdkCreator(true).getOrLogException(thisLogger()) != null
   }
 
   private suspend fun searchPreviousUsed(

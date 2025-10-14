@@ -50,11 +50,11 @@ import com.jetbrains.python.sdk.PySdkExtKt;
 import com.jetbrains.python.sdk.PySdkPopupFactory;
 import com.jetbrains.python.sdk.PythonSdkType;
 import com.jetbrains.python.sdk.conda.PyCondaSdkCustomizer;
+import com.jetbrains.python.sdk.configuration.CreateSdkInfo;
 import com.jetbrains.python.sdk.configuration.PyProjectSdkConfiguration;
 import com.jetbrains.python.sdk.configuration.PyProjectSdkConfigurationExtension;
 import com.jetbrains.python.sdk.legacy.PythonSdkUtil;
 import com.jetbrains.python.ui.PyUiUtil;
-import kotlin.Pair;
 import one.util.streamex.StreamEx;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -93,17 +93,17 @@ public final class PyInterpreterInspection extends PyInspection {
     private static final AsyncLoadingCache<@NotNull Module, @NotNull List<PyDetectedSdk>> DETECTED_ASSOCIATED_ENVS_CACHE =
       Caffeine.newBuilder().executor(AppExecutorUtil.getAppExecutorService())
 
-      // Even though various listeners invalidate the cache on many actions, it's unfeasible to track for venv/conda interpreters
-      // creation performed outside the IDE.
-      // 20 seconds timeout is taken at random.
-      .expireAfterWrite(Duration.ofSeconds(20))
+        // Even though various listeners invalidate the cache on many actions, it's unfeasible to track for venv/conda interpreters
+        // creation performed outside the IDE.
+        // 20 seconds timeout is taken at random.
+        .expireAfterWrite(Duration.ofSeconds(20))
 
-      .weakKeys()
-      .buildAsync(module -> {
-        final List<Sdk> existingSdks = getExistingSdks();
-        final UserDataHolderBase context = new UserDataHolderBase();
-        return PySdkExtKt.detectAssociatedEnvironments(module, existingSdks, context);
-      });
+        .weakKeys()
+        .buildAsync(module -> {
+          final List<Sdk> existingSdks = getExistingSdks();
+          final UserDataHolderBase context = new UserDataHolderBase();
+          return PySdkExtKt.detectAssociatedEnvironments(module, existingSdks, context);
+        });
 
     public Visitor(@Nullable ProblemsHolder holder,
                    @NotNull TypeEvalContext context) {
@@ -182,10 +182,9 @@ public final class PyInterpreterInspection extends PyInspection {
         return new UseDetectedInterpreterFix(detectedAssociatedSdk, existingSdks, true, module);
       }
 
-      final Pair<@IntentionName String, PyProjectSdkConfigurationExtension> textAndExtension =
-        PyProjectSdkConfigurationExtension.findForModule(module);
-      if (textAndExtension != null) {
-        return new UseProvidedInterpreterFix(module, textAndExtension.getSecond(), textAndExtension.getFirst());
+      final CreateSdkInfo createSdkInfo = PyProjectSdkConfigurationExtension.findForModule(module);
+      if (createSdkInfo != null) {
+        return new UseProvidedInterpreterFix(module, createSdkInfo);
       }
 
       if (name != null) {
@@ -221,9 +220,10 @@ public final class PyInterpreterInspection extends PyInspection {
 
       PyProjectSdkConfigurationExtension configurator = PyCondaSdkCustomizer.Companion.getInstance().getFallbackConfigurator();
       if (configurator != null) {
-        String intentionName = PyCondaSdkCustomizer.Companion.getIntentionBlocking(configurator, module);
-        if (intentionName != null) {
-          return new UseProvidedInterpreterFix(module, configurator, intentionName);
+        final CreateSdkInfo fallbackCreateSdkInfo =
+          PyCondaSdkCustomizer.Companion.checkEnvironmentAndPrepareSdkCreatorBlocking(configurator, module);
+        if (fallbackCreateSdkInfo != null) {
+          return new UseProvidedInterpreterFix(module, fallbackCreateSdkInfo);
         }
       }
 
@@ -411,16 +411,12 @@ public final class PyInterpreterInspection extends PyInspection {
 
     private final @NotNull Module myModule;
 
-    private final @NotNull PyProjectSdkConfigurationExtension myExtension;
-
-    private final @NotNull @IntentionName String myName;
+    private final @NotNull CreateSdkInfo myCreateSdkInfo;
 
     private UseProvidedInterpreterFix(@NotNull Module module,
-                                      @NotNull PyProjectSdkConfigurationExtension extension,
-                                      @NotNull @IntentionName String name) {
+                                      @NotNull CreateSdkInfo createSdkInfo) {
       myModule = module;
-      myExtension = extension;
-      myName = name;
+      myCreateSdkInfo = createSdkInfo;
     }
 
     @Override
@@ -430,13 +426,13 @@ public final class PyInterpreterInspection extends PyInspection {
 
     @Override
     public @IntentionName @NotNull String getName() {
-      return myName;
+      return myCreateSdkInfo.getIntentionName();
     }
 
     @Override
     public void applyFix(@NotNull Project project, @NotNull ProblemDescriptor descriptor) {
-      if (! detectSdkForModulesIn(project)) {
-        PyProjectSdkConfiguration.INSTANCE.configureSdkUsingExtension(myModule, myExtension);
+      if (!detectSdkForModulesIn(project)) {
+        PyProjectSdkConfiguration.INSTANCE.configureSdkUsingCreateSdkInfo(myModule, myCreateSdkInfo);
       }
     }
 

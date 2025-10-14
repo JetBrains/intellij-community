@@ -16,10 +16,7 @@ import com.intellij.python.pyproject.PyProjectToml
 import com.intellij.util.concurrency.annotations.RequiresEdt
 import com.jetbrains.python.*
 import com.jetbrains.python.PyBundle.message
-import com.jetbrains.python.PyToolUIInfo
-import com.jetbrains.python.Result
 import com.jetbrains.python.Result.Companion.success
-import com.jetbrains.python.TraceContext
 import com.jetbrains.python.errorProcessing.ErrorSink
 import com.jetbrains.python.errorProcessing.PyResult
 import com.jetbrains.python.newProjectWizard.projectPath.ProjectPathFlows

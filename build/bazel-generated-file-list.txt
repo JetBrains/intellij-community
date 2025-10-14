@@ -1425,6 +1425,7 @@ python/interpreters
 python/junit5Tests-framework
 python/junit5Tests-framework/conda
 python/openapi
+python/pipenv
 python/pluginCore
 python/pluginCore/impl
 python/pluginJava

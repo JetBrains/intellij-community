@@ -4,6 +4,7 @@ package com.jetbrains.python.sdk.add.v2.pipenv
 import com.intellij.ide.util.PropertiesComponent
 import com.intellij.openapi.projectRoots.Sdk
 import com.intellij.platform.eel.LocalEelApi
+import com.intellij.python.community.impl.pipenv.pipenvPath
 import com.jetbrains.python.PyBundle
 import com.jetbrains.python.errorProcessing.ErrorSink
 import com.jetbrains.python.errorProcessing.PyResult
@@ -12,7 +13,6 @@ import com.jetbrains.python.sdk.add.v2.FileSystem
 import com.jetbrains.python.sdk.add.v2.PathHolder
 import com.jetbrains.python.sdk.add.v2.PythonMutableTargetAddInterpreterModel
 import com.jetbrains.python.sdk.add.v2.ToolValidator
-import com.jetbrains.python.sdk.pipenv.pipEnvPath
 import com.jetbrains.python.sdk.pipenv.setupPipEnvSdkWithProgressReport
 import com.jetbrains.python.statistics.InterpreterType
 import java.nio.file.Path
@@ -27,7 +27,7 @@ internal class EnvironmentCreatorPip<P : PathHolder>(model: PythonMutableTargetA
     val savingPath = (pathHolder as? PathHolder.Eel)?.path
                      ?: (toolValidator.backProperty.get()?.pathHolder as? PathHolder.Eel)?.path
     savingPath?.let {
-      PropertiesComponent.getInstance().pipEnvPath = it.toString()
+      PropertiesComponent.getInstance().pipenvPath = it.toString()
     }
   }
 
