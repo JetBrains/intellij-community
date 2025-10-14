@@ -54,7 +54,8 @@
       "hoverBackground": "HoverBackgroundMid",
       "selectionBackground": "SelectionActive",
       "lightSelectionBackground": "SelectionActive",
-      "selectionInactiveBackground": "SelectionInactive"
+      "selectionInactiveBackground": "SelectionInactive",
+      "inactiveBackground": "BackgroundMid"
     },
 
     "Islands": 1,
