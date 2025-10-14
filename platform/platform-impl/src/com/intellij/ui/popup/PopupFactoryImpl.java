@@ -546,6 +546,13 @@ public class PopupFactoryImpl extends JBPopupFactory {
     if (rootPane != null) {
       return rootPane;
     }
+
+    // https://youtrack.jetbrains.com/issue/DPA-3312 Unexpected component for dataContext: org.jetbrains.skiko.SkiaLayer$1
+    // The focus owner may be a non-JComponent, but it resides inside a wrapping JComponent parent
+    JComponent jComponent = (JComponent)SwingUtilities.getAncestorOfClass(JComponent.class, component);
+    if (jComponent != null) {
+      return jComponent;
+    }
     else {
       String componentClass = component == null ? null : component.getClass().getName();
       throw new AssertionError("Unexpected component for " + errorInfoSupplier.get() + ": " + componentClass);
