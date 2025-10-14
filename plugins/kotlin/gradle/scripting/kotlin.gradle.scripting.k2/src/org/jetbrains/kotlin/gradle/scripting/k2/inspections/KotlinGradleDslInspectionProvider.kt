@@ -54,4 +54,15 @@ class KotlinGradleDslInspectionProvider : GradleDslInspectionProvider {
     ): PsiElementVisitor {
         return KotlinAvoidDependencyNamedArgumentsNotationInspectionVisitor(holder)
     }
+
+    override fun isRedundantKotlinStdLibInspectionAvailable(file: PsiFile): Boolean {
+        return FileUtilRt.extensionEquals(file.name, GradleConstants.KOTLIN_DSL_SCRIPT_EXTENSION)
+    }
+
+    override fun getRedundantKotlinStdLibInspectionVisitor(
+        holder: ProblemsHolder,
+        isOnTheFly: Boolean
+    ): PsiElementVisitor {
+        return RedundantKotlinStdLibInspectionVisitor(holder)
+    }
 }

@@ -18,7 +18,6 @@ jvm_library(
   srcs = glob(["test/**/*.kt", "test/**/*.java", "test/**/*.form"], allow_empty = True),
   deps = [
     "@lib//:kotlin-stdlib",
-    "//platform/analysis-api:analysis",
     "//platform/core-api:core",
     "//platform/editor-ui-api:editor-ui",
     "//plugins/kotlin/plugin/k2",
@@ -29,19 +28,11 @@ jvm_library(
     "//platform/testFramework:testFramework_test_lib",
     "//plugins/kotlin/base/test:test_test_lib",
     "@lib//:kotlinc-kotlin-compiler-tests",
-    "@lib//:gradle",
     "//plugins/kotlin/base/plugin",
     "//plugins/kotlin/base/plugin:plugin_test_lib",
-    "//plugins/kotlin/gradle/code-insight-common",
     "//plugins/kotlin/gradle/code-insight-groovy:kotlin-gradle-codeInsight-groovy",
-    "//plugins/groovy",
-    "//plugins/groovy:groovy_test_lib",
-    "//plugins/gradle",
-    "//plugins/gradle:gradle-tests_test_lib",
-    "//plugins/kotlin/base/facet",
   ],
-  runtime_deps = [":kotlin-gradle-codeInsight-groovy-tests"],
-  exports = ["@lib//:gradle"]
+  runtime_deps = [":kotlin-gradle-codeInsight-groovy-tests"]
 )
 ### auto-generated section `build intellij.kotlin.gradle.codeInsight.groovy.tests` end
 

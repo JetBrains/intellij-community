@@ -37,6 +37,5 @@
     <orderEntry type="module" module-name="intellij.kotlin.projectWizard.core" />
     <orderEntry type="module" module-name="kotlin.gradle.gradle-java" />
     <orderEntry type="module" module-name="intellij.platform.ide" />
-    <orderEntry type="module" module-name="intellij.gradle.java" />
   </component>
 </module>

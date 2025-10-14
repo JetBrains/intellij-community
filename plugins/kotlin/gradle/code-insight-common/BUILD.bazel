@@ -54,9 +54,6 @@ jvm_library(
     "//plugins/kotlin/code-insight/inspections-shared:kotlin-code-insight-inspections-shared",
     "//platform/execution",
     "//platform/lang-api:lang",
-    "//plugins/toml/core",
-    "//plugins/kotlin/base/external-build-system",
-    "//plugins/kotlin/gradle/gradle-tooling/impl",
   ]
 )
 ### auto-generated section `build intellij.kotlin.gradle.codeInsight.common` end

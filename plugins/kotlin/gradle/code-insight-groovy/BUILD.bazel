@@ -43,7 +43,6 @@ jvm_library(
     "//plugins/kotlin/project-wizard/core",
     "//plugins/kotlin/gradle/gradle-java",
     "//platform/platform-api:ide",
-    "//plugins/gradle/java",
   ]
 )
 ### auto-generated section `build intellij.kotlin.gradle.codeInsight.groovy` end

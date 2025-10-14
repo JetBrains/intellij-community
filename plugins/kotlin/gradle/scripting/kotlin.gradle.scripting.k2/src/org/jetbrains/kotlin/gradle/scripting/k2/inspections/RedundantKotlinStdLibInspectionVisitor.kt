@@ -10,10 +10,10 @@ import com.intellij.openapi.project.Project
 import com.intellij.psi.PsiMethod
 import com.intellij.psi.util.PsiTreeUtil
 import org.jetbrains.kotlin.idea.codeinsight.api.applicable.inspections.KotlinModCommandQuickFix
-import org.jetbrains.kotlin.idea.gradleCodeInsightCommon.native.KotlinGradleCodeInsightCommonBundle
 import org.jetbrains.kotlin.idea.references.mainReference
 import org.jetbrains.kotlin.psi.*
 import org.jetbrains.kotlin.utils.PathUtil.KOTLIN_JAVA_STDLIB_NAME
+import org.jetbrains.plugins.gradle.codeInspection.GradleInspectionBundle
 import org.jetbrains.plugins.gradle.toml.getResolvedDependency
 import org.jetbrains.plugins.gradle.toml.getResolvedPlugin
 import org.jetbrains.uast.UExpression
@@ -28,7 +28,7 @@ class RedundantKotlinStdLibInspectionVisitor(private val holder: ProblemsHolder)
 
         holder.registerProblem(
             expression,
-            KotlinGradleCodeInsightCommonBundle.message("inspection.message.redundant.kotlin.std.lib.dependency.descriptor"),
+            GradleInspectionBundle.message("inspection.message.redundant.kotlin.std.lib.dependency.descriptor"),
             RemoveDependencyFix()
         )
     }

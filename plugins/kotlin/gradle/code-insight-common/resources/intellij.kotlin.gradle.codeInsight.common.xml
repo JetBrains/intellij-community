@@ -13,12 +13,6 @@
             qualifiedName="org.jetbrains.kotlin.idea.gradleBuildScriptSupport"
             interface="org.jetbrains.kotlin.idea.gradleCodeInsightCommon.GradleBuildScriptSupport"
             dynamic="true"/>
-    <extensionPoint
-            qualifiedName="org.jetbrains.kotlin.idea.gradleKotlinInspectionProvider"
-            beanClass="com.intellij.lang.LanguageExtensionPoint" dynamic="true">
-      <with attribute="implementationClass"
-            implements="org.jetbrains.kotlin.idea.gradleCodeInsightCommon.inspections.GradleKotlinInspectionProvider"/>
-    </extensionPoint>
   </extensionPoints>
 
   <extensions defaultExtensionNs="com.intellij">
@@ -34,13 +28,6 @@
             description="Whether auto-configuration is enabled for Gradle projects when adding a Kotlin file"
             defaultValue="true"
             restartRequired="false"/>
-
-    <localInspection language="UAST" groupPath="Gradle" shortName="RedundantKotlinStdLibDependency"
-                     groupBundle="messages.GradleInspectionBundle" groupKey="inspection.best.practises"
-                     bundle="messages.KotlinGradleCodeInsightCommonBundle"
-                     key="inspection.display.name.redundant.kotlin.std.lib.dependency"
-                     enabledByDefault="true" level="WARNING"
-                     implementationClass="org.jetbrains.kotlin.idea.gradleCodeInsightCommon.inspections.RedundantKotlinStdLibInspection"/>
   </extensions>
 
   <extensions defaultExtensionNs="org.jetbrains.kotlin">

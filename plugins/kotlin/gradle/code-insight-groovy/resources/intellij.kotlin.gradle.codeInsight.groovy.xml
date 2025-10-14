@@ -50,8 +50,5 @@
   </extensions>
   <extensions defaultExtensionNs="org.jetbrains.kotlin.idea">
     <gradleBuildScriptSupport implementation="org.jetbrains.kotlin.idea.groovy.GroovyGradleBuildScriptSupport"/>
-    <gradleKotlinInspectionProvider
-            language="Groovy"
-            implementationClass="org.jetbrains.kotlin.idea.groovy.inspections.GroovyGradleKotlinInspectionProvider"/>
   </extensions>
 </idea-plugin>

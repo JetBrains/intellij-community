@@ -88,7 +88,6 @@
     <orderEntry type="module" module-name="intellij.java.testFramework" scope="TEST" />
     <orderEntry type="module" module-name="intellij.gradle.java" />
     <orderEntry type="module" module-name="intellij.kotlin.base.facet" scope="TEST" />
-    <orderEntry type="module" module-name="intellij.kotlin.gradle.codeInsight.common" />
     <orderEntry type="module" module-name="intellij.kotlin.codeInsight" />
     <orderEntry type="module" module-name="intellij.kotlin.codeInsight.shared" />
     <orderEntry type="module" module-name="intellij.kotlin.highlighting.minimal" scope="TEST" />

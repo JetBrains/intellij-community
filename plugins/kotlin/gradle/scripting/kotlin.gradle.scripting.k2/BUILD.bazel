@@ -78,7 +78,6 @@ jvm_library(
     "//platform/eel-provider",
     "//platform/projectModel-impl",
     "//plugins/gradle/java",
-    "//plugins/kotlin/gradle/code-insight-common",
     "//plugins/kotlin/code-insight/kotlin.code-insight.k2:kotlin-code-insight-k2",
     "//plugins/kotlin/code-insight/impl-base",
   ]
@@ -163,7 +162,6 @@ jvm_library(
     "//java/testFramework",
     "//plugins/gradle/java",
     "//plugins/kotlin/base/facet",
-    "//plugins/kotlin/gradle/code-insight-common",
     "//plugins/kotlin/code-insight/kotlin.code-insight.k2:kotlin-code-insight-k2",
     "//plugins/kotlin/code-insight/kotlin.code-insight.k2:kotlin-code-insight-k2_test_lib",
     "//plugins/kotlin/code-insight/impl-base",

@@ -2,7 +2,7 @@
 package org.jetbrains.kotlin.gradle.scripting.k2.inspections
 
 import org.gradle.util.GradleVersion
-import org.jetbrains.kotlin.idea.gradleCodeInsightCommon.inspections.RedundantKotlinStdLibInspection
+import org.jetbrains.plugins.gradle.codeInspection.GradleRedundantKotlinStdLibInspection
 import org.jetbrains.plugins.gradle.frameworkSupport.GradleDsl
 import org.jetbrains.plugins.gradle.testFramework.GradleTestFixtureBuilder
 import org.jetbrains.plugins.gradle.testFramework.annotations.BaseGradleVersionSource
@@ -17,7 +17,7 @@ class RedundantKotlinStdLibInspectionTest : K2GradleCodeInsightTestCase() {
         test: () -> Unit
     ) {
         test(gradleVersion, projectFixture) {
-            codeInsightFixture.enableInspections(RedundantKotlinStdLibInspection::class.java)
+            codeInsightFixture.enableInspections(GradleRedundantKotlinStdLibInspection::class.java)
             test()
         }
     }
