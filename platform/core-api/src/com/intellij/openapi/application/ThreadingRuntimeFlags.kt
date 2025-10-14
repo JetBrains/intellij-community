@@ -17,7 +17,7 @@ val useBackgroundWriteAction: Boolean = System.getProperty("idea.background.writ
  * See IJPL-199557
  */
 @ApiStatus.Internal
-val wrapHighLevelFunctionsInWriteIntent: Boolean = System.getProperty("idea.wrap.high.level.functions.in.write.intent", "true").toBoolean()
+val wrapHighLevelFunctionsInWriteIntent: Boolean = System.getProperty("idea.wrap.high.level.functions.in.write.intent", "false").toBoolean()
 
 /**
  * - `false` means that [backgroundWriteAction] will block the thread during lock acquisition
