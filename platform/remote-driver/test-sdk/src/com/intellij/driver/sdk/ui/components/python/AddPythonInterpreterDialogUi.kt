@@ -14,5 +14,5 @@ class AddPythonInterpreterDialogUi(data: ComponentData): UiComponent(data) {
   val useVenv1Link = x { byAccessibleName("Use .venv1") }
   val selectExisting = x { byAccessibleName("Select existing") }
 
-  fun clickPathToExecutable(type: String) = x("//div[@text='Path to $type:']/following-sibling:: *[@class='TextFieldWithBrowseButton'][1]").click()
+  fun clickPathToExecutable(type: String) = x("//div[@text='Path to $type:']/following-sibling:: *[@class='ValidatedPathField'][1]").click()
 }
