@@ -3,6 +3,7 @@ package com.intellij.codeInsight.completion
 
 import com.intellij.codeInsight.CodeInsightSettings
 import com.intellij.codeInsight.completion.JavaMethodCallElement.areParameterTemplatesEnabledOnCompletion
+import com.intellij.codeInsight.completion.JavaMethodCallInsertHandler.Companion.needParameterHints
 import com.intellij.codeInsight.completion.JavaMethodCallInsertHandler.Companion.showParameterHints
 import com.intellij.codeInsight.completion.method.*
 import com.intellij.codeInsight.completion.method.JavaMethodCallInsertHandlerHelper.findInsertedCall
@@ -77,7 +78,7 @@ public class JavaMethodCallInsertHandler(
     createNegationInsertHandler(item),
     afterHandler,
     ArgumentLiveTemplateInsertHandler.create(canStartArgumentLiveTemplate),
-    ShowParameterInfoInsertHandler(),
+    ShowParameterInfoInsertHandler.create(item),
   )
 
   override fun handleInsert(context: InsertionContext, item: JavaMethodCallElement) {
@@ -96,6 +97,18 @@ public class JavaMethodCallInsertHandler(
   }
 
   public companion object {
+    internal fun needParameterHints(element: LookupElement, method: PsiMethod): Boolean {
+      if (!CodeInsightSettings.getInstance().SHOW_PARAMETER_NAME_HINTS_ON_COMPLETION ||
+          element.getUserData(JavaMethodMergingContributor.MERGED_ELEMENT) != null
+      ) {
+        return false
+      }
+
+      val parameterList = method.parameterList
+      val parametersCount = parameterList.parametersCount
+      return parametersCount != 0
+    }
+
     @JvmStatic
     public fun showParameterHints(
       element: LookupElement,
@@ -103,19 +116,20 @@ public class JavaMethodCallInsertHandler(
       method: PsiMethod,
       methodCall: PsiCallExpression?,
     ) {
-      if (!CodeInsightSettings.getInstance().SHOW_PARAMETER_NAME_HINTS_ON_COMPLETION ||
+      if (!needParameterHints(element, method) ||
           context.completionChar == Lookup.COMPLETE_STATEMENT_SELECT_CHAR ||
           context.completionChar == Lookup.REPLACE_SELECT_CHAR ||
           methodCall == null ||
-          methodCall.containingFile is PsiCodeFragment ||
-          element.getUserData(JavaMethodMergingContributor.MERGED_ELEMENT) != null
+          methodCall.containingFile is PsiCodeFragment
       ) {
         return
       }
-      val parameterList = method.parameterList
-      val parametersCount = parameterList.parametersCount
+
+      val parametersCount = method.parameterList.parametersCount
+      assert(parametersCount != 0) { "must be checked in needParameterHints"}
+
       val parameterOwner = methodCall.argumentList
-      if ((parameterOwner == null) || (parameterOwner.getText() != "()") || (parametersCount == 0)) {
+      if ((parameterOwner == null) || (parameterOwner.getText() != "()")) {
         return
       }
 
@@ -309,6 +323,13 @@ private class ShowParameterInfoInsertHandler : InsertHandler<JavaMethodCallEleme
     val method = item.getObject()
     val methodCall = findInsertedCall(item, context)
     showParameterHints(item, context, method, methodCall)
+  }
+
+  companion object {
+    fun create(item: JavaMethodCallElement): InsertHandler<in JavaMethodCallElement>? {
+      if (!needParameterHints(item, item.`object`)) return null
+      return ShowParameterInfoInsertHandler()
+    }
   }
 }
 
