@@ -101,9 +101,11 @@ internal class BackendTerminalHyperlinkHighlighter(
   init {
     filterWrapper.getFilter() // kickstart computation
     outputModel.addListener(coroutineScope.asDisposable(), object : TerminalOutputModelListener {
-      override fun afterContentChanged(model: TerminalOutputModel, startOffset: TerminalOffset, isTypeAhead: Boolean) {
+      override fun afterContentChanged(event: TerminalContentChangeEvent) {
+        val model = event.model
+        val startOffset = event.offset
         val existingPendingTask = pendingTask
-        val startLine = model.getLineByOffset(startOffset)
+        val startLine = if (event.isTrimming) model.firstLine else model.getLineByOffset(startOffset)
         val dirtyRegionStart = if (existingPendingTask == null) {
           startLine
         }
@@ -111,7 +113,16 @@ internal class BackendTerminalHyperlinkHighlighter(
           min(TerminalLineIndex.of(existingPendingTask.startAbsoluteLine), startLine).coerceAtLeast(model.firstLine)
         }
         val newPendingTask = newHighlightTask(model, dirtyRegionStart)
-        LOG.debug { "The model updated from offset $startOffset (line $startLine), the new task is $newPendingTask" }
+        LOG.debug {
+          "The model " +
+          if (event.isTrimming) {
+            "trimmed from offset $startOffset to ${startOffset + event.oldText.length.toLong()} (line ${model.firstLine}), "
+          }
+          else {
+            "updated from offset $startOffset (line $startLine), "
+          } +
+          "the new task is $newPendingTask"
+        }
         pendingTask = newPendingTask
       }
     })

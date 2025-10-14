@@ -145,12 +145,20 @@ internal class TerminalOutputModelTest : BasePlatformTestCase() {
   }
 
   @Test
-  fun `update exceeds maxCapacity`() = runBlocking(Dispatchers.EDT) {
+  fun `update exceeds maxCapacity`(): Unit = runBlocking(Dispatchers.EDT) {
     val model = TerminalTestUtil.createOutputModel(maxLength = 10)
-    val startOffsets = mutableListOf<TerminalOffset>()
+    var balance = 0
+    val events = mutableListOf<TerminalContentChangeEvent>()
     model.addListener(testRootDisposable, object: TerminalOutputModelListener {
-      override fun afterContentChanged(model: TerminalOutputModel, startOffset: TerminalOffset, isTypeAhead: Boolean) {
-        startOffsets.add(startOffset)
+      override fun beforeContentChanged(model: TerminalOutputModel) {
+        ++balance
+        assertThat(balance).isOne()
+      }
+
+      override fun afterContentChanged(event: TerminalContentChangeEvent) {
+        --balance
+        assertThat(balance).isZero()
+        events.add(event)
       }
     })
 
@@ -175,7 +183,35 @@ internal class TerminalOutputModelTest : BasePlatformTestCase() {
       rs
       tuvwxyz
     """.trimIndent(), model.document.text)
-    assertEquals(listOf(firstStartOffset, secondStartOffset), startOffsets)
+    assertThat(balance).isZero()
+    assertThat(firstStartOffset).isEqualTo(TerminalOffset.of(3)) // trimmed: abc
+    assertThat(secondStartOffset).isEqualTo(TerminalOffset.of(12)) // trimmed: abcdef + EOL + mnopq (replacing ghijkl)
+    assertThat(events).hasSize(4)
+    // first insert
+    assertThat(events[0].offset).isEqualTo(TerminalOffset.of(0))
+    assertThat(events[0].oldText.toString()).isEmpty()
+    assertThat(events[0].newText.toString()).isEqualTo("""
+      abcdef
+      ghijkl
+    """.trimIndent())
+    // first trimming
+    assertThat(events[1].offset).isEqualTo(TerminalOffset.of(0))
+    assertThat(events[1].oldText.toString()).isEqualTo("abc")
+    assertThat(events[1].newText.toString()).isEmpty()
+    // second insert
+    assertThat(events[2].offset).isEqualTo(TerminalOffset.of(7)) // trimmed abc + def + EOL
+    assertThat(events[2].oldText.toString()).isEqualTo("ghijkl")
+    assertThat(events[2].newText.toString()).isEqualTo("""
+      mnopqrs
+      tuvwxyz
+    """.trimIndent())
+    // second trimming
+    assertThat(events[3].offset).isEqualTo(TerminalOffset.of(3)) // only trimmed abc
+    assertThat(events[3].oldText.toString()).isEqualTo("""
+      def
+      mnopq
+    """.trimIndent())
+    assertThat(events[3].newText.toString()).isEmpty()
   }
 
   @Test
