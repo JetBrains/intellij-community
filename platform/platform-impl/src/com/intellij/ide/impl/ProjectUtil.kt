@@ -681,8 +681,11 @@ object ProjectUtil {
   fun getOpenProjects(): Array<Project> = ProjectUtilCore.getOpenProjects()
 
   @Internal
+  enum class FolderOpeningMode { AS_PROJECT, AS_FOLDER }
+
+  @Internal
   @VisibleForTesting
-  suspend fun openExistingDir(file: Path, currentProject: Project?): Project? {
+  suspend fun openExistingDir(file: Path, mode: FolderOpeningMode, currentProject: Project?): Project? {
     val canAttach = ProjectAttachProcessor.canAttachToProject()
     val preferAttach = currentProject != null &&
                        canAttach &&
@@ -691,18 +694,20 @@ object ProjectUtil {
       return null
     }
 
-    val project = if (canAttach) {
-      val options = createOptionsToOpenDotIdeaOrCreateNewIfNotExists(file, currentProject).copy(
-        projectRootDir = file,
-      )
-      (serviceAsync<ProjectManager>() as ProjectManagerEx).openProjectAsync(file, options)
+    val options = if (mode == FolderOpeningMode.AS_PROJECT) {
+      createOptionsToOpenDotIdeaOrCreateNewIfNotExists(file, currentProject)
     }
     else {
-      val options = OpenProjectTask(projectToClose = currentProject).copy(
+      OpenProjectTask(projectToClose = currentProject).copy(
         projectRootDir = file,
+        createModule = false,
+        useDefaultProjectAsTemplate = true,
+        runConfigurators = false,
       )
-      openOrImportAsync(file, options)
     }
+
+    val project = openOrImportAsync(file, options)
+
     if (!ApplicationManager.getApplication().isUnitTestMode) {
       FileChooserUtil.setLastOpenedFile(project, file)
     }

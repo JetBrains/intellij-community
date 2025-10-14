@@ -3,6 +3,8 @@ package com.intellij.openapi.project
 
 import com.intellij.ide.CommandLineProcessor
 import com.intellij.ide.impl.ProjectUtil
+import com.intellij.ide.impl.ProjectUtil.FolderOpeningMode.AS_FOLDER
+import com.intellij.ide.impl.ProjectUtil.FolderOpeningMode.AS_PROJECT
 import com.intellij.platform.ModuleAttachProcessor
 import com.intellij.platform.backend.workspace.workspaceModel
 import com.intellij.platform.workspace.jps.entities.ModuleEntity
@@ -43,10 +45,16 @@ internal class OpenProjectTest(private val opener: Opener) {
     fun params(): Iterable<Opener> {
       return listOf(
         Opener("OpenFileAction-FolderAsProject", expectedModules = listOf($$"$ROOT$"), expectedRoots = listOf($$"$ROOT$")) {
-          runBlocking { ProjectUtil.openExistingDir(it, null) }
+          runBlocking { ProjectUtil.openExistingDir(it, AS_PROJECT, null) }
+        },
+        Opener("OpenFileAction-FolderAsFolder", expectedModules = emptyList(), expectedRoots = listOf($$"$ROOT$")) {
+          runBlocking { ProjectUtil.openExistingDir(it, AS_FOLDER, null) }
         },
         Opener("CLI-FolderAsProject", expectedModules = listOf($$"$ROOT$"), expectedRoots = listOf($$"$ROOT$")) {
           runBlocking { CommandLineProcessor.doOpenFileOrProject(it, createOrOpenExistingProject = true, false) }.project!!
+        },
+        Opener("CLI-FolderAsFolder", expectedModules = emptyList(), expectedRoots = listOf($$"$ROOT$")) {
+          runBlocking { CommandLineProcessor.doOpenFileOrProject(it, createOrOpenExistingProject = false, false) }.project!!
         },
       )
     }

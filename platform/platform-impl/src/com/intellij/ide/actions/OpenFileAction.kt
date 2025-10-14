@@ -171,7 +171,7 @@ open class OpenFileAction : AnAction(), DumbAware, LightEditCompatible, ActionRe
     val file = virtualFile.toNioPath()
     if (Files.isDirectory(file)) {
       @Suppress("TestOnlyProblems")
-      ProjectUtil.openExistingDir(file, project)
+      ProjectUtil.openExistingDir(file, ProjectUtil.FolderOpeningMode.AS_PROJECT, project)
       return
     }
 
