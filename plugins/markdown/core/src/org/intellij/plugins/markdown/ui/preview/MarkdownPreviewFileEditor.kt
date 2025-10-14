@@ -233,14 +233,22 @@ class MarkdownPreviewFileEditor(
     val settings = MarkdownSettings.getInstance(project)
     val textPreprocessor = retrievePanelProvider(settings).sourceTextPreprocessor
     lastRenderedHtml = readAction {
-      textPreprocessor.preprocessText(project, document, file)
+      val text = textPreprocessor.preprocessText(project, document, file)
+      logger.info("MarkdownPreviewFileEditor: readAction finished")
+      text
     }
 
-    val editor = mainEditor.firstOrNull() ?: return
+    val editor = mainEditor.firstOrNull() ?: run {
+      logger.warn("MarkdownPreviewFileEditor: editor is null, cannot update preview")
+      return
+    }
+
     writeIntentReadAction {
       val offset = editor.caretModel.offset
       val line = editor.document.getLineNumber(offset)
+      logger.info("MarkdownPreviewFileEditor: setHtml length: ${lastRenderedHtml.length}, offset: $offset, line: $line")
       panel.setHtml(lastRenderedHtml, offset, line, file)
+      logger.info("MarkdownPreviewFileEditor: setHtml finished")
     }
   }
 
