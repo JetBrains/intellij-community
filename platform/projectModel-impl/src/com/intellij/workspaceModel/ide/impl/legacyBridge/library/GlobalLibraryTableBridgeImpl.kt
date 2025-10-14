@@ -16,6 +16,7 @@ import com.intellij.platform.workspace.jps.serialization.impl.JpsGlobalEntitiesS
 import com.intellij.platform.workspace.storage.*
 import com.intellij.projectModel.ProjectModelBundle
 import com.intellij.workspaceModel.ide.impl.GlobalWorkspaceModel
+import com.intellij.workspaceModel.ide.impl.getInternalEnvironmentName
 import com.intellij.workspaceModel.ide.impl.jpsMetrics
 import com.intellij.workspaceModel.ide.legacyBridge.GlobalLibraryTableBridge
 import io.opentelemetry.api.metrics.Meter
@@ -80,7 +81,13 @@ class GlobalLibraryTableBridgeImpl(val eelMachine: EelMachine) : GlobalLibraryTa
 
   private fun createEntitySourceForGlobalLibrary(): EntitySource {
     val virtualFileUrlManager = GlobalWorkspaceModel.getInstance(eelMachine).getVirtualFileUrlManager()
-    val globalLibrariesFile = PathManager.getOptionsDir().resolve(JpsGlobalEntitiesSerializers.GLOBAL_LIBRARIES_FILE_NAME + PathManager.DEFAULT_EXT)
+    val optionsDir = PathManager.getOptionsDir()
+    val environmentName = eelMachine.getInternalEnvironmentName()
+    val environmentDir = when (environmentName) {
+      InternalEnvironmentName.Local -> optionsDir
+      is InternalEnvironmentName.Custom -> optionsDir.resolve(environmentName.name)
+    }
+    val globalLibrariesFile = environmentDir.resolve(JpsGlobalEntitiesSerializers.GLOBAL_LIBRARIES_FILE_NAME + PathManager.DEFAULT_EXT)
     return JpsGlobalFileEntitySource(virtualFileUrlManager.getOrCreateFromUrl(globalLibrariesFile.toAbsolutePath().toString()))
   }
 
