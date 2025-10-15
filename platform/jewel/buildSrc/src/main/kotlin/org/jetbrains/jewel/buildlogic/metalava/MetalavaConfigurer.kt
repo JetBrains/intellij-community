@@ -43,12 +43,20 @@ internal class MetalavaConfigurer(private val project: Project, private val vers
             val jdkHomePath = Jvm.current().javaHome.absolutePath
 
             // If no version is specified, default to the current one
-            val targetVersion =
-                (properties["metalavaTargetRelease"] as? String)?.trim()?.takeIf { it.isNotBlank() }
-                    ?: getJewelVersion()
+            val requestedVersion = (properties["metalavaTargetRelease"] as? String)?.trim()?.takeIf { it.isNotBlank() }
+            if (requestedVersion != null) {
+                logger.info("Metalava API check target version set to $requestedVersion")
+            } else {
+                logger.info(
+                    "Metalava API check target version not specified, using current Jewel version: ${getJewelVersion()}"
+                )
+            }
+            val targetVersion = requestedVersion ?: getJewelVersion()
 
-            setupTasks(targetVersion, classes, jdkHomePath, sourceDirectories, stableOnly = true)
-            setupTasks(targetVersion, classes, jdkHomePath, sourceDirectories, stableOnly = false)
+            val updateBaseline = (properties["update-baseline"]?.toString()?.toBooleanStrictOrNull()) == true
+
+            setupTasks(targetVersion, classes, jdkHomePath, sourceDirectories, stableOnly = true, updateBaseline)
+            setupTasks(targetVersion, classes, jdkHomePath, sourceDirectories, stableOnly = false, updateBaseline)
 
             tasks.register<DefaultTask>("checkMetalavaApi") {
                 dependsOn(tasks.named("checkMetalavaStableApi"), tasks.named("checkMetalavaExperimentalApi"))
@@ -78,6 +86,7 @@ internal class MetalavaConfigurer(private val project: Project, private val vers
         jdkHomePath: String,
         sourceDirectories: Provider<FileCollection>,
         stableOnly: Boolean,
+        updateBaselineForCheckTask: Boolean,
     ) {
         val taskDescriptor = if (stableOnly) "Stable" else "Experimental"
         validateJewelVersion(targetVersion)
@@ -115,6 +124,9 @@ internal class MetalavaConfigurer(private val project: Project, private val vers
             currentApiFile.set(generateApiTask.flatMap { it.output })
             referenceApiFile.set(targetApiFile)
 
+            updateBaseline.set(updateBaselineForCheckTask)
+            baselineFile.from(layout.projectDirectory.files("metalava/${baselineFileName(stableOnly)}"))
+
             dependsOn(generateApiTask)
         }
     }
@@ -125,6 +137,13 @@ internal class MetalavaConfigurer(private val project: Project, private val vers
         if (stableApiOnly) append("stable-")
         append(targetVersion)
         append(".txt")
+    }
+
+    private fun Project.baselineFileName(stableApiOnly: Boolean) = buildString {
+        append(project.name)
+        append("-baseline-")
+        if (stableApiOnly) append("stable-")
+        append("current.txt")
     }
 
     companion object {
