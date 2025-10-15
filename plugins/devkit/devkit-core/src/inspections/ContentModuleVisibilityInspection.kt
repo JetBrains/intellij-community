@@ -29,9 +29,12 @@ import org.jetbrains.idea.devkit.dom.ContentModuleVisibility
 import org.jetbrains.idea.devkit.dom.DependencyDescriptor
 import org.jetbrains.idea.devkit.dom.IdeaPlugin
 import org.jetbrains.idea.devkit.dom.index.PluginIdDependenciesIndex
+import org.jetbrains.idea.devkit.projectRoots.IntelliJPlatformProduct
 import org.jetbrains.idea.devkit.util.DescriptorUtil
 
 internal class ContentModuleVisibilityInspection : DevKitPluginXmlInspectionBase() {
+
+  private val rootPluginNames = IntelliJPlatformProduct.entries.map { "${it.platformPrefix}Plugin.xml" }
 
   override fun checkDomElement(element: DomElement, holder: DomElementAnnotationHolder, helper: DomHighlightingHelper) {
     val dependencyModule = element as? DependencyDescriptor.ModuleDescriptor ?: return
@@ -213,8 +216,14 @@ internal class ContentModuleVisibilityInspection : DevKitPluginXmlInspectionBase
       .flatMap { getActualIncludingPlugins(it.element.containingFile as XmlFile, scope, visited) }
   }
 
-  private fun isActualPluginDescriptor(ideaPlugin: IdeaPlugin, xmlFile: XmlFile): Boolean =
-    ideaPlugin.pluginId != null || (xmlFile.name == "plugin.xml" && xmlFile.parent?.name == "META-INF")
+  private fun isActualPluginDescriptor(ideaPlugin: IdeaPlugin, xmlFile: XmlFile): Boolean {
+    return ideaPlugin.pluginId != null || (xmlFile.parent?.name == "META-INF" && isPluginXmlName(xmlFile))
+  }
+
+  private fun isPluginXmlName(xmlFile: XmlFile): Boolean {
+    val fileName = xmlFile.name
+    return fileName == "plugin.xml" || fileName in rootPluginNames
+  }
 
   private fun isXiIncluded(reference: PsiReference): Boolean {
     val xmlTag = reference.element.parentOfType<XmlTag>() ?: return false
