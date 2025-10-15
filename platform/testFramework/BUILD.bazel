@@ -135,8 +135,6 @@ jvm_library(
     "//libraries/jackson/module-kotlin:libraries-jackson-module-kotlin",
     "@lib//:okhttp",
     "//java/java-runtime:rt",
-    "//libraries/junit4",
-    "//libraries/junit5-launcher",
     "//platform/analysis-api:analysis",
     "//platform/analysis-impl",
     "//platform/backend/observation",
@@ -194,6 +192,8 @@ jvm_library(
     "//platform/testFramework/bootstrap:tools-testsBootstrap",
     "@lib//:platform-test_framework-okhttp3-mockwebserver",
     "//platform/runtime/product",
+    ":libraries_junit4_provided",
+    ":libraries_junit5-launcher_provided",
   ],
   exports = [
     "@lib//:jet_check",

@@ -51,6 +51,21 @@ jvm_library(
   ]
 )
 
+jvm_provided_library(
+  name = "platform_vcs-api_vcs-core_test_lib_provided",
+  lib = "//platform/vcs-api/vcs-api-core:vcs-core_test_lib"
+)
+
+jvm_provided_library(
+  name = "platform_vcs-dvcs-impl_test_lib_provided",
+  lib = "//platform/dvcs-impl:vcs-dvcs-impl_test_lib"
+)
+
+jvm_provided_library(
+  name = "plugins_vcs-git_test_lib_provided",
+  lib = "//plugins/git4idea:vcs-git_test_lib"
+)
+
 jvm_library(
   name = "git_test_lib",
   visibility = ["//visibility:public"],
@@ -63,13 +78,6 @@ jvm_library(
     "//platform/projectModel-api:projectModel",
     "//platform/util",
     "//platform/ide-core",
-    "//platform/vcs-api/vcs-api-core:vcs-core",
-    "//platform/vcs-api/vcs-api-core:vcs-core_test_lib",
-    "//platform/vcs-log/api:vcs-log",
-    "//platform/dvcs-impl:vcs-dvcs-impl",
-    "//platform/dvcs-impl:vcs-dvcs-impl_test_lib",
-    "//plugins/git4idea:vcs-git",
-    "//plugins/git4idea:vcs-git_test_lib",
     "//plugins/devkit/devkit-core:core",
     "@lib//:junit4",
     "//platform/testFramework",
@@ -78,6 +86,13 @@ jvm_library(
     "//platform/vcs-log/impl",
     "//platform/vcs-log/impl:impl_test_lib",
     "//platform/platform-api:ide",
+    ":platform_vcs-api_vcs-core_provided",
+    ":platform_vcs-log_vcs-log_provided",
+    ":platform_vcs-dvcs-impl_provided",
+    ":plugins_vcs-git_provided",
+    ":platform_vcs-api_vcs-core_test_lib_provided",
+    ":platform_vcs-dvcs-impl_test_lib_provided",
+    ":plugins_vcs-git_test_lib_provided",
   ]
 )
 ### auto-generated section `build intellij.devkit.git` end

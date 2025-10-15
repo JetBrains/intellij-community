@@ -73,8 +73,6 @@ jvm_library(
     "@lib//:opentest4j",
     "@lib//:junit5Params",
     "//java/java-runtime:rt",
-    "//libraries/junit5",
-    "//libraries/junit5-launcher",
     "//platform/analysis-api:analysis",
     "//platform/core-api:core",
     "//platform/core-impl",
@@ -93,6 +91,8 @@ jvm_library(
     "//platform/util/coroutines",
     "//platform/util-ex",
     "//platform/util/jdom",
+    ":libraries_junit5_provided",
+    ":libraries_junit5-launcher_provided",
   ]
 )
 ### auto-generated section `build intellij.platform.testFramework.junit5` end
