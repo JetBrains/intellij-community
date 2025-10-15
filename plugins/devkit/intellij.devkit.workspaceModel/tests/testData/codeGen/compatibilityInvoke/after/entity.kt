@@ -11,36 +11,14 @@ interface SimpleEntity : WorkspaceEntity {
   val name: String
   val isSimple: Boolean
 
-  //region generated code
-  @GeneratedCodeApiVersion(3)
-  interface Builder : WorkspaceEntity.Builder<SimpleEntity> {
-    override var entitySource: EntitySource
-    var version: Int
-    var name: String
-    var isSimple: Boolean
-  }
+  //region compatibility generated code
+  interface Builder
 
   companion object : EntityType<SimpleEntity, Builder>() {
-    @JvmOverloads
-    @JvmStatic
-    @JvmName("create")
-    operator fun invoke(
-      version: Int,
-      name: String,
-      isSimple: Boolean,
-      entitySource: EntitySource,
-      init: (Builder.() -> Unit)? = null,
-    ): Builder {
-      val builder = builder()
-      builder.version = version
-      builder.name = name
-      builder.isSimple = isSimple
-      builder.entitySource = entitySource
-      init?.invoke(builder)
-      return builder
+    fun foo() {
+      // any code should be preserved in the original interface
+      // we only delete code that is surronded by `region generated code` comments
     }
-
-    //region compatibility generated code
     @Deprecated(
       message = "This method is deprecated and will be removed in next major release",
       replaceWith = ReplaceWith("invoke(version, name, isSimple, entitySource, init)"),
@@ -55,14 +33,6 @@ interface SimpleEntity : WorkspaceEntity {
       entitySource: EntitySource,
       init: (Builder.() -> Unit)? = null,
     ): Builder = invoke(version, name, isSimple, entitySource, init)
-    //endregion compatibility generated code
   }
-  //endregion
+  //endregion compatibility generated code
 }
-
-//region generated code
-fun MutableEntityStorage.modifySimpleEntity(
-  entity: SimpleEntity,
-  modification: SimpleEntity.Builder.() -> Unit,
-): SimpleEntity = modifyEntity(SimpleEntity.Builder::class.java, entity, modification)
-//endregion

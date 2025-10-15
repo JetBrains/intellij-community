@@ -1,9 +1,10 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.plugins.gradle.service.syncAction.impl.contributors
 
 import com.intellij.platform.workspace.jps.entities.ContentRootEntity
 import com.intellij.platform.workspace.jps.entities.InheritedSdkDependency
 import com.intellij.platform.workspace.jps.entities.ModuleEntity
+import com.intellij.platform.workspace.jps.entities.ModuleEntityBuilder
 import com.intellij.platform.workspace.jps.entities.ModuleSourceDependency
 import com.intellij.platform.workspace.storage.EntitySource
 import com.intellij.platform.workspace.storage.ImmutableEntityStorage
@@ -34,7 +35,7 @@ internal class GradleProjectRootSyncContributor : GradleSyncContributor {
   private fun createModuleEntity(
     context: ProjectResolverContext,
     projectRootData: GradleProjectRootData,
-  ): ModuleEntity.Builder {
+  ): ModuleEntityBuilder {
     return ModuleEntity(
       name = projectRootData.projectRoot.name,
       entitySource = projectRootData.entitySource,

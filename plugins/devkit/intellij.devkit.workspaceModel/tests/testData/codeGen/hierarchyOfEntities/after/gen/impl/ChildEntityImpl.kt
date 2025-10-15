@@ -6,6 +6,7 @@ import com.intellij.platform.workspace.storage.GeneratedCodeApiVersion
 import com.intellij.platform.workspace.storage.GeneratedCodeImplVersion
 import com.intellij.platform.workspace.storage.MutableEntityStorage
 import com.intellij.platform.workspace.storage.WorkspaceEntity
+import com.intellij.platform.workspace.storage.WorkspaceEntityBuilder
 import com.intellij.platform.workspace.storage.WorkspaceEntityInternalApi
 import com.intellij.platform.workspace.storage.annotations.Abstract
 import com.intellij.platform.workspace.storage.annotations.Open
@@ -16,6 +17,7 @@ import com.intellij.platform.workspace.storage.instrumentation.EntityStorageInst
 import com.intellij.platform.workspace.storage.instrumentation.EntityStorageInstrumentationApi
 import com.intellij.platform.workspace.storage.metadata.model.EntityMetadata
 import com.intellij.workspaceModel.test.api.ChildEntity
+import com.intellij.workspaceModel.test.api.ChildEntityBuilder
 
 @GeneratedCodeApiVersion(3)
 @GeneratedCodeImplVersion(7)
@@ -60,7 +62,7 @@ internal class ChildEntityImpl(private val dataSource: ChildEntityData) : ChildE
 
 
   internal class Builder(result: ChildEntityData?) : ModifiableWorkspaceEntityBase<ChildEntity, ChildEntityData>(
-    result), ChildEntity.Builder {
+    result), ChildEntityBuilder {
     internal constructor() : this(ChildEntityData())
 
     override fun applyToBuilder(builder: MutableEntityStorage) {
@@ -164,7 +166,7 @@ internal class ChildEntityData : WorkspaceEntityData<ChildEntity>() {
   internal fun isData2Initialized(): Boolean = ::data2.isInitialized
   internal fun isData3Initialized(): Boolean = ::data3.isInitialized
 
-  override fun wrapAsModifiable(diff: MutableEntityStorage): WorkspaceEntity.Builder<ChildEntity> {
+  override fun wrapAsModifiable(diff: MutableEntityStorage): WorkspaceEntityBuilder<ChildEntity> {
     val modifiable = ChildEntityImpl.Builder(null)
     modifiable.diff = diff
     modifiable.id = createEntityId()
@@ -190,7 +192,7 @@ internal class ChildEntityData : WorkspaceEntityData<ChildEntity>() {
     return ChildEntity::class.java
   }
 
-  override fun createDetachedEntity(parents: List<WorkspaceEntity.Builder<*>>): WorkspaceEntity.Builder<*> {
+  override fun createDetachedEntity(parents: List<WorkspaceEntityBuilder<*>>): WorkspaceEntityBuilder<*> {
     return ChildEntity(data1, data2, data3, entitySource) {
     }
   }

@@ -17,6 +17,7 @@ import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.platform.backend.workspace.virtualFile
 import com.intellij.platform.eel.provider.LocalEelMachine
 import com.intellij.platform.workspace.jps.JpsGlobalFileEntitySource
+import com.intellij.platform.workspace.jps.entities.SdkEntityBuilder
 import com.intellij.platform.workspace.jps.entities.SdkEntity
 import com.intellij.platform.workspace.jps.entities.SdkRoot
 import com.intellij.platform.workspace.jps.serialization.impl.JpsGlobalEntitiesSerializers
@@ -38,7 +39,7 @@ import java.util.function.Function
 // So I need to have such implementation and can't use implementation with SymbolicId and searching in storage
 @ApiStatus.Internal
 class SdkBridgeImpl(
-  private var sdkEntityBuilder: SdkEntity.Builder,
+  private var sdkEntityBuilder: SdkEntityBuilder,
   private var environmentName: InternalEnvironmentName,
 ) : UserDataHolderBase(), SdkBridge, RootProvider, Sdk {
 
@@ -159,7 +160,7 @@ class SdkBridgeImpl(
     applyChangesFrom(sdkBridge.sdkEntityBuilder)
   }
 
-  internal fun applyChangesFrom(sdkEntity: SdkEntity.Builder) {
+  internal fun applyChangesFrom(sdkEntity: SdkEntityBuilder) {
     val modifiableEntity = sdkEntityBuilder as ModifiableWorkspaceEntityBase<*, *>
     if (modifiableEntity.diff != null && !modifiableEntity.modifiable.get()) {
       sdkEntityBuilder = createEmptySdkEntity("", "", "", environmentName = environmentName)
@@ -176,11 +177,11 @@ class SdkBridgeImpl(
     }
   }
 
-  internal fun applyChangesTo(sdkEntity: SdkEntity.Builder) {
+  internal fun applyChangesTo(sdkEntity: SdkEntityBuilder) {
     sdkEntity.applyChangesFrom(sdkEntityBuilder)
   }
 
-  fun getEntityBuilder(): SdkEntity.Builder = sdkEntityBuilder
+  fun getEntityBuilder(): SdkEntityBuilder = sdkEntityBuilder
 
   override fun toString(): String {
     return "$name Version:$versionString Path:($homePath)"
@@ -214,14 +215,14 @@ class SdkBridgeImpl(
       homePath: String = "",
       version: String? = null,
       environmentName: InternalEnvironmentName,
-    ): SdkEntity.Builder {
+    ): SdkEntityBuilder {
       val sdkEntitySource = createEntitySourceForSdk(environmentName)
       val virtualFileUrlManager = getVirtualFileUrlManager()
       val homePathVfu = virtualFileUrlManager.getOrCreateFromUrl(homePath)
       return SdkEntity(name, type, emptyList(), "", sdkEntitySource) {
         this.homePath = homePathVfu
         this.version = version
-      } as SdkEntity.Builder
+      } as SdkEntityBuilder
     }
 
     fun createEntitySourceForSdk(environmentName: InternalEnvironmentName): EntitySource {
@@ -237,7 +238,7 @@ class SdkBridgeImpl(
   }
 }
 
-internal fun SdkEntity.Builder.getSdkType(): SdkTypeId {
+internal fun SdkEntityBuilder.getSdkType(): SdkTypeId {
   return ProjectJdkTable.getInstance().getSdkTypeByName(type)
 }
 
@@ -257,7 +258,7 @@ val OrderRootType.customName: String
   }
 
 @ApiStatus.Internal
-fun SdkEntity.Builder.applyChangesFrom(fromSdk: SdkEntity.Builder) {
+fun SdkEntityBuilder.applyChangesFrom(fromSdk: SdkEntityBuilder) {
   name = fromSdk.name
   type = fromSdk.type
   version = fromSdk.version
@@ -269,7 +270,7 @@ fun SdkEntity.Builder.applyChangesFrom(fromSdk: SdkEntity.Builder) {
 }
 
 @ApiStatus.Internal
-fun SdkEntity.Builder.applyChangesFrom(fromSdk: SdkEntity) {
+fun SdkEntityBuilder.applyChangesFrom(fromSdk: SdkEntity) {
   name = fromSdk.name
   type = fromSdk.type
   version = fromSdk.version

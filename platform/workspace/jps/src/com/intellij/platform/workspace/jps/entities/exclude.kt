@@ -3,7 +3,6 @@ package com.intellij.platform.workspace.jps.entities
 
 import com.intellij.platform.workspace.storage.EntitySource
 import com.intellij.platform.workspace.storage.EntityType
-import com.intellij.platform.workspace.storage.GeneratedCodeApiVersion
 import com.intellij.platform.workspace.storage.MutableEntityStorage
 import com.intellij.platform.workspace.storage.WorkspaceEntity
 import com.intellij.platform.workspace.storage.annotations.Parent
@@ -18,13 +17,10 @@ interface ExcludeUrlEntity : WorkspaceEntity {
   val url: VirtualFileUrl
 
   //region generated code
-  @GeneratedCodeApiVersion(3)
-  interface Builder : WorkspaceEntity.Builder<ExcludeUrlEntity> {
-    override var entitySource: EntitySource
-    var url: VirtualFileUrl
-  }
-
+  @Deprecated(message = "Use ExcludeUrlEntityBuilder instead")
+  interface Builder : ExcludeUrlEntityBuilder
   companion object : EntityType<ExcludeUrlEntity, Builder>() {
+    @Deprecated(message = "Use new API instead")
     @JvmOverloads
     @JvmStatic
     @JvmName("create")
@@ -32,28 +28,33 @@ interface ExcludeUrlEntity : WorkspaceEntity {
       url: VirtualFileUrl,
       entitySource: EntitySource,
       init: (Builder.() -> Unit)? = null,
-    ): Builder {
-      val builder = builder()
-      builder.url = url
-      builder.entitySource = entitySource
-      init?.invoke(builder)
-      return builder
-    }
+    ): Builder = ExcludeUrlEntityType.compatibilityInvoke(url, entitySource, init)
   }
   //endregion
 }
 
 //region generated code
+@Deprecated(message = "Use new API instead")
 fun MutableEntityStorage.modifyExcludeUrlEntity(
   entity: ExcludeUrlEntity,
   modification: ExcludeUrlEntity.Builder.() -> Unit,
-): ExcludeUrlEntity = modifyEntity(ExcludeUrlEntity.Builder::class.java, entity, modification)
+): ExcludeUrlEntity {
+  return modifyEntity(ExcludeUrlEntity.Builder::class.java, entity, modification)
+}
 
+@Deprecated(message = "Use new API instead")
 @Parent
 var ExcludeUrlEntity.Builder.contentRoot: ContentRootEntity.Builder?
-  by WorkspaceEntity.extensionBuilder(ContentRootEntity::class.java)
+  get() = (this as ExcludeUrlEntityBuilder).contentRoot as ContentRootEntity.Builder?
+  set(value) {
+    (this as ExcludeUrlEntityBuilder).contentRoot = value
+  }
 
+@Deprecated(message = "Use new API instead")
 @Parent
 var ExcludeUrlEntity.Builder.library: LibraryEntity.Builder?
-  by WorkspaceEntity.extensionBuilder(LibraryEntity::class.java)
+  get() = (this as ExcludeUrlEntityBuilder).library as LibraryEntity.Builder?
+  set(value) {
+    (this as ExcludeUrlEntityBuilder).library = value
+  }
 //endregion

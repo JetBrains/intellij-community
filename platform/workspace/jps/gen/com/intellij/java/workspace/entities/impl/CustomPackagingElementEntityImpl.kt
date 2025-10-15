@@ -1,21 +1,18 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.java.workspace.entities.impl
 
 import com.intellij.java.workspace.entities.ArtifactEntity
+import com.intellij.java.workspace.entities.ArtifactEntityBuilder
 import com.intellij.java.workspace.entities.CompositePackagingElementEntity
+import com.intellij.java.workspace.entities.CompositePackagingElementEntityBuilder
 import com.intellij.java.workspace.entities.CustomPackagingElementEntity
 import com.intellij.java.workspace.entities.PackagingElementEntity
-import com.intellij.openapi.util.NlsSafe
-import com.intellij.platform.workspace.jps.entities.LibraryId
-import com.intellij.platform.workspace.jps.entities.ModuleId
+import com.intellij.java.workspace.entities.PackagingElementEntityBuilder
 import com.intellij.platform.workspace.storage.*
-import com.intellij.platform.workspace.storage.annotations.Abstract
-import com.intellij.platform.workspace.storage.annotations.Parent
 import com.intellij.platform.workspace.storage.impl.EntityLink
 import com.intellij.platform.workspace.storage.impl.ModifiableWorkspaceEntityBase
 import com.intellij.platform.workspace.storage.impl.WorkspaceEntityBase
 import com.intellij.platform.workspace.storage.impl.WorkspaceEntityData
-import com.intellij.platform.workspace.storage.impl.containers.toMutableWorkspaceList
 import com.intellij.platform.workspace.storage.impl.extractOneToAbstractManyChildren
 import com.intellij.platform.workspace.storage.impl.extractOneToAbstractManyParent
 import com.intellij.platform.workspace.storage.impl.extractOneToAbstractOneParent
@@ -27,8 +24,6 @@ import com.intellij.platform.workspace.storage.instrumentation.EntityStorageInst
 import com.intellij.platform.workspace.storage.instrumentation.EntityStorageInstrumentationApi
 import com.intellij.platform.workspace.storage.instrumentation.MutableEntityStorageInstrumentation
 import com.intellij.platform.workspace.storage.metadata.model.EntityMetadata
-import com.intellij.platform.workspace.storage.url.VirtualFileUrl
-import org.jetbrains.annotations.NonNls
 
 @GeneratedCodeApiVersion(3)
 @GeneratedCodeImplVersion(7)
@@ -161,19 +156,19 @@ internal class CustomPackagingElementEntityImpl(private val dataSource: CustomPa
 
       }
 
-    override var parentEntity: CompositePackagingElementEntity.Builder<out CompositePackagingElementEntity>?
+    override var parentEntity: CompositePackagingElementEntityBuilder<out CompositePackagingElementEntity>?
       get() {
         val _diff = diff
         return if (_diff != null) {
           @OptIn(EntityStorageInstrumentationApi::class)
           ((_diff as MutableEntityStorageInstrumentation).getParentBuilder(PARENTENTITY_CONNECTION_ID,
-                                                                           this) as? CompositePackagingElementEntity.Builder<out CompositePackagingElementEntity>)
+                                                                           this) as? CompositePackagingElementEntityBuilder<out CompositePackagingElementEntity>)
           ?: (this.entityLinks[EntityLink(false,
-                                          PARENTENTITY_CONNECTION_ID)] as? CompositePackagingElementEntity.Builder<out CompositePackagingElementEntity>)
+                                          PARENTENTITY_CONNECTION_ID)] as? CompositePackagingElementEntityBuilder<out CompositePackagingElementEntity>)
         }
         else {
           this.entityLinks[EntityLink(false,
-                                      PARENTENTITY_CONNECTION_ID)] as? CompositePackagingElementEntity.Builder<out CompositePackagingElementEntity>
+                                      PARENTENTITY_CONNECTION_ID)] as? CompositePackagingElementEntityBuilder<out CompositePackagingElementEntity>
         }
       }
       set(value) {
@@ -204,16 +199,16 @@ internal class CustomPackagingElementEntityImpl(private val dataSource: CustomPa
         changedProperty.add("parentEntity")
       }
 
-    override var artifact: ArtifactEntity.Builder?
+    override var artifact: ArtifactEntityBuilder?
       get() {
         val _diff = diff
         return if (_diff != null) {
           @OptIn(EntityStorageInstrumentationApi::class)
-          ((_diff as MutableEntityStorageInstrumentation).getParentBuilder(ARTIFACT_CONNECTION_ID, this) as? ArtifactEntity.Builder)
-          ?: (this.entityLinks[EntityLink(false, ARTIFACT_CONNECTION_ID)] as? ArtifactEntity.Builder)
+          ((_diff as MutableEntityStorageInstrumentation).getParentBuilder(ARTIFACT_CONNECTION_ID, this) as? ArtifactEntityBuilder)
+          ?: (this.entityLinks[EntityLink(false, ARTIFACT_CONNECTION_ID)] as? ArtifactEntityBuilder)
         }
         else {
-          this.entityLinks[EntityLink(false, ARTIFACT_CONNECTION_ID)] as? ArtifactEntity.Builder
+          this.entityLinks[EntityLink(false, ARTIFACT_CONNECTION_ID)] as? ArtifactEntityBuilder
         }
       }
       set(value) {
@@ -240,18 +235,18 @@ internal class CustomPackagingElementEntityImpl(private val dataSource: CustomPa
         changedProperty.add("artifact")
       }
 
-    override var children: List<PackagingElementEntity.Builder<out PackagingElementEntity>>
+    override var children: List<PackagingElementEntityBuilder<out PackagingElementEntity>>
       get() {
         val _diff = diff
         return if (_diff != null) {
           @OptIn(EntityStorageInstrumentationApi::class)
           ((_diff as MutableEntityStorageInstrumentation).getManyChildrenBuilders(CHILDREN_CONNECTION_ID,
-                                                                                  this)!!.toList() as List<PackagingElementEntity.Builder<out PackagingElementEntity>>) +
-          (this.entityLinks[EntityLink(true, CHILDREN_CONNECTION_ID)] as? List<PackagingElementEntity.Builder<out PackagingElementEntity>>
+                                                                                  this)!!.toList() as List<PackagingElementEntityBuilder<out PackagingElementEntity>>) +
+          (this.entityLinks[EntityLink(true, CHILDREN_CONNECTION_ID)] as? List<PackagingElementEntityBuilder<out PackagingElementEntity>>
            ?: emptyList())
         }
         else {
-          this.entityLinks[EntityLink(true, CHILDREN_CONNECTION_ID)] as List<PackagingElementEntity.Builder<out PackagingElementEntity>>
+          this.entityLinks[EntityLink(true, CHILDREN_CONNECTION_ID)] as List<PackagingElementEntityBuilder<out PackagingElementEntity>>
           ?: emptyList()
         }
       }
@@ -313,7 +308,7 @@ internal class CustomPackagingElementEntityData : WorkspaceEntityData<CustomPack
   internal fun isTypeIdInitialized(): Boolean = ::typeId.isInitialized
   internal fun isPropertiesXmlTagInitialized(): Boolean = ::propertiesXmlTag.isInitialized
 
-  override fun wrapAsModifiable(diff: MutableEntityStorage): WorkspaceEntity.Builder<CustomPackagingElementEntity> {
+  override fun wrapAsModifiable(diff: MutableEntityStorage): WorkspaceEntityBuilder<CustomPackagingElementEntity> {
     val modifiable = CustomPackagingElementEntityImpl.Builder(null)
     modifiable.diff = diff
     modifiable.id = createEntityId()
@@ -339,10 +334,10 @@ internal class CustomPackagingElementEntityData : WorkspaceEntityData<CustomPack
     return CustomPackagingElementEntity::class.java
   }
 
-  override fun createDetachedEntity(parents: List<WorkspaceEntity.Builder<*>>): WorkspaceEntity.Builder<*> {
+  override fun createDetachedEntity(parents: List<WorkspaceEntityBuilder<*>>): WorkspaceEntityBuilder<*> {
     return CustomPackagingElementEntity(typeId, propertiesXmlTag, entitySource) {
-      this.parentEntity = parents.filterIsInstance<CompositePackagingElementEntity.Builder<out CompositePackagingElementEntity>>().singleOrNull()
-      this.artifact = parents.filterIsInstance<ArtifactEntity.Builder>().singleOrNull()
+      this.parentEntity = parents.filterIsInstance<CompositePackagingElementEntityBuilder<out CompositePackagingElementEntity>>().singleOrNull()
+      this.artifact = parents.filterIsInstance<ArtifactEntityBuilder>().singleOrNull()
     }
   }
 

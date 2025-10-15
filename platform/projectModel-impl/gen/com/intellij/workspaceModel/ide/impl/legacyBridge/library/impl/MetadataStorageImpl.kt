@@ -16,19 +16,6 @@ internal object MetadataStorageImpl : MetadataStorageBase() {
 
     var typeMetadata: StorageTypeMetadata
 
-    typeMetadata = FinalClassMetadata.ObjectMetadata(fqName = "com.intellij.workspaceModel.ide.NonPersistentEntitySource",
-                                                     properties = listOf(
-                                                       OwnPropertyMetadata(isComputable = false, isKey = false, isOpen = false,
-                                                                           name = "virtualFileUrl",
-                                                                           valueType = ValueTypeMetadata.SimpleType.CustomType(
-                                                                             isNullable = true,
-                                                                             typeMetadata = FinalClassMetadata.KnownClass(
-                                                                               fqName = "com.intellij.platform.workspace.storage.url.VirtualFileUrl")),
-                                                                           withDefault = false)),
-                                                     supertypes = listOf("com.intellij.platform.workspace.storage.EntitySource"))
-
-    addMetadata(typeMetadata)
-
     typeMetadata = FinalClassMetadata.ObjectMetadata(
       fqName = "com.intellij.workspaceModel.ide.impl.legacyBridge.LegacyBridgeJpsEntitySourceFactoryImpl\$DummyParentEntitySourceForProjectSettings",
       properties = listOf(OwnPropertyMetadata(isComputable = false, isKey = false, isOpen = false, name = "virtualFileUrl",
@@ -57,7 +44,6 @@ internal object MetadataStorageImpl : MetadataStorageBase() {
 
   override fun initializeMetadataHash() {
     addMetadataHash(typeFqn = "com.intellij.platform.workspace.storage.EntitySource", metadataHash = 298806520)
-    addMetadataHash(typeFqn = "com.intellij.workspaceModel.ide.NonPersistentEntitySource", metadataHash = 485749134)
     addMetadataHash(
       typeFqn = "com.intellij.workspaceModel.ide.impl.legacyBridge.LegacyBridgeJpsEntitySourceFactoryImpl\$DummyParentEntitySourceForProjectSettings",
       metadataHash = 780707301)

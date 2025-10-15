@@ -1,19 +1,16 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.platform.workspace.storage.testEntities.entities.impl
 
 import com.intellij.platform.workspace.storage.*
-import com.intellij.platform.workspace.storage.annotations.Parent
 import com.intellij.platform.workspace.storage.impl.ModifiableWorkspaceEntityBase
 import com.intellij.platform.workspace.storage.impl.WorkspaceEntityBase
 import com.intellij.platform.workspace.storage.impl.WorkspaceEntityData
-import com.intellij.platform.workspace.storage.impl.containers.toMutableWorkspaceList
 import com.intellij.platform.workspace.storage.instrumentation.EntityStorageInstrumentation
 import com.intellij.platform.workspace.storage.instrumentation.EntityStorageInstrumentationApi
 import com.intellij.platform.workspace.storage.metadata.model.EntityMetadata
 import com.intellij.platform.workspace.storage.testEntities.entities.LinkedListEntityId
 import com.intellij.platform.workspace.storage.testEntities.entities.SymbolicIdEntity
-import com.intellij.platform.workspace.storage.url.VirtualFileUrl
-import java.util.UUID
+import com.intellij.platform.workspace.storage.testEntities.entities.SymbolicIdEntityBuilder
 
 @GeneratedCodeApiVersion(3)
 @GeneratedCodeImplVersion(7)
@@ -47,8 +44,8 @@ internal class SymbolicIdEntityImpl(private val dataSource: SymbolicIdEntityData
   }
 
 
-  internal class Builder(result: SymbolicIdEntityData?) : ModifiableWorkspaceEntityBase<SymbolicIdEntity, SymbolicIdEntityData>(result),
-                                                          SymbolicIdEntity.Builder {
+  internal class Builder(result: SymbolicIdEntityData?) : ModifiableWorkspaceEntityBase<SymbolicIdEntity, SymbolicIdEntityData>(
+    result), SymbolicIdEntityBuilder {
     internal constructor() : this(SymbolicIdEntityData())
 
     override fun applyToBuilder(builder: MutableEntityStorage) {
@@ -124,7 +121,7 @@ internal class SymbolicIdEntityData : WorkspaceEntityData<SymbolicIdEntity>() {
 
   internal fun isDataInitialized(): Boolean = ::data.isInitialized
 
-  override fun wrapAsModifiable(diff: MutableEntityStorage): WorkspaceEntity.Builder<SymbolicIdEntity> {
+  override fun wrapAsModifiable(diff: MutableEntityStorage): WorkspaceEntityBuilder<SymbolicIdEntity> {
     val modifiable = SymbolicIdEntityImpl.Builder(null)
     modifiable.diff = diff
     modifiable.id = createEntityId()
@@ -144,15 +141,14 @@ internal class SymbolicIdEntityData : WorkspaceEntityData<SymbolicIdEntity>() {
 
   override fun getMetadata(): EntityMetadata {
     return MetadataStorageImpl.getMetadataByTypeFqn(
-      "com.intellij.platform.workspace.storage.testEntities.entities.SymbolicIdEntity"
-    ) as EntityMetadata
+      "com.intellij.platform.workspace.storage.testEntities.entities.SymbolicIdEntity") as EntityMetadata
   }
 
   override fun getEntityInterface(): Class<out WorkspaceEntity> {
     return SymbolicIdEntity::class.java
   }
 
-  override fun createDetachedEntity(parents: List<WorkspaceEntity.Builder<*>>): WorkspaceEntity.Builder<*> {
+  override fun createDetachedEntity(parents: List<WorkspaceEntityBuilder<*>>): WorkspaceEntityBuilder<*> {
     return SymbolicIdEntity(data, entitySource) {
     }
   }

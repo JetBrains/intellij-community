@@ -2,11 +2,12 @@
 package com.intellij.ide.scratch.workspace.impl
 
 import com.intellij.ide.scratch.workspace.ScratchRootsEntity
+import com.intellij.ide.scratch.workspace.ScratchRootsEntityBuilder
 import com.intellij.platform.workspace.storage.ConnectionId
 import com.intellij.platform.workspace.storage.EntitySource
-import com.intellij.platform.workspace.storage.EntityType
 import com.intellij.platform.workspace.storage.GeneratedCodeApiVersion
 import com.intellij.platform.workspace.storage.GeneratedCodeImplVersion
+import com.intellij.platform.workspace.storage.WorkspaceEntityBuilder
 import com.intellij.platform.workspace.storage.MutableEntityStorage
 import com.intellij.platform.workspace.storage.WorkspaceEntity
 import com.intellij.platform.workspace.storage.WorkspaceEntityInternalApi
@@ -52,7 +53,7 @@ internal class ScratchRootsEntityImpl(private val dataSource: ScratchRootsEntity
 
 
   internal class Builder(result: ScratchRootsEntityData?) : ModifiableWorkspaceEntityBase<ScratchRootsEntity, ScratchRootsEntityData>(
-    result), ScratchRootsEntity.Builder {
+    result), ScratchRootsEntityBuilder {
     internal constructor() : this(ScratchRootsEntityData())
 
     override fun applyToBuilder(builder: MutableEntityStorage) {
@@ -151,7 +152,7 @@ internal class ScratchRootsEntityData : WorkspaceEntityData<ScratchRootsEntity>(
 
   internal fun isRootsInitialized(): Boolean = ::roots.isInitialized
 
-  override fun wrapAsModifiable(diff: MutableEntityStorage): WorkspaceEntity.Builder<ScratchRootsEntity> {
+  override fun wrapAsModifiable(diff: MutableEntityStorage): WorkspaceEntityBuilder<ScratchRootsEntity> {
     val modifiable = ScratchRootsEntityImpl.Builder(null)
     modifiable.diff = diff
     modifiable.id = createEntityId()
@@ -184,7 +185,7 @@ internal class ScratchRootsEntityData : WorkspaceEntityData<ScratchRootsEntity>(
     return ScratchRootsEntity::class.java
   }
 
-  override fun createDetachedEntity(parents: List<WorkspaceEntity.Builder<*>>): WorkspaceEntity.Builder<*> {
+  override fun createDetachedEntity(parents: List<WorkspaceEntityBuilder<*>>): WorkspaceEntityBuilder<*> {
     return ScratchRootsEntity(roots, entitySource) {
     }
   }

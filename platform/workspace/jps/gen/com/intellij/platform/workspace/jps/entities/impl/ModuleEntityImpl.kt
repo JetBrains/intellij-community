@@ -1,11 +1,12 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 @file:JvmName("ModuleEntityAndExtensions")
 
 package com.intellij.platform.workspace.jps.entities.impl
 
-import com.intellij.openapi.util.NlsSafe
 import com.intellij.platform.workspace.jps.entities.ContentRootEntity
+import com.intellij.platform.workspace.jps.entities.ContentRootEntityBuilder
 import com.intellij.platform.workspace.jps.entities.FacetEntity
+import com.intellij.platform.workspace.jps.entities.FacetEntityBuilder
 import com.intellij.platform.workspace.jps.entities.InheritedSdkDependency
 import com.intellij.platform.workspace.jps.entities.LibraryDependency
 import com.intellij.platform.workspace.jps.entities.LibraryId
@@ -32,8 +33,6 @@ import com.intellij.platform.workspace.storage.instrumentation.EntityStorageInst
 import com.intellij.platform.workspace.storage.instrumentation.EntityStorageInstrumentationApi
 import com.intellij.platform.workspace.storage.instrumentation.MutableEntityStorageInstrumentation
 import com.intellij.platform.workspace.storage.metadata.model.EntityMetadata
-import org.jetbrains.annotations.ApiStatus.Internal
-import org.jetbrains.annotations.NonNls
 
 @GeneratedCodeApiVersion(3)
 @GeneratedCodeImplVersion(7)
@@ -224,18 +223,18 @@ internal class ModuleEntityImpl(private val dataSource: ModuleEntityData) : Modu
 
     // List of non-abstract referenced types
     var _contentRoots: List<ContentRootEntity>? = emptyList()
-    override var contentRoots: List<ContentRootEntity.Builder>
+    override var contentRoots: List<ContentRootEntityBuilder>
       get() {
         // Getter of the list of non-abstract referenced types
         val _diff = diff
         return if (_diff != null) {
           @OptIn(EntityStorageInstrumentationApi::class)
           ((_diff as MutableEntityStorageInstrumentation).getManyChildrenBuilders(CONTENTROOTS_CONNECTION_ID,
-                                                                                  this)!!.toList() as List<ContentRootEntity.Builder>) +
-          (this.entityLinks[EntityLink(true, CONTENTROOTS_CONNECTION_ID)] as? List<ContentRootEntity.Builder> ?: emptyList())
+                                                                                  this)!!.toList() as List<ContentRootEntityBuilder>) +
+          (this.entityLinks[EntityLink(true, CONTENTROOTS_CONNECTION_ID)] as? List<ContentRootEntityBuilder> ?: emptyList())
         }
         else {
-          this.entityLinks[EntityLink(true, CONTENTROOTS_CONNECTION_ID)] as? List<ContentRootEntity.Builder> ?: emptyList()
+          this.entityLinks[EntityLink(true, CONTENTROOTS_CONNECTION_ID)] as? List<ContentRootEntityBuilder> ?: emptyList()
         }
       }
       set(value) {
@@ -271,18 +270,18 @@ internal class ModuleEntityImpl(private val dataSource: ModuleEntityData) : Modu
 
     // List of non-abstract referenced types
     var _facets: List<FacetEntity>? = emptyList()
-    override var facets: List<FacetEntity.Builder>
+    override var facets: List<FacetEntityBuilder>
       get() {
         // Getter of the list of non-abstract referenced types
         val _diff = diff
         return if (_diff != null) {
           @OptIn(EntityStorageInstrumentationApi::class)
           ((_diff as MutableEntityStorageInstrumentation).getManyChildrenBuilders(FACETS_CONNECTION_ID,
-                                                                                  this)!!.toList() as List<FacetEntity.Builder>) +
-          (this.entityLinks[EntityLink(true, FACETS_CONNECTION_ID)] as? List<FacetEntity.Builder> ?: emptyList())
+                                                                                  this)!!.toList() as List<FacetEntityBuilder>) +
+          (this.entityLinks[EntityLink(true, FACETS_CONNECTION_ID)] as? List<FacetEntityBuilder> ?: emptyList())
         }
         else {
-          this.entityLinks[EntityLink(true, FACETS_CONNECTION_ID)] as? List<FacetEntity.Builder> ?: emptyList()
+          this.entityLinks[EntityLink(true, FACETS_CONNECTION_ID)] as? List<FacetEntityBuilder> ?: emptyList()
         }
       }
       set(value) {
@@ -472,7 +471,7 @@ internal class ModuleEntityData : WorkspaceEntityData<ModuleEntity>(), SoftLinka
     return changed
   }
 
-  override fun wrapAsModifiable(diff: MutableEntityStorage): WorkspaceEntity.Builder<ModuleEntity> {
+  override fun wrapAsModifiable(diff: MutableEntityStorage): WorkspaceEntityBuilder<ModuleEntity> {
     val modifiable = ModuleEntityImpl.Builder(null)
     modifiable.diff = diff
     modifiable.id = createEntityId()
@@ -505,7 +504,7 @@ internal class ModuleEntityData : WorkspaceEntityData<ModuleEntity>(), SoftLinka
     return ModuleEntity::class.java
   }
 
-  override fun createDetachedEntity(parents: List<WorkspaceEntity.Builder<*>>): WorkspaceEntity.Builder<*> {
+  override fun createDetachedEntity(parents: List<WorkspaceEntityBuilder<*>>): WorkspaceEntityBuilder<*> {
     return ModuleEntity(name, dependencies, entitySource) {
       this.type = this@ModuleEntityData.type
     }

@@ -3,13 +3,12 @@ package com.intellij.util.indexing.testEntities.impl
 
 import com.intellij.platform.workspace.storage.ConnectionId
 import com.intellij.platform.workspace.storage.EntitySource
-import com.intellij.platform.workspace.storage.EntityType
 import com.intellij.platform.workspace.storage.GeneratedCodeApiVersion
 import com.intellij.platform.workspace.storage.GeneratedCodeImplVersion
+import com.intellij.platform.workspace.storage.WorkspaceEntityBuilder
 import com.intellij.platform.workspace.storage.MutableEntityStorage
 import com.intellij.platform.workspace.storage.WorkspaceEntity
 import com.intellij.platform.workspace.storage.WorkspaceEntityInternalApi
-import com.intellij.platform.workspace.storage.annotations.Parent
 import com.intellij.platform.workspace.storage.impl.EntityLink
 import com.intellij.platform.workspace.storage.impl.ModifiableWorkspaceEntityBase
 import com.intellij.platform.workspace.storage.impl.WorkspaceEntityBase
@@ -20,9 +19,10 @@ import com.intellij.platform.workspace.storage.instrumentation.EntityStorageInst
 import com.intellij.platform.workspace.storage.instrumentation.EntityStorageInstrumentationApi
 import com.intellij.platform.workspace.storage.instrumentation.MutableEntityStorageInstrumentation
 import com.intellij.platform.workspace.storage.metadata.model.EntityMetadata
-import com.intellij.platform.workspace.storage.url.VirtualFileUrl
 import com.intellij.util.indexing.testEntities.ParentTestEntity
+import com.intellij.util.indexing.testEntities.ParentTestEntityBuilder
 import com.intellij.util.indexing.testEntities.SiblingEntity
+import com.intellij.util.indexing.testEntities.SiblingEntityBuilder
 
 @GeneratedCodeApiVersion(3)
 @GeneratedCodeImplVersion(7)
@@ -60,7 +60,7 @@ internal class SiblingEntityImpl(private val dataSource: SiblingEntityData) : Si
 
 
   internal class Builder(result: SiblingEntityData?) : ModifiableWorkspaceEntityBase<SiblingEntity, SiblingEntityData>(
-    result), SiblingEntity.Builder {
+    result), SiblingEntityBuilder {
     internal constructor() : this(SiblingEntityData())
 
     override fun applyToBuilder(builder: MutableEntityStorage) {
@@ -128,16 +128,16 @@ internal class SiblingEntityImpl(private val dataSource: SiblingEntityData) : Si
 
       }
 
-    override var parent: ParentTestEntity.Builder
+    override var parent: ParentTestEntityBuilder
       get() {
         val _diff = diff
         return if (_diff != null) {
           @OptIn(EntityStorageInstrumentationApi::class)
-          ((_diff as MutableEntityStorageInstrumentation).getParentBuilder(PARENT_CONNECTION_ID, this) as? ParentTestEntity.Builder)
-          ?: (this.entityLinks[EntityLink(false, PARENT_CONNECTION_ID)]!! as ParentTestEntity.Builder)
+          ((_diff as MutableEntityStorageInstrumentation).getParentBuilder(PARENT_CONNECTION_ID, this) as? ParentTestEntityBuilder)
+          ?: (this.entityLinks[EntityLink(false, PARENT_CONNECTION_ID)]!! as ParentTestEntityBuilder)
         }
         else {
-          this.entityLinks[EntityLink(false, PARENT_CONNECTION_ID)]!! as ParentTestEntity.Builder
+          this.entityLinks[EntityLink(false, PARENT_CONNECTION_ID)]!! as ParentTestEntityBuilder
         }
       }
       set(value) {
@@ -182,7 +182,7 @@ internal class SiblingEntityData : WorkspaceEntityData<SiblingEntity>() {
 
   internal fun isCustomSiblingPropertyInitialized(): Boolean = ::customSiblingProperty.isInitialized
 
-  override fun wrapAsModifiable(diff: MutableEntityStorage): WorkspaceEntity.Builder<SiblingEntity> {
+  override fun wrapAsModifiable(diff: MutableEntityStorage): WorkspaceEntityBuilder<SiblingEntity> {
     val modifiable = SiblingEntityImpl.Builder(null)
     modifiable.diff = diff
     modifiable.id = createEntityId()
@@ -208,9 +208,9 @@ internal class SiblingEntityData : WorkspaceEntityData<SiblingEntity>() {
     return SiblingEntity::class.java
   }
 
-  override fun createDetachedEntity(parents: List<WorkspaceEntity.Builder<*>>): WorkspaceEntity.Builder<*> {
+  override fun createDetachedEntity(parents: List<WorkspaceEntityBuilder<*>>): WorkspaceEntityBuilder<*> {
     return SiblingEntity(customSiblingProperty, entitySource) {
-      parents.filterIsInstance<ParentTestEntity.Builder>().singleOrNull()?.let { this.parent = it }
+      parents.filterIsInstance<ParentTestEntityBuilder>().singleOrNull()?.let { this.parent = it }
     }
   }
 

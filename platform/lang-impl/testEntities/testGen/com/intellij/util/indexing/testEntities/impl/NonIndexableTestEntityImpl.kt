@@ -10,6 +10,7 @@ import com.intellij.platform.workspace.storage.instrumentation.EntityStorageInst
 import com.intellij.platform.workspace.storage.metadata.model.EntityMetadata
 import com.intellij.platform.workspace.storage.url.VirtualFileUrl
 import com.intellij.util.indexing.testEntities.NonIndexableTestEntity
+import com.intellij.util.indexing.testEntities.NonIndexableTestEntityBuilder
 
 @GeneratedCodeApiVersion(3)
 @GeneratedCodeImplVersion(7)
@@ -43,7 +44,7 @@ internal class NonIndexableTestEntityImpl(private val dataSource: NonIndexableTe
 
 
   internal class Builder(result: NonIndexableTestEntityData?) : ModifiableWorkspaceEntityBase<NonIndexableTestEntity, NonIndexableTestEntityData>(
-    result), NonIndexableTestEntity.Builder {
+    result), NonIndexableTestEntityBuilder {
     internal constructor() : this(NonIndexableTestEntityData())
 
     override fun applyToBuilder(builder: MutableEntityStorage) {
@@ -122,7 +123,7 @@ internal class NonIndexableTestEntityData : WorkspaceEntityData<NonIndexableTest
 
   internal fun isRootInitialized(): Boolean = ::root.isInitialized
 
-  override fun wrapAsModifiable(diff: MutableEntityStorage): WorkspaceEntity.Builder<NonIndexableTestEntity> {
+  override fun wrapAsModifiable(diff: MutableEntityStorage): WorkspaceEntityBuilder<NonIndexableTestEntity> {
     val modifiable = NonIndexableTestEntityImpl.Builder(null)
     modifiable.diff = diff
     modifiable.id = createEntityId()
@@ -148,7 +149,7 @@ internal class NonIndexableTestEntityData : WorkspaceEntityData<NonIndexableTest
     return NonIndexableTestEntity::class.java
   }
 
-  override fun createDetachedEntity(parents: List<WorkspaceEntity.Builder<*>>): WorkspaceEntity.Builder<*> {
+  override fun createDetachedEntity(parents: List<WorkspaceEntityBuilder<*>>): WorkspaceEntityBuilder<*> {
     return NonIndexableTestEntity(root, entitySource) {
     }
   }

@@ -1,9 +1,10 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.platform.workspace.jps.serialization.impl
 
 import com.intellij.platform.workspace.jps.JpsFileEntitySource
-import com.intellij.platform.workspace.jps.entities.LibraryEntity
+import com.intellij.platform.workspace.jps.entities.LibraryEntityBuilder
 import com.intellij.platform.workspace.jps.entities.LibraryId
+import com.intellij.platform.workspace.jps.entities.ModuleEntityBuilder
 import com.intellij.platform.workspace.jps.entities.ModuleEntity
 import com.intellij.platform.workspace.storage.EntitySource
 import com.intellij.platform.workspace.storage.EntityStorage
@@ -34,14 +35,14 @@ interface CustomModuleRootsSerializer {
                          customDir: String?,
                          virtualFileManager: VirtualFileUrlManager): EntitySource?
 
-  fun loadRoots(moduleEntity: ModuleEntity.Builder,
+  fun loadRoots(moduleEntity: ModuleEntityBuilder,
                 reader: JpsFileContentReader,
                 customDir: String?,
                 imlFileUrl: VirtualFileUrl,
                 internalModuleListSerializer: JpsModuleListSerializer?,
                 errorReporter: ErrorReporter,
                 virtualFileManager: VirtualFileUrlManager,
-                moduleLibrariesCollector: MutableMap<LibraryId, LibraryEntity.Builder>)
+                moduleLibrariesCollector: MutableMap<LibraryId, LibraryEntityBuilder>) { }
 
   fun saveRoots(module: ModuleEntity,
                 entities: Map<Class<out WorkspaceEntity>, List<WorkspaceEntity>>,

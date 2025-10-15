@@ -3,8 +3,8 @@ package com.intellij.java.workspace.entities.impl
 
 import com.intellij.java.workspace.entities.JavaProjectSettingsEntity
 import com.intellij.platform.workspace.jps.entities.ProjectSettingsEntity
+import com.intellij.platform.workspace.jps.entities.ProjectSettingsEntityBuilder
 import com.intellij.platform.workspace.storage.*
-import com.intellij.platform.workspace.storage.annotations.Parent
 import com.intellij.platform.workspace.storage.impl.EntityLink
 import com.intellij.platform.workspace.storage.impl.ModifiableWorkspaceEntityBase
 import com.intellij.platform.workspace.storage.impl.WorkspaceEntityBase
@@ -135,17 +135,17 @@ internal class JavaProjectSettingsEntityImpl(private val dataSource: JavaProject
 
       }
 
-    override var projectSettings: ProjectSettingsEntity.Builder
+    override var projectSettings: ProjectSettingsEntityBuilder
       get() {
         val _diff = diff
         return if (_diff != null) {
           @OptIn(EntityStorageInstrumentationApi::class)
           ((_diff as MutableEntityStorageInstrumentation).getParentBuilder(PROJECTSETTINGS_CONNECTION_ID,
-                                                                           this) as? ProjectSettingsEntity.Builder)
-          ?: (this.entityLinks[EntityLink(false, PROJECTSETTINGS_CONNECTION_ID)]!! as ProjectSettingsEntity.Builder)
+                                                                           this) as? ProjectSettingsEntityBuilder)
+          ?: (this.entityLinks[EntityLink(false, PROJECTSETTINGS_CONNECTION_ID)]!! as ProjectSettingsEntityBuilder)
         }
         else {
-          this.entityLinks[EntityLink(false, PROJECTSETTINGS_CONNECTION_ID)]!! as ProjectSettingsEntity.Builder
+          this.entityLinks[EntityLink(false, PROJECTSETTINGS_CONNECTION_ID)]!! as ProjectSettingsEntityBuilder
         }
       }
       set(value) {
@@ -209,7 +209,7 @@ internal class JavaProjectSettingsEntityData : WorkspaceEntityData<JavaProjectSe
   var languageLevelDefault: Boolean? = null
 
 
-  override fun wrapAsModifiable(diff: MutableEntityStorage): WorkspaceEntity.Builder<JavaProjectSettingsEntity> {
+  override fun wrapAsModifiable(diff: MutableEntityStorage): WorkspaceEntityBuilder<JavaProjectSettingsEntity> {
     val modifiable = JavaProjectSettingsEntityImpl.Builder(null)
     modifiable.diff = diff
     modifiable.id = createEntityId()
@@ -235,12 +235,12 @@ internal class JavaProjectSettingsEntityData : WorkspaceEntityData<JavaProjectSe
     return JavaProjectSettingsEntity::class.java
   }
 
-  override fun createDetachedEntity(parents: List<WorkspaceEntity.Builder<*>>): WorkspaceEntity.Builder<*> {
+  override fun createDetachedEntity(parents: List<WorkspaceEntityBuilder<*>>): WorkspaceEntityBuilder<*> {
     return JavaProjectSettingsEntity(entitySource) {
       this.compilerOutput = this@JavaProjectSettingsEntityData.compilerOutput
       this.languageLevelId = this@JavaProjectSettingsEntityData.languageLevelId
       this.languageLevelDefault = this@JavaProjectSettingsEntityData.languageLevelDefault
-      parents.filterIsInstance<ProjectSettingsEntity.Builder>().singleOrNull()?.let { this.projectSettings = it }
+      parents.filterIsInstance<ProjectSettingsEntityBuilder>().singleOrNull()?.let { this.projectSettings = it }
     }
   }
 

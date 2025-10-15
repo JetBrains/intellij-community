@@ -1,26 +1,25 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.platform.workspace.storage.testEntities.entities.impl
 
 import com.intellij.platform.workspace.storage.*
-import com.intellij.platform.workspace.storage.annotations.Parent
 import com.intellij.platform.workspace.storage.impl.ModifiableWorkspaceEntityBase
 import com.intellij.platform.workspace.storage.impl.SoftLinkable
 import com.intellij.platform.workspace.storage.impl.WorkspaceEntityBase
 import com.intellij.platform.workspace.storage.impl.WorkspaceEntityData
-import com.intellij.platform.workspace.storage.impl.containers.toMutableWorkspaceList
 import com.intellij.platform.workspace.storage.impl.indices.WorkspaceMutableIndex
 import com.intellij.platform.workspace.storage.instrumentation.EntityStorageInstrumentation
 import com.intellij.platform.workspace.storage.instrumentation.EntityStorageInstrumentationApi
 import com.intellij.platform.workspace.storage.metadata.model.EntityMetadata
 import com.intellij.platform.workspace.storage.testEntities.entities.ComposedId
 import com.intellij.platform.workspace.storage.testEntities.entities.ComposedIdSoftRefEntity
+import com.intellij.platform.workspace.storage.testEntities.entities.ComposedIdSoftRefEntityBuilder
 import com.intellij.platform.workspace.storage.testEntities.entities.NameId
 
 @GeneratedCodeApiVersion(3)
 @GeneratedCodeImplVersion(7)
 @OptIn(WorkspaceEntityInternalApi::class)
-internal class ComposedIdSoftRefEntityImpl(private val dataSource: ComposedIdSoftRefEntityData) : ComposedIdSoftRefEntity,
-                                                                                                  WorkspaceEntityBase(dataSource) {
+internal class ComposedIdSoftRefEntityImpl(private val dataSource: ComposedIdSoftRefEntityData) : ComposedIdSoftRefEntity, WorkspaceEntityBase(
+  dataSource) {
 
   private companion object {
 
@@ -55,8 +54,8 @@ internal class ComposedIdSoftRefEntityImpl(private val dataSource: ComposedIdSof
   }
 
 
-  internal class Builder(result: ComposedIdSoftRefEntityData?) :
-    ModifiableWorkspaceEntityBase<ComposedIdSoftRefEntity, ComposedIdSoftRefEntityData>(result), ComposedIdSoftRefEntity.Builder {
+  internal class Builder(result: ComposedIdSoftRefEntityData?) : ModifiableWorkspaceEntityBase<ComposedIdSoftRefEntity, ComposedIdSoftRefEntityData>(
+    result), ComposedIdSoftRefEntityBuilder {
     internal constructor() : this(ComposedIdSoftRefEntityData())
 
     override fun applyToBuilder(builder: MutableEntityStorage) {
@@ -184,7 +183,7 @@ internal class ComposedIdSoftRefEntityData : WorkspaceEntityData<ComposedIdSoftR
     return changed
   }
 
-  override fun wrapAsModifiable(diff: MutableEntityStorage): WorkspaceEntity.Builder<ComposedIdSoftRefEntity> {
+  override fun wrapAsModifiable(diff: MutableEntityStorage): WorkspaceEntityBuilder<ComposedIdSoftRefEntity> {
     val modifiable = ComposedIdSoftRefEntityImpl.Builder(null)
     modifiable.diff = diff
     modifiable.id = createEntityId()
@@ -204,15 +203,14 @@ internal class ComposedIdSoftRefEntityData : WorkspaceEntityData<ComposedIdSoftR
 
   override fun getMetadata(): EntityMetadata {
     return MetadataStorageImpl.getMetadataByTypeFqn(
-      "com.intellij.platform.workspace.storage.testEntities.entities.ComposedIdSoftRefEntity"
-    ) as EntityMetadata
+      "com.intellij.platform.workspace.storage.testEntities.entities.ComposedIdSoftRefEntity") as EntityMetadata
   }
 
   override fun getEntityInterface(): Class<out WorkspaceEntity> {
     return ComposedIdSoftRefEntity::class.java
   }
 
-  override fun createDetachedEntity(parents: List<WorkspaceEntity.Builder<*>>): WorkspaceEntity.Builder<*> {
+  override fun createDetachedEntity(parents: List<WorkspaceEntityBuilder<*>>): WorkspaceEntityBuilder<*> {
     return ComposedIdSoftRefEntity(myName, link, entitySource) {
     }
   }

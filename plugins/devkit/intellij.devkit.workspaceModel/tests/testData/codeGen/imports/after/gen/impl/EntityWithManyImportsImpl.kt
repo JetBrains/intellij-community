@@ -15,7 +15,9 @@ import com.intellij.platform.workspace.storage.instrumentation.MutableEntityStor
 import com.intellij.platform.workspace.storage.metadata.model.EntityMetadata
 import com.intellij.platform.workspace.storage.url.VirtualFileUrl
 import com.intellij.workspaceModel.test.api.EntityWithManyImports
+import com.intellij.workspaceModel.test.api.EntityWithManyImportsBuilder
 import com.intellij.workspaceModel.test.api.SimpleEntity
+import com.intellij.workspaceModel.test.api.SimpleEntityBuilder
 import com.intellij.workspaceModel.test.api.SimpleId
 import java.net.URL
 
@@ -69,7 +71,7 @@ internal class EntityWithManyImportsImpl(private val dataSource: EntityWithManyI
 
 
   internal class Builder(result: EntityWithManyImportsData?) : ModifiableWorkspaceEntityBase<EntityWithManyImports, EntityWithManyImportsData>(
-    result), EntityWithManyImports.Builder {
+    result), EntityWithManyImportsBuilder {
     internal constructor() : this(EntityWithManyImportsData())
 
     override fun applyToBuilder(builder: MutableEntityStorage) {
@@ -161,18 +163,18 @@ internal class EntityWithManyImportsImpl(private val dataSource: EntityWithManyI
 
     // List of non-abstract referenced types
     var _files: List<SimpleEntity>? = emptyList()
-    override var files: List<SimpleEntity.Builder>
+    override var files: List<SimpleEntityBuilder>
       get() {
         // Getter of the list of non-abstract referenced types
         val _diff = diff
         return if (_diff != null) {
           @OptIn(EntityStorageInstrumentationApi::class)
           ((_diff as MutableEntityStorageInstrumentation).getManyChildrenBuilders(FILES_CONNECTION_ID,
-                                                                                  this)!!.toList() as List<SimpleEntity.Builder>) +
-          (this.entityLinks[EntityLink(true, FILES_CONNECTION_ID)] as? List<SimpleEntity.Builder> ?: emptyList())
+                                                                                  this)!!.toList() as List<SimpleEntityBuilder>) +
+          (this.entityLinks[EntityLink(true, FILES_CONNECTION_ID)] as? List<SimpleEntityBuilder> ?: emptyList())
         }
         else {
-          this.entityLinks[EntityLink(true, FILES_CONNECTION_ID)] as? List<SimpleEntity.Builder> ?: emptyList()
+          this.entityLinks[EntityLink(true, FILES_CONNECTION_ID)] as? List<SimpleEntityBuilder> ?: emptyList()
         }
       }
       set(value) {
@@ -229,7 +231,7 @@ internal class EntityWithManyImportsData : WorkspaceEntityData<EntityWithManyImp
   internal fun isNameInitialized(): Boolean = ::name.isInitialized
   internal fun isPointerInitialized(): Boolean = ::pointer.isInitialized
 
-  override fun wrapAsModifiable(diff: MutableEntityStorage): WorkspaceEntity.Builder<EntityWithManyImports> {
+  override fun wrapAsModifiable(diff: MutableEntityStorage): WorkspaceEntityBuilder<EntityWithManyImports> {
     val modifiable = EntityWithManyImportsImpl.Builder(null)
     modifiable.diff = diff
     modifiable.id = createEntityId()
@@ -255,7 +257,7 @@ internal class EntityWithManyImportsData : WorkspaceEntityData<EntityWithManyImp
     return EntityWithManyImports::class.java
   }
 
-  override fun createDetachedEntity(parents: List<WorkspaceEntity.Builder<*>>): WorkspaceEntity.Builder<*> {
+  override fun createDetachedEntity(parents: List<WorkspaceEntityBuilder<*>>): WorkspaceEntityBuilder<*> {
     return EntityWithManyImports(version, name, pointer, entitySource) {
     }
   }
