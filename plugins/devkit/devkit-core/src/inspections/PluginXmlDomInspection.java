@@ -336,6 +336,12 @@ public final class PluginXmlDomInspection extends DevKitPluginXmlInspectionBase 
                           holder, true, true);
     }
 
+    //noinspection deprecation
+    if (DomUtil.hasXml(ideaPlugin.getPackage())) {
+      //noinspection deprecation
+      highlightDeprecated(ideaPlugin.getPackage(), DevKitBundle.message("inspections.plugin.xml.deprecated.package.attribute"), holder, true, true);
+    }
+
     checkMaxLength(ideaPlugin.getUrl(), 255, holder);
     checkValidWebsite(ideaPlugin.getUrl(), holder);
 

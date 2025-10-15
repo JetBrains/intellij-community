@@ -85,8 +85,13 @@ public interface IdeaPlugin extends DomElement {
   @Attribute("visibility")
   @NotNull GenericAttributeValue<ContentModuleVisibility> getContentModuleVisibility();
 
+  /**
+   * @deprecated Usage is discouraged, content modules should be packaged into separate content module jars under `lib/modules/`.
+   */
+  @SuppressWarnings("DeprecatedIsStillUsed")
   @Stubbed
   @Convert(IdeaPluginPackageConverter.class)
+  @Deprecated
   @NotNull GenericAttributeValue<PsiPackage> getPackage();
 
   @Stubbed
