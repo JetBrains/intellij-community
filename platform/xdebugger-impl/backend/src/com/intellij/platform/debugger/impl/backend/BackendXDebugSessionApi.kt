@@ -183,24 +183,27 @@ internal class BackendXDebugSessionApi : XDebugSessionApi {
   }
 
   override suspend fun computeExecutionStacks(suspendContextId: XSuspendContextId): Flow<XExecutionStacksEvent> {
-    val suspendContextModel = suspendContextId.findValue() ?: return emptyFlow()
     return channelFlow {
-      suspendContextModel.suspendContext.computeExecutionStacks(object : XSuspendContext.XExecutionStackContainer {
-        override fun addExecutionStack(executionStacks: List<XExecutionStack>, last: Boolean) {
-          val session = suspendContextModel.session
-          val stacks = executionStacks.map { stack ->
-            stack.toRpc(suspendContextModel.coroutineScope, session)
+      // Switch to EDT to ensure the suspend context is not resumed concurrently
+      withContext(Dispatchers.EDT) {
+        val suspendContextModel = suspendContextId.findValue() ?: return@withContext
+        suspendContextModel.suspendContext.computeExecutionStacks(object : XSuspendContext.XExecutionStackContainer {
+          override fun addExecutionStack(executionStacks: List<XExecutionStack>, last: Boolean) {
+            val session = suspendContextModel.session
+            val stacks = executionStacks.map { stack ->
+              stack.toRpc(suspendContextModel.coroutineScope, session)
+            }
+            trySend(XExecutionStacksEvent.NewExecutionStacks(stacks, last))
+            if (last) {
+              this@channelFlow.close()
+            }
           }
-          trySend(XExecutionStacksEvent.NewExecutionStacks(stacks, last))
-          if (last) {
-            this@channelFlow.close()
-          }
-        }
 
-        override fun errorOccurred(errorMessage: @NlsContexts.DialogMessage String) {
-          trySend(XExecutionStacksEvent.ErrorOccurred(errorMessage))
-        }
-      })
+          override fun errorOccurred(errorMessage: @NlsContexts.DialogMessage String) {
+            trySend(XExecutionStacksEvent.ErrorOccurred(errorMessage))
+          }
+        })
+      }
       awaitClose()
     }.buffer(Channel.UNLIMITED)
   }
