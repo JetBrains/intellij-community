@@ -45,7 +45,7 @@ class FrontendXBreakpointManager(private val project: Project, private val cs: C
 
   private var _breakpointsDialogSettings: XBreakpointsDialogState? = null
 
-  private val lineBreakpointManager = XLineBreakpointManager(project, cs, isEnabled = SplitDebuggerMode.isSplitDebugger())
+  private val lineBreakpointManager = XLineBreakpointManager(project, cs, isEnabled = SplitDebuggerMode.isSplitDebugger(), this)
 
   private val lightBreakpoints: ConcurrentMap<LightBreakpointPosition, FrontendXLightLineBreakpoint> = ConcurrentCollectionFactory.createConcurrentMap()
 
