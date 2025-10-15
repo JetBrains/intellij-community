@@ -212,12 +212,14 @@ public final class ConfigImportHelper {
         }
         else if (bestCandidate != null && !isConfigOld(bestCandidate.second)) {
           oldConfigDirAndOldIdePath = new Pair<>(bestCandidate.first, null);
-          log.info("auto-import (wizard disabled)");
+          log.info("auto-import");
         }
-        else if (!(veryFirstStartOnThisComputer || wizardEnabled || "never".equals(showImportDialog) || AppMode.isRemoteDevHost())) {
+        else {
           log.info("no suitable configs found");
-          oldConfigDirAndOldIdePath = showDialogAndGetOldConfigPath(candidateDirectories.getPaths());
-          importScenarioStatistics = ImportOldConfigsUsagesCollector.InitialImportScenario.SHOW_DIALOG_NO_CONFIGS_FOUND;
+          if (!(veryFirstStartOnThisComputer || wizardEnabled || "never".equals(showImportDialog) || AppMode.isRemoteDevHost())) {
+            oldConfigDirAndOldIdePath = showDialogAndGetOldConfigPath(candidateDirectories.getPaths());
+            importScenarioStatistics = ImportOldConfigsUsagesCollector.InitialImportScenario.SHOW_DIALOG_NO_CONFIGS_FOUND;
+          }
         }
       }
 
