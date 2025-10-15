@@ -21,7 +21,7 @@ interface CredentialStore {
     ephemeral(runAsync { get(attributes) }.await() )
 
   @ApiStatus.Experimental
-  suspend fun <T> ephemeral(value: T?): Ephemeral<T> =
+  suspend fun <T : Any> ephemeral(value: T?): Ephemeral<T> =
     StaticEphemeral(value)
 
   operator fun set(attributes: CredentialAttributes, credentials: Credentials?)
