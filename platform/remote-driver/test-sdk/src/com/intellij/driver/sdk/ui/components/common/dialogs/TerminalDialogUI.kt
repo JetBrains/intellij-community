@@ -11,15 +11,30 @@ import com.intellij.driver.sdk.waitFor
 import org.intellij.lang.annotations.Language
 
 
-fun Finder.terminal(@Language("xpath") xpath: String = "//div[contains(@class, 'TerminalPanel') or contains(@class, 'ConsoleTerminalWidget')]"): TerminalDialogUI =
+fun Finder.terminal(@Language("xpath") xpath: String = "//div[contains(@class, 'TerminalToolWindow') or contains(@class, 'ConsoleTerminalWidget')]"): TerminalDialogUI =
   x(xpath, TerminalDialogUI::class.java)
 
 fun Finder.terminal(action: TerminalDialogUI.() -> Unit) {
-  x("//div[contains(@class, 'TerminalPanel') or contains(@class, 'ConsoleTerminalWidget')]", TerminalDialogUI::class.java).action()
+  x("//div[contains(@class, 'TerminalToolWindow') or contains(@class, 'ConsoleTerminalWidget')]", TerminalDialogUI::class.java).action()
+}
+
+fun Finder.terminalPanel(@Language("xpath") xpath: String = "//div[contains(@class, 'TerminalPanel')]"): TerminalPanelUi =
+  x(xpath, TerminalPanelUi::class.java)
+
+fun Finder.terminalPanel(action: TerminalPanelUi.() -> Unit) {
+  x("//div[contains(@class, 'TerminalPanel')]", TerminalPanelUi::class.java).action()
 }
 
 fun Driver.terminal(action: TerminalDialogUI.() -> Unit) {
   this.ui.terminal(action)
+}
+
+fun Driver.terminalPanel(action: TerminalPanelUi.() -> Unit) {
+  this.ui.terminalPanel(action)
+}
+
+class TerminalPanelUi(data: ComponentData) : UiComponent(data) {
+  val terminalView: TerminalViewImpl by lazy { driver.cast(component, TerminalViewImpl::class) }
 }
 
 class TerminalDialogUI(data: ComponentData) : UiComponent(data) {
@@ -29,10 +44,6 @@ class TerminalDialogUI(data: ComponentData) : UiComponent(data) {
     }
     waitFound()
   }
-
-  val terminalView: TerminalViewImpl by lazy { driver.cast(component, TerminalViewImpl::class) }
-
-
 
   val rdPortForwardingPanelWidget: RdPortForwardingPanelWidget
     get() = x(RdPortForwardingPanelWidget::class.java) { byJavaClass("com.jetbrains.thinclient.portForwarding.ThinClientPortForwardingPanelWidget") }
@@ -60,12 +71,12 @@ interface TerminalViewImpl {
   fun getActiveOutputModel() : TerminalOutputModel
 }
 
-@Remote("org.jetbrains.plugins.terminal.block.reworked.TerminalOutputModel")
+@Remote("org.jetbrains.plugins.terminal.view.TerminalOutputModel")
 interface TerminalOutputModel {
   val cursorOffset: TerminalOffset
 }
 
-@Remote("org.jetbrains.plugins.terminal.block.reworked.TerminalOffset",  plugin = "org.jetbrains.plugins.terminal")
+@Remote("org.jetbrains.plugins.terminal.view.TerminalOffset",  plugin = "org.jetbrains.plugins.terminal")
 interface TerminalOffset {
   fun toAbsolute(): Long
 }

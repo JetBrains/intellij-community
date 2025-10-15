@@ -123,10 +123,6 @@ class TerminalViewImpl(
     get() = getCurEditor().calculateTerminalSize()
   override val title: TerminalTitle = TerminalTitle()
 
-  @VisibleForTesting
-  override fun getActiveOutputModel(): TerminalOutputModel {
-    return outputModels.active.value
-  }
   private val mutableOutputModels: TerminalOutputModelsSetImpl
   override val outputModels: TerminalOutputModelsSet
 
@@ -602,8 +598,9 @@ class TerminalViewImpl(
     }
 
     @Suppress("unused")
+    @ApiStatus.Internal
     @VisibleForTesting
-    private fun getActiveOutputModel(): TerminalOutputModel {
+    fun getActiveOutputModel(): TerminalOutputModel {
       return outputModels.active.value
     }
 
