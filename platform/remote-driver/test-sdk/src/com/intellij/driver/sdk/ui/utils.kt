@@ -8,9 +8,12 @@ import com.intellij.driver.sdk.Project
 import com.intellij.driver.sdk.ui.components.UiComponent
 import com.intellij.driver.sdk.ui.remote.Component
 import com.intellij.driver.sdk.ui.remote.REMOTE_ROBOT_MODULE_ID
+import com.intellij.driver.sdk.waitFor
 import com.intellij.openapi.diagnostic.fileLogger
 import java.awt.Point
 import java.awt.Rectangle
+import kotlin.time.Duration
+import kotlin.time.Duration.Companion.seconds
 
 fun Driver.hasFocus(c: Component) = utility(IJSwingUtilities::class).hasFocus(c)
 fun Driver.hasFocus(c: UiComponent) = hasFocus(c.component)
@@ -47,6 +50,12 @@ val UiComponent.boundsOnScreen
 val UiComponent.accessibleName: String? get() = component.getAccessibleContext()?.getAccessibleName()
 
 val Component.rdTarget get() = (this as RefWrapper).getRef().rdTarget()
+
+fun UiComponent.waitEnabled(timeout: Duration = 5.seconds) = apply {
+  waitFor("'$accessibleName' component is enabled", timeout) {
+    isEnabled()
+  }
+}
 
 @Remote("com.intellij.util.IJSwingUtilities")
 interface IJSwingUtilities {
