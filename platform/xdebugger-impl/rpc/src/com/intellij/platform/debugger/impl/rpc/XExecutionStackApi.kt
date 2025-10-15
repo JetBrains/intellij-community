@@ -36,3 +36,13 @@ interface XExecutionStackApi : RemoteApi<Unit> {
 @ApiStatus.Internal
 @Serializable
 data class FrameNotificationRequest(val sessionId: XDebugSessionId?, val content: String)
+
+@ApiStatus.Internal
+@Serializable
+sealed interface ShowSessionTabRequest {
+  val sessionId: XDebugSessionId
+}
+
+@ApiStatus.Internal
+@Serializable
+data class ShowFramesRequest(override val sessionId: XDebugSessionId) : ShowSessionTabRequest

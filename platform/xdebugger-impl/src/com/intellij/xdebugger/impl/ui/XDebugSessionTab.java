@@ -540,7 +540,17 @@ public class XDebugSessionTab extends DebuggerSessionTabBase {
     tab.showView(tab.getWatchesContentId());
   }
 
+  /**
+   * @deprecated Use {@link #showFramesView(XDebugSessionProxy)} instead
+   */
+  @Deprecated
   public static void showFramesView(@Nullable XDebugSessionImpl session) {
+    if (session == null) return;
+    showFramesView(XDebugSessionProxyKeeperKt.asProxy(session));
+  }
+
+  @ApiStatus.Internal
+  public static void showFramesView(@Nullable XDebugSessionProxy session) {
     if (session == null) return;
     XDebugSessionTab tab = session.getSessionTab();
     if (tab == null) return;

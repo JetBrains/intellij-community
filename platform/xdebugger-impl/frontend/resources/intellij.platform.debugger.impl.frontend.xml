@@ -30,5 +30,6 @@
     <platform.rpc.projectRemoteTopicListener implementation="com.intellij.platform.debugger.impl.frontend.ShowBreakpointsDialogRemoteTopicListener"/>
     <platform.rpc.projectRemoteTopicListener implementation="com.intellij.platform.debugger.impl.frontend.frame.ShowImagePopupRemoteTopicListener"/>
     <platform.rpc.projectRemoteTopicListener implementation="com.intellij.platform.debugger.impl.frontend.frame.FrameNotificationRemoteTopicListener"/>
+    <platform.rpc.projectRemoteTopicListener implementation="com.intellij.platform.debugger.impl.frontend.frame.ShowSessionTabRemoteTopicListener"/>
   </extensions>
 </idea-plugin>
