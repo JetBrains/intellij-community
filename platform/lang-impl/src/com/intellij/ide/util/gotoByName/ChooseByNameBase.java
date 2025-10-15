@@ -14,6 +14,8 @@ import com.intellij.ide.actions.CopyReferenceAction;
 import com.intellij.ide.actions.GotoFileAction;
 import com.intellij.ide.impl.DataValidators;
 import com.intellij.lang.LangBundle;
+import com.intellij.model.Pointer;
+import com.intellij.model.Symbol;
 import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.actionSystem.toolbarLayout.ToolbarLayoutStrategy;
 import com.intellij.openapi.application.ApplicationManager;
@@ -277,6 +279,11 @@ public abstract class ChooseByNameBase implements ChooseByNameViewModel {
           selection, o -> getElement(o));
         return PsiUtilCore.toPsiElementArray(result);
       });
+
+      sink.lazy(CommonDataKeys.SYMBOLS, () -> {
+        if (myCalcElementsThread != null) return null;
+        return selection.stream().flatMap(o -> getSymbols(o).stream()).toList();
+      });
     }
 
     private static @Nullable PsiElement getElement(Object element) {
@@ -289,6 +296,24 @@ public abstract class ChooseByNameBase implements ChooseByNameViewModel {
           data, CommonDataKeys.PSI_ELEMENT.getName(), element);
       }
       return null;
+    }
+
+    private static @NotNull List<Symbol> getSymbols(Object element) {
+      if (element instanceof Pointer<?>) {
+        element = ((Pointer<?>)element).dereference();
+      }
+      if (element instanceof Symbol o) {
+        return Collections.singletonList(o);
+      }
+      if (element instanceof DataProvider o) {
+        List<Symbol> data = CommonDataKeys.SYMBOLS.getData(o);
+        if (data != null) {
+          //noinspection unchecked
+          data = (List<Symbol>)DataValidators.validOrNull(data, CommonDataKeys.SYMBOLS.getName(), element);
+        }
+        return data == null ? Collections.emptyList() : data;
+      }
+      return Collections.emptyList();
     }
 
     @Override
