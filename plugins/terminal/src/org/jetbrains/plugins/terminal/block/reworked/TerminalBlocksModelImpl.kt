@@ -2,8 +2,6 @@
 package org.jetbrains.plugins.terminal.block.reworked
 
 import com.intellij.openapi.Disposable
-import com.intellij.openapi.editor.event.DocumentEvent
-import com.intellij.openapi.editor.event.DocumentListener
 import com.intellij.util.concurrency.annotations.RequiresEdt
 import kotlinx.coroutines.channels.BufferOverflow
 import kotlinx.coroutines.flow.MutableSharedFlow
@@ -26,16 +24,16 @@ class TerminalBlocksModelImpl(private val outputModel: TerminalOutputModel, pare
   override val events: SharedFlow<TerminalBlocksModelEvent> = mutableEventsFlow.asSharedFlow()
 
   init {
-    (outputModel as MutableTerminalOutputModelImpl).document.addDocumentListener(object : DocumentListener {
-      override fun documentChanged(event: DocumentEvent) {
+    outputModel.addListener(parentDisposable, object : TerminalOutputModelListener {
+      override fun afterContentChanged(event: TerminalContentChangeEvent) {
         // first, clean up stuff that's out of bounds now
         trimBlocksBefore(outputModel.startOffset)
         trimBlocksAfter(outputModel.endOffset)
-        if (event.offset > 0 || event.newLength > 0) { // check that it's not trimming
-          trimBlocksAfter(outputModel.startOffset + event.offset.toLong())
+        if (!event.isTrimming) {
+          trimBlocksAfter(event.offset)
         }
       }
-    }, parentDisposable)
+    })
 
     val newBlock = createNewBlock(startOffset = outputModel.startOffset)
     blocks.add(newBlock)

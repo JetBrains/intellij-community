@@ -239,12 +239,10 @@ class MutableTerminalOutputModelImpl(
 
     highlightingsModel.removeBefore(removeUntilOffset)
 
-    // TODO: TerminalBlocksModelImpl uses a document listener and relies on this value being already updated, need to migrate it to a model listener
-    trimmedCharsCount += removeUntilOffset
-
     val trimmedPart = document.immutableCharSequence.subSequence(0, removeUntilOffset)
     document.deleteString(0, removeUntilOffset)
 
+    trimmedCharsCount += removeUntilOffset
     trimmedLinesCount += lineCountBefore - document.lineCount
     firstLineTrimmedCharsCount = removeUntilOffset - futureFirstLineStart
 
