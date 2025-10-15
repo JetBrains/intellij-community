@@ -6,10 +6,13 @@ import com.intellij.application.options.colors.SchemesPanel
 import com.intellij.application.options.colors.SchemesPanelFactory
 import com.intellij.application.options.editor.CheckboxDescriptor
 import com.intellij.application.options.editor.checkBox
-import com.intellij.ide.*
+import com.intellij.ide.DataManager
+import com.intellij.ide.GeneralSettings
 import com.intellij.ide.IdeBundle.message
+import com.intellij.ide.ProjectWindowCustomizerService
 import com.intellij.ide.actions.IdeScaleTransformer
 import com.intellij.ide.actions.QuickChangeLookAndFeel
+import com.intellij.ide.isSupportScreenReadersOverridden
 import com.intellij.ide.plugins.PluginManagerConfigurable
 import com.intellij.ide.ui.laf.LafManagerImpl
 import com.intellij.ide.ui.search.OptionDescription
@@ -204,12 +207,6 @@ internal class AppearanceConfigurable : BoundSearchableConfigurable(message("tit
           lafComboBoxModelWrapper.comboBoxComponent = theme.component
 
           browserLink(message("ide.islands.read.more"), IslandsFeedback.getReadMoreUrl()).visibleIf(islandLafProperty)
-
-          link(message("ide.islands.share.feedback")) {
-            BrowserUtil.browse(IslandsFeedback.getFeedbackUrl())
-          }
-            .visibleIf(islandLafProperty)
-            .component.setExternalLinkIcon()
 
           checkBox(message("preferred.theme.autodetect.selector"))
             .bindSelected(syncThemeProperty)
