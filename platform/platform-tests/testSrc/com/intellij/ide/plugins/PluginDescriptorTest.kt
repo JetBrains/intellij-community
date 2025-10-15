@@ -414,7 +414,7 @@ class PluginDescriptorTest {
     plugin(PluginManagerCore.CORE_PLUGIN_ID) {}.buildDir(pluginDirPath)
     val descriptor = loadDescriptorInTest(pluginDirPath)
     assertThat(descriptor).isNotNull
-    val hostIds = IdeaPluginCpuArchRequirement.getHostCpuArchModuleIds()
+    val hostIds = PluginCpuArchRequirement.getHostCpuArchModuleIds()
     if (hostIds.isEmpty()) {
       logger<PluginDescriptorTest>().warn("No host arch plugin aliases")
     }

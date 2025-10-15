@@ -36,23 +36,6 @@
 com.intellij.ide.plugins.DynamicPluginListener
 - *:beforePluginsLoaded():V
 - *:pluginsLoaded():V
-*e:com.intellij.ide.plugins.IdeaPluginCpuArchRequirement
-- java.lang.Enum
-- sf:ARM32:com.intellij.ide.plugins.IdeaPluginCpuArchRequirement
-- sf:ARM64:com.intellij.ide.plugins.IdeaPluginCpuArchRequirement
-- *sf:Companion:com.intellij.ide.plugins.IdeaPluginCpuArchRequirement$Companion
-- sf:Unknown:com.intellij.ide.plugins.IdeaPluginCpuArchRequirement
-- sf:X86:com.intellij.ide.plugins.IdeaPluginCpuArchRequirement
-- sf:X86_64:com.intellij.ide.plugins.IdeaPluginCpuArchRequirement
-- b:<init>(java.lang.String,I,kotlin.jvm.internal.DefaultConstructorMarker):V
-- s:getEntries():kotlin.enums.EnumEntries
-- f:getModuleId():com.intellij.openapi.extensions.PluginId
-- a:isHostOs():Z
-- s:valueOf(java.lang.String):com.intellij.ide.plugins.IdeaPluginCpuArchRequirement
-- s:values():com.intellij.ide.plugins.IdeaPluginCpuArchRequirement[]
-*f:com.intellij.ide.plugins.IdeaPluginCpuArchRequirement$Companion
-- f:fromModuleId(com.intellij.openapi.extensions.PluginId):com.intellij.ide.plugins.IdeaPluginCpuArchRequirement
-- f:getHostCpuArchModuleIds():java.util.List
 *e:com.intellij.ide.plugins.IdeaPluginOsRequirement
 - java.lang.Enum
 - *sf:Companion:com.intellij.ide.plugins.IdeaPluginOsRequirement$Companion

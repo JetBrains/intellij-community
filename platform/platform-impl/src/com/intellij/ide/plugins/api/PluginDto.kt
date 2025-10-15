@@ -24,7 +24,7 @@ class PluginDto(
   override var version: String? = null
   override var isBundled: Boolean = false
   override var isDeleted: Boolean = false
-  override var isIncompatibleWithCurrentOs: Boolean = false
+  override var isIncompatibleWithCurrentPlatform: Boolean = false
   override var isIncompatible: Boolean = false
   override var canBeEnabled: Boolean = true
   override var requiresUpgrade: Boolean = false
@@ -115,7 +115,7 @@ class PluginDto(
         version = model.version
         isBundled = model.isBundled
         isDeleted = model.isDeleted
-        isIncompatibleWithCurrentOs = model.isIncompatibleWithCurrentOs
+        isIncompatibleWithCurrentPlatform = model.isIncompatibleWithCurrentPlatform
         isIncompatible = model.isIncompatible
         canBeEnabled = model.canBeEnabled
         requiresUpgrade = model.requiresUpgrade

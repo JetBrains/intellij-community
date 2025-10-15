@@ -433,7 +433,7 @@ class PluginMainDescriptor(
     }
     return pluginAliases +
            IdeaPluginOsRequirement.getHostOsModuleIds() +
-           IdeaPluginCpuArchRequirement.getHostCpuArchModuleIds() +
+           PluginCpuArchRequirement.getHostCpuArchModuleIds() +
            productModeAliasesForCorePlugin()
   }
 

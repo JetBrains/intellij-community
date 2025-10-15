@@ -117,7 +117,7 @@ public final class ListPluginComponent extends JPanel {
     myCoroutineScope = coroutineScope;
     myInstalledDescriptorForMarketplace = listModel.getInstalledModels().get(pluginUiModel.getPluginId());
     PluginId pluginId = myPlugin.getPluginId();
-    boolean compatible = !myPlugin.isIncompatibleWithCurrentOs();
+    boolean compatible = !myPlugin.isIncompatibleWithCurrentPlatform();
     PluginInstallationState pluginInstallationState = listModel.getPluginInstallationStates().get(pluginId);
     myIsAvailable = (compatible || isInstalledAndEnabled(pluginInstallationState)) && pluginUiModel.getCanBeEnabled();
     UiPluginManager pluginManager = UiPluginManager.getInstance();
