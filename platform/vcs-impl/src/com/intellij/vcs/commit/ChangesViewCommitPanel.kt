@@ -22,7 +22,9 @@ class ChangesViewCommitPanel @ApiStatus.Internal constructor(
   private var isHideToolWindowOnCommit = false
 
   init {
-    ChangesViewCommitTabTitleUpdater(project).initSubscription(this)
+    val titleUpdater = ChangesViewCommitTabTitleUpdater(project)
+    titleUpdater.initSubscription(this)
+    titleUpdater.updateTitle()
   }
 
   override val isActive: Boolean get() = component.isVisible
@@ -81,9 +83,19 @@ private class ChangesViewCommitTabTitleUpdater(private val project: Project) : C
   }
 
   override fun toolWindowMappingChanged() {
+    updateTitle()
+  }
+
+  fun updateTitle() {
     val tabContent = ChangesViewContentManager.getInstance(project).findContent(LOCAL_CHANGES)
     if (tabContent != null) {
-        tabContent.displayName = if (project.isCommitToolWindowShown) message("tab.title.commit") else message("local.changes.tab")
+      val contentsCount = getToolWindowFor(project, LOCAL_CHANGES)?.contentManager?.contentCount ?: 0
+
+      tabContent.displayName = when {
+        contentsCount == 1 -> null
+        project.isCommitToolWindowShown -> message("tab.title.commit")
+        else -> message("local.changes.tab")
       }
+    }
   }
 }
