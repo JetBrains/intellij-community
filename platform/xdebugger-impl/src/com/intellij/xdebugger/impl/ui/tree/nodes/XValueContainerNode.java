@@ -1,4 +1,4 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.xdebugger.impl.ui.tree.nodes;
 
 import com.intellij.openapi.util.text.StringUtil;
@@ -70,12 +70,11 @@ public abstract class XValueContainerNode<ValueContainer extends XValueContainer
     if (myObsolete) return;
     invokeNodeUpdate(() -> {
       if (myObsolete) return;
-      List<XValueContainerNode<?>> newChildren;
+      List<XValueContainerNode<?>> newChildren = new ArrayList<>(children.size());
+      if (myValueChildren == null) {
+        myValueChildren = initChildrenList(children.size());
+      }
       if (children.size() > 0) {
-        newChildren = new ArrayList<>(children.size());
-        if (myValueChildren == null) {
-          myValueChildren = initChildrenList(children.size());
-        }
         boolean valuesInline = XDebuggerSettingsManager.getInstance().getDataViewSettings().isShowValuesInline();
         InlineDebuggerHelper inlineHelper = getTree().getEditorsProvider().getInlineDebuggerHelper();
         for (int i = 0; i < children.size(); i++) {
@@ -86,12 +85,6 @@ public abstract class XValueContainerNode<ValueContainer extends XValueContainer
           if (valuesInline && inlineHelper.shouldEvaluateChildrenByDefault(node) && isUseGetChildrenHack(myTree)) { //todo[kb]: try to generify this dirty hack
             node.getChildren();
           }
-        }
-      }
-      else {
-        newChildren = new SmartList<>();
-        if (myValueChildren == null) {
-          myValueChildren = new SmartList<>();
         }
       }
 
