@@ -9,6 +9,7 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.roots.*;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.vfs.VirtualFileFilter;
+import com.intellij.openapi.vfs.newvfs.NewVirtualFile;
 import com.intellij.platform.backend.workspace.WorkspaceModel;
 import com.intellij.platform.workspace.jps.entities.LibraryEntity;
 import com.intellij.platform.workspace.jps.entities.SdkEntity;
@@ -49,6 +50,7 @@ public class ProjectFileIndexImpl extends FileIndexBase implements ProjectFileIn
     Pair<List<VirtualFile>, List<VirtualFile>> rootsPair = ReadAction.compute(() -> {
       Set<VirtualFile> allRecursiveRoots = new LinkedHashSet<>();
       List<VirtualFile> allNonRecursiveRoots = new ArrayList<>();
+      List<VirtualFile> allRecursiveNonIndexableRoots = new ArrayList<>();
       myWorkspaceFileIndex.visitFileSets((fileSet, entityPointer) -> {
         ProgressManager.checkCanceled();
         if (fileSet.getKind().isContent()) {
@@ -57,10 +59,15 @@ public class ProjectFileIndexImpl extends FileIndexBase implements ProjectFileIn
             allNonRecursiveRoots.add(root);
           }
           else {
-            allRecursiveRoots.add(root);
+            if (fileSet.getKind().isIndexable()){
+              allRecursiveRoots.add(root);
+            } else {
+              allRecursiveNonIndexableRoots.add(NewVirtualFile.asCacheAvoiding(root));
+            }
           }
         }
       });
+      allRecursiveRoots.addAll(allRecursiveNonIndexableRoots);
       List<VirtualFile> recursiveRoots =
         ContainerUtil.filter(allRecursiveRoots, root -> root.getParent() == null ||
                                                         myWorkspaceFileIndex.getContentFileSetRoot(root.getParent(), false) == null);

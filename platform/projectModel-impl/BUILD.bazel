@@ -40,6 +40,7 @@ jvm_library(
     "//platform/eel-provider",
     "//platform/util/coroutines",
     "//platform/diagnostic/telemetry-impl",
+    "//platform/analysis-api:analysis",
   ],
   exports = [
     "//jps/model-serialization",
