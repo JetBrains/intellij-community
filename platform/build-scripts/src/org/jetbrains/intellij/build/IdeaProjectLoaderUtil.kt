@@ -82,7 +82,22 @@ internal object IdeaProjectLoaderUtil {
     }.let { BuildDependenciesCommunityRoot(it) }
   }
 
+  /**
+   * This method only for internal usage. Use [BuildPaths.MAYBE_ULTIMATE_HOME] instead.
+   */
+  @ApiStatus.Internal
+  fun maybeUltimateHome(): Path? {
+    return searchForOptionalMarkerFile(listOf(ULTIMATE_REPO_MARKER_FILE))
+  }
+
   fun searchForAnyMarkerFile(markerFiles: Collection<Path>): Path {
+    return searchForOptionalMarkerFile(markerFiles) ?: error(
+      "Cannot find marker file $markerFiles across sources:\n" +
+      collectHomeSources().joinToString("\n") { "  ${it.moniker}: ${it.path}" }
+    )
+  }
+
+  private fun searchForOptionalMarkerFile(markerFiles: Collection<Path>): Path? {
     val homeSources = collectHomeSources()
     for (source in homeSources) {
       if (source.path == null) {
@@ -99,10 +114,7 @@ internal object IdeaProjectLoaderUtil {
         }
       }
     }
-
-    error(
-      "Cannot find marker file $markerFiles across sources:\n" +
-      homeSources.joinToString("\n") { "  ${it.moniker}: ${it.path}" })
+    return null
   }
 
   private fun searchForMarkerFileUpwards(start: Path, markerFile: Path): Path? {

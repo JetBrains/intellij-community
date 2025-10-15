@@ -57,7 +57,7 @@ suspend fun checkPrivatePluginModulesAreNotPublic(
  */
 private fun getPrivateModules(context: BuildContext): Set<String> {
   val projectHome = context.paths.projectHome
-  val ultimateHome = BuildPaths.ULTIMATE_HOME
+  val ultimateHome = BuildPaths.MAYBE_ULTIMATE_HOME
 
   return when (projectHome) {
     ultimateHome -> readPrivateModulesFromFile(ultimateHome) // Ultimate project

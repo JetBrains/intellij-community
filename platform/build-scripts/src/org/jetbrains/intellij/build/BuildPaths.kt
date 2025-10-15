@@ -41,6 +41,14 @@ class BuildPaths(
       IdeaProjectLoaderUtil.guessUltimateHome()
     }
 
+    /**
+     * Path to the Ultimate repository root or null if it is the Community repository.
+     */
+    @JvmStatic
+    val MAYBE_ULTIMATE_HOME: Path? by lazy {
+      IdeaProjectLoaderUtil.maybeUltimateHome()
+    }
+
     @JvmStatic
     val COMMUNITY_ROOT: BuildDependenciesCommunityRoot by lazy {
       IdeaProjectLoaderUtil.guessCommunityHome()
