@@ -2,11 +2,8 @@
 package org.jetbrains.plugins.terminal.block.reworked
 
 import com.intellij.openapi.Disposable
+import com.intellij.util.EventDispatcher
 import com.intellij.util.concurrency.annotations.RequiresEdt
-import kotlinx.coroutines.channels.BufferOverflow
-import kotlinx.coroutines.flow.MutableSharedFlow
-import kotlinx.coroutines.flow.SharedFlow
-import kotlinx.coroutines.flow.asSharedFlow
 import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.annotations.VisibleForTesting
 import org.jetbrains.plugins.terminal.session.TerminalBlocksModelState
@@ -19,9 +16,7 @@ class TerminalBlocksModelImpl(private val outputModel: TerminalOutputModel, pare
 
   override val blocks: MutableList<TerminalOutputBlock> = mutableListOf()
 
-  private val mutableEventsFlow: MutableSharedFlow<TerminalBlocksModelEvent> = MutableSharedFlow(replay = Int.MAX_VALUE,
-                                                                                                 onBufferOverflow = BufferOverflow.DROP_OLDEST)
-  override val events: SharedFlow<TerminalBlocksModelEvent> = mutableEventsFlow.asSharedFlow()
+  private val dispatcher = EventDispatcher.create(TerminalBlocksModelListener::class.java)
 
   init {
     outputModel.addListener(parentDisposable, object : TerminalOutputModelListener {
@@ -38,16 +33,20 @@ class TerminalBlocksModelImpl(private val outputModel: TerminalOutputModel, pare
     addNewBlock(outputModel.startOffset)
   }
 
+  override fun addListener(parentDisposable: Disposable, listener: TerminalBlocksModelListener) {
+    dispatcher.addListener(listener, parentDisposable)
+  }
+
   override fun promptStarted(offset: TerminalOffset) {
     val lastBlock = blocks.last()
     if (offset == lastBlock.startOffset) {
       blocks.removeLast()
-      mutableEventsFlow.tryEmit(TerminalBlockRemovedEvent(lastBlock))
+      dispatcher.multicaster.blockRemoved(TerminalBlockRemovedEventImpl(this, lastBlock))
     }
     else {
       val updatedBlock = lastBlock.copy(endOffset = offset)
       blocks[blocks.lastIndex] = updatedBlock
-      mutableEventsFlow.tryEmit(TerminalBlockFinishedEvent(updatedBlock))
+      dispatcher.multicaster.blockFinished(TerminalBlockFinishedEventImpl(this, updatedBlock))
     }
 
     addNewBlock(offset)
@@ -81,20 +80,20 @@ class TerminalBlocksModelImpl(private val outputModel: TerminalOutputModel, pare
     blockIdCounter = state.blockIdCounter
 
     for (block in blocks) {
-      mutableEventsFlow.tryEmit(TerminalBlockRemovedEvent(block))
+      dispatcher.multicaster.blockRemoved(TerminalBlockRemovedEventImpl(this, block))
     }
     blocks.clear()
 
     val finishedBlocks = state.blocks.subList(0, state.blocks.size - 1)
     for (block in finishedBlocks) {
       blocks.add(block)
-      mutableEventsFlow.tryEmit(TerminalBlockStartedEvent(block))
-      mutableEventsFlow.tryEmit(TerminalBlockFinishedEvent(block))
+      dispatcher.multicaster.blockAdded(TerminalBlockAddedEventImpl(this, block))
+      dispatcher.multicaster.blockFinished(TerminalBlockFinishedEventImpl(this, block))
     }
 
     val lastBlock = state.blocks.last()
     blocks.add(lastBlock)
-    mutableEventsFlow.tryEmit(TerminalBlockStartedEvent(lastBlock))
+    dispatcher.multicaster.blockAdded(TerminalBlockAddedEventImpl(this, lastBlock))
   }
 
   /**
@@ -105,7 +104,7 @@ class TerminalBlocksModelImpl(private val outputModel: TerminalOutputModel, pare
     if (firstNotRemovedBlockIndex != -1) {
       repeat(firstNotRemovedBlockIndex) {
         val block = blocks.removeFirst()
-        mutableEventsFlow.tryEmit(TerminalBlockRemovedEvent(block))
+        dispatcher.multicaster.blockRemoved(TerminalBlockRemovedEventImpl(this, block))
       }
 
       val newMinimumOffset = outputModel.startOffset
@@ -124,7 +123,7 @@ class TerminalBlocksModelImpl(private val outputModel: TerminalOutputModel, pare
     else {
       // All text was removed, so remove all blocks and leave an empty initial block.
       for (block in blocks) {
-        mutableEventsFlow.tryEmit(TerminalBlockRemovedEvent(block))
+        dispatcher.multicaster.blockRemoved(TerminalBlockRemovedEventImpl(this, block))
       }
       blocks.clear()
 
@@ -140,7 +139,7 @@ class TerminalBlocksModelImpl(private val outputModel: TerminalOutputModel, pare
     if (firstBlockToRemoveIndex != -1) {
       repeat(blocks.size - firstBlockToRemoveIndex) {
         val block = blocks.removeLast()
-        mutableEventsFlow.tryEmit(TerminalBlockRemovedEvent(block))
+        dispatcher.multicaster.blockRemoved(TerminalBlockRemovedEventImpl(this, block))
       }
     }
 
@@ -156,7 +155,7 @@ class TerminalBlocksModelImpl(private val outputModel: TerminalOutputModel, pare
   private fun addNewBlock(startOffset: TerminalOffset) {
     val newBlock = createNewBlock(startOffset)
     blocks.add(newBlock)
-    mutableEventsFlow.tryEmit(TerminalBlockStartedEvent(newBlock))
+    dispatcher.multicaster.blockAdded(TerminalBlockAddedEventImpl(this, newBlock))
   }
 
   private fun createNewBlock(startOffset: TerminalOffset): TerminalOutputBlock {
@@ -174,6 +173,21 @@ class TerminalBlocksModelImpl(private val outputModel: TerminalOutputModel, pare
     return "TerminalBlocksModelImpl(blocks=$blocks)"
   }
 }
+
+private data class TerminalBlockAddedEventImpl(
+  override val model: TerminalBlocksModel,
+  override val block: TerminalOutputBlock,
+) : TerminalBlockAddedEvent
+
+private data class TerminalBlockRemovedEventImpl(
+  override val model: TerminalBlocksModel,
+  override val block: TerminalOutputBlock,
+) : TerminalBlockRemovedEvent
+
+private data class TerminalBlockFinishedEventImpl(
+  override val model: TerminalBlocksModel,
+  override val block: TerminalOutputBlock,
+) : TerminalBlockFinishedEvent
 
 /**
  * Returns true if the user can type a command right now.
