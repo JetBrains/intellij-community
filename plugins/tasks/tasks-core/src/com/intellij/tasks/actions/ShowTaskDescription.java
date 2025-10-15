@@ -15,18 +15,16 @@
  */
 package com.intellij.tasks.actions;
 
-import com.intellij.codeInsight.documentation.DocumentationManager;
 import com.intellij.featureStatistics.FeatureUsageTracker;
+import com.intellij.lang.documentation.ide.impl.DocumentationManagementHelper;
 import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.actionSystem.Presentation;
-import com.intellij.openapi.command.CommandProcessor;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.NlsContexts;
 import com.intellij.openapi.util.text.StringUtil;
-import com.intellij.psi.PsiManager;
 import com.intellij.tasks.LocalTask;
 import com.intellij.tasks.TaskBundle;
-import com.intellij.tasks.doc.TaskPsiElement;
+import com.intellij.tasks.TaskSymbol;
 import org.jetbrains.annotations.NotNull;
 
 /**
@@ -54,9 +52,11 @@ public class ShowTaskDescription extends BaseTaskAction {
     final Project project = getProject(e);
     assert project != null;
     final LocalTask task = getActiveTask(e);
+    if (task == null) return;
     FeatureUsageTracker.getInstance().triggerFeatureUsed("codeassists.quickjavadoc.ctrln");
-    CommandProcessor.getInstance().executeCommand(project,
-                                                  () -> DocumentationManager.getInstance(project).showJavaDocInfo(new TaskPsiElement(PsiManager.getInstance(project), task), null), getCommandName(), null);
+    project.getService(DocumentationManagementHelper.class).showQuickDoc(
+      null, new TaskSymbol(task).getDocumentationTarget(null), null, null
+    );
   }
 
   protected @NlsContexts.Command String getCommandName() {

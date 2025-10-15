@@ -9,10 +9,9 @@ import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.progress.ProcessCanceledException;
 import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.project.Project;
-import com.intellij.psi.PsiManager;
 import com.intellij.tasks.Task;
 import com.intellij.tasks.TaskManager;
-import com.intellij.tasks.doc.TaskPsiElement;
+import com.intellij.tasks.TaskSymbol;
 import com.intellij.util.ExceptionUtil;
 import com.intellij.util.Processor;
 import com.intellij.util.containers.ContainerUtil;
@@ -149,11 +148,10 @@ class TaskItemProvider implements ChooseByNameItemProvider, Disposable {
     return tasks;
   }
 
-  private boolean processTasks(List<Task> tasks, Processor<Object> consumer, ProgressIndicator cancelled) {
-    PsiManager psiManager = PsiManager.getInstance(myProject);
+  private static boolean processTasks(List<Task> tasks, Processor<Object> consumer, ProgressIndicator cancelled) {
     for (Task task : tasks) {
       cancelled.checkCanceled();
-      if (!consumer.process(new TaskPsiElement(psiManager, task))) return false;
+      if (!consumer.process(new TaskSymbol(task))) return false;
     }
     return true;
   }

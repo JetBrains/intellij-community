@@ -18,7 +18,7 @@ import com.intellij.tasks.LocalTask;
 import com.intellij.tasks.Task;
 import com.intellij.tasks.TaskBundle;
 import com.intellij.tasks.TaskManager;
-import com.intellij.tasks.doc.TaskPsiElement;
+import com.intellij.tasks.TaskSymbol;
 import com.intellij.tasks.impl.TaskManagerImpl;
 import com.intellij.tasks.impl.TaskUtil;
 import com.intellij.util.ArrayUtilRt;
@@ -93,8 +93,8 @@ public class GotoTaskAction extends GotoActionBase implements DumbAware {
       @Override
       public void elementChosen(ChooseByNamePopup popup, Object element) {
         TaskManager taskManager = TaskManager.getManager(project);
-        if (element instanceof TaskPsiElement) {
-          Task task = ((TaskPsiElement)element).getTask();
+        if (element instanceof TaskSymbol) {
+          Task task = ((TaskSymbol)element).getTask();
           LocalTask localTask = taskManager.findTask(task.getId());
           if (localTask != null) {
             taskManager.activateTask(localTask, !shiftPressed.get());
@@ -143,8 +143,8 @@ public class GotoTaskAction extends GotoActionBase implements DumbAware {
 
     @Override
     public String getElementName(@NotNull Object element) {
-      if (element instanceof TaskPsiElement) {
-        return TaskUtil.getTrimmedSummary(((TaskPsiElement)element).getTask());
+      if (element instanceof TaskSymbol) {
+        return TaskUtil.getTrimmedSummary(((TaskSymbol)element).getTask());
       }
       else if (element == CREATE_NEW_TASK_ACTION) {
         return CREATE_NEW_TASK_ACTION.getActionText();
