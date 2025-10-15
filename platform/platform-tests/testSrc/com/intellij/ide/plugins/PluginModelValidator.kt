@@ -525,8 +525,8 @@ class PluginModelValidator(
           if (SystemProperties.getBooleanProperty("intellij.plugin.model.check.module.visibility", false)) {
             when (moduleInfo.descriptor.moduleVisibility) {
               ModuleVisibility.PRIVATE -> {
-                val differentContainingPlugin = containingPlugins.find { it.pluginId != referencingPluginInfo.pluginId }
-                if (differentContainingPlugin != null) {
+                if (containingPlugins.all { it.pluginId != referencingPluginInfo.pluginId }) {
+                  val differentContainingPlugin = containingPlugins.first()
                   registerError("""
                   |Module '$moduleName' has 'private' (default) visibility in '${differentContainingPlugin.pluginId}' but it is used as a dependency in 
                   |a plugin '${referencingPluginInfo.pluginId}'.
