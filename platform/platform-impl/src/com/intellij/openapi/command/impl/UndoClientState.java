@@ -37,6 +37,7 @@ final class UndoClientState implements Disposable {
   private final @Nullable Project project; // null - global, isDefault - error
   private final @NotNull ClientId clientId;
   private final @NotNull CommandMerger commandMerger;
+  private final @NotNull CommandBuilder commandBuilder;
   private final @NotNull UndoRedoStacksHolder undoStacksHolder;
   private final @NotNull UndoRedoStacksHolder redoStacksHolder;
 
@@ -48,7 +49,6 @@ final class UndoClientState implements Disposable {
   private final @NotNull UndoSharedState sharedState;
 
   private @NotNull UndoRedoInProgress undoRedoInProgress = UndoRedoInProgress.NONE;
-  private final @NotNull CommandBuilder commandBuilder;
   private int commandTimestamp = 1;
 
   @SuppressWarnings("unused")

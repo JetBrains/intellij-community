@@ -64,10 +64,16 @@ public final class CommandMerger {
   }
 
   @Nullable UndoCommandFlushReason shouldFlush(@NotNull PerformedCommand performedCommand) {
-    if (isTransparentSupported && performedCommand.isTransparent() && performedCommand.editorStateAfter() == null && editorStateAfter != null) {
+    if (isTransparentSupported &&
+        performedCommand.isTransparent() &&
+        performedCommand.editorStateAfter() == null &&
+        editorStateAfter != null) {
       return createFlushReason("NEXT_TRANSPARENT_WITHOUT_EDITOR_STATE_AFTER", performedCommand);
     }
-    if (isTransparentSupported && isTransparent() && editorStateBefore == null && performedCommand.editorStateBefore() != null) {
+    if (isTransparentSupported &&
+        isTransparent() &&
+        editorStateBefore == null &&
+        performedCommand.editorStateBefore() != null) {
       return createFlushReason("CURRENT_TRANSPARENT_WITHOUT_EDITOR_STATE_BEFORE", performedCommand);
     }
     if (isTransparent() || performedCommand.isTransparent()) {
