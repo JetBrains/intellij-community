@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.vcs.commit
 
 import com.intellij.openapi.util.registry.Registry
@@ -6,7 +6,7 @@ import com.intellij.openapi.util.registry.RegistryValue
 import com.intellij.openapi.util.registry.RegistryValueListener
 import com.intellij.openapi.vcs.changes.InclusionListener
 import com.intellij.openapi.vcs.changes.ui.ChangeInfoCalculator
-import com.intellij.openapi.vcs.changes.ui.CommitLegendPanel
+import com.intellij.openapi.vcs.changes.ui.CommitLegendComponent
 import com.intellij.util.ui.JBInsets
 import com.intellij.util.ui.JBUI.Borders.empty
 import com.intellij.util.ui.components.BorderLayoutPanel
@@ -15,7 +15,7 @@ private val isCompactCommitLegend get() = Registry.get("vcs.non.modal.commit.leg
 
 class CommitStatusPanel(private val commitWorkflowUi: CommitWorkflowUi) : BorderLayoutPanel(), InclusionListener {
   private val commitLegendCalculator = ChangeInfoCalculator()
-  private val commitLegend = CommitLegendPanel(commitLegendCalculator).apply {
+  private val commitLegend = CommitLegendComponent.create(commitLegendCalculator).apply {
     component.myBorder = empty(0, 1)
     component.ipad = JBInsets.emptyInsets()
   }

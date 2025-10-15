@@ -2407,6 +2407,21 @@ a:com.intellij.openapi.vcs.changes.ui.CommitDialogChangesBrowser
 - a:getSelectedChanges():java.util.List
 - a:getSelectedUnversionedFiles():java.util.List
 - a:updateDisplayedChangeLists():V
+f:com.intellij.openapi.vcs.changes.ui.CommitLegendComponent
+- sf:Companion:com.intellij.openapi.vcs.changes.ui.CommitLegendComponent$Companion
+- sf:create(com.intellij.openapi.vcs.changes.ui.CommitLegendPanel$InfoCalculator):com.intellij.openapi.vcs.changes.ui.CommitLegendComponent
+- sf:create(com.intellij.openapi.vcs.changes.ui.CommitLegendPanel$InfoCalculator,java.util.List):com.intellij.openapi.vcs.changes.ui.CommitLegendComponent
+- sf:defaultLegendChunks(com.intellij.openapi.vcs.changes.ui.CommitLegendPanel$InfoCalculator):java.util.List
+- f:getComponent():com.intellij.ui.SimpleColoredComponent
+- f:getFullLegendString():java.lang.String
+- f:isCompact():Z
+- f:setCompact(Z):V
+- f:update():V
+f:com.intellij.openapi.vcs.changes.ui.CommitLegendComponent$Companion
+- f:create(com.intellij.openapi.vcs.changes.ui.CommitLegendPanel$InfoCalculator):com.intellij.openapi.vcs.changes.ui.CommitLegendComponent
+- f:create(com.intellij.openapi.vcs.changes.ui.CommitLegendPanel$InfoCalculator,java.util.List):com.intellij.openapi.vcs.changes.ui.CommitLegendComponent
+- bs:create$default(com.intellij.openapi.vcs.changes.ui.CommitLegendComponent$Companion,com.intellij.openapi.vcs.changes.ui.CommitLegendPanel$InfoCalculator,java.util.List,I,java.lang.Object):com.intellij.openapi.vcs.changes.ui.CommitLegendComponent
+- f:defaultLegendChunks(com.intellij.openapi.vcs.changes.ui.CommitLegendPanel$InfoCalculator):java.util.List
 c:com.intellij.openapi.vcs.changes.ui.CommitLegendPanel
 - <init>(com.intellij.openapi.vcs.changes.ui.CommitLegendPanel$InfoCalculator):V
 - pf:append(I,com.intellij.openapi.vcs.FileStatus,java.lang.String):V
@@ -2468,6 +2483,12 @@ com.intellij.openapi.vcs.changes.ui.EditChangelistSupport
 - a:addControls(javax.swing.JPanel,com.intellij.openapi.vcs.changes.LocalChangeList):com.intellij.util.Consumer
 - changelistCreated(com.intellij.openapi.vcs.changes.LocalChangeList):V
 - a:installSearch(com.intellij.ui.EditorTextField,com.intellij.ui.EditorTextField):V
+a:com.intellij.openapi.vcs.changes.ui.LegendChunk
+- <init>():V
+- a:formatNumbers():java.lang.String
+- a:getCompactLabel():java.lang.String
+- a:getFileStatus():com.intellij.openapi.vcs.FileStatus
+- a:getFullLabel():java.lang.String
 c:com.intellij.openapi.vcs.changes.ui.LoadingCommittedChangeListPanel
 - com.intellij.openapi.Disposable
 - <init>(com.intellij.openapi.project.Project):V
