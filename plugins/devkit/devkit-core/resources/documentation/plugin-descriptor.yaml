@@ -39,6 +39,10 @@ elements:
         - attribute:
             name: package
             renderContexts: [doc_provider]
+            deprecatedSince: "2026.1"
+            deprecationNote: |
+              Proper module packaging should be used instead of this attribute: content modules should be packed into their own jars under `lib/modules/`.
+              See [_Plugin Model_](https://youtrack.jetbrains.com/articles/IJPL-A-31){internal} for more details.
             requirement:
               required: no
             description: |
