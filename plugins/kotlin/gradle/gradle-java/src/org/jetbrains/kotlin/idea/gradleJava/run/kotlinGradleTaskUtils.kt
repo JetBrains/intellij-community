@@ -136,12 +136,9 @@ private fun isMethodOfProject(methodName: String, fqClassName: FqName) =
             || fqClassName == FqName("Build_gradle")) // Could be resolved instead of ProjectDelegate on Gradle 6.0
 
 private fun KaSession.isStringParameterSignature(signature: KaVariableSignature<KaValueParameterSymbol>): Boolean {
-    val notNullableType = signature.symbol.returnType.withNullability(false)
-    val classId = notNullableType.symbol?.classId ?: return false
-    return classId.asSingleFqName() in listOf(
-        FqName("java.lang.String"),
-        FqName("kotlin.String")
-    )
+    return signature.symbol.returnType
+        .withNullability(false)
+        .isStringType
 }
 
 fun KtNamedFunction.getKMPGradleConfigurationName(runTask: KotlinJvmRunTaskData): String =
