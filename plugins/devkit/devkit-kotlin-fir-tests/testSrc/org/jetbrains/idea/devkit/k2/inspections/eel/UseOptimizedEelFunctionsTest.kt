@@ -103,6 +103,72 @@ class UseOptimizedEelFunctionsTest {
     }
 
     @Nested
+    inner class `class dot method inside another call` {
+      @Test
+      fun Java() {
+        @Language("Java")
+        val source = """
+          import java.io.IOException;
+          import java.nio.ByteBuffer;
+          import java.nio.file.Files;
+          import java.nio.file.Path;
+    
+          class Example {
+            void example() throws IOException {
+              ByteBuffer result = ByteBuffer.wrap(Files.<warning descr="Works ineffectively with remote Eel">readAllBytes</warning>(Path.of("hello.txt")));
+            }
+          }
+        """.trimIndent()
+
+        @Language("Java")
+        val expectedResult = """
+          import com.intellij.platform.eel.provider.nioHelpers.EelFiles;
+          
+          import java.io.IOException;
+          import java.nio.ByteBuffer;
+          import java.nio.file.Files;
+          import java.nio.file.Path;
+    
+          class Example {
+            void example() throws IOException {
+              ByteBuffer result = ByteBuffer.wrap(EelFiles.readAllBytes(Path.of("hello.txt")));
+            }
+          }
+        """.trimIndent()
+
+        doTest("Example.java", source, expectedResult)
+      }
+
+      @Test
+      fun Kotlin() {
+        @Language("Kt")
+        val source = """
+          import java.nio.ByteBuffer
+          import java.nio.file.Files
+          import java.nio.file.Path
+    
+          fun example() {
+            val result = ByteBuffer.wrap(Files.<warning descr="Works ineffectively with remote Eel">readAllBytes</warning>(Path.of("hello.txt")))
+          }
+        """.trimIndent()
+
+        @Language("Kt")
+        val expectedResult = """
+          import com.intellij.platform.eel.provider.nioHelpers.EelFiles
+          import java.nio.ByteBuffer
+          import java.nio.file.Files
+          import java.nio.file.Path
+    
+          fun example() {
+            val result = ByteBuffer.wrap(EelFiles.readAllBytes(Path.of("hello.txt")))
+          }
+        """.trimIndent()
+
+        doTest("Example.kt", source, expectedResult)
+      }
+    }
+
+    @Nested
     inner class `class dot method and wildcard import` {
       @Test
       fun Java() {

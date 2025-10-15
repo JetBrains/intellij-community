@@ -79,9 +79,7 @@ class UseOptimizedEelFunctions : LocalInspectionTool() {
 
     override fun applyFix(project: Project, descriptor: ProblemDescriptor) {
       val methodCall = descriptor.psiElement.getUastParentOfType<UCallExpression>() ?: return
-      val call = generateSequence(methodCall as UElement) { it.uastParent }
-        .takeWhile { it is UCallExpression || it is UQualifiedReferenceExpression }
-        .last()
+      val call = methodCall.uastParent as? UQualifiedReferenceExpression ?: methodCall
       val factory = call.getUastElementFactory(project) ?: return
       val context = call.sourcePsi ?: return
 
