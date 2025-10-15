@@ -35,9 +35,7 @@ class TerminalBlocksModelImpl(private val outputModel: TerminalOutputModel, pare
       }
     })
 
-    val newBlock = createNewBlock(startOffset = outputModel.startOffset)
-    blocks.add(newBlock)
-    mutableEventsFlow.tryEmit(TerminalBlockStartedEvent(newBlock))
+    addNewBlock(outputModel.startOffset)
   }
 
   override fun promptStarted(offset: TerminalOffset) {
@@ -52,9 +50,7 @@ class TerminalBlocksModelImpl(private val outputModel: TerminalOutputModel, pare
       mutableEventsFlow.tryEmit(TerminalBlockFinishedEvent(updatedBlock))
     }
 
-    val newBlock = createNewBlock(offset)
-    blocks.add(newBlock)
-    mutableEventsFlow.tryEmit(TerminalBlockStartedEvent(newBlock))
+    addNewBlock(offset)
   }
 
   override fun promptFinished(offset: TerminalOffset) {
@@ -132,9 +128,7 @@ class TerminalBlocksModelImpl(private val outputModel: TerminalOutputModel, pare
       }
       blocks.clear()
 
-      val newBlock = createNewBlock(startOffset = outputModel.startOffset)
-      blocks.add(newBlock)
-      mutableEventsFlow.tryEmit(TerminalBlockStartedEvent(newBlock))
+      addNewBlock(outputModel.startOffset)
     }
   }
 
@@ -150,8 +144,19 @@ class TerminalBlocksModelImpl(private val outputModel: TerminalOutputModel, pare
       }
     }
 
-    val lastBlock = blocks.last()
-    blocks[blocks.lastIndex] = lastBlock.copy(endOffset = outputModel.endOffset)
+    if (blocks.isEmpty()) {
+      addNewBlock(outputModel.startOffset)
+    }
+    else {
+      val lastBlock = blocks.last()
+      blocks[blocks.lastIndex] = lastBlock.copy(endOffset = outputModel.endOffset)
+    }
+  }
+
+  private fun addNewBlock(startOffset: TerminalOffset) {
+    val newBlock = createNewBlock(startOffset)
+    blocks.add(newBlock)
+    mutableEventsFlow.tryEmit(TerminalBlockStartedEvent(newBlock))
   }
 
   private fun createNewBlock(startOffset: TerminalOffset): TerminalOutputBlock {
