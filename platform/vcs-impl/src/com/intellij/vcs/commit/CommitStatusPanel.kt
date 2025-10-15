@@ -10,6 +10,9 @@ import com.intellij.openapi.vcs.changes.ui.CommitLegendComponent
 import com.intellij.util.ui.JBInsets
 import com.intellij.util.ui.JBUI.Borders.empty
 import com.intellij.util.ui.components.BorderLayoutPanel
+import java.awt.event.ComponentAdapter
+import java.awt.event.ComponentEvent
+
 
 private val isCompactCommitLegend get() = Registry.get("vcs.non.modal.commit.legend.compact")
 
@@ -20,11 +23,21 @@ class CommitStatusPanel(private val commitWorkflowUi: CommitWorkflowUi) : Border
     component.ipad = JBInsets.emptyInsets()
   }
 
+  private val commitLegendWrapperPanel = BorderLayoutPanel().apply { isOpaque = false }
+
   init {
     isOpaque = false
 
+    commitLegendWrapperPanel.addToRight(commitLegend.component)
+
+    commitLegendWrapperPanel.addComponentListener(object : ComponentAdapter() {
+      override fun componentResized(e: ComponentEvent) {
+        updateLegend()
+      }
+    })
+
     setupLegend()
-    addToRight(commitLegend.component)
+    addToCenter(commitLegendWrapperPanel)
 
     commitWorkflowUi.addInclusionListener(this, commitWorkflowUi)
   }
@@ -32,14 +45,9 @@ class CommitStatusPanel(private val commitWorkflowUi: CommitWorkflowUi) : Border
   override fun inclusionChanged() = updateLegend()
 
   private fun setupLegend() {
-    setLegendCompact()
     isCompactCommitLegend.addListener(object : RegistryValueListener {
-      override fun afterValueChanged(value: RegistryValue) = setLegendCompact()
+      override fun afterValueChanged(value: RegistryValue) = updateLegend()
     }, commitWorkflowUi)
-  }
-
-  private fun setLegendCompact() {
-    commitLegend.isCompact = isCompactCommitLegend.asBoolean()
   }
 
   private fun updateLegend() {
@@ -49,5 +57,23 @@ class CommitStatusPanel(private val commitWorkflowUi: CommitWorkflowUi) : Border
       includedUnversionedFilesCount = commitWorkflowUi.getIncludedUnversionedFiles().size
     )
     commitLegend.update()
+    adjustLegendToFitPanel()
+  }
+
+  private fun adjustLegendToFitPanel() {
+    val availableWidth = commitLegendWrapperPanel.width
+    if (availableWidth <= 0) return
+
+    val forceCompact = isCompactCommitLegend.asBoolean()
+    if (forceCompact) {
+      commitLegend.isCompact = true
+      return
+    }
+
+    val fullLegendString = commitLegend.getFullLegendString()
+    val fm = commitLegend.component.getFontMetrics(commitLegend.component.font)
+    val legendWidth = fm.getStringBounds(fullLegendString, null).width
+
+    commitLegend.isCompact = legendWidth > availableWidth
   }
 }
