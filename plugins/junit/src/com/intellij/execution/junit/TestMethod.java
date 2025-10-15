@@ -58,8 +58,15 @@ public class TestMethod extends TestObject {
 
   @Override
   public RefactoringElementListener getListener(final PsiElement element) {
-    UElement uElement = UastContextKt.toUElement(element);
     JUnitConfiguration configuration = getConfiguration();
+    if (element instanceof PsiNamedElement namedElement) {
+      // do not react on unrelated refactorings
+      String elementName = namedElement.getName();
+      if (elementName == null ||
+          !configuration.getPersistentData().getMethodName().contains(elementName) &&
+          !configuration.getPersistentData().getMainClassName().contains(elementName)) return null;
+    }
+    UElement uElement = UastContextKt.toUElement(element);
     if (uElement instanceof PsiMethod method) {
       if (!method.getName().equals(configuration.getPersistentData().getMethodName())) return null;
       //noinspection ConstantConditions

@@ -133,7 +133,15 @@ public class TestsPattern extends TestPackage {
     final JUnitConfiguration.Data data = getConfiguration().getPersistentData();
     final Set<String> patterns = data.getPatterns();
     for (final String pattern : patterns) {
-      final PsiClass testClass = getTestClass(getConfiguration().getProject(), pattern.trim());
+      String trim = pattern.trim();
+      if (element instanceof PsiNamedElement namedElement) {
+        // do not react on unrelated refactorings
+        String shortName = namedElement.getName();
+        if (shortName == null || !trim.contains(shortName)) {
+          continue;
+        }
+      }
+      final PsiClass testClass = getTestClass(getConfiguration().getProject(), trim);
       if (testClass != null && testClass.equals(element)) {
         final RefactoringElementListener listeners =
           RefactoringListeners.getListeners(testClass, new RefactoringListeners.Accessor<>() {
