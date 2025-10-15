@@ -11,13 +11,18 @@ jvm_library(
   name = "poetry",
   module_name = "intellij.python.community.impl.poetry",
   visibility = ["//visibility:public"],
-  srcs = glob(["src/**/*.kt", "src/**/*.java", "src/**/*.form"], allow_empty = True),
+  srcs = glob(["src/**/*.kt", "src/**/*.java", "src/**/*.form", "gen/**/*.kt", "gen/**/*.java"], allow_empty = True),
   resources = [":poetry_resources"],
   deps = [
     "@lib//:kotlin-stdlib",
     "@lib//:jetbrains-annotations",
     "//platform/core-api:core",
     "//python/python-sdk:sdk",
+    "//python/openapi:community",
+    "//plugins/toml/core",
+    "//python/python-pyproject:pyproject",
+    "//platform/util/base/multiplatform",
+    "//platform/util",
   ]
 )
 ### auto-generated section `build intellij.python.community.impl.poetry` end

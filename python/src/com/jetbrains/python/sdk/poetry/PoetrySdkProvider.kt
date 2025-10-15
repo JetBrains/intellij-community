@@ -3,6 +3,7 @@ package com.jetbrains.python.sdk.poetry
 import com.intellij.openapi.module.Module
 import com.intellij.openapi.projectRoots.Sdk
 import com.intellij.openapi.projectRoots.SdkAdditionalData
+import com.intellij.python.community.impl.poetry.icons.PythonCommunityImplPoetryIcons
 import com.jetbrains.python.PyBundle
 import com.jetbrains.python.sdk.PyInterpreterInspectionQuickFixData
 import com.jetbrains.python.sdk.PySdkProvider
@@ -36,7 +37,7 @@ class PoetrySdkProvider : PySdkProvider {
   override fun getSdkAdditionalText(sdk: Sdk): String? = if (sdk.isPoetry) sdk.versionString else null
 
   override fun getSdkIcon(sdk: Sdk): Icon? {
-    return if (sdk.isPoetry) POETRY_ICON else null
+    return if (sdk.isPoetry) PythonCommunityImplPoetryIcons.Poetry else null
   }
 
   override fun loadAdditionalDataForSdk(element: Element): SdkAdditionalData? {

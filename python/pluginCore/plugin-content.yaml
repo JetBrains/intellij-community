@@ -66,6 +66,9 @@
 - name: lib/modules/intellij.python.community.impl.poetry.jar
   contentModules:
   - name: intellij.python.community.impl.poetry
+- name: lib/modules/intellij.python.community.impl.uv.jar
+  contentModules:
+  - name: intellij.python.community.impl.uv
 - name: lib/modules/intellij.python.community.impl.venv.jar
   contentModules:
   - name: intellij.python.community.impl.venv

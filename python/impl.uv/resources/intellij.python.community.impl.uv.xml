@@ -1,0 +1,11 @@
+<idea-plugin>
+  <dependencies>
+    <module name="intellij.python.sdk"/>
+    <module name="intellij.toml.core"/>
+    <module name="intellij.python.community"/>
+    <module name="intellij.python.pyproject"/>
+  </dependencies>
+  <extensions defaultExtensionNs="com.intellij.python.pyproject.model">
+    <tool implementation="com.intellij.python.community.impl.uv.UvTool"/>
+  </extensions>
+</idea-plugin>

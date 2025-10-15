@@ -1,9 +1,10 @@
 // Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
-package com.jetbrains.python.projectModel.uv
+package com.intellij.python.community.impl.uv
 
 import com.intellij.openapi.diagnostic.fileLogger
 import com.intellij.openapi.util.NlsSafe
 import com.intellij.openapi.util.getPathMatcher
+import com.intellij.python.community.impl.uv.icons.PythonCommunityImplUVIcons
 import com.intellij.python.pyproject.model.spi.ProjectName
 import com.intellij.python.pyproject.model.spi.ProjectStructureInfo
 import com.intellij.python.pyproject.model.spi.PyProjectTomlProject
@@ -11,7 +12,6 @@ import com.intellij.python.pyproject.model.spi.Tool
 import com.intellij.util.concurrency.annotations.RequiresBackgroundThread
 import com.jetbrains.python.PyToolUIInfo
 import com.jetbrains.python.ToolId
-import com.jetbrains.python.sdk.uv.UV_UI_INFO
 import com.jetbrains.python.venvReader.Directory
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
@@ -25,6 +25,8 @@ import kotlin.io.path.relativeTo
 
 @ApiStatus.Internal
 val UV_TOOL_ID: ToolId = ToolId("uv")
+
+val UV_UI_INFO: PyToolUIInfo = PyToolUIInfo("uv", PythonCommunityImplUVIcons.UV)
 
 internal class UvTool : Tool {
 
