@@ -12,11 +12,12 @@ import org.gradle.api.tasks.CacheableTask
 import org.gradle.api.tasks.Classpath
 import org.gradle.api.tasks.Input
 import org.gradle.api.tasks.InputFile
+import org.gradle.api.tasks.InputFiles
+import org.gradle.api.tasks.Optional
 import org.gradle.api.tasks.PathSensitive
 import org.gradle.api.tasks.PathSensitivity
 import org.gradle.api.tasks.TaskAction
 import org.gradle.process.ExecOperations
-import org.gradle.process.internal.ExecException
 import org.gradle.workers.WorkAction
 import org.gradle.workers.WorkParameters
 import org.gradle.workers.WorkerExecutor
@@ -37,7 +38,14 @@ abstract class CheckMetalavaApiTask @Inject constructor(private val workerExecut
 
     @get:Input abstract val stableApiOnly: Property<Boolean>
 
+    @get:Input abstract val updateBaseline: Property<Boolean>
+
     @get:PathSensitive(PathSensitivity.RELATIVE) @get:InputFile abstract val referenceApiFile: RegularFileProperty
+
+    @get:Optional
+    @get:PathSensitive(PathSensitivity.RELATIVE)
+    @get:InputFiles
+    abstract val baselineFile: ConfigurableFileCollection
 
     @get:PathSensitive(PathSensitivity.RELATIVE) @get:InputFile abstract val currentApiFile: RegularFileProperty
 
@@ -54,6 +62,8 @@ abstract class CheckMetalavaApiTask @Inject constructor(private val workerExecut
             referenceApiFile.set(this@CheckMetalavaApiTask.referenceApiFile)
             currentApiFile.set(this@CheckMetalavaApiTask.currentApiFile)
             stableApiOnly.set(this@CheckMetalavaApiTask.stableApiOnly)
+            updateBaseline.set(this@CheckMetalavaApiTask.updateBaseline)
+            baselineFile.from(this@CheckMetalavaApiTask.baselineFile)
         }
     }
 
@@ -64,6 +74,8 @@ abstract class CheckMetalavaApiTask @Inject constructor(private val workerExecut
         val referenceApiFile: RegularFileProperty
         val currentApiFile: RegularFileProperty
         val stableApiOnly: Property<Boolean>
+        val updateBaseline: Property<Boolean>
+        val baselineFile: ConfigurableFileCollection
     }
 
     abstract class Action : WorkAction<Parameters> {
@@ -78,44 +90,53 @@ abstract class CheckMetalavaApiTask @Inject constructor(private val workerExecut
                     systemProperty("apple.awt.UIElement", "true")
                     mainClass.set("com.android.tools.metalava.Driver")
                     classpath = parameters.metalavaClasspath
-                    args =
-                        listOf(
-                            "--format=v4",
-                            "--jdk-home",
-                            jdkHome,
-                            "--source-files",
-                            parameters.currentApiFile.get().asFile.absolutePath,
-                            "--check-compatibility:api:released",
-                            parameters.referenceApiFile.get().asFile.absolutePath,
-                            "--warnings-as-errors",
-                        ) +
-                            if (parameters.stableApiOnly.get()) {
-                                STABLE_ONLY_API_ARGS
-                            } else {
-                                EXPERIMENTAL_API_ARGS
-                            }
+                    args = buildList {
+                        add("--format=v4")
+                        add("--jdk-home")
+                        add(jdkHome)
+                        add("--source-files")
+                        add(parameters.currentApiFile.get().asFile.absolutePath)
+                        add("--check-compatibility:api:released")
+                        add(parameters.referenceApiFile.get().asFile.absolutePath)
+                        add("--warnings-as-errors")
 
+                        if (parameters.stableApiOnly.get()) {
+                            addAll(STABLE_ONLY_API_ARGS)
+                        } else {
+                            addAll(EXPERIMENTAL_API_ARGS)
+                        }
+
+                        val baselineFile = parameters.baselineFile.singleFile
+                        baselineFile.createNewFile() // Ensure baseline file exists
+
+                        add("--baseline")
+                        add(baselineFile.absolutePath)
+
+                        if (parameters.updateBaseline.get()) {
+                            add("--pass-baseline-updates")
+                            add("--update-baseline")
+                            add(baselineFile.absolutePath)
+                        }
+                    }
                     isIgnoreExitValue = true
                 }
 
-            try {
-                result.assertNormalExitValue()
-            } catch (e: ExecException) {
+            if (result.exitValue != 0) {
                 val msg =
                     """
-                    API changed! Run `./gradlew ${updateApi()}` and then commit the changes. For backwards-incompatible
-                    changes, be sure to update the major version. DO NOT USE JDK 24.
+                    [Metalava] The API _might_ have changed in an incompatible way!
+                    The Metalava process exited with a non-zero value — check the stderr output for details. 
+
+                    If this is intended, and this is not happening during the release process,
+                    update the baseline file and then commit the changes.
+
+                    IMPORTANT: DO NOT USE JDK 24 WHEN RUNNING METALAVA.
                     """
                         .trimIndent()
                         .wrapInStars(margin = 1)
-
-                throw ApiChangedException(msg, e)
+                
+                throw ApiChangedException(msg)
             }
-        }
-
-        private fun updateApi(): String {
-            val path = parameters.projectPath.get()
-            return if (path == ":") ":updateMetalavaApi" else "$path:updateMetalavaApi"
         }
 
         private fun String.wrapInStars(margin: Int = 0): String {
