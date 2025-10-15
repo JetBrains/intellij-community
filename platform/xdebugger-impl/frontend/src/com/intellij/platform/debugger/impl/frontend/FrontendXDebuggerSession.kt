@@ -47,6 +47,7 @@ import com.intellij.xdebugger.impl.util.XDebugMonolithUtils
 import com.intellij.xdebugger.ui.XDebugTabLayouter
 import kotlinx.coroutines.*
 import kotlinx.coroutines.channels.BufferOverflow
+import kotlinx.coroutines.channels.ClosedSendChannelException
 import kotlinx.coroutines.flow.*
 import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.annotations.VisibleForTesting
@@ -295,9 +296,15 @@ class FrontendXDebuggerSession private constructor(
     val executionEnvironmentId = tabInfo.executionEnvironmentId
 
     suspend fun onTabClosed() {
-      tabInfo.tabClosedCallback.send(Unit)
-      tabInfo.tabClosedCallback.close()
-      tabScope.cancel()
+      try {
+        tabInfo.tabClosedCallback.send(Unit)
+      }
+      catch (_: ClosedSendChannelException) {
+        // closed on the backend
+      }
+      finally {
+        tabScope.cancel()
+      }
     }
 
     val proxy = this@FrontendXDebuggerSession

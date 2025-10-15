@@ -72,7 +72,6 @@ import com.intellij.xdebugger.stepping.XSmartStepIntoHandler
 import com.intellij.xdebugger.stepping.XSmartStepIntoVariant
 import kotlinx.coroutines.*
 import kotlinx.coroutines.channels.Channel
-import kotlinx.coroutines.channels.consumeEach
 import kotlinx.coroutines.flow.*
 import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.annotations.Nls
@@ -470,7 +469,7 @@ class XDebugSessionImpl @JvmOverloads constructor(
 
     if (SplitDebuggerMode.isSplitDebugger()) {
       val localTabScope = tabCoroutineScope.childScope("ExecutionEnvironmentDto")
-      val tabClosedChannel = Channel<Unit>(capacity = 1)
+      val tabClosedChannel = Channel<Unit>()
       val additionalTabComponentManager = XDebugSessionAdditionalTabComponentManager(localTabScope)
       val runContentDescriptorId = CompletableDeferred<RunContentDescriptorIdImpl>()
       val executionEnvironmentId = executionEnvironment?.storeGlobally(localTabScope)
@@ -503,8 +502,12 @@ class XDebugSessionImpl @JvmOverloads constructor(
         val descriptorId = mockDescriptor.storeGlobally(localTabScope)
         runContentDescriptorId.complete(descriptorId)
         mockDescriptor.id = descriptorId
-        debuggerManager.coroutineScope.launch(Dispatchers.EDT) {
-          tabClosedChannel.consumeEach {
+        debuggerManager.coroutineScope.launch(Dispatchers.EDT, CoroutineStart.ATOMIC) {
+          try {
+            tabClosedChannel.receiveCatching()
+          }
+          finally {
+            tabClosedChannel.close()
             tabCoroutineScope.cancel()
             Disposer.dispose(mockDescriptor)
           }
