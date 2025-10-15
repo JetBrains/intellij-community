@@ -83,6 +83,12 @@ private val generalSettings: GeneralSettings
 private val lafManager: LafManager
   get() = LafManager.getInstance()
 
+private val cdDifferentToolwindowBackground
+  get() = CheckboxDescriptor(message("checkbox.different.toolwindow.background"), { settings.differentToolwindowBackground },
+                             { settings.differentToolwindowBackground = it
+                               lafManager.applyAltColors()
+                             })
+
 private val cdShowToolWindowBars
   get() = CheckboxDescriptor(message("checkbox.show.tool.window.bars"),
                              { !settings.hideToolStripes }, { settings.hideToolStripes = !it },
@@ -146,6 +152,7 @@ internal fun getAppearanceOptionDescriptors(): Sequence<OptionDescription> {
   return sequenceOf(
     cdShowToolWindowBars,
     cdShowToolWindowNumbers,
+    cdDifferentToolwindowBackground,
     cdEnableMenuMnemonics,
     cdEnableControlsMnemonics,
     cdSmoothScrolling,
@@ -241,6 +248,10 @@ internal class AppearanceConfigurable : BoundSearchableConfigurable(message("tit
             }
           }
         }
+
+        row {
+          checkBox(cdDifferentToolwindowBackground).comment(message("different.toolwindow.background.comment"))
+        }.topGap(TopGap.SMALL).visibleIf(islandLafProperty)
 
         disposable?.whenDisposed {
           colorAndFontsOptions.disposeUIResources()

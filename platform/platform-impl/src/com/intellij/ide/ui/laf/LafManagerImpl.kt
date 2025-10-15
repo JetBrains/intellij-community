@@ -66,11 +66,7 @@ import com.intellij.util.IJSwingUtilities
 import com.intellij.util.SVGLoader.colorPatcherProvider
 import com.intellij.util.concurrency.SynchronizedClearableLazy
 import com.intellij.util.ui.*
-import kotlinx.coroutines.CoroutineScope
-import kotlinx.coroutines.DelicateCoroutinesApi
-import kotlinx.coroutines.Dispatchers
-import kotlinx.coroutines.GlobalScope
-import kotlinx.coroutines.launch
+import kotlinx.coroutines.*
 import org.jdom.Element
 import org.jetbrains.annotations.ApiStatus.Internal
 import org.jetbrains.annotations.Nls
@@ -748,6 +744,12 @@ class LafManagerImpl(private val coroutineScope: CoroutineScope) : LafManager(),
     }
   }
 
+  @Internal
+  override fun applyAltColors() {
+    setCurrentLookAndFeel(currentTheme!!, true)
+    updateUI()
+  }
+
   /**
    * Updates LAF of all windows. The method also updates font of components as it's configured in `UISettings`.
    */
@@ -765,6 +767,7 @@ class LafManagerImpl(private val coroutineScope: CoroutineScope) : LafManager(),
 
     if (ExperimentalUI.isNewUI()) {
       applyDensityOnUpdateUi(uiDefaults)
+      applyAltColors(uiDefaults)
     }
 
     // should be called last because this method modifies uiDefault values
@@ -1403,6 +1406,18 @@ private fun applyDensityOnUpdateUi(uiDefaults: UIDefaults) {
       }
     }
     uiDefaults.putAll(compactValues)
+  }
+}
+
+private fun applyAltColors(uiDefaults: UIDefaults) {
+  if (UISettings.getInstance().differentToolwindowBackground) {
+    val altValues = mutableMapOf<String, Any>()
+    uiDefaults.forEach { key, value ->
+      if ((key as? String?)?.startsWith("alt.") == true) {
+        altValues[key.substring(4)] = value
+      }
+    }
+    uiDefaults.putAll(altValues)
   }
 }
 

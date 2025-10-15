@@ -22,6 +22,8 @@
     "BackgroundLight": "Gray1.5",
     "BackgroundLightest": "Gray2.5",
 
+    "AltBackgroundLight": "#323439",
+
     "BorderDark": "Gray1.5",
     "BorderLight": "Gray2.5",
     "BorderTransparent": "#00000000",
@@ -601,6 +603,17 @@
     "ProgressBar": {
       "progressCounterBackground": "Blue5",
       "progressCounterForeground": "#000000"
+    },
+
+    "alt": {
+      "MainWindow.background": "AltBackgroundLight",
+
+      "MainToolbar.background": "AltBackgroundLight",
+      "ToolWindow.Stripe.background": "AltBackgroundLight",
+      "StatusBar.background": "AltBackgroundLight",
+
+      "ToolWindow.Header.inactiveBackground": "#212326",
+      "ToolWindow.background": "#212326"
     }
   }
 }
