@@ -1,0 +1,3 @@
+// Baseline format: 1.0
+RemovedClass: org.jetbrains.jewel.ui.util.ModifierExtensionsKt:
+    Binary breaking change: Removed class org.jetbrains.jewel.ui.util.ModifierExtensionsKt

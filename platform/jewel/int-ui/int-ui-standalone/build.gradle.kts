@@ -53,14 +53,17 @@ tasks {
         mustRunAfter(generateThemes)
         mustRunAfter(ktfmtFormatMain)
     }
+
     lintKotlinMain {
         mustRunAfter(generateThemes)
         mustRunAfter(ktfmtFormatMain)
     }
+
     withType<Detekt>().configureEach {
         mustRunAfter(generateThemes)
         mustRunAfter(ktfmtFormatMain)
     }
+
     detektMain {
         mustRunAfter(generateThemes)
         mustRunAfter(ktfmtFormatMain)

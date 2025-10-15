@@ -5,4 +5,4 @@ package org.jetbrains.jewel.buildlogic.metalava
 
 import org.gradle.api.GradleException
 
-class ApiChangedException(msg: String, cause: Throwable) : GradleException(msg, cause)
+class ApiChangedException(msg: String, cause: Throwable? = null) : GradleException(msg, cause)
