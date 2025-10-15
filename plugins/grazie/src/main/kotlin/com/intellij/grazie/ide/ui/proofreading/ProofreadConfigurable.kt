@@ -44,7 +44,7 @@ class ProofreadConfigurable : BoundSearchableConfigurable(
   OptionsBundle.message("configurable.group.proofread.settings.display.name"),
   "reference.settings.ide.settings.proofreading",
   ID
-), Disposable {
+) {
   companion object {
     const val ID: String = "proofread"
   }
@@ -140,28 +140,28 @@ class ProofreadConfigurable : BoundSearchableConfigurable(
       label(GrazieBundle.message("grazie.status.bar.widget.language.processing.label.text"))
 
       icon(GrazieIcons.Stroke.GrazieCloudProcessing)
-        .visibleIf(GrazieListeningComponentPredicate(this@ProofreadConfigurable) { isLoggedIn })
+        .visibleIf(GrazieListeningComponentPredicate(disposable!!) { isLoggedIn })
       label(GrazieBundle.message("grazie.status.bar.widget.cloud.processing.label.text"))
-        .visibleIf(GrazieListeningComponentPredicate(this@ProofreadConfigurable) { isLoggedIn })
+        .visibleIf(GrazieListeningComponentPredicate(disposable!!) { isLoggedIn })
       link(GrazieBundle.message("grazie.status.bar.widget.disable.cloud.link.text")) {
         GrazieConfig.update { state -> state.copy(explicitlyChosenProcessing = Processing.Local) }
-      }.visibleIf(GrazieListeningComponentPredicate(this@ProofreadConfigurable) { isLoggedIn })
+      }.visibleIf(GrazieListeningComponentPredicate(disposable!!) { isLoggedIn })
       link(GrazieBundle.message("grazie.settings.logout.action.text")) {
         GrazieScope.coroutineScope().launch { GrazieLoginManager.getInstance().logOutFromCloud() }
-      }.visibleIf(GrazieListeningComponentPredicate(this@ProofreadConfigurable) {
+      }.visibleIf(GrazieListeningComponentPredicate(disposable!!) {
         isLoggedIn && !GrazieCloudConnector.hasAdditionalConnectors()
       })
 
       icon(GrazieIcons.Stroke.Grazie)
-        .visibleIf(GrazieListeningComponentPredicate(this@ProofreadConfigurable) { !isLoggedIn })
+        .visibleIf(GrazieListeningComponentPredicate(disposable!!) { !isLoggedIn })
       label(GrazieBundle.message("grazie.status.bar.widget.local.processing.label.text"))
-        .visibleIf(GrazieListeningComponentPredicate(this@ProofreadConfigurable) { !isLoggedIn })
+        .visibleIf(GrazieListeningComponentPredicate(disposable!!) { !isLoggedIn })
       link(GrazieBundle.message("grazie.status.bar.widget.enable.cloud.link.text")) {
         if (!GrazieCloudConnector.askUserConsentForCloud()) return@link
         logger.debug { "Connect to Grazie Cloud button started from settings" }
         if (!GrazieCloudConnector.isAuthorized() && !GrazieCloudConnector.connect(project)) return@link
         GrazieConfig.update { state -> state.copy(explicitlyChosenProcessing = Processing.Cloud) }
-      }.visibleIf(GrazieListeningComponentPredicate(this@ProofreadConfigurable) { !isLoggedIn })
+      }.visibleIf(GrazieListeningComponentPredicate(disposable!!) { !isLoggedIn })
     }
     row {
       val commentText = GrazieBundle.message("grazie.status.bar.widget.cloud.comment.text")
@@ -216,8 +216,6 @@ class ProofreadConfigurable : BoundSearchableConfigurable(
       }
     }
   }
-
-  override fun dispose(): Unit = Unit
 
   private class GrazieListeningComponentPredicate(private val disposable: Disposable, private val invoker: () -> Boolean) : ComponentPredicate() {
     override fun addListener(listener: (Boolean) -> Unit) {
