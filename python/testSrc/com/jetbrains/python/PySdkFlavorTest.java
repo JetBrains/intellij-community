@@ -30,23 +30,25 @@ import org.jetbrains.annotations.NotNull;
 
 public class PySdkFlavorTest extends PyTestCase {
   public void testPython27VersionString() {
-    final PythonSdkFlavor flavor = UnixPythonSdkFlavor.getInstance();
-    final String versionOutput = "Python 2.7.6\n";
-    final Sdk mockSdk = createMockSdk(flavor, versionOutput);
-    assertEquals("Python 2.7.6", mockSdk.getVersionString());
-    assertEquals(LanguageLevel.PYTHON27, flavor.getLanguageLevel(mockSdk));
+    testVersionAndFlavor("Python 2.7.6\n", "Python 2.7.6", LanguageLevel.PYTHON27);
   }
 
   public void testPython34VersionString() {
-    final PythonSdkFlavor flavor = UnixPythonSdkFlavor.getInstance();
-    final String versionOutput = "Python 3.4.0\n";
-    final Sdk mockSdk = createMockSdk(flavor, versionOutput);
-    assertEquals("Python 3.4.0", mockSdk.getVersionString());
-    assertEquals(LanguageLevel.PYTHON34, flavor.getLanguageLevel(mockSdk));
+    testVersionAndFlavor("Python 3.4.0\n", "Python 3.4.0", LanguageLevel.PYTHON34);
   }
 
+  public void testGraalPyVersionString() {
+    testVersionAndFlavor("GraalPy 3.12.8 (Interpreted JVM Development Build)\n", "GraalPy 3.12.8", LanguageLevel.PYTHON312);
+  }
 
-
+  private void testVersionAndFlavor(
+    @NotNull String versionOutput, @NotNull String expectedVersionString, @NotNull LanguageLevel expectedLanguageLevel
+  ) {
+    final PythonSdkFlavor<?> flavor = UnixPythonSdkFlavor.getInstance();
+    final Sdk mockSdk = createMockSdk(flavor, versionOutput);
+    assertEquals(expectedVersionString, mockSdk.getVersionString());
+    assertEquals(expectedLanguageLevel, flavor.getLanguageLevel(mockSdk));
+  }
 
 
   // TODO: Add tests for MayaPy and IronPython SDK flavors
