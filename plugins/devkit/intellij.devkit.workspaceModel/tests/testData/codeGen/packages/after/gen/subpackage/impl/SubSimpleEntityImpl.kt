@@ -4,6 +4,7 @@ import com.intellij.platform.workspace.storage.ConnectionId
 import com.intellij.platform.workspace.storage.EntitySource
 import com.intellij.platform.workspace.storage.GeneratedCodeApiVersion
 import com.intellij.platform.workspace.storage.GeneratedCodeImplVersion
+import com.intellij.platform.workspace.storage.ModifiableWorkspaceEntity
 import com.intellij.platform.workspace.storage.MutableEntityStorage
 import com.intellij.platform.workspace.storage.WorkspaceEntity
 import com.intellij.platform.workspace.storage.WorkspaceEntityInternalApi
@@ -13,6 +14,7 @@ import com.intellij.platform.workspace.storage.impl.WorkspaceEntityData
 import com.intellij.platform.workspace.storage.instrumentation.EntityStorageInstrumentation
 import com.intellij.platform.workspace.storage.instrumentation.EntityStorageInstrumentationApi
 import com.intellij.platform.workspace.storage.metadata.model.EntityMetadata
+import com.intellij.workspaceModel.test.api.subpackage.ModifiableSubSimpleEntity
 import com.intellij.workspaceModel.test.api.subpackage.SubSimpleEntity
 
 @GeneratedCodeApiVersion(3)
@@ -57,7 +59,7 @@ internal class SubSimpleEntityImpl(private val dataSource: SubSimpleEntityData) 
 
 
   internal class Builder(result: SubSimpleEntityData?) : ModifiableWorkspaceEntityBase<SubSimpleEntity, SubSimpleEntityData>(
-    result), SubSimpleEntity.Builder {
+    result), ModifiableSubSimpleEntity {
     internal constructor() : this(SubSimpleEntityData())
 
     override fun applyToBuilder(builder: MutableEntityStorage) {
@@ -155,7 +157,7 @@ internal class SubSimpleEntityData : WorkspaceEntityData<SubSimpleEntity>() {
   internal fun isNameInitialized(): Boolean = ::name.isInitialized
 
 
-  override fun wrapAsModifiable(diff: MutableEntityStorage): WorkspaceEntity.Builder<SubSimpleEntity> {
+  override fun wrapAsModifiable(diff: MutableEntityStorage): ModifiableWorkspaceEntity<SubSimpleEntity> {
     val modifiable = SubSimpleEntityImpl.Builder(null)
     modifiable.diff = diff
     modifiable.id = createEntityId()
@@ -181,7 +183,7 @@ internal class SubSimpleEntityData : WorkspaceEntityData<SubSimpleEntity>() {
     return SubSimpleEntity::class.java
   }
 
-  override fun createDetachedEntity(parents: List<WorkspaceEntity.Builder<*>>): WorkspaceEntity.Builder<*> {
+  override fun createDetachedEntity(parents: List<ModifiableWorkspaceEntity<*>>): ModifiableWorkspaceEntity<*> {
     return SubSimpleEntity(version, name, isSimple, entitySource) {
     }
   }

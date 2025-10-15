@@ -1,4 +1,4 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.platform.workspace.storage.testEntities.entities.impl
 
 import com.intellij.platform.workspace.storage.ConnectionId
@@ -6,6 +6,7 @@ import com.intellij.platform.workspace.storage.EntitySource
 import com.intellij.platform.workspace.storage.EntityType
 import com.intellij.platform.workspace.storage.GeneratedCodeApiVersion
 import com.intellij.platform.workspace.storage.GeneratedCodeImplVersion
+import com.intellij.platform.workspace.storage.ModifiableWorkspaceEntity
 import com.intellij.platform.workspace.storage.MutableEntityStorage
 import com.intellij.platform.workspace.storage.WorkspaceEntity
 import com.intellij.platform.workspace.storage.WorkspaceEntityInternalApi
@@ -17,13 +18,14 @@ import com.intellij.platform.workspace.storage.impl.WorkspaceEntityData
 import com.intellij.platform.workspace.storage.instrumentation.EntityStorageInstrumentation
 import com.intellij.platform.workspace.storage.instrumentation.EntityStorageInstrumentationApi
 import com.intellij.platform.workspace.storage.metadata.model.EntityMetadata
+import com.intellij.platform.workspace.storage.testEntities.entities.ModifiableSpecificChildWithLinkToParentEntity
 import com.intellij.platform.workspace.storage.testEntities.entities.SpecificChildWithLinkToParentEntity
 
 @GeneratedCodeApiVersion(3)
 @GeneratedCodeImplVersion(7)
 @OptIn(WorkspaceEntityInternalApi::class)
-internal class SpecificChildWithLinkToParentEntityImpl(private val dataSource: SpecificChildWithLinkToParentEntityData) :
-  SpecificChildWithLinkToParentEntity, WorkspaceEntityBase(dataSource) {
+internal class SpecificChildWithLinkToParentEntityImpl(private val dataSource: SpecificChildWithLinkToParentEntityData) : SpecificChildWithLinkToParentEntity, WorkspaceEntityBase(
+  dataSource) {
 
   private companion object {
 
@@ -50,9 +52,8 @@ internal class SpecificChildWithLinkToParentEntityImpl(private val dataSource: S
   }
 
 
-  internal class Builder(result: SpecificChildWithLinkToParentEntityData?) :
-    ModifiableWorkspaceEntityBase<SpecificChildWithLinkToParentEntity, SpecificChildWithLinkToParentEntityData>(result),
-    SpecificChildWithLinkToParentEntity.Builder {
+  internal class Builder(result: SpecificChildWithLinkToParentEntityData?) : ModifiableWorkspaceEntityBase<SpecificChildWithLinkToParentEntity, SpecificChildWithLinkToParentEntityData>(
+    result), ModifiableSpecificChildWithLinkToParentEntity {
     internal constructor() : this(SpecificChildWithLinkToParentEntityData())
 
     override fun applyToBuilder(builder: MutableEntityStorage) {
@@ -128,7 +129,7 @@ internal class SpecificChildWithLinkToParentEntityData : WorkspaceEntityData<Spe
 
   internal fun isDataInitialized(): Boolean = ::data.isInitialized
 
-  override fun wrapAsModifiable(diff: MutableEntityStorage): WorkspaceEntity.Builder<SpecificChildWithLinkToParentEntity> {
+  override fun wrapAsModifiable(diff: MutableEntityStorage): ModifiableWorkspaceEntity<SpecificChildWithLinkToParentEntity> {
     val modifiable = SpecificChildWithLinkToParentEntityImpl.Builder(null)
     modifiable.diff = diff
     modifiable.id = createEntityId()
@@ -148,15 +149,14 @@ internal class SpecificChildWithLinkToParentEntityData : WorkspaceEntityData<Spe
 
   override fun getMetadata(): EntityMetadata {
     return MetadataStorageImpl.getMetadataByTypeFqn(
-      "com.intellij.platform.workspace.storage.testEntities.entities.SpecificChildWithLinkToParentEntity"
-    ) as EntityMetadata
+      "com.intellij.platform.workspace.storage.testEntities.entities.SpecificChildWithLinkToParentEntity") as EntityMetadata
   }
 
   override fun getEntityInterface(): Class<out WorkspaceEntity> {
     return SpecificChildWithLinkToParentEntity::class.java
   }
 
-  override fun createDetachedEntity(parents: List<WorkspaceEntity.Builder<*>>): WorkspaceEntity.Builder<*> {
+  override fun createDetachedEntity(parents: List<ModifiableWorkspaceEntity<*>>): ModifiableWorkspaceEntity<*> {
     return SpecificChildWithLinkToParentEntity(data, entitySource) {
     }
   }

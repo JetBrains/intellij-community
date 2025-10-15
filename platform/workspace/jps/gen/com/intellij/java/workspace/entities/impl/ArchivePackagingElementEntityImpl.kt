@@ -1,9 +1,13 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.java.workspace.entities.impl
 
 import com.intellij.java.workspace.entities.ArchivePackagingElementEntity
 import com.intellij.java.workspace.entities.ArtifactEntity
 import com.intellij.java.workspace.entities.CompositePackagingElementEntity
+import com.intellij.java.workspace.entities.ModifiableArchivePackagingElementEntity
+import com.intellij.java.workspace.entities.ModifiableArtifactEntity
+import com.intellij.java.workspace.entities.ModifiableCompositePackagingElementEntity
+import com.intellij.java.workspace.entities.ModifiablePackagingElementEntity
 import com.intellij.java.workspace.entities.PackagingElementEntity
 import com.intellij.openapi.util.NlsSafe
 import com.intellij.platform.workspace.jps.entities.LibraryId
@@ -151,19 +155,19 @@ internal class ArchivePackagingElementEntityImpl(private val dataSource: Archive
 
       }
 
-    override var parentEntity: CompositePackagingElementEntity.Builder<out CompositePackagingElementEntity>?
+    override var parentEntity: ModifiableCompositePackagingElementEntity<out CompositePackagingElementEntity>?
       get() {
         val _diff = diff
         return if (_diff != null) {
           @OptIn(EntityStorageInstrumentationApi::class)
           ((_diff as MutableEntityStorageInstrumentation).getParentBuilder(PARENTENTITY_CONNECTION_ID,
-                                                                           this) as? CompositePackagingElementEntity.Builder<out CompositePackagingElementEntity>)
+                                                                           this) as? ModifiableCompositePackagingElementEntity<out CompositePackagingElementEntity>)
           ?: (this.entityLinks[EntityLink(false,
-                                          PARENTENTITY_CONNECTION_ID)] as? CompositePackagingElementEntity.Builder<out CompositePackagingElementEntity>)
+                                          PARENTENTITY_CONNECTION_ID)] as? ModifiableCompositePackagingElementEntity<out CompositePackagingElementEntity>)
         }
         else {
           this.entityLinks[EntityLink(false,
-                                      PARENTENTITY_CONNECTION_ID)] as? CompositePackagingElementEntity.Builder<out CompositePackagingElementEntity>
+                                      PARENTENTITY_CONNECTION_ID)] as? ModifiableCompositePackagingElementEntity<out CompositePackagingElementEntity>
         }
       }
       set(value) {
@@ -194,16 +198,16 @@ internal class ArchivePackagingElementEntityImpl(private val dataSource: Archive
         changedProperty.add("parentEntity")
       }
 
-    override var artifact: ArtifactEntity.Builder?
+    override var artifact: ModifiableArtifactEntity?
       get() {
         val _diff = diff
         return if (_diff != null) {
           @OptIn(EntityStorageInstrumentationApi::class)
-          ((_diff as MutableEntityStorageInstrumentation).getParentBuilder(ARTIFACT_CONNECTION_ID, this) as? ArtifactEntity.Builder)
-          ?: (this.entityLinks[EntityLink(false, ARTIFACT_CONNECTION_ID)] as? ArtifactEntity.Builder)
+          ((_diff as MutableEntityStorageInstrumentation).getParentBuilder(ARTIFACT_CONNECTION_ID, this) as? ModifiableArtifactEntity)
+          ?: (this.entityLinks[EntityLink(false, ARTIFACT_CONNECTION_ID)] as? ModifiableArtifactEntity)
         }
         else {
-          this.entityLinks[EntityLink(false, ARTIFACT_CONNECTION_ID)] as? ArtifactEntity.Builder
+          this.entityLinks[EntityLink(false, ARTIFACT_CONNECTION_ID)] as? ModifiableArtifactEntity
         }
       }
       set(value) {
@@ -230,18 +234,18 @@ internal class ArchivePackagingElementEntityImpl(private val dataSource: Archive
         changedProperty.add("artifact")
       }
 
-    override var children: List<PackagingElementEntity.Builder<out PackagingElementEntity>>
+    override var children: List<ModifiablePackagingElementEntity<out PackagingElementEntity>>
       get() {
         val _diff = diff
         return if (_diff != null) {
           @OptIn(EntityStorageInstrumentationApi::class)
           ((_diff as MutableEntityStorageInstrumentation).getManyChildrenBuilders(CHILDREN_CONNECTION_ID,
-                                                                                  this)!!.toList() as List<PackagingElementEntity.Builder<out PackagingElementEntity>>) +
-          (this.entityLinks[EntityLink(true, CHILDREN_CONNECTION_ID)] as? List<PackagingElementEntity.Builder<out PackagingElementEntity>>
+                                                                                  this)!!.toList() as List<ModifiablePackagingElementEntity<out PackagingElementEntity>>) +
+          (this.entityLinks[EntityLink(true, CHILDREN_CONNECTION_ID)] as? List<ModifiablePackagingElementEntity<out PackagingElementEntity>>
            ?: emptyList())
         }
         else {
-          this.entityLinks[EntityLink(true, CHILDREN_CONNECTION_ID)] as List<PackagingElementEntity.Builder<out PackagingElementEntity>>
+          this.entityLinks[EntityLink(true, CHILDREN_CONNECTION_ID)] as List<ModifiablePackagingElementEntity<out PackagingElementEntity>>
           ?: emptyList()
         }
       }
@@ -293,7 +297,7 @@ internal class ArchivePackagingElementEntityData : WorkspaceEntityData<ArchivePa
 
   internal fun isFileNameInitialized(): Boolean = ::fileName.isInitialized
 
-  override fun wrapAsModifiable(diff: MutableEntityStorage): WorkspaceEntity.Builder<ArchivePackagingElementEntity> {
+  override fun wrapAsModifiable(diff: MutableEntityStorage): ModifiableWorkspaceEntity<ArchivePackagingElementEntity> {
     val modifiable = ArchivePackagingElementEntityImpl.Builder(null)
     modifiable.diff = diff
     modifiable.id = createEntityId()
@@ -319,10 +323,10 @@ internal class ArchivePackagingElementEntityData : WorkspaceEntityData<ArchivePa
     return ArchivePackagingElementEntity::class.java
   }
 
-  override fun createDetachedEntity(parents: List<WorkspaceEntity.Builder<*>>): WorkspaceEntity.Builder<*> {
+  override fun createDetachedEntity(parents: List<ModifiableWorkspaceEntity<*>>): ModifiableWorkspaceEntity<*> {
     return ArchivePackagingElementEntity(fileName, entitySource) {
-      this.parentEntity = parents.filterIsInstance<CompositePackagingElementEntity.Builder<out CompositePackagingElementEntity>>().singleOrNull()
-      this.artifact = parents.filterIsInstance<ArtifactEntity.Builder>().singleOrNull()
+      this.parentEntity = parents.filterIsInstance<ModifiableCompositePackagingElementEntity<out CompositePackagingElementEntity>>().singleOrNull()
+      this.artifact = parents.filterIsInstance<ModifiableArtifactEntity>().singleOrNull()
     }
   }
 

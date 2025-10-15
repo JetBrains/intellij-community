@@ -1,8 +1,10 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.java.workspace.entities.impl
 
 import com.intellij.java.workspace.entities.ArtifactEntity
 import com.intellij.java.workspace.entities.ArtifactPropertiesEntity
+import com.intellij.java.workspace.entities.ModifiableArtifactEntity
+import com.intellij.java.workspace.entities.ModifiableArtifactPropertiesEntity
 import com.intellij.openapi.util.NlsSafe
 import com.intellij.platform.workspace.jps.entities.LibraryId
 import com.intellij.platform.workspace.jps.entities.ModuleId
@@ -136,16 +138,16 @@ internal class ArtifactPropertiesEntityImpl(private val dataSource: ArtifactProp
 
       }
 
-    override var artifact: ArtifactEntity.Builder
+    override var artifact: ModifiableArtifactEntity
       get() {
         val _diff = diff
         return if (_diff != null) {
           @OptIn(EntityStorageInstrumentationApi::class)
-          ((_diff as MutableEntityStorageInstrumentation).getParentBuilder(ARTIFACT_CONNECTION_ID, this) as? ArtifactEntity.Builder)
-          ?: (this.entityLinks[EntityLink(false, ARTIFACT_CONNECTION_ID)]!! as ArtifactEntity.Builder)
+          ((_diff as MutableEntityStorageInstrumentation).getParentBuilder(ARTIFACT_CONNECTION_ID, this) as? ModifiableArtifactEntity)
+          ?: (this.entityLinks[EntityLink(false, ARTIFACT_CONNECTION_ID)]!! as ModifiableArtifactEntity)
         }
         else {
-          this.entityLinks[EntityLink(false, ARTIFACT_CONNECTION_ID)]!! as ArtifactEntity.Builder
+          this.entityLinks[EntityLink(false, ARTIFACT_CONNECTION_ID)]!! as ModifiableArtifactEntity
         }
       }
       set(value) {
@@ -203,7 +205,7 @@ internal class ArtifactPropertiesEntityData : WorkspaceEntityData<ArtifactProper
 
   internal fun isProviderTypeInitialized(): Boolean = ::providerType.isInitialized
 
-  override fun wrapAsModifiable(diff: MutableEntityStorage): WorkspaceEntity.Builder<ArtifactPropertiesEntity> {
+  override fun wrapAsModifiable(diff: MutableEntityStorage): ModifiableWorkspaceEntity<ArtifactPropertiesEntity> {
     val modifiable = ArtifactPropertiesEntityImpl.Builder(null)
     modifiable.diff = diff
     modifiable.id = createEntityId()
@@ -229,10 +231,10 @@ internal class ArtifactPropertiesEntityData : WorkspaceEntityData<ArtifactProper
     return ArtifactPropertiesEntity::class.java
   }
 
-  override fun createDetachedEntity(parents: List<WorkspaceEntity.Builder<*>>): WorkspaceEntity.Builder<*> {
+  override fun createDetachedEntity(parents: List<ModifiableWorkspaceEntity<*>>): ModifiableWorkspaceEntity<*> {
     return ArtifactPropertiesEntity(providerType, entitySource) {
       this.propertiesXmlTag = this@ArtifactPropertiesEntityData.propertiesXmlTag
-      parents.filterIsInstance<ArtifactEntity.Builder>().singleOrNull()?.let { this.artifact = it }
+      parents.filterIsInstance<ModifiableArtifactEntity>().singleOrNull()?.let { this.artifact = it }
     }
   }
 

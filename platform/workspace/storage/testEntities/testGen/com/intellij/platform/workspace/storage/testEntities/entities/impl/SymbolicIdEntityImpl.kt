@@ -1,4 +1,4 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.platform.workspace.storage.testEntities.entities.impl
 
 import com.intellij.platform.workspace.storage.*
@@ -11,6 +11,7 @@ import com.intellij.platform.workspace.storage.instrumentation.EntityStorageInst
 import com.intellij.platform.workspace.storage.instrumentation.EntityStorageInstrumentationApi
 import com.intellij.platform.workspace.storage.metadata.model.EntityMetadata
 import com.intellij.platform.workspace.storage.testEntities.entities.LinkedListEntityId
+import com.intellij.platform.workspace.storage.testEntities.entities.ModifiableSymbolicIdEntity
 import com.intellij.platform.workspace.storage.testEntities.entities.SymbolicIdEntity
 import com.intellij.platform.workspace.storage.url.VirtualFileUrl
 import java.util.UUID
@@ -47,8 +48,8 @@ internal class SymbolicIdEntityImpl(private val dataSource: SymbolicIdEntityData
   }
 
 
-  internal class Builder(result: SymbolicIdEntityData?) : ModifiableWorkspaceEntityBase<SymbolicIdEntity, SymbolicIdEntityData>(result),
-                                                          SymbolicIdEntity.Builder {
+  internal class Builder(result: SymbolicIdEntityData?) : ModifiableWorkspaceEntityBase<SymbolicIdEntity, SymbolicIdEntityData>(
+    result), ModifiableSymbolicIdEntity {
     internal constructor() : this(SymbolicIdEntityData())
 
     override fun applyToBuilder(builder: MutableEntityStorage) {
@@ -124,7 +125,7 @@ internal class SymbolicIdEntityData : WorkspaceEntityData<SymbolicIdEntity>() {
 
   internal fun isDataInitialized(): Boolean = ::data.isInitialized
 
-  override fun wrapAsModifiable(diff: MutableEntityStorage): WorkspaceEntity.Builder<SymbolicIdEntity> {
+  override fun wrapAsModifiable(diff: MutableEntityStorage): ModifiableWorkspaceEntity<SymbolicIdEntity> {
     val modifiable = SymbolicIdEntityImpl.Builder(null)
     modifiable.diff = diff
     modifiable.id = createEntityId()
@@ -144,15 +145,14 @@ internal class SymbolicIdEntityData : WorkspaceEntityData<SymbolicIdEntity>() {
 
   override fun getMetadata(): EntityMetadata {
     return MetadataStorageImpl.getMetadataByTypeFqn(
-      "com.intellij.platform.workspace.storage.testEntities.entities.SymbolicIdEntity"
-    ) as EntityMetadata
+      "com.intellij.platform.workspace.storage.testEntities.entities.SymbolicIdEntity") as EntityMetadata
   }
 
   override fun getEntityInterface(): Class<out WorkspaceEntity> {
     return SymbolicIdEntity::class.java
   }
 
-  override fun createDetachedEntity(parents: List<WorkspaceEntity.Builder<*>>): WorkspaceEntity.Builder<*> {
+  override fun createDetachedEntity(parents: List<ModifiableWorkspaceEntity<*>>): ModifiableWorkspaceEntity<*> {
     return SymbolicIdEntity(data, entitySource) {
     }
   }

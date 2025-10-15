@@ -2,14 +2,17 @@
 @file:Experimental
 package com.intellij.java.impl.dependencySubstitution.impl
 
+import com.intellij.java.impl.dependencySubstitution.ModifiableModuleMavenCoordinateEntity
 import com.intellij.java.impl.dependencySubstitution.ModuleMavenCoordinateEntity
 import com.intellij.java.library.MavenCoordinates
+import com.intellij.platform.workspace.jps.entities.ModifiableModuleEntity
 import com.intellij.platform.workspace.jps.entities.ModuleEntity
 import com.intellij.platform.workspace.storage.ConnectionId
 import com.intellij.platform.workspace.storage.EntitySource
 import com.intellij.platform.workspace.storage.EntityType
 import com.intellij.platform.workspace.storage.GeneratedCodeApiVersion
 import com.intellij.platform.workspace.storage.GeneratedCodeImplVersion
+import com.intellij.platform.workspace.storage.ModifiableWorkspaceEntity
 import com.intellij.platform.workspace.storage.MutableEntityStorage
 import com.intellij.platform.workspace.storage.WorkspaceEntity
 import com.intellij.platform.workspace.storage.WorkspaceEntityInternalApi
@@ -63,7 +66,7 @@ internal class ModuleMavenCoordinateEntityImpl(private val dataSource: ModuleMav
 
 
   internal class Builder(result: ModuleMavenCoordinateEntityData?) : ModifiableWorkspaceEntityBase<ModuleMavenCoordinateEntity, ModuleMavenCoordinateEntityData>(
-    result), ModuleMavenCoordinateEntity.Builder {
+    result), ModifiableModuleMavenCoordinateEntity {
     internal constructor() : this(ModuleMavenCoordinateEntityData())
 
     override fun applyToBuilder(builder: MutableEntityStorage) {
@@ -131,16 +134,16 @@ internal class ModuleMavenCoordinateEntityImpl(private val dataSource: ModuleMav
 
       }
 
-    override var module: ModuleEntity.Builder
+    override var module: ModifiableModuleEntity
       get() {
         val _diff = diff
         return if (_diff != null) {
           @OptIn(EntityStorageInstrumentationApi::class)
-          ((_diff as MutableEntityStorageInstrumentation).getParentBuilder(MODULE_CONNECTION_ID, this) as? ModuleEntity.Builder)
-          ?: (this.entityLinks[EntityLink(false, MODULE_CONNECTION_ID)]!! as ModuleEntity.Builder)
+          ((_diff as MutableEntityStorageInstrumentation).getParentBuilder(MODULE_CONNECTION_ID, this) as? ModifiableModuleEntity)
+          ?: (this.entityLinks[EntityLink(false, MODULE_CONNECTION_ID)]!! as ModifiableModuleEntity)
         }
         else {
-          this.entityLinks[EntityLink(false, MODULE_CONNECTION_ID)]!! as ModuleEntity.Builder
+          this.entityLinks[EntityLink(false, MODULE_CONNECTION_ID)]!! as ModifiableModuleEntity
         }
       }
       set(value) {
@@ -186,7 +189,7 @@ internal class ModuleMavenCoordinateEntityData : WorkspaceEntityData<ModuleMaven
 
   internal fun isCoordinatesInitialized(): Boolean = ::coordinates.isInitialized
 
-  override fun wrapAsModifiable(diff: MutableEntityStorage): WorkspaceEntity.Builder<ModuleMavenCoordinateEntity> {
+  override fun wrapAsModifiable(diff: MutableEntityStorage): ModifiableWorkspaceEntity<ModuleMavenCoordinateEntity> {
     val modifiable = ModuleMavenCoordinateEntityImpl.Builder(null)
     modifiable.diff = diff
     modifiable.id = createEntityId()
@@ -213,9 +216,9 @@ internal class ModuleMavenCoordinateEntityData : WorkspaceEntityData<ModuleMaven
     return ModuleMavenCoordinateEntity::class.java
   }
 
-  override fun createDetachedEntity(parents: List<WorkspaceEntity.Builder<*>>): WorkspaceEntity.Builder<*> {
+  override fun createDetachedEntity(parents: List<ModifiableWorkspaceEntity<*>>): ModifiableWorkspaceEntity<*> {
     return ModuleMavenCoordinateEntity(coordinates, entitySource) {
-      parents.filterIsInstance<ModuleEntity.Builder>().singleOrNull()?.let { this.module = it }
+      parents.filterIsInstance<ModifiableModuleEntity>().singleOrNull()?.let { this.module = it }
     }
   }
 

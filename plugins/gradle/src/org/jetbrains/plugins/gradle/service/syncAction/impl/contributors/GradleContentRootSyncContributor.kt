@@ -3,6 +3,7 @@ package org.jetbrains.plugins.gradle.service.syncAction.impl.contributors
 
 import com.intellij.openapi.progress.checkCanceled
 import com.intellij.platform.externalSystem.impl.workspaceModel.ExternalProjectEntity
+import com.intellij.platform.externalSystem.impl.workspaceModel.ModifiableExternalProjectEntity
 import com.intellij.platform.workspace.jps.entities.*
 import com.intellij.platform.workspace.storage.EntitySource
 import com.intellij.platform.workspace.storage.ImmutableEntityStorage
@@ -14,6 +15,8 @@ import org.jetbrains.plugins.gradle.model.GradleLightProject
 import org.jetbrains.plugins.gradle.model.projectModel.GradleBuildEntity
 import org.jetbrains.plugins.gradle.model.projectModel.GradleModuleEntity
 import org.jetbrains.plugins.gradle.model.projectModel.GradleProjectEntity
+import org.jetbrains.plugins.gradle.model.projectModel.ModifiableGradleBuildEntity
+import org.jetbrains.plugins.gradle.model.projectModel.ModifiableGradleProjectEntity
 import org.jetbrains.plugins.gradle.model.projectModel.gradleModuleEntity
 import org.jetbrains.plugins.gradle.service.project.GradleProjectResolverUtil
 import org.jetbrains.plugins.gradle.service.project.ProjectResolverContext
@@ -54,7 +57,7 @@ internal class GradleContentRootSyncContributor : GradleSyncContributor {
   private fun createModuleEntity(
     context: ProjectResolverContext,
     contentRootData: GradleContentRootData,
-  ): ModuleEntity.Builder {
+  ): ModifiableModuleEntity {
     val projectModel = contentRootData.projectModel
     val externalProject = contentRootData.externalProject
     val entitySource = contentRootData.entitySource
@@ -84,7 +87,7 @@ internal class GradleContentRootSyncContributor : GradleSyncContributor {
   private fun createModuleOptionsEntity(
     context: ProjectResolverContext,
     sourceRootData: GradleContentRootData,
-  ): ExternalSystemModuleOptionsEntity.Builder {
+  ): ModifiableExternalSystemModuleOptionsEntity {
     val externalProject = sourceRootData.externalProject
     return ExternalSystemModuleOptionsEntity(
       entitySource = sourceRootData.entitySource
@@ -132,10 +135,10 @@ internal class GradleContentRootSyncContributor : GradleSyncContributor {
 
   private fun createGradleBuildEntity(
     buildModel: GradleLightBuild,
-    externalProjectBuilder: ExternalProjectEntity.Builder,
+    externalProjectBuilder: ModifiableExternalProjectEntity,
     context: ProjectResolverContext,
     entitySource: GradleProjectModelEntitySource,
-  ): GradleBuildEntity.Builder = GradleBuildEntity(
+  ): ModifiableGradleBuildEntity = GradleBuildEntity(
     externalProjectId = context.externalProjectEntityId,
     name = buildModel.name,
     url = buildModel.buildUrl(context),
@@ -149,7 +152,7 @@ internal class GradleContentRootSyncContributor : GradleSyncContributor {
     buildModel: GradleLightBuild,
     context: ProjectResolverContext,
     entitySource: GradleProjectModelEntitySource,
-  ): GradleProjectEntity.Builder = GradleProjectEntity(
+  ): ModifiableGradleProjectEntity = GradleProjectEntity(
     buildId = buildModel.buildEntityId(context),
     name = projectModel.name,
     path = projectModel.path,

@@ -116,13 +116,13 @@ class DependencySubstitutionPerformanceTest : DependencySubstitutionTestCase() {
     coordinates.libraries.putAll(testData.librarySubstitutions)
 
     for (moduleName in testData.modules.keys + testData.moduleSubstitutions.keys) {
-      storage addEntity ModuleEntity.Companion(moduleName, emptyList(), NonPersistentEntitySource)
+      storage addEntity ModuleEntity(moduleName, emptyList(), NonPersistentEntitySource)
     }
     for (libraryName in testData.libraries.keys + testData.librarySubstitutions.keys) {
-      storage addEntity LibraryEntity.Companion(libraryName, LibraryTableId.ProjectLibraryTableId, emptyList(), NonPersistentEntitySource)
+      storage addEntity LibraryEntity(libraryName, LibraryTableId.ProjectLibraryTableId, emptyList(), NonPersistentEntitySource)
     }
     for (appModuleName in testData.appModules.keys) {
-      storage addEntity ModuleEntity.Companion(appModuleName, emptyList(), NonPersistentEntitySource) {
+      storage addEntity ModuleEntity(appModuleName, emptyList(), NonPersistentEntitySource) {
         dependencies += testData.modules.keys.map { moduleName ->
           ModuleDependency(ModuleId(moduleName), false, DependencyScope.COMPILE, false)
         }

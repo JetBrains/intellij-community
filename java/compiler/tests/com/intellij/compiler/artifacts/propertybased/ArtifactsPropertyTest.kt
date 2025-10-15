@@ -1,4 +1,4 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.compiler.artifacts.propertybased
 
 import com.intellij.java.workspace.entities.*
@@ -737,7 +737,7 @@ class ArtifactsPropertyTest {
     return element to elementName
   }
 
-  private fun createCompositeElementEntity(env: ImperativeCommand.Environment): ArtifactRootElementEntity.Builder {
+  private fun createCompositeElementEntity(env: ImperativeCommand.Environment): ModifiableArtifactRootElementEntity {
     return ArtifactRootElementEntity(TestEntitySource)
   }
 

@@ -2,8 +2,10 @@
 package com.intellij.platform.externalSystem.impl.dependencySubstitution.impl
 
 import com.intellij.platform.externalSystem.impl.dependencySubstitution.DependencySubstitutionEntity
+import com.intellij.platform.externalSystem.impl.dependencySubstitution.ModifiableDependencySubstitutionEntity
 import com.intellij.platform.workspace.jps.entities.DependencyScope
 import com.intellij.platform.workspace.jps.entities.LibraryId
+import com.intellij.platform.workspace.jps.entities.ModifiableModuleEntity
 import com.intellij.platform.workspace.jps.entities.ModuleEntity
 import com.intellij.platform.workspace.jps.entities.ModuleId
 import com.intellij.platform.workspace.storage.*
@@ -72,7 +74,7 @@ internal class DependencySubstitutionEntityImpl(private val dataSource: Dependen
 
 
   internal class Builder(result: DependencySubstitutionEntityData?) : ModifiableWorkspaceEntityBase<DependencySubstitutionEntity, DependencySubstitutionEntityData>(
-    result), DependencySubstitutionEntity.Builder {
+    result), ModifiableDependencySubstitutionEntity {
     internal constructor() : this(DependencySubstitutionEntityData())
 
     override fun applyToBuilder(builder: MutableEntityStorage) {
@@ -148,16 +150,16 @@ internal class DependencySubstitutionEntityImpl(private val dataSource: Dependen
 
       }
 
-    override var owner: ModuleEntity.Builder
+    override var owner: ModifiableModuleEntity
       get() {
         val _diff = diff
         return if (_diff != null) {
           @OptIn(EntityStorageInstrumentationApi::class)
-          ((_diff as MutableEntityStorageInstrumentation).getParentBuilder(OWNER_CONNECTION_ID, this) as? ModuleEntity.Builder)
-          ?: (this.entityLinks[EntityLink(false, OWNER_CONNECTION_ID)]!! as ModuleEntity.Builder)
+          ((_diff as MutableEntityStorageInstrumentation).getParentBuilder(OWNER_CONNECTION_ID, this) as? ModifiableModuleEntity)
+          ?: (this.entityLinks[EntityLink(false, OWNER_CONNECTION_ID)]!! as ModifiableModuleEntity)
         }
         else {
-          this.entityLinks[EntityLink(false, OWNER_CONNECTION_ID)]!! as ModuleEntity.Builder
+          this.entityLinks[EntityLink(false, OWNER_CONNECTION_ID)]!! as ModifiableModuleEntity
         }
       }
       set(value) {
@@ -282,7 +284,7 @@ internal class DependencySubstitutionEntityData : WorkspaceEntityData<Dependency
     return changed
   }
 
-  override fun wrapAsModifiable(diff: MutableEntityStorage): WorkspaceEntity.Builder<DependencySubstitutionEntity> {
+  override fun wrapAsModifiable(diff: MutableEntityStorage): ModifiableWorkspaceEntity<DependencySubstitutionEntity> {
     val modifiable = DependencySubstitutionEntityImpl.Builder(null)
     modifiable.diff = diff
     modifiable.id = createEntityId()
@@ -309,9 +311,9 @@ internal class DependencySubstitutionEntityData : WorkspaceEntityData<Dependency
     return DependencySubstitutionEntity::class.java
   }
 
-  override fun createDetachedEntity(parents: List<WorkspaceEntity.Builder<*>>): WorkspaceEntity.Builder<*> {
+  override fun createDetachedEntity(parents: List<ModifiableWorkspaceEntity<*>>): ModifiableWorkspaceEntity<*> {
     return DependencySubstitutionEntity(library, module, scope, entitySource) {
-      parents.filterIsInstance<ModuleEntity.Builder>().singleOrNull()?.let { this.owner = it }
+      parents.filterIsInstance<ModifiableModuleEntity>().singleOrNull()?.let { this.owner = it }
     }
   }
 

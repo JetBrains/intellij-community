@@ -9,6 +9,7 @@ import com.intellij.platform.workspace.storage.impl.WorkspaceEntityData
 import com.intellij.platform.workspace.storage.instrumentation.EntityStorageInstrumentation
 import com.intellij.platform.workspace.storage.instrumentation.EntityStorageInstrumentationApi
 import com.intellij.platform.workspace.storage.metadata.model.EntityMetadata
+import com.intellij.workspaceModel.test.api.ModifiableSimpleEntity
 import com.intellij.workspaceModel.test.api.SimpleEntity
 import com.intellij.workspaceModel.test.api.SimpleId
 
@@ -45,7 +46,7 @@ internal class SimpleEntityImpl(private val dataSource: SimpleEntityData) : Simp
 
 
   internal class Builder(result: SimpleEntityData?) : ModifiableWorkspaceEntityBase<SimpleEntity, SimpleEntityData>(
-    result), SimpleEntity.Builder {
+    result), ModifiableSimpleEntity {
     internal constructor() : this(SimpleEntityData())
 
     override fun applyToBuilder(builder: MutableEntityStorage) {
@@ -121,7 +122,7 @@ internal class SimpleEntityData : WorkspaceEntityData<SimpleEntity>() {
 
   internal fun isNameInitialized(): Boolean = ::name.isInitialized
 
-  override fun wrapAsModifiable(diff: MutableEntityStorage): WorkspaceEntity.Builder<SimpleEntity> {
+  override fun wrapAsModifiable(diff: MutableEntityStorage): ModifiableWorkspaceEntity<SimpleEntity> {
     val modifiable = SimpleEntityImpl.Builder(null)
     modifiable.diff = diff
     modifiable.id = createEntityId()
@@ -147,7 +148,7 @@ internal class SimpleEntityData : WorkspaceEntityData<SimpleEntity>() {
     return SimpleEntity::class.java
   }
 
-  override fun createDetachedEntity(parents: List<WorkspaceEntity.Builder<*>>): WorkspaceEntity.Builder<*> {
+  override fun createDetachedEntity(parents: List<ModifiableWorkspaceEntity<*>>): ModifiableWorkspaceEntity<*> {
     return SimpleEntity(name, entitySource) {
     }
   }

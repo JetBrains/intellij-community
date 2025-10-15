@@ -12,36 +12,4 @@ object MavenEntitySource : EntitySource
 
 interface MavenProjectsTreeSettingsEntity: WorkspaceEntity {
   val importedFilePaths: List<String>
-
-  //region generated code
-  @GeneratedCodeApiVersion(3)
-  interface Builder : WorkspaceEntity.Builder<MavenProjectsTreeSettingsEntity> {
-    override var entitySource: EntitySource
-    var importedFilePaths: MutableList<String>
-  }
-
-  companion object : EntityType<MavenProjectsTreeSettingsEntity, Builder>() {
-    @JvmOverloads
-    @JvmStatic
-    @JvmName("create")
-    operator fun invoke(
-      importedFilePaths: List<String>,
-      entitySource: EntitySource,
-      init: (Builder.() -> Unit)? = null,
-    ): Builder {
-      val builder = builder()
-      builder.importedFilePaths = importedFilePaths.toMutableWorkspaceList()
-      builder.entitySource = entitySource
-      init?.invoke(builder)
-      return builder
-    }
-  }
-  //endregion
 }
-
-//region generated code
-fun MutableEntityStorage.modifyMavenProjectsTreeSettingsEntity(
-  entity: MavenProjectsTreeSettingsEntity,
-  modification: MavenProjectsTreeSettingsEntity.Builder.() -> Unit,
-): MavenProjectsTreeSettingsEntity = modifyEntity(MavenProjectsTreeSettingsEntity.Builder::class.java, entity, modification)
-//endregion

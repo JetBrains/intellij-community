@@ -15,6 +15,7 @@ import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.plugins.gradle.model.projectModel.GradleBuildEntityId
 import org.jetbrains.plugins.gradle.model.projectModel.GradleProjectEntity
 import org.jetbrains.plugins.gradle.model.projectModel.GradleProjectEntityId
+import org.jetbrains.plugins.gradle.model.projectModel.ModifiableGradleProjectEntity
 
 @GeneratedCodeApiVersion(3)
 @GeneratedCodeImplVersion(7)
@@ -80,7 +81,7 @@ internal class GradleProjectEntityImpl(private val dataSource: GradleProjectEnti
 
 
   internal class Builder(result: GradleProjectEntityData?) : ModifiableWorkspaceEntityBase<GradleProjectEntity, GradleProjectEntityData>(
-    result), GradleProjectEntity.Builder {
+    result), ModifiableGradleProjectEntity {
     internal constructor() : this(GradleProjectEntityData())
 
     override fun applyToBuilder(builder: MutableEntityStorage) {
@@ -267,7 +268,7 @@ internal class GradleProjectEntityData : WorkspaceEntityData<GradleProjectEntity
     return changed
   }
 
-  override fun wrapAsModifiable(diff: MutableEntityStorage): WorkspaceEntity.Builder<GradleProjectEntity> {
+  override fun wrapAsModifiable(diff: MutableEntityStorage): ModifiableWorkspaceEntity<GradleProjectEntity> {
     val modifiable = GradleProjectEntityImpl.Builder(null)
     modifiable.diff = diff
     modifiable.id = createEntityId()
@@ -293,7 +294,7 @@ internal class GradleProjectEntityData : WorkspaceEntityData<GradleProjectEntity
     return GradleProjectEntity::class.java
   }
 
-  override fun createDetachedEntity(parents: List<WorkspaceEntity.Builder<*>>): WorkspaceEntity.Builder<*> {
+  override fun createDetachedEntity(parents: List<ModifiableWorkspaceEntity<*>>): ModifiableWorkspaceEntity<*> {
     return GradleProjectEntity(buildId, name, path, identityPath, url, linkedProjectId, entitySource) {
     }
   }

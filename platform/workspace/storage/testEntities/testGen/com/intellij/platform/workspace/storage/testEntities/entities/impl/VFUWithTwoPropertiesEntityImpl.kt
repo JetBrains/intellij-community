@@ -1,4 +1,4 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.platform.workspace.storage.testEntities.entities.impl
 
 import com.intellij.platform.workspace.storage.ConnectionId
@@ -6,6 +6,7 @@ import com.intellij.platform.workspace.storage.EntitySource
 import com.intellij.platform.workspace.storage.EntityType
 import com.intellij.platform.workspace.storage.GeneratedCodeApiVersion
 import com.intellij.platform.workspace.storage.GeneratedCodeImplVersion
+import com.intellij.platform.workspace.storage.ModifiableWorkspaceEntity
 import com.intellij.platform.workspace.storage.MutableEntityStorage
 import com.intellij.platform.workspace.storage.WorkspaceEntity
 import com.intellij.platform.workspace.storage.WorkspaceEntityInternalApi
@@ -17,14 +18,15 @@ import com.intellij.platform.workspace.storage.impl.containers.toMutableWorkspac
 import com.intellij.platform.workspace.storage.instrumentation.EntityStorageInstrumentation
 import com.intellij.platform.workspace.storage.instrumentation.EntityStorageInstrumentationApi
 import com.intellij.platform.workspace.storage.metadata.model.EntityMetadata
+import com.intellij.platform.workspace.storage.testEntities.entities.ModifiableVFUWithTwoPropertiesEntity
 import com.intellij.platform.workspace.storage.testEntities.entities.VFUWithTwoPropertiesEntity
 import com.intellij.platform.workspace.storage.url.VirtualFileUrl
 
 @GeneratedCodeApiVersion(3)
 @GeneratedCodeImplVersion(7)
 @OptIn(WorkspaceEntityInternalApi::class)
-internal class VFUWithTwoPropertiesEntityImpl(private val dataSource: VFUWithTwoPropertiesEntityData) : VFUWithTwoPropertiesEntity,
-                                                                                                        WorkspaceEntityBase(dataSource) {
+internal class VFUWithTwoPropertiesEntityImpl(private val dataSource: VFUWithTwoPropertiesEntityData) : VFUWithTwoPropertiesEntity, WorkspaceEntityBase(
+  dataSource) {
 
   private companion object {
 
@@ -63,8 +65,8 @@ internal class VFUWithTwoPropertiesEntityImpl(private val dataSource: VFUWithTwo
   }
 
 
-  internal class Builder(result: VFUWithTwoPropertiesEntityData?) :
-    ModifiableWorkspaceEntityBase<VFUWithTwoPropertiesEntity, VFUWithTwoPropertiesEntityData>(result), VFUWithTwoPropertiesEntity.Builder {
+  internal class Builder(result: VFUWithTwoPropertiesEntityData?) : ModifiableWorkspaceEntityBase<VFUWithTwoPropertiesEntity, VFUWithTwoPropertiesEntityData>(
+    result), ModifiableVFUWithTwoPropertiesEntity {
     internal constructor() : this(VFUWithTwoPropertiesEntityData())
 
     override fun applyToBuilder(builder: MutableEntityStorage) {
@@ -174,7 +176,7 @@ internal class VFUWithTwoPropertiesEntityData : WorkspaceEntityData<VFUWithTwoPr
   internal fun isFilePropertyInitialized(): Boolean = ::fileProperty.isInitialized
   internal fun isSecondFilePropertyInitialized(): Boolean = ::secondFileProperty.isInitialized
 
-  override fun wrapAsModifiable(diff: MutableEntityStorage): WorkspaceEntity.Builder<VFUWithTwoPropertiesEntity> {
+  override fun wrapAsModifiable(diff: MutableEntityStorage): ModifiableWorkspaceEntity<VFUWithTwoPropertiesEntity> {
     val modifiable = VFUWithTwoPropertiesEntityImpl.Builder(null)
     modifiable.diff = diff
     modifiable.id = createEntityId()
@@ -194,15 +196,14 @@ internal class VFUWithTwoPropertiesEntityData : WorkspaceEntityData<VFUWithTwoPr
 
   override fun getMetadata(): EntityMetadata {
     return MetadataStorageImpl.getMetadataByTypeFqn(
-      "com.intellij.platform.workspace.storage.testEntities.entities.VFUWithTwoPropertiesEntity"
-    ) as EntityMetadata
+      "com.intellij.platform.workspace.storage.testEntities.entities.VFUWithTwoPropertiesEntity") as EntityMetadata
   }
 
   override fun getEntityInterface(): Class<out WorkspaceEntity> {
     return VFUWithTwoPropertiesEntity::class.java
   }
 
-  override fun createDetachedEntity(parents: List<WorkspaceEntity.Builder<*>>): WorkspaceEntity.Builder<*> {
+  override fun createDetachedEntity(parents: List<ModifiableWorkspaceEntity<*>>): ModifiableWorkspaceEntity<*> {
     return VFUWithTwoPropertiesEntity(data, fileProperty, secondFileProperty, entitySource) {
     }
   }

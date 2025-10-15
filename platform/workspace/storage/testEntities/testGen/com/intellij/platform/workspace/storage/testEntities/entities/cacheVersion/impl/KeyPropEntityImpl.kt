@@ -1,4 +1,4 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.platform.workspace.storage.testEntities.entities.cacheVersion.impl
 
 import com.intellij.platform.workspace.storage.*
@@ -9,6 +9,7 @@ import com.intellij.platform.workspace.storage.instrumentation.EntityStorageInst
 import com.intellij.platform.workspace.storage.instrumentation.EntityStorageInstrumentationApi
 import com.intellij.platform.workspace.storage.metadata.model.EntityMetadata
 import com.intellij.platform.workspace.storage.testEntities.entities.cacheVersion.KeyPropEntity
+import com.intellij.platform.workspace.storage.testEntities.entities.cacheVersion.ModifiableKeyPropEntity
 import com.intellij.platform.workspace.storage.url.VirtualFileUrl
 
 @GeneratedCodeApiVersion(3)
@@ -52,8 +53,8 @@ internal class KeyPropEntityImpl(private val dataSource: KeyPropEntityData) : Ke
   }
 
 
-  internal class Builder(result: KeyPropEntityData?) : ModifiableWorkspaceEntityBase<KeyPropEntity, KeyPropEntityData>(result),
-                                                       KeyPropEntity.Builder {
+  internal class Builder(result: KeyPropEntityData?) : ModifiableWorkspaceEntityBase<KeyPropEntity, KeyPropEntityData>(
+    result), ModifiableKeyPropEntity {
     internal constructor() : this(KeyPropEntityData())
 
     override fun applyToBuilder(builder: MutableEntityStorage) {
@@ -157,7 +158,7 @@ internal class KeyPropEntityData : WorkspaceEntityData<KeyPropEntity>() {
   internal fun isTextInitialized(): Boolean = ::text.isInitialized
   internal fun isUrlInitialized(): Boolean = ::url.isInitialized
 
-  override fun wrapAsModifiable(diff: MutableEntityStorage): WorkspaceEntity.Builder<KeyPropEntity> {
+  override fun wrapAsModifiable(diff: MutableEntityStorage): ModifiableWorkspaceEntity<KeyPropEntity> {
     val modifiable = KeyPropEntityImpl.Builder(null)
     modifiable.diff = diff
     modifiable.id = createEntityId()
@@ -177,15 +178,14 @@ internal class KeyPropEntityData : WorkspaceEntityData<KeyPropEntity>() {
 
   override fun getMetadata(): EntityMetadata {
     return MetadataStorageImpl.getMetadataByTypeFqn(
-      "com.intellij.platform.workspace.storage.testEntities.entities.cacheVersion.KeyPropEntity"
-    ) as EntityMetadata
+      "com.intellij.platform.workspace.storage.testEntities.entities.cacheVersion.KeyPropEntity") as EntityMetadata
   }
 
   override fun getEntityInterface(): Class<out WorkspaceEntity> {
     return KeyPropEntity::class.java
   }
 
-  override fun createDetachedEntity(parents: List<WorkspaceEntity.Builder<*>>): WorkspaceEntity.Builder<*> {
+  override fun createDetachedEntity(parents: List<ModifiableWorkspaceEntity<*>>): ModifiableWorkspaceEntity<*> {
     return KeyPropEntity(someInt, text, url, entitySource) {
     }
   }

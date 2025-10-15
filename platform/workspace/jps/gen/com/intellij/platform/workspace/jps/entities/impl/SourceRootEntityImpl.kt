@@ -1,8 +1,10 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.platform.workspace.jps.entities.impl
 
 import com.intellij.openapi.util.NlsSafe
 import com.intellij.platform.workspace.jps.entities.ContentRootEntity
+import com.intellij.platform.workspace.jps.entities.ModifiableContentRootEntity
+import com.intellij.platform.workspace.jps.entities.ModifiableSourceRootEntity
 import com.intellij.platform.workspace.jps.entities.SourceRootEntity
 import com.intellij.platform.workspace.jps.entities.SourceRootTypeId
 import com.intellij.platform.workspace.storage.*
@@ -156,16 +158,16 @@ internal class SourceRootEntityImpl(private val dataSource: SourceRootEntityData
 
       }
 
-    override var contentRoot: ContentRootEntity.Builder
+    override var contentRoot: ModifiableContentRootEntity
       get() {
         val _diff = diff
         return if (_diff != null) {
           @OptIn(EntityStorageInstrumentationApi::class)
-          ((_diff as MutableEntityStorageInstrumentation).getParentBuilder(CONTENTROOT_CONNECTION_ID, this) as? ContentRootEntity.Builder)
-          ?: (this.entityLinks[EntityLink(false, CONTENTROOT_CONNECTION_ID)]!! as ContentRootEntity.Builder)
+          ((_diff as MutableEntityStorageInstrumentation).getParentBuilder(CONTENTROOT_CONNECTION_ID, this) as? ModifiableContentRootEntity)
+          ?: (this.entityLinks[EntityLink(false, CONTENTROOT_CONNECTION_ID)]!! as ModifiableContentRootEntity)
         }
         else {
-          this.entityLinks[EntityLink(false, CONTENTROOT_CONNECTION_ID)]!! as ContentRootEntity.Builder
+          this.entityLinks[EntityLink(false, CONTENTROOT_CONNECTION_ID)]!! as ModifiableContentRootEntity
         }
       }
       set(value) {
@@ -208,7 +210,7 @@ internal class SourceRootEntityData : WorkspaceEntityData<SourceRootEntity>() {
   internal fun isUrlInitialized(): Boolean = ::url.isInitialized
   internal fun isRootTypeIdInitialized(): Boolean = ::rootTypeId.isInitialized
 
-  override fun wrapAsModifiable(diff: MutableEntityStorage): WorkspaceEntity.Builder<SourceRootEntity> {
+  override fun wrapAsModifiable(diff: MutableEntityStorage): ModifiableWorkspaceEntity<SourceRootEntity> {
     val modifiable = SourceRootEntityImpl.Builder(null)
     modifiable.diff = diff
     modifiable.id = createEntityId()
@@ -234,9 +236,9 @@ internal class SourceRootEntityData : WorkspaceEntityData<SourceRootEntity>() {
     return SourceRootEntity::class.java
   }
 
-  override fun createDetachedEntity(parents: List<WorkspaceEntity.Builder<*>>): WorkspaceEntity.Builder<*> {
+  override fun createDetachedEntity(parents: List<ModifiableWorkspaceEntity<*>>): ModifiableWorkspaceEntity<*> {
     return SourceRootEntity(url, rootTypeId, entitySource) {
-      parents.filterIsInstance<ContentRootEntity.Builder>().singleOrNull()?.let { this.contentRoot = it }
+      parents.filterIsInstance<ModifiableContentRootEntity>().singleOrNull()?.let { this.contentRoot = it }
     }
   }
 

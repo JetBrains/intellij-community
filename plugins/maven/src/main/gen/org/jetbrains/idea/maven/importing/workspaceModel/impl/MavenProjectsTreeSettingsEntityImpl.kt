@@ -6,6 +6,7 @@ import com.intellij.platform.workspace.storage.EntitySource
 import com.intellij.platform.workspace.storage.EntityType
 import com.intellij.platform.workspace.storage.GeneratedCodeApiVersion
 import com.intellij.platform.workspace.storage.GeneratedCodeImplVersion
+import com.intellij.platform.workspace.storage.ModifiableWorkspaceEntity
 import com.intellij.platform.workspace.storage.MutableEntityStorage
 import com.intellij.platform.workspace.storage.WorkspaceEntity
 import com.intellij.platform.workspace.storage.WorkspaceEntityInternalApi
@@ -18,6 +19,7 @@ import com.intellij.platform.workspace.storage.instrumentation.EntityStorageInst
 import com.intellij.platform.workspace.storage.instrumentation.EntityStorageInstrumentationApi
 import com.intellij.platform.workspace.storage.metadata.model.EntityMetadata
 import org.jetbrains.idea.maven.importing.workspaceModel.MavenProjectsTreeSettingsEntity
+import org.jetbrains.idea.maven.importing.workspaceModel.ModifiableMavenProjectsTreeSettingsEntity
 
 @GeneratedCodeApiVersion(3)
 @GeneratedCodeImplVersion(7)
@@ -51,7 +53,7 @@ internal class MavenProjectsTreeSettingsEntityImpl(private val dataSource: Maven
 
 
   internal class Builder(result: MavenProjectsTreeSettingsEntityData?) : ModifiableWorkspaceEntityBase<MavenProjectsTreeSettingsEntity, MavenProjectsTreeSettingsEntityData>(
-    result), MavenProjectsTreeSettingsEntity.Builder {
+    result), ModifiableMavenProjectsTreeSettingsEntity {
     internal constructor() : this(MavenProjectsTreeSettingsEntityData())
 
     override fun applyToBuilder(builder: MutableEntityStorage) {
@@ -148,7 +150,7 @@ internal class MavenProjectsTreeSettingsEntityData : WorkspaceEntityData<MavenPr
 
   internal fun isImportedFilePathsInitialized(): Boolean = ::importedFilePaths.isInitialized
 
-  override fun wrapAsModifiable(diff: MutableEntityStorage): WorkspaceEntity.Builder<MavenProjectsTreeSettingsEntity> {
+  override fun wrapAsModifiable(diff: MutableEntityStorage): ModifiableWorkspaceEntity<MavenProjectsTreeSettingsEntity> {
     val modifiable = MavenProjectsTreeSettingsEntityImpl.Builder(null)
     modifiable.diff = diff
     modifiable.id = createEntityId()
@@ -182,7 +184,7 @@ internal class MavenProjectsTreeSettingsEntityData : WorkspaceEntityData<MavenPr
     return MavenProjectsTreeSettingsEntity::class.java
   }
 
-  override fun createDetachedEntity(parents: List<WorkspaceEntity.Builder<*>>): WorkspaceEntity.Builder<*> {
+  override fun createDetachedEntity(parents: List<ModifiableWorkspaceEntity<*>>): ModifiableWorkspaceEntity<*> {
     return MavenProjectsTreeSettingsEntity(importedFilePaths, entitySource) {
     }
   }

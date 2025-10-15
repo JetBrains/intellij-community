@@ -37,8 +37,6 @@ import org.jetbrains.kotlin.idea.formatter.kotlinCustomSettings
 import org.jetbrains.kotlin.lexer.KtTokens
 import org.jetbrains.kotlin.psi.*
 import org.jetbrains.kotlin.psi.psiUtil.children
-import org.jetbrains.kotlin.psi.psiUtil.isPublic
-import org.jetbrains.kotlin.psi.psiUtil.visibilityModifierType
 import org.jetbrains.kotlin.resolve.ImportPath
 import java.io.IOException
 import java.net.URL
@@ -372,22 +370,45 @@ object CodeWriter {
     val apiFile = apiClass.containingKtFile
     val apiImports = importsByFile.getValue(apiFile)
     addInnerDeclarations(apiClass, code, apiImports, savedCompatibilityInvokeCode)
-    val topLevelCode = code.topLevelCode
-    if (topLevelCode != null) {
-      val declarations = psiFactory.createFile(apiImports.findAndRemoveFqns(code.topLevelCode!!))
-        .declarations.also {
-          if (!apiClass.isPublic) {
-            val apiClassVisibilityModifierType = apiClass.visibilityModifierType()!!
-            it.forEach { declaration -> declaration.addModifier(apiClassVisibilityModifierType) }
-          }
+
+    val sourceFile = apiClass.containingFile.virtualFile
+    val targetDirectory = getPsiDirectory(project, genFolder, sourceFolder, sourceFile)
+    run {
+      val apiPackageFqnName = apiFile.packageFqName.asString()
+      val generatedApiImports = Imports(apiPackageFqnName)
+      apiClass.containingKtFile.importDirectives.mapNotNull { it.importPath }.forEach { import ->
+        generatedApiImports.add(import.pathStr)
       }
-      topLevelDeclarations.putValue(apiFile, apiClass to declarations)
+      val psiFactory = KtPsiFactory(apiClass.project)
+      val topLevelCode = code.topLevelCode ?: ""
+      val generatedApiFile = psiFactory.createFile("${code.target.name}Api.kt", generatedApiImports.findAndRemoveFqns(topLevelCode))
+      generatedApiFile.packageFqName = apiFile.packageFqName
+
+      val compatibilityTopLevelDeclarations = mutableListOf<KtDeclaration>()
+      // val allDeclarationsFile = psiFactory.createFile(apiImports.findAndRemoveFqns(topLevelCode))
+      // allDeclarationsFile.importList?.copy()?.let { generatedApiFile.importList?.replace(it) }
+      val declarations = generatedApiFile.declarations
+      for (declaration in declarations) {
+        if (declaration.firstChild.text.contains("Deprecated")) {
+          compatibilityTopLevelDeclarations.add(declaration.copy() as KtDeclaration)
+          declaration.delete()
+          continue
+        }
+        
+      }
+      if (compatibilityTopLevelDeclarations.isNotEmpty()) {
+        topLevelDeclarations.putValue(apiFile, apiClass to compatibilityTopLevelDeclarations)
+      }
+
+      val apiTargetDirectory = targetDirectory.parent!!
+      apiTargetDirectory.findFile(generatedApiFile.name)?.delete()
+      //todo remove other old generated files
+      val addedFile = apiTargetDirectory.add(generatedApiFile) as KtFile
+      generatedFiles.add(addedFile)
+      importsByFile[addedFile] = generatedApiImports
     }
     val implementationClassText = code.implementationClass
     if (implementationClassText != null) {
-      val sourceFile = apiClass.containingFile.virtualFile
-      val targetDirectory = getPsiDirectory(project, genFolder, sourceFolder, sourceFile)
-
       val implPackageFqnName = "${apiFile.packageFqName.asString()}.impl"
       val implImports = Imports(implPackageFqnName)
       val implFile = psiFactory.createFile("${code.target.name}Impl.kt", implImports.findAndRemoveFqns(implementationClassText))
@@ -440,6 +461,7 @@ object CodeWriter {
   }
 
   private fun addInnerDeclarations(ktClass: KtClass, code: ObjClassGeneratedCode, imports: Imports, savedCompatibilityInvokeCode: MutableMap<KtClass, PsiElement>) {
+    if (code.builderInterface.isEmpty()) return
     val psiFactory = KtPsiFactory(ktClass.project)
     val builderInterface = ktClass.addDeclaration(psiFactory.createClass(imports.findAndRemoveFqns(code.builderInterface)))
     val companionObject = ktClass.addDeclaration(psiFactory.createObject(imports.findAndRemoveFqns(code.companionObject)))

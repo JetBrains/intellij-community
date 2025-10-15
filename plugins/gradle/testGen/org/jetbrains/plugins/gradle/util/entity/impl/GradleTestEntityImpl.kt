@@ -11,6 +11,7 @@ import com.intellij.platform.workspace.storage.metadata.model.EntityMetadata
 import org.jetbrains.plugins.gradle.service.syncAction.GradleSyncPhase
 import org.jetbrains.plugins.gradle.util.entity.GradleTestEntity
 import org.jetbrains.plugins.gradle.util.entity.GradleTestEntityId
+import org.jetbrains.plugins.gradle.util.entity.ModifiableGradleTestEntity
 
 @GeneratedCodeApiVersion(3)
 @GeneratedCodeImplVersion(7)
@@ -45,7 +46,7 @@ internal class GradleTestEntityImpl(private val dataSource: GradleTestEntityData
 
 
   internal class Builder(result: GradleTestEntityData?) : ModifiableWorkspaceEntityBase<GradleTestEntity, GradleTestEntityData>(
-    result), GradleTestEntity.Builder {
+    result), ModifiableGradleTestEntity {
     internal constructor() : this(GradleTestEntityData())
 
     override fun applyToBuilder(builder: MutableEntityStorage) {
@@ -122,7 +123,7 @@ internal class GradleTestEntityData : WorkspaceEntityData<GradleTestEntity>() {
 
   internal fun isPhaseInitialized(): Boolean = ::phase.isInitialized
 
-  override fun wrapAsModifiable(diff: MutableEntityStorage): WorkspaceEntity.Builder<GradleTestEntity> {
+  override fun wrapAsModifiable(diff: MutableEntityStorage): ModifiableWorkspaceEntity<GradleTestEntity> {
     val modifiable = GradleTestEntityImpl.Builder(null)
     modifiable.diff = diff
     modifiable.id = createEntityId()
@@ -148,7 +149,7 @@ internal class GradleTestEntityData : WorkspaceEntityData<GradleTestEntity>() {
     return GradleTestEntity::class.java
   }
 
-  override fun createDetachedEntity(parents: List<WorkspaceEntity.Builder<*>>): WorkspaceEntity.Builder<*> {
+  override fun createDetachedEntity(parents: List<ModifiableWorkspaceEntity<*>>): ModifiableWorkspaceEntity<*> {
     return GradleTestEntity(phase, entitySource) {
     }
   }

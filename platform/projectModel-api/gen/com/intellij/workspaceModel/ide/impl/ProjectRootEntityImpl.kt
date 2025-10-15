@@ -14,6 +14,7 @@ import com.intellij.platform.workspace.storage.instrumentation.EntityStorageInst
 import com.intellij.platform.workspace.storage.instrumentation.EntityStorageInstrumentationApi
 import com.intellij.platform.workspace.storage.metadata.model.EntityMetadata
 import com.intellij.platform.workspace.storage.url.VirtualFileUrl
+import com.intellij.workspaceModel.ide.ModifiableProjectRootEntity
 import com.intellij.workspaceModel.ide.ProjectRootEntity
 import java.nio.file.Path
 import org.jetbrains.annotations.ApiStatus.Internal
@@ -50,7 +51,7 @@ internal class ProjectRootEntityImpl(private val dataSource: ProjectRootEntityDa
 
 
   internal class Builder(result: ProjectRootEntityData?) : ModifiableWorkspaceEntityBase<ProjectRootEntity, ProjectRootEntityData>(
-    result), ProjectRootEntity.Builder {
+    result), ModifiableProjectRootEntity {
     internal constructor() : this(ProjectRootEntityData())
 
     override fun applyToBuilder(builder: MutableEntityStorage) {
@@ -129,7 +130,7 @@ internal class ProjectRootEntityData : WorkspaceEntityData<ProjectRootEntity>() 
 
   internal fun isRootInitialized(): Boolean = ::root.isInitialized
 
-  override fun wrapAsModifiable(diff: MutableEntityStorage): WorkspaceEntity.Builder<ProjectRootEntity> {
+  override fun wrapAsModifiable(diff: MutableEntityStorage): ModifiableWorkspaceEntity<ProjectRootEntity> {
     val modifiable = ProjectRootEntityImpl.Builder(null)
     modifiable.diff = diff
     modifiable.id = createEntityId()
@@ -155,7 +156,7 @@ internal class ProjectRootEntityData : WorkspaceEntityData<ProjectRootEntity>() 
     return ProjectRootEntity::class.java
   }
 
-  override fun createDetachedEntity(parents: List<WorkspaceEntity.Builder<*>>): WorkspaceEntity.Builder<*> {
+  override fun createDetachedEntity(parents: List<ModifiableWorkspaceEntity<*>>): ModifiableWorkspaceEntity<*> {
     return ProjectRootEntity(root, entitySource) {
     }
   }

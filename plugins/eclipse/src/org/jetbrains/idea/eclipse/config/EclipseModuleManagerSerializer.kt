@@ -1,6 +1,7 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.idea.eclipse.config
 
+import com.intellij.platform.workspace.jps.entities.ModifiableModuleEntity
 import com.intellij.platform.workspace.jps.entities.ModuleEntity
 import com.intellij.platform.workspace.jps.entities.customImlData
 import com.intellij.platform.workspace.jps.serialization.impl.CustomModuleComponentSerializer
@@ -18,7 +19,7 @@ import org.jetbrains.jps.model.serialization.JpsProjectLoader
 class EclipseModuleManagerSerializer : CustomModuleComponentSerializer {
   override val componentName: String = "EclipseModuleManager"
 
-  override fun loadComponent(detachedModuleEntity: ModuleEntity.Builder,
+  override fun loadComponent(detachedModuleEntity: ModifiableModuleEntity,
                              componentTag: Element,
                              errorReporter: ErrorReporter,
                              virtualFileManager: VirtualFileUrlManager) {

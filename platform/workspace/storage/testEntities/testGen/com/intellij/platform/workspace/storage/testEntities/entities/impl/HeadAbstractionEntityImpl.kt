@@ -1,4 +1,4 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.platform.workspace.storage.testEntities.entities.impl
 
 import com.intellij.platform.workspace.storage.*
@@ -17,17 +17,18 @@ import com.intellij.platform.workspace.storage.metadata.model.EntityMetadata
 import com.intellij.platform.workspace.storage.testEntities.entities.CompositeBaseEntity
 import com.intellij.platform.workspace.storage.testEntities.entities.HeadAbstractionEntity
 import com.intellij.platform.workspace.storage.testEntities.entities.HeadAbstractionSymbolicId
+import com.intellij.platform.workspace.storage.testEntities.entities.ModifiableCompositeBaseEntity
+import com.intellij.platform.workspace.storage.testEntities.entities.ModifiableHeadAbstractionEntity
 
 @GeneratedCodeApiVersion(3)
 @GeneratedCodeImplVersion(7)
 @OptIn(WorkspaceEntityInternalApi::class)
-internal class HeadAbstractionEntityImpl(private val dataSource: HeadAbstractionEntityData) : HeadAbstractionEntity,
-                                                                                              WorkspaceEntityBase(dataSource) {
+internal class HeadAbstractionEntityImpl(private val dataSource: HeadAbstractionEntityData) : HeadAbstractionEntity, WorkspaceEntityBase(
+  dataSource) {
 
   private companion object {
-    internal val CHILD_CONNECTION_ID: ConnectionId = ConnectionId.create(
-      HeadAbstractionEntity::class.java, CompositeBaseEntity::class.java, ConnectionId.ConnectionType.ABSTRACT_ONE_TO_ONE, true
-    )
+    internal val CHILD_CONNECTION_ID: ConnectionId = ConnectionId.create(HeadAbstractionEntity::class.java, CompositeBaseEntity::class.java,
+                                                                         ConnectionId.ConnectionType.ABSTRACT_ONE_TO_ONE, true)
 
     private val connections = listOf<ConnectionId>(
       CHILD_CONNECTION_ID,
@@ -57,8 +58,8 @@ internal class HeadAbstractionEntityImpl(private val dataSource: HeadAbstraction
   }
 
 
-  internal class Builder(result: HeadAbstractionEntityData?) :
-    ModifiableWorkspaceEntityBase<HeadAbstractionEntity, HeadAbstractionEntityData>(result), HeadAbstractionEntity.Builder {
+  internal class Builder(result: HeadAbstractionEntityData?) : ModifiableWorkspaceEntityBase<HeadAbstractionEntity, HeadAbstractionEntityData>(
+    result), ModifiableHeadAbstractionEntity {
     internal constructor() : this(HeadAbstractionEntityData())
 
     override fun applyToBuilder(builder: MutableEntityStorage) {
@@ -124,18 +125,17 @@ internal class HeadAbstractionEntityImpl(private val dataSource: HeadAbstraction
         changedProperty.add("data")
       }
 
-    override var child: CompositeBaseEntity.Builder<out CompositeBaseEntity>?
+    override var child: ModifiableCompositeBaseEntity<out CompositeBaseEntity>?
       get() {
         val _diff = diff
         return if (_diff != null) {
           @OptIn(EntityStorageInstrumentationApi::class)
-          ((_diff as MutableEntityStorageInstrumentation).getOneChildBuilder(
-            CHILD_CONNECTION_ID, this
-          ) as? CompositeBaseEntity.Builder<out CompositeBaseEntity>)
-          ?: (this.entityLinks[EntityLink(true, CHILD_CONNECTION_ID)] as? CompositeBaseEntity.Builder<out CompositeBaseEntity>)
+          ((_diff as MutableEntityStorageInstrumentation).getOneChildBuilder(CHILD_CONNECTION_ID,
+                                                                             this) as? ModifiableCompositeBaseEntity<out CompositeBaseEntity>)
+          ?: (this.entityLinks[EntityLink(true, CHILD_CONNECTION_ID)] as? ModifiableCompositeBaseEntity<out CompositeBaseEntity>)
         }
         else {
-          this.entityLinks[EntityLink(true, CHILD_CONNECTION_ID)] as? CompositeBaseEntity.Builder<out CompositeBaseEntity>
+          this.entityLinks[EntityLink(true, CHILD_CONNECTION_ID)] as? ModifiableCompositeBaseEntity<out CompositeBaseEntity>
         }
       }
       set(value) {
@@ -172,7 +172,7 @@ internal class HeadAbstractionEntityData : WorkspaceEntityData<HeadAbstractionEn
 
   internal fun isDataInitialized(): Boolean = ::data.isInitialized
 
-  override fun wrapAsModifiable(diff: MutableEntityStorage): WorkspaceEntity.Builder<HeadAbstractionEntity> {
+  override fun wrapAsModifiable(diff: MutableEntityStorage): ModifiableWorkspaceEntity<HeadAbstractionEntity> {
     val modifiable = HeadAbstractionEntityImpl.Builder(null)
     modifiable.diff = diff
     modifiable.id = createEntityId()
@@ -192,15 +192,14 @@ internal class HeadAbstractionEntityData : WorkspaceEntityData<HeadAbstractionEn
 
   override fun getMetadata(): EntityMetadata {
     return MetadataStorageImpl.getMetadataByTypeFqn(
-      "com.intellij.platform.workspace.storage.testEntities.entities.HeadAbstractionEntity"
-    ) as EntityMetadata
+      "com.intellij.platform.workspace.storage.testEntities.entities.HeadAbstractionEntity") as EntityMetadata
   }
 
   override fun getEntityInterface(): Class<out WorkspaceEntity> {
     return HeadAbstractionEntity::class.java
   }
 
-  override fun createDetachedEntity(parents: List<WorkspaceEntity.Builder<*>>): WorkspaceEntity.Builder<*> {
+  override fun createDetachedEntity(parents: List<ModifiableWorkspaceEntity<*>>): ModifiableWorkspaceEntity<*> {
     return HeadAbstractionEntity(data, entitySource) {
     }
   }

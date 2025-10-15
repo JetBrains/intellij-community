@@ -1,8 +1,10 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.idea.eclipse.config
 
 import com.intellij.java.workspace.entities.JavaModuleSettingsEntity
+import com.intellij.java.workspace.entities.JavaResourceRootPropertiesEntity
 import com.intellij.java.workspace.entities.JavaSourceRootPropertiesEntity
+import com.intellij.java.workspace.entities.asJavaResourceRoot
 import com.intellij.java.workspace.entities.asJavaSourceRoot
 import com.intellij.java.workspace.entities.javaSettings
 import com.intellij.openapi.components.ExpandMacroToPathMap
@@ -25,12 +27,12 @@ import org.jetbrains.jps.util.JpsPathUtil
  * Loads additional module configuration from *.eml file to [ModuleEntity]
  */
 internal class EmlFileLoader(
-  private val module: ModuleEntity.Builder,
+  private val module: ModifiableModuleEntity,
   private val expandMacroToPathMap: ExpandMacroToPathMap,
   private val virtualFileManager: VirtualFileUrlManager,
-  private val moduleLibrariesCollector: MutableMap<LibraryId, LibraryEntity.Builder>,
+  private val moduleLibrariesCollector: MutableMap<LibraryId, ModifiableLibraryEntity>,
 ) {
-  fun loadEml(emlTag: Element, contentRoot: ContentRootEntity.Builder) {
+  fun loadEml(emlTag: Element, contentRoot: ModifiableContentRootEntity) {
     loadCustomJavaSettings(emlTag)
     loadContentEntries(emlTag, contentRoot)
     loadJdkSettings(emlTag)
@@ -79,7 +81,7 @@ internal class EmlFileLoader(
     } ?: DependencyScope.COMPILE
   }
 
-  private fun loadModuleLibrary(libTag: Element, library: LibraryEntity.Builder) {
+  private fun loadModuleLibrary(libTag: Element, library: ModifiableLibraryEntity) {
     val eclipseSrcRoot = library.roots.firstOrNull { it.type.name == OrderRootType.SOURCES.name() }
     val rootsToRemove = HashSet<LibraryRoot>()
     val rootsToAdd = ArrayList<LibraryRoot>()
@@ -169,7 +171,7 @@ internal class EmlFileLoader(
     }
   }
 
-  private fun loadContentEntries(emlTag: Element, contentRoot: ContentRootEntity.Builder) {
+  private fun loadContentEntries(emlTag: Element, contentRoot: ModifiableContentRootEntity) {
     val entryElements = emlTag.getChildren(IdeaXml.CONTENT_ENTRY_TAG)
     if (entryElements.isNotEmpty()) {
       entryElements.forEach { entryTag ->
@@ -186,7 +188,7 @@ internal class EmlFileLoader(
     }
   }
 
-  private fun loadContentEntry(contentEntryTag: Element, entity: ContentRootEntity.Builder) {
+  private fun loadContentEntry(contentEntryTag: Element, entity: ModifiableContentRootEntity) {
     val testSourceFolders = contentEntryTag.getChildren(IdeaXml.TEST_FOLDER_TAG).mapTo(HashSet()) {
       it.getAttributeValue(IdeaXml.URL_ATTR)
     }

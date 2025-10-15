@@ -1,13 +1,13 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.plugins.gradle.service.project;
 
 import com.intellij.openapi.externalSystem.ExternalSystemModulePropertyManager;
 import com.intellij.openapi.externalSystem.service.project.ExternalSystemModulePropertyManagerBridge;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.project.Project;
-import com.intellij.platform.workspace.jps.entities.ExternalSystemModuleOptionsEntity;
+import com.intellij.platform.workspace.jps.entities.ExternalSystemModuleOptionsEntityApiKt;
 import com.intellij.platform.workspace.jps.entities.ModuleEntity;
-import com.intellij.platform.workspace.jps.entities.ModuleEntityAndExtensions;
+import com.intellij.platform.workspace.jps.entities.ModuleEntityApiKt;
 import com.intellij.platform.workspace.storage.MutableEntityStorage;
 import com.intellij.platform.workspace.storage.impl.VersionedEntityStorageOnSnapshot;
 import com.intellij.workspaceModel.ide.NonPersistentEntitySource;
@@ -62,18 +62,25 @@ public class GradleProjectResolverUtilTest {
     when(module.getProject()).thenReturn(project);
     MutableEntityStorage builder = MutableEntityStorage.create();
     ModuleEntity moduleEntity =
-      builder.addEntity(ModuleEntity.create("m", Collections.emptyList(), NonPersistentEntitySource.INSTANCE, moduleBuilder -> {
-        ModuleEntityAndExtensions.setExModuleOptions(moduleBuilder, ExternalSystemModuleOptionsEntity.create(NonPersistentEntitySource.INSTANCE, externalBuilder -> {
-          externalBuilder.setExternalSystem(SYSTEM_ID.getId());
-          externalBuilder.setExternalSystemModuleType(moduleType);
-          externalBuilder.setLinkedProjectId(projectId);
-          return Unit.INSTANCE;
-        }));
-        return Unit.INSTANCE;
-      }));
+      builder.addEntity(
+        ModuleEntityApiKt.createModuleEntity("m", Collections.emptyList(), NonPersistentEntitySource.INSTANCE,
+                                             moduleBuilder -> {
+                                               ModuleEntityApiKt.setExModuleOptions(moduleBuilder,
+                                                                                    ExternalSystemModuleOptionsEntityApiKt.createExternalSystemModuleOptionsEntity(
+                                                                                      NonPersistentEntitySource.INSTANCE,
+                                                                                      externalBuilder -> {
+                                                                                        externalBuilder.setExternalSystem(
+                                                                                          SYSTEM_ID.getId());
+                                                                                        externalBuilder.setExternalSystemModuleType(
+                                                                                          moduleType);
+                                                                                        externalBuilder.setLinkedProjectId(projectId);
+                                                                                        return Unit.INSTANCE;
+                                                                                      }));
+                                               return Unit.INSTANCE;
+                                             }));
     ModuleManagerBridgeImpl.Companion.getMutableModuleMap(builder).addMapping(moduleEntity, module);
     when(module.getEntityStorage()).thenReturn(new VersionedEntityStorageOnSnapshot(builder.toSnapshot()));
-    
+
     ExternalSystemModulePropertyManager modulePropertyManager = new ExternalSystemModulePropertyManagerBridge(module);
     when(module.getService(ExternalSystemModulePropertyManager.class)).thenReturn(modulePropertyManager);
 

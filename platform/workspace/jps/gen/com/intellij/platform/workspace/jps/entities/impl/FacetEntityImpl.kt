@@ -1,9 +1,11 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.platform.workspace.jps.entities.impl
 
 import com.intellij.platform.workspace.jps.entities.FacetEntity
 import com.intellij.platform.workspace.jps.entities.FacetEntityTypeId
 import com.intellij.platform.workspace.jps.entities.FacetId
+import com.intellij.platform.workspace.jps.entities.ModifiableFacetEntity
+import com.intellij.platform.workspace.jps.entities.ModifiableModuleEntity
 import com.intellij.platform.workspace.jps.entities.ModuleEntity
 import com.intellij.platform.workspace.jps.entities.ModuleId
 import com.intellij.platform.workspace.storage.ConnectionId
@@ -11,6 +13,7 @@ import com.intellij.platform.workspace.storage.EntitySource
 import com.intellij.platform.workspace.storage.EntityType
 import com.intellij.platform.workspace.storage.GeneratedCodeApiVersion
 import com.intellij.platform.workspace.storage.GeneratedCodeImplVersion
+import com.intellij.platform.workspace.storage.ModifiableWorkspaceEntity
 import com.intellij.platform.workspace.storage.MutableEntityStorage
 import com.intellij.platform.workspace.storage.SymbolicEntityId
 import com.intellij.platform.workspace.storage.WorkspaceEntity
@@ -203,16 +206,16 @@ internal class FacetEntityImpl(private val dataSource: FacetEntityData) : FacetE
         changedProperty.add("configurationXmlTag")
       }
 
-    override var module: ModuleEntity.Builder
+    override var module: ModifiableModuleEntity
       get() {
         val _diff = diff
         return if (_diff != null) {
           @OptIn(EntityStorageInstrumentationApi::class)
-          ((_diff as MutableEntityStorageInstrumentation).getParentBuilder(MODULE_CONNECTION_ID, this) as? ModuleEntity.Builder)
-          ?: (this.entityLinks[EntityLink(false, MODULE_CONNECTION_ID)]!! as ModuleEntity.Builder)
+          ((_diff as MutableEntityStorageInstrumentation).getParentBuilder(MODULE_CONNECTION_ID, this) as? ModifiableModuleEntity)
+          ?: (this.entityLinks[EntityLink(false, MODULE_CONNECTION_ID)]!! as ModifiableModuleEntity)
         }
         else {
-          this.entityLinks[EntityLink(false, MODULE_CONNECTION_ID)]!! as ModuleEntity.Builder
+          this.entityLinks[EntityLink(false, MODULE_CONNECTION_ID)]!! as ModifiableModuleEntity
         }
       }
       set(value) {
@@ -243,16 +246,16 @@ internal class FacetEntityImpl(private val dataSource: FacetEntityData) : FacetE
         changedProperty.add("module")
       }
 
-    override var underlyingFacet: FacetEntity.Builder?
+    override var underlyingFacet: ModifiableFacetEntity?
       get() {
         val _diff = diff
         return if (_diff != null) {
           @OptIn(EntityStorageInstrumentationApi::class)
-          ((_diff as MutableEntityStorageInstrumentation).getParentBuilder(UNDERLYINGFACET_CONNECTION_ID, this) as? FacetEntity.Builder)
-          ?: (this.entityLinks[EntityLink(false, UNDERLYINGFACET_CONNECTION_ID)] as? FacetEntity.Builder)
+          ((_diff as MutableEntityStorageInstrumentation).getParentBuilder(UNDERLYINGFACET_CONNECTION_ID, this) as? ModifiableFacetEntity)
+          ?: (this.entityLinks[EntityLink(false, UNDERLYINGFACET_CONNECTION_ID)] as? ModifiableFacetEntity)
         }
         else {
-          this.entityLinks[EntityLink(false, UNDERLYINGFACET_CONNECTION_ID)] as? FacetEntity.Builder
+          this.entityLinks[EntityLink(false, UNDERLYINGFACET_CONNECTION_ID)] as? ModifiableFacetEntity
         }
       }
       set(value) {
@@ -335,7 +338,7 @@ internal class FacetEntityData : WorkspaceEntityData<FacetEntity>(), SoftLinkabl
     return changed
   }
 
-  override fun wrapAsModifiable(diff: MutableEntityStorage): WorkspaceEntity.Builder<FacetEntity> {
+  override fun wrapAsModifiable(diff: MutableEntityStorage): ModifiableWorkspaceEntity<FacetEntity> {
     val modifiable = FacetEntityImpl.Builder(null)
     modifiable.diff = diff
     modifiable.id = createEntityId()
@@ -361,11 +364,11 @@ internal class FacetEntityData : WorkspaceEntityData<FacetEntity>(), SoftLinkabl
     return FacetEntity::class.java
   }
 
-  override fun createDetachedEntity(parents: List<WorkspaceEntity.Builder<*>>): WorkspaceEntity.Builder<*> {
+  override fun createDetachedEntity(parents: List<ModifiableWorkspaceEntity<*>>): ModifiableWorkspaceEntity<*> {
     return FacetEntity(moduleId, name, typeId, entitySource) {
       this.configurationXmlTag = this@FacetEntityData.configurationXmlTag
-      parents.filterIsInstance<ModuleEntity.Builder>().singleOrNull()?.let { this.module = it }
-      this.underlyingFacet = parents.filterIsInstance<FacetEntity.Builder>().singleOrNull()
+      parents.filterIsInstance<ModifiableModuleEntity>().singleOrNull()?.let { this.module = it }
+      this.underlyingFacet = parents.filterIsInstance<ModifiableFacetEntity>().singleOrNull()
     }
   }
 

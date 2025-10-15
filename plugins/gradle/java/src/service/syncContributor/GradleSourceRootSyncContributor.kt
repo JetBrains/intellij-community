@@ -1,4 +1,4 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.plugins.gradle.service.syncContributor
 
 import com.intellij.java.workspace.entities.JavaResourceRootPropertiesEntity
@@ -85,7 +85,7 @@ internal class GradleSourceRootSyncContributor : GradleSyncContributor {
   private fun createModuleEntity(
     context: ProjectResolverContext,
     sourceRootData: GradleSourceRootData,
-  ): ModuleEntity.Builder {
+  ): ModifiableModuleEntity {
     val (excluded, sources) = sourceRootData.externalSourceSet.sources.asSequence()
       .flatMap { (type, set) -> set.srcDirs.asSequence().map { it.toPath() to type } }
       .partition { it.second.isExcluded }
@@ -120,7 +120,7 @@ internal class GradleSourceRootSyncContributor : GradleSyncContributor {
     context: ProjectResolverContext,
     sourceRootData: GradleSourceRootData,
     excludedPath: Path,
-  ): ExcludeUrlEntity.Builder {
+  ): ModifiableExcludeUrlEntity {
     return ExcludeUrlEntity(
       url = context.virtualFileUrl(excludedPath),
       entitySource = sourceRootData.entitySource
@@ -132,7 +132,7 @@ internal class GradleSourceRootSyncContributor : GradleSyncContributor {
     sourceRootData: GradleSourceRootData,
     sourceRootPath: Path,
     sourceRootType: IExternalSystemSourceType,
-  ): SourceRootEntity.Builder {
+  ): ModifiableSourceRootEntity {
     return SourceRootEntity(
       url = context.virtualFileUrl(sourceRootPath),
       rootTypeId = sourceRootType.toSourceRootTypeId(),
@@ -158,7 +158,7 @@ internal class GradleSourceRootSyncContributor : GradleSyncContributor {
   private fun createModuleOptionsEntity(
     context: ProjectResolverContext,
     sourceRootData: GradleSourceRootData,
-  ): ExternalSystemModuleOptionsEntity.Builder {
+  ): ModifiableExternalSystemModuleOptionsEntity {
     val externalProject = sourceRootData.externalProject
     val externalSourceSet = sourceRootData.externalSourceSet
     return ExternalSystemModuleOptionsEntity(

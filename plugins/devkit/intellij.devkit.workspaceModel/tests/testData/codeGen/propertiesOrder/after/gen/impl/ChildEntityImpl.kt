@@ -15,6 +15,7 @@ import com.intellij.workspaceModel.test.api.BaseDataClass
 import com.intellij.workspaceModel.test.api.ChildEntity
 import com.intellij.workspaceModel.test.api.DerivedDataClass
 import com.intellij.workspaceModel.test.api.DerivedDerivedDataClass
+import com.intellij.workspaceModel.test.api.ModifiableChildEntity
 import com.intellij.workspaceModel.test.api.SimpleId
 
 @GeneratedCodeApiVersion(3)
@@ -84,7 +85,7 @@ internal class ChildEntityImpl(private val dataSource: ChildEntityData) : ChildE
 
 
   internal class Builder(result: ChildEntityData?) : ModifiableWorkspaceEntityBase<ChildEntity, ChildEntityData>(
-    result), ChildEntity.Builder {
+    result), ModifiableChildEntity {
     internal constructor() : this(ChildEntityData())
 
     override fun applyToBuilder(builder: MutableEntityStorage) {
@@ -328,7 +329,7 @@ internal class ChildEntityData : WorkspaceEntityData<ChildEntity>(), SoftLinkabl
     return changed
   }
 
-  override fun wrapAsModifiable(diff: MutableEntityStorage): WorkspaceEntity.Builder<ChildEntity> {
+  override fun wrapAsModifiable(diff: MutableEntityStorage): ModifiableWorkspaceEntity<ChildEntity> {
     val modifiable = ChildEntityImpl.Builder(null)
     modifiable.diff = diff
     modifiable.id = createEntityId()
@@ -354,7 +355,7 @@ internal class ChildEntityData : WorkspaceEntityData<ChildEntity>(), SoftLinkabl
     return ChildEntity::class.java
   }
 
-  override fun createDetachedEntity(parents: List<WorkspaceEntity.Builder<*>>): WorkspaceEntity.Builder<*> {
+  override fun createDetachedEntity(parents: List<ModifiableWorkspaceEntity<*>>): ModifiableWorkspaceEntity<*> {
     return ChildEntity(name, moduleId, aBaseEntityProperty, dBaseEntityProperty, bBaseEntityProperty, sealedDataClassProperty,
                        cChildEntityProperty, entitySource) {
     }

@@ -33,19 +33,29 @@ interface ArtifactEntity : WorkspaceEntityWithSymbolicId {
     get() = ArtifactId(name)
 
   //region generated code
-  @GeneratedCodeApiVersion(3)
-  interface Builder : WorkspaceEntity.Builder<ArtifactEntity> {
-    override var entitySource: EntitySource
-    var name: String
-    var artifactType: String
-    var includeInProjectBuild: Boolean
-    var outputUrl: VirtualFileUrl?
-    var rootElement: CompositePackagingElementEntity.Builder<out CompositePackagingElementEntity>?
-    var customProperties: List<ArtifactPropertiesEntity.Builder>
-    var artifactOutputPackagingElement: ArtifactOutputPackagingElementEntity.Builder?
+  @Deprecated(message = "Use ModifiableArtifactEntity instead")
+  interface Builder : ModifiableArtifactEntity {
+    @Deprecated(message = "Use new API instead")
+    fun getRootElement(): CompositePackagingElementEntity.Builder<out CompositePackagingElementEntity>? =
+      rootElement as CompositePackagingElementEntity.Builder<out CompositePackagingElementEntity>?
+
+    @Deprecated(message = "Use new API instead")
+    fun setRootElement(value: CompositePackagingElementEntity.Builder<out CompositePackagingElementEntity>?) {
+      rootElement = value
+    }
+
+    @Deprecated(message = "Use new API instead")
+    fun getArtifactOutputPackagingElement(): ArtifactOutputPackagingElementEntity.Builder? =
+      artifactOutputPackagingElement as ArtifactOutputPackagingElementEntity.Builder?
+
+    @Deprecated(message = "Use new API instead")
+    fun setArtifactOutputPackagingElement(value: ArtifactOutputPackagingElementEntity.Builder?) {
+      artifactOutputPackagingElement = value
+    }
   }
 
   companion object : EntityType<ArtifactEntity, Builder>() {
+    @Deprecated(message = "Use new API instead")
     @JvmOverloads
     @JvmStatic
     @JvmName("create")
@@ -55,25 +65,20 @@ interface ArtifactEntity : WorkspaceEntityWithSymbolicId {
       includeInProjectBuild: Boolean,
       entitySource: EntitySource,
       init: (Builder.() -> Unit)? = null,
-    ): Builder {
-      val builder = builder()
-      builder.name = name
-      builder.artifactType = artifactType
-      builder.includeInProjectBuild = includeInProjectBuild
-      builder.entitySource = entitySource
-      init?.invoke(builder)
-      return builder
-    }
+    ): Builder = ArtifactEntityType.compatibilityInvoke(name, artifactType, includeInProjectBuild, entitySource, init)
   }
   //endregion
 
 }
 
 //region generated code
+@Deprecated(message = "Use new API instead")
 fun MutableEntityStorage.modifyArtifactEntity(
   entity: ArtifactEntity,
   modification: ArtifactEntity.Builder.() -> Unit,
-): ArtifactEntity = modifyEntity(ArtifactEntity.Builder::class.java, entity, modification)
+): ArtifactEntity {
+  return modifyEntity(ArtifactEntity.Builder::class.java, entity, modification)
+}
 //endregion
 
 interface ArtifactPropertiesEntity : WorkspaceEntity {
@@ -84,15 +89,19 @@ interface ArtifactPropertiesEntity : WorkspaceEntity {
   val propertiesXmlTag: @NonNls String?
 
   //region generated code
-  @GeneratedCodeApiVersion(3)
-  interface Builder : WorkspaceEntity.Builder<ArtifactPropertiesEntity> {
-    override var entitySource: EntitySource
-    var artifact: ArtifactEntity.Builder
-    var providerType: String
-    var propertiesXmlTag: String?
+  @Deprecated(message = "Use ModifiableArtifactPropertiesEntity instead")
+  interface Builder : ModifiableArtifactPropertiesEntity {
+    @Deprecated(message = "Use new API instead")
+    fun getArtifact(): ArtifactEntity.Builder = artifact as ArtifactEntity.Builder
+
+    @Deprecated(message = "Use new API instead")
+    fun setArtifact(value: ArtifactEntity.Builder) {
+      artifact = value
+    }
   }
 
   companion object : EntityType<ArtifactPropertiesEntity, Builder>() {
+    @Deprecated(message = "Use new API instead")
     @JvmOverloads
     @JvmStatic
     @JvmName("create")
@@ -100,23 +109,20 @@ interface ArtifactPropertiesEntity : WorkspaceEntity {
       providerType: String,
       entitySource: EntitySource,
       init: (Builder.() -> Unit)? = null,
-    ): Builder {
-      val builder = builder()
-      builder.providerType = providerType
-      builder.entitySource = entitySource
-      init?.invoke(builder)
-      return builder
-    }
+    ): Builder = ArtifactPropertiesEntityType.compatibilityInvoke(providerType, entitySource, init)
   }
   //endregion
 
 }
 
 //region generated code
+@Deprecated(message = "Use new API instead")
 fun MutableEntityStorage.modifyArtifactPropertiesEntity(
   entity: ArtifactPropertiesEntity,
   modification: ArtifactPropertiesEntity.Builder.() -> Unit,
-): ArtifactPropertiesEntity = modifyEntity(ArtifactPropertiesEntity.Builder::class.java, entity, modification)
+): ArtifactPropertiesEntity {
+  return modifyEntity(ArtifactPropertiesEntity.Builder::class.java, entity, modification)
+}
 //endregion
 
 @Abstract interface PackagingElementEntity : WorkspaceEntity {
@@ -124,25 +130,27 @@ fun MutableEntityStorage.modifyArtifactPropertiesEntity(
   val parentEntity: CompositePackagingElementEntity?
 
   //region generated code
-  @GeneratedCodeApiVersion(3)
-  interface Builder<T : PackagingElementEntity> : WorkspaceEntity.Builder<T> {
-    override var entitySource: EntitySource
-    var parentEntity: CompositePackagingElementEntity.Builder<out CompositePackagingElementEntity>?
+  @Deprecated(message = "Use ModifiablePackagingElementEntity instead")
+  interface Builder<T : PackagingElementEntity> : ModifiablePackagingElementEntity<T> {
+    @Deprecated(message = "Use new API instead")
+    fun getParentEntity(): CompositePackagingElementEntity.Builder<out CompositePackagingElementEntity>? =
+      parentEntity as CompositePackagingElementEntity.Builder<out CompositePackagingElementEntity>?
+
+    @Deprecated(message = "Use new API instead")
+    fun setParentEntity(value: CompositePackagingElementEntity.Builder<out CompositePackagingElementEntity>?) {
+      parentEntity = value
+    }
   }
 
   companion object : EntityType<PackagingElementEntity, Builder<PackagingElementEntity>>() {
+    @Deprecated(message = "Use new API instead")
     @JvmOverloads
     @JvmStatic
     @JvmName("create")
     operator fun invoke(
       entitySource: EntitySource,
       init: (Builder<PackagingElementEntity>.() -> Unit)? = null,
-    ): Builder<PackagingElementEntity> {
-      val builder = builder()
-      builder.entitySource = entitySource
-      init?.invoke(builder)
-      return builder
-    }
+    ): Builder<PackagingElementEntity> = PackagingElementEntityType.compatibilityInvoke(entitySource, init)
   }
   //endregion
 
@@ -155,27 +163,26 @@ fun MutableEntityStorage.modifyArtifactPropertiesEntity(
   val children: List<PackagingElementEntity>
 
   //region generated code
-  @GeneratedCodeApiVersion(3)
-  interface Builder<T : CompositePackagingElementEntity> : WorkspaceEntity.Builder<T>, PackagingElementEntity.Builder<T> {
-    override var entitySource: EntitySource
-    override var parentEntity: CompositePackagingElementEntity.Builder<out CompositePackagingElementEntity>?
-    var artifact: ArtifactEntity.Builder?
-    var children: List<PackagingElementEntity.Builder<out PackagingElementEntity>>
+  @Deprecated(message = "Use ModifiableCompositePackagingElementEntity instead")
+  interface Builder<T : CompositePackagingElementEntity> : ModifiableCompositePackagingElementEntity<T> {
+    @Deprecated(message = "Use new API instead")
+    fun getArtifact(): ArtifactEntity.Builder? = artifact as ArtifactEntity.Builder?
+
+    @Deprecated(message = "Use new API instead")
+    fun setArtifact(value: ArtifactEntity.Builder?) {
+      artifact = value
+    }
   }
 
-  companion object : EntityType<CompositePackagingElementEntity, Builder<CompositePackagingElementEntity>>(PackagingElementEntity) {
+  companion object : EntityType<CompositePackagingElementEntity, Builder<CompositePackagingElementEntity>>() {
+    @Deprecated(message = "Use new API instead")
     @JvmOverloads
     @JvmStatic
     @JvmName("create")
     operator fun invoke(
       entitySource: EntitySource,
       init: (Builder<CompositePackagingElementEntity>.() -> Unit)? = null,
-    ): Builder<CompositePackagingElementEntity> {
-      val builder = builder()
-      builder.entitySource = entitySource
-      init?.invoke(builder)
-      return builder
-    }
+    ): Builder<CompositePackagingElementEntity> = CompositePackagingElementEntityType.compatibilityInvoke(entitySource, init)
   }
   //endregion
 
@@ -185,16 +192,10 @@ interface DirectoryPackagingElementEntity: CompositePackagingElementEntity {
   val directoryName: @NlsSafe String
 
   //region generated code
-  @GeneratedCodeApiVersion(3)
-  interface Builder : WorkspaceEntity.Builder<DirectoryPackagingElementEntity>, CompositePackagingElementEntity.Builder<DirectoryPackagingElementEntity> {
-    override var entitySource: EntitySource
-    override var parentEntity: CompositePackagingElementEntity.Builder<out CompositePackagingElementEntity>?
-    override var artifact: ArtifactEntity.Builder?
-    override var children: List<PackagingElementEntity.Builder<out PackagingElementEntity>>
-    var directoryName: String
-  }
-
-  companion object : EntityType<DirectoryPackagingElementEntity, Builder>(CompositePackagingElementEntity) {
+  @Deprecated(message = "Use ModifiableDirectoryPackagingElementEntity instead")
+  interface Builder : ModifiableDirectoryPackagingElementEntity
+  companion object : EntityType<DirectoryPackagingElementEntity, Builder>() {
+    @Deprecated(message = "Use new API instead")
     @JvmOverloads
     @JvmStatic
     @JvmName("create")
@@ -202,39 +203,30 @@ interface DirectoryPackagingElementEntity: CompositePackagingElementEntity {
       directoryName: String,
       entitySource: EntitySource,
       init: (Builder.() -> Unit)? = null,
-    ): Builder {
-      val builder = builder()
-      builder.directoryName = directoryName
-      builder.entitySource = entitySource
-      init?.invoke(builder)
-      return builder
-    }
+    ): Builder = DirectoryPackagingElementEntityType.compatibilityInvoke(directoryName, entitySource, init)
   }
   //endregion
 
 }
 
 //region generated code
+@Deprecated(message = "Use new API instead")
 fun MutableEntityStorage.modifyDirectoryPackagingElementEntity(
   entity: DirectoryPackagingElementEntity,
   modification: DirectoryPackagingElementEntity.Builder.() -> Unit,
-): DirectoryPackagingElementEntity = modifyEntity(DirectoryPackagingElementEntity.Builder::class.java, entity, modification)
+): DirectoryPackagingElementEntity {
+  return modifyEntity(DirectoryPackagingElementEntity.Builder::class.java, entity, modification)
+}
 //endregion
 
 interface ArchivePackagingElementEntity: CompositePackagingElementEntity {
   val fileName: @NlsSafe String
 
   //region generated code
-  @GeneratedCodeApiVersion(3)
-  interface Builder : WorkspaceEntity.Builder<ArchivePackagingElementEntity>, CompositePackagingElementEntity.Builder<ArchivePackagingElementEntity> {
-    override var entitySource: EntitySource
-    override var parentEntity: CompositePackagingElementEntity.Builder<out CompositePackagingElementEntity>?
-    override var artifact: ArtifactEntity.Builder?
-    override var children: List<PackagingElementEntity.Builder<out PackagingElementEntity>>
-    var fileName: String
-  }
-
-  companion object : EntityType<ArchivePackagingElementEntity, Builder>(CompositePackagingElementEntity) {
+  @Deprecated(message = "Use ModifiableArchivePackagingElementEntity instead")
+  interface Builder : ModifiableArchivePackagingElementEntity
+  companion object : EntityType<ArchivePackagingElementEntity, Builder>() {
+    @Deprecated(message = "Use new API instead")
     @JvmOverloads
     @JvmStatic
     @JvmName("create")
@@ -242,98 +234,86 @@ interface ArchivePackagingElementEntity: CompositePackagingElementEntity {
       fileName: String,
       entitySource: EntitySource,
       init: (Builder.() -> Unit)? = null,
-    ): Builder {
-      val builder = builder()
-      builder.fileName = fileName
-      builder.entitySource = entitySource
-      init?.invoke(builder)
-      return builder
-    }
+    ): Builder = ArchivePackagingElementEntityType.compatibilityInvoke(fileName, entitySource, init)
   }
   //endregion
 
 }
 
 //region generated code
+@Deprecated(message = "Use new API instead")
 fun MutableEntityStorage.modifyArchivePackagingElementEntity(
   entity: ArchivePackagingElementEntity,
   modification: ArchivePackagingElementEntity.Builder.() -> Unit,
-): ArchivePackagingElementEntity = modifyEntity(ArchivePackagingElementEntity.Builder::class.java, entity, modification)
+): ArchivePackagingElementEntity {
+  return modifyEntity(ArchivePackagingElementEntity.Builder::class.java, entity, modification)
+}
 //endregion
 
 interface ArtifactRootElementEntity: CompositePackagingElementEntity {
   //region generated code
-  @GeneratedCodeApiVersion(3)
-  interface Builder : WorkspaceEntity.Builder<ArtifactRootElementEntity>, CompositePackagingElementEntity.Builder<ArtifactRootElementEntity> {
-    override var entitySource: EntitySource
-    override var parentEntity: CompositePackagingElementEntity.Builder<out CompositePackagingElementEntity>?
-    override var artifact: ArtifactEntity.Builder?
-    override var children: List<PackagingElementEntity.Builder<out PackagingElementEntity>>
-  }
-
-  companion object : EntityType<ArtifactRootElementEntity, Builder>(CompositePackagingElementEntity) {
+  @Deprecated(message = "Use ModifiableArtifactRootElementEntity instead")
+  interface Builder : ModifiableArtifactRootElementEntity
+  companion object : EntityType<ArtifactRootElementEntity, Builder>() {
+    @Deprecated(message = "Use new API instead")
     @JvmOverloads
     @JvmStatic
     @JvmName("create")
     operator fun invoke(
       entitySource: EntitySource,
       init: (Builder.() -> Unit)? = null,
-    ): Builder {
-      val builder = builder()
-      builder.entitySource = entitySource
-      init?.invoke(builder)
-      return builder
-    }
+    ): Builder = ArtifactRootElementEntityType.compatibilityInvoke(entitySource, init)
   }
   //endregion
 
 }
 
 //region generated code
+@Deprecated(message = "Use new API instead")
 fun MutableEntityStorage.modifyArtifactRootElementEntity(
   entity: ArtifactRootElementEntity,
   modification: ArtifactRootElementEntity.Builder.() -> Unit,
-): ArtifactRootElementEntity = modifyEntity(ArtifactRootElementEntity.Builder::class.java, entity, modification)
+): ArtifactRootElementEntity {
+  return modifyEntity(ArtifactRootElementEntity.Builder::class.java, entity, modification)
+}
 //endregion
 
 interface ArtifactOutputPackagingElementEntity: PackagingElementEntity {
   val artifact: ArtifactId?
 
   //region generated code
-  @GeneratedCodeApiVersion(3)
-  interface Builder : WorkspaceEntity.Builder<ArtifactOutputPackagingElementEntity>, PackagingElementEntity.Builder<ArtifactOutputPackagingElementEntity> {
-    override var entitySource: EntitySource
-    override var parentEntity: CompositePackagingElementEntity.Builder<out CompositePackagingElementEntity>?
-    var artifact: ArtifactId?
-  }
-
-  companion object : EntityType<ArtifactOutputPackagingElementEntity, Builder>(PackagingElementEntity) {
+  @Deprecated(message = "Use ModifiableArtifactOutputPackagingElementEntity instead")
+  interface Builder : ModifiableArtifactOutputPackagingElementEntity
+  companion object : EntityType<ArtifactOutputPackagingElementEntity, Builder>() {
+    @Deprecated(message = "Use new API instead")
     @JvmOverloads
     @JvmStatic
     @JvmName("create")
     operator fun invoke(
       entitySource: EntitySource,
       init: (Builder.() -> Unit)? = null,
-    ): Builder {
-      val builder = builder()
-      builder.entitySource = entitySource
-      init?.invoke(builder)
-      return builder
-    }
+    ): Builder = ArtifactOutputPackagingElementEntityType.compatibilityInvoke(entitySource, init)
   }
   //endregion
 
 }
 
 //region generated code
+@Deprecated(message = "Use new API instead")
 fun MutableEntityStorage.modifyArtifactOutputPackagingElementEntity(
   entity: ArtifactOutputPackagingElementEntity,
   modification: ArtifactOutputPackagingElementEntity.Builder.() -> Unit,
-): ArtifactOutputPackagingElementEntity = modifyEntity(ArtifactOutputPackagingElementEntity.Builder::class.java, entity, modification)
+): ArtifactOutputPackagingElementEntity {
+  return modifyEntity(ArtifactOutputPackagingElementEntity.Builder::class.java, entity, modification)
+}
 
+@Deprecated(message = "Use new API instead")
 @Parent
 var ArtifactOutputPackagingElementEntity.Builder.artifactEntity: ArtifactEntity.Builder?
-  by WorkspaceEntity.extensionBuilder(ArtifactEntity::class.java)
+  get() = (this as ModifiableArtifactOutputPackagingElementEntity).artifactEntity as ArtifactEntity.Builder?
+  set(value) {
+    (this as ModifiableArtifactOutputPackagingElementEntity).artifactEntity = value
+  }
 //endregion
 
 @Parent
@@ -344,159 +324,130 @@ interface ModuleOutputPackagingElementEntity : PackagingElementEntity {
   val module: ModuleId?
 
   //region generated code
-  @GeneratedCodeApiVersion(3)
-  interface Builder : WorkspaceEntity.Builder<ModuleOutputPackagingElementEntity>, PackagingElementEntity.Builder<ModuleOutputPackagingElementEntity> {
-    override var entitySource: EntitySource
-    override var parentEntity: CompositePackagingElementEntity.Builder<out CompositePackagingElementEntity>?
-    var module: ModuleId?
-  }
-
-  companion object : EntityType<ModuleOutputPackagingElementEntity, Builder>(PackagingElementEntity) {
+  @Deprecated(message = "Use ModifiableModuleOutputPackagingElementEntity instead")
+  interface Builder : ModifiableModuleOutputPackagingElementEntity
+  companion object : EntityType<ModuleOutputPackagingElementEntity, Builder>() {
+    @Deprecated(message = "Use new API instead")
     @JvmOverloads
     @JvmStatic
     @JvmName("create")
     operator fun invoke(
       entitySource: EntitySource,
       init: (Builder.() -> Unit)? = null,
-    ): Builder {
-      val builder = builder()
-      builder.entitySource = entitySource
-      init?.invoke(builder)
-      return builder
-    }
+    ): Builder = ModuleOutputPackagingElementEntityType.compatibilityInvoke(entitySource, init)
   }
   //endregion
 
 }
 
 //region generated code
+@Deprecated(message = "Use new API instead")
 fun MutableEntityStorage.modifyModuleOutputPackagingElementEntity(
   entity: ModuleOutputPackagingElementEntity,
   modification: ModuleOutputPackagingElementEntity.Builder.() -> Unit,
-): ModuleOutputPackagingElementEntity = modifyEntity(ModuleOutputPackagingElementEntity.Builder::class.java, entity, modification)
+): ModuleOutputPackagingElementEntity {
+  return modifyEntity(ModuleOutputPackagingElementEntity.Builder::class.java, entity, modification)
+}
 //endregion
 
 interface LibraryFilesPackagingElementEntity : PackagingElementEntity {
   val library: LibraryId?
 
   //region generated code
-  @GeneratedCodeApiVersion(3)
-  interface Builder : WorkspaceEntity.Builder<LibraryFilesPackagingElementEntity>, PackagingElementEntity.Builder<LibraryFilesPackagingElementEntity> {
-    override var entitySource: EntitySource
-    override var parentEntity: CompositePackagingElementEntity.Builder<out CompositePackagingElementEntity>?
-    var library: LibraryId?
-  }
-
-  companion object : EntityType<LibraryFilesPackagingElementEntity, Builder>(PackagingElementEntity) {
+  @Deprecated(message = "Use ModifiableLibraryFilesPackagingElementEntity instead")
+  interface Builder : ModifiableLibraryFilesPackagingElementEntity
+  companion object : EntityType<LibraryFilesPackagingElementEntity, Builder>() {
+    @Deprecated(message = "Use new API instead")
     @JvmOverloads
     @JvmStatic
     @JvmName("create")
     operator fun invoke(
       entitySource: EntitySource,
       init: (Builder.() -> Unit)? = null,
-    ): Builder {
-      val builder = builder()
-      builder.entitySource = entitySource
-      init?.invoke(builder)
-      return builder
-    }
+    ): Builder = LibraryFilesPackagingElementEntityType.compatibilityInvoke(entitySource, init)
   }
   //endregion
 
 }
 
 //region generated code
+@Deprecated(message = "Use new API instead")
 fun MutableEntityStorage.modifyLibraryFilesPackagingElementEntity(
   entity: LibraryFilesPackagingElementEntity,
   modification: LibraryFilesPackagingElementEntity.Builder.() -> Unit,
-): LibraryFilesPackagingElementEntity = modifyEntity(LibraryFilesPackagingElementEntity.Builder::class.java, entity, modification)
+): LibraryFilesPackagingElementEntity {
+  return modifyEntity(LibraryFilesPackagingElementEntity.Builder::class.java, entity, modification)
+}
 //endregion
 
 interface ModuleSourcePackagingElementEntity : PackagingElementEntity {
   val module: ModuleId?
 
   //region generated code
-  @GeneratedCodeApiVersion(3)
-  interface Builder : WorkspaceEntity.Builder<ModuleSourcePackagingElementEntity>, PackagingElementEntity.Builder<ModuleSourcePackagingElementEntity> {
-    override var entitySource: EntitySource
-    override var parentEntity: CompositePackagingElementEntity.Builder<out CompositePackagingElementEntity>?
-    var module: ModuleId?
-  }
-
-  companion object : EntityType<ModuleSourcePackagingElementEntity, Builder>(PackagingElementEntity) {
+  @Deprecated(message = "Use ModifiableModuleSourcePackagingElementEntity instead")
+  interface Builder : ModifiableModuleSourcePackagingElementEntity
+  companion object : EntityType<ModuleSourcePackagingElementEntity, Builder>() {
+    @Deprecated(message = "Use new API instead")
     @JvmOverloads
     @JvmStatic
     @JvmName("create")
     operator fun invoke(
       entitySource: EntitySource,
       init: (Builder.() -> Unit)? = null,
-    ): Builder {
-      val builder = builder()
-      builder.entitySource = entitySource
-      init?.invoke(builder)
-      return builder
-    }
+    ): Builder = ModuleSourcePackagingElementEntityType.compatibilityInvoke(entitySource, init)
   }
   //endregion
 
 }
 
 //region generated code
+@Deprecated(message = "Use new API instead")
 fun MutableEntityStorage.modifyModuleSourcePackagingElementEntity(
   entity: ModuleSourcePackagingElementEntity,
   modification: ModuleSourcePackagingElementEntity.Builder.() -> Unit,
-): ModuleSourcePackagingElementEntity = modifyEntity(ModuleSourcePackagingElementEntity.Builder::class.java, entity, modification)
+): ModuleSourcePackagingElementEntity {
+  return modifyEntity(ModuleSourcePackagingElementEntity.Builder::class.java, entity, modification)
+}
 //endregion
 
 interface ModuleTestOutputPackagingElementEntity : PackagingElementEntity {
   val module: ModuleId?
 
   //region generated code
-  @GeneratedCodeApiVersion(3)
-  interface Builder : WorkspaceEntity.Builder<ModuleTestOutputPackagingElementEntity>, PackagingElementEntity.Builder<ModuleTestOutputPackagingElementEntity> {
-    override var entitySource: EntitySource
-    override var parentEntity: CompositePackagingElementEntity.Builder<out CompositePackagingElementEntity>?
-    var module: ModuleId?
-  }
-
-  companion object : EntityType<ModuleTestOutputPackagingElementEntity, Builder>(PackagingElementEntity) {
+  @Deprecated(message = "Use ModifiableModuleTestOutputPackagingElementEntity instead")
+  interface Builder : ModifiableModuleTestOutputPackagingElementEntity
+  companion object : EntityType<ModuleTestOutputPackagingElementEntity, Builder>() {
+    @Deprecated(message = "Use new API instead")
     @JvmOverloads
     @JvmStatic
     @JvmName("create")
     operator fun invoke(
       entitySource: EntitySource,
       init: (Builder.() -> Unit)? = null,
-    ): Builder {
-      val builder = builder()
-      builder.entitySource = entitySource
-      init?.invoke(builder)
-      return builder
-    }
+    ): Builder = ModuleTestOutputPackagingElementEntityType.compatibilityInvoke(entitySource, init)
   }
   //endregion
 
 }
 
 //region generated code
+@Deprecated(message = "Use new API instead")
 fun MutableEntityStorage.modifyModuleTestOutputPackagingElementEntity(
   entity: ModuleTestOutputPackagingElementEntity,
   modification: ModuleTestOutputPackagingElementEntity.Builder.() -> Unit,
-): ModuleTestOutputPackagingElementEntity = modifyEntity(ModuleTestOutputPackagingElementEntity.Builder::class.java, entity, modification)
+): ModuleTestOutputPackagingElementEntity {
+  return modifyEntity(ModuleTestOutputPackagingElementEntity.Builder::class.java, entity, modification)
+}
 //endregion
 
 @Abstract interface FileOrDirectoryPackagingElementEntity : PackagingElementEntity {
   val filePath: VirtualFileUrl
 
   //region generated code
-  @GeneratedCodeApiVersion(3)
-  interface Builder<T : FileOrDirectoryPackagingElementEntity> : WorkspaceEntity.Builder<T>, PackagingElementEntity.Builder<T> {
-    override var entitySource: EntitySource
-    override var parentEntity: CompositePackagingElementEntity.Builder<out CompositePackagingElementEntity>?
-    var filePath: VirtualFileUrl
-  }
-
-  companion object : EntityType<FileOrDirectoryPackagingElementEntity, Builder<FileOrDirectoryPackagingElementEntity>>(
-    PackagingElementEntity) {
+  @Deprecated(message = "Use ModifiableFileOrDirectoryPackagingElementEntity instead")
+  interface Builder<T : FileOrDirectoryPackagingElementEntity> : ModifiableFileOrDirectoryPackagingElementEntity<T>
+  companion object : EntityType<FileOrDirectoryPackagingElementEntity, Builder<FileOrDirectoryPackagingElementEntity>>() {
+    @Deprecated(message = "Use new API instead")
     @JvmOverloads
     @JvmStatic
     @JvmName("create")
@@ -504,13 +455,8 @@ fun MutableEntityStorage.modifyModuleTestOutputPackagingElementEntity(
       filePath: VirtualFileUrl,
       entitySource: EntitySource,
       init: (Builder<FileOrDirectoryPackagingElementEntity>.() -> Unit)? = null,
-    ): Builder<FileOrDirectoryPackagingElementEntity> {
-      val builder = builder()
-      builder.filePath = filePath
-      builder.entitySource = entitySource
-      init?.invoke(builder)
-      return builder
-    }
+    ): Builder<FileOrDirectoryPackagingElementEntity> =
+      FileOrDirectoryPackagingElementEntityType.compatibilityInvoke(filePath, entitySource, init)
   }
   //endregion
 
@@ -518,14 +464,10 @@ fun MutableEntityStorage.modifyModuleTestOutputPackagingElementEntity(
 
 interface DirectoryCopyPackagingElementEntity : FileOrDirectoryPackagingElementEntity {
   //region generated code
-  @GeneratedCodeApiVersion(3)
-  interface Builder : WorkspaceEntity.Builder<DirectoryCopyPackagingElementEntity>, FileOrDirectoryPackagingElementEntity.Builder<DirectoryCopyPackagingElementEntity> {
-    override var entitySource: EntitySource
-    override var parentEntity: CompositePackagingElementEntity.Builder<out CompositePackagingElementEntity>?
-    override var filePath: VirtualFileUrl
-  }
-
-  companion object : EntityType<DirectoryCopyPackagingElementEntity, Builder>(FileOrDirectoryPackagingElementEntity) {
+  @Deprecated(message = "Use ModifiableDirectoryCopyPackagingElementEntity instead")
+  interface Builder : ModifiableDirectoryCopyPackagingElementEntity
+  companion object : EntityType<DirectoryCopyPackagingElementEntity, Builder>() {
+    @Deprecated(message = "Use new API instead")
     @JvmOverloads
     @JvmStatic
     @JvmName("create")
@@ -533,38 +475,30 @@ interface DirectoryCopyPackagingElementEntity : FileOrDirectoryPackagingElementE
       filePath: VirtualFileUrl,
       entitySource: EntitySource,
       init: (Builder.() -> Unit)? = null,
-    ): Builder {
-      val builder = builder()
-      builder.filePath = filePath
-      builder.entitySource = entitySource
-      init?.invoke(builder)
-      return builder
-    }
+    ): Builder = DirectoryCopyPackagingElementEntityType.compatibilityInvoke(filePath, entitySource, init)
   }
   //endregion
 
 }
 
 //region generated code
+@Deprecated(message = "Use new API instead")
 fun MutableEntityStorage.modifyDirectoryCopyPackagingElementEntity(
   entity: DirectoryCopyPackagingElementEntity,
   modification: DirectoryCopyPackagingElementEntity.Builder.() -> Unit,
-): DirectoryCopyPackagingElementEntity = modifyEntity(DirectoryCopyPackagingElementEntity.Builder::class.java, entity, modification)
+): DirectoryCopyPackagingElementEntity {
+  return modifyEntity(DirectoryCopyPackagingElementEntity.Builder::class.java, entity, modification)
+}
 //endregion
 
 interface ExtractedDirectoryPackagingElementEntity: FileOrDirectoryPackagingElementEntity {
   val pathInArchive: @NlsSafe String
 
   //region generated code
-  @GeneratedCodeApiVersion(3)
-  interface Builder : WorkspaceEntity.Builder<ExtractedDirectoryPackagingElementEntity>, FileOrDirectoryPackagingElementEntity.Builder<ExtractedDirectoryPackagingElementEntity> {
-    override var entitySource: EntitySource
-    override var parentEntity: CompositePackagingElementEntity.Builder<out CompositePackagingElementEntity>?
-    override var filePath: VirtualFileUrl
-    var pathInArchive: String
-  }
-
-  companion object : EntityType<ExtractedDirectoryPackagingElementEntity, Builder>(FileOrDirectoryPackagingElementEntity) {
+  @Deprecated(message = "Use ModifiableExtractedDirectoryPackagingElementEntity instead")
+  interface Builder : ModifiableExtractedDirectoryPackagingElementEntity
+  companion object : EntityType<ExtractedDirectoryPackagingElementEntity, Builder>() {
+    @Deprecated(message = "Use new API instead")
     @JvmOverloads
     @JvmStatic
     @JvmName("create")
@@ -573,40 +507,30 @@ interface ExtractedDirectoryPackagingElementEntity: FileOrDirectoryPackagingElem
       pathInArchive: String,
       entitySource: EntitySource,
       init: (Builder.() -> Unit)? = null,
-    ): Builder {
-      val builder = builder()
-      builder.filePath = filePath
-      builder.pathInArchive = pathInArchive
-      builder.entitySource = entitySource
-      init?.invoke(builder)
-      return builder
-    }
+    ): Builder = ExtractedDirectoryPackagingElementEntityType.compatibilityInvoke(filePath, pathInArchive, entitySource, init)
   }
   //endregion
 
 }
 
 //region generated code
+@Deprecated(message = "Use new API instead")
 fun MutableEntityStorage.modifyExtractedDirectoryPackagingElementEntity(
   entity: ExtractedDirectoryPackagingElementEntity,
   modification: ExtractedDirectoryPackagingElementEntity.Builder.() -> Unit,
-): ExtractedDirectoryPackagingElementEntity =
-  modifyEntity(ExtractedDirectoryPackagingElementEntity.Builder::class.java, entity, modification)
+): ExtractedDirectoryPackagingElementEntity {
+  return modifyEntity(ExtractedDirectoryPackagingElementEntity.Builder::class.java, entity, modification)
+}
 //endregion
 
 interface FileCopyPackagingElementEntity : FileOrDirectoryPackagingElementEntity {
   val renamedOutputFileName: @NlsSafe String?
 
   //region generated code
-  @GeneratedCodeApiVersion(3)
-  interface Builder : WorkspaceEntity.Builder<FileCopyPackagingElementEntity>, FileOrDirectoryPackagingElementEntity.Builder<FileCopyPackagingElementEntity> {
-    override var entitySource: EntitySource
-    override var parentEntity: CompositePackagingElementEntity.Builder<out CompositePackagingElementEntity>?
-    override var filePath: VirtualFileUrl
-    var renamedOutputFileName: String?
-  }
-
-  companion object : EntityType<FileCopyPackagingElementEntity, Builder>(FileOrDirectoryPackagingElementEntity) {
+  @Deprecated(message = "Use ModifiableFileCopyPackagingElementEntity instead")
+  interface Builder : ModifiableFileCopyPackagingElementEntity
+  companion object : EntityType<FileCopyPackagingElementEntity, Builder>() {
+    @Deprecated(message = "Use new API instead")
     @JvmOverloads
     @JvmStatic
     @JvmName("create")
@@ -614,23 +538,20 @@ interface FileCopyPackagingElementEntity : FileOrDirectoryPackagingElementEntity
       filePath: VirtualFileUrl,
       entitySource: EntitySource,
       init: (Builder.() -> Unit)? = null,
-    ): Builder {
-      val builder = builder()
-      builder.filePath = filePath
-      builder.entitySource = entitySource
-      init?.invoke(builder)
-      return builder
-    }
+    ): Builder = FileCopyPackagingElementEntityType.compatibilityInvoke(filePath, entitySource, init)
   }
   //endregion
 
 }
 
 //region generated code
+@Deprecated(message = "Use new API instead")
 fun MutableEntityStorage.modifyFileCopyPackagingElementEntity(
   entity: FileCopyPackagingElementEntity,
   modification: FileCopyPackagingElementEntity.Builder.() -> Unit,
-): FileCopyPackagingElementEntity = modifyEntity(FileCopyPackagingElementEntity.Builder::class.java, entity, modification)
+): FileCopyPackagingElementEntity {
+  return modifyEntity(FileCopyPackagingElementEntity.Builder::class.java, entity, modification)
+}
 //endregion
 
 interface CustomPackagingElementEntity : CompositePackagingElementEntity {
@@ -638,17 +559,10 @@ interface CustomPackagingElementEntity : CompositePackagingElementEntity {
   val propertiesXmlTag: @NonNls String
 
   //region generated code
-  @GeneratedCodeApiVersion(3)
-  interface Builder : WorkspaceEntity.Builder<CustomPackagingElementEntity>, CompositePackagingElementEntity.Builder<CustomPackagingElementEntity> {
-    override var entitySource: EntitySource
-    override var parentEntity: CompositePackagingElementEntity.Builder<out CompositePackagingElementEntity>?
-    override var artifact: ArtifactEntity.Builder?
-    override var children: List<PackagingElementEntity.Builder<out PackagingElementEntity>>
-    var typeId: String
-    var propertiesXmlTag: String
-  }
-
-  companion object : EntityType<CustomPackagingElementEntity, Builder>(CompositePackagingElementEntity) {
+  @Deprecated(message = "Use ModifiableCustomPackagingElementEntity instead")
+  interface Builder : ModifiableCustomPackagingElementEntity
+  companion object : EntityType<CustomPackagingElementEntity, Builder>() {
+    @Deprecated(message = "Use new API instead")
     @JvmOverloads
     @JvmStatic
     @JvmName("create")
@@ -657,24 +571,20 @@ interface CustomPackagingElementEntity : CompositePackagingElementEntity {
       propertiesXmlTag: String,
       entitySource: EntitySource,
       init: (Builder.() -> Unit)? = null,
-    ): Builder {
-      val builder = builder()
-      builder.typeId = typeId
-      builder.propertiesXmlTag = propertiesXmlTag
-      builder.entitySource = entitySource
-      init?.invoke(builder)
-      return builder
-    }
+    ): Builder = CustomPackagingElementEntityType.compatibilityInvoke(typeId, propertiesXmlTag, entitySource, init)
   }
   //endregion
 
 }
 
 //region generated code
+@Deprecated(message = "Use new API instead")
 fun MutableEntityStorage.modifyCustomPackagingElementEntity(
   entity: CustomPackagingElementEntity,
   modification: CustomPackagingElementEntity.Builder.() -> Unit,
-): CustomPackagingElementEntity = modifyEntity(CustomPackagingElementEntity.Builder::class.java, entity, modification)
+): CustomPackagingElementEntity {
+  return modifyEntity(CustomPackagingElementEntity.Builder::class.java, entity, modification)
+}
 //endregion
 
 /**
@@ -685,13 +595,10 @@ interface ArtifactsOrderEntity : WorkspaceEntity {
   val orderOfArtifacts: List<@NlsSafe String>
 
   //region generated code
-  @GeneratedCodeApiVersion(3)
-  interface Builder : WorkspaceEntity.Builder<ArtifactsOrderEntity> {
-    override var entitySource: EntitySource
-    var orderOfArtifacts: MutableList<String>
-  }
-
+  @Deprecated(message = "Use ModifiableArtifactsOrderEntity instead")
+  interface Builder : ModifiableArtifactsOrderEntity
   companion object : EntityType<ArtifactsOrderEntity, Builder>() {
+    @Deprecated(message = "Use new API instead")
     @JvmOverloads
     @JvmStatic
     @JvmName("create")
@@ -699,21 +606,18 @@ interface ArtifactsOrderEntity : WorkspaceEntity {
       orderOfArtifacts: List<String>,
       entitySource: EntitySource,
       init: (Builder.() -> Unit)? = null,
-    ): Builder {
-      val builder = builder()
-      builder.orderOfArtifacts = orderOfArtifacts.toMutableWorkspaceList()
-      builder.entitySource = entitySource
-      init?.invoke(builder)
-      return builder
-    }
+    ): Builder = ArtifactsOrderEntityType.compatibilityInvoke(orderOfArtifacts, entitySource, init)
   }
   //endregion
 
 }
 
 //region generated code
+@Deprecated(message = "Use new API instead")
 fun MutableEntityStorage.modifyArtifactsOrderEntity(
   entity: ArtifactsOrderEntity,
   modification: ArtifactsOrderEntity.Builder.() -> Unit,
-): ArtifactsOrderEntity = modifyEntity(ArtifactsOrderEntity.Builder::class.java, entity, modification)
+): ArtifactsOrderEntity {
+  return modifyEntity(ArtifactsOrderEntity.Builder::class.java, entity, modification)
+}
 //endregion

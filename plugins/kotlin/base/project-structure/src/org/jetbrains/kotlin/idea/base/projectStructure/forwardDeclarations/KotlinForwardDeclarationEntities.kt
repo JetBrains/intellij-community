@@ -3,6 +3,7 @@
 package org.jetbrains.kotlin.idea.base.projectStructure.forwardDeclarations
 
 import com.intellij.platform.workspace.jps.entities.LibraryEntity
+import com.intellij.platform.workspace.jps.entities.ModifiableLibraryEntity
 import com.intellij.platform.workspace.storage.EntitySource
 import com.intellij.platform.workspace.storage.EntityType
 import com.intellij.platform.workspace.storage.GeneratedCodeApiVersion
@@ -24,44 +25,7 @@ interface KotlinForwardDeclarationsWorkspaceEntity : WorkspaceEntity {
     val forwardDeclarationRoots: Set<VirtualFileUrl>
     @Parent
     val library: LibraryEntity
-
-  //region generated code
-  @GeneratedCodeApiVersion(3)
-  interface Builder : WorkspaceEntity.Builder<KotlinForwardDeclarationsWorkspaceEntity> {
-    override var entitySource: EntitySource
-    var forwardDeclarationRoots: MutableSet<VirtualFileUrl>
-    var library: LibraryEntity.Builder
-  }
-
-  companion object : EntityType<KotlinForwardDeclarationsWorkspaceEntity, Builder>() {
-    @JvmOverloads
-    @JvmStatic
-    @JvmName("create")
-    operator fun invoke(
-      forwardDeclarationRoots: Set<VirtualFileUrl>,
-      entitySource: EntitySource,
-      init: (Builder.() -> Unit)? = null,
-    ): Builder {
-      val builder = builder()
-      builder.forwardDeclarationRoots = forwardDeclarationRoots.toMutableWorkspaceSet()
-      builder.entitySource = entitySource
-      init?.invoke(builder)
-      return builder
-    }
-  }
-  //endregion
 }
-
-//region generated code
-fun MutableEntityStorage.modifyKotlinForwardDeclarationsWorkspaceEntity(
-  entity: KotlinForwardDeclarationsWorkspaceEntity,
-  modification: KotlinForwardDeclarationsWorkspaceEntity.Builder.() -> Unit,
-): KotlinForwardDeclarationsWorkspaceEntity =
-  modifyEntity(KotlinForwardDeclarationsWorkspaceEntity.Builder::class.java, entity, modification)
-
-var LibraryEntity.Builder.kotlinForwardDeclarationsWorkspaceEntity: KotlinForwardDeclarationsWorkspaceEntity.Builder?
-  by WorkspaceEntity.extensionBuilder(KotlinForwardDeclarationsWorkspaceEntity::class.java)
-//endregion
 
 val LibraryEntity.kotlinForwardDeclarationsWorkspaceEntity: KotlinForwardDeclarationsWorkspaceEntity?
     by WorkspaceEntity.extension()

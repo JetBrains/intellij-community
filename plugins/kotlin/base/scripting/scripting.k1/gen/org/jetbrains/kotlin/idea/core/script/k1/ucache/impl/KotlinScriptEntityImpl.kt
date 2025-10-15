@@ -16,6 +16,7 @@ import com.intellij.platform.workspace.storage.url.VirtualFileUrl
 import org.jetbrains.kotlin.idea.core.script.k1.ucache.KotlinScriptEntity
 import org.jetbrains.kotlin.idea.core.script.k1.ucache.KotlinScriptId
 import org.jetbrains.kotlin.idea.core.script.k1.ucache.KotlinScriptLibraryId
+import org.jetbrains.kotlin.idea.core.script.k1.ucache.ModifiableKotlinScriptEntity
 
 @GeneratedCodeApiVersion(3)
 @GeneratedCodeImplVersion(7)
@@ -57,7 +58,7 @@ internal class KotlinScriptEntityImpl(private val dataSource: KotlinScriptEntity
 
 
   internal class Builder(result: KotlinScriptEntityData?) : ModifiableWorkspaceEntityBase<KotlinScriptEntity, KotlinScriptEntityData>(
-    result), KotlinScriptEntity.Builder {
+    result), ModifiableKotlinScriptEntity {
     internal constructor() : this(KotlinScriptEntityData())
 
     override fun applyToBuilder(builder: MutableEntityStorage) {
@@ -219,7 +220,7 @@ internal class KotlinScriptEntityData : WorkspaceEntityData<KotlinScriptEntity>(
     return changed
   }
 
-  override fun wrapAsModifiable(diff: MutableEntityStorage): WorkspaceEntity.Builder<KotlinScriptEntity> {
+  override fun wrapAsModifiable(diff: MutableEntityStorage): ModifiableWorkspaceEntity<KotlinScriptEntity> {
     val modifiable = KotlinScriptEntityImpl.Builder(null)
     modifiable.diff = diff
     modifiable.id = createEntityId()
@@ -252,7 +253,7 @@ internal class KotlinScriptEntityData : WorkspaceEntityData<KotlinScriptEntity>(
     return KotlinScriptEntity::class.java
   }
 
-  override fun createDetachedEntity(parents: List<WorkspaceEntity.Builder<*>>): WorkspaceEntity.Builder<*> {
+  override fun createDetachedEntity(parents: List<ModifiableWorkspaceEntity<*>>): ModifiableWorkspaceEntity<*> {
     return KotlinScriptEntity(path, dependencies, entitySource) {
     }
   }

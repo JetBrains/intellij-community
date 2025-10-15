@@ -6,6 +6,7 @@ import com.intellij.platform.workspace.storage.EntitySource
 import com.intellij.platform.workspace.storage.EntityType
 import com.intellij.platform.workspace.storage.GeneratedCodeApiVersion
 import com.intellij.platform.workspace.storage.GeneratedCodeImplVersion
+import com.intellij.platform.workspace.storage.ModifiableWorkspaceEntity
 import com.intellij.platform.workspace.storage.MutableEntityStorage
 import com.intellij.platform.workspace.storage.WorkspaceEntity
 import com.intellij.platform.workspace.storage.WorkspaceEntityInternalApi
@@ -23,7 +24,9 @@ import com.intellij.platform.workspace.storage.instrumentation.MutableEntityStor
 import com.intellij.platform.workspace.storage.metadata.model.EntityMetadata
 import com.intellij.platform.workspace.storage.url.VirtualFileUrl
 import org.jetbrains.plugins.gradle.model.projectModel.GradleBuildEntity
+import org.jetbrains.plugins.gradle.model.projectModel.ModifiableGradleBuildEntity
 import org.jetbrains.plugins.gradle.model.versionCatalogs.GradleVersionCatalogEntity
+import org.jetbrains.plugins.gradle.model.versionCatalogs.ModifiableGradleVersionCatalogEntity
 
 @GeneratedCodeApiVersion(3)
 @GeneratedCodeImplVersion(7)
@@ -69,7 +72,7 @@ internal class GradleVersionCatalogEntityImpl(private val dataSource: GradleVers
 
 
   internal class Builder(result: GradleVersionCatalogEntityData?) : ModifiableWorkspaceEntityBase<GradleVersionCatalogEntity, GradleVersionCatalogEntityData>(
-    result), GradleVersionCatalogEntity.Builder {
+    result), ModifiableGradleVersionCatalogEntity {
     internal constructor() : this(GradleVersionCatalogEntityData())
 
     override fun applyToBuilder(builder: MutableEntityStorage) {
@@ -160,16 +163,16 @@ internal class GradleVersionCatalogEntityImpl(private val dataSource: GradleVers
         if (_diff != null) index(this, "url", value)
       }
 
-    override var build: GradleBuildEntity.Builder
+    override var build: ModifiableGradleBuildEntity
       get() {
         val _diff = diff
         return if (_diff != null) {
           @OptIn(EntityStorageInstrumentationApi::class)
-          ((_diff as MutableEntityStorageInstrumentation).getParentBuilder(BUILD_CONNECTION_ID, this) as? GradleBuildEntity.Builder)
-          ?: (this.entityLinks[EntityLink(false, BUILD_CONNECTION_ID)]!! as GradleBuildEntity.Builder)
+          ((_diff as MutableEntityStorageInstrumentation).getParentBuilder(BUILD_CONNECTION_ID, this) as? ModifiableGradleBuildEntity)
+          ?: (this.entityLinks[EntityLink(false, BUILD_CONNECTION_ID)]!! as ModifiableGradleBuildEntity)
         }
         else {
-          this.entityLinks[EntityLink(false, BUILD_CONNECTION_ID)]!! as GradleBuildEntity.Builder
+          this.entityLinks[EntityLink(false, BUILD_CONNECTION_ID)]!! as ModifiableGradleBuildEntity
         }
       }
       set(value) {
@@ -212,7 +215,7 @@ internal class GradleVersionCatalogEntityData : WorkspaceEntityData<GradleVersio
   internal fun isNameInitialized(): Boolean = ::name.isInitialized
   internal fun isUrlInitialized(): Boolean = ::url.isInitialized
 
-  override fun wrapAsModifiable(diff: MutableEntityStorage): WorkspaceEntity.Builder<GradleVersionCatalogEntity> {
+  override fun wrapAsModifiable(diff: MutableEntityStorage): ModifiableWorkspaceEntity<GradleVersionCatalogEntity> {
     val modifiable = GradleVersionCatalogEntityImpl.Builder(null)
     modifiable.diff = diff
     modifiable.id = createEntityId()
@@ -239,9 +242,9 @@ internal class GradleVersionCatalogEntityData : WorkspaceEntityData<GradleVersio
     return GradleVersionCatalogEntity::class.java
   }
 
-  override fun createDetachedEntity(parents: List<WorkspaceEntity.Builder<*>>): WorkspaceEntity.Builder<*> {
+  override fun createDetachedEntity(parents: List<ModifiableWorkspaceEntity<*>>): ModifiableWorkspaceEntity<*> {
     return GradleVersionCatalogEntity(name, url, entitySource) {
-      parents.filterIsInstance<GradleBuildEntity.Builder>().singleOrNull()?.let { this.build = it }
+      parents.filterIsInstance<ModifiableGradleBuildEntity>().singleOrNull()?.let { this.build = it }
     }
   }
 

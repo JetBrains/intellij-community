@@ -1,4 +1,4 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.platform.workspace.storage.testEntities.entities.impl
 
 import com.intellij.platform.workspace.storage.*
@@ -10,12 +10,13 @@ import com.intellij.platform.workspace.storage.instrumentation.EntityStorageInst
 import com.intellij.platform.workspace.storage.metadata.model.EntityMetadata
 import com.intellij.platform.workspace.storage.testEntities.entities.FirstEntityWithPId
 import com.intellij.platform.workspace.storage.testEntities.entities.FirstPId
+import com.intellij.platform.workspace.storage.testEntities.entities.ModifiableFirstEntityWithPId
 
 @GeneratedCodeApiVersion(3)
 @GeneratedCodeImplVersion(7)
 @OptIn(WorkspaceEntityInternalApi::class)
-internal class FirstEntityWithPIdImpl(private val dataSource: FirstEntityWithPIdData) : FirstEntityWithPId,
-                                                                                        WorkspaceEntityBase(dataSource) {
+internal class FirstEntityWithPIdImpl(private val dataSource: FirstEntityWithPIdData) : FirstEntityWithPId, WorkspaceEntityBase(
+  dataSource) {
 
   private companion object {
 
@@ -44,8 +45,8 @@ internal class FirstEntityWithPIdImpl(private val dataSource: FirstEntityWithPId
   }
 
 
-  internal class Builder(result: FirstEntityWithPIdData?) :
-    ModifiableWorkspaceEntityBase<FirstEntityWithPId, FirstEntityWithPIdData>(result), FirstEntityWithPId.Builder {
+  internal class Builder(result: FirstEntityWithPIdData?) : ModifiableWorkspaceEntityBase<FirstEntityWithPId, FirstEntityWithPIdData>(
+    result), ModifiableFirstEntityWithPId {
     internal constructor() : this(FirstEntityWithPIdData())
 
     override fun applyToBuilder(builder: MutableEntityStorage) {
@@ -121,7 +122,7 @@ internal class FirstEntityWithPIdData : WorkspaceEntityData<FirstEntityWithPId>(
 
   internal fun isDataInitialized(): Boolean = ::data.isInitialized
 
-  override fun wrapAsModifiable(diff: MutableEntityStorage): WorkspaceEntity.Builder<FirstEntityWithPId> {
+  override fun wrapAsModifiable(diff: MutableEntityStorage): ModifiableWorkspaceEntity<FirstEntityWithPId> {
     val modifiable = FirstEntityWithPIdImpl.Builder(null)
     modifiable.diff = diff
     modifiable.id = createEntityId()
@@ -141,15 +142,14 @@ internal class FirstEntityWithPIdData : WorkspaceEntityData<FirstEntityWithPId>(
 
   override fun getMetadata(): EntityMetadata {
     return MetadataStorageImpl.getMetadataByTypeFqn(
-      "com.intellij.platform.workspace.storage.testEntities.entities.FirstEntityWithPId"
-    ) as EntityMetadata
+      "com.intellij.platform.workspace.storage.testEntities.entities.FirstEntityWithPId") as EntityMetadata
   }
 
   override fun getEntityInterface(): Class<out WorkspaceEntity> {
     return FirstEntityWithPId::class.java
   }
 
-  override fun createDetachedEntity(parents: List<WorkspaceEntity.Builder<*>>): WorkspaceEntity.Builder<*> {
+  override fun createDetachedEntity(parents: List<ModifiableWorkspaceEntity<*>>): ModifiableWorkspaceEntity<*> {
     return FirstEntityWithPId(data, entitySource) {
     }
   }

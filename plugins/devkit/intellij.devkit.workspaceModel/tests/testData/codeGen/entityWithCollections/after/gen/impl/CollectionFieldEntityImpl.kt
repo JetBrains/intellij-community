@@ -4,6 +4,7 @@ import com.intellij.platform.workspace.storage.ConnectionId
 import com.intellij.platform.workspace.storage.EntitySource
 import com.intellij.platform.workspace.storage.GeneratedCodeApiVersion
 import com.intellij.platform.workspace.storage.GeneratedCodeImplVersion
+import com.intellij.platform.workspace.storage.ModifiableWorkspaceEntity
 import com.intellij.platform.workspace.storage.MutableEntityStorage
 import com.intellij.platform.workspace.storage.WorkspaceEntity
 import com.intellij.platform.workspace.storage.WorkspaceEntityInternalApi
@@ -18,6 +19,7 @@ import com.intellij.platform.workspace.storage.instrumentation.EntityStorageInst
 import com.intellij.platform.workspace.storage.instrumentation.EntityStorageInstrumentationApi
 import com.intellij.platform.workspace.storage.metadata.model.EntityMetadata
 import com.intellij.workspaceModel.test.api.CollectionFieldEntity
+import com.intellij.workspaceModel.test.api.ModifiableCollectionFieldEntity
 
 @GeneratedCodeApiVersion(3)
 @GeneratedCodeImplVersion(7)
@@ -63,7 +65,7 @@ internal class CollectionFieldEntityImpl(private val dataSource: CollectionField
 
 
   internal class Builder(result: CollectionFieldEntityData?) : ModifiableWorkspaceEntityBase<CollectionFieldEntity, CollectionFieldEntityData>(
-    result), CollectionFieldEntity.Builder {
+    result), ModifiableCollectionFieldEntity {
     internal constructor() : this(CollectionFieldEntityData())
 
     override fun applyToBuilder(builder: MutableEntityStorage) {
@@ -206,7 +208,7 @@ internal class CollectionFieldEntityData : WorkspaceEntityData<CollectionFieldEn
   internal fun isNamesInitialized(): Boolean = ::names.isInitialized
   internal fun isManifestAttributesInitialized(): Boolean = ::manifestAttributes.isInitialized
 
-  override fun wrapAsModifiable(diff: MutableEntityStorage): WorkspaceEntity.Builder<CollectionFieldEntity> {
+  override fun wrapAsModifiable(diff: MutableEntityStorage): ModifiableWorkspaceEntity<CollectionFieldEntity> {
     val modifiable = CollectionFieldEntityImpl.Builder(null)
     modifiable.diff = diff
     modifiable.id = createEntityId()
@@ -240,7 +242,7 @@ internal class CollectionFieldEntityData : WorkspaceEntityData<CollectionFieldEn
     return CollectionFieldEntity::class.java
   }
 
-  override fun createDetachedEntity(parents: List<WorkspaceEntity.Builder<*>>): WorkspaceEntity.Builder<*> {
+  override fun createDetachedEntity(parents: List<ModifiableWorkspaceEntity<*>>): ModifiableWorkspaceEntity<*> {
     return CollectionFieldEntity(versions, names, manifestAttributes, entitySource) {
     }
   }

@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.kotlin.idea.serialization
 
 import org.jetbrains.kotlin.cli.common.arguments.*
@@ -9,7 +9,7 @@ import org.jetbrains.kotlin.platform.TargetPlatform
 import org.jetbrains.kotlin.platform.isCommon
 import org.jetbrains.kotlin.platform.jvm.JvmPlatforms
 
-class KotlinFacetSettingsWorkspaceModel(val entity: KotlinSettingsEntity.Builder) : IKotlinFacetSettings {
+class KotlinFacetSettingsWorkspaceModel(val entity: ModifiableKotlinSettingsEntity) : IKotlinFacetSettings {
     private var myUseProjectSettings = entity.useProjectSettings
     override var useProjectSettings: Boolean
         get() = myUseProjectSettings

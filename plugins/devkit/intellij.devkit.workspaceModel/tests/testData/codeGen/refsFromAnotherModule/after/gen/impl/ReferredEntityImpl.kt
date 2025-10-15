@@ -1,10 +1,12 @@
 package com.intellij.workspaceModel.test.api.impl
 
 import com.intellij.platform.workspace.jps.entities.ContentRootEntity
+import com.intellij.platform.workspace.jps.entities.ModifiableContentRootEntity
 import com.intellij.platform.workspace.storage.ConnectionId
 import com.intellij.platform.workspace.storage.EntitySource
 import com.intellij.platform.workspace.storage.GeneratedCodeApiVersion
 import com.intellij.platform.workspace.storage.GeneratedCodeImplVersion
+import com.intellij.platform.workspace.storage.ModifiableWorkspaceEntity
 import com.intellij.platform.workspace.storage.MutableEntityStorage
 import com.intellij.platform.workspace.storage.WorkspaceEntity
 import com.intellij.platform.workspace.storage.WorkspaceEntityInternalApi
@@ -19,6 +21,7 @@ import com.intellij.platform.workspace.storage.instrumentation.EntityStorageInst
 import com.intellij.platform.workspace.storage.instrumentation.EntityStorageInstrumentationApi
 import com.intellij.platform.workspace.storage.instrumentation.MutableEntityStorageInstrumentation
 import com.intellij.platform.workspace.storage.metadata.model.EntityMetadata
+import com.intellij.workspaceModel.test.api.ModifiableReferredEntity
 import com.intellij.workspaceModel.test.api.ReferredEntity
 
 @GeneratedCodeApiVersion(3)
@@ -62,7 +65,7 @@ internal class ReferredEntityImpl(private val dataSource: ReferredEntityData) : 
 
 
   internal class Builder(result: ReferredEntityData?) : ModifiableWorkspaceEntityBase<ReferredEntity, ReferredEntityData>(
-    result), ReferredEntity.Builder {
+    result), ModifiableReferredEntity {
     internal constructor() : this(ReferredEntityData())
 
     override fun applyToBuilder(builder: MutableEntityStorage) {
@@ -137,16 +140,17 @@ internal class ReferredEntityImpl(private val dataSource: ReferredEntityData) : 
         changedProperty.add("name")
       }
 
-    override var contentRoot: ContentRootEntity.Builder?
+    override var contentRoot: ModifiableContentRootEntity?
       get() {
         val _diff = diff
         return if (_diff != null) {
           @OptIn(EntityStorageInstrumentationApi::class)
-          ((_diff as MutableEntityStorageInstrumentation).getOneChildBuilder(CONTENTROOT_CONNECTION_ID, this) as? ContentRootEntity.Builder)
-          ?: (this.entityLinks[EntityLink(true, CONTENTROOT_CONNECTION_ID)] as? ContentRootEntity.Builder)
+          ((_diff as MutableEntityStorageInstrumentation).getOneChildBuilder(CONTENTROOT_CONNECTION_ID,
+                                                                             this) as? ModifiableContentRootEntity)
+          ?: (this.entityLinks[EntityLink(true, CONTENTROOT_CONNECTION_ID)] as? ModifiableContentRootEntity)
         }
         else {
-          this.entityLinks[EntityLink(true, CONTENTROOT_CONNECTION_ID)] as? ContentRootEntity.Builder
+          this.entityLinks[EntityLink(true, CONTENTROOT_CONNECTION_ID)] as? ModifiableContentRootEntity
         }
       }
       set(value) {
@@ -185,7 +189,7 @@ internal class ReferredEntityData : WorkspaceEntityData<ReferredEntity>() {
 
   internal fun isNameInitialized(): Boolean = ::name.isInitialized
 
-  override fun wrapAsModifiable(diff: MutableEntityStorage): WorkspaceEntity.Builder<ReferredEntity> {
+  override fun wrapAsModifiable(diff: MutableEntityStorage): ModifiableWorkspaceEntity<ReferredEntity> {
     val modifiable = ReferredEntityImpl.Builder(null)
     modifiable.diff = diff
     modifiable.id = createEntityId()
@@ -211,7 +215,7 @@ internal class ReferredEntityData : WorkspaceEntityData<ReferredEntity>() {
     return ReferredEntity::class.java
   }
 
-  override fun createDetachedEntity(parents: List<WorkspaceEntity.Builder<*>>): WorkspaceEntity.Builder<*> {
+  override fun createDetachedEntity(parents: List<ModifiableWorkspaceEntity<*>>): ModifiableWorkspaceEntity<*> {
     return ReferredEntity(version, name, entitySource) {
     }
   }

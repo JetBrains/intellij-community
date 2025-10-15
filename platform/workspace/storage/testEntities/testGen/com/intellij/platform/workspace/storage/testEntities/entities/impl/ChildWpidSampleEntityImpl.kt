@@ -1,4 +1,4 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.platform.workspace.storage.testEntities.entities.impl
 
 import com.intellij.platform.workspace.storage.*
@@ -15,19 +15,21 @@ import com.intellij.platform.workspace.storage.instrumentation.EntityStorageInst
 import com.intellij.platform.workspace.storage.instrumentation.MutableEntityStorageInstrumentation
 import com.intellij.platform.workspace.storage.metadata.model.EntityMetadata
 import com.intellij.platform.workspace.storage.testEntities.entities.ChildWpidSampleEntity
+import com.intellij.platform.workspace.storage.testEntities.entities.ModifiableChildWpidSampleEntity
+import com.intellij.platform.workspace.storage.testEntities.entities.ModifiableSampleWithSymbolicIdEntity
 import com.intellij.platform.workspace.storage.testEntities.entities.SampleWithSymbolicIdEntity
 import com.intellij.platform.workspace.storage.url.VirtualFileUrl
 
 @GeneratedCodeApiVersion(3)
 @GeneratedCodeImplVersion(7)
 @OptIn(WorkspaceEntityInternalApi::class)
-internal class ChildWpidSampleEntityImpl(private val dataSource: ChildWpidSampleEntityData) : ChildWpidSampleEntity,
-                                                                                              WorkspaceEntityBase(dataSource) {
+internal class ChildWpidSampleEntityImpl(private val dataSource: ChildWpidSampleEntityData) : ChildWpidSampleEntity, WorkspaceEntityBase(
+  dataSource) {
 
   private companion object {
-    internal val PARENTENTITY_CONNECTION_ID: ConnectionId = ConnectionId.create(
-      SampleWithSymbolicIdEntity::class.java, ChildWpidSampleEntity::class.java, ConnectionId.ConnectionType.ONE_TO_MANY, true
-    )
+    internal val PARENTENTITY_CONNECTION_ID: ConnectionId = ConnectionId.create(SampleWithSymbolicIdEntity::class.java,
+                                                                                ChildWpidSampleEntity::class.java,
+                                                                                ConnectionId.ConnectionType.ONE_TO_MANY, true)
 
     private val connections = listOf<ConnectionId>(
       PARENTENTITY_CONNECTION_ID,
@@ -55,8 +57,8 @@ internal class ChildWpidSampleEntityImpl(private val dataSource: ChildWpidSample
   }
 
 
-  internal class Builder(result: ChildWpidSampleEntityData?) :
-    ModifiableWorkspaceEntityBase<ChildWpidSampleEntity, ChildWpidSampleEntityData>(result), ChildWpidSampleEntity.Builder {
+  internal class Builder(result: ChildWpidSampleEntityData?) : ModifiableWorkspaceEntityBase<ChildWpidSampleEntity, ChildWpidSampleEntityData>(
+    result), ModifiableChildWpidSampleEntity {
     internal constructor() : this(ChildWpidSampleEntityData())
 
     override fun applyToBuilder(builder: MutableEntityStorage) {
@@ -122,18 +124,17 @@ internal class ChildWpidSampleEntityImpl(private val dataSource: ChildWpidSample
         changedProperty.add("data")
       }
 
-    override var parentEntity: SampleWithSymbolicIdEntity.Builder?
+    override var parentEntity: ModifiableSampleWithSymbolicIdEntity?
       get() {
         val _diff = diff
         return if (_diff != null) {
           @OptIn(EntityStorageInstrumentationApi::class)
-          ((_diff as MutableEntityStorageInstrumentation).getParentBuilder(
-            PARENTENTITY_CONNECTION_ID, this
-          ) as? SampleWithSymbolicIdEntity.Builder)
-          ?: (this.entityLinks[EntityLink(false, PARENTENTITY_CONNECTION_ID)] as? SampleWithSymbolicIdEntity.Builder)
+          ((_diff as MutableEntityStorageInstrumentation).getParentBuilder(PARENTENTITY_CONNECTION_ID,
+                                                                           this) as? ModifiableSampleWithSymbolicIdEntity)
+          ?: (this.entityLinks[EntityLink(false, PARENTENTITY_CONNECTION_ID)] as? ModifiableSampleWithSymbolicIdEntity)
         }
         else {
-          this.entityLinks[EntityLink(false, PARENTENTITY_CONNECTION_ID)] as? SampleWithSymbolicIdEntity.Builder
+          this.entityLinks[EntityLink(false, PARENTENTITY_CONNECTION_ID)] as? ModifiableSampleWithSymbolicIdEntity
         }
       }
       set(value) {
@@ -174,7 +175,7 @@ internal class ChildWpidSampleEntityData : WorkspaceEntityData<ChildWpidSampleEn
 
   internal fun isDataInitialized(): Boolean = ::data.isInitialized
 
-  override fun wrapAsModifiable(diff: MutableEntityStorage): WorkspaceEntity.Builder<ChildWpidSampleEntity> {
+  override fun wrapAsModifiable(diff: MutableEntityStorage): ModifiableWorkspaceEntity<ChildWpidSampleEntity> {
     val modifiable = ChildWpidSampleEntityImpl.Builder(null)
     modifiable.diff = diff
     modifiable.id = createEntityId()
@@ -194,17 +195,16 @@ internal class ChildWpidSampleEntityData : WorkspaceEntityData<ChildWpidSampleEn
 
   override fun getMetadata(): EntityMetadata {
     return MetadataStorageImpl.getMetadataByTypeFqn(
-      "com.intellij.platform.workspace.storage.testEntities.entities.ChildWpidSampleEntity"
-    ) as EntityMetadata
+      "com.intellij.platform.workspace.storage.testEntities.entities.ChildWpidSampleEntity") as EntityMetadata
   }
 
   override fun getEntityInterface(): Class<out WorkspaceEntity> {
     return ChildWpidSampleEntity::class.java
   }
 
-  override fun createDetachedEntity(parents: List<WorkspaceEntity.Builder<*>>): WorkspaceEntity.Builder<*> {
+  override fun createDetachedEntity(parents: List<ModifiableWorkspaceEntity<*>>): ModifiableWorkspaceEntity<*> {
     return ChildWpidSampleEntity(data, entitySource) {
-      this.parentEntity = parents.filterIsInstance<SampleWithSymbolicIdEntity.Builder>().singleOrNull()
+      this.parentEntity = parents.filterIsInstance<ModifiableSampleWithSymbolicIdEntity>().singleOrNull()
     }
   }
 

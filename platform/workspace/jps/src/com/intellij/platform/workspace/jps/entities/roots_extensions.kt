@@ -26,14 +26,19 @@ interface SourceRootOrderEntity : WorkspaceEntity {
   val contentRootEntity: ContentRootEntity
 
   //region generated code
-  @GeneratedCodeApiVersion(3)
-  interface Builder : WorkspaceEntity.Builder<SourceRootOrderEntity> {
-    override var entitySource: EntitySource
-    var orderOfSourceRoots: MutableList<VirtualFileUrl>
-    var contentRootEntity: ContentRootEntity.Builder
+  @Deprecated(message = "Use ModifiableSourceRootOrderEntity instead")
+  interface Builder : ModifiableSourceRootOrderEntity {
+    @Deprecated(message = "Use new API instead")
+    fun getContentRootEntity(): ContentRootEntity.Builder = contentRootEntity as ContentRootEntity.Builder
+
+    @Deprecated(message = "Use new API instead")
+    fun setContentRootEntity(value: ContentRootEntity.Builder) {
+      contentRootEntity = value
+    }
   }
 
   companion object : EntityType<SourceRootOrderEntity, Builder>() {
+    @Deprecated(message = "Use new API instead")
     @JvmOverloads
     @JvmStatic
     @JvmName("create")
@@ -41,24 +46,21 @@ interface SourceRootOrderEntity : WorkspaceEntity {
       orderOfSourceRoots: List<VirtualFileUrl>,
       entitySource: EntitySource,
       init: (Builder.() -> Unit)? = null,
-    ): Builder {
-      val builder = builder()
-      builder.orderOfSourceRoots = orderOfSourceRoots.toMutableWorkspaceList()
-      builder.entitySource = entitySource
-      init?.invoke(builder)
-      return builder
-    }
+    ): Builder = SourceRootOrderEntityType.compatibilityInvoke(orderOfSourceRoots, entitySource, init)
   }
   //endregion
 
 }
 
 //region generated code
+@Deprecated(message = "Use new API instead")
 @Internal
 fun MutableEntityStorage.modifySourceRootOrderEntity(
   entity: SourceRootOrderEntity,
   modification: SourceRootOrderEntity.Builder.() -> Unit,
-): SourceRootOrderEntity = modifyEntity(SourceRootOrderEntity.Builder::class.java, entity, modification)
+): SourceRootOrderEntity {
+  return modifyEntity(SourceRootOrderEntity.Builder::class.java, entity, modification)
+}
 //endregion
 
 @get:Internal
@@ -77,14 +79,19 @@ interface CustomSourceRootPropertiesEntity : WorkspaceEntity {
   val sourceRoot: SourceRootEntity
 
   //region generated code
-  @GeneratedCodeApiVersion(3)
-  interface Builder : WorkspaceEntity.Builder<CustomSourceRootPropertiesEntity> {
-    override var entitySource: EntitySource
-    var propertiesXmlTag: String
-    var sourceRoot: SourceRootEntity.Builder
+  @Deprecated(message = "Use ModifiableCustomSourceRootPropertiesEntity instead")
+  interface Builder : ModifiableCustomSourceRootPropertiesEntity {
+    @Deprecated(message = "Use new API instead")
+    fun getSourceRoot(): SourceRootEntity.Builder = sourceRoot as SourceRootEntity.Builder
+
+    @Deprecated(message = "Use new API instead")
+    fun setSourceRoot(value: SourceRootEntity.Builder) {
+      sourceRoot = value
+    }
   }
 
   companion object : EntityType<CustomSourceRootPropertiesEntity, Builder>() {
+    @Deprecated(message = "Use new API instead")
     @JvmOverloads
     @JvmStatic
     @JvmName("create")
@@ -92,24 +99,21 @@ interface CustomSourceRootPropertiesEntity : WorkspaceEntity {
       propertiesXmlTag: String,
       entitySource: EntitySource,
       init: (Builder.() -> Unit)? = null,
-    ): Builder {
-      val builder = builder()
-      builder.propertiesXmlTag = propertiesXmlTag
-      builder.entitySource = entitySource
-      init?.invoke(builder)
-      return builder
-    }
+    ): Builder = CustomSourceRootPropertiesEntityType.compatibilityInvoke(propertiesXmlTag, entitySource, init)
   }
   //endregion
 
 }
 
 //region generated code
+@Deprecated(message = "Use new API instead")
 @Internal
 fun MutableEntityStorage.modifyCustomSourceRootPropertiesEntity(
   entity: CustomSourceRootPropertiesEntity,
   modification: CustomSourceRootPropertiesEntity.Builder.() -> Unit,
-): CustomSourceRootPropertiesEntity = modifyEntity(CustomSourceRootPropertiesEntity.Builder::class.java, entity, modification)
+): CustomSourceRootPropertiesEntity {
+  return modifyEntity(CustomSourceRootPropertiesEntity.Builder::class.java, entity, modification)
+}
 //endregion
 
 @get:Internal
@@ -128,14 +132,19 @@ interface ExcludeUrlOrderEntity : WorkspaceEntity {
   val contentRoot: ContentRootEntity
 
   //region generated code
-  @GeneratedCodeApiVersion(3)
-  interface Builder : WorkspaceEntity.Builder<ExcludeUrlOrderEntity> {
-    override var entitySource: EntitySource
-    var order: MutableList<VirtualFileUrl>
-    var contentRoot: ContentRootEntity.Builder
+  @Deprecated(message = "Use ModifiableExcludeUrlOrderEntity instead")
+  interface Builder : ModifiableExcludeUrlOrderEntity {
+    @Deprecated(message = "Use new API instead")
+    fun getContentRoot(): ContentRootEntity.Builder = contentRoot as ContentRootEntity.Builder
+
+    @Deprecated(message = "Use new API instead")
+    fun setContentRoot(value: ContentRootEntity.Builder) {
+      contentRoot = value
+    }
   }
 
   companion object : EntityType<ExcludeUrlOrderEntity, Builder>() {
+    @Deprecated(message = "Use new API instead")
     @JvmOverloads
     @JvmStatic
     @JvmName("create")
@@ -143,23 +152,20 @@ interface ExcludeUrlOrderEntity : WorkspaceEntity {
       order: List<VirtualFileUrl>,
       entitySource: EntitySource,
       init: (Builder.() -> Unit)? = null,
-    ): Builder {
-      val builder = builder()
-      builder.order = order.toMutableWorkspaceList()
-      builder.entitySource = entitySource
-      init?.invoke(builder)
-      return builder
-    }
+    ): Builder = ExcludeUrlOrderEntityType.compatibilityInvoke(order, entitySource, init)
   }
   //endregion
 }
 
 //region generated code
+@Deprecated(message = "Use new API instead")
 @Internal
 fun MutableEntityStorage.modifyExcludeUrlOrderEntity(
   entity: ExcludeUrlOrderEntity,
   modification: ExcludeUrlOrderEntity.Builder.() -> Unit,
-): ExcludeUrlOrderEntity = modifyEntity(ExcludeUrlOrderEntity.Builder::class.java, entity, modification)
+): ExcludeUrlOrderEntity {
+  return modifyEntity(ExcludeUrlOrderEntity.Builder::class.java, entity, modification)
+}
 //endregion
 
 @get:Internal

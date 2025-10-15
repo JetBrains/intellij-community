@@ -13,42 +13,4 @@ interface KotlinScriptEntity : WorkspaceEntity {
     val virtualFileUrl: VirtualFileUrl
     val dependencies: List<KotlinScriptLibraryEntityId>
     val sdk: ModuleDependencyItem
-
-  //region generated code
-  @GeneratedCodeApiVersion(3)
-  interface Builder : WorkspaceEntity.Builder<KotlinScriptEntity> {
-    override var entitySource: EntitySource
-    var virtualFileUrl: VirtualFileUrl
-    var dependencies: MutableList<KotlinScriptLibraryEntityId>
-    var sdk: ModuleDependencyItem
-  }
-
-  companion object : EntityType<KotlinScriptEntity, Builder>() {
-    @JvmOverloads
-    @JvmStatic
-    @JvmName("create")
-    operator fun invoke(
-      virtualFileUrl: VirtualFileUrl,
-      dependencies: List<KotlinScriptLibraryEntityId>,
-      sdk: ModuleDependencyItem,
-      entitySource: EntitySource,
-      init: (Builder.() -> Unit)? = null,
-    ): Builder {
-      val builder = builder()
-      builder.virtualFileUrl = virtualFileUrl
-      builder.dependencies = dependencies.toMutableWorkspaceList()
-      builder.sdk = sdk
-      builder.entitySource = entitySource
-      init?.invoke(builder)
-      return builder
-    }
-  }
-  //endregion
 }
-
-//region generated code
-fun MutableEntityStorage.modifyKotlinScriptEntity(
-  entity: KotlinScriptEntity,
-  modification: KotlinScriptEntity.Builder.() -> Unit,
-): KotlinScriptEntity = modifyEntity(KotlinScriptEntity.Builder::class.java, entity, modification)
-//endregion

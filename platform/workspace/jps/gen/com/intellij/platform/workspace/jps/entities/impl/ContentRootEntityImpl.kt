@@ -1,9 +1,13 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.platform.workspace.jps.entities.impl
 
 import com.intellij.openapi.util.NlsSafe
 import com.intellij.platform.workspace.jps.entities.ContentRootEntity
 import com.intellij.platform.workspace.jps.entities.ExcludeUrlEntity
+import com.intellij.platform.workspace.jps.entities.ModifiableContentRootEntity
+import com.intellij.platform.workspace.jps.entities.ModifiableExcludeUrlEntity
+import com.intellij.platform.workspace.jps.entities.ModifiableModuleEntity
+import com.intellij.platform.workspace.jps.entities.ModifiableSourceRootEntity
 import com.intellij.platform.workspace.jps.entities.ModuleEntity
 import com.intellij.platform.workspace.jps.entities.SourceRootEntity
 import com.intellij.platform.workspace.storage.*
@@ -214,16 +218,16 @@ internal class ContentRootEntityImpl(private val dataSource: ContentRootEntityDa
         excludedPatternsUpdater.invoke(value)
       }
 
-    override var module: ModuleEntity.Builder
+    override var module: ModifiableModuleEntity
       get() {
         val _diff = diff
         return if (_diff != null) {
           @OptIn(EntityStorageInstrumentationApi::class)
-          ((_diff as MutableEntityStorageInstrumentation).getParentBuilder(MODULE_CONNECTION_ID, this) as? ModuleEntity.Builder)
-          ?: (this.entityLinks[EntityLink(false, MODULE_CONNECTION_ID)]!! as ModuleEntity.Builder)
+          ((_diff as MutableEntityStorageInstrumentation).getParentBuilder(MODULE_CONNECTION_ID, this) as? ModifiableModuleEntity)
+          ?: (this.entityLinks[EntityLink(false, MODULE_CONNECTION_ID)]!! as ModifiableModuleEntity)
         }
         else {
-          this.entityLinks[EntityLink(false, MODULE_CONNECTION_ID)]!! as ModuleEntity.Builder
+          this.entityLinks[EntityLink(false, MODULE_CONNECTION_ID)]!! as ModifiableModuleEntity
         }
       }
       set(value) {
@@ -256,18 +260,18 @@ internal class ContentRootEntityImpl(private val dataSource: ContentRootEntityDa
 
     // List of non-abstract referenced types
     var _sourceRoots: List<SourceRootEntity>? = emptyList()
-    override var sourceRoots: List<SourceRootEntity.Builder>
+    override var sourceRoots: List<ModifiableSourceRootEntity>
       get() {
         // Getter of the list of non-abstract referenced types
         val _diff = diff
         return if (_diff != null) {
           @OptIn(EntityStorageInstrumentationApi::class)
           ((_diff as MutableEntityStorageInstrumentation).getManyChildrenBuilders(SOURCEROOTS_CONNECTION_ID,
-                                                                                  this)!!.toList() as List<SourceRootEntity.Builder>) +
-          (this.entityLinks[EntityLink(true, SOURCEROOTS_CONNECTION_ID)] as? List<SourceRootEntity.Builder> ?: emptyList())
+                                                                                  this)!!.toList() as List<ModifiableSourceRootEntity>) +
+          (this.entityLinks[EntityLink(true, SOURCEROOTS_CONNECTION_ID)] as? List<ModifiableSourceRootEntity> ?: emptyList())
         }
         else {
-          this.entityLinks[EntityLink(true, SOURCEROOTS_CONNECTION_ID)] as? List<SourceRootEntity.Builder> ?: emptyList()
+          this.entityLinks[EntityLink(true, SOURCEROOTS_CONNECTION_ID)] as? List<ModifiableSourceRootEntity> ?: emptyList()
         }
       }
       set(value) {
@@ -303,18 +307,18 @@ internal class ContentRootEntityImpl(private val dataSource: ContentRootEntityDa
 
     // List of non-abstract referenced types
     var _excludedUrls: List<ExcludeUrlEntity>? = emptyList()
-    override var excludedUrls: List<ExcludeUrlEntity.Builder>
+    override var excludedUrls: List<ModifiableExcludeUrlEntity>
       get() {
         // Getter of the list of non-abstract referenced types
         val _diff = diff
         return if (_diff != null) {
           @OptIn(EntityStorageInstrumentationApi::class)
           ((_diff as MutableEntityStorageInstrumentation).getManyChildrenBuilders(EXCLUDEDURLS_CONNECTION_ID,
-                                                                                  this)!!.toList() as List<ExcludeUrlEntity.Builder>) +
-          (this.entityLinks[EntityLink(true, EXCLUDEDURLS_CONNECTION_ID)] as? List<ExcludeUrlEntity.Builder> ?: emptyList())
+                                                                                  this)!!.toList() as List<ModifiableExcludeUrlEntity>) +
+          (this.entityLinks[EntityLink(true, EXCLUDEDURLS_CONNECTION_ID)] as? List<ModifiableExcludeUrlEntity> ?: emptyList())
         }
         else {
-          this.entityLinks[EntityLink(true, EXCLUDEDURLS_CONNECTION_ID)] as? List<ExcludeUrlEntity.Builder> ?: emptyList()
+          this.entityLinks[EntityLink(true, EXCLUDEDURLS_CONNECTION_ID)] as? List<ModifiableExcludeUrlEntity> ?: emptyList()
         }
       }
       set(value) {
@@ -360,7 +364,7 @@ internal class ContentRootEntityData : WorkspaceEntityData<ContentRootEntity>() 
   internal fun isUrlInitialized(): Boolean = ::url.isInitialized
   internal fun isExcludedPatternsInitialized(): Boolean = ::excludedPatterns.isInitialized
 
-  override fun wrapAsModifiable(diff: MutableEntityStorage): WorkspaceEntity.Builder<ContentRootEntity> {
+  override fun wrapAsModifiable(diff: MutableEntityStorage): ModifiableWorkspaceEntity<ContentRootEntity> {
     val modifiable = ContentRootEntityImpl.Builder(null)
     modifiable.diff = diff
     modifiable.id = createEntityId()
@@ -393,9 +397,9 @@ internal class ContentRootEntityData : WorkspaceEntityData<ContentRootEntity>() 
     return ContentRootEntity::class.java
   }
 
-  override fun createDetachedEntity(parents: List<WorkspaceEntity.Builder<*>>): WorkspaceEntity.Builder<*> {
+  override fun createDetachedEntity(parents: List<ModifiableWorkspaceEntity<*>>): ModifiableWorkspaceEntity<*> {
     return ContentRootEntity(url, excludedPatterns, entitySource) {
-      parents.filterIsInstance<ModuleEntity.Builder>().singleOrNull()?.let { this.module = it }
+      parents.filterIsInstance<ModifiableModuleEntity>().singleOrNull()?.let { this.module = it }
     }
   }
 

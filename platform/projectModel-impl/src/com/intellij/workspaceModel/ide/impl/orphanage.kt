@@ -1,4 +1,4 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.workspaceModel.ide.impl
 
 import com.intellij.openapi.application.edtWriteAction
@@ -222,7 +222,7 @@ private interface EntityAdder {
 }
 
 private class ContentRootAdder : EntityAdder {
-  private lateinit var updates: List<Pair<ModuleEntity, List<ContentRootEntity.Builder>>>
+  private lateinit var updates: List<Pair<ModuleEntity, List<ModifiableContentRootEntity>>>
   private val entitiesToRemoveFromOrphanage = ArrayList<ContentRootEntity>()
 
   override fun collectOrphanRoots(orphanToSnapshotModules: List<Pair<ModuleEntity, ModuleEntity>>) {
@@ -232,7 +232,7 @@ private class ContentRootAdder : EntityAdder {
         .filter { it.entitySource !is OrphanageWorkerEntitySource }
         .onEach { entitiesToRemoveFromOrphanage += it }
         .filter { it.url !in existingUrls }
-        .map { it.createEntityTreeCopy() as ContentRootEntity.Builder }
+        .map { it.createEntityTreeCopy() as ModifiableContentRootEntity }
 
       if (rootsToAdd.isNotEmpty()) {
         snapshotModule to rootsToAdd
@@ -278,7 +278,7 @@ private class ContentRootAdder : EntityAdder {
 }
 
 private class SourceRootAdder : EntityAdder {
-  lateinit var updates: List<Pair<ModuleEntity, List<Pair<VirtualFileUrl, List<SourceRootEntity.Builder>>>>>
+  lateinit var updates: List<Pair<ModuleEntity, List<Pair<VirtualFileUrl, List<ModifiableSourceRootEntity>>>>>
   private val entitiesToRemoveFromOrphanage = ArrayList<SourceRootEntity>()
 
   override fun collectOrphanRoots(orphanToSnapshotModules: List<Pair<ModuleEntity, ModuleEntity>>) {
@@ -291,7 +291,7 @@ private class SourceRootAdder : EntityAdder {
         .mapNotNull { contentRoot ->
           val sourcesToAdd = contentRoot.sourceRoots
             .filter { it.url !in (existingContentUrls[contentRoot.url] ?: emptyList()) }
-            .map { it.createEntityTreeCopy() as SourceRootEntity.Builder }
+            .map { it.createEntityTreeCopy() as ModifiableSourceRootEntity }
 
           if (sourcesToAdd.isNotEmpty()) {
             contentRoot.url to sourcesToAdd
@@ -352,7 +352,7 @@ private class SourceRootAdder : EntityAdder {
 }
 
 private class ExcludeRootAdder : EntityAdder {
-  lateinit var updates: List<Pair<ModuleEntity, List<Pair<VirtualFileUrl, List<ExcludeUrlEntity.Builder>>>>>
+  lateinit var updates: List<Pair<ModuleEntity, List<Pair<VirtualFileUrl, List<ModifiableExcludeUrlEntity>>>>>
   private val entitiesToRemoveFromOrphanage = ArrayList<ExcludeUrlEntity>()
 
   override fun collectOrphanRoots(orphanToSnapshotModules: List<Pair<ModuleEntity, ModuleEntity>>) {
@@ -365,7 +365,7 @@ private class ExcludeRootAdder : EntityAdder {
         .mapNotNull { contentRoot ->
           val excludeToAdd = contentRoot.excludedUrls
             .filter { it.url !in (existingExcludes[contentRoot.url] ?: emptyList()) }
-            .map { it.createEntityTreeCopy() as ExcludeUrlEntity.Builder }
+            .map { it.createEntityTreeCopy() as ModifiableExcludeUrlEntity }
 
           if (excludeToAdd.isNotEmpty()) {
             contentRoot.url to excludeToAdd

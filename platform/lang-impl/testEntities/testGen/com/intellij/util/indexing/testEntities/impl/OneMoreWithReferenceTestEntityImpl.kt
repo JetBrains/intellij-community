@@ -7,6 +7,7 @@ import com.intellij.platform.workspace.storage.EntitySource
 import com.intellij.platform.workspace.storage.EntityType
 import com.intellij.platform.workspace.storage.GeneratedCodeApiVersion
 import com.intellij.platform.workspace.storage.GeneratedCodeImplVersion
+import com.intellij.platform.workspace.storage.ModifiableWorkspaceEntity
 import com.intellij.platform.workspace.storage.MutableEntityStorage
 import com.intellij.platform.workspace.storage.SymbolicEntityId
 import com.intellij.platform.workspace.storage.WorkspaceEntity
@@ -24,6 +25,7 @@ import com.intellij.platform.workspace.storage.instrumentation.EntityStorageInst
 import com.intellij.platform.workspace.storage.metadata.model.EntityMetadata
 import com.intellij.platform.workspace.storage.url.VirtualFileUrl
 import com.intellij.util.indexing.testEntities.DependencyItem
+import com.intellij.util.indexing.testEntities.ModifiableOneMoreWithReferenceTestEntity
 import com.intellij.util.indexing.testEntities.OneMoreWithReferenceTestEntity
 import com.intellij.util.indexing.testEntities.ReferredTestEntityId
 
@@ -59,7 +61,7 @@ internal class OneMoreWithReferenceTestEntityImpl(private val dataSource: OneMor
 
 
   internal class Builder(result: OneMoreWithReferenceTestEntityData?) : ModifiableWorkspaceEntityBase<OneMoreWithReferenceTestEntity, OneMoreWithReferenceTestEntityData>(
-    result), OneMoreWithReferenceTestEntity.Builder {
+    result), ModifiableOneMoreWithReferenceTestEntity {
     internal constructor() : this(OneMoreWithReferenceTestEntityData())
 
     override fun applyToBuilder(builder: MutableEntityStorage) {
@@ -211,7 +213,7 @@ internal class OneMoreWithReferenceTestEntityData : WorkspaceEntityData<OneMoreW
     return changed
   }
 
-  override fun wrapAsModifiable(diff: MutableEntityStorage): WorkspaceEntity.Builder<OneMoreWithReferenceTestEntity> {
+  override fun wrapAsModifiable(diff: MutableEntityStorage): ModifiableWorkspaceEntity<OneMoreWithReferenceTestEntity> {
     val modifiable = OneMoreWithReferenceTestEntityImpl.Builder(null)
     modifiable.diff = diff
     modifiable.id = createEntityId()
@@ -245,7 +247,7 @@ internal class OneMoreWithReferenceTestEntityData : WorkspaceEntityData<OneMoreW
     return OneMoreWithReferenceTestEntity::class.java
   }
 
-  override fun createDetachedEntity(parents: List<WorkspaceEntity.Builder<*>>): WorkspaceEntity.Builder<*> {
+  override fun createDetachedEntity(parents: List<ModifiableWorkspaceEntity<*>>): ModifiableWorkspaceEntity<*> {
     return OneMoreWithReferenceTestEntity(references, entitySource) {
     }
   }

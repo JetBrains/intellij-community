@@ -1,8 +1,10 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.java.workspace.entities.impl
 
 import com.intellij.java.workspace.entities.CompositePackagingElementEntity
 import com.intellij.java.workspace.entities.FileCopyPackagingElementEntity
+import com.intellij.java.workspace.entities.ModifiableCompositePackagingElementEntity
+import com.intellij.java.workspace.entities.ModifiableFileCopyPackagingElementEntity
 import com.intellij.java.workspace.entities.PackagingElementEntity
 import com.intellij.openapi.util.NlsSafe
 import com.intellij.platform.workspace.jps.entities.LibraryId
@@ -127,19 +129,19 @@ internal class FileCopyPackagingElementEntityImpl(private val dataSource: FileCo
 
       }
 
-    override var parentEntity: CompositePackagingElementEntity.Builder<out CompositePackagingElementEntity>?
+    override var parentEntity: ModifiableCompositePackagingElementEntity<out CompositePackagingElementEntity>?
       get() {
         val _diff = diff
         return if (_diff != null) {
           @OptIn(EntityStorageInstrumentationApi::class)
           ((_diff as MutableEntityStorageInstrumentation).getParentBuilder(PARENTENTITY_CONNECTION_ID,
-                                                                           this) as? CompositePackagingElementEntity.Builder<out CompositePackagingElementEntity>)
+                                                                           this) as? ModifiableCompositePackagingElementEntity<out CompositePackagingElementEntity>)
           ?: (this.entityLinks[EntityLink(false,
-                                          PARENTENTITY_CONNECTION_ID)] as? CompositePackagingElementEntity.Builder<out CompositePackagingElementEntity>)
+                                          PARENTENTITY_CONNECTION_ID)] as? ModifiableCompositePackagingElementEntity<out CompositePackagingElementEntity>)
         }
         else {
           this.entityLinks[EntityLink(false,
-                                      PARENTENTITY_CONNECTION_ID)] as? CompositePackagingElementEntity.Builder<out CompositePackagingElementEntity>
+                                      PARENTENTITY_CONNECTION_ID)] as? ModifiableCompositePackagingElementEntity<out CompositePackagingElementEntity>
         }
       }
       set(value) {
@@ -199,7 +201,7 @@ internal class FileCopyPackagingElementEntityData : WorkspaceEntityData<FileCopy
 
   internal fun isFilePathInitialized(): Boolean = ::filePath.isInitialized
 
-  override fun wrapAsModifiable(diff: MutableEntityStorage): WorkspaceEntity.Builder<FileCopyPackagingElementEntity> {
+  override fun wrapAsModifiable(diff: MutableEntityStorage): ModifiableWorkspaceEntity<FileCopyPackagingElementEntity> {
     val modifiable = FileCopyPackagingElementEntityImpl.Builder(null)
     modifiable.diff = diff
     modifiable.id = createEntityId()
@@ -225,10 +227,10 @@ internal class FileCopyPackagingElementEntityData : WorkspaceEntityData<FileCopy
     return FileCopyPackagingElementEntity::class.java
   }
 
-  override fun createDetachedEntity(parents: List<WorkspaceEntity.Builder<*>>): WorkspaceEntity.Builder<*> {
+  override fun createDetachedEntity(parents: List<ModifiableWorkspaceEntity<*>>): ModifiableWorkspaceEntity<*> {
     return FileCopyPackagingElementEntity(filePath, entitySource) {
       this.renamedOutputFileName = this@FileCopyPackagingElementEntityData.renamedOutputFileName
-      this.parentEntity = parents.filterIsInstance<CompositePackagingElementEntity.Builder<out CompositePackagingElementEntity>>().singleOrNull()
+      this.parentEntity = parents.filterIsInstance<ModifiableCompositePackagingElementEntity<out CompositePackagingElementEntity>>().singleOrNull()
     }
   }
 

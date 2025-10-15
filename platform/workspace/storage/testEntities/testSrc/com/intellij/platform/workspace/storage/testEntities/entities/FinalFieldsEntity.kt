@@ -1,4 +1,4 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.platform.workspace.storage.testEntities.entities
 
 import com.intellij.platform.workspace.storage.EntitySource
@@ -28,43 +28,7 @@ interface FinalFieldsEntity: WorkspaceEntity {
     return !isEditable() && descriptor.url != null
   }
 
-  //region generated code
-  @GeneratedCodeApiVersion(3)
-  interface Builder : WorkspaceEntity.Builder<FinalFieldsEntity> {
-    override var entitySource: EntitySource
-    var descriptor: AnotherDataClass
-    var description: String
-    var anotherVersion: Int
-  }
-
-  companion object : EntityType<FinalFieldsEntity, Builder>() {
-    @JvmOverloads
-    @JvmStatic
-    @JvmName("create")
-    operator fun invoke(
-      descriptor: AnotherDataClass,
-      entitySource: EntitySource,
-      init: (Builder.() -> Unit)? = null,
-    ): Builder {
-      val builder = builder()
-      builder.descriptor = descriptor
-      builder.entitySource = entitySource
-      init?.invoke(builder)
-      return builder
-    }
-  }
-  //endregion
-
 }
-
-//region generated code
-fun MutableEntityStorage.modifyFinalFieldsEntity(
-  entity: FinalFieldsEntity,
-  modification: FinalFieldsEntity.Builder.() -> Unit,
-): FinalFieldsEntity {
-  return modifyEntity(FinalFieldsEntity.Builder::class.java, entity, modification)
-}
-//endregion
 
 data class AnotherDataClass(val name: String, val version: Int, val source: Boolean, val displayName: String? = null, val url: String? = null,
                             val revision: String? = null)

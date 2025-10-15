@@ -1,4 +1,4 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.workspaceModel.ide.impl.legacyBridge.facet
 
 import com.intellij.facet.*
@@ -65,7 +65,7 @@ class FacetManagerBridge(module: Module) : FacetManagerBase() {
         val facetConfigurationXml = FacetUtil.saveFacetConfiguration(facet)?.let { JDOMUtil.write(it) }
         if (facetConfigurationXml != facetEntity.configurationXmlTag) {
           runWriteAction {
-            val change: FacetEntity.Builder.() -> Unit = { this.configurationXmlTag = facetConfigurationXml }
+            val change: ModifiableFacetEntity.() -> Unit = { this.configurationXmlTag = facetConfigurationXml }
             module.diff?.modifyFacetEntity(facetEntity, change) ?: WorkspaceModel.getInstance(module.project)
               .updateProjectModel("Update facet configuration (not bridge)") { it.modifyFacetEntity(facetEntity, change) }
           }

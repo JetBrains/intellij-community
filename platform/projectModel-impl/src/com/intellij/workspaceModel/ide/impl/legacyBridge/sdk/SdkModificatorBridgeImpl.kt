@@ -28,7 +28,7 @@ import java.nio.file.Path
 private val rootTypes = ConcurrentFactoryMap.createMap<String, SdkRootTypeId> { SdkRootTypeId(it) }
 
 internal class SdkModificatorBridgeImpl(
-  private val originalEntity: SdkEntity.Builder,
+  private val originalEntity: ModifiableSdkEntity,
   private val originalSdk: ProjectJdkImpl,
   private val originalSdkDelegate: SdkBridgeImpl,
   environmentName: InternalEnvironmentName
@@ -36,7 +36,7 @@ internal class SdkModificatorBridgeImpl(
 
   private var isCommitted = false
   private var additionalData: SdkAdditionalData? = null
-  private val modifiedSdkEntity: SdkEntity.Builder = SdkBridgeImpl.createEmptySdkEntity("", "", environmentName = environmentName)
+  private val modifiedSdkEntity: ModifiableSdkEntity = SdkBridgeImpl.createEmptySdkEntity("", "", environmentName = environmentName)
 
   init {
     modifiedSdkEntity.applyChangesFrom(originalEntity)

@@ -1,7 +1,8 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.java.workspace.entities.impl
 
 import com.intellij.java.workspace.entities.ArtifactsOrderEntity
+import com.intellij.java.workspace.entities.ModifiableArtifactsOrderEntity
 import com.intellij.openapi.util.NlsSafe
 import com.intellij.platform.workspace.jps.entities.LibraryId
 import com.intellij.platform.workspace.jps.entities.ModuleId
@@ -148,7 +149,7 @@ internal class ArtifactsOrderEntityData : WorkspaceEntityData<ArtifactsOrderEnti
 
   internal fun isOrderOfArtifactsInitialized(): Boolean = ::orderOfArtifacts.isInitialized
 
-  override fun wrapAsModifiable(diff: MutableEntityStorage): WorkspaceEntity.Builder<ArtifactsOrderEntity> {
+  override fun wrapAsModifiable(diff: MutableEntityStorage): ModifiableWorkspaceEntity<ArtifactsOrderEntity> {
     val modifiable = ArtifactsOrderEntityImpl.Builder(null)
     modifiable.diff = diff
     modifiable.id = createEntityId()
@@ -181,7 +182,7 @@ internal class ArtifactsOrderEntityData : WorkspaceEntityData<ArtifactsOrderEnti
     return ArtifactsOrderEntity::class.java
   }
 
-  override fun createDetachedEntity(parents: List<WorkspaceEntity.Builder<*>>): WorkspaceEntity.Builder<*> {
+  override fun createDetachedEntity(parents: List<ModifiableWorkspaceEntity<*>>): ModifiableWorkspaceEntity<*> {
     return ArtifactsOrderEntity(orderOfArtifacts, entitySource) {
     }
   }

@@ -1,4 +1,4 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.platform.workspace.storage.tests.ordering
 
 import com.intellij.platform.workspace.storage.MutableEntityStorage
@@ -101,9 +101,9 @@ class AbstractChildrenOrderingTest {
       )
     }
 
-    assertEquals("One", entity.children[0].asSafely<MiddleEntity.Builder>()!!.property)
-    assertEquals("Two", entity.children[1].asSafely<MiddleEntity.Builder>()!!.property)
-    assertEquals("Three", entity.children[2].asSafely<MiddleEntity.Builder>()!!.property)
+    assertEquals("One", entity.children[0].asSafely<ModifiableMiddleEntity>()!!.property)
+    assertEquals("Two", entity.children[1].asSafely<ModifiableMiddleEntity>()!!.property)
+    assertEquals("Three", entity.children[2].asSafely<ModifiableMiddleEntity>()!!.property)
   }
 
   @ParameterizedTest

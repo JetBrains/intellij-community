@@ -1,4 +1,4 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.platform.workspace.storage.testEntities.entities.impl
 
 import com.intellij.platform.workspace.storage.ConnectionId
@@ -6,6 +6,7 @@ import com.intellij.platform.workspace.storage.EntitySource
 import com.intellij.platform.workspace.storage.EntityType
 import com.intellij.platform.workspace.storage.GeneratedCodeApiVersion
 import com.intellij.platform.workspace.storage.GeneratedCodeImplVersion
+import com.intellij.platform.workspace.storage.ModifiableWorkspaceEntity
 import com.intellij.platform.workspace.storage.MutableEntityStorage
 import com.intellij.platform.workspace.storage.WorkspaceEntity
 import com.intellij.platform.workspace.storage.WorkspaceEntityInternalApi
@@ -18,6 +19,7 @@ import com.intellij.platform.workspace.storage.impl.containers.toMutableWorkspac
 import com.intellij.platform.workspace.storage.instrumentation.EntityStorageInstrumentation
 import com.intellij.platform.workspace.storage.instrumentation.EntityStorageInstrumentationApi
 import com.intellij.platform.workspace.storage.metadata.model.EntityMetadata
+import com.intellij.platform.workspace.storage.testEntities.entities.ModifiableSetVFUEntity
 import com.intellij.platform.workspace.storage.testEntities.entities.SetVFUEntity
 import com.intellij.platform.workspace.storage.url.VirtualFileUrl
 
@@ -57,8 +59,8 @@ internal class SetVFUEntityImpl(private val dataSource: SetVFUEntityData) : SetV
   }
 
 
-  internal class Builder(result: SetVFUEntityData?) : ModifiableWorkspaceEntityBase<SetVFUEntity, SetVFUEntityData>(result),
-                                                      SetVFUEntity.Builder {
+  internal class Builder(result: SetVFUEntityData?) : ModifiableWorkspaceEntityBase<SetVFUEntity, SetVFUEntityData>(
+    result), ModifiableSetVFUEntity {
     internal constructor() : this(SetVFUEntityData())
 
     override fun applyToBuilder(builder: MutableEntityStorage) {
@@ -171,7 +173,7 @@ internal class SetVFUEntityData : WorkspaceEntityData<SetVFUEntity>() {
   internal fun isDataInitialized(): Boolean = ::data.isInitialized
   internal fun isFilePropertyInitialized(): Boolean = ::fileProperty.isInitialized
 
-  override fun wrapAsModifiable(diff: MutableEntityStorage): WorkspaceEntity.Builder<SetVFUEntity> {
+  override fun wrapAsModifiable(diff: MutableEntityStorage): ModifiableWorkspaceEntity<SetVFUEntity> {
     val modifiable = SetVFUEntityImpl.Builder(null)
     modifiable.diff = diff
     modifiable.id = createEntityId()
@@ -191,8 +193,7 @@ internal class SetVFUEntityData : WorkspaceEntityData<SetVFUEntity>() {
 
   override fun getMetadata(): EntityMetadata {
     return MetadataStorageImpl.getMetadataByTypeFqn(
-      "com.intellij.platform.workspace.storage.testEntities.entities.SetVFUEntity"
-    ) as EntityMetadata
+      "com.intellij.platform.workspace.storage.testEntities.entities.SetVFUEntity") as EntityMetadata
   }
 
   override fun clone(): SetVFUEntityData {
@@ -206,7 +207,7 @@ internal class SetVFUEntityData : WorkspaceEntityData<SetVFUEntity>() {
     return SetVFUEntity::class.java
   }
 
-  override fun createDetachedEntity(parents: List<WorkspaceEntity.Builder<*>>): WorkspaceEntity.Builder<*> {
+  override fun createDetachedEntity(parents: List<ModifiableWorkspaceEntity<*>>): ModifiableWorkspaceEntity<*> {
     return SetVFUEntity(data, fileProperty, entitySource) {
     }
   }

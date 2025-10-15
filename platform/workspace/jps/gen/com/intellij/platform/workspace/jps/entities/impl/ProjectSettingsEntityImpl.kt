@@ -2,6 +2,7 @@
 package com.intellij.platform.workspace.jps.entities.impl
 
 import com.intellij.java.workspace.entities.JavaProjectSettingsEntity
+import com.intellij.platform.workspace.jps.entities.ModifiableProjectSettingsEntity
 import com.intellij.platform.workspace.jps.entities.ProjectSettingsEntity
 import com.intellij.platform.workspace.jps.entities.SdkId
 import com.intellij.platform.workspace.storage.ConnectionId
@@ -9,6 +10,7 @@ import com.intellij.platform.workspace.storage.EntitySource
 import com.intellij.platform.workspace.storage.EntityType
 import com.intellij.platform.workspace.storage.GeneratedCodeApiVersion
 import com.intellij.platform.workspace.storage.GeneratedCodeImplVersion
+import com.intellij.platform.workspace.storage.ModifiableWorkspaceEntity
 import com.intellij.platform.workspace.storage.MutableEntityStorage
 import com.intellij.platform.workspace.storage.SymbolicEntityId
 import com.intellij.platform.workspace.storage.WorkspaceEntity
@@ -179,7 +181,7 @@ internal class ProjectSettingsEntityData : WorkspaceEntityData<ProjectSettingsEn
     return changed
   }
 
-  override fun wrapAsModifiable(diff: MutableEntityStorage): WorkspaceEntity.Builder<ProjectSettingsEntity> {
+  override fun wrapAsModifiable(diff: MutableEntityStorage): ModifiableWorkspaceEntity<ProjectSettingsEntity> {
     val modifiable = ProjectSettingsEntityImpl.Builder(null)
     modifiable.diff = diff
     modifiable.id = createEntityId()
@@ -205,7 +207,7 @@ internal class ProjectSettingsEntityData : WorkspaceEntityData<ProjectSettingsEn
     return ProjectSettingsEntity::class.java
   }
 
-  override fun createDetachedEntity(parents: List<WorkspaceEntity.Builder<*>>): WorkspaceEntity.Builder<*> {
+  override fun createDetachedEntity(parents: List<ModifiableWorkspaceEntity<*>>): ModifiableWorkspaceEntity<*> {
     return ProjectSettingsEntity(entitySource) {
       this.projectSdk = this@ProjectSettingsEntityData.projectSdk
     }

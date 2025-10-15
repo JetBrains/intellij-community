@@ -9,6 +9,7 @@ import com.intellij.platform.workspace.storage.instrumentation.EntityStorageInst
 import com.intellij.platform.workspace.storage.instrumentation.EntityStorageInstrumentationApi
 import com.intellij.platform.workspace.storage.metadata.model.EntityMetadata
 import com.intellij.platform.workspace.storage.url.VirtualFileUrl
+import com.intellij.util.indexing.testEntities.ModifiableNonRecursiveTestEntity
 import com.intellij.util.indexing.testEntities.NonRecursiveTestEntity
 
 @GeneratedCodeApiVersion(3)
@@ -43,7 +44,7 @@ internal class NonRecursiveTestEntityImpl(private val dataSource: NonRecursiveTe
 
 
   internal class Builder(result: NonRecursiveTestEntityData?) : ModifiableWorkspaceEntityBase<NonRecursiveTestEntity, NonRecursiveTestEntityData>(
-    result), NonRecursiveTestEntity.Builder {
+    result), ModifiableNonRecursiveTestEntity {
     internal constructor() : this(NonRecursiveTestEntityData())
 
     override fun applyToBuilder(builder: MutableEntityStorage) {
@@ -122,7 +123,7 @@ internal class NonRecursiveTestEntityData : WorkspaceEntityData<NonRecursiveTest
 
   internal fun isRootInitialized(): Boolean = ::root.isInitialized
 
-  override fun wrapAsModifiable(diff: MutableEntityStorage): WorkspaceEntity.Builder<NonRecursiveTestEntity> {
+  override fun wrapAsModifiable(diff: MutableEntityStorage): ModifiableWorkspaceEntity<NonRecursiveTestEntity> {
     val modifiable = NonRecursiveTestEntityImpl.Builder(null)
     modifiable.diff = diff
     modifiable.id = createEntityId()
@@ -148,7 +149,7 @@ internal class NonRecursiveTestEntityData : WorkspaceEntityData<NonRecursiveTest
     return NonRecursiveTestEntity::class.java
   }
 
-  override fun createDetachedEntity(parents: List<WorkspaceEntity.Builder<*>>): WorkspaceEntity.Builder<*> {
+  override fun createDetachedEntity(parents: List<ModifiableWorkspaceEntity<*>>): ModifiableWorkspaceEntity<*> {
     return NonRecursiveTestEntity(root, entitySource) {
     }
   }

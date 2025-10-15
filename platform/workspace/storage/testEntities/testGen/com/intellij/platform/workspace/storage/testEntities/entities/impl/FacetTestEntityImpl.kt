@@ -1,4 +1,4 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.platform.workspace.storage.testEntities.entities.impl
 
 import com.intellij.platform.workspace.storage.*
@@ -15,6 +15,8 @@ import com.intellij.platform.workspace.storage.instrumentation.MutableEntityStor
 import com.intellij.platform.workspace.storage.metadata.model.EntityMetadata
 import com.intellij.platform.workspace.storage.testEntities.entities.FacetTestEntity
 import com.intellij.platform.workspace.storage.testEntities.entities.FacetTestEntitySymbolicId
+import com.intellij.platform.workspace.storage.testEntities.entities.ModifiableFacetTestEntity
+import com.intellij.platform.workspace.storage.testEntities.entities.ModifiableModuleTestEntity
 import com.intellij.platform.workspace.storage.testEntities.entities.ModuleTestEntity
 
 @GeneratedCodeApiVersion(3)
@@ -23,8 +25,8 @@ import com.intellij.platform.workspace.storage.testEntities.entities.ModuleTestE
 internal class FacetTestEntityImpl(private val dataSource: FacetTestEntityData) : FacetTestEntity, WorkspaceEntityBase(dataSource) {
 
   private companion object {
-    internal val MODULE_CONNECTION_ID: ConnectionId =
-      ConnectionId.create(ModuleTestEntity::class.java, FacetTestEntity::class.java, ConnectionId.ConnectionType.ONE_TO_MANY, false)
+    internal val MODULE_CONNECTION_ID: ConnectionId = ConnectionId.create(ModuleTestEntity::class.java, FacetTestEntity::class.java,
+                                                                          ConnectionId.ConnectionType.ONE_TO_MANY, false)
 
     private val connections = listOf<ConnectionId>(
       MODULE_CONNECTION_ID,
@@ -60,8 +62,8 @@ internal class FacetTestEntityImpl(private val dataSource: FacetTestEntityData) 
   }
 
 
-  internal class Builder(result: FacetTestEntityData?) : ModifiableWorkspaceEntityBase<FacetTestEntity, FacetTestEntityData>(result),
-                                                         FacetTestEntity.Builder {
+  internal class Builder(result: FacetTestEntityData?) : ModifiableWorkspaceEntityBase<FacetTestEntity, FacetTestEntityData>(
+    result), ModifiableFacetTestEntity {
     internal constructor() : this(FacetTestEntityData())
 
     override fun applyToBuilder(builder: MutableEntityStorage) {
@@ -149,16 +151,16 @@ internal class FacetTestEntityImpl(private val dataSource: FacetTestEntityData) 
         changedProperty.add("moreData")
       }
 
-    override var module: ModuleTestEntity.Builder
+    override var module: ModifiableModuleTestEntity
       get() {
         val _diff = diff
         return if (_diff != null) {
           @OptIn(EntityStorageInstrumentationApi::class)
-          ((_diff as MutableEntityStorageInstrumentation).getParentBuilder(MODULE_CONNECTION_ID, this) as? ModuleTestEntity.Builder)
-          ?: (this.entityLinks[EntityLink(false, MODULE_CONNECTION_ID)]!! as ModuleTestEntity.Builder)
+          ((_diff as MutableEntityStorageInstrumentation).getParentBuilder(MODULE_CONNECTION_ID, this) as? ModifiableModuleTestEntity)
+          ?: (this.entityLinks[EntityLink(false, MODULE_CONNECTION_ID)]!! as ModifiableModuleTestEntity)
         }
         else {
-          this.entityLinks[EntityLink(false, MODULE_CONNECTION_ID)]!! as ModuleTestEntity.Builder
+          this.entityLinks[EntityLink(false, MODULE_CONNECTION_ID)]!! as ModifiableModuleTestEntity
         }
       }
       set(value) {
@@ -201,7 +203,7 @@ internal class FacetTestEntityData : WorkspaceEntityData<FacetTestEntity>() {
   internal fun isDataInitialized(): Boolean = ::data.isInitialized
   internal fun isMoreDataInitialized(): Boolean = ::moreData.isInitialized
 
-  override fun wrapAsModifiable(diff: MutableEntityStorage): WorkspaceEntity.Builder<FacetTestEntity> {
+  override fun wrapAsModifiable(diff: MutableEntityStorage): ModifiableWorkspaceEntity<FacetTestEntity> {
     val modifiable = FacetTestEntityImpl.Builder(null)
     modifiable.diff = diff
     modifiable.id = createEntityId()
@@ -221,17 +223,16 @@ internal class FacetTestEntityData : WorkspaceEntityData<FacetTestEntity>() {
 
   override fun getMetadata(): EntityMetadata {
     return MetadataStorageImpl.getMetadataByTypeFqn(
-      "com.intellij.platform.workspace.storage.testEntities.entities.FacetTestEntity"
-    ) as EntityMetadata
+      "com.intellij.platform.workspace.storage.testEntities.entities.FacetTestEntity") as EntityMetadata
   }
 
   override fun getEntityInterface(): Class<out WorkspaceEntity> {
     return FacetTestEntity::class.java
   }
 
-  override fun createDetachedEntity(parents: List<WorkspaceEntity.Builder<*>>): WorkspaceEntity.Builder<*> {
+  override fun createDetachedEntity(parents: List<ModifiableWorkspaceEntity<*>>): ModifiableWorkspaceEntity<*> {
     return FacetTestEntity(data, moreData, entitySource) {
-      parents.filterIsInstance<ModuleTestEntity.Builder>().singleOrNull()?.let { this.module = it }
+      parents.filterIsInstance<ModifiableModuleTestEntity>().singleOrNull()?.let { this.module = it }
     }
   }
 

@@ -1,4 +1,4 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.projectRoots.impl;
 
 import com.intellij.openapi.Disposable;
@@ -13,6 +13,7 @@ import com.intellij.openapi.util.InvalidDataException;
 import com.intellij.openapi.util.UserDataHolderBase;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.vfs.pointers.VirtualFilePointerManager;
+import com.intellij.platform.workspace.jps.entities.ModifiableSdkEntity;
 import com.intellij.platform.workspace.jps.entities.SdkEntity;
 import com.intellij.platform.workspace.storage.InternalEnvironmentName;
 import com.intellij.util.concurrency.ThreadingAssertions;
@@ -53,7 +54,7 @@ public class ProjectJdkImpl extends UserDataHolderBase implements SdkBridge, Sdk
   @ApiStatus.Internal
   public ProjectJdkImpl(@NotNull String name, @NotNull SdkTypeId sdkType, String homePath, String version,
                         @NotNull InternalEnvironmentName environmentName) {
-    SdkEntity.Builder sdkEntity =
+    ModifiableSdkEntity sdkEntity =
       SdkBridgeImpl.Companion.createEmptySdkEntity(name, sdkType.getName(), homePath, version, environmentName);
     delegate = new SdkBridgeImpl(sdkEntity, environmentName);
     // register on VirtualFilePointerManager because we want our virtual pointers to be disposed before VFPM to avoid "pointer leaked" diagnostics fired

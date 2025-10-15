@@ -1,4 +1,4 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.java.configurationStore
 
 import com.intellij.openapi.application.ex.PathManagerEx
@@ -7,6 +7,8 @@ import com.intellij.platform.workspace.jps.CustomModuleEntitySource
 import com.intellij.platform.workspace.jps.JpsFileEntitySource
 import com.intellij.platform.workspace.jps.entities.LibraryEntity
 import com.intellij.platform.workspace.jps.entities.LibraryId
+import com.intellij.platform.workspace.jps.entities.ModifiableLibraryEntity
+import com.intellij.platform.workspace.jps.entities.ModifiableModuleEntity
 import com.intellij.platform.workspace.jps.entities.ModuleEntity
 import com.intellij.platform.workspace.jps.serialization.impl.*
 import com.intellij.platform.workspace.storage.DummyParentEntitySource
@@ -38,14 +40,14 @@ internal class SampleCustomModuleRootsSerializer : CustomModuleRootsSerializer {
     return SampleDummyParentCustomModuleEntitySource(internalEntitySource)
   }
 
-  override fun loadRoots(moduleEntity: ModuleEntity.Builder,
+  override fun loadRoots(moduleEntity: ModifiableModuleEntity,
                          reader: JpsFileContentReader,
                          customDir: String?,
                          imlFileUrl: VirtualFileUrl,
                          internalModuleListSerializer: JpsModuleListSerializer?,
                          errorReporter: ErrorReporter,
                          virtualFileManager: VirtualFileUrlManager,
-                         moduleLibrariesCollector: MutableMap<LibraryId, LibraryEntity.Builder>) {
+                         moduleLibrariesCollector: MutableMap<LibraryId, ModifiableLibraryEntity>) {
   }
 
   override fun saveRoots(module: ModuleEntity,

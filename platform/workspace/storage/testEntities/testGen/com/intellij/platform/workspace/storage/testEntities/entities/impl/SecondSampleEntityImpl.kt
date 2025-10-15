@@ -1,4 +1,4 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.platform.workspace.storage.testEntities.entities.impl
 
 import com.intellij.platform.workspace.storage.*
@@ -10,6 +10,7 @@ import com.intellij.platform.workspace.storage.impl.containers.toMutableWorkspac
 import com.intellij.platform.workspace.storage.instrumentation.EntityStorageInstrumentation
 import com.intellij.platform.workspace.storage.instrumentation.EntityStorageInstrumentationApi
 import com.intellij.platform.workspace.storage.metadata.model.EntityMetadata
+import com.intellij.platform.workspace.storage.testEntities.entities.ModifiableSecondSampleEntity
 import com.intellij.platform.workspace.storage.testEntities.entities.SecondSampleEntity
 import com.intellij.platform.workspace.storage.url.VirtualFileUrl
 import java.util.UUID
@@ -17,8 +18,8 @@ import java.util.UUID
 @GeneratedCodeApiVersion(3)
 @GeneratedCodeImplVersion(7)
 @OptIn(WorkspaceEntityInternalApi::class)
-internal class SecondSampleEntityImpl(private val dataSource: SecondSampleEntityData) : SecondSampleEntity,
-                                                                                        WorkspaceEntityBase(dataSource) {
+internal class SecondSampleEntityImpl(private val dataSource: SecondSampleEntityData) : SecondSampleEntity, WorkspaceEntityBase(
+  dataSource) {
 
   private companion object {
 
@@ -45,8 +46,8 @@ internal class SecondSampleEntityImpl(private val dataSource: SecondSampleEntity
   }
 
 
-  internal class Builder(result: SecondSampleEntityData?) :
-    ModifiableWorkspaceEntityBase<SecondSampleEntity, SecondSampleEntityData>(result), SecondSampleEntity.Builder {
+  internal class Builder(result: SecondSampleEntityData?) : ModifiableWorkspaceEntityBase<SecondSampleEntity, SecondSampleEntityData>(
+    result), ModifiableSecondSampleEntity {
     internal constructor() : this(SecondSampleEntityData())
 
     override fun applyToBuilder(builder: MutableEntityStorage) {
@@ -118,7 +119,7 @@ internal class SecondSampleEntityData : WorkspaceEntityData<SecondSampleEntity>(
   var intProperty: Int = 0
 
 
-  override fun wrapAsModifiable(diff: MutableEntityStorage): WorkspaceEntity.Builder<SecondSampleEntity> {
+  override fun wrapAsModifiable(diff: MutableEntityStorage): ModifiableWorkspaceEntity<SecondSampleEntity> {
     val modifiable = SecondSampleEntityImpl.Builder(null)
     modifiable.diff = diff
     modifiable.id = createEntityId()
@@ -138,15 +139,14 @@ internal class SecondSampleEntityData : WorkspaceEntityData<SecondSampleEntity>(
 
   override fun getMetadata(): EntityMetadata {
     return MetadataStorageImpl.getMetadataByTypeFqn(
-      "com.intellij.platform.workspace.storage.testEntities.entities.SecondSampleEntity"
-    ) as EntityMetadata
+      "com.intellij.platform.workspace.storage.testEntities.entities.SecondSampleEntity") as EntityMetadata
   }
 
   override fun getEntityInterface(): Class<out WorkspaceEntity> {
     return SecondSampleEntity::class.java
   }
 
-  override fun createDetachedEntity(parents: List<WorkspaceEntity.Builder<*>>): WorkspaceEntity.Builder<*> {
+  override fun createDetachedEntity(parents: List<ModifiableWorkspaceEntity<*>>): ModifiableWorkspaceEntity<*> {
     return SecondSampleEntity(intProperty, entitySource) {
     }
   }

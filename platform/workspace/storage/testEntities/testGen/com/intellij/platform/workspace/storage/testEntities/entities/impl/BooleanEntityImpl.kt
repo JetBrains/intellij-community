@@ -1,4 +1,4 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.platform.workspace.storage.testEntities.entities.impl
 
 import com.intellij.platform.workspace.storage.ConnectionId
@@ -6,6 +6,7 @@ import com.intellij.platform.workspace.storage.EntitySource
 import com.intellij.platform.workspace.storage.EntityType
 import com.intellij.platform.workspace.storage.GeneratedCodeApiVersion
 import com.intellij.platform.workspace.storage.GeneratedCodeImplVersion
+import com.intellij.platform.workspace.storage.ModifiableWorkspaceEntity
 import com.intellij.platform.workspace.storage.MutableEntityStorage
 import com.intellij.platform.workspace.storage.WorkspaceEntity
 import com.intellij.platform.workspace.storage.WorkspaceEntityInternalApi
@@ -17,6 +18,7 @@ import com.intellij.platform.workspace.storage.instrumentation.EntityStorageInst
 import com.intellij.platform.workspace.storage.instrumentation.EntityStorageInstrumentationApi
 import com.intellij.platform.workspace.storage.metadata.model.EntityMetadata
 import com.intellij.platform.workspace.storage.testEntities.entities.BooleanEntity
+import com.intellij.platform.workspace.storage.testEntities.entities.ModifiableBooleanEntity
 
 @GeneratedCodeApiVersion(3)
 @GeneratedCodeImplVersion(7)
@@ -48,8 +50,8 @@ internal class BooleanEntityImpl(private val dataSource: BooleanEntityData) : Bo
   }
 
 
-  internal class Builder(result: BooleanEntityData?) : ModifiableWorkspaceEntityBase<BooleanEntity, BooleanEntityData>(result),
-                                                       BooleanEntity.Builder {
+  internal class Builder(result: BooleanEntityData?) : ModifiableWorkspaceEntityBase<BooleanEntity, BooleanEntityData>(
+    result), ModifiableBooleanEntity {
     internal constructor() : this(BooleanEntityData())
 
     override fun applyToBuilder(builder: MutableEntityStorage) {
@@ -121,7 +123,7 @@ internal class BooleanEntityData : WorkspaceEntityData<BooleanEntity>() {
   var data: Boolean = false
 
 
-  override fun wrapAsModifiable(diff: MutableEntityStorage): WorkspaceEntity.Builder<BooleanEntity> {
+  override fun wrapAsModifiable(diff: MutableEntityStorage): ModifiableWorkspaceEntity<BooleanEntity> {
     val modifiable = BooleanEntityImpl.Builder(null)
     modifiable.diff = diff
     modifiable.id = createEntityId()
@@ -141,15 +143,14 @@ internal class BooleanEntityData : WorkspaceEntityData<BooleanEntity>() {
 
   override fun getMetadata(): EntityMetadata {
     return MetadataStorageImpl.getMetadataByTypeFqn(
-      "com.intellij.platform.workspace.storage.testEntities.entities.BooleanEntity"
-    ) as EntityMetadata
+      "com.intellij.platform.workspace.storage.testEntities.entities.BooleanEntity") as EntityMetadata
   }
 
   override fun getEntityInterface(): Class<out WorkspaceEntity> {
     return BooleanEntity::class.java
   }
 
-  override fun createDetachedEntity(parents: List<WorkspaceEntity.Builder<*>>): WorkspaceEntity.Builder<*> {
+  override fun createDetachedEntity(parents: List<ModifiableWorkspaceEntity<*>>): ModifiableWorkspaceEntity<*> {
     return BooleanEntity(data, entitySource) {
     }
   }

@@ -1,4 +1,4 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.platform.workspace.storage.testEntities.entities.cacheVersion.impl
 
 import com.intellij.platform.workspace.storage.ConnectionId
@@ -6,6 +6,7 @@ import com.intellij.platform.workspace.storage.EntitySource
 import com.intellij.platform.workspace.storage.EntityType
 import com.intellij.platform.workspace.storage.GeneratedCodeApiVersion
 import com.intellij.platform.workspace.storage.GeneratedCodeImplVersion
+import com.intellij.platform.workspace.storage.ModifiableWorkspaceEntity
 import com.intellij.platform.workspace.storage.MutableEntityStorage
 import com.intellij.platform.workspace.storage.WorkspaceEntity
 import com.intellij.platform.workspace.storage.WorkspaceEntityInternalApi
@@ -18,12 +19,13 @@ import com.intellij.platform.workspace.storage.instrumentation.EntityStorageInst
 import com.intellij.platform.workspace.storage.instrumentation.EntityStorageInstrumentationApi
 import com.intellij.platform.workspace.storage.metadata.model.EntityMetadata
 import com.intellij.platform.workspace.storage.testEntities.entities.cacheVersion.ChangedValueTypeEntity
+import com.intellij.platform.workspace.storage.testEntities.entities.cacheVersion.ModifiableChangedValueTypeEntity
 
 @GeneratedCodeApiVersion(3)
 @GeneratedCodeImplVersion(7)
 @OptIn(WorkspaceEntityInternalApi::class)
-internal class ChangedValueTypeEntityImpl(private val dataSource: ChangedValueTypeEntityData) : ChangedValueTypeEntity,
-                                                                                                WorkspaceEntityBase(dataSource) {
+internal class ChangedValueTypeEntityImpl(private val dataSource: ChangedValueTypeEntityData) : ChangedValueTypeEntity, WorkspaceEntityBase(
+  dataSource) {
 
   private companion object {
 
@@ -61,8 +63,8 @@ internal class ChangedValueTypeEntityImpl(private val dataSource: ChangedValueTy
   }
 
 
-  internal class Builder(result: ChangedValueTypeEntityData?) :
-    ModifiableWorkspaceEntityBase<ChangedValueTypeEntity, ChangedValueTypeEntityData>(result), ChangedValueTypeEntity.Builder {
+  internal class Builder(result: ChangedValueTypeEntityData?) : ModifiableWorkspaceEntityBase<ChangedValueTypeEntity, ChangedValueTypeEntityData>(
+    result), ModifiableChangedValueTypeEntity {
     internal constructor() : this(ChangedValueTypeEntityData())
 
     override fun applyToBuilder(builder: MutableEntityStorage) {
@@ -184,7 +186,7 @@ internal class ChangedValueTypeEntityData : WorkspaceEntityData<ChangedValueType
 
   internal fun isTextInitialized(): Boolean = ::text.isInitialized
 
-  override fun wrapAsModifiable(diff: MutableEntityStorage): WorkspaceEntity.Builder<ChangedValueTypeEntity> {
+  override fun wrapAsModifiable(diff: MutableEntityStorage): ModifiableWorkspaceEntity<ChangedValueTypeEntity> {
     val modifiable = ChangedValueTypeEntityImpl.Builder(null)
     modifiable.diff = diff
     modifiable.id = createEntityId()
@@ -204,8 +206,7 @@ internal class ChangedValueTypeEntityData : WorkspaceEntityData<ChangedValueType
 
   override fun getMetadata(): EntityMetadata {
     return MetadataStorageImpl.getMetadataByTypeFqn(
-      "com.intellij.platform.workspace.storage.testEntities.entities.cacheVersion.ChangedValueTypeEntity"
-    ) as EntityMetadata
+      "com.intellij.platform.workspace.storage.testEntities.entities.cacheVersion.ChangedValueTypeEntity") as EntityMetadata
   }
 
   override fun clone(): ChangedValueTypeEntityData {
@@ -219,7 +220,7 @@ internal class ChangedValueTypeEntityData : WorkspaceEntityData<ChangedValueType
     return ChangedValueTypeEntity::class.java
   }
 
-  override fun createDetachedEntity(parents: List<WorkspaceEntity.Builder<*>>): WorkspaceEntity.Builder<*> {
+  override fun createDetachedEntity(parents: List<ModifiableWorkspaceEntity<*>>): ModifiableWorkspaceEntity<*> {
     return ChangedValueTypeEntity(type, someKey, text, entitySource) {
     }
   }

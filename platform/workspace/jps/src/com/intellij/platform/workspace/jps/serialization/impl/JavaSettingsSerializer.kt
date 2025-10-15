@@ -1,7 +1,8 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.platform.workspace.jps.serialization.impl
 
 import com.intellij.java.workspace.entities.JavaModuleSettingsEntity
+import com.intellij.java.workspace.entities.ModifiableJavaModuleSettingsEntity
 import com.intellij.platform.workspace.jps.serialization.SerializationContext
 import com.intellij.platform.workspace.storage.EntitySource
 import org.jdom.Element
@@ -41,7 +42,7 @@ internal object JavaSettingsSerializer {
 
   fun loadJavaModuleSettings(rootManagerElement: Element,
                              context: SerializationContext,
-                             contentRootEntitySource: EntitySource ): JavaModuleSettingsEntity.Builder? {
+                             contentRootEntitySource: EntitySource ): ModifiableJavaModuleSettingsEntity? {
     val inheritedCompilerOutput = rootManagerElement.getAttributeAndDetach(INHERIT_COMPILER_OUTPUT_ATTRIBUTE)
     val languageLevel = rootManagerElement.getAttributeAndDetach(MODULE_LANGUAGE_LEVEL_ATTRIBUTE)
     val excludeOutput = rootManagerElement.getChildAndDetach(EXCLUDE_OUTPUT_TAG)

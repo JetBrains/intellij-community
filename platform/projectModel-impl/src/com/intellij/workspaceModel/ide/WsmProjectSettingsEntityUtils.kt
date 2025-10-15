@@ -2,6 +2,7 @@
 package com.intellij.workspaceModel.ide
 
 import com.intellij.openapi.project.Project
+import com.intellij.platform.workspace.jps.entities.ModifiableProjectSettingsEntity
 import com.intellij.platform.workspace.jps.entities.ProjectSettingsEntity
 import com.intellij.platform.workspace.storage.EntitySource
 import com.intellij.platform.workspace.storage.MutableEntityStorage
@@ -15,12 +16,12 @@ object WsmProjectSettingsEntityUtils {
   fun addOrModifyProjectSettingsEntity(
     project: Project,
     mutableStorage: MutableEntityStorage,
-    modFunction: (ProjectSettingsEntity.Builder) -> Unit,
+    modFunction: (ModifiableProjectSettingsEntity) -> Unit,
   ) {
     val sourceFactory = LegacyBridgeJpsEntitySourceFactory.Companion.getInstance(project) as LegacyBridgeJpsEntitySourceFactoryInternal
     val entitySource: EntitySource = sourceFactory.createEntitySourceForProjectSettings() ?: return // do not touch default project
     addOrModifySingleEntity(mutableStorage,
-                            ProjectSettingsEntity::class.java, ProjectSettingsEntity.Builder::class.java,
-                            { ProjectSettingsEntity.Companion(entitySource) }, modFunction)
+                            ProjectSettingsEntity::class.java, ModifiableProjectSettingsEntity::class.java,
+                            { ProjectSettingsEntity(entitySource) }, modFunction)
   }
 }

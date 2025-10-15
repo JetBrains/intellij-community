@@ -4,6 +4,7 @@ package com.intellij.openapi.externalSystem.settings.workspaceModel.impl
 
 import com.intellij.openapi.externalSystem.settings.workspaceModel.ExternalProjectBuildClasspathEntity
 import com.intellij.openapi.externalSystem.settings.workspaceModel.ExternalProjectsBuildClasspathEntity
+import com.intellij.openapi.externalSystem.settings.workspaceModel.ModifiableExternalProjectsBuildClasspathEntity
 import com.intellij.platform.workspace.storage.*
 import com.intellij.platform.workspace.storage.impl.ModifiableWorkspaceEntityBase
 import com.intellij.platform.workspace.storage.impl.WorkspaceEntityBase
@@ -121,7 +122,7 @@ internal class ExternalProjectsBuildClasspathEntityData : WorkspaceEntityData<Ex
 
   internal fun isProjectsBuildClasspathInitialized(): Boolean = ::projectsBuildClasspath.isInitialized
 
-  override fun wrapAsModifiable(diff: MutableEntityStorage): WorkspaceEntity.Builder<ExternalProjectsBuildClasspathEntity> {
+  override fun wrapAsModifiable(diff: MutableEntityStorage): ModifiableWorkspaceEntity<ExternalProjectsBuildClasspathEntity> {
     val modifiable = ExternalProjectsBuildClasspathEntityImpl.Builder(null)
     modifiable.diff = diff
     modifiable.id = createEntityId()
@@ -148,7 +149,7 @@ internal class ExternalProjectsBuildClasspathEntityData : WorkspaceEntityData<Ex
     return ExternalProjectsBuildClasspathEntity::class.java
   }
 
-  override fun createDetachedEntity(parents: List<WorkspaceEntity.Builder<*>>): WorkspaceEntity.Builder<*> {
+  override fun createDetachedEntity(parents: List<ModifiableWorkspaceEntity<*>>): ModifiableWorkspaceEntity<*> {
     return ExternalProjectsBuildClasspathEntity(projectsBuildClasspath, entitySource) {
     }
   }

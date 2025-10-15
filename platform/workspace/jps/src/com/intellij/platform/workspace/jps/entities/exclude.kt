@@ -18,13 +18,10 @@ interface ExcludeUrlEntity : WorkspaceEntity {
   val url: VirtualFileUrl
 
   //region generated code
-  @GeneratedCodeApiVersion(3)
-  interface Builder : WorkspaceEntity.Builder<ExcludeUrlEntity> {
-    override var entitySource: EntitySource
-    var url: VirtualFileUrl
-  }
-
+  @Deprecated(message = "Use ModifiableExcludeUrlEntity instead")
+  interface Builder : ModifiableExcludeUrlEntity
   companion object : EntityType<ExcludeUrlEntity, Builder>() {
+    @Deprecated(message = "Use new API instead")
     @JvmOverloads
     @JvmStatic
     @JvmName("create")
@@ -32,28 +29,33 @@ interface ExcludeUrlEntity : WorkspaceEntity {
       url: VirtualFileUrl,
       entitySource: EntitySource,
       init: (Builder.() -> Unit)? = null,
-    ): Builder {
-      val builder = builder()
-      builder.url = url
-      builder.entitySource = entitySource
-      init?.invoke(builder)
-      return builder
-    }
+    ): Builder = ExcludeUrlEntityType.compatibilityInvoke(url, entitySource, init)
   }
   //endregion
 }
 
 //region generated code
+@Deprecated(message = "Use new API instead")
 fun MutableEntityStorage.modifyExcludeUrlEntity(
   entity: ExcludeUrlEntity,
   modification: ExcludeUrlEntity.Builder.() -> Unit,
-): ExcludeUrlEntity = modifyEntity(ExcludeUrlEntity.Builder::class.java, entity, modification)
+): ExcludeUrlEntity {
+  return modifyEntity(ExcludeUrlEntity.Builder::class.java, entity, modification)
+}
 
+@Deprecated(message = "Use new API instead")
 @Parent
 var ExcludeUrlEntity.Builder.contentRoot: ContentRootEntity.Builder?
-  by WorkspaceEntity.extensionBuilder(ContentRootEntity::class.java)
+  get() = (this as ModifiableExcludeUrlEntity).contentRoot as ContentRootEntity.Builder?
+  set(value) {
+    (this as ModifiableExcludeUrlEntity).contentRoot = value
+  }
 
+@Deprecated(message = "Use new API instead")
 @Parent
 var ExcludeUrlEntity.Builder.library: LibraryEntity.Builder?
-  by WorkspaceEntity.extensionBuilder(LibraryEntity::class.java)
+  get() = (this as ModifiableExcludeUrlEntity).library as LibraryEntity.Builder?
+  set(value) {
+    (this as ModifiableExcludeUrlEntity).library = value
+  }
 //endregion

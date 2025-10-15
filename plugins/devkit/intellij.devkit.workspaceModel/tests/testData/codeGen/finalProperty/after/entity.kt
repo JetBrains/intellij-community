@@ -1,12 +1,9 @@
 package com.intellij.workspaceModel.test.api
 
-import com.intellij.platform.workspace.storage.EntitySource
-import com.intellij.platform.workspace.storage.EntityType
 import com.intellij.platform.workspace.storage.GeneratedCodeApiVersion
 import com.intellij.platform.workspace.storage.ModifiableWorkspaceEntity
 import com.intellij.platform.workspace.storage.MutableEntityStorage
 import com.intellij.platform.workspace.storage.WorkspaceEntity
-import com.intellij.platform.workspace.storage.annotations.Default
 
 
 interface FinalFieldsEntity : WorkspaceEntity {
@@ -25,39 +22,7 @@ interface FinalFieldsEntity : WorkspaceEntity {
   fun isReadOnly(): Boolean {
     return !isEditable() && descriptor.url != null
   }
-
-  //region generated code
-  @GeneratedCodeApiVersion(3)
-  interface Builder : WorkspaceEntity.Builder<FinalFieldsEntity> {
-    override var entitySource: EntitySource
-    var descriptor: AnotherDataClass
-  }
-
-  companion object : EntityType<FinalFieldsEntity, Builder>() {
-    @JvmOverloads
-    @JvmStatic
-    @JvmName("create")
-    operator fun invoke(
-      descriptor: AnotherDataClass,
-      entitySource: EntitySource,
-      init: (Builder.() -> Unit)? = null,
-    ): Builder {
-      val builder = builder()
-      builder.descriptor = descriptor
-      builder.entitySource = entitySource
-      init?.invoke(builder)
-      return builder
-    }
-  }
-  //endregion
 }
-
-//region generated code
-fun MutableEntityStorage.modifyFinalFieldsEntity(
-  entity: FinalFieldsEntity,
-  modification: FinalFieldsEntity.Builder.() -> Unit,
-): FinalFieldsEntity = modifyEntity(FinalFieldsEntity.Builder::class.java, entity, modification)
-//endregion
 
 data class AnotherDataClass(val name: String,
                             val version: Int,

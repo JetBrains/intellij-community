@@ -1,4 +1,4 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.platform.workspace.storage.testEntities.entities.impl
 
 import com.intellij.platform.workspace.storage.ConnectionId
@@ -6,6 +6,7 @@ import com.intellij.platform.workspace.storage.EntitySource
 import com.intellij.platform.workspace.storage.EntityType
 import com.intellij.platform.workspace.storage.GeneratedCodeApiVersion
 import com.intellij.platform.workspace.storage.GeneratedCodeImplVersion
+import com.intellij.platform.workspace.storage.ModifiableWorkspaceEntity
 import com.intellij.platform.workspace.storage.MutableEntityStorage
 import com.intellij.platform.workspace.storage.WorkspaceEntity
 import com.intellij.platform.workspace.storage.WorkspaceEntityInternalApi
@@ -21,17 +22,20 @@ import com.intellij.platform.workspace.storage.instrumentation.EntityStorageInst
 import com.intellij.platform.workspace.storage.instrumentation.MutableEntityStorageInstrumentation
 import com.intellij.platform.workspace.storage.metadata.model.EntityMetadata
 import com.intellij.platform.workspace.storage.testEntities.entities.ChildMultipleEntity
+import com.intellij.platform.workspace.storage.testEntities.entities.ModifiableChildMultipleEntity
+import com.intellij.platform.workspace.storage.testEntities.entities.ModifiableParentMultipleEntity
 import com.intellij.platform.workspace.storage.testEntities.entities.ParentMultipleEntity
 
 @GeneratedCodeApiVersion(3)
 @GeneratedCodeImplVersion(7)
 @OptIn(WorkspaceEntityInternalApi::class)
-internal class ChildMultipleEntityImpl(private val dataSource: ChildMultipleEntityData) : ChildMultipleEntity,
-                                                                                          WorkspaceEntityBase(dataSource) {
+internal class ChildMultipleEntityImpl(private val dataSource: ChildMultipleEntityData) : ChildMultipleEntity, WorkspaceEntityBase(
+  dataSource) {
 
   private companion object {
-    internal val PARENTENTITY_CONNECTION_ID: ConnectionId =
-      ConnectionId.create(ParentMultipleEntity::class.java, ChildMultipleEntity::class.java, ConnectionId.ConnectionType.ONE_TO_MANY, false)
+    internal val PARENTENTITY_CONNECTION_ID: ConnectionId = ConnectionId.create(ParentMultipleEntity::class.java,
+                                                                                ChildMultipleEntity::class.java,
+                                                                                ConnectionId.ConnectionType.ONE_TO_MANY, false)
 
     private val connections = listOf<ConnectionId>(
       PARENTENTITY_CONNECTION_ID,
@@ -59,8 +63,8 @@ internal class ChildMultipleEntityImpl(private val dataSource: ChildMultipleEnti
   }
 
 
-  internal class Builder(result: ChildMultipleEntityData?) :
-    ModifiableWorkspaceEntityBase<ChildMultipleEntity, ChildMultipleEntityData>(result), ChildMultipleEntity.Builder {
+  internal class Builder(result: ChildMultipleEntityData?) : ModifiableWorkspaceEntityBase<ChildMultipleEntity, ChildMultipleEntityData>(
+    result), ModifiableChildMultipleEntity {
     internal constructor() : this(ChildMultipleEntityData())
 
     override fun applyToBuilder(builder: MutableEntityStorage) {
@@ -136,18 +140,17 @@ internal class ChildMultipleEntityImpl(private val dataSource: ChildMultipleEnti
         changedProperty.add("childData")
       }
 
-    override var parentEntity: ParentMultipleEntity.Builder
+    override var parentEntity: ModifiableParentMultipleEntity
       get() {
         val _diff = diff
         return if (_diff != null) {
           @OptIn(EntityStorageInstrumentationApi::class)
-          ((_diff as MutableEntityStorageInstrumentation).getParentBuilder(
-            PARENTENTITY_CONNECTION_ID, this
-          ) as? ParentMultipleEntity.Builder)
-          ?: (this.entityLinks[EntityLink(false, PARENTENTITY_CONNECTION_ID)]!! as ParentMultipleEntity.Builder)
+          ((_diff as MutableEntityStorageInstrumentation).getParentBuilder(PARENTENTITY_CONNECTION_ID,
+                                                                           this) as? ModifiableParentMultipleEntity)
+          ?: (this.entityLinks[EntityLink(false, PARENTENTITY_CONNECTION_ID)]!! as ModifiableParentMultipleEntity)
         }
         else {
-          this.entityLinks[EntityLink(false, PARENTENTITY_CONNECTION_ID)]!! as ParentMultipleEntity.Builder
+          this.entityLinks[EntityLink(false, PARENTENTITY_CONNECTION_ID)]!! as ModifiableParentMultipleEntity
         }
       }
       set(value) {
@@ -188,7 +191,7 @@ internal class ChildMultipleEntityData : WorkspaceEntityData<ChildMultipleEntity
 
   internal fun isChildDataInitialized(): Boolean = ::childData.isInitialized
 
-  override fun wrapAsModifiable(diff: MutableEntityStorage): WorkspaceEntity.Builder<ChildMultipleEntity> {
+  override fun wrapAsModifiable(diff: MutableEntityStorage): ModifiableWorkspaceEntity<ChildMultipleEntity> {
     val modifiable = ChildMultipleEntityImpl.Builder(null)
     modifiable.diff = diff
     modifiable.id = createEntityId()
@@ -208,17 +211,16 @@ internal class ChildMultipleEntityData : WorkspaceEntityData<ChildMultipleEntity
 
   override fun getMetadata(): EntityMetadata {
     return MetadataStorageImpl.getMetadataByTypeFqn(
-      "com.intellij.platform.workspace.storage.testEntities.entities.ChildMultipleEntity"
-    ) as EntityMetadata
+      "com.intellij.platform.workspace.storage.testEntities.entities.ChildMultipleEntity") as EntityMetadata
   }
 
   override fun getEntityInterface(): Class<out WorkspaceEntity> {
     return ChildMultipleEntity::class.java
   }
 
-  override fun createDetachedEntity(parents: List<WorkspaceEntity.Builder<*>>): WorkspaceEntity.Builder<*> {
+  override fun createDetachedEntity(parents: List<ModifiableWorkspaceEntity<*>>): ModifiableWorkspaceEntity<*> {
     return ChildMultipleEntity(childData, entitySource) {
-      parents.filterIsInstance<ParentMultipleEntity.Builder>().singleOrNull()?.let { this.parentEntity = it }
+      parents.filterIsInstance<ModifiableParentMultipleEntity>().singleOrNull()?.let { this.parentEntity = it }
     }
   }
 

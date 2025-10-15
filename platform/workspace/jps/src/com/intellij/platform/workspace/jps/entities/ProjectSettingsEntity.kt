@@ -12,32 +12,27 @@ interface ProjectSettingsEntity : WorkspaceEntity {
   val projectSdk: SdkId?
 
   //region generated code
-  @GeneratedCodeApiVersion(3)
-  interface Builder : WorkspaceEntity.Builder<ProjectSettingsEntity> {
-    override var entitySource: EntitySource
-    var projectSdk: SdkId?
-  }
-
+  @Deprecated(message = "Use ModifiableProjectSettingsEntity instead")
+  interface Builder : ModifiableProjectSettingsEntity
   companion object : EntityType<ProjectSettingsEntity, Builder>() {
+    @Deprecated(message = "Use new API instead")
     @JvmOverloads
     @JvmStatic
     @JvmName("create")
     operator fun invoke(
       entitySource: EntitySource,
       init: (Builder.() -> Unit)? = null,
-    ): Builder {
-      val builder = builder()
-      builder.entitySource = entitySource
-      init?.invoke(builder)
-      return builder
-    }
+    ): Builder = ProjectSettingsEntityType.compatibilityInvoke(entitySource, init)
   }
   //endregion
 }
 
 //region generated code
+@Deprecated(message = "Use new API instead")
 fun MutableEntityStorage.modifyProjectSettingsEntity(
   entity: ProjectSettingsEntity,
   modification: ProjectSettingsEntity.Builder.() -> Unit,
-): ProjectSettingsEntity = modifyEntity(ProjectSettingsEntity.Builder::class.java, entity, modification)
+): ProjectSettingsEntity {
+  return modifyEntity(ProjectSettingsEntity.Builder::class.java, entity, modification)
+}
 //endregion

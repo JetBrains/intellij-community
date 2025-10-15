@@ -6,6 +6,7 @@ import com.intellij.platform.workspace.storage.EntitySource
 import com.intellij.platform.workspace.storage.EntityType
 import com.intellij.platform.workspace.storage.GeneratedCodeApiVersion
 import com.intellij.platform.workspace.storage.GeneratedCodeImplVersion
+import com.intellij.platform.workspace.storage.ModifiableWorkspaceEntity
 import com.intellij.platform.workspace.storage.MutableEntityStorage
 import com.intellij.platform.workspace.storage.WorkspaceEntity
 import com.intellij.platform.workspace.storage.WorkspaceEntityInternalApi
@@ -19,6 +20,7 @@ import com.intellij.platform.workspace.storage.instrumentation.EntityStorageInst
 import com.intellij.platform.workspace.storage.metadata.model.EntityMetadata
 import com.intellij.platform.workspace.storage.url.VirtualFileUrl
 import com.intellij.util.indexing.testEntities.IndexingTestEntity
+import com.intellij.util.indexing.testEntities.ModifiableIndexingTestEntity
 
 @GeneratedCodeApiVersion(3)
 @GeneratedCodeImplVersion(7)
@@ -58,7 +60,7 @@ internal class IndexingTestEntityImpl(private val dataSource: IndexingTestEntity
 
 
   internal class Builder(result: IndexingTestEntityData?) : ModifiableWorkspaceEntityBase<IndexingTestEntity, IndexingTestEntityData>(
-    result), IndexingTestEntity.Builder {
+    result), ModifiableIndexingTestEntity {
     internal constructor() : this(IndexingTestEntityData())
 
     override fun applyToBuilder(builder: MutableEntityStorage) {
@@ -191,7 +193,7 @@ internal class IndexingTestEntityData : WorkspaceEntityData<IndexingTestEntity>(
   internal fun isRootsInitialized(): Boolean = ::roots.isInitialized
   internal fun isExcludedRootsInitialized(): Boolean = ::excludedRoots.isInitialized
 
-  override fun wrapAsModifiable(diff: MutableEntityStorage): WorkspaceEntity.Builder<IndexingTestEntity> {
+  override fun wrapAsModifiable(diff: MutableEntityStorage): ModifiableWorkspaceEntity<IndexingTestEntity> {
     val modifiable = IndexingTestEntityImpl.Builder(null)
     modifiable.diff = diff
     modifiable.id = createEntityId()
@@ -225,7 +227,7 @@ internal class IndexingTestEntityData : WorkspaceEntityData<IndexingTestEntity>(
     return IndexingTestEntity::class.java
   }
 
-  override fun createDetachedEntity(parents: List<WorkspaceEntity.Builder<*>>): WorkspaceEntity.Builder<*> {
+  override fun createDetachedEntity(parents: List<ModifiableWorkspaceEntity<*>>): ModifiableWorkspaceEntity<*> {
     return IndexingTestEntity(roots, excludedRoots, entitySource) {
     }
   }

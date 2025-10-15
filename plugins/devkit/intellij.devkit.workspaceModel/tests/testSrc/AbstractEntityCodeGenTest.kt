@@ -18,6 +18,10 @@ abstract class AbstractEntityCodeGenTest : CodeGenerationTestBase() {
   fun testSimpleCase() {
     doTest()
   }
+  
+  fun testKeepOld() {
+    doTest()
+  }
 
   fun testFinalProperty() {
     doTest()

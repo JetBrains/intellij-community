@@ -1,4 +1,4 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.platform.workspace.storage.testEntities.entities.impl
 
 import com.intellij.platform.workspace.storage.ConnectionId
@@ -6,6 +6,7 @@ import com.intellij.platform.workspace.storage.EntitySource
 import com.intellij.platform.workspace.storage.EntityType
 import com.intellij.platform.workspace.storage.GeneratedCodeApiVersion
 import com.intellij.platform.workspace.storage.GeneratedCodeImplVersion
+import com.intellij.platform.workspace.storage.ModifiableWorkspaceEntity
 import com.intellij.platform.workspace.storage.MutableEntityStorage
 import com.intellij.platform.workspace.storage.WorkspaceEntity
 import com.intellij.platform.workspace.storage.WorkspaceEntityInternalApi
@@ -22,6 +23,7 @@ import com.intellij.platform.workspace.storage.instrumentation.EntityStorageInst
 import com.intellij.platform.workspace.storage.instrumentation.EntityStorageInstrumentationApi
 import com.intellij.platform.workspace.storage.instrumentation.MutableEntityStorageInstrumentation
 import com.intellij.platform.workspace.storage.metadata.model.EntityMetadata
+import com.intellij.platform.workspace.storage.testEntities.entities.ModifiableTreeEntity
 import com.intellij.platform.workspace.storage.testEntities.entities.TreeEntity
 
 @GeneratedCodeApiVersion(3)
@@ -30,10 +32,10 @@ import com.intellij.platform.workspace.storage.testEntities.entities.TreeEntity
 internal class TreeEntityImpl(private val dataSource: TreeEntityData) : TreeEntity, WorkspaceEntityBase(dataSource) {
 
   private companion object {
-    internal val CHILDREN_CONNECTION_ID: ConnectionId =
-      ConnectionId.create(TreeEntity::class.java, TreeEntity::class.java, ConnectionId.ConnectionType.ONE_TO_MANY, true)
-    internal val PARENTENTITY_CONNECTION_ID: ConnectionId =
-      ConnectionId.create(TreeEntity::class.java, TreeEntity::class.java, ConnectionId.ConnectionType.ONE_TO_MANY, true)
+    internal val CHILDREN_CONNECTION_ID: ConnectionId = ConnectionId.create(TreeEntity::class.java, TreeEntity::class.java,
+                                                                            ConnectionId.ConnectionType.ONE_TO_MANY, true)
+    internal val PARENTENTITY_CONNECTION_ID: ConnectionId = ConnectionId.create(TreeEntity::class.java, TreeEntity::class.java,
+                                                                                ConnectionId.ConnectionType.ONE_TO_MANY, true)
 
     private val connections = listOf<ConnectionId>(
       CHILDREN_CONNECTION_ID,
@@ -65,7 +67,8 @@ internal class TreeEntityImpl(private val dataSource: TreeEntityData) : TreeEnti
   }
 
 
-  internal class Builder(result: TreeEntityData?) : ModifiableWorkspaceEntityBase<TreeEntity, TreeEntityData>(result), TreeEntity.Builder {
+  internal class Builder(result: TreeEntityData?) : ModifiableWorkspaceEntityBase<TreeEntity, TreeEntityData>(
+    result), ModifiableTreeEntity {
     internal constructor() : this(TreeEntityData())
 
     override fun applyToBuilder(builder: MutableEntityStorage) {
@@ -144,18 +147,18 @@ internal class TreeEntityImpl(private val dataSource: TreeEntityData) : TreeEnti
 
     // List of non-abstract referenced types
     var _children: List<TreeEntity>? = emptyList()
-    override var children: List<TreeEntity.Builder>
+    override var children: List<ModifiableTreeEntity>
       get() {
         // Getter of the list of non-abstract referenced types
         val _diff = diff
         return if (_diff != null) {
           @OptIn(EntityStorageInstrumentationApi::class)
-          ((_diff as MutableEntityStorageInstrumentation).getManyChildrenBuilders(CHILDREN_CONNECTION_ID, this)!!
-            .toList() as List<TreeEntity.Builder>) +
-          (this.entityLinks[EntityLink(true, CHILDREN_CONNECTION_ID)] as? List<TreeEntity.Builder> ?: emptyList())
+          ((_diff as MutableEntityStorageInstrumentation).getManyChildrenBuilders(CHILDREN_CONNECTION_ID,
+                                                                                  this)!!.toList() as List<ModifiableTreeEntity>) +
+          (this.entityLinks[EntityLink(true, CHILDREN_CONNECTION_ID)] as? List<ModifiableTreeEntity> ?: emptyList())
         }
         else {
-          this.entityLinks[EntityLink(true, CHILDREN_CONNECTION_ID)] as? List<TreeEntity.Builder> ?: emptyList()
+          this.entityLinks[EntityLink(true, CHILDREN_CONNECTION_ID)] as? List<ModifiableTreeEntity> ?: emptyList()
         }
       }
       set(value) {
@@ -189,16 +192,16 @@ internal class TreeEntityImpl(private val dataSource: TreeEntityData) : TreeEnti
         changedProperty.add("children")
       }
 
-    override var parentEntity: TreeEntity.Builder?
+    override var parentEntity: ModifiableTreeEntity?
       get() {
         val _diff = diff
         return if (_diff != null) {
           @OptIn(EntityStorageInstrumentationApi::class)
-          ((_diff as MutableEntityStorageInstrumentation).getParentBuilder(PARENTENTITY_CONNECTION_ID, this) as? TreeEntity.Builder)
-          ?: (this.entityLinks[EntityLink(false, PARENTENTITY_CONNECTION_ID)] as? TreeEntity.Builder)
+          ((_diff as MutableEntityStorageInstrumentation).getParentBuilder(PARENTENTITY_CONNECTION_ID, this) as? ModifiableTreeEntity)
+          ?: (this.entityLinks[EntityLink(false, PARENTENTITY_CONNECTION_ID)] as? ModifiableTreeEntity)
         }
         else {
-          this.entityLinks[EntityLink(false, PARENTENTITY_CONNECTION_ID)] as? TreeEntity.Builder
+          this.entityLinks[EntityLink(false, PARENTENTITY_CONNECTION_ID)] as? ModifiableTreeEntity
         }
       }
       set(value) {
@@ -239,7 +242,7 @@ internal class TreeEntityData : WorkspaceEntityData<TreeEntity>() {
 
   internal fun isDataInitialized(): Boolean = ::data.isInitialized
 
-  override fun wrapAsModifiable(diff: MutableEntityStorage): WorkspaceEntity.Builder<TreeEntity> {
+  override fun wrapAsModifiable(diff: MutableEntityStorage): ModifiableWorkspaceEntity<TreeEntity> {
     val modifiable = TreeEntityImpl.Builder(null)
     modifiable.diff = diff
     modifiable.id = createEntityId()
@@ -259,17 +262,16 @@ internal class TreeEntityData : WorkspaceEntityData<TreeEntity>() {
 
   override fun getMetadata(): EntityMetadata {
     return MetadataStorageImpl.getMetadataByTypeFqn(
-      "com.intellij.platform.workspace.storage.testEntities.entities.TreeEntity"
-    ) as EntityMetadata
+      "com.intellij.platform.workspace.storage.testEntities.entities.TreeEntity") as EntityMetadata
   }
 
   override fun getEntityInterface(): Class<out WorkspaceEntity> {
     return TreeEntity::class.java
   }
 
-  override fun createDetachedEntity(parents: List<WorkspaceEntity.Builder<*>>): WorkspaceEntity.Builder<*> {
+  override fun createDetachedEntity(parents: List<ModifiableWorkspaceEntity<*>>): ModifiableWorkspaceEntity<*> {
     return TreeEntity(data, entitySource) {
-      this.parentEntity = parents.filterIsInstance<TreeEntity.Builder>().singleOrNull()
+      this.parentEntity = parents.filterIsInstance<ModifiableTreeEntity>().singleOrNull()
     }
   }
 

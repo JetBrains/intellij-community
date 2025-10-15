@@ -1,4 +1,4 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.platform.workspace.storage.testEntities.entities.impl
 
 import com.intellij.platform.workspace.storage.ConnectionId
@@ -6,6 +6,7 @@ import com.intellij.platform.workspace.storage.EntitySource
 import com.intellij.platform.workspace.storage.EntityType
 import com.intellij.platform.workspace.storage.GeneratedCodeApiVersion
 import com.intellij.platform.workspace.storage.GeneratedCodeImplVersion
+import com.intellij.platform.workspace.storage.ModifiableWorkspaceEntity
 import com.intellij.platform.workspace.storage.MutableEntityStorage
 import com.intellij.platform.workspace.storage.WorkspaceEntity
 import com.intellij.platform.workspace.storage.WorkspaceEntityInternalApi
@@ -24,6 +25,9 @@ import com.intellij.platform.workspace.storage.instrumentation.MutableEntityStor
 import com.intellij.platform.workspace.storage.metadata.model.EntityMetadata
 import com.intellij.platform.workspace.storage.testEntities.entities.ChildSubEntity
 import com.intellij.platform.workspace.storage.testEntities.entities.ChildSubSubEntity
+import com.intellij.platform.workspace.storage.testEntities.entities.ModifiableChildSubEntity
+import com.intellij.platform.workspace.storage.testEntities.entities.ModifiableChildSubSubEntity
+import com.intellij.platform.workspace.storage.testEntities.entities.ModifiableParentSubEntity
 import com.intellij.platform.workspace.storage.testEntities.entities.ParentSubEntity
 
 @GeneratedCodeApiVersion(3)
@@ -32,10 +36,10 @@ import com.intellij.platform.workspace.storage.testEntities.entities.ParentSubEn
 internal class ChildSubEntityImpl(private val dataSource: ChildSubEntityData) : ChildSubEntity, WorkspaceEntityBase(dataSource) {
 
   private companion object {
-    internal val PARENTENTITY_CONNECTION_ID: ConnectionId =
-      ConnectionId.create(ParentSubEntity::class.java, ChildSubEntity::class.java, ConnectionId.ConnectionType.ONE_TO_ONE, false)
-    internal val CHILD_CONNECTION_ID: ConnectionId =
-      ConnectionId.create(ChildSubEntity::class.java, ChildSubSubEntity::class.java, ConnectionId.ConnectionType.ONE_TO_ONE, false)
+    internal val PARENTENTITY_CONNECTION_ID: ConnectionId = ConnectionId.create(ParentSubEntity::class.java, ChildSubEntity::class.java,
+                                                                                ConnectionId.ConnectionType.ONE_TO_ONE, false)
+    internal val CHILD_CONNECTION_ID: ConnectionId = ConnectionId.create(ChildSubEntity::class.java, ChildSubSubEntity::class.java,
+                                                                         ConnectionId.ConnectionType.ONE_TO_ONE, false)
 
     private val connections = listOf<ConnectionId>(
       PARENTENTITY_CONNECTION_ID,
@@ -61,8 +65,8 @@ internal class ChildSubEntityImpl(private val dataSource: ChildSubEntityData) : 
   }
 
 
-  internal class Builder(result: ChildSubEntityData?) : ModifiableWorkspaceEntityBase<ChildSubEntity, ChildSubEntityData>(result),
-                                                        ChildSubEntity.Builder {
+  internal class Builder(result: ChildSubEntityData?) : ModifiableWorkspaceEntityBase<ChildSubEntity, ChildSubEntityData>(
+    result), ModifiableChildSubEntity {
     internal constructor() : this(ChildSubEntityData())
 
     override fun applyToBuilder(builder: MutableEntityStorage) {
@@ -126,16 +130,16 @@ internal class ChildSubEntityImpl(private val dataSource: ChildSubEntityData) : 
 
       }
 
-    override var parentEntity: ParentSubEntity.Builder
+    override var parentEntity: ModifiableParentSubEntity
       get() {
         val _diff = diff
         return if (_diff != null) {
           @OptIn(EntityStorageInstrumentationApi::class)
-          ((_diff as MutableEntityStorageInstrumentation).getParentBuilder(PARENTENTITY_CONNECTION_ID, this) as? ParentSubEntity.Builder)
-          ?: (this.entityLinks[EntityLink(false, PARENTENTITY_CONNECTION_ID)]!! as ParentSubEntity.Builder)
+          ((_diff as MutableEntityStorageInstrumentation).getParentBuilder(PARENTENTITY_CONNECTION_ID, this) as? ModifiableParentSubEntity)
+          ?: (this.entityLinks[EntityLink(false, PARENTENTITY_CONNECTION_ID)]!! as ModifiableParentSubEntity)
         }
         else {
-          this.entityLinks[EntityLink(false, PARENTENTITY_CONNECTION_ID)]!! as ParentSubEntity.Builder
+          this.entityLinks[EntityLink(false, PARENTENTITY_CONNECTION_ID)]!! as ModifiableParentSubEntity
         }
       }
       set(value) {
@@ -162,16 +166,16 @@ internal class ChildSubEntityImpl(private val dataSource: ChildSubEntityData) : 
         changedProperty.add("parentEntity")
       }
 
-    override var child: ChildSubSubEntity.Builder?
+    override var child: ModifiableChildSubSubEntity?
       get() {
         val _diff = diff
         return if (_diff != null) {
           @OptIn(EntityStorageInstrumentationApi::class)
-          ((_diff as MutableEntityStorageInstrumentation).getOneChildBuilder(CHILD_CONNECTION_ID, this) as? ChildSubSubEntity.Builder)
-          ?: (this.entityLinks[EntityLink(true, CHILD_CONNECTION_ID)] as? ChildSubSubEntity.Builder)
+          ((_diff as MutableEntityStorageInstrumentation).getOneChildBuilder(CHILD_CONNECTION_ID, this) as? ModifiableChildSubSubEntity)
+          ?: (this.entityLinks[EntityLink(true, CHILD_CONNECTION_ID)] as? ModifiableChildSubSubEntity)
         }
         else {
-          this.entityLinks[EntityLink(true, CHILD_CONNECTION_ID)] as? ChildSubSubEntity.Builder
+          this.entityLinks[EntityLink(true, CHILD_CONNECTION_ID)] as? ModifiableChildSubSubEntity
         }
       }
       set(value) {
@@ -206,7 +210,7 @@ internal class ChildSubEntityImpl(private val dataSource: ChildSubEntityData) : 
 internal class ChildSubEntityData : WorkspaceEntityData<ChildSubEntity>() {
 
 
-  override fun wrapAsModifiable(diff: MutableEntityStorage): WorkspaceEntity.Builder<ChildSubEntity> {
+  override fun wrapAsModifiable(diff: MutableEntityStorage): ModifiableWorkspaceEntity<ChildSubEntity> {
     val modifiable = ChildSubEntityImpl.Builder(null)
     modifiable.diff = diff
     modifiable.id = createEntityId()
@@ -226,17 +230,16 @@ internal class ChildSubEntityData : WorkspaceEntityData<ChildSubEntity>() {
 
   override fun getMetadata(): EntityMetadata {
     return MetadataStorageImpl.getMetadataByTypeFqn(
-      "com.intellij.platform.workspace.storage.testEntities.entities.ChildSubEntity"
-    ) as EntityMetadata
+      "com.intellij.platform.workspace.storage.testEntities.entities.ChildSubEntity") as EntityMetadata
   }
 
   override fun getEntityInterface(): Class<out WorkspaceEntity> {
     return ChildSubEntity::class.java
   }
 
-  override fun createDetachedEntity(parents: List<WorkspaceEntity.Builder<*>>): WorkspaceEntity.Builder<*> {
+  override fun createDetachedEntity(parents: List<ModifiableWorkspaceEntity<*>>): ModifiableWorkspaceEntity<*> {
     return ChildSubEntity(entitySource) {
-      parents.filterIsInstance<ParentSubEntity.Builder>().singleOrNull()?.let { this.parentEntity = it }
+      parents.filterIsInstance<ModifiableParentSubEntity>().singleOrNull()?.let { this.parentEntity = it }
     }
   }
 

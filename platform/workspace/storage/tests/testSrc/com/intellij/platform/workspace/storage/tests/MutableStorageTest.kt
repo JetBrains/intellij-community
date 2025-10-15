@@ -1,4 +1,4 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.platform.workspace.storage.tests
 
 import com.intellij.platform.workspace.storage.MutableEntityStorage
@@ -27,9 +27,9 @@ class MutableStorageTest {
     val newBuilder = MutableEntityStorage.from(builder.toSnapshot())
 
     val entityFromStoreOne = newBuilder.entities(SampleEntity2::class.java).single()
-    val sampleBuilder = entityFromStoreOne.builderFrom(newBuilder) as SampleEntity2.Builder
+    val sampleBuilder = entityFromStoreOne.builderFrom(newBuilder) as ModifiableSampleEntity2
     val entityFromStoreTwo = newBuilder.entities(SampleEntity2::class.java).single()
-    val entityTwoBuilder = entityFromStoreTwo.builderFrom(newBuilder) as SampleEntity2.Builder
+    val entityTwoBuilder = entityFromStoreTwo.builderFrom(newBuilder) as ModifiableSampleEntity2
 
     newBuilder.modifySampleEntity2(entityFromStoreOne) {
       entitySource = MySource
@@ -84,7 +84,7 @@ class MutableStorageTest {
     builder.addEntity(parentEntity)
 
     val parentEntityFromStore = builder.entities(ParentMultipleEntity::class.java).single()
-    val parentBuilder = parentEntityFromStore.builderFrom(builder) as ParentMultipleEntity.Builder
+    val parentBuilder = parentEntityFromStore.builderFrom(builder) as ModifiableParentMultipleEntity
     assertThrows<IllegalStateException> {
       parentBuilder.parentData = "AnotherParentData"
     }

@@ -1,4 +1,4 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.platform.workspace.storage.testEntities.entities.impl
 
 import com.intellij.platform.workspace.storage.ConnectionId
@@ -6,6 +6,7 @@ import com.intellij.platform.workspace.storage.EntitySource
 import com.intellij.platform.workspace.storage.EntityType
 import com.intellij.platform.workspace.storage.GeneratedCodeApiVersion
 import com.intellij.platform.workspace.storage.GeneratedCodeImplVersion
+import com.intellij.platform.workspace.storage.ModifiableWorkspaceEntity
 import com.intellij.platform.workspace.storage.MutableEntityStorage
 import com.intellij.platform.workspace.storage.WorkspaceEntity
 import com.intellij.platform.workspace.storage.WorkspaceEntityInternalApi
@@ -17,6 +18,7 @@ import com.intellij.platform.workspace.storage.instrumentation.EntityStorageInst
 import com.intellij.platform.workspace.storage.instrumentation.EntityStorageInstrumentationApi
 import com.intellij.platform.workspace.storage.metadata.model.EntityMetadata
 import com.intellij.platform.workspace.storage.testEntities.entities.ChildWithNulls
+import com.intellij.platform.workspace.storage.testEntities.entities.ModifiableChildWithNulls
 
 @GeneratedCodeApiVersion(3)
 @GeneratedCodeImplVersion(7)
@@ -48,8 +50,8 @@ internal class ChildWithNullsImpl(private val dataSource: ChildWithNullsData) : 
   }
 
 
-  internal class Builder(result: ChildWithNullsData?) : ModifiableWorkspaceEntityBase<ChildWithNulls, ChildWithNullsData>(result),
-                                                        ChildWithNulls.Builder {
+  internal class Builder(result: ChildWithNullsData?) : ModifiableWorkspaceEntityBase<ChildWithNulls, ChildWithNullsData>(
+    result), ModifiableChildWithNulls {
     internal constructor() : this(ChildWithNullsData())
 
     override fun applyToBuilder(builder: MutableEntityStorage) {
@@ -125,7 +127,7 @@ internal class ChildWithNullsData : WorkspaceEntityData<ChildWithNulls>() {
 
   internal fun isChildDataInitialized(): Boolean = ::childData.isInitialized
 
-  override fun wrapAsModifiable(diff: MutableEntityStorage): WorkspaceEntity.Builder<ChildWithNulls> {
+  override fun wrapAsModifiable(diff: MutableEntityStorage): ModifiableWorkspaceEntity<ChildWithNulls> {
     val modifiable = ChildWithNullsImpl.Builder(null)
     modifiable.diff = diff
     modifiable.id = createEntityId()
@@ -145,15 +147,14 @@ internal class ChildWithNullsData : WorkspaceEntityData<ChildWithNulls>() {
 
   override fun getMetadata(): EntityMetadata {
     return MetadataStorageImpl.getMetadataByTypeFqn(
-      "com.intellij.platform.workspace.storage.testEntities.entities.ChildWithNulls"
-    ) as EntityMetadata
+      "com.intellij.platform.workspace.storage.testEntities.entities.ChildWithNulls") as EntityMetadata
   }
 
   override fun getEntityInterface(): Class<out WorkspaceEntity> {
     return ChildWithNulls::class.java
   }
 
-  override fun createDetachedEntity(parents: List<WorkspaceEntity.Builder<*>>): WorkspaceEntity.Builder<*> {
+  override fun createDetachedEntity(parents: List<ModifiableWorkspaceEntity<*>>): ModifiableWorkspaceEntity<*> {
     return ChildWithNulls(childData, entitySource) {
     }
   }

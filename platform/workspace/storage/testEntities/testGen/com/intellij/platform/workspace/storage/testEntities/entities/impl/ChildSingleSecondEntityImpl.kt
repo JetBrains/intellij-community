@@ -1,4 +1,4 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.platform.workspace.storage.testEntities.entities.impl
 
 import com.intellij.platform.workspace.storage.ConnectionId
@@ -6,6 +6,7 @@ import com.intellij.platform.workspace.storage.EntitySource
 import com.intellij.platform.workspace.storage.EntityType
 import com.intellij.platform.workspace.storage.GeneratedCodeApiVersion
 import com.intellij.platform.workspace.storage.GeneratedCodeImplVersion
+import com.intellij.platform.workspace.storage.ModifiableWorkspaceEntity
 import com.intellij.platform.workspace.storage.MutableEntityStorage
 import com.intellij.platform.workspace.storage.WorkspaceEntity
 import com.intellij.platform.workspace.storage.WorkspaceEntityInternalApi
@@ -23,18 +24,20 @@ import com.intellij.platform.workspace.storage.instrumentation.MutableEntityStor
 import com.intellij.platform.workspace.storage.metadata.model.EntityMetadata
 import com.intellij.platform.workspace.storage.testEntities.entities.ChildSingleAbstractBaseEntity
 import com.intellij.platform.workspace.storage.testEntities.entities.ChildSingleSecondEntity
+import com.intellij.platform.workspace.storage.testEntities.entities.ModifiableChildSingleSecondEntity
+import com.intellij.platform.workspace.storage.testEntities.entities.ModifiableParentSingleAbEntity
 import com.intellij.platform.workspace.storage.testEntities.entities.ParentSingleAbEntity
 
 @GeneratedCodeApiVersion(3)
 @GeneratedCodeImplVersion(7)
 @OptIn(WorkspaceEntityInternalApi::class)
-internal class ChildSingleSecondEntityImpl(private val dataSource: ChildSingleSecondEntityData) : ChildSingleSecondEntity,
-                                                                                                  WorkspaceEntityBase(dataSource) {
+internal class ChildSingleSecondEntityImpl(private val dataSource: ChildSingleSecondEntityData) : ChildSingleSecondEntity, WorkspaceEntityBase(
+  dataSource) {
 
   private companion object {
-    internal val PARENTENTITY_CONNECTION_ID: ConnectionId = ConnectionId.create(
-      ParentSingleAbEntity::class.java, ChildSingleAbstractBaseEntity::class.java, ConnectionId.ConnectionType.ABSTRACT_ONE_TO_ONE, false
-    )
+    internal val PARENTENTITY_CONNECTION_ID: ConnectionId = ConnectionId.create(ParentSingleAbEntity::class.java,
+                                                                                ChildSingleAbstractBaseEntity::class.java,
+                                                                                ConnectionId.ConnectionType.ABSTRACT_ONE_TO_ONE, false)
 
     private val connections = listOf<ConnectionId>(
       PARENTENTITY_CONNECTION_ID,
@@ -68,8 +71,8 @@ internal class ChildSingleSecondEntityImpl(private val dataSource: ChildSingleSe
   }
 
 
-  internal class Builder(result: ChildSingleSecondEntityData?) :
-    ModifiableWorkspaceEntityBase<ChildSingleSecondEntity, ChildSingleSecondEntityData>(result), ChildSingleSecondEntity.Builder {
+  internal class Builder(result: ChildSingleSecondEntityData?) : ModifiableWorkspaceEntityBase<ChildSingleSecondEntity, ChildSingleSecondEntityData>(
+    result), ModifiableChildSingleSecondEntity {
     internal constructor() : this(ChildSingleSecondEntityData())
 
     override fun applyToBuilder(builder: MutableEntityStorage) {
@@ -149,18 +152,17 @@ internal class ChildSingleSecondEntityImpl(private val dataSource: ChildSingleSe
         changedProperty.add("commonData")
       }
 
-    override var parentEntity: ParentSingleAbEntity.Builder
+    override var parentEntity: ModifiableParentSingleAbEntity
       get() {
         val _diff = diff
         return if (_diff != null) {
           @OptIn(EntityStorageInstrumentationApi::class)
-          ((_diff as MutableEntityStorageInstrumentation).getParentBuilder(
-            PARENTENTITY_CONNECTION_ID, this
-          ) as? ParentSingleAbEntity.Builder)
-          ?: (this.entityLinks[EntityLink(false, PARENTENTITY_CONNECTION_ID)]!! as ParentSingleAbEntity.Builder)
+          ((_diff as MutableEntityStorageInstrumentation).getParentBuilder(PARENTENTITY_CONNECTION_ID,
+                                                                           this) as? ModifiableParentSingleAbEntity)
+          ?: (this.entityLinks[EntityLink(false, PARENTENTITY_CONNECTION_ID)]!! as ModifiableParentSingleAbEntity)
         }
         else {
-          this.entityLinks[EntityLink(false, PARENTENTITY_CONNECTION_ID)]!! as ParentSingleAbEntity.Builder
+          this.entityLinks[EntityLink(false, PARENTENTITY_CONNECTION_ID)]!! as ModifiableParentSingleAbEntity
         }
       }
       set(value) {
@@ -207,7 +209,7 @@ internal class ChildSingleSecondEntityData : WorkspaceEntityData<ChildSingleSeco
   internal fun isCommonDataInitialized(): Boolean = ::commonData.isInitialized
   internal fun isSecondDataInitialized(): Boolean = ::secondData.isInitialized
 
-  override fun wrapAsModifiable(diff: MutableEntityStorage): WorkspaceEntity.Builder<ChildSingleSecondEntity> {
+  override fun wrapAsModifiable(diff: MutableEntityStorage): ModifiableWorkspaceEntity<ChildSingleSecondEntity> {
     val modifiable = ChildSingleSecondEntityImpl.Builder(null)
     modifiable.diff = diff
     modifiable.id = createEntityId()
@@ -227,17 +229,16 @@ internal class ChildSingleSecondEntityData : WorkspaceEntityData<ChildSingleSeco
 
   override fun getMetadata(): EntityMetadata {
     return MetadataStorageImpl.getMetadataByTypeFqn(
-      "com.intellij.platform.workspace.storage.testEntities.entities.ChildSingleSecondEntity"
-    ) as EntityMetadata
+      "com.intellij.platform.workspace.storage.testEntities.entities.ChildSingleSecondEntity") as EntityMetadata
   }
 
   override fun getEntityInterface(): Class<out WorkspaceEntity> {
     return ChildSingleSecondEntity::class.java
   }
 
-  override fun createDetachedEntity(parents: List<WorkspaceEntity.Builder<*>>): WorkspaceEntity.Builder<*> {
+  override fun createDetachedEntity(parents: List<ModifiableWorkspaceEntity<*>>): ModifiableWorkspaceEntity<*> {
     return ChildSingleSecondEntity(commonData, secondData, entitySource) {
-      parents.filterIsInstance<ParentSingleAbEntity.Builder>().singleOrNull()?.let { this.parentEntity = it }
+      parents.filterIsInstance<ModifiableParentSingleAbEntity>().singleOrNull()?.let { this.parentEntity = it }
     }
   }
 

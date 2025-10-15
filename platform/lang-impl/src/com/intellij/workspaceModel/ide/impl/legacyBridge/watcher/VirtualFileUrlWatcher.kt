@@ -1,8 +1,9 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.workspaceModel.ide.impl.legacyBridge.watcher
 
 import com.intellij.ide.highlighter.ModuleFileType
 import com.intellij.java.workspace.entities.JavaModuleSettingsEntity
+import com.intellij.java.workspace.entities.ModifiableJavaModuleSettingsEntity
 import com.intellij.openapi.components.service
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.io.FileUtil
@@ -32,7 +33,7 @@ open class VirtualFileUrlWatcher(val project: Project) {
     SdkRootFileWatcher(),
     // Library excluded roots
     EntityVirtualFileUrlWatcher(
-      LibraryEntity::class, LibraryEntity.Builder::class,
+      LibraryEntity::class, ModifiableLibraryEntity::class,
       propertyName = LibraryEntity::excludedRoots.name,
       modificator = { oldVirtualFileUrl, newVirtualFileUrl ->
         val newUrls = excludedRoots.toMutableList()
@@ -42,7 +43,7 @@ open class VirtualFileUrlWatcher(val project: Project) {
       }
     ),
     EntityVirtualFileUrlWatcher(
-      ExcludeUrlEntity::class, ExcludeUrlEntity.Builder::class,
+      ExcludeUrlEntity::class, ModifiableExcludeUrlEntity::class,
       propertyName = ExcludeUrlEntity::url.name,
       modificator = { _, newVirtualFileUrl ->
         if (this.library != null || this.contentRoot != null) {
@@ -52,13 +53,13 @@ open class VirtualFileUrlWatcher(val project: Project) {
     ),
     // Content root urls
     EntityVirtualFileUrlWatcher(
-      ContentRootEntity::class, ContentRootEntity.Builder::class,
+      ContentRootEntity::class, ModifiableContentRootEntity::class,
       propertyName = ContentRootEntity::url.name,
       modificator = { _, newVirtualFileUrl -> url = newVirtualFileUrl }
     ),
     // Content root excluded urls
     EntityVirtualFileUrlWatcher(
-      ContentRootEntity::class, ContentRootEntity.Builder::class,
+      ContentRootEntity::class, ModifiableContentRootEntity::class,
       propertyName = ContentRootEntity::excludedUrls.name,
       modificator = { oldVirtualFileUrl, newVirtualFileUrl ->
         val newUrls = excludedUrls.toMutableList()
@@ -69,19 +70,19 @@ open class VirtualFileUrlWatcher(val project: Project) {
     ),
     // Source roots
     EntityVirtualFileUrlWatcher(
-      SourceRootEntity::class, SourceRootEntity.Builder::class,
+      SourceRootEntity::class, ModifiableSourceRootEntity::class,
       propertyName = SourceRootEntity::url.name,
       modificator = { _, newVirtualFileUrl -> url = newVirtualFileUrl }
     ),
     // Java module settings entity compiler output
     EntityVirtualFileUrlWatcher(
-      JavaModuleSettingsEntity::class, JavaModuleSettingsEntity.Builder::class,
+      JavaModuleSettingsEntity::class, ModifiableJavaModuleSettingsEntity::class,
       propertyName = JavaModuleSettingsEntity::compilerOutput.name,
       modificator = { _, newVirtualFileUrl -> compilerOutput = newVirtualFileUrl }
     ),
     // Java module settings entity compiler output for tests
     EntityVirtualFileUrlWatcher(
-      JavaModuleSettingsEntity::class, JavaModuleSettingsEntity.Builder::class,
+      JavaModuleSettingsEntity::class, ModifiableJavaModuleSettingsEntity::class,
       propertyName = JavaModuleSettingsEntity::compilerOutputForTests.name,
       modificator = { _, newVirtualFileUrl -> compilerOutputForTests = newVirtualFileUrl }
     ),

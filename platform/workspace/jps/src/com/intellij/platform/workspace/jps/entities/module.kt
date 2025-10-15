@@ -27,17 +27,10 @@ interface ModuleEntity : WorkspaceEntityWithSymbolicId {
   val facets: List<FacetEntity>
 
   //region generated code
-  @GeneratedCodeApiVersion(3)
-  interface Builder : WorkspaceEntity.Builder<ModuleEntity> {
-    override var entitySource: EntitySource
-    var name: String
-    var type: ModuleTypeId?
-    var dependencies: MutableList<ModuleDependencyItem>
-    var contentRoots: List<ContentRootEntity.Builder>
-    var facets: List<FacetEntity.Builder>
-  }
-
+  @Deprecated(message = "Use ModifiableModuleEntity instead")
+  interface Builder : ModifiableModuleEntity
   companion object : EntityType<ModuleEntity, Builder>() {
+    @Deprecated(message = "Use new API instead")
     @JvmOverloads
     @JvmStatic
     @JvmName("create")
@@ -46,49 +39,70 @@ interface ModuleEntity : WorkspaceEntityWithSymbolicId {
       dependencies: List<ModuleDependencyItem>,
       entitySource: EntitySource,
       init: (Builder.() -> Unit)? = null,
-    ): Builder {
-      val builder = builder()
-      builder.name = name
-      builder.dependencies = dependencies.toMutableWorkspaceList()
-      builder.entitySource = entitySource
-      init?.invoke(builder)
-      return builder
-    }
+    ): Builder = ModuleEntityType.compatibilityInvoke(name, dependencies, entitySource, init)
   }
   //endregion
 
 }
 
 //region generated code
+@Deprecated(message = "Use new API instead")
 fun MutableEntityStorage.modifyModuleEntity(
   entity: ModuleEntity,
   modification: ModuleEntity.Builder.() -> Unit,
-): ModuleEntity = modifyEntity(ModuleEntity.Builder::class.java, entity, modification)
+): ModuleEntity {
+  return modifyEntity(ModuleEntity.Builder::class.java, entity, modification)
+}
 
 @get:Internal
 @set:Internal
+@Deprecated(message = "Use new API instead")
 var ModuleEntity.Builder.customImlData: ModuleCustomImlDataEntity.Builder?
-  by WorkspaceEntity.extensionBuilder(ModuleCustomImlDataEntity::class.java)
+  get() = (this as ModifiableModuleEntity).customImlData as ModuleCustomImlDataEntity.Builder?
+  set(value) {
+    (this as ModifiableModuleEntity).customImlData = value
+  }
 
 @get:Internal
 @set:Internal
+@Deprecated(message = "Use new API instead")
 var ModuleEntity.Builder.exModuleOptions: ExternalSystemModuleOptionsEntity.Builder?
-  by WorkspaceEntity.extensionBuilder(ExternalSystemModuleOptionsEntity::class.java)
+  get() = (this as ModifiableModuleEntity).exModuleOptions as ExternalSystemModuleOptionsEntity.Builder?
+  set(value) {
+    (this as ModifiableModuleEntity).exModuleOptions = value
+  }
 
 @get:Internal
 @set:Internal
+@Deprecated(message = "Use new API instead")
 var ModuleEntity.Builder.facetOrder: FacetsOrderEntity.Builder?
-  by WorkspaceEntity.extensionBuilder(FacetsOrderEntity::class.java)
+  get() = (this as ModifiableModuleEntity).facetOrder as FacetsOrderEntity.Builder?
+  set(value) {
+    (this as ModifiableModuleEntity).facetOrder = value
+  }
 
 @get:Internal
 @set:Internal
+@Deprecated(message = "Use new API instead")
 var ModuleEntity.Builder.groupPath: ModuleGroupPathEntity.Builder?
-  by WorkspaceEntity.extensionBuilder(ModuleGroupPathEntity::class.java)
+  get() = (this as ModifiableModuleEntity).groupPath as ModuleGroupPathEntity.Builder?
+  set(value) {
+    (this as ModifiableModuleEntity).groupPath = value
+  }
+
+@Deprecated(message = "Use new API instead")
 var ModuleEntity.Builder.sourceRoots: List<SourceRootEntity.Builder>
-  by WorkspaceEntity.extensionBuilder(SourceRootEntity::class.java)
+  get() = (this as ModifiableModuleEntity).sourceRoots as List<SourceRootEntity.Builder>
+  set(value) {
+    (this as ModifiableModuleEntity).sourceRoots = value
+  }
 
 @get:Internal
 @set:Internal
+@Deprecated(message = "Use new API instead")
 var ModuleEntity.Builder.testProperties: TestModulePropertiesEntity.Builder?
-  by WorkspaceEntity.extensionBuilder(TestModulePropertiesEntity::class.java)
+  get() = (this as ModifiableModuleEntity).testProperties as TestModulePropertiesEntity.Builder?
+  set(value) {
+    (this as ModifiableModuleEntity).testProperties = value
+  }
 //endregion

@@ -1,4 +1,4 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.platform.workspace.storage.testEntities.entities.impl
 
 import com.intellij.platform.workspace.storage.*
@@ -15,6 +15,8 @@ import com.intellij.platform.workspace.storage.instrumentation.MutableEntityStor
 import com.intellij.platform.workspace.storage.metadata.model.EntityMetadata
 import com.intellij.platform.workspace.storage.testEntities.entities.KeyChild
 import com.intellij.platform.workspace.storage.testEntities.entities.KeyParent
+import com.intellij.platform.workspace.storage.testEntities.entities.ModifiableKeyChild
+import com.intellij.platform.workspace.storage.testEntities.entities.ModifiableKeyParent
 
 @GeneratedCodeApiVersion(3)
 @GeneratedCodeImplVersion(7)
@@ -22,8 +24,8 @@ import com.intellij.platform.workspace.storage.testEntities.entities.KeyParent
 internal class KeyParentImpl(private val dataSource: KeyParentData) : KeyParent, WorkspaceEntityBase(dataSource) {
 
   private companion object {
-    internal val CHILDREN_CONNECTION_ID: ConnectionId =
-      ConnectionId.create(KeyParent::class.java, KeyChild::class.java, ConnectionId.ConnectionType.ONE_TO_MANY, false)
+    internal val CHILDREN_CONNECTION_ID: ConnectionId = ConnectionId.create(KeyParent::class.java, KeyChild::class.java,
+                                                                            ConnectionId.ConnectionType.ONE_TO_MANY, false)
 
     private val connections = listOf<ConnectionId>(
       CHILDREN_CONNECTION_ID,
@@ -57,7 +59,7 @@ internal class KeyParentImpl(private val dataSource: KeyParentData) : KeyParent,
   }
 
 
-  internal class Builder(result: KeyParentData?) : ModifiableWorkspaceEntityBase<KeyParent, KeyParentData>(result), KeyParent.Builder {
+  internal class Builder(result: KeyParentData?) : ModifiableWorkspaceEntityBase<KeyParent, KeyParentData>(result), ModifiableKeyParent {
     internal constructor() : this(KeyParentData())
 
     override fun applyToBuilder(builder: MutableEntityStorage) {
@@ -148,18 +150,18 @@ internal class KeyParentImpl(private val dataSource: KeyParentData) : KeyParent,
 
     // List of non-abstract referenced types
     var _children: List<KeyChild>? = emptyList()
-    override var children: List<KeyChild.Builder>
+    override var children: List<ModifiableKeyChild>
       get() {
         // Getter of the list of non-abstract referenced types
         val _diff = diff
         return if (_diff != null) {
           @OptIn(EntityStorageInstrumentationApi::class)
-          ((_diff as MutableEntityStorageInstrumentation).getManyChildrenBuilders(CHILDREN_CONNECTION_ID, this)!!
-            .toList() as List<KeyChild.Builder>) +
-          (this.entityLinks[EntityLink(true, CHILDREN_CONNECTION_ID)] as? List<KeyChild.Builder> ?: emptyList())
+          ((_diff as MutableEntityStorageInstrumentation).getManyChildrenBuilders(CHILDREN_CONNECTION_ID,
+                                                                                  this)!!.toList() as List<ModifiableKeyChild>) +
+          (this.entityLinks[EntityLink(true, CHILDREN_CONNECTION_ID)] as? List<ModifiableKeyChild> ?: emptyList())
         }
         else {
-          this.entityLinks[EntityLink(true, CHILDREN_CONNECTION_ID)] as? List<KeyChild.Builder> ?: emptyList()
+          this.entityLinks[EntityLink(true, CHILDREN_CONNECTION_ID)] as? List<ModifiableKeyChild> ?: emptyList()
         }
       }
       set(value) {
@@ -205,7 +207,7 @@ internal class KeyParentData : WorkspaceEntityData<KeyParent>() {
   internal fun isKeyFieldInitialized(): Boolean = ::keyField.isInitialized
   internal fun isNotKeyFieldInitialized(): Boolean = ::notKeyField.isInitialized
 
-  override fun wrapAsModifiable(diff: MutableEntityStorage): WorkspaceEntity.Builder<KeyParent> {
+  override fun wrapAsModifiable(diff: MutableEntityStorage): ModifiableWorkspaceEntity<KeyParent> {
     val modifiable = KeyParentImpl.Builder(null)
     modifiable.diff = diff
     modifiable.id = createEntityId()
@@ -225,15 +227,14 @@ internal class KeyParentData : WorkspaceEntityData<KeyParent>() {
 
   override fun getMetadata(): EntityMetadata {
     return MetadataStorageImpl.getMetadataByTypeFqn(
-      "com.intellij.platform.workspace.storage.testEntities.entities.KeyParent"
-    ) as EntityMetadata
+      "com.intellij.platform.workspace.storage.testEntities.entities.KeyParent") as EntityMetadata
   }
 
   override fun getEntityInterface(): Class<out WorkspaceEntity> {
     return KeyParent::class.java
   }
 
-  override fun createDetachedEntity(parents: List<WorkspaceEntity.Builder<*>>): WorkspaceEntity.Builder<*> {
+  override fun createDetachedEntity(parents: List<ModifiableWorkspaceEntity<*>>): ModifiableWorkspaceEntity<*> {
     return KeyParent(keyField, notKeyField, entitySource) {
     }
   }

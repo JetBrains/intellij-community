@@ -29,18 +29,27 @@ interface FacetEntity : ModuleSettingsFacetBridgeEntity {
   val underlyingFacet: FacetEntity?
 
   //region generated code
-  @GeneratedCodeApiVersion(3)
-  interface Builder : WorkspaceEntity.Builder<FacetEntity>, ModuleSettingsFacetBridgeEntity.Builder<FacetEntity> {
-    override var entitySource: EntitySource
-    override var moduleId: ModuleId
-    override var name: String
-    var typeId: FacetEntityTypeId
-    var configurationXmlTag: String?
-    var module: ModuleEntity.Builder
-    var underlyingFacet: FacetEntity.Builder?
+  @Deprecated(message = "Use ModifiableFacetEntity instead")
+  interface Builder : ModifiableFacetEntity {
+    @Deprecated(message = "Use new API instead")
+    fun getModule(): ModuleEntity.Builder = module as ModuleEntity.Builder
+
+    @Deprecated(message = "Use new API instead")
+    fun setModule(value: ModuleEntity.Builder) {
+      module = value
+    }
+
+    @Deprecated(message = "Use new API instead")
+    fun getUnderlyingFacet(): FacetEntity.Builder? = underlyingFacet as FacetEntity.Builder?
+
+    @Deprecated(message = "Use new API instead")
+    fun setUnderlyingFacet(value: FacetEntity.Builder?) {
+      underlyingFacet = value
+    }
   }
 
-  companion object : EntityType<FacetEntity, Builder>(ModuleSettingsFacetBridgeEntity) {
+  companion object : EntityType<FacetEntity, Builder>() {
+    @Deprecated(message = "Use new API instead")
     @JvmOverloads
     @JvmStatic
     @JvmName("create")
@@ -50,15 +59,7 @@ interface FacetEntity : ModuleSettingsFacetBridgeEntity {
       typeId: FacetEntityTypeId,
       entitySource: EntitySource,
       init: (Builder.() -> Unit)? = null,
-    ): Builder {
-      val builder = builder()
-      builder.moduleId = moduleId
-      builder.name = name
-      builder.typeId = typeId
-      builder.entitySource = entitySource
-      init?.invoke(builder)
-      return builder
-    }
+    ): Builder = FacetEntityType.compatibilityInvoke(moduleId, name, typeId, entitySource, init)
 
     //region compatibility generated code
     @Deprecated(
@@ -81,13 +82,20 @@ interface FacetEntity : ModuleSettingsFacetBridgeEntity {
 }
 
 //region generated code
+@Deprecated(message = "Use new API instead")
 fun MutableEntityStorage.modifyFacetEntity(
   entity: FacetEntity,
   modification: FacetEntity.Builder.() -> Unit,
-): FacetEntity = modifyEntity(FacetEntity.Builder::class.java, entity, modification)
+): FacetEntity {
+  return modifyEntity(FacetEntity.Builder::class.java, entity, modification)
+}
 
+@Deprecated(message = "Use new API instead")
 var FacetEntity.Builder.childrenFacets: List<FacetEntity.Builder>
-  by WorkspaceEntity.extensionBuilder(FacetEntity::class.java)
+  get() = (this as ModifiableFacetEntity).childrenFacets as List<FacetEntity.Builder>
+  set(value) {
+    (this as ModifiableFacetEntity).childrenFacets = value
+  }
 //endregion
 
 val FacetEntity.childrenFacets: List<FacetEntity>

@@ -1,4 +1,4 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.platform.workspace.jps.serialization.impl
 
 import com.intellij.openapi.diagnostic.debug
@@ -160,7 +160,7 @@ open class JpsLibraryEntitiesSerializer(override val fileUrl: VirtualFileUrl,
   override fun checkAndAddToBuilder(builder: MutableEntityStorage,
                                     orphanage: MutableEntityStorage,
                                     newEntities: Map<Class<out WorkspaceEntity>, Collection<WorkspaceEntity.Builder<out WorkspaceEntity>>>) {
-    val libraries = (newEntities[LibraryEntity::class.java] as? List<LibraryEntity.Builder>) ?: emptyList()
+    val libraries = (newEntities[LibraryEntity::class.java] as? List<ModifiableLibraryEntity>) ?: emptyList()
     libraries.forEach {
       val symbolicId = LibraryId(it.name, it.tableId)
       if (symbolicId in builder) {
@@ -259,7 +259,7 @@ open class JpsLibraryEntitiesSerializer(override val fileUrl: VirtualFileUrl,
     }
 
     fun loadLibrary(name: String, libraryElement: Element, libraryTableId: LibraryTableId, source: EntitySource,
-                    virtualFileManager: VirtualFileUrlManager): LibraryEntity.Builder {
+                    virtualFileManager: VirtualFileUrlManager): ModifiableLibraryEntity {
       val roots = ArrayList<LibraryRoot>()
       val excludedRoots = ArrayList<VirtualFileUrl>()
       val jarDirectories = libraryElement.getChildren(JAR_DIRECTORY_TAG).associateBy(

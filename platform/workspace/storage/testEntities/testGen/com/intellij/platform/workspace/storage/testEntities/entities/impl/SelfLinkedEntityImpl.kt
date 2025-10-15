@@ -1,4 +1,4 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.platform.workspace.storage.testEntities.entities.impl
 
 import com.intellij.platform.workspace.storage.ConnectionId
@@ -6,6 +6,7 @@ import com.intellij.platform.workspace.storage.EntitySource
 import com.intellij.platform.workspace.storage.EntityType
 import com.intellij.platform.workspace.storage.GeneratedCodeApiVersion
 import com.intellij.platform.workspace.storage.GeneratedCodeImplVersion
+import com.intellij.platform.workspace.storage.ModifiableWorkspaceEntity
 import com.intellij.platform.workspace.storage.MutableEntityStorage
 import com.intellij.platform.workspace.storage.WorkspaceEntity
 import com.intellij.platform.workspace.storage.WorkspaceEntityInternalApi
@@ -20,6 +21,7 @@ import com.intellij.platform.workspace.storage.instrumentation.EntityStorageInst
 import com.intellij.platform.workspace.storage.instrumentation.EntityStorageInstrumentationApi
 import com.intellij.platform.workspace.storage.instrumentation.MutableEntityStorageInstrumentation
 import com.intellij.platform.workspace.storage.metadata.model.EntityMetadata
+import com.intellij.platform.workspace.storage.testEntities.entities.ModifiableSelfLinkedEntity
 import com.intellij.platform.workspace.storage.testEntities.entities.SelfLinkedEntity
 
 @GeneratedCodeApiVersion(3)
@@ -28,8 +30,8 @@ import com.intellij.platform.workspace.storage.testEntities.entities.SelfLinkedE
 internal class SelfLinkedEntityImpl(private val dataSource: SelfLinkedEntityData) : SelfLinkedEntity, WorkspaceEntityBase(dataSource) {
 
   private companion object {
-    internal val PARENTENTITY_CONNECTION_ID: ConnectionId =
-      ConnectionId.create(SelfLinkedEntity::class.java, SelfLinkedEntity::class.java, ConnectionId.ConnectionType.ONE_TO_MANY, true)
+    internal val PARENTENTITY_CONNECTION_ID: ConnectionId = ConnectionId.create(SelfLinkedEntity::class.java, SelfLinkedEntity::class.java,
+                                                                                ConnectionId.ConnectionType.ONE_TO_MANY, true)
 
     private val connections = listOf<ConnectionId>(
       PARENTENTITY_CONNECTION_ID,
@@ -51,8 +53,8 @@ internal class SelfLinkedEntityImpl(private val dataSource: SelfLinkedEntityData
   }
 
 
-  internal class Builder(result: SelfLinkedEntityData?) : ModifiableWorkspaceEntityBase<SelfLinkedEntity, SelfLinkedEntityData>(result),
-                                                          SelfLinkedEntity.Builder {
+  internal class Builder(result: SelfLinkedEntityData?) : ModifiableWorkspaceEntityBase<SelfLinkedEntity, SelfLinkedEntityData>(
+    result), ModifiableSelfLinkedEntity {
     internal constructor() : this(SelfLinkedEntityData())
 
     override fun applyToBuilder(builder: MutableEntityStorage) {
@@ -106,16 +108,16 @@ internal class SelfLinkedEntityImpl(private val dataSource: SelfLinkedEntityData
 
       }
 
-    override var parentEntity: SelfLinkedEntity.Builder?
+    override var parentEntity: ModifiableSelfLinkedEntity?
       get() {
         val _diff = diff
         return if (_diff != null) {
           @OptIn(EntityStorageInstrumentationApi::class)
-          ((_diff as MutableEntityStorageInstrumentation).getParentBuilder(PARENTENTITY_CONNECTION_ID, this) as? SelfLinkedEntity.Builder)
-          ?: (this.entityLinks[EntityLink(false, PARENTENTITY_CONNECTION_ID)] as? SelfLinkedEntity.Builder)
+          ((_diff as MutableEntityStorageInstrumentation).getParentBuilder(PARENTENTITY_CONNECTION_ID, this) as? ModifiableSelfLinkedEntity)
+          ?: (this.entityLinks[EntityLink(false, PARENTENTITY_CONNECTION_ID)] as? ModifiableSelfLinkedEntity)
         }
         else {
-          this.entityLinks[EntityLink(false, PARENTENTITY_CONNECTION_ID)] as? SelfLinkedEntity.Builder
+          this.entityLinks[EntityLink(false, PARENTENTITY_CONNECTION_ID)] as? ModifiableSelfLinkedEntity
         }
       }
       set(value) {
@@ -154,7 +156,7 @@ internal class SelfLinkedEntityImpl(private val dataSource: SelfLinkedEntityData
 internal class SelfLinkedEntityData : WorkspaceEntityData<SelfLinkedEntity>() {
 
 
-  override fun wrapAsModifiable(diff: MutableEntityStorage): WorkspaceEntity.Builder<SelfLinkedEntity> {
+  override fun wrapAsModifiable(diff: MutableEntityStorage): ModifiableWorkspaceEntity<SelfLinkedEntity> {
     val modifiable = SelfLinkedEntityImpl.Builder(null)
     modifiable.diff = diff
     modifiable.id = createEntityId()
@@ -174,17 +176,16 @@ internal class SelfLinkedEntityData : WorkspaceEntityData<SelfLinkedEntity>() {
 
   override fun getMetadata(): EntityMetadata {
     return MetadataStorageImpl.getMetadataByTypeFqn(
-      "com.intellij.platform.workspace.storage.testEntities.entities.SelfLinkedEntity"
-    ) as EntityMetadata
+      "com.intellij.platform.workspace.storage.testEntities.entities.SelfLinkedEntity") as EntityMetadata
   }
 
   override fun getEntityInterface(): Class<out WorkspaceEntity> {
     return SelfLinkedEntity::class.java
   }
 
-  override fun createDetachedEntity(parents: List<WorkspaceEntity.Builder<*>>): WorkspaceEntity.Builder<*> {
+  override fun createDetachedEntity(parents: List<ModifiableWorkspaceEntity<*>>): ModifiableWorkspaceEntity<*> {
     return SelfLinkedEntity(entitySource) {
-      this.parentEntity = parents.filterIsInstance<SelfLinkedEntity.Builder>().singleOrNull()
+      this.parentEntity = parents.filterIsInstance<ModifiableSelfLinkedEntity>().singleOrNull()
     }
   }
 

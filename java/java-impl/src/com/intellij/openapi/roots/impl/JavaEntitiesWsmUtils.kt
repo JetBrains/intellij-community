@@ -2,6 +2,7 @@
 package com.intellij.openapi.roots.impl
 
 import com.intellij.java.workspace.entities.JavaProjectSettingsEntity
+import com.intellij.java.workspace.entities.ModifiableJavaProjectSettingsEntity
 import com.intellij.openapi.project.Project
 import com.intellij.platform.workspace.storage.EntitySource
 import com.intellij.platform.workspace.storage.EntityStorage
@@ -21,13 +22,13 @@ internal object JavaEntitiesWsmUtils {
   }
 
   @JvmStatic
-  fun addOrModifyJavaProjectSettingsEntity(project: Project, mutableStorage: MutableEntityStorage, modFunction: Consumer<JavaProjectSettingsEntity.Builder>) {
+  fun addOrModifyJavaProjectSettingsEntity(project: Project, mutableStorage: MutableEntityStorage, modFunction: Consumer<ModifiableJavaProjectSettingsEntity>) {
     val sourceFactory = LegacyBridgeJpsEntitySourceFactory.getInstance(project) as LegacyBridgeJpsEntitySourceFactoryInternal
     val entitySource: EntitySource = sourceFactory.createEntitySourceForProjectSettings() ?: return // do not touch the default project
 
     WsmProjectSettingsEntityUtils.addOrModifyProjectSettingsEntity(project, mutableStorage) { projectSettingsBuilder ->
       WsmSingletonEntityUtils.addOrModifySingleEntity(mutableStorage,
-                                                      JavaProjectSettingsEntity::class.java, JavaProjectSettingsEntity.Builder::class.java,
+                                                      JavaProjectSettingsEntity::class.java, ModifiableJavaProjectSettingsEntity::class.java,
                                                       {
                                           JavaProjectSettingsEntity(entitySource) { projectSettings = projectSettingsBuilder }
                                         }, modFunction::accept)

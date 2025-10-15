@@ -3,6 +3,7 @@ package org.jetbrains.plugins.gradle.model.projectModel.impl
 
 import com.intellij.platform.externalSystem.impl.workspaceModel.ExternalProjectEntity
 import com.intellij.platform.externalSystem.impl.workspaceModel.ExternalProjectEntityId
+import com.intellij.platform.externalSystem.impl.workspaceModel.ModifiableExternalProjectEntity
 import com.intellij.platform.workspace.storage.*
 import com.intellij.platform.workspace.storage.annotations.Parent
 import com.intellij.platform.workspace.storage.impl.EntityLink
@@ -21,6 +22,7 @@ import com.intellij.platform.workspace.storage.url.VirtualFileUrl
 import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.plugins.gradle.model.projectModel.GradleBuildEntity
 import org.jetbrains.plugins.gradle.model.projectModel.GradleBuildEntityId
+import org.jetbrains.plugins.gradle.model.projectModel.ModifiableGradleBuildEntity
 
 @GeneratedCodeApiVersion(3)
 @GeneratedCodeImplVersion(7)
@@ -73,7 +75,7 @@ internal class GradleBuildEntityImpl(private val dataSource: GradleBuildEntityDa
 
 
   internal class Builder(result: GradleBuildEntityData?) : ModifiableWorkspaceEntityBase<GradleBuildEntity, GradleBuildEntityData>(
-    result), GradleBuildEntity.Builder {
+    result), ModifiableGradleBuildEntity {
     internal constructor() : this(GradleBuildEntityData())
 
     override fun applyToBuilder(builder: MutableEntityStorage) {
@@ -150,17 +152,17 @@ internal class GradleBuildEntityImpl(private val dataSource: GradleBuildEntityDa
 
       }
 
-    override var externalProject: ExternalProjectEntity.Builder
+    override var externalProject: ModifiableExternalProjectEntity
       get() {
         val _diff = diff
         return if (_diff != null) {
           @OptIn(EntityStorageInstrumentationApi::class)
           ((_diff as MutableEntityStorageInstrumentation).getParentBuilder(EXTERNALPROJECT_CONNECTION_ID,
-                                                                           this) as? ExternalProjectEntity.Builder)
-          ?: (this.entityLinks[EntityLink(false, EXTERNALPROJECT_CONNECTION_ID)]!! as ExternalProjectEntity.Builder)
+                                                                           this) as? ModifiableExternalProjectEntity)
+          ?: (this.entityLinks[EntityLink(false, EXTERNALPROJECT_CONNECTION_ID)]!! as ModifiableExternalProjectEntity)
         }
         else {
-          this.entityLinks[EntityLink(false, EXTERNALPROJECT_CONNECTION_ID)]!! as ExternalProjectEntity.Builder
+          this.entityLinks[EntityLink(false, EXTERNALPROJECT_CONNECTION_ID)]!! as ModifiableExternalProjectEntity
         }
       }
       set(value) {
@@ -269,7 +271,7 @@ internal class GradleBuildEntityData : WorkspaceEntityData<GradleBuildEntity>(),
     return changed
   }
 
-  override fun wrapAsModifiable(diff: MutableEntityStorage): WorkspaceEntity.Builder<GradleBuildEntity> {
+  override fun wrapAsModifiable(diff: MutableEntityStorage): ModifiableWorkspaceEntity<GradleBuildEntity> {
     val modifiable = GradleBuildEntityImpl.Builder(null)
     modifiable.diff = diff
     modifiable.id = createEntityId()
@@ -295,9 +297,9 @@ internal class GradleBuildEntityData : WorkspaceEntityData<GradleBuildEntity>(),
     return GradleBuildEntity::class.java
   }
 
-  override fun createDetachedEntity(parents: List<WorkspaceEntity.Builder<*>>): WorkspaceEntity.Builder<*> {
+  override fun createDetachedEntity(parents: List<ModifiableWorkspaceEntity<*>>): ModifiableWorkspaceEntity<*> {
     return GradleBuildEntity(externalProjectId, name, url, entitySource) {
-      parents.filterIsInstance<ExternalProjectEntity.Builder>().singleOrNull()?.let { this.externalProject = it }
+      parents.filterIsInstance<ModifiableExternalProjectEntity>().singleOrNull()?.let { this.externalProject = it }
     }
   }
 

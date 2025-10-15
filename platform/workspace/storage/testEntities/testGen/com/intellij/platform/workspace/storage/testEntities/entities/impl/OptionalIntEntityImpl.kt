@@ -1,4 +1,4 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.platform.workspace.storage.testEntities.entities.impl
 
 import com.intellij.platform.workspace.storage.ConnectionId
@@ -6,6 +6,7 @@ import com.intellij.platform.workspace.storage.EntitySource
 import com.intellij.platform.workspace.storage.EntityType
 import com.intellij.platform.workspace.storage.GeneratedCodeApiVersion
 import com.intellij.platform.workspace.storage.GeneratedCodeImplVersion
+import com.intellij.platform.workspace.storage.ModifiableWorkspaceEntity
 import com.intellij.platform.workspace.storage.MutableEntityStorage
 import com.intellij.platform.workspace.storage.WorkspaceEntity
 import com.intellij.platform.workspace.storage.WorkspaceEntityInternalApi
@@ -16,6 +17,7 @@ import com.intellij.platform.workspace.storage.impl.containers.toMutableWorkspac
 import com.intellij.platform.workspace.storage.instrumentation.EntityStorageInstrumentation
 import com.intellij.platform.workspace.storage.instrumentation.EntityStorageInstrumentationApi
 import com.intellij.platform.workspace.storage.metadata.model.EntityMetadata
+import com.intellij.platform.workspace.storage.testEntities.entities.ModifiableOptionalIntEntity
 import com.intellij.platform.workspace.storage.testEntities.entities.OptionalIntEntity
 
 @GeneratedCodeApiVersion(3)
@@ -48,8 +50,8 @@ internal class OptionalIntEntityImpl(private val dataSource: OptionalIntEntityDa
   }
 
 
-  internal class Builder(result: OptionalIntEntityData?) : ModifiableWorkspaceEntityBase<OptionalIntEntity, OptionalIntEntityData>(result),
-                                                           OptionalIntEntity.Builder {
+  internal class Builder(result: OptionalIntEntityData?) : ModifiableWorkspaceEntityBase<OptionalIntEntity, OptionalIntEntityData>(
+    result), ModifiableOptionalIntEntity {
     internal constructor() : this(OptionalIntEntityData())
 
     override fun applyToBuilder(builder: MutableEntityStorage) {
@@ -121,7 +123,7 @@ internal class OptionalIntEntityData : WorkspaceEntityData<OptionalIntEntity>() 
   var data: Int? = null
 
 
-  override fun wrapAsModifiable(diff: MutableEntityStorage): WorkspaceEntity.Builder<OptionalIntEntity> {
+  override fun wrapAsModifiable(diff: MutableEntityStorage): ModifiableWorkspaceEntity<OptionalIntEntity> {
     val modifiable = OptionalIntEntityImpl.Builder(null)
     modifiable.diff = diff
     modifiable.id = createEntityId()
@@ -141,15 +143,14 @@ internal class OptionalIntEntityData : WorkspaceEntityData<OptionalIntEntity>() 
 
   override fun getMetadata(): EntityMetadata {
     return MetadataStorageImpl.getMetadataByTypeFqn(
-      "com.intellij.platform.workspace.storage.testEntities.entities.OptionalIntEntity"
-    ) as EntityMetadata
+      "com.intellij.platform.workspace.storage.testEntities.entities.OptionalIntEntity") as EntityMetadata
   }
 
   override fun getEntityInterface(): Class<out WorkspaceEntity> {
     return OptionalIntEntity::class.java
   }
 
-  override fun createDetachedEntity(parents: List<WorkspaceEntity.Builder<*>>): WorkspaceEntity.Builder<*> {
+  override fun createDetachedEntity(parents: List<ModifiableWorkspaceEntity<*>>): ModifiableWorkspaceEntity<*> {
     return OptionalIntEntity(entitySource) {
       this.data = this@OptionalIntEntityData.data
     }

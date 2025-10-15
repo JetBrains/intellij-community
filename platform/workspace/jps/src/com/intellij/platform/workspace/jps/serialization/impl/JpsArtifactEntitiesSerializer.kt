@@ -1,4 +1,4 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.platform.workspace.jps.serialization.impl
 
 import com.intellij.java.workspace.entities.*
@@ -58,7 +58,7 @@ internal class JpsArtifactsDirectorySerializerFactory(override val directoryUrl:
 
       // Convert it's packaging elements
       it.rootElement!!.forThisAndFullTree {
-        builder.modifyEntity(PackagingElementEntity.Builder::class.java, it) {
+        builder.modifyEntity(ModifiablePackagingElementEntity::class.java, it) {
           this.entitySource = artifactSource
         }
       }
@@ -177,7 +177,7 @@ internal open class JpsArtifactEntitiesSerializer(override val fileUrl: VirtualF
           val rootElement = loadPackagingElement(state.rootElement, entitySource)
           val artifactEntity = ArtifactEntity(state.name, state.artifactType, state.isBuildOnMake, entitySource) {
             this.outputUrl = outputUrl
-            this.rootElement = rootElement as CompositePackagingElementEntity.Builder<out CompositePackagingElementEntity>
+            this.rootElement = rootElement as ModifiableCompositePackagingElementEntity<out CompositePackagingElementEntity>
           }
           for (propertiesState in state.propertiesList) {
             ArtifactPropertiesEntity(propertiesState.id, entitySource) {
@@ -202,7 +202,7 @@ internal open class JpsArtifactEntitiesSerializer(override val fileUrl: VirtualF
                                     orphanage: MutableEntityStorage,
                                     newEntities: Map<Class<out WorkspaceEntity>, Collection<WorkspaceEntity.Builder<out WorkspaceEntity>>>) {
     if (preserveOrder) {
-      val order = newEntities[ArtifactsOrderEntity::class.java]?.singleOrNull() as? ArtifactsOrderEntity.Builder
+      val order = newEntities[ArtifactsOrderEntity::class.java]?.singleOrNull() as? ModifiableArtifactsOrderEntity
       if (order != null) {
         val entity = builder.entities(ArtifactsOrderEntity::class.java).firstOrNull()
         if (entity != null) {
@@ -228,7 +228,7 @@ internal open class JpsArtifactEntitiesSerializer(override val fileUrl: VirtualF
   }
 
   private fun loadPackagingElement(element: Element,
-                                   source: EntitySource): PackagingElementEntity.Builder<out PackagingElementEntity> {
+                                   source: EntitySource): ModifiablePackagingElementEntity<out PackagingElementEntity> {
     fun loadElementChildren() = element.children.mapTo(ArrayList()) { loadPackagingElement(it, source) }
     fun getAttribute(name: String) = element.getAttributeValue(name)!!
     fun getOptionalAttribute(name: String) = element.getAttributeValue(name)

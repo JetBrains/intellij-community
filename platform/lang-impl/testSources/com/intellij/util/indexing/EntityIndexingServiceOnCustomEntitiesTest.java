@@ -1,4 +1,4 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.util.indexing;
 
 import com.intellij.openapi.application.ApplicationManager;
@@ -18,6 +18,8 @@ import com.intellij.util.indexing.roots.IndexableFilesIterator;
 import com.intellij.util.indexing.roots.origin.IndexingUrlRootHolder;
 import com.intellij.util.indexing.roots.origin.IndexingUrlSourceRootHolder;
 import com.intellij.util.indexing.testEntities.IndexingTestEntity;
+import com.intellij.util.indexing.testEntities.IndexingTestEntityApiKt;
+import com.intellij.util.indexing.testEntities.ModifiableIndexingTestEntity;
 import com.intellij.workspaceModel.core.fileIndex.WorkspaceFileIndexContributor;
 import com.intellij.workspaceModel.core.fileIndex.WorkspaceFileKind;
 import com.intellij.workspaceModel.core.fileIndex.WorkspaceFileSetRegistrar;
@@ -357,15 +359,15 @@ public class EntityIndexingServiceOnCustomEntitiesTest extends EntityIndexingSer
 
   @NotNull
   static IndexingTestEntity createAndRegisterEntity(List<VirtualFileUrl> roots, List<VirtualFileUrl> excludedRoots, Project project) {
-    IndexingTestEntity.Builder entity = IndexingTestEntity.create(roots, excludedRoots, ENTITY_SOURCE);
+    ModifiableIndexingTestEntity entity = IndexingTestEntityApiKt.createIndexingTestEntity(roots, excludedRoots, ENTITY_SOURCE);
     return editWorkspaceModel(project, builder -> builder.addEntity(entity));
   }
 
   static void editSingleWorkspaceEntity(@NotNull Project project,
-                                        @NotNull Consumer<? super IndexingTestEntity.Builder> modification) {
+                                        @NotNull Consumer<? super ModifiableIndexingTestEntity> modification) {
     editWorkspaceModel(project, builder -> {
       IndexingTestEntity existingEntity = SequencesKt.first(builder.entities(IndexingTestEntity.class));
-      builder.modifyEntity(IndexingTestEntity.Builder.class, existingEntity, entityBuilder -> {
+      builder.modifyEntity(ModifiableIndexingTestEntity.class, existingEntity, entityBuilder -> {
         modification.accept(entityBuilder);
         return Unit.INSTANCE;
       });

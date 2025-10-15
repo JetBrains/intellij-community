@@ -1,4 +1,4 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.platform.workspace.storage.testEntities.entities.impl
 
 import com.intellij.platform.workspace.storage.ConnectionId
@@ -6,6 +6,7 @@ import com.intellij.platform.workspace.storage.EntitySource
 import com.intellij.platform.workspace.storage.EntityType
 import com.intellij.platform.workspace.storage.GeneratedCodeApiVersion
 import com.intellij.platform.workspace.storage.GeneratedCodeImplVersion
+import com.intellij.platform.workspace.storage.ModifiableWorkspaceEntity
 import com.intellij.platform.workspace.storage.MutableEntityStorage
 import com.intellij.platform.workspace.storage.WorkspaceEntity
 import com.intellij.platform.workspace.storage.WorkspaceEntityInternalApi
@@ -22,19 +23,21 @@ import com.intellij.platform.workspace.storage.instrumentation.EntityStorageInst
 import com.intellij.platform.workspace.storage.instrumentation.MutableEntityStorageInstrumentation
 import com.intellij.platform.workspace.storage.metadata.model.EntityMetadata
 import com.intellij.platform.workspace.storage.testEntities.entities.AbstractChildEntity
+import com.intellij.platform.workspace.storage.testEntities.entities.ModifiableParentWithExtensionEntity
+import com.intellij.platform.workspace.storage.testEntities.entities.ModifiableSpecificChildEntity
 import com.intellij.platform.workspace.storage.testEntities.entities.ParentWithExtensionEntity
 import com.intellij.platform.workspace.storage.testEntities.entities.SpecificChildEntity
 
 @GeneratedCodeApiVersion(3)
 @GeneratedCodeImplVersion(7)
 @OptIn(WorkspaceEntityInternalApi::class)
-internal class SpecificChildEntityImpl(private val dataSource: SpecificChildEntityData) : SpecificChildEntity,
-                                                                                          WorkspaceEntityBase(dataSource) {
+internal class SpecificChildEntityImpl(private val dataSource: SpecificChildEntityData) : SpecificChildEntity, WorkspaceEntityBase(
+  dataSource) {
 
   private companion object {
-    internal val PARENT_CONNECTION_ID: ConnectionId = ConnectionId.create(
-      ParentWithExtensionEntity::class.java, AbstractChildEntity::class.java, ConnectionId.ConnectionType.ABSTRACT_ONE_TO_ONE, false
-    )
+    internal val PARENT_CONNECTION_ID: ConnectionId = ConnectionId.create(ParentWithExtensionEntity::class.java,
+                                                                          AbstractChildEntity::class.java,
+                                                                          ConnectionId.ConnectionType.ABSTRACT_ONE_TO_ONE, false)
 
     private val connections = listOf<ConnectionId>(
       PARENT_CONNECTION_ID,
@@ -62,8 +65,8 @@ internal class SpecificChildEntityImpl(private val dataSource: SpecificChildEnti
   }
 
 
-  internal class Builder(result: SpecificChildEntityData?) :
-    ModifiableWorkspaceEntityBase<SpecificChildEntity, SpecificChildEntityData>(result), SpecificChildEntity.Builder {
+  internal class Builder(result: SpecificChildEntityData?) : ModifiableWorkspaceEntityBase<SpecificChildEntity, SpecificChildEntityData>(
+    result), ModifiableSpecificChildEntity {
     internal constructor() : this(SpecificChildEntityData())
 
     override fun applyToBuilder(builder: MutableEntityStorage) {
@@ -139,18 +142,17 @@ internal class SpecificChildEntityImpl(private val dataSource: SpecificChildEnti
         changedProperty.add("data")
       }
 
-    override var parent: ParentWithExtensionEntity.Builder
+    override var parent: ModifiableParentWithExtensionEntity
       get() {
         val _diff = diff
         return if (_diff != null) {
           @OptIn(EntityStorageInstrumentationApi::class)
-          ((_diff as MutableEntityStorageInstrumentation).getParentBuilder(
-            PARENT_CONNECTION_ID, this
-          ) as? ParentWithExtensionEntity.Builder)
-          ?: (this.entityLinks[EntityLink(false, PARENT_CONNECTION_ID)]!! as ParentWithExtensionEntity.Builder)
+          ((_diff as MutableEntityStorageInstrumentation).getParentBuilder(PARENT_CONNECTION_ID,
+                                                                           this) as? ModifiableParentWithExtensionEntity)
+          ?: (this.entityLinks[EntityLink(false, PARENT_CONNECTION_ID)]!! as ModifiableParentWithExtensionEntity)
         }
         else {
-          this.entityLinks[EntityLink(false, PARENT_CONNECTION_ID)]!! as ParentWithExtensionEntity.Builder
+          this.entityLinks[EntityLink(false, PARENT_CONNECTION_ID)]!! as ModifiableParentWithExtensionEntity
         }
       }
       set(value) {
@@ -187,7 +189,7 @@ internal class SpecificChildEntityData : WorkspaceEntityData<SpecificChildEntity
 
   internal fun isDataInitialized(): Boolean = ::data.isInitialized
 
-  override fun wrapAsModifiable(diff: MutableEntityStorage): WorkspaceEntity.Builder<SpecificChildEntity> {
+  override fun wrapAsModifiable(diff: MutableEntityStorage): ModifiableWorkspaceEntity<SpecificChildEntity> {
     val modifiable = SpecificChildEntityImpl.Builder(null)
     modifiable.diff = diff
     modifiable.id = createEntityId()
@@ -207,17 +209,16 @@ internal class SpecificChildEntityData : WorkspaceEntityData<SpecificChildEntity
 
   override fun getMetadata(): EntityMetadata {
     return MetadataStorageImpl.getMetadataByTypeFqn(
-      "com.intellij.platform.workspace.storage.testEntities.entities.SpecificChildEntity"
-    ) as EntityMetadata
+      "com.intellij.platform.workspace.storage.testEntities.entities.SpecificChildEntity") as EntityMetadata
   }
 
   override fun getEntityInterface(): Class<out WorkspaceEntity> {
     return SpecificChildEntity::class.java
   }
 
-  override fun createDetachedEntity(parents: List<WorkspaceEntity.Builder<*>>): WorkspaceEntity.Builder<*> {
+  override fun createDetachedEntity(parents: List<ModifiableWorkspaceEntity<*>>): ModifiableWorkspaceEntity<*> {
     return SpecificChildEntity(data, entitySource) {
-      parents.filterIsInstance<ParentWithExtensionEntity.Builder>().singleOrNull()?.let { this.parent = it }
+      parents.filterIsInstance<ModifiableParentWithExtensionEntity>().singleOrNull()?.let { this.parent = it }
     }
   }
 

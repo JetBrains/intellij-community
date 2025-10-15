@@ -1,6 +1,7 @@
 // Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.java.workspace.entities
 
+import com.intellij.platform.workspace.jps.entities.ModifiableModuleEntity
 import com.intellij.platform.workspace.jps.entities.ModuleEntity
 import com.intellij.platform.workspace.storage.EntitySource
 import com.intellij.platform.workspace.storage.EntityType
@@ -25,19 +26,19 @@ interface JavaModuleSettingsEntity: WorkspaceEntity {
   @Default get() = emptyMap()
 
   //region generated code
-  @GeneratedCodeApiVersion(3)
-  interface Builder : WorkspaceEntity.Builder<JavaModuleSettingsEntity> {
-    override var entitySource: EntitySource
-    var module: ModuleEntity.Builder
-    var inheritedCompilerOutput: Boolean
-    var excludeOutput: Boolean
-    var compilerOutput: VirtualFileUrl?
-    var compilerOutputForTests: VirtualFileUrl?
-    var languageLevelId: String?
-    var manifestAttributes: Map<String, String>
+  @Deprecated(message = "Use ModifiableJavaModuleSettingsEntity instead")
+  interface Builder : ModifiableJavaModuleSettingsEntity {
+    @Deprecated(message = "Use new API instead")
+    fun getModule(): ModuleEntity.Builder = module as ModuleEntity.Builder
+
+    @Deprecated(message = "Use new API instead")
+    fun setModule(value: ModuleEntity.Builder) {
+      module = value
+    }
   }
 
   companion object : EntityType<JavaModuleSettingsEntity, Builder>() {
+    @Deprecated(message = "Use new API instead")
     @JvmOverloads
     @JvmStatic
     @JvmName("create")
@@ -46,27 +47,27 @@ interface JavaModuleSettingsEntity: WorkspaceEntity {
       excludeOutput: Boolean,
       entitySource: EntitySource,
       init: (Builder.() -> Unit)? = null,
-    ): Builder {
-      val builder = builder()
-      builder.inheritedCompilerOutput = inheritedCompilerOutput
-      builder.excludeOutput = excludeOutput
-      builder.entitySource = entitySource
-      init?.invoke(builder)
-      return builder
-    }
+    ): Builder = JavaModuleSettingsEntityType.compatibilityInvoke(inheritedCompilerOutput, excludeOutput, entitySource, init)
   }
   //endregion
 
 }
 
 //region generated code
+@Deprecated(message = "Use new API instead")
 fun MutableEntityStorage.modifyJavaModuleSettingsEntity(
   entity: JavaModuleSettingsEntity,
   modification: JavaModuleSettingsEntity.Builder.() -> Unit,
-): JavaModuleSettingsEntity = modifyEntity(JavaModuleSettingsEntity.Builder::class.java, entity, modification)
+): JavaModuleSettingsEntity {
+  return modifyEntity(JavaModuleSettingsEntity.Builder::class.java, entity, modification)
+}
 
+@Deprecated(message = "Use new API instead")
 var ModuleEntity.Builder.javaSettings: JavaModuleSettingsEntity.Builder?
-  by WorkspaceEntity.extensionBuilder(JavaModuleSettingsEntity::class.java)
+  get() = (this as ModifiableModuleEntity).javaSettings as JavaModuleSettingsEntity.Builder?
+  set(value) {
+    (this as ModifiableModuleEntity).javaSettings = value
+  }
 //endregion
 
 val ModuleEntity.javaSettings: JavaModuleSettingsEntity?

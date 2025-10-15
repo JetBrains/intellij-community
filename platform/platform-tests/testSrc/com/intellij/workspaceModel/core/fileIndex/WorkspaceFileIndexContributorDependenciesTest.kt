@@ -1,4 +1,4 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.workspaceModel.core.fileIndex
 
 import com.intellij.openapi.Disposable
@@ -14,6 +14,9 @@ import com.intellij.testFramework.junit5.TestDisposable
 import com.intellij.testFramework.rules.ProjectModelExtension
 import com.intellij.util.containers.sequenceOfNotNull
 import com.intellij.util.indexing.testEntities.ChildTestEntity
+import com.intellij.util.indexing.testEntities.ModifiableChildTestEntity
+import com.intellij.util.indexing.testEntities.ModifiableParentTestEntity
+import com.intellij.util.indexing.testEntities.ModifiableSiblingEntity
 import com.intellij.util.indexing.testEntities.ParentTestEntity
 import com.intellij.util.indexing.testEntities.SiblingEntity
 import com.intellij.workspaceModel.core.fileIndex.impl.WorkspaceFileIndexImpl
@@ -74,7 +77,7 @@ class WorkspaceFileIndexContributorDependenciesTest {
     val parentEntity = model.currentSnapshot.entities(ParentTestEntity::class.java).single()
 
     model.update("Update parent") {
-      it.modifyEntity(ParentTestEntity.Builder::class.java, parentEntity) {
+      it.modifyEntity(ModifiableParentTestEntity::class.java, parentEntity) {
         customParentProperty = "new parent value"
       }
     }
@@ -89,7 +92,7 @@ class WorkspaceFileIndexContributorDependenciesTest {
     val childEntity = model.currentSnapshot.entities(ChildTestEntity::class.java).single()
 
     model.update("Update child") {
-      it.modifyEntity(ChildTestEntity.Builder::class.java, childEntity) {
+      it.modifyEntity(ModifiableChildTestEntity::class.java, childEntity) {
         customChildProperty = "new child value"
       }
     }
@@ -103,7 +106,7 @@ class WorkspaceFileIndexContributorDependenciesTest {
     val siblingEntity = model.currentSnapshot.entities(SiblingEntity::class.java).single()
 
     model.update("Update sibling") {
-      it.modifyEntity(SiblingEntity.Builder::class.java, siblingEntity) {
+      it.modifyEntity(ModifiableSiblingEntity::class.java, siblingEntity) {
         customSiblingProperty = "new sibling property value"
       }
     }

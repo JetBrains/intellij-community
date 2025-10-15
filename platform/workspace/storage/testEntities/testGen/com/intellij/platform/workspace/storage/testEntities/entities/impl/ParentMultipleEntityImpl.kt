@@ -1,4 +1,4 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.platform.workspace.storage.testEntities.entities.impl
 
 import com.intellij.platform.workspace.storage.ConnectionId
@@ -6,6 +6,7 @@ import com.intellij.platform.workspace.storage.EntitySource
 import com.intellij.platform.workspace.storage.EntityType
 import com.intellij.platform.workspace.storage.GeneratedCodeApiVersion
 import com.intellij.platform.workspace.storage.GeneratedCodeImplVersion
+import com.intellij.platform.workspace.storage.ModifiableWorkspaceEntity
 import com.intellij.platform.workspace.storage.MutableEntityStorage
 import com.intellij.platform.workspace.storage.WorkspaceEntity
 import com.intellij.platform.workspace.storage.WorkspaceEntityInternalApi
@@ -21,17 +22,20 @@ import com.intellij.platform.workspace.storage.instrumentation.EntityStorageInst
 import com.intellij.platform.workspace.storage.instrumentation.MutableEntityStorageInstrumentation
 import com.intellij.platform.workspace.storage.metadata.model.EntityMetadata
 import com.intellij.platform.workspace.storage.testEntities.entities.ChildMultipleEntity
+import com.intellij.platform.workspace.storage.testEntities.entities.ModifiableChildMultipleEntity
+import com.intellij.platform.workspace.storage.testEntities.entities.ModifiableParentMultipleEntity
 import com.intellij.platform.workspace.storage.testEntities.entities.ParentMultipleEntity
 
 @GeneratedCodeApiVersion(3)
 @GeneratedCodeImplVersion(7)
 @OptIn(WorkspaceEntityInternalApi::class)
-internal class ParentMultipleEntityImpl(private val dataSource: ParentMultipleEntityData) : ParentMultipleEntity,
-                                                                                            WorkspaceEntityBase(dataSource) {
+internal class ParentMultipleEntityImpl(private val dataSource: ParentMultipleEntityData) : ParentMultipleEntity, WorkspaceEntityBase(
+  dataSource) {
 
   private companion object {
-    internal val CHILDREN_CONNECTION_ID: ConnectionId =
-      ConnectionId.create(ParentMultipleEntity::class.java, ChildMultipleEntity::class.java, ConnectionId.ConnectionType.ONE_TO_MANY, false)
+    internal val CHILDREN_CONNECTION_ID: ConnectionId = ConnectionId.create(ParentMultipleEntity::class.java,
+                                                                            ChildMultipleEntity::class.java,
+                                                                            ConnectionId.ConnectionType.ONE_TO_MANY, false)
 
     private val connections = listOf<ConnectionId>(
       CHILDREN_CONNECTION_ID,
@@ -59,8 +63,8 @@ internal class ParentMultipleEntityImpl(private val dataSource: ParentMultipleEn
   }
 
 
-  internal class Builder(result: ParentMultipleEntityData?) :
-    ModifiableWorkspaceEntityBase<ParentMultipleEntity, ParentMultipleEntityData>(result), ParentMultipleEntity.Builder {
+  internal class Builder(result: ParentMultipleEntityData?) : ModifiableWorkspaceEntityBase<ParentMultipleEntity, ParentMultipleEntityData>(
+    result), ModifiableParentMultipleEntity {
     internal constructor() : this(ParentMultipleEntityData())
 
     override fun applyToBuilder(builder: MutableEntityStorage) {
@@ -139,18 +143,18 @@ internal class ParentMultipleEntityImpl(private val dataSource: ParentMultipleEn
 
     // List of non-abstract referenced types
     var _children: List<ChildMultipleEntity>? = emptyList()
-    override var children: List<ChildMultipleEntity.Builder>
+    override var children: List<ModifiableChildMultipleEntity>
       get() {
         // Getter of the list of non-abstract referenced types
         val _diff = diff
         return if (_diff != null) {
           @OptIn(EntityStorageInstrumentationApi::class)
-          ((_diff as MutableEntityStorageInstrumentation).getManyChildrenBuilders(CHILDREN_CONNECTION_ID, this)!!
-            .toList() as List<ChildMultipleEntity.Builder>) +
-          (this.entityLinks[EntityLink(true, CHILDREN_CONNECTION_ID)] as? List<ChildMultipleEntity.Builder> ?: emptyList())
+          ((_diff as MutableEntityStorageInstrumentation).getManyChildrenBuilders(CHILDREN_CONNECTION_ID,
+                                                                                  this)!!.toList() as List<ModifiableChildMultipleEntity>) +
+          (this.entityLinks[EntityLink(true, CHILDREN_CONNECTION_ID)] as? List<ModifiableChildMultipleEntity> ?: emptyList())
         }
         else {
-          this.entityLinks[EntityLink(true, CHILDREN_CONNECTION_ID)] as? List<ChildMultipleEntity.Builder> ?: emptyList()
+          this.entityLinks[EntityLink(true, CHILDREN_CONNECTION_ID)] as? List<ModifiableChildMultipleEntity> ?: emptyList()
         }
       }
       set(value) {
@@ -194,7 +198,7 @@ internal class ParentMultipleEntityData : WorkspaceEntityData<ParentMultipleEnti
 
   internal fun isParentDataInitialized(): Boolean = ::parentData.isInitialized
 
-  override fun wrapAsModifiable(diff: MutableEntityStorage): WorkspaceEntity.Builder<ParentMultipleEntity> {
+  override fun wrapAsModifiable(diff: MutableEntityStorage): ModifiableWorkspaceEntity<ParentMultipleEntity> {
     val modifiable = ParentMultipleEntityImpl.Builder(null)
     modifiable.diff = diff
     modifiable.id = createEntityId()
@@ -214,15 +218,14 @@ internal class ParentMultipleEntityData : WorkspaceEntityData<ParentMultipleEnti
 
   override fun getMetadata(): EntityMetadata {
     return MetadataStorageImpl.getMetadataByTypeFqn(
-      "com.intellij.platform.workspace.storage.testEntities.entities.ParentMultipleEntity"
-    ) as EntityMetadata
+      "com.intellij.platform.workspace.storage.testEntities.entities.ParentMultipleEntity") as EntityMetadata
   }
 
   override fun getEntityInterface(): Class<out WorkspaceEntity> {
     return ParentMultipleEntity::class.java
   }
 
-  override fun createDetachedEntity(parents: List<WorkspaceEntity.Builder<*>>): WorkspaceEntity.Builder<*> {
+  override fun createDetachedEntity(parents: List<ModifiableWorkspaceEntity<*>>): ModifiableWorkspaceEntity<*> {
     return ParentMultipleEntity(parentData, entitySource) {
     }
   }

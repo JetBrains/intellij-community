@@ -1,4 +1,4 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.platform.workspace.storage.testEntities.entities.impl
 
 import com.intellij.platform.workspace.storage.ConnectionId
@@ -6,6 +6,7 @@ import com.intellij.platform.workspace.storage.EntitySource
 import com.intellij.platform.workspace.storage.EntityType
 import com.intellij.platform.workspace.storage.GeneratedCodeApiVersion
 import com.intellij.platform.workspace.storage.GeneratedCodeImplVersion
+import com.intellij.platform.workspace.storage.ModifiableWorkspaceEntity
 import com.intellij.platform.workspace.storage.MutableEntityStorage
 import com.intellij.platform.workspace.storage.WorkspaceEntity
 import com.intellij.platform.workspace.storage.WorkspaceEntityInternalApi
@@ -26,24 +27,26 @@ import com.intellij.platform.workspace.storage.instrumentation.MutableEntityStor
 import com.intellij.platform.workspace.storage.metadata.model.EntityMetadata
 import com.intellij.platform.workspace.storage.testEntities.entities.ContentRootTestEntity
 import com.intellij.platform.workspace.storage.testEntities.entities.Descriptor
+import com.intellij.platform.workspace.storage.testEntities.entities.ModifiableContentRootTestEntity
+import com.intellij.platform.workspace.storage.testEntities.entities.ModifiableProjectModelTestEntity
 import com.intellij.platform.workspace.storage.testEntities.entities.ProjectModelTestEntity
 
 @GeneratedCodeApiVersion(3)
 @GeneratedCodeImplVersion(7)
 @OptIn(WorkspaceEntityInternalApi::class)
-internal class ProjectModelTestEntityImpl(private val dataSource: ProjectModelTestEntityData) : ProjectModelTestEntity,
-                                                                                                WorkspaceEntityBase(dataSource) {
+internal class ProjectModelTestEntityImpl(private val dataSource: ProjectModelTestEntityData) : ProjectModelTestEntity, WorkspaceEntityBase(
+  dataSource) {
 
   private companion object {
-    internal val PARENTENTITY_CONNECTION_ID: ConnectionId = ConnectionId.create(
-      ProjectModelTestEntity::class.java, ProjectModelTestEntity::class.java, ConnectionId.ConnectionType.ONE_TO_MANY, true
-    )
-    internal val CHILDRENENTITIES_CONNECTION_ID: ConnectionId = ConnectionId.create(
-      ProjectModelTestEntity::class.java, ProjectModelTestEntity::class.java, ConnectionId.ConnectionType.ONE_TO_MANY, true
-    )
-    internal val CONTENTROOT_CONNECTION_ID: ConnectionId = ConnectionId.create(
-      ProjectModelTestEntity::class.java, ContentRootTestEntity::class.java, ConnectionId.ConnectionType.ONE_TO_ONE, true
-    )
+    internal val PARENTENTITY_CONNECTION_ID: ConnectionId = ConnectionId.create(ProjectModelTestEntity::class.java,
+                                                                                ProjectModelTestEntity::class.java,
+                                                                                ConnectionId.ConnectionType.ONE_TO_MANY, true)
+    internal val CHILDRENENTITIES_CONNECTION_ID: ConnectionId = ConnectionId.create(ProjectModelTestEntity::class.java,
+                                                                                    ProjectModelTestEntity::class.java,
+                                                                                    ConnectionId.ConnectionType.ONE_TO_MANY, true)
+    internal val CONTENTROOT_CONNECTION_ID: ConnectionId = ConnectionId.create(ProjectModelTestEntity::class.java,
+                                                                               ContentRootTestEntity::class.java,
+                                                                               ConnectionId.ConnectionType.ONE_TO_ONE, true)
 
     private val connections = listOf<ConnectionId>(
       PARENTENTITY_CONNECTION_ID,
@@ -85,8 +88,8 @@ internal class ProjectModelTestEntityImpl(private val dataSource: ProjectModelTe
   }
 
 
-  internal class Builder(result: ProjectModelTestEntityData?) :
-    ModifiableWorkspaceEntityBase<ProjectModelTestEntity, ProjectModelTestEntityData>(result), ProjectModelTestEntity.Builder {
+  internal class Builder(result: ProjectModelTestEntityData?) : ModifiableWorkspaceEntityBase<ProjectModelTestEntity, ProjectModelTestEntityData>(
+    result), ModifiableProjectModelTestEntity {
     internal constructor() : this(ProjectModelTestEntityData())
 
     override fun applyToBuilder(builder: MutableEntityStorage) {
@@ -176,18 +179,17 @@ internal class ProjectModelTestEntityImpl(private val dataSource: ProjectModelTe
 
       }
 
-    override var parentEntity: ProjectModelTestEntity.Builder?
+    override var parentEntity: ModifiableProjectModelTestEntity?
       get() {
         val _diff = diff
         return if (_diff != null) {
           @OptIn(EntityStorageInstrumentationApi::class)
-          ((_diff as MutableEntityStorageInstrumentation).getParentBuilder(
-            PARENTENTITY_CONNECTION_ID, this
-          ) as? ProjectModelTestEntity.Builder)
-          ?: (this.entityLinks[EntityLink(false, PARENTENTITY_CONNECTION_ID)] as? ProjectModelTestEntity.Builder)
+          ((_diff as MutableEntityStorageInstrumentation).getParentBuilder(PARENTENTITY_CONNECTION_ID,
+                                                                           this) as? ModifiableProjectModelTestEntity)
+          ?: (this.entityLinks[EntityLink(false, PARENTENTITY_CONNECTION_ID)] as? ModifiableProjectModelTestEntity)
         }
         else {
-          this.entityLinks[EntityLink(false, PARENTENTITY_CONNECTION_ID)] as? ProjectModelTestEntity.Builder
+          this.entityLinks[EntityLink(false, PARENTENTITY_CONNECTION_ID)] as? ModifiableProjectModelTestEntity
         }
       }
       set(value) {
@@ -220,18 +222,18 @@ internal class ProjectModelTestEntityImpl(private val dataSource: ProjectModelTe
 
     // List of non-abstract referenced types
     var _childrenEntities: List<ProjectModelTestEntity>? = emptyList()
-    override var childrenEntities: List<ProjectModelTestEntity.Builder>
+    override var childrenEntities: List<ModifiableProjectModelTestEntity>
       get() {
         // Getter of the list of non-abstract referenced types
         val _diff = diff
         return if (_diff != null) {
           @OptIn(EntityStorageInstrumentationApi::class)
-          ((_diff as MutableEntityStorageInstrumentation).getManyChildrenBuilders(CHILDRENENTITIES_CONNECTION_ID, this)!!
-            .toList() as List<ProjectModelTestEntity.Builder>) +
-          (this.entityLinks[EntityLink(true, CHILDRENENTITIES_CONNECTION_ID)] as? List<ProjectModelTestEntity.Builder> ?: emptyList())
+          ((_diff as MutableEntityStorageInstrumentation).getManyChildrenBuilders(CHILDRENENTITIES_CONNECTION_ID,
+                                                                                  this)!!.toList() as List<ModifiableProjectModelTestEntity>) +
+          (this.entityLinks[EntityLink(true, CHILDRENENTITIES_CONNECTION_ID)] as? List<ModifiableProjectModelTestEntity> ?: emptyList())
         }
         else {
-          this.entityLinks[EntityLink(true, CHILDRENENTITIES_CONNECTION_ID)] as? List<ProjectModelTestEntity.Builder> ?: emptyList()
+          this.entityLinks[EntityLink(true, CHILDRENENTITIES_CONNECTION_ID)] as? List<ModifiableProjectModelTestEntity> ?: emptyList()
         }
       }
       set(value) {
@@ -265,18 +267,17 @@ internal class ProjectModelTestEntityImpl(private val dataSource: ProjectModelTe
         changedProperty.add("childrenEntities")
       }
 
-    override var contentRoot: ContentRootTestEntity.Builder?
+    override var contentRoot: ModifiableContentRootTestEntity?
       get() {
         val _diff = diff
         return if (_diff != null) {
           @OptIn(EntityStorageInstrumentationApi::class)
-          ((_diff as MutableEntityStorageInstrumentation).getOneChildBuilder(
-            CONTENTROOT_CONNECTION_ID, this
-          ) as? ContentRootTestEntity.Builder)
-          ?: (this.entityLinks[EntityLink(true, CONTENTROOT_CONNECTION_ID)] as? ContentRootTestEntity.Builder)
+          ((_diff as MutableEntityStorageInstrumentation).getOneChildBuilder(CONTENTROOT_CONNECTION_ID,
+                                                                             this) as? ModifiableContentRootTestEntity)
+          ?: (this.entityLinks[EntityLink(true, CONTENTROOT_CONNECTION_ID)] as? ModifiableContentRootTestEntity)
         }
         else {
-          this.entityLinks[EntityLink(true, CONTENTROOT_CONNECTION_ID)] as? ContentRootTestEntity.Builder
+          this.entityLinks[EntityLink(true, CONTENTROOT_CONNECTION_ID)] as? ModifiableContentRootTestEntity
         }
       }
       set(value) {
@@ -315,7 +316,7 @@ internal class ProjectModelTestEntityData : WorkspaceEntityData<ProjectModelTest
   internal fun isInfoInitialized(): Boolean = ::info.isInitialized
   internal fun isDescriptorInitialized(): Boolean = ::descriptor.isInitialized
 
-  override fun wrapAsModifiable(diff: MutableEntityStorage): WorkspaceEntity.Builder<ProjectModelTestEntity> {
+  override fun wrapAsModifiable(diff: MutableEntityStorage): ModifiableWorkspaceEntity<ProjectModelTestEntity> {
     val modifiable = ProjectModelTestEntityImpl.Builder(null)
     modifiable.diff = diff
     modifiable.id = createEntityId()
@@ -335,17 +336,16 @@ internal class ProjectModelTestEntityData : WorkspaceEntityData<ProjectModelTest
 
   override fun getMetadata(): EntityMetadata {
     return MetadataStorageImpl.getMetadataByTypeFqn(
-      "com.intellij.platform.workspace.storage.testEntities.entities.ProjectModelTestEntity"
-    ) as EntityMetadata
+      "com.intellij.platform.workspace.storage.testEntities.entities.ProjectModelTestEntity") as EntityMetadata
   }
 
   override fun getEntityInterface(): Class<out WorkspaceEntity> {
     return ProjectModelTestEntity::class.java
   }
 
-  override fun createDetachedEntity(parents: List<WorkspaceEntity.Builder<*>>): WorkspaceEntity.Builder<*> {
+  override fun createDetachedEntity(parents: List<ModifiableWorkspaceEntity<*>>): ModifiableWorkspaceEntity<*> {
     return ProjectModelTestEntity(info, descriptor, entitySource) {
-      this.parentEntity = parents.filterIsInstance<ProjectModelTestEntity.Builder>().singleOrNull()
+      this.parentEntity = parents.filterIsInstance<ModifiableProjectModelTestEntity>().singleOrNull()
     }
   }
 

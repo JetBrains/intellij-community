@@ -1,4 +1,4 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.platform.workspace.storage.testEntities.entities.impl
 
 import com.intellij.platform.workspace.storage.*
@@ -16,6 +16,9 @@ import com.intellij.platform.workspace.storage.instrumentation.EntityStorageInst
 import com.intellij.platform.workspace.storage.instrumentation.MutableEntityStorageInstrumentation
 import com.intellij.platform.workspace.storage.metadata.model.EntityMetadata
 import com.intellij.platform.workspace.storage.testEntities.entities.DataClassX
+import com.intellij.platform.workspace.storage.testEntities.entities.ModifiableXChildChildEntity
+import com.intellij.platform.workspace.storage.testEntities.entities.ModifiableXChildEntity
+import com.intellij.platform.workspace.storage.testEntities.entities.ModifiableXParentEntity
 import com.intellij.platform.workspace.storage.testEntities.entities.XChildChildEntity
 import com.intellij.platform.workspace.storage.testEntities.entities.XChildEntity
 import com.intellij.platform.workspace.storage.testEntities.entities.XParentEntity
@@ -26,10 +29,10 @@ import com.intellij.platform.workspace.storage.testEntities.entities.XParentEnti
 internal class XChildEntityImpl(private val dataSource: XChildEntityData) : XChildEntity, WorkspaceEntityBase(dataSource) {
 
   private companion object {
-    internal val PARENTENTITY_CONNECTION_ID: ConnectionId =
-      ConnectionId.create(XParentEntity::class.java, XChildEntity::class.java, ConnectionId.ConnectionType.ONE_TO_MANY, false)
-    internal val CHILDCHILD_CONNECTION_ID: ConnectionId =
-      ConnectionId.create(XChildEntity::class.java, XChildChildEntity::class.java, ConnectionId.ConnectionType.ONE_TO_MANY, false)
+    internal val PARENTENTITY_CONNECTION_ID: ConnectionId = ConnectionId.create(XParentEntity::class.java, XChildEntity::class.java,
+                                                                                ConnectionId.ConnectionType.ONE_TO_MANY, false)
+    internal val CHILDCHILD_CONNECTION_ID: ConnectionId = ConnectionId.create(XChildEntity::class.java, XChildChildEntity::class.java,
+                                                                              ConnectionId.ConnectionType.ONE_TO_MANY, false)
 
     private val connections = listOf<ConnectionId>(
       PARENTENTITY_CONNECTION_ID,
@@ -67,8 +70,8 @@ internal class XChildEntityImpl(private val dataSource: XChildEntityData) : XChi
   }
 
 
-  internal class Builder(result: XChildEntityData?) : ModifiableWorkspaceEntityBase<XChildEntity, XChildEntityData>(result),
-                                                      XChildEntity.Builder {
+  internal class Builder(result: XChildEntityData?) : ModifiableWorkspaceEntityBase<XChildEntity, XChildEntityData>(
+    result), ModifiableXChildEntity {
     internal constructor() : this(XChildEntityData())
 
     override fun applyToBuilder(builder: MutableEntityStorage) {
@@ -165,16 +168,16 @@ internal class XChildEntityImpl(private val dataSource: XChildEntityData) : XChi
 
       }
 
-    override var parentEntity: XParentEntity.Builder
+    override var parentEntity: ModifiableXParentEntity
       get() {
         val _diff = diff
         return if (_diff != null) {
           @OptIn(EntityStorageInstrumentationApi::class)
-          ((_diff as MutableEntityStorageInstrumentation).getParentBuilder(PARENTENTITY_CONNECTION_ID, this) as? XParentEntity.Builder)
-          ?: (this.entityLinks[EntityLink(false, PARENTENTITY_CONNECTION_ID)]!! as XParentEntity.Builder)
+          ((_diff as MutableEntityStorageInstrumentation).getParentBuilder(PARENTENTITY_CONNECTION_ID, this) as? ModifiableXParentEntity)
+          ?: (this.entityLinks[EntityLink(false, PARENTENTITY_CONNECTION_ID)]!! as ModifiableXParentEntity)
         }
         else {
-          this.entityLinks[EntityLink(false, PARENTENTITY_CONNECTION_ID)]!! as XParentEntity.Builder
+          this.entityLinks[EntityLink(false, PARENTENTITY_CONNECTION_ID)]!! as ModifiableXParentEntity
         }
       }
       set(value) {
@@ -207,18 +210,18 @@ internal class XChildEntityImpl(private val dataSource: XChildEntityData) : XChi
 
     // List of non-abstract referenced types
     var _childChild: List<XChildChildEntity>? = emptyList()
-    override var childChild: List<XChildChildEntity.Builder>
+    override var childChild: List<ModifiableXChildChildEntity>
       get() {
         // Getter of the list of non-abstract referenced types
         val _diff = diff
         return if (_diff != null) {
           @OptIn(EntityStorageInstrumentationApi::class)
-          ((_diff as MutableEntityStorageInstrumentation).getManyChildrenBuilders(CHILDCHILD_CONNECTION_ID, this)!!
-            .toList() as List<XChildChildEntity.Builder>) +
-          (this.entityLinks[EntityLink(true, CHILDCHILD_CONNECTION_ID)] as? List<XChildChildEntity.Builder> ?: emptyList())
+          ((_diff as MutableEntityStorageInstrumentation).getManyChildrenBuilders(CHILDCHILD_CONNECTION_ID,
+                                                                                  this)!!.toList() as List<ModifiableXChildChildEntity>) +
+          (this.entityLinks[EntityLink(true, CHILDCHILD_CONNECTION_ID)] as? List<ModifiableXChildChildEntity> ?: emptyList())
         }
         else {
-          this.entityLinks[EntityLink(true, CHILDCHILD_CONNECTION_ID)] as? List<XChildChildEntity.Builder> ?: emptyList()
+          this.entityLinks[EntityLink(true, CHILDCHILD_CONNECTION_ID)] as? List<ModifiableXChildChildEntity> ?: emptyList()
         }
       }
       set(value) {
@@ -263,7 +266,7 @@ internal class XChildEntityData : WorkspaceEntityData<XChildEntity>() {
 
   internal fun isChildPropertyInitialized(): Boolean = ::childProperty.isInitialized
 
-  override fun wrapAsModifiable(diff: MutableEntityStorage): WorkspaceEntity.Builder<XChildEntity> {
+  override fun wrapAsModifiable(diff: MutableEntityStorage): ModifiableWorkspaceEntity<XChildEntity> {
     val modifiable = XChildEntityImpl.Builder(null)
     modifiable.diff = diff
     modifiable.id = createEntityId()
@@ -283,18 +286,17 @@ internal class XChildEntityData : WorkspaceEntityData<XChildEntity>() {
 
   override fun getMetadata(): EntityMetadata {
     return MetadataStorageImpl.getMetadataByTypeFqn(
-      "com.intellij.platform.workspace.storage.testEntities.entities.XChildEntity"
-    ) as EntityMetadata
+      "com.intellij.platform.workspace.storage.testEntities.entities.XChildEntity") as EntityMetadata
   }
 
   override fun getEntityInterface(): Class<out WorkspaceEntity> {
     return XChildEntity::class.java
   }
 
-  override fun createDetachedEntity(parents: List<WorkspaceEntity.Builder<*>>): WorkspaceEntity.Builder<*> {
+  override fun createDetachedEntity(parents: List<ModifiableWorkspaceEntity<*>>): ModifiableWorkspaceEntity<*> {
     return XChildEntity(childProperty, entitySource) {
       this.dataClass = this@XChildEntityData.dataClass
-      parents.filterIsInstance<XParentEntity.Builder>().singleOrNull()?.let { this.parentEntity = it }
+      parents.filterIsInstance<ModifiableXParentEntity>().singleOrNull()?.let { this.parentEntity = it }
     }
   }
 

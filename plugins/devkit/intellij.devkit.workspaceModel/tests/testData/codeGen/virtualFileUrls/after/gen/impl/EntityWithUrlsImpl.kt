@@ -4,6 +4,7 @@ import com.intellij.platform.workspace.storage.ConnectionId
 import com.intellij.platform.workspace.storage.EntitySource
 import com.intellij.platform.workspace.storage.GeneratedCodeApiVersion
 import com.intellij.platform.workspace.storage.GeneratedCodeImplVersion
+import com.intellij.platform.workspace.storage.ModifiableWorkspaceEntity
 import com.intellij.platform.workspace.storage.MutableEntityStorage
 import com.intellij.platform.workspace.storage.WorkspaceEntity
 import com.intellij.platform.workspace.storage.WorkspaceEntityInternalApi
@@ -18,6 +19,7 @@ import com.intellij.platform.workspace.storage.metadata.model.EntityMetadata
 import com.intellij.platform.workspace.storage.url.VirtualFileUrl
 import com.intellij.workspaceModel.test.api.DataClassWithUrl
 import com.intellij.workspaceModel.test.api.EntityWithUrls
+import com.intellij.workspaceModel.test.api.ModifiableEntityWithUrls
 
 @GeneratedCodeApiVersion(3)
 @GeneratedCodeImplVersion(7)
@@ -68,7 +70,7 @@ internal class EntityWithUrlsImpl(private val dataSource: EntityWithUrlsData) : 
 
 
   internal class Builder(result: EntityWithUrlsData?) : ModifiableWorkspaceEntityBase<EntityWithUrls, EntityWithUrlsData>(
-    result), EntityWithUrls.Builder {
+    result), ModifiableEntityWithUrls {
     internal constructor() : this(EntityWithUrlsData())
 
     override fun applyToBuilder(builder: MutableEntityStorage) {
@@ -212,7 +214,7 @@ internal class EntityWithUrlsData : WorkspaceEntityData<EntityWithUrls>() {
   internal fun isListOfUrlsInitialized(): Boolean = ::listOfUrls.isInitialized
   internal fun isDataClassWithUrlInitialized(): Boolean = ::dataClassWithUrl.isInitialized
 
-  override fun wrapAsModifiable(diff: MutableEntityStorage): WorkspaceEntity.Builder<EntityWithUrls> {
+  override fun wrapAsModifiable(diff: MutableEntityStorage): ModifiableWorkspaceEntity<EntityWithUrls> {
     val modifiable = EntityWithUrlsImpl.Builder(null)
     modifiable.diff = diff
     modifiable.id = createEntityId()
@@ -245,7 +247,7 @@ internal class EntityWithUrlsData : WorkspaceEntityData<EntityWithUrls>() {
     return EntityWithUrls::class.java
   }
 
-  override fun createDetachedEntity(parents: List<WorkspaceEntity.Builder<*>>): WorkspaceEntity.Builder<*> {
+  override fun createDetachedEntity(parents: List<ModifiableWorkspaceEntity<*>>): ModifiableWorkspaceEntity<*> {
     return EntityWithUrls(simpleUrl, listOfUrls, dataClassWithUrl, entitySource) {
       this.nullableUrl = this@EntityWithUrlsData.nullableUrl
     }

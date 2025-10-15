@@ -32,17 +32,10 @@ interface LibraryEntity : WorkspaceEntityWithSymbolicId {
         get() = LibraryId(name, tableId)
 
   //region generated code
-  @GeneratedCodeApiVersion(3)
-  interface Builder : WorkspaceEntity.Builder<LibraryEntity> {
-    override var entitySource: EntitySource
-    var name: String
-    var tableId: LibraryTableId
-    var typeId: LibraryTypeId?
-    var roots: MutableList<LibraryRoot>
-    var excludedRoots: List<ExcludeUrlEntity.Builder>
-  }
-
+  @Deprecated(message = "Use ModifiableLibraryEntity instead")
+  interface Builder : ModifiableLibraryEntity
   companion object : EntityType<LibraryEntity, Builder>() {
+    @Deprecated(message = "Use new API instead")
     @JvmOverloads
     @JvmStatic
     @JvmName("create")
@@ -52,30 +45,29 @@ interface LibraryEntity : WorkspaceEntityWithSymbolicId {
       roots: List<LibraryRoot>,
       entitySource: EntitySource,
       init: (Builder.() -> Unit)? = null,
-    ): Builder {
-      val builder = builder()
-      builder.name = name
-      builder.tableId = tableId
-      builder.roots = roots.toMutableWorkspaceList()
-      builder.entitySource = entitySource
-      init?.invoke(builder)
-      return builder
-    }
+    ): Builder = LibraryEntityType.compatibilityInvoke(name, tableId, roots, entitySource, init)
   }
   //endregion
 
 }
 
 //region generated code
+@Deprecated(message = "Use new API instead")
 fun MutableEntityStorage.modifyLibraryEntity(
   entity: LibraryEntity,
   modification: LibraryEntity.Builder.() -> Unit,
-): LibraryEntity = modifyEntity(LibraryEntity.Builder::class.java, entity, modification)
+): LibraryEntity {
+  return modifyEntity(LibraryEntity.Builder::class.java, entity, modification)
+}
 
 @get:Internal
 @set:Internal
+@Deprecated(message = "Use new API instead")
 var LibraryEntity.Builder.libraryProperties: LibraryPropertiesEntity.Builder?
-  by WorkspaceEntity.extensionBuilder(LibraryPropertiesEntity::class.java)
+  get() = (this as ModifiableLibraryEntity).libraryProperties as LibraryPropertiesEntity.Builder?
+  set(value) {
+    (this as ModifiableLibraryEntity).libraryProperties = value
+  }
 //endregion
 
 @Parent

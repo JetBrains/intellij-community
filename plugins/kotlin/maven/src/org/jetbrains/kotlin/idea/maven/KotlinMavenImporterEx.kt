@@ -1,4 +1,4 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.kotlin.idea.maven
 
 import com.intellij.openapi.application.ApplicationManager
@@ -41,7 +41,7 @@ class KotlinMavenImporterEx : KotlinMavenImporter(), MavenWorkspaceFacetConfigur
             }.asSequence().asStream()
     }
 
-    private fun createWorkspaceEntity(module: ModuleEntity): KotlinSettingsEntity.Builder =
+    private fun createWorkspaceEntity(module: ModuleEntity): ModifiableKotlinSettingsEntity =
         KotlinSettingsEntity(
             module.symbolicId,
             KotlinFacetType.INSTANCE.presentableName,

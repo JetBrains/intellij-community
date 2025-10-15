@@ -1,4 +1,4 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.java.workspace.entities.impl
 
 import com.intellij.java.workspace.entities.ArtifactEntity
@@ -6,6 +6,10 @@ import com.intellij.java.workspace.entities.ArtifactId
 import com.intellij.java.workspace.entities.ArtifactOutputPackagingElementEntity
 import com.intellij.java.workspace.entities.ArtifactPropertiesEntity
 import com.intellij.java.workspace.entities.CompositePackagingElementEntity
+import com.intellij.java.workspace.entities.ModifiableArtifactEntity
+import com.intellij.java.workspace.entities.ModifiableArtifactOutputPackagingElementEntity
+import com.intellij.java.workspace.entities.ModifiableArtifactPropertiesEntity
+import com.intellij.java.workspace.entities.ModifiableCompositePackagingElementEntity
 import com.intellij.openapi.util.NlsSafe
 import com.intellij.platform.workspace.jps.entities.LibraryId
 import com.intellij.platform.workspace.jps.entities.ModuleId
@@ -211,19 +215,19 @@ internal class ArtifactEntityImpl(private val dataSource: ArtifactEntityData) : 
         if (_diff != null) index(this, "outputUrl", value)
       }
 
-    override var rootElement: CompositePackagingElementEntity.Builder<out CompositePackagingElementEntity>?
+    override var rootElement: ModifiableCompositePackagingElementEntity<out CompositePackagingElementEntity>?
       get() {
         val _diff = diff
         return if (_diff != null) {
           @OptIn(EntityStorageInstrumentationApi::class)
           ((_diff as MutableEntityStorageInstrumentation).getOneChildBuilder(ROOTELEMENT_CONNECTION_ID,
-                                                                             this) as? CompositePackagingElementEntity.Builder<out CompositePackagingElementEntity>)
+                                                                             this) as? ModifiableCompositePackagingElementEntity<out CompositePackagingElementEntity>)
           ?: (this.entityLinks[EntityLink(true,
-                                          ROOTELEMENT_CONNECTION_ID)] as? CompositePackagingElementEntity.Builder<out CompositePackagingElementEntity>)
+                                          ROOTELEMENT_CONNECTION_ID)] as? ModifiableCompositePackagingElementEntity<out CompositePackagingElementEntity>)
         }
         else {
           this.entityLinks[EntityLink(true,
-                                      ROOTELEMENT_CONNECTION_ID)] as? CompositePackagingElementEntity.Builder<out CompositePackagingElementEntity>
+                                      ROOTELEMENT_CONNECTION_ID)] as? ModifiableCompositePackagingElementEntity<out CompositePackagingElementEntity>
         }
       }
       set(value) {
@@ -252,18 +256,18 @@ internal class ArtifactEntityImpl(private val dataSource: ArtifactEntityData) : 
 
     // List of non-abstract referenced types
     var _customProperties: List<ArtifactPropertiesEntity>? = emptyList()
-    override var customProperties: List<ArtifactPropertiesEntity.Builder>
+    override var customProperties: List<ModifiableArtifactPropertiesEntity>
       get() {
         // Getter of the list of non-abstract referenced types
         val _diff = diff
         return if (_diff != null) {
           @OptIn(EntityStorageInstrumentationApi::class)
           ((_diff as MutableEntityStorageInstrumentation).getManyChildrenBuilders(CUSTOMPROPERTIES_CONNECTION_ID,
-                                                                                  this)!!.toList() as List<ArtifactPropertiesEntity.Builder>) +
-          (this.entityLinks[EntityLink(true, CUSTOMPROPERTIES_CONNECTION_ID)] as? List<ArtifactPropertiesEntity.Builder> ?: emptyList())
+                                                                                  this)!!.toList() as List<ModifiableArtifactPropertiesEntity>) +
+          (this.entityLinks[EntityLink(true, CUSTOMPROPERTIES_CONNECTION_ID)] as? List<ModifiableArtifactPropertiesEntity> ?: emptyList())
         }
         else {
-          this.entityLinks[EntityLink(true, CUSTOMPROPERTIES_CONNECTION_ID)] as? List<ArtifactPropertiesEntity.Builder> ?: emptyList()
+          this.entityLinks[EntityLink(true, CUSTOMPROPERTIES_CONNECTION_ID)] as? List<ModifiableArtifactPropertiesEntity> ?: emptyList()
         }
       }
       set(value) {
@@ -297,18 +301,19 @@ internal class ArtifactEntityImpl(private val dataSource: ArtifactEntityData) : 
         changedProperty.add("customProperties")
       }
 
-    override var artifactOutputPackagingElement: ArtifactOutputPackagingElementEntity.Builder?
+    override var artifactOutputPackagingElement: ModifiableArtifactOutputPackagingElementEntity?
       get() {
         val _diff = diff
         return if (_diff != null) {
           @OptIn(EntityStorageInstrumentationApi::class)
           ((_diff as MutableEntityStorageInstrumentation).getOneChildBuilder(ARTIFACTOUTPUTPACKAGINGELEMENT_CONNECTION_ID,
-                                                                             this) as? ArtifactOutputPackagingElementEntity.Builder)
+                                                                             this) as? ModifiableArtifactOutputPackagingElementEntity)
           ?: (this.entityLinks[EntityLink(true,
-                                          ARTIFACTOUTPUTPACKAGINGELEMENT_CONNECTION_ID)] as? ArtifactOutputPackagingElementEntity.Builder)
+                                          ARTIFACTOUTPUTPACKAGINGELEMENT_CONNECTION_ID)] as? ModifiableArtifactOutputPackagingElementEntity)
         }
         else {
-          this.entityLinks[EntityLink(true, ARTIFACTOUTPUTPACKAGINGELEMENT_CONNECTION_ID)] as? ArtifactOutputPackagingElementEntity.Builder
+          this.entityLinks[EntityLink(true,
+                                      ARTIFACTOUTPUTPACKAGINGELEMENT_CONNECTION_ID)] as? ModifiableArtifactOutputPackagingElementEntity
         }
       }
       set(value) {
@@ -350,7 +355,7 @@ internal class ArtifactEntityData : WorkspaceEntityData<ArtifactEntity>() {
   internal fun isArtifactTypeInitialized(): Boolean = ::artifactType.isInitialized
 
 
-  override fun wrapAsModifiable(diff: MutableEntityStorage): WorkspaceEntity.Builder<ArtifactEntity> {
+  override fun wrapAsModifiable(diff: MutableEntityStorage): ModifiableWorkspaceEntity<ArtifactEntity> {
     val modifiable = ArtifactEntityImpl.Builder(null)
     modifiable.diff = diff
     modifiable.id = createEntityId()
@@ -376,7 +381,7 @@ internal class ArtifactEntityData : WorkspaceEntityData<ArtifactEntity>() {
     return ArtifactEntity::class.java
   }
 
-  override fun createDetachedEntity(parents: List<WorkspaceEntity.Builder<*>>): WorkspaceEntity.Builder<*> {
+  override fun createDetachedEntity(parents: List<ModifiableWorkspaceEntity<*>>): ModifiableWorkspaceEntity<*> {
     return ArtifactEntity(name, artifactType, includeInProjectBuild, entitySource) {
       this.outputUrl = this@ArtifactEntityData.outputUrl
     }

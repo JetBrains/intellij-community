@@ -1,0 +1,52 @@
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+package com.intellij.platform.workspace.storage.testEntities.entities.currentVersion
+
+import com.intellij.platform.workspace.storage.EntitySource
+import com.intellij.platform.workspace.storage.EntityType
+import com.intellij.platform.workspace.storage.GeneratedCodeApiVersion
+import com.intellij.platform.workspace.storage.ModifiableWorkspaceEntity
+import com.intellij.platform.workspace.storage.MutableEntityStorage
+import com.intellij.platform.workspace.storage.WorkspaceEntity
+import com.intellij.platform.workspace.storage.impl.containers.toMutableWorkspaceList
+
+@GeneratedCodeApiVersion(3)
+interface ModifiableDefaultPropEntity : ModifiableWorkspaceEntity<DefaultPropEntity> {
+  override var entitySource: EntitySource
+  var someString: String
+  var someList: MutableList<Int>
+  var constInt: Int
+}
+
+internal object DefaultPropEntityType : EntityType<DefaultPropEntity, ModifiableDefaultPropEntity>() {
+  override val entityClass: Class<DefaultPropEntity> get() = DefaultPropEntity::class.java
+  operator fun invoke(
+    someString: String,
+    someList: List<Int>,
+    constInt: Int,
+    entitySource: EntitySource,
+    init: (ModifiableDefaultPropEntity.() -> Unit)? = null,
+  ): ModifiableDefaultPropEntity {
+    val builder = builder()
+    builder.someString = someString
+    builder.someList = someList.toMutableWorkspaceList()
+    builder.constInt = constInt
+    builder.entitySource = entitySource
+    init?.invoke(builder)
+    return builder
+  }
+}
+
+fun MutableEntityStorage.modifyDefaultPropEntity(
+  entity: DefaultPropEntity,
+  modification: ModifiableDefaultPropEntity.() -> Unit,
+): DefaultPropEntity = modifyEntity(ModifiableDefaultPropEntity::class.java, entity, modification)
+
+@JvmOverloads
+@JvmName("createDefaultPropEntity")
+fun DefaultPropEntity(
+  someString: String,
+  someList: List<Int>,
+  constInt: Int,
+  entitySource: EntitySource,
+  init: (ModifiableDefaultPropEntity.() -> Unit)? = null,
+): ModifiableDefaultPropEntity = DefaultPropEntityType(someString, someList, constInt, entitySource, init)
