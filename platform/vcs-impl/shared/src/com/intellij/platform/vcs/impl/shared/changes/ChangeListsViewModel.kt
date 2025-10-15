@@ -4,11 +4,13 @@ package com.intellij.platform.vcs.impl.shared.changes
 import com.intellij.openapi.components.Service
 import com.intellij.openapi.components.service
 import com.intellij.openapi.project.Project
+import com.intellij.openapi.vcs.changes.Change
 import com.intellij.openapi.vcs.changes.LocalChangeList
 import com.intellij.platform.project.ProjectId
 import com.intellij.platform.project.projectIdOrNull
 import com.intellij.platform.vcs.changes.ChangeListManagerState
 import com.intellij.platform.vcs.impl.shared.RdLocalChanges
+import com.intellij.platform.vcs.impl.shared.rpc.ChangeId
 import com.intellij.platform.vcs.impl.shared.rpc.ChangeListsApi
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.flow.*
@@ -30,10 +32,16 @@ class ChangeListsViewModel(
             ChangeListManagerState.Updating(ChangeListManagerState.FileHoldersState(true, true)))
 
   val changeLists: StateFlow<ChangeLists> = changeListsApiFlow { api, projectId ->
-    emitAll(api.getChangeLists(projectId).map { changeLists ->
-      ChangeLists(changeLists.map { it.getChangeList(project) })
+    emitAll(api.getChangeLists(projectId).map { dtos ->
+      val changeLists = dtos.map { it.getChangeList(project) }
+      ChangeLists(
+        changeLists,
+        changeLists.flatMap { it.changes }.associateBy { ChangeId.getId(it) }
+      )
     })
-  }.stateIn(cs, SharingStarted.Eagerly, ChangeLists(emptyList()))
+  }.stateIn(cs, SharingStarted.Eagerly, ChangeLists.EMPTY)
+
+  fun resolveChange(changeId: ChangeId): Change? = changeLists.value.changes[changeId]
 
   private fun <T> changeListsApiFlow(checkRegistry: Boolean = true, flowProducer: suspend FlowCollector<T>.(ChangeListsApi, ProjectId) -> Unit): Flow<T> =
     if (checkRegistry && !RdLocalChanges.isEnabled()) emptyFlow()
@@ -48,5 +56,12 @@ class ChangeListsViewModel(
     fun getInstance(project: Project): ChangeListsViewModel = project.service()
   }
 
-  class ChangeLists(val lists: List<LocalChangeList>)
+  class ChangeLists(
+    val lists: List<LocalChangeList>,
+    val changes: Map<ChangeId, Change>
+  ) {
+    companion object {
+      val EMPTY = ChangeLists(emptyList(), emptyMap())
+    }
+  }
 }

@@ -13,7 +13,10 @@ import org.jetbrains.annotations.ApiStatus
 import javax.swing.JComponent
 
 // TODO IJPL-173924 cleanup methods returning tree/component
-internal interface BackendCommitChangesViewModel {
+/**
+ * @see [com.intellij.vcs.changes.BackendChangesView]
+ */
+internal sealed interface BackendCommitChangesViewModel {
   val inclusionChanged: SharedFlow<Unit>
 
   fun initPanel()

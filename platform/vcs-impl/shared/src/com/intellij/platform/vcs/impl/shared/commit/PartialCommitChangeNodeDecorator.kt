@@ -8,7 +8,9 @@ import com.intellij.openapi.vcs.changes.Change
 import com.intellij.openapi.vcs.changes.ChangeListChange
 import com.intellij.openapi.vcs.changes.ui.ChangeNodeDecorator
 import com.intellij.openapi.vcs.changes.ui.ChangesBrowserNodeRenderer
-import com.intellij.openapi.vcs.ex.countAffectedVisibleChanges
+import com.intellij.openapi.vcs.ex.changesInChangeList
+import com.intellij.openapi.vcs.ex.countAllChanges
+import com.intellij.openapi.vcs.ex.countIncludedChanges
 import com.intellij.platform.vcs.impl.shared.changes.PartialChangesHolder
 import com.intellij.ui.SimpleColoredComponent
 import com.intellij.ui.SimpleTextAttributes
@@ -31,10 +33,9 @@ class PartialCommitChangeNodeDecorator @JvmOverloads constructor(
   private fun appendPartialCommitState(change: Change, renderer: SimpleColoredComponent) {
     val changeListId = (change as? ChangeListChange)?.changeListId ?: return
     val filePath = change.afterRevision?.file ?: return
-    val ranges = PartialChangesHolder.Companion.getInstance(project).getRanges(filePath) ?: return
-    val rangesToCommit = ranges.filter { it.changelistId == changeListId }
-      .sumOf { it.exclusionState.countAffectedVisibleChanges(true) }
-    val totalRanges = ranges.sumOf { it.exclusionState.countAffectedVisibleChanges(false) }
+    val ranges = PartialChangesHolder.getInstance(project).getRanges(filePath) ?: return
+    val rangesToCommit = ranges.changesInChangeList(changeListId).countIncludedChanges()
+    val totalRanges = ranges.countAllChanges()
     if (rangesToCommit != 0 && rangesToCommit != totalRanges) {
       renderer.append(FontUtil.spaceAndThinSpace()).append(
         VcsBundle.message("ranges.to.commit.of.ranges.size.changes", rangesToCommit, totalRanges),

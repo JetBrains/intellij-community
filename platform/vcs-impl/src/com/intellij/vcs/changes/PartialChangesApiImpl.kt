@@ -13,7 +13,6 @@ import com.intellij.platform.vcs.impl.shared.rpc.PartialChangesApi
 import com.intellij.platform.vcs.impl.shared.rpc.PartialChangesEvent
 import com.intellij.util.asDisposable
 import com.intellij.vcs.rpc.ProjectScopeRpcHelper.projectScopedCallbackFlow
-import com.intellij.vcs.toDto
 import com.intellij.vcsUtil.VcsUtil
 import kotlinx.coroutines.channels.ProducerScope
 import kotlinx.coroutines.channels.SendChannel
@@ -73,5 +72,5 @@ internal class PartialChangesApiImpl : PartialChangesApi {
     }
   }
 
-  private fun getPathDto(tracker: PartialLocalLineStatusTracker): FilePathDto = VcsUtil.getFilePath(tracker.virtualFile).toDto()
+  private fun getPathDto(tracker: PartialLocalLineStatusTracker): FilePathDto = FilePathDto.toDto(VcsUtil.getFilePath(tracker.virtualFile))
 }

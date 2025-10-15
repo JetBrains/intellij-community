@@ -37,9 +37,9 @@ import kotlin.time.Duration.Companion.milliseconds
 private val REFRESH_DELAY = 100.milliseconds
 
 @ApiStatus.Internal
-class CommitChangesViewWithToolbarPanel(
+open class CommitChangesViewWithToolbarPanel(
   changesView: ChangesListView,
-  private val cs: CoroutineScope,
+  protected val cs: CoroutineScope,
 ) : ChangesViewPanel(changesView) {
   val project: Project get() = changesView.project
   private val settings get() = ChangesViewSettings.getInstance(project)
@@ -49,12 +49,6 @@ class CommitChangesViewWithToolbarPanel(
   }
 
   private var modelProvider: ModelProvider? = null
-
-  var id: ChangesViewId? = null
-    set(value) {
-      if (field == null) field = value
-      else error("Id is already assigned")
-    }
 
   init {
     refresher.start()
@@ -67,8 +61,6 @@ class CommitChangesViewWithToolbarPanel(
 
   @RequiresEdt
   fun initPanel(modelProvider: ModelProvider) {
-    checkNotNull(id)
-
     this.modelProvider = modelProvider
 
     cs.launch(Dispatchers.UI) {
@@ -77,7 +69,7 @@ class CommitChangesViewWithToolbarPanel(
       }
     }
 
-     cs.launch(Dispatchers.UI) {
+    cs.launch(Dispatchers.UI) {
       PartialChangesHolder.getInstance(project).updates.collectLatest {
         changesView.repaint()
       }
@@ -119,7 +111,7 @@ class CommitChangesViewWithToolbarPanel(
   }
 
   @CalledInAny
-  private fun scheduleRefresh(withDelay: Boolean, @RequiresBackgroundThread callback: Runnable? = null) {
+  protected fun scheduleRefresh(withDelay: Boolean, @RequiresBackgroundThread callback: Runnable? = null) {
     if (!withDelay && callback == null) {
       refresher.request()
       return

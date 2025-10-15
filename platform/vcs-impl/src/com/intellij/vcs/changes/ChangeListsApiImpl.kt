@@ -4,13 +4,9 @@ package com.intellij.vcs.changes
 import com.intellij.openapi.vcs.changes.*
 import com.intellij.platform.project.ProjectId
 import com.intellij.platform.vcs.changes.ChangeListManagerState
-import com.intellij.platform.vcs.impl.shared.rpc.ChangeDto
-import com.intellij.platform.vcs.impl.shared.rpc.ChangeListDto
-import com.intellij.platform.vcs.impl.shared.rpc.ChangeListsApi
-import com.intellij.platform.vcs.impl.shared.rpc.ContentRevisionDto
+import com.intellij.platform.vcs.impl.shared.rpc.*
 import com.intellij.vcs.rpc.ProjectScopeRpcHelper.getProjectScoped
 import com.intellij.vcs.rpc.ProjectScopeRpcHelper.projectScopedCallbackFlow
-import com.intellij.vcs.toDto
 import kotlinx.coroutines.channels.BufferOverflow
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.buffer
@@ -61,7 +57,7 @@ internal class ChangeListsApiImpl : ChangeListsApi {
 
   private fun ContentRevision.toDto() = ContentRevisionDto(
     revisionString = revisionNumber.asString(),
-    filePath = file.toDto(),
+    filePath = FilePathDto.toDto(file),
     localValue = this,
   )
 }

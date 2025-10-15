@@ -10,6 +10,9 @@ import org.jetbrains.annotations.ApiStatus
 @ApiStatus.Internal
 val ChangesViewSplitComponentBinding: SplitComponentBinding<ChangesViewId> = SplitComponentBinding("ChangesView", ::ChangesViewId)
 
+/**
+ * Note that there is only 1 changes view per project.
+ */
 @Serializable
 @ApiStatus.Internal
 data class ChangesViewId(override val uid: UID) : Id

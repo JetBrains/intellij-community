@@ -59,7 +59,7 @@ class LocalRange @ApiStatus.Internal constructor(
         encodeIntElement(descriptor, LINE2, value.line2)
         encodeIntElement(descriptor, VCS_LINE1, value.vcsLine1)
         encodeIntElement(descriptor, VCS_LINE2, value.vcsLine2)
-        val innerSer = kotlinx.serialization.builtins.ListSerializer(InnerRange.serializer())
+        val innerSer = ListSerializer(InnerRange.serializer())
         val ir = value.innerRanges
         if (ir != null) {
           encodeSerializableElement(descriptor, INNER_RANGES, innerSer, ir)
@@ -106,3 +106,12 @@ class LocalRange @ApiStatus.Internal constructor(
     }
   }
 }
+
+@ApiStatus.Internal
+fun List<LocalRange>.changesInChangeList(changeListId: String): List<LocalRange> = filter { it.changelistId == changeListId }
+
+@ApiStatus.Internal
+fun List<LocalRange>.countIncludedChanges(): Int = sumOf { it.exclusionState.countAffectedVisibleChanges(true) }
+
+@ApiStatus.Internal
+fun List<LocalRange>.countAllChanges(): Int = sumOf { it.exclusionState.countAffectedVisibleChanges(false) }
