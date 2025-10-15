@@ -18,8 +18,8 @@ import org.jetbrains.kotlin.analysis.decompiler.psi.KotlinBuiltInFileType
 import org.jetbrains.kotlin.incremental.storage.StringExternalizer
 import org.jetbrains.kotlin.library.KLIB_FILE_EXTENSION_WITH_DOT
 import org.jetbrains.kotlin.library.KLIB_MANIFEST_FILE_NAME
-import org.jetbrains.kotlin.library.KLIB_METADATA_FILE_EXTENSION
-import org.jetbrains.kotlin.library.KLIB_METADATA_FOLDER_NAME
+import org.jetbrains.kotlin.library.components.KlibMetadataConstants.KLIB_METADATA_FILE_EXTENSION
+import org.jetbrains.kotlin.library.components.KlibMetadataConstants.KLIB_METADATA_FOLDER_NAME
 import org.jetbrains.kotlin.name.FqName
 
 /**
