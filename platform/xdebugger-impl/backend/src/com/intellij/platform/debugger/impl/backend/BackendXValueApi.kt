@@ -184,7 +184,7 @@ internal fun computeContainerChildren(
 
   return channelFlow {
     parentCs.awaitCancellationAndInvoke {
-      close()
+      rawEvents.close()
     }
     val addNextChildrenCallbackHandler = AddNextChildrenCallbackHandler(this@channelFlow)
 
@@ -224,15 +224,11 @@ internal fun computeContainerChildren(
       }
     }
 
-    launch {
+    try {
+      xValueContainer.computeChildren(xCompositeBridgeNode)
       for (event in rawEvents) {
         send(event.convertToRpcEvent(parentCs, session))
       }
-    }
-
-    try {
-      xValueContainer.computeChildren(xCompositeBridgeNode)
-      awaitClose()
     }
     finally {
       xCompositeBridgeNode.obsolete = true
