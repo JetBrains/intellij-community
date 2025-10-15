@@ -67,6 +67,7 @@ import org.jetbrains.annotations.*;
 
 import javax.swing.*;
 import java.awt.*;
+import java.util.List;
 import java.util.Objects;
 import java.util.concurrent.Callable;
 import java.util.concurrent.CompletableFuture;
@@ -860,7 +861,7 @@ public final class ApplicationImpl extends ClientAwareComponentManager implement
       if (restart) {
         if (canRestart) {
           try {
-            Restarter.scheduleRestart(BitUtil.isSet(flags, ELEVATE), beforeRestart);
+            Restarter.scheduleRestart(BitUtil.isSet(flags, ELEVATE), List.of(beforeRestart));
           }
           catch (Throwable t) {
             logErrorDuringExit("Failed to restart the application", t);
