@@ -1,9 +1,9 @@
 // Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.plugins.terminal.block.reworked
 
+import com.intellij.openapi.Disposable
 import com.intellij.openapi.util.Key
 import com.intellij.util.concurrency.annotations.RequiresEdt
-import kotlinx.coroutines.flow.SharedFlow
 import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.plugins.terminal.session.TerminalBlocksModelState
 import org.jetbrains.plugins.terminal.session.TerminalOutputBlock
@@ -14,10 +14,7 @@ interface TerminalBlocksModel {
   @get:RequiresEdt
   val blocks: List<TerminalOutputBlock>
 
-  /**
-   * Blocks are guaranteed to be valid if they are requested during this flow collection on EDT.
-   */
-  val events: SharedFlow<TerminalBlocksModelEvent>
+  fun addListener(parentDisposable: Disposable, listener: TerminalBlocksModelListener)
 
   @RequiresEdt
   fun promptStarted(offset: TerminalOffset)

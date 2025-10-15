@@ -1,9 +1,6 @@
 // Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.terminal.frontend.view.impl
 
-import com.intellij.openapi.application.EDT
-import com.intellij.openapi.application.ModalityState
-import com.intellij.openapi.application.asContextElement
 import com.intellij.openapi.editor.Inlay
 import com.intellij.openapi.editor.ex.EditorEx
 import com.intellij.openapi.editor.markup.HighlighterLayer
@@ -12,8 +9,6 @@ import com.intellij.openapi.editor.markup.RangeHighlighter
 import com.intellij.openapi.util.Disposer
 import com.intellij.util.asDisposable
 import kotlinx.coroutines.CoroutineScope
-import kotlinx.coroutines.Dispatchers
-import kotlinx.coroutines.launch
 import org.jetbrains.plugins.terminal.block.BlockTerminalOptions
 import org.jetbrains.plugins.terminal.block.BlockTerminalOptionsListener
 import org.jetbrains.plugins.terminal.block.reworked.*
@@ -31,15 +26,19 @@ internal class TerminalBlocksDecorator(
   private val decorations: MutableMap<Int, BlockDecoration> = HashMap()
 
   init {
-    coroutineScope.launch(Dispatchers.EDT + ModalityState.any().asContextElement()) {
-      blocksModel.events.collect { event ->
-        editor.doTerminalOutputScrollChangingAction {
-          handleBlocksModelEvent(event)
-        }
-
-        scrollingModel.scrollToCursor(force = false)
+    blocksModel.addListener(coroutineScope.asDisposable(), object : TerminalBlocksModelListener {
+      override fun blockAdded(event: TerminalBlockAddedEvent) {
+        handleBlocksModelEvent(event)
       }
-    }
+
+      override fun blockRemoved(event: TerminalBlockRemovedEvent) {
+        handleBlocksModelEvent(event)
+      }
+
+      override fun blockFinished(event: TerminalBlockFinishedEvent) {
+        handleBlocksModelEvent(event)
+      }
+    })
 
     BlockTerminalOptions.getInstance().addListener(coroutineScope.asDisposable(), object : BlockTerminalOptionsListener {
       override fun showSeparatorsBetweenBlocksChanged(shouldShow: Boolean) {
@@ -49,6 +48,8 @@ internal class TerminalBlocksDecorator(
         else disposeAllDecorations()
       }
     })
+
+    createDecorationsForAllBlocks()
   }
 
   private fun handleBlocksModelEvent(event: TerminalBlocksModelEvent) {
@@ -57,17 +58,27 @@ internal class TerminalBlocksDecorator(
       return
     }
 
-    val block = event.block
+    editor.doTerminalOutputScrollChangingAction {
+      doHandleBlocksModelEvent(event)
+    }
+
+    scrollingModel.scrollToCursor(force = false)
+  }
+
+  private fun doHandleBlocksModelEvent(event: TerminalBlocksModelEvent) {
     when (event) {
-      is TerminalBlockStartedEvent -> {
+      is TerminalBlockAddedEvent -> {
+        val block = event.block
         decorations[block.id] = createPromptDecoration(block)
       }
       is TerminalBlockFinishedEvent -> {
+        val block = event.block
         val decoration = decorations[block.id] ?: error("Decoration not found for block $block")
         disposeDecoration(decoration)
         decorations[block.id] = createFinishedBlockDecoration(block)
       }
       is TerminalBlockRemovedEvent -> {
+        val block = event.block
         val decoration = decorations[block.id] ?: error("Decoration not found for block $block")
         disposeDecoration(decoration)
         decorations.remove(block.id)
