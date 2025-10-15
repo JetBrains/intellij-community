@@ -5401,6 +5401,7 @@ f:com.intellij.util.ui.UIUtil
 - s:getWarningIcon():javax.swing.Icon
 - s:getWindow(java.awt.Component):java.awt.Window
 - s:getWindowColor():java.awt.Color
+- s:getWindowLayeredPaneFor(java.awt.Component):javax.swing.JLayeredPane
 - s:hasComponentOfType(java.awt.Component,java.lang.Class[]):Z
 - s:hasScrollPane(java.awt.Component):Z
 - s:haveCommonOwner(java.awt.Component,java.awt.Component):Z

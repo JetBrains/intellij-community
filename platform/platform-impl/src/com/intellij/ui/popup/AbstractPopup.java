@@ -744,21 +744,10 @@ public class AbstractPopup implements JBPopup, ScreenAreaConsumer, AlignedPopup 
       var windowManager = getWndManager();
       Component focusedComponent = windowManager == null ? null : windowManager.getFocusedComponent(myProject);
       if (focusedComponent != null) {
-        Window window = SwingUtilities.windowForComponent(focusedComponent);
-        JLayeredPane layeredPane;
-        if (window instanceof JFrame) {
-          layeredPane = ((JFrame)window).getLayeredPane();
+        JLayeredPane layeredPane = UIUtil.getWindowLayeredPaneFor(focusedComponent);
+        if (layeredPane == null) {
+          throw new IllegalStateException("cannot find parent window: project=" + myProject + "; component=" + focusedComponent);
         }
-        else if (window instanceof JDialog) {
-          layeredPane = ((JDialog)window).getLayeredPane();
-        }
-        else if (window instanceof JWindow) {
-          layeredPane = ((JWindow)window).getLayeredPane();
-        }
-        else {
-          throw new IllegalStateException("cannot find parent window: project=" + myProject + "; window=" + window);
-        }
-
         return relativePointWithDominantRectangle(layeredPane, dominantArea);
       }
     }

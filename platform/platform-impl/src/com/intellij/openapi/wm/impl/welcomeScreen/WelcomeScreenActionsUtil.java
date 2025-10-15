@@ -114,8 +114,9 @@ public final class WelcomeScreenActionsUtil {
     ActionUiKind uiKind = toolbar == null ? ActionUiKind.NONE : new ActualActionUiKind.Toolbar(toolbar);
     DataContext context = ActionToolbar.getDataContextFor(component);
 
-    Point p = RelativePoint.getNorthWestOf(component).getPoint();
-    Rectangle popupLocation = new Rectangle(p.x, p.y + component.getHeight(), 0, 0);
+    JLayeredPane layeredPane = UIUtil.getWindowLayeredPaneFor(component);
+    Point p = SwingUtilities.convertPoint(component, 0, 0, layeredPane);
+    Rectangle popupLocation = new Rectangle(p.x, p.y + component.getHeight() + JBUI.scale(4), 0, 0);
     DataContext popupContext = SimpleDataContext.builder()
       .setParent(context)
       .add(PlatformDataKeys.DOMINANT_HINT_AREA_RECTANGLE, popupLocation)
