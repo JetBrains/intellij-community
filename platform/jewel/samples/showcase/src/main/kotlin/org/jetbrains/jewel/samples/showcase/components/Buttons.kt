@@ -36,6 +36,7 @@ import org.jetbrains.jewel.ui.component.SelectableIconButton
 import org.jetbrains.jewel.ui.component.Text
 import org.jetbrains.jewel.ui.component.ToggleableIconActionButton
 import org.jetbrains.jewel.ui.component.ToggleableIconButton
+import org.jetbrains.jewel.ui.component.VerticallyScrollableContainer
 import org.jetbrains.jewel.ui.component.items
 import org.jetbrains.jewel.ui.component.separator
 import org.jetbrains.jewel.ui.component.styling.LocalIconButtonStyle
@@ -49,16 +50,18 @@ import org.jetbrains.jewel.ui.typography
 
 @Composable
 public fun Buttons(modifier: Modifier = Modifier) {
-    Column(modifier.fillMaxSize(), verticalArrangement = Arrangement.spacedBy(24.dp)) {
-        NormalButtons()
+    VerticallyScrollableContainer(modifier.fillMaxSize()) {
+        Column(Modifier.fillMaxWidth(), verticalArrangement = Arrangement.spacedBy(24.dp)) {
+            NormalButtons()
 
-        var selectedIndex by remember { mutableIntStateOf(0) }
-        IconButtons(selectedIndex == 1) { selectedIndex = 1 }
-        IconActionButtons(selectedIndex == 2) { selectedIndex = 2 }
+            var selectedIndex by remember { mutableIntStateOf(0) }
+            IconButtons(selectedIndex == 1) { selectedIndex = 1 }
+            IconActionButtons(selectedIndex == 2) { selectedIndex = 2 }
 
-        ActionButtons()
+            ActionButtons()
 
-        SplitButtons()
+            SplitButtons()
+        }
     }
 }
 
@@ -91,12 +94,12 @@ private fun IconButtons(selected: Boolean, onSelectableClick: () -> Unit) {
         ) {
             Text("Focusable:")
 
-            IconButton(onClick = {}) { Icon(key = AllIconsKeys.Actions.Close, contentDescription = "IconButton") }
+            IconButton(onClick = {}) { Icon(key = AllIconsKeys.Actions.AddFile, contentDescription = "IconButton") }
 
             Text("Not focusable:")
 
             IconButton(onClick = {}, focusable = false) {
-                Icon(key = AllIconsKeys.Actions.Close, contentDescription = "IconButton")
+                Icon(key = AllIconsKeys.Actions.AddFile, contentDescription = "IconButton")
             }
 
             Text("Selectable:")
@@ -131,7 +134,13 @@ private fun IconButtons(selected: Boolean, onSelectableClick: () -> Unit) {
             Text("Without background:")
 
             IconButton(style = JewelTheme.transparentIconButtonStyle, onClick = {}) {
-                Icon(key = AllIconsKeys.Actions.Close, contentDescription = "IconButton")
+                Icon(key = AllIconsKeys.Actions.AddFile, contentDescription = "IconButton")
+            }
+
+            Text("Disabled:")
+
+            IconButton(onClick = {}, enabled = false) {
+                Icon(key = AllIconsKeys.Actions.AddFile, contentDescription = "IconButton")
             }
         }
     }
@@ -148,16 +157,24 @@ private fun IconActionButtons(selected: Boolean, onSelectableClick: () -> Unit) 
             verticalAlignment = Alignment.CenterVertically,
         ) {
             Text("With tooltip:")
-            IconActionButton(key = AllIconsKeys.Actions.Copy, contentDescription = "IconActionButton", onClick = {}) {
+            IconActionButton(
+                key = AllIconsKeys.Actions.BuildAutoReloadChanges,
+                contentDescription = "IconActionButton",
+                onClick = {},
+            ) {
                 Text("I am a tooltip")
             }
 
             Text("Without tooltip:")
-            IconActionButton(key = AllIconsKeys.Actions.Copy, contentDescription = "IconActionButton", onClick = {})
+            IconActionButton(
+                key = AllIconsKeys.Actions.BuildAutoReloadChanges,
+                contentDescription = "IconActionButton",
+                onClick = {},
+            )
 
             Text("Selectable:")
             SelectableIconActionButton(
-                key = AllIconsKeys.Actions.Copy,
+                key = AllIconsKeys.Actions.BuildAutoReloadChanges,
                 contentDescription = "SelectableIconActionButton",
                 selected = selected,
                 onClick = onSelectableClick,
@@ -166,10 +183,25 @@ private fun IconActionButtons(selected: Boolean, onSelectableClick: () -> Unit) 
             Text("Toggleable:")
             var checked by remember { mutableStateOf(false) }
             ToggleableIconActionButton(
-                key = AllIconsKeys.Actions.Copy,
+                key = AllIconsKeys.Actions.BuildAutoReloadChanges,
                 contentDescription = "SelectableIconActionButton",
                 value = checked,
                 onValueChange = { checked = it },
+            )
+        }
+
+        Row(
+            modifier = Modifier.fillMaxWidth(),
+            horizontalArrangement = Arrangement.spacedBy(16.dp),
+            verticalAlignment = Alignment.CenterVertically,
+        ) {
+            Text("Disabled:")
+
+            IconActionButton(
+                key = AllIconsKeys.Actions.BuildAutoReloadChanges,
+                contentDescription = "IconActionButton",
+                onClick = {},
+                enabled = false,
             )
         }
     }
