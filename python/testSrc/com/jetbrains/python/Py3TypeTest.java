@@ -4192,11 +4192,11 @@ public class Py3TypeTest extends PyTestCase {
     String testDir = TEST_DIRECTORY + getTestName(false);
     runWithAdditionalClassEntryInSdkRoots(testDir + "/site-packages", () -> {
       runWithAdditionalClassEntryInSdkRoots(testDir + "/python_stubs", () -> {
-        doTest("imported module pkg", """
+        doTest("pkg", """
           import pkg.subpkg
           expr = pkg
           """);
-        doTest("__init__.py", """
+        doTest("pkg.subpkg", """
           import pkg.subpkg
           expr = pkg.subpkg
           """);

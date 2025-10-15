@@ -21,5 +21,5 @@ class Reporter3(Protocol):
 
 
 rp1: Reporter1 = _protocols_modules2  # OK
-rp2: Reporter2 = <warning descr="Expected type 'Reporter2', got '_protocols_modules2.py' instead">_protocols_modules2</warning>
-rp3: Reporter3 = <warning descr="Expected type 'Reporter3', got '_protocols_modules2.py' instead">_protocols_modules2</warning>
+rp2: Reporter2 = <warning descr="Expected type 'Reporter2', got '_protocols_modules2' instead">_protocols_modules2</warning>
+rp3: Reporter3 = <warning descr="Expected type 'Reporter3', got '_protocols_modules2' instead">_protocols_modules2</warning>

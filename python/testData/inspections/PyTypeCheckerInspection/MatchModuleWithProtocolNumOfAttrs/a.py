@@ -13,4 +13,4 @@ class Options2(Protocol):
 
 
 op1: Options1 = _protocols_modules1
-op1: Options2 = <warning descr="Expected type 'Options2', got '_protocols_modules1.py' instead">_protocols_modules1</warning>
+op1: Options2 = <warning descr="Expected type 'Options2', got '_protocols_modules1' instead">_protocols_modules1</warning>

@@ -2873,14 +2873,14 @@ public class PyTypeTest extends PyTestCase {
 
   // PY-25751
   public void testNotImportedModuleInDunderAll() {
-    doMultiFileTest("Union[aaa.py, Any]",
+    doMultiFileTest("Union[pkg.aaa, Any]",
                     "from pkg import *\n" +
                     "expr = aaa");
   }
 
   // PY-25751
   public void testNotImportedPackageInDunderAll() {
-    doMultiFileTest("Union[__init__.py, Any]",
+    doMultiFileTest("Union[pkg.aaa, Any]",
                     "from pkg import *\n" +
                     "expr = aaa");
   }

@@ -13,6 +13,7 @@ import com.intellij.psi.*;
 import com.intellij.psi.scope.PsiScopeProcessor;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.psi.util.QualifiedName;
+import com.intellij.util.LazyInitializer;
 import com.intellij.util.ObjectUtils;
 import com.intellij.util.ProcessingContext;
 import com.intellij.util.Processor;
@@ -41,12 +42,14 @@ import static com.jetbrains.python.psi.PyUtil.inSameFile;
 
 public class PyModuleType implements PyType { // Modules don't descend from object
   private final @NotNull PyFile myModule;
+  private final @NotNull LazyInitializer.LazyValue<@Nullable QualifiedName> myQualifiedName;
 
   private static final ImmutableSet<String> MODULE_MEMBERS = ImmutableSet.of(
     "__name__", "__file__", "__path__", "__doc__", "__dict__", "__package__");
 
   public PyModuleType(@NotNull PyFile source) {
     myModule = source;
+    myQualifiedName = LazyInitializer.create(() -> QualifiedNameFinder.findShortestImportableQName(myModule));
   }
 
 
@@ -565,7 +568,8 @@ public class PyModuleType implements PyType { // Modules don't descend from obje
 
   @Override
   public String getName() {
-    return myModule.getName();
+    QualifiedName qualifiedName = myQualifiedName.get();
+    return qualifiedName != null ? qualifiedName.toString() : "";
   }
 
   @Override
