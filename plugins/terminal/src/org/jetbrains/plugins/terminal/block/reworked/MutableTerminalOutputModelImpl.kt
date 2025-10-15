@@ -453,6 +453,8 @@ class MutableTerminalOutputModelImpl(
         )
       }
       styleRanges.addAll(insertionIndex, absoluteStyles)
+
+      highlightingsSnapshot = null
     }
 
     private fun shift(shiftFromIndex: Int, shift: Int) {
