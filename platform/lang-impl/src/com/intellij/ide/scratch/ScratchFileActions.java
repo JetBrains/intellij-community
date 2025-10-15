@@ -36,6 +36,7 @@ import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.util.text.NaturalComparator;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.*;
+import com.intellij.openapi.wm.ex.WelcomeScreenProjectProvider;
 import com.intellij.pom.Navigatable;
 import com.intellij.psi.*;
 import com.intellij.psi.util.PsiUtilCore;
@@ -90,6 +91,7 @@ public final class ScratchFileActions {
 
       boolean enabled = project != null && (
         e.isFromActionToolbar() ||
+        WelcomeScreenProjectProvider.Companion.isWelcomeScreenProject(project) ||
         ActionPlaces.isMainMenuOrActionSearch(place) ||
         ActionPlaces.EDITOR_POPUP.equals(place) && hasSelection(editor) ||
         e.isFromContextMenu() && e.getData(LangDataKeys.IDE_VIEW) != null);
