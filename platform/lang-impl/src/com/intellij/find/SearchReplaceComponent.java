@@ -5,6 +5,7 @@ import com.intellij.find.editorHeaderActions.*;
 import com.intellij.icons.AllIcons;
 import com.intellij.ide.DataManager;
 import com.intellij.ide.lightEdit.LightEditCompatible;
+import com.intellij.ide.ui.UISettings;
 import com.intellij.ide.ui.laf.darcula.ui.DarculaTextBorder;
 import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.actionSystem.ex.ActionUtil;
@@ -740,7 +741,7 @@ public final class SearchReplaceComponent extends EditorHeaderComponent implemen
       component.setBorder(new DarculaTextBorder() {
         @Override
         public Insets getBorderInsets(Component c) {
-          return new JBInsets(4, 6, 0, 6).asUIResource();
+          return new JBInsets(UISettings.getInstance().getCompactMode() ? 2 : 4, 6, 0, 6).asUIResource();
         }
 
         @Override
