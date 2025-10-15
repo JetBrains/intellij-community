@@ -173,7 +173,7 @@ internal class TerminalBlocksModelTest : BasePlatformTestCase() {
   }
 
   @Test
-  fun `single block is left after clear`() = runBlocking(Dispatchers.EDT) {
+  fun `single block is left after full replace`() = runBlocking(Dispatchers.EDT) {
     val outputModel = TerminalTestUtil.createOutputModel()
     val blocksModel = TerminalBlocksModelImpl(outputModel, testRootDisposable)
 
@@ -194,7 +194,7 @@ internal class TerminalBlocksModelTest : BasePlatformTestCase() {
     // Test
     outputModel.update(2, "myPrompt: clear\n")
     blocksModel.commandStarted(outputModel.startOffset + 46L)
-    outputModel.update(0, "\n\n\n")  // all text cleared
+    outputModel.update(0, "\n\n\n")  // full replace
     blocksModel.promptStarted(outputModel.startOffset + 0L)
     outputModel.update(0, "myPrompt: \n\n\n")
     blocksModel.promptFinished(outputModel.startOffset + 10L)
@@ -203,12 +203,8 @@ internal class TerminalBlocksModelTest : BasePlatformTestCase() {
     assertEquals("myPrompt: \n\n\n", outputModel.getTextAsString(block.startOffset, block.endOffset))
   }
 
-  /**
-   * I'm not sure that this case is possible, because usually after clear-related things, an empty screen with new lines is left.
-   * But let's test this case too, to ensure that model can handle it.
-   */
   @Test
-  fun `single block is left after all text removed`() = runBlocking(Dispatchers.EDT) {
+  fun `single block is left after clear`() = runBlocking(Dispatchers.EDT) {
     val outputModel = TerminalTestUtil.createOutputModel()
     val blocksModel = TerminalBlocksModelImpl(outputModel, testRootDisposable)
 
@@ -222,7 +218,36 @@ internal class TerminalBlocksModelTest : BasePlatformTestCase() {
     outputModel.update(1, "output123\n\n")
     blocksModel.promptStarted(outputModel.startOffset + 30L)
     outputModel.update(2, "myPrompt: \n")
-    blocksModel.promptFinished(outputModel.startOffset + 40L)
+    blocksModel.promptFinished(outputModel.startOffset + 45L)
+    outputModel.update(2, "myPrompt: clear\n")
+
+    assertEquals(2, blocksModel.blocks.size)
+
+    // Test
+    outputModel.update(0, "")
+
+    val block = blocksModel.blocks.singleOrNull() ?: error("Single block expected")
+    assertEquals("", outputModel.getTextAsString(block.startOffset, block.endOffset))
+  }
+
+  @Test
+  fun `single block is left after clear (with trimming)`() = runBlocking(Dispatchers.EDT) {
+    val outputModel = TerminalTestUtil.createOutputModel(100)
+    val blocksModel = TerminalBlocksModelImpl(outputModel, testRootDisposable)
+
+    // Prepare
+    outputModel.update(0, "\n\n\n")
+    blocksModel.promptStarted(outputModel.startOffset + 0L)
+    outputModel.update(0, "myPrompt: \n\n\n")
+    blocksModel.promptFinished(outputModel.startOffset + 10L)
+    outputModel.update(0, "myPrompt: myCommand\n\n\n")
+    blocksModel.commandStarted(outputModel.startOffset + 20L)
+    outputModel.update(1, "a".repeat(100) + "\n\n")
+    outputModel.update(2, "output123\n")
+    blocksModel.promptStarted(outputModel.startOffset + 100L)
+    outputModel.update(3, "myPrompt: ")
+    blocksModel.promptFinished(outputModel.startOffset + 100L)
+    outputModel.update(3, "myPrompt: clear")
 
     assertEquals(2, blocksModel.blocks.size)
 
