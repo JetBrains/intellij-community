@@ -4,11 +4,13 @@ package org.jetbrains.intellij.build.impl
 import com.intellij.ReviseWhenPortedToJDK
 import com.intellij.platform.ijent.community.buildConstants.MULTI_ROUTING_FILE_SYSTEM_VMOPTIONS
 import com.intellij.platform.ijent.community.buildConstants.isMultiRoutingFileSystemEnabledForProduct
+import org.jetbrains.intellij.build.ArtifactsServer
 import org.jetbrains.intellij.build.BuildContext
 import java.nio.charset.StandardCharsets
 import java.nio.file.Files
 import java.nio.file.Path
 import kotlin.io.path.name
+import kotlin.text.startsWith
 
 private const val DEFAULT_MIN_HEAP = "128m"
 private const val DEFAULT_MAX_HEAP = "2048m"
@@ -107,13 +109,22 @@ object VmOptionsGenerator {
 private fun computeCustomPluginRepositoryUrl(context: BuildContext): String? {
   val artifactsServer = context.proprietaryBuildTools.artifactsServer
   if (artifactsServer != null && context.productProperties.productLayout.prepareCustomPluginRepositoryForPublishedPlugins) {
-    val builtinPluginsRepoUrl = artifactsServer.urlToArtifact(context, "${context.nonBundledPlugins.name}/plugins.xml")
+    val paths = listOf(context.nonBundledPlugins.name, context.nonBundledPluginsToBePublished.name)
+      return paths.mapNotNull {
+        getBuiltinPluginsRepoUrl(artifactsServer, it, context)
+      }.takeIf { it.isNotEmpty() }?.joinToString(",")
+    }
+    return null
+  }
+
+  private fun getBuiltinPluginsRepoUrl(artifactsServer: ArtifactsServer, path: String, context: BuildContext): String? {
+    val builtinPluginsRepoUrl = artifactsServer.urlToArtifact(context, "${path}/plugins.xml")
     if (builtinPluginsRepoUrl != null) {
       if (builtinPluginsRepoUrl.startsWith("http:")) {
         context.messages.logErrorAndThrow("Insecure artifact server: ${builtinPluginsRepoUrl}")
       }
       return builtinPluginsRepoUrl
-    }
+
   }
   return null
 }
