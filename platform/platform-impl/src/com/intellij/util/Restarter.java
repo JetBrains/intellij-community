@@ -227,11 +227,11 @@ public final class Restarter {
     var command = new ArrayList<String>();
     command.add(copyWhenNeeded(restarter, beforeRestart).toString());
     command.add(String.valueOf(ProcessHandle.current().pid()));
-    if (!beforeRestart.isEmpty()) {
-      beforeRestart.forEach(cmd -> {
+    for (var cmd : beforeRestart) {
+      if (!cmd.isEmpty()) {
         command.add(String.valueOf(cmd.size()));
         command.addAll(cmd);
-      });
+      }
     }
     return command;
   }
