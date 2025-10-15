@@ -42,7 +42,7 @@ class LanguageToolBundleInfoTest : BasePlatformTestCase() {
       if (jLanguage == null) {
         val logger = Logger.getInstance(LanguageToolBundleInfoTest::class.java)
         logger.info("Language pack for ${lang.displayName} not found, downloading...")
-        if (!GrazieRemote.download(lang)) {
+        if (!GrazieRemote.downloadWithoutLicenseCheck(lang)) {
           logger.info("Failed to download language pack for ${lang.displayName}")
           return@map
         }
