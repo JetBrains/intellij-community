@@ -25,7 +25,6 @@ import com.intellij.xdebugger.impl.frame.XDebugSessionProxy
 import com.intellij.xdebugger.impl.rpc.XDebugSessionId
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
-import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.channels.BufferOverflow
 import kotlinx.coroutines.channels.Channel
 import kotlinx.coroutines.flow.*
@@ -40,24 +39,10 @@ class FrontendXDebuggerManager(private val project: Project, private val cs: Cor
   private val sessionsFlow = MutableStateFlow<List<FrontendXDebuggerSession>>(listOf())
   private val synchronousExecutor = Channel<suspend () -> Unit>(capacity = Integer.MAX_VALUE)
 
-  @OptIn(ExperimentalCoroutinesApi::class)
-  val currentSession: StateFlow<FrontendXDebuggerSession?> =
-    channelFlow {
-      durableWithStateReset(block = {
-        val currentSessionFlow = XDebuggerManagerApi.getInstance().currentSession(project.projectId())
-        currentSessionFlow
-          .combine(sessionsFlow) { currentSessionId, sessions ->
-            currentSessionId to sessions
-          }
-          .collectLatest { (currentSessionId, sessions) ->
-            synchronousExecutor.trySend {
-              this@channelFlow.send(sessions.firstOrNull { it.id == currentSessionId })
-            }
-          }
-      }, stateReset = {
-        synchronousExecutor.trySend { this@channelFlow.send(null) }
-      })
-    }.stateIn(cs, SharingStarted.Eagerly, null)
+  private val _currentSessionFlow = MutableStateFlow<FrontendXDebuggerSession?>(null)
+
+  val currentSessionFlow: StateFlow<FrontendXDebuggerSession?> = _currentSessionFlow.asStateFlow()
+  val currentSession: FrontendXDebuggerSession? get() = currentSessionFlow.value
 
   val breakpointsManager: FrontendXBreakpointManager = FrontendXBreakpointManager(project, cs)
   internal val sessions get() = sessionsFlow.value
@@ -131,6 +116,7 @@ class FrontendXDebuggerManager(private val project: Project, private val cs: Cor
               val sessions = sessionsFlow.value
               val previousSession = sessions.firstOrNull { it.id == event.previousSession }
               val currentSession = sessions.firstOrNull { it.id == event.currentSession }
+              _currentSessionFlow.value = currentSession
               if (shouldTriggerListener) {
                 project.messageBus.syncPublisher(XDebuggerManagerProxyListener.TOPIC).activeSessionChanged(previousSession, currentSession)
               }

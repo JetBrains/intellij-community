@@ -28,7 +28,10 @@ import fleet.rpc.core.toRpc
 import kotlinx.coroutines.*
 import kotlinx.coroutines.channels.Channel
 import kotlinx.coroutines.channels.awaitClose
-import kotlinx.coroutines.flow.*
+import kotlinx.coroutines.flow.Flow
+import kotlinx.coroutines.flow.buffer
+import kotlinx.coroutines.flow.channelFlow
+import kotlinx.coroutines.flow.map
 
 internal class BackendXDebuggerManagerApi : XDebuggerManagerApi {
   override suspend fun initialize(projectId: ProjectId, capabilities: XFrontendDebuggerCapabilities) {
@@ -40,15 +43,6 @@ internal class BackendXDebuggerManagerApi : XDebuggerManagerApi {
       canShowImages = old.canShowImages || capabilities.canShowImages,
     )
     manager.frontendCapabilities = new
-  }
-
-  @OptIn(ExperimentalCoroutinesApi::class)
-  override suspend fun currentSession(projectId: ProjectId): Flow<XDebugSessionId?> {
-    val project = projectId.findProject()
-
-    return (XDebuggerManager.getInstance(project) as XDebuggerManagerImpl).currentSessionFlow.mapLatest { currentSession ->
-      currentSession?.id
-    }
   }
 
   override suspend fun sessions(projectId: ProjectId): XDebugSessionsList {

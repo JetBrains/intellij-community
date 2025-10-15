@@ -38,11 +38,11 @@ private class FrontendXDebugManagerProxy : XDebugManagerProxy {
   }
 
   override fun getCurrentSessionProxy(project: Project): XDebugSessionProxy? {
-    return FrontendXDebuggerManager.getInstance(project).currentSession.value
+    return FrontendXDebuggerManager.getInstance(project).currentSession
   }
 
   override fun getCurrentSessionFlow(project: Project): Flow<XDebugSessionProxy?> {
-    return FrontendXDebuggerManager.getInstance(project).currentSession
+    return FrontendXDebuggerManager.getInstance(project).currentSessionFlow
   }
 
   override fun getSessions(project: Project): List<XDebugSessionProxy> {
