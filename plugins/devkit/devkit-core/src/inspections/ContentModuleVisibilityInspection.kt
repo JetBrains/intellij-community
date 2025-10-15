@@ -1,6 +1,7 @@
 // Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.idea.devkit.inspections
 
+import com.intellij.codeInsight.intention.preview.IntentionPreviewInfo
 import com.intellij.codeInspection.LocalQuickFix
 import com.intellij.codeInspection.ProblemDescriptor
 import com.intellij.codeInspection.util.IntentionFamilyName
@@ -9,6 +10,8 @@ import com.intellij.ide.highlighter.XmlFileType
 import com.intellij.openapi.fileEditor.UniqueVFilePathBuilder
 import com.intellij.openapi.project.Project
 import com.intellij.psi.PsiReference
+import com.intellij.psi.SmartPsiElementPointer
+import com.intellij.psi.createSmartPointer
 import com.intellij.psi.search.GlobalSearchScope
 import com.intellij.psi.search.GlobalSearchScopesCore
 import com.intellij.psi.search.searches.ReferencesSearch
@@ -16,7 +19,6 @@ import com.intellij.psi.util.parentOfType
 import com.intellij.psi.xml.XmlFile
 import com.intellij.psi.xml.XmlTag
 import com.intellij.util.xml.DomElement
-import com.intellij.util.xml.DomUtil
 import com.intellij.util.xml.GenericAttributeValue
 import com.intellij.util.xml.highlighting.DomElementAnnotationHolder
 import com.intellij.util.xml.highlighting.DomHighlightingHelper
@@ -100,7 +102,8 @@ internal class ContentModuleVisibilityInspection : DevKitPluginXmlInspectionBase
           currentModuleIncludingPlugin.getIdOrUniqueFileName(), currentModuleNamespace
         )
       }
-    } else {
+    }
+    else {
       when {
         dependencyNamespace == null -> message(
           "inspection.content.module.visibility.internal.dependency.namespace.missing",
@@ -159,6 +162,7 @@ internal class ContentModuleVisibilityInspection : DevKitPluginXmlInspectionBase
       for (dependencyIncludingPlugin in dependencyIncludingPlugins) {
         if (currentModuleIncludingPlugin != dependencyIncludingPlugin) {
           val dependencyModuleName = getModuleName(dependencyXmlFile)
+          val dependencyXmlFilePointer = dependencyXmlFile.createSmartPointer()
           holder.createProblem(
             dependencyValue,
             message(
@@ -166,8 +170,8 @@ internal class ContentModuleVisibilityInspection : DevKitPluginXmlInspectionBase
               dependencyModuleName, dependencyIncludingPlugin.getIdOrUniqueFileName(),
               getModuleName(currentXmlFile), currentModuleIncludingPlugin.getIdOrUniqueFileName()
             ),
-            ChangeModuleModuleVisibilityFix(dependencyModuleName, ContentModuleVisibility.INTERNAL),
-            ChangeModuleModuleVisibilityFix(dependencyModuleName, ContentModuleVisibility.PUBLIC)
+            ChangeModuleModuleVisibilityFix(dependencyModuleName, ContentModuleVisibility.INTERNAL, dependencyXmlFilePointer),
+            ChangeModuleModuleVisibilityFix(dependencyModuleName, ContentModuleVisibility.PUBLIC, dependencyXmlFilePointer)
           )
           return // report only one problem at once
         }
@@ -228,6 +232,7 @@ internal class ContentModuleVisibilityInspection : DevKitPluginXmlInspectionBase
   private class ChangeModuleModuleVisibilityFix(
     private val moduleName: String,
     private val visibility: ContentModuleVisibility,
+    private val dependencyXmlFilePointer: SmartPsiElementPointer<XmlFile>,
   ) : LocalQuickFix {
 
     override fun getFamilyName(): @IntentionFamilyName String =
@@ -237,10 +242,26 @@ internal class ContentModuleVisibilityInspection : DevKitPluginXmlInspectionBase
       message("inspection.content.module.visibility.private.fix.change.visibility.to.internal.name", moduleName, visibility.value)
 
     override fun applyFix(project: Project, descriptor: ProblemDescriptor) {
-      @Suppress("UNCHECKED_CAST")
-      val dependency = DomUtil.getDomElement(descriptor.psiElement) as? GenericAttributeValue<IdeaPlugin> ?: return
-      val dependencyIdeaPlugin = dependency.value ?: return
-      dependencyIdeaPlugin.contentModuleVisibility.value = visibility
+      val dependencyXmlFile = dependencyXmlFilePointer.dereference() ?: return
+      changeVisibility(dependencyXmlFile)
+    }
+
+    private fun changeVisibility(pluginXmlFile: XmlFile) {
+      val ideaPlugin = DescriptorUtil.getIdeaPlugin(pluginXmlFile) ?: return
+      ideaPlugin.contentModuleVisibility.value = visibility
+    }
+
+    override fun generatePreview(project: Project, previewDescriptor: ProblemDescriptor): IntentionPreviewInfo {
+      val dependencyXmlFile = dependencyXmlFilePointer.dereference() ?: return IntentionPreviewInfo.EMPTY
+      val dependencyXmlFileCopy = dependencyXmlFile.copy() as XmlFile
+      changeVisibility(dependencyXmlFileCopy)
+      return IntentionPreviewInfo.CustomDiff(
+        XmlFileType.INSTANCE,
+        dependencyXmlFile.name,
+        dependencyXmlFile.text,
+        dependencyXmlFileCopy.text,
+        true
+      )
     }
   }
 
