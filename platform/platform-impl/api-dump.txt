@@ -1228,6 +1228,9 @@ f:com.intellij.ui.TextIcon
 - setTextsForMinimumBounds(java.util.List):V
 - setWithBorders(Z):V
 - uiSettingsChanged():V
+f:com.intellij.ui.codeFloatingToolbar.CodeFloatingToolbar
+- sf:HIDE_CONFIGURATIONS_GROUP:com.intellij.openapi.util.Key
+- sf:HIDE_INTENTIONS_GROUP:com.intellij.openapi.util.Key
 com.intellij.ui.colorpicker.ColorPickerComponentProvider
 - a:createComponent(com.intellij.ui.colorpicker.ColorPickerModel):javax.swing.JComponent
 com.intellij.ui.colorpicker.ColorPipetteProvider

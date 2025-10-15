@@ -8,6 +8,7 @@ import com.intellij.ide.HelpTooltip
 import com.intellij.ide.ui.customization.CustomActionsSchema
 import com.intellij.openapi.Disposable
 import com.intellij.openapi.actionSystem.ActionGroup
+import com.intellij.openapi.actionSystem.AnAction
 import com.intellij.openapi.actionSystem.DefaultActionGroup
 import com.intellij.openapi.actionSystem.Toggleable
 import com.intellij.openapi.actionSystem.ex.ActionUtil
@@ -57,6 +58,12 @@ class CodeFloatingToolbar(
 
   companion object {
     private val FLOATING_TOOLBAR = Key<CodeFloatingToolbar>("floating.codeToolbar")
+
+    @JvmField
+    val HIDE_INTENTIONS_GROUP: Key<Boolean> = Key.create("floating.codeToolbar.hideIntentionsGroup")
+
+    @JvmField
+    val HIDE_CONFIGURATIONS_GROUP: Key<Boolean> = Key.create("floating.codeToolbar.hideConfigurationsGroup")
 
     private var TEMPORARILY_DISABLED = false
 
@@ -169,10 +176,20 @@ class CodeFloatingToolbar(
   override fun createActionGroup(): ActionGroup? {
     val contextAwareActionGroupId = getContextAwareGroupId(editor) ?: return null
     val mainActionGroup = CustomActionsSchema.getInstance().getCorrectedAction(contextAwareActionGroupId) ?: error("Can't find groupId action")
-    val configurationGroup = createConfigureGroup(contextAwareActionGroupId)
-    val showIntentionAction = CustomActionsSchema.getInstance().getCorrectedAction("ShowIntentionActions")
-                              ?: error("Can't find ShowIntentionActions action")
-    return DefaultActionGroup(showIntentionAction, mainActionGroup, configurationGroup)
+
+    return buildList {
+      if (!isIntentionsGroupHidden(mainActionGroup)) {
+        val showIntentionAction = CustomActionsSchema.getInstance().getCorrectedAction("ShowIntentionActions")
+                                  ?: error("Can't find ShowIntentionActions action")
+        add(showIntentionAction)
+      }
+
+      add(mainActionGroup)
+
+      if (!isConfigurationsGroupHidden(mainActionGroup)) {
+        add(createConfigureGroup(contextAwareActionGroupId))
+      }
+    }.let { DefaultActionGroup(it) }
   }
 
   override suspend fun createHint(): LightweightHint {
@@ -292,6 +309,14 @@ class CodeFloatingToolbar(
       }
     })
     return disposable
+  }
+
+  private fun isIntentionsGroupHidden(mainAction: AnAction): Boolean {
+    return mainAction.templatePresentation.getClientProperty(HIDE_INTENTIONS_GROUP) == true
+  }
+
+  private fun isConfigurationsGroupHidden(mainAction: AnAction): Boolean {
+    return mainAction.templatePresentation.getClientProperty(HIDE_CONFIGURATIONS_GROUP) == true
   }
 
   @RequiresEdt
