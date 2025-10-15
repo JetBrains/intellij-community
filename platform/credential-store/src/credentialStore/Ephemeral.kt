@@ -9,7 +9,7 @@ import org.jetbrains.annotations.ApiStatus
  * Represents a wrapper for an ephemeral value with a limited lifetime.
  */
 @ApiStatus.Experimental
-interface Ephemeral<out T> {
+interface Ephemeral<out T : Any> {
   /**
    * Suspends until the ephemeral value held by this instance is available and returns it, or `null` if the value has expired.
    */
@@ -34,16 +34,16 @@ interface Ephemeral<out T> {
    * Creates a new `Ephemeral` instance by transforming the value held by the current instance
    * using the provided mapping function. The resulting value inherits the original lifetime.
    */
-  fun <P> derive(map: (T & Any) -> P): Ephemeral<P & Any>
+  fun <P : Any> derive(map: (T) -> P?): Ephemeral<P>
 }
 
-internal class StaticEphemeral<T>(private val data: T?) : Ephemeral<T> {
+internal class StaticEphemeral<T : Any>(private val data: T?) : Ephemeral<T> {
   override suspend fun unwrap(): T? =
     data
 
   override fun asFlow(): Flow<T?> =
     flowOf(data)
 
-  override fun <P> derive(map: (T & Any) -> P): Ephemeral<P & Any> =
+  override fun <P : Any> derive(map: (T) -> P?): Ephemeral<P> =
     StaticEphemeral(data?.let(map))
 }
