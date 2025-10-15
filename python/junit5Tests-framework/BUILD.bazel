@@ -30,7 +30,6 @@ jvm_library(
     "@lib//:io-mockk-jvm",
     "@lib//:jna",
     "@lib//:kotlin-stdlib",
-    "@lib//:testcontainers-junit-jupiter",
     "//wintools",
     "//wintools:wintools_test_lib",
     "//libraries/system-stubs-jupiter",

@@ -1248,6 +1248,11 @@ object CommunityLibraryLicenses {
       .mit("https://github.com/testcontainers/testcontainers-java/blob/main/LICENSE")
       .suppliedByPersons("Richard North"),
 
+    LibraryLicense("Testcontainers JUnit5", libraryName = "testcontainers-junit-jupiter", url = "https://java.testcontainers.org")
+      .mit("https://github.com/testcontainers/testcontainers-java/blob/main/LICENSE")
+      .suppliedByPersons("Richard North"),
+
+
     LibraryLicense(libraryName = "TestNG", url = "https://testng.org/")
       .apache("https://github.com/cbeust/testng/blob/master/LICENSE.txt"),
 
