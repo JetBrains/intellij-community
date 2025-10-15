@@ -6,19 +6,14 @@ import com.intellij.psi.util.findTopmostParentOfType
 import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.kotlin.analysis.api.KaSession
 import org.jetbrains.kotlin.analysis.api.analyze
-import org.jetbrains.kotlin.analysis.api.components.allOverriddenSymbols
-import org.jetbrains.kotlin.analysis.api.components.declaredMemberScope
-import org.jetbrains.kotlin.analysis.api.components.memberScope
-import org.jetbrains.kotlin.analysis.api.components.resolveToCall
-import org.jetbrains.kotlin.analysis.api.components.semanticallyEquals
-import org.jetbrains.kotlin.analysis.api.components.withNullability
+import org.jetbrains.kotlin.analysis.api.components.*
 import org.jetbrains.kotlin.analysis.api.resolution.KaSimpleFunctionCall
 import org.jetbrains.kotlin.analysis.api.resolution.successfulFunctionCallOrNull
 import org.jetbrains.kotlin.analysis.api.resolution.symbol
 import org.jetbrains.kotlin.analysis.api.symbols.*
 import org.jetbrains.kotlin.analysis.api.types.symbol
 import org.jetbrains.kotlin.idea.base.psi.copied
-import org.jetbrains.kotlin.idea.base.psi.getSamConstructorValueArgument
+import org.jetbrains.kotlin.idea.base.psi.samConstructorValueArgument
 import org.jetbrains.kotlin.name.CallableId
 import org.jetbrains.kotlin.name.Name
 import org.jetbrains.kotlin.psi.*
@@ -194,13 +189,13 @@ fun samConstructorCallsToBeConverted(functionCall: KtCallExpression): Collection
 }
 
 private fun canBeSamConstructorCall(argument: KtValueArgument): Boolean =
-    argument.toCallExpression()?.getSamConstructorValueArgument() != null
+    argument.toCallExpression()?.samConstructorValueArgument != null
 
 private fun ValueArgument.toCallExpression(): KtCallExpression? =
     getArgumentExpression()?.getPossiblyQualifiedCallExpression()
 
 private fun containsLabeledReturnPreventingConversion(it: KtCallExpression): Boolean {
-    val samValueArgument = it.getSamConstructorValueArgument()
+    val samValueArgument = it.samConstructorValueArgument
     val samConstructorName = (it.calleeExpression as? KtSimpleNameExpression)?.getReferencedNameAsName()
     return samValueArgument == null ||
             samConstructorName == null ||

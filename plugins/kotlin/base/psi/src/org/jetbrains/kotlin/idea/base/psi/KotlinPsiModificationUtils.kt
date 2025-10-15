@@ -15,11 +15,7 @@ import org.jetbrains.kotlin.lexer.KtModifierKeywordToken
 import org.jetbrains.kotlin.lexer.KtTokens
 import org.jetbrains.kotlin.name.Name
 import org.jetbrains.kotlin.psi.*
-import org.jetbrains.kotlin.psi.psiUtil.canPlaceAfterSimpleNameEntry
-import org.jetbrains.kotlin.psi.psiUtil.containingClassOrObject
-import org.jetbrains.kotlin.psi.psiUtil.getElementTextWithContext
-import org.jetbrains.kotlin.psi.psiUtil.getQualifiedExpressionForSelectorOrThis
-import org.jetbrains.kotlin.psi.psiUtil.hasBody
+import org.jetbrains.kotlin.psi.psiUtil.*
 
 inline fun <reified T : PsiElement> T.copied(): T {
     return copy() as T
@@ -170,7 +166,7 @@ fun shouldLambdaParameterBeNamed(argument: KtLambdaArgument): Boolean {
 }
 
 fun replaceSamConstructorCall(callExpression: KtCallExpression): KtLambdaExpression {
-    val functionalArgument = callExpression.getSamConstructorValueArgument()?.getArgumentExpression()
+    val functionalArgument = callExpression.samConstructorValueArgument?.getArgumentExpression()
         ?: throw AssertionError("SAM constructor should have a FunctionLiteralExpression as single argument: ${callExpression.getElementTextWithContext()}")
     val ktExpression = callExpression.getQualifiedExpressionForSelectorOrThis()
     return runWriteActionIfPhysical(ktExpression) { ktExpression.replace(functionalArgument) as KtLambdaExpression }
