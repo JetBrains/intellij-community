@@ -624,6 +624,18 @@ elements:
                             **This option isn't implemented yet and currently behaves the same way as `optional`.**
                         defaultValue: |
                           `optional`
+                    - attribute:
+                        name: required-if-available
+                        description: |
+                          **Experimental attribute**
+                          
+                          Specifies a condition when the loading rule should be restricted to 'required' instead of the rule given by the 'loading' attribute.
+                          The value of the attribute may reference one of the special content modules that reflect the configuration of the IDE:
+                          - `intellij.platform.frontend` 
+                          - `intellij.platform.backend` 
+                          - `intellij.platform.frontend.split`                          
+                          
+                          [Internal doc](https://youtrack.jetbrains.com/articles/IJPL-A-1503).
         - element:
             name: extensions
             references:
