@@ -46,6 +46,18 @@ public class PluginXmlDomStubsTest extends DomStubTest {
                         Element:content
                           Element:module
                             Attribute:name:module.name
+                          Element:module
+                            Attribute:name:optional.module
+                            Attribute:loading:optional
+                          Element:module
+                            Attribute:name:required.module
+                            Attribute:loading:required
+                          Element:module
+                            Attribute:name:ondemand.module
+                            Attribute:loading:on-demand
+                          Element:module
+                            Attribute:name:required.in.frontend
+                            Attribute:required-if-available:intellij.platform.frontend
                         Element:dependencies
                           Element:module
                             Attribute:name:dependencies.module
