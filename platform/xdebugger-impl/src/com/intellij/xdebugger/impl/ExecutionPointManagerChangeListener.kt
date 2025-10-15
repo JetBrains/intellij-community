@@ -13,15 +13,18 @@ import kotlinx.coroutines.launch
 
 
 private class ExecutionPointManagerChangeListener(val project: Project) : XDebuggerManagerProxyListener {
-  init {
-    val breakpointsManager = XDebugManagerProxy.getInstance().getBreakpointManagerProxy(project)
-
-    breakpointsManager.subscribeOnBreakpointsChanges(project) {
-      updateGutterRendererIcon(project)
-    }
-  }
+  private var breakpointChangeListenerInitialized = false
 
   override fun sessionStarted(session: XDebugSessionProxy) {
+    if (!breakpointChangeListenerInitialized) {
+      breakpointChangeListenerInitialized = true
+
+      val breakpointsManager = XDebugManagerProxy.getInstance().getBreakpointManagerProxy(project)
+
+      breakpointsManager.subscribeOnBreakpointsChanges(project) {
+        updateGutterRendererIcon(project)
+      }
+    }
     session.coroutineScope.launch {
       session.activeNonLineBreakpointFlow.collect {
         updateGutterRendererIcon(project)
