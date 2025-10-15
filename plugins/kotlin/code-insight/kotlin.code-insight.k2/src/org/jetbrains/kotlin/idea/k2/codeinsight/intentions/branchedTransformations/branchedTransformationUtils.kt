@@ -20,6 +20,20 @@ import org.jetbrains.kotlin.psi.*
 import org.jetbrains.kotlin.psi.psiUtil.isPropertyParameter
 import org.jetbrains.kotlin.utils.KotlinExceptionWithAttachments
 
+private val STDLIB_COLLECTION_CONSTRUCTOR_NAMES = setOf(
+    // Standard collection constructors
+    "listOf", "setOf", "mapOf", "arrayOf",
+    // Empty collection constructors
+    "emptyList", "emptySet", "emptyMap", "emptyArray",
+    // Mutable collection constructors
+    "mutableListOf", "mutableSetOf", "mutableMapOf",
+    // Additional common constructors
+    "arrayListOf", "hashSetOf", "hashMapOf", "linkedSetOf", "linkedMapOf",
+    "sortedSetOf", "sortedMapOf",
+    // Sequence constructors
+    "sequenceOf", "emptySequence"
+)
+
 /**
  * A function to generate a new [KtExpression] for the new condition with [subject].
  *
@@ -359,6 +373,19 @@ fun KtIfExpression.introduceValueForCondition(occurrenceInThenClause: KtExpressi
     )
 }
 
+private fun isStdlibCollectionConstructorCall(callExpression: KtCallExpression): Boolean {
+    val calleeText = callExpression.calleeExpression?.text ?: return false
+    // Check if this is a known stdlib collection constructor name
+    if (calleeText !in STDLIB_COLLECTION_CONSTRUCTOR_NAMES) {
+        return false
+    }
+    val callee = callExpression.calleeExpression
+    if (callee is KtNameReferenceExpression) {
+        return true
+    }
+    return true
+}
+
 fun KtExpression.isPure(): Boolean {
     when (val expr = safeDeparenthesize()) {
         is KtSimpleNameExpression -> {
@@ -373,6 +400,11 @@ fun KtExpression.isPure(): Boolean {
 
                 else -> false
             }
+        }
+
+        is KtCallExpression -> {
+            // Collection literals: listOf(), setOf(), mapOf() - smart stdlib detection
+            return isStdlibCollectionConstructorCall(expr)
         }
 
         is KtQualifiedExpression -> {

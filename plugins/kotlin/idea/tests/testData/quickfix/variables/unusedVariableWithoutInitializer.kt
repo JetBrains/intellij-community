@@ -1,4 +1,4 @@
-// "Remove variable 'test'" "true"
+// "Remove variable 'test' (may change semantics)" "true"
 fun f() {
     val <caret>test: Int
 }

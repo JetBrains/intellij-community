@@ -14,7 +14,6 @@ import org.jetbrains.kotlin.idea.base.resources.KotlinBundle
 import org.jetbrains.kotlin.idea.codeinsight.api.classic.quickfixes.PsiElementSuitabilityCheckers
 import org.jetbrains.kotlin.idea.codeinsight.api.classic.quickfixes.QuickFixesPsiBasedFactory
 import org.jetbrains.kotlin.idea.codeinsight.utils.isExplicitTypeReferenceNeededForTypeInference
-import org.jetbrains.kotlin.idea.codeinsight.utils.removeProperty
 import org.jetbrains.kotlin.lexer.KtTokens
 import org.jetbrains.kotlin.psi.*
 import org.jetbrains.kotlin.psi.psiUtil.getNonStrictParentOfType
@@ -79,14 +78,32 @@ open class RemovePsiElementSimpleFix private constructor(element: PsiElement, @N
             val typeReference = ktProperty.typeReference
             if (typeReference != null && ktProperty.isExplicitTypeReferenceNeededForTypeInference(typeReference)) return emptyList()
 
-            val removePropertyFix = object : RemovePsiElementSimpleFix(ktProperty, KotlinBundle.message("remove.variable.0", ktProperty.name.toString())) {
+            val isSimpleCase = isSimpleCaseVariable(ktProperty)
+            val text = if (isSimpleCase) {
+                KotlinBundle.message("remove.variable.0", ktProperty.name.toString())
+            } else {
+                KotlinBundle.message("remove.variable.change.semantics", ktProperty.name.toString())
+            }
+
+            val removePropertyFix = object : RemovePsiElementSimpleFix(ktProperty, text) {
                 override fun invoke(context: ActionContext, element: PsiElement, updater: ModPsiUpdater) {
                     val property = element as? KtProperty ?: return
-                    removeProperty(property)
+                    property.delete()
                 }
             }
 
             return listOf(removePropertyFix.asIntention())
+        }
+
+        private fun isSimpleCaseVariable(property: KtProperty): Boolean {
+            val initializer = property.initializer ?: return false
+
+            return when (initializer) {
+                is KtConstantExpression -> true
+                is KtStringTemplateExpression -> initializer.entries.all { it is KtLiteralStringTemplateEntry }
+                is KtNameReferenceExpression -> true
+                else -> false
+            }
         }
     }
 }

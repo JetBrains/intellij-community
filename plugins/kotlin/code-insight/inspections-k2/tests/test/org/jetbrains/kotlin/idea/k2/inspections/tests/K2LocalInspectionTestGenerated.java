@@ -37,6 +37,11 @@ public abstract class K2LocalInspectionTestGenerated extends AbstractK2LocalInsp
             runTest("../../../idea/tests/testData/inspectionsLocal/unusedVariable/unusedVariableInDestructuringDeclaration.kt");
         }
 
+        @TestMetadata("unusedVariableInNotPure.kt")
+        public void testUnusedVariableInNotPure() throws Exception {
+            runTest("../../../idea/tests/testData/inspectionsLocal/unusedVariable/unusedVariableInNotPure.kt");
+        }
+
         @TestMetadata("unusedVariableWithAnonymousFunctionInitialize1.kt")
         public void testUnusedVariableWithAnonymousFunctionInitialize1() throws Exception {
             runTest("../../../idea/tests/testData/inspectionsLocal/unusedVariable/unusedVariableWithAnonymousFunctionInitialize1.kt");
