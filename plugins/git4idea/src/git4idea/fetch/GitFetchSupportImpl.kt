@@ -410,7 +410,7 @@ internal class GitFetchSupportImpl(private val project: Project) : GitFetchSuppo
       val text = details.asString()
       if (text.isNotEmpty()) {
         if (!sb.isEmpty) sb.br()
-        sb.append(text)
+        sb.appendRaw(text)
       }
     }
 
