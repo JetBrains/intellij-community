@@ -102,7 +102,7 @@ public class PyImportedModuleType implements PyType {
 
   @Override
   public String getName() {
-    return "imported module " + myImportedModule.getImportedPrefix().toString();
+    return myImportedModule.getImportedPrefix().toString();
   }
 
   @Override
