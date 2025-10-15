@@ -1418,6 +1418,7 @@ python/ide/impl
 python/ide/impl/intellij.pycharm.community.ide.impl.promotion
 python/ide/implTraining/intellij.pycharm.community.ide.implTraining
 python/impl.helperLocator
+python/impl.uv
 python/installer
 python/intellij.python.community.communityOnly
 python/intellij.python.ml.features

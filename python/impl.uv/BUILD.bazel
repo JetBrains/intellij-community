@@ -1,0 +1,26 @@
+### auto-generated section `build intellij.python.community.impl.uv` start
+load("@rules_jvm//:jvm.bzl", "jvm_library", "resourcegroup")
+
+resourcegroup(
+  name = "impl.uv_resources",
+  srcs = glob(["resources/**/*"]),
+  strip_prefix = "resources"
+)
+
+jvm_library(
+  name = "impl.uv",
+  module_name = "intellij.python.community.impl.uv",
+  visibility = ["//visibility:public"],
+  srcs = glob(["gen/**/*.kt", "gen/**/*.java", "src/**/*.kt", "src/**/*.java", "src/**/*.form"], allow_empty = True),
+  resources = [":impl.uv_resources"],
+  deps = [
+    "@lib//:kotlin-stdlib",
+    "//python/python-pyproject:pyproject",
+    "//python/openapi:community",
+    "//plugins/toml/core",
+    "@lib//:jetbrains-annotations",
+    "//platform/util",
+    "//platform/core-api:core",
+  ]
+)
+### auto-generated section `build intellij.python.community.impl.uv` end

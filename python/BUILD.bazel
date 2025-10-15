@@ -353,6 +353,7 @@ jvm_library(
     "//python/python-exec-service/execService.python",
     "//python/interpreters",
     "//python/python-sdk-configurator/common",
+    "//python/impl.uv",
   ],
   exports = [
     "//python/openapi:community",

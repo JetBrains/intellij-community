@@ -69,6 +69,7 @@ jvm_library(
     "//python/python-exec-service:community-execService",
     "//python/python-sdk-configurator/common",
     "//python/python-sdk-ui:sdk-ui",
+    "//python/impl.uv",
   ],
   runtime_deps = ["//python/python-features-trainer:featuresTrainer"],
   plugins = ["@lib//:compose-plugin"]
@@ -144,6 +145,7 @@ jvm_library(
     "//python/python-exec-service:community-execService_test_lib",
     "//python/python-sdk-configurator/common",
     "//python/python-sdk-ui:sdk-ui",
+    "//python/impl.uv",
   ],
   plugins = ["@lib//:compose-plugin"]
 )

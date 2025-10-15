@@ -1,6 +1,7 @@
 package com.jetbrains.python.uv.sdk.evolution
 
 import com.intellij.openapi.ui.popup.ListSeparator
+import com.intellij.python.community.impl.uv.icons.PythonCommunityImplUVIcons
 import com.jetbrains.python.Result
 import com.jetbrains.python.errorProcessing.PyResult
 import com.jetbrains.python.sdk.basePath
@@ -22,27 +23,30 @@ import kotlin.collections.component2
 
 
 private class UvSelectSdkProvider() : EvoSelectSdkProvider {
-  override fun getTreeElement(evoModuleSdk: EvoModuleSdk) = EvoTreeLazyNodeElement("uv", PythonIcons.UV) {
-    getUvExecutable() ?: return@EvoTreeLazyNodeElement PyResult.localizedError(PyBundle.message("evolution.uv.executable.is.not.found"))
+  override fun getTreeElement(evoModuleSdk: EvoModuleSdk): EvoTreeLazyNodeElement {
+    val icon = PythonCommunityImplUVIcons.UV
+    return EvoTreeLazyNodeElement("uv", icon) {
+      getUvExecutable() ?: return@EvoTreeLazyNodeElement PyResult.localizedError(PyBundle.message("evolution.uv.executable.is.not.found"))
 
-    val environments = VenvEvoSdkManager.findEnvironments(evoModuleSdk.module).getOr {
-      return@EvoTreeLazyNodeElement it
-    }.map { it.copy(icon = PythonIcons.UV) }
-    val envByFolders = environments.groupBy { it.pythonBinaryPath?.parent?.parent?.parent }.toMutableMap()
-    envByFolders.putIfAbsent(
-      evoModuleSdk.module.basePath?.let { Path.of(it) },
-      listOf(EvoSdk(icon = PythonIcons.UV, name = ".venv", pythonBinaryPath = null))
-    )
-    val envSections = envByFolders.map { (basePath, sdks) ->
-      val label = basePath?.toString() ?: "undefined"
-      val leafs = sdks.map { evoSdk -> SelectEnvAction(evoSdk) }.map { action -> EvoTreeLeafElement(action) }
-      EvoTreeSection(ListSeparator(label), leafs + EvoTreeLeafElement(AddNewEnvAction()))
+      val environments = VenvEvoSdkManager.findEnvironments(evoModuleSdk.module).getOr {
+        return@EvoTreeLazyNodeElement it
+      }.map { it.copy(icon = icon) }
+      val envByFolders = environments.groupBy { it.pythonBinaryPath?.parent?.parent?.parent }.toMutableMap()
+      envByFolders.putIfAbsent(
+        evoModuleSdk.module.basePath?.let { Path.of(it) },
+        listOf(EvoSdk(icon = icon, name = ".venv", pythonBinaryPath = null))
+      )
+      val envSections = envByFolders.map { (basePath, sdks) ->
+        val label = basePath?.toString() ?: "undefined"
+        val leafs = sdks.map { evoSdk -> SelectEnvAction(evoSdk) }.map { action -> EvoTreeLeafElement(action) }
+        EvoTreeSection(ListSeparator(label), leafs + EvoTreeLeafElement(AddNewEnvAction()))
+      }
+
+      val sections = buildList {
+        addAll(envSections)
+      }
+
+      Result.success(sections)
     }
-
-    val sections = buildList {
-      addAll(envSections)
-    }
-
-    Result.success(sections)
   }
 }

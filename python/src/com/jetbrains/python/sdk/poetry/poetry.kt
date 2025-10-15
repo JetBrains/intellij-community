@@ -25,8 +25,6 @@ import java.util.regex.Pattern
 import javax.swing.Icon
 import kotlin.io.path.pathString
 
-// TODO: Provide a special icon for poetry
-val POETRY_ICON: Icon = PythonIcons.Python.Origami
 
 @Internal
 fun suggestedSdkName(basePath: Path): @NlsSafe String = "Poetry (${PathUtil.getFileName(basePath.pathString)})"
