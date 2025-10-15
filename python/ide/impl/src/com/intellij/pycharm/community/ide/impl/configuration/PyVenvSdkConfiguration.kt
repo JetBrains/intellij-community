@@ -44,7 +44,7 @@ class PyVenvSdkConfiguration : PyProjectSdkConfigurationExtension {
   }
 
   private fun getVirtualEnv(module: Module): PyDetectedSdk? = detectAssociatedEnvironments(module, existingSdks, context)
-    .firstOrNull { it.pyvenvContains("virtualenv = ") }
+    .firstOrNull { !it.pyvenvContains("uv = ") }
 
   private suspend fun setupVenv(module: Module): PyResult<Sdk> {
     val env = withContext(Dispatchers.IO) {
