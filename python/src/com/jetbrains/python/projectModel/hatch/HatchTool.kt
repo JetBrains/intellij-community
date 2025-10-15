@@ -9,14 +9,13 @@ import com.intellij.python.pyproject.model.spi.Tool
 import com.intellij.python.sdk.ui.icons.PythonSdkUIIcons
 import com.jetbrains.python.PyToolUIInfo
 import com.jetbrains.python.ToolId
-import com.jetbrains.python.projectModel.common.getDependenciesFromToml
-import com.jetbrains.python.projectModel.common.getProjectStructure
 import com.jetbrains.python.venvReader.Directory
 import org.apache.tuweni.toml.TomlTable
 import org.jetbrains.annotations.ApiStatus
 
 @ApiStatus.Internal
 val HATCH_TOOL_ID: ToolId = ToolId("hatch")
+
 internal class HatchTool : Tool {
 
   override val id: ToolId = HATCH_TOOL_ID
@@ -26,6 +25,5 @@ internal class HatchTool : Tool {
 
   override suspend fun getProjectName(projectToml: TomlTable): @NlsSafe String? = null
 
-  override suspend fun getProjectStructure(entries: Map<ProjectName, PyProjectTomlProject>, rootIndex: Map<Directory, ProjectName>): ProjectStructureInfo =
-    getProjectStructure(entries, rootIndex) { getDependenciesFromToml(it.pyProjectToml) }
+  override suspend fun getProjectStructure(entries: Map<ProjectName, PyProjectTomlProject>, rootIndex: Map<Directory, ProjectName>): ProjectStructureInfo? = null
 }

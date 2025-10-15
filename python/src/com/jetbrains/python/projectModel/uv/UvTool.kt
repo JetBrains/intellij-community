@@ -4,8 +4,10 @@ package com.jetbrains.python.projectModel.uv
 import com.intellij.openapi.diagnostic.fileLogger
 import com.intellij.openapi.util.NlsSafe
 import com.intellij.openapi.util.getPathMatcher
-import com.intellij.python.pyproject.PY_PROJECT_TOML_BUILD_SYSTEM
-import com.intellij.python.pyproject.model.spi.*
+import com.intellij.python.pyproject.model.spi.ProjectName
+import com.intellij.python.pyproject.model.spi.ProjectStructureInfo
+import com.intellij.python.pyproject.model.spi.PyProjectTomlProject
+import com.intellij.python.pyproject.model.spi.Tool
 import com.intellij.util.concurrency.annotations.RequiresBackgroundThread
 import com.jetbrains.python.PyToolUIInfo
 import com.jetbrains.python.ToolId
@@ -23,6 +25,7 @@ import kotlin.io.path.relativeTo
 
 @ApiStatus.Internal
 val UV_TOOL_ID: ToolId = ToolId("uv")
+
 internal class UvTool : Tool {
 
   override val id: ToolId = UV_TOOL_ID
