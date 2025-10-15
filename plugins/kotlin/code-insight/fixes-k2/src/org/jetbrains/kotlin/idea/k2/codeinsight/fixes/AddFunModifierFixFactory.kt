@@ -8,7 +8,9 @@ import com.intellij.modcommand.ModPsiUpdater
 import com.intellij.psi.SmartPsiElementPointer
 import com.intellij.psi.createSmartPointer
 import org.jetbrains.kotlin.analysis.api.KaSession
+import org.jetbrains.kotlin.analysis.api.analyzeCopy
 import org.jetbrains.kotlin.analysis.api.fir.diagnostics.KaFirDiagnostic
+import org.jetbrains.kotlin.analysis.api.projectStructure.KaDanglingFileResolutionMode
 import org.jetbrains.kotlin.analysis.api.symbols.KaNamedClassSymbol
 import org.jetbrains.kotlin.config.LanguageVersion
 import org.jetbrains.kotlin.idea.base.analysis.api.utils.findSamSymbolOrNull
@@ -17,6 +19,8 @@ import org.jetbrains.kotlin.idea.base.psi.replaceSamConstructorCall
 import org.jetbrains.kotlin.idea.base.resources.KotlinBundle
 import org.jetbrains.kotlin.idea.codeinsight.api.applicable.intentions.KotlinPsiUpdateModCommandAction
 import org.jetbrains.kotlin.idea.codeinsight.api.applicators.fixes.KotlinQuickFixFactory
+import org.jetbrains.kotlin.idea.refactoring.canMoveLambdaOutsideParentheses
+import org.jetbrains.kotlin.idea.refactoring.moveFunctionLiteralOutsideParentheses
 import org.jetbrains.kotlin.lexer.KtTokens
 import org.jetbrains.kotlin.psi.KtCallExpression
 import org.jetbrains.kotlin.psi.KtClass
@@ -68,8 +72,16 @@ internal object AddFunModifierFixFactory {
             val referrerCall = updater.getWritable(elementContext.referrerCallPointer.element)
             element.addModifier(KtTokens.FUN_KEYWORD)
             if (referrerCall?.lambdaArguments?.singleOrNull() == null) return
-            referrerCall.getStrictParentOfType<KtValueArgument>()?.takeIf { it.getArgumentExpression() == referrerCall } ?: return
+            val argument = referrerCall.getStrictParentOfType<KtValueArgument>()
+                ?.takeIf { it.getArgumentExpression() == referrerCall }
+                ?: return
+            val parentCall = argument.getStrictParentOfType<KtCallExpression>() ?: return
             replaceSamConstructorCall(referrerCall)
+            analyzeCopy(element, resolutionMode = KaDanglingFileResolutionMode.PREFER_SELF) {
+                if (parentCall.canMoveLambdaOutsideParentheses(skipComplexCalls = true)) {
+                    parentCall.moveFunctionLiteralOutsideParentheses()
+                }
+            }
         }
 
         override fun getFamilyName(): @IntentionFamilyName String =
