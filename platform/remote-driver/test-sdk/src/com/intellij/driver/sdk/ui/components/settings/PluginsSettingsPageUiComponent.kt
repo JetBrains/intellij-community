@@ -1,9 +1,11 @@
 package com.intellij.driver.sdk.ui.components.settings
 
+import com.intellij.driver.client.Driver
 import com.intellij.driver.client.Remote
 import com.intellij.driver.sdk.PluginDescriptor
 import com.intellij.driver.sdk.PluginId
 import com.intellij.driver.sdk.getPlugin
+import com.intellij.driver.sdk.invokeAction
 import com.intellij.driver.sdk.ui.Finder
 import com.intellij.driver.sdk.ui.accessibleName
 import com.intellij.driver.sdk.ui.components.ComponentData
@@ -24,6 +26,10 @@ fun DialogUiComponent.pluginsSettingsPage(action: PluginsSettingsPageUiComponent
 
 fun WelcomeScreenUI.pluginsPage(action: PluginsSettingsPageUiComponent.() -> Unit = {}): PluginsSettingsPageUiComponent =
   onPluginsPage().apply(action)
+
+fun Driver.openPluginsSettings() {
+  invokeAction("WelcomeScreen.Plugins", now = false)
+}
 
 private fun Finder.onPluginsPage(action: PluginsSettingsPageUiComponent.() -> Unit = {}): PluginsSettingsPageUiComponent =
   x("${xQuery { byType("com.intellij.ide.plugins.newui.PluginSearchTextField") }}/ancestor::div[.//div[@accessiblename='Installed' and @javaclass='javax.swing.JLabel']][1]", PluginsSettingsPageUiComponent::class.java).apply(action)
