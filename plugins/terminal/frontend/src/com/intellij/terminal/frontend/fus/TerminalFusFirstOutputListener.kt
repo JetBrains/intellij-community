@@ -4,7 +4,6 @@ import com.intellij.openapi.diagnostic.thisLogger
 import org.jetbrains.plugins.terminal.block.reworked.TerminalContentChangeEvent
 import org.jetbrains.plugins.terminal.block.reworked.TerminalOutputModel
 import org.jetbrains.plugins.terminal.block.reworked.TerminalOutputModelListener
-import org.jetbrains.plugins.terminal.block.reworked.endOffset
 import org.jetbrains.plugins.terminal.fus.ReworkedTerminalUsageCollector
 import org.jetbrains.plugins.terminal.fus.TerminalStartupFusInfo
 

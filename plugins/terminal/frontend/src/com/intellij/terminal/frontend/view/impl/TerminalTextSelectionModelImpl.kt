@@ -13,7 +13,6 @@ import com.intellij.util.EventDispatcher
 import com.intellij.util.asDisposable
 import kotlinx.coroutines.CoroutineScope
 import org.jetbrains.plugins.terminal.block.reworked.TerminalOutputModel
-import org.jetbrains.plugins.terminal.block.reworked.endOffset
 import org.jetbrains.plugins.terminal.view.TerminalOutputModelsSet
 
 internal class TerminalTextSelectionModelImpl(
