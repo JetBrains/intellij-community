@@ -31,6 +31,7 @@ import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.*;
 import java.util.concurrent.TimeUnit;
+import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 import java.util.stream.Collectors;
 
@@ -65,7 +66,7 @@ public abstract class PythonSdkFlavor<D extends PyFlavorData> {
     .maximumSize(1000)
     .build();
 
-  private static final Pattern VERSION_RE = Pattern.compile("(Python \\S+).*");
+  private static final Pattern VERSION_RE = Pattern.compile("((Python|GraalPy) (\\S+)).*", Pattern.DOTALL);
   private static final Logger LOG = Logger.getInstance(PythonSdkFlavor.class);
 
 
@@ -436,8 +437,9 @@ public abstract class PythonSdkFlavor<D extends PyFlavorData> {
    * @return level or null if no parsable output was found
    */
   public static @Nullable LanguageLevel getLanguageLevelFromVersionStringStaticSafe(@NotNull String versionString) {
-    if (versionString.startsWith(PYTHON_VERSION_STRING_PREFIX)) {
-      return LanguageLevel.fromPythonVersionSafe(versionString.substring(PYTHON_VERSION_STRING_PREFIX.length()));
+    final Matcher m = VERSION_RE.matcher(versionString);
+    if (m.matches()) {
+      return LanguageLevel.fromPythonVersionSafe(m.group(3));
     }
     return null;
   }
