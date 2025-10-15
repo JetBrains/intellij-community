@@ -19,7 +19,6 @@ import com.intellij.ui.JreHiDpiUtil
 import com.intellij.ui.NewUiValue
 import com.intellij.ui.scale.JBUIScale
 import com.intellij.util.ComponentTreeEventDispatcher
-import com.intellij.util.concurrency.ThreadingAssertions
 import com.intellij.util.ui.EDT
 import com.intellij.util.ui.GraphicsUtil
 import com.intellij.util.ui.UIUtil
@@ -170,6 +169,12 @@ class UISettings @NonInjectable constructor(private val notRoamableOptions: NotR
     get() = state.showToolWindowsNumbers
     set(value) {
       state.showToolWindowsNumbers = value
+    }
+
+  var differentToolwindowBackground: Boolean
+    get() = state.differentToolwindowBackground
+    set(value) {
+      state.differentToolwindowBackground = value
     }
 
   var showToolWindowsNames: Boolean
