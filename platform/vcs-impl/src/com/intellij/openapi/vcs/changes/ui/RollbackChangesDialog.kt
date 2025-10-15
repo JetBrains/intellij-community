@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.vcs.changes.ui
 
 import com.intellij.CommonBundle
@@ -27,7 +27,7 @@ class RollbackChangesDialog private constructor(private val project: Project,
   : DialogWrapper(project, true) {
 
   private val changeInfoCalculator = ChangeInfoCalculator()
-  private val commitLegend = CommitLegendPanel(changeInfoCalculator)
+  private val commitLegend = CommitLegendComponent.create(changeInfoCalculator)
 
   private lateinit var deleteLocallyAddedFilesCheckBox: JCheckBox
   private val operationName: @Nls String
