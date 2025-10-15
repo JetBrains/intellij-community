@@ -106,8 +106,7 @@
     },
 
     "Editor.ToolTip": {
-      "background": "TooltipBackground",
-      "border": "TooltipBackground"
+      "background": "TooltipBackground"
     },
 
     "Code.Block": {
