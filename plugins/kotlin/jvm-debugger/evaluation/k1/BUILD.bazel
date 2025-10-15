@@ -29,7 +29,7 @@ jvm_library(
     "//plugins/kotlin/base/facet",
     "//platform/xdebugger-impl:debugger-impl",
     "//java/debugger/impl",
-    "//plugins/kotlin/code-insight/impl-base",
+    "//plugins/kotlin/code-insight/impl-base:kotlin-codeInsight-shared",
     "//plugins/kotlin/base/project-structure",
     "//plugins/kotlin/j2k/k1.old",
     "//plugins/kotlin/idea",

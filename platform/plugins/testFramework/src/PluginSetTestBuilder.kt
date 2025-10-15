@@ -110,6 +110,7 @@ class PluginSetTestBuilder private constructor(
     PluginManagerCore.getAndClearPluginLoadingErrors()
     
     val initContext = buildInitContext()
+    PluginMainDescriptor.setInitContextForLoadingRuleDetermination(initContext) // FIXME this should not exist
     val (loadingContext, loadingResult) = buildLoadingResult(initContext)
     return PluginManagerCore.initializePlugins(
       descriptorLoadingErrors = loadingContext.copyDescriptorLoadingErrors(),

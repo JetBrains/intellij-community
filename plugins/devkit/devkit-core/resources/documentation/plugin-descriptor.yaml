@@ -247,12 +247,12 @@ elements:
                     required: no
                   description: |
                     The highest version of the IDE the plugin is compatible with.
-                    It's highly recommended not to set this attribute, so the plugin will be compatible with all the IDEs since the version 
-                    specified by the [`since-build`](#attribute:idea-plugin__idea-version__since-build).
-                    If it becomes necessary to specify the highest compatible IDE version later, it'll be possible to do that via the 
-                    Marketplace.
-                    Only if the publishing process for the plugin is configured to upload a new version of a plugin for each major IDE 
-                    version, it makes sense to limit the highest compatible IDE version from the beginning. 
+                    It's highly recommended not to set this attribute, so the plugin will be compatible with all IDE versions since the 
+                    version specified by the [`since-build`](#attribute:idea-plugin__idea-version__since-build).<br/>
+                    If it becomes necessary to specify the highest compatible IDE version later, it'll be possible to do that via JetBrains
+                    Marketplace.<br/>
+                    Only if the publishing process for the plugin is configured to upload a new version for each major IDE version, it makes
+                    sense to limit the highest compatible IDE version from the beginning. 
                     In that case, use [`strict-until-build`](#attribute:idea-plugin__idea-version__strict-until-build) instead.
               - attribute:
                   name: strict-until-build
@@ -260,11 +260,12 @@ elements:
                     required: no
                   since: "2025.3"
                   description: |
-                    The highest version of the IDE the plugin is compatible with.
-                    Use this attribute only if the publishing process for the plugin is configured to upload a new version of a plugin for 
-                    each major IDE version.
-                    Otherwise, omit this attribute. If it becomes necessary to specify the highest compatible IDE version later, it'll be 
-                    possible to do that via the Marketplace.
+                    The highest version of the IDE the plugin is compatible with.<br/>
+                    Use this attribute only if the publishing process for the plugin is configured to upload a new version for each major
+                    IDE version.
+                    Otherwise, skip this attribute.<br/>
+                    If it becomes necessary to specify the highest compatible IDE version later, it'll be possible to do that via
+                    JetBrains Marketplace.
             examples:
               - | # code snippets must have 4 spaces indent here
                 Compatibility with a specific build number (2021.3.3) and higher versions:
@@ -482,6 +483,15 @@ elements:
                           required: yes
                         description: |
                           The name of the module to depend on.
+                    - attribute:
+                        name: namespace
+                        description: |
+                          Specifies the [namespace](#attribute:idea-plugin__content__namespace) where the referenced module is defined. 
+                          
+                          If the namespace is not specified explicitly, the dependency is resolved as follows:
+                          - if a content module with the specified [name](#attribute:idea-plugin__dependencies__name) exists in the plugin
+                            where the current module is defined, the dependency resolved to that module.
+                          - otherwise, the module is searched in the default `jetbrains` namespace.
               - element:
                   name: plugin
                   description: |
@@ -614,19 +624,6 @@ elements:
                             **This option isn't implemented yet and currently behaves the same way as `optional`.**
                         defaultValue: |
                           `optional`
-                    - attribute:
-                        name: os
-                        description: |
-                          Allows restricting the loading of a module to specific operating system.
-                          Supported values:
-                          - `freebsd`
-                          - `linux`
-                          - `mac`
-                          - `unix`
-                          - `windows`
-                          
-                          For example, `os="windows"` allows the module to load only on Windows.
-
         - element:
             name: extensions
             references:

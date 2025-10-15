@@ -313,11 +313,12 @@ public class PyTypeAssertionEvaluator extends PyRecursiveElementVisitor {
      * And:
      *   if isinstance(x, (1, "")):
      */
+    PyExpression typeElementNoParens = PyPsiUtils.flattenParens(typeElement);
     if (type instanceof PyTupleType tupleType) {
       final List<PyType> members = new ArrayList<>();
       final int count = tupleType.getElementCount();
 
-      final PyTupleExpression tupleExpression = as(PyPsiUtils.flattenParens(typeElement), PyTupleExpression.class);
+      final PyTupleExpression tupleExpression = as(typeElementNoParens, PyTupleExpression.class);
       if (tupleExpression != null && tupleExpression.getElements().length == count) {
         final PyExpression[] elements = tupleExpression.getElements();
         for (int i = 0; i < count; i++) {
@@ -332,14 +333,14 @@ public class PyTypeAssertionEvaluator extends PyRecursiveElementVisitor {
 
       return PyUnionType.union(members);
     }
-    else if (type instanceof PyUnionType) {
-      return ((PyUnionType)type).map(member -> transformTypeFromAssertion(member, transformToDefinition, context, null));
-    }
-    else if (type instanceof PyClassType && "types.UnionType".equals(((PyClassType)type).getClassQName()) && typeElement != null) {
-      final Ref<PyType> typeFromTypingProvider = PyTypingTypeProvider.getType(typeElement, context);
+    else if (typeElementNoParens instanceof PyBinaryExpression binary && binary.getOperator() == PyTokenTypes.OR) {
+      final Ref<PyType> typeFromTypingProvider = PyTypingTypeProvider.getType(binary, context);
       if (typeFromTypingProvider != null) {
         return transformTypeFromAssertion(typeFromTypingProvider.get(), transformToDefinition, context, null);
       }
+    }
+    else if (type instanceof PyUnionType) {
+      return ((PyUnionType)type).map(member -> transformTypeFromAssertion(member, transformToDefinition, context, null));
     }
     else if (type instanceof PyInstantiableType instantiableType) {
       return transformToDefinition ? instantiableType.toClass() : instantiableType.toInstance();

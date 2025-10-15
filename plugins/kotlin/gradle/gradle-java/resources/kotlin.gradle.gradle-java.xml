@@ -2,11 +2,11 @@
 
   <dependencies>
     <plugin id="org.jetbrains.plugins.gradle"/>
-    <module name="kotlin.gradle.gradle-tooling"/>
-    <module name="kotlin.gradle.gradle"/>
-    <module name="kotlin.gradle.code-insight-common"/>
-    <module name="kotlin.project-wizard.idea"/>
-    <module name="kotlin.base.external-build-system"/>
+    <module name="intellij.kotlin.gradle.tooling"/>
+    <module name="intellij.kotlin.gradle.gradle"/>
+    <module name="intellij.kotlin.gradle.codeInsight.common"/>
+    <module name="intellij.kotlin.projectWizard.idea"/>
+    <module name="intellij.kotlin.base.externalSystem"/>
   </dependencies>
 
   <extensionPoints>

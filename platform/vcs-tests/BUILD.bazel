@@ -73,6 +73,7 @@ jvm_library(
     "//xml/xml-psi-api:psi",
     "//tools/intellij.tools.ide.metrics.benchmark:ide-metrics-benchmark",
     "//tools/intellij.tools.ide.metrics.benchmark:ide-metrics-benchmark_test_lib",
+    "//platform/vcs-impl/shared",
   ],
   exports = ["//platform/vcs-tests:vcs-testFramework"]
 )

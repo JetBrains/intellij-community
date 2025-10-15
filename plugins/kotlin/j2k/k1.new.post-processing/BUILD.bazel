@@ -47,7 +47,7 @@ jvm_library(
     "//plugins/kotlin/frontend-independent",
     "//plugins/kotlin/j2k/shared",
     "//plugins/kotlin/j2k/k1.new",
-    "//plugins/kotlin/code-insight/impl-base",
+    "//plugins/kotlin/code-insight/impl-base:kotlin-codeInsight-shared",
     "//plugins/kotlin/idea",
     "//platform/lang-impl",
     "//platform/code-style-impl:codeStyle-impl",
@@ -57,7 +57,7 @@ jvm_library(
     "//plugins/kotlin/code-insight/utils",
     "//plugins/kotlin/code-insight/intentions-shared:kotlin-code-insight-intentions-shared",
     "//plugins/kotlin/refactorings/kotlin.refactorings.common:kotlin-refactorings-common",
-    "//plugins/kotlin/base/analysis-api/analysis-api-utils:kotlin-base-analysis-api-utils",
+    "//plugins/kotlin/base/analysis-api/analysis-api-utils:kotlin-base-analysis-utils",
     "//plugins/kotlin/code-insight/inspections-shared:kotlin-code-insight-inspections-shared",
   ]
 )

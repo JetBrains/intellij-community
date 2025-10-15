@@ -5,7 +5,6 @@ import ai.grazie.nlp.langs.LanguageISO
 import ai.grazie.rules.settings.TextStyle
 import com.intellij.grazie.GrazieConfig
 import com.intellij.grazie.GrazieConfig.State.Processing
-import com.intellij.grazie.cloud.GrazieCloudConnector
 import com.intellij.grazie.config.CheckingContext
 import com.intellij.grazie.ide.ui.grammar.tabs.rules.component.allRules
 import com.intellij.grazie.rule.RuleIdeClient
@@ -97,8 +96,7 @@ internal class GrazieFUSState : ApplicationUsagesCollector() {
     }
 
     // state.processing doesn't have a constant default value, so we always report it
-    val connectionType = GrazieCloudConnector.EP_NAME.extensionList.firstNotNullOfOrNull { it.connectionType() } ?: Processing.Local
-    metrics.add(PROCESSING.metric(connectionType))
+    metrics.add(PROCESSING.metric(GrazieConfig.get().processing))
     if (state.styleProfile != DEFAULT_STATE.styleProfile) {
       metrics.add(WRITING_STYLE.metric(state.getTextStyle().id.uppercase()))
     }

@@ -5,7 +5,7 @@ from collections.abc import Callable
 from threading import Thread
 from types import TracebackType
 from typing import Any, Final, NoReturn, final, overload
-from typing_extensions import TypeVarTuple, Unpack
+from typing_extensions import TypeVarTuple, Unpack, disjoint_base
 
 _Ts = TypeVarTuple("_Ts")
 
@@ -110,6 +110,7 @@ if sys.version_info >= (3, 12):
 if sys.version_info >= (3, 14):
     def set_name(name: str) -> None: ...
 
+@disjoint_base
 class _local:
     def __getattribute__(self, name: str, /) -> Any: ...
     def __setattr__(self, name: str, value: Any, /) -> None: ...

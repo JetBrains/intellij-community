@@ -35,9 +35,9 @@
     <orderEntry type="module" module-name="intellij.platform.projectModel" />
     <orderEntry type="module" module-name="intellij.platform.refactoring" />
     <orderEntry type="module" module-name="intellij.platform.workspace.storage" />
-    <orderEntry type="module" module-name="kotlin.base.util" />
-    <orderEntry type="module" module-name="kotlin.base.plugin" />
-    <orderEntry type="module" module-name="kotlin.base.resources" />
+    <orderEntry type="module" module-name="intellij.kotlin.base.util" />
+    <orderEntry type="module" module-name="intellij.kotlin.base.plugin" />
+    <orderEntry type="module" module-name="intellij.kotlin.base.resources" />
     <orderEntry type="module" module-name="kotlin.fir.frontend-independent" exported="" />
     <orderEntry type="library" name="kotlinc.analysis-api" level="project" />
     <orderEntry type="library" name="kotlinc.analysis-api-impl-base" level="project" />
@@ -46,42 +46,42 @@
     <orderEntry type="library" name="kotlinc.kotlin-scripting-common" level="project" />
     <orderEntry type="library" name="kotlinc.kotlin-scripting-compiler-impl" level="project" />
     <orderEntry type="library" name="kotlinc.scripting-compiler-plugin" level="project" />
-    <orderEntry type="module" module-name="kotlin.base.psi" />
-    <orderEntry type="module" module-name="kotlin.base.kdoc" />
-    <orderEntry type="module" module-name="kotlin.base.indices" />
-    <orderEntry type="module" module-name="kotlin.base.facet" />
+    <orderEntry type="module" module-name="intellij.kotlin.base.psi" />
+    <orderEntry type="module" module-name="intellij.kotlin.base.kdoc" />
+    <orderEntry type="module" module-name="intellij.kotlin.base.indices" />
+    <orderEntry type="module" module-name="intellij.kotlin.base.facet" />
     <orderEntry type="module" module-name="intellij.platform.ide.impl" />
-    <orderEntry type="module" module-name="kotlin.base.project-structure" />
-    <orderEntry type="module" module-name="kotlin.base.analysis" />
+    <orderEntry type="module" module-name="intellij.kotlin.base.projectStructure" />
+    <orderEntry type="module" module-name="intellij.kotlin.base.analysis" />
     <orderEntry type="module" module-name="kotlin.highlighting.shared" />
-    <orderEntry type="module" module-name="kotlin.base.code-insight" />
-    <orderEntry type="module" module-name="kotlin.base.analysis-api.utils" />
+    <orderEntry type="module" module-name="intellij.kotlin.base.codeInsight" />
+    <orderEntry type="module" module-name="intellij.kotlin.base.analysis.utils" />
     <orderEntry type="module" module-name="kotlin.compiler-plugins.sam-with-receiver.common" />
     <orderEntry type="module" module-name="intellij.platform.analysis.impl" />
     <orderEntry type="module" module-name="intellij.java.psi" />
     <orderEntry type="module" module-name="intellij.platform.lang" />
     <orderEntry type="module" module-name="intellij.java.analysis.impl" />
     <orderEntry type="module" module-name="intellij.platform.core.ui" />
-    <orderEntry type="module" module-name="kotlin.code-insight.api" />
+    <orderEntry type="module" module-name="intellij.kotlin.codeInsight.api" />
     <orderEntry type="module" module-name="intellij.platform.usageView" />
     <orderEntry type="module" module-name="intellij.java.psi.impl" />
     <orderEntry type="module" module-name="intellij.platform.core.impl" />
-    <orderEntry type="module" module-name="kotlin.uast.uast-kotlin-idea.k2" />
-    <orderEntry type="module" module-name="kotlin.uast.uast-kotlin.k2" scope="RUNTIME" />
+    <orderEntry type="module" module-name="intellij.kotlin.uast.idea" />
+    <orderEntry type="module" module-name="intellij.kotlin.uast" scope="RUNTIME" />
     <orderEntry type="module" module-name="intellij.java.analysis" scope="RUNTIME" />
     <orderEntry type="module" module-name="intellij.platform.execution.impl" />
     <orderEntry type="library" name="kotlinc.analysis-api-platform-interface" level="project" />
     <orderEntry type="library" scope="RUNTIME" name="kotlinc.symbol-light-classes" level="project" />
     <orderEntry type="module" module-name="intellij.java.impl" />
-    <orderEntry type="module" module-name="kotlin.base.fir.analysis-api-platform" scope="RUNTIME" />
-    <orderEntry type="module" module-name="kotlin.code-insight.impl-base" />
-    <orderEntry type="module" module-name="kotlin.code-insight.utils" />
+    <orderEntry type="module" module-name="intellij.kotlin.analysis.platform" scope="RUNTIME" />
+    <orderEntry type="module" module-name="intellij.kotlin.codeInsight.shared" />
+    <orderEntry type="module" module-name="intellij.kotlin.codeInsight.utils" />
     <orderEntry type="module" module-name="intellij.platform.lang.core" />
     <orderEntry type="module" module-name="intellij.platform.util.classLoader" />
     <orderEntry type="library" name="kotlinc.kotlin-jps-common" level="project" />
-    <orderEntry type="module" module-name="kotlin.base.compiler-configuration" />
+    <orderEntry type="module" module-name="intellij.kotlin.base.compilerConfiguration" />
     <orderEntry type="module" module-name="kotlin.code-insight.override-implement.shared" />
-    <orderEntry type="module" module-name="kotlin.code-insight.override-implement.k2" />
+    <orderEntry type="module" module-name="intellij.kotlin.codeInsight.overrideImplement" />
     <orderEntry type="module" module-name="kotlin.bundled-compiler-plugins-support" />
     <orderEntry type="module" module-name="intellij.platform.workspace.jps" />
     <orderEntry type="module" module-name="intellij.platform.backend.workspace" />

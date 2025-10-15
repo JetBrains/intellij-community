@@ -1,4 +1,4 @@
-### auto-generated section `build kotlin.navigation` start
+### auto-generated section `build intellij.kotlin.navigation` start
 load("//build:compiler-options.bzl", "create_kotlinc_options")
 load("@rules_jvm//:jvm.bzl", "jvm_library", "resourcegroup")
 
@@ -19,7 +19,7 @@ resourcegroup(
 
 jvm_library(
   name = "navigation",
-  module_name = "kotlin.navigation",
+  module_name = "intellij.kotlin.navigation",
   visibility = ["//visibility:public"],
   srcs = glob(["src/**/*.kt", "src/**/*.java", "src/**/*.form"], allow_empty = True),
   resources = [":navigation_resources"],
@@ -39,4 +39,4 @@ jvm_library(
     "//plugins/kotlin/base/project-structure",
   ]
 )
-### auto-generated section `build kotlin.navigation` end
+### auto-generated section `build intellij.kotlin.navigation` end

@@ -18,6 +18,7 @@ package com.siyeh.ig.style;
 import com.intellij.codeInspection.CleanupLocalInspectionTool;
 import com.intellij.codeInspection.LocalQuickFix;
 import com.intellij.codeInspection.options.OptPane;
+import com.intellij.openapi.util.text.HtmlChunk;
 import com.intellij.pom.java.JavaFeature;
 import com.intellij.psi.*;
 import com.intellij.psi.util.PsiTreeUtil;
@@ -71,6 +72,7 @@ public final class UnnecessaryFinalOnLocalVariableOrParameterInspection extends 
       checkbox("reportPatternVariables", InspectionGadgetsBundle.message("unnecessary.final.report.pattern.variables.option")),
       checkbox("reportParameters", InspectionGadgetsBundle.message("unnecessary.final.report.method.parameters.option"),
                checkbox("onlyWarnOnAbstractMethods",InspectionGadgetsBundle.message("unnecessary.final.on.parameter.only.interface.option"))
+                 .description(HtmlChunk.raw(InspectionGadgetsBundle.message("unnecessary.final.on.parameter.only.interface.option.description")))
       ),
       checkbox("reportCatchParameters", InspectionGadgetsBundle.message("unnecessary.final.report.catch.parameters.option")),
       checkbox("reportForeachParameters", InspectionGadgetsBundle.message("unnecessary.final.report.foreach.parameters.option"))

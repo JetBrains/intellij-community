@@ -6,6 +6,7 @@ import com.intellij.openapi.extensions.PluginId
 import com.intellij.openapi.util.BuildNumber
 import com.intellij.openapi.util.NlsContexts
 import com.intellij.openapi.util.NlsSafe
+import com.intellij.util.system.CpuArch
 import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.annotations.Nls
 import org.jetbrains.annotations.NonNls
@@ -112,6 +113,21 @@ class PluginIsIncompatibleWithHostPlatform(
     get() = CoreBundle.message("plugin.loading.error.short.incompatible.with.platform", requiredOs)
   override val logMessage: @NonNls String
     get() = "Plugin '${plugin.name}' (${plugin.pluginId}, version=${plugin.version}) requires platform ${requiredOs} but the current platform is ${hostOs}"
+  override val shouldNotifyUser: Boolean = true
+}
+
+@ApiStatus.Internal
+class PluginIsIncompatibleWithHostCpu(
+  override val plugin: IdeaPluginDescriptor,
+  val requiredCpuArch: IdeaPluginCpuArchRequirement,
+  val hostCpu: @NlsSafe CpuArch,
+): PluginNonLoadReason {
+  override val detailedMessage: @NlsContexts.DetailedDescription String
+    get() = CoreBundle.message("plugin.loading.error.long.incompatible.with.cpu", plugin.name, plugin.version, requiredCpuArch, hostCpu)
+  override val shortMessage: @NlsContexts.Label String
+    get() = CoreBundle.message("plugin.loading.error.short.incompatible.with.platform", requiredCpuArch)
+  override val logMessage: @NonNls String
+    get() = "Plugin '${plugin.name}' (${plugin.pluginId}, version=${plugin.version}) requires CPU ${requiredCpuArch} but the current platform is ${hostCpu}"
   override val shouldNotifyUser: Boolean = true
 }
 

@@ -33,8 +33,8 @@
     <orderEntry type="library" name="kotlinc.analysis-api" level="project" />
     <orderEntry type="library" scope="TEST" name="kotlinc.kotlin-compiler-tests" level="project" />
     <orderEntry type="module" module-name="kotlin.plugin.k1" scope="TEST" />
-    <orderEntry type="module" module-name="kotlin.base.analysis" />
-    <orderEntry type="module" module-name="kotlin.base.util" scope="TEST" />
+    <orderEntry type="module" module-name="intellij.kotlin.base.analysis" />
+    <orderEntry type="module" module-name="intellij.kotlin.base.util" scope="TEST" />
     <orderEntry type="module" module-name="kotlin.base.fe10.analysis" />
     <orderEntry type="module" module-name="kotlin.base.fe10.code-insight" />
     <orderEntry type="module" module-name="kotlin.j2k.shared" scope="TEST" />
@@ -49,8 +49,8 @@
     <orderEntry type="module" module-name="intellij.java.psi" scope="TEST" />
     <orderEntry type="module" module-name="intellij.platform.codeStyle.impl" scope="TEST" />
     <orderEntry type="module" module-name="kotlin.test-framework" scope="TEST" />
-    <orderEntry type="module" module-name="kotlin.code-insight.utils" scope="TEST" />
+    <orderEntry type="module" module-name="intellij.kotlin.codeInsight.utils" scope="TEST" />
     <orderEntry type="module" module-name="kotlin.j2k.shared.tests" scope="TEST" />
-    <orderEntry type="module" module-name="kotlin.base.plugin" scope="TEST" />
+    <orderEntry type="module" module-name="intellij.kotlin.base.plugin" scope="TEST" />
   </component>
 </module>

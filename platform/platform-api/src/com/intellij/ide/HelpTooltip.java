@@ -106,7 +106,7 @@ import static com.intellij.openapi.util.text.HtmlChunk.html;
  * The UI designer will offer to create {@code private void createUIComponents()} method where you can create the label with a static method.</p>
  */
 public class HelpTooltip {
-  protected static final Color INFO_COLOR = JBColor.namedColor("ToolTip.infoForeground", JBUI.CurrentTheme.ContextHelp.FOREGROUND);
+  private static final Color INFO_COLOR = JBColor.namedColor("ToolTip.infoForeground", JBUI.CurrentTheme.ContextHelp.FOREGROUND);
   private static final Color LINK_COLOR = JBColor.namedColor("ToolTip.linkForeground", JBUI.CurrentTheme.Link.Foreground.ENABLED);
 
   private static final JBValue MAX_WIDTH = new JBValue.UIInteger("HelpTooltip.maxWidth", 250);

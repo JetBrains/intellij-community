@@ -5,8 +5,10 @@ import com.intellij.openapi.application.ex.ApplicationInfoEx
 import com.intellij.openapi.application.impl.ApplicationInfoImpl
 import com.intellij.openapi.diagnostic.fileLogger
 import com.intellij.openapi.util.registry.Registry
+import com.intellij.openapi.util.registry.RegistryValue
 import com.intellij.platform.ide.productMode.IdeProductMode
 import org.jetbrains.annotations.ApiStatus
+import java.util.*
 
 @ApiStatus.Internal
 // FIXME: When we consider client services stable enough, all usages of the method must be removed,
@@ -29,7 +31,7 @@ fun isNewFrontendServiceViewEnabled(): Boolean {
   // when it comes to testing either the debugger or service view.
   // Otherwise we have to maintain even more registry flag combinations compatible which does not make sense
   if (isSplitDebuggerEnabledInTestsCopyPaste()) return true
-
+  if (IdeProductMode.isMonolith) return false
   return isSplitServicesRegistryFlagOn() && isCurrentProductSupportSplitServiceView()
 }
 
@@ -41,7 +43,7 @@ fun isOldMonolithServiceViewEnabled(): Boolean {
 }
 
 private fun isSplitDebuggerEnabledInTestsCopyPaste(): Boolean {
-  val testProperty = System.getProperty("c.for.tests")
+  val testProperty = System.getProperty("xdebugger.toolwindow.split.for.tests")
   return testProperty?.toBoolean() ?: false
 }
 
@@ -56,7 +58,7 @@ fun isShowLuxedRunToolwindowInServicesView(): Boolean {
 }
 
 private val shouldEnableSplitServiceViewCachedRegistryValue by lazy {
-  Registry.`is`("services.view.split.enabled")
+  Registry.`is`("services.view.split.enabled", true)
 }
 
 private val shouldEnableLuxedRunToolwindowInServiceViewCachedRegistryValue by lazy {
@@ -66,7 +68,7 @@ private val shouldEnableLuxedRunToolwindowInServiceViewCachedRegistryValue by la
 // mutating state of current services implementation
 @ApiStatus.Internal
 fun isCurrentProductSupportSplitServiceView(): Boolean {
-  val value = Registry.stringValue("services.view.split.products")
+  val value = getValueIfExists("services.view.split.products")?.asString() ?: return false
   val productCodes = value.split(",").toSet()
   val currentProductCode = if (IdeProductMode.isFrontend) {
     ApplicationInfoEx.getInstanceEx().fullIdeProductCode
@@ -79,24 +81,35 @@ fun isCurrentProductSupportSplitServiceView(): Boolean {
 
 @ApiStatus.Internal
 fun setServiceViewImplementationForNextIdeRun(shouldEnableSplitImplementation: Boolean) {
-  Registry.get("services.view.split.enabled").setValue(shouldEnableSplitImplementation)
-  Registry.get("services.view.split.run.luxing.enabled").setValue(shouldEnableSplitImplementation)
+  getValueIfExists("services.view.split.enabled")?.setValue(shouldEnableSplitImplementation)
+  getValueIfExists("services.view.split.run.luxing.enabled")?.setValue(shouldEnableSplitImplementation)
 
   if (shouldEnableSplitImplementation) {
     // do not disable debugger since it is a separate functionality, only enable it if services are enabled as well
-    Registry.get("xdebugger.toolwindow.split.remdev").setValue(true)
+    getValueIfExists("xdebugger.toolwindow.split.remdev")?.setValue(true)
   }
-  Registry.get("docker.split.service.view.enabled").setValue(shouldEnableSplitImplementation)
-  Registry.get("docker.registry.split.service.view.enabled").setValue(shouldEnableSplitImplementation)
+  getValueIfExists("docker.split.service.view.enabled")?.setValue(shouldEnableSplitImplementation)
+  getValueIfExists("docker.registry.split.service.view.enabled")?.setValue(shouldEnableSplitImplementation)
 }
 
 @ApiStatus.Internal
 fun getServiceViewRegistryFlagsState(): Map<String, Boolean> {
   return mapOf(
-    "services.view.split.enabled" to Registry.`is`("services.view.split.enabled"),
-    "services.view.split.run.luxing.enabled" to Registry.`is`("services.view.split.run.luxing.enabled"),
-    "xdebugger.toolwindow.split.remdev" to Registry.`is`("xdebugger.toolwindow.split.remdev"),
-    "docker.split.service.view.enabled" to Registry.`is`("docker.split.service.view.enabled"),
-    "docker.registry.split.service.view.enabled" to Registry.`is`("docker.registry.split.service.view.enabled"),
+    "services.view.split.enabled" to Registry.`is`("services.view.split.enabled", true),
+    "services.view.split.run.luxing.enabled" to Registry.`is`("services.view.split.run.luxing.enabled", true),
+    "xdebugger.toolwindow.split.remdev" to Registry.`is`("xdebugger.toolwindow.split.remdev", true),
+    "docker.split.service.view.enabled" to Registry.`is`("docker.split.service.view.enabled", true),
+    "docker.registry.split.service.view.enabled" to Registry.`is`("docker.registry.split.service.view.enabled", true),
   )
+}
+
+private fun getValueIfExists(key: String): RegistryValue? {
+  val maybeMissingValue = Registry.get(key)
+  return try {
+    maybeMissingValue.asString()
+    maybeMissingValue
+  }
+  catch (_: MissingResourceException) {
+    null
+  }
 }

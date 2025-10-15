@@ -20,7 +20,7 @@ jvm_library(
     "//plugins/kotlin/base/plugin",
     "//platform/util",
     "//plugins/kotlin/base/jps",
-    "//plugins/kotlin/compiler-plugins/compiler-plugin-support/common",
+    "//plugins/kotlin/compiler-plugins/compiler-plugin-support/common:kotlin-compilerPlugins-support",
     "//plugins/kotlin/compiler-plugins/compiler-plugin-support/gradle",
     "//plugins/kotlin/gradle/gradle-tooling/impl",
     "//plugins/kotlin/gradle/gradle-java",

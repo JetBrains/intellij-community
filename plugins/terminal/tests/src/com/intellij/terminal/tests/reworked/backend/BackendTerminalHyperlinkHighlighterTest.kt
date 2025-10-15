@@ -384,7 +384,7 @@ internal class BackendTerminalHyperlinkHighlighterTest : BasePlatformTestCase() 
       updateModel(999L, generateLines(1002, 1005, links = (1002..1005).toList()))
       assertLinks(
         *(
-          (0 until 764).map { link(at(it, "link${it + 234}")) } +
+          (1 until 764).map { link(at(it, "link${it + 234}")) } +
           listOf(
             link(at(764, "link1000")),
             link(at(765, "link1002")),
@@ -485,24 +485,29 @@ internal class BackendTerminalHyperlinkHighlighterTest : BasePlatformTestCase() 
     }
 
     suspend fun updateModel(fromLine: Long, newText: String) {
-      updateEvents.emit(listOf(TerminalContentUpdatedEvent(newText, emptyList(), fromLine)))
+      updateEvents.emit(listOf(TerminalContentUpdatedEvent(newText.ensureEOL(), emptyList(), fromLine)))
       pendingUpdateEventCount.update { it + 1 }
     }
 
     suspend fun assertText(expected: String) {
       awaitEventProcessing()
-      assertThat(document.text).isEqualTo(expected)
+      assertThat(document.text).isEqualTo(expected.ensureEOL())
     }
 
     suspend fun assertLinks(vararg expectedLinks: Link) {
       awaitEventProcessing()
-      val actualLinks = backendFacade.dumpState().hyperlinks.filterIsInstance<TerminalHyperlinkInfo>()
+      val actualLinks = backendFacade.dumpState().hyperlinks.filterIsInstance<TerminalHyperlinkInfo>().map { link ->
+        ActualLinkWrapper(
+          outputModel.getText(TerminalOffset.of(link.absoluteStartOffset), TerminalOffset.of(link.absoluteEndOffset)).toString(),
+          link,
+        )
+      }
       assertThat(actualLinks).hasSameSizeAs(expectedLinks)
       for (i in actualLinks.indices) {
-        val actual = actualLinks[i]
+        val actual = actualLinks[i].link
         val expected = expectedLinks[i]
-        val actualStartOffset = outputModel.absoluteOffset(actual.absoluteStartOffset)
-        val actualEndOffset = outputModel.absoluteOffset(actual.absoluteEndOffset)
+        val actualStartOffset = TerminalOffset.of(actual.absoluteStartOffset)
+        val actualEndOffset = TerminalOffset.of(actual.absoluteEndOffset)
         if (i == 0 && actualStartOffset < outputModel.startOffset) continue // partially trimmed link, we may not be able to locate it
         val expectedStartOffset = expected.locator.locateOffset(outputModel)
         val expectedEndOffset = expectedStartOffset + expected.locator.length.toLong()
@@ -518,17 +523,27 @@ internal class BackendTerminalHyperlinkHighlighterTest : BasePlatformTestCase() 
       }
     }
 
+    private data class ActualLinkWrapper(
+      val line: String,
+      val link: TerminalHyperlinkInfo,
+    )
+
     suspend fun assertHighlightings(vararg expectedHighlightings: Highlighting) {
       awaitEventProcessing()
-      val actualHighlightings = backendFacade.dumpState().hyperlinks.filterIsInstance<TerminalHighlightingInfo>()
+      val actualHighlightings = backendFacade.dumpState().hyperlinks.filterIsInstance<TerminalHighlightingInfo>().map { highlighting ->
+        ActualHighlightingWrapper(
+          outputModel.getText(TerminalOffset.of(highlighting.absoluteStartOffset), TerminalOffset.of(highlighting.absoluteEndOffset)).toString(),
+          highlighting,
+        )
+      }
       assertThat(actualHighlightings).hasSameSizeAs(expectedHighlightings)
       for (i in actualHighlightings.indices) {
-        val actual = actualHighlightings[i]
+        val actual = actualHighlightings[i].highlighting
         val expected = expectedHighlightings[i]
         val expectedStartOffset = expected.locator.locateOffset(outputModel)
         val expectedEndOffset = expectedStartOffset + expected.locator.length.toLong()
-        val actualStartOffset = outputModel.absoluteOffset(actual.absoluteStartOffset)
-        val actualEndOffset = outputModel.absoluteOffset(actual.absoluteEndOffset)
+        val actualStartOffset = TerminalOffset.of(actual.absoluteStartOffset)
+        val actualEndOffset = TerminalOffset.of(actual.absoluteEndOffset)
         val expectedLayer = HighlighterLayer.CONSOLE_FILTER
 
         val description = "at $i actual highlight $actual expected highlight $expected"
@@ -539,6 +554,11 @@ internal class BackendTerminalHyperlinkHighlighterTest : BasePlatformTestCase() 
       }
     }
 
+    private data class ActualHighlightingWrapper(
+      val line: String,
+      val highlighting: TerminalHighlightingInfo,
+    )
+
     suspend fun assertInlays(vararg expectedInlays: Inlay) {
       awaitEventProcessing()
       val actualInlays = backendFacade.dumpState().hyperlinks.filterIsInstance<TerminalInlayInfo>()
@@ -548,8 +568,8 @@ internal class BackendTerminalHyperlinkHighlighterTest : BasePlatformTestCase() 
         val expected = expectedInlays[i]
         val expectedStartOffset = expected.locator.locateOffset(outputModel)
         val expectedEndOffset = expectedStartOffset + expected.locator.length.toLong()
-        val actualStartOffset = outputModel.absoluteOffset(actual.absoluteStartOffset)
-        val actualEndOffset = outputModel.absoluteOffset(actual.absoluteEndOffset)
+        val actualStartOffset = TerminalOffset.of(actual.absoluteStartOffset)
+        val actualEndOffset = TerminalOffset.of(actual.absoluteEndOffset)
 
         val description = "at $i actual inlay $actual expected inlay $expected"
         assertThat(actualStartOffset).`as`(description).isEqualTo(expectedStartOffset)
@@ -609,10 +629,10 @@ internal class BackendTerminalHyperlinkHighlighterTest : BasePlatformTestCase() 
       val length: Int get() = substring.length
 
       fun locateOffset(model: TerminalOutputModel): TerminalOffset {
-        val line = model.firstLine + line.toLong()
-        val lineStart = model.startOffset(line)
-        val lineEnd = model.endOffset(line)
-        val lineText = model.getText(lineStart, lineEnd)
+        val line = model.firstLineIndex + line.toLong()
+        val lineStart = model.getStartOfLine(line)
+        val lineEnd = model.getEndOfLine(line)
+        val lineText = model.getText(lineStart, lineEnd).toString()
         val column = lineText.indexOfSingle(substring)
         return lineStart + column.toLong()
       }
@@ -691,6 +711,8 @@ internal class BackendTerminalHyperlinkHighlighterTest : BasePlatformTestCase() 
     }
   }
 }
+
+private fun String.ensureEOL(): String = if (isEmpty() || endsWith('\n')) this else this + '\n'
 
 private class InlayResultItem(
   highlightStartOffset: Int,

@@ -4,8 +4,6 @@ package com.intellij.debugger.engine
 import com.intellij.debugger.DebuggerManager
 import com.intellij.execution.process.ProcessHandler
 import com.intellij.openapi.project.Project
-import com.intellij.util.AwaitCancellationAndInvoke
-import com.intellij.util.awaitCancellationAndInvoke
 import java.io.OutputStream
 import java.util.concurrent.atomic.AtomicBoolean
 
@@ -15,7 +13,6 @@ open class RemoteDebugProcessHandler @JvmOverloads constructor(
 ) : ProcessHandler() {
   private val myClosedByUser = AtomicBoolean()
 
-  @OptIn(AwaitCancellationAndInvoke::class)
   override fun startNotify() {
     val listener: DebugProcessListener = object : DebugProcessAdapterImpl() {
       //executed in manager thread
@@ -25,10 +22,7 @@ open class RemoteDebugProcessHandler @JvmOverloads constructor(
           notifyProcessDetached()
         }
         else {
-          // first wait for the full termination
-          process.managerThread.coroutineScope.awaitCancellationAndInvoke {
-            process.reattach(process.session.debugEnvironment)
-          }
+          process.reattach(process.session.debugEnvironment)
         }
       }
     }

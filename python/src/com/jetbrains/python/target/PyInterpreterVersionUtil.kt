@@ -3,7 +3,9 @@
 
 package com.jetbrains.python.target
 
+import com.intellij.python.community.execService.BinOnEel
 import com.intellij.python.community.execService.BinOnTarget
+import com.intellij.python.community.execService.BinaryToExec
 import com.intellij.python.community.execService.python.validatePythonAndGetVersion
 import com.intellij.remote.RemoteSdkException
 import com.jetbrains.python.Result
@@ -11,10 +13,20 @@ import com.jetbrains.python.errorProcessing.PyResult
 import com.jetbrains.python.psi.LanguageLevel
 import com.jetbrains.python.ui.pyMayBeModalBlocking
 import org.jetbrains.annotations.ApiStatus
+import java.nio.file.Path
+
+private fun PyTargetAwareAdditionalData.getBinaryToExec(): BinaryToExec {
+  val configuration = targetEnvironmentConfiguration
+  val binaryToExec = if (configuration == null) {
+    BinOnEel(Path.of(interpreterPath))
+  } else {
+    BinOnTarget(interpreterPath, configuration)
+  }
+  return binaryToExec
+}
 
 @ApiStatus.Internal
-suspend fun PyTargetAwareAdditionalData.getInterpreterVersion(): PyResult<LanguageLevel> =
-  BinOnTarget(interpreterPath, targetEnvironmentConfiguration).validatePythonAndGetVersion()
+suspend fun PyTargetAwareAdditionalData.getInterpreterVersion(): PyResult<LanguageLevel> = getBinaryToExec().validatePythonAndGetVersion()
 
 
 @ApiStatus.Internal

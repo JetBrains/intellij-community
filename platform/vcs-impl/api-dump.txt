@@ -2695,15 +2695,6 @@ a:com.intellij.openapi.vcs.configurable.VcsOptionsTopHitProviderBase
 - com.intellij.ide.ui.OptionsSearchTopHitProvider$ProjectLevelProvider
 - <init>():V
 - p:isEnabled(com.intellij.openapi.project.Project,com.intellij.openapi.vcs.VcsKey):Z
-e:com.intellij.openapi.vcs.ex.ExclusionState
-- java.lang.Enum
-- sf:ALL_EXCLUDED:com.intellij.openapi.vcs.ex.ExclusionState
-- sf:ALL_INCLUDED:com.intellij.openapi.vcs.ex.ExclusionState
-- sf:NO_CHANGES:com.intellij.openapi.vcs.ex.ExclusionState
-- sf:PARTIALLY:com.intellij.openapi.vcs.ex.ExclusionState
-- s:getEntries():kotlin.enums.EnumEntries
-- s:valueOf(java.lang.String):com.intellij.openapi.vcs.ex.ExclusionState
-- s:values():com.intellij.openapi.vcs.ex.ExclusionState[]
 com.intellij.openapi.vcs.ex.LineStatusTracker
 - com.intellij.openapi.vcs.ex.LineStatusTrackerI
 - a:getProject():com.intellij.openapi.project.Project
@@ -2726,11 +2717,6 @@ f:com.intellij.openapi.vcs.ex.LocalLineStatusTracker$Mode
 - f:getDetectWhitespaceChangedLines():Z
 - f:getShowErrorStripeMarkers():Z
 - f:isVisible():Z
-f:com.intellij.openapi.vcs.ex.LocalRange
-- com.intellij.openapi.vcs.ex.Range
-- f:getChangelistId():java.lang.String
-- getClientIds():java.util.List
-- f:getExclusionState():com.intellij.openapi.vcs.ex.RangeExclusionState
 f:com.intellij.openapi.vcs.ex.PartialCommitContent
 - <init>(java.lang.CharSequence,java.lang.CharSequence,java.util.List):V
 - f:getCurrentContent():java.lang.CharSequence

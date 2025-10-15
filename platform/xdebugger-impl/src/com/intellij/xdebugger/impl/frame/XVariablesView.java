@@ -111,7 +111,7 @@ public class XVariablesView extends XVariablesViewBase {
                                                      proxy + " of type " + proxy.getClass() + " instead");
       return null;
     }
-    return (XDebugSessionImpl)monolith.getSession();
+    return monolith.getSession();
   }
 
   @ApiStatus.Internal

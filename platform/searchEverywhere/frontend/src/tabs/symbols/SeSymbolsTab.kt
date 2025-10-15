@@ -22,7 +22,7 @@ import kotlinx.coroutines.flow.Flow
 import org.jetbrains.annotations.ApiStatus
 
 @ApiStatus.Internal
-class SeSymbolsTab(private val delegate: SeTabDelegate) : SeTab {
+open class SeSymbolsTab(private val delegate: SeTabDelegate) : SeTab {
   override val name: String get() = NAME
   override val id: String get() = ID
   override val isIndexingDependent: Boolean get() = true
@@ -63,6 +63,10 @@ class SeSymbolsTab(private val delegate: SeTabDelegate) : SeTab {
 
   override suspend fun getPreviewInfo(itemData: SeItemData): SePreviewInfo? {
     return delegate.getPreviewInfo(itemData, false)
+  }
+
+  override suspend fun isExtendedInfoEnabled(): Boolean {
+    return delegate.isExtendedInfoEnabled()
   }
 
   override fun dispose() {

@@ -6,6 +6,7 @@ import com.intellij.openapi.application.asContextElement
 import com.intellij.openapi.observable.properties.AtomicProperty
 import com.intellij.openapi.ui.DialogWrapper
 import com.intellij.openapi.ui.validation.WHEN_PROPERTY_CHANGED
+import com.intellij.platform.eel.provider.localEel
 import com.intellij.ui.dsl.builder.panel
 import com.intellij.util.concurrency.annotations.RequiresEdt
 import com.intellij.util.ui.launchOnShow
@@ -25,8 +26,8 @@ import javax.swing.JComponent
  */
 internal class PythonAddLocalInterpreterDialog(private val dialogPresenter: PythonAddLocalInterpreterPresenter) : DialogWrapper(dialogPresenter.moduleOrProject.project) {
 
-  private lateinit var mainPanel: PythonAddCustomInterpreter
-  private lateinit var model: PythonLocalAddInterpreterModel
+  private lateinit var mainPanel: PythonAddCustomInterpreter<PathHolder.Eel>
+  private lateinit var model: PythonLocalAddInterpreterModel<PathHolder.Eel>
 
   private val basePath = dialogPresenter.pathForVEnv
 
@@ -54,7 +55,7 @@ internal class PythonAddLocalInterpreterDialog(private val dialogPresenter: Pyth
     val errorSink = ShowingMessageErrorSync
 
     val rootPanel = panel {
-      model = PythonLocalAddInterpreterModel(ProjectPathFlows.create(basePath))
+      model = PythonLocalAddInterpreterModel(ProjectPathFlows.create(basePath), FileSystem.Eel(eelApi = localEel))
       model.navigator.selectionMode = AtomicProperty(PythonInterpreterSelectionMode.CUSTOM)
       mainPanel = PythonAddCustomInterpreter(
         model = model,

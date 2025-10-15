@@ -35,12 +35,11 @@ abstract class BaseEventId(groupId: String, val eventId: String, val recorder: S
     RegisteredLogDescriptionsProcessor.registerEventDescription(groupId, eventId, description)
   }
 
-  private  fun getLoggers(): List<StatisticsEventLogger> = StatisticsEventLogProviderUtil.getEventLogProvidersExt(recorder).map { it.logger }
   internal fun processLoggers(log: (StatisticsEventLogger) -> Unit) {
     val errors = mutableListOf<Throwable>()
-    for (logger in getLoggers()) {
+    for (p in StatisticsEventLogProviderUtil.getEventLogProvidersExt(recorder)) {
       try {
-        log(logger)
+        log(p.logger)
       }
       catch (e: Throwable) {
         errors.add(e)

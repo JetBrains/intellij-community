@@ -2,6 +2,7 @@
 package com.intellij.platform.backend.workspace
 
 import com.intellij.openapi.application.ApplicationManager
+import com.intellij.platform.workspace.storage.InternalEnvironmentName
 import com.intellij.platform.workspace.storage.MutableEntityStorage
 import com.intellij.platform.workspace.storage.url.VirtualFileUrlManager
 import com.intellij.util.concurrency.annotations.RequiresBlockingContext

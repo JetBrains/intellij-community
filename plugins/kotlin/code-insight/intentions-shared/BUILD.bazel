@@ -50,7 +50,7 @@ jvm_library(
     "//platform/lang-api:lang",
     "//java/java-psi-api:psi",
     "//platform/code-style-impl:codeStyle-impl",
-    "//plugins/kotlin/code-insight/impl-base",
+    "//plugins/kotlin/code-insight/impl-base:kotlin-codeInsight-shared",
     "//platform/lang-impl",
     "//plugins/kotlin/refactorings/kotlin.refactorings.common:kotlin-refactorings-common",
     "//java/openapi:java",

@@ -2,9 +2,9 @@ load("@community//build:tests-options.bzl", "jps_test")
 load("@community//plugins/kotlin:kotlin_test_dependencies.bzl", "all_test_dep_targets")
 
 jps_test(
-  name = "kotlin-jvm-debugger-test-parcelize-k2_test",
+  name = "parcelize_test",
   runtime_deps = [
-    ":kotlin-jvm-debugger-test-parcelize-k2_test_lib",
+    ":parcelize_test_lib",
     "//:main_test_lib",
   ],
   data = [
@@ -16,20 +16,20 @@ jps_test(
   ]
 )
 
-### skip generation section `test kotlin.jvm-debugger.test.parcelize.k2`
+### skip generation section `test intellij.kotlin.jvm.debugger.test.parcelize`
 
-### auto-generated section `build kotlin.jvm-debugger.test.parcelize.k2` start
+### auto-generated section `build intellij.kotlin.jvm.debugger.test.parcelize` start
 load("@rules_jvm//:jvm.bzl", "jvm_library")
 
 jvm_library(
-  name = "kotlin-jvm-debugger-test-parcelize-k2",
+  name = "parcelize",
   visibility = ["//visibility:public"],
   srcs = glob([], allow_empty = True)
 )
 
 jvm_library(
-  name = "kotlin-jvm-debugger-test-parcelize-k2_test_lib",
-  module_name = "kotlin.jvm-debugger.test.parcelize.k2",
+  name = "parcelize_test_lib",
+  module_name = "intellij.kotlin.jvm.debugger.test.parcelize",
   visibility = ["//visibility:public"],
   srcs = glob(["test/**/*.kt", "test/**/*.java", "test/**/*.form"], allow_empty = True),
   deps = [
@@ -37,7 +37,7 @@ jvm_library(
     "//plugins/kotlin/plugin/k2",
     "//plugins/kotlin/base/test:test_test_lib",
     "@lib//:kotlinc-kotlin-compiler-tests",
-    "//plugins/kotlin/jvm-debugger/test/k2:k2_test_lib",
+    "//plugins/kotlin/jvm-debugger/test/k2:kotlin-jvm-debugger-test_test_lib",
     "//platform/testFramework",
     "//platform/testFramework:testFramework_test_lib",
     "//platform/lang-core",
@@ -51,4 +51,4 @@ jvm_library(
     "//android/streaming",
   ]
 )
-### auto-generated section `build kotlin.jvm-debugger.test.parcelize.k2` end
+### auto-generated section `build intellij.kotlin.jvm.debugger.test.parcelize` end

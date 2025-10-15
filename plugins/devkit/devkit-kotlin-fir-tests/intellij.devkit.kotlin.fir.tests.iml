@@ -14,7 +14,7 @@
     <orderEntry type="module" module-name="intellij.platform.indexing" scope="TEST" />
     <orderEntry type="module" module-name="intellij.platform.projectModel" scope="TEST" />
     <orderEntry type="module" module-name="intellij.xml.psi" scope="TEST" />
-    <orderEntry type="module" module-name="kotlin.code-insight.k2" />
+    <orderEntry type="module" module-name="intellij.kotlin.codeInsight" />
     <orderEntry type="module" module-name="intellij.devkit" />
     <orderEntry type="module" module-name="intellij.devkit.core" />
     <orderEntry type="module" module-name="intellij.java" scope="TEST" />
@@ -23,7 +23,7 @@
     <orderEntry type="module" module-name="intellij.platform.testFramework" scope="TEST" />
     <orderEntry type="module" module-name="intellij.kotlin.plugin.community.main" scope="RUNTIME" />
     <orderEntry type="module" module-name="intellij.kotlin.devkit" />
-    <orderEntry type="module" module-name="kotlin.base.plugin" scope="TEST" />
+    <orderEntry type="module" module-name="intellij.kotlin.base.plugin" scope="TEST" />
     <orderEntry type="module" module-name="intellij.xml.dom" scope="TEST" />
     <orderEntry type="module" module-name="intellij.xml.analysis" scope="TEST" />
     <orderEntry type="module" module-name="kotlin.base.test" scope="TEST" />

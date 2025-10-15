@@ -180,7 +180,7 @@ object ReworkedTerminalUsageCollector : CounterUsagesCollector() {
   }
 
   @JvmStatic
-  fun logLocalShellStarted(project: Project, shellCommand: Array<String>) {
+  fun logLocalShellStarted(project: Project, shellCommand: List<String>) {
     localShellStartedEvent.log(project,
                                osVersion,
                                getShellNameForStat(shellCommand.firstOrNull()))

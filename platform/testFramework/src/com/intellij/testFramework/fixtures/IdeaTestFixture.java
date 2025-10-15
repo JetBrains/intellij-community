@@ -3,6 +3,8 @@ package com.intellij.testFramework.fixtures;
 
 /**
  * This is to be provided by the test framework and not by plugin authors.
+ *
+ * @see <a href="https://plugins.jetbrains.com/docs/intellij/tests-and-fixtures.html">Tests and Fixtures (IntelliJ Platform Docs)</a>
  */
 public interface IdeaTestFixture {
   /**

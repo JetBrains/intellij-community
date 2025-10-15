@@ -11,7 +11,6 @@ import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.heightIn
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
-import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.layout.widthIn
 import androidx.compose.foundation.onClick
 import androidx.compose.foundation.shape.RoundedCornerShape
@@ -44,6 +43,7 @@ import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.text.TextStyle
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.Dp
+import androidx.compose.ui.unit.coerceAtLeast
 import androidx.compose.ui.unit.takeOrElse
 import androidx.compose.ui.window.PopupProperties
 import org.jetbrains.annotations.ApiStatus
@@ -71,7 +71,9 @@ import org.jetbrains.jewel.ui.theme.comboBoxStyle
  * @param popupModifier Modifier to be applied to the popup
  * @param enabled Controls whether the combo box can be interacted with
  * @param outline The outline style to be applied to the combo box
- * @param maxPopupHeight The maximum height of the popup
+ * @param maxPopupHeight The maximum height of the popup. If it's unspecified, it will allow the content to grow as
+ *   needed
+ * @param maxPopupWidth The maximum width of the popup. If it's unspecified, it will allow the content to grow as needed
  * @param interactionSource Source of interactions for this combo box
  * @param style The visual styling configuration for the combo box
  * @param textStyle The typography style to be applied to the text
@@ -89,6 +91,7 @@ public fun ComboBox(
     enabled: Boolean = true,
     outline: Outline = Outline.None,
     maxPopupHeight: Dp = Dp.Unspecified,
+    maxPopupWidth: Dp = Dp.Unspecified,
     interactionSource: MutableInteractionSource = remember { MutableInteractionSource() },
     style: ComboBoxStyle = JewelTheme.comboBoxStyle,
     textStyle: TextStyle = JewelTheme.defaultTextStyle,
@@ -106,11 +109,69 @@ public fun ComboBox(
         enabled,
         outline,
         maxPopupHeight,
+        maxPopupWidth,
         interactionSource,
         style,
         onArrowDownPress,
         onArrowUpPress,
         popupManager,
+    )
+}
+
+/**
+ * A dropdown component that displays a text label and a popup with custom content.
+ *
+ * This component provides a standard dropdown UI with a text label. When clicked, it displays a popup with customizable
+ * content. Supports keyboard navigation, focus management, and various visual states.
+ *
+ * @param labelText The text to display in the dropdown field
+ * @param modifier Modifier to be applied to the combo box
+ * @param popupModifier Modifier to be applied to the popup
+ * @param enabled Controls whether the combo box can be interacted with
+ * @param outline The outline style to be applied to the combo box
+ * @param maxPopupHeight The maximum height of the popup
+ * @param interactionSource Source of interactions for this combo box
+ * @param style The visual styling configuration for the combo box
+ * @param textStyle The typography style to be applied to the text
+ * @param onArrowDownPress Called when the down arrow key is pressed while the popup is visible
+ * @param onArrowUpPress Called when the up arrow key is pressed while the popup is visible
+ * @param popupManager Manager for controlling the popup visibility state
+ * @param popupContent Composable content for the popup
+ */
+@Suppress("UnavailableSymbol") // TODO(JEWEL-983) Address Metalava suppressions
+@Composable
+@Deprecated("Deprecated in favor of the method with 'maxPopupWidth' parameter", level = DeprecationLevel.HIDDEN)
+public fun ComboBox(
+    labelText: String,
+    modifier: Modifier = Modifier,
+    popupModifier: Modifier = Modifier,
+    enabled: Boolean = true,
+    outline: Outline = Outline.None,
+    maxPopupHeight: Dp = Dp.Unspecified,
+    interactionSource: MutableInteractionSource = remember { MutableInteractionSource() },
+    style: ComboBoxStyle = JewelTheme.comboBoxStyle,
+    textStyle: TextStyle = JewelTheme.defaultTextStyle,
+    onArrowDownPress: () -> Unit = {},
+    onArrowUpPress: () -> Unit = {},
+    // TODO(JEWEL-983) Address Metalava suppressions
+    @Suppress("HiddenTypeParameter", "ReferencesHidden") popupManager: PopupManager = remember { PopupManager() },
+    popupContent: @Composable () -> Unit,
+) {
+    ComboBox(
+        labelText = labelText,
+        popupContent = popupContent,
+        modifier = modifier,
+        popupModifier = popupModifier,
+        enabled = enabled,
+        outline = outline,
+        maxPopupHeight = maxPopupHeight,
+        maxPopupWidth = Dp.Unspecified,
+        interactionSource = interactionSource,
+        style = style,
+        textStyle = textStyle,
+        onArrowDownPress = onArrowDownPress,
+        onArrowUpPress = onArrowUpPress,
+        popupManager = popupManager,
     )
 }
 
@@ -128,7 +189,9 @@ public fun ComboBox(
  * @param popupModifier Modifier to be applied to the popup
  * @param enabled Controls whether the combo box can be interacted with
  * @param outline The outline style to be applied to the combo box
- * @param maxPopupHeight The maximum height of the popup
+ * @param maxPopupHeight The maximum height of the popup. If it's unspecified, it will allow the content to grow as
+ *   needed
+ * @param maxPopupWidth The maximum width of the popup. If it's unspecified, it will allow the content to grow as needed
  * @param interactionSource Source of interactions for this combo box
  * @param style The visual styling configuration for the combo box
  * @param onArrowDownPress Called when the down arrow key is pressed while the popup is visible
@@ -146,6 +209,7 @@ public fun ComboBox(
     enabled: Boolean = true,
     outline: Outline = Outline.None,
     maxPopupHeight: Dp = Dp.Unspecified,
+    maxPopupWidth: Dp = Dp.Unspecified,
     interactionSource: MutableInteractionSource = remember { MutableInteractionSource() },
     style: ComboBoxStyle = JewelTheme.comboBoxStyle,
     onArrowDownPress: () -> Unit = {},
@@ -279,10 +343,10 @@ public fun ComboBox(
                     }
                 },
                 modifier =
-                    popupModifier
-                        .testTag("Jewel.ComboBox.Popup")
+                    Modifier.testTag("Jewel.ComboBox.Popup")
                         .heightIn(max = maxHeight)
-                        .width(comboBoxWidth)
+                        .widthIn(min = comboBoxWidth, max = maxPopupWidth.coerceAtLeast(comboBoxWidth))
+                        .then(popupModifier)
                         .onClick { popupManager.setPopupVisible(false) },
                 horizontalAlignment = Alignment.Start,
                 popupProperties = PopupProperties(focusable = false),
@@ -290,6 +354,62 @@ public fun ComboBox(
             )
         }
     }
+}
+
+/**
+ * A dropdown component that displays custom content in the label area and a popup with custom content.
+ *
+ * This component provides a standard dropdown UI with customizable label content. When clicked, it displays a popup
+ * with customizable content. Supports keyboard navigation, focus management, and various visual states.
+ *
+ * This version of ComboBox allows for complete customization of the label area through a composable function.
+ *
+ * @param labelContent Composable content for the label area of the combo box
+ * @param popupContent Composable content for the popup
+ * @param modifier Modifier to be applied to the combo box
+ * @param popupModifier Modifier to be applied to the popup
+ * @param enabled Controls whether the combo box can be interacted with
+ * @param outline The outline style to be applied to the combo box
+ * @param maxPopupHeight The maximum height of the popup
+ * @param interactionSource Source of interactions for this combo box
+ * @param style The visual styling configuration for the combo box
+ * @param onArrowDownPress Called when the down arrow key is pressed while the popup is visible
+ * @param onArrowUpPress Called when the up arrow key is pressed while the popup is visible
+ * @param popupManager Manager for controlling the popup visibility state
+ */
+@ApiStatus.Experimental
+@ExperimentalJewelApi
+@Composable
+@Deprecated("Deprecated in favor of the method with 'maxPopupWidth' parameter", level = DeprecationLevel.HIDDEN)
+public fun ComboBox(
+    labelContent: @Composable (() -> Unit),
+    popupContent: @Composable (() -> Unit),
+    modifier: Modifier = Modifier,
+    popupModifier: Modifier = Modifier,
+    enabled: Boolean = true,
+    outline: Outline = Outline.None,
+    maxPopupHeight: Dp = Dp.Unspecified,
+    interactionSource: MutableInteractionSource = remember { MutableInteractionSource() },
+    style: ComboBoxStyle = JewelTheme.comboBoxStyle,
+    onArrowDownPress: () -> Unit = {},
+    onArrowUpPress: () -> Unit = {},
+    popupManager: PopupManager = remember { PopupManager() },
+) {
+    ComboBox(
+        labelContent = labelContent,
+        popupContent = popupContent,
+        modifier = modifier,
+        popupModifier = popupModifier,
+        enabled = enabled,
+        outline = outline,
+        maxPopupHeight = maxPopupHeight,
+        maxPopupWidth = Dp.Unspecified,
+        interactionSource = interactionSource,
+        style = style,
+        onArrowDownPress = onArrowDownPress,
+        onArrowUpPress = onArrowUpPress,
+        popupManager = popupManager,
+    )
 }
 
 @Composable

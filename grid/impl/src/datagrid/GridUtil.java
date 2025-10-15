@@ -109,6 +109,7 @@ import static com.intellij.database.DatabaseDataKeys.DATA_GRID_SETTINGS_KEY;
 import static com.intellij.database.DatabaseDataKeys.GRID_KEY;
 import static com.intellij.database.run.actions.ShowPaginationActionKt.getSHOW_PAGINATION;
 import static com.intellij.database.run.ui.DataAccessType.DATA_WITH_MUTATIONS;
+import static com.intellij.openapi.actionSystem.ActionPlaces.EDITOR_TOOLBAR;
 
 public class GridUtil extends GridUtilCore {
   public static final int ADDITIONAL_ROWS_COUNT = 5;
@@ -134,7 +135,7 @@ public class GridUtil extends GridUtilCore {
   public static void addBottomHeader(@NotNull DataGrid grid) {
     ActionManager actionManager = ActionManager.getInstance();
     ActionGroup actions = (ActionGroup)actionManager.getAction("Console.InEditorTableResult.Horizontal.Group");
-    ActionToolbar toolbar = actionManager.createActionToolbar(ActionPlaces.EDITOR_TOOLBAR, actions, true);
+    ActionToolbar toolbar = actionManager.createActionToolbar(EDITOR_TOOLBAR, actions, true);
     toolbar.setTargetComponent(grid.getPanel().getComponent());
     toolbar.getComponent().setOpaque(false);
 
@@ -803,9 +804,8 @@ public class GridUtil extends GridUtilCore {
   public static @NotNull JComponent addGridHeaderComponent(@NotNull DataGrid dataGrid, boolean transparent,
                                                            ActionGroup actions,
                                                            ActionGroup secondaryActions) {
-    ActionManager actionManager = ActionManager.getInstance();
-    ActionToolbar toolbar = actionManager.createActionToolbar(ActionPlaces.EDITOR_TOOLBAR, actions, true);
-    ActionToolbar toolbarSecondary = actionManager.createActionToolbar(ActionPlaces.EDITOR_TOOLBAR, secondaryActions, true);
+    ActionToolbar toolbar = CustomGridToolbarProvider.Companion.createToolbar(dataGrid, EDITOR_TOOLBAR, actions);
+    ActionToolbar toolbarSecondary = CustomGridToolbarProvider.Companion.createToolbar(dataGrid, EDITOR_TOOLBAR, secondaryActions);
     toolbar.setTargetComponent(dataGrid.getPanel().getComponent());
     toolbarSecondary.setTargetComponent(dataGrid.getPanel().getComponent());
     toolbarSecondary.setReservePlaceAutoPopupIcon(false);
@@ -832,7 +832,7 @@ public class GridUtil extends GridUtilCore {
   public static @NotNull JComponent addVerticalGridHeaderComponent(@NotNull DataGrid dataGrid, @Nullable String actionGroupName) {
     ActionManager actionManager = ActionManager.getInstance();
     ActionGroup actions = actionGroupName == null ? new EmptyActionGroup() : (ActionGroup)actionManager.getAction(actionGroupName);
-    ActionToolbar toolbar = actionManager.createActionToolbar(ActionPlaces.EDITOR_TOOLBAR, actions, false);
+    ActionToolbar toolbar = actionManager.createActionToolbar(EDITOR_TOOLBAR, actions, false);
     toolbar.setTargetComponent(dataGrid.getPanel().getComponent());
 
     toolbar.getComponent().setOpaque(false);

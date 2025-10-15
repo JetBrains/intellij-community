@@ -2,9 +2,9 @@ load("@community//build:tests-options.bzl", "jps_test")
 load("@community//plugins/kotlin:kotlin_test_dependencies.bzl", "all_test_dep_targets")
 
 jps_test(
-  name = "kotlin-jvm-debugger-test-compose-k2_test",
+  name = "compose_test",
   runtime_deps = [
-    ":kotlin-jvm-debugger-test-compose-k2_test_lib",
+    ":compose_test_lib",
     "//:main_test_lib",
   ],
   data = [
@@ -16,20 +16,20 @@ jps_test(
   ]
 )
 
-### skip generation section `test kotlin.jvm-debugger.test.compose.k2`
+### skip generation section `test intellij.kotlin.jvm.debugger.test.compose`
 
-### auto-generated section `build kotlin.jvm-debugger.test.compose.k2` start
+### auto-generated section `build intellij.kotlin.jvm.debugger.test.compose` start
 load("@rules_jvm//:jvm.bzl", "jvm_library")
 
 jvm_library(
-  name = "kotlin-jvm-debugger-test-compose-k2",
+  name = "compose",
   visibility = ["//visibility:public"],
   srcs = glob([], allow_empty = True)
 )
 
 jvm_library(
-  name = "kotlin-jvm-debugger-test-compose-k2_test_lib",
-  module_name = "kotlin.jvm-debugger.test.compose.k2",
+  name = "compose_test_lib",
+  module_name = "intellij.kotlin.jvm.debugger.test.compose",
   visibility = ["//visibility:public"],
   srcs = glob(["test/**/*.kt", "test/**/*.java", "test/**/*.form"], allow_empty = True),
   deps = [
@@ -39,7 +39,7 @@ jvm_library(
     "//platform/testFramework",
     "//platform/testFramework:testFramework_test_lib",
     "@lib//:kotlinc-kotlin-compiler-tests",
-    "//plugins/kotlin/jvm-debugger/test/k2:k2_test_lib",
+    "//plugins/kotlin/jvm-debugger/test/k2:kotlin-jvm-debugger-test_test_lib",
     "//plugins/kotlin/jvm-debugger/test:test_test_lib",
     "//plugins/kotlin/tests-common:tests-common_test_lib",
     "//java/openapi:java",
@@ -58,4 +58,4 @@ jvm_library(
     "//android/adt-ui:adt-ui_test_lib",
   ]
 )
-### auto-generated section `build kotlin.jvm-debugger.test.compose.k2` end
+### auto-generated section `build intellij.kotlin.jvm.debugger.test.compose` end

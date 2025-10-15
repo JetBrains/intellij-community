@@ -78,9 +78,7 @@ public final class AppMode {
     return Boolean.getBoolean("idea.use.dev.build.server");
   }
 
-  /**
-   * @deprecated use {@link #isRunningFromDevBuild()} instead; this name may be confusing
-   */
+  /** @deprecated use {@link #isRunningFromDevBuild()} instead; this name may be confusing */
   @Deprecated
   public static boolean isDevServer() {
     return isRunningFromDevBuild();
@@ -120,8 +118,7 @@ public final class AppMode {
    * This is a temporary workaround for IJPL-161632.
    */
   private static boolean isKnownNonLightEditCommand(@NotNull List<String> args) {
-    return !args.isEmpty() &&
-           Arrays.asList("thinClient").contains(args.get(0));
+    return !args.isEmpty() && "thinClient".equals(args.get(0));
   }
 
   private static boolean isGuiCommand(String arg) {

@@ -128,6 +128,7 @@
     <completion.contributor language="Python"
                             implementationClass="com.jetbrains.python.codeInsight.completion.PySuperMethodCompletionContributor"/>
     <completion.contributor language="Python"
+                            id="PyDocstringCompletionContributor"
                             implementationClass="com.jetbrains.python.codeInsight.completion.PyDocstringCompletionContributor"/>
     <completion.contributor language="Python" implementationClass="com.jetbrains.python.documentation.docstrings.DocStringTagCompletionContributor"/>
     <completion.contributor language="Python" implementationClass="com.jetbrains.python.documentation.docstrings.DocStringSectionHeaderCompletionContributor"/>
@@ -530,6 +531,9 @@
       <categoryKey>INTN.category.python</categoryKey>
     </intentionAction>
 
+    <registryKey defaultValue="false"
+                 description="Enable experimental better handling of recursive cases in type inference"
+                 key="python.use.better.control.flow.type.inference"/>
     <registryKey defaultValue="true"
                  description="Enable pyi stubs distributed with numpy (see https://github.com/numpy/numpy/issues/18565)"
                  key="enable.numpy.pyi.stubs"/>
@@ -548,6 +552,8 @@
                  description="Enables incremental reparse for statement lists"/>
     <registryKey key="python.strict.type.narrow" defaultValue="false"
                  description="Allows narrowing types exhaustively to Never"/>
+    <registryKey key="python.lsp.tools.enabled" defaultValue="true" restartRequired="true"
+                 description="Enables lsp tools"/>
 
     <virtualFileCustomDataProvider implementation="com.jetbrains.python.formatter.PyCodeStyleSettingsProvider"/>
   </extensions>

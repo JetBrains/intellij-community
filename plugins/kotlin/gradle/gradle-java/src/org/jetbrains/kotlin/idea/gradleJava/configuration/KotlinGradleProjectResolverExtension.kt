@@ -282,7 +282,6 @@ class KotlinGradleProjectResolverExtension : AbstractProjectResolverExtension() 
             return super.populateModuleDependencies(gradleModule, ideModule, ideProject)
         }
 
-
         val gradleModel = resolverCtx.getExtraProject(gradleModule, KotlinGradleModel::class.java)
             ?: return super.populateModuleDependencies(gradleModule, ideModule, ideProject)
 
@@ -291,8 +290,10 @@ class KotlinGradleProjectResolverExtension : AbstractProjectResolverExtension() 
         }
         ideModule.kotlinTaskPropertiesBySourceSet = gradleModel.kotlinTaskProperties
 
-        addTransitiveDependenciesOnImplementedModules(gradleModule, ideModule, ideProject)
-        addImplementedModuleNames(gradleModule, ideModule, ideProject, gradleModel)
+        ExternalSystemTelemetryUtil.runWithSpan(ideProject.data.owner, "kotlin_import_jvm_populateModuleDependencies") {
+            addTransitiveDependenciesOnImplementedModules(gradleModule, ideModule, ideProject)
+            addImplementedModuleNames(gradleModule, ideModule, ideProject, gradleModel)
+        }
 
         if (useModulePerSourceSet()) {
             super.populateModuleDependencies(gradleModule, ideModule, ideProject)
@@ -338,32 +339,35 @@ class KotlinGradleProjectResolverExtension : AbstractProjectResolverExtension() 
 
     override fun populateModuleContentRoots(gradleModule: IdeaModule, ideModule: DataNode<ModuleData>) {
         nextResolver.populateModuleContentRoots(gradleModule, ideModule)
-        val moduleNamePrefix = GradleProjectResolverUtil.getModuleId(resolverCtx, gradleModule)
-        resolverCtx.getExtraProject(gradleModule, KotlinGradleModel::class.java)?.let { gradleModel ->
-            val project = resolverCtx.externalSystemTaskId.findProject()
-            project?.service<KotlinGradleFUSLogger>()?.populateGradleUserDir(gradleModel.gradleUserHome)
+        ExternalSystemTelemetryUtil.runWithSpan(ideModule.data.owner, "kotlin_import_jvm_populateModuleContentRoots") {
+            val moduleNamePrefix = GradleProjectResolverUtil.getModuleId(resolverCtx, gradleModule)
+            resolverCtx.getExtraProject(gradleModule, KotlinGradleModel::class.java)?.let { gradleModel ->
+                val project = resolverCtx.externalSystemTaskId.findProject()
+                project?.service<KotlinGradleFUSLogger>()?.populateGradleUserDir(gradleModel.gradleUserHome)
 
-            val gradleSourceSets = ExternalSystemApiUtil.findAll(ideModule, GradleSourceSetData.KEY)
-            for (gradleSourceSetNode in gradleSourceSets) {
-                val propertiesForSourceSet =
-                    gradleModel.kotlinTaskProperties.filter { (k, _) -> gradleSourceSetNode.data.id == "$moduleNamePrefix:$k" }
-                        .toList().singleOrNull()
-                gradleSourceSetNode.children.forEach { dataNode ->
-                    val data = dataNode.data as? ContentRootData
-                    if (data != null) {
-                        /*
-                        Code snippet for setting in content root properties
-                        if (propertiesForSourceSet?.second?.pureKotlinSourceFolders?.contains(File(data.rootPath)) == true) {
-                            @Suppress("UNCHECKED_CAST")
-                            (dataNode as DataNode<ContentRootData>).isPureKotlinSourceFolder = true
-                        }*/
-                        val packagePrefix = propertiesForSourceSet?.second?.packagePrefix
-                        if (packagePrefix != null) {
-                            ExternalSystemSourceType.values().filter { !(it.isResource || it.isGenerated) }.forEach { type ->
-                                val paths = data.getPaths(type)
-                                val newPaths = paths.map { ContentRootData.SourceRoot(it.path, packagePrefix) }
-                                paths.clear()
-                                paths.addAll(newPaths)
+                val gradleSourceSets = ExternalSystemApiUtil.findAll(ideModule, GradleSourceSetData.KEY)
+                for (gradleSourceSetNode in gradleSourceSets) {
+                    val propertiesForSourceSet =
+                        gradleModel.kotlinTaskProperties.filter { (k, _) -> gradleSourceSetNode.data.id == "$moduleNamePrefix:$k" }
+                            .toList().singleOrNull()
+                    gradleSourceSetNode.children.forEach { dataNode ->
+                        val data = dataNode.data as? ContentRootData
+                        if (data != null) {
+                            /**
+                             * Code snippet for setting in content root properties
+                             * if (propertiesForSourceSet?.second?.pureKotlinSourceFolders?.contains(File(data.rootPath)) == true) {
+                             *     @Suppress("UNCHECKED_CAST")
+                             *     (dataNode as DataNode<ContentRootData>).isPureKotlinSourceFolder = true
+                             * }
+                             */
+                            val packagePrefix = propertiesForSourceSet?.second?.packagePrefix
+                            if (packagePrefix != null) {
+                                ExternalSystemSourceType.values().filter { !(it.isResource || it.isGenerated) }.forEach { type ->
+                                    val paths = data.getPaths(type)
+                                    val newPaths = paths.map { ContentRootData.SourceRoot(it.path, packagePrefix) }
+                                    paths.clear()
+                                    paths.addAll(newPaths)
+                                }
                             }
                         }
                     }

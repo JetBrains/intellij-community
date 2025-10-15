@@ -24,6 +24,7 @@ import com.intellij.openapi.ui.DialogPanel;
 import com.intellij.openapi.ui.TextFieldWithBrowseButton;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.python.community.impl.pipenv.PathKt;
 import com.intellij.ui.CollectionComboBoxModel;
 import com.intellij.ui.IdeBorderFactory;
 import com.intellij.ui.SimpleListCellRenderer;
@@ -258,7 +259,7 @@ public class PyIntegratedToolsConfigurable implements SearchableConfigurable {
       return true;
     }
     if (!myPipEnvPathField.getText()
-      .equals(StringUtil.notNullize(PipenvCommandExecutorKt.getPipEnvPath(PropertiesComponent.getInstance())))) {
+      .equals(StringUtil.notNullize(PathKt.getPipenvPath(PropertiesComponent.getInstance())))) {
       return true;
     }
     return ContainerUtil.exists(myCustomizePanels, panel -> panel.isModified());
@@ -292,7 +293,7 @@ public class PyIntegratedToolsConfigurable implements SearchableConfigurable {
     setRequirementsPath(myRequirementsPathField.getText());
 
     DaemonCodeAnalyzer.getInstance(myProject).restart(this);
-    PipenvCommandExecutorKt.setPipEnvPath(PropertiesComponent.getInstance(), StringUtil.nullize(myPipEnvPathField.getText()));
+    PathKt.setPipenvPath(PropertiesComponent.getInstance(), StringUtil.nullize(myPipEnvPathField.getText()));
 
     for (@NotNull DialogPanel panel : myCustomizePanels) {
       panel.apply();
@@ -328,7 +329,7 @@ public class PyIntegratedToolsConfigurable implements SearchableConfigurable {
     // TODO: Move pipenv settings into a separate configurable
     final JBTextField pipEnvText = ObjectUtils.tryCast(myPipEnvPathField.getTextField(), JBTextField.class);
     if (pipEnvText != null) {
-      final String savedPath = PipenvCommandExecutorKt.getPipEnvPath(PropertiesComponent.getInstance());
+      final String savedPath = PathKt.getPipenvPath(PropertiesComponent.getInstance());
       if (savedPath != null) {
         pipEnvText.setText(savedPath);
       }

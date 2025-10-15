@@ -78,5 +78,11 @@
     <registryKey key="java.formatter.chained.calls.pre212.compatibility"
                  defaultValue="false"
                  description="Format chained calls as in versions prior to 2021.2"/>
+
+    <completion.frontendFriendlyInsertHandler implementationClass="com.intellij.codeInsight.completion.method.DiamondInsertHandler"/>
+    <completion.frontendFriendlyInsertHandler implementationClass="com.intellij.codeInsight.completion.method.RefStartInsertHandler"/>
+    <completion.frontendFriendlyInsertHandler implementationClass="com.intellij.codeInsight.completion.method.MethodCallInstallerHandler"/>
+    <completion.frontendFriendlyInsertHandler implementationClass="com.intellij.codeInsight.completion.method.NegationInsertHandler"/>
+
   </extensions>
 </idea-plugin>

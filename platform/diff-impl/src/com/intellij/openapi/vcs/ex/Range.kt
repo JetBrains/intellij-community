@@ -1,6 +1,8 @@
 // Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.vcs.ex
 
+import kotlinx.serialization.Serializable
+
 typealias LstRange = com.intellij.openapi.vcs.ex.Range
 typealias LstInnerRange = com.intellij.openapi.vcs.ex.Range.InnerRange
 
@@ -15,6 +17,7 @@ open class Range(val line1: Int,
   constructor(line1: Int, line2: Int, vcsLine1: Int, vcsLine2: Int) : this(line1, line2, vcsLine1, vcsLine2, null)
   constructor(range: Range) : this(range.line1, range.line2, range.vcsLine1, range.vcsLine2)
 
+  @Serializable
   class InnerRange(val line1: Int, val line2: Int, val type: Byte)
 
   fun hasLines(): Boolean = line1 != line2

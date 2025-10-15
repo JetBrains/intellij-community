@@ -53,7 +53,7 @@ jvm_library(
     "//plugins/kotlin/base/facet",
     "//plugins/kotlin/base/project-structure",
     "//plugins/kotlin/base/platforms",
-    "//plugins/kotlin/base/external-build-system",
+    "//plugins/kotlin/base/external-build-system:kotlin-base-externalSystem",
     "//plugins/kotlin/base/analysis",
     "//plugins/kotlin/base/code-insight",
     "//plugins/kotlin/base/resources:kotlin-base-resources",
@@ -68,7 +68,7 @@ jvm_library(
     "//plugins/kotlin/project-configuration",
     "//plugins/kotlin/gradle/gradle-tooling/impl",
     "//plugins/kotlin/gradle/gradle",
-    "//plugins/kotlin/gradle/code-insight-common",
+    "//plugins/kotlin/gradle/code-insight-common:kotlin-gradle-codeInsight-common",
     "//platform/object-serializer:objectSerializer-annotations",
     "//platform/projectModel-impl",
     "//platform/external-system-api:externalSystem",
@@ -89,6 +89,7 @@ jvm_library(
     "@lib//:opentelemetry",
     "//libraries/commons/lang3",
     "//plugins/kotlin/jvm-debugger/coroutines",
+    "//platform/diagnostic/telemetry",
   ]
 )
 
@@ -130,7 +131,7 @@ jvm_library(
     "//plugins/kotlin/base/project-structure",
     "//plugins/kotlin/base/project-structure:project-structure_test_lib",
     "//plugins/kotlin/base/platforms",
-    "//plugins/kotlin/base/external-build-system",
+    "//plugins/kotlin/base/external-build-system:kotlin-base-externalSystem",
     "//plugins/kotlin/base/analysis",
     "//plugins/kotlin/base/code-insight",
     "//plugins/kotlin/base/code-insight:code-insight_test_lib",
@@ -148,7 +149,7 @@ jvm_library(
     "//plugins/kotlin/gradle/gradle-tooling/impl",
     "//plugins/kotlin/gradle/gradle-tooling/impl:impl_test_lib",
     "//plugins/kotlin/gradle/gradle",
-    "//plugins/kotlin/gradle/code-insight-common",
+    "//plugins/kotlin/gradle/code-insight-common:kotlin-gradle-codeInsight-common",
     "//platform/object-serializer:objectSerializer-annotations",
     "//platform/projectModel-impl",
     "//platform/external-system-api:externalSystem",
@@ -173,6 +174,8 @@ jvm_library(
     "@lib//:opentelemetry",
     "//libraries/commons/lang3",
     "//plugins/kotlin/jvm-debugger/coroutines",
+    "//platform/diagnostic/telemetry",
+    "//platform/diagnostic/telemetry:telemetry_test_lib",
   ]
 )
 ### auto-generated section `build kotlin.gradle.gradle-java` end

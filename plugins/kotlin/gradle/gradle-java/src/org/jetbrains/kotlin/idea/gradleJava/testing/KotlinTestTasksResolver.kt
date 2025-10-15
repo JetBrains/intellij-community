@@ -7,14 +7,17 @@ import com.intellij.openapi.externalSystem.model.ProjectKeys
 import com.intellij.openapi.externalSystem.model.project.ModuleData
 import com.intellij.openapi.externalSystem.model.project.ProjectData
 import com.intellij.openapi.externalSystem.model.task.TaskData
+import com.intellij.openapi.externalSystem.util.ExternalSystemTelemetryUtil
 import com.intellij.openapi.externalSystem.util.Order
 import com.intellij.openapi.util.registry.Registry
+import com.intellij.platform.diagnostic.telemetry.helpers.use
 import org.gradle.tooling.model.idea.IdeaModule
 import org.jetbrains.kotlin.idea.gradleJava.configuration.getMppModel
 import org.jetbrains.kotlin.idea.gradleTooling.KotlinMPPGradleModel
 import org.jetbrains.kotlin.idea.gradleTooling.KotlinMPPGradleModelBuilder
 import org.jetbrains.kotlin.idea.projectModel.KotlinTarget
 import org.jetbrains.plugins.gradle.service.project.AbstractProjectResolverExtension
+import org.jetbrains.plugins.gradle.util.GradleConstants
 
 @Order(Int.MIN_VALUE)
 open class KotlinTestTasksResolver : AbstractProjectResolverExtension() {
@@ -38,7 +41,11 @@ open class KotlinTestTasksResolver : AbstractProjectResolverExtension() {
         val mppModel = resolverCtx.getMppModel(gradleModule)
             ?: return super.populateModuleTasks(gradleModule, ideModule, ideProject)
 
-        return postprocessTaskData(mppModel, ideModule, nextResolver.populateModuleTasks(gradleModule, ideModule, ideProject))
+        return ExternalSystemTelemetryUtil.getTracer(GradleConstants.SYSTEM_ID)
+            .spanBuilder("kotlin_import_mpp_testTasks")
+            .use {
+                return@use postprocessTaskData(mppModel, ideModule, nextResolver.populateModuleTasks(gradleModule, ideModule, ideProject))
+            }
     }
 
     private fun postprocessTaskData(

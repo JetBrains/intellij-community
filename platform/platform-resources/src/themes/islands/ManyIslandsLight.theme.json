@@ -10,6 +10,8 @@
     "BackgroundDark": "Gray12",
     "BackgroundDarkest": "Gray11",
 
+    "AltBackgroundDark": "#EBEBED",
+
     "BorderDark": "Gray12",
     "BorderLight": "Gray12",
     "BorderTransparent": "#00000000",
@@ -35,6 +37,7 @@
     "Island": {
       "arc": 20,
       "borderWidth": 4,
+      "borderWidth.compact": 3,
       "inactiveAlpha": 0.44,
       "inactiveAlphaInStatusBar": {
         "os.mac": 0.2,
@@ -214,6 +217,17 @@
     "ProgressBar": {
       "progressCounterBackground": "#5288f2",
       "progressCounterForeground": "#FFFFFF"
+    },
+
+    "alt": {
+      "MainWindow.background": "AltBackgroundDark",
+
+      "MainToolbar.background": "AltBackgroundDark",
+      "ToolWindow.Stripe.background": "AltBackgroundDark",
+      "StatusBar.background": "AltBackgroundDark",
+
+      "ToolWindow.Header.inactiveBackground": "#F7F6F8",
+      "ToolWindow.background": "#F7F6F8"
     }
   }
 }

@@ -21,7 +21,7 @@ import com.intellij.xdebugger.impl.pinned.items.PinToTopParentValue
 import com.intellij.xdebugger.impl.ui.XValueTextProvider
 import com.intellij.xdebugger.impl.ui.tree.XValueExtendedPresentation
 import com.intellij.xdebugger.impl.ui.tree.nodes.XValueNodeEx
-import com.intellij.xdebugger.impl.util.MonolithUtils
+import com.intellij.xdebugger.impl.util.XDebugMonolithUtils
 import kotlinx.coroutines.*
 import kotlinx.coroutines.flow.*
 import kotlinx.coroutines.future.asCompletableFuture
@@ -223,7 +223,7 @@ class FrontendXValue private constructor(
 
   override fun getReferrersProvider(): XReferrersProvider? {
     // TODO referrersProvider is only supported in monolith
-    return MonolithUtils.findXValueById(xValueDto.id)?.referrersProvider
+    return XDebugMonolithUtils.findXValueById(xValueDto.id)?.referrersProvider
   }
 
   override fun shouldShowTextValue(): Boolean = textProvider?.value?.shouldShowTextValue ?: false

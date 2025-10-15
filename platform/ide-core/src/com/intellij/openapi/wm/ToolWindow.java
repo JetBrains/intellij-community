@@ -246,4 +246,17 @@ public interface ToolWindow extends BusyObject {
   void setAdditionalGearActions(@Nullable ActionGroup additionalGearActions);
 
   @NotNull Project getProject();
+
+  /**
+   * @return whether the user can be able to split the tool window pane into separate views with tool window tabs.
+   * For example, using drag and drop functionality or Split Right/Left actions.
+   * Useful for tool windows that can contain several contents, for example, Run and Terminal.
+   */
+  @ApiStatus.Experimental
+  default boolean canSplitTabs() {
+    return false;
+  }
+
+  @ApiStatus.Experimental
+  default void setTabsSplittingAllowed(boolean allowed) { }
 }

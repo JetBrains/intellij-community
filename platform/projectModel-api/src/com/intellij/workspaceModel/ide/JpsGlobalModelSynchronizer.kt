@@ -2,7 +2,7 @@
 package com.intellij.workspaceModel.ide
 
 import com.intellij.openapi.components.service
-import com.intellij.platform.backend.workspace.InternalEnvironmentName
+import com.intellij.platform.workspace.storage.InternalEnvironmentName
 import com.intellij.platform.workspace.storage.MutableEntityStorage
 import com.intellij.platform.workspace.storage.VersionedEntityStorage
 import com.intellij.platform.workspace.storage.url.VirtualFileUrlManager

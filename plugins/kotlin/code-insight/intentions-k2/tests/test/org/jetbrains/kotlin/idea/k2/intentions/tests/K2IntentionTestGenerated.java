@@ -1590,6 +1590,11 @@ public abstract class K2IntentionTestGenerated extends AbstractK2IntentionTest {
             runTest("../../../idea/tests/testData/intentions/importMember/ClassCallChain3.kt");
         }
 
+        @TestMetadata("CompanionObjectImplicitReference.kt")
+        public void testCompanionObjectImplicitReference() throws Exception {
+            runTest("../../../idea/tests/testData/intentions/importMember/CompanionObjectImplicitReference.kt");
+        }
+
         @TestMetadata("EnumMember.kt")
         public void testEnumMember() throws Exception {
             runTest("../../../idea/tests/testData/intentions/importMember/EnumMember.kt");

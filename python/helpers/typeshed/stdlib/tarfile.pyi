@@ -744,6 +744,28 @@ def tar_filter(member: TarInfo, dest_path: str) -> TarInfo: ...
 def data_filter(member: TarInfo, dest_path: str) -> TarInfo: ...
 
 class TarInfo:
+    __slots__ = (
+        "name",
+        "mode",
+        "uid",
+        "gid",
+        "size",
+        "mtime",
+        "chksum",
+        "type",
+        "linkname",
+        "uname",
+        "gname",
+        "devmajor",
+        "devminor",
+        "offset",
+        "offset_data",
+        "pax_headers",
+        "sparse",
+        "_tarfile",
+        "_sparse_structs",
+        "_link_target",
+    )
     name: str
     path: str
     size: int

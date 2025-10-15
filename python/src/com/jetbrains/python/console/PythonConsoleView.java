@@ -49,6 +49,7 @@ import com.intellij.psi.codeStyle.CodeStyleManager;
 import com.intellij.psi.util.PsiUtilCore;
 import com.intellij.ui.JBColor;
 import com.intellij.ui.JBSplitter;
+import com.intellij.ui.OnePixelSplitter;
 import com.intellij.ui.TitlePanel;
 import com.intellij.ui.components.JBScrollPane;
 import com.intellij.ui.content.Content;
@@ -624,7 +625,7 @@ public class PythonConsoleView extends LanguageConsoleImpl implements Observable
   private void splitWindow() {
     Component console = getComponent(0);
     removeAll();
-    JBSplitter p = new JBSplitter(!myIsToolwindowHorizontal, 2f / 3);
+    OnePixelSplitter p = new OnePixelSplitter(!myIsToolwindowHorizontal, 2f / 3);
     p.setFirstComponent((JComponent)console);
     p.setSecondComponent(mySplitView.getPanel());
     p.setShowDividerControls(true);

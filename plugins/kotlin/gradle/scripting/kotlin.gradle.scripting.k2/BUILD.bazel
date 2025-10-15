@@ -1,9 +1,9 @@
-### auto-generated section `build kotlin.gradle.scripting.k2` start
+### auto-generated section `build intellij.kotlin.gradle.scripting` start
 load("//build:compiler-options.bzl", "create_kotlinc_options")
 load("@rules_jvm//:jvm.bzl", "jvm_library", "resourcegroup")
 
 create_kotlinc_options(
-  name = "custom_kotlin-gradle-scripting-k2",
+  name = "custom_kotlin-gradle-scripting",
   opt_in = [
     "com.intellij.openapi.util.IntellijInternalApi",
     "org.jetbrains.kotlin.analysis.api.permissions.KaAllowProhibitedAnalyzeFromWriteAction",
@@ -14,27 +14,27 @@ create_kotlinc_options(
 )
 
 resourcegroup(
-  name = "kotlin-gradle-scripting-k2_resources",
+  name = "kotlin-gradle-scripting_resources",
   srcs = glob(["resources/**/*"]),
   strip_prefix = "resources"
 )
 
 resourcegroup(
-  name = "kotlin-gradle-scripting-k2_resources_1",
+  name = "kotlin-gradle-scripting_resources_1",
   srcs = glob(["resources-en/**/*"]),
   strip_prefix = "resources-en"
 )
 
 jvm_library(
-  name = "kotlin-gradle-scripting-k2",
-  module_name = "kotlin.gradle.scripting.k2",
+  name = "kotlin-gradle-scripting",
+  module_name = "intellij.kotlin.gradle.scripting",
   visibility = ["//visibility:public"],
   srcs = glob(["src/**/*.kt", "src/**/*.java", "src/**/*.form"], allow_empty = True),
   resources = [
-    ":kotlin-gradle-scripting-k2_resources",
-    ":kotlin-gradle-scripting-k2_resources_1",
+    ":kotlin-gradle-scripting_resources",
+    ":kotlin-gradle-scripting_resources_1",
   ],
-  kotlinc_opts = ":custom_kotlin-gradle-scripting-k2",
+  kotlinc_opts = ":custom_kotlin-gradle-scripting",
   deps = [
     "@lib//:kotlin-stdlib",
     "//platform/projectModel-api:projectModel",
@@ -46,7 +46,7 @@ jvm_library(
     "//platform/backend/workspace",
     "//platform/workspace/storage",
     "//plugins/kotlin/base/util",
-    "//plugins/kotlin/base/scripting/scripting.k2",
+    "//plugins/kotlin/base/scripting/scripting.k2:kotlin-base-scripting",
     "@lib//:kotlinc-kotlin-scripting-jvm",
     "@lib//:kotlinc-kotlin-scripting-compiler-impl",
     "@lib//:kotlinc-kotlin-scripting-common",
@@ -64,7 +64,7 @@ jvm_library(
     "@lib//:kotlinc-analysis-api",
     "@lib//:kotlinc-kotlin-compiler-common",
     "//plugins/kotlin/code-insight/utils",
-    "//plugins/kotlin/base/analysis-api/analysis-api-utils:kotlin-base-analysis-api-utils",
+    "//plugins/kotlin/base/analysis-api/analysis-api-utils:kotlin-base-analysis-utils",
     "//java/java-psi-api:psi",
     "//plugins/kotlin/base/psi",
     "//plugins/kotlin/base/plugin",
@@ -77,11 +77,11 @@ jvm_library(
 )
 
 jvm_library(
-  name = "kotlin-gradle-scripting-k2_test_lib",
+  name = "kotlin-gradle-scripting_test_lib",
   visibility = ["//visibility:public"],
   srcs = glob(["tests/**/*.kt", "tests/**/*.java", "tests/**/*.form"], allow_empty = True),
-  kotlinc_opts = ":custom_kotlin-gradle-scripting-k2",
-  associates = [":kotlin-gradle-scripting-k2"],
+  kotlinc_opts = ":custom_kotlin-gradle-scripting",
+  associates = [":kotlin-gradle-scripting"],
   deps = [
     "@lib//:kotlin-stdlib",
     "//platform/projectModel-api:projectModel",
@@ -95,8 +95,8 @@ jvm_library(
     "//platform/workspace/storage",
     "//plugins/kotlin/base/util",
     "//plugins/kotlin/base/util:util_test_lib",
-    "//plugins/kotlin/base/scripting/scripting.k2",
-    "//plugins/kotlin/base/scripting/scripting.k2:scripting.k2_test_lib",
+    "//plugins/kotlin/base/scripting/scripting.k2:kotlin-base-scripting",
+    "//plugins/kotlin/base/scripting/scripting.k2:kotlin-base-scripting_test_lib",
     "@lib//:kotlinc-kotlin-scripting-jvm",
     "@lib//:kotlinc-kotlin-scripting-compiler-impl",
     "@lib//:kotlinc-kotlin-scripting-common",
@@ -116,7 +116,7 @@ jvm_library(
     "@lib//:kotlinc-analysis-api",
     "@lib//:kotlinc-kotlin-compiler-common",
     "//plugins/kotlin/code-insight/utils",
-    "//plugins/kotlin/base/analysis-api/analysis-api-utils:kotlin-base-analysis-api-utils",
+    "//plugins/kotlin/base/analysis-api/analysis-api-utils:kotlin-base-analysis-utils",
     "//java/java-psi-api:psi",
     "//plugins/kotlin/base/psi",
     "//plugins/kotlin/base/plugin",
@@ -151,13 +151,13 @@ jvm_library(
     "//plugins/kotlin/gradle/gradle-tooling/impl:impl_test_lib",
   ]
 )
-### auto-generated section `build kotlin.gradle.scripting.k2` end
+### auto-generated section `build intellij.kotlin.gradle.scripting` end
 
-### auto-generated section `test kotlin.gradle.scripting.k2` start
+### auto-generated section `test intellij.kotlin.gradle.scripting` start
 load("@community//build:tests-options.bzl", "jps_test")
 
 jps_test(
-  name = "kotlin-gradle-scripting-k2_test",
-  runtime_deps = [":kotlin-gradle-scripting-k2_test_lib"]
+  name = "kotlin-gradle-scripting_test",
+  runtime_deps = [":kotlin-gradle-scripting_test_lib"]
 )
-### auto-generated section `test kotlin.gradle.scripting.k2` end
+### auto-generated section `test intellij.kotlin.gradle.scripting` end

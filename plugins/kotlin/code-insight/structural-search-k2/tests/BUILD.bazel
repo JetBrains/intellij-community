@@ -1,4 +1,4 @@
-### auto-generated section `build kotlin.code-insight.structural-search.k2.tests` start
+### auto-generated section `build intellij.kotlin.codeInsight.structuralSearch.tests` start
 load("@rules_jvm//:jvm.bzl", "jvm_library")
 
 jvm_library(
@@ -9,7 +9,7 @@ jvm_library(
 
 jvm_library(
   name = "tests_test_lib",
-  module_name = "kotlin.code-insight.structural-search.k2.tests",
+  module_name = "intellij.kotlin.codeInsight.structuralSearch.tests",
   visibility = ["//visibility:public"],
   srcs = glob(["test/**/*.kt", "test/**/*.java", "test/**/*.form"], allow_empty = True),
   deps = [
@@ -32,19 +32,19 @@ jvm_library(
     "//plugins/kotlin/tests-common:tests-common_test_lib",
     "//plugins/kotlin/base/util",
     "//plugins/kotlin/base/util:util_test_lib",
-    "//plugins/kotlin/code-insight/structural-search-k2:kotlin-code-insight-structural-search-k2",
+    "//plugins/kotlin/code-insight/structural-search-k2:kotlin-codeInsight-structuralSearch",
     "//plugins/kotlin/fir/tests:tests_test_lib",
     "//plugins/kotlin/base/plugin",
     "//plugins/kotlin/base/plugin:plugin_test_lib",
   ]
 )
-### auto-generated section `build kotlin.code-insight.structural-search.k2.tests` end
+### auto-generated section `build intellij.kotlin.codeInsight.structuralSearch.tests` end
 
-### auto-generated section `test kotlin.code-insight.structural-search.k2.tests` start
+### auto-generated section `test intellij.kotlin.codeInsight.structuralSearch.tests` start
 load("@community//build:tests-options.bzl", "jps_test")
 
 jps_test(
   name = "tests_test",
   runtime_deps = [":tests_test_lib"]
 )
-### auto-generated section `test kotlin.code-insight.structural-search.k2.tests` end
+### auto-generated section `test intellij.kotlin.codeInsight.structuralSearch.tests` end

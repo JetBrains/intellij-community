@@ -1,6 +1,7 @@
 from _typeshed import Incomplete, SupportsRead
 from collections.abc import Mapping, Sequence
 from typing import IO, Any
+from typing_extensions import disjoint_base
 
 from .events import Event
 from .nodes import Node
@@ -8,7 +9,7 @@ from .tokens import Token
 
 def get_version_string() -> str: ...
 def get_version() -> tuple[int, int, int]: ...
-
+@disjoint_base
 class Mark:
     name: Any
     index: int
@@ -19,6 +20,7 @@ class Mark:
     def __init__(self, name, index: int, line: int, column: int, buffer, pointer) -> None: ...
     def get_snippet(self): ...
 
+@disjoint_base
 class CParser:
     def __init__(self, stream: str | bytes | SupportsRead[str | bytes]) -> None: ...
     def dispose(self) -> None: ...
@@ -34,6 +36,7 @@ class CParser:
     def raw_parse(self) -> int: ...
     def raw_scan(self) -> int: ...
 
+@disjoint_base
 class CEmitter:
     def __init__(
         self,

@@ -1,4 +1,4 @@
-### auto-generated section `build kotlin.features-trainer` start
+### auto-generated section `build intellij.kotlin.featuresTrainer` start
 load("@rules_jvm//:jvm.bzl", "jvm_library", "resourcegroup")
 
 resourcegroup(
@@ -9,7 +9,7 @@ resourcegroup(
 
 jvm_library(
   name = "features-trainer",
-  module_name = "kotlin.features-trainer",
+  module_name = "intellij.kotlin.featuresTrainer",
   visibility = ["//visibility:public"],
   srcs = glob(["src/**/*.kt", "src/**/*.java", "src/**/*.form"], allow_empty = True),
   resources = [":features-trainer_resources"],
@@ -41,4 +41,4 @@ jvm_library(
     "//plugins/kotlin/highlighting/highlighting-shared:kotlin-highlighting-shared",
   ]
 )
-### auto-generated section `build kotlin.features-trainer` end
+### auto-generated section `build intellij.kotlin.featuresTrainer` end

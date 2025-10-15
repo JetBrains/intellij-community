@@ -133,6 +133,8 @@ import kotlin.math.abs
 
   internal var icon: Icon? = null
 
+  private var tabsSplittingAllowed: Boolean = false
+
   private val contentManager = SynchronizedClearableLazy {
     val result = createContentManager()
     if (toolWindowManager.isNewUi) {
@@ -637,6 +639,19 @@ import kotlin.math.abs
 
   override fun updateContentUi() {
     contentUi?.update()
+  }
+
+  override fun canSplitTabs(): Boolean {
+    return tabsSplittingAllowed
+  }
+
+  override fun setTabsSplittingAllowed(allowed: Boolean) {
+    tabsSplittingAllowed = allowed
+
+    val header = decorator?.header ?: return
+    if (header.isShowing) {
+      header.manageWestPanelTabComponentAndToolbar(true)
+    }
   }
 
   fun fireActivated(source: ToolWindowEventSource) {

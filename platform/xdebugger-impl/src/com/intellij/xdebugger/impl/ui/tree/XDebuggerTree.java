@@ -24,6 +24,7 @@ import com.intellij.util.concurrency.EdtExecutorService;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.ui.TextTransferable;
 import com.intellij.util.ui.UIUtil;
+import com.intellij.xdebugger.SplitDebuggerMode;
 import com.intellij.xdebugger.XSourcePosition;
 import com.intellij.xdebugger.evaluation.XDebuggerEditorsProvider;
 import com.intellij.xdebugger.frame.XDebuggerTreeNodeHyperlink;
@@ -55,9 +56,6 @@ import java.util.Arrays;
 import java.util.List;
 import java.util.Objects;
 import java.util.function.Function;
-
-import static com.intellij.xdebugger.impl.frame.XDebugSessionProxy.showFeWarnings;
-import static com.intellij.xdebugger.impl.frame.XDebugSessionProxy.useFeProxy;
 
 public class XDebuggerTree extends DnDAwareTree implements UiCompatibleDataProvider, Disposable {
   private final ComponentListener myMoveListener = new ComponentAdapter() {
@@ -476,7 +474,7 @@ public class XDebuggerTree extends DnDAwareTree implements UiCompatibleDataProvi
   }
 
   public static @NotNull List<XValueNodeImpl> getSelectedNodes(@NotNull DataContext context) {
-    if (showFeWarnings() && useFeProxy() && AppMode.isRemoteDevHost()) {
+    if (SplitDebuggerMode.showSplitWarnings() && AppMode.isRemoteDevHost()) {
       LOG.error("""
         XDebuggerTree.getSelectedNodes should not be called on the backend as it returns frontend node instances (XValueNodeImpl) which are only available on the frontend.
         The action will not work correctly in Split mode. Please use XDebuggerTreeBackendOnlyActionBase to make your action backend-only and operates with XValue instances instead."""

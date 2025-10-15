@@ -13,9 +13,9 @@ import com.intellij.ide.startup.StartupActionScriptManager.ActionCommand;
 import com.intellij.ide.ui.laf.LookAndFeelThemeAdapterKt;
 import com.intellij.idea.AppMode;
 import com.intellij.openapi.application.impl.ApplicationInfoImpl;
-import com.intellij.openapi.application.migrations.Localization242Kt;
+import com.intellij.openapi.application.migrations.Localization242;
+import com.intellij.openapi.application.migrations.BigDataToolsMigration253;
 import com.intellij.openapi.application.migrations.NotebooksMigration242;
-import com.intellij.openapi.application.migrations.PluginMigrationKt;
 import com.intellij.openapi.application.migrations.SpaceMigration252;
 import com.intellij.openapi.components.StoragePathMacros;
 import com.intellij.openapi.diagnostic.Logger;
@@ -110,27 +110,26 @@ public final class ConfigImportHelper {
     @NotNull List<String> args,
     @NotNull Logger log
   ) {
-    log.info("Importing configs to " + newConfigDir);
+    log.info("Importing configs to '" + newConfigDir + "'; veryFirstStart=" + veryFirstStartOnThisComputer);
     System.setProperty(InitialConfigImportState.FIRST_SESSION_KEY, Boolean.TRUE.toString());
 
-    var customMigrationOption = CustomConfigMigrationOption.readCustomConfigMigrationOptionAndRemoveMarkerFile(newConfigDir);
-    log.info("Custom migration option: " + customMigrationOption);
+    var migrationOption = CustomConfigMigrationOption.readCustomConfigMigrationOptionAndRemoveMarkerFile(newConfigDir);
+    log.info("Custom migration option: " + migrationOption);
+    var importSettings = findCustomConfigImportSettings();
+    log.info("Custom import settings: " + importSettings);
 
-    if (customMigrationOption instanceof CustomConfigMigrationOption.SetProperties sp) {
+    if (migrationOption instanceof CustomConfigMigrationOption.SetProperties sp) {
       var properties = sp.getProperties();
       log.info("Enabling system properties after restart: " + properties);
       for (var property : properties) System.setProperty(property, Boolean.TRUE.toString());
       return;
     }
-
-    var settings = findCustomConfigImportSettings();
-    log.info("Custom ConfigImportSettings instance: " + settings);
-    if (customMigrationOption instanceof CustomConfigMigrationOption.MigratePluginsFromCustomPlace migratePluginsOption) {
+    else if (migrationOption instanceof CustomConfigMigrationOption.MigratePluginsFromCustomPlace migratePluginsOption) {
       var oldConfigDir = migratePluginsOption.getConfigLocation();
       if (isConfigDirectory(oldConfigDir)) {
         var oldPluginsDir = computeOldPluginsDir(oldConfigDir, null);
         var newPluginsDir = newConfigDir.getFileSystem().getPath(PathManager.getPluginsDir().toString());
-        var importOptions = createConfigImportOptions(settings, customMigrationOption, log);
+        var importOptions = createConfigImportOptions(importSettings, migrationOption, log);
         try {
           migratePlugins(oldPluginsDir, oldConfigDir, newPluginsDir, newConfigDir, importOptions, Predicates.alwaysFalse());
         }
@@ -144,26 +143,23 @@ public final class ConfigImportHelper {
       return;
     }
 
-    var guessedOldConfigDirs = findInheritedDirectory(newConfigDir, System.getenv(IMPORT_FROM_ENV_VAR), settings, args, log);
-    if (guessedOldConfigDirs == null) {
-      guessedOldConfigDirs = findConfigDirectories(newConfigDir, settings, args);
-    }
-    var bestConfigGuess = guessedOldConfigDirs.directories.isEmpty() ? null : guessedOldConfigDirs.directories.getFirst();
     var tempBackup = (Path)null;
     var vmOptionFileChanged = false;
-    var vmOptionsLines = (List<String>)null;
-    var currentlyDisabledPlugins = (List<String>)null;
-    var importScenarioStatistics = (ImportOldConfigsUsagesCollector.InitialImportScenario)null;
 
     try {
-      var oldConfigDirAndOldIdePath = (Pair<@NotNull Path, @Nullable Path>)null;
+      var oldConfigDirAndOldIdePath = (Pair<Path, @Nullable Path>)null;
+      var vmOptionsLines = (List<String>)null;
+      var currentlyDisabledPlugins = (List<String>)null;
+      var importScenarioStatistics = (ImportOldConfigsUsagesCollector.InitialImportScenario)null;
+      var wizardEnabled = InitialConfigImportState.isStartupWizardEnabled();
+
       if (
-        customMigrationOption instanceof CustomConfigMigrationOption.MigrateFromCustomPlace ||
-        customMigrationOption instanceof CustomConfigMigrationOption.StartWithCleanConfig
+        migrationOption instanceof CustomConfigMigrationOption.MigrateFromCustomPlace ||
+        migrationOption instanceof CustomConfigMigrationOption.StartWithCleanConfig
       ) {
         vmOptionFileChanged = doesVmOptionsFileExist(newConfigDir);
         try {
-          if (customMigrationOption instanceof CustomConfigMigrationOption.MigrateFromCustomPlace mcp) {
+          if (migrationOption instanceof CustomConfigMigrationOption.MigrateFromCustomPlace mcp) {
             oldConfigDirAndOldIdePath = findConfigDirectoryByPath(mcp.getLocation());
             if (oldConfigDirAndOldIdePath == null) {
               logRejectedConfigDirectory(log, "Custom location", mcp.getLocation());
@@ -185,11 +181,11 @@ public final class ConfigImportHelper {
                 currentlyDisabledPlugins = Files.readAllLines(newConfigDir.resolve(DisabledPluginsState.DISABLED_PLUGINS_FILENAME));
               }
             }
-            tempBackup = backupAndDeleteCurrentConfig(newConfigDir, log, settings);
+            tempBackup = backupAndDeleteCurrentConfig(newConfigDir, log, importSettings);
             importScenarioStatistics = ImportOldConfigsUsagesCollector.InitialImportScenario.IMPORT_SETTINGS_ACTION;
           }
           else {
-            tempBackup = backupAndDeleteCurrentConfig(newConfigDir, log, settings);
+            tempBackup = backupAndDeleteCurrentConfig(newConfigDir, log, importSettings);
             importScenarioStatistics = ImportOldConfigsUsagesCollector.InitialImportScenario.RESTORE_DEFAULT_ACTION;
           }
         }
@@ -197,23 +193,40 @@ public final class ConfigImportHelper {
           log.error("Couldn't backup current config or delete current config directory", e);
         }
       }
-      else if (bestConfigGuess != null && !isConfigOld(bestConfigGuess.second)) {
-        oldConfigDirAndOldIdePath = new Pair<>(bestConfigGuess.first, null);
-        log.info("choosing [" + bestConfigGuess.first + "] to import from");
-      }
-      else if (canAskForConfig() && !veryFirstStartOnThisComputer) {
-        log.info("bestConfigGuess=" + bestConfigGuess);
-        oldConfigDirAndOldIdePath = showDialogAndGetOldConfigPath(guessedOldConfigDirs.getPaths());
-        importScenarioStatistics = ImportOldConfigsUsagesCollector.InitialImportScenario.SHOW_DIALOG_REQUESTED_BY_PROPERTY;
+      else if (wizardEnabled && (System.getProperty(PathManager.PROPERTY_CONFIG_PATH) != null || PluginManagerCore.isRunningFromSources())) {
+        log.info("skipping import because of non-standard config directory");
       }
       else {
-        log.info("canAskForConfig=" + canAskForConfig() + " veryFirstStart=" + veryFirstStartOnThisComputer);
+        var candidateDirectories = findInheritedDirectory(newConfigDir, System.getenv(IMPORT_FROM_ENV_VAR), importSettings, args, log);
+        if (candidateDirectories == null) {
+          candidateDirectories = findConfigDirectories(newConfigDir, importSettings, args);
+          log.info("candidates: " + candidateDirectories.directories);
+        }
+        var bestCandidate = candidateDirectories.directories.isEmpty() ? null : candidateDirectories.directories.getFirst();
+        var showImportDialog = System.getProperty(SHOW_IMPORT_CONFIG_DIALOG_PROPERTY);
+
+        if (Boolean.parseBoolean(showImportDialog) && !wizardEnabled) {
+          log.info("import dialog requested explicitly");
+          oldConfigDirAndOldIdePath = showDialogAndGetOldConfigPath(candidateDirectories.getPaths());
+          importScenarioStatistics = ImportOldConfigsUsagesCollector.InitialImportScenario.SHOW_DIALOG_REQUESTED_BY_PROPERTY;
+        }
+        else if (bestCandidate != null && !isConfigOld(bestCandidate.second)) {
+          oldConfigDirAndOldIdePath = new Pair<>(bestCandidate.first, null);
+          log.info("auto-import");
+        }
+        else {
+          log.info("no suitable configs found");
+          if (!(veryFirstStartOnThisComputer || wizardEnabled || "never".equals(showImportDialog) || AppMode.isRemoteDevHost())) {
+            oldConfigDirAndOldIdePath = showDialogAndGetOldConfigPath(candidateDirectories.getPaths());
+            importScenarioStatistics = ImportOldConfigsUsagesCollector.InitialImportScenario.SHOW_DIALOG_NO_CONFIGS_FOUND;
+          }
+        }
       }
 
       if (oldConfigDirAndOldIdePath != null) {
         var oldConfigDir = oldConfigDirAndOldIdePath.first;
         var oldIdeHome = oldConfigDirAndOldIdePath.second;
-        var configImportOptions = createConfigImportOptions(settings, customMigrationOption, log);
+        var configImportOptions = createConfigImportOptions(importSettings, migrationOption, log);
 
         if (importScenarioStatistics == null) {
           importScenarioStatistics = ImportOldConfigsUsagesCollector.InitialImportScenario.IMPORTED_FROM_PREVIOUS_VERSION;
@@ -248,14 +261,14 @@ public final class ConfigImportHelper {
         }
       }
 
-      if (settings != null) {
+      if (importSettings != null) {
         var oldConfigDir = oldConfigDirAndOldIdePath != null ? oldConfigDirAndOldIdePath.first : null;
-        settings.importFinished(newConfigDir, oldConfigDir);
+        importSettings.importFinished(newConfigDir, oldConfigDir);
       }
 
       ImportOldConfigsUsagesCollector.INSTANCE.reportImportScenario(importScenarioStatistics);
 
-      if (importScenarioStatistics == ImportOldConfigsUsagesCollector.InitialImportScenario.IMPORT_SETTINGS_ACTION && vmOptionsLines != null) {
+      if (vmOptionsLines != null) {
         var vmOptionsFile = newConfigDir.resolve(VMOptions.getFileName());
         try {
           Files.write(vmOptionsFile, vmOptionsLines, VMOptions.getFileCharset());
@@ -281,7 +294,7 @@ public final class ConfigImportHelper {
 
     if (vmOptionFileChanged) {
       if (!AppMode.isRemoteDevHost()) {
-        if (settings == null || settings.shouldRestartAfterVmOptionsChange()) {
+        if (importSettings == null || importSettings.shouldRestartAfterVmOptionsChange()) {
           log.info("The vmoptions file has changed, restarting...");
           try {
             writeOptionsForRestart(newConfigDir);
@@ -292,7 +305,7 @@ public final class ConfigImportHelper {
           restart(args);
         }
         else {
-          log.info("The vmoptions file has changed, but restart is switched off by " + settings);
+          log.info("The vmoptions file has changed, but restart is switched off by " + importSettings);
         }
       }
       else {
@@ -430,11 +443,10 @@ public final class ConfigImportHelper {
     }
   }
 
-  private static boolean canAskForConfig() {
-    return !InitialConfigImportState.isStartupWizardEnabled() && Boolean.getBoolean(SHOW_IMPORT_CONFIG_DIALOG_PROPERTY);
-  }
-
   private static @Nullable Pair<Path, Path> showDialogAndGetOldConfigPath(List<Path> guessedOldConfigDirs) {
+    var app = ApplicationManager.getApplication();
+    if (app != null && app.isUnitTestMode()) throw new UnsupportedOperationException("Unit test mode");
+
     //noinspection TestOnlyProblems
     LookAndFeelThemeAdapterKt.setEarlyUiLaF();
 
@@ -907,8 +919,8 @@ public final class ConfigImportHelper {
     updateVMOptions(newConfigDir, log);
   }
 
-  public static void migrateLocalization(Path oldConfigDir, Path oldPluginsDir) {
-    Localization242Kt.enableL10nIfPluginInstalled(parseVersionFromConfig(oldConfigDir), oldPluginsDir);
+  public static void migrateLocalization(@NotNull Path oldConfigDir, @NotNull Path oldPluginsDir) {
+    Localization242.INSTANCE.enableL10nIfPluginInstalled(parseVersionFromConfig(oldConfigDir), oldPluginsDir);
   }
 
   private static List<ActionCommand> loadStartupActionScript(Path oldConfigDir, @Nullable Path oldIdeHome, Path oldPluginsDir) throws IOException {
@@ -953,13 +965,8 @@ public final class ConfigImportHelper {
 
     if (options.importSettings != null) {
       options.importSettings.processPluginsToMigrate(
-        newConfigDir,
-        oldConfigDir,
-        oldPluginsDir,
-        options,
-        brokenPluginVersions,
-        pluginsToMigrate,
-        pluginsToDownload);
+        newConfigDir, oldConfigDir, oldPluginsDir, options, brokenPluginVersions, pluginsToMigrate, pluginsToDownload
+      );
     }
 
     if (!PlatformUtils.isJetBrainsClient()) {
@@ -1062,6 +1069,7 @@ public final class ConfigImportHelper {
     // Note that migrations are not taken into account for IDE updates through Toolbox
     new NotebooksMigration242().migratePlugins(options);
     new SpaceMigration252().migratePlugins(options);
+    new BigDataToolsMigration253().migratePlugins(options);
   }
 
   private static void migrateGlobalPlugins(
@@ -1076,7 +1084,7 @@ public final class ConfigImportHelper {
     var downloadIds = toDownload.stream()
       .map(descriptor -> descriptor.getPluginId().getIdString())
       .collect(Collectors.joining("\n"));
-    var resultFile = newConfigDir.resolve(PluginMigrationKt.MIGRATION_INSTALLED_PLUGINS_TXT);
+    var resultFile = newConfigDir.resolve(InitialConfigImportState.MIGRATION_INSTALLED_PLUGINS_TXT);
     try {
       Files.writeString(resultFile, downloadIds);
     }

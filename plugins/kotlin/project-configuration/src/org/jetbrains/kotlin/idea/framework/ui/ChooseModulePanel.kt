@@ -6,6 +6,7 @@ import com.intellij.openapi.module.Module
 import com.intellij.openapi.observable.properties.AtomicProperty
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.ui.DialogPanel
+import com.intellij.openapi.ui.naturalSorted
 import com.intellij.openapi.ui.popup.JBPopupFactory
 import com.intellij.openapi.ui.popup.util.BaseListPopupStep
 import com.intellij.openapi.util.Computable
@@ -127,7 +128,7 @@ class ChooseModulePanel(
                             .applySelected(ChoseModuleType.SINGLE)
                     },
                     {
-                        val comboBox = comboBox(modules as List<Module?>, textListCellRenderer { it?.name })
+                        val comboBox = comboBox(modules.naturalSorted() as List<Module?>, textListCellRenderer { it?.name })
                             .bindItem(selectedModule)
                             .align(AlignX.FILL)
                         comboBox.enabledIf(singleModuleButton.selected)

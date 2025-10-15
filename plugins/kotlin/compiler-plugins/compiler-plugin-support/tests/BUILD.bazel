@@ -23,7 +23,7 @@ jvm_library(
     "//platform/testFramework:testFramework_test_lib",
     "//plugins/kotlin/base/facet",
     "//plugins/kotlin/base/facet/tests:tests_test_lib",
-    "//plugins/kotlin/compiler-plugins/compiler-plugin-support/common",
+    "//plugins/kotlin/compiler-plugins/compiler-plugin-support/common:kotlin-compilerPlugins-support",
     "//plugins/kotlin/base/plugin",
     "//plugins/kotlin/base/plugin:plugin_test_lib",
     "//plugins/kotlin/base/test:test_test_lib",

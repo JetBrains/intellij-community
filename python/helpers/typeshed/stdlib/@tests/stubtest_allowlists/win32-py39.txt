@@ -53,6 +53,7 @@ xml.parsers.expat.XMLParserType.SetReparseDeferralEnabled
 xml.sax.expatreader.ExpatParser.flush
 zipfile.ZipInfo.__slots__
 
+
 # =============================================================
 # Allowlist entries that cannot or should not be fixed; <= 3.12
 # =============================================================

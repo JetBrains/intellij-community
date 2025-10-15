@@ -1,4 +1,4 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.devkit.workspaceModel
 
 import com.intellij.devkit.workspaceModel.codegen.writer.CodeWriter
@@ -101,7 +101,8 @@ class WorkspaceModelGenerator(private val project: Project, private val coroutin
       return closest.sourceRoot.url.virtualFile
     }
     val contentRoot = sourceRoot.contentRoot
-    val inContentRoot = contentRoot.sourceRoots.flatMap { it.javaSourceRoots }.firstOrNull { it.generated }
+    val inContentRoot = contentRoot.sourceRoots.filter { it.rootTypeId == sourceRoot.rootTypeId }
+      .flatMap { it.javaSourceRoots }.firstOrNull { it.generated }
     if (inContentRoot != null) {
       return inContentRoot.sourceRoot.url.virtualFile
     }

@@ -2,6 +2,7 @@
 package com.intellij.cce.util
 
 import com.intellij.cce.core.Language
+import com.intellij.openapi.diagnostic.thisLogger
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.roots.ContentIterator
 import com.intellij.openapi.vfs.VfsUtil
@@ -16,7 +17,7 @@ object FilesHelper {
                          evaluationRoots: List<String>,
                          ignoreFileNames: Set<String>,
                          language: String?): List<VirtualFile> {
-    val extensionToFiles = getFiles(evaluationRoots.map { getFile(project, it) }, ignoreFileNames)
+    val extensionToFiles = getFiles(evaluationRoots.mapNotNull { getFile(project, it) }, ignoreFileNames)
     if (language == null) return extensionToFiles.flatMap { it.value }.toList()
     return extensionToFiles[language]?.toList() ?: throw IllegalArgumentException("No files for $language found")
   }
@@ -43,9 +44,13 @@ object FilesHelper {
     return if (projectPath == null) path else Paths.get(projectPath).relativize(Paths.get(path)).toString()
   }
 
-  fun getFile(project: Project, relativePath: String): VirtualFile =
-    VfsUtil.findFile(Paths.get(project.basePath ?: "").resolve(relativePath), true)
-    ?: throw FileNotFoundException("File not found: $relativePath")
+  fun getFile(project: Project, relativePath: String): VirtualFile? {
+    val file = VfsUtil.findFile(Paths.get(project.basePath ?: "").resolve(relativePath), true)
+    if (file == null) {
+      thisLogger().warn("File $relativePath not found")
+    }
+    return file
+  }
 }
 
 fun VirtualFile.text(): String {

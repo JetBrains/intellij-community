@@ -6,6 +6,8 @@
     <module name="intellij.platform.whatsNew"/>
     <module name="intellij.platform.ide.nonModalWelcomeScreen"/>
     <module name="intellij.platform.ide.nonModalWelcomeScreen.backend"/>
+    <module name="intellij.python.sdkConfigurator.common"/>
+    <module name="intellij.python.sdk.ui"/>
   </dependencies>
 
   <projectListeners>
@@ -68,6 +70,13 @@
                        bundle="messages.PyBundle"
                        displayNameKey="settings.python.group.title"
                        descriptionKey="settings.python.group.description"/>
+
+    <groupConfigurable id="python.tools.group.settings"
+                       parentId="python.group.settings"
+                       weight="72"
+                       bundle="messages.PyBundle"
+                       displayNameKey="settings.python.tools.group.title"
+                       descriptionKey="settings.python.tools.group.description"/>
 
     <projectConfigurable groupId="python.group.settings"
                          id="com.jetbrains.python.configuration.PyActiveSdkModuleConfigurable"
@@ -135,7 +144,7 @@
   <extensions defaultExtensionNs="Pythonid">
     <projectSdkConfigurationExtension
       implementation="com.intellij.pycharm.community.ide.impl.configuration.PyRequirementsTxtOrSetupPySdkConfiguration"
-      id="requirementsTxtOrSetupPy" order="last"/>
+      id="requirementsTxtOrSetupPy" order="before uv"/>
     <projectSdkConfigurationExtension
       implementation="com.intellij.pycharm.community.ide.impl.conda.PyEnvironmentYmlSdkConfiguration"
       id="environmentYml"/>
@@ -146,7 +155,7 @@
     <projectSdkConfigurationExtension implementation="com.intellij.pycharm.community.ide.impl.configuration.PyHatchSdkConfiguration"
                                       id="hatch" order="after poetry"/>
     <projectSdkConfigurationExtension implementation="com.intellij.pycharm.community.ide.impl.configuration.PyUvSdkConfiguration"
-                                      id="uv" order="after hatch"/>
+                                      id="uv" order="last"/>
     <projectSdkConfigurationExtension implementation="com.intellij.pycharm.community.ide.impl.configuration.PyVenvSdkConfiguration"
                                       id="venv" order="before requirementsTxtOrSetupPy"/>
   </extensions>

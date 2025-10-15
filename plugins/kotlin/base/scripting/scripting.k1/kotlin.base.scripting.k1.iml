@@ -26,16 +26,16 @@
     <orderEntry type="module" module-name="intellij.platform.indexing" />
     <orderEntry type="module" module-name="intellij.platform.jps.model" />
     <orderEntry type="module" module-name="intellij.platform.workspace.storage" />
-    <orderEntry type="module" module-name="kotlin.base.compiler-configuration" />
+    <orderEntry type="module" module-name="intellij.kotlin.base.compilerConfiguration" />
     <orderEntry type="module" module-name="intellij.platform.util.progress" />
-    <orderEntry type="module" module-name="kotlin.base.util" />
-    <orderEntry type="module" module-name="kotlin.base.psi" />
+    <orderEntry type="module" module-name="intellij.kotlin.base.util" />
+    <orderEntry type="module" module-name="intellij.kotlin.base.psi" />
     <orderEntry type="module" module-name="intellij.platform.ide.impl" />
-    <orderEntry type="module" module-name="kotlin.base.plugin" />
-    <orderEntry type="module" module-name="kotlin.base.resources" />
-    <orderEntry type="module" module-name="kotlin.base.platforms" />
-    <orderEntry type="module" module-name="kotlin.base.facet" />
-    <orderEntry type="module" module-name="kotlin.base.project-structure" />
+    <orderEntry type="module" module-name="intellij.kotlin.base.plugin" />
+    <orderEntry type="module" module-name="intellij.kotlin.base.resources" />
+    <orderEntry type="module" module-name="intellij.kotlin.base.platforms" />
+    <orderEntry type="module" module-name="intellij.kotlin.base.facet" />
+    <orderEntry type="module" module-name="intellij.kotlin.base.projectStructure" />
     <orderEntry type="module" module-name="intellij.platform.core.ui" />
     <orderEntry type="module" module-name="intellij.java.indexing" />
     <orderEntry type="module" module-name="intellij.platform.util.jdom" />
@@ -51,13 +51,13 @@
     <orderEntry type="module" module-name="intellij.platform.collaborationTools" />
     <orderEntry type="module" module-name="intellij.java.impl" />
     <orderEntry type="module" module-name="intellij.platform.backend.workspace" />
-    <orderEntry type="module" module-name="kotlin.code-insight.utils" />
+    <orderEntry type="module" module-name="intellij.kotlin.codeInsight.utils" />
     <orderEntry type="module" module-name="intellij.platform.workspace.jps" />
     <orderEntry type="module" module-name="intellij.platform.externalSystem.impl" />
     <orderEntry type="module" module-name="intellij.java.ui" />
     <orderEntry type="library" name="kotlinc.kotlin-scripting-dependencies" level="project" />
     <orderEntry type="module" module-name="kotlin.scripting" />
-    <orderEntry type="module" module-name="kotlin.base.scripting.shared" />
+    <orderEntry type="module" module-name="intellij.kotlin.base.scripting.shared" />
     <orderEntry type="module" module-name="intellij.platform.refactoring" />
     <orderEntry type="module" module-name="kotlin.highlighting.shared" />
   </component>

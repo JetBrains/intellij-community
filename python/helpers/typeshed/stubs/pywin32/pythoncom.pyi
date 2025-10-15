@@ -2,7 +2,7 @@ from _typeshed import Incomplete, Unused
 from abc import abstractmethod
 from collections.abc import Sequence
 from typing import ClassVar, SupportsInt, overload
-from typing_extensions import TypeAlias, deprecated
+from typing_extensions import TypeAlias, deprecated, disjoint_base
 
 import _win32typing
 from win32.lib.pywintypes import TimeType, com_error as com_error
@@ -11,6 +11,7 @@ error: TypeAlias = com_error  # noqa: Y042
 
 class internal_error(Exception): ...
 
+@disjoint_base
 class com_record:
     @abstractmethod
     def __init__(self, /, *args, **kwargs) -> None: ...

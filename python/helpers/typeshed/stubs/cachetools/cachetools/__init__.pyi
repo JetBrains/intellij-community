@@ -3,7 +3,7 @@ from collections.abc import Callable, Iterator, MutableMapping, Sequence
 from contextlib import AbstractContextManager
 from threading import Condition
 from typing import Any, TypeVar, overload
-from typing_extensions import deprecated
+from typing_extensions import Self, deprecated
 
 __all__ = ("Cache", "FIFOCache", "LFUCache", "LRUCache", "RRCache", "TLRUCache", "TTLCache", "cached", "cachedmethod")
 __version__: str
@@ -52,6 +52,8 @@ class RRCache(Cache[_KT, _VT]):
     def __init__(self, maxsize: float, choice: Callable[[Sequence[_KT]], _KT], getsizeof: Callable[[_VT], float]) -> None: ...
     @property
     def choice(self) -> Callable[[Sequence[_KT]], _KT]: ...
+    def __setitem__(self, key: _KT, value: _VT, cache_setitem: Callable[[Self, _KT, _VT], None] = ...) -> None: ...
+    def __delitem__(self, key: _KT, cache_delitem: Callable[[Self, _KT], None] = ...) -> None: ...
 
 class _TimedCache(Cache[_KT, _VT]):
     @overload

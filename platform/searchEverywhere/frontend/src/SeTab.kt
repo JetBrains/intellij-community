@@ -47,4 +47,6 @@ interface SeTab : Disposable {
   suspend fun isPreviewEnabled(): Boolean
 
   suspend fun getPreviewInfo(itemData: SeItemData): SePreviewInfo?
+
+  suspend fun isExtendedInfoEnabled(): Boolean
 }

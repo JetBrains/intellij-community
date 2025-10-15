@@ -56,10 +56,10 @@ http_file(
 )
 
 http_file(
-  name = "ai_grazie-grazie-rule-engine-0_3_8_http",
-  url = "https://cache-redirector.jetbrains.com/packages.jetbrains.team/maven/p/grazi/grazie-platform-public/ai/grazie/grazie-rule-engine/0.3.8/grazie-rule-engine-0.3.8.jar",
-  sha256 = "9ba6e4c538ceac8a0c66b7a1b2b356da995799e22d59eab772a59c4e9c5b9896",
-  downloaded_file_path = "grazie-rule-engine-0.3.8.jar"
+  name = "ai_grazie-grazie-rule-engine-0_3_11_http",
+  url = "https://cache-redirector.jetbrains.com/packages.jetbrains.team/maven/p/grazi/grazie-platform-public/ai/grazie/grazie-rule-engine/0.3.11/grazie-rule-engine-0.3.11.jar",
+  sha256 = "54b321650a50f78ceee6bd06653ee3cea0b19db5fe95e3c3a109e6af4a20126c",
+  downloaded_file_path = "grazie-rule-engine-0.3.11.jar"
 )
 
 http_file(
@@ -70,10 +70,10 @@ http_file(
 )
 
 http_file(
-  name = "ai_grazie-grazie-rule-engine-0_3_8-sources_http",
-  url = "https://cache-redirector.jetbrains.com/packages.jetbrains.team/maven/p/grazi/grazie-platform-public/ai/grazie/grazie-rule-engine/0.3.8/grazie-rule-engine-0.3.8-sources.jar",
-  sha256 = "ab2f153dc4084d043a0def945c271a4aae168469ff1243c642215b56588c0310",
-  downloaded_file_path = "grazie-rule-engine-0.3.8-sources.jar"
+  name = "ai_grazie-grazie-rule-engine-0_3_11-sources_http",
+  url = "https://cache-redirector.jetbrains.com/packages.jetbrains.team/maven/p/grazi/grazie-platform-public/ai/grazie/grazie-rule-engine/0.3.11/grazie-rule-engine-0.3.11-sources.jar",
+  sha256 = "19eb1b150e296d68f6123d2804019eadcfe9c2755b1093fd4a5151f5c91e77d3",
+  downloaded_file_path = "grazie-rule-engine-0.3.11-sources.jar"
 )
 
 http_file(
@@ -2989,10 +2989,10 @@ http_file(
 )
 
 http_file(
-  name = "org_jetbrains_intellij_deps_languagetool-language-en-6_6_18_http",
-  url = "https://cache-redirector.jetbrains.com/packages.jetbrains.team/maven/p/ij/intellij-dependencies/org/jetbrains/intellij/deps/languagetool/language-en/6.6.18/language-en-6.6.18.jar",
-  sha256 = "b8e86015465545729e1495eb0e660aa974118ca25ca01fa3fc9ea1d903d7e949",
-  downloaded_file_path = "language-en-6.6.18.jar"
+  name = "org_jetbrains_intellij_deps_languagetool-language-en-6_7_19_http",
+  url = "https://cache-redirector.jetbrains.com/packages.jetbrains.team/maven/p/ij/intellij-dependencies/org/jetbrains/intellij/deps/languagetool/language-en/6.7.19/language-en-6.7.19.jar",
+  sha256 = "4faf190812aff01543fe930c7476db7d21b4a5ac892421c849aa85e090d5dd2b",
+  downloaded_file_path = "language-en-6.7.19.jar"
 )
 
 http_file(
@@ -3003,17 +3003,17 @@ http_file(
 )
 
 http_file(
-  name = "org_jetbrains_intellij_deps_languagetool-language-en-6_6_18-sources_http",
-  url = "https://cache-redirector.jetbrains.com/packages.jetbrains.team/maven/p/ij/intellij-dependencies/org/jetbrains/intellij/deps/languagetool/language-en/6.6.18/language-en-6.6.18-sources.jar",
-  sha256 = "fb170c723168b75eb519853af871239fe2ac036703b14b2a5ad0548bc3dee8ca",
-  downloaded_file_path = "language-en-6.6.18-sources.jar"
+  name = "org_jetbrains_intellij_deps_languagetool-language-en-6_7_19-sources_http",
+  url = "https://cache-redirector.jetbrains.com/packages.jetbrains.team/maven/p/ij/intellij-dependencies/org/jetbrains/intellij/deps/languagetool/language-en/6.7.19/language-en-6.7.19-sources.jar",
+  sha256 = "483b24945487625fe64c9dd8e5c65e66e1943ca3d4b43ee675921ec367a9582d",
+  downloaded_file_path = "language-en-6.7.19-sources.jar"
 )
 
 http_file(
-  name = "org_jetbrains_intellij_deps_languagetool-languagetool-core-6_6_18_http",
-  url = "https://cache-redirector.jetbrains.com/packages.jetbrains.team/maven/p/ij/intellij-dependencies/org/jetbrains/intellij/deps/languagetool/languagetool-core/6.6.18/languagetool-core-6.6.18.jar",
-  sha256 = "71b90438b6a272190f61fc3d65fc50061eeff32e52f2757dfb560b6f4460b367",
-  downloaded_file_path = "languagetool-core-6.6.18.jar"
+  name = "org_jetbrains_intellij_deps_languagetool-languagetool-core-6_7_19_http",
+  url = "https://cache-redirector.jetbrains.com/packages.jetbrains.team/maven/p/ij/intellij-dependencies/org/jetbrains/intellij/deps/languagetool/languagetool-core/6.7.19/languagetool-core-6.7.19.jar",
+  sha256 = "adafb32cef456d63fbc71cd0e193211a58fb712517ad7fea7f3098e34a184842",
+  downloaded_file_path = "languagetool-core-6.7.19.jar"
 )
 
 http_file(
@@ -3024,10 +3024,10 @@ http_file(
 )
 
 http_file(
-  name = "org_jetbrains_intellij_deps_languagetool-languagetool-core-6_6_18-sources_http",
-  url = "https://cache-redirector.jetbrains.com/packages.jetbrains.team/maven/p/ij/intellij-dependencies/org/jetbrains/intellij/deps/languagetool/languagetool-core/6.6.18/languagetool-core-6.6.18-sources.jar",
-  sha256 = "f6ff6c6dd886bdd456ade8b3add7f24adf433781cd4d5325de463c31733b9dbe",
-  downloaded_file_path = "languagetool-core-6.6.18-sources.jar"
+  name = "org_jetbrains_intellij_deps_languagetool-languagetool-core-6_7_19-sources_http",
+  url = "https://cache-redirector.jetbrains.com/packages.jetbrains.team/maven/p/ij/intellij-dependencies/org/jetbrains/intellij/deps/languagetool/languagetool-core/6.7.19/languagetool-core-6.7.19-sources.jar",
+  sha256 = "77d09f7f0520816d1ae80578d228a520806bbb548627681e3bc8c24184dba5b6",
+  downloaded_file_path = "languagetool-core-6.7.19-sources.jar"
 )
 
 http_file(
@@ -3101,10 +3101,10 @@ http_file(
 )
 
 http_file(
-  name = "org_jetbrains_intellij_deps_languagetool-language-be-6_6_18_http",
-  url = "https://cache-redirector.jetbrains.com/packages.jetbrains.team/maven/p/ij/intellij-dependencies/org/jetbrains/intellij/deps/languagetool/language-be/6.6.18/language-be-6.6.18.jar",
-  sha256 = "b955b64d447da91ceb433f6ad609766365946dd7b65df20d904520754740f6cd",
-  downloaded_file_path = "language-be-6.6.18.jar"
+  name = "org_jetbrains_intellij_deps_languagetool-language-be-6_7_19_http",
+  url = "https://cache-redirector.jetbrains.com/packages.jetbrains.team/maven/p/ij/intellij-dependencies/org/jetbrains/intellij/deps/languagetool/language-be/6.7.19/language-be-6.7.19.jar",
+  sha256 = "e1112c8cbb7bc83523e2fc057e58b0b48dcdba5cb58e9771639ed2cd735ae4e4",
+  downloaded_file_path = "language-be-6.7.19.jar"
 )
 
 http_file(
@@ -3115,38 +3115,38 @@ http_file(
 )
 
 http_file(
-  name = "org_jetbrains_intellij_deps_languagetool-language-be-6_6_18-sources_http",
-  url = "https://cache-redirector.jetbrains.com/packages.jetbrains.team/maven/p/ij/intellij-dependencies/org/jetbrains/intellij/deps/languagetool/language-be/6.6.18/language-be-6.6.18-sources.jar",
-  sha256 = "fbd480fed6ef53b05a8dd17bdac81451d070524847292d1d17ee1bda5e0dcf99",
-  downloaded_file_path = "language-be-6.6.18-sources.jar"
+  name = "org_jetbrains_intellij_deps_languagetool-language-be-6_7_19-sources_http",
+  url = "https://cache-redirector.jetbrains.com/packages.jetbrains.team/maven/p/ij/intellij-dependencies/org/jetbrains/intellij/deps/languagetool/language-be/6.7.19/language-be-6.7.19-sources.jar",
+  sha256 = "68d1862b111ca1c66ca21f6992a0ed11b22d743c24cc102453a5ad62825215fd",
+  downloaded_file_path = "language-be-6.7.19-sources.jar"
 )
 
 http_file(
-  name = "org_jetbrains_intellij_deps_languagetool-language-uk-6_6_18_http",
-  url = "https://cache-redirector.jetbrains.com/packages.jetbrains.team/maven/p/ij/intellij-dependencies/org/jetbrains/intellij/deps/languagetool/language-uk/6.6.18/language-uk-6.6.18.jar",
-  sha256 = "0be5b8358456d81f350cb334c92322b05c79f871aa052860a38d8ecd93fd4d79",
-  downloaded_file_path = "language-uk-6.6.18.jar"
+  name = "org_jetbrains_intellij_deps_languagetool-language-uk-6_7_19_http",
+  url = "https://cache-redirector.jetbrains.com/packages.jetbrains.team/maven/p/ij/intellij-dependencies/org/jetbrains/intellij/deps/languagetool/language-uk/6.7.19/language-uk-6.7.19.jar",
+  sha256 = "a02e7a2aced8f3f43244c9b06bdd2ac620ffc76a173dd33c19f79e12a9056660",
+  downloaded_file_path = "language-uk-6.7.19.jar"
 )
 
 http_file(
-  name = "ua_net_nlp-morfologik-ukrainian-lt-6_6_0_http",
-  url = "https://cache-redirector.jetbrains.com/repo1.maven.org/maven2/ua/net/nlp/morfologik-ukrainian-lt/6.6.0/morfologik-ukrainian-lt-6.6.0.jar",
-  sha256 = "3ff49f9b989e3c50eb8d96f4385906b3562b638607aeeddaffd90939695b66a5",
-  downloaded_file_path = "morfologik-ukrainian-lt-6.6.0.jar"
+  name = "ua_net_nlp-morfologik-ukrainian-lt-6_7_1_http",
+  url = "https://cache-redirector.jetbrains.com/repo1.maven.org/maven2/ua/net/nlp/morfologik-ukrainian-lt/6.7.1/morfologik-ukrainian-lt-6.7.1.jar",
+  sha256 = "453886930ba7ba0d80d1158577e3e10d814e2c739ee17e297f062542d92dfd04",
+  downloaded_file_path = "morfologik-ukrainian-lt-6.7.1.jar"
 )
 
 http_file(
-  name = "org_jetbrains_intellij_deps_languagetool-language-uk-6_6_18-sources_http",
-  url = "https://cache-redirector.jetbrains.com/packages.jetbrains.team/maven/p/ij/intellij-dependencies/org/jetbrains/intellij/deps/languagetool/language-uk/6.6.18/language-uk-6.6.18-sources.jar",
-  sha256 = "23858581a8eee5eb94f5d922efce0189a97832684baecf96e1fcd21645eda503",
-  downloaded_file_path = "language-uk-6.6.18-sources.jar"
+  name = "org_jetbrains_intellij_deps_languagetool-language-uk-6_7_19-sources_http",
+  url = "https://cache-redirector.jetbrains.com/packages.jetbrains.team/maven/p/ij/intellij-dependencies/org/jetbrains/intellij/deps/languagetool/language-uk/6.7.19/language-uk-6.7.19-sources.jar",
+  sha256 = "33d686b9f84dfe4749a1d91d5d66bbccec5375577dc1938b87a26eef26b8f9f0",
+  downloaded_file_path = "language-uk-6.7.19-sources.jar"
 )
 
 http_file(
-  name = "org_jetbrains_intellij_deps_languagetool-language-de-6_6_18_http",
-  url = "https://cache-redirector.jetbrains.com/packages.jetbrains.team/maven/p/ij/intellij-dependencies/org/jetbrains/intellij/deps/languagetool/language-de/6.6.18/language-de-6.6.18.jar",
-  sha256 = "a78eba8389b989d903c020fe040d68965e2c1f1fb6014efe64a9ffe0d6558536",
-  downloaded_file_path = "language-de-6.6.18.jar"
+  name = "org_jetbrains_intellij_deps_languagetool-language-de-6_7_19_http",
+  url = "https://cache-redirector.jetbrains.com/packages.jetbrains.team/maven/p/ij/intellij-dependencies/org/jetbrains/intellij/deps/languagetool/language-de/6.7.19/language-de-6.7.19.jar",
+  sha256 = "3b8fdde02fa7c870daaa0d33d040d00a6dd9a8971e5bf01b3946ff2a9a7b5887",
+  downloaded_file_path = "language-de-6.7.19.jar"
 )
 
 http_file(
@@ -3164,10 +3164,10 @@ http_file(
 )
 
 http_file(
-  name = "org_jetbrains_intellij_deps_languagetool-language-de-6_6_18-sources_http",
-  url = "https://cache-redirector.jetbrains.com/packages.jetbrains.team/maven/p/ij/intellij-dependencies/org/jetbrains/intellij/deps/languagetool/language-de/6.6.18/language-de-6.6.18-sources.jar",
-  sha256 = "4b52331cea14125fa5a93848826712a0f1b479bb8bac436ae5d214302249c005",
-  downloaded_file_path = "language-de-6.6.18-sources.jar"
+  name = "org_jetbrains_intellij_deps_languagetool-language-de-6_7_19-sources_http",
+  url = "https://cache-redirector.jetbrains.com/packages.jetbrains.team/maven/p/ij/intellij-dependencies/org/jetbrains/intellij/deps/languagetool/language-de/6.7.19/language-de-6.7.19-sources.jar",
+  sha256 = "e702ede12f26175725a87d40bbc0df055e2512577504399de1cc826a00525a53",
+  downloaded_file_path = "language-de-6.7.19-sources.jar"
 )
 
 http_file(
@@ -3178,45 +3178,45 @@ http_file(
 )
 
 http_file(
-  name = "org_jetbrains_intellij_deps_languagetool-language-it-6_6_18_http",
-  url = "https://cache-redirector.jetbrains.com/packages.jetbrains.team/maven/p/ij/intellij-dependencies/org/jetbrains/intellij/deps/languagetool/language-it/6.6.18/language-it-6.6.18.jar",
-  sha256 = "1178854d4e568f9b30d64333e1f759fea63976c5e17459506beb94dd9ff83426",
-  downloaded_file_path = "language-it-6.6.18.jar"
+  name = "org_jetbrains_intellij_deps_languagetool-language-it-6_7_19_http",
+  url = "https://cache-redirector.jetbrains.com/packages.jetbrains.team/maven/p/ij/intellij-dependencies/org/jetbrains/intellij/deps/languagetool/language-it/6.7.19/language-it-6.7.19.jar",
+  sha256 = "66610c22526cae842fbcfc2d64b15b27e1e88f6bd715b8b72d951d60d205e53c",
+  downloaded_file_path = "language-it-6.7.19.jar"
 )
 
 http_file(
-  name = "org_jetbrains_intellij_deps_languagetool-language-it-6_6_18-sources_http",
-  url = "https://cache-redirector.jetbrains.com/packages.jetbrains.team/maven/p/ij/intellij-dependencies/org/jetbrains/intellij/deps/languagetool/language-it/6.6.18/language-it-6.6.18-sources.jar",
-  sha256 = "c831ca9119057980a106e0cbd458f259c46c0c555a30ba27ef510b143af37190",
-  downloaded_file_path = "language-it-6.6.18-sources.jar"
+  name = "org_jetbrains_intellij_deps_languagetool-language-it-6_7_19-sources_http",
+  url = "https://cache-redirector.jetbrains.com/packages.jetbrains.team/maven/p/ij/intellij-dependencies/org/jetbrains/intellij/deps/languagetool/language-it/6.7.19/language-it-6.7.19-sources.jar",
+  sha256 = "769e1f6ccd2094148022ee368122591542f6a5c2565fb720f064de71aaae3797",
+  downloaded_file_path = "language-it-6.7.19-sources.jar"
 )
 
 http_file(
-  name = "org_jetbrains_intellij_deps_languagetool-language-pt-6_6_18_http",
-  url = "https://cache-redirector.jetbrains.com/packages.jetbrains.team/maven/p/ij/intellij-dependencies/org/jetbrains/intellij/deps/languagetool/language-pt/6.6.18/language-pt-6.6.18.jar",
-  sha256 = "6086e945d18e1b2aba635eb3b8fc68ad51466d0c9af8be226c47993fa15d2237",
-  downloaded_file_path = "language-pt-6.6.18.jar"
+  name = "org_jetbrains_intellij_deps_languagetool-language-pt-6_7_19_http",
+  url = "https://cache-redirector.jetbrains.com/packages.jetbrains.team/maven/p/ij/intellij-dependencies/org/jetbrains/intellij/deps/languagetool/language-pt/6.7.19/language-pt-6.7.19.jar",
+  sha256 = "15082b699292f1b28756337e3fe46295c556d1e1147bf98d155cca4a08382599",
+  downloaded_file_path = "language-pt-6.7.19.jar"
 )
 
 http_file(
-  name = "org_jetbrains_intellij_deps_languagetool-language-pt-6_6_18-sources_http",
-  url = "https://cache-redirector.jetbrains.com/packages.jetbrains.team/maven/p/ij/intellij-dependencies/org/jetbrains/intellij/deps/languagetool/language-pt/6.6.18/language-pt-6.6.18-sources.jar",
-  sha256 = "970086d4a0400d6af595e7bdd8a725b0a42d6bf67dab480c5847020dd8dcbb0f",
-  downloaded_file_path = "language-pt-6.6.18-sources.jar"
+  name = "org_jetbrains_intellij_deps_languagetool-language-pt-6_7_19-sources_http",
+  url = "https://cache-redirector.jetbrains.com/packages.jetbrains.team/maven/p/ij/intellij-dependencies/org/jetbrains/intellij/deps/languagetool/language-pt/6.7.19/language-pt-6.7.19-sources.jar",
+  sha256 = "06149a22416176986c6ca47d43089568e10a58407b53d76fe923a9a4176243ec",
+  downloaded_file_path = "language-pt-6.7.19-sources.jar"
 )
 
 http_file(
-  name = "org_jetbrains_intellij_deps_languagetool-language-ru-6_6_18_http",
-  url = "https://cache-redirector.jetbrains.com/packages.jetbrains.team/maven/p/ij/intellij-dependencies/org/jetbrains/intellij/deps/languagetool/language-ru/6.6.18/language-ru-6.6.18.jar",
-  sha256 = "042fc651feda66c688f3cb42b9794a19a4ffd19d098f95e18e44d758204313b0",
-  downloaded_file_path = "language-ru-6.6.18.jar"
+  name = "org_jetbrains_intellij_deps_languagetool-language-ru-6_7_19_http",
+  url = "https://cache-redirector.jetbrains.com/packages.jetbrains.team/maven/p/ij/intellij-dependencies/org/jetbrains/intellij/deps/languagetool/language-ru/6.7.19/language-ru-6.7.19.jar",
+  sha256 = "24e353865ce2862de1cb2468b73f28bb4d7fb996ab480c9a9513999ba2a3252e",
+  downloaded_file_path = "language-ru-6.7.19.jar"
 )
 
 http_file(
-  name = "org_jetbrains_intellij_deps_languagetool-language-ru-6_6_18-sources_http",
-  url = "https://cache-redirector.jetbrains.com/packages.jetbrains.team/maven/p/ij/intellij-dependencies/org/jetbrains/intellij/deps/languagetool/language-ru/6.6.18/language-ru-6.6.18-sources.jar",
-  sha256 = "90317f5714aa9a4ecc4ef44f3345130efc18a0f4b435e1f1409acc537580bd7c",
-  downloaded_file_path = "language-ru-6.6.18-sources.jar"
+  name = "org_jetbrains_intellij_deps_languagetool-language-ru-6_7_19-sources_http",
+  url = "https://cache-redirector.jetbrains.com/packages.jetbrains.team/maven/p/ij/intellij-dependencies/org/jetbrains/intellij/deps/languagetool/language-ru/6.7.19/language-ru-6.7.19-sources.jar",
+  sha256 = "30a6823ef6d1deaed18c40443a98a47a4f2c38043041d422870b954414acaedf",
+  downloaded_file_path = "language-ru-6.7.19-sources.jar"
 )
 
 http_file(
@@ -4088,73 +4088,101 @@ http_file(
 )
 
 http_file(
-  name = "org_jacoco-org_jacoco_ant-0_8_13-_ant_http",
-  url = "https://cache-redirector.jetbrains.com/repo1.maven.org/maven2/org/jacoco/org.jacoco.ant/0.8.13/org.jacoco.ant-0.8.13.jar",
-  sha256 = "6434b8552ff3d0e4a2fbbd13a6efb124e0c9ca453817c62c03de8390d87ffd11",
-  downloaded_file_path = "org.jacoco.ant-0.8.13.jar"
+  name = "org_jacoco-org_jacoco_ant-0_8_14-_ant_http",
+  url = "https://cache-redirector.jetbrains.com/repo1.maven.org/maven2/org/jacoco/org.jacoco.ant/0.8.14/org.jacoco.ant-0.8.14.jar",
+  sha256 = "9fff68954d5de3aad2bf838eaf886ed67d2c22a2d6c6f095548bade8c45caeae",
+  downloaded_file_path = "org.jacoco.ant-0.8.14.jar"
 )
 
 http_file(
-  name = "org_jacoco-org_jacoco_core-0_8_13-_core_http",
-  url = "https://cache-redirector.jetbrains.com/repo1.maven.org/maven2/org/jacoco/org.jacoco.core/0.8.13/org.jacoco.core-0.8.13.jar",
-  sha256 = "514c23df6cfd015d7d83c10a792e35ab68a7b7e82f3d6a3a4481762c132e33a9",
-  downloaded_file_path = "org.jacoco.core-0.8.13.jar"
+  name = "org_jacoco-org_jacoco_core-0_8_14-_core_http",
+  url = "https://cache-redirector.jetbrains.com/repo1.maven.org/maven2/org/jacoco/org.jacoco.core/0.8.14/org.jacoco.core-0.8.14.jar",
+  sha256 = "28abbf0eea5a08e4f24097f2fbac663ca17c341c25c3a04d90d6cd325943c995",
+  downloaded_file_path = "org.jacoco.core-0.8.14.jar"
 )
 
 http_file(
-  name = "org_ow2_asm-asm-commons-9_8_http",
-  url = "https://cache-redirector.jetbrains.com/repo1.maven.org/maven2/org/ow2/asm/asm-commons/9.8/asm-commons-9.8.jar",
-  sha256 = "3301a1c1cb4c59fcc5292648dac1d7c5aed4c0f067dfbe88873b8cdfe77404f4",
-  downloaded_file_path = "asm-commons-9.8.jar"
+  name = "org_ow2_asm-asm-9_9_http",
+  url = "https://cache-redirector.jetbrains.com/repo1.maven.org/maven2/org/ow2/asm/asm/9.9/asm-9.9.jar",
+  sha256 = "03d99a74ad1ee5c71334ef67437f4ef4fe3488caa7c96d8645abc73c8e2017d4",
+  downloaded_file_path = "asm-9.9.jar"
 )
 
 http_file(
-  name = "org_jacoco-org_jacoco_report-0_8_13-_report_http",
-  url = "https://cache-redirector.jetbrains.com/repo1.maven.org/maven2/org/jacoco/org.jacoco.report/0.8.13/org.jacoco.report-0.8.13.jar",
-  sha256 = "8133280a0aa44358be9d136b52370342f455ccb944aae07438220a77662578a2",
-  downloaded_file_path = "org.jacoco.report-0.8.13.jar"
+  name = "org_ow2_asm-asm-commons-9_9_http",
+  url = "https://cache-redirector.jetbrains.com/repo1.maven.org/maven2/org/ow2/asm/asm-commons/9.9/asm-commons-9.9.jar",
+  sha256 = "db2f6f26150bbe7c126606b4a1151836bcc22a1e05a423b3585698bece995ff8",
+  downloaded_file_path = "asm-commons-9.9.jar"
 )
 
 http_file(
-  name = "org_jacoco-org_jacoco_agent-0_8_13-_agent_http",
-  url = "https://cache-redirector.jetbrains.com/repo1.maven.org/maven2/org/jacoco/org.jacoco.agent/0.8.13/org.jacoco.agent-0.8.13.jar",
-  sha256 = "9db3c9d5d74fa870b261b64a3082412e1bd6e22e9fa98f4737b1bff8af9cc64d",
-  downloaded_file_path = "org.jacoco.agent-0.8.13.jar"
+  name = "org_ow2_asm-asm-tree-9_9_http",
+  url = "https://cache-redirector.jetbrains.com/repo1.maven.org/maven2/org/ow2/asm/asm-tree/9.9/asm-tree-9.9.jar",
+  sha256 = "42178f3775c9c63f9e5e1446747d29b4eca4d91bd6e75e5c43cfa372a47d38c6",
+  downloaded_file_path = "asm-tree-9.9.jar"
 )
 
 http_file(
-  name = "org_jacoco-org_jacoco_ant-0_8_13-_ant-sources_http",
-  url = "https://cache-redirector.jetbrains.com/repo1.maven.org/maven2/org/jacoco/org.jacoco.ant/0.8.13/org.jacoco.ant-0.8.13-sources.jar",
-  sha256 = "3f4414193d2a6549ea77b5e1032be48b2030737bce514a6ec50e4f5a1cb6b7fc",
-  downloaded_file_path = "org.jacoco.ant-0.8.13-sources.jar"
+  name = "org_jacoco-org_jacoco_report-0_8_14-_report_http",
+  url = "https://cache-redirector.jetbrains.com/repo1.maven.org/maven2/org/jacoco/org.jacoco.report/0.8.14/org.jacoco.report-0.8.14.jar",
+  sha256 = "a3e2026060ab8b8d5c650706406234bb4c033dfd5376afeb8b1666e8ed27c453",
+  downloaded_file_path = "org.jacoco.report-0.8.14.jar"
 )
 
 http_file(
-  name = "org_jacoco-org_jacoco_core-0_8_13-_core-sources_http",
-  url = "https://cache-redirector.jetbrains.com/repo1.maven.org/maven2/org/jacoco/org.jacoco.core/0.8.13/org.jacoco.core-0.8.13-sources.jar",
-  sha256 = "5ebc4e70a0b6ac54be8cbb6a526dc8904123d7f2bd4553239dc9076898008e5a",
-  downloaded_file_path = "org.jacoco.core-0.8.13-sources.jar"
+  name = "org_jacoco-org_jacoco_agent-0_8_14-_agent_http",
+  url = "https://cache-redirector.jetbrains.com/repo1.maven.org/maven2/org/jacoco/org.jacoco.agent/0.8.14/org.jacoco.agent-0.8.14.jar",
+  sha256 = "20be9853385bdfc65a5929643412d09243d14514304b89ba23a265158cc8792b",
+  downloaded_file_path = "org.jacoco.agent-0.8.14.jar"
 )
 
 http_file(
-  name = "org_ow2_asm-asm-commons-9_8-sources_http",
-  url = "https://cache-redirector.jetbrains.com/repo1.maven.org/maven2/org/ow2/asm/asm-commons/9.8/asm-commons-9.8-sources.jar",
-  sha256 = "a2bd3ba563c5f2e19eea66df99437ef81d69a0dcb3def07028442a273a2da562",
-  downloaded_file_path = "asm-commons-9.8-sources.jar"
+  name = "org_jacoco-org_jacoco_ant-0_8_14-_ant-sources_http",
+  url = "https://cache-redirector.jetbrains.com/repo1.maven.org/maven2/org/jacoco/org.jacoco.ant/0.8.14/org.jacoco.ant-0.8.14-sources.jar",
+  sha256 = "c6a7e71b8b80a3f51d19153092cfb1ad3f5985c1653ff864710ff5b3e6bd27a6",
+  downloaded_file_path = "org.jacoco.ant-0.8.14-sources.jar"
 )
 
 http_file(
-  name = "org_jacoco-org_jacoco_report-0_8_13-_report-sources_http",
-  url = "https://cache-redirector.jetbrains.com/repo1.maven.org/maven2/org/jacoco/org.jacoco.report/0.8.13/org.jacoco.report-0.8.13-sources.jar",
-  sha256 = "d326237792109c8095a64f96578c6b7457e2082712f7d293a41d6e19a71c0be5",
-  downloaded_file_path = "org.jacoco.report-0.8.13-sources.jar"
+  name = "org_jacoco-org_jacoco_core-0_8_14-_core-sources_http",
+  url = "https://cache-redirector.jetbrains.com/repo1.maven.org/maven2/org/jacoco/org.jacoco.core/0.8.14/org.jacoco.core-0.8.14-sources.jar",
+  sha256 = "1550fd5081ecd2c2ad053994c23d91a4cef6dcbed4c4dac95130e7d75fa9cd3c",
+  downloaded_file_path = "org.jacoco.core-0.8.14-sources.jar"
 )
 
 http_file(
-  name = "org_jacoco-org_jacoco_agent-0_8_13-_agent-sources_http",
-  url = "https://cache-redirector.jetbrains.com/repo1.maven.org/maven2/org/jacoco/org.jacoco.agent/0.8.13/org.jacoco.agent-0.8.13-sources.jar",
-  sha256 = "c23cdc6c09294359f7ec1559791a94e2550ecfabbe58571d02318b2811200f9c",
-  downloaded_file_path = "org.jacoco.agent-0.8.13-sources.jar"
+  name = "org_ow2_asm-asm-9_9-sources_http",
+  url = "https://cache-redirector.jetbrains.com/repo1.maven.org/maven2/org/ow2/asm/asm/9.9/asm-9.9-sources.jar",
+  sha256 = "e37000a2a0bc9f0bef373714ad7dde4082212351847b74618d483057a4ae186c",
+  downloaded_file_path = "asm-9.9-sources.jar"
+)
+
+http_file(
+  name = "org_ow2_asm-asm-commons-9_9-sources_http",
+  url = "https://cache-redirector.jetbrains.com/repo1.maven.org/maven2/org/ow2/asm/asm-commons/9.9/asm-commons-9.9-sources.jar",
+  sha256 = "218bbb648e24578a385cb6b6a21ceff222a2a8f8b2d5f6a256a8099dd336dc76",
+  downloaded_file_path = "asm-commons-9.9-sources.jar"
+)
+
+http_file(
+  name = "org_ow2_asm-asm-tree-9_9-sources_http",
+  url = "https://cache-redirector.jetbrains.com/repo1.maven.org/maven2/org/ow2/asm/asm-tree/9.9/asm-tree-9.9-sources.jar",
+  sha256 = "9d1fe261fa1d29904ca9dbc76878396e76bc225191676a8c16ad2669a205321a",
+  downloaded_file_path = "asm-tree-9.9-sources.jar"
+)
+
+http_file(
+  name = "org_jacoco-org_jacoco_report-0_8_14-_report-sources_http",
+  url = "https://cache-redirector.jetbrains.com/repo1.maven.org/maven2/org/jacoco/org.jacoco.report/0.8.14/org.jacoco.report-0.8.14-sources.jar",
+  sha256 = "80ac2fac212d6a4583b7f025dc7b602f384a9dfcdbccd0e9cb78c415e9f5ffc6",
+  downloaded_file_path = "org.jacoco.report-0.8.14-sources.jar"
+)
+
+http_file(
+  name = "org_jacoco-org_jacoco_agent-0_8_14-_agent-sources_http",
+  url = "https://cache-redirector.jetbrains.com/repo1.maven.org/maven2/org/jacoco/org.jacoco.agent/0.8.14/org.jacoco.agent-0.8.14-sources.jar",
+  sha256 = "8a643b749deb255d7a42c445c3053c9ec263e27103becdaaf88cedda44357255",
+  downloaded_file_path = "org.jacoco.agent-0.8.14-sources.jar"
 )
 
 http_file(
@@ -4431,17 +4459,17 @@ http_file(
 )
 
 http_file(
-  name = "org_jetbrains_runtime-jbr-api-1_6_0_http",
-  url = "https://cache-redirector.jetbrains.com/repo1.maven.org/maven2/org/jetbrains/runtime/jbr-api/1.6.0/jbr-api-1.6.0.jar",
-  sha256 = "0ef4d299ddca95aab7a41799693781175bdca348864fa912eb21eab0d9bb0d2d",
-  downloaded_file_path = "jbr-api-1.6.0.jar"
+  name = "org_jetbrains_runtime-jbr-api-1_9_0_http",
+  url = "https://cache-redirector.jetbrains.com/repo1.maven.org/maven2/org/jetbrains/runtime/jbr-api/1.9.0/jbr-api-1.9.0.jar",
+  sha256 = "7e37284e33b5b304ee6174dcaa92db949b257cc4c8991ca865e7daf5113d8279",
+  downloaded_file_path = "jbr-api-1.9.0.jar"
 )
 
 http_file(
-  name = "org_jetbrains_runtime-jbr-api-1_6_0-sources_http",
-  url = "https://cache-redirector.jetbrains.com/repo1.maven.org/maven2/org/jetbrains/runtime/jbr-api/1.6.0/jbr-api-1.6.0-sources.jar",
-  sha256 = "c9e956af6a2a79560ba570adaeb2d2d53cf81ca8c47e7e7608e96d0bf9e32637",
-  downloaded_file_path = "jbr-api-1.6.0-sources.jar"
+  name = "org_jetbrains_runtime-jbr-api-1_9_0-sources_http",
+  url = "https://cache-redirector.jetbrains.com/repo1.maven.org/maven2/org/jetbrains/runtime/jbr-api/1.9.0/jbr-api-1.9.0-sources.jar",
+  sha256 = "70381d761a95c275eb9c09ab0dbf506d07f1ae61ece96a013219da19cbba80b8",
+  downloaded_file_path = "jbr-api-1.9.0-sources.jar"
 )
 
 http_file(
@@ -5474,6 +5502,20 @@ http_file(
 )
 
 http_file(
+  name = "org_jetbrains_intellij_deps_completion-completion-ranking-kotlin-0_4_0_http",
+  url = "https://cache-redirector.jetbrains.com/packages.jetbrains.team/maven/p/ij/intellij-dependencies/org/jetbrains/intellij/deps/completion/completion-ranking-kotlin/0.4.0/completion-ranking-kotlin-0.4.0.jar",
+  sha256 = "1849979a0cd2a997e1071ac79741b1a77781357e254138f30eabffebccddfec8",
+  downloaded_file_path = "completion-ranking-kotlin-0.4.0.jar"
+)
+
+http_file(
+  name = "org_jetbrains_intellij_deps_completion-completion-ranking-kotlin-0_4_0-sources_http",
+  url = "https://cache-redirector.jetbrains.com/packages.jetbrains.team/maven/p/ij/intellij-dependencies/org/jetbrains/intellij/deps/completion/completion-ranking-kotlin/0.4.0/completion-ranking-kotlin-0.4.0-sources.jar",
+  sha256 = "a2606dc207459370518b5e6ea2a356c1f9552a9eb53613cb9a57ce762ce8d6e9",
+  downloaded_file_path = "completion-ranking-kotlin-0.4.0-sources.jar"
+)
+
+http_file(
   name = "org_jetbrains_kotlin-kotlin-gradle-plugin-idea-1_9_20-dev-8162_http",
   url = "https://cache-redirector.jetbrains.com/packages.jetbrains.team/maven/p/ij/intellij-dependencies/org/jetbrains/kotlin/kotlin-gradle-plugin-idea/1.9.20-dev-8162/kotlin-gradle-plugin-idea-1.9.20-dev-8162.jar",
   sha256 = "8d1af87632d95148f122a9fa0ae2903c19ee6fab7d01e017f76e0d2c9a022c20",
@@ -5513,20 +5555,6 @@ http_file(
   url = "https://cache-redirector.jetbrains.com/repo1.maven.org/maven2/org/jetbrains/kotlin/kotlin-metadata-jvm/2.2.20/kotlin-metadata-jvm-2.2.20-sources.jar",
   sha256 = "c55bd0d04e6d796d7d2cf0711281989d5e06b7def07100f80640b98ae1ebb788",
   downloaded_file_path = "kotlin-metadata-jvm-2.2.20-sources.jar"
-)
-
-http_file(
-  name = "org_jetbrains_intellij_deps_completion-completion-ranking-kotlin-0_4_0_http",
-  url = "https://cache-redirector.jetbrains.com/packages.jetbrains.team/maven/p/ij/intellij-dependencies/org/jetbrains/intellij/deps/completion/completion-ranking-kotlin/0.4.0/completion-ranking-kotlin-0.4.0.jar",
-  sha256 = "1849979a0cd2a997e1071ac79741b1a77781357e254138f30eabffebccddfec8",
-  downloaded_file_path = "completion-ranking-kotlin-0.4.0.jar"
-)
-
-http_file(
-  name = "org_jetbrains_intellij_deps_completion-completion-ranking-kotlin-0_4_0-sources_http",
-  url = "https://cache-redirector.jetbrains.com/packages.jetbrains.team/maven/p/ij/intellij-dependencies/org/jetbrains/intellij/deps/completion/completion-ranking-kotlin/0.4.0/completion-ranking-kotlin-0.4.0-sources.jar",
-  sha256 = "a2606dc207459370518b5e6ea2a356c1f9552a9eb53613cb9a57ce762ce8d6e9",
-  downloaded_file_path = "completion-ranking-kotlin-0.4.0-sources.jar"
 )
 
 http_file(
@@ -6811,13 +6839,6 @@ http_file(
 )
 
 http_file(
-  name = "com_squareup_okio-okio-jvm-3_11_0_http",
-  url = "https://cache-redirector.jetbrains.com/repo1.maven.org/maven2/com/squareup/okio/okio-jvm/3.11.0/okio-jvm-3.11.0.jar",
-  sha256 = "2d22541a192f901a45c95274567d6957ac1ed613d49e41db4e5e5d86139cf022",
-  downloaded_file_path = "okio-jvm-3.11.0.jar"
-)
-
-http_file(
   name = "io_coil-kt_coil3-coil-compose-core-jvm-3_2_0_http",
   url = "https://cache-redirector.jetbrains.com/repo1.maven.org/maven2/io/coil-kt/coil3/coil-compose-core-jvm/3.2.0/coil-compose-core-jvm-3.2.0.jar",
   sha256 = "a74b96cb179fe8f872d4e9f03468e0477d32787e9b6430a9d137aafb76012a60",
@@ -6843,13 +6864,6 @@ http_file(
   url = "https://cache-redirector.jetbrains.com/repo1.maven.org/maven2/io/coil-kt/coil3/coil-core-jvm/3.2.0/coil-core-jvm-3.2.0-sources.jar",
   sha256 = "c0086b413bc0abf66c5727adc73ccb8fb0340cd505ef46ec85db5b8b9c7b5958",
   downloaded_file_path = "coil-core-jvm-3.2.0-sources.jar"
-)
-
-http_file(
-  name = "com_squareup_okio-okio-jvm-3_11_0-sources_http",
-  url = "https://cache-redirector.jetbrains.com/repo1.maven.org/maven2/com/squareup/okio/okio-jvm/3.11.0/okio-jvm-3.11.0-sources.jar",
-  sha256 = "4cc11c760166d43da9653a5c27ddbf58a510bb8f35ff1aa3a1676206e56a0e4e",
-  downloaded_file_path = "okio-jvm-3.11.0-sources.jar"
 )
 
 http_file(
@@ -6909,24 +6923,10 @@ http_file(
 )
 
 http_file(
-  name = "org_jetbrains_skiko-skiko-awt-0_9_4_http",
-  url = "https://cache-redirector.jetbrains.com/repo1.maven.org/maven2/org/jetbrains/skiko/skiko-awt/0.9.4/skiko-awt-0.9.4.jar",
-  sha256 = "8e26ab1ae75f65786f6b973a66e89a2836d199a5561c4c2edbc1f3f67ad2197f",
-  downloaded_file_path = "skiko-awt-0.9.4.jar"
-)
-
-http_file(
   name = "io_coil-kt_coil3-coil-test-jvm-3_2_0-sources_http",
   url = "https://cache-redirector.jetbrains.com/repo1.maven.org/maven2/io/coil-kt/coil3/coil-test-jvm/3.2.0/coil-test-jvm-3.2.0-sources.jar",
   sha256 = "dabc717837fe8b897f0ad526f47c097483983794c6b0b46eeec868ccfe2a7273",
   downloaded_file_path = "coil-test-jvm-3.2.0-sources.jar"
-)
-
-http_file(
-  name = "org_jetbrains_skiko-skiko-awt-0_9_4-sources_http",
-  url = "https://cache-redirector.jetbrains.com/repo1.maven.org/maven2/org/jetbrains/skiko/skiko-awt/0.9.4/skiko-awt-0.9.4-sources.jar",
-  sha256 = "a4b1b3cf0855f8095b161df523dfbd0bea7684a29b0914a5d85d1680f8f68f58",
-  downloaded_file_path = "skiko-awt-0.9.4-sources.jar"
 )
 
 http_file(

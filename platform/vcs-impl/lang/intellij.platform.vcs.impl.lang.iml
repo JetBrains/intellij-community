@@ -32,5 +32,6 @@
     <orderEntry type="module" module-name="intellij.platform.statistics" />
     <orderEntry type="module" module-name="intellij.libraries.fastutil" />
     <orderEntry type="module" module-name="intellij.platform.todo" />
+    <orderEntry type="module" module-name="intellij.platform.vcs.impl.shared" />
   </component>
 </module>

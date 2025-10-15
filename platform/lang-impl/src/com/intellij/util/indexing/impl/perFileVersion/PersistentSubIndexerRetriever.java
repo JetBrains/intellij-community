@@ -53,6 +53,7 @@ public final class PersistentSubIndexerRetriever<SubIndexerType, SubIndexerVersi
   @Override
   public void close() throws IOException {
     myPersistentVersionEnumerator.close();
+    myFileAttribute.close();
   }
 
   public void flush() throws IOException {

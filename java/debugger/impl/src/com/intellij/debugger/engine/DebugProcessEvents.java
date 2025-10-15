@@ -39,12 +39,11 @@ import com.intellij.util.ConcurrencyUtil;
 import com.intellij.util.TimeoutUtil;
 import com.intellij.util.concurrency.AppExecutorUtil;
 import com.intellij.util.containers.ContainerUtil;
-import com.intellij.util.ui.UIUtil;
 import com.intellij.xdebugger.XDebugSession;
 import com.intellij.xdebugger.breakpoints.XBreakpoint;
 import com.intellij.xdebugger.impl.XDebugSessionImpl;
 import com.intellij.xdebugger.impl.XDebuggerManagerImpl;
-import com.intellij.xdebugger.impl.ui.XDebugSessionTab;
+import com.intellij.xdebugger.impl.frame.ShowSessionTabUtils;
 import com.jetbrains.jdi.EventRequestManagerImpl;
 import com.jetbrains.jdi.LocationImpl;
 import com.jetbrains.jdi.ThreadReferenceImpl;
@@ -458,7 +457,9 @@ public class DebugProcessEvents extends DebugProcessImpl {
       if (!canBeModified) {
         SuspendContextImpl suspendContext = getSuspendManager().pushSuspendContext(EventRequest.SUSPEND_ALL, 0);
         forEachSafe(myDebugProcessListeners, it -> it.paused(suspendContext));
-        UIUtil.invokeLaterIfNeeded(() -> XDebugSessionTab.showFramesView(session));
+        if (session != null) {
+          ShowSessionTabUtils.showFrames(getProject(), session.getId());
+        }
       }
     }
   }

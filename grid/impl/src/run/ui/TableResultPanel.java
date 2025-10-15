@@ -103,7 +103,7 @@ public class TableResultPanel extends UserDataHolderBase
   private ErrorNotificationPanel myErrorNotificationPanel;
 
   private final GridMainPanel myMainPanel;
-  private final LayeredPaneWithSizer myLayeredPane;
+  protected final LayeredPaneWithSizer myLayeredPane;
   private ResultView myResultView;
 
   private final ActionGroup myPopupActionGroup;
@@ -347,7 +347,7 @@ public class TableResultPanel extends UserDataHolderBase
     myColumnAttributes.myAnonymousColumnName = name;
   }
 
-  private void createResultView() {
+  protected void createResultView() {
     myResultView = myViewFactory.createResultView(this, myColumnHeaderActions, myRowHeaderActions);
 
     myColorModel = new GridColorModelImpl(this, getDatabaseMutator(this), myResultViewSettings.myTransparentRowHeaderBg, myResultViewSettings.myTransparentColumnHeaderBg);
@@ -1604,17 +1604,18 @@ public class TableResultPanel extends UserDataHolderBase
     }
   }
 
-  @Override
-  public void setPresentationMode(@NotNull GridPresentationMode presentationMode) {
-    if (myPresentationMode == presentationMode) return;
+  protected final void reloadPresentation() {
+    reloadPresentation(myPresentationMode, true);
+  }
 
+  private void reloadPresentation(GridPresentationMode presentationMode, boolean force) {
     saveAndRestoreSelection(this, () -> {
       myPresentationMode = presentationMode;
       ResultViewFactory newFactory = ResultViewFactory.of(presentationMode);
       boolean requestFocusInSearchField = mySearchSession != null &&
                                           IdeFocusManager.getInstance(getProject()).getFocusOwner() ==
                                           mySearchSession.getComponent().getSearchTextComponent();
-      if (myViewFactory != newFactory) {
+      if (force || myViewFactory != newFactory) {
         boolean wasTransposed = myResultView.isTransposed();
         myViewFactory = newFactory;
         myLayeredPane.removeAll();
@@ -1640,6 +1641,12 @@ public class TableResultPanel extends UserDataHolderBase
                           true));
       }
     });
+  }
+
+  @Override
+  public void setPresentationMode(@NotNull GridPresentationMode presentationMode) {
+    if (myPresentationMode == presentationMode) return;
+    reloadPresentation(presentationMode, false);
   }
 
   @Override

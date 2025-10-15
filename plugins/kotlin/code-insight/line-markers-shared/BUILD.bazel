@@ -32,7 +32,7 @@ jvm_library(
     "//platform/execution-impl",
     "//java/java-psi-api:psi",
     "//plugins/kotlin/base/project-structure",
-    "//plugins/kotlin/kotlin.searching:searching-k2",
+    "//plugins/kotlin/kotlin.searching",
     "@lib//:kotlinc-analysis-api-platform-interface",
   ]
 )

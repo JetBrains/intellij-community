@@ -1,4 +1,4 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.notification;
 
 import com.intellij.internal.statistic.collectors.fus.actions.persistence.ActionIdProvider;
@@ -7,7 +7,6 @@ import com.intellij.openapi.actionSystem.AnAction;
 import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.project.DumbAwareAction;
 import org.jetbrains.annotations.ApiStatus;
-import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -65,9 +64,11 @@ public abstract class NotificationAction extends DumbAwareAction {
     return new Simple(text, action, true, action, null);
   }
 
-  public static @NotNull NotificationAction createSimple(@NotNull @NotificationContent String text,
-                                                         @NotNull @NonNls String actionId,
-                                                         @NotNull Runnable action) {
+  public static @NotNull NotificationAction createSimple(
+    @NotNull @NotificationContent String text,
+    @NotNull String actionId,
+    @NotNull Runnable action
+  ) {
     return new Simple(text, (event, notification) -> action.run(), false, action, actionId);
   }
 

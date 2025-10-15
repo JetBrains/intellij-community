@@ -33,7 +33,7 @@
     <orderEntry type="module" module-name="intellij.platform.util" />
     <orderEntry type="module" module-name="intellij.platform.editor.ui" />
     <orderEntry type="module" module-name="kotlin.highlighting.k1" />
-    <orderEntry type="module" module-name="kotlin.base.analysis" />
+    <orderEntry type="module" module-name="intellij.kotlin.base.analysis" />
     <orderEntry type="module" module-name="kotlin.base.fe10.code-insight" />
     <orderEntry type="module" module-name="kotlin.base.fe10.analysis" />
     <orderEntry type="module" module-name="kotlin.completion.impl.k1" />

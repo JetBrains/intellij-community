@@ -3,8 +3,9 @@ package com.intellij.python.sdkConfigurator.frontend
 import com.intellij.openapi.application.EDT
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.ui.DialogWrapper
-import com.intellij.python.sdkConfigurator.common.ModuleName
-import com.intellij.python.sdkConfigurator.common.ModulesDTO
+import com.intellij.python.sdkConfigurator.common.impl.ModuleName
+import com.intellij.python.sdkConfigurator.common.impl.ModulesDTO
+import com.intellij.python.sdkConfigurator.frontend.PySdkConfiguratorFrontendBundle.message
 import com.intellij.python.sdkConfigurator.frontend.components.ModuleList
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
@@ -28,7 +29,8 @@ internal suspend fun askUser(project: Project, modules: ModulesDTO, onResult: (S
 private class MyDialog(project: Project, private val viewModel: ModulesViewModel) : DialogWrapper(project) {
 
   init {
-    title = PySdkConfiguratorFrontendBundle.message("python.sdk.configurator.frontend.choose.modules.title")
+    title = message("python.sdk.configurator.frontend.choose.modules.title")
+    isResizable = false
     init()
   }
 
@@ -36,7 +38,10 @@ private class MyDialog(project: Project, private val viewModel: ModulesViewModel
   override fun createCenterPanel(): JComponent {
     enableNewSwingCompositing()
     return compose(focusOnClickInside = true, content = {
-      ModuleList(viewModel.checkBoxItems, viewModel.checked, viewModel::clicked)
+      ModuleList(viewModel.checkBoxItems, viewModel.checked, viewModel::clicked,
+                 topLabel = message("python.sdk.configurator.frontend.choose.modules.text"),
+                 projectStructureLabel = message("python.sdk.configurator.frontend.choose.modules.project.structure"),
+                 environmentLabel = message("python.sdk.configurator.frontend.choose.modules.environment"))
     })
   }
 }

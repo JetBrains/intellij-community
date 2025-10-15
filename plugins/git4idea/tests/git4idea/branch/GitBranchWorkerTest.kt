@@ -126,9 +126,9 @@ class GitBranchWorkerTest : GitPlatformTest() {
       }
     })
 
-    assertCurrentBranch(first, "feature")
-    assertCurrentBranch(second, "master")
-    assertCurrentBranch(last, "master")
+    first.assertCurrentBranch("feature")
+    second.assertCurrentBranch("master")
+    last.assertCurrentBranch("master")
   }
 
   fun `test checkout without problems`() {
@@ -189,9 +189,9 @@ class GitBranchWorkerTest : GitPlatformTest() {
       override fun showUnmergedFilesMessageWithRollback(operationName: String, rollbackProposal: String) = false
     })
 
-    assertCurrentBranch(first, "feature")
-    assertCurrentBranch(second, "master")
-    assertCurrentBranch(last, "master")
+    first.assertCurrentBranch("feature")
+    second.assertCurrentBranch("master")
+    last.assertCurrentBranch("master")
   }
 
   fun `test checkout revision checkout branch with complete success`() {
@@ -228,7 +228,7 @@ class GitBranchWorkerTest : GitPlatformTest() {
 
     checkoutRevision("feature", TestUiHandler(project))
 
-    assertCurrentBranch(last, "master")
+    last.assertCurrentBranch("master")
     assertDetachedState(first, "feature")
     assertDetachedState(second, "feature")
 
@@ -515,9 +515,9 @@ class GitBranchWorkerTest : GitPlatformTest() {
 
   fun `test deny to smart checkout in second repo should show rollback proposal`() {
     `check deny to smart operation in second repo should show rollback proposal`("checkout")
-    assertCurrentBranch(first, "feature")
-    assertCurrentBranch(second, "master")
-    assertCurrentBranch(last, "master")
+    first.assertCurrentBranch("feature")
+    second.assertCurrentBranch("master")
+    last.assertCurrentBranch("master")
   }
 
   fun `test deny to smart merge in second repo should show rollback proposal`() {
@@ -906,9 +906,9 @@ class GitBranchWorkerTest : GitPlatformTest() {
       }
     })
 
-    assertCurrentBranch(last, "feature")
-    assertCurrentBranch(first, "newbranch")
-    assertCurrentBranch(second, "master")
+    last.assertCurrentBranch("feature")
+    first.assertCurrentBranch("newbranch")
+    second.assertCurrentBranch("master")
   }
 
   fun `test delete remote branch`() {
@@ -1059,13 +1059,13 @@ class GitBranchWorkerTest : GitPlatformTest() {
 
   private fun assertCurrentBranch(name: String) {
     for (repository in myRepositories) {
-      assertCurrentBranch(repository, name)
+      repository.assertCurrentBranch(name)
     }
   }
 
   private fun assertCurrentRevision(reference: String) {
     for (repository in myRepositories) {
-      assertCurrentRevision(repository, reference)
+      repository.assertCurrentRevision(reference)
     }
   }
 
@@ -1214,19 +1214,8 @@ class GitBranchWorkerTest : GitPlatformTest() {
   }
 
   private fun assertDetachedState(repository: GitRepository, reference: String) {
-    assertCurrentRevision(repository, reference)
+    repository.assertCurrentRevision(reference)
     assertEquals("Repository should be in the detached HEAD state", Repository.State.DETACHED, repository.state)
-  }
-
-  private fun assertCurrentBranch(repository: GitRepository, name: String) {
-    assertEquals("Current branch is incorrect in ${repository}", name, repository.currentBranchName)
-  }
-
-  private fun assertCurrentRevision(repository: GitRepository, reference: String) {
-    val expectedRef = repository.git("rev-parse HEAD")
-    val currentRef = repository.git("rev-parse $reference")
-
-    assertEquals("Current revision is incorrect in ${repository}", expectedRef, currentRef)
   }
 
   private fun assertBranchDeleted(repo: GitRepository, branch: String) {

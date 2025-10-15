@@ -14,6 +14,7 @@ import com.intellij.execution.configurations.GeneralCommandLine;
 import com.intellij.execution.configurations.GeneralCommandLine.ParentEnvironmentType;
 import com.intellij.execution.configurations.ParametersList;
 import com.intellij.execution.configurations.PtyCommandLine;
+import com.intellij.execution.executors.DefaultDebugExecutor;
 import com.intellij.execution.filters.TextConsoleBuilder;
 import com.intellij.execution.filters.TextConsoleBuilderFactory;
 import com.intellij.execution.filters.UrlFilter;
@@ -58,7 +59,6 @@ import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.execution.ParametersListUtil;
 import com.jetbrains.python.PyBundle;
 import com.jetbrains.python.console.PyDebugConsoleBuilder;
-import com.jetbrains.python.debugger.PyDebugRunner;
 import com.jetbrains.python.debugger.PyDebuggerOptionsProvider;
 import com.jetbrains.python.debugger.PyTargetPathMapper;
 import com.jetbrains.python.facet.LibraryContributingFacet;
@@ -67,6 +67,8 @@ import com.jetbrains.python.library.PythonLibraryType;
 import com.jetbrains.python.packaging.PyExecutionException;
 import com.jetbrains.python.remote.PyRemotePathMapper;
 import com.jetbrains.python.remote.PyRemoteSdkAdditionalData;
+import com.jetbrains.python.run.features.PyRunToolParameters;
+import com.jetbrains.python.run.features.PyRunToolProvider;
 import com.jetbrains.python.run.target.HelpersAwareTargetEnvironmentRequest;
 import com.jetbrains.python.run.target.PySdkTargetPaths;
 import com.jetbrains.python.run.target.PythonCommandLineTargetEnvironmentProvider;
@@ -90,6 +92,7 @@ import java.util.function.Function;
 
 import static com.intellij.execution.util.EnvFilesUtilKt.configureEnvsFromFiles;
 import static com.jetbrains.python.run.PythonScriptCommandLineState.getExpandedWorkingDir;
+import static com.jetbrains.python.run.features.PyRunToolExtKt.useRunTool;
 
 /**
  * Since this state is async, any method could be called on any thread
@@ -135,7 +138,8 @@ public abstract class PythonCommandLineState extends CommandLineState {
   private boolean myRunWithPty = PtyCommandLine.isEnabled();
 
   public boolean isDebug() {
-    return PyDebugRunner.PY_DEBUG_RUNNER.equals(getEnvironment().getRunner().getRunnerId());
+    return getEnvironment().getExecutor() instanceof DefaultDebugExecutor &&
+           getEnvironment().getRunProfile() instanceof AbstractPythonRunConfiguration;
   }
 
   public static ServerSocket createServerSocket() throws ExecutionException {
@@ -205,7 +209,8 @@ public abstract class PythonCommandLineState extends CommandLineState {
     return new DefaultExecutionResult(console, processHandler, createActions(console, processHandler));
   }
 
-  private @NotNull ConsoleView createAndAttachConsoleInEDT(@NotNull Project project, ProcessHandler processHandler, Executor executor)
+  @ApiStatus.Internal
+  public @NotNull ConsoleView createAndAttachConsoleInEDT(@NotNull Project project, ProcessHandler processHandler, Executor executor)
     throws ExecutionException {
     final Ref<Object> consoleRef = Ref.create();
     ApplicationManager.getApplication().invokeAndWait(
@@ -340,10 +345,21 @@ public abstract class PythonCommandLineState extends CommandLineState {
       helpersAwareTargetRequest.getTargetEnvironmentRequest().prepareEnvironment(TargetProgressIndicator.EMPTY);
 
     // TODO Detect and discard existing overrides of configured parameters.
-    List<String> allInterpreterParameters = Streams.concat(getConfiguredInterpreterParameters().stream(),
-                                                        realPythonExecution.getAdditionalInterpreterParameters().stream()).toList();
+    List<String> allInterpreterParameters =
+      Streams.concat(getConfiguredInterpreterParameters().stream(), realPythonExecution.getAdditionalInterpreterParameters().stream())
+        .toList();
+
+    PyRunToolParameters runToolParameters = null;
+    if (sdk != null) {
+      PyRunToolProvider runToolProvider = PyRunToolProvider.forSdk(sdk);
+      if (runToolProvider != null && useRunTool(myConfig, sdk)) {
+        runToolParameters = runToolProvider.getRunToolParameters();
+      }
+    }
+
     TargetedCommandLine targetedCommandLine =
-      PythonScripts.buildTargetedCommandLine(realPythonExecution, targetEnvironment, sdk, allInterpreterParameters, myRunWithPty);
+      PythonScripts.buildTargetedCommandLine(realPythonExecution, targetEnvironment, sdk, allInterpreterParameters, myRunWithPty,
+                                             runToolParameters);
 
     // TODO [Targets API] `myConfig.isPassParentEnvs` must be handled (at least for the local case)
     ProcessHandler processHandler = doStartProcess(targetEnvironment, targetedCommandLine, progressIndicator);
@@ -527,14 +543,14 @@ public abstract class PythonCommandLineState extends CommandLineState {
 
   /**
    * Collects deployment paths from suitable mapping providers.
-   *
+   * <p>
    * If the current SDK additional data is not a {@code PyTargetAwareAdditionalData}, then an empty set is returned.
    *
    * @return a set of paths on remote file systems
    */
   private @NotNull Set<String> getDeploymentPaths() {
     Sdk sdk = myConfig.getSdk();
-    Set<String> deploymentPaths = new HashSet<String>();
+    Set<String> deploymentPaths = new HashSet<>();
     if (sdk != null) {
       SdkAdditionalData sdkAdditionalData = sdk.getSdkAdditionalData();
       if (sdkAdditionalData instanceof PyTargetAwareAdditionalData data) {
@@ -821,6 +837,21 @@ public abstract class PythonCommandLineState extends CommandLineState {
       initPythonPath(commandLine, passParentEnvs, pathList, sdkHome);
     }
   }
+
+  @ApiStatus.Internal
+  public static void buildPythonPath(@NotNull AbstractPythonRunConfiguration<?> configuration, boolean isDebug, boolean passParentEnvs) {
+    Module module = configuration.getModule();
+    Sdk sdk = configuration.getSdk();
+    String sdkHome = sdk != null ? sdk.getHomePath() : null;
+
+    if (sdk != null) {
+      List<String> pathList = new ArrayList<>();
+      pathList.addAll(getAddedPaths(sdk));
+      pathList.addAll(collectPythonPath(module, sdkHome, configuration.shouldAddContentRoots(), configuration.shouldAddSourceRoots(), isDebug));
+      PythonEnvUtil.initPythonPath(configuration.getEnvs(), passParentEnvs, pathList);
+    }
+  }
+
 
   public static void buildPythonPath(@NotNull Project project,
                                      @Nullable Module module,

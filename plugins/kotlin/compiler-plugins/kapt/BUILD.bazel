@@ -1,4 +1,4 @@
-### auto-generated section `build kotlin.compiler-plugins.kapt` start
+### auto-generated section `build intellij.kotlin.compilerPlugins.kapt` start
 load("@rules_jvm//:jvm.bzl", "jvm_library", "resourcegroup")
 
 resourcegroup(
@@ -9,7 +9,7 @@ resourcegroup(
 
 jvm_library(
   name = "kapt",
-  module_name = "kotlin.compiler-plugins.kapt",
+  module_name = "intellij.kotlin.compilerPlugins.kapt",
   visibility = ["//visibility:public"],
   srcs = glob(["src/**/*.kt", "src/**/*.java", "src/**/*.form"], allow_empty = True),
   resources = [":kapt_resources"],
@@ -26,4 +26,4 @@ jvm_library(
     "//plugins/gradle:gradle-common",
   ]
 )
-### auto-generated section `build kotlin.compiler-plugins.kapt` end
+### auto-generated section `build intellij.kotlin.compilerPlugins.kapt` end

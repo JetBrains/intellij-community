@@ -25,6 +25,7 @@ class LicenseDialogUi(data: ComponentData) : UiComponent(data) {
   val activationCodeTextField = x("//div[contains(@classhierarchy, 'javax.swing.JTextArea')]")
   val activateButton = x("//div[@accessiblename='Activate' and @javaclass!='com.intellij.ui.dsl.builder.components.SegmentedButton']")
   val activateAnotherLicenseButton = x { or(contains(byAccessibleName("Activate Another License")), contains(byAccessibleName("Activate Another Subscription"))) }
+  val loginWithJbaLinkButton = x { byClass("ActionLink") and contains(byAccessibleName("Log in")) }
   val loginWithJbaButton = x { contains(byAccessibleName("Log In")) }
   val loginTroublesButton = x { or(contains(byAccessibleName("Troubles")), contains(byAccessibleName("Log in with token"))) }
   val startTrialTab = x { and(byClass("SegmentedButton"), byAccessibleName("Start trial")) }

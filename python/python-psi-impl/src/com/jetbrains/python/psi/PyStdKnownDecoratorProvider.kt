@@ -54,7 +54,8 @@ class PyStdKnownDecoratorProvider : PyKnownDecoratorProvider {
       PyKnownDecorator.ATTRS_FROZEN,
       PyKnownDecorator.PYTEST_FIXTURES_FIXTURE,
       PyKnownDecorator.ENUM_MEMBER,
-      PyKnownDecorator.ENUM_NONMEMBER
+      PyKnownDecorator.ENUM_NONMEMBER,
+      PyKnownDecorator.DISJOINT_BASE_EXT,
     )
   }
 }

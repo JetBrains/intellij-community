@@ -58,6 +58,7 @@ object PluginXmlConst {
   const val CONTENT_MODULE_LOADING_REQUIRED_VALUE: String = "required"
   const val CONTENT_MODULE_LOADING_EMBEDDED_VALUE: String = "embedded"
   const val CONTENT_MODULE_LOADING_ON_DEMAND_VALUE: String = "on-demand"
+  const val CONTENT_MODULE_REQUIRED_IF_AVAILABLE_ATTR: String = "required-if-available"
 
   const val DEPENDS_ELEM: String = "depends"
   const val DEPENDS_OPTIONAL_ATTR: String = "optional"
@@ -66,6 +67,7 @@ object PluginXmlConst {
   const val DEPENDENCIES_ELEM: String = "dependencies"
   const val DEPENDENCIES_MODULE_ELEM: String = "module"
   const val DEPENDENCIES_MODULE_NAME_ATTR: String = "name"
+  const val DEPENDENCIES_MODULE_NAMESPACE_ATTR: String = "namespace"
   const val DEPENDENCIES_PLUGIN_ELEM: String = "plugin"
   const val DEPENDENCIES_PLUGIN_ID_ATTR: String = "id"
 

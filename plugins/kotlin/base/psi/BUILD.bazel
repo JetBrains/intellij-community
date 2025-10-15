@@ -1,4 +1,4 @@
-### auto-generated section `build kotlin.base.psi` start
+### auto-generated section `build intellij.kotlin.base.psi` start
 load("@rules_jvm//:jvm.bzl", "jvm_library", "resourcegroup")
 
 resourcegroup(
@@ -9,7 +9,7 @@ resourcegroup(
 
 jvm_library(
   name = "psi",
-  module_name = "kotlin.base.psi",
+  module_name = "intellij.kotlin.base.psi",
   visibility = ["//visibility:public"],
   srcs = glob(["src/**/*.kt", "src/**/*.java", "src/**/*.form"], allow_empty = True),
   resources = [":psi_resources"],
@@ -27,4 +27,4 @@ jvm_library(
     "//platform/code-style-api:codeStyle",
   ]
 )
-### auto-generated section `build kotlin.base.psi` end
+### auto-generated section `build intellij.kotlin.base.psi` end

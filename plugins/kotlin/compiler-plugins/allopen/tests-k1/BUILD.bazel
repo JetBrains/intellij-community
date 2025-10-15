@@ -32,7 +32,7 @@ jvm_library(
     "//plugins/kotlin/base/plugin:plugin_test_lib",
     "//plugins/kotlin/base/facet",
     "//plugins/kotlin/core",
-    "//plugins/kotlin/compiler-plugins/compiler-plugin-support/common",
+    "//plugins/kotlin/compiler-plugins/compiler-plugin-support/common:kotlin-compilerPlugins-support",
     "//plugins/kotlin/compiler-plugins/allopen/common-k1:kotlin-compiler-plugins-allopen-common-k1",
     "//plugins/kotlin/test-framework",
     "//plugins/kotlin/test-framework:test-framework_test_lib",

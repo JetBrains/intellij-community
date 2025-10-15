@@ -16,20 +16,20 @@
     <orderEntry type="module" module-name="intellij.platform.core" />
     <orderEntry type="module" module-name="intellij.platform.refactoring" />
     <orderEntry type="module" module-name="kotlin.base.frontend-agnostic" />
-    <orderEntry type="module" module-name="kotlin.base.util" />
-    <orderEntry type="module" module-name="kotlin.base.plugin" />
-    <orderEntry type="module" module-name="kotlin.base.project-structure" />
+    <orderEntry type="module" module-name="intellij.kotlin.base.util" />
+    <orderEntry type="module" module-name="intellij.kotlin.base.plugin" />
+    <orderEntry type="module" module-name="intellij.kotlin.base.projectStructure" />
     <orderEntry type="module" module-name="intellij.platform.editor.ui" />
     <orderEntry type="module" module-name="intellij.platform.ide" />
     <orderEntry type="module" module-name="intellij.java.analysis.impl" />
     <orderEntry type="module" module-name="intellij.platform.lang.impl" />
     <orderEntry type="module" module-name="intellij.platform.core.ui" />
-    <orderEntry type="module" module-name="kotlin.base.resources" />
-    <orderEntry type="module" module-name="kotlin.base.psi" />
+    <orderEntry type="module" module-name="intellij.kotlin.base.resources" />
+    <orderEntry type="module" module-name="intellij.kotlin.base.psi" />
     <orderEntry type="module" module-name="intellij.libraries.markdown" />
     <orderEntry type="module" module-name="intellij.java.impl" />
-    <orderEntry type="module" module-name="kotlin.highlighting.minimal" exported="" />
-    <orderEntry type="module" module-name="kotlin.code-insight.utils" />
+    <orderEntry type="module" module-name="intellij.kotlin.highlighting.minimal" exported="" />
+    <orderEntry type="module" module-name="intellij.kotlin.codeInsight.utils" />
     <orderEntry type="library" name="kotlinc.analysis-api" level="project" />
   </component>
 </module>

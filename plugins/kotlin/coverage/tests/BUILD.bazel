@@ -1,4 +1,4 @@
-### auto-generated section `build kotlin.coverage.tests` start
+### auto-generated section `build intellij.kotlin.coverage.tests` start
 load("@rules_jvm//:jvm.bzl", "jvm_library")
 
 jvm_library(
@@ -9,7 +9,7 @@ jvm_library(
 
 jvm_library(
   name = "tests_test_lib",
-  module_name = "kotlin.coverage.tests",
+  module_name = "intellij.kotlin.coverage.tests",
   visibility = ["//visibility:public"],
   srcs = glob(["test/**/*.kt", "test/**/*.java", "test/**/*.form"], allow_empty = True),
   deps = [
@@ -46,13 +46,13 @@ jvm_library(
     "//platform/indexing-api:indexing",
   ]
 )
-### auto-generated section `build kotlin.coverage.tests` end
+### auto-generated section `build intellij.kotlin.coverage.tests` end
 
-### auto-generated section `test kotlin.coverage.tests` start
+### auto-generated section `test intellij.kotlin.coverage.tests` start
 load("@community//build:tests-options.bzl", "jps_test")
 
 jps_test(
   name = "tests_test",
   runtime_deps = [":tests_test_lib"]
 )
-### auto-generated section `test kotlin.coverage.tests` end
+### auto-generated section `test intellij.kotlin.coverage.tests` end

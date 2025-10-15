@@ -1,6 +1,7 @@
 // Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.jetbrains.python.testing
 
+import com.google.gson.Gson
 import com.intellij.execution.*
 import com.intellij.execution.actions.ConfigurationContext
 import com.intellij.execution.actions.ConfigurationFromContext
@@ -41,6 +42,7 @@ import com.intellij.refactoring.listeners.RefactoringElementListener
 import com.intellij.remote.PathMappingProvider
 import com.intellij.remote.RemoteSdkAdditionalData
 import com.intellij.util.ThreeState
+import com.intellij.util.execution.ParametersListUtil
 import com.jetbrains.python.PyBundle
 import com.jetbrains.python.extensions.*
 import com.jetbrains.python.packaging.management.PythonPackageManager
@@ -66,10 +68,14 @@ import com.jetbrains.python.testing.doctest.PythonDocTestUtil
 import jetbrains.buildServer.messages.serviceMessages.ServiceMessage
 import jetbrains.buildServer.messages.serviceMessages.TestStdErr
 import jetbrains.buildServer.messages.serviceMessages.TestStdOut
+import org.jdom.Element
 import org.jetbrains.annotations.PropertyKey
 import org.jetbrains.jps.model.java.JavaSourceRootType
+import java.io.File
 import java.nio.file.Path
 import java.util.regex.Matcher
+import java.util.regex.Pattern
+import javax.swing.JComponent
 
 fun getFactoryById(id: String): PyAbstractTestFactory<*>? =
   // user may have "pytest" because it was used instead of py.test (old id) for some time
@@ -157,7 +163,7 @@ private fun findConfigurationFactoryFromSettings(module: Module): ConfigurationF
 
 
 // folder provided by python side. Resolve test names versus it
-private val PATH_URL = java.util.regex.Pattern.compile("^python<([^<>]+)>$")
+private val PATH_URL = Pattern.compile("^python<([^<>]+)>$")
 
 
 private fun Sdk.getMapping(project: Project) = (sdkAdditionalData as? RemoteSdkAdditionalData)?.let { data ->
@@ -260,7 +266,7 @@ abstract class PyTestExecutionEnvironment<T : PyAbstractTestConfiguration>(confi
 
   override fun generateCommandLine(): GeneralCommandLine {
     val line = super.generateCommandLine()
-    line.workDirectory = java.io.File(configuration.workingDirectorySafe)
+    line.workDirectory = File(configuration.workingDirectorySafe)
     return line
   }
 }
@@ -281,7 +287,7 @@ abstract class PyAbstractTestSettingsEditor(private val sharedForm: PyTestShared
     s.copyFrom(getProperties(sharedForm, usePojoProperties = true))
   }
 
-  override fun createEditor(): javax.swing.JComponent = sharedForm.panel
+  override fun createEditor(): JComponent = sharedForm.panel
 }
 
 /**
@@ -470,7 +476,7 @@ abstract class PyAbstractTestConfiguration(project: Project,
   /**
    * Args after it passed to test runner itself
    */
-  protected val rawArgumentsSeparator = "--"
+  protected val rawArgumentsSeparator: String = "--"
 
   @DelegationProperty
   val target: ConfigurationTarget = ConfigurationTarget(DEFAULT_PATH, PyRunTargetVariant.PATH)
@@ -613,7 +619,7 @@ abstract class PyAbstractTestConfiguration(project: Project,
   private fun generateRawArguments(forRerun: Boolean = false): List<String> {
     val rawArguments = additionalArguments + " " + getCustomRawArgumentsString(forRerun)
     if (rawArguments.isNotBlank()) {
-      return listOf(rawArgumentsSeparator) + com.intellij.util.execution.ParametersListUtil.parse(rawArguments, false, true)
+      return listOf(rawArgumentsSeparator) + ParametersListUtil.parse(rawArguments, false, true)
     }
     return emptyList()
   }
@@ -621,7 +627,7 @@ abstract class PyAbstractTestConfiguration(project: Project,
   /**
    * If true, then framework name must be used as part of the run configuration name i.e "pytest: spam.eggs"
    */
-  protected open val useFrameworkNameInConfiguration = true
+  protected open val useFrameworkNameInConfiguration: Boolean = true
 
   override fun suggestedName(): String {
     val testFrameworkName = if (useFrameworkNameInConfiguration) testFrameworkName else PyBundle.message("runcfg.test.display_name")
@@ -660,10 +666,10 @@ abstract class PyAbstractTestConfiguration(project: Project,
   }
 
 
-  override fun writeExternal(element: org.jdom.Element) {
+  override fun writeExternal(element: Element) {
     super.writeExternal(element)
 
-    val gson = com.google.gson.Gson()
+    val gson = Gson()
 
     getConfigFields().properties.forEach {
       val value = it.get()
@@ -674,10 +680,10 @@ abstract class PyAbstractTestConfiguration(project: Project,
     }
   }
 
-  override fun readExternal(element: org.jdom.Element) {
+  override fun readExternal(element: Element) {
     super.readExternal(element)
 
-    val gson = com.google.gson.Gson()
+    val gson = Gson()
 
     getConfigFields().properties.forEach {
       val fromJson: Any? = gson.fromJson(readField(element, it.prefixedName), it.getType())
@@ -833,7 +839,7 @@ internal class PyTestsConfigurationProducer : AbstractPythonTestConfigurationPro
      */
     private fun getDirectoryForFileToBeImportedFrom(file: PyFile, module: Module?): PsiDirectory? {
       getExplicitlyConfiguredTestRoot(file)?.let {
-        return PsiManager.getInstance(file.project).findDirectory(it)
+        return file.manager.findDirectory(it)
       }
 
       module?.baseDir?.let {

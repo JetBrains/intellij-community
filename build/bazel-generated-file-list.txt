@@ -413,6 +413,7 @@ libraries/junit5
 libraries/junit5-launcher
 libraries/junit5-params
 libraries/junit5-pioneer
+libraries/junit5-vintage
 libraries/jvm-native-trusted-roots
 libraries/jzlib
 libraries/kotlin/reflect
@@ -493,6 +494,9 @@ platform/code-style-impl
 platform/collaboration-tools
 platform/collaboration-tools/auth
 platform/collaboration-tools/auth-base
+platform/completion/backend
+platform/completion/common
+platform/completion/frontend
 platform/compose
 platform/compose/compiler-plugin
 platform/compose/markdown
@@ -1421,6 +1425,7 @@ python/interpreters
 python/junit5Tests-framework
 python/junit5Tests-framework/conda
 python/openapi
+python/pipenv
 python/pluginCore
 python/pluginCore/impl
 python/pluginJava

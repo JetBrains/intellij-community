@@ -5,18 +5,17 @@ import com.intellij.execution.filters.CompositeFilter
 import com.intellij.execution.filters.ConsoleFilterProvider
 import com.intellij.execution.filters.Filter
 import com.intellij.execution.impl.ConsoleViewUtil
-import com.intellij.openapi.application.*
+import com.intellij.openapi.application.ModalityState
+import com.intellij.openapi.application.UiWithModelAccess
+import com.intellij.openapi.application.asContextElement
+import com.intellij.openapi.application.readAction
 import com.intellij.openapi.project.Project
-import com.intellij.psi.search.GlobalSearchScope
-import kotlinx.coroutines.CoroutineName
-import kotlinx.coroutines.CoroutineScope
-import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.*
 import kotlinx.coroutines.channels.BufferOverflow
 import kotlinx.coroutines.flow.*
-import kotlinx.coroutines.launch
-import kotlinx.coroutines.withContext
 import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.annotations.TestOnly
+import org.jetbrains.plugins.terminal.hyperlinks.TerminalFilterScope
 import java.util.concurrent.CopyOnWriteArrayList
 import java.util.concurrent.atomic.AtomicBoolean
 
@@ -59,7 +58,7 @@ class CompositeFilterWrapper(private val project: Project, coroutineScope: Corou
 
   private suspend fun computeFilter(): CompositeFilter {
     val filters = readAction {
-      ConsoleViewUtil.computeConsoleFilters(project, null, GlobalSearchScope.allScope(project))
+      ConsoleViewUtil.computeConsoleFilters(project, null, TerminalFilterScope(project))
     }
     return CompositeFilter(project, customFilters + filters).also {
       it.setForceUseAllFilters(true)

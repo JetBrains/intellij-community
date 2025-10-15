@@ -1,9 +1,9 @@
-### auto-generated section `build kotlin.j2k.k2` start
+### auto-generated section `build intellij.kotlin.j2k` start
 load("//build:compiler-options.bzl", "create_kotlinc_options")
 load("@rules_jvm//:jvm.bzl", "jvm_library", "resourcegroup")
 
 create_kotlinc_options(
-  name = "custom_k2",
+  name = "custom_kotlin-j2k",
   opt_in = [
     "com.intellij.openapi.util.IntellijInternalApi",
     "org.jetbrains.kotlin.utils.addToStdlib.UnsafeCastFunction",
@@ -14,18 +14,18 @@ create_kotlinc_options(
 )
 
 resourcegroup(
-  name = "k2_resources",
+  name = "kotlin-j2k_resources",
   srcs = glob(["resources/**/*"]),
   strip_prefix = "resources"
 )
 
 jvm_library(
-  name = "k2",
-  module_name = "kotlin.j2k.k2",
+  name = "kotlin-j2k",
+  module_name = "intellij.kotlin.j2k",
   visibility = ["//visibility:public"],
   srcs = glob(["src/**/*.kt", "src/**/*.java", "src/**/*.form"], allow_empty = True),
-  resources = [":k2_resources"],
-  kotlinc_opts = ":custom_k2",
+  resources = [":kotlin-j2k_resources"],
+  kotlinc_opts = ":custom_kotlin-j2k",
   deps = [
     "@lib//:kotlin-stdlib",
     "@lib//:kotlinc-analysis-api",
@@ -37,12 +37,12 @@ jvm_library(
     "//platform/core-impl",
     "//platform/editor-ui-api:editor-ui",
     "//platform/indexing-api:indexing",
-    "//plugins/kotlin/base/analysis-api/analysis-api-utils:kotlin-base-analysis-api-utils",
+    "//plugins/kotlin/base/analysis-api/analysis-api-utils:kotlin-base-analysis-utils",
     "//plugins/kotlin/base/code-insight",
     "//plugins/kotlin/base/psi",
     "//plugins/kotlin/base/util",
     "//plugins/kotlin/code-insight/api",
-    "//plugins/kotlin/code-insight/fixes-k2:kotlin-code-insight-fixes-k2",
+    "//plugins/kotlin/code-insight/fixes-k2:kotlin-codeInsight-fixes",
     "//plugins/kotlin/code-insight/utils",
     "//plugins/kotlin/frontend-independent",
     "//plugins/kotlin/j2k/shared",
@@ -51,8 +51,8 @@ jvm_library(
     "//java/java-indexing-api:indexing",
     "//platform/lang-impl",
     "//plugins/kotlin/refactorings/kotlin.refactorings.common:kotlin-refactorings-common",
-    "//plugins/kotlin/code-insight/kotlin.code-insight.k2:kotlin-code-insight-k2",
+    "//plugins/kotlin/code-insight/kotlin.code-insight.k2:kotlin-codeInsight",
     "//plugins/kotlin/base/project-structure",
   ]
 )
-### auto-generated section `build kotlin.j2k.k2` end
+### auto-generated section `build intellij.kotlin.j2k` end

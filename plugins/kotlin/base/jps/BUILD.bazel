@@ -1,9 +1,9 @@
-### auto-generated section `build kotlin.base.jps` start
+### auto-generated section `build intellij.kotlin.base.jps` start
 load("@rules_jvm//:jvm.bzl", "jvm_library")
 
 jvm_library(
   name = "jps",
-  module_name = "kotlin.base.jps",
+  module_name = "intellij.kotlin.base.jps",
   visibility = ["//visibility:public"],
   srcs = glob(["src/**/*.kt", "src/**/*.java", "src/**/*.form"], allow_empty = True),
   deps = [
@@ -25,4 +25,4 @@ jvm_library(
     "//java/compiler/impl",
   ]
 )
-### auto-generated section `build kotlin.base.jps` end
+### auto-generated section `build intellij.kotlin.base.jps` end

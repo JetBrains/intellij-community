@@ -65,7 +65,9 @@ fun PluginSpec.buildXml(config: PluginPackagingConfig = PluginPackagingConfig())
     if (moduleDependencies.isNotEmpty() || pluginMainModuleDependencies.isNotEmpty()) {
       appendLine("<dependencies>")
       for (module in moduleDependencies) {
-        appendLine("""<module name="${module}" />""")
+        append("""<module name="${module.name}"""")
+        if (module.namespace != null) append(""" namespace="${module.namespace}"""")
+        appendLine(""" />""")
       }
       for (plugin in pluginMainModuleDependencies) {
         appendLine("""<plugin id="${plugin}" />""")
@@ -87,7 +89,7 @@ fun PluginSpec.buildXml(config: PluginPackagingConfig = PluginPackagingConfig())
           ModuleLoadingRule.REQUIRED -> "loading=\"required\" "
           ModuleLoadingRule.EMBEDDED -> "loading=\"embedded\" "
           ModuleLoadingRule.ON_DEMAND -> "loading=\"on-demand\" "
-        }
+        } + module.requiredIfAvailable?.let { "required-if-available=\"$it\" " }.orEmpty()
         val tag = """module name="${module.moduleId}" $loadingAttribute"""
         if (module.embedToPluginXml) {
           appendLine("<$tag><![CDATA[${module.spec.buildXml(config)}]]></module>")

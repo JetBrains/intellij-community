@@ -32,16 +32,18 @@ import com.jetbrains.python.black.BlackFormatterUtil
 import com.jetbrains.python.black.BlackFormatterVersionService
 import com.jetbrains.python.black.BlackFormatterVersionService.Companion.UNKNOWN_VERSION
 import com.jetbrains.python.black.configuration.BlackFormatterConfiguration.BlackFormatterOption.Companion.toCliOptionFlags
+import com.jetbrains.python.externaltools.configuration.createPythonSdkComboBox
 import com.jetbrains.python.packaging.management.ui.PythonPackageManagerUI
 import com.jetbrains.python.packaging.management.ui.installPackageBackground
 import com.jetbrains.python.sdk.pythonSdk
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
 import org.jetbrains.annotations.Nls
-import java.io.File
+import java.nio.file.Path
 import javax.swing.JButton
 import javax.swing.JCheckBox
 import javax.swing.JLabel
+import kotlin.io.path.absolutePathString
 
 const val CONFIGURABLE_ID: String = "com.jetbrains.python.black.configuration.BlackFormatterConfigurable"
 
@@ -49,7 +51,7 @@ class BlackFormatterConfigurable(val project: Project) : BoundConfigurable(PyBun
   private var storedState = BlackFormatterConfiguration.getBlackConfiguration(project)
 
   private var isBlackFormatterPackageInstalled: Boolean = false
-  private var detectedBlackExecutable: File? = null
+  private var detectedBlackExecutable: Path? = null
   private var selectedSdk: Sdk? = null
   private var isLocalSdk = false
 
@@ -71,7 +73,8 @@ class BlackFormatterConfigurable(val project: Project) : BoundConfigurable(PyBun
       .withTitle(@Suppress("DialogTitleCapitalization") PyBundle.message("black.select.path.to.executable")))
   }
 
-  private val sdkSelectionComboBox = createPythonSdkComboBox(project.modules.mapNotNull { it.pythonSdk }, null)
+  // TODO: initial should be project default
+  private val sdkSelectionComboBox = createPythonSdkComboBox(project, null)
 
   private val cliArgumentsTextField = BlackTextFieldWithAutoCompletion(project, object :
     TextFieldWithAutoCompletionListProvider<BlackFormatterConfiguration.CliOptionFlag>(
@@ -91,8 +94,7 @@ class BlackFormatterConfigurable(val project: Project) : BoundConfigurable(PyBun
         .applyToComponent { renderer = executionModeComboBoxRenderer }
         .gap(RightGap.SMALL)
         .component
-      icon(AllIcons.General.ContextHelp)
-        .applyToComponent { toolTipText = PyBundle.message("black.execution.mode.tooltip.text") }
+      contextHelp(PyBundle.message("black.execution.mode.tooltip.text"))
       layout(RowLayout.LABEL_ALIGNED)
     }
     row {
@@ -179,7 +181,6 @@ class BlackFormatterConfigurable(val project: Project) : BoundConfigurable(PyBun
     executionModeComboBox.addActionListener { updateUiState() }
 
     sdkSelectionComboBox.addActionListener {
-      selectedSdk = sdkSelectionComboBox.item
       updateSdkInfo()
       updateUiState()
     }
@@ -189,8 +190,7 @@ class BlackFormatterConfigurable(val project: Project) : BoundConfigurable(PyBun
     enableOnReformatCheckBox.isSelected = storedState.enabledOnReformat
     enableOnSaveCheckBox.isSelected = storedState.enabledOnSave
     executionModeComboBox.item = storedState.executionMode
-    cliArgumentsTextField.text = storedState.cmdArguments ?: ""
-    sdkSelectionComboBox.item = selectedSdk
+    cliArgumentsTextField.text = storedState.cmdArguments
 
     blackExecutablePathField.emptyText.text = getBlackExecPathPlaceholderMessage()
     storedState.pathToExecutable?.let {
@@ -264,18 +264,18 @@ class BlackFormatterConfigurable(val project: Project) : BoundConfigurable(PyBun
     sdkName = selectedSdk?.name
 
     pathToExecutable = if (blackExecutableValidationInfo() == null) {
-      blackExecutablePathField.text.nullize() ?: BlackFormatterUtil.detectBlackExecutable()?.absolutePath
+      blackExecutablePathField.text.nullize() ?: BlackFormatterUtil.detectBlackExecutable()?.absolutePathString()
     }
     else null
   }
 
   private fun blackExecutableValidationInfo(): ValidationInfo? =
     BlackFormatterUtil.validateBlackExecutable(
-      blackExecutablePathField.text.nullize() ?: BlackFormatterUtil.detectBlackExecutable()?.absolutePath)
+      blackExecutablePathField.text.nullize() ?: BlackFormatterUtil.detectBlackExecutable()?.absolutePathString())
 
   private fun getBlackExecPathPlaceholderMessage(): String {
     return BlackFormatterUtil.detectBlackExecutable()?.let {
-      PyBundle.message("black.executable.auto.detected.path", it.absolutePath)
+      PyBundle.message("black.executable.auto.detected.path", it.absolutePathString())
     } ?: PyBundle.message("black.executable.not.found", if (SystemInfo.isWindows) 0 else 1)
   }
 
@@ -309,9 +309,10 @@ class BlackFormatterConfigurable(val project: Project) : BoundConfigurable(PyBun
   }
 
 
-  class BlackTextFieldWithAutoCompletion(project: Project,
-                                         provider: TextFieldWithAutoCompletionListProvider<BlackFormatterConfiguration.CliOptionFlag>)
-    : TextFieldWithCompletion(project, provider, "", true, true, true) {
+  class BlackTextFieldWithAutoCompletion(
+    project: Project,
+    provider: TextFieldWithAutoCompletionListProvider<BlackFormatterConfiguration.CliOptionFlag>,
+  ) : TextFieldWithCompletion(project, provider, "", true, true, true) {
     override fun createEditor(): EditorEx {
       val editor = super.createEditor()
       val disableSpellChecking = SpellCheckingEditorCustomizationProvider.getInstance().disabledCustomization
@@ -353,7 +354,7 @@ class BlackFormatterConfigurable(val project: Project) : BoundConfigurable(PyBun
 
     private fun getCommentForBlack(configuration: BlackFormatterConfiguration): ActionOnSaveComment {
       val version = runWithModalProgressBlocking(project, PyBundle.message("black.getting.black.version")) {
-        BlackFormatterVersionService.getVersion (project)
+        BlackFormatterVersionService.getVersion(project)
       }
 
       return when (configuration.executionMode) {

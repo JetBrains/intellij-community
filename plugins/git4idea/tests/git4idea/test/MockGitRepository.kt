@@ -6,7 +6,9 @@ import com.intellij.openapi.project.Project
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.platform.project.projectId
 import com.intellij.platform.vcs.impl.shared.rpc.RepositoryId
+import com.intellij.vcs.log.Hash
 import git4idea.GitLocalBranch
+import git4idea.GitRemoteBranch
 import git4idea.GitVcs
 import git4idea.branch.GitBranchesCollection
 import git4idea.ignore.GitRepositoryIgnoredFilesHolder
@@ -25,6 +27,10 @@ class MockGitRepository(private val project: Project, private val root: VirtualF
     @JvmName("remotes_") get
   var tagHolder: GitTagHolder? = null
     @JvmName("tagHolder_") get
+  var branchTrackInfos: Collection<GitBranchTrackInfo> = emptyList()
+    @JvmName("branchTrackInfos_") get
+  var remoteBranchesWithHashes:Map<GitRemoteBranch, Hash> = emptyMap()
+    @JvmName("remoteBranchesWithHashes_") get
 
   override fun getGitDir(): VirtualFile {
     throw UnsupportedOperationException()
@@ -47,7 +53,20 @@ class MockGitRepository(private val project: Project, private val root: VirtualF
   }
 
   override fun getInfo(): GitRepoInfo {
-    throw UnsupportedOperationException()
+    val local = currentBranch
+
+    return GitRepoInfo(
+      currentBranch = local,
+      currentRevision = currentRevision,
+      state = state,
+      remotes = remotes,
+      localBranchesWithHashes = emptyMap(),
+      remoteBranchesWithHashes = remoteBranchesWithHashes,
+      branchTrackInfos = branchTrackInfos,
+      submodules = emptyList(),
+      hooksInfo = GitHooksInfo(false, false),
+      isShallow = false
+    )
   }
 
   override fun getCurrentBranch(): GitLocalBranch? = currentBranch
@@ -59,11 +78,11 @@ class MockGitRepository(private val project: Project, private val root: VirtualF
   override fun getRemotes(): Collection<GitRemote> = remotes
 
   override fun getBranchTrackInfos(): Collection<GitBranchTrackInfo> {
-    throw UnsupportedOperationException()
+    return info.branchTrackInfos
   }
 
   override fun getBranchTrackInfo(localBranchName: String): GitBranchTrackInfo? {
-    throw UnsupportedOperationException()
+    return info.branchTrackInfosMap[localBranchName]
   }
 
   override fun isRebaseInProgress(): Boolean {

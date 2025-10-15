@@ -16,6 +16,12 @@ jvm_library(
 
 ### auto-generated section `build intellij.platform.eel.codegen` start
 jvm_library(
+  name = "eel-codegen",
+  visibility = ["//visibility:public"],
+  srcs = glob([], allow_empty = True)
+)
+
+jvm_library(
   name = "eel-codegen_test_lib",
   module_name = "intellij.platform.eel.codegen",
   visibility = ["//visibility:public"],

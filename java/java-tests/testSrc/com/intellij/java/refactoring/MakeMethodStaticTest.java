@@ -12,11 +12,12 @@ import com.intellij.refactoring.makeStatic.MakeStaticHandler;
 import com.intellij.refactoring.makeStatic.MakeStaticUtil;
 import com.intellij.refactoring.makeStatic.Settings;
 import com.intellij.refactoring.util.VariableData;
+import com.intellij.testFramework.LightJavaCodeInsightTestCase;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.ArrayList;
 
-public class MakeMethodStaticTest extends LightRefactoringTestCase {
+public class MakeMethodStaticTest extends LightJavaCodeInsightTestCase {
   @NotNull
   @Override
   protected String getTestDataPath() {

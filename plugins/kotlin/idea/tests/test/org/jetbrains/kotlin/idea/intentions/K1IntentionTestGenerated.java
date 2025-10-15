@@ -11324,6 +11324,11 @@ public abstract class K1IntentionTestGenerated extends AbstractK1IntentionTest {
             runTest("testData/intentions/importMember/ClassCallChain3.kt");
         }
 
+        @TestMetadata("CompanionObjectImplicitReference.kt")
+        public void testCompanionObjectImplicitReference() throws Exception {
+            runTest("testData/intentions/importMember/CompanionObjectImplicitReference.kt");
+        }
+
         @TestMetadata("EnumMember.kt")
         public void testEnumMember() throws Exception {
             runTest("testData/intentions/importMember/EnumMember.kt");

@@ -4,7 +4,10 @@ package com.intellij.cce.actions
 import com.intellij.cce.core.*
 import com.intellij.cce.evaluable.EvaluationStrategy
 import com.intellij.cce.evaluable.common.CommonActionsInvoker
-import com.intellij.cce.evaluation.*
+import com.intellij.cce.evaluation.EvaluationChunk
+import com.intellij.cce.evaluation.EvaluationEnvironment
+import com.intellij.cce.evaluation.EvaluationRootInfo
+import com.intellij.cce.evaluation.EvaluationStep
 import com.intellij.cce.evaluation.step.runInIntellij
 import com.intellij.cce.interpreter.*
 import com.intellij.cce.processor.DefaultEvaluationRootProcessor
@@ -45,7 +48,8 @@ open class ProjectActionsEnvironment(
     val sf = this ?: ""
     if (sf.isNotBlank()) {
       DatasetRef.parse(sf)
-    } else {
+    }
+    else {
       null
     }
   }
@@ -60,7 +64,8 @@ open class ProjectActionsEnvironment(
     if (datasetRef != null) {
       val finalPath = DatasetRefConverter().convert(datasetRef, datasetContext, project) ?: datasetContext.path(datasetRef)
       datasetContext.replaceActionsStorage(ActionsSingleFileStorage(finalPath))
-    } else {
+    }
+    else {
       val filesForEvaluation = ReadAction.compute<List<VirtualFile>, Throwable> {
         FilesHelper.getFilesOfLanguage(project, config.evaluationRoots, config.ignoreFileNames, config.language)
       }
@@ -83,9 +88,13 @@ open class ProjectActionsEnvironment(
 
   override fun chunks(datasetContext: DatasetContext): Sequence<EvaluationChunk> {
     val files = datasetContext.actionsStorage.getActionFiles()
-    return files.shuffled(FILES_RANDOM).asSequence().map { file ->
+    return files.shuffled(FILES_RANDOM).asSequence().mapNotNull { file ->
       val fileActions = datasetContext.actionsStorage.getActions(file)
-      val fileText = FilesHelper.getFile(project, fileActions.path).text()
+      val virtualFile = FilesHelper.getFile(project, fileActions.path)
+      if (virtualFile == null) {
+        return@mapNotNull null
+      }
+      val fileText = virtualFile.text()
       FileActionsChunk(fileActions, fileText)
     }
   }
@@ -243,7 +252,7 @@ open class ProjectActionsEnvironment(
       handler: InterpretationHandler,
       filter: InterpretFilter,
       order: InterpretationOrder,
-      sessionHandler: (Session) -> Unit
+      sessionHandler: (Session) -> Unit,
     ): EvaluationChunk.Result {
       val factory = object : InvokersFactory {
         override fun createActionsInvoker(): ActionsInvoker = CommonActionsInvoker(project)
@@ -258,7 +267,7 @@ open class ProjectActionsEnvironment(
   }
 
   companion object {
-    fun<T> open(projectPath: String, init: (Project) -> T): T {
+    fun <T> open(projectPath: String, init: (Project) -> T): T {
       val project = ProjectOpeningUtils.open(projectPath)
 
       val environment = try {

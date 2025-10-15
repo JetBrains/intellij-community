@@ -4,14 +4,8 @@ package com.intellij.openapi.roots.ui.configuration
 import com.intellij.openapi.project.ProjectBundle
 import com.intellij.ui.ScrollPaneFactory
 import com.intellij.ui.components.JBTextField
-import com.intellij.ui.dsl.builder.Align
-import com.intellij.ui.dsl.builder.AlignX
-import com.intellij.ui.dsl.builder.DslComponentProperty
-import com.intellij.ui.dsl.builder.IntelliJSpacingConfiguration
-import com.intellij.ui.dsl.builder.MAX_LINE_LENGTH_WORD_WRAP
-import com.intellij.ui.dsl.builder.VerticalComponentGap
+import com.intellij.ui.dsl.builder.*
 import com.intellij.ui.dsl.builder.impl.DslComponentPropertyInternal
-import com.intellij.ui.dsl.builder.panel
 import com.intellij.ui.dsl.gridLayout.UnscaledGaps
 import com.intellij.ui.treeStructure.Tree
 
@@ -42,4 +36,6 @@ internal class ContentEntryTreeEditorUI(tree: Tree) {
       }
     }.customize(UnscaledGaps(left = gap, right = gap))
   }
+    .withMinimumWidth(350)
+    .withMinimumHeight(200)
 }

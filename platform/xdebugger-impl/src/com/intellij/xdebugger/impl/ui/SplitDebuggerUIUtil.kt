@@ -10,15 +10,14 @@ import com.intellij.openapi.actionSystem.DataKey
 import com.intellij.openapi.actionSystem.ExecutionDataKeys
 import com.intellij.openapi.actionSystem.LangDataKeys
 import com.intellij.platform.debugger.impl.rpc.XDebuggerTreeSelectedValueId
+import com.intellij.xdebugger.SplitDebuggerMode
+import com.intellij.xdebugger.frame.XValue
 import com.intellij.xdebugger.impl.rpc.ExecutionEnvironmentId
+import com.intellij.xdebugger.impl.rpc.models.BackendXValueModel
 import com.intellij.xdebugger.impl.rpc.models.findValue
+import com.intellij.xdebugger.impl.ui.tree.XDebuggerTree
 import com.intellij.xdebugger.impl.ui.tree.actions.XDebuggerTreeSelectedValue
 import org.jetbrains.annotations.ApiStatus
-import com.intellij.xdebugger.frame.XValue
-import com.intellij.xdebugger.impl.frame.XDebugSessionProxy
-import com.intellij.xdebugger.impl.rpc.models.BackendXValueModel
-import com.intellij.xdebugger.impl.ui.tree.XDebuggerTree
-import kotlin.collections.map
 
 @ApiStatus.Internal
 object SplitDebuggerUIUtil {
@@ -45,7 +44,7 @@ object SplitDebuggerUIUtil {
 
   @JvmStatic
   fun getXDebuggerTreeSelectedBackendValues(dataContext: DataContext): List<XDebuggerTreeSelectedValue> {
-    return if (XDebugSessionProxy.useFeProxy()) {
+    return if (SplitDebuggerMode.isSplitDebugger()) {
       // In Split mode, find backend values by the ids passed from the frontend
       SPLIT_SELECTED_VALUES_KEY.getData(dataContext)?.mapNotNull { (xValueId, name) ->
         val xValue = BackendXValueModel.findById(xValueId)?.xValue ?: return@mapNotNull null

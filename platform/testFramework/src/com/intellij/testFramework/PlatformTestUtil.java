@@ -1368,8 +1368,8 @@ public final class PlatformTestUtil {
     return FileTypeManager.getInstance().getStdFileType("JSPX") == FileTypes.PLAIN_TEXT;
   }
 
-  public static <E extends Throwable> void withSystemProperty(@NotNull String key, String value, @NotNull ThrowableRunnable<E> task) throws E {
-    var original = System.setProperty(key, value);
+  public static <E extends Throwable> void withSystemProperty(@NotNull String key, @Nullable String value, @NotNull ThrowableRunnable<E> task) throws E {
+    var original = value != null ? System.setProperty(key, value) : System.clearProperty(key);
     try {
       task.run();
     }

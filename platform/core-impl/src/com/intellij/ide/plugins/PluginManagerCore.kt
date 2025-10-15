@@ -37,6 +37,7 @@ import com.intellij.ui.PlatformIcons
 import com.intellij.util.PlatformUtils
 import com.intellij.util.containers.Java11Shim
 import com.intellij.util.lang.ZipEntryResolverPool
+import com.intellij.util.system.CpuArch
 import com.intellij.util.system.OS
 import kotlinx.coroutines.CompletableDeferred
 import kotlinx.coroutines.CoroutineScope
@@ -448,9 +449,17 @@ object PluginManagerCore {
     return checkBuildNumberCompatibility(descriptor, buildNumber ?: PluginManagerCore.buildNumber) != null
   }
 
+  @ApiStatus.Internal
   fun getUnfulfilledOsRequirement(descriptor: IdeaPluginDescriptor): IdeaPluginOsRequirement? {
     return descriptor.getDependencies().asSequence()
       .mapNotNull { dep -> IdeaPluginOsRequirement.fromModuleId(dep.pluginId).takeIf { !dep.isOptional } }
+      .firstOrNull { osReq -> !osReq.isHostOs() }
+  }
+
+  @ApiStatus.Internal
+  fun getUnfulfilledCpuArchRequirement(descriptor: IdeaPluginDescriptor): IdeaPluginCpuArchRequirement? {
+    return descriptor.getDependencies().asSequence()
+      .mapNotNull { dep -> IdeaPluginCpuArchRequirement.fromModuleId(dep.pluginId).takeIf { !dep.isOptional } }
       .firstOrNull { osReq -> !osReq.isHostOs() }
   }
 
@@ -459,6 +468,11 @@ object PluginManagerCore {
     val requiredOs = getUnfulfilledOsRequirement(descriptor)
     if (requiredOs != null) {
       return PluginIsIncompatibleWithHostPlatform(descriptor, requiredOs, OS.CURRENT.name)
+    }
+
+    val requiredArch = getUnfulfilledCpuArchRequirement(descriptor)
+    if (requiredArch != null) {
+      return PluginIsIncompatibleWithHostCpu(descriptor, requiredArch, CpuArch.CURRENT)
     }
 
     if (isIgnoreCompatibility) {
@@ -560,7 +574,7 @@ object PluginManagerCore {
 
     val additionalErrors = pluginSetBuilder.computeEnabledModuleMap(
       incompletePlugins = loadingResult.getIncompleteIdMap().values,
-      currentProductModeEvaluator = initContext::currentProductModeId, 
+      initContext = initContext,
       disabler = { descriptor, disabledModuleToProblematicPlugin ->
       val loadingError = pluginSetBuilder.initEnableState(
         descriptor = descriptor,
@@ -1122,7 +1136,7 @@ fun pluginRequiresUltimatePlugin(rootDescriptor: IdeaPluginDescriptorImpl,
 }
 
 /**
- * Checks if the class is a part of the platform or included to a built-in plugin provided by JetBrains vendor.
+ * Checks if the class is a part of the platform or included in a built-in plugin provided by the JetBrains vendor.
  */
 @ApiStatus.Internal
 @IntellijInternalApi

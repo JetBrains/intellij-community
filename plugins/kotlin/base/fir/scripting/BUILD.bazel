@@ -1,4 +1,4 @@
-### auto-generated section `build kotlin.base.fir.scripting` start
+### auto-generated section `build intellij.kotlin.scripting` start
 load("//build:compiler-options.bzl", "create_kotlinc_options")
 load("@rules_jvm//:jvm.bzl", "jvm_library", "resourcegroup")
 
@@ -19,7 +19,7 @@ resourcegroup(
 
 jvm_library(
   name = "scripting",
-  module_name = "kotlin.base.fir.scripting",
+  module_name = "intellij.kotlin.scripting",
   visibility = ["//visibility:public"],
   srcs = glob(["src/**/*.kt", "src/**/*.java", "src/**/*.form"], allow_empty = True),
   resources = [":scripting_resources"],
@@ -30,7 +30,7 @@ jvm_library(
     "//platform/workspace/storage",
     "//platform/backend/workspace",
     "//platform/core-api:core",
-    "//plugins/kotlin/base/fir/analysis-api-platform",
+    "//plugins/kotlin/base/fir/analysis-api-platform:kotlin-analysis-platform",
     "//plugins/kotlin/base/project-structure",
     "//platform/projectModel-impl",
     "@lib//:kotlinc-analysis-api",
@@ -47,8 +47,8 @@ jvm_library(
     "@lib//:kotlinc-kotlin-scripting-jvm",
     "@lib//:kotlinc-kotlin-scripting-compiler-impl",
     "//plugins/kotlin/base/fir/project-structure",
-    "//plugins/kotlin/base/scripting/scripting.k2",
+    "//plugins/kotlin/base/scripting/scripting.k2:kotlin-base-scripting",
     "//plugins/kotlin/base/scripting/scripting.shared",
   ]
 )
-### auto-generated section `build kotlin.base.fir.scripting` end
+### auto-generated section `build intellij.kotlin.scripting` end

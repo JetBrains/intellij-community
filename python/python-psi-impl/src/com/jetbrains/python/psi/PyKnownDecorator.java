@@ -157,6 +157,8 @@ public class PyKnownDecorator {
   public final static PyKnownDecorator ENUM_MEMBER = new PyKnownDecorator(PyNames.TYPE_ENUM_MEMBER);
   public final static PyKnownDecorator ENUM_NONMEMBER = new PyKnownDecorator(PyNames.TYPE_ENUM_NONMEMBER);
 
+  public final static PyKnownDecorator DISJOINT_BASE_EXT = new PyKnownDecorator("typing_extensions.disjoint_base");
+
   /**
    * Mutable properties support __set__ and __delete__
    */

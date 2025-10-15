@@ -29,6 +29,15 @@ public class UrlFilterTest extends BasePlatformTestCase {
                         4, 52, "//wsl$/Ubuntu-20.04/projects/report.txt", 4, -1);
   }
 
+  public void testMinimalFileProtocol() {
+    assertFileHyperlink("Click file:/path/to/file.diff:2:4 to see the difference", 6, 33, "/path/to/file.diff", 2, 4);
+    assertFileHyperlink("file:/path/to/file.txt", 0, 22, "/path/to/file.txt", -1, -1);
+  }
+
+  public void testNoFileHyperlink() {
+    assertBrowserHyperlink("file://path/to/file.txt", 0, 23);
+  }
+
   public void testSingleBrowserHyperlink() {
     assertBrowserHyperlink("http://test.com", 0, 15);
     assertBrowserHyperlink(" at http://test.com", 4, 19);

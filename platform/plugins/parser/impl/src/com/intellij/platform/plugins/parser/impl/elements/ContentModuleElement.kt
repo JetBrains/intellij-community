@@ -3,8 +3,10 @@ package com.intellij.platform.plugins.parser.impl.elements
 
 class ContentModuleElement(
   val name: String,
-  val loadingRule: ModuleLoadingRule = ModuleLoadingRule.OPTIONAL,
-  val embeddedDescriptorContent: CharArray? = null,
+  val loadingRule: ModuleLoadingRule,
+  /** `required-if-available` attribute value */
+  val requiredIfAvailable: String?,
+  val embeddedDescriptorContent: CharArray?,
 ) {
   override fun toString(): String {
     return "Module(name=$name, loadingRule=$loadingRule)"

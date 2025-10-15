@@ -36,7 +36,7 @@ jvm_library(
     "//plugins/kotlin/base/project-structure",
     "//plugins/kotlin/base/analysis",
     "//platform/core-impl",
-    "//plugins/kotlin/base/analysis-api-platform",
+    "//plugins/kotlin/base/analysis-api-platform:kotlin-base-analysis-platform",
     "//java/openapi:java",
     "//plugins/kotlin/base/util",
     "//plugins/kotlin/base/fe10/analysis",

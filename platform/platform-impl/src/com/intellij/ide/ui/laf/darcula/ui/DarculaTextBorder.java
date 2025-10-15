@@ -1,6 +1,7 @@
 // Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.ide.ui.laf.darcula.ui;
 
+import com.intellij.ide.ui.laf.darcula.DarculaNewUIUtil;
 import com.intellij.ide.ui.laf.darcula.DarculaUIUtil;
 import com.intellij.openapi.ui.ErrorBorderCapable;
 import com.intellij.util.ui.JBInsets;
@@ -101,11 +102,17 @@ public class DarculaTextBorder implements Border, UIResource, ErrorBorderCapable
 
   @ApiStatus.Internal
   public static void paintDarculaSearchArea(Graphics2D g, Rectangle r, JComponent c, boolean fillBackground, boolean enabled) {
-    paintDarculaSearchArea(g, r, c, null, fillBackground, enabled);
+    paintDarculaSearchArea(g, r, c, null, fillBackground, enabled, false);
   }
 
   @ApiStatus.Internal
-  public static void paintDarculaSearchArea(Graphics2D g, Rectangle r, JComponent c, Color bgColor, boolean fillBackground, boolean enabled) {
+  public static void paintDarculaSearchArea(Graphics2D g,
+                                            Rectangle r,
+                                            JComponent c,
+                                            Color bgColor,
+                                            boolean fillBackground,
+                                            boolean enabled,
+                                            boolean customFocusBorder) {
     Graphics2D g2 = (Graphics2D)g.create();
     try {
       g2.setRenderingHint(RenderingHints.KEY_ANTIALIASING, RenderingHints.VALUE_ANTIALIAS_ON);
@@ -126,7 +133,16 @@ public class DarculaTextBorder implements Border, UIResource, ErrorBorderCapable
 
       if (c.getClientProperty("JTextField.Search.noBorderRing") != Boolean.TRUE) {
         if (c.hasFocus()) {
-          paintFocusBorder(g2, r.width, r.height, arc, true);
+          if (customFocusBorder) {
+            int bw2 = JBUI.scale(2);
+            Rectangle r2 = new Rectangle(r);
+            r2.width -= bw2;
+            r2.height -= bw2;
+            DarculaNewUIUtil.INSTANCE.paintComponentBorder(g2, r2, null, true, true, BW.get(), COMPONENT_ARC.getFloat());
+          }
+          else {
+            paintFocusBorder(g2, r.width, r.height, arc, true);
+          }
         }
         Path2D path = new Path2D.Float(Path2D.WIND_EVEN_ODD);
         path.append(outerShape, false);

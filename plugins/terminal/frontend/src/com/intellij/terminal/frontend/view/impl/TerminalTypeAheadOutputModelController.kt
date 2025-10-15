@@ -15,6 +15,7 @@ import kotlinx.coroutines.channels.BufferOverflow
 import kotlinx.coroutines.flow.MutableSharedFlow
 import kotlinx.coroutines.flow.debounce
 import org.jetbrains.plugins.terminal.block.reworked.*
+import org.jetbrains.plugins.terminal.block.reworked.TerminalOffset
 import org.jetbrains.plugins.terminal.block.util.TerminalDataContextUtils.isReworkedTerminalEditor
 import org.jetbrains.plugins.terminal.session.TerminalContentUpdatedEvent
 import org.jetbrains.plugins.terminal.session.TerminalCursorPositionChangedEvent
@@ -206,11 +207,11 @@ private fun MutableTerminalOutputModel.insertAtCursor(string: String) {
   withTypeAhead {
     val remainingLinePart = getRemainingLinePart()
     val replaceLength = string.length.coerceAtMost(remainingLinePart.length)
-    val replaceOffset = cursorOffsetState.value
+    val replaceOffset = cursorOffset
     replaceContent(replaceOffset, replaceLength, string, emptyList())
     // Do not reuse the cursorOffsetState.value because replaceContent might change it.
     // Instead, compute the new offset using the absolute offsets.
-    val newCursorOffset = absoluteOffset(replaceOffset.toAbsolute() + string.length).coerceAtMost(endOffset)
+    val newCursorOffset = TerminalOffset.of(replaceOffset.toAbsolute() + string.length).coerceAtMost(endOffset)
     updateCursorPosition(newCursorOffset)
   }
 }
@@ -223,15 +224,15 @@ private fun MutableTerminalOutputModel.backspace() {
   updateCursorPosition(replaceOffset)
 }
 
-private fun TerminalOutputModel.getRemainingLinePart(): @NlsSafe String {
+private fun TerminalOutputModel.getRemainingLinePart(): @NlsSafe CharSequence {
   val cursorOffset = cursorOffset
-  val line = lineByOffset(cursorOffset)
-  val lineEnd = endOffset(line)
+  val line = getLineByOffset(cursorOffset)
+  val lineEnd = getEndOfLine(line)
   val remainingLinePart = getText(cursorOffset, lineEnd)
   return remainingLinePart
 }
 
-private fun TerminalOutputModel.getTextAfterCursor(): @NlsSafe String {
+private fun TerminalOutputModel.getTextAfterCursor(): @NlsSafe CharSequence {
   val cursorOffset = cursorOffset
   return getText(cursorOffset, endOffset)
 }

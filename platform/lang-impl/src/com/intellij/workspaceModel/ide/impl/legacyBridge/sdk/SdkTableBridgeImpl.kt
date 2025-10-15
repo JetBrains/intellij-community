@@ -7,6 +7,7 @@ import com.intellij.openapi.projectRoots.SdkTypeId
 import com.intellij.openapi.projectRoots.impl.ProjectJdkImpl
 import com.intellij.openapi.roots.OrderRootType
 import com.intellij.openapi.util.Comparing
+import com.intellij.openapi.util.io.toNioPathOrNull
 import com.intellij.platform.eel.provider.LocalEelDescriptor
 import com.intellij.platform.eel.provider.getEelDescriptor
 import com.intellij.platform.workspace.jps.entities.SdkEntity
@@ -16,6 +17,7 @@ import com.intellij.platform.workspace.jps.entities.modifySdkEntity
 import com.intellij.util.containers.ConcurrentFactoryMap
 import com.intellij.workspaceModel.ide.JpsGlobalModelSynchronizer
 import com.intellij.workspaceModel.ide.impl.GlobalWorkspaceModel
+import com.intellij.workspaceModel.ide.impl.getInternalEnvironmentName
 import com.intellij.workspaceModel.ide.impl.jps.serialization.JpsGlobalModelSynchronizerImpl
 import com.intellij.workspaceModel.ide.impl.legacyBridge.sdk.SdkBridgeImpl.Companion.mutableSdkMap
 import com.intellij.workspaceModel.ide.impl.legacyBridge.sdk.SdkBridgeImpl.Companion.sdkMap
@@ -56,7 +58,9 @@ class SdkTableBridgeImpl: SdkTableImplementationDelegate {
   }
 
   override fun createSdk(name: String, type: SdkTypeId, homePath: String?): Sdk {
-    return ProjectJdkImpl(name, type, homePath ?: "", null)
+    val descriptor = homePath?.toNioPathOrNull()?.getEelDescriptor() ?: LocalEelDescriptor
+    val environmentName = descriptor.machine.getInternalEnvironmentName()
+    return ProjectJdkImpl(name, type, homePath ?: "", null, environmentName)
   }
 
   override fun addNewSdk(sdk: Sdk) {
@@ -69,7 +73,8 @@ class SdkTableBridgeImpl: SdkTableImplementationDelegate {
       throw IllegalStateException("SDK $sdk is already registered")
     }
 
-    val sdkEntitySource = SdkBridgeImpl.createEntitySourceForSdk()
+    val environmentName = descriptor.machine.getInternalEnvironmentName()
+    val sdkEntitySource = SdkBridgeImpl.createEntitySourceForSdk(environmentName)
     val virtualFileUrlManager = globalWorkspaceModel.getVirtualFileUrlManager()
     val homePathVfu = delegateSdk.homePath?.let { virtualFileUrlManager.getOrCreateFromUrl(it) }
 

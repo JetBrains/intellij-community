@@ -48,7 +48,7 @@ jobs:
             stubs/**/METADATA.toml
       - name: Install dependencies
         run: pip install -r requirements-tests.txt
-      - name: Run stubtest
+      - name: Determine changed stubs
         shell: bash
         run: |
           # This only runs stubtest on changed stubs, because it is much faster.
@@ -56,21 +56,21 @@ jobs:
           function find_stubs {
             git diff --name-only origin/${{ github.base_ref }} HEAD | \
             egrep ^stubs/ | cut -d "/" -f 2 | sort -u | \
-            (while read stub; do [ -d "stubs/$stub" ] && echo "$stub" || true; done)
+            (while read stub; do [ -d "stubs/$stub" ] && echo -n "$stub " || true; done)
           }
           STUBS=$(find_stubs || echo '')
-
+          echo "Changed stubs: $STUBS"
+          echo "STUBS=$STUBS" >> $GITHUB_ENV
+      - name: Install required system packages
+        shell: bash
+        run: |
           if [ -n "$STUBS" ]; then
-            echo "Testing $STUBS..."
             PACKAGES=$(python tests/get_stubtest_system_requirements.py $STUBS)
-
             if [ "${{ runner.os }}" = "Linux" ]; then
               if [ -n "$PACKAGES" ]; then
                 printf "Installing APT packages:\n  $(echo $PACKAGES | sed 's/ /\n  /g')\n"
                 sudo apt-get update -q && sudo apt-get install -qy $PACKAGES
               fi
-
-              PYTHON_EXECUTABLE="xvfb-run python"
             else
               if [ "${{ runner.os }}" = "macOS" ] && [ -n "$PACKAGES" ]; then
                 printf "Installing Homebrew packages:\n  $(echo $PACKAGES | sed 's/ /\n  /g')\n"
@@ -81,7 +81,17 @@ jobs:
                 printf "Installing Chocolatey packages:\n  $(echo $PACKAGES | sed 's/ /\n  /g')\n"
                 choco install -y $PACKAGES
               fi
+            fi
+          fi
+      - name: Run stubtest
+        shell: bash
+        run: |
+          if [ -n "$STUBS" ]; then
+            echo "Testing $STUBS..."
 
+            if [ "${{ runner.os }}" = "Linux" ]; then
+              PYTHON_EXECUTABLE="xvfb-run python"
+            else
               PYTHON_EXECUTABLE="python"
             fi
 

@@ -25,6 +25,7 @@ import com.intellij.platform.util.coroutines.childScope
 import com.intellij.platform.vcs.impl.shared.SingleTaskRunner
 import com.intellij.platform.vcs.impl.shared.changes.ChangeListsViewModel
 import com.intellij.platform.vcs.impl.shared.changes.ChangesViewSettings
+import com.intellij.platform.vcs.impl.shared.changes.PartialChangesHolder
 import com.intellij.platform.vcs.impl.shared.telemetry.ChangesView
 import com.intellij.platform.vcs.impl.shared.telemetry.VcsScope
 import com.intellij.ui.ExperimentalUI.Companion.isNewUI
@@ -70,6 +71,12 @@ class CommitChangesViewWithToolbarPanel(changesView: ChangesListView, parentDisp
 
     scope.launch(Dispatchers.UI) {
       ChangeListsViewModel.getInstance(project).changeListManagerState.collectLatest {
+        changesView.repaint()
+      }
+    }
+
+    scope.launch(Dispatchers.UI) {
+      PartialChangesHolder.getInstance(project).updates.collectLatest {
         changesView.repaint()
       }
     }

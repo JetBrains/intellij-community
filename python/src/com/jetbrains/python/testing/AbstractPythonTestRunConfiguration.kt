@@ -138,6 +138,6 @@ protected constructor(project: Project, factory: ConfigurationFactory, private v
      * When passing path to test to runners, you should join parts with this char.
      * I.e.: file.py::PyClassTest::test_method
      */
-    protected const val TEST_NAME_PARTS_SPLITTER = "::"
+    protected const val TEST_NAME_PARTS_SPLITTER: String = "::"
   }
 }

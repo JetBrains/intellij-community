@@ -43,7 +43,6 @@ curses.LINES  # Initialized only after initscr call
 curses.has_key  # stubtest gets confused because this is both a module and a function in curses
 multiprocessing.popen_spawn_win32  # exists on Darwin but fails to import
 readline.append_history_file  # Only available if compiled with GNU readline, not editline
-select.kqueue.__init__  # default C signature is wrong
 select.poll  # Actually a function; we have a class so it can be used as a type
 
 # Some of these exist on non-windows, but they are useless and this is not intended

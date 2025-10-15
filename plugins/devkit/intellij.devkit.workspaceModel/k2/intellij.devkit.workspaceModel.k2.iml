@@ -28,8 +28,8 @@
     <orderEntry type="module" module-name="intellij.devkit.workspaceModel" />
     <orderEntry type="module" module-name="intellij.platform.core" />
     <orderEntry type="module" module-name="intellij.platform.indexing" />
-    <orderEntry type="module" module-name="kotlin.base.indices" />
-    <orderEntry type="module" module-name="kotlin.base.project-structure" />
+    <orderEntry type="module" module-name="intellij.kotlin.base.indices" />
+    <orderEntry type="module" module-name="intellij.kotlin.base.projectStructure" />
     <orderEntry type="module" module-name="intellij.java.indexing" />
     <orderEntry type="module" module-name="intellij.platform.workspace.storage" />
     <orderEntry type="library" name="kotlin-stdlib" level="project" />
@@ -38,10 +38,10 @@
     <orderEntry type="library" name="workspace-model-codegen" level="project" />
     <orderEntry type="module" module-name="intellij.platform.core.impl" />
     <orderEntry type="module" module-name="intellij.java" />
-    <orderEntry type="module" module-name="kotlin.base.psi" />
+    <orderEntry type="module" module-name="intellij.kotlin.base.psi" />
     <orderEntry type="module" module-name="intellij.devkit.workspaceModel.tests" scope="TEST" />
     <orderEntry type="module" module-name="kotlin.test-framework" scope="TEST" />
-    <orderEntry type="module" module-name="kotlin.base.plugin" scope="TEST" />
+    <orderEntry type="module" module-name="intellij.kotlin.base.plugin" scope="TEST" />
     <orderEntry type="module" module-name="kotlin.tests-common" scope="TEST" />
     <orderEntry type="module" module-name="kotlin.plugin.k2" scope="TEST" />
     <orderEntry type="module" module-name="intellij.platform.testFramework" scope="TEST" />

@@ -1,4 +1,4 @@
-### auto-generated section `build kotlin.run-configurations.junit` start
+### auto-generated section `build intellij.kotlin.runConfigurations.junit` start
 load("@rules_jvm//:jvm.bzl", "jvm_library", "resourcegroup")
 
 resourcegroup(
@@ -9,7 +9,7 @@ resourcegroup(
 
 jvm_library(
   name = "junit",
-  module_name = "kotlin.run-configurations.junit",
+  module_name = "intellij.kotlin.runConfigurations.junit",
   visibility = ["//visibility:public"],
   srcs = glob(["src/**/*.kt", "src/**/*.java", "src/**/*.form"], allow_empty = True),
   resources = [":junit_resources"],
@@ -33,8 +33,8 @@ jvm_library(
     "//java/java-analysis-impl:analysis-impl",
     "//plugins/junit",
     "//java/java-impl:impl",
-    "//plugins/kotlin/code-insight/impl-base",
+    "//plugins/kotlin/code-insight/impl-base:kotlin-codeInsight-shared",
     "//plugins/kotlin/base/plugin",
   ]
 )
-### auto-generated section `build kotlin.run-configurations.junit` end
+### auto-generated section `build intellij.kotlin.runConfigurations.junit` end

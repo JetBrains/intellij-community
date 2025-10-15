@@ -62,6 +62,8 @@ class GrazieCloudConnectionState: Disposable {
       return after
     }
 
+    fun obtainCurrentState(): ConnectionState = toState(getInstance().errors)
+
     private fun toState(errors: Set<BackgroundCloudService>) =
       if (errors.isEmpty()) ConnectionState.Stable else ConnectionState.Error
 

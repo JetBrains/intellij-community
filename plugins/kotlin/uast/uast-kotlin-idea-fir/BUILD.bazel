@@ -1,9 +1,9 @@
-### auto-generated section `build kotlin.uast.uast-kotlin-idea.k2` start
+### auto-generated section `build intellij.kotlin.uast.idea` start
 load("//build:compiler-options.bzl", "create_kotlinc_options")
 load("@rules_jvm//:jvm.bzl", "jvm_library")
 
 create_kotlinc_options(
-  name = "custom_kotlin-uast-uast-kotlin-idea-k2",
+  name = "custom_kotlin-uast-idea",
   opt_in = [
     "org.jetbrains.kotlin.analysis.api.KaIdeApi",
     "org.jetbrains.kotlin.analysis.api.KaNonPublicApi",
@@ -13,11 +13,11 @@ create_kotlinc_options(
 )
 
 jvm_library(
-  name = "kotlin-uast-uast-kotlin-idea-k2",
-  module_name = "kotlin.uast.uast-kotlin-idea.k2",
+  name = "kotlin-uast-idea",
+  module_name = "intellij.kotlin.uast.idea",
   visibility = ["//visibility:public"],
   srcs = glob(["src/**/*.kt", "src/**/*.java", "src/**/*.form"], allow_empty = True),
-  kotlinc_opts = ":custom_kotlin-uast-uast-kotlin-idea-k2",
+  kotlinc_opts = ":custom_kotlin-uast-idea",
   deps = [
     "@lib//:kotlin-stdlib",
     "@lib//:kotlinc-kotlin-compiler-common",
@@ -32,12 +32,12 @@ jvm_library(
     "//platform/core-impl",
     "//platform/projectModel-api:projectModel",
     "//uast/uast-common:uast",
-    "//plugins/kotlin/uast/uast-kotlin-fir:kotlin-uast-uast-kotlin-k2",
+    "//plugins/kotlin/uast/uast-kotlin-fir:kotlin-uast",
     "//plugins/kotlin/base/util",
     "//plugins/kotlin/refactorings/kotlin.refactorings.common:kotlin-refactorings-common",
-    "//plugins/kotlin/base/analysis-api/analysis-api-utils:kotlin-base-analysis-api-utils",
+    "//plugins/kotlin/base/analysis-api/analysis-api-utils:kotlin-base-analysis-utils",
     "//uast/uast-common-ide:ide",
   ],
   runtime_deps = ["//plugins/kotlin/gradle/gradle"]
 )
-### auto-generated section `build kotlin.uast.uast-kotlin-idea.k2` end
+### auto-generated section `build intellij.kotlin.uast.idea` end

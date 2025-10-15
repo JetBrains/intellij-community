@@ -1,4 +1,4 @@
-### auto-generated section `build kotlin.git` start
+### auto-generated section `build intellij.kotlin.git` start
 load("@rules_jvm//:jvm.bzl", "jvm_library", "jvm_provided_library", "resourcegroup")
 
 resourcegroup(
@@ -14,7 +14,7 @@ jvm_provided_library(
 
 jvm_library(
   name = "git",
-  module_name = "kotlin.git",
+  module_name = "intellij.kotlin.git",
   visibility = ["//visibility:public"],
   srcs = glob(["src/**/*.kt", "src/**/*.java", "src/**/*.form"], allow_empty = True),
   resources = [":git_resources"],
@@ -28,4 +28,4 @@ jvm_library(
     ":plugins_vcs-git_provided",
   ]
 )
-### auto-generated section `build kotlin.git` end
+### auto-generated section `build intellij.kotlin.git` end

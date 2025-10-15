@@ -1,18 +1,18 @@
-### auto-generated section `build kotlin.performanceExtendedPlugin` start
+### auto-generated section `build intellij.kotlin.performanceExtendedPlugin` start
 load("@rules_jvm//:jvm.bzl", "jvm_library", "resourcegroup")
 
 resourcegroup(
-  name = "performanceExtendedPlugin_resources",
+  name = "kotlin.performanceExtendedPlugin_resources",
   srcs = glob(["resources/**/*"]),
   strip_prefix = "resources"
 )
 
 jvm_library(
-  name = "performanceExtendedPlugin",
-  module_name = "kotlin.performanceExtendedPlugin",
+  name = "kotlin.performanceExtendedPlugin",
+  module_name = "intellij.kotlin.performanceExtendedPlugin",
   visibility = ["//visibility:public"],
   srcs = glob(["src/**/*.kt", "src/**/*.java", "src/**/*.form"], allow_empty = True),
-  resources = [":performanceExtendedPlugin_resources"],
+  resources = [":kotlin.performanceExtendedPlugin_resources"],
   deps = [
     "@lib//:kotlin-stdlib",
     "//plugins/performanceTesting/core:performanceTesting",
@@ -40,7 +40,7 @@ jvm_library(
     "//platform/diagnostic/telemetry",
     "//platform/diagnostic/telemetry-impl",
     "//plugins/kotlin/base/code-insight/minimal",
-    "//plugins/kotlin/kotlin.ide:ide",
+    "//plugins/kotlin/kotlin.ide",
     "//platform/lang-impl",
     "//platform/core-ui",
     "//plugins/kotlin/base/compiler-configuration",
@@ -50,4 +50,4 @@ jvm_library(
     "//plugins/kotlin/base/project-structure",
   ]
 )
-### auto-generated section `build kotlin.performanceExtendedPlugin` end
+### auto-generated section `build intellij.kotlin.performanceExtendedPlugin` end

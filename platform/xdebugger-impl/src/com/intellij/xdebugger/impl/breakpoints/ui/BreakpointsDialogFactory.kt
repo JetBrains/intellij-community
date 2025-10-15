@@ -9,13 +9,13 @@ import com.intellij.openapi.project.Project
 import com.intellij.openapi.ui.popup.Balloon
 import com.intellij.openapi.util.Disposer
 import com.intellij.platform.rpc.topics.sendToClient
+import com.intellij.xdebugger.SplitDebuggerMode
 import com.intellij.xdebugger.breakpoints.XBreakpoint
 import com.intellij.xdebugger.impl.breakpoints.SHOW_BREAKPOINT_DIALOG_REMOTE_TOPIC
 import com.intellij.xdebugger.impl.breakpoints.ShowBreakpointDialogRequest
 import com.intellij.xdebugger.impl.breakpoints.XBreakpointBase
 import com.intellij.xdebugger.impl.breakpoints.XBreakpointProxy
 import com.intellij.xdebugger.impl.frame.XDebugManagerProxy
-import com.intellij.xdebugger.impl.frame.XDebugSessionProxy.Companion.useFeProxy
 import com.intellij.xdebugger.impl.rpc.XBreakpointId
 import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.annotations.VisibleForTesting
@@ -54,7 +54,7 @@ class BreakpointsDialogFactory(private val project: Project) {
   }
 
   fun showDialog(initialBreakpointId: XBreakpointId?) {
-    if (useFeProxy() && AppMode.isRemoteDevHost()) {
+    if (SplitDebuggerMode.isSplitDebugger() && AppMode.isRemoteDevHost()) {
       hideBalloon()
       SHOW_BREAKPOINT_DIALOG_REMOTE_TOPIC.sendToClient(project, ShowBreakpointDialogRequest(initialBreakpointId))
       return

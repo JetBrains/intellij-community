@@ -1,3 +1,4 @@
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.workspaceModel.codegen.impl.writer.classes
 
 import com.intellij.workspaceModel.codegen.deft.meta.ObjClass
@@ -9,7 +10,7 @@ import com.intellij.workspaceModel.codegen.impl.writer.fields.implWsBuilderIsIni
 
 fun ObjClass<*>.implWsEntityBuilderCode(): String {
   return """
-    internal class Builder(result: $javaDataName?): ${ModifiableWorkspaceEntityBase}<$javaFullName, $javaDataName>(result), $javaBuilderName {
+    internal class Builder(result: $javaDataName?): ${ModifiableWorkspaceEntityBase}<$javaFullName, $javaDataName>(result), $compatibleJavaBuilderName {
         internal constructor(): this($javaDataName())
         
 ${

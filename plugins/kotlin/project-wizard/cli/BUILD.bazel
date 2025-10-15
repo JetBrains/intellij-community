@@ -1,9 +1,9 @@
-### auto-generated section `build kotlin.project-wizard.cli` start
+### auto-generated section `build intellij.kotlin.projectWizard.cli` start
 load("@rules_jvm//:jvm.bzl", "jvm_library")
 
 jvm_library(
   name = "cli",
-  module_name = "kotlin.project-wizard.cli",
+  module_name = "intellij.kotlin.projectWizard.cli",
   visibility = ["//visibility:public"],
   srcs = glob(["src/**/*.kt", "src/**/*.java", "src/**/*.form"], allow_empty = True),
   deps = [
@@ -19,4 +19,4 @@ jvm_library(
     "@lib//:kotlinc-kotlin-compiler-common",
   ]
 )
-### auto-generated section `build kotlin.project-wizard.cli` end
+### auto-generated section `build intellij.kotlin.projectWizard.cli` end

@@ -44,7 +44,7 @@
 
     <dom.fileMetaData implementation="org.jetbrains.idea.devkit.dom.impl.PluginDescriptorDomFileDescription"
                       rootTagName="idea-plugin"
-                      stubVersion="21"/>
+                      stubVersion="22"/>
     <dom.extender domClass="org.jetbrains.idea.devkit.dom.Extensions"
                   extenderClass="org.jetbrains.idea.devkit.dom.impl.ExtensionsDomExtender"/>
     <dom.extender domClass="org.jetbrains.idea.devkit.dom.Action"
@@ -535,6 +535,13 @@
                      enabledByDefault="true" level="ERROR"
                      implementationClass="org.jetbrains.idea.devkit.inspections.ModuleNotRegisteredAsPluginContentInspection"
                      key="inspection.module.not.registered.as.plugin.content.name"/>
+
+    <localInspection language="XML" applyToDialects="false"
+                     projectType="INTELLIJ_PLUGIN"
+                     groupPathKey="inspections.group.path" groupKey="inspections.group.descriptor"
+                     enabledByDefault="true" level="ERROR"
+                     implementationClass="org.jetbrains.idea.devkit.inspections.ContentModuleVisibilityInspection"
+                     key="inspection.content.module.visibility.name"/>
 
     <localInspection language="XML" applyToDialects="false"
                      projectType="INTELLIJ_PLUGIN"

@@ -48,7 +48,7 @@ abstract class RunToolbarDebugActionHandler : DebuggerActionHandler() {
     return XDebuggerManager.getInstance(project)
       ?.debugSessions
       ?.filterIsInstance<XDebugSessionImpl>()
-      ?.filter { it.getRunContentDescriptorIfInitialized() == descriptor }
+      ?.filter { it.getMockRunContentDescriptorIfInitialized() == descriptor }
       ?.firstOrNull { !it.isStopped }
   }
 

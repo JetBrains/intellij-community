@@ -25,4 +25,6 @@ data class FilePathDto(
     else
       vcsContextFactory.createFilePath(path, isDirectory)
   }
+
+  override fun toString(): String = "$path (isDirectory=$isDirectory)"
 }

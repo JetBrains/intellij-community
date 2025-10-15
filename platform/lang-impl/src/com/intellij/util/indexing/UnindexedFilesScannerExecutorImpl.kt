@@ -4,6 +4,7 @@ package com.intellij.util.indexing
 import com.google.common.util.concurrent.SettableFuture
 import com.intellij.openapi.Disposable
 import com.intellij.openapi.application.edtWriteAction
+import com.intellij.openapi.application.runReadAction
 import com.intellij.openapi.components.service
 import com.intellij.openapi.components.serviceAsync
 import com.intellij.openapi.diagnostic.ControlFlowException
@@ -325,15 +326,29 @@ class UnindexedFilesScannerExecutorImpl(private val project: Project, cs: Corout
     if (application.isWriteIntentLockAcquired) {
       // make this executor "running" immediately: clients immediately invoking "runWhenSmart" expect that this scanning is processed first.
       application.runWriteAction {
-        if (hasQueuedTasks) {
-          isRunning.value = true
-        } // else: the task is already picked by the executor. Don't touch isRunning in this case.
-        // There is no problem if the task is not only picked by the executor, but also completed, and isRunning is
-        // already set to false - there will be one "empty" cycle performed by the executor, and nothing bad.
+        markAsRunning()
+      }
+    }
+    else if (DumbService.isDumb(project)) {
+      // here we want to immediately "start" executor without EDT in the case when scanning is started under a dumb task.
+      // Acquire RA to make sure that dumb mode won't change to smart, otherwise we risk changing smart mode to not-smart outside WA.
+      runReadAction {
+        if (DumbService.isDumb(project)) {
+          markAsRunning()
+        }
       }
     }
 
     return res
+  }
+
+  // should be invoked under RA + dumb mode or WA
+  private fun markAsRunning() {
+    if (hasQueuedTasks) {
+      isRunning.value = true
+    } // else: the task is already picked by the executor. Don't touch isRunning in this case.
+    // There is no problem if the task is not only picked by the executor, but also completed, and isRunning is
+    // already set to false - there will be one "empty" cycle performed by the executor, and nothing bad.
   }
 
   private fun startTaskInSmartMode(task: UnindexedFilesScanner): Future<ProjectScanningHistory> {

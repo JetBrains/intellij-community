@@ -43,7 +43,7 @@ import com.intellij.xdebugger.impl.rpc.*
 import com.intellij.xdebugger.impl.ui.SplitDebuggerUIUtil
 import com.intellij.xdebugger.impl.ui.XDebugSessionData
 import com.intellij.xdebugger.impl.ui.XDebugSessionTab
-import com.intellij.xdebugger.impl.util.MonolithUtils
+import com.intellij.xdebugger.impl.util.XDebugMonolithUtils
 import com.intellij.xdebugger.ui.XDebugTabLayouter
 import kotlinx.coroutines.*
 import kotlinx.coroutines.channels.BufferOverflow
@@ -391,7 +391,7 @@ class FrontendXDebuggerSession private constructor(
 
   override fun createTabLayouter(): XDebugTabLayouter {
     // Additional tabs are not supported in RemDev
-    val monolithLayouter = MonolithUtils.findSessionById(id)?.debugProcess?.createTabLayouter()
+    val monolithLayouter = XDebugMonolithUtils.findSessionById(id)?.debugProcess?.createTabLayouter()
     return monolithLayouter ?: object : XDebugTabLayouter() {} // TODO support additional tabs in RemDev
   }
 
@@ -407,7 +407,7 @@ class FrontendXDebuggerSession private constructor(
 
   override fun registerAdditionalActions(leftToolbar: DefaultActionGroup, topLeftToolbar: DefaultActionGroup, settings: DefaultActionGroup) {
     // TODO: addittional actions are not registered in RemDev
-    MonolithUtils.findSessionById(id)?.debugProcess?.registerAdditionalActions(leftToolbar, topLeftToolbar, settings)
+    XDebugMonolithUtils.findSessionById(id)?.debugProcess?.registerAdditionalActions(leftToolbar, topLeftToolbar, settings)
   }
 
   override fun putKey(sink: DataSink) {

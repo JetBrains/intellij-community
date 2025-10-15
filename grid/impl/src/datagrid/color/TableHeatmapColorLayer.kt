@@ -102,9 +102,8 @@ class TableHeatmapColorLayer private constructor(private val dataGrid: DataGrid,
       val column = dataModel.getColumn(columnIndex)
       val firstRow = dataModel.rowIndices.first()
 
-      // ColumnDescriptor.Attribute.HIGHLIGHTED currently is the only normal way do extract index column from coloring.
       if (column == null ||
-          column.attributes.contains(ColumnDescriptor.Attribute.HIGHLIGHTED) ||
+          column.attributes.contains(ColumnDescriptor.Attribute.INDEX) ||
           !ObjectFormatterUtil.isNumericCell(dataGrid, firstRow, columnIndex)) {
         return@forEach
       }

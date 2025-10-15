@@ -160,9 +160,10 @@ class SeFrontendService(val project: Project?, private val coroutineScope: Corou
     availableLegacyContributors: Map<SeProviderId, SearchEverywhereContributor<Any>>,
   ) {
     val tabInitializationTimeoutMillis: Long = 50
-    val orderedTabFactoryIds = tabFactories.map { it.id }
+    val customizedTabFactories = SeTabsCustomizer.getInstance().customize(tabFactories)
+    val orderedTabFactoryIds = customizedTabFactories.map { it.id }
 
-    val tabsOrDeferredTabs = tabFactories.map {
+    val tabsOrDeferredTabs = customizedTabFactories.map {
       it.id to initAsync(popupScope) {
         computeCatchingOrNull({ e -> "Error while getting tab from ${it.id} tab factory: ${e.message}" }) {
           it.getTab(popupScope, project, session, initEvent) { action ->

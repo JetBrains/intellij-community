@@ -439,7 +439,7 @@ public final class SearchEverywhereUI extends BigPopupUI implements UiDataProvid
     if (!containsPSIContributors) return null;
 
     return isDumb
-           ? new Pair<>(IdeBundle.message("dumb.mode.results.might.be.incomplete"), IdeBundle.message("dumb.mode.results.might.be.incomplete.during.project.analysis"))
+           ? new Pair<>(IdeBundle.message("dumb.mode.analyzing.project"), IdeBundle.message("dumb.mode.results.might.be.incomplete.during.project.analysis"))
            : new Pair<>(IdeBundle.message("incomplete.mode.results.might.be.incomplete"), null);
   }
 
@@ -1068,7 +1068,8 @@ public final class SearchEverywhereUI extends BigPopupUI implements UiDataProvid
     }
   }
 
-  static boolean isExtendedInfoEnabled() {
+  @ApiStatus.Internal
+  public static boolean isExtendedInfoEnabled() {
     return Registry.is("search.everywhere.footer.extended.info") || ApplicationManager.getApplication().isInternal();
   }
 

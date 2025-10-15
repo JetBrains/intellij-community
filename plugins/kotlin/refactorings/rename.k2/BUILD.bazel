@@ -1,9 +1,9 @@
-### auto-generated section `build kotlin.refactorings.rename.k2` start
+### auto-generated section `build intellij.kotlin.refactorings.rename` start
 load("//build:compiler-options.bzl", "create_kotlinc_options")
 load("@rules_jvm//:jvm.bzl", "jvm_library", "resourcegroup")
 
 create_kotlinc_options(
-  name = "custom_rename.k2",
+  name = "custom_kotlin-refactorings-rename",
   opt_in = [
     "com.intellij.openapi.util.IntellijInternalApi",
     "org.jetbrains.kotlin.utils.addToStdlib.UnsafeCastFunction",
@@ -15,18 +15,18 @@ create_kotlinc_options(
 )
 
 resourcegroup(
-  name = "rename.k2_resources",
+  name = "kotlin-refactorings-rename_resources",
   srcs = glob(["resources/**/*"]),
   strip_prefix = "resources"
 )
 
 jvm_library(
-  name = "rename.k2",
-  module_name = "kotlin.refactorings.rename.k2",
+  name = "kotlin-refactorings-rename",
+  module_name = "intellij.kotlin.refactorings.rename",
   visibility = ["//visibility:public"],
   srcs = glob(["src/**/*.kt", "src/**/*.java", "src/**/*.form"], allow_empty = True),
-  resources = [":rename.k2_resources"],
-  kotlinc_opts = ":custom_rename.k2",
+  resources = [":kotlin-refactorings-rename_resources"],
+  kotlinc_opts = ":custom_kotlin-refactorings-rename",
   deps = [
     "@lib//:kotlinc-kotlin-compiler-common",
     "@lib//:kotlinc-analysis-api",
@@ -39,22 +39,22 @@ jvm_library(
     "//platform/core-impl",
     "//platform/lang-impl",
     "//plugins/kotlin/refactorings/kotlin.refactorings.common:kotlin-refactorings-common",
-    "//plugins/kotlin/refactorings/kotlin.refactorings.k2:kotlin-refactorings-k2",
+    "//plugins/kotlin/refactorings/kotlin.refactorings.k2:kotlin-refactorings",
     "//plugins/kotlin/base/analysis",
     "//plugins/kotlin/base/resources:kotlin-base-resources",
-    "//plugins/kotlin/kotlin.searching:searching-k2",
-    "//plugins/kotlin/base/analysis-api/analysis-api-utils:kotlin-base-analysis-api-utils",
+    "//plugins/kotlin/kotlin.searching",
+    "//plugins/kotlin/base/analysis-api/analysis-api-utils:kotlin-base-analysis-utils",
     "//java/java-indexing-api:indexing",
     "//java/java-impl-refactorings:impl-refactorings",
   ]
 )
 
 jvm_library(
-  name = "rename.k2_test_lib",
+  name = "kotlin-refactorings-rename_test_lib",
   visibility = ["//visibility:public"],
   srcs = glob(["test/**/*.kt", "test/**/*.java", "test/**/*.form"], allow_empty = True),
-  kotlinc_opts = ":custom_rename.k2",
-  associates = [":rename.k2"],
+  kotlinc_opts = ":custom_kotlin-refactorings-rename",
+  associates = [":kotlin-refactorings-rename"],
   deps = [
     "@lib//:kotlinc-kotlin-compiler-common",
     "@lib//:kotlinc-kotlin-compiler-tests",
@@ -80,26 +80,26 @@ jvm_library(
     "//plugins/kotlin/tests-common:tests-common_test_lib",
     "//plugins/kotlin/test-framework:test-framework_test_lib",
     "//plugins/kotlin/fir/tests:tests_test_lib",
-    "//plugins/kotlin/base/fir/code-insight",
+    "//plugins/kotlin/base/fir/code-insight:kotlin-codeInsight-base",
     "//java/testFramework",
     "//plugins/kotlin/idea/tests:tests_test_lib",
     "//plugins/kotlin/refactorings/kotlin.refactorings.common:kotlin-refactorings-common",
-    "//plugins/kotlin/refactorings/kotlin.refactorings.k2:kotlin-refactorings-k2",
+    "//plugins/kotlin/refactorings/kotlin.refactorings.k2:kotlin-refactorings",
     "//plugins/kotlin/base/analysis",
     "//plugins/kotlin/base/resources:kotlin-base-resources",
-    "//plugins/kotlin/kotlin.searching:searching-k2",
-    "//plugins/kotlin/base/analysis-api/analysis-api-utils:kotlin-base-analysis-api-utils",
+    "//plugins/kotlin/kotlin.searching",
+    "//plugins/kotlin/base/analysis-api/analysis-api-utils:kotlin-base-analysis-utils",
     "//java/java-indexing-api:indexing",
     "//java/java-impl-refactorings:impl-refactorings",
   ]
 )
-### auto-generated section `build kotlin.refactorings.rename.k2` end
+### auto-generated section `build intellij.kotlin.refactorings.rename` end
 
-### auto-generated section `test kotlin.refactorings.rename.k2` start
+### auto-generated section `test intellij.kotlin.refactorings.rename` start
 load("@community//build:tests-options.bzl", "jps_test")
 
 jps_test(
-  name = "rename.k2_test",
-  runtime_deps = [":rename.k2_test_lib"]
+  name = "kotlin-refactorings-rename_test",
+  runtime_deps = [":kotlin-refactorings-rename_test_lib"]
 )
-### auto-generated section `test kotlin.refactorings.rename.k2` end
+### auto-generated section `test intellij.kotlin.refactorings.rename` end

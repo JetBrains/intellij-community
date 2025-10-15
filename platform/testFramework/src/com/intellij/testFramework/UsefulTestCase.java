@@ -84,7 +84,8 @@ import static org.junit.Assume.assumeTrue;
  * To use JUnit 4, annotate your test subclass with {@code @RunWith(JUnit4.class)} or any other runner (like {@code Parametrized.class}).
  * <p>
  * For JUnit 5 support,
- * see the {@code intellij.platform.testFramework.junit5} module in {@code community/platform/testFramework/junit5}.
+ * see the {@code intellij.platform.testFramework.junit5} module in {@code community/platform/testFramework/junit5}
+ * and the showcase in {@code community/platform/testFramework/junit5/test/showcase}.
  * <h3>Caveats</h3>
  * If you're looking for JUnit 4 for Assume support and still have JUnit 3 tests,
  * consider using {@code @RunWith(JUnit38AssumeSupportRunner.class)}.

@@ -1,9 +1,9 @@
-### auto-generated section `build kotlin.code-insight.impl-base` start
+### auto-generated section `build intellij.kotlin.codeInsight.shared` start
 load("//build:compiler-options.bzl", "create_kotlinc_options")
 load("@rules_jvm//:jvm.bzl", "jvm_library", "resourcegroup")
 
 create_kotlinc_options(
-  name = "custom_impl-base",
+  name = "custom_kotlin-codeInsight-shared",
   opt_in = [
     "com.intellij.openapi.util.IntellijInternalApi",
     "org.jetbrains.kotlin.utils.addToStdlib.UnsafeCastFunction",
@@ -15,18 +15,18 @@ create_kotlinc_options(
 )
 
 resourcegroup(
-  name = "impl-base_resources",
+  name = "kotlin-codeInsight-shared_resources",
   srcs = glob(["resources/**/*"]),
   strip_prefix = "resources"
 )
 
 jvm_library(
-  name = "impl-base",
-  module_name = "kotlin.code-insight.impl-base",
+  name = "kotlin-codeInsight-shared",
+  module_name = "intellij.kotlin.codeInsight.shared",
   visibility = ["//visibility:public"],
   srcs = glob(["src/**/*.kt", "src/**/*.java", "src/**/*.form"], allow_empty = True),
-  resources = [":impl-base_resources"],
-  kotlinc_opts = ":custom_impl-base",
+  resources = [":kotlin-codeInsight-shared_resources"],
+  kotlinc_opts = ":custom_kotlin-codeInsight-shared",
   deps = [
     "@lib//:jetbrains-annotations",
     "@lib//:kotlin-stdlib",
@@ -50,7 +50,7 @@ jvm_library(
     "//plugins/kotlin/base/psi",
     "//plugins/kotlin/base/resources:kotlin-base-resources",
     "//plugins/kotlin/base/code-insight",
-    "//plugins/kotlin/base/analysis-api/analysis-api-utils:kotlin-base-analysis-api-utils",
+    "//plugins/kotlin/base/analysis-api/analysis-api-utils:kotlin-base-analysis-utils",
     "//platform/platform-impl:ide-impl",
     "//plugins/kotlin/base/project-structure",
     "//plugins/kotlin/formatter",
@@ -77,4 +77,4 @@ jvm_library(
     "//libraries/fastutil",
   ]
 )
-### auto-generated section `build kotlin.code-insight.impl-base` end
+### auto-generated section `build intellij.kotlin.codeInsight.shared` end

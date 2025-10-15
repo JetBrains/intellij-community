@@ -9,6 +9,7 @@ import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.runBlocking
 import org.jetbrains.plugins.terminal.block.reworked.MutableTerminalOutputModel
 import org.jetbrains.plugins.terminal.block.reworked.TerminalBlocksModelImpl
+import org.jetbrains.plugins.terminal.block.reworked.TerminalOffset
 import org.jetbrains.plugins.terminal.session.TerminalBlocksModelState
 import org.jetbrains.plugins.terminal.session.TerminalOutputBlock
 import org.junit.Assert.assertNotEquals
@@ -49,9 +50,9 @@ internal class TerminalBlocksModelTest : BasePlatformTestCase() {
     val block = blocksModel.blocks.singleOrNull() ?: error("Single block expected")
 
     assertNotEquals(null, block.commandStartOffset)
-    assertEquals("myPrompt: ", outputModel.getText(block.startOffset, block.commandStartOffset!!))
+    assertEquals("myPrompt: ", outputModel.getTextAsString(block.startOffset, block.commandStartOffset!!))
     assertEquals(null, block.outputStartOffset)
-    assertEquals("myPrompt: \n\n\n", outputModel.getText(block.startOffset, block.endOffset))
+    assertEquals("myPrompt: \n\n\n", outputModel.getTextAsString(block.startOffset, block.endOffset))
   }
 
   @Test
@@ -67,7 +68,7 @@ internal class TerminalBlocksModelTest : BasePlatformTestCase() {
 
     val block = blocksModel.blocks.singleOrNull() ?: error("Single block expected")
 
-    assertEquals("myPrompt: myCommand\n\n\n", outputModel.getText(block.startOffset, block.endOffset))
+    assertEquals("myPrompt: myCommand\n\n\n", outputModel.getTextAsString(block.startOffset, block.endOffset))
   }
 
   @Test
@@ -84,9 +85,9 @@ internal class TerminalBlocksModelTest : BasePlatformTestCase() {
     outputModel.update(1, "someOutput\n\n")
 
     val block = blocksModel.blocks.singleOrNull() ?: error("Single block expected")
-    assertEquals("myCommand\n", outputModel.getText(block.commandStartOffset!!, block.outputStartOffset!!))
-    assertEquals("someOutput\n\n", outputModel.getText(block.outputStartOffset!!, block.endOffset))
-    assertEquals("myPrompt: myCommand\nsomeOutput\n\n", outputModel.getText(block.startOffset, block.endOffset))
+    assertEquals("myCommand\n", outputModel.getTextAsString(block.commandStartOffset!!, block.outputStartOffset!!))
+    assertEquals("someOutput\n\n", outputModel.getTextAsString(block.outputStartOffset!!, block.endOffset))
+    assertEquals("myPrompt: myCommand\nsomeOutput\n\n", outputModel.getTextAsString(block.startOffset, block.endOffset))
   }
 
   @Test
@@ -108,9 +109,9 @@ internal class TerminalBlocksModelTest : BasePlatformTestCase() {
     assertEquals(2, blocksModel.blocks.size)
 
     val firstBlock = blocksModel.blocks[0]
-    assertEquals("myPrompt: myCommand\nsomeOutput\n", outputModel.getText(firstBlock.startOffset, firstBlock.endOffset))
+    assertEquals("myPrompt: myCommand\nsomeOutput\n", outputModel.getTextAsString(firstBlock.startOffset, firstBlock.endOffset))
     val secondBlock = blocksModel.blocks[1]
-    assertEquals("updatedPrompt: \n", outputModel.getText(secondBlock.startOffset, secondBlock.endOffset))
+    assertEquals("updatedPrompt: \n", outputModel.getTextAsString(secondBlock.startOffset, secondBlock.endOffset))
   }
 
   @Test
@@ -129,10 +130,10 @@ internal class TerminalBlocksModelTest : BasePlatformTestCase() {
     val firstBlock = blocksModel.blocks[0]
     assertEquals(null, firstBlock.commandStartOffset)
     assertEquals(null, firstBlock.outputStartOffset)
-    assertEquals("welcomeText\n", outputModel.getText(firstBlock.startOffset, firstBlock.endOffset))
+    assertEquals("welcomeText\n", outputModel.getTextAsString(firstBlock.startOffset, firstBlock.endOffset))
 
     val secondBlock = blocksModel.blocks[1]
-    assertEquals("myPrompt: \n\n", outputModel.getText(secondBlock.startOffset, secondBlock.endOffset))
+    assertEquals("myPrompt: \n\n", outputModel.getTextAsString(secondBlock.startOffset, secondBlock.endOffset))
   }
 
   @Test
@@ -166,9 +167,9 @@ internal class TerminalBlocksModelTest : BasePlatformTestCase() {
     assertEquals(2, blocksModel.blocks.size)
 
     val firstBlock = blocksModel.blocks[0]
-    assertEquals("myPrompt: myCommand\noutput123\n", outputModel.getText(firstBlock.startOffset, firstBlock.endOffset))
+    assertEquals("myPrompt: myCommand\noutput123\n", outputModel.getTextAsString(firstBlock.startOffset, firstBlock.endOffset))
     val secondBlock = blocksModel.blocks[1]
-    assertEquals("myPrompt: otherModifiedCommand\n", outputModel.getText(secondBlock.startOffset, secondBlock.endOffset))
+    assertEquals("myPrompt: otherModifiedCommand\n", outputModel.getTextAsString(secondBlock.startOffset, secondBlock.endOffset))
   }
 
   @Test
@@ -199,7 +200,7 @@ internal class TerminalBlocksModelTest : BasePlatformTestCase() {
     blocksModel.promptFinished(outputModel.startOffset + 10L)
 
     val block = blocksModel.blocks.singleOrNull() ?: error("Single block expected")
-    assertEquals("myPrompt: \n\n\n", outputModel.getText(block.startOffset, block.endOffset))
+    assertEquals("myPrompt: \n\n\n", outputModel.getTextAsString(block.startOffset, block.endOffset))
   }
 
   /**
@@ -229,7 +230,7 @@ internal class TerminalBlocksModelTest : BasePlatformTestCase() {
     outputModel.update(0, "")
 
     val block = blocksModel.blocks.singleOrNull() ?: error("Single block expected")
-    assertEquals("", outputModel.getText(block.startOffset, block.endOffset))
+    assertEquals("", outputModel.getTextAsString(block.startOffset, block.endOffset))
   }
 
   @Test
@@ -251,12 +252,12 @@ internal class TerminalBlocksModelTest : BasePlatformTestCase() {
     assertEquals(2, blocksModel.blocks.size)
 
     val firstBlock = blocksModel.blocks[0]
-    assertEquals("", outputModel.getText(firstBlock.startOffset, firstBlock.commandStartOffset!!))
-    assertEquals("mmand\n", outputModel.getText(firstBlock.commandStartOffset!!, firstBlock.outputStartOffset!!))
-    assertEquals("mmand\noutput123456\n", outputModel.getText(firstBlock.startOffset, firstBlock.endOffset))
+    assertEquals("", outputModel.getTextAsString(firstBlock.startOffset, firstBlock.commandStartOffset!!))
+    assertEquals("mmand\n", outputModel.getTextAsString(firstBlock.commandStartOffset!!, firstBlock.outputStartOffset!!))
+    assertEquals("mmand\noutput123456\n", outputModel.getTextAsString(firstBlock.startOffset, firstBlock.endOffset))
 
     val secondBlock = blocksModel.blocks[1]
-    assertEquals("myPrompt: \n", outputModel.getText(secondBlock.startOffset, secondBlock.endOffset))
+    assertEquals("myPrompt: \n", outputModel.getTextAsString(secondBlock.startOffset, secondBlock.endOffset))
   }
 
   @Test
@@ -279,12 +280,12 @@ internal class TerminalBlocksModelTest : BasePlatformTestCase() {
     assertEquals(2, blocksModel.blocks.size)
 
     val firstBlock = blocksModel.blocks[0]
-    assertEquals("", outputModel.getText(firstBlock.startOffset, firstBlock.commandStartOffset!!))
-    assertEquals("mmand\n", outputModel.getText(firstBlock.commandStartOffset!!, firstBlock.outputStartOffset!!))
-    assertEquals("mmand\noutput123456\n", outputModel.getText(firstBlock.startOffset, firstBlock.endOffset))
+    assertEquals("", outputModel.getTextAsString(firstBlock.startOffset, firstBlock.commandStartOffset!!))
+    assertEquals("mmand\n", outputModel.getTextAsString(firstBlock.commandStartOffset!!, firstBlock.outputStartOffset!!))
+    assertEquals("mmand\noutput123456\n", outputModel.getTextAsString(firstBlock.startOffset, firstBlock.endOffset))
 
     val secondBlock = blocksModel.blocks[1]
-    assertEquals("myPrompt: \n", outputModel.getText(secondBlock.startOffset, secondBlock.endOffset))
+    assertEquals("myPrompt: \n", outputModel.getTextAsString(secondBlock.startOffset, secondBlock.endOffset))
   }
 
   @Test
@@ -413,7 +414,7 @@ internal class TerminalBlocksModelTest : BasePlatformTestCase() {
     assertEquals(expectedSecondBlock, state.blocks[1])
   }
 
-  private fun MutableTerminalOutputModel.getText(startOffset: Int, endOffset: Int): String {
-    return document.charsSequence.substring(startOffset, endOffset)
+  private fun MutableTerminalOutputModel.getTextAsString(startOffset: TerminalOffset, endOffset: TerminalOffset): String {
+    return getText(startOffset, endOffset).toString()
   }
 }

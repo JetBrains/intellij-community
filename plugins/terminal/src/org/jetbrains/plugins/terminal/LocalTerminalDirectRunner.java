@@ -3,9 +3,10 @@ package org.jetbrains.plugins.terminal;
 
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.Project;
+import com.intellij.platform.eel.EelDescriptor;
 import com.intellij.terminal.pty.PtyProcessTtyConnector;
-import com.intellij.util.ArrayUtil;
 import com.intellij.util.TimeoutUtil;
+import com.intellij.util.containers.ContainerUtil;
 import com.jediterm.core.util.TermSize;
 import com.jediterm.terminal.TtyConnector;
 import com.pty4j.PtyProcess;
@@ -25,7 +26,10 @@ import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
 import java.nio.file.InvalidPathException;
 import java.nio.file.Path;
-import java.util.*;
+import java.util.LinkedHashMap;
+import java.util.List;
+import java.util.Map;
+import java.util.Objects;
 import java.util.concurrent.ExecutionException;
 import java.util.stream.Collectors;
 
@@ -62,11 +66,12 @@ public class LocalTerminalDirectRunner extends AbstractTerminalRunner<PtyProcess
   }
 
   private @NotNull ShellStartupOptions applyTerminalCustomizers(@NotNull ShellStartupOptions options) {
-    String[] command = ArrayUtil.toStringArray(options.getShellCommand());
+    List<String> shellCommand = ContainerUtil.notNullize(options.getShellCommand());
+    EelDescriptor eelDescriptor = findEelDescriptor(options.getWorkingDirectory(), shellCommand);
     Map<String, String> envs = ShellStartupOptionsKt.createEnvVariablesMap(options.getEnvVariables());
-    for (LocalTerminalCustomizer customizer : LocalTerminalCustomizer.EP_NAME.getExtensions()) {
+    for (LocalTerminalCustomizer customizer : LocalTerminalCustomizer.EP_NAME.getExtensionList()) {
       try {
-        command = customizer.customizeCommandAndEnvironment(myProject, options.getWorkingDirectory(), command, envs);
+        shellCommand = customizer.customizeCommandAndEnvironment(myProject, options.getWorkingDirectory(), shellCommand, envs, eelDescriptor);
       }
       catch (Exception e) {
         LOG.error("Exception during customization of the terminal session", e);
@@ -74,7 +79,7 @@ public class LocalTerminalDirectRunner extends AbstractTerminalRunner<PtyProcess
     }
 
     return options.builder()
-      .shellCommand(Arrays.asList(command))
+      .shellCommand(shellCommand)
       .envVariables(envs)
       .build();
   }
@@ -91,13 +96,16 @@ public class LocalTerminalDirectRunner extends AbstractTerminalRunner<PtyProcess
   }
 
   private @NotNull ShellProcessHolder doCreateProcess(@NotNull ShellStartupOptions options) throws ExecutionException {
-    String[] command = ArrayUtil.toStringArray(options.getShellCommand());
+    List<String> command = Objects.requireNonNull(options.getShellCommand(), () -> {
+      return "Shell command must not be null, " + options;
+    });
     Map<String, String> envs = options.getEnvVariables();
-    TermSize initialTermSize = options.getInitialTermSize();
-    String workingDir = options.getWorkingDirectory();
-    if (workingDir == null) {
-      throw new IllegalStateException("Working directory must not be null, startup options: " + options);
-    }
+    TermSize initialTermSize = Objects.requireNonNull(options.getInitialTermSize(), () -> {
+      return "Initial term size must not be null, " + options;
+    });
+    String workingDir = Objects.requireNonNull(options.getWorkingDirectory(), () -> {
+      return "Working directory must not be null, " + options;
+    });
 
     var shellIntegration = options.getShellIntegration();
     boolean isBlockTerminal =
@@ -110,24 +118,15 @@ public class LocalTerminalDirectRunner extends AbstractTerminalRunner<PtyProcess
       TerminalUsageTriggerCollector.triggerLocalShellStarted(myProject, command, isBlockTerminal);
     }
 
-    Path workingDirPath = null;
-    try {
-      workingDirPath = Path.of(workingDir);
-    }
-    catch (InvalidPathException ignored) {
-    }
     try {
       long startNano = System.nanoTime();
+      Path workingDirPath = Path.of(workingDir);
       ShellProcessHolder processHolder;
-      if (workingDirPath != null && shouldUseEelApi()) {
-        processHolder = startProcess(
-          List.of(command), envs, workingDirPath, Objects.requireNonNull(initialTermSize)
-        );
+      if (shouldUseEelApi()) {
+        processHolder = startProcess(command, envs, workingDirPath, initialTermSize);
       }
       else {
-        processHolder = startLocalProcess(
-          List.of(command), envs, workingDir, Objects.requireNonNull(initialTermSize)
-        );
+        processHolder = startLocalProcess(command, envs, workingDir, initialTermSize);
       }
       LOG.info("Started " + processHolder.getPtyProcess().getClass().getName() + " in " + TimeoutUtil.getDurationMillis(startNano)
                + " ms from " + stringifyProcessInfo(command, workingDir, initialTermSize, envs, !LOG.isDebugEnabled()));
@@ -142,12 +141,12 @@ public class LocalTerminalDirectRunner extends AbstractTerminalRunner<PtyProcess
     return TerminalOptionsProvider.getInstance().getShellIntegration();
   }
 
-  private static @NotNull String stringifyProcessInfo(String @NotNull[] command,
+  private static @NotNull String stringifyProcessInfo(@NotNull List<String> command,
                                                       @NotNull String workingDirectory,
                                                       @Nullable TermSize initialTermSize,
                                                       @NotNull Map<String, String> environment,
                                                       boolean envDiff) {
-    String info = Arrays.toString(command) + " in " + workingDirectory + (isDirectory(workingDirectory) ? "" : " [no such directory]") +
+    String info = command + " in " + workingDirectory + (isDirectory(workingDirectory) ? "" : " [no such directory]") +
                   ", [" + initialTermSize + "]";
     if (envDiff) {
       return info + ", diff_envs=" + getEnvironmentDiff(environment, System.getenv());

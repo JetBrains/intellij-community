@@ -107,6 +107,14 @@ fun Path.asEelPath(): EelPath {
 }
 
 @ApiStatus.Internal
+fun EelDescriptor.mountProvider(): EelMountProvider? {
+  return EelProvider.EP_NAME.extensionList
+    .firstNotNullOfOrNull { eelProvider ->
+      eelProvider.getMountProvider(eelDescriptor = this)
+    }
+}
+
+@ApiStatus.Internal
 fun EelDescriptor.routingPrefixes(): Set<Path> {
   return EelProvider.EP_NAME.extensionList
     .flatMapTo(HashSet()) { eelProvider ->

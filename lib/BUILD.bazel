@@ -157,16 +157,16 @@ jvm_import(
 java_library(
   name = "ai-grazie-rule-engine",
   exports = [
-    ":ai_grazie-grazie-rule-engine-0_3_8_http_import",
+    ":ai_grazie-grazie-rule-engine-0_3_11_http_import",
     ":net_fellbaum-jemoji-1_3_1_http_import",
   ],
   visibility = ["//visibility:public"]
 )
 
 jvm_import(
-  name = "ai_grazie-grazie-rule-engine-0_3_8_http_import",
-  jar = "@ai_grazie-grazie-rule-engine-0_3_8_http//file",
-  source_jar = "@ai_grazie-grazie-rule-engine-0_3_8_http//file"
+  name = "ai_grazie-grazie-rule-engine-0_3_11_http_import",
+  jar = "@ai_grazie-grazie-rule-engine-0_3_11_http//file",
+  source_jar = "@ai_grazie-grazie-rule-engine-0_3_11_http//file"
 )
 
 jvm_import(
@@ -2096,16 +2096,16 @@ jvm_import(
 java_library(
   name = "grazie-core-org-jetbrains-intellij-deps-languagetool-language-en",
   exports = [
-    ":org_jetbrains_intellij_deps_languagetool-language-en-6_6_18_http_import",
+    ":org_jetbrains_intellij_deps_languagetool-language-en-6_7_19_http_import",
     ":org_languagetool-english-pos-dict-0_6_http_import",
   ],
   visibility = ["//visibility:public"]
 )
 
 jvm_import(
-  name = "org_jetbrains_intellij_deps_languagetool-language-en-6_6_18_http_import",
-  jar = "@org_jetbrains_intellij_deps_languagetool-language-en-6_6_18_http//file",
-  source_jar = "@org_jetbrains_intellij_deps_languagetool-language-en-6_6_18_http//file"
+  name = "org_jetbrains_intellij_deps_languagetool-language-en-6_7_19_http_import",
+  jar = "@org_jetbrains_intellij_deps_languagetool-language-en-6_7_19_http//file",
+  source_jar = "@org_jetbrains_intellij_deps_languagetool-language-en-6_7_19_http//file"
 )
 
 jvm_import(
@@ -2116,16 +2116,16 @@ jvm_import(
 java_library(
   name = "grazie-core-org-jetbrains-intellij-deps-languagetool-languagetool-core",
   exports = [
-    ":org_jetbrains_intellij_deps_languagetool-languagetool-core-6_6_18_http_import",
+    ":org_jetbrains_intellij_deps_languagetool-languagetool-core-6_7_19_http_import",
     ":edu_washington_cs_knowitall-openregex-1_1_1_http_import",
   ],
   visibility = ["//visibility:public"]
 )
 
 jvm_import(
-  name = "org_jetbrains_intellij_deps_languagetool-languagetool-core-6_6_18_http_import",
-  jar = "@org_jetbrains_intellij_deps_languagetool-languagetool-core-6_6_18_http//file",
-  source_jar = "@org_jetbrains_intellij_deps_languagetool-languagetool-core-6_6_18_http//file"
+  name = "org_jetbrains_intellij_deps_languagetool-languagetool-core-6_7_19_http_import",
+  jar = "@org_jetbrains_intellij_deps_languagetool-languagetool-core-6_7_19_http//file",
+  source_jar = "@org_jetbrains_intellij_deps_languagetool-languagetool-core-6_7_19_http//file"
 )
 
 jvm_import(
@@ -2176,16 +2176,16 @@ jvm_import(
 java_library(
   name = "grazie-tests-jetbrains-intellij-deps-languagetool-language-be",
   exports = [
-    ":org_jetbrains_intellij_deps_languagetool-language-be-6_6_18_http_import",
+    ":org_jetbrains_intellij_deps_languagetool-language-be-6_7_19_http_import",
     ":io_github_belarus-linguistics_grammardb_spell_languagetool-1_0_2_http_import",
   ],
   visibility = ["//visibility:public"]
 )
 
 jvm_import(
-  name = "org_jetbrains_intellij_deps_languagetool-language-be-6_6_18_http_import",
-  jar = "@org_jetbrains_intellij_deps_languagetool-language-be-6_6_18_http//file",
-  source_jar = "@org_jetbrains_intellij_deps_languagetool-language-be-6_6_18_http//file"
+  name = "org_jetbrains_intellij_deps_languagetool-language-be-6_7_19_http_import",
+  jar = "@org_jetbrains_intellij_deps_languagetool-language-be-6_7_19_http//file",
+  source_jar = "@org_jetbrains_intellij_deps_languagetool-language-be-6_7_19_http//file"
 )
 
 jvm_import(
@@ -2196,27 +2196,27 @@ jvm_import(
 java_library(
   name = "grazie-tests-jetbrains-intellij-deps-languagetool-language-uk",
   exports = [
-    ":org_jetbrains_intellij_deps_languagetool-language-uk-6_6_18_http_import",
-    ":ua_net_nlp-morfologik-ukrainian-lt-6_6_0_http_import",
+    ":org_jetbrains_intellij_deps_languagetool-language-uk-6_7_19_http_import",
+    ":ua_net_nlp-morfologik-ukrainian-lt-6_7_1_http_import",
   ],
   visibility = ["//visibility:public"]
 )
 
 jvm_import(
-  name = "org_jetbrains_intellij_deps_languagetool-language-uk-6_6_18_http_import",
-  jar = "@org_jetbrains_intellij_deps_languagetool-language-uk-6_6_18_http//file",
-  source_jar = "@org_jetbrains_intellij_deps_languagetool-language-uk-6_6_18_http//file"
+  name = "org_jetbrains_intellij_deps_languagetool-language-uk-6_7_19_http_import",
+  jar = "@org_jetbrains_intellij_deps_languagetool-language-uk-6_7_19_http//file",
+  source_jar = "@org_jetbrains_intellij_deps_languagetool-language-uk-6_7_19_http//file"
 )
 
 jvm_import(
-  name = "ua_net_nlp-morfologik-ukrainian-lt-6_6_0_http_import",
-  jar = "@ua_net_nlp-morfologik-ukrainian-lt-6_6_0_http//file"
+  name = "ua_net_nlp-morfologik-ukrainian-lt-6_7_1_http_import",
+  jar = "@ua_net_nlp-morfologik-ukrainian-lt-6_7_1_http//file"
 )
 
 java_library(
   name = "grazie-tests-org-jetbrains-intellij-deps-languagetool-language-de",
   exports = [
-    ":org_jetbrains_intellij_deps_languagetool-language-de-6_6_18_http_import",
+    ":org_jetbrains_intellij_deps_languagetool-language-de-6_7_19_http_import",
     ":de_danielnaber-german-pos-dict-1_2_4_http_import",
     ":de_danielnaber-jwordsplitter-4_7_http_import",
   ],
@@ -2224,9 +2224,9 @@ java_library(
 )
 
 jvm_import(
-  name = "org_jetbrains_intellij_deps_languagetool-language-de-6_6_18_http_import",
-  jar = "@org_jetbrains_intellij_deps_languagetool-language-de-6_6_18_http//file",
-  source_jar = "@org_jetbrains_intellij_deps_languagetool-language-de-6_6_18_http//file"
+  name = "org_jetbrains_intellij_deps_languagetool-language-de-6_7_19_http_import",
+  jar = "@org_jetbrains_intellij_deps_languagetool-language-de-6_7_19_http//file",
+  source_jar = "@org_jetbrains_intellij_deps_languagetool-language-de-6_7_19_http//file"
 )
 
 jvm_import(
@@ -2242,29 +2242,29 @@ jvm_import(
 
 jvm_import(
   name = "grazie-tests-org-jetbrains-intellij-deps-languagetool-language-it",
-  jar = "@org_jetbrains_intellij_deps_languagetool-language-it-6_6_18_http//file",
-  source_jar = "@org_jetbrains_intellij_deps_languagetool-language-it-6_6_18_http//file",
+  jar = "@org_jetbrains_intellij_deps_languagetool-language-it-6_7_19_http//file",
+  source_jar = "@org_jetbrains_intellij_deps_languagetool-language-it-6_7_19_http//file",
   visibility = ["//visibility:public"]
 )
 
 jvm_import(
   name = "grazie-tests-org-jetbrains-intellij-deps-languagetool-language-pt",
-  jar = "@org_jetbrains_intellij_deps_languagetool-language-pt-6_6_18_http//file",
-  source_jar = "@org_jetbrains_intellij_deps_languagetool-language-pt-6_6_18_http//file",
+  jar = "@org_jetbrains_intellij_deps_languagetool-language-pt-6_7_19_http//file",
+  source_jar = "@org_jetbrains_intellij_deps_languagetool-language-pt-6_7_19_http//file",
   visibility = ["//visibility:public"]
 )
 
 jvm_import(
   name = "grazie-tests-org-jetbrains-intellij-deps-languagetool-language-ru",
-  jar = "@org_jetbrains_intellij_deps_languagetool-language-ru-6_6_18_http//file",
-  source_jar = "@org_jetbrains_intellij_deps_languagetool-language-ru-6_6_18_http//file",
+  jar = "@org_jetbrains_intellij_deps_languagetool-language-ru-6_7_19_http//file",
+  source_jar = "@org_jetbrains_intellij_deps_languagetool-language-ru-6_7_19_http//file",
   visibility = ["//visibility:public"]
 )
 
 java_library(
   name = "grazie-tests-org-jetbrains-intellij-deps-languagetool-languagetool-core",
   exports = [
-    ":org_jetbrains_intellij_deps_languagetool-languagetool-core-6_6_18_http_import",
+    ":org_jetbrains_intellij_deps_languagetool-languagetool-core-6_7_19_http_import",
     ":edu_washington_cs_knowitall-openregex-1_1_1_http_import",
   ],
   visibility = ["//visibility:public"]
@@ -2810,45 +2810,57 @@ jvm_import(
 java_library(
   name = "java-coverage-_ja_co_co",
   exports = [
-    ":org_jacoco-org_jacoco_ant-0_8_13-_ant_http_import",
-    ":org_jacoco-org_jacoco_core-0_8_13-_core_http_import",
-    ":org_ow2_asm-asm-9_8_http_import",
-    ":org_ow2_asm-asm-commons-9_8_http_import",
-    ":org_ow2_asm-asm-tree-9_8_http_import",
-    ":org_jacoco-org_jacoco_report-0_8_13-_report_http_import",
-    ":org_jacoco-org_jacoco_agent-0_8_13-_agent_http_import",
+    ":org_jacoco-org_jacoco_ant-0_8_14-_ant_http_import",
+    ":org_jacoco-org_jacoco_core-0_8_14-_core_http_import",
+    ":org_ow2_asm-asm-9_9_http_import",
+    ":org_ow2_asm-asm-commons-9_9_http_import",
+    ":org_ow2_asm-asm-tree-9_9_http_import",
+    ":org_jacoco-org_jacoco_report-0_8_14-_report_http_import",
+    ":org_jacoco-org_jacoco_agent-0_8_14-_agent_http_import",
   ],
   visibility = ["//visibility:public"]
 )
 
 jvm_import(
-  name = "org_jacoco-org_jacoco_ant-0_8_13-_ant_http_import",
-  jar = "@org_jacoco-org_jacoco_ant-0_8_13-_ant_http//file",
-  source_jar = "@org_jacoco-org_jacoco_ant-0_8_13-_ant_http//file"
+  name = "org_jacoco-org_jacoco_ant-0_8_14-_ant_http_import",
+  jar = "@org_jacoco-org_jacoco_ant-0_8_14-_ant_http//file",
+  source_jar = "@org_jacoco-org_jacoco_ant-0_8_14-_ant_http//file"
 )
 
 jvm_import(
-  name = "org_jacoco-org_jacoco_core-0_8_13-_core_http_import",
-  jar = "@org_jacoco-org_jacoco_core-0_8_13-_core_http//file",
-  source_jar = "@org_jacoco-org_jacoco_core-0_8_13-_core_http//file"
+  name = "org_jacoco-org_jacoco_core-0_8_14-_core_http_import",
+  jar = "@org_jacoco-org_jacoco_core-0_8_14-_core_http//file",
+  source_jar = "@org_jacoco-org_jacoco_core-0_8_14-_core_http//file"
 )
 
 jvm_import(
-  name = "org_ow2_asm-asm-commons-9_8_http_import",
-  jar = "@org_ow2_asm-asm-commons-9_8_http//file",
-  source_jar = "@org_ow2_asm-asm-commons-9_8_http//file"
+  name = "org_ow2_asm-asm-9_9_http_import",
+  jar = "@org_ow2_asm-asm-9_9_http//file",
+  source_jar = "@org_ow2_asm-asm-9_9_http//file"
 )
 
 jvm_import(
-  name = "org_jacoco-org_jacoco_report-0_8_13-_report_http_import",
-  jar = "@org_jacoco-org_jacoco_report-0_8_13-_report_http//file",
-  source_jar = "@org_jacoco-org_jacoco_report-0_8_13-_report_http//file"
+  name = "org_ow2_asm-asm-commons-9_9_http_import",
+  jar = "@org_ow2_asm-asm-commons-9_9_http//file",
+  source_jar = "@org_ow2_asm-asm-commons-9_9_http//file"
 )
 
 jvm_import(
-  name = "org_jacoco-org_jacoco_agent-0_8_13-_agent_http_import",
-  jar = "@org_jacoco-org_jacoco_agent-0_8_13-_agent_http//file",
-  source_jar = "@org_jacoco-org_jacoco_agent-0_8_13-_agent_http//file"
+  name = "org_ow2_asm-asm-tree-9_9_http_import",
+  jar = "@org_ow2_asm-asm-tree-9_9_http//file",
+  source_jar = "@org_ow2_asm-asm-tree-9_9_http//file"
+)
+
+jvm_import(
+  name = "org_jacoco-org_jacoco_report-0_8_14-_report_http_import",
+  jar = "@org_jacoco-org_jacoco_report-0_8_14-_report_http//file",
+  source_jar = "@org_jacoco-org_jacoco_report-0_8_14-_report_http//file"
+)
+
+jvm_import(
+  name = "org_jacoco-org_jacoco_agent-0_8_14-_agent_http_import",
+  jar = "@org_jacoco-org_jacoco_agent-0_8_14-_agent_http//file",
+  source_jar = "@org_jacoco-org_jacoco_agent-0_8_14-_agent_http//file"
 )
 
 java_library(
@@ -3039,8 +3051,8 @@ jvm_import(
 
 jvm_import(
   name = "jbr-api",
-  jar = "@org_jetbrains_runtime-jbr-api-1_6_0_http//file",
-  source_jar = "@org_jetbrains_runtime-jbr-api-1_6_0_http//file",
+  jar = "@org_jetbrains_runtime-jbr-api-1_9_0_http//file",
+  source_jar = "@org_jetbrains_runtime-jbr-api-1_9_0_http//file",
   visibility = ["//visibility:public"]
 )
 
@@ -3618,13 +3630,6 @@ jvm_import(
 )
 
 java_library(
-  name = "junit5Vintage-provided",
-  exports = [":junit5Vintage"],
-  neverlink = True,
-  visibility = ["//visibility:public"]
-)
-
-java_library(
   name = "junit6",
   exports = [
     ":org_junit_jupiter-junit-jupiter-api-6_0_0_http_import",
@@ -3733,9 +3738,16 @@ jvm_import(
 )
 
 jvm_import(
-  name = "kotlin-base-fir-analysis-api-platform-ehcache-sizeof",
+  name = "kotlin-analysis-platform-ehcache-sizeof",
   jar = "@org_ehcache-sizeof-0_4_0_http//file",
   source_jar = "@org_ehcache-sizeof-0_4_0_http//file",
+  visibility = ["//visibility:public"]
+)
+
+jvm_import(
+  name = "kotlin-completion-ml-completion-ranking-kotlin",
+  jar = "@org_jetbrains_intellij_deps_completion-completion-ranking-kotlin-0_4_0_http//file",
+  source_jar = "@org_jetbrains_intellij_deps_completion-completion-ranking-kotlin-0_4_0_http//file",
   visibility = ["//visibility:public"]
 )
 
@@ -3764,13 +3776,6 @@ jvm_import(
   name = "kotlin-metadata",
   jar = "@org_jetbrains_kotlin-kotlin-metadata-jvm-2_2_20_http//file",
   source_jar = "@org_jetbrains_kotlin-kotlin-metadata-jvm-2_2_20_http//file",
-  visibility = ["//visibility:public"]
-)
-
-jvm_import(
-  name = "kotlin-ml-completion-completion-ranking-kotlin",
-  jar = "@org_jetbrains_intellij_deps_completion-completion-ranking-kotlin-0_4_0_http//file",
-  source_jar = "@org_jetbrains_intellij_deps_completion-completion-ranking-kotlin-0_4_0_http//file",
   visibility = ["//visibility:public"]
 )
 
@@ -4779,7 +4784,6 @@ java_library(
     ":io_coil-kt_coil3-coil-compose-jvm-3_2_0_http_import",
     ":io_coil-kt_coil3-coil-jvm-3_2_0_http_import",
     ":io_coil-kt_coil3-coil-core-jvm-3_2_0_http_import",
-    ":com_squareup_okio-okio-jvm-3_11_0_http_import",
     ":io_coil-kt_coil3-coil-compose-core-jvm-3_2_0_http_import",
   ],
   visibility = ["//visibility:public"]
@@ -4804,12 +4808,6 @@ jvm_import(
 )
 
 jvm_import(
-  name = "com_squareup_okio-okio-jvm-3_11_0_http_import",
-  jar = "@com_squareup_okio-okio-jvm-3_11_0_http//file",
-  source_jar = "@com_squareup_okio-okio-jvm-3_11_0_http//file"
-)
-
-jvm_import(
   name = "io_coil-kt_coil3-coil-compose-core-jvm-3_2_0_http_import",
   jar = "@io_coil-kt_coil3-coil-compose-core-jvm-3_2_0_http//file",
   source_jar = "@io_coil-kt_coil3-coil-compose-core-jvm-3_2_0_http//file"
@@ -4819,8 +4817,6 @@ java_library(
   name = "libraries-coil-io-coil-kt-coil3-network-ktor3-jvm",
   exports = [
     ":io_coil-kt_coil3-coil-network-ktor3-jvm-3_2_0_http_import",
-    ":io_coil-kt_coil3-coil-core-jvm-3_2_0_http_import",
-    ":com_squareup_okio-okio-jvm-3_11_0_http_import",
     ":io_coil-kt_coil3-coil-network-core-jvm-3_2_0_http_import",
   ],
   visibility = ["//visibility:public"]
@@ -4838,43 +4834,18 @@ jvm_import(
   source_jar = "@io_coil-kt_coil3-coil-network-core-jvm-3_2_0_http//file"
 )
 
-java_library(
+jvm_import(
   name = "libraries-coil-io-coil-kt-coil3-svg-jvm",
-  exports = [
-    ":io_coil-kt_coil3-coil-svg-jvm-3_2_0_http_import",
-    ":io_coil-kt_coil3-coil-core-jvm-3_2_0_http_import",
-    ":com_squareup_okio-okio-jvm-3_11_0_http_import",
-  ],
-  visibility = ["//visibility:public"]
-)
-
-jvm_import(
-  name = "io_coil-kt_coil3-coil-svg-jvm-3_2_0_http_import",
   jar = "@io_coil-kt_coil3-coil-svg-jvm-3_2_0_http//file",
-  source_jar = "@io_coil-kt_coil3-coil-svg-jvm-3_2_0_http//file"
-)
-
-java_library(
-  name = "libraries-coil-io-coil-kt-coil3-test-jvm",
-  exports = [
-    ":io_coil-kt_coil3-coil-test-jvm-3_2_0_http_import",
-    ":io_coil-kt_coil3-coil-core-jvm-3_2_0_http_import",
-    ":org_jetbrains_skiko-skiko-awt-0_9_4_http_import",
-    ":com_squareup_okio-okio-jvm-3_11_0_http_import",
-  ],
+  source_jar = "@io_coil-kt_coil3-coil-svg-jvm-3_2_0_http//file",
   visibility = ["//visibility:public"]
 )
 
 jvm_import(
-  name = "io_coil-kt_coil3-coil-test-jvm-3_2_0_http_import",
+  name = "libraries-coil-io-coil-kt-coil3-test-jvm",
   jar = "@io_coil-kt_coil3-coil-test-jvm-3_2_0_http//file",
-  source_jar = "@io_coil-kt_coil3-coil-test-jvm-3_2_0_http//file"
-)
-
-jvm_import(
-  name = "org_jetbrains_skiko-skiko-awt-0_9_4_http_import",
-  jar = "@org_jetbrains_skiko-skiko-awt-0_9_4_http//file",
-  source_jar = "@org_jetbrains_skiko-skiko-awt-0_9_4_http//file"
+  source_jar = "@io_coil-kt_coil3-coil-test-jvm-3_2_0_http//file",
+  visibility = ["//visibility:public"]
 )
 
 jvm_import(

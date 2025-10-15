@@ -1,4 +1,4 @@
-### auto-generated section `build kotlin.gradle.gradle.tests` start
+### auto-generated section `build intellij.kotlin.gradle.gradle.tests` start
 load("@rules_jvm//:jvm.bzl", "jvm_library", "resourcegroup")
 
 resourcegroup(
@@ -15,7 +15,7 @@ jvm_library(
 
 jvm_library(
   name = "tests_test_lib",
-  module_name = "kotlin.gradle.gradle.tests",
+  module_name = "intellij.kotlin.gradle.gradle.tests",
   visibility = ["//visibility:public"],
   srcs = glob(["test/**/*.kt", "test/**/*.java", "test/**/*.form"], allow_empty = True),
   resources = [":tests_test_resources"],
@@ -55,9 +55,9 @@ jvm_library(
     "//plugins/kotlin/jvm/shared",
     "//plugins/kotlin/migration",
     "//plugins/kotlin/inspections",
-    "//plugins/kotlin/gradle/code-insight-groovy",
+    "//plugins/kotlin/gradle/code-insight-groovy:kotlin-gradle-codeInsight-groovy",
     "//plugins/kotlin/gradle/gradle",
-    "//plugins/kotlin/gradle/code-insight-common",
+    "//plugins/kotlin/gradle/code-insight-common:kotlin-gradle-codeInsight-common",
     "//plugins/groovy/groovy-psi:psi",
     "//plugins/kotlin/tests-common",
     "//plugins/kotlin/tests-common:tests-common_test_lib",
@@ -85,13 +85,13 @@ jvm_library(
   ],
   exports = ["@lib//:kotlin-tooling-core"]
 )
-### auto-generated section `build kotlin.gradle.gradle.tests` end
+### auto-generated section `build intellij.kotlin.gradle.gradle.tests` end
 
-### auto-generated section `test kotlin.gradle.gradle.tests` start
+### auto-generated section `test intellij.kotlin.gradle.gradle.tests` start
 load("@community//build:tests-options.bzl", "jps_test")
 
 jps_test(
   name = "tests_test",
   runtime_deps = [":tests_test_lib"]
 )
-### auto-generated section `test kotlin.gradle.gradle.tests` end
+### auto-generated section `test intellij.kotlin.gradle.gradle.tests` end

@@ -1,4 +1,4 @@
-### auto-generated section `build kotlin.compiler-reference-index` start
+### auto-generated section `build intellij.kotlin.compilerReferenceIndex` start
 load("@rules_jvm//:jvm.bzl", "jvm_library", "resourcegroup")
 
 resourcegroup(
@@ -9,7 +9,7 @@ resourcegroup(
 
 jvm_library(
   name = "compiler-reference-index",
-  module_name = "kotlin.compiler-reference-index",
+  module_name = "intellij.kotlin.compilerReferenceIndex",
   visibility = ["//visibility:public"],
   srcs = glob(["src/**/*.kt", "src/**/*.java", "src/**/*.form"], allow_empty = True),
   resources = [":compiler-reference-index_resources"],
@@ -36,4 +36,4 @@ jvm_library(
     "//java/compiler/impl",
   ]
 )
-### auto-generated section `build kotlin.compiler-reference-index` end
+### auto-generated section `build intellij.kotlin.compilerReferenceIndex` end

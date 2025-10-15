@@ -13,8 +13,8 @@
     <orderEntry type="library" name="jetbrains-annotations" level="project" />
     <orderEntry type="module" module-name="intellij.platform.externalSystem.impl" />
     <orderEntry type="module" module-name="intellij.platform.projectModel" />
-    <orderEntry type="module" module-name="kotlin.base.util" />
-    <orderEntry type="module" module-name="kotlin.base.plugin" />
+    <orderEntry type="module" module-name="intellij.kotlin.base.util" />
+    <orderEntry type="module" module-name="intellij.kotlin.base.plugin" />
     <orderEntry type="module" module-name="intellij.platform.core" />
     <orderEntry type="module" module-name="intellij.platform.util" />
     <orderEntry type="module" module-name="intellij.gradle" />
@@ -28,22 +28,22 @@
     <orderEntry type="library" name="kotlinc.kotlin-scripting-jvm" level="project" />
     <orderEntry type="library" name="kotlinc.kotlin-scripting-compiler-impl" level="project" />
     <orderEntry type="library" name="kotlinc.kotlin-scripting-common" level="project" />
-    <orderEntry type="module" module-name="kotlin.gradle.gradle-tooling.impl" />
+    <orderEntry type="module" module-name="intellij.kotlin.gradle.tooling.impl" />
     <orderEntry type="library" name="kotlin-tooling-core" level="project" />
     <orderEntry type="module" module-name="intellij.platform.workspace.storage" />
     <orderEntry type="module" module-name="intellij.platform.lang.core" />
     <orderEntry type="module" module-name="intellij.platform.lang.impl" />
     <orderEntry type="module" module-name="intellij.platform.util.ui" />
-    <orderEntry type="module" module-name="kotlin.preferences" />
+    <orderEntry type="module" module-name="intellij.kotlin.preferences" />
     <orderEntry type="module" module-name="intellij.platform.backend.workspace" />
     <orderEntry type="module" module-name="intellij.platform.workspace.jps" />
     <orderEntry type="module" module-name="intellij.java.frontback.psi.impl" />
-    <orderEntry type="module" module-name="kotlin.base.resources" />
+    <orderEntry type="module" module-name="intellij.kotlin.base.resources" />
     <orderEntry type="module" module-name="intellij.java.ui" />
     <orderEntry type="library" name="kotlinc.kotlin-script-runtime" level="project" />
     <orderEntry type="module" module-name="intellij.platform.core.ui" />
     <orderEntry type="module" module-name="intellij.platform.ide.impl" />
-    <orderEntry type="module" module-name="kotlin.base.scripting.shared" />
+    <orderEntry type="module" module-name="intellij.kotlin.base.scripting.shared" />
     <orderEntry type="module" module-name="intellij.java.psi" />
   </component>
 </module>

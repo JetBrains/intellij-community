@@ -7,40 +7,34 @@ import com.intellij.ui.BooleanTableCellRenderer
 import com.intellij.util.ui.ColumnInfo
 import com.intellij.util.ui.ListTableModel
 import org.jetbrains.kotlin.idea.base.resources.KotlinBundle
-import org.jetbrains.kotlin.scripting.definitions.ScriptDefinition
-import org.jetbrains.kotlin.scripting.resolve.KotlinScriptDefinitionFromAnnotatedTemplate
 import javax.swing.JTable
 
 data class ScriptDefinitionModel(
-    val definition: ScriptDefinition,
+    val id: String,
+    val name: String,
+    val pattern: String,
+    val canBeSwitchedOff: Boolean,
     var isEnabled: Boolean,
 )
 
-class KotlinScriptDefinitionsModel(definitions: MutableList<ScriptDefinitionModel>) :
-    ListTableModel<ScriptDefinitionModel>(
-        arrayOf(
-            ScriptDefinitionName(),
-            ScriptDefinitionPattern(),
-            ScriptDefinitionIsEnabled(),
-        ),
-        definitions,
-        0
-    ) {
+class ScriptDefinitionTable(definitions: MutableList<ScriptDefinitionModel>) : ListTableModel<ScriptDefinitionModel>(
+    arrayOf(
+        ScriptDefinitionName(),
+        ScriptDefinitionPattern(),
+        ScriptDefinitionIsEnabled(),
+    ), definitions, 0
+) {
 
     private class ScriptDefinitionName : ColumnInfo<ScriptDefinitionModel, String>(
         KotlinBundle.message("kotlin.script.definitions.model.name.name")
     ) {
-        override fun valueOf(item: ScriptDefinitionModel) = item.definition.name
+        override fun valueOf(item: ScriptDefinitionModel) = item.name
     }
 
     private class ScriptDefinitionPattern : ColumnInfo<ScriptDefinitionModel, String>(
         KotlinBundle.message("kotlin.script.definitions.model.name.pattern.extension")
     ) {
-        override fun valueOf(item: ScriptDefinitionModel): String =
-            item.definition.asLegacyOrNull<KotlinScriptDefinitionFromAnnotatedTemplate>()?.scriptFilePattern?.pattern
-                ?: (item.definition as? ScriptDefinition.FromConfigurationsBase)?.fileNamePattern
-                ?: (item.definition as? ScriptDefinition.FromConfigurationsBase)?.filePathPattern
-                ?: ("." + item.definition.fileExtension)
+        override fun valueOf(item: ScriptDefinitionModel): String = item.pattern
     }
 
     private class ScriptDefinitionIsEnabled :
@@ -54,8 +48,6 @@ class KotlinScriptDefinitionsModel(definitions: MutableList<ScriptDefinitionMode
             item.isEnabled = value
         }
 
-        override fun isCellEditable(item: ScriptDefinitionModel): Boolean {
-            return item.definition.canDefinitionBeSwitchedOff
-        }
+        override fun isCellEditable(item: ScriptDefinitionModel): Boolean = item.canBeSwitchedOff
     }
 }

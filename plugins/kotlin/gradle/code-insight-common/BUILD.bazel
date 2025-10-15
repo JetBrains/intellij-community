@@ -1,18 +1,18 @@
-### auto-generated section `build kotlin.gradle.code-insight-common` start
+### auto-generated section `build intellij.kotlin.gradle.codeInsight.common` start
 load("@rules_jvm//:jvm.bzl", "jvm_library", "resourcegroup")
 
 resourcegroup(
-  name = "code-insight-common_resources",
+  name = "kotlin-gradle-codeInsight-common_resources",
   srcs = glob(["resources/**/*"]),
   strip_prefix = "resources"
 )
 
 jvm_library(
-  name = "code-insight-common",
-  module_name = "kotlin.gradle.code-insight-common",
+  name = "kotlin-gradle-codeInsight-common",
+  module_name = "intellij.kotlin.gradle.codeInsight.common",
   visibility = ["//visibility:public"],
   srcs = glob(["src/**/*.kt", "src/**/*.java", "src/**/*.form"], allow_empty = True),
-  resources = [":code-insight-common_resources"],
+  resources = [":kotlin-gradle-codeInsight-common_resources"],
   deps = [
     "@lib//:kotlin-stdlib",
     "@lib//:kotlinc-kotlin-compiler-common",
@@ -54,4 +54,4 @@ jvm_library(
     "//plugins/kotlin/code-insight/inspections-shared:kotlin-code-insight-inspections-shared",
   ]
 )
-### auto-generated section `build kotlin.gradle.code-insight-common` end
+### auto-generated section `build intellij.kotlin.gradle.codeInsight.common` end

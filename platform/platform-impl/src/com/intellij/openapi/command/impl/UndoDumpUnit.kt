@@ -6,6 +6,7 @@ import com.intellij.openapi.command.undo.DocumentReference
 import com.intellij.openapi.command.undo.UndoableAction
 
 
+@Suppress("EXPOSED_PACKAGE_PRIVATE_TYPE_FROM_INTERNAL_WARNING")
 internal class UndoDumpUnit(
   private val id: String,
   private val command: String,
@@ -50,7 +51,7 @@ internal class UndoDumpUnit(
         merger.isTransparent,
         merger.isValid,
         merger.undoConfirmationPolicy,
-        ArrayList(merger.allAffectedDocuments),
+        ArrayList(merger.affectedDocuments),
         ArrayList(merger.additionalAffectedDocuments),
         null,
       )

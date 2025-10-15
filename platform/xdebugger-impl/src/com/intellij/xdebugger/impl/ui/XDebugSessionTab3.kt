@@ -52,7 +52,7 @@ class XDebugSessionTab3(
   private fun getWatchesViewImpl(sessionProxy: XDebugSessionProxy, watchesIsVariables: Boolean): XWatchesViewImpl {
     if (sessionProxy is XDebugSessionProxy.Monolith) {
       val session = sessionProxy.session
-      if (session.debugProcess.useSplitterView() && session is XDebugSessionImpl) { // TODO terekhin migrate Immediate window to using new debugger API
+      if (session.debugProcess.useSplitterView()) { // TODO terekhin migrate Immediate window to using new debugger API
         return XSplitterWatchesViewImpl(session, watchesIsVariables, true, withToolbar = false)
       }
     }

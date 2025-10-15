@@ -84,9 +84,13 @@ final class UpdatePluginsApp implements ApplicationStarter {
       pluginsToUpdate = availableUpdates;
     }
 
-    pluginsToUpdate = hotfix242InstallDependency(pluginsToUpdate, PluginId.getId("Pythonid"), PluginId.getId("PythonCore"));
-    pluginsToUpdate = hotfix242InstallDependency(pluginsToUpdate, PluginId.getId("intellij.jupyter"), PluginId.getId("com.intellij.notebooks.core"));
-    pluginsToUpdate = hotfix242InstallDependency(pluginsToUpdate, PluginId.getId("R4Intellij"), PluginId.getId("com.intellij.notebooks.core"));
+    pluginsToUpdate = hotfixInstallDependency(pluginsToUpdate, PluginId.getId("Pythonid"), PluginId.getId("PythonCore"));
+    pluginsToUpdate = hotfixInstallDependency(pluginsToUpdate, PluginId.getId("intellij.jupyter"), PluginId.getId("com.intellij.notebooks.core"));
+    pluginsToUpdate = hotfixInstallDependency(pluginsToUpdate, PluginId.getId("R4Intellij"), PluginId.getId("com.intellij.notebooks.core"));
+    pluginsToUpdate = hotfixInstallDependency(pluginsToUpdate, PluginId.getId("com.intellij.bigdatatools.core"), PluginId.getId("intellij.bigdatatools.coreUi"));
+    pluginsToUpdate = hotfixInstallDependency(pluginsToUpdate, PluginId.getId("com.intellij.bigdatatools.core"), PluginId.getId("intellij.bigdatatools.awsBase"));
+    pluginsToUpdate = hotfixInstallDependency(pluginsToUpdate, PluginId.getId("com.intellij.bigdatatools.rfs"), PluginId.getId("intellij.bigdatatools.gcloud"));
+    pluginsToUpdate = hotfixInstallDependency(pluginsToUpdate, PluginId.getId("com.intellij.bigdatatools.rfs"), PluginId.getId("intellij.bigdatatools.azure"));
 
     logInfo("Plugins to update: " +
             ContainerUtil.map(pluginsToUpdate, downloader -> downloader.getPluginName() + " version " + downloader.getPluginVersion()));
@@ -121,9 +125,9 @@ final class UpdatePluginsApp implements ApplicationStarter {
     LOG.info(msg);
   }
 
-  private static @NotNull Collection<PluginDownloader> hotfix242InstallDependency(@NotNull Collection<PluginDownloader> pluginsToUpdate,
-                                                                                  PluginId pluginId,
-                                                                                  PluginId dependencyId) {
+  private static @NotNull Collection<PluginDownloader> hotfixInstallDependency(@NotNull Collection<PluginDownloader> pluginsToUpdate,
+                                                                               PluginId pluginId,
+                                                                               PluginId dependencyId) {
     if (PluginManagerCore.isPluginInstalled(dependencyId)
         || !ContainerUtil.exists(pluginsToUpdate, p -> p.getId().equals(pluginId))
         || ContainerUtil.exists(pluginsToUpdate, p -> p.getId().equals(dependencyId))) {

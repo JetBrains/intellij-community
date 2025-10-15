@@ -130,7 +130,7 @@ public abstract class XDebuggerUtil {
   public static boolean areInlineBreakpointsEnabled(@Nullable VirtualFile file) {
     boolean isRemDev = AppMode.isRemoteDevHost() || PlatformUtils.isJetBrainsClient();
     return Registry.is(INLINE_BREAKPOINTS_KEY) &&
-           (SplitDebuggerMode.useFeProxy() || !isRemDev) &&
+           (SplitDebuggerMode.isSplitDebugger() || !isRemDev) &&
            !ContainerUtil.exists(InlineBreakpointsDisabler.Companion.getEP().getExtensionList(),
                                  disabler -> disabler.areInlineBreakpointsDisabled(file));
   }

@@ -12,7 +12,7 @@ import java.util.stream.Stream;
 
 public class DevkitInspectionsRegistrationCheckTest extends BasePlatformTestCase {
 
-  private static final int EXPECTED_INSPECTIONS_NUMBER = 85;
+  private static final int EXPECTED_INSPECTIONS_NUMBER = 86;
 
   /**
    * Inspections that are finished and intentionally disabled.
@@ -59,7 +59,6 @@ public class DevkitInspectionsRegistrationCheckTest extends BasePlatformTestCase
     List<String> allKnownDisabledInspections = new ArrayList<>(ContainerUtil.concat(DISABLED_INSPECTIONS, WIP_INSPECTIONS));
     Collections.sort(allKnownDisabledInspections);
 
-    assertSameElements("Mismatch in known WIP inspections", disabledInspectionShortNames,
-                       allKnownDisabledInspections);
+    assertSameElements("Mismatch in known WIP inspections", disabledInspectionShortNames, allKnownDisabledInspections);
   }
 }

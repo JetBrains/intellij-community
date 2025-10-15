@@ -3,7 +3,6 @@ package com.intellij.xdebugger.impl.breakpoints
 
 import com.intellij.openapi.Disposable
 import com.intellij.openapi.application.WriteAction
-import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.editor.Editor
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.util.ThrowableRunnable
@@ -12,8 +11,6 @@ import com.intellij.xdebugger.impl.XLineBreakpointInstallationInfo
 import com.intellij.xdebugger.impl.breakpoints.ui.BreakpointItem
 import com.intellij.xdebugger.impl.rpc.XBreakpointId
 import org.jetbrains.annotations.ApiStatus
-
-private val LOG = logger<XBreakpointManagerProxy>()
 
 @ApiStatus.Internal
 interface XBreakpointManagerProxy {
@@ -55,7 +52,11 @@ interface XBreakpointManagerProxy {
 
   suspend fun <T> withLightBreakpointIfPossible(editor: Editor?, info: XLineBreakpointInstallationInfo, block: suspend () -> T): T
 
-  class Monolith(val breakpointManager: XBreakpointManagerImpl) : XBreakpointManagerProxy {
+  companion object {
+    internal fun asProxy(breakpointManager: XBreakpointManagerImpl): XBreakpointManagerProxy = Monolith(breakpointManager)
+  }
+
+  private class Monolith(val breakpointManager: XBreakpointManagerImpl) : XBreakpointManagerProxy {
     override val breakpointsDialogSettings: XBreakpointsDialogState?
       get() = breakpointManager.breakpointsDialogSettings
 
@@ -166,3 +167,5 @@ interface XBreakpointManagerProxy {
     }
   }
 }
+
+internal fun XBreakpointManagerImpl.asProxy(): XBreakpointManagerProxy = XBreakpointManagerProxy.asProxy(this)

@@ -1,8 +1,8 @@
 <idea-plugin package="org.jetbrains.kotlin.idea.compilerPlugin.noarg.gradleJava">
   <dependencies>
     <plugin id="org.jetbrains.plugins.gradle"/>
-    <module name="kotlin.gradle.gradle-tooling"/>
-    <module name="kotlin.gradle.gradle"/>
+    <module name="intellij.kotlin.gradle.tooling"/>
+    <module name="intellij.kotlin.gradle.gradle"/>
     <module name="kotlin.gradle.gradle-java"/>
     <module name="kotlin.compiler-plugins.compiler-plugin-support.gradle"/>
   </dependencies>

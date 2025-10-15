@@ -10,10 +10,10 @@ import com.intellij.openapi.diagnostic.fileLogger
 import com.intellij.openapi.diagnostic.thisLogger
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.project.ex.ProjectManagerEx
-import com.intellij.openapi.project.guessProjectDir
 import com.intellij.openapi.projectRoots.Sdk
 import com.intellij.openapi.vfs.VfsUtil
 import com.intellij.openapi.vfs.VirtualFile
+import com.intellij.openapi.wm.ex.WelcomeScreenProjectProvider
 import com.intellij.platform.ide.progress.ModalTaskOwner
 import com.intellij.platform.ide.progress.TaskCancellation
 import com.intellij.platform.ide.progress.runWithModalProgressBlocking
@@ -25,7 +25,6 @@ import com.intellij.pycharm.community.ide.impl.miscProject.MiscFileType
 import com.intellij.pycharm.community.ide.impl.miscProject.TemplateFileName
 import com.intellij.python.community.services.systemPython.SystemPythonService
 import com.intellij.util.SystemProperties
-import com.intellij.util.concurrency.annotations.RequiresEdt
 import com.jetbrains.python.PyBundle
 import com.jetbrains.python.Result
 import com.jetbrains.python.errorProcessing.MessageError
@@ -42,13 +41,14 @@ import kotlin.io.path.createDirectories
 import kotlin.io.path.createFile
 import kotlin.time.Duration.Companion.milliseconds
 
-internal const val MISC_PROJECT_NAME: String = "Welcome"
+internal const val MISC_PROJECT_WITH_WELCOME_NAME: String = "Welcome"
+internal const val MISC_PROJECT_NAME = "PyCharmMiscProject"
 
 internal val miscProjectDefaultPath: Path
   get() {
     val default = GeneralLocalSettings.getInstance().defaultProjectDirectory
     val directory = if (default.isEmpty()) Path.of(SystemProperties.getUserHome()) else Path.of(default)
-    return directory.resolve("PyCharmMiscProject")
+    return directory.resolve(MISC_PROJECT_NAME)
   }
 
 /**
@@ -145,8 +145,8 @@ private suspend fun createProjectAndSdk(
   systemPythonService: SystemPythonService,
   currentProject: Project?,
 ): PyResult<Pair<Project, Sdk>> {
-  val isCurrentProjectIsAlreadyMiscProject = currentProject?.name == MISC_PROJECT_NAME
-  val project = if (isCurrentProjectIsAlreadyMiscProject) {
+  val isAlreadyMiscOrWelcomeScreenProject = currentProject != null && WelcomeScreenProjectProvider.isWelcomeScreenProject(currentProject)
+  val project = if (isAlreadyMiscOrWelcomeScreenProject) {
     currentProject
   } else {
     openProject(projectPath)
@@ -174,8 +174,6 @@ private suspend fun openProject(projectPath: Path): Project {
   val project = projectManager.openProjectAsync(projectPath, OpenProjectTask {
     runConfigurators = false
     isProjectCreatedWithWizard = true
-    projectName = MISC_PROJECT_NAME
-
   }) ?: error("Failed to open project in $projectPath, check logs")
   // There are countless numbers of reasons `openProjectAsync` might return null
 

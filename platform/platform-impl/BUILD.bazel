@@ -313,6 +313,7 @@ jvm_library(
     "//platform/kernel/pasta",
     "//platform/workspace/storage",
     "//platform/plugins/parser/impl",
+    "//platform/plugins/parser/impl:impl_test_lib",
     "//platform/eel",
     "//platform/platform-util-io:ide-util-io",
     "//platform/locking.impl",

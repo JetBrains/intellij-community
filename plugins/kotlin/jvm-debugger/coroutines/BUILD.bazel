@@ -1,4 +1,4 @@
-### auto-generated section `build kotlin.jvm-debugger.coroutines` start
+### auto-generated section `build intellij.kotlin.jvm.debugger.coroutines` start
 load("//build:compiler-options.bzl", "create_kotlinc_options")
 load("@rules_jvm//:jvm.bzl", "jvm_library", "resourcegroup")
 
@@ -19,7 +19,7 @@ resourcegroup(
 
 jvm_library(
   name = "coroutines",
-  module_name = "kotlin.jvm-debugger.coroutines",
+  module_name = "intellij.kotlin.jvm.debugger.coroutines",
   visibility = ["//visibility:public"],
   srcs = glob(["src/**/*.kt", "src/**/*.java", "src/**/*.form"], allow_empty = True),
   resources = [":coroutines_resources"],
@@ -67,4 +67,4 @@ jvm_library(
     "//platform/xdebugger-impl/shared",
   ]
 )
-### auto-generated section `build kotlin.jvm-debugger.coroutines` end
+### auto-generated section `build intellij.kotlin.jvm.debugger.coroutines` end

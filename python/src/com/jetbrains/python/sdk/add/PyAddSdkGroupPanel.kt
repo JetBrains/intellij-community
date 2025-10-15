@@ -15,6 +15,9 @@ import javax.swing.Icon
 import javax.swing.JPanel
 import kotlin.collections.iterator
 
+@Deprecated(
+  "Custom Python SDKs support was removed from python plugin for IDEA because of UI/UX unification with PyCharm",
+)
 class PyAddSdkGroupPanel(private val nameGetter: Supplier<@Nls String>,
                          panelIcon: Icon,
                          val panels: List<PyAddSdkPanel>,

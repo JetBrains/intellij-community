@@ -61,7 +61,7 @@ public class PythonRunConfiguration extends AbstractPythonRunConfiguration<Pytho
   public static PythonRunConfiguration createRunConfigurationForTests(Project project, ConfigurationFactory factory) {
     return new PythonRunConfiguration(project, factory);
   }
-  
+
   @Override
   protected boolean isNewUiSupported() {
     return true;

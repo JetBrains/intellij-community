@@ -3,7 +3,7 @@ package com.intellij.platform.debugger.impl.frontend
 
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.startup.ProjectActivity
-import com.intellij.xdebugger.impl.frame.XDebugSessionProxy.Companion.useFeProxy
+import com.intellij.xdebugger.SplitDebuggerMode
 import org.jetbrains.annotations.ApiStatus
 
 @ApiStatus.Internal
@@ -13,7 +13,7 @@ private class FrontendXDebuggerInitializationProjectActivity : ProjectActivity {
     val frontendManager = FrontendXDebuggerManager.getInstance(project)
 
     // initialize debugger editor lines breakpoints manager
-    if (useFeProxy()) {
+    if (SplitDebuggerMode.isSplitDebugger()) {
       FrontendEditorLinesBreakpointsInfoManager.getInstance(project)
       frontendManager.startContentSelectionListening()
     }

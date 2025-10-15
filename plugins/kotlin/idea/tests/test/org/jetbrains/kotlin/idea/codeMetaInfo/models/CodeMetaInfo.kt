@@ -112,8 +112,14 @@ fun createCodeMetaInfo(obj: Any, renderConfiguration: AbstractCodeMetaInfoRender
         }
         is HighlightInfo -> {
             val codeMetaInfo: CodeMetaInfo = when(renderConfiguration) {
-                is HighlightingConfiguration -> HighlightingCodeMetaInfo(renderConfiguration, obj)
-                is FileLevelHighlightingConfiguration -> FileLevelHighlightingCodeMetaInfo(renderConfiguration, obj)
+                is HighlightingConfiguration -> {
+                    if (obj.isFileLevelAnnotation) return emptyList()
+                    HighlightingCodeMetaInfo(renderConfiguration, obj)
+                }
+                is FileLevelHighlightingConfiguration -> {
+                    if (!obj.isFileLevelAnnotation) return emptyList()
+                    FileLevelHighlightingCodeMetaInfo(renderConfiguration, obj)
+                }
                 else -> error(errorMessage())
             }
 

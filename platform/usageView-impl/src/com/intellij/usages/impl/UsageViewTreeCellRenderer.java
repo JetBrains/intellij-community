@@ -1,8 +1,10 @@
 // Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.usages.impl;
 
+import com.intellij.ide.IdeBundle;
 import com.intellij.navigation.ItemPresentation;
 import com.intellij.openapi.diagnostic.Logger;
+import com.intellij.openapi.project.DumbService;
 import com.intellij.openapi.util.NlsContexts;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.ui.ColoredTreeCellRenderer;
@@ -91,6 +93,10 @@ final class UsageViewTreeCellRenderer extends ColoredTreeCellRenderer {
         SimpleTextAttributes attributes = patchAttrs(node, UsageTreeColors.NUMBER_OF_USAGES_ATTRIBUTES);
         append(FontUtil.spaceAndThinSpace() + UsageViewBundle.message("usage.view.counter", count),
                SimpleTextAttributes.GRAYED_ATTRIBUTES.derive(attributes.getStyle(), null, null, null));
+
+        if (!node.isRoot() && ((DefaultMutableTreeNode)node.getParent()).isRoot() && DumbService.isDumb(myView.getProject())) {
+          append(FontUtil.spaceAndThinSpace() + IdeBundle.message("dumb.mode.analyzing.project"), SimpleTextAttributes.GRAYED_ATTRIBUTES);
+        }
       }
       else if (treeNode instanceof UsageNode node) {
         if (!node.isValid()) {

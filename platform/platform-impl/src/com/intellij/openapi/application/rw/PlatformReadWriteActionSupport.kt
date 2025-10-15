@@ -39,6 +39,8 @@ class PlatformReadWriteActionSupport : ReadWriteActionSupport {
 
   private val retryMarker: Any = ObjectUtils.sentinel("rw action")
 
+  private val backgroundWriteActionDispatcher = Dispatchers.IO.limitedParallelism(1, "Background write action dispatcher")
+
   init {
     // init the write action counter listener
     ApplicationManager.getApplication().service<AsyncExecutionService>()
@@ -116,7 +118,7 @@ class PlatformReadWriteActionSupport : ReadWriteActionSupport {
   }
 
   private suspend fun <T> executeWriteActionOnBackgroundWithAtomicCheck(lock: ThreadingSupport, originalStamp: Long, action: () -> T): /*T or retryMarker */ Any? {
-    val dispatcher = Dispatchers.Default
+    val dispatcher = backgroundWriteActionDispatcher
     val ref = withContext(dispatcher + InternalThreading.RunInBackgroundWriteActionMarker) {
       executeWriteActionWithPossibleRetry {
         lock.runWriteActionWithCheckInWriteIntent(
@@ -144,7 +146,7 @@ class PlatformReadWriteActionSupport : ReadWriteActionSupport {
 
   override suspend fun <T> runWriteAction(action: () -> T): T {
     val context = if (useBackgroundWriteAction) {
-      Dispatchers.Default + InternalThreading.RunInBackgroundWriteActionMarker
+      backgroundWriteActionDispatcher + InternalThreading.RunInBackgroundWriteActionMarker
     }
     else {
       Dispatchers.EDT

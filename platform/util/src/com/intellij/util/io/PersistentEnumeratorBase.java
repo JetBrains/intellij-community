@@ -1,4 +1,4 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.util.io;
 
 import com.intellij.openapi.Forceable;
@@ -186,9 +186,9 @@ public abstract class PersistentEnumeratorBase<Data> implements DataEnumeratorEx
             dataDescriptor
           );
         }
-        catch (Throwable e) {
-          LOG.info(e);
-          throw new CorruptedException(file);
+        catch (Throwable t) {
+          LOG.info(t);
+          throw new CorruptedException(file, t);
         }
       }
 

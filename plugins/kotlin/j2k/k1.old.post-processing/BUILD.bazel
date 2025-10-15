@@ -42,7 +42,7 @@ jvm_library(
     "//platform/lang-api:lang",
     "//java/java-psi-impl:psi-impl",
     "//plugins/kotlin/idea",
-    "//plugins/kotlin/code-insight/impl-base",
+    "//plugins/kotlin/code-insight/impl-base:kotlin-codeInsight-shared",
     "//plugins/kotlin/code-insight/intentions-shared:kotlin-code-insight-intentions-shared",
     "//plugins/kotlin/base/fe10/analysis",
     "//plugins/kotlin/code-insight/api",
@@ -51,7 +51,7 @@ jvm_library(
     "//platform/lang-impl",
     "//plugins/kotlin/j2k/shared",
     "//plugins/kotlin/j2k/k1.old",
-    "//plugins/kotlin/base/analysis-api/analysis-api-utils:kotlin-base-analysis-api-utils",
+    "//plugins/kotlin/base/analysis-api/analysis-api-utils:kotlin-base-analysis-utils",
     "//plugins/kotlin/code-insight/inspections-shared:kotlin-code-insight-inspections-shared",
   ]
 )

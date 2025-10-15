@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.vcs.merge
 
 import com.intellij.CommonBundle
@@ -9,7 +9,10 @@ import com.intellij.diff.InvalidDiffRequestException
 import com.intellij.diff.merge.MergeRequest
 import com.intellij.diff.merge.MergeResult
 import com.intellij.diff.merge.MergeUtil
+import com.intellij.diff.statistics.MergeAction
+import com.intellij.diff.statistics.MergeStatisticsCollector
 import com.intellij.diff.util.DiffUtil
+import com.intellij.diff.util.Side
 import com.intellij.ide.DataManager
 import com.intellij.ide.util.treeView.TreeState
 import com.intellij.openapi.actionSystem.PlatformDataKeys
@@ -281,6 +284,9 @@ open class MultipleFileMergeDialog(
 
   private fun acceptRevision(resolution: MergeSession.Resolution) {
     assert(resolution == MergeSession.Resolution.AcceptedYours || resolution == MergeSession.Resolution.AcceptedTheirs)
+
+    val side = if (resolution == MergeSession.Resolution.AcceptedYours) MergeAction.LEFT else MergeAction.RIGHT
+    MergeStatisticsCollector.logButtonClickOnTable(project, side)
 
     FileDocumentManager.getInstance().saveAllDocuments()
     val files = getSelectedFiles()

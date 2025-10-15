@@ -18,6 +18,7 @@ import com.intellij.refactoring.introduceParameter.Util;
 import com.intellij.refactoring.introduceVariable.IntroduceVariableBase;
 import com.intellij.refactoring.util.occurrences.ExpressionOccurrenceManager;
 import com.intellij.testFramework.IdeaTestUtil;
+import com.intellij.testFramework.LightJavaCodeInsightTestCase;
 import com.intellij.testFramework.PlatformTestUtil;
 import com.intellij.testFramework.TestDataPath;
 import com.intellij.util.CommonJavaRefactoringUtil;
@@ -29,7 +30,7 @@ import java.util.List;
 import java.util.Objects;
 
 @TestDataPath("$CONTENT_ROOT/testData")
-public class IntroduceParameterTest extends LightRefactoringTestCase  {
+public class IntroduceParameterTest extends LightJavaCodeInsightTestCase {
   @NotNull
   @Override
   protected String getTestDataPath() {

@@ -3,7 +3,6 @@ package com.intellij.java.refactoring.inline;
 
 import com.intellij.JavaTestUtil;
 import com.intellij.codeInsight.TargetElementUtil;
-import com.intellij.java.refactoring.LightRefactoringTestCase;
 import com.intellij.lang.refactoring.InlineActionHandler;
 import com.intellij.openapi.projectRoots.Sdk;
 import com.intellij.openapi.ui.TestDialog;
@@ -17,11 +16,12 @@ import com.intellij.refactoring.inline.InlineMethodProcessor;
 import com.intellij.refactoring.util.CommonRefactoringUtil;
 import com.intellij.refactoring.util.InlineUtil;
 import com.intellij.testFramework.IdeaTestUtil;
+import com.intellij.testFramework.LightJavaCodeInsightTestCase;
 import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 
-public class InlineMethodTest extends LightRefactoringTestCase {
+public class InlineMethodTest extends LightJavaCodeInsightTestCase {
   @NotNull
   @Override
   protected String getTestDataPath() {

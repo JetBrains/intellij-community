@@ -146,6 +146,8 @@ interface EelProvider {
    */
   fun getEelDescriptor(path: @MultiRoutingFileSystemPath Path): EelDescriptor?
 
+  fun getMountProvider(eelDescriptor: EelDescriptor): EelMountProvider? = null
+
   /**
    * Makes sense only on Windows, because on Posix there's the only root `/`.
    *

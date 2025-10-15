@@ -8,17 +8,20 @@ import com.intellij.openapi.extensions.ProjectExtensionPointName;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.ui.components.breadcrumbs.Crumb;
+import com.intellij.ui.components.breadcrumbs.StickyLineInfo;
 import com.intellij.util.concurrency.annotations.RequiresBackgroundThread;
 import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
+import java.util.List;
+
 /**
  * Allows to replace the mechanism of gathering breadcrumbs for a file.
  */
 public abstract class FileBreadcrumbsCollector {
-  
+
   public static final ProjectExtensionPointName<FileBreadcrumbsCollector> EP_NAME =
     new ProjectExtensionPointName<>("com.intellij.fileBreadcrumbsCollector");
 
@@ -47,6 +50,11 @@ public abstract class FileBreadcrumbsCollector {
                                                                    @Nullable Boolean forcedShown);
 
   @ApiStatus.Internal
+  public @NotNull List<StickyLineInfo> computeStickyLineInfos(@NotNull VirtualFile file, @NotNull Document document, int offset) {
+    return ContainerUtil.emptyList();
+  }
+
+  @ApiStatus.Internal
   public boolean requiresProvider() { return true; }
 
   public static FileBreadcrumbsCollector findBreadcrumbsCollector(Project project, VirtualFile file) {
@@ -57,6 +65,6 @@ public abstract class FileBreadcrumbsCollector {
         }
       }
     }
-    return ContainerUtil.getLastItem(EP_NAME.getPoint(project).getExtensionList());
+    return DefaultFileBreadcrumbsCollector.INSTANCE;
   }
 }

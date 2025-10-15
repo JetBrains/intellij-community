@@ -74,7 +74,7 @@ class FileBasedIndexTumbler(private val reason: @NonNls String) {
         LOG.assertTrue(fileTypeTracker == null)
         fileTypeTracker = FileTypeTracker()
         fileBasedIndex.waitUntilIndicesAreInitialized()
-        fileBasedIndex.performShutdown(true, reason)
+        fileBasedIndex.performShutdown(/*keepConnection: */ true, reason)
         fileBasedIndex.dropRegisteredIndexes()
         val indexesAreOk = RebuildStatus.isOk()
         RebuildStatus.reset()

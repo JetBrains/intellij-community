@@ -17,6 +17,7 @@ import com.intellij.python.community.execService.impl.Arg
 import com.intellij.python.community.execService.impl.ExecServiceImpl
 import com.intellij.python.community.execService.impl.PyExecBundle
 import com.intellij.python.community.execService.impl.transformerToHandler
+import com.intellij.util.concurrency.annotations.RequiresBackgroundThread
 import com.jetbrains.python.PythonBinary
 import com.jetbrains.python.Result
 import com.jetbrains.python.errorProcessing.ExecError
@@ -51,8 +52,15 @@ data class BinOnEel(val path: Path, internal val workDir: Path? = null) : Binary
  * Legacy Targets-based approach. Do not use it, unless you know what you are doing
  * if [target] "local" target is used
  */
-data class BinOnTarget(internal val configureTargetCmdLine: (TargetedCommandLineBuilder) -> Unit, val target: TargetEnvironmentConfiguration?) : BinaryToExec {
-  constructor(exePath: FullPathOnTarget, target: TargetEnvironmentConfiguration?) : this({ it.setExePath(exePath) }, target)
+data class BinOnTarget(internal val configureTargetCmdLine: (TargetedCommandLineBuilder) -> Unit, val target: TargetEnvironmentConfiguration) : BinaryToExec {
+  constructor(exePath: FullPathOnTarget, target: TargetEnvironmentConfiguration) : this({ it.setExePath(exePath) }, target)
+
+  @RequiresBackgroundThread
+  fun getLocalExePath(): Lazy<FullPathOnTarget> = lazy {
+    val targetedCommandLineBuilder = TargetedCommandLineBuilder(target.createEnvironmentRequest(null))
+    configureTargetCmdLine.invoke(targetedCommandLineBuilder)
+    targetedCommandLineBuilder.exePath.localValue.blockingGet(0) ?: ""
+  }
 }
 
 fun PythonBinary.asBinToExec(): BinaryToExec = BinOnEel(this)

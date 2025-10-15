@@ -33,7 +33,7 @@
     <orderEntry type="module" module-name="intellij.platform.indexing" />
     <orderEntry type="module" module-name="intellij.platform.projectModel" />
     <orderEntry type="module" module-name="kotlin.base.frontend-agnostic" />
-    <orderEntry type="module" module-name="kotlin.base.util" />
+    <orderEntry type="module" module-name="intellij.kotlin.base.util" />
     <orderEntry type="module" module-name="intellij.platform.core.impl" />
     <orderEntry type="module" module-name="intellij.platform.lang.impl" />
     <orderEntry type="module" module-name="intellij.platform.util.ex" />
@@ -41,11 +41,11 @@
     <orderEntry type="module" module-name="intellij.platform.codeStyle" />
     <orderEntry type="library" name="jetbrains-annotations" level="project" />
     <orderEntry type="module" module-name="intellij.platform.langInjection" />
-    <orderEntry type="module" module-name="kotlin.base.project-structure" />
+    <orderEntry type="module" module-name="intellij.kotlin.base.projectStructure" />
     <orderEntry type="module" module-name="intellij.java.langInjection" />
-    <orderEntry type="module" module-name="kotlin.base.psi" />
+    <orderEntry type="module" module-name="intellij.kotlin.base.psi" />
     <orderEntry type="library" name="kotlinc.analysis-api" level="project" />
-    <orderEntry type="module" module-name="kotlin.base.analysis" />
+    <orderEntry type="module" module-name="intellij.kotlin.base.analysis" />
     <orderEntry type="module" module-name="intellij.platform.langInjection.backend" scope="PROVIDED" />
   </component>
 </module>

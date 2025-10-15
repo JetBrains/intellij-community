@@ -18,7 +18,8 @@ import org.jetbrains.annotations.Nls
 class SeSymbolsProvider(private val contributorWrapper: SeAsyncContributorWrapper<Any>) : SeWrappedLegacyContributorItemsProvider(),
                                                                                           SeSearchScopesProvider,
                                                                                           SeTypeVisibilityStateProvider,
-                                                                                          SeItemsPreviewProvider{
+                                                                                          SeItemsPreviewProvider,
+                                                                                          SeExtendedInfoProvider {
   override val id: String get() = SeProviderIdUtils.SYMBOLS_ID
   override val displayName: @Nls String
     get() = contributorWrapper.contributor.fullGroupName

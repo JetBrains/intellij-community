@@ -111,7 +111,7 @@ public abstract class PythonSdkFlavor<D extends PyFlavorData> {
     return suggestLocalHomePathsImpl(module, context).stream().filter(path -> {
       var flavor = tryDetectFlavorByLocalPath(path.toString());
       boolean correctFlavor = flavor != null && flavor.getClass().equals(getClass());
-      // Some flavors might report foreign pythons: i.e Windows might find conda on PATH.
+      // Some flavors might report foreign pythons: e.g. Windows might find conda on PATH.
       if (!correctFlavor) {
         LOG.info(String.format("Path %s has a wrong flavor, not %s, skipping", path, this));
         return false;
@@ -468,7 +468,8 @@ public abstract class PythonSdkFlavor<D extends PyFlavorData> {
   @ApiStatus.Internal
   public void dropCaches() {
   }
-@ApiStatus.Internal
+
+  @ApiStatus.Internal
   public static final class UnknownFlavor extends PythonSdkFlavor<PyFlavorData.Empty> {
 
     public static final UnknownFlavor INSTANCE = new UnknownFlavor();

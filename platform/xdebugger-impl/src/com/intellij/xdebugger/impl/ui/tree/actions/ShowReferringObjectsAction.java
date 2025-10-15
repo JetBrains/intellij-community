@@ -17,7 +17,7 @@ import com.intellij.xdebugger.impl.ui.DebuggerUIUtil;
 import com.intellij.xdebugger.impl.ui.tree.XDebuggerTree;
 import com.intellij.xdebugger.impl.ui.tree.XInspectDialog;
 import com.intellij.xdebugger.impl.ui.tree.nodes.XValueNodeImpl;
-import com.intellij.xdebugger.impl.util.MonolithUtils;
+import com.intellij.xdebugger.impl.util.XDebugMonolithUtils;
 import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -70,7 +70,7 @@ public class ShowReferringObjectsAction extends XDebuggerTreeActionBase
       XValue referringObjectsRoot = referrersProvider.getReferringObjectsValue();
       DialogWrapper dialog;
       // TODO ReferrersTreeCustomizer is supported only in monolith
-      XDebugSession xDebugSession = MonolithUtils.findSessionById(session.getId());
+      XDebugSession xDebugSession = XDebugMonolithUtils.findSessionById(session.getId());
       if (xDebugSession != null && referringObjectsRoot instanceof ReferrersTreeCustomizer referrersTreeCustomizer) {
         dialog = referrersTreeCustomizer.getDialog(xDebugSession, nodeName, position, markers);
       }

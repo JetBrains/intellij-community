@@ -12,13 +12,14 @@ import com.intellij.refactoring.memberPullUp.PullUpConflictsUtil;
 import com.intellij.refactoring.memberPullUp.PullUpProcessor;
 import com.intellij.refactoring.util.DocCommentPolicy;
 import com.intellij.refactoring.util.classMembers.MemberInfo;
+import com.intellij.testFramework.LightJavaCodeInsightTestCase;
 import com.intellij.util.containers.MultiMap;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.Arrays;
 import java.util.stream.Collectors;
 
-public class PullUpTest extends LightRefactoringTestCase {
+public class PullUpTest extends LightJavaCodeInsightTestCase {
   private static final String BASE_PATH = "/refactoring/pullUp/";
 
   private static final String IGNORE_CONFLICTS = "IGNORE";

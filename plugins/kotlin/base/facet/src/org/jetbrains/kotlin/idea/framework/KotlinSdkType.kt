@@ -9,6 +9,7 @@ import com.intellij.openapi.application.runWriteAction
 import com.intellij.openapi.projectRoots.*
 import com.intellij.openapi.projectRoots.impl.SdkConfigurationUtil
 import org.jdom.Element
+import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.annotations.TestOnly
 import org.jetbrains.kotlin.idea.KotlinIcons
 import org.jetbrains.kotlin.idea.base.facet.KotlinBaseFacetBundle
@@ -16,10 +17,13 @@ import org.jetbrains.kotlin.idea.compiler.configuration.KotlinPluginLayout
 import java.util.function.Consumer
 import javax.swing.JComponent
 
-class KotlinSdkType : SdkType("KotlinSDK") {
+class KotlinSdkType : SdkType(NAME) {
     companion object {
         @JvmField
         val INSTANCE = KotlinSdkType()
+
+        @ApiStatus.Internal
+        const val NAME = "KotlinSDK"
 
         @JvmOverloads
         fun setUpIfNeeded(disposable: Disposable? = null, checkIfNeeded: () -> Boolean = { true }) {

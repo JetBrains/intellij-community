@@ -8,6 +8,7 @@ import com.intellij.openapi.editor.ex.EditorEx
 import com.intellij.openapi.editor.impl.InputMethodInlayRenderer
 import com.intellij.openapi.util.Disposer
 import com.intellij.platform.util.coroutines.childScope
+import com.intellij.terminal.frontend.view.impl.cursorOffsetFlow
 import com.intellij.terminal.tests.reworked.util.TerminalTestUtil
 import com.intellij.testFramework.assertInstanceOf
 import com.intellij.testFramework.common.timeoutRunBlocking
@@ -49,7 +50,7 @@ internal class TerminalInputMethodSupportTest : BasePlatformTestCase() {
         val offset = (model.cursorOffset - model.startOffset).toInt()
         editor.offsetToLogicalPosition(offset)
       },
-      cursorOffsetFlow = model.cursorOffsetState.map { (it - model.startOffset).toInt() },
+      cursorOffsetFlow = model.cursorOffsetFlow.map { (it - model.startOffset).toInt() },
       sendInputString = echoer::echo,
     )
   }

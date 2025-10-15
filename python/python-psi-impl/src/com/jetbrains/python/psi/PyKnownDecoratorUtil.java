@@ -6,6 +6,7 @@ import com.intellij.psi.PsiFile;
 import com.intellij.psi.util.QualifiedName;
 import com.intellij.util.containers.ContainerUtil;
 import com.jetbrains.python.FunctionParameter;
+import com.jetbrains.python.PyNames;
 import com.jetbrains.python.codeInsight.controlflow.ScopeOwner;
 import com.jetbrains.python.psi.resolve.PyResolveContext;
 import com.jetbrains.python.psi.resolve.PyResolveUtil;
@@ -54,6 +55,11 @@ public final class PyKnownDecoratorUtil {
   public static @NotNull List<PyKnownDecorator> asKnownDecorators(@NotNull PyDecorator decorator, @NotNull TypeEvalContext context) {
     final QualifiedName qualifiedName = decorator.getQualifiedName();
     if (qualifiedName == null) {
+      return Collections.emptyList();
+    }
+    // Avoid resolving property accessor decorators to prevent an infinite recursion
+    String lastComponent = qualifiedName.getLastComponent();
+    if (PyNames.GETTER.equals(lastComponent) || PyNames.SETTER.equals(lastComponent) || PyNames.DELETER.equals(lastComponent)) {
       return Collections.emptyList();
     }
     if (context.maySwitchToAST(decorator)) {

@@ -12,7 +12,9 @@ import com.jetbrains.python.sdk.ModuleOrProject
 import com.jetbrains.python.sdk.legacy.PythonSdkUtil
 import com.jetbrains.python.sdk.add.v2.CustomExistingEnvironmentSelector
 import com.jetbrains.python.sdk.add.v2.DetectedSelectableInterpreter
+import com.jetbrains.python.sdk.add.v2.PathHolder
 import com.jetbrains.python.sdk.add.v2.PythonMutableTargetAddInterpreterModel
+import com.jetbrains.python.sdk.add.v2.ValidatedPath
 import com.jetbrains.python.sdk.basePath
 import com.jetbrains.python.sdk.poetry.createPoetrySdk
 import com.jetbrains.python.sdk.poetry.detectPoetryEnvs
@@ -22,15 +24,16 @@ import com.jetbrains.python.statistics.version
 import java.nio.file.Path
 import kotlin.io.path.pathString
 
-internal class PoetryExistingEnvironmentSelector(model: PythonMutableTargetAddInterpreterModel, module: Module?) : CustomExistingEnvironmentSelector("poetry", model, module) {
-  override val executable: ObservableMutableProperty<String> = model.state.poetryExecutable
+internal class PoetryExistingEnvironmentSelector<P: PathHolder>(model: PythonMutableTargetAddInterpreterModel<P>, module: Module?) : CustomExistingEnvironmentSelector<P>("poetry", model, module) {
+  override val executable: ObservableMutableProperty<ValidatedPath.Executable<P>?> = model.state.poetryExecutable
   override val interpreterType: InterpreterType = InterpreterType.POETRY
 
   override suspend fun getOrCreateSdk(moduleOrProject: ModuleOrProject): PyResult<Sdk> {
-    val pythonBinaryPath = selectedEnv.get()?.let { Path.of(it.homePath) }
+
+    val pythonBinaryPath = selectedEnv.get()?.homePath as? PathHolder.Eel
                            ?: return PyResult.localizedError(PyBundle.message("python.sdk.provided.path.is.invalid", selectedEnv.get()?.homePath))
 
-    PythonSdkUtil.getAllSdks().find { sdk -> sdk.isPoetry && sdk.homePath == pythonBinaryPath.pathString }?.let { return Result.success(it) }
+    PythonSdkUtil.getAllSdks().find { sdk -> sdk.isPoetry && sdk.homePath == pythonBinaryPath.toString() }?.let { return Result.success(it) }
 
     val module = when (moduleOrProject) {
       is ModuleOrProject.ModuleAndProject -> {
@@ -47,9 +50,13 @@ internal class PoetryExistingEnvironmentSelector(model: PythonMutableTargetAddIn
     )
   }
 
-  override suspend fun detectEnvironments(modulePath: Path): List<DetectedSelectableInterpreter> {
+  override suspend fun detectEnvironments(modulePath: Path): List<DetectedSelectableInterpreter<P>> {
     val existingEnvs = detectPoetryEnvs(null, null, modulePath.pathString).mapNotNull { env ->
-      env.homePath?.let { path -> DetectedSelectableInterpreter(path, env.version, false) }
+      env.homePath?.let { path ->
+        model.fileSystem.parsePath(path).successOrNull?.let { fsPath ->
+          DetectedSelectableInterpreter<P>(fsPath, env.version, false)
+        }
+      }
     }
     return existingEnvs
   }

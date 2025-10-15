@@ -49,6 +49,7 @@ public class PluginXmlDomStubsTest extends DomStubTest {
                         Element:dependencies
                           Element:module
                             Attribute:name:dependencies.module
+                            Attribute:namespace:custom
                           Element:plugin
                             Attribute:id:dependencies.plugin.id
                         Element:resource-bundle:MyResourceBundle

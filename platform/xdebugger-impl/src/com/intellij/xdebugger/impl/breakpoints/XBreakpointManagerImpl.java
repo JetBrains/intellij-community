@@ -23,6 +23,7 @@ import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.MultiMap;
 import com.intellij.util.messages.SimpleMessageBusConnection;
 import com.intellij.util.ui.UIUtil;
+import com.intellij.xdebugger.SplitDebuggerMode;
 import com.intellij.xdebugger.XDebugSession;
 import com.intellij.xdebugger.XDebuggerUtil;
 import com.intellij.xdebugger.XSourcePosition;
@@ -46,7 +47,6 @@ import java.util.function.Function;
 
 import static com.intellij.util.progress.CancellationUtil.withLockMaybeCancellable;
 import static com.intellij.xdebugger.impl.breakpoints.XBreakpointProxyKt.asProxy;
-import static com.intellij.xdebugger.impl.frame.XDebugSessionProxy.useFeLineBreakpointProxy;
 
 @ApiStatus.Internal
 public final class XBreakpointManagerImpl implements XBreakpointManager {
@@ -79,7 +79,7 @@ public final class XBreakpointManagerImpl implements XBreakpointManager {
     myDebuggerManager = debuggerManager;
     myCoroutineScope = coroutineScope;
     myDependentBreakpointManager = new XDependentBreakpointManager(this, messageBusConnection);
-    myLineBreakpointManager = new XLineBreakpointManager(project, coroutineScope, !useFeLineBreakpointProxy());
+    myLineBreakpointManager = new XLineBreakpointManager(project, coroutineScope, !SplitDebuggerMode.isSplitDebugger());
 
     XBreakpointType.EXTENSION_POINT_NAME.addExtensionPointListener(new ExtensionPointListener<>() {
       @SuppressWarnings("unchecked")

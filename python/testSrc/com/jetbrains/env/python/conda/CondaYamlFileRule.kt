@@ -1,6 +1,7 @@
 // Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.jetbrains.env.python.conda
 
+import com.intellij.python.community.execService.BinaryToExec
 import com.intellij.util.io.delete
 import com.jetbrains.python.getOrThrow
 import com.jetbrains.python.psi.LanguageLevel
@@ -27,11 +28,12 @@ internal class CondaYamlFileRule(private val condaRule: LocalCondaRule,
   override fun before() {
     val fullPathOnTarget = condaRule.condaPathOnTarget
     val command = PyCondaCommand(fullPathOnTarget, null, null)
+
     val condaEnvRequest = NewCondaEnvRequest.EmptyNamedEnv(languageLevel, envName)
     val env = PyCondaEnvIdentity.NamedEnv(condaEnvRequest.envName)
     val yamlFileText = runBlocking {
       PyCondaEnv.createEnv(command, condaEnvRequest).getOrThrow()
-      CondaExecutor.exportEnvironmentFile(Path.of(fullPathOnTarget), env)
+      CondaExecutor.exportEnvironmentFile(command.asBinaryToExec(), env)
     }.getOrThrow()
 
     val file = File.createTempFile("ijconda", ".yaml")

@@ -1,7 +1,6 @@
 // Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.xdebugger.impl.inline;
 
-import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.extensions.ExtensionPointName;
 import com.intellij.xdebugger.XDebugSession;
@@ -46,7 +45,7 @@ public interface InlineValuePopupProvider {
       showPopup(xValueNode, monolith.getSession(), position, treeCreator, editor, point, hideRunnable);
     }
     else {
-      Logger.getInstance(InlineValuePopupProvider.class).error("Non-monolith proxy is not supported. Please override this method.");
+      throw new AbstractMethodError("Non-monolith proxy is not supported. Please override this method.");
     }
   }
 }

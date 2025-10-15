@@ -1,4 +1,4 @@
-### auto-generated section `build kotlin.grazie` start
+### auto-generated section `build intellij.kotlin.grazie` start
 load("@rules_jvm//:jvm.bzl", "jvm_library", "resourcegroup")
 
 resourcegroup(
@@ -9,7 +9,7 @@ resourcegroup(
 
 jvm_library(
   name = "grazie",
-  module_name = "kotlin.grazie",
+  module_name = "intellij.kotlin.grazie",
   visibility = ["//visibility:public"],
   srcs = glob(["src/**/*.kt", "src/**/*.java", "src/**/*.form"], allow_empty = True),
   resources = [":grazie_resources"],
@@ -24,4 +24,4 @@ jvm_library(
     "//plugins/grazie/src:core",
   ]
 )
-### auto-generated section `build kotlin.grazie` end
+### auto-generated section `build intellij.kotlin.grazie` end

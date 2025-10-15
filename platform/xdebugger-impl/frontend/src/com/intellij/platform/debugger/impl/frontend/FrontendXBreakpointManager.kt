@@ -15,10 +15,10 @@ import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.platform.debugger.impl.rpc.*
 import com.intellij.platform.project.projectId
 import com.intellij.platform.util.coroutines.childScope
+import com.intellij.xdebugger.SplitDebuggerMode
 import com.intellij.xdebugger.impl.XLineBreakpointInstallationInfo
 import com.intellij.xdebugger.impl.breakpoints.*
 import com.intellij.xdebugger.impl.breakpoints.ui.BreakpointItem
-import com.intellij.xdebugger.impl.frame.XDebugSessionProxy.Companion.useFeLineBreakpointProxy
 import com.intellij.xdebugger.impl.rpc.XBreakpointId
 import fleet.rpc.client.RpcClientException
 import kotlinx.coroutines.*
@@ -45,7 +45,7 @@ class FrontendXBreakpointManager(private val project: Project, private val cs: C
 
   private var _breakpointsDialogSettings: XBreakpointsDialogState? = null
 
-  private val lineBreakpointManager = XLineBreakpointManager(project, cs, isEnabled = useFeLineBreakpointProxy())
+  private val lineBreakpointManager = XLineBreakpointManager(project, cs, isEnabled = SplitDebuggerMode.isSplitDebugger())
 
   private val lightBreakpoints: ConcurrentMap<LightBreakpointPosition, FrontendXLightLineBreakpoint> = ConcurrentCollectionFactory.createConcurrentMap()
 

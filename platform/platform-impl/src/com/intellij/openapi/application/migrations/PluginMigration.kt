@@ -1,13 +1,10 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.application.migrations
 
 import com.intellij.ide.plugins.IdeaPluginDescriptor
 import com.intellij.ide.plugins.PluginNode
-import com.intellij.openapi.application.PathManager
 import com.intellij.openapi.application.PluginMigrationOptions
 import com.intellij.openapi.extensions.PluginId
-import org.jetbrains.annotations.ApiStatus
-import java.nio.file.Files
 
 /**
  * Note that migrations are not taken into account for IDE updates through Toolbox
@@ -39,18 +36,4 @@ internal abstract class PluginMigration {
       options.pluginsToDownload.removeIf { it.pluginId.idString == pluginIdString }
     }
   }
-}
-
-internal const val MIGRATION_INSTALLED_PLUGINS_TXT = "migration_installed_plugins.txt"
-
-@ApiStatus.Internal
-fun getMigrationInstalledPluginIds(): Collection<PluginId> {
-  val migratedPluginsPath = PathManager.getConfigDir().resolve(MIGRATION_INSTALLED_PLUGINS_TXT)
-  if (Files.exists(migratedPluginsPath)) {
-    val lines = Files.readAllLines(migratedPluginsPath)
-    return lines
-      .distinct()
-      .map { PluginId.getId(it) }
-  }
-  return emptyList()
 }

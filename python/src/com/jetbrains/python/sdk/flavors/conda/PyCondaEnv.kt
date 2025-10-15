@@ -6,6 +6,9 @@ import com.intellij.execution.target.TargetEnvironmentConfiguration
 import com.intellij.execution.target.TargetedCommandLineBuilder
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.projectRoots.Sdk
+import com.intellij.python.community.execService.BinOnEel
+import com.intellij.python.community.execService.BinOnTarget
+import com.intellij.python.community.execService.BinaryToExec
 import com.jetbrains.python.errorProcessing.PyResult
 import com.jetbrains.python.sdk.conda.TargetCommandExecutor
 import com.jetbrains.python.sdk.conda.createCondaSdkFromExistingEnv
@@ -14,7 +17,6 @@ import com.jetbrains.python.sdk.flavors.conda.PyCondaEnv.Companion.getEnvs
 import org.jetbrains.annotations.ApiStatus
 import java.nio.file.Path
 import java.util.*
-import kotlin.io.path.Path
 import kotlin.io.path.name
 
 /**
@@ -27,17 +29,19 @@ data class PyCondaEnv(
   val envIdentity: PyCondaEnvIdentity,
   val fullCondaPathOnTarget: FullPathOnTarget,
 ) {
-  val condaPath: Path
-    get() = Path(fullCondaPathOnTarget)
-
   companion object {
 
     /**
      * @return list of conda environments
      */
     @ApiStatus.Internal
-    suspend fun getEnvs(condaPath: String): PyResult<List<PyCondaEnv>> {
-      val info = CondaExecutor.listEnvs(Path(condaPath)).getOr { return it }
+    suspend fun getEnvs(binaryToExec: BinaryToExec): PyResult<List<PyCondaEnv>> {
+      val condaPath = when (binaryToExec) {
+        is BinOnEel -> binaryToExec.path.toString()
+        is BinOnTarget -> binaryToExec.getLocalExePath().value
+      }
+      val info = CondaExecutor.listEnvs(binaryToExec).getOr { return it }
+      val condaPrefix = info.condaPrefix ?: condaPath.removeSuffix("/bin/conda")
       val envs = info.envs.distinctBy { it.trim().lowercase(Locale.getDefault()) }
       val identities = envs.map { envPath ->
         // Env name is the basename for envs inside of default location
@@ -49,7 +53,7 @@ data class PyCondaEnv(
           Path.of(envPath).name
         else
           null
-        val base = envPath.equals(info.condaPrefix, ignoreCase = true)
+        val base = envPath.equals(condaPrefix, ignoreCase = true)
         val identity = if (envName != null) {
           PyCondaEnvIdentity.NamedEnv(envName)
         }
@@ -63,7 +67,7 @@ data class PyCondaEnv(
     }
 
     suspend fun createEnv(command: PyCondaCommand, newCondaEnvInfo: NewCondaEnvRequest): PyResult<Unit> {
-      return newCondaEnvInfo.create(command.getCondaPath())
+      return newCondaEnvInfo.create(command.asBinaryToExec())
     }
   }
 

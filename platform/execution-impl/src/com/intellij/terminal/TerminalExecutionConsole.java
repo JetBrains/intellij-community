@@ -6,6 +6,8 @@ import com.intellij.execution.ExecutionBundle;
 import com.intellij.execution.actions.ConsoleActionsPostProcessor;
 import com.intellij.execution.filters.Filter;
 import com.intellij.execution.filters.HyperlinkInfo;
+import com.intellij.execution.filters.InputFilter;
+import com.intellij.execution.impl.ConsoleViewUtil;
 import com.intellij.execution.process.*;
 import com.intellij.execution.ui.ConsoleView;
 import com.intellij.execution.ui.ConsoleViewContentType;
@@ -21,8 +23,10 @@ import com.intellij.openapi.project.DumbAwareAction;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.Key;
+import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.encoding.EncodingProjectManager;
+import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.util.LineSeparator;
 import com.intellij.util.ObjectUtils;
 import com.intellij.util.concurrency.annotations.RequiresEdt;
@@ -45,6 +49,7 @@ import javax.swing.event.ChangeEvent;
 import java.awt.*;
 import java.awt.event.KeyEvent;
 import java.io.IOException;
+import java.util.List;
 import java.util.concurrent.atomic.AtomicBoolean;
 
 public class TerminalExecutionConsole implements ConsoleView, ObservableConsoleView {
@@ -57,6 +62,7 @@ public class TerminalExecutionConsole implements ConsoleView, ObservableConsoleV
   private final Project myProject;
   private final AppendableTerminalDataStream myDataStream;
   private final AtomicBoolean myAttachedToProcess = new AtomicBoolean(false);
+  private final @NotNull InputFilter myInputMessageFilter;
   private volatile boolean myLastCR = false;
   private final TerminalConsoleContentHelper myContentHelper = new TerminalConsoleContentHelper(this);
 
@@ -86,6 +92,7 @@ public class TerminalExecutionConsole implements ConsoleView, ObservableConsoleV
     myProject = project;
     myDataStream = new AppendableTerminalDataStream();
     myTerminalWidget = new ConsoleTerminalWidget(project, columns, lines, settingsProvider);
+    myInputMessageFilter = ConsoleViewUtil.computeInputFilter(this, project, GlobalSearchScope.allScope(project));
     if (processHandler != null) {
       attachToProcess(processHandler);
     }
@@ -291,7 +298,18 @@ public class TerminalExecutionConsole implements ConsoleView, ObservableConsoleV
       else if (convertLfToCrlf) {
         text = convertTextToCRLF(text);
       }
-      printText(text, contentType);
+      ConsoleViewContentType notNullContentType = ObjectUtils.notNull(contentType, ConsoleViewContentType.NORMAL_OUTPUT);
+      List<Pair<String, ConsoleViewContentType>> result = myInputMessageFilter.applyFilter(text, notNullContentType);
+      if (result == null) {
+        printText(text, contentType);
+      }
+      else {
+        for (Pair<String, ConsoleViewContentType> pair : result) {
+          if (pair.first != null) {
+            printText(pair.first, ObjectUtils.chooseNotNull(pair.second, contentType));
+          }
+        }
+      }
     }
     catch (IOException e) {
       LOG.info(e);

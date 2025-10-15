@@ -1,6 +1,6 @@
 import sys
 from typing import NamedTuple, type_check_only
-from typing_extensions import Self, deprecated
+from typing_extensions import Self, deprecated, disjoint_base
 
 def libc_ver(executable: str | None = None, lib: str = "", version: str = "", chunksize: int = 16384) -> tuple[str, str]: ...
 def win32_ver(release: str = "", version: str = "", csd: str = "", ptype: str = "") -> tuple[str, str, str, str]: ...
@@ -46,13 +46,23 @@ class _uname_result_base(NamedTuple):
 
 # uname_result emulates a 6-field named tuple, but the processor field
 # is lazily evaluated rather than being passed in to the constructor.
-class uname_result(_uname_result_base):
-    if sys.version_info >= (3, 10):
+if sys.version_info >= (3, 12):
+    class uname_result(_uname_result_base):
         __match_args__ = ("system", "node", "release", "version", "machine")  # pyright: ignore[reportAssignmentType]
 
-    def __new__(_cls, system: str, node: str, release: str, version: str, machine: str) -> Self: ...
-    @property
-    def processor(self) -> str: ...
+        def __new__(_cls, system: str, node: str, release: str, version: str, machine: str) -> Self: ...
+        @property
+        def processor(self) -> str: ...
+
+else:
+    @disjoint_base
+    class uname_result(_uname_result_base):
+        if sys.version_info >= (3, 10):
+            __match_args__ = ("system", "node", "release", "version", "machine")  # pyright: ignore[reportAssignmentType]
+
+        def __new__(_cls, system: str, node: str, release: str, version: str, machine: str) -> Self: ...
+        @property
+        def processor(self) -> str: ...
 
 def uname() -> uname_result: ...
 def system() -> str: ...

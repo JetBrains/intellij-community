@@ -9,11 +9,10 @@
     <orderEntry type="inheritedJdk" />
     <orderEntry type="sourceFolder" forTests="false" />
     <orderEntry type="module" module-name="intellij.platform.boot" scope="RUNTIME" />
-    <orderEntry type="library" name="JUnit4" level="project" />
-    <orderEntry type="library" name="hamcrest" level="project" />
+    <orderEntry type="module" module-name="intellij.libraries.junit4" />
     <orderEntry type="library" scope="PROVIDED" name="JUnit5Launcher" level="project" />
     <orderEntry type="library" scope="PROVIDED" name="JUnit5" level="project" />
-    <orderEntry type="library" scope="PROVIDED" name="JUnit5Vintage" level="project" />
+    <orderEntry type="module" module-name="intellij.libraries.junit5.vintage" scope="PROVIDED" />
     <orderEntry type="library" name="tcServiceMessages" level="project" />
     <orderEntry type="library" scope="PROVIDED" name="JUnit5Jupiter" level="project" />
     <orderEntry type="library" name="opentest4j" level="project" />

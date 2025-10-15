@@ -34,7 +34,6 @@ import com.intellij.openapi.wm.ToolWindow
 import com.intellij.openapi.wm.ToolWindowManager
 import com.intellij.openapi.wm.ex.ToolWindowManagerListener
 import com.intellij.openapi.wm.impl.content.SingleContentSupplier
-import com.intellij.openapi.wm.impl.content.ToolWindowContentUi
 import com.intellij.ui.ExperimentalUI
 import com.intellij.ui.content.*
 import com.intellij.ui.content.Content.CLOSE_LISTENER_KEY
@@ -176,7 +175,7 @@ class RunContentManagerImpl(private val project: Project) : RunContentManager {
     ))
     toolWindow.setToHideOnEmptyContent(true)
     if (DefaultRunExecutor.EXECUTOR_ID == executor.id || Registry.`is`("debugger.new.tool.window.layout.dnd", false)) {
-      ToolWindowContentUi.setAllowTabsReordering(toolWindow, true)
+      toolWindow.setTabsSplittingAllowed(true)
     }
     val contentManager = toolWindow.contentManager
     contentManager.addUiDataProvider { sink ->

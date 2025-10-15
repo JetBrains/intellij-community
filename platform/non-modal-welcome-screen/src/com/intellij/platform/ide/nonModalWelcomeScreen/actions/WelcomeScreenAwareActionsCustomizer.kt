@@ -40,7 +40,7 @@ private fun ActionRuntimeRegistrar.replaceExistingAction(
 }
 
 private fun hideActionOnWelcomeScreen(action: AnAction): AnAction {
-  return if (action is ActionRemoteBehaviorSpecification) {
+  return if (action is ActionRemoteBehaviorSpecification && action.getBehavior() != null) {
     WelcomeScreenHiddenActionWithRemoteSpec(action)
   }
   else {
@@ -51,7 +51,7 @@ private fun hideActionOnWelcomeScreen(action: AnAction): AnAction {
 private class WelcomeScreenHiddenActionWithRemoteSpec<T>(val actionWithSpec: T) : WelcomeScreenHiddenAction(actionWithSpec),
                                                                                   ActionRemoteBehaviorSpecification
   where T : AnAction, T : ActionRemoteBehaviorSpecification {
-  override fun getBehavior(): ActionRemoteBehavior = actionWithSpec.getBehavior()
+  override fun getBehavior(): ActionRemoteBehavior? = actionWithSpec.getBehavior()
 }
 
 private open class WelcomeScreenHiddenAction(action: AnAction) : AnActionWrapper(action) {

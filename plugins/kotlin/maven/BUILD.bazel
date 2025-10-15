@@ -1,4 +1,4 @@
-### auto-generated section `build kotlin.maven` start
+### auto-generated section `build intellij.kotlin.maven` start
 load("@rules_jvm//:jvm.bzl", "jvm_library", "resourcegroup")
 
 resourcegroup(
@@ -9,7 +9,7 @@ resourcegroup(
 
 jvm_library(
   name = "maven",
-  module_name = "kotlin.maven",
+  module_name = "intellij.kotlin.maven",
   visibility = ["//visibility:public"],
   srcs = glob(["src/**/*.kt", "src/**/*.java", "src/**/*.form"], allow_empty = True),
   resources = [":maven_resources"],
@@ -55,4 +55,4 @@ jvm_library(
     "//platform/vcs-api/vcs-api-core:vcs-core",
   ]
 )
-### auto-generated section `build kotlin.maven` end
+### auto-generated section `build intellij.kotlin.maven` end

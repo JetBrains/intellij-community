@@ -1,4 +1,4 @@
-### auto-generated section `build kotlin.uast.uast-kotlin-idea.k2.tests` start
+### auto-generated section `build intellij.kotlin.uast.idea.tests` start
 load("@rules_jvm//:jvm.bzl", "jvm_library")
 
 jvm_library(
@@ -9,7 +9,7 @@ jvm_library(
 
 jvm_library(
   name = "tests_test_lib",
-  module_name = "kotlin.uast.uast-kotlin-idea.k2.tests",
+  module_name = "intellij.kotlin.uast.idea.tests",
   visibility = ["//visibility:public"],
   srcs = glob(["test/**/*.kt", "test/**/*.java", "test/**/*.form"], allow_empty = True),
   deps = [
@@ -33,13 +33,13 @@ jvm_library(
     "//plugins/kotlin/uast/uast-kotlin-fir/tests:tests_test_lib",
   ]
 )
-### auto-generated section `build kotlin.uast.uast-kotlin-idea.k2.tests` end
+### auto-generated section `build intellij.kotlin.uast.idea.tests` end
 
-### auto-generated section `test kotlin.uast.uast-kotlin-idea.k2.tests` start
+### auto-generated section `test intellij.kotlin.uast.idea.tests` start
 load("@community//build:tests-options.bzl", "jps_test")
 
 jps_test(
   name = "tests_test",
   runtime_deps = [":tests_test_lib"]
 )
-### auto-generated section `test kotlin.uast.uast-kotlin-idea.k2.tests` end
+### auto-generated section `test intellij.kotlin.uast.idea.tests` end

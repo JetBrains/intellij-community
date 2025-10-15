@@ -7,6 +7,7 @@ import com.intellij.ide.ConfigImportOptions
 import com.intellij.ide.ConfigImportSettings
 import com.intellij.ide.SpecialConfigFiles
 import com.intellij.ide.plugins.DisabledPluginsState.Companion.saveDisabledPluginsAndInvalidate
+import com.intellij.ide.plugins.PluginManagerCore
 import com.intellij.ide.plugins.PluginNode
 import com.intellij.ide.plugins.marketplace.MarketplacePluginDownloadService
 import com.intellij.ide.plugins.marketplace.utils.MarketplaceCustomizationService
@@ -28,6 +29,7 @@ import com.intellij.platform.testFramework.plugins.buildZip
 import com.intellij.platform.testFramework.plugins.dependsIntellijModulesLang
 import com.intellij.platform.testFramework.plugins.plugin
 import com.intellij.testFramework.PlatformTestUtil.useAppConfigDir
+import com.intellij.testFramework.PlatformTestUtil.withSystemProperty
 import com.intellij.testFramework.junit5.http.url
 import com.intellij.testFramework.replaceService
 import com.intellij.util.SystemProperties
@@ -37,6 +39,7 @@ import com.intellij.util.system.OS
 import com.sun.net.httpserver.HttpServer
 import kotlinx.coroutines.runBlocking
 import org.assertj.core.api.Assertions.assertThat
+import org.assertj.core.api.Assertions.assertThatThrownBy
 import org.assertj.core.api.Condition
 import org.junit.Assume.assumeTrue
 import org.junit.Test
@@ -563,6 +566,101 @@ class ConfigImportHelperTest : ConfigImportHelperBaseTest() {
     assertThat(findInheritedDirectory(newConfigDir, newConfigDir.resolveSibling("_missing").toString())).isNull()
 
     assertThat(findInheritedDirectory(newConfigDir, oldConfigDir.toString())!!.paths).containsExactly(oldConfigDir)
+  }
+
+  @Test fun `automatic import`() {
+    val oldConfigDir = createConfigDir("2025.2", storageTS = LocalDateTime.now())
+    val markerFile = Files.createTempFile(oldConfigDir.resolve(PathManager.OPTIONS_DIRECTORY), "test.", ".xml")
+    val newConfigDir = createConfigDir(version = "2025.3")
+
+    withSystemProperty<RuntimeException>("intellij.startup.wizard", "false") {
+      ConfigImportHelper.importConfigsTo(false, newConfigDir, emptyList(), LOG)
+    }
+
+    assertThat(newConfigDir.resolve(PathManager.OPTIONS_DIRECTORY)).isDirectoryContaining { it.name == markerFile.name }
+  }
+
+  @Test fun `skipping automatic import into custom directory`() {
+    createConfigDir("2025.2", storageTS = LocalDateTime.now())
+    val newConfigDir = createConfigDir(version = "", modern = true, product = "newConfig")
+
+    // NB: currently, it works even without the property because of the `PluginManagerCore.isRunningFromSources()` condition
+    withSystemProperty<RuntimeException>(PathManager.PROPERTY_CONFIG_PATH, newConfigDir.toString()) {
+      ConfigImportHelper.importConfigsTo(false, newConfigDir, emptyList(), LOG)
+    }
+
+    assertThat(newConfigDir).isEmptyDirectory
+  }
+
+  @Test fun `skipping automatic import when running from sources`() {
+    assumeTrue(PluginManagerCore.isRunningFromSources())
+
+    val oldConfigDir = createConfigDir("2025.2", storageTS = LocalDateTime.now())
+    val newConfigDir = createConfigDir(version = "2025.3")
+    assertThat(findConfigDirectories(newConfigDir).paths).containsExactly(oldConfigDir)
+
+    withSystemProperty<RuntimeException>(PathManager.PROPERTY_CONFIG_PATH, null) {
+      ConfigImportHelper.importConfigsTo(false, newConfigDir, emptyList(), LOG)
+    }
+
+    assertThat(newConfigDir).isEmptyDirectory
+  }
+
+  @Test fun `explicit settings import dialog`() {
+    val oldConfigDir = createConfigDir("2025.2", storageTS = LocalDateTime.now())
+    val newConfigDir = createConfigDir(version = "2025.3")
+    assertThat(findConfigDirectories(newConfigDir).paths).containsExactly(oldConfigDir)
+
+    assertThatThrownBy {
+      withSystemProperty<RuntimeException>("intellij.startup.wizard", "false") {
+        withSystemProperty<RuntimeException>("idea.initially.ask.config", "true") {
+          ConfigImportHelper.importConfigsTo(false, newConfigDir, emptyList(), LOG)
+        }
+      }
+    }.isInstanceOf(UnsupportedOperationException::class.java).hasMessage("Unit test mode")
+  }
+
+  @Test fun `settings import dialog when no candidates`() {
+    val newConfigDir = createConfigDir(version = "2025.3")
+
+    assertThatThrownBy {
+      withSystemProperty<RuntimeException>("intellij.startup.wizard", "false") {
+        ConfigImportHelper.importConfigsTo(false, newConfigDir, emptyList(), LOG)
+      }
+    }.isInstanceOf(UnsupportedOperationException::class.java).hasMessage("Unit test mode")
+  }
+
+  @Test fun `skipping automatic import from an old directory`() {
+    createConfigDir("2024.2", storageTS = LocalDateTime.now().minusYears(1))
+    val newConfigDir = createConfigDir(version = "2025.3")
+
+    assertThatThrownBy {
+      withSystemProperty<RuntimeException>("intellij.startup.wizard", "false") {
+        ConfigImportHelper.importConfigsTo(false, newConfigDir, emptyList(), LOG)
+      }
+    }.isInstanceOf(UnsupportedOperationException::class.java).hasMessage("Unit test mode")
+  }
+
+  @Test fun `avoiding settings import dialog on the very first start`() {
+    val newConfigDir = createConfigDir(version = "2025.3")
+
+    withSystemProperty<RuntimeException>("intellij.startup.wizard", "false") {
+      ConfigImportHelper.importConfigsTo(true, newConfigDir, emptyList(), LOG)
+    }
+
+    assertThat(newConfigDir).isEmptyDirectory
+  }
+
+  @Test fun `avoiding settings import dialog when suppressed`() {
+    val newConfigDir = createConfigDir(version = "2025.3")
+
+    withSystemProperty<RuntimeException>("intellij.startup.wizard", "false") {
+      withSystemProperty<RuntimeException>("idea.initially.ask.config", "never") {
+        ConfigImportHelper.importConfigsTo(false, newConfigDir, emptyList(), LOG)
+      }
+    }
+
+    assertThat(newConfigDir).isEmptyDirectory
   }
 
   @Test fun `uses broken plugins from marketplace by default`() {

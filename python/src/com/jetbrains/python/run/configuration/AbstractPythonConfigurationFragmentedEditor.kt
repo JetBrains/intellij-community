@@ -4,12 +4,15 @@ package com.jetbrains.python.run.configuration
 import com.intellij.diagnostic.logging.LogsGroupFragment
 import com.intellij.execution.ui.*
 import com.intellij.openapi.components.service
+import com.intellij.openapi.projectRoots.Sdk
 import com.intellij.ui.RawCommandLineEditor
 import com.intellij.ui.components.TextComponentEmptyText
 import com.jetbrains.python.PyBundle
 import com.jetbrains.python.run.AbstractPythonRunConfiguration
 import com.jetbrains.python.run.PyCommonFragmentsBuilder
 import com.jetbrains.python.run.PythonRunConfigurationExtensionsManager
+import com.jetbrains.python.run.features.PyRunToolProvider
+import com.jetbrains.python.run.features.useRunTool
 import java.awt.event.ComponentAdapter
 import java.awt.event.ComponentEvent
 
@@ -28,6 +31,10 @@ abstract class AbstractPythonConfigurationFragmentedEditor<T : AbstractPythonRun
     addInterpreterOptions(fragments)
     addContentSourceRoots(fragments)
 
+    runConfiguration.sdk?.let { sdk ->
+      createRunToolTag(sdk)?.let { fragments.add(it) }
+    }
+
     customizeFragments(fragments)
     fragments.add(PyEditorExtensionFragment())
     fragments.add(LogsGroupFragment())
@@ -40,6 +47,18 @@ abstract class AbstractPythonConfigurationFragmentedEditor<T : AbstractPythonRun
   }
 
   abstract fun customizeFragments(fragments: MutableList<SettingsEditorFragment<T, *>>)
+
+  private fun createRunToolTag(sdk: Sdk): SettingsEditorFragment<T, *>? {
+    val provider = PyRunToolProvider.forSdk(sdk) ?: return null
+    val toolData = provider.runToolData
+    return SettingsEditorFragment.createTag(
+      toolData.id.value,
+      PyBundle.message("python.run.configuration.fragments.run.with.tool", toolData.name),
+      toolData.group,
+      { runConfiguration.useRunTool(sdk) },
+      { config, value -> config.useRunTool = value }
+    )
+  }
 
   private fun <T : AbstractPythonRunConfiguration<*>> addInterpreterOptions(fragments: MutableList<SettingsEditorFragment<T, *>>) {
     val interpreterOptionsField = RawCommandLineEditor()

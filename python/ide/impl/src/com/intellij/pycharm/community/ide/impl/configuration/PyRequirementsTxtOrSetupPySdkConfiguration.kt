@@ -2,7 +2,6 @@
 package com.intellij.pycharm.community.ide.impl.configuration
 
 import com.intellij.CommonBundle
-import com.intellij.codeInspection.util.IntentionName
 import com.intellij.execution.ExecutionException
 import com.intellij.openapi.application.EDT
 import com.intellij.openapi.application.ex.ApplicationManagerEx
@@ -22,19 +21,20 @@ import com.intellij.pycharm.community.ide.impl.configuration.PySdkConfigurationC
 import com.intellij.pycharm.community.ide.impl.configuration.PySdkConfigurationCollector.Source
 import com.intellij.pycharm.community.ide.impl.configuration.PySdkConfigurationCollector.VirtualEnvResult
 import com.intellij.pycharm.community.ide.impl.configuration.ui.PyAddNewVirtualEnvFromFilePanel
+import com.intellij.python.sdk.ui.icons.PythonSdkUIIcons
 import com.intellij.ui.IdeBorderFactory
 import com.intellij.ui.components.JBLabel
 import com.intellij.util.ui.JBUI
-import com.jetbrains.python.sdk.impl.PySdkBundle
+import com.jetbrains.python.PyToolUIInfo
 import com.jetbrains.python.errorProcessing.PyResult
 import com.jetbrains.python.packaging.PyPackageUtil
 import com.jetbrains.python.packaging.management.PythonPackageManager
 import com.jetbrains.python.packaging.requirementsTxt.PythonRequirementTxtSdkUtils
 import com.jetbrains.python.packaging.setupPy.SetupPyManager
-import com.jetbrains.python.sdk.legacy.PythonSdkUtil
 import com.jetbrains.python.sdk.basePath
-import com.jetbrains.python.sdk.configuration.PyProjectSdkConfigurationExtension
-import com.jetbrains.python.sdk.configuration.createVirtualEnvAndSdkSynchronously
+import com.jetbrains.python.sdk.configuration.*
+import com.jetbrains.python.sdk.impl.PySdkBundle
+import com.jetbrains.python.sdk.legacy.PythonSdkUtil
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
 import org.jetbrains.annotations.ApiStatus
@@ -48,12 +48,20 @@ private val LOGGER = fileLogger()
 
 @ApiStatus.Internal
 class PyRequirementsTxtOrSetupPySdkConfiguration : PyProjectSdkConfigurationExtension {
-  override suspend fun createAndAddSdkForConfigurator(module: Module): PyResult<Sdk?> = createAndAddSdk(module, Source.CONFIGURATOR)
 
-  override suspend fun getIntention(module: Module): @IntentionName String? =
-    getRequirementsTxtOrSetupPy(module)?.let { PyCharmCommunityCustomizationBundle.message("sdk.create.venv.suggestion", it.name) }
+  override val toolInfo: PyToolUIInfo = PyToolUIInfo("venv", PythonSdkUIIcons.Tools.Pip)
 
-  override suspend fun createAndAddSdkForInspection(module: Module): PyResult<Sdk?> = createAndAddSdk(module, Source.INSPECTION)
+  override suspend fun checkEnvironmentAndPrepareSdkCreator(module: Module): CreateSdkInfo? = prepareSdkCreator(
+    toolInfo,
+    { checkManageableEnv(module) },
+  ) { { needsConfirmation -> createAndAddSdk(module, if (needsConfirmation) Source.CONFIGURATOR else Source.INSPECTION) } }
+
+  override fun asPyProjectTomlSdkConfigurationExtension(): PyProjectTomlConfigurationExtension? = null
+
+  private fun checkManageableEnv(module: Module): EnvCheckerResult {
+    val configFile = getRequirementsTxtOrSetupPy(module) ?: return EnvCheckerResult.CannotConfigure
+    return EnvCheckerResult.EnvNotFound(PyCharmCommunityCustomizationBundle.message("sdk.create.venv.suggestion", configFile.name))
+  }
 
   private suspend fun createAndAddSdk(module: Module, source: Source): PyResult<Sdk?> {
     val existingSdks = PythonSdkUtil.getAllSdks()

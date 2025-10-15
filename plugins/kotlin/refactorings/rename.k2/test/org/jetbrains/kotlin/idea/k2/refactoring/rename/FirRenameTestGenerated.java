@@ -185,6 +185,11 @@ public class FirRenameTestGenerated extends AbstractFirRenameTest {
         runTest("../../idea/tests/testData/refactoring/rename/classUsagesInTextFiles/classUsagesInTextFiles.test");
     }
 
+    @TestMetadata("companionExplicitRefSameName/companionExplicitRefSameName.test")
+    public void testCompanionExplicitRefSameName_CompanionExplicitRefSameName() throws Exception {
+        runTest("../../idea/tests/testData/refactoring/rename/companionExplicitRefSameName/companionExplicitRefSameName.test");
+    }
+
     @TestMetadata("companionFullRef/companionFullRef.test")
     public void testCompanionFullRef_CompanionFullRef() throws Exception {
         runTest("../../idea/tests/testData/refactoring/rename/companionFullRef/companionFullRef.test");
@@ -203,6 +208,11 @@ public class FirRenameTestGenerated extends AbstractFirRenameTest {
     @TestMetadata("companionObject/companionObject.test")
     public void testCompanionObject_CompanionObject() throws Exception {
         runTest("../../idea/tests/testData/refactoring/rename/companionObject/companionObject.test");
+    }
+
+    @TestMetadata("companionShortRefSameName/companionShortRefSameName.test")
+    public void testCompanionShortRefSameName_CompanionShortRefSameName() throws Exception {
+        runTest("../../idea/tests/testData/refactoring/rename/companionShortRefSameName/companionShortRefSameName.test");
     }
 
     @TestMetadata("companionShortRef/companionShortRef.test")

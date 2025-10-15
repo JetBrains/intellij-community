@@ -332,6 +332,7 @@ f:com.intellij.ide.ui.UISettings
 - f:getCycleScrolling():Z
 - sf:getDefFontScale():F
 - sf:getDefFontSize():F
+- f:getDifferentToolwindowBackground():Z
 - f:getDifferentiateProjects():Z
 - f:getDisableMnemonics():Z
 - f:getDisableMnemonicsInControls():Z
@@ -419,6 +420,7 @@ f:com.intellij.ide.ui.UISettings
 - f:setConsoleCommandHistoryLimit(I):V
 - f:setConsoleCycleBufferSizeKb(I):V
 - f:setCurrentIdeScale(F):V
+- f:setDifferentToolwindowBackground(Z):V
 - f:setDifferentiateProjects(Z):V
 - f:setDisableMnemonics(Z):V
 - f:setDisableMnemonicsInControls(Z):V

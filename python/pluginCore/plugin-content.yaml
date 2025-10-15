@@ -60,6 +60,9 @@
       - name: $MAVEN_REPOSITORY$/completion/ml/python/features/ml-completion-prev-exprs-models/1/ml-completion-prev-exprs-models-1.jar
       completion-ranking-python-with-full-line:
       - name: $MAVEN_REPOSITORY$/org/jetbrains/intellij/deps/completion/completion-ranking-python-with-full-line/0/completion-ranking-python-with-full-line-0.jar
+- name: lib/modules/intellij.python.community.impl.pipenv.jar
+  contentModules:
+  - name: intellij.python.community.impl.pipenv
 - name: lib/modules/intellij.python.community.impl.poetry.jar
   contentModules:
   - name: intellij.python.community.impl.poetry

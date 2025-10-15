@@ -32,13 +32,15 @@ import com.intellij.workspaceModel.ide.impl.GlobalWorkspaceModel
 import org.jdom.Element
 import org.jetbrains.annotations.ApiStatus
 import java.util.function.Function
-import kotlin.io.path.Path
 
 
 // SdkBridgeImpl.clone called from com.intellij.openapi.roots.ui.configuration.projectRoot.ProjectSdksModel.reset
 // So I need to have such implementation and can't use implementation with SymbolicId and searching in storage
 @ApiStatus.Internal
-class SdkBridgeImpl(private var sdkEntityBuilder: SdkEntity.Builder) : UserDataHolderBase(), SdkBridge, RootProvider, Sdk {
+class SdkBridgeImpl(
+  private var sdkEntityBuilder: SdkEntity.Builder,
+  private var environmentName: InternalEnvironmentName,
+) : UserDataHolderBase(), SdkBridge, RootProvider, Sdk {
 
   private var additionalData: SdkAdditionalData? = null
   private val dispatcher = EventDispatcher.create(RootSetChangedListener::class.java)
@@ -67,7 +69,7 @@ class SdkBridgeImpl(private var sdkEntityBuilder: SdkEntity.Builder) : UserDataH
   }
 
   fun getSdkModificator(originSdk: ProjectJdkImpl): SdkModificator {
-    return SdkModificatorBridgeImpl(sdkEntityBuilder, originSdk, this)
+    return SdkModificatorBridgeImpl(sdkEntityBuilder, originSdk, this, environmentName)
   }
 
   override fun getRootProvider(): RootProvider = this
@@ -113,9 +115,9 @@ class SdkBridgeImpl(private var sdkEntityBuilder: SdkEntity.Builder) : UserDataH
   override fun getSdkAdditionalData(): SdkAdditionalData? = additionalData
 
   override fun clone(): SdkBridgeImpl {
-    val sdkEntityClone = createEmptySdkEntity("", "", "")
+    val sdkEntityClone = createEmptySdkEntity("", "", environmentName = environmentName)
     sdkEntityClone.applyChangesFrom(sdkEntityBuilder)
-    return SdkBridgeImpl(sdkEntityClone)
+    return SdkBridgeImpl(sdkEntityClone, environmentName)
   }
 
   @ApiStatus.Internal
@@ -130,7 +132,7 @@ class SdkBridgeImpl(private var sdkEntityBuilder: SdkEntity.Builder) : UserDataH
   }
 
   override fun readExternal(element: Element) {
-    val sdkSerializer = createSerializer()
+    val sdkSerializer = createSerializer(InternalEnvironmentName.Local)
     val sdkEntity = sdkSerializer.loadSdkEntity(element, getVirtualFileUrlManager())
 
     sdkEntityBuilder.applyChangesFrom(sdkEntity)
@@ -142,13 +144,13 @@ class SdkBridgeImpl(private var sdkEntityBuilder: SdkEntity.Builder) : UserDataH
   }
 
   override fun writeExternal(element: Element) {
-    createSerializer().saveSdkEntity(element, sdkEntityBuilder)
+    createSerializer(environmentName).saveSdkEntity(element, sdkEntityBuilder)
   }
 
-  private fun createSerializer(): JpsSdkEntitySerializer {
+  private fun createSerializer(environmentName: InternalEnvironmentName): JpsSdkEntitySerializer {
     val sortedRootTypes = OrderRootType.getSortedRootTypes().mapNotNull { it.sdkRootName }
     return JpsGlobalEntitiesSerializers.createSdkSerializer(getVirtualFileUrlManager(), sortedRootTypes,
-                                                            Path(PathManager.getOptionsPath()))
+                                                            PathManager.getOptionsDir(), environmentName)
   }
 
   fun getRawSdkAdditionalData(): String = sdkEntityBuilder.additionalData
@@ -160,7 +162,7 @@ class SdkBridgeImpl(private var sdkEntityBuilder: SdkEntity.Builder) : UserDataH
   internal fun applyChangesFrom(sdkEntity: SdkEntity.Builder) {
     val modifiableEntity = sdkEntityBuilder as ModifiableWorkspaceEntityBase<*, *>
     if (modifiableEntity.diff != null && !modifiableEntity.modifiable.get()) {
-      sdkEntityBuilder = createEmptySdkEntity("", "", "")
+      sdkEntityBuilder = createEmptySdkEntity("", "", "", environmentName = environmentName)
     }
     sdkEntityBuilder.applyChangesFrom(sdkEntity)
     reloadAdditionalData()
@@ -206,8 +208,14 @@ class SdkBridgeImpl(private var sdkEntityBuilder: SdkEntity.Builder) : UserDataH
       return findSdk(sdkEntity)
     }
 
-    fun createEmptySdkEntity(name: String, type: String, homePath: String = "", version: String? = null): SdkEntity.Builder {
-      val sdkEntitySource = createEntitySourceForSdk()
+    fun createEmptySdkEntity(
+      name: String,
+      type: String,
+      homePath: String = "",
+      version: String? = null,
+      environmentName: InternalEnvironmentName,
+    ): SdkEntity.Builder {
+      val sdkEntitySource = createEntitySourceForSdk(environmentName)
       val virtualFileUrlManager = getVirtualFileUrlManager()
       val homePathVfu = virtualFileUrlManager.getOrCreateFromUrl(homePath)
       return SdkEntity(name, type, emptyList(), "", sdkEntitySource) {
@@ -216,9 +224,14 @@ class SdkBridgeImpl(private var sdkEntityBuilder: SdkEntity.Builder) : UserDataH
       } as SdkEntity.Builder
     }
 
-    fun createEntitySourceForSdk(): EntitySource {
+    fun createEntitySourceForSdk(environmentName: InternalEnvironmentName): EntitySource {
       val virtualFileUrlManager = getVirtualFileUrlManager()
-      val sdkFile = PathManager.getOptionsDir().resolve(JpsGlobalEntitiesSerializers.SDK_FILE_NAME + PathManager.DEFAULT_EXT)
+      val optionsDir = PathManager.getOptionsDir()
+      val environmentDir = when (environmentName) {
+        InternalEnvironmentName.Local -> optionsDir
+        is InternalEnvironmentName.Custom -> optionsDir.resolve(environmentName.name)
+      }
+      val sdkFile = environmentDir.resolve(JpsGlobalEntitiesSerializers.SDK_FILE_NAME + PathManager.DEFAULT_EXT)
       return JpsGlobalFileEntitySource(virtualFileUrlManager.getOrCreateFromUrl(sdkFile.toAbsolutePath().toString()))
     }
   }

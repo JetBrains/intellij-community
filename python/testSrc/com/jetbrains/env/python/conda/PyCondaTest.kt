@@ -63,7 +63,7 @@ internal class PyCondaTest {
 
   @Test
   fun testBasePython(): Unit =  timeoutRunBlocking(10.minutes) { 
-    val baseConda = PyCondaEnv.getEnvs(condaRule.condaPathOnTarget).getOrThrow()
+    val baseConda = PyCondaEnv.getEnvs(condaRule.getCondaBinaryToExec()).getOrThrow()
       .first { (it.envIdentity as? PyCondaEnvIdentity.UnnamedEnv)?.isBase == true }
     val targetRequest = LocalTargetEnvironmentRequest()
     val commandLineBuilder = TargetedCommandLineBuilder(targetRequest)
@@ -87,7 +87,7 @@ internal class PyCondaTest {
   fun testCondaCreateByYaml() =  timeoutRunBlocking(60.seconds) {
     PyCondaEnv.createEnv(condaRule.condaCommand,
                          LocalEnvByLocalEnvironmentFile(yamlRule.yamlFilePath, emptyList())).getOrThrow()
-    val condaEnv = PyCondaEnv.getEnvs(condaRule.condaPathOnTarget)
+    val condaEnv = PyCondaEnv.getEnvs(condaRule.getCondaBinaryToExec())
       .getOrThrow().first { (it.envIdentity as? PyCondaEnvIdentity.NamedEnv)?.envName == yamlRule.envName }
 
     // Python version contains word "Python", LanguageLevel doesn't expect it
@@ -100,13 +100,13 @@ internal class PyCondaTest {
     val envName = "myNewEnvForTests"
     PyCondaEnv.createEnv(condaRule.condaCommand,
                          EmptyNamedEnv(LanguageLevel.PYTHON39, envName)).getOrThrow()
-    PyCondaEnv.getEnvs(condaRule.condaPathOnTarget)
+    PyCondaEnv.getEnvs(condaRule.getCondaBinaryToExec())
       .getOrThrow().first { (it.envIdentity as? PyCondaEnvIdentity.NamedEnv)?.envName == envName }
   }
 
   @Test
   fun testCondaListEnvs(): Unit =  timeoutRunBlocking(10.minutes) { 
-    val condaEnvs = PyCondaEnv.getEnvs(condaRule.condaPathOnTarget).getOrThrow()
+    val condaEnvs = PyCondaEnv.getEnvs(condaRule.getCondaBinaryToExec()).getOrThrow()
     Assert.assertTrue("No environments returned", condaEnvs.isNotEmpty())
 
     var baseFound = false
@@ -129,7 +129,7 @@ internal class PyCondaTest {
 
   @Test
   fun testCondaListUnnamedEnvs(): Unit =  timeoutRunBlocking(90.seconds) {
-    val envDirs = CondaExecutor.listEnvs(Path.of(condaRule.condaPathOnTarget)).mapSuccess { it.envsDirs }.getOrThrow()
+    val envDirs = CondaExecutor.listEnvs(condaRule.getCondaBinaryToExec()).mapSuccess { it.envsDirs }.getOrThrow()
     val envsDirs = Path.of(envDirs.first())
     val childDir = envsDirs.resolve("child")
     val childEnvPrefix = childDir.resolve("childEnv").toString()
@@ -143,7 +143,7 @@ internal class PyCondaTest {
 
     // Important to check that envIdentity is UnnamedEnv as this is testing to make sure that
     // getEnvs doesn't mistakenly return a NamedEnv for an environment that isn't a direct child of envsDirs
-    val envs = PyCondaEnv.getEnvs(condaRule.condaPathOnTarget).getOrThrow()
+    val envs = PyCondaEnv.getEnvs(condaRule.getCondaBinaryToExec()).getOrThrow()
       .map { it.envIdentity }
       .filterIsInstance<PyCondaEnvIdentity.UnnamedEnv>()
     Assert.assertTrue("No child $childEnvPrefix in $envs", envs.any { it.envPath == childEnvPrefix })
@@ -154,6 +154,6 @@ internal class PyCondaTest {
     val req = LocalTargetEnvironmentRequest()
     val commandLine = TargetedCommandLineBuilder(req).also { condaEnv.addCondaToTargetBuilder(it) }
     commandLine.addParameter("python")
-    return getPythonVersion(commandLine, CondaEnvSdkFlavor.getInstance(), req) ?: error("No version for $condaEnv")
+    return getPythonVersion(commandLine, CondaEnvSdkFlavor, req) ?: error("No version for $condaEnv")
   }
 }

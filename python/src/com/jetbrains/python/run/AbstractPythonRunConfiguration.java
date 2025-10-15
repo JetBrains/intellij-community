@@ -32,6 +32,7 @@ import com.jetbrains.python.sdk.PythonEnvUtil;
 import com.jetbrains.python.sdk.PythonSdkType;
 import com.jetbrains.python.sdk.legacy.PythonSdkUtil;
 import org.jdom.Element;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -45,6 +46,8 @@ import static com.jetbrains.python.run.PythonScriptCommandLineState.getExpandedW
  */
 public abstract class AbstractPythonRunConfiguration<T extends AbstractPythonRunConfiguration<T>> extends AbstractRunConfiguration
   implements AbstractPythonRunConfigurationParams, CommandLinePatcher, RunProfileWithCompileBeforeLaunchOption {
+  private static final String RUN_TOOL = "RUN_TOOL";
+  private @Nullable Boolean useRunTool = null;
   private String myInterpreterOptions = "";
   private String myWorkingDirectory = "";
   private String mySdkHome = "";
@@ -281,6 +284,8 @@ public abstract class AbstractPythonRunConfiguration<T extends AbstractPythonRun
     setMappingSettings(PathMappingSettings.readExternal(element));
     // extension settings:
     PythonRunConfigurationExtensionsManager.Companion.getInstance().readExternal(this, element);
+    String runToolValue = JDOMExternalizerUtil.readField(element, RUN_TOOL);
+    useRunTool = StringUtil.isEmpty(runToolValue) ? null : Boolean.parseBoolean(runToolValue);
   }
 
   protected void readEnvs(Element element) {
@@ -313,6 +318,7 @@ public abstract class AbstractPythonRunConfiguration<T extends AbstractPythonRun
     PythonRunConfigurationExtensionsManager.Companion.getInstance().writeExternal(this, element);
 
     PathMappingSettings.writeExternal(element, getMappingSettings());
+    JDOMExternalizerUtil.writeField(element, RUN_TOOL, useRunTool == null ? null : Boolean.toString(useRunTool));
   }
 
   protected void writeEnvs(Element element) {
@@ -400,6 +406,7 @@ public abstract class AbstractPythonRunConfiguration<T extends AbstractPythonRun
     target.setMappingSettings(source.getMappingSettings());
     target.setAddContentRoots(source.shouldAddContentRoots());
     target.setAddSourceRoots(source.shouldAddSourceRoots());
+    target.setUseRunTool(source.getUseRunTool());
   }
 
   /**
@@ -492,6 +499,18 @@ public abstract class AbstractPythonRunConfiguration<T extends AbstractPythonRun
   public String getModuleName() {
     Module module = getModule();
     return module != null ? module.getName() : null;
+  }
+
+  @ApiStatus.Internal
+  @Override
+  public final @Nullable Boolean getUseRunTool() {
+    return useRunTool;
+  }
+
+  @ApiStatus.Internal
+  @Override
+  public final void setUseRunTool(@Nullable Boolean useRunTool) {
+    this.useRunTool = useRunTool;
   }
 
   @Override

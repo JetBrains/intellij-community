@@ -15,6 +15,7 @@ import com.intellij.platform.eel.provider.LocalEelMachine
 import com.intellij.platform.eel.provider.getEelDescriptor
 import com.intellij.platform.workspace.jps.entities.*
 import com.intellij.platform.workspace.jps.serialization.impl.ELEMENT_ADDITIONAL
+import com.intellij.platform.workspace.storage.InternalEnvironmentName
 import com.intellij.util.concurrency.ThreadingAssertions
 import com.intellij.util.concurrency.annotations.RequiresWriteLock
 import com.intellij.util.containers.ConcurrentFactoryMap
@@ -26,13 +27,16 @@ import java.nio.file.Path
 
 private val rootTypes = ConcurrentFactoryMap.createMap<String, SdkRootTypeId> { SdkRootTypeId(it) }
 
-internal class SdkModificatorBridgeImpl(private val originalEntity: SdkEntity.Builder,
-                               private val originalSdk: ProjectJdkImpl,
-                               private val originalSdkDelegate: SdkBridgeImpl) : SdkModificator {
+internal class SdkModificatorBridgeImpl(
+  private val originalEntity: SdkEntity.Builder,
+  private val originalSdk: ProjectJdkImpl,
+  private val originalSdkDelegate: SdkBridgeImpl,
+  environmentName: InternalEnvironmentName
+) : SdkModificator {
 
   private var isCommitted = false
   private var additionalData: SdkAdditionalData? = null
-  private val modifiedSdkEntity: SdkEntity.Builder = SdkBridgeImpl.createEmptySdkEntity("", "", "")
+  private val modifiedSdkEntity: SdkEntity.Builder = SdkBridgeImpl.createEmptySdkEntity("", "", environmentName = environmentName)
 
   init {
     modifiedSdkEntity.applyChangesFrom(originalEntity)

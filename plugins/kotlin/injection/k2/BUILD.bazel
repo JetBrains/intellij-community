@@ -1,26 +1,26 @@
-### auto-generated section `build kotlin.injection.k2` start
+### auto-generated section `build intellij.kotlin.injection` start
 load("//build:compiler-options.bzl", "create_kotlinc_options")
 load("@rules_jvm//:jvm.bzl", "jvm_library", "resourcegroup")
 
 create_kotlinc_options(
-  name = "custom_k2",
+  name = "custom_kotlin-injection",
   opt_in = ["org.jetbrains.kotlin.analysis.api.permissions.KaAllowProhibitedAnalyzeFromWriteAction"],
   x_context_parameters = True
 )
 
 resourcegroup(
-  name = "k2_resources",
+  name = "kotlin-injection_resources",
   srcs = glob(["resources/**/*"]),
   strip_prefix = "resources"
 )
 
 jvm_library(
-  name = "k2",
-  module_name = "kotlin.injection.k2",
+  name = "kotlin-injection",
+  module_name = "intellij.kotlin.injection",
   visibility = ["//visibility:public"],
   srcs = glob(["src/**/*.kt", "src/**/*.java", "src/**/*.form"], allow_empty = True),
-  resources = [":k2_resources"],
-  kotlinc_opts = ":custom_k2",
+  resources = [":kotlin-injection_resources"],
+  kotlinc_opts = ":custom_kotlin-injection",
   deps = [
     "@lib//:kotlin-stdlib",
     "@lib//:kotlinc-kotlin-compiler-common",
@@ -38,4 +38,4 @@ jvm_library(
     "//plugins/kotlin/base/code-insight",
   ]
 )
-### auto-generated section `build kotlin.injection.k2` end
+### auto-generated section `build intellij.kotlin.injection` end

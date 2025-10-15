@@ -59,7 +59,7 @@ public final class ParameterInfoComponent extends JPanel {
   private JLabel myShortcutLabel;
   private final JPanel myBottomPanel;
   private JComponent myCustomBottomComponent;
-  private final JLabel myDumbLabel = new JLabel(IdeBundle.message("dumb.mode.results.might.be.incomplete"));
+  private final JLabel myDumbLabel = new JLabel(IdeBundle.message("dumb.mode.analyzing.project"));
   private final boolean myAllowSwitchLabel;
 
   private final Font NORMAL_FONT;

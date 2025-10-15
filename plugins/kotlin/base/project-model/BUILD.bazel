@@ -1,9 +1,9 @@
-### auto-generated section `build kotlin.base.project-model` start
+### auto-generated section `build intellij.kotlin.base.projectModel` start
 load("@rules_jvm//:jvm.bzl", "jvm_library")
 
 jvm_library(
   name = "project-model",
-  module_name = "kotlin.base.project-model",
+  module_name = "intellij.kotlin.base.projectModel",
   visibility = ["//visibility:public"],
   srcs = glob(["src/**/*.kt", "src/**/*.java", "src/**/*.form"], allow_empty = True),
   kotlinc_opts = "@community//:k8",
@@ -15,4 +15,4 @@ jvm_library(
   ],
   exports = ["@lib//:kotlin-tooling-core"]
 )
-### auto-generated section `build kotlin.base.project-model` end
+### auto-generated section `build intellij.kotlin.base.projectModel` end

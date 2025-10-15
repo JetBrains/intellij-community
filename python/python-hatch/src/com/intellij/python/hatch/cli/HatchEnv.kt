@@ -254,11 +254,11 @@ data class HatchEnvironments(
 data class HatchEnvironment(
   val name: @NlsSafe String,
   val type: @NlsSafe String,
-  val features: String? = null,
-  val dependencies: String? = null,
-  val environmentVariables: String? = null,
-  val scripts: String? = null,
-  val description: String? = null,
+  val features: String = "",
+  val dependencies: String = "",
+  val environmentVariables: String = "",
+  val scripts: String = "",
+  val description: String = "",
 ) {
   companion object {
     val DEFAULT: HatchEnvironment = HatchEnvironment(name = DEFAULT_ENV_NAME, type = ENV_TYPE_VIRTUAL)
@@ -286,11 +286,11 @@ private fun AsciiTable.parseHatchEnvironments(): List<Pair<HatchEnvironment, Lis
     HatchEnvironment(
       name = row[nameIdx],
       type = row[typeIdx],
-      features = row.cell(featuresIdx),
-      dependencies = row.cell(dependenciesIdx),
-      environmentVariables = row.cell(environmentVariablesIdx),
-      scripts = row.cell(scriptsIdx),
-      description = row.cell(descriptionIdx),
+      features = row.cell(featuresIdx) ?: "",
+      dependencies = row.cell(dependenciesIdx) ?: "",
+      environmentVariables = row.cell(environmentVariablesIdx) ?: "",
+      scripts = row.cell(scriptsIdx) ?: "",
+      description = row.cell(descriptionIdx) ?: "",
     ) to matrixEnvironments
   }
 }

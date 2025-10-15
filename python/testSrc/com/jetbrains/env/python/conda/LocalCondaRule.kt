@@ -2,7 +2,12 @@
 package com.jetbrains.env.python.conda
 
 import com.intellij.execution.target.FullPathOnTarget
+import com.intellij.python.community.execService.BinOnEel
+import com.intellij.python.community.execService.BinaryToExec
 import com.intellij.python.community.testFramework.testEnv.conda.TypeConda
+import com.jetbrains.python.getOrThrow
+import com.jetbrains.python.sdk.add.v2.Version
+import com.jetbrains.python.sdk.add.v2.conda.getCondaVersion
 import com.jetbrains.python.sdk.flavors.conda.PyCondaCommand
 import kotlinx.coroutines.runBlocking
 import org.junit.AssumptionViolatedException
@@ -20,6 +25,9 @@ class LocalCondaRule : ExternalResource() {
   lateinit var condaPath: Path
     private set
 
+  lateinit var condaVersion: Version
+    private set
+
   private lateinit var autoCloseable: AutoCloseable
 
   val condaPathOnTarget: FullPathOnTarget get() = condaPath.toString()
@@ -35,10 +43,16 @@ class LocalCondaRule : ExternalResource() {
     if (!condaPath.isExecutable()) {
       throw AssumptionViolatedException("$condaPath is not executable")
     }
+    condaVersion = runBlocking { BinOnEel(condaPath).getCondaVersion().getOrThrow() }
+
     this.autoCloseable = autoCloseable
   }
 
   override fun after() {
     autoCloseable.close()
+  }
+
+  fun getCondaBinaryToExec(): BinaryToExec {
+    return BinOnEel(Path.of(condaPathOnTarget))
   }
 }

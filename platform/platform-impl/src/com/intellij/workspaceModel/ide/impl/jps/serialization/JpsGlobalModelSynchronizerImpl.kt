@@ -8,7 +8,6 @@ import com.intellij.openapi.components.impl.stores.stateStore
 import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.roots.OrderRootType
 import com.intellij.openapi.util.JDOMUtil
-import com.intellij.platform.backend.workspace.InternalEnvironmentName
 import com.intellij.platform.diagnostic.telemetry.helpers.MillisecondsMeasurer
 import com.intellij.platform.eel.provider.EelProvider
 import com.intellij.platform.eel.provider.LocalEelMachine
@@ -16,10 +15,7 @@ import com.intellij.platform.workspace.jps.JpsGlobalFileEntitySource
 import com.intellij.platform.workspace.jps.entities.LibraryEntity
 import com.intellij.platform.workspace.jps.entities.SdkEntity
 import com.intellij.platform.workspace.jps.serialization.impl.*
-import com.intellij.platform.workspace.storage.EntityStorage
-import com.intellij.platform.workspace.storage.MutableEntityStorage
-import com.intellij.platform.workspace.storage.VersionedEntityStorage
-import com.intellij.platform.workspace.storage.WorkspaceEntity
+import com.intellij.platform.workspace.storage.*
 import com.intellij.platform.workspace.storage.url.VirtualFileUrl
 import com.intellij.platform.workspace.storage.url.VirtualFileUrlManager
 import com.intellij.util.containers.ContainerUtil
@@ -38,7 +34,6 @@ import org.jdom.Element
 import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.annotations.TestOnly
 import org.jetbrains.annotations.VisibleForTesting
-import kotlin.io.path.Path
 import kotlin.time.Duration
 import kotlin.time.Duration.Companion.seconds
 
@@ -68,7 +63,7 @@ import kotlin.time.Duration.Companion.seconds
 @ApiStatus.Internal
 @ApiStatus.NonExtendable
 open class JpsGlobalModelSynchronizerImpl(private val coroutineScope: CoroutineScope) : JpsGlobalModelSynchronizer {
-  private var loadedFromDisk: Boolean = false
+  private var loadedFromDisk: MutableMap<InternalEnvironmentName, Boolean> = mutableMapOf()
   private val isSerializationProhibited: Boolean
     get() = !forceEnableLoading && ApplicationManager.getApplication().isUnitTestMode
   private lateinit var virtualFileUrlManager: VirtualFileUrlManager
@@ -127,8 +122,8 @@ open class JpsGlobalModelSynchronizerImpl(private val coroutineScope: CoroutineS
     val globalWorkspaceModels = GlobalWorkspaceModel.getInstances()
     for (globalWorkspaceModel in globalWorkspaceModels) {
       setVirtualFileUrlManager(globalWorkspaceModel.getVirtualFileUrlManager())
-      val entityStorage = globalWorkspaceModel.entityStorage.current
-      val serializers = createSerializers()
+      val entityStorage = globalWorkspaceModel.currentSnapshot
+      val serializers = createSerializers(globalWorkspaceModel.internalEnvironmentName)
       val contentWriter = (ApplicationManager.getApplication().stateStore as ApplicationStoreJpsContentReader).createContentWriter()
       for (serializer in serializers) {
         serializeEntities(entityStorage, serializer, contentWriter)
@@ -141,15 +136,16 @@ open class JpsGlobalModelSynchronizerImpl(private val coroutineScope: CoroutineS
   suspend fun saveSdkEntities() {
     val sortedRootTypes = OrderRootType.getSortedRootTypes().mapNotNull { it.sdkRootName }
 
-    @Suppress("UNCHECKED_CAST")
-    val sdkSerializer = JpsGlobalEntitiesSerializers.createSdkSerializer(
-      virtualFileUrlManager = virtualFileUrlManager,
-      sortedRootTypes = sortedRootTypes,
-      optionsDir = PathManager.getOptionsDir(),
-    ) as JpsFileEntityTypeSerializer<WorkspaceEntity>
-    val contentWriter = (ApplicationManager.getApplication().stateStore as ApplicationStoreJpsContentReader).createContentWriter()
     for (globalWorkspaceModel in GlobalWorkspaceModel.getInstances()) {
-      val entityStorage = globalWorkspaceModel.entityStorage.current
+      @Suppress("UNCHECKED_CAST")
+      val sdkSerializer = JpsGlobalEntitiesSerializers.createSdkSerializer(
+        virtualFileUrlManager = virtualFileUrlManager,
+        sortedRootTypes = sortedRootTypes,
+        optionsDir = PathManager.getOptionsDir(),
+        environmentName = globalWorkspaceModel.internalEnvironmentName,
+      ) as JpsFileEntityTypeSerializer<WorkspaceEntity>
+      val contentWriter = (ApplicationManager.getApplication().stateStore as ApplicationStoreJpsContentReader).createContentWriter()
+      val entityStorage = globalWorkspaceModel.currentSnapshot
       serializeEntities(entityStorage, sdkSerializer, contentWriter)
       contentWriter.saveSession()
     }
@@ -226,7 +222,7 @@ open class JpsGlobalModelSynchronizerImpl(private val coroutineScope: CoroutineS
   @VisibleForTesting
   protected open suspend fun delayLoadGlobalWorkspaceModel(environmentName: InternalEnvironmentName) {
     val globalWorkspaceModel = GlobalWorkspaceModel.getInstanceByEnvironmentName(environmentName)
-    if (loadedFromDisk || !globalWorkspaceModel.loadedFromCache) {
+    if (loadedFromDisk[environmentName] == true || !globalWorkspaceModel.loadedFromCache) {
       return
     }
 
@@ -255,7 +251,7 @@ open class JpsGlobalModelSynchronizerImpl(private val coroutineScope: CoroutineS
     initializeBridges: Boolean,
   ): () -> Unit {
     val contentReader = (ApplicationManager.getApplication().stateStore as ApplicationStoreJpsContentReader).createContentReader()
-    val serializers = createSerializers()
+    val serializers = createSerializers(environmentName)
     val errorReporter = object : ErrorReporter {
       override fun reportError(message: String, file: VirtualFileUrl) {
         LOG.warn(message)
@@ -272,14 +268,14 @@ open class JpsGlobalModelSynchronizerImpl(private val coroutineScope: CoroutineS
     } else {
       { }
     }
-    loadedFromDisk = true
+    loadedFromDisk[environmentName] = true
     return callback
   }
 
-  private fun createSerializers(): List<JpsFileEntityTypeSerializer<WorkspaceEntity>> {
+  private fun createSerializers(environmentName: InternalEnvironmentName): List<JpsFileEntityTypeSerializer<WorkspaceEntity>> {
     if (isSerializationProhibited) return emptyList()
     val sortedRootTypes = OrderRootType.getSortedRootTypes().mapNotNull { it.sdkRootName }
-    return JpsGlobalEntitiesSerializers.createApplicationSerializers(virtualFileUrlManager, sortedRootTypes, Path(PathManager.getOptionsPath()))
+    return JpsGlobalEntitiesSerializers.createApplicationSerializers(virtualFileUrlManager, sortedRootTypes, PathManager.getOptionsDir(), environmentName)
   }
 
   private fun bridgesInitializationCallback(

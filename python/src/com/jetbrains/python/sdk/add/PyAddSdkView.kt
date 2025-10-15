@@ -8,12 +8,10 @@ import org.jetbrains.annotations.Nls
 import java.awt.Component
 import javax.swing.Icon
 
-/**
- * Represents the view for adding new Python SDK. It is used in
- * [PyAddSdkDialog].
- *
- * If you need to be notified when this view is closed, implement [com.intellij.openapi.Disposable]
- */
+@Deprecated(
+  "Custom Python SDKs support was removed from python plugin for IDEA because of UI/UX unification with PyCharm",
+)
+@Suppress("unused")
 interface PyAddSdkView {
   val panelName: String
     @Nls(capitalization = Nls.Capitalization.Title) get

@@ -14,52 +14,46 @@ import com.intellij.openapi.project.isNotificationSilentMode
 import com.intellij.openapi.projectRoots.Sdk
 import com.intellij.openapi.util.Disposer
 import com.intellij.openapi.util.use
+import com.intellij.openapi.wm.ex.WelcomeScreenProjectProvider
 import com.intellij.platform.ide.progress.withBackgroundProgress
 import com.jetbrains.python.PyBundle
-import com.jetbrains.python.sdk.impl.PySdkBundle
 import com.jetbrains.python.PythonPluginDisposable
-import com.jetbrains.python.errorProcessing.PyResult
 import com.jetbrains.python.packaging.utils.PyPackageCoroutine
 import com.jetbrains.python.sdk.PySdkPopupFactory
 import com.jetbrains.python.sdk.configuration.suppressors.PyInterpreterInspectionSuppressor
 import com.jetbrains.python.sdk.configuration.suppressors.PyPackageRequirementsInspectionSuppressor
 import com.jetbrains.python.sdk.configuration.suppressors.TipOfTheDaySuppressor
 import com.jetbrains.python.sdk.configurePythonSdk
+import com.jetbrains.python.sdk.impl.PySdkBundle
 import com.jetbrains.python.statistics.ConfiguredPythonInterpreterIdsHolder.Companion.SDK_HAS_BEEN_CONFIGURED_AS_THE_PROJECT_INTERPRETER
 import com.jetbrains.python.util.ShowingMessageErrorSync
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
 
 object PyProjectSdkConfiguration {
-  fun configureSdkUsingExtension(module: Module, extension: PyProjectSdkConfigurationExtension) {
-    val lifetime = suppressTipAndInspectionsFor(module, extension)
+  fun configureSdkUsingCreateSdkInfo(module: Module, createSdkInfo: CreateSdkInfo) {
+    val lifetime = suppressTipAndInspectionsFor(module, createSdkInfo.toolInfo.toolName)
 
     val project = module.project
     PyPackageCoroutine.launch(project) {
-      val title = extension.getIntention(module) ?: PySdkBundle.message("python.configuring.interpreter.progress")
-      withBackgroundProgress(project, title, false) {
-        lifetime.use {
-          setSdkUsingExtension(module, extension) {
-            withContext(Dispatchers.Default) {
-              extension.createAndAddSdkForInspection(module)
-            }
-          }
-        }
+      withBackgroundProgress(project, createSdkInfo.intentionName, false) {
+        lifetime.use { setSdkUsingCreateSdkInfo(module, createSdkInfo, false) }
       }
     }
   }
 
-  suspend fun setSdkUsingExtension(module: Module, extension: PyProjectSdkConfigurationExtension, supplier: suspend () -> PyResult<Sdk?>): Boolean {
-    thisLogger().debug("Configuring sdk with ${extension.javaClass.canonicalName} extension")
+  suspend fun setSdkUsingCreateSdkInfo(
+    module: Module, createSdkInfo: CreateSdkInfo, needsConfirmation: NeedsConfirmation,
+  ): Boolean = withContext(Dispatchers.Default) {
+    thisLogger().debug("Configuring sdk using ${createSdkInfo.toolInfo.toolName}")
 
-    val sdk = supplier().getOr {
+    val sdk = createSdkInfo.sdkCreator(needsConfirmation).getOr {
       ShowingMessageErrorSync.emit(it.error)
-      return true
-    } ?: return false
+      return@withContext true
+    } ?: return@withContext false
 
-    // TODO Move this to PyUvSdkConfiguration, show better notification
     setReadyToUseSdk(module.project, module, sdk)
-    return true
+    true
   }
 
   fun setReadyToUseSdkSync(project: Project, module: Module, sdk: Sdk) {
@@ -79,12 +73,12 @@ object PyProjectSdkConfiguration {
     }
   }
 
-  fun suppressTipAndInspectionsFor(module: Module, extension: PyProjectSdkConfigurationExtension): Disposable {
+  fun suppressTipAndInspectionsFor(module: Module, toolName: String): Disposable {
     val project = module.project
 
     val lifetime = Disposer.newDisposable(
       PythonPluginDisposable.getInstance(project),
-      "Configuring sdk using ${extension.javaClass.name} extension"
+      "Configuring sdk using $toolName"
     )
 
     TipOfTheDaySuppressor.suppress()?.let { Disposer.register(lifetime, it) }
@@ -96,7 +90,7 @@ object PyProjectSdkConfiguration {
   }
 
   private fun notifyAboutConfiguredSdk(project: Project, module: Module, sdk: Sdk) {
-    if (isNotificationSilentMode(project)) return
+    if (isNotificationSilentMode(project) || WelcomeScreenProjectProvider.isWelcomeScreenProject(project)) return
     NotificationGroupManager.getInstance().getNotificationGroup("ConfiguredPythonInterpreter")
       .createNotification(
         content = PyBundle.message("sdk.has.been.configured.as.the.project.interpreter", sdk.name),

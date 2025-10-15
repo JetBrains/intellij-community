@@ -17,6 +17,7 @@ import com.intellij.driver.sdk.waitAny
 import com.intellij.driver.sdk.waitFor
 import com.intellij.driver.sdk.waitForOne
 import com.intellij.openapi.diagnostic.logger
+import org.intellij.lang.annotations.Language
 import java.awt.Color
 import java.awt.IllegalComponentStateException
 import java.awt.Point
@@ -405,6 +406,15 @@ open class UiComponent(private val data: ComponentData) : Finder, WithKeyboard {
 
     return UiComponent(ComponentData(data.xpath + "/..", driver, searchService, robotProvider,
                                      data.parentSearchContext, parent))
+  }
+
+  fun findInParentContext(@Language("XPath") xpath: String): UiComponent? {
+    val parentSearchContext = data.parentSearchContext
+    val foundComponent = parentSearchContext.findAll(xpath).firstOrNull() ?: return null
+    val componentPath = "${parentSearchContext.contextAsString}/$xpath"
+
+    return UiComponent(ComponentData(componentPath, driver, searchService, robotProvider,
+                                     parentSearchContext, foundComponent))
   }
 
   fun getColor(point: Point?, moveMouse: Boolean = true): Color {

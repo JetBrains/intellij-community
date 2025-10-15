@@ -21,7 +21,7 @@ import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.ui.EDT;
 import com.intellij.xdebugger.XDebuggerUtil;
 import com.intellij.xdebugger.XSourcePosition;
-import com.intellij.xdebugger.impl.FrontendXDebuggerManagerListener;
+import com.intellij.xdebugger.impl.XDebuggerManagerProxyListener;
 import com.intellij.xdebugger.impl.frame.XDebugSessionProxy;
 import com.intellij.xdebugger.impl.frame.XVariablesView;
 import com.intellij.xdebugger.impl.ui.DebuggerUIUtil;
@@ -47,7 +47,7 @@ public final class XDebuggerInlayUtil {
 
   XDebuggerInlayUtil(Project project) {
     myProject = project;
-    project.getMessageBus().connect().subscribe(FrontendXDebuggerManagerListener.TOPIC, new FrontendXDebuggerManagerListener() {
+    project.getMessageBus().connect().subscribe(XDebuggerManagerProxyListener.TOPIC, new XDebuggerManagerProxyListener() {
       @Override
       public void sessionStopped(@NotNull XDebugSessionProxy session) {
         XVariablesView.InlineVariablesInfo.set(session, null);

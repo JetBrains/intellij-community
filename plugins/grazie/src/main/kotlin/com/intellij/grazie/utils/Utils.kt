@@ -3,8 +3,14 @@ package com.intellij.grazie.utils
 
 import ai.grazie.gec.model.problem.ProblemFix
 import com.intellij.openapi.progress.ProcessCanceledException
+import com.intellij.openapi.progress.ProgressManager
+import com.intellij.openapi.progress.runBlockingCancellable
+import com.intellij.openapi.project.Project
+import com.intellij.openapi.util.NlsContexts
 import com.intellij.openapi.util.TextRange
+import com.intellij.openapi.util.ThrowableComputable
 import kotlinx.coroutines.CancellationException
+import kotlinx.coroutines.CoroutineScope
 import java.util.*
 
 fun ProblemFix.Part.Change.ijRange(): TextRange = TextRange(range.start, range.endExclusive)
@@ -18,9 +24,7 @@ typealias LinkedSet<T> = LinkedHashSet<T>
 val IntRange.length
   get() = endInclusive - start + 1
 
-
 fun <T> Enumeration<T>.toSet() = toList().toSet()
-
 
 inline fun <R> catching(block: () -> R): Result<R> {
   try {
@@ -35,4 +39,21 @@ inline fun <R> catching(block: () -> R): Result<R> {
   catch (exception: Throwable) {
     return Result.failure(exception)
   }
+}
+
+/**
+ * Same as [runBlockingModal] but without [ModalTaskOwner].
+ */
+internal fun <T> runBlockingModalProcess(
+  project: Project? = null,
+  title: @NlsContexts.DialogTitle String,
+  isCancellable: Boolean = true,
+  block: suspend CoroutineScope.() -> T
+): T {
+  return ProgressManager.getInstance().runProcessWithProgressSynchronously(
+    ThrowableComputable { runBlockingCancellable(block) },
+    title,
+    isCancellable,
+    project
+  )
 }

@@ -51,14 +51,13 @@ public class PsiMethodTreeElement extends JavaClassTreeElementBase<PsiMethod> im
 
   @Override
   public String getPresentableText() {
-    final PsiMethod psiMethod = getElement();
-    if (psiMethod == null) return "";
-    final boolean dumb = DumbService.isDumb(psiMethod.getProject());
-    String method = PsiFormatUtil.formatMethod(psiMethod,
-                                               PsiSubstitutor.EMPTY,
-                                               SHOW_NAME | TYPE_AFTER | SHOW_PARAMETERS | (dumb ? 0 : SHOW_TYPE),
-                                               dumb ? SHOW_NAME : SHOW_TYPE);
-    return StringUtil.replace(method, ":", ": ");
+    final PsiMethod method = getElement();
+    if (method == null) return "";
+    final boolean dumb = DumbService.isDumb(method.getProject());
+    return PsiFormatUtil.formatMethod(method,
+                                      PsiSubstitutor.EMPTY,
+                                      SHOW_NAME | TYPE_AFTER | SHOW_PARAMETERS | (dumb ? 0 : SHOW_TYPE),
+                                      dumb ? SHOW_NAME : SHOW_TYPE);
   }
 
 

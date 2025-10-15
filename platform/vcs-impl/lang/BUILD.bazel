@@ -38,6 +38,7 @@ jvm_library(
     "//platform/statistics",
     "//libraries/fastutil",
     "//platform/todo",
+    "//platform/vcs-impl/shared",
   ]
 )
 ### auto-generated section `build intellij.platform.vcs.impl.lang` end

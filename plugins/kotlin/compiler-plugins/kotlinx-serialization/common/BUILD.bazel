@@ -36,7 +36,7 @@ jvm_library(
     "//plugins/kotlin/base/fe10/analysis",
     "//plugins/kotlin/base/fe10/code-insight",
     "//plugins/kotlin/code-insight/api",
-    "//plugins/kotlin/compiler-plugins/compiler-plugin-support/common",
+    "//plugins/kotlin/compiler-plugins/compiler-plugin-support/common:kotlin-compilerPlugins-support",
     "//plugins/kotlin/core",
     "//plugins/kotlin/idea",
     "//plugins/kotlin/frontend-independent",

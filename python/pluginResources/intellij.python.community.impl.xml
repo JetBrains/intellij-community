@@ -10,6 +10,7 @@
     <module name="intellij.python.community.execService.python"/>
     <module name="intellij.python.community.interpreters"/>
     <module name="intellij.python.community.impl.poetry"/>
+    <module name="intellij.python.community.impl.pipenv"/>
     <module name="intellij.python.hatch"/>
     <module name="intellij.python.pydev"/>
     <module name="intellij.python.sdk.ui"/>
@@ -19,6 +20,7 @@
     <module name="intellij.python.community.impl.installer"/>
     <module name="intellij.python.community.impl.venv"/>
     <module name="intellij.python.community.services.systemPython"/>
+    <module name="intellij.python.sdkConfigurator.common"/>
   </dependencies>
 
   <resource-bundle>messages.PyBundle</resource-bundle>
@@ -82,6 +84,7 @@
   <extensions defaultExtensionNs="com.intellij.python.pyproject.model">
     <tool implementation="com.jetbrains.python.projectModel.poetry.PoetryTool"/>
     <tool implementation="com.jetbrains.python.projectModel.uv.UvTool"/>
+    <tool implementation="com.jetbrains.python.projectModel.hatch.HatchTool"/>
   </extensions>
 
   <projectListeners>
@@ -142,9 +145,9 @@
     <projectService serviceImplementation="com.jetbrains.python.inspections.PyCompatibilityInspectionAdvertiserSettings"/>
     <projectService serviceImplementation="com.jetbrains.python.packaging.PyPackagingSettings"/>
 
-    <projectService serviceInterface="com.jetbrains.python.codeInsight.completion.RemoteFilePathRetrievalService"
-                    serviceImplementation="com.jetbrains.python.codeInsight.completion.DummyRemoteFilePathRetrievalService"
-                    testServiceImplementation="com.jetbrains.python.codeInsight.completion.DummyRemoteFilePathRetrievalService"/>
+    <projectService serviceInterface="com.jetbrains.python.codeInsight.completion.runtime.patProvider.RemoteFilePathRetrievalService"
+                    serviceImplementation="com.jetbrains.python.codeInsight.completion.runtime.patProvider.DummyRemoteFilePathRetrievalService"
+                    testServiceImplementation="com.jetbrains.python.codeInsight.completion.runtime.patProvider.DummyRemoteFilePathRetrievalService"/>
 
     <applicationService serviceImplementation="com.jetbrains.python.packaging.pip.PypiPackageCache"/>
     <applicationService serviceImplementation="com.jetbrains.python.packaging.PyPackageService"/>
@@ -810,9 +813,14 @@
     <extensionPoint qualifiedName="Pythonid.PythonPackageRequirementsTreeExtractorProvider"
                     interface="com.jetbrains.python.packaging.packageRequirements.PythonPackageRequirementsTreeExtractorProvider"
                     dynamic="true"/>
+
+    <extensionPoint qualifiedName="Pythonid.pyRunToolProvider"
+                    interface="com.jetbrains.python.run.features.PyRunToolProvider"
+                    dynamic="true"/>
   </extensionPoints>
 
   <extensions defaultExtensionNs="Pythonid">
+    <pyRunToolProvider implementation="com.jetbrains.python.sdk.uv.run.UvRunToolProvider"/>
     <evoTreeElementProvider id="UvEvoProvider"
                             order="first"
                             implementation="com.jetbrains.python.uv.sdk.evolution.UvSelectSdkProvider"/>
@@ -882,7 +890,7 @@
     <pythonPackageManagerProvider implementation="com.jetbrains.python.hatch.packaging.HatchPackageManagerProvider"/>
 
     <!-- SDK Flavors -->
-    <pythonSdkFlavor implementation="com.jetbrains.python.sdk.flavors.conda.CondaEnvSdkFlavor"/>
+    <pythonFlavorProvider implementation="com.jetbrains.python.sdk.flavors.conda.CondaEnvSdkFlavorProvider"/>
     <pythonSdkFlavor implementation="com.jetbrains.python.sdk.flavors.MacPythonSdkFlavor"/>
     <pythonSdkFlavor implementation="com.jetbrains.python.sdk.flavors.UnixPythonSdkFlavor"/>
     <pythonSdkFlavor implementation="com.jetbrains.python.sdk.flavors.VirtualEnvSdkFlavor"/>

@@ -1,4 +1,4 @@
-### auto-generated section `build kotlin.formatter` start
+### auto-generated section `build intellij.kotlin.formatter` start
 load("@rules_jvm//:jvm.bzl", "jvm_library", "resourcegroup")
 
 resourcegroup(
@@ -9,7 +9,7 @@ resourcegroup(
 
 jvm_library(
   name = "formatter",
-  module_name = "kotlin.formatter",
+  module_name = "intellij.kotlin.formatter",
   visibility = ["//visibility:public"],
   srcs = glob(["src/**/*.kt", "src/**/*.java", "src/**/*.form"], allow_empty = True),
   resources = [":formatter_resources"],
@@ -36,4 +36,4 @@ jvm_library(
   ],
   exports = ["//plugins/kotlin/formatter/minimal"]
 )
-### auto-generated section `build kotlin.formatter` end
+### auto-generated section `build intellij.kotlin.formatter` end

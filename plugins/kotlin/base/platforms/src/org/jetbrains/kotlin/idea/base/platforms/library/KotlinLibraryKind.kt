@@ -6,6 +6,7 @@ import com.intellij.openapi.project.Project
 import com.intellij.openapi.roots.libraries.DummyLibraryProperties
 import com.intellij.openapi.roots.libraries.Library
 import com.intellij.openapi.roots.libraries.PersistentLibraryKind
+import com.intellij.platform.workspace.jps.entities.LibraryEntity
 import org.jetbrains.kotlin.platform.CommonPlatforms
 import org.jetbrains.kotlin.platform.TargetPlatform
 import org.jetbrains.kotlin.platform.js.JsPlatforms
@@ -89,3 +90,7 @@ val PersistentLibraryKind<*>?.platform: TargetPlatform
 
 fun detectLibraryKind(library: Library, project: Project): PersistentLibraryKind<*>? =
     project.service<LibraryEffectiveKindProvider>().getEffectiveKind(library)
+
+fun detectLibraryKind(library: LibraryEntity, project: Project): PersistentLibraryKind<*>? =
+    project.service<LibraryEffectiveKindProvider>().getEffectiveKind(library)
+

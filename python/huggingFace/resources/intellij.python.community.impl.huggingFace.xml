@@ -1,4 +1,7 @@
 <idea-plugin visibility="internal">
+
+  <resource-bundle>messages.PyHuggingFaceBundle</resource-bundle>
+
   <dependencies>
     <module name="intellij.json.backend"/>
     <module name="intellij.python.community.impl"/>

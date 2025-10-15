@@ -1283,10 +1283,10 @@ public class PydevConsoleRunnerImpl implements PydevConsoleRunner {
                                    new PyConsoleDebugProcess(session, serverSocket, debugConsoleView,
                                                              consoleDebugProcessHandler);
 
-                                 PythonDebugConsoleCommunication communication =
+                                 PythonDebugConsoleCommunication<PyConsoleDebugProcess> communication =
                                    PyDebugRunner
-                                     .initDebugConsoleView(myProject, consoleDebugProcess, debugConsoleView, consoleDebugProcessHandler,
-                                                           session);
+                                     .initDebugConsole(myProject, consoleDebugProcess, debugConsoleView, consoleDebugProcessHandler,
+                                                       session);
 
                                  communication.addCommunicationListener(new ConsoleCommunicationListener() {
                                    @Override

@@ -13,7 +13,6 @@ import com.intellij.ide.ui.laf.darcula.ui.TextFieldWithPopupHandlerUI
 import com.intellij.internal.statistic.eventLog.events.EventFields
 import com.intellij.openapi.Disposable
 import com.intellij.openapi.actionSystem.*
-import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.application.EDT
 import com.intellij.openapi.application.UI
 import com.intellij.openapi.application.ex.ApplicationManagerEx
@@ -151,8 +150,6 @@ class SePopupContentPane(
     })
 
     resultList.setFocusable(false)
-
-    updateExtendedInfoContainer()
 
     RowsGridBuilder(this)
       .row().cell(headerPane, horizontalAlign = HorizontalAlign.FILL, resizableColumn = true)
@@ -299,6 +296,9 @@ class SePopupContentPane(
               hintHelper.setRightExtensions(rightActions)
             }
           }
+        }
+        withContext(Dispatchers.EDT) {
+          updateExtendedInfoContainer()
         }
       }
     }
@@ -581,14 +581,12 @@ class SePopupContentPane(
       vmState.value?.let { vm ->
         vm.selectNextTab()
         logTabSwitchedEvent(e)
-        updateExtendedInfoContainer()
       }
     }
     val prevTabAction: (AnActionEvent) -> Unit = { e ->
       vmState.value?.let { vm ->
         vm.selectPreviousTab()
         logTabSwitchedEvent(e)
-        updateExtendedInfoContainer()
       }
     }
 
@@ -704,7 +702,7 @@ class SePopupContentPane(
     textField.addExtension(
       object : ExtendableTextComponent.Extension {
         override fun getIcon(hovered: Boolean): Icon {
-          return if (isExtendedInfoEnabled()) AllIcons.Actions.SearchWithHistory else AllIcons.Actions.Search
+          return AllIcons.Actions.SearchWithHistory
         }
 
         override fun isIconBeforeText(): Boolean {
@@ -715,9 +713,7 @@ class SePopupContentPane(
           return scale(if (isNewUI()) 6 else 10)
         }
 
-        override fun getActionOnClick(): Runnable? {
-          if (!isExtendedInfoEnabled()) return null
-
+        override fun getActionOnClick(): Runnable {
           val bounds = (textField.getUI() as TextFieldWithPopupHandlerUI).getExtensionIconBounds(this)
           val point = bounds.location
           point.y += bounds.width + scale(2)
@@ -751,11 +747,10 @@ class SePopupContentPane(
       .show(relativePoint)
   }
 
-  private fun createExtendedInfoComponent(): ExtendedInfoComponent? {
-    if (isExtendedInfoEnabled()) {
+  private suspend fun createExtendedInfoComponent(): ExtendedInfoComponent? {
+    if (vmState.value?.isExtendedInfoEnabled() == true) {
       val leftText = fun(element: Any): String? {
         val leftText = (element as? SeResultListItemRow)?.item?.presentation?.extendedInfo?.text
-        extendedInfoContainer.isVisible = !leftText.isNullOrEmpty()
         return leftText
       }
 
@@ -788,7 +783,7 @@ class SePopupContentPane(
     return null
   }
 
-  private fun updateExtendedInfoContainer() {
+  private suspend fun updateExtendedInfoContainer() {
     extendedInfoContainer.removeAll()
     extendedInfoComponent = createExtendedInfoComponent()
     extendedInfoComponent?.let { extendedInfoContainer.add(it.component) }
@@ -827,7 +822,7 @@ class SePopupContentPane(
   }
 
   private fun updateViewMode(compact: Boolean) {
-    extendedInfoContainer.isVisible = !compact && isExtendedInfoEnabled()
+    extendedInfoContainer.isVisible = !compact
 
     if (compact == isCompactViewMode) return
     isCompactViewMode = compact
@@ -972,10 +967,5 @@ class SePopupContentPane(
   companion object {
     const val DEFAULT_FROZEN_VISIBLE_PART: Double = 1.1
     const val DEFAULT_FREEZING_DELAY_MS: Long = 800
-
-    @JvmStatic
-    fun isExtendedInfoEnabled(): Boolean {
-      return Registry.`is`("search.everywhere.footer.extended.info") || ApplicationManager.getApplication().isInternal()
-    }
   }
 }

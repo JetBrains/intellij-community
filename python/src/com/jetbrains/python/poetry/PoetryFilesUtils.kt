@@ -15,6 +15,7 @@ import com.intellij.psi.util.PsiElementFilter
 import com.intellij.psi.util.PsiTreeUtil
 import com.jetbrains.python.poetry.VersionType.Companion.getVersionType
 import com.jetbrains.python.psi.LanguageLevel
+import com.jetbrains.python.sdk.add.v2.PathHolder
 import com.jetbrains.python.sdk.add.v2.PythonSelectableInterpreter
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.Flow
@@ -94,7 +95,7 @@ class PoetryPyProjectTomlPythonVersionsService : Disposable {
   fun validateSdkVersions(moduleFile: VirtualFile, sdks: List<Sdk>): List<Sdk> =
     sdks.filter { getVersion(moduleFile).isValid(it.versionString) }
 
-  fun validateInterpretersVersions(moduleFile: VirtualFile, interpreters: Flow<List<PythonSelectableInterpreter>?>): Flow<List<PythonSelectableInterpreter>?> {
+  fun <P: PathHolder> validateInterpretersVersions(moduleFile: VirtualFile, interpreters: Flow<List<PythonSelectableInterpreter<P>>?>): Flow<List<PythonSelectableInterpreter<P>>?> {
     val version = getVersion(moduleFile)
     return interpreters.map { list -> list?.filter { version.isValid(it.languageLevel) } }
   }

@@ -29,15 +29,15 @@
     <orderEntry type="module" module-name="intellij.platform.analysis" />
     <orderEntry type="module" module-name="intellij.platform.core" />
     <orderEntry type="module" module-name="intellij.platform.lang" />
-    <orderEntry type="module" module-name="kotlin.completion.impl.k2" />
-    <orderEntry type="module" module-name="kotlin.highlighting.k2" />
+    <orderEntry type="module" module-name="intellij.kotlin.completion.impl" />
+    <orderEntry type="module" module-name="intellij.kotlin.highlighting" />
     <orderEntry type="module" module-name="intellij.platform.util" />
     <orderEntry type="module" module-name="intellij.platform.analysis.impl" />
     <orderEntry type="module" module-name="kotlin.refactorings.common" />
-    <orderEntry type="module" module-name="kotlin.refactorings.k2" />
+    <orderEntry type="module" module-name="intellij.kotlin.refactorings" />
     <orderEntry type="library" scope="PROVIDED" name="kotlinc.kotlin-compiler-common" level="project" />
     <orderEntry type="library" scope="PROVIDED" name="kotlinc.analysis-api" level="project" />
-    <orderEntry type="module" module-name="kotlin.base.analysis-api.utils" />
+    <orderEntry type="module" module-name="intellij.kotlin.base.analysis.utils" />
     <orderEntry type="module" module-name="intellij.java.psi" />
   </component>
 </module>

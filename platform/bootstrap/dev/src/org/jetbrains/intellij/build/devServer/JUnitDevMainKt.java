@@ -38,19 +38,29 @@ public final class JUnitDevMainKt {
     System.setProperty("idea.use.dev.build.server", "true");
     if (jUnitStarterModule != null) System.setProperty("idea.dev.build.unpacked", "true");
     // idea.platform.prefix should be set
+    if (System.getProperty("idea.platform.prefix") == null) {
+      System.err.println("'idea.platform.prefix' is not set");
+      System.exit(1);
+    }
 
     // idea.dev.build.test.entry.point.module should be set
+    if (System.getProperty("idea.dev.build.test.entry.point.module") == null) {
+      System.err.println("'idea.dev.build.test.entry.point.module' is not set");
+      System.exit(1);
+    }
     System.setProperty("idea.dev.build.test.entry.point.class", jUnitStarterModule != null ? "com.intellij.rt.junit.JUnitStarter" : "com.intellij.tests.JUnit5TeamCityRunnerForTestsOnClasspath");
     if (jUnitStarterModule != null) System.setProperty("idea.dev.build.test.additional.modules", jUnitStarterModule);
 
-    String testEntryPointModulePlugin = System.getProperty("idea.dev.build.test.entry.point.module") + ".plugin";
-    String additionalModules = System.getProperty("additional.modules");
-    System.setProperty("additional.modules", (additionalModules != null ? additionalModules + "," : "") + testEntryPointModulePlugin);
+    // additional.modules should be set
+    if (System.getProperty("additional.modules") == null) {
+      System.err.println("'additional.modules' is not set");
+      System.exit(1);
+    }
 
     // separate method to not retain local variables like implClass
     if (!build(lookup, classLoader)) {
       // Unable to build the classpath: terminate.
-      return;
+      System.exit(1);
     }
 
     System.out.println("build completed in " + (System.currentTimeMillis() - start) + "ms");

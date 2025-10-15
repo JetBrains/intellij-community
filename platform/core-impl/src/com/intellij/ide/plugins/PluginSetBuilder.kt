@@ -95,7 +95,7 @@ class PluginSetBuilder(@JvmField val unsortedPlugins: Set<PluginMainDescriptor>)
 
   internal fun computeEnabledModuleMap(
     incompletePlugins: Collection<PluginMainDescriptor>,
-    currentProductModeEvaluator: () -> String = { ProductLoadingStrategy.strategy.currentModeId },
+    initContext: PluginInitializationContext,
     disabler: ((descriptor: IdeaPluginDescriptorImpl, disabledModuleToProblematicPlugin: Map<PluginModuleId, PluginId>) -> Boolean)? = null,
   ): List<PluginNonLoadReason> {
     val logMessages = ArrayList<String>()
@@ -105,7 +105,6 @@ class PluginSetBuilder(@JvmField val unsortedPlugins: Set<PluginMainDescriptor>)
     for (incompletePlugin in incompletePlugins) {
       incompletePlugin.contentModules.associateByTo(disabledModuleToProblematicPlugin, { it.moduleId }, { incompletePlugin.pluginId })
     }
-    val moduleIncompatibleWithCurrentMode = getModuleIncompatibleWithCurrentProductMode(currentProductModeEvaluator)
     val usedPackagePrefixes = HashMap<String, IdeaPluginDescriptorImpl>()
     val isDisabledDueToPackagePrefixConflict = HashMap<PluginModuleId, IdeaPluginDescriptorImpl>()
 
@@ -127,10 +126,13 @@ class PluginSetBuilder(@JvmField val unsortedPlugins: Set<PluginMainDescriptor>)
     }
 
     m@ for (module in sortedModulesWithDependencies.modules) {
-      if (module is ContentModuleDescriptor && module.moduleId == moduleIncompatibleWithCurrentMode) {
-        module.isMarkedForLoading = false
-        logMessages.add("Module ${module.moduleId.id} is disabled because it is not compatible with the current product mode")
-        continue
+      if (module is ContentModuleDescriptor) {
+        val envConfiguredModule = initContext.environmentConfiguredModules[module.moduleId]
+        if (envConfiguredModule?.unavailabilityReason != null) {
+          module.isMarkedForLoading = false
+          logMessages.add(envConfiguredModule.unavailabilityReason.logMessage)
+          continue
+        }
       }
 
       if (module.useIdeaClassLoader && !canExtendIdeaClassLoader) {
@@ -249,20 +251,6 @@ class PluginSetBuilder(@JvmField val unsortedPlugins: Set<PluginMainDescriptor>)
     return loadingErrors
   }
 
-  /**
-   * Returns a module which should be disabled because it's not relevant to the current com.intellij.platform.runtime.product.ProductMode.
-   * All modules that depend on the specified module will be automatically disabled as well.
-   */
-  private fun getModuleIncompatibleWithCurrentProductMode(currentProductModeEvaluator: () -> String): PluginModuleId? {
-    return when (currentProductModeEvaluator()) {
-      /** intellij.platform.backend.split is currently available in 'monolith' mode because it's used as a backend in CodeWithMe */
-      "monolith" -> "intellij.platform.frontend.split"
-      "backend" -> "intellij.platform.frontend"
-      "frontend" -> "intellij.platform.backend"
-      else -> null
-    }?.let { PluginModuleId(it) }
-  }
-
   private fun markModuleAsEnabled(moduleId: PluginModuleId, moduleDescriptor: ContentModuleDescriptor) {
     enabledModuleV2Ids.put(moduleId, moduleDescriptor)
     for (pluginAlias in moduleDescriptor.pluginAliases) {
@@ -271,9 +259,10 @@ class PluginSetBuilder(@JvmField val unsortedPlugins: Set<PluginMainDescriptor>)
   }
 
   fun createPluginSetWithEnabledModulesMap(): PluginSet {
-    //TODO pass proper list of incomplete plugins to ensure that this information isn't lost after enabling/disabling a plugin dynamically
+    // FIXME pass proper list of incomplete plugins to ensure that this information isn't lost after enabling/disabling a plugin dynamically
+    //   and proper init context too
     val incompletePlugins = emptyList<PluginMainDescriptor>()
-    computeEnabledModuleMap(incompletePlugins = incompletePlugins)
+    computeEnabledModuleMap(incompletePlugins = incompletePlugins, initContext = ProductPluginInitContext())
     return createPluginSet(incompletePlugins = incompletePlugins)
   }
 

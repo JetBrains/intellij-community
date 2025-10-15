@@ -901,6 +901,12 @@
       id="EditorDeleteLine.checkHandler"
     />
 
+    <registryKey key="remdev.completion.on.frontend"
+                 defaultValue="false"
+                 description="Enables frontend completion support"
+                 restartRequired="true"
+    />
+
     <typedHandler implementation="com.intellij.codeInsight.inline.completion.listeners.typing.InlineCompletionTypedHandlerDelegate"/>
 
     <registryKey key="editor.action.caretMovement.UpDownIgnoreSelectionBoundaries" defaultValue="false"
@@ -1163,7 +1169,8 @@
                              key="configurable.breadcrumbs" bundle="messages.ApplicationBundle"
                              instance="com.intellij.xml.breadcrumbs.BreadcrumbsConfigurable"/>
 
-    <fileBreadcrumbsCollector implementation="com.intellij.xml.breadcrumbs.PsiFileBreadcrumbsCollector" order="last"/>
+    <fileBreadcrumbsCollector implementation="com.intellij.xml.breadcrumbs.PsiFileBreadcrumbsCollector"
+                              id="PsiFileBreadcrumbsCollector" order="last"/>
 
     <applicationConfigurable parentId="preferences.editor" id="editor.stickyLines"
                              key="configurable.sticky.lines" bundle="messages.ApplicationBundle"

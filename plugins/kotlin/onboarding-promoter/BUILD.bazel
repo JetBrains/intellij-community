@@ -1,4 +1,4 @@
-### auto-generated section `build intellij.kotlin.onboarding-promoter` start
+### auto-generated section `build intellij.kotlin.onboarding.promoter` start
 load("@rules_jvm//:jvm.bzl", "jvm_library", "resourcegroup")
 
 resourcegroup(
@@ -9,7 +9,7 @@ resourcegroup(
 
 jvm_library(
   name = "onboarding-promoter",
-  module_name = "intellij.kotlin.onboarding-promoter",
+  module_name = "intellij.kotlin.onboarding.promoter",
   visibility = ["//visibility:public"],
   srcs = glob(["src/**/*.kt", "src/**/*.java", "src/**/*.form"], allow_empty = True),
   resources = [":onboarding-promoter_resources"],
@@ -23,4 +23,4 @@ jvm_library(
     "//platform/statistics",
   ]
 )
-### auto-generated section `build intellij.kotlin.onboarding-promoter` end
+### auto-generated section `build intellij.kotlin.onboarding.promoter` end

@@ -1,9 +1,9 @@
-### auto-generated section `build kotlin.code-insight.intentions.k2` start
+### auto-generated section `build intellij.kotlin.codeInsight.intentions` start
 load("//build:compiler-options.bzl", "create_kotlinc_options")
 load("@rules_jvm//:jvm.bzl", "jvm_library", "resourcegroup")
 
 create_kotlinc_options(
-  name = "custom_kotlin-code-insight-intentions-k2",
+  name = "custom_kotlin-codeInsight-intentions",
   opt_in = [
     "com.intellij.openapi.util.IntellijInternalApi",
     "org.jetbrains.kotlin.analysis.api.permissions.KaAllowProhibitedAnalyzeFromWriteAction",
@@ -15,18 +15,18 @@ create_kotlinc_options(
 )
 
 resourcegroup(
-  name = "kotlin-code-insight-intentions-k2_resources",
+  name = "kotlin-codeInsight-intentions_resources",
   srcs = glob(["resources/**/*"]),
   strip_prefix = "resources"
 )
 
 jvm_library(
-  name = "kotlin-code-insight-intentions-k2",
-  module_name = "kotlin.code-insight.intentions.k2",
+  name = "kotlin-codeInsight-intentions",
+  module_name = "intellij.kotlin.codeInsight.intentions",
   visibility = ["//visibility:public"],
   srcs = glob(["src/**/*.kt", "src/**/*.java", "src/**/*.form"], allow_empty = True),
-  resources = [":kotlin-code-insight-intentions-k2_resources"],
-  kotlinc_opts = ":custom_kotlin-code-insight-intentions-k2",
+  resources = [":kotlin-codeInsight-intentions_resources"],
+  kotlinc_opts = ":custom_kotlin-codeInsight-intentions",
   deps = [
     "@lib//:kotlin-stdlib",
     "//java/java-indexing-api:indexing",
@@ -48,8 +48,8 @@ jvm_library(
     "//plugins/kotlin/base/resources:kotlin-base-resources",
     "//plugins/kotlin/base/code-insight",
     "//plugins/kotlin/code-insight/utils",
-    "//plugins/kotlin/code-insight/impl-base",
-    "//plugins/kotlin/base/analysis-api/analysis-api-utils:kotlin-base-analysis-api-utils",
+    "//plugins/kotlin/code-insight/impl-base:kotlin-codeInsight-shared",
+    "//plugins/kotlin/base/analysis-api/analysis-api-utils:kotlin-base-analysis-utils",
     "@lib//:kotlinc-analysis-api-k2",
     "//plugins/kotlin/base/project-structure",
     "//plugins/kotlin/code-insight/descriptions",
@@ -58,16 +58,16 @@ jvm_library(
     "//platform/core-ui",
     "//java/java-impl:impl",
     "//java/execution/impl",
-    "//plugins/kotlin/refactorings/kotlin.refactorings.k2:kotlin-refactorings-k2",
+    "//plugins/kotlin/refactorings/kotlin.refactorings.k2:kotlin-refactorings",
     "//plugins/kotlin/base/analysis",
     "//plugins/kotlin/base/facet",
-    "//plugins/kotlin/refactorings/kotlin.refactorings.move.k2:kotlin-refactorings-move-k2",
+    "//plugins/kotlin/refactorings/kotlin.refactorings.move.k2:kotlin-refactorings-move",
     "//plugins/kotlin/code-insight/override-implement-shared:kotlin-code-insight-override-implement-shared",
-    "//plugins/kotlin/code-insight/override-implement-k2:kotlin-code-insight-override-implement-k2",
+    "//plugins/kotlin/code-insight/override-implement-k2:kotlin-codeInsight-overrideImplement",
     "//plugins/kotlin/frontend-independent",
-    "//plugins/kotlin/code-insight/kotlin.code-insight.k2:kotlin-code-insight-k2",
-    "//plugins/kotlin/kotlin.searching:searching-k2",
+    "//plugins/kotlin/code-insight/kotlin.code-insight.k2:kotlin-codeInsight",
+    "//plugins/kotlin/kotlin.searching",
     "//libraries/guava",
   ]
 )
-### auto-generated section `build kotlin.code-insight.intentions.k2` end
+### auto-generated section `build intellij.kotlin.codeInsight.intentions` end

@@ -9,7 +9,7 @@ import kotlinx.coroutines.launch
 import kotlin.coroutines.CoroutineContext
 import kotlin.coroutines.EmptyCoroutineContext
 
-internal fun CoroutineScope.launchDisposable(
+fun CoroutineScope.launchDisposable(
   parent: Disposable,
   context: CoroutineContext = EmptyCoroutineContext,
   start: CoroutineStart = CoroutineStart.DEFAULT,

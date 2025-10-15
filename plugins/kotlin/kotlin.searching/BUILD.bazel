@@ -1,9 +1,9 @@
-### auto-generated section `build kotlin.searching.k2` start
+### auto-generated section `build intellij.kotlin.searching` start
 load("//build:compiler-options.bzl", "create_kotlinc_options")
 load("@rules_jvm//:jvm.bzl", "jvm_library", "resourcegroup")
 
 create_kotlinc_options(
-  name = "custom_searching-k2",
+  name = "custom_kotlin.searching",
   opt_in = [
     "com.intellij.openapi.util.IntellijInternalApi",
     "org.jetbrains.kotlin.analysis.api.KaIdeApi",
@@ -13,18 +13,18 @@ create_kotlinc_options(
 )
 
 resourcegroup(
-  name = "searching-k2_resources",
+  name = "kotlin.searching_resources",
   srcs = glob(["resources/**/*"]),
   strip_prefix = "resources"
 )
 
 jvm_library(
-  name = "searching-k2",
-  module_name = "kotlin.searching.k2",
+  name = "kotlin.searching",
+  module_name = "intellij.kotlin.searching",
   visibility = ["//visibility:public"],
   srcs = glob(["src/**/*.kt", "src/**/*.java", "src/**/*.form"], allow_empty = True),
-  resources = [":searching-k2_resources"],
-  kotlinc_opts = ":custom_searching-k2",
+  resources = [":kotlin.searching_resources"],
+  kotlinc_opts = ":custom_kotlin.searching",
   deps = [
     "@lib//:kotlin-stdlib",
     "//java/java-psi-api:psi",
@@ -45,8 +45,8 @@ jvm_library(
     "//plugins/kotlin/base/util",
     "//plugins/kotlin/kotlin.searching/base",
     "//plugins/kotlin/base/facet",
-    "//plugins/kotlin/base/analysis-api/analysis-api-utils:kotlin-base-analysis-api-utils",
+    "//plugins/kotlin/base/analysis-api/analysis-api-utils:kotlin-base-analysis-utils",
     "//plugins/kotlin/base/psi",
   ]
 )
-### auto-generated section `build kotlin.searching.k2` end
+### auto-generated section `build intellij.kotlin.searching` end

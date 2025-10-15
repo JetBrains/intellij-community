@@ -3,6 +3,8 @@ package com.intellij.xdebugger.impl.ui;
 
 import com.intellij.codeInsight.hint.HintUtil;
 import com.intellij.codeWithMe.ClientId;
+import com.intellij.frontend.FrontendApplicationInfo;
+import com.intellij.frontend.FrontendType;
 import com.intellij.ide.nls.NlsMessages;
 import com.intellij.ide.ui.AntiFlickeringPanel;
 import com.intellij.openapi.Disposable;
@@ -61,7 +63,6 @@ import com.intellij.xdebugger.impl.ui.tree.XDebuggerTree;
 import com.intellij.xdebugger.impl.ui.tree.XDebuggerTreeState;
 import com.intellij.xdebugger.impl.ui.tree.nodes.XValueNodeImpl;
 import com.intellij.xdebugger.impl.ui.visualizedtext.VisualizedTextPopupUtil;
-import com.intellij.xdebugger.impl.util.MonolithUtils;
 import one.util.streamex.StreamEx;
 import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NonNls;
@@ -74,8 +75,6 @@ import java.awt.event.*;
 
 import static com.intellij.openapi.wm.IdeFocusManager.getGlobalInstance;
 import static com.intellij.xdebugger.impl.breakpoints.XBreakpointProxyKt.asProxy;
-import static com.intellij.xdebugger.impl.frame.XDebugSessionProxy.showFeWarnings;
-import static com.intellij.xdebugger.impl.frame.XDebugSessionProxy.useFeProxy;
 
 public final class DebuggerUIUtil {
   public static final @NonNls String FULL_VALUE_POPUP_DIMENSION_KEY = "XDebugger.FullValuePopup";
@@ -554,7 +553,7 @@ public final class DebuggerUIUtil {
    * Use {@link DebuggerUIUtil#getSessionProxy(AnActionEvent)} instead.
    */
   public static @Nullable XDebugSession getSession(@NotNull AnActionEvent e) {
-    if (showFeWarnings() && useFeProxy() && !MonolithUtils.isMonolith()) {
+    if (SplitDebuggerMode.showSplitWarnings() && FrontendApplicationInfo.INSTANCE.getFrontendType() instanceof FrontendType.Remote) {
       LOG.error("In Split mode DebuggerUIUtil#getSession(AnActionEvent) should not be called from the frontend. " +
                 "Please use DebuggerUIUtil#getSessionProxy(AnActionEvent) instead.");
     }

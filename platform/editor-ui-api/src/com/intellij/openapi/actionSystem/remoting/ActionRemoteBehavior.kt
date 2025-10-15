@@ -69,7 +69,7 @@ enum class ActionRemoteBehavior {
 @ApiStatus.Internal
 @ApiStatus.Experimental
 interface ActionRemoteBehaviorSpecification {
-  fun getBehavior(): ActionRemoteBehavior
+  fun getBehavior(): ActionRemoteBehavior?
 
   interface Frontend : ActionRemoteBehaviorSpecification {
     override fun getBehavior(): ActionRemoteBehavior = ActionRemoteBehavior.FrontendOnly

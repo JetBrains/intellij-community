@@ -3,7 +3,7 @@ package org.jetbrains.plugins.terminal.session.dto
 
 import kotlinx.serialization.Serializable
 import org.jetbrains.annotations.ApiStatus
-import org.jetbrains.plugins.terminal.block.reworked.TerminalOutputModel
+import org.jetbrains.plugins.terminal.block.reworked.TerminalOffset
 import org.jetbrains.plugins.terminal.session.TerminalOutputBlock
 
 @Serializable
@@ -30,13 +30,13 @@ fun TerminalOutputBlock.toDto(): TerminalOutputBlockDto {
 }
 
 @ApiStatus.Internal
-fun TerminalOutputBlockDto.toBlock(outputModel: TerminalOutputModel): TerminalOutputBlock {
+fun TerminalOutputBlockDto.toBlock(): TerminalOutputBlock {
   return TerminalOutputBlock(
     id = id,
-    startOffset = outputModel.absoluteOffset(startOffset),
-    commandStartOffset = commandStartOffset?.let { outputModel.absoluteOffset(it) },
-    outputStartOffset = outputStartOffset?.let { outputModel.absoluteOffset(it) },
-    endOffset = outputModel.absoluteOffset(endOffset),
+    startOffset = TerminalOffset.of(startOffset),
+    commandStartOffset = commandStartOffset?.let { TerminalOffset.of(it) },
+    outputStartOffset = outputStartOffset?.let { TerminalOffset.of(it) },
+    endOffset = TerminalOffset.of(endOffset),
     exitCode = exitCode
   )
 }

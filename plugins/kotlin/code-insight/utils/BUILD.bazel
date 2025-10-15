@@ -1,4 +1,4 @@
-### auto-generated section `build kotlin.code-insight.utils` start
+### auto-generated section `build intellij.kotlin.codeInsight.utils` start
 load("//build:compiler-options.bzl", "create_kotlinc_options")
 load("@rules_jvm//:jvm.bzl", "jvm_library")
 
@@ -10,7 +10,7 @@ create_kotlinc_options(
 
 jvm_library(
   name = "utils",
-  module_name = "kotlin.code-insight.utils",
+  module_name = "intellij.kotlin.codeInsight.utils",
   visibility = ["//visibility:public"],
   srcs = glob(["src/**/*.kt", "src/**/*.java", "src/**/*.form"], allow_empty = True),
   kotlinc_opts = ":custom_utils",
@@ -36,4 +36,4 @@ jvm_library(
     "//platform/core-ui",
   ]
 )
-### auto-generated section `build kotlin.code-insight.utils` end
+### auto-generated section `build intellij.kotlin.codeInsight.utils` end

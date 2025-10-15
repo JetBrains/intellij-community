@@ -12,7 +12,7 @@
     <orderEntry type="module" module-name="intellij.platform.core" />
     <orderEntry type="module" module-name="intellij.platform.lang.impl" />
     <orderEntry type="module" module-name="intellij.java.psi" />
-    <orderEntry type="module" module-name="kotlin.base.plugin" />
+    <orderEntry type="module" module-name="intellij.kotlin.base.plugin" />
     <orderEntry type="module" module-name="intellij.evaluationPlugin.languages" />
     <orderEntry type="module" module-name="intellij.evaluationPlugin.core" />
     <orderEntry type="library" scope="PROVIDED" name="kotlinc.kotlin-compiler-common" level="project" />

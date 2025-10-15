@@ -22,13 +22,14 @@ import com.intellij.openapi.vfs.VfsUtil;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.refactoring.BaseRefactoringProcessor;
 import com.intellij.testFramework.FileBasedTestCaseHelper;
+import com.intellij.testFramework.LightJavaCodeInsightTestCase;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 
 import java.io.File;
 
 @RunWith(com.intellij.testFramework.Parameterized.class)
-public abstract class LightRefactoringParameterizedTestCase extends LightRefactoringTestCase implements FileBasedTestCaseHelper {
+public abstract class LightRefactoringParameterizedTestCase extends LightJavaCodeInsightTestCase implements FileBasedTestCaseHelper {
 
   protected static final String BEFORE_PREFIX = "before";
   protected static final String AFTER_PREFIX = "after";

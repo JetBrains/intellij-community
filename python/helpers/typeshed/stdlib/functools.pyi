@@ -4,7 +4,7 @@ from _typeshed import SupportsAllComparisons, SupportsItems
 from collections.abc import Callable, Hashable, Iterable, Sized
 from types import GenericAlias
 from typing import Any, Final, Generic, Literal, NamedTuple, TypedDict, TypeVar, final, overload, type_check_only
-from typing_extensions import ParamSpec, Self, TypeAlias
+from typing_extensions import ParamSpec, Self, TypeAlias, disjoint_base
 
 __all__ = [
     "update_wrapper",
@@ -150,7 +150,7 @@ else:
 
 def total_ordering(cls: type[_T]) -> type[_T]: ...
 def cmp_to_key(mycmp: Callable[[_T, _T], int]) -> Callable[[_T], SupportsAllComparisons]: ...
-
+@disjoint_base
 class partial(Generic[_T]):
     @property
     def func(self) -> Callable[..., _T]: ...
@@ -169,10 +169,17 @@ class partialmethod(Generic[_T]):
     func: Callable[..., _T] | _Descriptor
     args: tuple[Any, ...]
     keywords: dict[str, Any]
-    @overload
-    def __init__(self, func: Callable[..., _T], /, *args: Any, **keywords: Any) -> None: ...
-    @overload
-    def __init__(self, func: _Descriptor, /, *args: Any, **keywords: Any) -> None: ...
+    if sys.version_info >= (3, 14):
+        @overload
+        def __new__(self, func: Callable[..., _T], /, *args: Any, **keywords: Any) -> Self: ...
+        @overload
+        def __new__(self, func: _Descriptor, /, *args: Any, **keywords: Any) -> Self: ...
+    else:
+        @overload
+        def __init__(self, func: Callable[..., _T], /, *args: Any, **keywords: Any) -> None: ...
+        @overload
+        def __init__(self, func: _Descriptor, /, *args: Any, **keywords: Any) -> None: ...
+
     def __get__(self, obj: Any, cls: type[Any] | None = None) -> Callable[..., _T]: ...
     @property
     def __isabstractmethod__(self) -> bool: ...

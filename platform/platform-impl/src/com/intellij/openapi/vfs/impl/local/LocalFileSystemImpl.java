@@ -366,17 +366,22 @@ public class LocalFileSystemImpl extends LocalFileSystemBase implements Disposab
     return myChildrenAttrGetter.accessDiskWithCheckCanceled(new Pair<>(dir, childrenNames));
   }
 
-  protected static Map<String, FileAttributes> listWithAttributesImpl(@NotNull VirtualFile dir,
-                                                                      @Nullable Set<String> filter) {
+  private static Map<String, FileAttributes> listWithAttributesImpl(@NotNull VirtualFile dir,
+                                                                    @Nullable Set<String> filter) {
     if (!dir.isDirectory()) {
       return Collections.emptyMap();
     }
+    return listWithAttributesImpl(Path.of(toIoPath(dir)), filter);
+  }
+
+  protected static Map<String, FileAttributes> listWithAttributesImpl(@NotNull Path dir,
+                                                                      @Nullable Set<String> filter) {
     try {
       int expectedSize = (filter == null) ? 10 : filter.size();
       //We must return a 'normal' (=case-sensitive) map from this method, see BatchingFileSystem.listWithAttributes() contract:
       Map<String, FileAttributes> childrenWithAttributes = createFilePathMap(expectedSize, /*caseSensitive: */true);
 
-      PlatformNioHelper.visitDirectory(Path.of(toIoPath(dir)), filter, (file, ioAttributesHolder) -> {
+      PlatformNioHelper.visitDirectory(dir, filter, (file, ioAttributesHolder) -> {
         try {
           var attributes = amendAttributes(file, FileAttributes.fromNio(file, ioAttributesHolder.get()));
           childrenWithAttributes.put(file.getFileName().toString(), attributes);

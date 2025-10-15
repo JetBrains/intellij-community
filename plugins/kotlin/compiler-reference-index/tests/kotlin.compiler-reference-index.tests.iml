@@ -17,10 +17,10 @@
     <orderEntry type="module" module-name="intellij.platform.jps.model" scope="TEST" />
     <orderEntry type="module" module-name="intellij.platform.lang.core" scope="TEST" />
     <orderEntry type="module" module-name="kotlin.plugin.k1" scope="TEST" />
-    <orderEntry type="module" module-name="kotlin.base.psi" />
-    <orderEntry type="module" module-name="kotlin.base.plugin" />
+    <orderEntry type="module" module-name="intellij.kotlin.base.psi" />
+    <orderEntry type="module" module-name="intellij.kotlin.base.plugin" />
     <orderEntry type="module" module-name="kotlin.base.test" scope="TEST" />
-    <orderEntry type="module" module-name="kotlin.compiler-reference-index" />
+    <orderEntry type="module" module-name="intellij.kotlin.compilerReferenceIndex" />
     <orderEntry type="module" module-name="kotlin.fir.frontend-independent" />
     <orderEntry type="module" module-name="kotlin.tests-common" scope="TEST" />
     <orderEntry type="module" module-name="kotlin.idea.tests" scope="TEST" />
@@ -40,7 +40,7 @@
     <orderEntry type="module" module-name="intellij.java.testFramework" scope="TEST" />
     <orderEntry type="module" module-name="intellij.java.tests" scope="TEST" />
     <orderEntry type="module" module-name="kotlin.idea" scope="TEST" />
-    <orderEntry type="module" module-name="kotlin.base.compiler-configuration" scope="TEST" />
+    <orderEntry type="module" module-name="intellij.kotlin.base.compilerConfiguration" scope="TEST" />
     <orderEntry type="module" module-name="kotlin.test-framework" scope="TEST" />
     <orderEntry type="module" module-name="intellij.platform.util" scope="TEST" />
   </component>

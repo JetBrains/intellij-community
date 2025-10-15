@@ -63,7 +63,7 @@ jvm_library(
     "//platform/ml-impl",
     "//plugins/kotlin/base/plugin",
     "//plugins/kotlin/highlighting/highlighting-k1:kotlin-highlighting-k1",
-    "//plugins/kotlin/code-insight/impl-base",
+    "//plugins/kotlin/code-insight/impl-base:kotlin-codeInsight-shared",
   ]
 )
 ### auto-generated section `build kotlin.completion.impl.k1` end

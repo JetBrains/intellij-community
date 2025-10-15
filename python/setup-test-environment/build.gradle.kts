@@ -201,5 +201,5 @@ createPython("python3.12", "3.12",
 createPython("conda", "Miniconda3-py312_25.1.1-0", listOf(), listOf("conda"), type = PythonType.CONDA)
 
 createPython("python3.13", "3.13",
-             listOf(),
-             listOf("python3.13", "python3"))
+             listOf("ruff"),
+             listOf("python3.13", "python3", "ruff"))

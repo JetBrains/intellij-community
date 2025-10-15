@@ -410,6 +410,24 @@ class PluginDescriptorTest {
   }
 
   @Test
+  fun `core plugin has implicit CPU arch mode plugin alias`() {
+    plugin(PluginManagerCore.CORE_PLUGIN_ID) {}.buildDir(pluginDirPath)
+    val descriptor = loadDescriptorInTest(pluginDirPath)
+    assertThat(descriptor).isNotNull
+    val hostIds = IdeaPluginCpuArchRequirement.getHostCpuArchModuleIds()
+    if (hostIds.isEmpty()) {
+      logger<PluginDescriptorTest>().warn("No host arch plugin aliases")
+    }
+    val productAliases = PluginMainDescriptor.productModeAliasesForCorePlugin()
+    if (productAliases.isEmpty()) {
+      logger<PluginDescriptorTest>().warn("No product mode plugin aliases")
+    }
+    assertThat(descriptor.pluginAliases)
+      .containsAll(hostIds)
+      .containsAll(productAliases)
+  }
+
+  @Test
   fun `content module's content modules are disregarded`() {
     plugin("bar") {
       content {

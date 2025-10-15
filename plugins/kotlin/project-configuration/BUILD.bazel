@@ -1,4 +1,4 @@
-### auto-generated section `build kotlin.project-configuration` start
+### auto-generated section `build intellij.kotlin.projectConfiguration` start
 load("@rules_jvm//:jvm.bzl", "jvm_library", "resourcegroup")
 
 resourcegroup(
@@ -9,7 +9,7 @@ resourcegroup(
 
 jvm_library(
   name = "project-configuration",
-  module_name = "kotlin.project-configuration",
+  module_name = "intellij.kotlin.projectConfiguration",
   visibility = ["//visibility:public"],
   srcs = glob(["src/**/*.kt", "src/**/*.java", "src/**/*.form"], allow_empty = True),
   resources = [":project-configuration_resources"],
@@ -63,4 +63,4 @@ jvm_library(
     "//platform/vcs-impl/shared",
   ]
 )
-### auto-generated section `build kotlin.project-configuration` end
+### auto-generated section `build intellij.kotlin.projectConfiguration` end

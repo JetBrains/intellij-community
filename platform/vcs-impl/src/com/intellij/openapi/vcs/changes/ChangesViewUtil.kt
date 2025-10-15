@@ -11,7 +11,7 @@ import com.intellij.openapi.vcs.changes.ui.ChangesBrowserUnversionedLoadingPendi
 import com.intellij.openapi.vcs.changes.ui.ChangesGroupingPolicyFactory
 import com.intellij.openapi.vcs.changes.ui.TreeModelBuilder
 import com.intellij.platform.vcs.impl.shared.changes.TreeModelBuilderEx
-import com.intellij.vcs.commit.PartialCommitChangeNodeDecorator
+import com.intellij.platform.vcs.impl.shared.commit.PartialCommitChangeNodeDecorator
 import org.jetbrains.annotations.ApiStatus
 import javax.swing.tree.DefaultTreeModel
 

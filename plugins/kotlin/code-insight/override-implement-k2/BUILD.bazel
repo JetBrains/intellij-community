@@ -1,9 +1,9 @@
-### auto-generated section `build kotlin.code-insight.override-implement.k2` start
+### auto-generated section `build intellij.kotlin.codeInsight.overrideImplement` start
 load("//build:compiler-options.bzl", "create_kotlinc_options")
 load("@rules_jvm//:jvm.bzl", "jvm_library")
 
 create_kotlinc_options(
-  name = "custom_kotlin-code-insight-override-implement-k2",
+  name = "custom_kotlin-codeInsight-overrideImplement",
   opt_in = [
     "com.intellij.openapi.util.IntellijInternalApi",
     "org.jetbrains.kotlin.analysis.api.permissions.KaAllowProhibitedAnalyzeFromWriteAction",
@@ -14,11 +14,11 @@ create_kotlinc_options(
 )
 
 jvm_library(
-  name = "kotlin-code-insight-override-implement-k2",
-  module_name = "kotlin.code-insight.override-implement.k2",
+  name = "kotlin-codeInsight-overrideImplement",
+  module_name = "intellij.kotlin.codeInsight.overrideImplement",
   visibility = ["//visibility:public"],
   srcs = glob(["src/**/*.kt", "src/**/*.java", "src/**/*.form"], allow_empty = True),
-  kotlinc_opts = ":custom_kotlin-code-insight-override-implement-k2",
+  kotlinc_opts = ":custom_kotlin-codeInsight-overrideImplement",
   deps = [
     "@lib//:kotlin-stdlib",
     "@lib//:kotlinc-kotlin-compiler-common",
@@ -37,12 +37,12 @@ jvm_library(
     "//platform/core-impl",
     "//platform/lang-impl",
     "//java/java-psi-api:psi",
-    "//plugins/kotlin/base/analysis-api/analysis-api-utils:kotlin-base-analysis-api-utils",
+    "//plugins/kotlin/base/analysis-api/analysis-api-utils:kotlin-base-analysis-utils",
     "//platform/core-ui",
     "//platform/platform-impl:ide-impl",
-    "//plugins/kotlin/code-insight/impl-base",
+    "//plugins/kotlin/code-insight/impl-base:kotlin-codeInsight-shared",
     "//plugins/kotlin/base/analysis",
     "@lib//:kotlinc-analysis-api-impl-base",
   ]
 )
-### auto-generated section `build kotlin.code-insight.override-implement.k2` end
+### auto-generated section `build intellij.kotlin.codeInsight.overrideImplement` end

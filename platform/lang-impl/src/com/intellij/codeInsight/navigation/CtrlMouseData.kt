@@ -70,16 +70,20 @@ internal fun psiCtrlMouseData(
   targetElement: PsiElement,
 ): CtrlMouseData {
   return targetCtrlMouseData(
-    ranges = getReferenceRanges(leafElement),
+    ranges = getReferenceRanges(leafElement, targetElement),
     isNavigatable = isNavigatableQuickDoc(leafElement, targetElement),
     target = psiDocumentationTargets(targetElement, leafElement).first() //TODO support multi-targeting
   )
 }
 
+@JvmOverloads
 @Internal
-internal fun getReferenceRanges(elementAtPointer: PsiElement): List<TextRange> {
+internal fun getReferenceRanges(elementAtPointer: PsiElement, targetElement: PsiElement? = null): List<TextRange> {
   if (!elementAtPointer.isPhysical) {
     return emptyList()
+  }
+  targetElement?.let {
+    return listOf(it.textRange)
   }
   var textOffset = elementAtPointer.textOffset
   val range = elementAtPointer.textRange

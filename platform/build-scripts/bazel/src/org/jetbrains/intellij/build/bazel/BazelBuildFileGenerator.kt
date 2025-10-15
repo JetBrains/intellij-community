@@ -335,12 +335,15 @@ internal class BazelBuildFileGenerator(
     val result = ModuleList(community = community, ultimate = ultimate, skippedModules = skippedModules)
     for (module in (community + ultimate)) {
       val hasSources = module.sources.isNotEmpty()
-      if (hasSources || module.testSources.isEmpty()) {
+      val hasResources = module.resources.isNotEmpty()
+      val hasTestSources = module.testSources.isNotEmpty()
+      val hasTestResources = module.testResources.isNotEmpty()
+
+      if (hasSources || hasResources || !hasTestSources) {
         result.deps.put(module, generateDeps(m2Repo, module = module, isTest = false, context = this, hasSources = hasSources))
       }
 
-      val hasTestSources = module.testSources.isNotEmpty()
-      if (hasTestSources || isTestClasspathModule(module)) {
+      if (hasTestSources || hasTestResources || isTestClasspathModule(module)) {
         result.testDeps.put(module, generateDeps(m2Repo = m2Repo, module = module, hasSources = hasTestSources, isTest = true, context = this))
       }
     }
@@ -530,6 +533,9 @@ internal class BazelBuildFileGenerator(
     // if someone depends on such a test module from another production module
     val isUsedAsTestDependency = !moduleDescriptor.testSources.isEmpty() && isReferencedAsTestDep(moduleList, moduleDescriptor)
 
+    // reuse production generated provided libraries in test
+    var generatedProvidedLibs = emptyList<BazelLabel>()
+
     if (sources.isNotEmpty()) {
       load("@rules_jvm//:jvm.bzl", "jvm_library")
 
@@ -568,20 +574,9 @@ internal class BazelBuildFileGenerator(
 
         var deps = moduleList.deps.get(moduleDescriptor)
         if (deps != null && deps.provided.isNotEmpty()) {
-          load("@rules_jvm//:jvm.bzl", "jvm_provided_library")
-
-          val extraDeps = mutableListOf<BazelLabel>()
-          val labelToName = getUniqueSegmentName(deps.provided.map { it.label })
-          for (label in deps.provided) {
-            val name = labelToName.get(label.label) + "_provided"
-            extraDeps.add(BazelLabel(":$name", null))
-            target("jvm_provided_library") {
-              option("name", name)
-              option("lib", label)
-            }
-          }
-
+          val extraDeps = generateProvidedLibs(deps.provided)
           deps = deps.copy(deps = deps.deps + extraDeps)
+          generatedProvidedLibs = extraDeps
         }
 
         renderDeps(deps = deps, target = this, resourceDependencies = emptyList(), forTests = false)
@@ -632,11 +627,11 @@ internal class BazelBuildFileGenerator(
       val testLibTargetName = "${moduleDescriptor.targetName}$TEST_LIB_NAME_SUFFIX"
       testCompileTargets.add(BazelLabel(testLibTargetName, moduleDescriptor))
 
-      val testDeps = moduleList.testDeps.get(moduleDescriptor)
-
       load("@rules_jvm//:jvm.bzl", "jvm_library")
       target("jvm_library") {
         option("name", testLibTargetName)
+
+        var testDeps = moduleList.testDeps.get(moduleDescriptor)
         if (testDeps == null || testDeps.associates.isEmpty()) { // => in this case no 'associates' attribute will be generated
           option("module_name", module.name)
         }
@@ -650,6 +645,11 @@ internal class BazelBuildFileGenerator(
 
         javacOptionsLabel?.let { option("javac_opts", it) }
         kotlincOptionsLabel?.let { option("kotlinc_opts", it) }
+
+        if (testDeps != null && testDeps.provided.isNotEmpty()) {
+          val extraDeps = generateProvidedLibs(testDeps.provided - moduleList.deps.get(moduleDescriptor)?.provided.orEmpty().toSet())
+          testDeps = testDeps.copy(deps = testDeps.deps + generatedProvidedLibs + extraDeps)
+        }
 
         renderDeps(deps = testDeps, target = this, resourceDependencies = emptyList(), forTests = true)
       }
@@ -710,6 +710,22 @@ internal class BazelBuildFileGenerator(
     return glob(sources.flatMap { it.glob }, exclude = exclude.toList())
   }
 
+  private fun BuildFile.generateProvidedLibs(providedLibs: List<BazelLabel>): List<BazelLabel> {
+    load("@rules_jvm//:jvm.bzl", "jvm_provided_library")
+
+    val extraDeps = mutableListOf<BazelLabel>()
+    val labelToName = getUniqueSegmentName(providedLibs.map { it.label })
+    for (label in providedLibs) {
+      val name = labelToName.get(label.label) + "_provided"
+      extraDeps.add(BazelLabel(":$name", null))
+      target("jvm_provided_library") {
+        option("name", name)
+        option("lib", label)
+      }
+    }
+    return extraDeps
+  }
+
   private data class GenerateResourcesResult(
     val resourceTargets: List<BazelLabel>,
   )
@@ -761,9 +777,6 @@ internal class BazelBuildFileGenerator(
         }
         if (resource.relativeOutputPath.isNotEmpty()) {
           option("add_prefix", resource.relativeOutputPath)
-        }
-        if (hasOnlyTestResources(module)) {
-          visibility(arrayOf("//visibility:public"))
         }
       }
 
@@ -849,6 +862,7 @@ private fun getTestClasspathModule(module: ModuleDescriptor, moduleList: ModuleL
 
   val mainModuleName = when {
     moduleName.startsWith("kotlin.jvm-debugger.") -> "intellij.idea.community.main"
+    moduleName.startsWith("intellij.kotlin.jvm.debugger.") -> "intellij.idea.community.main"
     else -> null
   }
 

@@ -8,6 +8,7 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.SystemInfo;
 import com.intellij.troubleshooting.GeneralTroubleInfoCollector;
 import com.intellij.util.system.CpuArch;
+import com.jetbrains.JBR;
 import org.jetbrains.annotations.NotNull;
 
 import java.awt.*;
@@ -19,6 +20,8 @@ import java.text.DateFormat;
 import java.text.SimpleDateFormat;
 import java.util.Calendar;
 import java.util.Locale;
+import java.util.stream.Collectors;
+import java.util.stream.Stream;
 
 final class AboutTroubleInfoCollector implements GeneralTroubleInfoCollector {
   @Override
@@ -68,6 +71,14 @@ final class AboutTroubleInfoCollector implements GeneralTroubleInfoCollector {
     output += "Toolkit: ";
     output += Toolkit.getDefaultToolkit().getClass().getName();
     output += '\n';
+
+    if (JBR.isVulkanSupported()) {
+      output += "Vulkan Rendering is ON:\n";
+      output += "  Presentation is " + (JBR.getVulkan().isPresentationEnabled() ? "ON" : "OFF") + "\n";
+      output += Stream.of(JBR.getVulkan().getDevices()).map(device ->
+                                                    "  " + device.getName() + " (" + device.getTypeString() + "), caps=0x" +
+                                                    Integer.toHexString(device.getCapabilities()) + "\n").collect(Collectors.joining());
+    }
 
     output += PathManager.PROPERTY_CONFIG_PATH + "=" + logPath(PathManager.getConfigPath()) + '\n';
     output += PathManager.PROPERTY_SYSTEM_PATH + "=" + logPath(PathManager.getSystemPath()) + '\n';

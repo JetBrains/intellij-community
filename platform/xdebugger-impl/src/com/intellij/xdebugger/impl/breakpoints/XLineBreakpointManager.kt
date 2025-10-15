@@ -27,7 +27,6 @@ import com.intellij.openapi.fileEditor.FileEditorManager
 import com.intellij.openapi.fileEditor.TextEditor
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.startup.StartupManager
-import com.intellij.openapi.util.Disposer
 import com.intellij.openapi.util.io.FileUtil
 import com.intellij.openapi.util.registry.Registry
 import com.intellij.openapi.util.registry.RegistryValue
@@ -48,12 +47,13 @@ import com.intellij.util.containers.MultiMap
 import com.intellij.util.ui.EDT
 import com.intellij.util.ui.update.MergingUpdateQueue
 import com.intellij.util.ui.update.Update
+import com.intellij.xdebugger.SplitDebuggerMode
 import com.intellij.xdebugger.XDebuggerUtil
 import com.intellij.xdebugger.breakpoints.XBreakpoint
 import com.intellij.xdebugger.impl.actions.ToggleLineBreakpointAction
 import com.intellij.xdebugger.impl.frame.XDebugManagerProxy
-import com.intellij.xdebugger.impl.frame.XDebugSessionProxy
 import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.cancel
 import org.jetbrains.annotations.ApiStatus.Internal
 import org.jetbrains.annotations.TestOnly
 import java.awt.event.MouseEvent
@@ -123,10 +123,7 @@ class XLineBreakpointManager(private val project: Project, coroutineScope: Corou
     })
 
     if (!isEnabled) {
-      // Remove all listeners but keep the queue active.
-      // It is used to update icons on the backend.
-      // The queue may be also disabled after inline breakpoints migration to proxy.
-      Disposer.dispose(disposable)
+      cs.cancel()
     }
   }
 
@@ -260,7 +257,6 @@ class XLineBreakpointManager(private val project: Project, coroutineScope: Corou
 
   @Deprecated("Use queueBreakpointUpdateCallback(XLightLineBreakpointProxy, Runnable)")
   fun queueBreakpointUpdateCallback(breakpoint: XLineBreakpointImpl<*>?, callback: Runnable) {
-    if (!isEnabled) return
     breakpointUpdateQueue.queue(object : Update(breakpoint) {
       override fun run() {
         callback.run()
@@ -269,7 +265,6 @@ class XLineBreakpointManager(private val project: Project, coroutineScope: Corou
   }
 
   fun queueBreakpointUpdateCallback(breakpoint: XLightLineBreakpointProxy, callback: Runnable) {
-    if (!isEnabled) return
     breakpointUpdateQueue.queue(object : Update(breakpoint) {
       override fun run() {
         callback.run()
@@ -283,20 +278,10 @@ class XLineBreakpointManager(private val project: Project, coroutineScope: Corou
     breakpointUpdateQueue.sendFlush()
   }
 
-  private fun callDoUpdateUI(breakpoint: XLightLineBreakpointProxy, callOnUpdate: () -> Unit = {}) {
-    if (isEnabled) {
-      breakpoint.doUpdateUI(callOnUpdate)
-    }
-    else {
-      // TODO this will not be needed after inline breakpoints migration to proxy
-      breakpoint.updateIcon()
-    }
-  }
-
   private fun queueBreakpointUpdate(breakpoint: XLightLineBreakpointProxy, callOnUpdate: Runnable? = null) {
     breakpointUpdateQueue.queue(object : Update(breakpoint) {
       override fun run() {
-        callDoUpdateUI(breakpoint) {
+        breakpoint.doUpdateUI {
           callOnUpdate?.run()
         }
       }
@@ -306,8 +291,8 @@ class XLineBreakpointManager(private val project: Project, coroutineScope: Corou
   fun queueAllBreakpointsUpdate() {
     breakpointUpdateQueue.queue(object : Update("all breakpoints") {
       override fun run() {
-        for (it in myBreakpoints.values()) {
-          callDoUpdateUI(it)
+        for (breakpoint in myBreakpoints.values()) {
+          breakpoint.doUpdateUI()
         }
       }
     })
@@ -386,7 +371,7 @@ class XLineBreakpointManager(private val project: Project, coroutineScope: Corou
         val event = AnActionEvent.createFromAnAction(action, mouseEvent, ActionPlaces.EDITOR_GUTTER, dataContext)
         // TODO IJPL-185322 Introduce a better way to handle actions in the frontend
         // TODO We actually want to call the action directly, but dispatch it on frontend if possible
-        if (XDebugSessionProxy.useFeProxy()) {
+        if (SplitDebuggerMode.isSplitDebugger()) {
           // Call handler directly so that it will be called on frontend
           val handler = ToggleLineBreakpointAction.ourHandler
           if (handler.isEnabled(project, event)) {

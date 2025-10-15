@@ -1,18 +1,18 @@
-### auto-generated section `build kotlin.base.scripting.k2` start
+### auto-generated section `build intellij.kotlin.base.scripting` start
 load("@rules_jvm//:jvm.bzl", "jvm_library", "resourcegroup")
 
 resourcegroup(
-  name = "scripting.k2_resources",
+  name = "kotlin-base-scripting_resources",
   srcs = glob(["resources/**/*"]),
   strip_prefix = "resources"
 )
 
 jvm_library(
-  name = "scripting.k2",
-  module_name = "kotlin.base.scripting.k2",
+  name = "kotlin-base-scripting",
+  module_name = "intellij.kotlin.base.scripting",
   visibility = ["//visibility:public"],
   srcs = glob(["gen/**/*.kt", "gen/**/*.java", "src/**/*.kt", "src/**/*.java", "src/**/*.form"], allow_empty = True),
-  resources = [":scripting.k2_resources"],
+  resources = [":kotlin-base-scripting_resources"],
   deps = [
     "//platform/core-api:core",
     "//platform/projectModel-api:projectModel",
@@ -67,10 +67,10 @@ jvm_library(
 )
 
 jvm_library(
-  name = "scripting.k2_test_lib",
+  name = "kotlin-base-scripting_test_lib",
   visibility = ["//visibility:public"],
   srcs = glob(["test/**/*.kt", "test/**/*.java", "test/**/*.form"], allow_empty = True),
-  associates = [":scripting.k2"],
+  associates = [":kotlin-base-scripting"],
   deps = [
     "//plugins/kotlin/plugin/k2",
     "//platform/core-api:core",
@@ -132,13 +132,13 @@ jvm_library(
     "//plugins/kotlin/base/test:test_test_lib",
   ]
 )
-### auto-generated section `build kotlin.base.scripting.k2` end
+### auto-generated section `build intellij.kotlin.base.scripting` end
 
-### auto-generated section `test kotlin.base.scripting.k2` start
+### auto-generated section `test intellij.kotlin.base.scripting` start
 load("@community//build:tests-options.bzl", "jps_test")
 
 jps_test(
-  name = "scripting.k2_test",
-  runtime_deps = [":scripting.k2_test_lib"]
+  name = "kotlin-base-scripting_test",
+  runtime_deps = [":kotlin-base-scripting_test_lib"]
 )
-### auto-generated section `test kotlin.base.scripting.k2` end
+### auto-generated section `test intellij.kotlin.base.scripting` end

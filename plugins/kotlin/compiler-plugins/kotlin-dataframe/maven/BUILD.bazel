@@ -1,4 +1,4 @@
-### auto-generated section `build kotlin.compiler-plugins.kotlin-dataframe.maven` start
+### auto-generated section `build intellij.kotlin.compilerPlugins.dataframe.maven` start
 load("@rules_jvm//:jvm.bzl", "jvm_library", "resourcegroup")
 
 resourcegroup(
@@ -9,18 +9,18 @@ resourcegroup(
 
 jvm_library(
   name = "maven",
-  module_name = "kotlin.compiler-plugins.kotlin-dataframe.maven",
+  module_name = "intellij.kotlin.compilerPlugins.dataframe.maven",
   visibility = ["//visibility:public"],
   srcs = glob(["src/**/*.kt", "src/**/*.java", "src/**/*.form"], allow_empty = True),
   resources = [":maven_resources"],
   deps = [
     "@lib//:kotlin-stdlib",
     "//plugins/kotlin/maven",
-    "//plugins/kotlin/compiler-plugins/compiler-plugin-support/common",
+    "//plugins/kotlin/compiler-plugins/compiler-plugin-support/common:kotlin-compilerPlugins-support",
     "//plugins/kotlin/compiler-plugins/compiler-plugin-support/maven",
     "//plugins/maven",
     "//plugins/kotlin/base/plugin",
     "//plugins/kotlin/base/jps",
   ]
 )
-### auto-generated section `build kotlin.compiler-plugins.kotlin-dataframe.maven` end
+### auto-generated section `build intellij.kotlin.compilerPlugins.dataframe.maven` end

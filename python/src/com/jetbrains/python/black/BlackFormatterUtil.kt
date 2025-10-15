@@ -19,7 +19,7 @@ import com.jetbrains.python.pathValidation.ValidationRequest
 import com.jetbrains.python.pathValidation.validateExecutableFile
 import com.jetbrains.python.pyi.PyiFileType
 import org.jetbrains.annotations.SystemDependent
-import java.io.File
+import java.nio.file.Path
 
 class BlackFormatterUtil {
   companion object {
@@ -38,12 +38,12 @@ class BlackFormatterUtil {
       return packageManager?.hasInstalledPackageSnapshot(PACKAGE_NAME) ?: false
     }
 
-    fun detectBlackExecutable(): File? {
+    fun detectBlackExecutable(): Path? {
       val name = when {
         SystemInfo.isWindows -> "black.exe"
         else -> "black"
       }
-      return PathEnvironmentVariableUtil.findInPath(name)
+      return PathEnvironmentVariableUtil.findInPath(name)?.toPath()
     }
 
     fun isBlackExecutableDetected(): Boolean = detectBlackExecutable() != null

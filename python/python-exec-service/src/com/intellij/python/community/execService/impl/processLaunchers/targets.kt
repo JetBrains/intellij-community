@@ -22,6 +22,7 @@ import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.withContext
+import com.intellij.remoteServer.util.ServerRuntimeException
 import kotlin.io.path.pathString
 import kotlin.time.Duration.Companion.milliseconds
 
@@ -32,7 +33,12 @@ internal suspend fun createProcessLauncherOnTarget(binOnTarget: BinOnTarget, lau
 
   val request = if (target != null) {
     val projectMan = ProjectManager.getInstance() // Broken Targets API doesn't work without project
-    target.createEnvironmentRequest(projectMan.openProjects.firstOrNull() ?: projectMan.defaultProject)
+    try {
+      target.createEnvironmentRequest(projectMan.openProjects.firstOrNull() ?: projectMan.defaultProject)
+    }
+    catch (e: ServerRuntimeException) {
+      return@withContext Result.failure(ExecuteGetProcessError.EnvironmentError(MessageError(e.localizedMessage)))
+    }
   }
   else LocalTargetEnvironmentRequest()
 
