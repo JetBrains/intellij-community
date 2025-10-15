@@ -1,10 +1,13 @@
 // Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.kotlin.idea.k2.codeinsight.fixes
 
+import com.intellij.codeInspection.util.IntentionFamilyName
 import com.intellij.modcommand.ActionContext
+import com.intellij.modcommand.ModCommandAction
 import com.intellij.modcommand.ModPsiUpdater
 import com.intellij.psi.SmartPsiElementPointer
 import com.intellij.psi.createSmartPointer
+import org.jetbrains.kotlin.analysis.api.KaSession
 import org.jetbrains.kotlin.analysis.api.fir.diagnostics.KaFirDiagnostic
 import org.jetbrains.kotlin.analysis.api.symbols.KaNamedClassSymbol
 import org.jetbrains.kotlin.config.LanguageVersion
@@ -23,23 +26,26 @@ import org.jetbrains.kotlin.psi.psiUtil.getStrictParentOfType
 
 internal object AddFunModifierFixFactory {
     val addFunModifierFixFactory = KotlinQuickFixFactory.ModCommandBased { diagnostic: KaFirDiagnostic.InterfaceAsFunction ->
+        listOfNotNull(createQuickFix(diagnostic))
+    }
+
+    context(_: KaSession)
+    private fun createQuickFix(diagnostic: KaFirDiagnostic.InterfaceAsFunction): ModCommandAction? {
         val referrer = diagnostic.psi
-        if (referrer.languageVersionSettings.languageVersion < LanguageVersion.KOTLIN_1_4) return@ModCommandBased emptyList()
+        if (referrer.languageVersionSettings.languageVersion < LanguageVersion.KOTLIN_1_4) return null
 
-        val referrerCall = referrer.parent as? KtCallExpression ?: return@ModCommandBased emptyList()
-        if (referrerCall.valueArguments.singleOrNull() !is KtLambdaArgument) return@ModCommandBased emptyList()
-        val referenceClassSymbol = diagnostic.classSymbol as? KaNamedClassSymbol ?: return@ModCommandBased emptyList()
-        if (referenceClassSymbol.isFun || referenceClassSymbol.findSamSymbolOrNull() == null) return@ModCommandBased emptyList()
+        val referrerCall = referrer.parent as? KtCallExpression ?: return null
+        if (referrerCall.valueArguments.singleOrNull() !is KtLambdaArgument) return null
+        val referenceClassSymbol = diagnostic.classSymbol as? KaNamedClassSymbol ?: return null
+        if (referenceClassSymbol.isFun || referenceClassSymbol.findSamSymbolOrNull() == null) return null
 
-        val referenceClass = referenceClassSymbol.psi as? KtClass ?: return@ModCommandBased emptyList()
-        val referenceClassName = referenceClass.name ?: return@ModCommandBased emptyList()
+        val referenceClass = referenceClassSymbol.psi as? KtClass ?: return null
+        val referenceClassName = referenceClass.name ?: return null
 
-        return@ModCommandBased listOf(
-            AddFunModifierFix(
-                referenceClass,
-                referenceClassName,
-                ElementContext(referrerCall.createSmartPointer())
-            )
+        return AddFunModifierFix(
+            referenceClass,
+            ElementContext(referrerCall.createSmartPointer()),
+            referenceClassName,
         )
     }
 
@@ -47,8 +53,11 @@ internal object AddFunModifierFixFactory {
         val referrerCallPointer: SmartPsiElementPointer<KtCallExpression>,
     )
 
-    private class AddFunModifierFix(ktClass: KtClass, private val elementName: String, context: ElementContext) :
-        KotlinPsiUpdateModCommandAction.ElementBased<KtClass, ElementContext>(ktClass, context) {
+    private class AddFunModifierFix(
+        element: KtClass,
+        elementContext: ElementContext,
+        private val elementName: String,
+    ) : KotlinPsiUpdateModCommandAction.ElementBased<KtClass, ElementContext>(element, elementContext) {
 
         override fun invoke(
             actionContext: ActionContext,
@@ -63,6 +72,7 @@ internal object AddFunModifierFixFactory {
             replaceSamConstructorCall(referrerCall)
         }
 
-        override fun getFamilyName(): String = KotlinBundle.message("add.fun.modifier.to.0", elementName)
+        override fun getFamilyName(): @IntentionFamilyName String =
+            KotlinBundle.message("add.fun.modifier.to.0", elementName)
     }
 }
