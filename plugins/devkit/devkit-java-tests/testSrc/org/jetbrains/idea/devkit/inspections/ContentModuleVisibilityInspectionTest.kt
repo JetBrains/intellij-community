@@ -107,6 +107,49 @@ class ContentModuleVisibilityInspectionTest : ContentModuleVisibilityInspectionT
     testHighlighting(testedFile)
   }
 
+  fun `test should report private module dependency when current module is included in root plugin with non-plugin-xml name`() {
+    myFixture.addModuleWithPluginDescriptor(
+      "com.example.plugin.with.privatemodule",
+      "com.example.plugin.with.privatemodule/META-INF/plugin.xml",
+      """
+      <idea-plugin>
+        <id>com.example.plugin.with.privatemodule</id>
+        <content>
+          <module name="com.example.privatemodule"/>
+        </content>
+      </idea-plugin>
+      """.trimIndent())
+    myFixture.addModuleWithPluginDescriptor(
+      "com.example.privatemodule",
+      "com.example.privatemodule/com.example.privatemodule.xml",
+      """
+      <idea-plugin visibility="private">
+      </idea-plugin>
+      """.trimIndent())
+
+    myFixture.addModuleWithPluginDescriptor(
+      "com.example.plugin.with.publicmodule",
+      "com.example.plugin.with.publicmodule/META-INF/WebStormPlugin.xml",
+      """
+      <idea-plugin>
+        <content namespace="test-namespace">
+          <module name="com.example.publicmodule"/>
+        </content>
+      </idea-plugin>
+      """.trimIndent())
+    val testedFile = myFixture.addModuleWithPluginDescriptor(
+      "com.example.publicmodule",
+      "com.example.publicmodule/com.example.publicmodule.xml",
+      """
+      <idea-plugin visibility="public">
+        <dependencies>
+          <module name="<error descr="The 'com.example.privatemodule' module is private and declared in plugin 'com.example.plugin.with.privatemodule', so it cannot be accessed from module 'com.example.publicmodule' declared in plugin 'WebStormPlugin.xml'">com.example.privatemodule</error>"/>
+        </dependencies>
+      </idea-plugin>
+      """.trimIndent())
+    testHighlighting(testedFile)
+  }
+
   fun `test should report internal module with different namespace`() {
     myFixture.addModuleWithPluginDescriptor(
       "com.example.plugin.with.internalmodule",
@@ -145,6 +188,50 @@ class ContentModuleVisibilityInspectionTest : ContentModuleVisibilityInspectionT
       <idea-plugin visibility="public">
         <dependencies>
           <module name="<error descr="The 'com.example.internalmodule' module is internal and declared in namespace 'test-other-namespace' in 'com.example.plugin.with.internalmodule/…/plugin.xml', so it cannot be accessed from module 'com.example.currentmodule', which is declared in namespace 'test-namespace' in 'com.example.plugin.with.currentmodule/…/plugin.xml'">com.example.internalmodule</error>"/>
+        </dependencies>
+      </idea-plugin>
+      """.trimIndent())
+    testHighlighting(testedFile)
+  }
+
+  fun `test should report internal module with different namespace when current module is included in root plugin with non-plugin-xml name`() {
+    myFixture.addModuleWithPluginDescriptor(
+      "com.example.plugin.with.internalmodule",
+      "com.example.plugin.with.internalmodule/META-INF/plugin.xml",
+      """
+      <idea-plugin>
+        <id>com.example.plugin.with.internalmodule</id>
+        <content namespace="test-other-namespace">
+          <module name="com.example.internalmodule"/>
+        </content>
+      </idea-plugin>
+      """.trimIndent())
+    myFixture.addModuleWithPluginDescriptor(
+      "com.example.internalmodule",
+      "com.example.internalmodule/com.example.internalmodule.xml",
+      """
+      <idea-plugin visibility="internal">
+      </idea-plugin>
+      """.trimIndent())
+
+    myFixture.addModuleWithPluginDescriptor(
+      "com.example.plugin.with.currentmodule",
+      "com.example.plugin.with.currentmodule/META-INF/GoLandPlugin.xml",
+      """
+      <idea-plugin>
+        <id>com.example.plugin.with.currentmodule</id>
+        <content namespace="test-namespace">
+          <module name="com.example.currentmodule"/>
+        </content>
+      </idea-plugin>
+      """.trimIndent())
+    val testedFile = myFixture.addModuleWithPluginDescriptor(
+      "com.example.currentmodule",
+      "com.example.currentmodule/com.example.currentmodule.xml",
+      """
+      <idea-plugin visibility="public">
+        <dependencies>
+          <module name="<error descr="The 'com.example.internalmodule' module is internal and declared in namespace 'test-other-namespace' in 'plugin.xml', so it cannot be accessed from module 'com.example.currentmodule', which is declared in namespace 'test-namespace' in 'GoLandPlugin.xml'">com.example.internalmodule</error>"/>
         </dependencies>
       </idea-plugin>
       """.trimIndent())
