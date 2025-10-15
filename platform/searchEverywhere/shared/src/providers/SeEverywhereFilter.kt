@@ -8,21 +8,24 @@ import com.intellij.platform.searchEverywhere.SeProviderId
 import org.jetbrains.annotations.ApiStatus
 
 @ApiStatus.Internal
-class SeEverywhereFilter(val isEverywhere: Boolean, val disabledProviderIds: List<SeProviderId>) : SeFilter {
+class SeEverywhereFilter(val isAllTab: Boolean, val isEverywhere: Boolean, val disabledProviderIds: List<SeProviderId>) : SeFilter {
   override fun toState(): SeFilterState =
-    SeFilterState.Data(mapOf(KEY_IS_EVERYWHERE to SeFilterValue.One(isEverywhere.toString()),
+    SeFilterState.Data(mapOf(KEY_ALL_TAB to SeFilterValue.One(isAllTab.toString()),
+                             KEY_IS_EVERYWHERE to SeFilterValue.One(isEverywhere.toString()),
                              ENABLED_PROVIDER_IDS to SeFilterValue.Many(disabledProviderIds.map { it.value })))
 
-  fun cloneWith(isEverywhere: Boolean): SeEverywhereFilter = SeEverywhereFilter(isEverywhere, disabledProviderIds)
-  fun cloneWith(disabledProviderIds: List<SeProviderId>): SeEverywhereFilter = SeEverywhereFilter(isEverywhere, disabledProviderIds)
+  fun cloneWith(isEverywhere: Boolean): SeEverywhereFilter = SeEverywhereFilter(isAllTab, isEverywhere, disabledProviderIds)
+  fun cloneWith(disabledProviderIds: List<SeProviderId>): SeEverywhereFilter = SeEverywhereFilter(isAllTab, isEverywhere, disabledProviderIds)
 
   companion object {
+    const val KEY_ALL_TAB: String = "ALL_TAB"
     const val KEY_IS_EVERYWHERE: String = "IS_EVERYWHERE"
     const val ENABLED_PROVIDER_IDS: String = "ENABLED_PROVIDER_IDS"
 
     fun from(state: SeFilterState): SeEverywhereFilter {
       when (state) {
         is SeFilterState.Data -> {
+          val isAllTab = isAllTab(state) ?: false
           val isEverywhere = isEverywhere(state) ?: false
 
           val disabledProviderIds = state.map[ENABLED_PROVIDER_IDS]?.let {
@@ -31,11 +34,14 @@ class SeEverywhereFilter(val isEverywhere: Boolean, val disabledProviderIds: Lis
             SeProviderId(it)
           } ?: emptyList()
 
-          return SeEverywhereFilter(isEverywhere, disabledProviderIds)
+          return SeEverywhereFilter(isAllTab, isEverywhere, disabledProviderIds)
         }
-        SeFilterState.Empty -> return SeEverywhereFilter(false, emptyList())
+        SeFilterState.Empty -> return SeEverywhereFilter(false, false, emptyList())
       }
     }
+
+    fun isAllTab(state: SeFilterState): Boolean? =
+      (state as? SeFilterState.Data)?.map?.get(KEY_ALL_TAB)?.let { it as? SeFilterValue.One }?.value?.toBoolean()
 
     fun isEverywhere(state: SeFilterState): Boolean? =
       (state as? SeFilterState.Data)?.map?.get(KEY_IS_EVERYWHERE)?.let { it as? SeFilterValue.One }?.value?.toBoolean()

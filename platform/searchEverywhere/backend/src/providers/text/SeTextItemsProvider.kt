@@ -79,12 +79,26 @@ class SeTextItemsProvider(project: Project, private val contributorWrapper: SeAs
       findModel.isRegularExpressions = SeTextFilter.isRegularExpressions(params.filter) ?: false
     }
 
-    contributorWrapper.fetchElements(inputQuery, object : AsyncProcessor<Any> {
-      override suspend fun process(item: Any, weight: Int): Boolean {
-        if (item !is SearchEverywhereItem) return true
-        return collector.put(SeTextSearchItem(item, contributor, weight, contributor.getExtendedInfo(item), contributorWrapper.contributor.isMultiSelectionSupported))
+    val isAllTab: Boolean = SeEverywhereFilter.isAllTab(params.filter) == true
+    val savedModel = findModel
+    try {
+      if (isAllTab) {
+        findModel.fileFilter = null
+        findModel.isCaseSensitive = false
+        findModel.isWholeWordsOnly = false
+        findModel.isRegularExpressions = false
       }
-    })
+
+      contributorWrapper.fetchElements(inputQuery, object : AsyncProcessor<Any> {
+        override suspend fun process(item: Any, weight: Int): Boolean {
+          if (item !is SearchEverywhereItem) return true
+          return collector.put(SeTextSearchItem(item, contributor, weight, contributor.getExtendedInfo(item), contributorWrapper.contributor.isMultiSelectionSupported))
+        }
+      })
+    }
+    finally {
+      findModel.copyFrom(savedModel)
+    }
   }
 
   override suspend fun itemSelected(item: SeItem, modifiers: Int, searchText: String): Boolean {

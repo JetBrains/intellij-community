@@ -93,7 +93,7 @@ class SeAllTab(private val delegate: SeTabDelegate) : SeTab {
   }
 }
 
-private class SeAllFilterEditor(providersIdToName: Map<SeProviderId, @Nls String>) : SeFilterEditorBase<SeEverywhereFilter>(SeEverywhereFilter(false, disabledProviders)) {
+private class SeAllFilterEditor(providersIdToName: Map<SeProviderId, @Nls String>) : SeFilterEditorBase<SeEverywhereFilter>(SeEverywhereFilter(true, false, disabledProviders)) {
   private val actions = listOf(getEverywhereToggleAction(), getFilterTypesAction(providersIdToName))
   override fun getHeaderActions(): List<AnAction> = actions
 
