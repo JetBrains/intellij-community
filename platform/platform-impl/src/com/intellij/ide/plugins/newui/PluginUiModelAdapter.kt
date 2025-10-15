@@ -23,7 +23,7 @@ class PluginUiModelAdapter(
     get() = pluginDescriptor.version
   override val isBundled: Boolean
     get() = pluginDescriptor.isBundled
-  override val isIncompatibleWithCurrentOs: Boolean
+  override val isIncompatibleWithCurrentPlatform: Boolean
     get() {
       return getUnfulfilledOsRequirement(pluginDescriptor) != null
              || getUnfulfilledCpuArchRequirement(pluginDescriptor) != null

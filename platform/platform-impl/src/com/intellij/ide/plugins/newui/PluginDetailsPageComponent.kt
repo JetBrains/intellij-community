@@ -872,7 +872,7 @@ class PluginDetailsPageComponent @JvmOverloads constructor(
   suspend fun showPluginImpl(pluginUiModel: PluginUiModel, updateDescriptor: PluginUiModel?) {
     plugin = pluginUiModel
     this.updateDescriptor = if (updateDescriptor != null && updateDescriptor.canBeEnabled) updateDescriptor else null
-    isPluginCompatible = !pluginUiModel.isIncompatibleWithCurrentOs
+    isPluginCompatible = !pluginUiModel.isIncompatibleWithCurrentPlatform
     isPluginAvailable = isPluginCompatible && updateDescriptor?.canBeEnabled ?: true
     if (isMarketplace) {
       withContext(Dispatchers.IO) {

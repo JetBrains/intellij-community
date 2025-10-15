@@ -9,7 +9,6 @@ import com.intellij.ide.plugins.PluginInfoProvider
 import com.intellij.ide.plugins.PluginNode
 import com.intellij.ide.plugins.auth.PluginRepositoryAuthService
 import com.intellij.ide.plugins.marketplace.utils.MarketplaceUrls
-import com.intellij.ide.plugins.marketplace.utils.buildEncodedArchParameter
 import com.intellij.ide.plugins.marketplace.utils.buildEncodedOsParameter
 import com.intellij.ide.plugins.newui.PluginUiModel
 import com.intellij.ide.plugins.newui.PluginUiModelAdapter
@@ -40,6 +39,8 @@ import com.intellij.util.io.HttpRequests
 import com.intellij.util.io.RequestBuilder
 import com.intellij.util.io.computeDetached
 import com.intellij.util.io.write
+import com.intellij.util.system.CpuArch
+import com.intellij.util.system.OS
 import com.intellij.util.ui.IoErrorText
 import com.intellij.util.withQuery
 import kotlinx.coroutines.CoroutineScope
@@ -154,7 +155,7 @@ class MarketplaceRequests(private val coroutineScope: CoroutineScope) : PluginIn
       allIds: Set<PluginId>,
       buildNumber: BuildNumber? = null,
       throwExceptions: Boolean = false,
-      updateCheck: Boolean = false
+      updateCheck: Boolean = false,
     ): List<IdeCompatibleUpdate> {
       val chunks = mutableListOf<MutableList<PluginId>>()
       chunks.add(ArrayList(100))
@@ -217,12 +218,12 @@ class MarketplaceRequests(private val coroutineScope: CoroutineScope) : PluginIn
         val machineId = if (LoadingState.COMPONENTS_LOADED.isOccurred) {
           MachineIdManager.getAnonymizedMachineId("JetBrainsUpdates") // same as regular updates
             .takeIf { !PropertiesComponent.getInstance().getBoolean(UpdateCheckerFacade.MACHINE_ID_DISABLED_PROPERTY, false) }
-        } else null
+        }
+        else null
 
         val query = buildString {
           append("build=${ApplicationInfoImpl.orFromPluginCompatibleBuild(buildNumber)}")
           append("&os=${buildEncodedOsParameter()}")
-          append("&arch=${buildEncodedArchParameter()}")
           if (machineId != null && updateCheck) {
             append("&mid=$machineId")
           }
@@ -267,14 +268,7 @@ class MarketplaceRequests(private val coroutineScope: CoroutineScope) : PluginIn
         if (ids.isEmpty()) return emptyList()
 
         val data = objectMapper.writeValueAsString(CompatibleUpdateRequest(ids, buildNumber))
-        val baseUrl = URI(MarketplaceUrls.getSearchNearestUpdate())
-        val query = buildString {
-          append("os=${buildEncodedOsParameter()}")
-          append("&arch=${buildEncodedArchParameter()}")
-        }
-        val url = baseUrl.withQuery(query).toString()
-
-        return HttpRequests.post(url, HttpRequests.JSON_CONTENT_TYPE).run {
+        return HttpRequests.post(MarketplaceUrls.getSearchNearestUpdate(), HttpRequests.JSON_CONTENT_TYPE).run {
           productNameAsUserAgent()
           throwStatusCodeException(throwExceptions)
           connect {
@@ -752,14 +746,7 @@ class MarketplaceRequests(private val coroutineScope: CoroutineScope) : PluginIn
       val data = objectMapper.writeValueAsString(CompatibleUpdateForModuleRequest(module))
 
       @Suppress("DEPRECATION")
-      val baseUrl = URI(MarketplaceUrls.getSearchCompatibleUpdatesUrl())
-      val query = buildString {
-        append("os=${buildEncodedOsParameter()}")
-        append("&arch=${buildEncodedArchParameter()}")
-      }
-      val url = baseUrl.withQuery(query).toString()
-
-      return HttpRequests.post(url, HttpRequests.JSON_CONTENT_TYPE)
+      return HttpRequests.post(MarketplaceUrls.getSearchCompatibleUpdatesUrl(), HttpRequests.JSON_CONTENT_TYPE)
         .productNameAsUserAgent()
         .throwStatusCodeException(false)
         .connect {
@@ -963,6 +950,8 @@ private fun isNotModified(urlConnection: URLConnection, file: Path?): Boolean {
 private data class CompatibleUpdateRequest(
   val build: String,
   val pluginXMLIds: List<String>,
+  val os: String = OS.CURRENT.name,
+  val arch: String = CpuArch.CURRENT.name,
 ) {
 
   @JvmOverloads
@@ -978,6 +967,8 @@ private data class CompatibleUpdateRequest(
 private data class CompatibleUpdateForModuleRequest(
   val module: String,
   val build: String,
+  val os: String = OS.CURRENT.name,
+  val arch: String = CpuArch.CURRENT.name,
 ) {
 
   @JvmOverloads

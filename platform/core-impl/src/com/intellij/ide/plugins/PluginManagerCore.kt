@@ -457,10 +457,10 @@ object PluginManagerCore {
   }
 
   @ApiStatus.Internal
-  fun getUnfulfilledCpuArchRequirement(descriptor: IdeaPluginDescriptor): IdeaPluginCpuArchRequirement? {
+  fun getUnfulfilledCpuArchRequirement(descriptor: IdeaPluginDescriptor): PluginCpuArchRequirement? {
     return descriptor.getDependencies().asSequence()
-      .mapNotNull { dep -> IdeaPluginCpuArchRequirement.fromModuleId(dep.pluginId).takeIf { !dep.isOptional } }
-      .firstOrNull { osReq -> !osReq.isHostOs() }
+      .mapNotNull { dep -> PluginCpuArchRequirement.fromPluginId(dep.pluginId).takeIf { !dep.isOptional } }
+      .firstOrNull { osReq -> !osReq.isHostArch() }
   }
 
   @JvmStatic

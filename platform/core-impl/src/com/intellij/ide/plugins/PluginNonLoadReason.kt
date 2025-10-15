@@ -119,7 +119,7 @@ class PluginIsIncompatibleWithHostPlatform(
 @ApiStatus.Internal
 class PluginIsIncompatibleWithHostCpu(
   override val plugin: IdeaPluginDescriptor,
-  val requiredCpuArch: IdeaPluginCpuArchRequirement,
+  val requiredCpuArch: PluginCpuArchRequirement,
   val hostCpu: @NlsSafe CpuArch,
 ): PluginNonLoadReason {
   override val detailedMessage: @NlsContexts.DetailedDescription String
