@@ -50,7 +50,6 @@ private suspend fun <P : PathHolder> PythonAddInterpreterModel<P>.createSdkFromB
   existingSdks: List<Sdk>,
 ): PyResult<SdkWrapper<P>> {
   val basePython = fileSystem.getBinaryToExec(pathToBasePython)
-
   createVenv(basePython, pathToVenvHome.toString(), inheritSitePackages).getOr(message("project.error.cant.venv")) { return it }
 
   val pythonBinaryPath = fileSystem.resolvePythonBinary(pathToVenvHome)

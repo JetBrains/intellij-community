@@ -14,6 +14,7 @@ import com.intellij.platform.eel.provider.utils.ProcessFunctions
 import com.intellij.platform.eel.provider.utils.bindProcessToScopeImpl
 import com.intellij.python.community.execService.BinOnTarget
 import com.intellij.python.community.execService.ExecuteGetProcessError
+import com.intellij.python.community.execService.spi.TargetEnvironmentRequestHandler
 import com.jetbrains.python.Result
 import com.jetbrains.python.errorProcessing.Exe
 import com.jetbrains.python.errorProcessing.ExecErrorReason
@@ -44,9 +45,10 @@ internal suspend fun createProcessLauncherOnTarget(binOnTarget: BinOnTarget, lau
 
   // Broken Targets API can only upload the whole directory
   val dirsToMap = launchRequest.args.localFiles.map { it.parent }.toSet()
-  for (localDir in dirsToMap) {
-    request.uploadVolumes.add(TargetEnvironment.UploadRoot(localDir, TargetEnvironment.TargetPath.Temporary(), removeAtShutdown = true))
-  }
+  val handler = TargetEnvironmentRequestHandler.getHandler(request)
+  val uploadRoots = handler.mapUploadRoots(request, dirsToMap)
+  request.uploadVolumes.addAll(uploadRoots)
+
   val targetEnv = try {
     request.prepareEnvironment(TargetProgressIndicator.EMPTY)
   }
