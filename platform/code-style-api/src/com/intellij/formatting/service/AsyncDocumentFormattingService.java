@@ -37,10 +37,10 @@ public abstract class AsyncDocumentFormattingService extends AbstractDocumentFor
 
   @Override
   public final void formatDocument(@NotNull Document document,
-                                                @NotNull List<TextRange> formattingRanges,
-                                                @NotNull FormattingContext formattingContext,
-                                                boolean canChangeWhiteSpaceOnly,
-                                                boolean quickFormat) {
+                                   @NotNull List<TextRange> formattingRanges,
+                                   @NotNull FormattingContext formattingContext,
+                                   boolean canChangeWhiteSpaceOnly,
+                                   boolean quickFormat) {
     mySupport.formatDocument(document, formattingRanges, formattingContext, canChangeWhiteSpaceOnly, quickFormat);
   }
 

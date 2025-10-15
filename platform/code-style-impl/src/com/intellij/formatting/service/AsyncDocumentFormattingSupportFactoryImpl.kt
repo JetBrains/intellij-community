@@ -8,5 +8,4 @@ class AsyncDocumentFormattingSupportFactoryImpl : AsyncDocumentFormattingSupport
   override fun create(service: AsyncDocumentFormattingService): AsyncDocumentFormattingSupport {
     return AsyncDocumentFormattingSupportImpl(service)
   }
-
 }

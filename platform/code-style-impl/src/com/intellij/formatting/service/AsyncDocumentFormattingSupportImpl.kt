@@ -28,7 +28,6 @@ import java.io.FileWriter
 import java.io.IOException
 import java.nio.charset.Charset
 import java.util.concurrent.ConcurrentHashMap
-import java.util.concurrent.atomic.AtomicReference
 import kotlin.concurrent.Volatile
 import kotlin.time.Duration.Companion.nanoseconds
 import kotlin.time.TimeSource
@@ -75,7 +74,7 @@ class AsyncDocumentFormattingSupportImpl(private val service: AsyncDocumentForma
 
   private fun isSyncFormat(document: Document): Boolean {
     val forceSync = document.getUserData(FORMAT_DOCUMENT_SYNCHRONOUSLY) == true
-    val isHeadless = ApplicationManager.getApplication().isHeadlessEnvironment()
+    val isHeadless = ApplicationManager.getApplication().isHeadlessEnvironment
     val isIgnoreHeadless = SystemProperties.getBooleanProperty("intellij.async.formatting.ignoreHeadless", false)
     return forceSync || (isHeadless && !isIgnoreHeadless)
   }
@@ -124,12 +123,12 @@ class AsyncDocumentFormattingSupportImpl(private val service: AsyncDocumentForma
     private var task: FormattingTask? = null
 
     private val taskStarted = CompletableDeferred<Unit>()
-    private val result = CompletableDeferred<String?>()
+    private val taskResult = CompletableDeferred<String?>()
 
     fun cancel(): Boolean {
       if (!taskStarted.isCompleted) return false
       // for our purpose, result.cancel is equivalent, but we need the CAS semantics
-      if (result.completeExceptionally(CancellationException())) {
+      if (taskResult.completeExceptionally(CancellationException())) {
         val formattingTask = checkNotNull(task)
         return formattingTask.cancel()
       }
@@ -191,7 +190,7 @@ class AsyncDocumentFormattingSupportImpl(private val service: AsyncDocumentForma
           taskStarted.await()
         }
         val formattedText = withTimeout(timeout) {
-          result.await()
+          taskResult.await()
         } ?: return@coroutineScope
         if (ApplicationManager.getApplication().isWriteAccessAllowed()) {
           updateDocument(formattedText)
@@ -220,9 +219,7 @@ class AsyncDocumentFormattingSupportImpl(private val service: AsyncDocumentForma
         withContext(NonCancellable) {
           withTimeoutOrNull(remainingToTimeout) {
             taskJob.join()
-          } ?: run {
-            notifyExpired()
-          }
+          } ?: notifyExpired()
         }
       }
     }
@@ -271,7 +268,7 @@ class AsyncDocumentFormattingSupportImpl(private val service: AsyncDocumentForma
     }
 
     override fun onTextReady(updatedText: String?) {
-      result.complete(updatedText)
+      taskResult.complete(updatedText)
     }
 
     override fun onError(title: @NlsContexts.NotificationTitle String, message: @NlsContexts.NotificationContent String) {
@@ -283,7 +280,7 @@ class AsyncDocumentFormattingSupportImpl(private val service: AsyncDocumentForma
       @NlsContexts.NotificationContent message: @NlsContexts.NotificationContent String,
       displayId: String?,
     ) {
-      if (result.complete(null)) {
+      if (taskResult.complete(null)) {
         FormattingNotificationService.getInstance(_context.project)
           .reportError(getNotificationGroupId(service), displayId, title, message)
       }
@@ -299,7 +296,7 @@ class AsyncDocumentFormattingSupportImpl(private val service: AsyncDocumentForma
       displayId: String?,
       offset: Int,
     ) {
-      if (result.complete(null)) {
+      if (taskResult.complete(null)) {
         FormattingNotificationService.getInstance(_context.project)
           .reportErrorAndNavigate(getNotificationGroupId(service), displayId, title, message, _context, offset)
       }
