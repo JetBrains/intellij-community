@@ -1,9 +1,8 @@
-package intellij.lambda.com.intellij.lambda.tests
+package intellij.lambda.tests
 
-import com.intellij.ide.starter.extended.allure.IjplComponents
-import com.intellij.lambda.testFramework.junit.ExecuteInMonolithAndSplitMode
 import com.intellij.openapi.application.ApplicationManager
 import com.intellij.remoteDev.tests.modelGenerated.LambdaRdIdeType
+import com.intellij.lambda.testFramework.junit.ExecuteInMonolithAndSplitMode
 import org.junit.jupiter.api.TestFactory
 import org.junit.jupiter.api.TestTemplate
 import org.junit.jupiter.params.ParameterizedTest
@@ -11,8 +10,6 @@ import org.junit.jupiter.params.provider.ValueSource
 import org.junitpioneer.jupiter.cartesian.CartesianTest
 import java.util.stream.Stream
 
-
-@IjplComponents.TODO
 @ExecuteInMonolithAndSplitMode
 class UnitSplitExampleTest {
   // @Test annotation will not run the test in different modes, since it's by design executed only once
