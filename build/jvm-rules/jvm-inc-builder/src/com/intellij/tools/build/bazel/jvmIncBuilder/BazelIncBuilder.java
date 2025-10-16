@@ -282,7 +282,11 @@ public class BazelIncBuilder {
         }
       }
 
-      return ExitCode.OK;
+    }
+    catch (Throwable e) {
+      // catch any unexpected errors happened closing storages
+      context.report(Message.create(null, e));
+      return ExitCode.ERROR;
     }
     finally {
       NodeSourceSnapshot sourcesState = srcSnapshotDelta != null? srcSnapshotDelta.asSnapshot() : null;
@@ -290,6 +294,8 @@ public class BazelIncBuilder {
         context, sourcesState, context.getResources(), modifiedLibraries, deletedLibraries
       );
     }
+    
+    return context.hasErrors()? ExitCode.ERROR : ExitCode.OK;
   }
 
   private static void deleteResources(Iterable<ResourceGroup> resGroups, Iterable<NodeSource> resources, ZipOutputBuilder out) {
@@ -412,7 +418,7 @@ public class BazelIncBuilder {
         StorageManager.backupDependencies(context, deletedPaths, presentPaths);
       }
       catch (Throwable e) {
-        LOG.log(Level.SEVERE, "Error saving build state " + context.getTargetName(), e);
+        LOG.log(Level.SEVERE, "Error saving dependencies state " + context.getTargetName(), e);
         context.report(Message.create(null, e));
       }
     }
