@@ -32,7 +32,7 @@ internal class UsageStatisticsConsentUi(private val consent: Consent) : ConsentU
     }
     val dataCollectionAgreement = DataCollectionAgreement.getInstance() ?: return null
     return when (dataCollectionAgreement) {
-      DataCollectionAgreement.YES -> ConsentForcedState.AlwaysEnabled(null)
+      DataCollectionAgreement.YES -> ConsentForcedState.AlwaysEnabled(IdeBundle.message("gdpr.data.collection.consent.setting.enabled.warning.text"))
       DataCollectionAgreement.NOT_SET -> null
       DataCollectionAgreement.NO -> null
     }
