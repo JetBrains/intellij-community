@@ -55,21 +55,21 @@ internal class ContentModuleVisibilityInspection : DevKitPluginXmlInspectionBase
   ) {
     val currentXmlFile = dependencyValue.xmlElement?.containingFile as? XmlFile ?: return
     val productionXmlFilesScope = getProjectProductionXmlFilesScope(currentXmlFile.project)
-    val currentModuleIncludingPlugins = getPluginXmlFilesIncludingFileAsContentModule(currentXmlFile, productionXmlFilesScope)
+    val currentModuleIncludingFiles = getXmlFilesIncludingFileAsContentModule(currentXmlFile, productionXmlFilesScope)
     val dependencyXmlFile = moduleDependency.xmlElement?.containingFile as? XmlFile ?: return
-    val dependencyIncludingPlugins = getPluginXmlFilesIncludingFileAsContentModule(dependencyXmlFile, productionXmlFilesScope)
+    val dependencyIncludingFiles = getXmlFilesIncludingFileAsContentModule(dependencyXmlFile, productionXmlFilesScope)
 
-    for (currentModuleIncludingPlugin in currentModuleIncludingPlugins) {
-      for (dependencyIncludingPlugin in dependencyIncludingPlugins) {
-        if (currentModuleIncludingPlugin == dependencyIncludingPlugin) continue
-        val currentModuleNamespace = currentModuleIncludingPlugin.namespace
-        val dependencyNamespace = dependencyIncludingPlugin.namespace
+    for (currentModuleIncludingFile in currentModuleIncludingFiles) {
+      for (dependencyIncludingFile in dependencyIncludingFiles) {
+        if (currentModuleIncludingFile == dependencyIncludingFile) continue
+        val currentModuleNamespace = currentModuleIncludingFile.namespace
+        val dependencyNamespace = dependencyIncludingFile.namespace
         if (currentModuleNamespace != dependencyNamespace) {
           holder.createProblem(
             dependencyValue,
             getInternalVisibilityProblemMessage(
-              dependencyValue, dependencyIncludingPlugin, dependencyNamespace,
-              currentXmlFile, currentModuleIncludingPlugin, currentModuleNamespace
+              dependencyValue, dependencyIncludingFile, dependencyNamespace,
+              currentXmlFile, currentModuleIncludingFile, currentModuleNamespace
             )
           )
           return // report only one problem at once
@@ -127,7 +127,7 @@ internal class ContentModuleVisibilityInspection : DevKitPluginXmlInspectionBase
     }
   }
 
-  private fun getPluginXmlFilesIncludingFileAsContentModule(xmlFile: XmlFile, scope: GlobalSearchScope): Collection<IdeaPlugin> {
+  private fun getXmlFilesIncludingFileAsContentModule(xmlFile: XmlFile, scope: GlobalSearchScope): Collection<IdeaPlugin> {
     val ideaPlugin = DescriptorUtil.getIdeaPlugin(xmlFile)
     if (ideaPlugin != null && isActualPluginDescriptor(ideaPlugin, xmlFile)) {
       return listOf(ideaPlugin)
