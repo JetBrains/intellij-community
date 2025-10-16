@@ -193,7 +193,8 @@ class UnifiedLocalChangeListDiffViewer(context: DiffContext,
     }
   }
 
-  private class UnifiedLocalFragmentBuilder(document1: Document,
+  @ApiStatus.Internal
+  class UnifiedLocalFragmentBuilder(document1: Document,
                                             document2: Document,
                                             masterSide: Side,
                                             val allowExcludeChangesFromCommit: Boolean
