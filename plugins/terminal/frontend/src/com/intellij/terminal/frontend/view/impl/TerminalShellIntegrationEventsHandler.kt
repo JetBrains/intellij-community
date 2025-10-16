@@ -3,10 +3,11 @@ package com.intellij.terminal.frontend.view.impl
 import com.intellij.openapi.application.EDT
 import com.intellij.openapi.application.ModalityState
 import com.intellij.openapi.application.asContextElement
+import com.intellij.platform.util.coroutines.childScope
+import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
 import org.jetbrains.plugins.terminal.block.reworked.TerminalAliasesStorage
-import org.jetbrains.plugins.terminal.block.reworked.TerminalBlocksModelImpl
 import org.jetbrains.plugins.terminal.session.*
 import org.jetbrains.plugins.terminal.session.dto.toState
 import org.jetbrains.plugins.terminal.view.TerminalShellIntegration
@@ -14,51 +15,58 @@ import java.util.concurrent.CompletableFuture
 
 internal class TerminalShellIntegrationEventsHandler(
   private val outputModelController: TerminalOutputModelController,
-  private val commandDetectionFuture: CompletableFuture<TerminalShellIntegration>,
-  private val blocksModel: TerminalBlocksModelImpl,
+  private val shellIntegrationFuture: CompletableFuture<TerminalShellIntegration>,
   private val aliasesStorage: TerminalAliasesStorage,
+  private val coroutineScope: CoroutineScope,
 ) : TerminalOutputEventsHandler {
   private val edtContext = Dispatchers.EDT + ModalityState.any().asContextElement()
 
-  private var commandDetectionInitialized = false
+  private val shellIntegration: TerminalShellIntegrationImpl?
+    get() = shellIntegrationFuture.getNow(null) as? TerminalShellIntegrationImpl
+
+  private fun getIntegrationOrThrow(): TerminalShellIntegrationImpl {
+    return shellIntegration ?: error("Shell integration is not initialized yet")
+  }
 
   override suspend fun handleEvent(event: TerminalOutputEvent) {
     when (event) {
       is TerminalInitialStateEvent -> {
         withContext(edtContext) {
-          if (!commandDetectionInitialized && event.sessionState.isShellIntegrationEnabled) {
-            initCommandDetection()
+          if (shellIntegration == null && event.sessionState.isShellIntegrationEnabled) {
+            initShellIntegration()
           }
-          blocksModel.restoreFromState(event.blocksModelState.toState())
+          shellIntegration?.blocksModel?.restoreFromState(event.blocksModelState.toState())
         }
       }
       is TerminalStateChangedEvent -> {
-        if (!commandDetectionInitialized && event.state.isShellIntegrationEnabled) {
-          initCommandDetection()
+        if (shellIntegration == null && event.state.isShellIntegrationEnabled) {
+          initShellIntegration()
         }
       }
+      // It is expected that shell integration is initialized before the below events arrive.
+      // So, throw an exception if it is not initialized yet to find such cases quickly.
       TerminalPromptStartedEvent -> {
         withContext(edtContext) {
           outputModelController.applyPendingUpdates()
-          blocksModel.promptStarted(outputModelController.model.cursorOffset)
+          getIntegrationOrThrow().blocksModel.promptStarted(outputModelController.model.cursorOffset)
         }
       }
       TerminalPromptFinishedEvent -> {
         withContext(edtContext) {
           outputModelController.applyPendingUpdates()
-          blocksModel.promptFinished(outputModelController.model.cursorOffset)
+          getIntegrationOrThrow().blocksModel.promptFinished(outputModelController.model.cursorOffset)
         }
       }
       is TerminalCommandStartedEvent -> {
         withContext(edtContext) {
           outputModelController.applyPendingUpdates()
-          blocksModel.commandStarted(outputModelController.model.cursorOffset)
+          getIntegrationOrThrow().blocksModel.commandStarted(outputModelController.model.cursorOffset)
         }
       }
       is TerminalCommandFinishedEvent -> {
         withContext(edtContext) {
           outputModelController.applyPendingUpdates()
-          blocksModel.commandFinished(event.exitCode)
+          getIntegrationOrThrow().blocksModel.commandFinished(event.exitCode)
         }
       }
       is TerminalAliasesReceivedEvent -> {
@@ -70,10 +78,11 @@ internal class TerminalShellIntegrationEventsHandler(
     }
   }
 
-  private fun initCommandDetection() {
-    val detection = TerminalShellIntegrationImpl(blocksModel)
-    commandDetectionFuture.complete(detection)
-
-    commandDetectionInitialized = true
+  private fun initShellIntegration() {
+    val integration = TerminalShellIntegrationImpl(
+      outputModelController.model,
+      coroutineScope.childScope("TerminalShellIntegration")
+    )
+    shellIntegrationFuture.complete(integration)
   }
 }
