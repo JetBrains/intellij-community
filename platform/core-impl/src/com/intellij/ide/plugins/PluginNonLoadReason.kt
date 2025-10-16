@@ -200,7 +200,7 @@ class PluginPackagePrefixConflict(
             "Their respective modules '${module.moduleId}' and '${conflictingModule.moduleId}' declare the same package prefix"
   override val shouldNotifyUser: Boolean = true
 
-  private val IdeaPluginDescriptorImpl.moduleId: String get() = contentModuleId ?: pluginId.idString
+  private val IdeaPluginDescriptorImpl.moduleId: String get() = contentModuleName ?: pluginId.idString
 }
 
 @ApiStatus.Internal

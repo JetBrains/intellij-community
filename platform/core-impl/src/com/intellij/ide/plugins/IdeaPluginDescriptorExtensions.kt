@@ -5,13 +5,8 @@ package com.intellij.ide.plugins
 
 import org.jetbrains.annotations.ApiStatus
 
-@Deprecated("Use `contentModuleId`", ReplaceWith("contentModuleId"))
 @get:ApiStatus.Experimental
 val IdeaPluginDescriptor.contentModuleName: String?
-  get() = (this as? ContentModuleDescriptor)?.moduleId?.name
-
-@get:ApiStatus.Experimental
-val IdeaPluginDescriptor.contentModuleId: String?
   get() = (this as? ContentModuleDescriptor)?.moduleId?.name
 
 @get:ApiStatus.Experimental

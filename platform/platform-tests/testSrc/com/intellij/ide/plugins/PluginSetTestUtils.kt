@@ -25,7 +25,7 @@ fun ObjectAssert<PluginSet>.doesNotHaveEnabledPlugins(firstId: String, vararg ot
 fun ObjectAssert<PluginSet>.doesNotHaveEnabledPlugins() = hasExactlyEnabledPlugins()
 
 fun ObjectAssert<PluginSet>.hasExactlyEnabledModulesWithoutMainDescriptors(vararg ids: String) = apply {
-  extracting { it.getEnabledModules().mapNotNull { plugin -> plugin.contentModuleId } }
+  extracting { it.getEnabledModules().mapNotNull { plugin -> plugin.contentModuleName } }
     .asList()
     .containsExactlyInAnyOrder(*ids)
 }
@@ -40,6 +40,6 @@ fun PluginSet.getEnabledPlugins(vararg ids: String): List<PluginMainDescriptor> 
 fun PluginSet.getPlugin(id: String): PluginMainDescriptor = allPlugins.single { id == it.pluginId.idString }
 
 fun PluginSet.getEnabledModule(id: String): ContentModuleDescriptor =
-  getUnsortedEnabledModules().find { it.contentModuleId == id } ?: throw AssertionError("Module '$id' not found")
+  getUnsortedEnabledModules().find { it.contentModuleName == id } ?: throw AssertionError("Module '$id' not found")
 
 fun PluginSet.getEnabledModules(vararg ids: String): List<ContentModuleDescriptor> = ids.map { getEnabledModule(it) }
