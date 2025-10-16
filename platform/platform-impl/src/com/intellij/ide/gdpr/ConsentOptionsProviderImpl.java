@@ -76,6 +76,7 @@ final class ConsentOptionsProviderImpl implements ConsentOptionsProvider {
                                                               ? LocalConsentOptions.INSTANCE.getTraceDataCollectionNonComPermission()
                                                               : LocalConsentOptions.INSTANCE.getTraceDataCollectionComPermission();
     return dataCollectionAgreement == DataCollectionAgreement.YES ||
-           traceDataCollectionPermission == ConsentOptions.Permission.YES;
+           (dataCollectionAgreement != DataCollectionAgreement.NO &&
+            traceDataCollectionPermission == ConsentOptions.Permission.YES);
   }
 }
