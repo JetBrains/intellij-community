@@ -56,8 +56,12 @@ class PythonSdkConfigurator : DirectoryProjectConfigurator {
 
   override fun configureProject(project: Project, baseDir: VirtualFile, moduleRef: Ref<Module>, isProjectCreatedWithWizard: Boolean) {
     val sdk = project.pythonSdk
-    thisLogger().debug { "Input: $sdk, $isProjectCreatedWithWizard" }
-    if (sdk != null || isProjectCreatedWithWizard) {
+    thisLogger().debug { "Input: $sdk" }
+    /*
+     * Technically, we can end up in a situation when we created a project, but failed to configure SDK for some reason, which would
+     * lead to automatic SDK configuration.
+     */
+    if (sdk != null) {
       return
     }
     if (PySdkFromEnvironmentVariable.getPycharmPythonPathProperty()?.isNotBlank() == true) {
@@ -83,7 +87,7 @@ class PythonSdkConfigurator : DirectoryProjectConfigurator {
       emptyList()
     }
     else {
-      PyProjectSdkConfigurationExtension.EP_NAME.extensionsIfPointIsRegistered.mapNotNull { e->
+      PyProjectSdkConfigurationExtension.EP_NAME.extensionsIfPointIsRegistered.mapNotNull { e ->
         e.checkEnvironmentAndPrepareSdkCreator(module)?.let { CreateSdkInfoWithTool(it, e.toolId) }
       }.sortedBy { it.createSdkInfo }
     }
