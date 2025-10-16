@@ -325,7 +325,7 @@ class CodeInliner(
             elementType.isDoubleType -> "kotlin.doubleArrayOf"
             elementType.isFloatType -> "kotlin.floatArrayOf"
             elementType is KaErrorType -> "kotlin.arrayOf"
-            else -> "kotlin.arrayOf<" + elementType.render(position = Variance.INVARIANT) + ">"
+            else -> "kotlin.arrayOf"
         }
     }
 
