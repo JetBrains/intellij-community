@@ -107,6 +107,7 @@ fun runTestBuild(
   productProperties: ProductProperties,
   buildTools: ProprietaryBuildTools,
   testInfo: TestInfo,
+  onSuccess: suspend (BuildContext) -> Unit = {},
   buildOptionsCustomizer: (BuildOptions) -> Unit = {},
 ) {
   runTestBuild(
@@ -115,6 +116,7 @@ fun runTestBuild(
     testInfo = testInfo,
     buildTools = buildTools,
     isReproducibilityTestAllowed = true,
+    onSuccess = onSuccess,
     buildOptionsCustomizer = buildOptionsCustomizer,
   )
 }
