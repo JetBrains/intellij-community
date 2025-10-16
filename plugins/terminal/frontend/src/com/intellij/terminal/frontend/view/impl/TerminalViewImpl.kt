@@ -91,7 +91,7 @@ class TerminalViewImpl(
   private val sessionModel: TerminalSessionModel
 
   @VisibleForTesting
-  val blocksModel: TerminalBlocksModel
+  val blocksModel: TerminalBlocksModelImpl
   private val encodingManager: TerminalKeyEncodingManager
   private val controller: TerminalSessionController
 

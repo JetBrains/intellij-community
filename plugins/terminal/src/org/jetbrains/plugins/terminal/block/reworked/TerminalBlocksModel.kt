@@ -5,7 +5,6 @@ import com.intellij.openapi.Disposable
 import com.intellij.openapi.util.Key
 import com.intellij.util.concurrency.annotations.RequiresEdt
 import org.jetbrains.annotations.ApiStatus
-import org.jetbrains.plugins.terminal.session.TerminalBlocksModelState
 import org.jetbrains.plugins.terminal.session.TerminalOutputBlock
 
 @ApiStatus.Internal
@@ -15,24 +14,6 @@ interface TerminalBlocksModel {
   val blocks: List<TerminalOutputBlock>
 
   fun addListener(parentDisposable: Disposable, listener: TerminalBlocksModelListener)
-
-  @RequiresEdt
-  fun promptStarted(offset: TerminalOffset)
-
-  @RequiresEdt
-  fun promptFinished(offset: TerminalOffset)
-
-  @RequiresEdt
-  fun commandStarted(offset: TerminalOffset)
-
-  @RequiresEdt
-  fun commandFinished(exitCode: Int)
-
-  @RequiresEdt
-  fun dumpState(): TerminalBlocksModelState
-
-  @RequiresEdt
-  fun restoreFromState(state: TerminalBlocksModelState)
 
   companion object {
     val KEY: Key<TerminalBlocksModel> = Key.create("TerminalBlocksModel")
