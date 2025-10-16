@@ -2,6 +2,7 @@
 package com.intellij.codeInsight.codeVision.ui.model
 
 import com.intellij.codeInsight.codeVision.CodeVisionEntry
+import com.intellij.lang.LangBundle
 import org.jetbrains.annotations.ApiStatus
 
 @ApiStatus.Internal
@@ -10,7 +11,7 @@ class ZeroWidthCodeVisionEntry(
 ) : CodeVisionEntry(
   providerId,
   icon = null,
-  longPresentation = "Show a Code Vision inlay inlay when no results are available",
+  longPresentation = LangBundle.message("show.a.code.vision.inlay.inlay.when.no.results.are.available"),
   tooltip = "",
   extraActions = emptyList()
 ) {
