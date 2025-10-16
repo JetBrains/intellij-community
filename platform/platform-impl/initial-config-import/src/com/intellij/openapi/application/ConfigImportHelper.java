@@ -234,7 +234,7 @@ public final class ConfigImportHelper {
 
         System.setProperty(CONFIG_IMPORTED_FROM_PATH, oldConfigDir.toString());
 
-        doImport(oldConfigDir, newConfigDir, oldIdeHome, log, configImportOptions);
+        doImport(oldConfigDir, newConfigDir, oldIdeHome, configImportOptions);
 
         System.setProperty(InitialConfigImportState.CONFIG_IMPORTED_IN_CURRENT_SESSION_KEY, Boolean.TRUE.toString());
 
@@ -804,14 +804,9 @@ public final class ConfigImportHelper {
     return OSAgnosticPathUtil.expandUserHome(StringUtil.unquoteString(dir, '"'));
   }
 
-  @VisibleForTesting
-  public static void doImport(
-    @NotNull Path oldConfigDir,
-    @NotNull Path newConfigDir,
-    @Nullable Path oldIdeHome,
-    @NotNull Logger log,
-    @NotNull ConfigImportOptions importOptions
-  ) {
+  private static void doImport(Path oldConfigDir, Path newConfigDir, @Nullable Path oldIdeHome, ConfigImportOptions options) {
+    var log = options.log;
+
     if (oldConfigDir.equals(newConfigDir)) {
       log.info("New config directory is the same as the old one, no import needed.");
       return;
@@ -824,7 +819,7 @@ public final class ConfigImportHelper {
       log.info(String.format(
         "Importing configs: oldConfigDir=[%s], newConfigDir=[%s], oldIdeHome=[%s], oldPluginsDir=[%s], newPluginsDir=[%s]",
         oldConfigDir, newConfigDir, oldIdeHome, oldPluginsDir, newPluginsDir));
-      doImport(oldConfigDir, newConfigDir, oldIdeHome, oldPluginsDir, newPluginsDir, importOptions);
+      doImport(oldConfigDir, newConfigDir, oldIdeHome, oldPluginsDir, newPluginsDir, options);
     }
     catch (Exception e) {
       log.warn(e);
