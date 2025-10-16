@@ -24,8 +24,11 @@ import com.intellij.ui.dsl.gridLayout.builders.RowsGridBuilder
 import com.intellij.util.bindSelectedTabIn
 import com.intellij.util.ui.JBFont
 import com.intellij.util.ui.JBUI
-import kotlinx.coroutines.*
+import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.*
+import kotlinx.coroutines.launch
+import kotlinx.coroutines.withContext
 import org.jetbrains.annotations.ApiStatus.Internal
 import org.jetbrains.annotations.Nls
 import java.awt.Dimension
@@ -80,11 +83,15 @@ class SePopupHeaderPane(
     panel.border = JBUI.Borders.compound(JBUI.Borders.customLineBottom(JBUI.CurrentTheme.CustomFrameDecorations.separatorForeground()),
                                          JBUI.CurrentTheme.BigPopup.headerBorder())
 
-    configuration.value.tabs.ifEmpty {
+    val initialConfiguration = configuration.value
+
+    initialConfiguration.tabs.ifEmpty {
       listOf(Tab(SeAllTab.NAME, SeAllTab.ID, SeAllTab.ID))
     }.forEach { tab ->
       tabbedPane.addTab(tab.name, null, JPanel(), tabShortcuts[tab.id])
     }
+
+    setSelectedIndexSafe(initialConfiguration.selectedTab.value)
 
     add(panel)
 
@@ -98,20 +105,18 @@ class SePopupHeaderPane(
                                                              SearchEverywhereUsageTriggerCollector.IS_SPLIT.with(true))
     }
 
-    var selectedTabBindingJob: Job? = null
-
     coroutineScope.launch {
       configuration.collectLatest { configuration ->
         withContext(Dispatchers.EDT) {
           tabbedPane.removeAll()
-          selectedTabBindingJob?.cancel()
 
           if (configuration.tabs.isNotEmpty()) {
             for (tab in configuration.tabs) {
               tabbedPane.addTab(tab.name, null, JPanel(), tabShortcuts[tab.id])
             }
 
-            selectedTabBindingJob = tabbedPane.bindSelectedTabIn(configuration.selectedTab, coroutineScope)
+            setSelectedIndexSafe(initialConfiguration.selectedTab.value)
+            tabbedPane.bindSelectedTabIn(configuration.selectedTab, this)
           }
           else {
             tabbedPane.addTab(SeAllTab.NAME, null, JPanel(), null)
@@ -133,6 +138,14 @@ class SePopupHeaderPane(
     toolbarListenerDisposable?.let { Disposer.dispose(it) }
     toolbarListenerDisposable = null
     super.removeNotify()
+  }
+
+  private fun setSelectedIndexSafe(index: Int) {
+    index.takeIf {
+      it >= 0 && it < tabbedPane.tabCount
+    }?.let {
+      tabbedPane.selectedIndex = it
+    }
   }
 
   fun setFilterActions(actions: List<AnAction>, showInFindToolWindowAction: AnAction?, isPreviewEnabled: Boolean) {
