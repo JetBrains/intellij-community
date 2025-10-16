@@ -23,12 +23,7 @@ internal class TraceEventLoggerProvider : StatisticsEventLoggerProvider(
     const val RECORDER_ID: String = "TRACE"
   }
 
-  override fun isRecordEnabled(): Boolean =
-    !ApplicationManager.getApplication().isUnitTestMode &&
-    (ApplicationInfo.getInstance() == null || PlatformUtils.isJetBrainsProduct()) &&
-    StatisticsUploadAssistant.isCollectAllowed { service<ConsentOptionsProvider>().isTraceDataCollectionAllowed }
+  override fun isRecordEnabled(): Boolean = false
 
-  override fun isSendEnabled(): Boolean =
-    isRecordEnabled() &&
-    StatisticsUploadAssistant.isSendAllowed { service<ConsentOptionsProvider>().isTraceDataCollectionAllowed }
+  override fun isSendEnabled(): Boolean = false
 }

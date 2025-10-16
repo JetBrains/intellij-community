@@ -2,7 +2,10 @@
 package com.intellij.ide.gdpr;
 
 import com.intellij.ide.BrowserUtil;
-import com.intellij.ide.gdpr.ui.consents.*;
+import com.intellij.ide.gdpr.ui.consents.AiDataCollectionConsentUi;
+import com.intellij.ide.gdpr.ui.consents.ConsentUi;
+import com.intellij.ide.gdpr.ui.consents.DefaultConsentUi;
+import com.intellij.ide.gdpr.ui.consents.UsageStatisticsConsentUi;
 import com.intellij.openapi.options.ConfigurableUi;
 import com.intellij.openapi.util.NlsSafe;
 import com.intellij.openapi.util.text.StringUtil;
@@ -11,14 +14,11 @@ import com.intellij.ui.HyperlinkAdapter;
 import com.intellij.ui.JBColor;
 import com.intellij.ui.components.JBScrollPane;
 import com.intellij.ui.scale.JBUIScale;
-import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.ui.JBUI;
 import com.intellij.util.ui.SwingHelper;
 import com.intellij.util.ui.UIUtil;
-import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.Contract;
 import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
 import javax.swing.event.HyperlinkEvent;
@@ -28,11 +28,9 @@ import java.awt.*;
 import java.net.URL;
 import java.util.ArrayList;
 import java.util.Collection;
-import java.util.Comparator;
 import java.util.List;
 import java.util.function.Supplier;
 
-import static com.intellij.ide.gdpr.ui.consents.ConsentGroup.DATA_COLLECTION_GROUP_ID;
 import static javax.swing.ScrollPaneConstants.HORIZONTAL_SCROLLBAR_AS_NEEDED;
 import static javax.swing.ScrollPaneConstants.VERTICAL_SCROLLBAR_AS_NEEDED;
 
@@ -102,24 +100,14 @@ public class ConsentSettingsUi extends JPanel implements ConfigurableUi<List<Con
     return viewer;
   }
 
-  @ApiStatus.Internal
-  public static @NotNull ConsentUi getConsentUi(Consent consent) {
+  static @NotNull ConsentUi getConsentUi(Consent consent) {
     if (ConsentOptions.condUsageStatsConsent().test(consent)) {
       return new UsageStatisticsConsentUi(consent);
     }
-    if (ConsentOptions.condTraceDataCollectionComConsent().test(consent) ||
-        ConsentOptions.condTraceDataCollectionNonComConsent().test(consent)) {
-      return new TraceDataCollectionConsentUI(consent);
+    if (ConsentOptions.condAiDataCollectionConsent().test(consent)) {
+      return new AiDataCollectionConsentUi(consent);
     }
     return new DefaultConsentUi(consent);
-  }
-
-  @ApiStatus.Internal
-  public static @Nullable ConsentGroupUi getConsentGroupUi(ConsentGroup consentGroup) {
-    if (DATA_COLLECTION_GROUP_ID.equals(consentGroup.getId())) {
-      return new DataCollectionConsentGroupUI(ContainerUtil.map(consentGroup.getConsents(), ConsentSettingsUi::getConsentUi));
-    }
-    return null;
   }
 
   @Contract(pure = true)
@@ -132,7 +120,6 @@ public class ConsentSettingsUi extends JPanel implements ConfigurableUi<List<Con
     for (ConsentStateSupplier supplier : consentMapping) {
       result.add(supplier.consent.derive(supplier.getState()));
     }
-    result.sort(Comparator.comparing(Consent::getId));
     return result;
   }
 

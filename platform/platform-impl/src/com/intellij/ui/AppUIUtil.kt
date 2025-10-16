@@ -7,7 +7,6 @@ import com.intellij.ide.IdeBundle
 import com.intellij.ide.gdpr.Consent
 import com.intellij.ide.gdpr.ConsentOptions
 import com.intellij.ide.gdpr.ConsentSettingsUi
-import com.intellij.ide.gdpr.trace.TraceConsentManager
 import com.intellij.ide.plugins.PluginManagerCore
 import com.intellij.ide.ui.UISettings
 import com.intellij.idea.AppMode
@@ -177,13 +176,6 @@ fun isWindowIconAlreadyExternallySet(): Boolean = when (OS.CURRENT) {
   else -> false
 }
 
-private fun removeTraceConsents(consents: MutableList<Consent>) {
-  consents.removeIf { consent ->
-    ConsentOptions.condTraceDataCollectionNonComConsent().test(consent) ||
-    ConsentOptions.condTraceDataCollectionComConsent().test(consent)
-  }
-}
-
 object AppUIUtil {
   @JvmStatic
   fun loadApplicationIcon(ctx: ScaleContext, size: Int): Icon? =
@@ -343,18 +335,6 @@ object AppUIUtil {
         result = ArrayList()
         result.add(statConsent.derive(UsageStatisticsPersistenceComponent.getInstance().isAllowed))
         result.addAll(consents)
-      }
-    }
-    result.removeIf(ConsentOptions.condTraceDataCollectionConsent()) // IJPL-208500
-    result.removeIf(ConsentOptions.condAiDataCollectionConsent()) // IJPL-195651; AI data collection (LLMC) consent should not be present on UI while it's staying a default consent as a part of migration from LLMC to TRACE consent
-    if (TraceConsentManager.getInstance()?.canDisplayTraceConsent() != true) {
-      removeTraceConsents(result)
-    } else {
-      val licenseTypeFlag = LicensingFacade.getInstance()?.metadata?.getOrNull(10)
-      when (licenseTypeFlag) {
-        'F' -> result.removeIf(ConsentOptions.condTraceDataCollectionComConsent())
-        null -> removeTraceConsents(result)
-        else -> result.removeIf(ConsentOptions.condTraceDataCollectionNonComConsent())
       }
     }
     return result
