@@ -71,11 +71,18 @@ class DumbServiceBalloon(private val myProject: Project,
     val startTimestamp = System.nanoTime()
     DumbModeBalloonRequested.log(myProject)
     val builder = if (ExperimentalUI.isNewUI()) {
-      JBPopupFactory.getInstance().createHtmlTextBalloonBuilder(balloonText, MessageType.WARNING.defaultIcon,
-                                                                HintHint.Status.Warning.foreground, HintHint.Status.Warning.background,
-                                                                null).setBorderColor(HintHint.Status.Warning.border).setShowCallout(
-        true).setBorderInsets(JBUI.insets(9, 7, 11, 7)).setPointerSize(JBUI.size(16, 8)).setPointerShiftedToStart(true).setCornerRadius(
-        JBUI.scale(8))
+      JBPopupFactory.getInstance()
+        .createHtmlTextBalloonBuilder(balloonText,
+                                      null,
+                                      HintHint.Status.Info.foreground,
+                                      HintHint.Status.Info.background,
+                                      null)
+        .setBorderColor(HintHint.Status.Info.border)
+        .setShowCallout(true)
+        .setBorderInsets(JBUI.insets(9, 7, 11, 7))
+        .setPointerSize(JBUI.size(16, 8))
+        .setPointerShiftedToStart(true)
+        .setCornerRadius(JBUI.scale(8))
     }
     else {
       JBPopupFactory.getInstance().createHtmlTextBalloonBuilder(balloonText, MessageType.WARNING, null).setBorderInsets(
