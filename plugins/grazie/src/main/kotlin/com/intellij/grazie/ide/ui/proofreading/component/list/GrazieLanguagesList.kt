@@ -24,7 +24,7 @@ import java.awt.BorderLayout
 import javax.swing.JComponent
 import javax.swing.ListCellRenderer
 
-class GrazieLanguagesList(private val download: suspend (Collection<Lang>) -> Unit, private val onLanguageRemoved: (lang: Lang) -> Unit) :
+class GrazieLanguagesList(private val download: suspend (Collection<Lang>) -> Boolean, private val onLanguageRemoved: (lang: Lang) -> Unit) :
   AddDeleteListPanel<Lang>(null, emptyList()), GrazieUIComponent {
 
   private val decorator: ToolbarDecorator = MyToolbarDecorator(myList)
