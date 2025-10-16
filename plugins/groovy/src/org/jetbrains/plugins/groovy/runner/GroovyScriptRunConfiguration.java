@@ -56,7 +56,7 @@ public final class GroovyScriptRunConfiguration extends JavaRunConfigurationBase
   private String vmParams;
   private String workDir;
   private boolean isDebugEnabled;
-  private boolean isAddClasspathToTheRunner;
+  private boolean isAddClasspathToTheRunner = true;
   private @Nullable String scriptParams;
   private @Nullable String scriptPath;
   private final Map<String, String> envs = new LinkedHashMap<>();
@@ -64,6 +64,7 @@ public final class GroovyScriptRunConfiguration extends JavaRunConfigurationBase
 
   private boolean myAlternativeJrePathEnabled;
   private @Nullable String myAlternativeJrePath;
+  private @Nullable ShortenCommandLine shortenClasspathMode;
 
   public GroovyScriptRunConfiguration(final String name, final Project project, final ConfigurationFactory factory) {
     super(name, new JavaRunConfigurationModule(project, true), factory);
@@ -135,6 +136,12 @@ public final class GroovyScriptRunConfiguration extends JavaRunConfigurationBase
     }
     isDebugEnabled = Boolean.parseBoolean(JDOMExternalizer.readString(element, "debug"));
     isAddClasspathToTheRunner = Boolean.parseBoolean(JDOMExternalizer.readString(element, "addClasspath"));
+
+    String shortenClasspath = JDOMExternalizer.readString(element, "shortenClasspath");
+    if (shortenClasspath != null) {
+      shortenClasspathMode = ShortenCommandLine.valueOf(shortenClasspath);
+    }
+
     envs.clear();
     JDOMExternalizer.readMap(element, envs, null, "env");
 
@@ -152,6 +159,9 @@ public final class GroovyScriptRunConfiguration extends JavaRunConfigurationBase
     JdomKt.addOptionTag(element, "debug", Boolean.toString(isDebugEnabled), "setting");
     if (isAddClasspathToTheRunner) {
       JdomKt.addOptionTag(element, "addClasspath", Boolean.toString(true), "setting");
+    }
+    if (shortenClasspathMode != null) {
+        JDOMExternalizer.write(element, "shortenClasspath", shortenClasspathMode.name());
     }
     JDOMExternalizer.writeMap(element, envs, null, "env");
 
@@ -208,6 +218,7 @@ public final class GroovyScriptRunConfiguration extends JavaRunConfigurationBase
       module == null ? JavaParametersUtil.createProjectJdk(getProject(), jrePath)
                      : JavaParametersUtil.createModuleJdk(module, !tests, jrePath)
     );
+    params.setShortenCommandLine(shortenClasspathMode);
     configureConfiguration(params, new CommonProgramRunConfigurationParametersDelegate(this) {
       @Override
       public @Nullable String getProgramParameters() {
@@ -260,11 +271,13 @@ public final class GroovyScriptRunConfiguration extends JavaRunConfigurationBase
 
   @Override
   public @Nullable ShortenCommandLine getShortenCommandLine() {
-    return null;
+    return shortenClasspathMode;
   }
 
   @Override
-  public void setShortenCommandLine(@Nullable ShortenCommandLine mode) { }
+  public void setShortenCommandLine(@Nullable ShortenCommandLine mode) {
+    shortenClasspathMode = mode;
+  }
 
   private static @Nullable String getPathByElement(@NotNull PsiElement element) {
     PsiFile file = element.getContainingFile();
