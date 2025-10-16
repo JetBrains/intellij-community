@@ -12012,17 +12012,17 @@ http_file(
 )
 
 http_file(
-  name = "jetbrains_fleet-noria-compiler-plugin-2_2_21-RC2-0_1_http",
-  url = "https://cache-redirector.jetbrains.com/packages.jetbrains.team/maven/p/ij/intellij-dependencies/jetbrains/fleet/noria-compiler-plugin/2.2.21-RC2-0.1/noria-compiler-plugin-2.2.21-RC2-0.1.jar",
-  sha256 = "7395d9ed25dfac0433e52153f6c9dac1e4e0a2ad90ab66e739243ead2a015518",
-  downloaded_file_path = "noria-compiler-plugin-2.2.21-RC2-0.1.jar"
+  name = "jetbrains_fleet-noria-compiler-plugin-2_2_21-RC2-0_2_http",
+  url = "https://cache-redirector.jetbrains.com/packages.jetbrains.team/maven/p/ij/intellij-dependencies/jetbrains/fleet/noria-compiler-plugin/2.2.21-RC2-0.2/noria-compiler-plugin-2.2.21-RC2-0.2.jar",
+  sha256 = "554d83b65ae13641a23cd3ec03b91e6662bb6fe9767a4d2c442023cc23971cf1",
+  downloaded_file_path = "noria-compiler-plugin-2.2.21-RC2-0.2.jar"
 )
 
 http_file(
-  name = "jetbrains_fleet-noria-compiler-plugin-2_2_21-RC2-0_1-sources_http",
-  url = "https://cache-redirector.jetbrains.com/packages.jetbrains.team/maven/p/ij/intellij-dependencies/jetbrains/fleet/noria-compiler-plugin/2.2.21-RC2-0.1/noria-compiler-plugin-2.2.21-RC2-0.1-sources.jar",
-  sha256 = "b02d2ffef2e0e388d856d8b560144a45eaeb135209839e22f09d147520a57bf6",
-  downloaded_file_path = "noria-compiler-plugin-2.2.21-RC2-0.1-sources.jar"
+  name = "jetbrains_fleet-noria-compiler-plugin-2_2_21-RC2-0_2-sources_http",
+  url = "https://cache-redirector.jetbrains.com/packages.jetbrains.team/maven/p/ij/intellij-dependencies/jetbrains/fleet/noria-compiler-plugin/2.2.21-RC2-0.2/noria-compiler-plugin-2.2.21-RC2-0.2-sources.jar",
+  sha256 = "bcbe5eec06eaa84fceedaf169192ac3c3161543b5a334c3bfdee0e9875e7dc05",
+  downloaded_file_path = "noria-compiler-plugin-2.2.21-RC2-0.2-sources.jar"
 )
 
 http_file(

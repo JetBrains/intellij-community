@@ -347,6 +347,11 @@ internal fun generateDeps(
         plugins.add("@lib//:rpc-plugin")
       }
     }
+    else if (it.name.startsWith("noria-compiler-plugin-") && it.name.endsWith(".jar")) {
+      if (module.module.name == "fleet.noria.cells") {
+        plugins.add("@lib//:noria-plugin")
+      }
+    }
   }
 
   checkForDuplicates("bazel deps", deps)

@@ -131,5 +131,5 @@ class DbContext<out QQ : Q>(
  * assertThrows<Throwable>{ foo.value }
  * ```
  */
-fun <T, U : Q> asOf(queryAPI: U, f: DbContext<U>.() -> T): T =
-  DbContext.bind(DbContext<U>(queryAPI, null)) { f() }
+inline fun <T, U : Q> asOf(queryAPI: U, f: DbContext<U>.() -> T): T =
+  DbContext.bind(DbContext(queryAPI, null), f)
