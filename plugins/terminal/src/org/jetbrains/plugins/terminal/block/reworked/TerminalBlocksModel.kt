@@ -5,13 +5,12 @@ import com.intellij.openapi.Disposable
 import com.intellij.openapi.util.Key
 import com.intellij.util.concurrency.annotations.RequiresEdt
 import org.jetbrains.annotations.ApiStatus
-import org.jetbrains.plugins.terminal.session.TerminalOutputBlock
 
 @ApiStatus.Internal
 interface TerminalBlocksModel {
   /** The list can be mutable in the implementation, so it should not be cached. */
   @get:RequiresEdt
-  val blocks: List<TerminalOutputBlock>
+  val blocks: List<TerminalBlockBase>
 
   fun addListener(parentDisposable: Disposable, listener: TerminalBlocksModelListener)
 

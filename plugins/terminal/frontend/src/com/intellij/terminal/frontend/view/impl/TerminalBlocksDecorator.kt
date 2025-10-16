@@ -13,7 +13,6 @@ import org.jetbrains.plugins.terminal.block.BlockTerminalOptions
 import org.jetbrains.plugins.terminal.block.BlockTerminalOptionsListener
 import org.jetbrains.plugins.terminal.block.reworked.*
 import org.jetbrains.plugins.terminal.block.ui.*
-import org.jetbrains.plugins.terminal.session.TerminalOutputBlock
 
 internal class TerminalBlocksDecorator(
   private val editor: EditorEx,
@@ -23,7 +22,7 @@ internal class TerminalBlocksDecorator(
   coroutineScope: CoroutineScope,
 ) {
   /** Block ID to decoration */
-  private val decorations: MutableMap<Int, BlockDecoration> = HashMap()
+  private val decorations: MutableMap<TerminalBlockId, BlockDecoration> = HashMap()
 
   init {
     blocksModel.addListener(coroutineScope.asDisposable(), object : TerminalBlocksModelListener {
@@ -68,19 +67,19 @@ internal class TerminalBlocksDecorator(
   private fun doHandleBlocksModelEvent(event: TerminalBlocksModelEvent) {
     when (event) {
       is TerminalBlockAddedEvent -> {
-        val previousBlock = blocksModel.blocks.getOrNull(blocksModel.blocks.lastIndex - 1)
+        val previousBlock = blocksModel.blocks.getOrNull(blocksModel.blocks.lastIndex - 1) as? TerminalCommandBlock
         if (previousBlock != null) {
           val decoration = decorations[previousBlock.id] ?: error("Decoration not found for block $previousBlock")
           disposeDecoration(decoration)
           decorations[previousBlock.id] = createFinishedBlockDecoration(previousBlock)
         }
 
-        val block = event.block
+        val block = event.block as? TerminalCommandBlock ?: return
         decorations[block.id] = createPromptDecoration(block)
       }
       is TerminalBlockRemovedEvent -> {
         val block = event.block
-        val decoration = decorations[block.id] ?: error("Decoration not found for block $block")
+        val decoration = decorations[block.id] ?: return
         disposeDecoration(decoration)
         decorations.remove(block.id)
       }
@@ -91,7 +90,7 @@ internal class TerminalBlocksDecorator(
     }
   }
 
-  private fun createPromptDecoration(block: TerminalOutputBlock): BlockDecoration {
+  private fun createPromptDecoration(block: TerminalCommandBlock): BlockDecoration {
     val startOffset = block.startOffset
     val endOffset = block.endOffset
 
@@ -109,7 +108,7 @@ internal class TerminalBlocksDecorator(
     return BlockDecoration(block.id, bgHighlighter, cornersHighlighter, topInlay, bottomInlay = null)
   }
 
-  private fun createFinishedBlockDecoration(block: TerminalOutputBlock): BlockDecoration {
+  private fun createFinishedBlockDecoration(block: TerminalCommandBlock): BlockDecoration {
     val startOffset = block.startOffset
     // End offset of the finished block is located after the line break.
     // But we need to place the end inlay before the line break and limit the height of the highlighters to the block content.
@@ -134,7 +133,7 @@ internal class TerminalBlocksDecorator(
 
     val blocks = blocksModel.blocks
     for (ind in blocks.indices) {
-      val block = blocks[ind]
+      val block = blocks[ind] as? TerminalCommandBlock ?: continue
       decorations[block.id] = if (ind < blocks.lastIndex) {
         createFinishedBlockDecoration(block)
       }
@@ -158,7 +157,7 @@ internal class TerminalBlocksDecorator(
     decoration.bottomInlay?.let { Disposer.dispose(it) }
   }
 
-  private fun createTopInlay(block: TerminalOutputBlock): Inlay<*> {
+  private fun createTopInlay(block: TerminalCommandBlock): Inlay<*> {
     val topRenderer = VerticalSpaceInlayRenderer {
       val isFirstBlock = blocksModel.blocks.firstOrNull()?.id == block.id
       if (isFirstBlock) {
@@ -197,7 +196,7 @@ internal class TerminalBlocksDecorator(
   }
 
   private data class BlockDecoration(
-    val blockId: Int,
+    val blockId: TerminalBlockId,
     val backgroundHighlighter: RangeHighlighter,
     val cornersHighlighter: RangeHighlighter,
     val topInlay: Inlay<*>,

@@ -7,14 +7,13 @@ import com.intellij.util.concurrency.annotations.RequiresEdt
 import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.annotations.VisibleForTesting
 import org.jetbrains.plugins.terminal.session.TerminalBlocksModelState
-import org.jetbrains.plugins.terminal.session.TerminalOutputBlock
 
 @ApiStatus.Internal
 class TerminalBlocksModelImpl(private val outputModel: TerminalOutputModel, parentDisposable: Disposable) : TerminalBlocksModel {
   @VisibleForTesting
   var blockIdCounter: Int = 0
 
-  override val blocks: MutableList<TerminalOutputBlock> = mutableListOf()
+  override val blocks: MutableList<TerminalBlockBase> = mutableListOf()
 
   private val dispatcher = EventDispatcher.create(TerminalBlocksModelListener::class.java)
 
@@ -38,7 +37,7 @@ class TerminalBlocksModelImpl(private val outputModel: TerminalOutputModel, pare
   }
 
   fun promptStarted(offset: TerminalOffset) {
-    val lastBlock = blocks.last()
+    val lastBlock = blocks.last() as TerminalCommandBlockImpl
     if (offset == lastBlock.startOffset) {
       blocks.removeLast()
       dispatcher.multicaster.blockRemoved(TerminalBlockRemovedEventImpl(this, lastBlock))
@@ -52,17 +51,17 @@ class TerminalBlocksModelImpl(private val outputModel: TerminalOutputModel, pare
   }
 
   fun promptFinished(offset: TerminalOffset) {
-    val curBlock = blocks.last()
+    val curBlock = blocks.last() as TerminalCommandBlockImpl
     blocks[blocks.lastIndex] = curBlock.copy(commandStartOffset = offset)
   }
 
   fun commandStarted(offset: TerminalOffset) {
-    val curBlock = blocks.last()
+    val curBlock = blocks.last() as TerminalCommandBlockImpl
     blocks[blocks.lastIndex] = curBlock.copy(outputStartOffset = offset)
   }
 
   fun commandFinished(exitCode: Int) {
-    val curBlock = blocks.last()
+    val curBlock = blocks.last() as TerminalCommandBlockImpl
     blocks[blocks.lastIndex] = curBlock.copy(exitCode = exitCode)
   }
 
@@ -114,12 +113,12 @@ class TerminalBlocksModelImpl(private val outputModel: TerminalOutputModel, pare
       addNewBlock(outputModel.startOffset)
     }
     else {
-      val lastBlock = blocks.last()
+      val lastBlock = blocks.last() as TerminalCommandBlockImpl
       blocks[blocks.lastIndex] = lastBlock.copy(endOffset = outputModel.endOffset)
     }
   }
 
-  private fun replaceBlocks(newBlocks: List<TerminalOutputBlock>) {
+  private fun replaceBlocks(newBlocks: List<TerminalBlockBase>) {
     val oldBlocks = blocks.toList()
     blocks.clear()
     blocks.addAll(newBlocks)
@@ -132,14 +131,14 @@ class TerminalBlocksModelImpl(private val outputModel: TerminalOutputModel, pare
     dispatcher.multicaster.blockAdded(TerminalBlockAddedEventImpl(this, newBlock))
   }
 
-  private fun createNewBlock(startOffset: TerminalOffset): TerminalOutputBlock {
-    return TerminalOutputBlock(
-      id = blockIdCounter++,
+  private fun createNewBlock(startOffset: TerminalOffset): TerminalCommandBlock {
+    return TerminalCommandBlockImpl(
+      id = TerminalBlockIdImpl(blockIdCounter++),
       startOffset = startOffset,
+      endOffset = outputModel.endOffset,
       commandStartOffset = null,
       outputStartOffset = null,
-      endOffset = outputModel.endOffset,
-      exitCode = null
+      exitCode = null,
     )
   }
 
@@ -150,18 +149,18 @@ class TerminalBlocksModelImpl(private val outputModel: TerminalOutputModel, pare
 
 private data class TerminalBlockAddedEventImpl(
   override val model: TerminalBlocksModel,
-  override val block: TerminalOutputBlock,
+  override val block: TerminalBlockBase,
 ) : TerminalBlockAddedEvent
 
 private data class TerminalBlockRemovedEventImpl(
   override val model: TerminalBlocksModel,
-  override val block: TerminalOutputBlock,
+  override val block: TerminalBlockBase,
 ) : TerminalBlockRemovedEvent
 
 private data class TerminalBlocksReplacedEventImpl(
   override val model: TerminalBlocksModel,
-  override val oldBlocks: List<TerminalOutputBlock>,
-  override val newBlocks: List<TerminalOutputBlock>,
+  override val oldBlocks: List<TerminalBlockBase>,
+  override val newBlocks: List<TerminalBlockBase>,
 ) : TerminalBlocksReplacedEvent
 
 /**
@@ -170,7 +169,7 @@ private data class TerminalBlocksReplacedEventImpl(
 @ApiStatus.Internal
 @RequiresEdt
 fun TerminalBlocksModel.isCommandTypingMode(): Boolean {
-  val lastBlock = blocks.lastOrNull() ?: return false
+  val lastBlock = blocks.lastOrNull() as? TerminalCommandBlock ?: return false
   // The command start offset is where the prompt ends.
   // If it's not there yet, it means the user can't type a command yet.
   // The output start offset is -1 until the command starts executing.

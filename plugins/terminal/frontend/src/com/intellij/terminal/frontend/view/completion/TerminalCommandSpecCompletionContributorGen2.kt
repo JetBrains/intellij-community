@@ -24,6 +24,7 @@ import org.jetbrains.plugins.terminal.block.completion.spec.ShellDataGenerators
 import org.jetbrains.plugins.terminal.block.completion.spec.impl.TerminalCommandCompletionServices
 import org.jetbrains.plugins.terminal.block.reworked.TerminalAliasesStorage
 import org.jetbrains.plugins.terminal.block.reworked.TerminalBlocksModel
+import org.jetbrains.plugins.terminal.block.reworked.TerminalCommandBlock
 import org.jetbrains.plugins.terminal.block.reworked.TerminalOutputModel
 import org.jetbrains.plugins.terminal.block.util.TerminalDataContextUtils.isReworkedTerminalEditor
 import org.jetbrains.plugins.terminal.block.util.TerminalDataContextUtils.isSuppressCompletion
@@ -36,7 +37,7 @@ internal class TerminalCommandSpecCompletionContributorGen2 : CompletionContribu
     if (!parameters.editor.isReworkedTerminalEditor) return
     val outputModel = parameters.editor.getUserData(TerminalOutputModel.KEY) ?: return
     val blocksModel = parameters.editor.getUserData(TerminalBlocksModel.KEY) ?: return
-    val lastBlock = blocksModel.blocks.lastOrNull() ?: return
+    val lastBlock = blocksModel.blocks.lastOrNull() as? TerminalCommandBlock ?: return
     val commandStartOffset = lastBlock.commandStartOffset ?: return
 
     if (parameters.completionType != CompletionType.BASIC) {
