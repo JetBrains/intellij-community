@@ -1,4 +1,4 @@
-<idea-plugin package="mypackage">
+<idea-plugin <error descr="Package attribute usage is discouraged and deprecated, content modules should be packaged into separate jars under `lib/modules/`. IntelliJ Monorepository build system does it automatically when the attribute is not specified. IntelliJ Platform Gradle Plugin allows doing that with `pluginModule` declaration since version 2.7.0.">package="mypackage"</error>>
   <id>com.intellij.myPlugin</id>
   <vendor>JetBrains</vendor>
   <version>1.0</version>
