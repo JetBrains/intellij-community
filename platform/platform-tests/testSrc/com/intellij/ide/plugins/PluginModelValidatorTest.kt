@@ -169,7 +169,7 @@ class PluginModelValidatorTest {
                <id>intellij.plugin</id>
                <content>
                   <module name="intellij.optional.module"/>
-                  <module name="intellij.required.module" loading='required'/>
+                  <module name="intellij.required.module" loading="required"/>
                </content>
             </idea-plugin>
       """)
