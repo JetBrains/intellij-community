@@ -77,21 +77,7 @@ class TerminalBlocksModelImpl(private val outputModel: TerminalOutputModel, pare
     check(state.blocks.isNotEmpty()) { "There should be always at least one block in the blocks model state" }
 
     blockIdCounter = state.blockIdCounter
-
-    for (block in blocks) {
-      dispatcher.multicaster.blockRemoved(TerminalBlockRemovedEventImpl(this, block))
-    }
-    blocks.clear()
-
-    val finishedBlocks = state.blocks.subList(0, state.blocks.size - 1)
-    for (block in finishedBlocks) {
-      blocks.add(block)
-      dispatcher.multicaster.blockAdded(TerminalBlockAddedEventImpl(this, block))
-    }
-
-    val lastBlock = state.blocks.last()
-    blocks.add(lastBlock)
-    dispatcher.multicaster.blockAdded(TerminalBlockAddedEventImpl(this, lastBlock))
+    replaceBlocks(state.blocks)
   }
 
   /**
@@ -120,12 +106,8 @@ class TerminalBlocksModelImpl(private val outputModel: TerminalOutputModel, pare
     }
     else {
       // All text was removed, so remove all blocks and leave an empty initial block.
-      for (block in blocks) {
-        dispatcher.multicaster.blockRemoved(TerminalBlockRemovedEventImpl(this, block))
-      }
-      blocks.clear()
-
-      addNewBlock(outputModel.startOffset)
+      val newBlock = createNewBlock(outputModel.startOffset)
+      replaceBlocks(listOf(newBlock))
     }
   }
 
@@ -148,6 +130,13 @@ class TerminalBlocksModelImpl(private val outputModel: TerminalOutputModel, pare
       val lastBlock = blocks.last()
       blocks[blocks.lastIndex] = lastBlock.copy(endOffset = outputModel.endOffset)
     }
+  }
+
+  private fun replaceBlocks(newBlocks: List<TerminalOutputBlock>) {
+    val oldBlocks = blocks.toList()
+    blocks.clear()
+    blocks.addAll(newBlocks)
+    dispatcher.multicaster.blocksReplaced(TerminalBlocksReplacedEventImpl(this, oldBlocks, newBlocks))
   }
 
   private fun addNewBlock(startOffset: TerminalOffset) {
@@ -181,6 +170,12 @@ private data class TerminalBlockRemovedEventImpl(
   override val model: TerminalBlocksModel,
   override val block: TerminalOutputBlock,
 ) : TerminalBlockRemovedEvent
+
+private data class TerminalBlocksReplacedEventImpl(
+  override val model: TerminalBlocksModel,
+  override val oldBlocks: List<TerminalOutputBlock>,
+  override val newBlocks: List<TerminalOutputBlock>,
+) : TerminalBlocksReplacedEvent
 
 /**
  * Returns true if the user can type a command right now.

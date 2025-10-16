@@ -34,6 +34,10 @@ internal class TerminalBlocksDecorator(
       override fun blockRemoved(event: TerminalBlockRemovedEvent) {
         handleBlocksModelEvent(event)
       }
+
+      override fun blocksReplaced(event: TerminalBlocksReplacedEvent) {
+        handleBlocksModelEvent(event)
+      }
     })
 
     BlockTerminalOptions.getInstance().addListener(coroutineScope.asDisposable(), object : BlockTerminalOptionsListener {
@@ -79,6 +83,10 @@ internal class TerminalBlocksDecorator(
         val decoration = decorations[block.id] ?: error("Decoration not found for block $block")
         disposeDecoration(decoration)
         decorations.remove(block.id)
+      }
+      is TerminalBlocksReplacedEvent -> {
+        disposeAllDecorations()
+        createDecorationsForAllBlocks()
       }
     }
   }
