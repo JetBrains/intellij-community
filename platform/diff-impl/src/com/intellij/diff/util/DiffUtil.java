@@ -1675,6 +1675,14 @@ public final class DiffUtil {
     holder.putUserData(DiffUserDataKeys.NOTIFICATION_PROVIDERS, newProviders);
   }
 
+  public static void addNotificationIfAbsent(@NotNull DiffNotificationProvider provider, @NotNull UserDataHolder holder) {
+    List<DiffNotificationProvider> providers = getNotificationProviders(holder);
+    if(providers.contains(provider)) return;
+    List<DiffNotificationProvider> newProviders = new ArrayList<>(providers);
+    newProviders.add(provider);
+    holder.putUserData(DiffUserDataKeys.NOTIFICATION_PROVIDERS, newProviders);
+  }
+
   public static @NotNull List<JComponent> createCustomNotifications(@Nullable DiffViewer viewer,
                                                                     @NotNull UserDataHolder context,
                                                                     @NotNull UserDataHolder request) {
