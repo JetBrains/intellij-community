@@ -1,4 +1,4 @@
-<idea-plugin package="com.intellij.searchEverywhereMl.ranking.core">
+<idea-plugin package="com.intellij.searchEverywhereMl.ranking.core" visibility="internal">
   <resource-bundle>messages.searchEverywhereMlBundle</resource-bundle>
 
   <dependencies>
