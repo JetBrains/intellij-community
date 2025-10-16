@@ -68,11 +68,8 @@ class UseOptimizedEelFunctions : LocalInspectionTool() {
       }
     }, true)
 
-  private fun handleMethod(holder: ProblemsHolder, node: UExpression, fqn: String) {
-    val methodPsi = when (node) {
-      is UCallExpression -> node.methodIdentifier?.sourcePsi ?: return
-      else -> node.sourcePsi ?: return
-    }
+  private fun handleMethod(holder: ProblemsHolder, node: UCallExpression, fqn: String) {
+    val methodPsi = node.methodIdentifier?.sourcePsi ?: return
     if (fqn == "java.nio.file.Files.readAllBytes") {
       holder.registerProblem(
         methodPsi, "Works ineffectively with remote Eel", ProblemHighlightType.WARNING,
@@ -83,6 +80,18 @@ class UseOptimizedEelFunctions : LocalInspectionTool() {
       holder.registerProblem(
         methodPsi, "Works ineffectively with remote Eel", ProblemHighlightType.WARNING,
         ReplaceWithEelFunction(holder.project, "com.intellij.platform.eel.fs.EelFiles", "readString"),
+      )
+    }
+    if (
+      (
+        fqn == "com.intellij.openapi.util.io.NioFiles.deleteRecursively" ||
+        fqn == "com.intellij.openapi.util.io.FileUtilRt.deleteRecursively"
+      ) &&
+      node.valueArgumentCount == 1
+    ) {
+      holder.registerProblem(
+        methodPsi, "Works ineffectively with remote Eel", ProblemHighlightType.WARNING,
+        ReplaceWithEelFunction(holder.project, "com.intellij.platform.eel.fs.EelFileUtils", "deleteRecursively"),
       )
     }
   }

@@ -565,6 +565,60 @@ class UseOptimizedEelFunctionsTest {
 
       doTest("Example.java", source, expectedResult)
     }
+
+    @Test
+    fun deleteRecursively() {
+      @Suppress("unused")
+      fun someFnThatIsNeverCalled() {
+        // Just a reminder that these functions are checked by this inspection.
+        // If something happens with the functions, the inspection is to be modified as well.
+        fun path(): Path = error("oops")
+        com.intellij.openapi.util.io.NioFiles.deleteRecursively(path())
+        com.intellij.openapi.util.io.FileUtilRt.deleteRecursively(path())
+      }
+
+      @Language("Java")
+      val source = """
+        import com.intellij.openapi.util.io.NioFiles;
+        import com.intellij.openapi.util.io.FileUtilRt;
+        import java.io.IOException;
+        import java.nio.charset.StandardCharsets;
+        import java.nio.file.Files;
+        import java.nio.file.Path;
+  
+        class Example {
+          void example() throws IOException {
+            NioFiles.<warning descr="Works ineffectively with remote Eel">deleteRecursively</warning>(Path.of(""));
+            NioFiles.deleteRecursively(Path.of(""), path -> {});  // This overload has no replacement in eel.
+            
+            FileUtilRt.<warning descr="Works ineffectively with remote Eel">deleteRecursively</warning>(Path.of(""));
+          }
+        }
+      """.trimIndent()
+
+      @Language("Java")
+      val expectedResult = """
+        import com.intellij.openapi.util.io.NioFiles;
+        import com.intellij.openapi.util.io.FileUtilRt;
+        import com.intellij.platform.eel.fs.EelFileUtils;
+        
+        import java.io.IOException;
+        import java.nio.charset.StandardCharsets;
+        import java.nio.file.Files;
+        import java.nio.file.Path;
+  
+        class Example {
+          void example() throws IOException {
+            EelFileUtils.deleteRecursively(Path.of(""));
+            NioFiles.deleteRecursively(Path.of(""), path -> {});  // This overload has no replacement in eel.
+            
+            EelFileUtils.deleteRecursively(Path.of(""));
+          }
+        }
+      """.trimIndent()
+
+      doTest("Example.java", source, expectedResult)
+    }
   }
 
   @BeforeEach
@@ -622,10 +676,12 @@ class UseOptimizedEelFunctionsTest {
         commit()
       }
 
-      PsiTestUtil.addSourceContentToRoots(
-        module,
-        Path.of(PathManager.getCommunityHomePath(), "platform/eel/src").refreshAndGetVirtualDirectory(),
-      )
+      for (directory in listOf("platform/eel/src", "platform/util/src", "platform/util-rt/src")) {
+        PsiTestUtil.addSourceContentToRoots(
+          module,
+          Path.of(PathManager.getCommunityHomePath(), directory).refreshAndGetVirtualDirectory(),
+        )
+      }
     }
   }
 }
