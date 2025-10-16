@@ -18,6 +18,8 @@ import java.nio.file.NoSuchFileException;
 import java.nio.file.Path;
 import java.nio.file.StandardOpenOption;
 import java.util.*;
+import java.util.logging.Level;
+import java.util.logging.Logger;
 import java.util.zip.Deflater;
 import java.util.zip.DeflaterOutputStream;
 import java.util.zip.InflaterInputStream;
@@ -25,6 +27,7 @@ import java.util.zip.InflaterInputStream;
 import static org.jetbrains.jps.util.Iterators.*;
 
 public class ConfigurationState {
+  private static final Logger LOG = Logger.getLogger("com.intellij.tools.build.bazel.jvmIncBuilder.impl.ConfigurationState");
   // Update the version value whenever a serialization format changes.
   // This will help to avoid multiple "failed to load configuration" error messages
   private static final int VERSION = 2;
@@ -98,6 +101,7 @@ public class ConfigurationState {
       out.writeLong(myFlagsDigest);
     }
     catch (Throwable e) {
+      LOG.log(Level.SEVERE, "Error saving build configuration state " + context.getTargetName(), e);
       context.report(Message.create(null, e));
     }
   }

@@ -195,12 +195,6 @@ public class StorageManager implements CloseableExt {
       safeClose(config.getGraph(), saveChanges);
     }
 
-    InstrumentationClassFinder finder = myInstrumentationClassFinder;
-    if (finder != null) {
-      myInstrumentationClassFinder = null;
-      finder.releaseResources();
-    }
-
     myComposite = null;
 
     safeClose(myOutputBuilder, saveChanges);
@@ -208,6 +202,12 @@ public class StorageManager implements CloseableExt {
 
     safeClose(myAbiOutputBuilder, saveChanges);
     myAbiOutputBuilder = null;
+
+    InstrumentationClassFinder finder = myInstrumentationClassFinder;
+    if (finder != null) {
+      myInstrumentationClassFinder = null;
+      finder.releaseResources();
+    }
   }
 
   private void safeClose(Closeable cl, boolean saveChanges) {
