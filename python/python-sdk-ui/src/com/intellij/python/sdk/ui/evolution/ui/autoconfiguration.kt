@@ -42,7 +42,7 @@ private class AutoconfigSelectSdkProvider() : EvoSelectSdkProvider {
     val section = EvoTreeSection(
       label = null,
       elements = createSdkInfoWithTools.mapIndexed { idx, createSdkInfoWithTool ->
-        EvoTreeLeafElement(RunConfiguratorAction(createSdkInfoWithTool.intentionName, idx))
+        EvoTreeLeafElement(RunConfiguratorAction(createSdkInfoWithTool.createSdkInfo.intentionName, idx))
       }
     )
 

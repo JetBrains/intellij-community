@@ -21,11 +21,10 @@ import com.intellij.pycharm.community.ide.impl.configuration.PySdkConfigurationC
 import com.intellij.pycharm.community.ide.impl.configuration.PySdkConfigurationCollector.Source
 import com.intellij.pycharm.community.ide.impl.configuration.PySdkConfigurationCollector.VirtualEnvResult
 import com.intellij.pycharm.community.ide.impl.configuration.ui.PyAddNewVirtualEnvFromFilePanel
-import com.intellij.python.sdk.ui.icons.PythonSdkUIIcons
 import com.intellij.ui.IdeBorderFactory
 import com.intellij.ui.components.JBLabel
 import com.intellij.util.ui.JBUI
-import com.jetbrains.python.PyToolUIInfo
+import com.jetbrains.python.ToolId
 import com.jetbrains.python.errorProcessing.PyResult
 import com.jetbrains.python.packaging.PyPackageUtil
 import com.jetbrains.python.packaging.management.PythonPackageManager
@@ -49,10 +48,9 @@ private val LOGGER = fileLogger()
 @ApiStatus.Internal
 class PyRequirementsTxtOrSetupPySdkConfiguration : PyProjectSdkConfigurationExtension {
 
-  override val toolInfo: PyToolUIInfo = PyToolUIInfo("venv", PythonSdkUIIcons.Tools.Pip)
+  override val toolId: ToolId = ToolId("PyRequirements") // This is nonsense, but will be dropped soon
 
   override suspend fun checkEnvironmentAndPrepareSdkCreator(module: Module): CreateSdkInfo? = prepareSdkCreator(
-    toolInfo,
     { checkManageableEnv(module) },
   ) { { needsConfirmation -> createAndAddSdk(module, if (needsConfirmation) Source.CONFIGURATOR else Source.INSPECTION) } }
 

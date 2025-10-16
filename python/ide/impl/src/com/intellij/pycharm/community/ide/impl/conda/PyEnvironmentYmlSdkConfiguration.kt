@@ -25,6 +25,7 @@ import com.intellij.util.FileName
 import com.intellij.util.concurrency.annotations.RequiresBackgroundThread
 import com.jetbrains.python.PyBundle
 import com.jetbrains.python.PyToolUIInfo
+import com.jetbrains.python.ToolId
 import com.jetbrains.python.configuration.PyConfigurableInterpreterList
 import com.jetbrains.python.errorProcessing.PyResult
 import com.jetbrains.python.getOrNull
@@ -64,10 +65,10 @@ import kotlin.io.path.name
 @ApiStatus.Internal
 class PyEnvironmentYmlSdkConfiguration : PyProjectSdkConfigurationExtension {
 
-  override val toolInfo: PyToolUIInfo = PyToolUIInfo("Conda", PythonSdkUIIcons.Tools.Anaconda)
+  override val toolId: ToolId = ToolId("Conda")
 
   override suspend fun checkEnvironmentAndPrepareSdkCreator(module: Module): CreateSdkInfo? = prepareSdkCreator(
-    toolInfo, { checkManageableEnv(module, it) }
+     { checkManageableEnv(module, it) }
   ) { envExists ->
     { needsConfirmation -> createAndAddSdk(module, if (needsConfirmation) Source.CONFIGURATOR else Source.INSPECTION, envExists) }
   }

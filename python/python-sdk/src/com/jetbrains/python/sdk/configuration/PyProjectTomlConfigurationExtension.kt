@@ -6,7 +6,6 @@ import org.jetbrains.annotations.ApiStatus
 
 @ApiStatus.Internal
 interface PyProjectTomlConfigurationExtension : PyProjectSdkConfigurationExtension {
-  val toolId: ToolId
 
   suspend fun createSdkWithoutPyProjectTomlChecks(module: Module): CreateSdkInfo?
 }

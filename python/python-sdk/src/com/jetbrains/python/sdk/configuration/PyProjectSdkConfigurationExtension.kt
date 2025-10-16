@@ -3,7 +3,7 @@ package com.jetbrains.python.sdk.configuration
 
 import com.intellij.openapi.extensions.ExtensionPointName
 import com.intellij.openapi.module.Module
-import com.jetbrains.python.PyToolUIInfo
+import com.jetbrains.python.ToolId
 import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.annotations.CheckReturnValue
 
@@ -24,11 +24,12 @@ interface PyProjectSdkConfigurationExtension {
      * We return all configurators in a sorted order. The order is determined by extensions order, but existing environments have a
      * higher priority. That means we first have all existing envs, and only after SDK creators that extensions can manage.
      */
-    suspend fun findAllSortedForModule(module: Module): List<CreateSdkInfo> = EP_NAME.extensionsIfPointIsRegistered
-        .mapNotNull { e -> e.checkEnvironmentAndPrepareSdkCreator(module) }.sorted()
+    suspend fun findAllSortedForModule(module: Module): List<CreateSdkInfoWithTool> = EP_NAME.extensionsIfPointIsRegistered
+      .mapNotNull { e -> e.checkEnvironmentAndPrepareSdkCreator(module)?.let { CreateSdkInfoWithTool(it, e.toolId) } }
+      .sortedBy { it.createSdkInfo }
   }
 
-  val toolInfo: PyToolUIInfo
+  val toolId: ToolId
 
   /**
    * Discovers whether this extension can provide a Python SDK for the given module and prepares a creator for it.
@@ -65,3 +66,8 @@ interface PyProjectSdkConfigurationExtension {
    */
   fun asPyProjectTomlSdkConfigurationExtension(): PyProjectTomlConfigurationExtension?
 }
+
+/**
+ * [createSdkInfo] with [toolId] that created it
+ */
+data class CreateSdkInfoWithTool(val createSdkInfo: CreateSdkInfo, val toolId: ToolId)

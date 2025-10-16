@@ -9,6 +9,7 @@ import com.intellij.pycharm.community.ide.impl.PyCharmCommunityCustomizationBund
 import com.intellij.pycharm.community.ide.impl.findEnvOrNull
 import com.jetbrains.python.PyBundle
 import com.jetbrains.python.PyToolUIInfo
+import com.jetbrains.python.ToolId
 import com.jetbrains.python.errorProcessing.MessageError
 import com.jetbrains.python.errorProcessing.PyResult
 import com.jetbrains.python.sdk.*
@@ -26,10 +27,10 @@ class PyVenvSdkConfiguration : PyProjectSdkConfigurationExtension {
   private val existingSdks by lazy { PythonSdkUtil.getAllSdks() }
   private val context = UserDataHolderBase()
 
-  override val toolInfo: PyToolUIInfo = PyToolUIInfo("Virtualenv", null)
+  override val toolId: ToolId = ToolId("Venv")
 
   override suspend fun checkEnvironmentAndPrepareSdkCreator(module: Module): CreateSdkInfo? = prepareSdkCreator(
-    toolInfo, { checkManageableEnv(module) }
+     { checkManageableEnv(module) }
   ) { { setupVenv(module) } }
 
   override fun asPyProjectTomlSdkConfigurationExtension(): PyProjectTomlConfigurationExtension? = null

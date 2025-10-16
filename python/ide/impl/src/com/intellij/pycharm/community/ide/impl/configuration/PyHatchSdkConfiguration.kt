@@ -27,16 +27,13 @@ class PyHatchSdkConfiguration : PyProjectTomlConfigurationExtension {
     private val LOGGER = Logger.getInstance(PyHatchSdkConfiguration::class.java)
   }
 
-  override val toolInfo: PyToolUIInfo = HATCH_UI_INFO
   override val toolId: ToolId = HATCH_TOOL_ID
 
   override suspend fun checkEnvironmentAndPrepareSdkCreator(module: Module): CreateSdkInfo? = prepareSdkCreator(
-    toolInfo,
     { checkExistence -> checkManageableEnv(module, checkExistence, true) },
   ) { envExists -> { createSdk(module, envExists) } }
 
   override suspend fun createSdkWithoutPyProjectTomlChecks(module: Module): CreateSdkInfo? = prepareSdkCreator(
-    toolInfo,
     { checkExistence -> checkManageableEnv(module, checkExistence, false) },
   ) { envExists -> { createSdk(module, envExists) } }
 

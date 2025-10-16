@@ -9,7 +9,7 @@ import com.intellij.openapi.project.Project
 import com.intellij.python.sdkConfigurator.common.detectSdkForModulesIn
 import com.intellij.python.sdkConfigurator.common.enableSDKAutoConfigurator
 import com.intellij.util.concurrency.annotations.RequiresBackgroundThread
-import com.jetbrains.python.sdk.configuration.CreateSdkInfo
+import com.jetbrains.python.sdk.configuration.CreateSdkInfoWithTool
 import com.jetbrains.python.sdk.configuration.PyProjectSdkConfigurationExtension
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.launch
@@ -37,6 +37,6 @@ private class MyService(val scope: CoroutineScope)
  */
 @ApiStatus.Internal
 @RequiresBackgroundThread
-internal fun findAllSortedForModuleForJvm(module: Module): List<CreateSdkInfo> = runBlockingMaybeCancellable {
+internal fun findAllSortedForModuleForJvm(module: Module): List<CreateSdkInfoWithTool> = runBlockingMaybeCancellable {
   PyProjectSdkConfigurationExtension.findAllSortedForModule(module)
 }
