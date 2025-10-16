@@ -17,6 +17,7 @@ import com.intellij.platform.util.coroutines.childScope
 import com.intellij.terminal.completion.spec.ShellCommandSpec
 import com.intellij.terminal.frontend.view.activeOutputModel
 import com.intellij.terminal.frontend.view.completion.TerminalLookupPrefixUpdater
+import com.intellij.terminal.frontend.view.impl.TerminalShellIntegrationImpl
 import com.intellij.terminal.frontend.view.impl.TerminalViewImpl
 import com.intellij.terminal.frontend.view.impl.TimedKeyEvent
 import com.intellij.terminal.tests.block.util.TestCommandSpecsProvider
@@ -50,9 +51,11 @@ class TerminalCompletionFixture(val project: Project, val testRootDisposable: Di
       terminalScope.cancel()
     }
     view = TerminalViewImpl(project, JBTerminalSystemSettingsProvider(), null, terminalScope)
+    val shellIntegration = TerminalShellIntegrationImpl(outputModel, terminalScope.childScope("TerminalShellIntegration"))
+    view.shellIntegrationFuture.complete(shellIntegration)
     val terminalOutputBlock = TerminalOutputBlock(0, outputModel.startOffset, outputModel.startOffset, null, outputModel.startOffset, null)
     val blocksModelState = TerminalBlocksModelState(listOf(terminalOutputBlock), 0)
-    view.blocksModel.restoreFromState(blocksModelState)
+    shellIntegration.blocksModel.restoreFromState(blocksModelState)
 
     Registry.get("terminal.type.ahead").setValue(true, testRootDisposable)
     TerminalCommandCompletion.enableForTests(testRootDisposable)

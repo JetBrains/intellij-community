@@ -86,12 +86,12 @@ class TerminalViewImpl(
   override val coroutineScope: CoroutineScope,
 ) : TerminalView {
   private val sessionFuture: CompletableFuture<TerminalSession> = CompletableFuture()
-  private val shellIntegrationFuture: CompletableFuture<TerminalShellIntegration> = CompletableFuture()
+
+  @VisibleForTesting
+  val shellIntegrationFuture: CompletableFuture<TerminalShellIntegration> = CompletableFuture()
 
   private val sessionModel: TerminalSessionModel
 
-  @VisibleForTesting
-  val blocksModel: TerminalBlocksModelImpl
   private val encodingManager: TerminalKeyEncodingManager
   private val controller: TerminalSessionController
 
@@ -192,11 +192,6 @@ class TerminalViewImpl(
                                                       coroutineScope.childScope("TerminalOutputScrollingModel"))
     outputEditor.putUserData(TerminalOutputScrollingModel.KEY, scrollingModel)
 
-    // todo: Blocks model should be created in TerminalShellIntegrationImpl
-    blocksModel = TerminalBlocksModelImpl(outputModel, coroutineScope.asDisposable())
-    outputEditor.putUserData(TerminalBlocksModel.KEY, blocksModel)
-    TerminalBlocksDecorator(outputEditor, outputModel, blocksModel, scrollingModel, coroutineScope.childScope("TerminalBlocksDecorator"))
-
     val outputModelController = TerminalTypeAheadOutputModelController(
       project,
       outputModel,
@@ -262,8 +257,8 @@ class TerminalViewImpl(
     val shellIntegrationEventsHandler = TerminalShellIntegrationEventsHandler(
       outputModelController,
       shellIntegrationFuture,
-      blocksModel,
       terminalAliasesStorage,
+      coroutineScope.childScope("TerminalShellIntegrationEventsHandler"),
     )
     controller.addEventsHandler(shellIntegrationEventsHandler)
 
@@ -292,6 +287,15 @@ class TerminalViewImpl(
       CoroutineName("Shell integration features init")
     ) {
       val shellIntegration = awaitShellIntegrationInitialized()
+
+      outputEditor.putUserData(TerminalBlocksModel.KEY, shellIntegration.blocksModel)
+      TerminalBlocksDecorator(
+        outputEditor,
+        outputModel,
+        shellIntegration.blocksModel,
+        scrollingModel,
+        coroutineScope.childScope("TerminalBlocksDecorator")
+      )
 
       configureInlineCompletion(
         outputEditor,
