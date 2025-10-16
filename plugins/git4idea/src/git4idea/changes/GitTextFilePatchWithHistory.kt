@@ -96,7 +96,7 @@ class GitTextFilePatchWithHistory(val patch: TextFilePatch, val isCumulative: Bo
       }
     }
     else {
-      error("Couldn't find commit ${fromCommitSha}")
+      null
     }
 
   private fun transferToChild(lineIndex: Int, beforeSha: String, fromCommitSha: String, afterSha: String): DiffLineLocation? =
@@ -113,7 +113,7 @@ class GitTextFilePatchWithHistory(val patch: TextFilePatch, val isCumulative: Bo
       }
     }
     else {
-      error("Couldn't find commit ${fromCommitSha}")
+      null
     }
 
   private fun transferLine(patchChain: List<TextFilePatch>, lineIndex: Int, rightToLeft: Boolean): TransferResult {
