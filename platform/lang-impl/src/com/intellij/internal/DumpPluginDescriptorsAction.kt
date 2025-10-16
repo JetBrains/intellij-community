@@ -140,7 +140,7 @@ private class PluginDescriptionDumper(val coroutineScope: CoroutineScope) {
     writeArrayFieldStart("modules")
     for (module in modules) {
       writeStartObject()
-      writeStringField("name", module.moduleId.id)
+      writeStringField("name", module.moduleId.name)
       val isEnabled = module in PluginManagerCore.getPluginSet().getEnabledModules()
       writeBooleanField("enabled", isEnabled)
       if (isEnabled) {

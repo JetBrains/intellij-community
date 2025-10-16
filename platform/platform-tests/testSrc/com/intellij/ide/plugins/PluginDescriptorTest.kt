@@ -388,7 +388,7 @@ class PluginDescriptorTest {
     assertThat(descriptor.pluginId.idString).isEqualTo("bar")
     assertThat(descriptor.resourceBundleBaseName).isEqualTo("resourceBundle")
     assertThat(descriptor.contentModules).hasSize(3)
-    assertThat(descriptor.contentModules).allMatch { it.resourceBundleBaseName == it.moduleId.id }
+    assertThat(descriptor.contentModules).allMatch { it.resourceBundleBaseName == it.moduleId.name }
   }
 
   @Test
@@ -471,7 +471,7 @@ class PluginDescriptorTest {
     }.buildDir(pluginDirPath)
     val foo = loadDescriptorInTest(pluginDirPath)
     assertThat(foo).hasExactlyEnabledContentModules("foo.internal", "foo.private", "foo.public")
-    val contentModules = foo.contentModules.sortedBy { it.moduleId.id }
+    val contentModules = foo.contentModules.sortedBy { it.moduleId.name }
     assertThat(contentModules[0].visibility).isEqualTo(ModuleVisibility.INTERNAL)
     assertThat(contentModules[1].visibility).isEqualTo(ModuleVisibility.PRIVATE)
     assertThat(contentModules[2].visibility).isEqualTo(ModuleVisibility.PUBLIC)

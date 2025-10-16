@@ -276,7 +276,7 @@ internal class ModuleBasedProductLoadingStrategy(internal val moduleRepository: 
           descriptor?.contentModules?.forEach { module ->
             if (module.packagePrefix == null) {
               val moduleId = module.moduleId
-              module.jarFiles = moduleRepository.getModule(RuntimeModuleId.module(moduleId.id)).resourceRootPaths
+              module.jarFiles = moduleRepository.getModule(RuntimeModuleId.module(moduleId.name)).resourceRootPaths
             }
           }
         }
@@ -313,7 +313,7 @@ internal class ModuleBasedProductLoadingStrategy(internal val moduleRepository: 
     productModules.mainModuleGroup.optionalModuleIds.contains(RuntimeModuleId.raw(moduleId))
 
   override fun findProductContentModuleClassesRoot(moduleId: PluginModuleId, moduleDir: Path): Path? {
-    val resolvedModule = moduleRepository.resolveModule(RuntimeModuleId.module(moduleId.id)).resolvedModule
+    val resolvedModule = moduleRepository.resolveModule(RuntimeModuleId.module(moduleId.name)).resolvedModule
     if (resolvedModule == null) {
       // https://youtrack.jetbrains.com/issue/CPP-38280
       // we log here, as only for JetBrainsClient it is expected that some module is not resolved

@@ -635,7 +635,7 @@ object PluginManagerCore {
     if (corePlugin != null) {
       val disabledModulesOfCorePlugin = corePlugin.contentModules.filter { it.moduleLoadingRule.required && !it.isMarkedForLoading }
       if (disabledModulesOfCorePlugin.isNotEmpty()) {
-        throw EssentialPluginMissingException(disabledModulesOfCorePlugin.map { it.moduleId.id })
+        throw EssentialPluginMissingException(disabledModulesOfCorePlugin.map { it.moduleId.name })
       }
     }
     var missing: MutableList<Pair<String, PluginNonLoadReason?>>? = null

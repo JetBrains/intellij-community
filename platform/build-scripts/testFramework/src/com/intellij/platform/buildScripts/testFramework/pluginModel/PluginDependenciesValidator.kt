@@ -360,12 +360,12 @@ class PluginDependenciesValidator private constructor(
     )
     val embeddedContentModules = descriptor.content.modules.filter { it.defaultLoadingRule == ModuleLoadingRule.EMBEDDED }.map { it.moduleId }
     val customConfigFileToModule = descriptor.content.modules.mapNotNull { 
-      moduleItem -> moduleItem.configFile?.let { it to moduleItem.moduleId.id.substringBefore('/') }
+      moduleItem -> moduleItem.configFile?.let { it to moduleItem.moduleId.name.substringBefore('/') }
     }.toMap()
     val pathResolver = LoadFromSourcePathResolver(pluginLayout, customConfigFileToModule, embeddedContentModules, xIncludeLoader)
     val dataLoader = LoadFromSourceDataLoader(mainPluginModule = mainModule) 
     loadPluginSubDescriptors(descriptor, pathResolver, loadingContext = loadingContext, dataLoader = dataLoader, pluginDir = pluginDir, pool = zipPool)
-    descriptor.jarFiles = (pluginLayout.jpsModulesInClasspath + embeddedContentModules.map { it.id }).map { getModuleOutputDir(it) }
+    descriptor.jarFiles = (pluginLayout.jpsModulesInClasspath + embeddedContentModules.map { it.name }).map { getModuleOutputDir(it) }
     return descriptor
   }
 
@@ -469,7 +469,7 @@ class PluginDependenciesValidator private constructor(
       if (moduleId in embeddedContentModules) {
         return emptyList()
       }
-      return listOf(getModuleOutputDir(moduleId.id.substringBefore('/')))
+      return listOf(getModuleOutputDir(moduleId.name.substringBefore('/')))
     }
   }
 

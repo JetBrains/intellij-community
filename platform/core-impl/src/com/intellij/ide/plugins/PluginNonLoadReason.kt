@@ -226,14 +226,14 @@ class PluginModuleDependencyCannotBeLoadedOrMissing(
   override val shouldNotifyUser: Boolean,
 ): PluginNonLoadReason {
   private val dependencyName: String
-    get() = containingPlugin?.idString ?: moduleDependency.id
+    get() = containingPlugin?.idString ?: moduleDependency.name
   // FIXME VERY confusing message
   override val detailedMessage: @NlsContexts.DetailedDescription String
     get() = CoreBundle.message("plugin.loading.error.long.depends.on.not.installed.plugin", plugin.name, dependencyName)
   override val shortMessage: @NlsContexts.Label String
     get() = CoreBundle.message("plugin.loading.error.short.depends.on.not.installed.plugin", dependencyName)
   override val logMessage: @NonNls String
-    get() = "Plugin '${plugin.name}' (${plugin.pluginId}) has module dependency '${moduleDependency.id}' which cannot be loaded or missing"
+    get() = "Plugin '${plugin.name}' (${plugin.pluginId}) has module dependency '${moduleDependency.name}' which cannot be loaded or missing"
 }
 
 @ApiStatus.Internal
@@ -270,11 +270,11 @@ class PluginHasDuplicateContentModuleDeclaration(
   val moduleId: PluginModuleId,
 ): PluginNonLoadReason {
   override val detailedMessage: @NlsContexts.DetailedDescription String
-    get() = CoreBundle.message("plugin.loading.error.long.content.modules.are.invalid.duplicate.module", plugin.name, moduleId.id)
+    get() = CoreBundle.message("plugin.loading.error.long.content.modules.are.invalid.duplicate.module", plugin.name, moduleId.name)
   override val shortMessage: @NlsContexts.Label String
     get() = CoreBundle.message("plugin.loading.error.short.content.modules.are.invalid.duplicate.module", plugin.name)
   override val logMessage: @NonNls String
-    get() = "Plugin '${plugin.name}' (${plugin.pluginId}) has duplicate declaration of content module '${moduleId.id}'"
+    get() = "Plugin '${plugin.name}' (${plugin.pluginId}) has duplicate declaration of content module '${moduleId.name}'"
   override val shouldNotifyUser: Boolean
     get() = true
 }
