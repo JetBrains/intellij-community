@@ -3,22 +3,22 @@ package org.jetbrains.kotlin.idea.core.script.k2.configurations
 
 import com.intellij.openapi.components.service
 import com.intellij.openapi.project.Project
-import com.intellij.openapi.projectRoots.ProjectJdkTable
 import com.intellij.openapi.projectRoots.Sdk
 import com.intellij.openapi.roots.OrderRootType
-import com.intellij.openapi.roots.ProjectRootManager
 import com.intellij.openapi.util.Key
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.platform.backend.workspace.toVirtualFileUrl
 import com.intellij.platform.backend.workspace.virtualFile
 import com.intellij.platform.backend.workspace.workspaceModel
-import com.intellij.platform.workspace.jps.entities.InheritedSdkDependency
-import com.intellij.platform.workspace.jps.entities.SdkDependency
+import com.intellij.platform.workspace.jps.entities.SdkEntity
+import com.intellij.platform.workspace.jps.entities.SdkRootTypeId
 import com.intellij.psi.search.GlobalSearchScope
 import com.intellij.psi.search.NonClasspathDirectoriesScope.compose
 import com.intellij.psi.util.CachedValue
 import com.intellij.psi.util.CachedValueProvider
 import com.intellij.psi.util.CachedValuesManager
+import com.intellij.workspaceModel.ide.impl.legacyBridge.sdk.customName
+import com.intellij.workspaceModel.ide.legacyBridge.ModifiableRootModelBridge
 import kotlinx.coroutines.CoroutineScope
 import org.jetbrains.kotlin.idea.core.script.k2.modules.KotlinScriptEntity
 import org.jetbrains.kotlin.idea.core.script.k2.modules.KotlinScriptLibraryEntity
@@ -44,7 +44,7 @@ private class AllScriptsDependencies(
 private data class ScriptDependencies(
     val classes: Collection<VirtualFile>,
     val sources: Collection<VirtualFile>,
-    val sdk: Sdk?,
+    val sdk: SdkEntity?,
 ) {
     companion object {
         val EMPTY = ScriptDependencies(setOf(), setOf(), null)
@@ -61,10 +61,10 @@ class ScriptConfigurationsProviderImpl(project: Project, val coroutineScope: Cor
             val (classes, sources) = snapshot.entities(KotlinScriptLibraryEntity::class.java).toClassesSources()
 
             val (sdkClasses, sdkSources) =
-                snapshot.entities(KotlinScriptEntity::class.java).mapNotNull { it.jdk }
+                snapshot.entities(KotlinScriptEntity::class.java).mapNotNull { entity -> entity.sdkId?.let { snapshot.resolve(it) } }
                     .fold(mutableSetOf<VirtualFile>() to mutableSetOf<VirtualFile>()) { (accClasses, accSources), jdk ->
-                        accClasses += jdk.rootProvider.getFiles(OrderRootType.CLASSES).toList()
-                        accSources += jdk.rootProvider.getFiles(OrderRootType.SOURCES).toList()
+                        accClasses += jdk.roots.filter { it.type == classesTypeId }.mapNotNull { it.url.virtualFile }
+                        accClasses += jdk.roots.filter { it.type == sourcesTypeId }.mapNotNull { it.url.virtualFile }
                         accClasses to accSources
                     }
 
@@ -82,15 +82,16 @@ class ScriptConfigurationsProviderImpl(project: Project, val coroutineScope: Cor
     }
 
     override fun getScriptDependenciesClassFilesScope(virtualFile: VirtualFile): GlobalSearchScope {
-        val (classes, _, sdk) = virtualFile.currentDependencies
-        val sdkClasses = sdk?.rootProvider?.getFiles(OrderRootType.CLASSES)?.toList() ?: emptyList<VirtualFile>()
-        return compose(classes + sdkClasses)
+        val sdk = virtualFile.currentDependencies.sdk
+        val sdkClasses = sdk?.roots?.filter { it.type == classesTypeId }?.mapNotNull { it.url.virtualFile } ?: emptyList()
+        return compose(virtualFile.currentDependencies.classes + sdkClasses)
     }
 
     override fun getScriptDependenciesClassFiles(virtualFile: VirtualFile): Collection<VirtualFile> =
         virtualFile.currentDependencies.classes
 
-    override fun getScriptSdk(virtualFile: VirtualFile): Sdk? = virtualFile.currentDependencies.sdk
+    override fun getScriptSdk(virtualFile: VirtualFile): Sdk? =
+        virtualFile.currentDependencies.sdk?.let { ModifiableRootModelBridge.findSdk(it.name, it.type) }
 
     private val VirtualFile.currentDependencies: ScriptDependencies
         get() {
@@ -106,7 +107,7 @@ class ScriptConfigurationsProviderImpl(project: Project, val coroutineScope: Cor
                 .toClassesSources()
 
             return ScriptDependencies(
-                classes, sources, entity.jdk
+                classes, sources, entity.sdkId?.let { snapshot.resolve(it) }
             )
         }
 
@@ -115,13 +116,6 @@ class ScriptConfigurationsProviderImpl(project: Project, val coroutineScope: Cor
             accClasses += entity.classes.mapNotNull { it.virtualFile }
             accSources += entity.sources.mapNotNull { it.virtualFile }
             accClasses to accSources
-        }
-
-    private val KotlinScriptEntity.jdk: Sdk?
-        get() = when (val sdkDependency = sdk) {
-            is SdkDependency -> ProjectJdkTable.getInstance().findJdk(sdkDependency.sdk.name, sdkDependency.sdk.type)
-            is InheritedSdkDependency -> ProjectRootManager.getInstance(project).projectSdk
-            else -> null
         }
 
     override fun getScriptConfigurationResult(file: KtFile): ScriptCompilationConfigurationResult? {
@@ -135,6 +129,9 @@ class ScriptConfigurationsProviderImpl(project: Project, val coroutineScope: Cor
     }
 
     companion object {
+        private val classesTypeId = SdkRootTypeId(OrderRootType.CLASSES.customName)
+        private val sourcesTypeId = SdkRootTypeId(OrderRootType.SOURCES.customName)
+
         fun getInstance(project: Project): ScriptConfigurationsProviderImpl =
             project.service<ScriptConfigurationsProvider>() as ScriptConfigurationsProviderImpl
     }

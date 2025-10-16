@@ -12,8 +12,6 @@ import kotlin.script.experimental.host.ScriptingHostConfiguration
 import kotlin.script.experimental.jvm.defaultJvmScriptingHostConfiguration
 import kotlin.script.templates.standard.ScriptTemplateWithArgs
 
-const val DEFINITION_ID: String = "ideGradleScriptDefinitionId"
-
 open class GradleScriptDefinition(
     compilationConfiguration: ScriptCompilationConfiguration,
     override val hostConfiguration: ScriptingHostConfiguration,
@@ -25,9 +23,6 @@ open class GradleScriptDefinition(
     init {
         order = Int.MIN_VALUE
     }
-
-    override val definitionId: String
-        get() = DEFINITION_ID
 
     override val canDefinitionBeSwitchedOff: Boolean = false
 

@@ -9,8 +9,6 @@ import com.intellij.openapi.roots.ProjectRootManager
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.platform.backend.workspace.WorkspaceModel
 import com.intellij.platform.backend.workspace.toVirtualFileUrl
-import com.intellij.platform.workspace.jps.entities.InheritedSdkDependency
-import com.intellij.platform.workspace.jps.entities.SdkDependency
 import com.intellij.platform.workspace.jps.entities.SdkId
 import com.intellij.platform.workspace.storage.EntitySource
 import com.intellij.platform.workspace.storage.MutableEntityStorage
@@ -69,7 +67,7 @@ open class DefaultScriptConfigurationHandler(
 
         project.service<ScriptReportSink>().attachReports(virtualFile, result.reports)
 
-        return ScriptConfigurationWithSdk(result, sdk)
+        return ScriptConfigurationWithSdk(result, sdk?.let { SdkId(it.name, it.sdkType.name) })
     }
 
     override suspend fun updateWorkspaceModel(configurationPerFile: Map<VirtualFile, ScriptConfigurationWithSdk>) {
@@ -105,12 +103,11 @@ open class DefaultScriptConfigurationHandler(
                 result addEntity KotlinScriptLibraryEntity(classes, sources, DefaultScriptEntitySource)
             }
 
-            val sdk = configurationWithSdk.sdk?.let { SdkDependency(SdkId(it.name, it.sdkType.name)) }
-
             result addEntity KotlinScriptEntity(
-                scriptUrl, libraryIds.toList(),
-                sdk ?: InheritedSdkDependency, DefaultScriptEntitySource
-            )
+                scriptUrl, libraryIds.toList(), DefaultScriptEntitySource
+            ) {
+                this.sdkId = configurationWithSdk.sdkId
+            }
         }
 
         return result

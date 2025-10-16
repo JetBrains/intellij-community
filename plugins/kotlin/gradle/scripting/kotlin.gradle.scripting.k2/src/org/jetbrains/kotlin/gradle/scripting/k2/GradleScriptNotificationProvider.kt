@@ -23,13 +23,11 @@ import org.jetbrains.kotlin.gradle.scripting.shared.roots.GradleBuildRootsLocato
 import org.jetbrains.kotlin.gradle.scripting.shared.roots.Imported
 import org.jetbrains.kotlin.gradle.scripting.shared.runPartialGradleImport
 import org.jetbrains.kotlin.idea.core.script.shared.KotlinBaseScriptingBundle
-import org.jetbrains.kotlin.idea.core.script.k2.configurations.ScriptConfigurationsProviderImpl
 import org.jetbrains.kotlin.idea.util.isKotlinFileType
 import org.jetbrains.plugins.gradle.util.GradleConstants
 import java.io.File
 import java.util.function.Function
 import javax.swing.JComponent
-import kotlin.script.experimental.api.valueOrNull
 
 //TODO: KTIJ-30408
 internal class GradleScriptNotificationProvider : EditorNotificationProvider {
@@ -160,7 +158,7 @@ internal class GradleScriptNotificationProvider : EditorNotificationProvider {
     }
 
     private fun isImported(virtualFile: VirtualFile, project: Project): Boolean =
-        GradleScriptRefinedConfigurationProvider.getInstance(project).get(virtualFile) != null
+        GradleKotlinScriptService.getInstance(project).get(virtualFile) != null
 
     private fun linkProject(
         project: Project,

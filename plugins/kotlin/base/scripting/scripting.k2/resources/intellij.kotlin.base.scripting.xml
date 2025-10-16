@@ -13,11 +13,6 @@
             interface="org.jetbrains.kotlin.idea.core.script.k2.modules.K2IdeScriptAdditionalIdeaDependenciesProvider"
             dynamic="true"/>
 
-    <extensionPoint
-            qualifiedName="org.jetbrains.kotlin.kotlinScripDeferredResolutionPolicy"
-            interface="org.jetbrains.kotlin.idea.core.script.k2.highlighting.KotlinScripDeferredResolutionPolicy"
-            area="IDEA_PROJECT"
-            dynamic="true"/>
   </extensionPoints>
 
   <extensions defaultExtensionNs="com.intellij">

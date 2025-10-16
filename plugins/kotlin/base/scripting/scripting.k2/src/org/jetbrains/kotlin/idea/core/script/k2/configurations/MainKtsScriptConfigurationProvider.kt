@@ -4,12 +4,9 @@ package org.jetbrains.kotlin.idea.core.script.k2.configurations
 import com.google.common.collect.TreeMultimap
 import com.google.common.graph.Traverser
 import com.intellij.openapi.application.smartReadAction
-import com.intellij.openapi.application.writeAction
 import com.intellij.openapi.components.Service
 import com.intellij.openapi.components.service
 import com.intellij.openapi.project.Project
-import com.intellij.openapi.projectRoots.JavaSdk
-import com.intellij.openapi.projectRoots.ProjectJdkTable
 import com.intellij.openapi.roots.ProjectRootManager
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.platform.backend.workspace.WorkspaceModel
@@ -18,11 +15,10 @@ import com.intellij.platform.backend.workspace.workspaceModel
 import com.intellij.platform.ide.progress.withBackgroundProgress
 import com.intellij.platform.util.progress.ProgressReporter
 import com.intellij.platform.util.progress.reportProgressScope
-import com.intellij.platform.workspace.jps.entities.InheritedSdkDependency
+import com.intellij.platform.workspace.jps.entities.SdkId
 import com.intellij.platform.workspace.storage.EntitySource
 import com.intellij.platform.workspace.storage.MutableEntityStorage
 import kotlinx.coroutines.CoroutineScope
-import kotlinx.coroutines.launch
 import org.jetbrains.kotlin.idea.core.script.k2.configurations.DefaultScriptConfigurationHandler.DefaultScriptEntitySource
 import org.jetbrains.kotlin.idea.core.script.k2.modules.KotlinScriptEntity
 import org.jetbrains.kotlin.idea.core.script.k2.modules.KotlinScriptLibraryEntity
@@ -86,13 +82,6 @@ class MainKtsScriptConfigurationProvider(val project: Project, val coroutineScop
     private suspend fun resolveMainKtsConfiguration(mainKts: VirtualFile, definition: ScriptDefinition): ScriptConfigurationWithSdk {
         val scriptSource = VirtualFileScriptSource(mainKts)
         val sdk = ProjectRootManager.getInstance(project).projectSdk
-            ?: ProjectJdkTable.getInstance().findMostRecentSdkOfType(JavaSdk.getInstance())?.also {
-                coroutineScope.launch {
-                    writeAction {
-                        ProjectRootManager.getInstance(project).projectSdk = it
-                    }
-                }
-            }
 
         val providedConfiguration = sdk?.homePath?.let { jdkHome ->
             definition.compilationConfiguration.with {
@@ -115,7 +104,7 @@ class MainKtsScriptConfigurationProvider(val project: Project, val coroutineScop
             }
         }
 
-        return ScriptConfigurationWithSdk(result, sdk)
+        return ScriptConfigurationWithSdk(result, sdk?.let { SdkId(it.name, it.sdkType.name) })
     }
 
     override suspend fun updateWorkspaceModel(configurationPerFile: Map<VirtualFile, ScriptConfigurationWithSdk>) {
@@ -162,8 +151,10 @@ class MainKtsScriptConfigurationProvider(val project: Project, val coroutineScop
             }
 
             storageToUpdate addEntity KotlinScriptEntity(
-                virtualFileUrl, libraryIds.toList(), InheritedSdkDependency, MainKtsKotlinScriptEntitySource
-            )
+                virtualFileUrl, libraryIds.toList(), MainKtsKotlinScriptEntitySource
+            ) {
+                this.sdkId = configurationWithSdk.sdkId
+            }
         }
 
         return storageToUpdate

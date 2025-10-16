@@ -38,7 +38,12 @@
   </extensions>
 
   <extensions defaultExtensionNs="org.jetbrains.kotlin">
-    <kotlinScripDeferredResolutionPolicy implementation="org.jetbrains.kotlin.gradle.scripting.k2.GradleScripDeferredResolvePolicy"/>
-    <scriptDefinitionsSource implementation="org.jetbrains.kotlin.gradle.scripting.k2.GradleScriptDefinitionsSource"/>
+    <scriptHighlightingExtension implementation="org.jetbrains.kotlin.gradle.scripting.k2.GradleScriptHighlightingExtension"/>
+    <scriptDefinitionsSource implementation="org.jetbrains.kotlin.gradle.scripting.k2.definition.GradleScriptDefinitionsSource"/>
   </extensions>
+
+  <projectListeners>
+    <listener class="org.jetbrains.kotlin.gradle.scripting.k2.GradleKotlinScriptService$GradleWorkspaceModelListener"
+              topic="com.intellij.platform.backend.workspace.WorkspaceModelChangeListener"/>
+  </projectListeners>
 </idea-plugin>

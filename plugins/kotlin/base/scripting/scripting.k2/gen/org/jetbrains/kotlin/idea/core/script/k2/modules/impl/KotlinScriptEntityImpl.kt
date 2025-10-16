@@ -1,16 +1,9 @@
 // Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.kotlin.idea.core.script.k2.modules.impl
 
-import com.intellij.platform.workspace.jps.entities.InheritedSdkDependency
-import com.intellij.platform.workspace.jps.entities.LibraryDependency
-import com.intellij.platform.workspace.jps.entities.LibraryId
-import com.intellij.platform.workspace.jps.entities.ModuleDependency
-import com.intellij.platform.workspace.jps.entities.ModuleDependencyItem
-import com.intellij.platform.workspace.jps.entities.ModuleId
-import com.intellij.platform.workspace.jps.entities.ModuleSourceDependency
-import com.intellij.platform.workspace.jps.entities.SdkDependency
 import com.intellij.platform.workspace.jps.entities.SdkId
 import com.intellij.platform.workspace.storage.*
+import com.intellij.platform.workspace.storage.annotations.Default
 import com.intellij.platform.workspace.storage.impl.ModifiableWorkspaceEntityBase
 import com.intellij.platform.workspace.storage.impl.SoftLinkable
 import com.intellij.platform.workspace.storage.impl.WorkspaceEntityBase
@@ -25,6 +18,8 @@ import com.intellij.platform.workspace.storage.url.VirtualFileUrl
 import org.jetbrains.kotlin.idea.core.script.k2.modules.KotlinScriptEntity
 import org.jetbrains.kotlin.idea.core.script.k2.modules.KotlinScriptLibraryEntityId
 import org.jetbrains.kotlin.idea.core.script.k2.modules.ModifiableKotlinScriptEntity
+import org.jetbrains.kotlin.idea.core.script.k2.modules.ScriptCompilationConfigurationEntity
+import org.jetbrains.kotlin.idea.core.script.k2.modules.ScriptDiagnosticData
 
 @GeneratedCodeApiVersion(3)
 @GeneratedCodeImplVersion(7)
@@ -52,11 +47,19 @@ internal class KotlinScriptEntityImpl(private val dataSource: KotlinScriptEntity
       return dataSource.dependencies
     }
 
-  override val sdk: ModuleDependencyItem
+  override val configuration: ScriptCompilationConfigurationEntity?
     get() {
-      readField("sdk")
-      return dataSource.sdk
+      readField("configuration")
+      return dataSource.configuration
     }
+
+  override val sdkId: SdkId?
+    get() {
+      readField("sdkId")
+      return dataSource.sdkId
+    }
+
+  override var reports: List<ScriptDiagnosticData> = dataSource.reports
 
   override val entitySource: EntitySource
     get() {
@@ -108,9 +111,6 @@ internal class KotlinScriptEntityImpl(private val dataSource: KotlinScriptEntity
       if (!getEntityData().isDependenciesInitialized()) {
         error("Field KotlinScriptEntity#dependencies should be initialized")
       }
-      if (!getEntityData().isSdkInitialized()) {
-        error("Field KotlinScriptEntity#sdk should be initialized")
-      }
     }
 
     override fun connectionIdList(): List<ConnectionId> {
@@ -122,6 +122,10 @@ internal class KotlinScriptEntityImpl(private val dataSource: KotlinScriptEntity
       if (collection_dependencies is MutableWorkspaceList<*>) {
         collection_dependencies.cleanModificationUpdateAction()
       }
+      val collection_reports = getEntityData().reports
+      if (collection_reports is MutableWorkspaceList<*>) {
+        collection_reports.cleanModificationUpdateAction()
+      }
     }
 
     // Relabeling code, move information from dataSource to this builder
@@ -130,7 +134,9 @@ internal class KotlinScriptEntityImpl(private val dataSource: KotlinScriptEntity
       if (this.entitySource != dataSource.entitySource) this.entitySource = dataSource.entitySource
       if (this.virtualFileUrl != dataSource.virtualFileUrl) this.virtualFileUrl = dataSource.virtualFileUrl
       if (this.dependencies != dataSource.dependencies) this.dependencies = dataSource.dependencies.toMutableList()
-      if (this.sdk != dataSource.sdk) this.sdk = dataSource.sdk
+      if (this.configuration != dataSource?.configuration) this.configuration = dataSource.configuration
+      if (this.sdkId != dataSource?.sdkId) this.sdkId = dataSource.sdkId
+      if (this.reports != dataSource.reports) this.reports = dataSource.reports.toMutableList()
       updateChildToParentReferences(parents)
     }
 
@@ -176,13 +182,44 @@ internal class KotlinScriptEntityImpl(private val dataSource: KotlinScriptEntity
         dependenciesUpdater.invoke(value)
       }
 
-    override var sdk: ModuleDependencyItem
-      get() = getEntityData().sdk
+    override var configuration: ScriptCompilationConfigurationEntity?
+      get() = getEntityData().configuration
       set(value) {
         checkModificationAllowed()
-        getEntityData(true).sdk = value
-        changedProperty.add("sdk")
+        getEntityData(true).configuration = value
+        changedProperty.add("configuration")
 
+      }
+
+    override var sdkId: SdkId?
+      get() = getEntityData().sdkId
+      set(value) {
+        checkModificationAllowed()
+        getEntityData(true).sdkId = value
+        changedProperty.add("sdkId")
+
+      }
+
+    private val reportsUpdater: (value: List<ScriptDiagnosticData>) -> Unit = { value ->
+
+      changedProperty.add("reports")
+    }
+    override var reports: MutableList<ScriptDiagnosticData>
+      get() {
+        val collection_reports = getEntityData().reports
+        if (collection_reports !is MutableWorkspaceList) return collection_reports
+        if (diff == null || modifiable.get()) {
+          collection_reports.setModificationUpdateAction(reportsUpdater)
+        }
+        else {
+          collection_reports.cleanModificationUpdateAction()
+        }
+        return collection_reports
+      }
+      set(value) {
+        checkModificationAllowed()
+        getEntityData(true).reports = value
+        reportsUpdater.invoke(value)
       }
 
     override fun getEntityClass(): Class<KotlinScriptEntity> = KotlinScriptEntity::class.java
@@ -193,32 +230,23 @@ internal class KotlinScriptEntityImpl(private val dataSource: KotlinScriptEntity
 internal class KotlinScriptEntityData : WorkspaceEntityData<KotlinScriptEntity>(), SoftLinkable {
   lateinit var virtualFileUrl: VirtualFileUrl
   lateinit var dependencies: MutableList<KotlinScriptLibraryEntityId>
-  lateinit var sdk: ModuleDependencyItem
+  var configuration: ScriptCompilationConfigurationEntity? = null
+  var sdkId: SdkId? = null
+  var reports: MutableList<ScriptDiagnosticData> = listOf<ScriptDiagnosticData>().toMutableWorkspaceList()
 
   internal fun isVirtualFileUrlInitialized(): Boolean = ::virtualFileUrl.isInitialized
   internal fun isDependenciesInitialized(): Boolean = ::dependencies.isInitialized
-  internal fun isSdkInitialized(): Boolean = ::sdk.isInitialized
 
   override fun getLinks(): Set<SymbolicEntityId<*>> {
     val result = HashSet<SymbolicEntityId<*>>()
     for (item in dependencies) {
       result.add(item)
     }
-    val _sdk = sdk
-    when (_sdk) {
-      is InheritedSdkDependency -> {
-      }
-      is LibraryDependency -> {
-        result.add(_sdk.library)
-      }
-      is ModuleDependency -> {
-        result.add(_sdk.module)
-      }
-      is ModuleSourceDependency -> {
-      }
-      is SdkDependency -> {
-        result.add(_sdk.sdk)
-      }
+    val optionalLink_sdkId = sdkId
+    if (optionalLink_sdkId != null) {
+      result.add(optionalLink_sdkId)
+    }
+    for (item in reports) {
     }
     return result
   }
@@ -227,21 +255,11 @@ internal class KotlinScriptEntityData : WorkspaceEntityData<KotlinScriptEntity>(
     for (item in dependencies) {
       index.index(this, item)
     }
-    val _sdk = sdk
-    when (_sdk) {
-      is InheritedSdkDependency -> {
-      }
-      is LibraryDependency -> {
-        index.index(this, _sdk.library)
-      }
-      is ModuleDependency -> {
-        index.index(this, _sdk.module)
-      }
-      is ModuleSourceDependency -> {
-      }
-      is SdkDependency -> {
-        index.index(this, _sdk.sdk)
-      }
+    val optionalLink_sdkId = sdkId
+    if (optionalLink_sdkId != null) {
+      index.index(this, optionalLink_sdkId)
+    }
+    for (item in reports) {
     }
   }
 
@@ -254,30 +272,14 @@ internal class KotlinScriptEntityData : WorkspaceEntityData<KotlinScriptEntity>(
         index.index(this, item)
       }
     }
-    val _sdk = sdk
-    when (_sdk) {
-      is InheritedSdkDependency -> {
+    val optionalLink_sdkId = sdkId
+    if (optionalLink_sdkId != null) {
+      val removedItem_optionalLink_sdkId = mutablePreviousSet.remove(optionalLink_sdkId)
+      if (!removedItem_optionalLink_sdkId) {
+        index.index(this, optionalLink_sdkId)
       }
-      is LibraryDependency -> {
-        val removedItem__sdk_library = mutablePreviousSet.remove(_sdk.library)
-        if (!removedItem__sdk_library) {
-          index.index(this, _sdk.library)
-        }
-      }
-      is ModuleDependency -> {
-        val removedItem__sdk_module = mutablePreviousSet.remove(_sdk.module)
-        if (!removedItem__sdk_module) {
-          index.index(this, _sdk.module)
-        }
-      }
-      is ModuleSourceDependency -> {
-      }
-      is SdkDependency -> {
-        val removedItem__sdk_sdk = mutablePreviousSet.remove(_sdk.sdk)
-        if (!removedItem__sdk_sdk) {
-          index.index(this, _sdk.sdk)
-        }
-      }
+    }
+    for (item in reports) {
     }
     for (removed in mutablePreviousSet) {
       index.remove(this, removed)
@@ -304,59 +306,21 @@ internal class KotlinScriptEntityData : WorkspaceEntityData<KotlinScriptEntity>(
     if (dependencies_data != null) {
       dependencies = dependencies_data as MutableList<KotlinScriptLibraryEntityId>
     }
-    val _sdk = sdk
-    val res_sdk = when (_sdk) {
-      is InheritedSdkDependency -> {
-        _sdk
+    var sdkId_data_optional = if (sdkId != null) {
+      val sdkId___data = if (sdkId!! == oldLink) {
+        changed = true
+        newLink as SdkId
       }
-      is LibraryDependency -> {
-        val _sdk_library_data = if (_sdk.library == oldLink) {
-          changed = true
-          newLink as LibraryId
-        }
-        else {
-          null
-        }
-        var _sdk_data = _sdk
-        if (_sdk_library_data != null) {
-          _sdk_data = _sdk_data.copy(library = _sdk_library_data)
-        }
-        _sdk_data
+      else {
+        null
       }
-      is ModuleDependency -> {
-        val _sdk_module_data = if (_sdk.module == oldLink) {
-          changed = true
-          newLink as ModuleId
-        }
-        else {
-          null
-        }
-        var _sdk_data = _sdk
-        if (_sdk_module_data != null) {
-          _sdk_data = _sdk_data.copy(module = _sdk_module_data)
-        }
-        _sdk_data
-      }
-      is ModuleSourceDependency -> {
-        _sdk
-      }
-      is SdkDependency -> {
-        val _sdk_sdk_data = if (_sdk.sdk == oldLink) {
-          changed = true
-          newLink as SdkId
-        }
-        else {
-          null
-        }
-        var _sdk_data = _sdk
-        if (_sdk_sdk_data != null) {
-          _sdk_data = _sdk_data.copy(sdk = _sdk_sdk_data)
-        }
-        _sdk_data
-      }
+      sdkId___data
     }
-    if (res_sdk != null) {
-      sdk = res_sdk
+    else {
+      null
+    }
+    if (sdkId_data_optional != null) {
+      sdkId = sdkId_data_optional
     }
     return changed
   }
@@ -387,6 +351,7 @@ internal class KotlinScriptEntityData : WorkspaceEntityData<KotlinScriptEntity>(
     val clonedEntity = super.clone()
     clonedEntity as KotlinScriptEntityData
     clonedEntity.dependencies = clonedEntity.dependencies.toMutableWorkspaceList()
+    clonedEntity.reports = clonedEntity.reports.toMutableWorkspaceList()
     return clonedEntity
   }
 
@@ -395,7 +360,10 @@ internal class KotlinScriptEntityData : WorkspaceEntityData<KotlinScriptEntity>(
   }
 
   override fun createDetachedEntity(parents: List<ModifiableWorkspaceEntity<*>>): ModifiableWorkspaceEntity<*> {
-    return KotlinScriptEntity(virtualFileUrl, dependencies, sdk, entitySource) {
+    return KotlinScriptEntity(virtualFileUrl, dependencies, entitySource) {
+      this.configuration = this@KotlinScriptEntityData.configuration
+      this.sdkId = this@KotlinScriptEntityData.sdkId
+      this.reports = this@KotlinScriptEntityData.reports.toMutableWorkspaceList()
     }
   }
 
@@ -413,7 +381,9 @@ internal class KotlinScriptEntityData : WorkspaceEntityData<KotlinScriptEntity>(
     if (this.entitySource != other.entitySource) return false
     if (this.virtualFileUrl != other.virtualFileUrl) return false
     if (this.dependencies != other.dependencies) return false
-    if (this.sdk != other.sdk) return false
+    if (this.configuration != other.configuration) return false
+    if (this.sdkId != other.sdkId) return false
+    if (this.reports != other.reports) return false
     return true
   }
 
@@ -425,7 +395,9 @@ internal class KotlinScriptEntityData : WorkspaceEntityData<KotlinScriptEntity>(
 
     if (this.virtualFileUrl != other.virtualFileUrl) return false
     if (this.dependencies != other.dependencies) return false
-    if (this.sdk != other.sdk) return false
+    if (this.configuration != other.configuration) return false
+    if (this.sdkId != other.sdkId) return false
+    if (this.reports != other.reports) return false
     return true
   }
 
@@ -433,7 +405,9 @@ internal class KotlinScriptEntityData : WorkspaceEntityData<KotlinScriptEntity>(
     var result = entitySource.hashCode()
     result = 31 * result + virtualFileUrl.hashCode()
     result = 31 * result + dependencies.hashCode()
-    result = 31 * result + sdk.hashCode()
+    result = 31 * result + configuration.hashCode()
+    result = 31 * result + sdkId.hashCode()
+    result = 31 * result + reports.hashCode()
     return result
   }
 
@@ -441,7 +415,9 @@ internal class KotlinScriptEntityData : WorkspaceEntityData<KotlinScriptEntity>(
     var result = javaClass.hashCode()
     result = 31 * result + virtualFileUrl.hashCode()
     result = 31 * result + dependencies.hashCode()
-    result = 31 * result + sdk.hashCode()
+    result = 31 * result + configuration.hashCode()
+    result = 31 * result + sdkId.hashCode()
+    result = 31 * result + reports.hashCode()
     return result
   }
 }

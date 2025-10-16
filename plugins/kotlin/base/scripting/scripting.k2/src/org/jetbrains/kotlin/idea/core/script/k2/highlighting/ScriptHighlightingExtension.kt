@@ -5,7 +5,7 @@ import org.jetbrains.kotlin.idea.core.script.shared.AbstractKotlinScriptHighligh
 import org.jetbrains.kotlin.psi.KtFile
 
 class ScriptHighlightingExtension : AbstractKotlinScriptHighlightingExtension {
-    override fun calculateShouldHighlightScript(file: KtFile): Boolean {
+    override fun shouldHighlight(file: KtFile): Boolean {
         val strategy = DefaultScriptResolutionStrategy.getInstance(file.project)
         return strategy.isReadyToHighlight(file).also { isReady -> if (!isReady) strategy.execute(file) }
     }
