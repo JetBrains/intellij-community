@@ -1506,6 +1506,7 @@
       <module fileurl="file://$PROJECT_DIR$/plugins/performanceTesting/commands-model/intellij.tools.ide.performanceTesting.commands.iml" filepath="$PROJECT_DIR$/plugins/performanceTesting/commands-model/intellij.tools.ide.performanceTesting.commands.iml" />
       <module fileurl="file://$PROJECT_DIR$/tools/intellij.tools.ide.starter/intellij.tools.ide.starter.iml" filepath="$PROJECT_DIR$/tools/intellij.tools.ide.starter/intellij.tools.ide.starter.iml" />
       <module fileurl="file://$PROJECT_DIR$/plugins/performanceTesting/event-bus/intellij.tools.ide.starter.bus.iml" filepath="$PROJECT_DIR$/plugins/performanceTesting/event-bus/intellij.tools.ide.starter.bus.iml" />
+      <module fileurl="file://$PROJECT_DIR$/tools/intellij.tools.ide.starter.driver/intellij.tools.ide.starter.driver.iml" filepath="$PROJECT_DIR$/tools/intellij.tools.ide.starter.driver/intellij.tools.ide.starter.driver.iml" />
       <module fileurl="file://$PROJECT_DIR$/tools/intellij.tools.ide.starter.junit5/intellij.tools.ide.starter.junit5.iml" filepath="$PROJECT_DIR$/tools/intellij.tools.ide.starter.junit5/intellij.tools.ide.starter.junit5.iml" />
       <module fileurl="file://$PROJECT_DIR$/tools/intellij.tools.ide.util.common/intellij.tools.ide.util.common.iml" filepath="$PROJECT_DIR$/tools/intellij.tools.ide.util.common/intellij.tools.ide.util.common.iml" />
       <module fileurl="file://$PROJECT_DIR$/jps/antLayout/intellij.tools.jps.antTasks.iml" filepath="$PROJECT_DIR$/jps/antLayout/intellij.tools.jps.antTasks.iml" />

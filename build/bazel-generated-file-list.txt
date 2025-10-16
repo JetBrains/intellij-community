@@ -1492,6 +1492,7 @@ tools/intellij.tools.ide.metrics.benchmark
 tools/intellij.tools.ide.metrics.collector
 tools/intellij.tools.ide.metrics.collector.starter
 tools/intellij.tools.ide.starter
+tools/intellij.tools.ide.starter.driver
 tools/intellij.tools.ide.starter.junit5
 tools/intellij.tools.ide.util.common
 tools/launcher-generator
