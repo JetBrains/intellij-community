@@ -7,6 +7,7 @@ import com.intellij.ide.structureView.impl.common.PsiTreeElementBase
 import com.intellij.ide.structureView.logical.impl.LogicalStructureViewService
 import com.intellij.ide.structureView.newStructureView.StructureViewComponent
 import com.intellij.ide.util.treeView.PresentableNodeDescriptor
+import com.intellij.openapi.util.Disposer
 import com.intellij.pom.PomTargetPsiElement
 import com.intellij.psi.PsiElement
 import com.intellij.psi.PsiFile
@@ -51,52 +52,56 @@ fun assertLogicalStructure(
   val builder = LogicalStructureViewService.getInstance(project).getLogicalStructureBuilder(psiFile)
   assertNotNull(builder)
   val structureView = builder!!.createStructureView(null, project)
-  var targetStructureElement = structureView.treeModel.root
-  nodePath?.split("/")?.forEach { pathPart ->
-    val child = targetStructureElement.children.firstOrNull {
-      val presentation = it.presentation
-      presentation.presentableText == pathPart || (presentation as? PresentationData)?.coloredText?.firstOrNull()?.text == pathPart
-    } as? StructureViewTreeElement
-    assertNotNull("Can't find a child '$pathPart'", child)
-    targetStructureElement = child!!
-  }
-  var actualRoot = createActualNode(targetStructureElement)
-  if (nodePath != null) {
-    actualRoot = LogicalStructureNode(null, "", "").also {
-      it.subNode(actualRoot)
+  try {
+    var targetStructureElement = structureView.treeModel.root
+    nodePath?.split("/")?.forEach { pathPart ->
+      val child = targetStructureElement.children.firstOrNull {
+        val presentation = it.presentation
+        presentation.presentableText == pathPart || (presentation as? PresentationData)?.coloredText?.firstOrNull()?.text == pathPart
+      } as? StructureViewTreeElement
+      assertNotNull("Can't find a child '$pathPart'", child)
+      targetStructureElement = child!!
     }
-  }
-  val expectedRoot = LogicalStructureNode(null, "", "")
-  expectedRoot.expectedStructureInitializer()
-  if (!expectedRoot.isEqualTo(actualRoot, false)) {
-    expectedRoot.synchronizeImportantElements(actualRoot)
-    throw ComparisonFailure("The models are not equal: ",
-                            expectedRoot.print("", false),
-                            actualRoot.print("", false))
-  }
-  if (selectedElement != null) {
-    val expectedSelectedPath = expectedRoot.getSelectedNodePath().let { it.subList(1, it.size) }
-    val select = (structureView as StructureViewComponent).select(selectedElement, true)
-    val actualPaths = try {
-      val treePath = PlatformTestUtil.waitForPromise(select)
-      treePath!!.path.toList().let { it.subList(1, it.size) }
-    } catch (e: Throwable) {
-      e.printStackTrace()
-      throw e
-    }
-    val nodePaths = nodePath?.split("/") ?: emptyList()
-    for ((index, any) in actualPaths.withIndex()) {
-      if (index < nodePaths.size) {
-        assertTrue("Selected node is different: ", any.toString().startsWith(nodePaths[index]))
-      }
-      else {
-        val expectedNode = expectedSelectedPath.getOrNull(index - nodePaths.size)!!
-        val expectedName = if (expectedNode.coloredTextElements.isNotEmpty()) {
-          expectedNode.coloredTextElements.joinToString("") { it.text }
-        } else expectedNode.name
-        assertEquals("Selected node is different: ", expectedName, any.toString())
+    var actualRoot = createActualNode(targetStructureElement)
+    if (nodePath != null) {
+      actualRoot = LogicalStructureNode(null, "", "").also {
+        it.subNode(actualRoot)
       }
     }
+    val expectedRoot = LogicalStructureNode(null, "", "")
+    expectedRoot.expectedStructureInitializer()
+    if (!expectedRoot.isEqualTo(actualRoot, false)) {
+      expectedRoot.synchronizeImportantElements(actualRoot)
+      throw ComparisonFailure("The models are not equal: ",
+                              expectedRoot.print("", false),
+                              actualRoot.print("", false))
+    }
+    if (selectedElement != null) {
+      val expectedSelectedPath = expectedRoot.getSelectedNodePath().let { it.subList(1, it.size) }
+      val select = (structureView as StructureViewComponent).select(selectedElement, true)
+      val actualPaths = try {
+        val treePath = PlatformTestUtil.waitForPromise(select)
+        treePath!!.path.toList().let { it.subList(1, it.size) }
+      } catch (e: Throwable) {
+        e.printStackTrace()
+        throw e
+      }
+      val nodePaths = nodePath?.split("/") ?: emptyList()
+      for ((index, any) in actualPaths.withIndex()) {
+        if (index < nodePaths.size) {
+          assertTrue("Selected node is different: ", any.toString().startsWith(nodePaths[index]))
+        }
+        else {
+          val expectedNode = expectedSelectedPath.getOrNull(index - nodePaths.size)!!
+          val expectedName = if (expectedNode.coloredTextElements.isNotEmpty()) {
+            expectedNode.coloredTextElements.joinToString("") { it.text }
+          } else expectedNode.name
+          assertEquals("Selected node is different: ", expectedName, any.toString())
+        }
+      }
+    }
+  } finally {
+    Disposer.dispose(structureView)
   }
 }
 
