@@ -46,7 +46,6 @@ class TerminalBlocksModelImpl(private val outputModel: TerminalOutputModel, pare
     else {
       val updatedBlock = lastBlock.copy(endOffset = offset)
       blocks[blocks.lastIndex] = updatedBlock
-      dispatcher.multicaster.blockFinished(TerminalBlockFinishedEventImpl(this, updatedBlock))
     }
 
     addNewBlock(offset)
@@ -88,7 +87,6 @@ class TerminalBlocksModelImpl(private val outputModel: TerminalOutputModel, pare
     for (block in finishedBlocks) {
       blocks.add(block)
       dispatcher.multicaster.blockAdded(TerminalBlockAddedEventImpl(this, block))
-      dispatcher.multicaster.blockFinished(TerminalBlockFinishedEventImpl(this, block))
     }
 
     val lastBlock = state.blocks.last()
@@ -183,11 +181,6 @@ private data class TerminalBlockRemovedEventImpl(
   override val model: TerminalBlocksModel,
   override val block: TerminalOutputBlock,
 ) : TerminalBlockRemovedEvent
-
-private data class TerminalBlockFinishedEventImpl(
-  override val model: TerminalBlocksModel,
-  override val block: TerminalOutputBlock,
-) : TerminalBlockFinishedEvent
 
 /**
  * Returns true if the user can type a command right now.
