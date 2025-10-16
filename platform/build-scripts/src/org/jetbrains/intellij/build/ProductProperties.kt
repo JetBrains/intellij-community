@@ -216,7 +216,7 @@ abstract class ProductProperties {
   var rootModuleForModularLoader: String? = null
 
   /**
-   * Specifies the mode of this product which will be used to determine which plugin modules should be loaded at runtime by 
+   * Specifies the mode of this product which will be used to determine which plugin modules should be loaded at runtime by
    * [the modular loader][com.intellij.platform.bootstrap.ModuleBasedProductLoadingStrategy].
    * This property makes sense only if [rootModuleForModularLoader] is set to a non-null value.
    */
@@ -347,7 +347,7 @@ abstract class ProductProperties {
   open fun getAdditionalContextDependentIdeJvmArguments(context: BuildContext): List<String> = emptyList()
 
   /**
-   * @return custom properties for [org.jetbrains.intellij.build.impl.productInfo.ProductInfoData].
+   * @return custom properties for [com.intellij.platform.buildData.productInfo.ProductInfoData].
    */
   @Suppress("KDocUnresolvedReference")
   open fun generateCustomPropertiesForProductInfo(): List<CustomProperty> = emptyList()
