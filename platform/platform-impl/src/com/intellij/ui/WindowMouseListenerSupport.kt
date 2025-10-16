@@ -45,9 +45,9 @@ internal sealed class WindowMouseListenerSupport(private val source: WindowMouse
   private var location: Point? = null
   private var viewBounds: Rectangle? = null
   private var mouseButton = 0
-  private var expectMouseReleased = false
-  private var expectMouseClicked = false
-  
+  protected var expectMouseReleased = false
+  protected var expectMouseClicked = false
+
   var leftMouseButtonOnly = false
   
   val isBusy: Boolean
@@ -92,14 +92,19 @@ internal sealed class WindowMouseListenerSupport(private val source: WindowMouse
     mouseButton = event.getButton()
     location = event.locationOnScreen
     viewBounds = view.bounds
+    onStarted(event, view)
   }
+
+  protected open fun onStarted(event: MouseEvent, view: Component) { }
 
   /**
    * Processes moving/resizing and stops it if not `mouseMove`.
    */
   fun process(event: MouseEvent, mouseMove: Boolean) {
     if (event.isConsumed) return
-    if (mouseMove) expectMouseClicked = false // after dragging starts, there will be only one "released" event
+    if (mouseMove) {
+      onDraggingStarted()
+    }
 
     val viewBounds = this.viewBounds
     val location = this.location
@@ -140,8 +145,10 @@ internal sealed class WindowMouseListenerSupport(private val source: WindowMouse
       handleStopEvent(event)
     }
   }
-  
-  private fun computeOffsetFromInitialLocation(event: MouseEvent): Point {
+
+  protected abstract fun onDraggingStarted()
+
+  protected open fun computeOffsetFromInitialLocation(event: MouseEvent): Point {
     val location = this.location
     checkNotNull(location) { "Must not be called when inactive" }
     val dx: Int = event.xOnScreen - location.x
@@ -189,16 +196,55 @@ internal sealed class WindowMouseListenerSupport(private val source: WindowMouse
   }
 }
 
-internal class RegularWindowMouseListenerSupport(source: WindowMouseListenerSource) : WindowMouseListenerSupport(source) {
+private class RegularWindowMouseListenerSupport(source: WindowMouseListenerSource) : WindowMouseListenerSupport(source) {
   override fun moveAfterMouseRelease(): Boolean = false
+
+  override fun onDraggingStarted() {
+    expectMouseClicked = false // after dragging starts, there will be only one "released" event
+  }
 
   override fun jbrMoveSupported(component: Component?): Boolean {
     return (component is Frame || component is Dialog) && JBR.isWindowMoveSupported()
   }
 }
 
-internal class WaylandWindowMouseListenerSupport(source: WindowMouseListenerSource) : WindowMouseListenerSupport(source) {
-  override fun moveAfterMouseRelease(): Boolean = true
+private class WaylandWindowMouseListenerSupport(source: WindowMouseListenerSource) : WindowMouseListenerSupport(source) {
+  private var isTruePopup = false
+  private var dx = 0
+  private var dy = 0
+  private var expectReleasedEvent = false
+  private var expectClickedEvent = false
+
+  override fun onStarted(event: MouseEvent, view: Component) {
+    isTruePopup = view is Window && view.type == Window.Type.POPUP
+    dx = 0
+    dy = 0
+    if (isRelativeMovementMode()) {
+      @Suppress("UsePropertyAccessSyntax")
+      JBR.getRelativePointerMovement().getAccumulatedMouseDeltaAndReset()
+      expectClickedEvent = true
+      expectReleasedEvent = true
+    }
+  }
+
+  override fun onDraggingStarted() { } // on Wayland, whether dragging has started or not, both "released" and "clicked" events will arrive
+
+  override fun computeOffsetFromInitialLocation(event: MouseEvent): Point {
+    if (isRelativeMovementMode()) {
+      @Suppress("UsePropertyAccessSyntax")
+      val delta = JBR.getRelativePointerMovement().getAccumulatedMouseDeltaAndReset()
+      dx += delta.x
+      dy += delta.y
+      return Point(dx, dy)
+    }
+    else {
+      return super.computeOffsetFromInitialLocation(event)
+    }
+  }
+
+  private fun isRelativeMovementMode(): Boolean = isTruePopup && JBR.isRelativePointerMovementSupported()
+
+  override fun moveAfterMouseRelease(): Boolean = !isRelativeMovementMode()
 
   override fun jbrMoveSupported(component: Component?): Boolean {
     return component is Window && component.type != Window.Type.POPUP
