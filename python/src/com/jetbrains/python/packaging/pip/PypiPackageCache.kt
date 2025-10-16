@@ -7,7 +7,7 @@ import com.google.gson.reflect.TypeToken
 import com.intellij.openapi.application.PathManager
 import com.intellij.openapi.components.Service
 import com.intellij.openapi.components.service
-import com.intellij.openapi.diagnostic.logger
+import com.intellij.openapi.diagnostic.thisLogger
 import com.intellij.spellchecker.dictionary.Dictionary.LookupStatus
 import com.intellij.util.concurrency.annotations.RequiresBackgroundThread
 import com.intellij.util.io.SafeFileOutputStream
@@ -31,7 +31,7 @@ import java.time.Duration
 import java.time.Instant
 import kotlin.io.path.exists
 
-private val LOG = logger<PypiPackageCache>()
+
 private val ALPHABET_REGEX = Regex("[-a-z0-9]+")
 
 @ApiStatus.Internal
@@ -70,10 +70,14 @@ open class PypiPackageCache : PythonPackageCache<String> {
     }
 
     try {
+      LOG.info("Reloading Pypi package cache")
       withContext(Dispatchers.IO) {
         if (!tryLoadFromFile()) {
           return@withContext refresh()
         }
+      }
+      if (packages.isEmpty()) {
+        LOG.warn("Empty Pypi loaded package cache")
       }
     }
     finally {
@@ -87,6 +91,7 @@ open class PypiPackageCache : PythonPackageCache<String> {
   private suspend fun tryLoadFromFile(): Boolean {
     return withContext(Dispatchers.IO) {
       if (isFileCacheExpired()) {
+        thisLogger().debug("Pypi package cache file is expired")
         return@withContext false
       }
 
@@ -97,13 +102,14 @@ open class PypiPackageCache : PythonPackageCache<String> {
           .use<BufferedReader, LinkedHashSet<String>> {
             gson.fromJson(it, type)
           }
+
+        LOG.info("Package list loaded from file ${filePath} with ${Files.size(filePath) / 1024}Kb size with ${packageList.size} entries")
+
       }
       catch (e: JsonSyntaxException) {
         LOG.warn("Corrupted pypi cache file: $e")
         return@withContext false
       }
-
-      LOG.info("Package list loaded from file with ${packageList.size} entries")
       cache = packageList.map { PyPackageName.normalizePackageName(it) }.toSet()
       true
     }
@@ -112,8 +118,9 @@ open class PypiPackageCache : PythonPackageCache<String> {
   @CheckReturnValue
   private suspend fun refresh(): Result<Unit, IOException> {
     withContext(Dispatchers.IO) {
-      LOG.info("Loading python packages from PyPi")
+      LOG.info("Loading python packages from PyPi Repository")
       val pypiList = service<PypiPackageLoader>().loadPackages().getOr { return@withContext it }
+      LOG.info("Loaded ${pypiList.size} python packages from PyPi Repository")
       cache = pypiList.toSet()
       store()
     }
@@ -151,5 +158,13 @@ open class PypiPackageCache : PythonPackageCache<String> {
     catch (e: IOException) {
       Result.failure(e)
     }
+    catch (t: Throwable) {
+      thisLogger().warn("Cannot load pypiList from internet", t)
+      throw t
+    }
+  }
+
+  companion object {
+    private val LOG = thisLogger()
   }
 }
