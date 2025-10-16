@@ -219,8 +219,7 @@ public final class GroovyConsole {
     JavaParameters res = GroovyScriptRunConfiguration.createJavaParametersWithSdk(module);
     DefaultGroovyScriptRunner.configureGenericGroovyRunner(
       res, module, "groovy.ui.GroovyMain",
-      !hasNeededDependenciesToRunConsole(module), true, true, false
-    );
+      !hasNeededDependenciesToRunConsole(module), true, true);
     res.getProgramParametersList().addAll("-p", GroovyScriptRunner.getPathInConf("console.groovy"));
     res.setWorkingDirectory(getWorkingDirectory(module));
     res.setUseDynamicClasspath(true);

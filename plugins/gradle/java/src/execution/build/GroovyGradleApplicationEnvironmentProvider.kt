@@ -4,10 +4,7 @@ package org.jetbrains.plugins.gradle.execution.build
 import com.intellij.execution.JavaRunConfigurationBase
 import com.intellij.execution.configurations.JavaParameters
 import com.intellij.execution.util.ScriptFileUtil
-import com.intellij.openapi.application.readAction
-import com.intellij.openapi.application.runReadAction
 import com.intellij.task.ExecuteRunConfigurationTask
-import org.jetbrains.plugins.gradle.service.execution.loadApplicationInitScript
 import org.jetbrains.plugins.groovy.config.GroovyConfigUtils
 import org.jetbrains.plugins.groovy.runner.GroovyScriptRunConfiguration
 

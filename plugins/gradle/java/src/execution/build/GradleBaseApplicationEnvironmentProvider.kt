@@ -6,6 +6,8 @@ import com.intellij.execution.CantRunException
 import com.intellij.execution.ExecutionBundle
 import com.intellij.execution.Executor
 import com.intellij.execution.JavaRunConfigurationBase
+import com.intellij.execution.ShortenCommandLine.ARGS_FILE
+import com.intellij.execution.ShortenCommandLine.MANIFEST
 import com.intellij.execution.configurations.JavaParameters
 import com.intellij.execution.executors.DefaultRunExecutor
 import com.intellij.execution.impl.RunManagerImpl
@@ -51,8 +53,8 @@ abstract class GradleBaseApplicationEnvironmentProvider : GradleExecutionEnviron
       definitions = params.definitions,
       intelliJRtPath = null,
       workingDirectory = params.workingDirectory,
-      useManifestJar = false,
-      useArgsFile = false,
+      useManifestJar = params.configuration.shortenCommandLine === MANIFEST,
+      useArgsFile = params.configuration.shortenCommandLine === ARGS_FILE,
       useClasspathFile = false,
       javaModuleName = params.javaModuleName
     )
@@ -268,6 +270,6 @@ abstract class GradleBaseApplicationEnvironmentProvider : GradleExecutionEnviron
     override val mainClass: String,
     override val javaExePath: String,
     override val sourceSetName: String,
-    override val javaModuleName: String?,
+    override val javaModuleName: String?
   ) : GradleInitScriptParameters
 }

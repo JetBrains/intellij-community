@@ -6,6 +6,7 @@ import com.intellij.application.options.ModulesComboBox;
 import com.intellij.execution.ui.CommonJavaParametersPanel;
 import com.intellij.execution.ui.DefaultJreSelector.SdkFromModuleDependencies;
 import com.intellij.execution.ui.JrePathEditor;
+import com.intellij.execution.ui.ShortenCommandLineModeCombo;
 import com.intellij.execution.util.ScriptFileUtil;
 import com.intellij.openapi.fileChooser.FileChooserDescriptorFactory;
 import com.intellij.openapi.options.ConfigurationException;
@@ -38,7 +39,7 @@ public class GroovyRunConfigurationEditor extends SettingsEditor<GroovyScriptRun
 
   private JCheckBox myDebugCB;
   private JCheckBox myAddClasspathCB;
-
+  private LabeledComponentNoThrow<ShortenCommandLineModeCombo> myShortenClasspathModeCombo;
   private JComponent myAnchor;
 
   public GroovyRunConfigurationEditor(@NotNull Project project) {
@@ -69,11 +70,14 @@ public class GroovyRunConfigurationEditor extends SettingsEditor<GroovyScriptRun
           );
         }
       });
+    myShortenClasspathModeCombo.setComponent(new ShortenCommandLineModeCombo(project, myJrePathEditor,() -> modulesComboBox.getSelectedModule(),
+                                                                             listener -> modulesComboBox.addActionListener(listener)));
     myAnchor = UIUtil.mergeComponentsWithAnchor(
       myScriptPathComponent,
       myCommonJavaParametersPanel,
       myModulesComboBoxComponent,
-      myJrePathEditor
+      myJrePathEditor,
+      myShortenClasspathModeCombo
     );
   }
 
@@ -88,6 +92,7 @@ public class GroovyRunConfigurationEditor extends SettingsEditor<GroovyScriptRun
 
     myDebugCB.setSelected(configuration.isDebugEnabled());
     myAddClasspathCB.setSelected(configuration.isAddClasspathToTheRunner());
+    myShortenClasspathModeCombo.getComponent().setSelectedItem(configuration.getShortenCommandLine());
   }
 
   @Override
@@ -101,6 +106,7 @@ public class GroovyRunConfigurationEditor extends SettingsEditor<GroovyScriptRun
 
     configuration.setDebugEnabled(myDebugCB.isSelected());
     configuration.setAddClasspathToTheRunner(myAddClasspathCB.isSelected());
+    configuration.setShortenCommandLine(myShortenClasspathModeCombo.getComponent().getSelectedItem());
   }
 
   @Override
@@ -120,5 +126,6 @@ public class GroovyRunConfigurationEditor extends SettingsEditor<GroovyScriptRun
     myCommonJavaParametersPanel.setAnchor(anchor);
     myModulesComboBoxComponent.setAnchor(anchor);
     myJrePathEditor.setAnchor(anchor);
+    myShortenClasspathModeCombo.setAnchor(anchor);
   }
 }
