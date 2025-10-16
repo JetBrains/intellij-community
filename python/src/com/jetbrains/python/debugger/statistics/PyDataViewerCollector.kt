@@ -63,7 +63,7 @@ internal object PyDataViewerCollector : CounterUsagesCollector() {
     companion object {
       fun getDataDimensions(dimensions: Int?): DataDimensions {
         return when (dimensions) {
-          null -> UNKNOWN
+          0 -> UNKNOWN
           1 -> ONE
           2 -> TWO
           3 -> THREE
@@ -78,7 +78,7 @@ internal object PyDataViewerCollector : CounterUsagesCollector() {
   fun logDataOpened(
     project: Project?,
     type: String?,
-    dimensions: Int?,
+    dimensions: Int,
     rowsCount: Int,
     columnsCount: Int,
     isNewTable: Boolean,
