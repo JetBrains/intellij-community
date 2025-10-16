@@ -259,58 +259,64 @@ internal class TerminalBlocksModelTest : BasePlatformTestCase() {
   }
 
   @Test
-  fun `blocks positions are adjusted after output start trimmed`() = runBlocking(Dispatchers.EDT) {
+  fun `block positions stay the same after output start trimmed`() = runBlocking(Dispatchers.EDT) {
     val outputModel = TerminalTestUtil.createOutputModel(maxLength = 30)
     val blocksModel = TerminalBlocksModelImpl(outputModel, testRootDisposable)
 
     outputModel.update(0, "\n\n\n")
-    blocksModel.promptStarted(outputModel.startOffset + 0L)
+    blocksModel.promptStarted(TerminalOffset.ZERO)
     outputModel.update(0, "myPrompt: \n\n\n")
-    blocksModel.promptFinished(outputModel.startOffset + 10L)
+    blocksModel.promptFinished(TerminalOffset.of(10))
     outputModel.update(0, "myPrompt: myCommand\n\n\n")
-    blocksModel.commandStarted(outputModel.startOffset + 20L)
+    blocksModel.commandStarted(TerminalOffset.of(20))
     outputModel.update(1, "output123456\n\n")  // 4 chars from the start should be trimmed
-    blocksModel.promptStarted(outputModel.startOffset + 29L)
+    blocksModel.promptStarted(TerminalOffset.of(33))
     outputModel.update(2, "myPrompt: \n")      // 10 chars from the start should be trimmed
-    blocksModel.promptFinished(outputModel.startOffset + 29L)
+    blocksModel.promptFinished(TerminalOffset.of(43))
 
     assertEquals(2, blocksModel.blocks.size)
 
     val firstBlock = blocksModel.blocks[0]
-    assertEquals("", outputModel.getTextAsString(firstBlock.startOffset, firstBlock.commandStartOffset!!))
-    assertEquals("mmand\n", outputModel.getTextAsString(firstBlock.commandStartOffset!!, firstBlock.outputStartOffset!!))
-    assertEquals("mmand\noutput123456\n", outputModel.getTextAsString(firstBlock.startOffset, firstBlock.endOffset))
+    assertEquals(TerminalOffset.ZERO, firstBlock.startOffset)
+    assertEquals(TerminalOffset.of(10), firstBlock.commandStartOffset)
+    assertEquals(TerminalOffset.of(20), firstBlock.outputStartOffset)
+    assertEquals(TerminalOffset.of(33), firstBlock.endOffset)
 
     val secondBlock = blocksModel.blocks[1]
-    assertEquals("myPrompt: \n", outputModel.getTextAsString(secondBlock.startOffset, secondBlock.endOffset))
+    assertEquals(TerminalOffset.of(33), secondBlock.startOffset)
+    assertEquals(TerminalOffset.of(43), secondBlock.commandStartOffset)
+    assertEquals(TerminalOffset.of(44), secondBlock.endOffset)
   }
 
   @Test
-  fun `blocks was removed after output start trimmed`() = runBlocking(Dispatchers.EDT) {
+  fun `block was removed after output start trimmed`() = runBlocking(Dispatchers.EDT) {
     val outputModel = TerminalTestUtil.createOutputModel(maxLength = 30)
     val blocksModel = TerminalBlocksModelImpl(outputModel, testRootDisposable)
 
     outputModel.update(0, "\n\n\n")
     outputModel.update(0, "welcome12\n\n\n")
-    blocksModel.promptStarted(outputModel.startOffset + 10L)
+    blocksModel.promptStarted(TerminalOffset.of(10))
     outputModel.update(1, "myPrompt: \n\n")
-    blocksModel.promptFinished(outputModel.startOffset + 20L)
-    outputModel.update(1, "myPrompt: myCommand\n\n")  // 1 char from that start should be trimmed
-    blocksModel.commandStarted(outputModel.startOffset + 29L)
+    blocksModel.promptFinished(TerminalOffset.of(20))
+    outputModel.update(1, "myPrompt: myCommand\n\n")  // 1 char from the start should be trimmed
+    blocksModel.commandStarted(TerminalOffset.of(30))
     outputModel.update(2, "output123456\n")           // 12 chars from the start should be trimmed (and first block removed)
-    blocksModel.promptStarted(outputModel.startOffset + 30L)
+    blocksModel.promptStarted(TerminalOffset.of(43))
     outputModel.update(3, "myPrompt: \n")             // 10 chars from the start should be trimmed
-    blocksModel.promptFinished(outputModel.startOffset + 29L)
+    blocksModel.promptFinished(TerminalOffset.of(53))
 
     assertEquals(2, blocksModel.blocks.size)
 
     val firstBlock = blocksModel.blocks[0]
-    assertEquals("", outputModel.getTextAsString(firstBlock.startOffset, firstBlock.commandStartOffset!!))
-    assertEquals("mmand\n", outputModel.getTextAsString(firstBlock.commandStartOffset!!, firstBlock.outputStartOffset!!))
-    assertEquals("mmand\noutput123456\n", outputModel.getTextAsString(firstBlock.startOffset, firstBlock.endOffset))
+    assertEquals(TerminalOffset.of(10), firstBlock.startOffset)
+    assertEquals(TerminalOffset.of(20), firstBlock.commandStartOffset)
+    assertEquals(TerminalOffset.of(30), firstBlock.outputStartOffset)
+    assertEquals(TerminalOffset.of(43), firstBlock.endOffset)
 
     val secondBlock = blocksModel.blocks[1]
-    assertEquals("myPrompt: \n", outputModel.getTextAsString(secondBlock.startOffset, secondBlock.endOffset))
+    assertEquals(TerminalOffset.of(43), secondBlock.startOffset)
+    assertEquals(TerminalOffset.of(53), secondBlock.commandStartOffset)
+    assertEquals(TerminalOffset.of(54), secondBlock.endOffset)
   }
 
   @Test

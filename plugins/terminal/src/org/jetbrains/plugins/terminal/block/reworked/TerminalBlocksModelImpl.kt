@@ -90,19 +90,6 @@ class TerminalBlocksModelImpl(private val outputModel: TerminalOutputModel, pare
         val block = blocks.removeFirst()
         dispatcher.multicaster.blockRemoved(TerminalBlockRemovedEventImpl(this, block))
       }
-
-      val newMinimumOffset = outputModel.startOffset
-      for (ind in blocks.indices) {
-        val block = blocks[ind]
-        blocks[ind] = TerminalOutputBlock(
-          id = block.id,
-          startOffset = block.startOffset.coerceAtLeast(newMinimumOffset),
-          commandStartOffset = block.commandStartOffset?.coerceAtLeast(newMinimumOffset),
-          outputStartOffset = block.outputStartOffset?.coerceAtLeast(newMinimumOffset),
-          endOffset = block.endOffset.coerceAtLeast(newMinimumOffset),
-          exitCode = block.exitCode
-        )
-      }
     }
     else {
       // All text was removed, so remove all blocks and leave an empty initial block.
