@@ -33,7 +33,6 @@
     <orderEntry type="module" module-name="intellij.platform.ide" />
     <orderEntry type="module" module-name="intellij.platform.editor.ui" />
     <orderEntry type="module" module-name="intellij.platform.editor.ex" />
-    <orderEntry type="module" module-name="intellij.platform.split.protocol" />
     <orderEntry type="module" module-name="intellij.platform.testFramework" />
     <orderEntry type="module" module-name="intellij.platform.codeStyle" />
     <orderEntry type="module" module-name="intellij.platform.lang" />
@@ -48,15 +47,5 @@
     <orderEntry type="module" module-name="intellij.platform.debugger.impl" />
     <orderEntry type="module" module-name="intellij.platform.concurrency" />
     <orderEntry type="module" module-name="intellij.platform.usageView" />
-    <orderEntry type="module" module-name="intellij.rd.ide.model.generated" />
-    <orderEntry type="library" name="rd-framework" level="project" />
-    <orderEntry type="library" name="rd-core" level="project" />
-    <orderEntry type="library" name="kodein-di-jvm" level="project" />
-    <orderEntry type="module" module-name="intellij.driver.client" />
-    <orderEntry type="module" module-name="intellij.tools.ide.starter" />
-    <orderEntry type="module" module-name="intellij.ide.starter.extended" />
-    <orderEntry type="module" module-name="intellij.platform.testFramework.junit5" />
-    <orderEntry type="module" module-name="intellij.libraries.kotlin.reflect" />
-    <orderEntry type="module" module-name="intellij.platform.split" />
   </component>
 </module>
