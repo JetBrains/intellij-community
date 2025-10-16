@@ -916,7 +916,7 @@ public final class ConfigImportHelper {
     // applying prepared updates to copied plugins
     StartupActionScriptManager.executeActionScriptCommands(actionCommands, oldPluginsDir, newPluginsDir);
 
-    updateVMOptions(newConfigDir, log);
+    updateVMOptions(newConfigDir, oldConfigDir, log);
   }
 
   public static void migrateLocalization(@NotNull Path oldConfigDir, @NotNull Path oldPluginsDir) {
@@ -1417,7 +1417,7 @@ public final class ConfigImportHelper {
       var currentLines = Files.readAllLines(currentFile, cs);
       currentLines.sort(String::compareTo);
       var result = mergeVmOptionsLines(importLines, currentLines);
-      updateVMOptionsLines(newConfigDir, result, log);
+      updateVMOptionsLines(newConfigDir, oldConfigDir, result, log);
       result.sort(String::compareTo);
       return !currentLines.equals(result);
     }
@@ -1427,7 +1427,7 @@ public final class ConfigImportHelper {
     }
   }
 
-  private static ArrayList<String> mergeVmOptionsLines(List<String> importLines, List<String> currentLines) {
+  private static List<String> mergeVmOptionsLines(List<String> importLines, List<String> currentLines) {
     var result = new ArrayList<String>(importLines.size() + currentLines.size());
     var preferCurrentXmx = false;
 
@@ -1460,12 +1460,12 @@ public final class ConfigImportHelper {
   }
 
   /* Fix VM options in the custom *.vmoptions file that won't work with the current IDE version or duplicate/undercut platform ones. */
-  public static void updateVMOptions(Path newConfigDir, Logger log) {
+  public static void updateVMOptions(@NotNull Path newConfigDir, @NotNull Path oldConfigDir, @NotNull Logger log) {
     var vmOptionsFile = newConfigDir.resolve(VMOptions.getFileName());
     if (Files.exists(vmOptionsFile)) {
       try {
         var lines = Files.readAllLines(vmOptionsFile, VMOptions.getFileCharset());
-        var updated = updateVMOptionsLines(newConfigDir, lines, log);
+        var updated = updateVMOptionsLines(newConfigDir, oldConfigDir, lines, log);
         if (updated) {
           Files.write(vmOptionsFile, lines, VMOptions.getFileCharset());
         }
@@ -1476,9 +1476,12 @@ public final class ConfigImportHelper {
     }
   }
 
-  private static boolean updateVMOptionsLines(Path newConfigDir, List<String> lines, Logger log) {
+  private static boolean updateVMOptionsLines(Path newConfigDir, Path oldConfigDir, List<String> lines, Logger log) {
     var platformVmOptionsFile = newConfigDir.getFileSystem().getPath(VMOptions.getPlatformOptionsFile().toString());
     var platformLines = new LinkedHashSet<>(readPlatformOptions(platformVmOptionsFile, log));
+    var oldConfigName = oldConfigDir.getFileName().toString();
+    @SuppressWarnings("SpellCheckingInspection")
+    var fromCE = oldConfigName.startsWith("IdeaIC") || oldConfigName.startsWith("PyCharmCE");
     var updated = false;
 
     for (var i = lines.listIterator(); i.hasNext(); ) {
@@ -1494,6 +1497,7 @@ public final class ConfigImportHelper {
         line.startsWith("-agentpath:") && line.contains("yjpagent") ||
         "-Dsun.io.useCanonPrefixCache=false".equals(line) ||
         "-Dfile.encoding=UTF-8".equals(line) && OS.CURRENT == OS.macOS ||
+        line.startsWith("-DJETBRAINS_LICENSE_SERVER") && fromCE ||
         isDuplicateOrLowerValue(line, platformLines)
       ) {
         i.remove(); updated = true;

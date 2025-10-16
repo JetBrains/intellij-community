@@ -56,6 +56,7 @@ import kotlin.io.path.*
 
 private val LOG = logger<ConfigImportHelperTest>()
 
+@OptIn(ExperimentalPathApi::class)
 class ConfigImportHelperTest : ConfigImportHelperBaseTest() {
   val options = ConfigImportOptions(LOG).apply { headless = true }
 
@@ -404,6 +405,27 @@ class ConfigImportHelperTest : ConfigImportHelperBaseTest() {
     ConfigImportHelper.doImport(oldConfigDir, newConfigDir, null, oldConfigDir.resolve("plugins"), newConfigDir.resolve("plugins"), options)
 
     assertThat(newConfigDir.resolve(VMOptions.getFileName())).hasContent("-Xms512m\n-Xmx2g\n-XX:+UseZGC")
+  }
+
+  @Test fun `filtering FLS VM option when importing from CE`() {
+    val oldICConfigDir = createConfigDir(version = "2025.2", product = "IdeaIC")
+    val oldIUConfigDir = createConfigDir(version = "2025.2", product = "IntelliJIdea")
+    listOf(oldICConfigDir, oldIUConfigDir).forEach {
+      it.resolve(VMOptions.getFileName())
+        .createParentDirectories()
+        .writeLines(listOf("-Dsome.random.properrty=xyz", "-DJETBRAINS_LICENSE_SERVER=host.domain"))
+    }
+
+    val newConfigDir = createConfigDir(version = "2025.3")
+    val importedFile = newConfigDir.resolve(VMOptions.getFileName())
+
+    newConfigDir.apply { deleteRecursively() }.createDirectories()
+    ConfigImportHelper.doImport(oldICConfigDir, newConfigDir, null, oldICConfigDir.resolve("plugins"), newConfigDir.resolve("plugins"), options)
+    assertThat(importedFile).content().doesNotContain("JETBRAINS_LICENSE_SERVER")
+
+    newConfigDir.apply { deleteRecursively() }.createDirectories()
+    ConfigImportHelper.doImport(oldIUConfigDir, newConfigDir, null, oldIUConfigDir.resolve("plugins"), newConfigDir.resolve("plugins"), options)
+    assertThat(importedFile).content().contains("JETBRAINS_LICENSE_SERVER")
   }
 
   @Test fun `finding related directories`() {
