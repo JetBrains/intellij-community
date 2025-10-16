@@ -66,7 +66,8 @@ data class DevBuildServerSettings(
     args.addAll(jvmArgs.map {
       it.replace("${'$'}TEST_MODULE_NAME$", mainModule)
     })
-    args.add("-Didea.dev.build.test.entry.point.class=$mainClass")
+    if (args.none { it.startsWith("-Didea.dev.build.test.entry.point.class=") })
+      args.add("-Didea.dev.build.test.entry.point.class=$mainClass")
     args.add(this.mainClass)
   }
 
