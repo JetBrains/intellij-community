@@ -1,7 +1,7 @@
 package com.intellij.lambda.testFramework.junit
 
-import com.intellij.ide.starter.extended.data.TestCases
 import com.intellij.ide.starter.runner.Starter
+import examples.data.TestCases
 import com.intellij.lambda.testFramework.starter.newContextWithLambda
 import com.intellij.lambda.testFramework.utils.IdeLambdaStarter
 import com.intellij.lambda.testFramework.utils.IdeLambdaStarter.BackgroundRunWithLambda

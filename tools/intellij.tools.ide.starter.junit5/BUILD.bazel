@@ -68,6 +68,7 @@ jvm_library(
     "//tools/intellij.tools.ide.metrics.collector.starter:ide-metrics-collector-starter",
     "@lib//:opentelemetry",
     "//platform/core-api:core",
+    "//platform/util",
   ]
 )
 ### auto-generated section `build intellij.tools.ide.starter.junit5` end
