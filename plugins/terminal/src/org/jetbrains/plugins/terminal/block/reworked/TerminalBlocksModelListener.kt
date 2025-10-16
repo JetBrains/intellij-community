@@ -2,7 +2,6 @@
 package org.jetbrains.plugins.terminal.block.reworked
 
 import org.jetbrains.annotations.ApiStatus
-import org.jetbrains.plugins.terminal.session.TerminalOutputBlock
 import java.util.*
 
 @ApiStatus.Internal
@@ -21,16 +20,16 @@ sealed interface TerminalBlocksModelEvent {
 
 @ApiStatus.Internal
 sealed interface TerminalBlockAddedEvent : TerminalBlocksModelEvent {
-  val block: TerminalOutputBlock
+  val block: TerminalBlockBase
 }
 
 @ApiStatus.Internal
 sealed interface TerminalBlockRemovedEvent : TerminalBlocksModelEvent {
-  val block: TerminalOutputBlock
+  val block: TerminalBlockBase
 }
 
 @ApiStatus.Internal
 sealed interface TerminalBlocksReplacedEvent : TerminalBlocksModelEvent {
-  val oldBlocks: List<TerminalOutputBlock>
-  val newBlocks: List<TerminalOutputBlock>
+  val oldBlocks: List<TerminalBlockBase>
+  val newBlocks: List<TerminalBlockBase>
 }

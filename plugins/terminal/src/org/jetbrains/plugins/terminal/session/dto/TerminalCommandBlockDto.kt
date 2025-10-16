@@ -3,40 +3,42 @@ package org.jetbrains.plugins.terminal.session.dto
 
 import kotlinx.serialization.Serializable
 import org.jetbrains.annotations.ApiStatus
+import org.jetbrains.plugins.terminal.block.reworked.TerminalBlockId
+import org.jetbrains.plugins.terminal.block.reworked.TerminalCommandBlock
+import org.jetbrains.plugins.terminal.block.reworked.TerminalCommandBlockImpl
 import org.jetbrains.plugins.terminal.block.reworked.TerminalOffset
-import org.jetbrains.plugins.terminal.session.TerminalOutputBlock
 
-@Serializable
 @ApiStatus.Internal
-data class TerminalOutputBlockDto(
-  val id: Int,
+@Serializable
+data class TerminalCommandBlockDto(
+  val id: TerminalBlockId,
   val startOffset: Long,
+  val endOffset: Long,
   val commandStartOffset: Long?,
   val outputStartOffset: Long?,
-  val endOffset: Long,
   val exitCode: Int?,
 )
 
 @ApiStatus.Internal
-fun TerminalOutputBlock.toDto(): TerminalOutputBlockDto {
-  return TerminalOutputBlockDto(
+fun TerminalCommandBlock.toDto(): TerminalCommandBlockDto {
+  return TerminalCommandBlockDto(
     id = id,
     startOffset = startOffset.toAbsolute(),
+    endOffset = endOffset.toAbsolute(),
     commandStartOffset = commandStartOffset?.toAbsolute(),
     outputStartOffset = outputStartOffset?.toAbsolute(),
-    endOffset = endOffset.toAbsolute(),
-    exitCode = exitCode
+    exitCode = exitCode,
   )
 }
 
 @ApiStatus.Internal
-fun TerminalOutputBlockDto.toBlock(): TerminalOutputBlock {
-  return TerminalOutputBlock(
+fun TerminalCommandBlockDto.toCommandBlock(): TerminalCommandBlock {
+  return TerminalCommandBlockImpl(
     id = id,
     startOffset = TerminalOffset.of(startOffset),
+    endOffset = TerminalOffset.of(endOffset),
     commandStartOffset = commandStartOffset?.let { TerminalOffset.of(it) },
     outputStartOffset = outputStartOffset?.let { TerminalOffset.of(it) },
-    endOffset = TerminalOffset.of(endOffset),
-    exitCode = exitCode
+    exitCode = exitCode,
   )
 }

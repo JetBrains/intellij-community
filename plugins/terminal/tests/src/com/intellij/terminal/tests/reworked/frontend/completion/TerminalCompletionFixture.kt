@@ -27,11 +27,8 @@ import org.jetbrains.plugins.terminal.JBTerminalSystemSettingsProvider
 import org.jetbrains.plugins.terminal.block.completion.spec.ShellCommandSpecConflictStrategy
 import org.jetbrains.plugins.terminal.block.completion.spec.ShellCommandSpecInfo
 import org.jetbrains.plugins.terminal.block.completion.spec.ShellCommandSpecsProvider
-import org.jetbrains.plugins.terminal.block.reworked.MutableTerminalOutputModel
-import org.jetbrains.plugins.terminal.block.reworked.TerminalCommandCompletion
-import org.jetbrains.plugins.terminal.block.reworked.TerminalOutputModel
+import org.jetbrains.plugins.terminal.block.reworked.*
 import org.jetbrains.plugins.terminal.session.TerminalBlocksModelState
-import org.jetbrains.plugins.terminal.session.TerminalOutputBlock
 import org.jetbrains.plugins.terminal.util.terminalProjectScope
 import org.junit.Assume
 import java.awt.event.KeyEvent
@@ -53,8 +50,15 @@ class TerminalCompletionFixture(val project: Project, val testRootDisposable: Di
     view = TerminalViewImpl(project, JBTerminalSystemSettingsProvider(), null, terminalScope)
     val shellIntegration = TerminalShellIntegrationImpl(outputModel, terminalScope.childScope("TerminalShellIntegration"))
     view.shellIntegrationFuture.complete(shellIntegration)
-    val terminalOutputBlock = TerminalOutputBlock(0, outputModel.startOffset, outputModel.startOffset, null, outputModel.startOffset, null)
-    val blocksModelState = TerminalBlocksModelState(listOf(terminalOutputBlock), 0)
+    val terminalOutputBlock = TerminalCommandBlockImpl(
+      id = TerminalBlockIdImpl(0),
+      startOffset = outputModel.startOffset,
+      endOffset = outputModel.startOffset,
+      commandStartOffset = outputModel.startOffset,
+      outputStartOffset = null,
+      exitCode = null,
+    )
+    val blocksModelState = TerminalBlocksModelState(listOf(terminalOutputBlock), 1)
     shellIntegration.blocksModel.restoreFromState(blocksModelState)
 
     Registry.get("terminal.type.ahead").setValue(true, testRootDisposable)

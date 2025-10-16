@@ -15,7 +15,6 @@ import kotlinx.coroutines.channels.BufferOverflow
 import kotlinx.coroutines.flow.MutableSharedFlow
 import kotlinx.coroutines.flow.debounce
 import org.jetbrains.plugins.terminal.block.reworked.*
-import org.jetbrains.plugins.terminal.block.reworked.TerminalOffset
 import org.jetbrains.plugins.terminal.block.util.TerminalDataContextUtils.isReworkedTerminalEditor
 import org.jetbrains.plugins.terminal.session.TerminalContentUpdatedEvent
 import org.jetbrains.plugins.terminal.session.TerminalCursorPositionChangedEvent
@@ -78,7 +77,7 @@ internal class TerminalTypeAheadOutputModelController(
     if (!isTypeAheadEnabled()) return
 
     val shellIntegration = shellIntegrationFuture.getNow(null)!!  // isTypeAheadEnabled should guarantee that it is available
-    val lastBlock = shellIntegration.blocksModel.blocks.lastOrNull()
+    val lastBlock = shellIntegration.blocksModel.blocks.lastOrNull() as? TerminalCommandBlock
     val cursorOffset = outputModel.cursorOffset
     val commandStartOffset = lastBlock?.commandStartOffset
     if (lastBlock == null || (commandStartOffset != null && cursorOffset <= commandStartOffset) || cursorOffset == outputModel.startOffset) {

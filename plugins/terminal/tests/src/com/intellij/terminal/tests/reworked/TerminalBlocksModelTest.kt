@@ -7,11 +7,8 @@ import com.intellij.terminal.tests.reworked.util.TerminalTestUtil.update
 import com.intellij.testFramework.fixtures.BasePlatformTestCase
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.runBlocking
-import org.jetbrains.plugins.terminal.block.reworked.MutableTerminalOutputModel
-import org.jetbrains.plugins.terminal.block.reworked.TerminalBlocksModelImpl
-import org.jetbrains.plugins.terminal.block.reworked.TerminalOffset
+import org.jetbrains.plugins.terminal.block.reworked.*
 import org.jetbrains.plugins.terminal.session.TerminalBlocksModelState
-import org.jetbrains.plugins.terminal.session.TerminalOutputBlock
 import org.junit.Assert.assertNotEquals
 import org.junit.Test
 import org.junit.runner.RunWith
@@ -47,7 +44,7 @@ internal class TerminalBlocksModelTest : BasePlatformTestCase() {
     outputModel.update(0, "myPrompt: \n\n\n")
     blocksModel.promptFinished(outputModel.startOffset + 10L)
 
-    val block = blocksModel.blocks.singleOrNull() ?: error("Single block expected")
+    val block = blocksModel.blocks.singleOrNull() as? TerminalCommandBlock ?: error("Single command block expected")
 
     assertNotEquals(null, block.commandStartOffset)
     assertEquals("myPrompt: ", outputModel.getTextAsString(block.startOffset, block.commandStartOffset!!))
@@ -84,7 +81,7 @@ internal class TerminalBlocksModelTest : BasePlatformTestCase() {
     blocksModel.commandStarted(outputModel.startOffset + 20L)
     outputModel.update(1, "someOutput\n\n")
 
-    val block = blocksModel.blocks.singleOrNull() ?: error("Single block expected")
+    val block = blocksModel.blocks.singleOrNull() as? TerminalCommandBlock ?: error("Single command block expected")
     assertEquals("myCommand\n", outputModel.getTextAsString(block.commandStartOffset!!, block.outputStartOffset!!))
     assertEquals("someOutput\n\n", outputModel.getTextAsString(block.outputStartOffset!!, block.endOffset))
     assertEquals("myPrompt: myCommand\nsomeOutput\n\n", outputModel.getTextAsString(block.startOffset, block.endOffset))
@@ -127,12 +124,12 @@ internal class TerminalBlocksModelTest : BasePlatformTestCase() {
 
     assertEquals(2, blocksModel.blocks.size)
 
-    val firstBlock = blocksModel.blocks[0]
+    val firstBlock = blocksModel.blocks[0] as TerminalCommandBlock
     assertEquals(null, firstBlock.commandStartOffset)
     assertEquals(null, firstBlock.outputStartOffset)
     assertEquals("welcomeText\n", outputModel.getTextAsString(firstBlock.startOffset, firstBlock.endOffset))
 
-    val secondBlock = blocksModel.blocks[1]
+    val secondBlock = blocksModel.blocks[1] as TerminalCommandBlock
     assertEquals("myPrompt: \n\n", outputModel.getTextAsString(secondBlock.startOffset, secondBlock.endOffset))
   }
 
@@ -276,13 +273,13 @@ internal class TerminalBlocksModelTest : BasePlatformTestCase() {
 
     assertEquals(2, blocksModel.blocks.size)
 
-    val firstBlock = blocksModel.blocks[0]
+    val firstBlock = blocksModel.blocks[0] as TerminalCommandBlock
     assertEquals(TerminalOffset.ZERO, firstBlock.startOffset)
     assertEquals(TerminalOffset.of(10), firstBlock.commandStartOffset)
     assertEquals(TerminalOffset.of(20), firstBlock.outputStartOffset)
     assertEquals(TerminalOffset.of(33), firstBlock.endOffset)
 
-    val secondBlock = blocksModel.blocks[1]
+    val secondBlock = blocksModel.blocks[1] as TerminalCommandBlock
     assertEquals(TerminalOffset.of(33), secondBlock.startOffset)
     assertEquals(TerminalOffset.of(43), secondBlock.commandStartOffset)
     assertEquals(TerminalOffset.of(44), secondBlock.endOffset)
@@ -307,13 +304,13 @@ internal class TerminalBlocksModelTest : BasePlatformTestCase() {
 
     assertEquals(2, blocksModel.blocks.size)
 
-    val firstBlock = blocksModel.blocks[0]
+    val firstBlock = blocksModel.blocks[0] as TerminalCommandBlock
     assertEquals(TerminalOffset.of(10), firstBlock.startOffset)
     assertEquals(TerminalOffset.of(20), firstBlock.commandStartOffset)
     assertEquals(TerminalOffset.of(30), firstBlock.outputStartOffset)
     assertEquals(TerminalOffset.of(43), firstBlock.endOffset)
 
-    val secondBlock = blocksModel.blocks[1]
+    val secondBlock = blocksModel.blocks[1] as TerminalCommandBlock
     assertEquals(TerminalOffset.of(43), secondBlock.startOffset)
     assertEquals(TerminalOffset.of(53), secondBlock.commandStartOffset)
     assertEquals(TerminalOffset.of(54), secondBlock.endOffset)
@@ -342,8 +339,8 @@ internal class TerminalBlocksModelTest : BasePlatformTestCase() {
     assertEquals(3, state.blockIdCounter)
     assertEquals(2, state.blocks.size)
 
-    val expectedFirstBlock = TerminalOutputBlock(
-      id = 1,
+    val expectedFirstBlock = TerminalCommandBlockImpl(
+      id = TerminalBlockIdImpl(1),
       startOffset = outputModel.startOffset + 0,
       commandStartOffset = outputModel.startOffset + 10,
       outputStartOffset = outputModel.startOffset + 20,
@@ -352,8 +349,8 @@ internal class TerminalBlocksModelTest : BasePlatformTestCase() {
     )
     assertEquals(expectedFirstBlock, state.blocks[0])
 
-    val expectedSecondBlock = TerminalOutputBlock(
-      id = 2,
+    val expectedSecondBlock = TerminalCommandBlockImpl(
+      id = TerminalBlockIdImpl(2),
       startOffset = outputModel.startOffset + 31,
       commandStartOffset = outputModel.startOffset + 46,
       outputStartOffset = null,
@@ -368,16 +365,16 @@ internal class TerminalBlocksModelTest : BasePlatformTestCase() {
     val outputModel = TerminalTestUtil.createOutputModel()
     val blocksModel = TerminalBlocksModelImpl(outputModel, testRootDisposable)
 
-    val firstBlock = TerminalOutputBlock(
-      id = 1,
+    val firstBlock = TerminalCommandBlockImpl(
+      id = TerminalBlockIdImpl(1),
       startOffset = outputModel.startOffset + 0,
       commandStartOffset = outputModel.startOffset + 10,
       outputStartOffset = outputModel.startOffset + 20,
       endOffset = outputModel.startOffset + 31,
       exitCode = null
     )
-    val secondBlock = TerminalOutputBlock(
-      id = 2,
+    val secondBlock = TerminalCommandBlockImpl(
+      id = TerminalBlockIdImpl(2),
       startOffset = outputModel.startOffset + 31,
       commandStartOffset = outputModel.startOffset + 46,
       outputStartOffset = null,
@@ -424,8 +421,8 @@ internal class TerminalBlocksModelTest : BasePlatformTestCase() {
     assertEquals(3, state.blockIdCounter)
     assertEquals(2, state.blocks.size)
 
-    val expectedFirstBlock = TerminalOutputBlock(
-      id = 1,
+    val expectedFirstBlock = TerminalCommandBlockImpl(
+      id = TerminalBlockIdImpl(1),
       startOffset = newOutputModel.startOffset + 0,
       commandStartOffset = newOutputModel.startOffset + 10,
       outputStartOffset = newOutputModel.startOffset + 20,
@@ -434,8 +431,8 @@ internal class TerminalBlocksModelTest : BasePlatformTestCase() {
     )
     assertEquals(expectedFirstBlock, state.blocks[0])
 
-    val expectedSecondBlock = TerminalOutputBlock(
-      id = 2,
+    val expectedSecondBlock = TerminalCommandBlockImpl(
+      id = TerminalBlockIdImpl(2),
       startOffset = newOutputModel.startOffset + 31,
       commandStartOffset = newOutputModel.startOffset + 46,
       outputStartOffset = null,

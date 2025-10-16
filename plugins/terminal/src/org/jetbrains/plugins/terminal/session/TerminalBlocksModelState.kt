@@ -2,9 +2,10 @@
 package org.jetbrains.plugins.terminal.session
 
 import org.jetbrains.annotations.ApiStatus
+import org.jetbrains.plugins.terminal.block.reworked.TerminalBlockBase
 
 @ApiStatus.Internal
 data class TerminalBlocksModelState(
-  val blocks: List<TerminalOutputBlock>,
+  val blocks: List<TerminalBlockBase>,
   val blockIdCounter: Int,
 )
