@@ -24,7 +24,7 @@ import com.intellij.openapi.util.NlsContexts;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.tasks.LocalTask;
 import com.intellij.tasks.TaskBundle;
-import com.intellij.tasks.TaskSymbol;
+import com.intellij.tasks.core.TaskSymbol;
 import org.jetbrains.annotations.NotNull;
 
 /**

@@ -106,6 +106,7 @@ public class VcsLogGraphTable extends TableWithProgress
   private final @NotNull BaseStyleProvider myBaseStyleProvider;
   private final @Nullable GraphCommitCellRenderer myGraphCommitCellRenderer;
   private final @NotNull MyMouseAdapter myMouseAdapter;
+  private final @NotNull VcsLogGraphTableLinkPreviewSupport myLinkPreviewSupport;
 
   // BasicTableUI.viewIndexForColumn uses reference equality, so we should not change TableColumn during DnD.
   private final @NotNull Map<VcsLogColumn<?>, TableColumn> myTableColumns = new HashMap<>();
@@ -160,8 +161,11 @@ public class VcsLogGraphTable extends TableWithProgress
     });
 
     myMouseAdapter = new MyMouseAdapter(commitByHashNavigator);
+    myLinkPreviewSupport = new VcsLogGraphTableLinkPreviewSupport(this);
     addMouseMotionListener(myMouseAdapter);
+    addMouseMotionListener(myLinkPreviewSupport);
     addMouseListener(myMouseAdapter);
+    addMouseListener(myLinkPreviewSupport);
 
     getSelectionModel().addListSelectionListener(e -> mySelectionSnapshot = null);
     getColumnModel().setColumnSelectionAllowed(false);
@@ -722,8 +726,8 @@ public class VcsLogGraphTable extends TableWithProgress
         style = createStyle(JBColor.GRAY,
                             selected ? baseStyle.getBackground() : CURRENT_BRANCH_BG,
                             VcsLogHighlighter.TextStyle.NORMAL);
-
-      } else {
+      }
+      else {
         style = createStyle(baseStyle.getForeground(),
                             selected ? baseStyle.getBackground() : CURRENT_BRANCH_BG,
                             VcsLogHighlighter.TextStyle.BOLD);
@@ -857,6 +861,10 @@ public class VcsLogGraphTable extends TableWithProgress
       Color background = selected ? myTable.getSelectionBackground(hasFocus, row) : getTableBackground();
       return createStyle(dummyRendererComponent.getForeground(), background, VcsLogHighlighter.TextStyle.NORMAL);
     }
+  }
+
+  @Nullable Object getTagAt(MouseEvent e) {
+    return myMouseAdapter.myLinkListener.getTagAt(e);
   }
 
   private class MyMouseAdapter extends MouseAdapter {

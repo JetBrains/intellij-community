@@ -70,10 +70,13 @@ public class IssueNavigationConfiguration extends SimpleModificationTracker
   public static class LinkMatch implements LinkDescriptor, Comparable {
     private final TextRange myRange;
     private final String myTargetUrl;
+    private final boolean myIsIssueMatch;
 
-    public LinkMatch(final TextRange range, final String targetUrl) {
+    @ApiStatus.Internal
+    public LinkMatch(final TextRange range, final String targetUrl, final boolean isIssueMatch) {
       myRange = range;
       myTargetUrl = targetUrl;
+      myIsIssueMatch = isIssueMatch;
     }
 
     @Override
@@ -83,6 +86,10 @@ public class IssueNavigationConfiguration extends SimpleModificationTracker
 
     public String getTargetUrl() {
       return myTargetUrl;
+    }
+
+    public boolean isIssueMatch() {
+      return myIsIssueMatch;
     }
 
     @Override
@@ -103,7 +110,7 @@ public class IssueNavigationConfiguration extends SimpleModificationTracker
       TextRange match;
       int lastOffset = 0;
       while ((match = URLUtil.findUrl(text, lastOffset, text.length())) != null) {
-        addMatch(result, match, match.subSequence(text).toString());
+        addMatch(result, match, match.subSequence(text).toString(), false);
         lastOffset = match.getEndOffset();
       }
     }
@@ -122,7 +129,7 @@ public class IssueNavigationConfiguration extends SimpleModificationTracker
     while (m.find()) {
       try {
         String replacement = issuePattern.matcher(m.group(0)).replaceFirst(link.getLinkRegexp());
-        addMatch(result, new TextRange(m.start(), m.end()), replacement);
+        addMatch(result, new TextRange(m.start(), m.end()), replacement, true);
       }
       catch (Exception e) {
         LOG.debug("Malformed regex replacement. IssueLink: " + link + "; text: " + text, e);
@@ -130,7 +137,7 @@ public class IssueNavigationConfiguration extends SimpleModificationTracker
     }
   }
 
-  private static void addMatch(final List<LinkMatch> result, final TextRange range, final String replacement) {
+  private static void addMatch(final List<LinkMatch> result, final TextRange range, final String replacement, boolean isIssueMatch) {
     for (Iterator<LinkMatch> iterator = result.iterator(); iterator.hasNext(); ) {
       LinkMatch oldMatch = iterator.next();
       if (oldMatch.getRange().intersectsStrict(range)) {
@@ -141,7 +148,7 @@ public class IssueNavigationConfiguration extends SimpleModificationTracker
         iterator.remove();
       }
     }
-    result.add(new LinkMatch(range, replacement));
+    result.add(new LinkMatch(range, replacement, isIssueMatch));
   }
 
   public static void processTextWithLinks(@Nls String text, @NotNull List<? extends LinkMatch> matches,

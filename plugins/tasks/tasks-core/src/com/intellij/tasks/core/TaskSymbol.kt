@@ -1,9 +1,8 @@
 // Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
-package com.intellij.tasks
+package com.intellij.tasks.core
 
 import com.intellij.ide.BrowserUtil
-import com.intellij.lang.documentation.DocumentationMarkup.GRAYED_END
-import com.intellij.lang.documentation.DocumentationMarkup.GRAYED_START
+import com.intellij.lang.documentation.DocumentationMarkup.CLASS_GRAYED
 import com.intellij.markdown.utils.doc.DocMarkdownToHtmlConverter
 import com.intellij.model.Pointer
 import com.intellij.model.Pointer.hardPointer
@@ -12,6 +11,9 @@ import com.intellij.openapi.progress.runBlockingCancellable
 import com.intellij.openapi.project.DefaultProjectFactory
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.NlsSafe
+import com.intellij.openapi.util.text.HtmlBuilder
+import com.intellij.openapi.util.text.HtmlChunk
+import com.intellij.openapi.util.text.StringUtil
 import com.intellij.platform.backend.documentation.DocumentationSymbol
 import com.intellij.platform.backend.documentation.DocumentationTarget
 import com.intellij.platform.backend.navigation.NavigationRequest
@@ -24,8 +26,9 @@ import com.intellij.polySymbols.PolySymbolQualifiedKind
 import com.intellij.polySymbols.documentation.PolySymbolDocumentationTarget
 import com.intellij.pom.Navigatable
 import com.intellij.psi.PsiElement
-import com.intellij.util.text.DateFormatUtil
-import com.intellij.util.text.DateTimeFormatManager
+import com.intellij.tasks.Task
+import com.intellij.tasks.TaskBundle
+import com.intellij.tasks.TaskState
 import org.jetbrains.annotations.Nls
 import javax.swing.Icon
 
@@ -70,9 +73,6 @@ sealed class AbstractTaskSymbol : PolySymbol, DocumentationSymbol {
   override val name: @NlsSafe String
     get() = id
 
-  val presentableId: @NlsSafe String
-    get() = task?.presentableId ?: id
-
   override fun getDocumentationTarget(): DocumentationTarget =
     getDocumentationTarget(null)
 
@@ -80,48 +80,52 @@ sealed class AbstractTaskSymbol : PolySymbol, DocumentationSymbol {
     PolySymbolDocumentationTarget.create(this, null) { symbol, _ ->
       val task = symbol.task
       val taskUrl = symbol.taskUrl
+      var definition = HtmlBuilder()
       if (taskUrl != null) {
-        definition("<a href='${taskUrl}'>${symbol.id}</a> ${task?.summary ?: "<not found>"}")
+        definition.append(HtmlChunk.tag("a").attr("href", taskUrl).addText(symbol.id))
         docUrl(taskUrl)
       }
       else {
-        definition("${symbol.id} ${task?.summary ?: "<not found>"}")
+        definition.append(symbol.id)
       }
+      if (task?.isClosed == true) {
+        definition = HtmlBuilder().append(definition.wrapWith("s"))
+      }
+      definition.append(" ").append(task?.summary ?: TaskBundle.message("task.symbol.not.found"))
+      task?.state
+        ?.takeIf { it != TaskState.OTHER }
+        ?.let {
+          @Suppress("HardCodedStringLiteral")
+          definition.append(
+            HtmlChunk.span().setClass(CLASS_GRAYED)
+              .addRaw(" (${StringUtil.escapeXmlEntities(it.presentableName).replace(" ", "&nbsp;")})")
+          )
+        }
+      definition(definition.toString())
 
       if (task == null) return@create
       @Nls
-      val description = StringBuilder()
-
-      description.append("<table colspan=0 style='width:100%'>")
-      task.state?.let {
-        description.append("<tr><td>${GRAYED_START}State:${GRAYED_END}<td>${it.presentableName}")
-      }
-      task.created?.let {
-        description.append(
-          "<tr><td>${GRAYED_START}Created at:${GRAYED_END}<td>${DateTimeFormatManager.getInstance().dateFormat.format(it)} ${DateFormatUtil.formatTime(it)}"
-        )
-      }
-      task.updated?.let {
-        description.append(
-          "<tr><td>${GRAYED_START}Updated at:${GRAYED_END}<td>${DateTimeFormatManager.getInstance().dateFormat.format(it)} ${DateFormatUtil.formatTime(it)}"
-        )
-      }
-      description.append("</table>")
-
+      val description = HtmlBuilder()
       val taskDescription = task.description
-      if (!taskDescription.isNullOrBlank())
-        description.append("<hr>")
-
       if (!taskDescription.isNullOrBlank()) {
+
         if (taskDescription.length > 1500)
           description
-            .append(DocMarkdownToHtmlConverter.convert(
-              DefaultProjectFactory.getInstance().defaultProject, taskDescription.ellipsize(1500), null)
+            .appendRaw(DocMarkdownToHtmlConverter.convert(
+              DefaultProjectFactory.getInstance().defaultProject,
+              StringUtil.shortenTextWithEllipsis(taskDescription, 1500, 0, true),
+              null)
             )
-            .append("<p><a href='${taskUrl}'>Read more...</a>")
+            .append(HtmlChunk.p().child(
+              HtmlChunk.tag("a").attr("href", taskUrl ?: "")
+                .addText(TaskBundle.message("task.symbol.doc.read.more")))
+            )
         else
-          description.append(DocMarkdownToHtmlConverter.convert(DefaultProjectFactory.getInstance().defaultProject, taskDescription))
+          description.appendRaw(
+            DocMarkdownToHtmlConverter.convert(DefaultProjectFactory.getInstance().defaultProject, taskDescription)
+          )
       }
+      icon(task.icon)
       description(description.toString())
     }
 
@@ -159,7 +163,3 @@ sealed class AbstractTaskSymbol : PolySymbol, DocumentationSymbol {
   override fun equals(other: Any?): Boolean =
     other === this || other is AbstractTaskSymbol && other.javaClass == javaClass && other.id == id
 }
-
-@NlsSafe
-private fun String.ellipsize(maxLength: Int): String =
-  if (length > maxLength) take(maxLength - 1) + "…" else take(maxLength)

@@ -11,7 +11,7 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.tasks.Task;
 import com.intellij.tasks.TaskManager;
-import com.intellij.tasks.TaskSymbol;
+import com.intellij.tasks.core.TaskSymbol;
 import com.intellij.tasks.impl.TaskManagerImpl;
 import com.intellij.ui.TextFieldWithAutoCompletionListProvider;
 import org.jetbrains.annotations.NotNull;

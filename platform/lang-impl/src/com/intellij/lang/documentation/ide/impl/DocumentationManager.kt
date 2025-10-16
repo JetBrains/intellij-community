@@ -42,7 +42,9 @@ import kotlinx.coroutines.*
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.collectLatest
 import org.jetbrains.annotations.ApiStatus
+import java.awt.Component
 import java.awt.Point
+import java.awt.Rectangle
 import java.lang.ref.WeakReference
 
 @ApiStatus.Internal
@@ -117,6 +119,26 @@ class DocumentationManager(private val project: Project, private val cs: Corouti
       EDT.assertIsEdt()
       return popup?.get()?.isVisible == true
     }
+
+  @ApiStatus.Experimental
+  fun showDocumentationOnHoverAround(
+    targets: List<DocumentationTarget>,
+    project: Project,
+    component: Component,
+    areaWithinComponent: Rectangle,
+    minHeight: Int,
+    onDocumentationSessionDone: Runnable?,
+  ): DocumentationOnHoverSession? {
+    EDT.assertIsEdt()
+    val requests = targets.map { it.documentationRequest() }
+    if (requests.isEmpty() || !CodeInsightSettings.getInstance().AUTO_POPUP_JAVADOC_INFO) return null
+
+    val popupContext = ComponentAreaPopupContext(project, component, areaWithinComponent, onDocumentationSessionDone, minHeight)
+    showDocumentation(requests, popupContext, null) {
+      onDocumentationSessionDone?.run()
+    }
+    return popupContext.session
+  }
 
   private fun getPopup(): AbstractPopup? {
     EDT.assertIsEdt()
@@ -287,6 +309,16 @@ class DocumentationManager(private val project: Project, private val cs: Corouti
     finally {
       pauseAutoUpdateHandle?.let(Disposer::dispose)
     }
+  }
+
+  interface DocumentationOnHoverSession {
+
+    fun mouseOutsideOfSourceArea()
+
+    fun mouseWithinSourceArea()
+
+    fun tryFinishImmediately(): Boolean
+
   }
 }
 

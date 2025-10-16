@@ -11,7 +11,7 @@ import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.project.Project;
 import com.intellij.tasks.Task;
 import com.intellij.tasks.TaskManager;
-import com.intellij.tasks.TaskSymbol;
+import com.intellij.tasks.core.TaskSymbol;
 import com.intellij.util.ExceptionUtil;
 import com.intellij.util.Processor;
 import com.intellij.util.containers.ContainerUtil;

@@ -265,6 +265,10 @@
       <with attribute="implementation" implements="com.intellij.vcs.commit.message.BaseCommitMessageInspection"/>
     </extensionPoint>
 
+    <extensionPoint name="vcs.issueDocumentationTargetProvider"
+                    interface="com.intellij.openapi.vcs.IssueDocumentationTargetProvider"
+                    dynamic="true"/>
+
     <extensionPoint qualifiedName="com.intellij.vcs.impl.backend.treeNodeConverter"
                     interface="com.intellij.vcs.shelf.NodeToEntityConverter"
                     dynamic="true"/>
