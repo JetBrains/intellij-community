@@ -59,7 +59,7 @@ class UseOptimizedEelFunctionsTest {
 
         @Language("Java")
         val expectedResult = """
-          import com.intellij.platform.eel.provider.nioHelpers.EelFiles;
+          import com.intellij.platform.eel.fs.EelFiles;
           
           import java.io.IOException;
           import java.nio.file.Files;
@@ -89,7 +89,7 @@ class UseOptimizedEelFunctionsTest {
 
         @Language("Kt")
         val expectedResult = """
-          import com.intellij.platform.eel.provider.nioHelpers.EelFiles
+          import com.intellij.platform.eel.fs.EelFiles
           import java.nio.file.Files
           import java.nio.file.Path
     
@@ -175,7 +175,7 @@ class UseOptimizedEelFunctionsTest {
 
         @Language("Java")
         val expectedResult = """
-          import com.intellij.platform.eel.provider.nioHelpers.EelFiles;
+          import com.intellij.platform.eel.fs.EelFiles;
           
           import java.io.IOException;
           import java.nio.ByteBuffer;
@@ -207,7 +207,7 @@ class UseOptimizedEelFunctionsTest {
 
         @Language("Kt")
         val expectedResult = """
-          import com.intellij.platform.eel.provider.nioHelpers.EelFiles
+          import com.intellij.platform.eel.fs.EelFiles
           import java.nio.ByteBuffer
           import java.nio.file.Files
           import java.nio.file.Path
@@ -239,7 +239,7 @@ class UseOptimizedEelFunctionsTest {
 
         @Language("Java")
         val expectedResult = """
-          import com.intellij.platform.eel.provider.nioHelpers.EelFiles;
+          import com.intellij.platform.eel.fs.EelFiles;
           
           import java.io.IOException;
           import java.nio.file.*;
@@ -267,7 +267,7 @@ class UseOptimizedEelFunctionsTest {
 
         @Language("Kt")
         val expectedResult = """
-          import com.intellij.platform.eel.provider.nioHelpers.EelFiles
+          import com.intellij.platform.eel.fs.EelFiles
           import java.nio.file.*
     
           fun example() {
@@ -297,7 +297,7 @@ class UseOptimizedEelFunctionsTest {
         // It would be better to keep FQN for java.nio.file.Path, but it's impossible after the commit b739467b7a9728dd1e7eabe814dda073e66ad563
         @Language("Java")
         val expectedResult = """
-          import com.intellij.platform.eel.provider.nioHelpers.EelFiles;
+          import com.intellij.platform.eel.fs.EelFiles;
           
           import java.io.IOException;
           import java.nio.file.Path;
@@ -326,7 +326,7 @@ class UseOptimizedEelFunctionsTest {
         // It would be better to keep FQN for java.nio.file.Path, but it's impossible after the commit b739467b7a9728dd1e7eabe814dda073e66ad563
         @Language("Kt")
         val expectedResult = """
-          import com.intellij.platform.eel.provider.nioHelpers.EelFiles
+          import com.intellij.platform.eel.fs.EelFiles
           import java.nio.file.Files
           import java.nio.file.Path
     
@@ -358,7 +358,7 @@ class UseOptimizedEelFunctionsTest {
 
         @Language("Java")
         val expectedResult = """
-          import com.intellij.platform.eel.provider.nioHelpers.EelFiles;
+          import com.intellij.platform.eel.fs.EelFiles;
           
           import java.io.IOException;
           import static java.nio.file.Files.readAllBytes;
@@ -388,7 +388,7 @@ class UseOptimizedEelFunctionsTest {
 
         @Language("Kt")
         val expectedResult = """
-          import com.intellij.platform.eel.provider.nioHelpers.EelFiles
+          import com.intellij.platform.eel.fs.EelFiles
           import java.nio.file.Files.readAllBytes
           import java.nio.file.Path
     
@@ -415,7 +415,7 @@ class UseOptimizedEelFunctionsTest {
 
       @Language("Kt")
       val expectedResult = """
-        import com.intellij.platform.eel.provider.nioHelpers.EelFiles
+        import com.intellij.platform.eel.fs.EelFiles
         import java.nio.file.Files.readAllBytes as foobar
         import java.nio.file.Path
   
@@ -447,7 +447,7 @@ class UseOptimizedEelFunctionsTest {
 
       @Language("Java")
       val expectedResult = """
-        import com.intellij.platform.eel.provider.nioHelpers.EelFiles;
+        import com.intellij.platform.eel.fs.EelFiles;
         
         import java.io.IOException;
         import java.nio.file.Files;
@@ -482,7 +482,7 @@ class UseOptimizedEelFunctionsTest {
 
       @Language("Java")
       val expectedResult = """
-        import com.intellij.platform.eel.provider.nioHelpers.EelFiles;
+        import com.intellij.platform.eel.fs.EelFiles;
         
         import java.io.IOException;
         import java.nio.charset.StandardCharsets;
@@ -559,10 +559,6 @@ class UseOptimizedEelFunctionsTest {
       PsiTestUtil.addSourceContentToRoots(
         module,
         Path.of(PathManager.getCommunityHomePath(), "platform/eel/src").refreshAndGetVirtualDirectory(),
-      )
-      PsiTestUtil.addSourceContentToRoots(
-        module,
-        Path.of(PathManager.getCommunityHomePath(), "platform/eel-provider/src").refreshAndGetVirtualDirectory(),
       )
     }
   }

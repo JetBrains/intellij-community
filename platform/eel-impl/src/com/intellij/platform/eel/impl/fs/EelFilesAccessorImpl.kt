@@ -1,9 +1,10 @@
 // Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 @file:Suppress("RAW_RUN_BLOCKING")
 
-package com.intellij.platform.eel.provider.nioHelpers
+package com.intellij.platform.eel.impl.fs
 
 import com.intellij.openapi.util.registry.Registry
+import com.intellij.platform.eel.EelSharedSecrets
 import com.intellij.platform.eel.fs.readFile
 import com.intellij.platform.eel.provider.LocalEelDescriptor
 import com.intellij.platform.eel.provider.asEelPath
@@ -11,23 +12,18 @@ import com.intellij.platform.eel.provider.getEelDescriptor
 import com.intellij.platform.eel.provider.utils.getOrThrowFileSystemException
 import com.intellij.util.io.toByteArray
 import kotlinx.coroutines.runBlocking
-import org.jetbrains.annotations.ApiStatus
 import java.io.IOException
 import java.nio.charset.Charset
 import java.nio.file.FileSystems
 import java.nio.file.Path
 
-@ApiStatus.Experimental
-object EelFiles {
-  /**
-   * Does the same as [java.nio.file.Files.readAllBytes] but works more effectively with Eel.
-   * In particular, it performs fewer RPC requests to IJent for reading files.
-   */
-  @JvmStatic
+internal class EelFilesAccessorImpl : EelSharedSecrets.EelFilesAccessor {
+  private val default = EelSharedSecrets.EelFilesAccessor.Default
+
   @Throws(IOException::class)
-  fun readAllBytes(path: Path): ByteArray {
+  override fun readAllBytes(path: Path): ByteArray {
     if (shouldInvokeOriginal(path)) {
-      return java.nio.file.Files.readAllBytes(path)
+      return default.readAllBytes(path)
     }
     return runBlocking {
       val eelPath = path.asEelPath()
@@ -37,24 +33,10 @@ object EelFiles {
     }
   }
 
-  /**
-   * Does the same as [java.nio.file.Files.readString] but works more effectively with Eel.
-   * In particular, it performs fewer RPC requests to IJent for reading files.
-   */
-  @JvmStatic
   @Throws(IOException::class)
-  fun readString(path: Path): String =
-    readString(path, Charsets.UTF_8)
-
-  /**
-   * Does the same as [java.nio.file.Files.readString] but works more effectively with Eel.
-   * In particular, it performs fewer RPC requests to IJent for reading files.
-   */
-  @JvmStatic
-  @Throws(IOException::class)
-  fun readString(path: Path, cs: Charset): String {
+  override fun readString(path: Path, cs: Charset): String {
     if (shouldInvokeOriginal(path)) {
-      return java.nio.file.Files.readString(path, cs)
+      return default.readString(path, cs)
     }
     return String(readAllBytes(path), cs)
   }
@@ -66,11 +48,10 @@ object EelFiles {
    *
    * The registry flag can be enabled and removed only after thorough performance testing.
    */
-  @JvmStatic
   private fun shouldInvokeOriginal(path: Path): Boolean =
     path.getEelDescriptor() == LocalEelDescriptor &&
     (
-      !Registry.`is`("use.generic.functions.for.local.eel", false)
+      !Registry.Companion.`is`("use.generic.functions.for.local.eel", false)
       || path.fileSystem != FileSystems.getDefault()  // It may be a path from ZipFileSystem or something like that.
     )
 }

@@ -166,6 +166,7 @@ internal suspend fun createPlatformLayout(projectLibrariesUsedByPlugins: SortedS
     // it has package `kotlin.coroutines.jvm.internal` - should be packed into the same JAR as coroutine lib,
     // to ensure that package index will not report one more JAR in a search path
     "intellij.platform.bootstrap.coroutine",
+    "intellij.platform.eel",  // EelFiles, which is a replacement for java.nio.file.Files, may be used everywhere
   ), productLayout = productLayout, layout = layout)
 
   // https://jetbrains.team/p/ij/reviews/67104/timeline

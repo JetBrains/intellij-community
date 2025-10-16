@@ -6,6 +6,7 @@ jvm_library(
   module_name = "intellij.platform.eel",
   visibility = ["//visibility:public"],
   srcs = glob(["gen-builders/**/*.kt", "gen-builders/**/*.java", "src/**/*.kt", "src/**/*.java", "src/**/*.form"], allow_empty = True),
+  kotlinc_opts = "@community//:k8",
   deps = [
     "@lib//:kotlin-stdlib",
     "@lib//:jetbrains-annotations",

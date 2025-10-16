@@ -47,6 +47,7 @@ jvm_library(
     "@lib//:maven-resolver-provider",
     "@lib//:kotlin-metadata",
     "@lib//:kotlinx-coroutines-core",
+    "//platform/eel",
   ],
   exports = ["@lib//:maven-resolver-provider"],
   runtime_deps = [

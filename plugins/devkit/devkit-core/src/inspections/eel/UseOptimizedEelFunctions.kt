@@ -76,13 +76,13 @@ class UseOptimizedEelFunctions : LocalInspectionTool() {
     if (fqn == "java.nio.file.Files.readAllBytes") {
       holder.registerProblem(
         methodPsi, "Works ineffectively with remote Eel", ProblemHighlightType.WARNING,
-        ReplaceWithEelFunction(holder.project, "com.intellij.platform.eel.provider.nioHelpers.EelFiles", "readAllBytes"),
+        ReplaceWithEelFunction(holder.project, "com.intellij.platform.eel.fs.EelFiles", "readAllBytes"),
       )
     }
     if (fqn == "java.nio.file.Files.readString") {
       holder.registerProblem(
         methodPsi, "Works ineffectively with remote Eel", ProblemHighlightType.WARNING,
-        ReplaceWithEelFunction(holder.project, "com.intellij.platform.eel.provider.nioHelpers.EelFiles", "readString"),
+        ReplaceWithEelFunction(holder.project, "com.intellij.platform.eel.fs.EelFiles", "readString"),
       )
     }
   }
