@@ -27,7 +27,6 @@ import com.intellij.openapi.project.ex.ProjectManagerEx
 import com.intellij.openapi.startup.StartupManager
 import com.intellij.openapi.ui.MessageDialogBuilder
 import com.intellij.openapi.ui.Messages
-import com.intellij.openapi.util.Disposer
 import com.intellij.openapi.util.SystemInfoRt
 import com.intellij.openapi.util.io.FileUtil
 import com.intellij.openapi.util.io.FileUtilRt
@@ -654,31 +653,25 @@ object ProjectUtil {
       false
     }
 
-    var projectFile: Path? = null
-    if (created) {
-      val options = OpenProjectTask {
-        isNewProject = true
-        runConfigurators = true
-        projectName = name
-      }
-
-      val project = projectManager.newProjectAsync(file = file, options = options)
-      runInAutoSaveDisabledMode {
-        saveSettings(componentManager = project, forceSavingAllSettings = true)
-      }
-      edtWriteAction {
-        Disposer.dispose(project)
-      }
-      projectFile = file
-    }
-
-    if (projectFile == null) {
+    if (!created) {
       return null
     }
 
-    return projectManager.openProjectAsync(projectIdentityFile = projectFile, options = OpenProjectTask {
+    val newProject = projectManager.newProjectAsync(file = file, options = OpenProjectTask {
+      isNewProject = true
+      isProjectCreatedWithWizard = true
+      runConfigurators = true
+      projectName = name
+    })
+
+    runInAutoSaveDisabledMode {
+      saveSettings(componentManager = newProject, forceSavingAllSettings = true)
+    }
+
+    return projectManager.openProjectAsync(projectIdentityFile = file, options = OpenProjectTask {
       runConfigurators = true
       isProjectCreatedWithWizard = true
+      project = newProject
     })
   }
 

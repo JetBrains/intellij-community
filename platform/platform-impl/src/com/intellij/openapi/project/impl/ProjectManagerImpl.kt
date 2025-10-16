@@ -73,6 +73,7 @@ import com.intellij.openapi.wm.WindowManager
 import com.intellij.openapi.wm.ex.WelcomeScreenProjectProvider
 import com.intellij.openapi.wm.ex.WindowManagerEx
 import com.intellij.openapi.wm.impl.welcomeScreen.WelcomeFrame
+import com.intellij.platform.PROJECT_NEWLY_CREATED
 import com.intellij.platform.PROJECT_NEWLY_OPENED
 import com.intellij.platform.PlatformProjectOpenProcessor
 import com.intellij.platform.attachToProjectAsync
@@ -657,7 +658,8 @@ open class ProjectManagerImpl : ProjectManagerEx(), Disposable {
                 projectName = options.projectName,
                 beforeInit = options.beforeInit,
                 useDefaultProjectAsTemplate = options.useDefaultProjectAsTemplate,
-                preloadServices = options.preloadServices
+                preloadServices = options.preloadServices,
+                markAsNewlyCreated = options.isProjectCreatedWithWizard,
               )
               else -> prepareProject(
                 projectIdentityFile = projectIdentityFile,
@@ -838,6 +840,7 @@ open class ProjectManagerImpl : ProjectManagerEx(), Disposable {
       options.beforeInit,
       options.useDefaultProjectAsTemplate,
       options.preloadServices,
+      options.isProjectCreatedWithWizard,
       markAsNew = false
     ).also { project ->
       TrustedProjects.setProjectTrusted(project, true)
@@ -885,6 +888,7 @@ open class ProjectManagerImpl : ProjectManagerEx(), Disposable {
     beforeInit: ((Project) -> Unit)?,
     useDefaultProjectAsTemplate: Boolean,
     preloadServices: Boolean,
+    markAsNewlyCreated: Boolean,
     markAsNew: Boolean = true,
   ): Project {
     return coroutineScope {
@@ -915,6 +919,7 @@ open class ProjectManagerImpl : ProjectManagerEx(), Disposable {
 
       val project = instantiateProject(identityFle = identityFle, projectName = projectName, beforeInit = beforeInit)
       project.putUserData(PROJECT_NEWLY_OPENED, markAsNew)
+      project.putUserData(PROJECT_NEWLY_CREATED, markAsNewlyCreated)
       val template = templateAsync?.await()
       initProject(file = identityFle, project = project, preloadServices = preloadServices, template = template)
       project
