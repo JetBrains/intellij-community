@@ -37,7 +37,7 @@
       "rider/rdclient-dotnet/src/com/jetbrains/rider/projectView/workspace/impl/WorkspaceModelUpdater.kt",
       "rider/src/com/jetbrains/rider/workspaceModel/RiderWorkspaceModelInitializer.kt",
       "rustrover/core/src/main/kotlin/org/rust/lang/core/types/infer/TypeInferenceWalker.kt",
-      "tests/ideTestingFramework/intellij.tools.ide.starter/src/com/intellij/ide/starter/models/VMOptions.kt"
+      "community/tools/intellij.tools.ide.starter/src/com/intellij/ide/starter/models/VMOptions.kt"
     ]
   },
   "interpret": {
