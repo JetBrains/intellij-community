@@ -30,6 +30,11 @@ public class KotlinFirMultiplatformTestGenerated extends AbstractKotlinFirMultip
         KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
     }
 
+    @TestMetadata("commonAnonymousFunction.kt")
+    public void testCommonAnonymousFunction() throws Exception {
+        runTest("../../idea/tests/testData/refactoring/inlineMultiModule/commonAnonymousFunction.kt");
+    }
+
     @TestMetadata("defaultValueFromAnotherModule.kt")
     public void testDefaultValueFromAnotherModule() throws Exception {
         runTest("../../idea/tests/testData/refactoring/inlineMultiModule/defaultValueFromAnotherModule.kt");

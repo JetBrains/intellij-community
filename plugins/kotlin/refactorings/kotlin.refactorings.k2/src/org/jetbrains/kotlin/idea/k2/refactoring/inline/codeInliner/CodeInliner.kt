@@ -494,7 +494,18 @@ class CodeInliner(
         (this as? KtModifierListOwner)?.modifierList?.contextReceiverList?.contextParameters().orEmpty() +
                 (this as? KtDeclarationWithBody)?.valueParameters.orEmpty()
 
-    override fun KtParameter.name(): Name = nameAsSafeName
+    override fun KtParameter.name(): Name {
+        val originalDeclaration = replacement.originalDeclaration
+        val isAnonymousFunction = originalDeclaration is KtNamedFunction && originalDeclaration.nameIdentifier == null
+        val isAnonymousFunctionWithReceiver = isAnonymousFunction && originalDeclaration.receiverTypeReference != null
+
+        return if (isAnonymousFunction && ownerDeclaration == originalDeclaration) {
+            val shift = if (isAnonymousFunctionWithReceiver) 2 else 1
+            Name.identifier("p${parameterIndex() + shift}")
+        } else {
+            nameAsSafeName
+        }
+    }
 
     override fun introduceValue(
         value: KtExpression,
