@@ -1,5 +1,6 @@
 package com.intellij.lambda.testFramework.junit
 
+import com.intellij.ide.starter.junit5.RemoteDevRun
 import com.intellij.remoteDev.tests.modelGenerated.LambdaRdIdeType
 import com.intellij.testFramework.junit5.impl.TestApplicationExtension
 import org.junit.jupiter.api.TestInstance
@@ -17,6 +18,7 @@ import java.lang.annotation.Inherited
 @ExtendWith(TestApplicationExtension::class,
             MonolithAndSplitModeContextProvider::class,
             MonolithAndSplitModeInvocationInterceptor::class,
-            MonolithAndSplitModeIdeInstanceInitializer::class)
+            MonolithAndSplitModeIdeInstanceInitializer::class,
+            RemoteDevRun::class)
 @TestInstance(TestInstance.Lifecycle.PER_CLASS)
 annotation class ExecuteInMonolithAndSplitMode(vararg val mode: LambdaRdIdeType = [LambdaRdIdeType.FRONTEND, LambdaRdIdeType.BACKEND, LambdaRdIdeType.MONOLITH])

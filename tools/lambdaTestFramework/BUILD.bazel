@@ -31,6 +31,7 @@ jvm_library(
     "//platform/editor-ui-api:editor-ui",
     "//platform/editor-ui-ex:editor-ex",
     "//platform/testFramework",
+    "//platform/testFramework/junit5",
     "//platform/code-style-api:codeStyle",
     "//platform/lang-api:lang",
     "//platform/execution-impl",
@@ -44,6 +45,7 @@ jvm_library(
     "//platform/xdebugger-impl:debugger-impl",
     "//platform/util/concurrency",
     "//platform/usageView",
+    "//tools/intellij.tools.ide.starter.junit5:ide-starter-junit5",
   ]
 )
 ### auto-generated section `build intellij.lambda.testFramework` end
