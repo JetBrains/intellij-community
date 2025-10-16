@@ -10,7 +10,11 @@ class ZeroWidthCodeVisionEntry(
 ) : CodeVisionEntry(
   providerId,
   icon = null,
-  longPresentation = "",
+  longPresentation = "Show a Code Vision inlay inlay when no results are available",
   tooltip = "",
   extraActions = emptyList()
-)
+) {
+  init {
+    showInMorePopup = false
+  }
+}
