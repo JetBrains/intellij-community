@@ -139,6 +139,19 @@ internal class ContentModuleVisibilityInspection : DevKitPluginXmlInspectionBase
       .mapNotNull { DescriptorUtil.getIdeaPlugin(it) }
   }
 
+  private fun getRootPluginDescriptorIncludingFileAsContentModule(xmlFile: XmlFile, scope: GlobalSearchScope): Collection<IdeaPlugin> {
+    val ideaPlugin = DescriptorUtil.getIdeaPlugin(xmlFile)
+    if (ideaPlugin != null && isActualPluginDescriptor(ideaPlugin, xmlFile)) {
+      return listOf(ideaPlugin)
+    }
+    val moduleVirtualFile = xmlFile.virtualFile ?: return emptyList()
+    val psiManager = xmlFile.manager
+    return PluginIdDependenciesIndex.findFilesIncludingContentModule(moduleVirtualFile, scope)
+      .mapNotNull { psiManager.findFile(it) as? XmlFile }
+      .flatMap { getActualIncludingPlugins(it, scope) }
+      .distinct()
+  }
+
   private val IdeaPlugin.namespace: String?
     get() {
       // all <content> must have the same namespace, so take it from the first:
@@ -157,9 +170,9 @@ internal class ContentModuleVisibilityInspection : DevKitPluginXmlInspectionBase
     val currentXmlFile = dependencyValue.xmlElement?.containingFile as? XmlFile ?: return
     val project = currentXmlFile.project
     val productionXmlFilesScope = getProjectProductionXmlFilesScope(project)
-    val currentModuleIncludingPlugins = getPluginXmlFilesIncludingFileAsContentModule(currentXmlFile, productionXmlFilesScope)
+    val currentModuleIncludingPlugins = getRootPluginDescriptorIncludingFileAsContentModule(currentXmlFile, productionXmlFilesScope)
     val dependencyXmlFile = moduleDependency.xmlElement?.containingFile as? XmlFile ?: return
-    val dependencyIncludingPlugins = getPluginsIncludingFileAsContentModule(dependencyXmlFile, productionXmlFilesScope)
+    val dependencyIncludingPlugins = getRootPluginDescriptorIncludingFileAsContentModule(dependencyXmlFile, productionXmlFilesScope)
     for (currentModuleIncludingPlugin in currentModuleIncludingPlugins) {
       if (dependencyIncludingPlugins.contains(currentModuleIncludingPlugin)) continue // are included in the same plugin
       for (dependencyIncludingPlugin in dependencyIncludingPlugins) {
@@ -192,15 +205,6 @@ internal class ContentModuleVisibilityInspection : DevKitPluginXmlInspectionBase
 
   private fun getProjectProductionXmlFilesScope(project: Project): GlobalSearchScope {
     return GlobalSearchScope.getScopeRestrictedByFileTypes(GlobalSearchScopesCore.projectProductionScope(project), XmlFileType.INSTANCE)
-  }
-
-  private fun getPluginsIncludingFileAsContentModule(xmlFile: XmlFile, scope: GlobalSearchScope): Collection<IdeaPlugin> {
-    val moduleVirtualFile = xmlFile.virtualFile ?: return emptyList()
-    val psiManager = xmlFile.manager
-    return PluginIdDependenciesIndex.findFilesIncludingContentModule(moduleVirtualFile, scope)
-      .mapNotNull { psiManager.findFile(it) as? XmlFile }
-      .flatMap { getActualIncludingPlugins(it, scope) }
-      .distinct()
   }
 
   /**

@@ -829,6 +829,50 @@ class ContentModuleVisibilityInspectionTest : ContentModuleVisibilityInspectionT
     testHighlighting(testedFile)
   }
 
+  fun `test should not report private module when both modules included via xi-include`() {
+    myFixture.addModuleWithPluginDescriptor(
+      "com.example.plugin.with.privatemodule",
+      "com.example.plugin.with.privatemodule/META-INF/plugin.xml",
+      """
+      <idea-plugin xmlns:xi="http://www.w3.org/2001/XInclude">
+        <id>com.example.plugin.with.privatemodule</id>
+        <xi:include href="/META-INF/modules.xml"/>
+      </idea-plugin>
+      """.trimIndent())
+
+    myFixture.addXmlFile(
+      "com.example.plugin.with.privatemodule/META-INF/modules.xml",
+      """
+      <idea-plugin>
+        <content>
+          <module name="com.example.publicmodule"/>
+          <module name="com.example.privatemodule"/>
+        </content>
+      </idea-plugin>
+      """.trimIndent())
+
+    myFixture.addModuleWithPluginDescriptor(
+      "com.example.privatemodule",
+      "com.example.privatemodule/com.example.privatemodule.xml",
+      """
+      <idea-plugin visibility="private">
+      </idea-plugin>
+      """.trimIndent())
+
+    val testedFile = myFixture.addModuleWithPluginDescriptor(
+      "com.example.publicmodule",
+      "com.example.publicmodule/com.example.publicmodule.xml",
+      """
+      <idea-plugin visibility="public">
+        <dependencies>
+          <module name="com.example.privatemodule"/>
+        </dependencies>
+      </idea-plugin>
+      """.trimIndent())
+
+    testHighlighting(testedFile)
+  }
+
   fun `test should not report private module included via multiple xi-includes`() {
     myFixture.addModuleWithPluginDescriptor(
       "com.example.plugin.with.privatemodule",
