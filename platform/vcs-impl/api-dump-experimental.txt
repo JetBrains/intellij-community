@@ -1,3 +1,7 @@
+*:com.intellij.openapi.vcs.IssueDocumentationTargetProvider
+- *sf:Companion:com.intellij.openapi.vcs.IssueDocumentationTargetProvider$Companion
+- a:getIssueDocumentationTarget(com.intellij.openapi.project.Project,java.lang.String,java.lang.String):com.intellij.platform.backend.documentation.DocumentationTarget
+*f:com.intellij.openapi.vcs.IssueDocumentationTargetProvider$Companion
 *:com.intellij.openapi.vcs.changes.ChangeListChangeAssigner
 - sf:EP_NAME:com.intellij.openapi.extensions.ProjectExtensionPointName
 - a:beforeChangesProcessing(com.intellij.openapi.vcs.changes.VcsDirtyScope):V

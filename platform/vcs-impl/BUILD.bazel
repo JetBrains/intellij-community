@@ -78,6 +78,7 @@ jvm_library(
     "//platform/project/shared:project",
     "//platform/kernel/backend",
     "//platform/platform-impl/rpc",
+    "//platform/polySymbols",
   ]
 )
 
@@ -161,6 +162,7 @@ jvm_library(
     "//platform/kernel/backend",
     "//platform/platform-impl/rpc",
     "//platform/diff-impl/tests:tests_test_lib",
+    "//platform/polySymbols",
   ]
 )
 ### auto-generated section `build intellij.platform.vcs.impl` end

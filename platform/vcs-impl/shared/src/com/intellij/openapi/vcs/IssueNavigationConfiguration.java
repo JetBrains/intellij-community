@@ -88,6 +88,7 @@ public class IssueNavigationConfiguration extends SimpleModificationTracker
       return myTargetUrl;
     }
 
+    @ApiStatus.Internal
     public boolean isIssueMatch() {
       return myIsIssueMatch;
     }
