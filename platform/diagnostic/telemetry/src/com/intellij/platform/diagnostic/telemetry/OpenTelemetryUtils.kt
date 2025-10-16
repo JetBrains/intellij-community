@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.platform.diagnostic.telemetry
 
 import com.intellij.openapi.application.PathManager
@@ -60,9 +60,11 @@ object OpenTelemetryUtils {
   }
 
   fun metricsCsvReportingPath(): Path? =
-    resolveMetricsReportingPath(System.getProperty("idea.diagnostic.opentelemetry.metrics.file", "open-telemetry-metrics.csv"))
+    resolveMetricsReportingPath(System.getProperty("idea.diagnostic.opentelemetry.metrics.file", "telemetry/open-telemetry-metrics.csv"))
 
   fun metricsJsonReportingPath(): Path? =
+    //MAYBE: move .json telemetry files into .../telemetry subfolder, same as .csv telemetry files above?
+    //       OpenTelemetryJsonMeterCollector should be updated then
     resolveMetricsReportingPath(System.getProperty("idea.diagnostic.opentelemetry.meters.file.json", "open-telemetry-meters.json"))
 
   fun setupFileLimiterForMetrics(metricsReportingBasePath: Path): FileSetLimiter {
