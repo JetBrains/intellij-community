@@ -1,0 +1,3 @@
+def foo(x: int): ...
+foo(1)
+foo(<warning descr="Expected type 'int', got 'str' instead">"1"</warning>)
