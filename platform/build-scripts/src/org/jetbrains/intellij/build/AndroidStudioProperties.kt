@@ -151,6 +151,10 @@ class AndroidStudioProperties(home: Path) : BaseIdeaProperties() {
 
     val unknownExcludedPlugins = EXCLUDED_PLUGINS - INHERITED_PLUGINS
     check(unknownExcludedPlugins.isEmpty()) { "AndroidStudioProperties.EXCLUDED_PLUGINS contains nonexistent plugins: $unknownExcludedPlugins" }
+
+    val duplicateExtraPlugins = EXTRA_PLUGINS.intersect(INHERITED_PLUGINS)
+    check(duplicateExtraPlugins.isEmpty()) { "AndroidStudioProperties.EXTRA_PLUGINS contains plugins already inherited from IntelliJ: $duplicateExtraPlugins" }
+
     val bundledPlugins = (INHERITED_PLUGINS + EXTRA_PLUGINS - EXCLUDED_PLUGINS.toSet()).toPersistentList()
     productLayout.bundledPluginModules = bundledPlugins
 
