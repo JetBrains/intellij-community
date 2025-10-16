@@ -12,6 +12,7 @@ import org.jetbrains.jps.dependency.Delta;
 import org.jetbrains.jps.dependency.Graph;
 import org.jetbrains.jps.dependency.NodeSource;
 import org.jetbrains.jps.dependency.impl.DeltaImpl;
+import org.jetbrains.jps.dependency.impl.GraphImpl;
 import org.jetbrains.jps.dependency.impl.PathSource;
 import org.jetbrains.jps.dependency.java.JvmClassNodeBuilder;
 import org.jetbrains.jps.util.Pair;
@@ -41,7 +42,7 @@ public final class LibraryGraphLoader {
 
   private static Pair<NodeSourceSnapshot, Graph> loadReadonlyLibraryGraph(Path jarPath) throws IOException {
     try (var is = new BufferedInputStream(Files.newInputStream(jarPath))) {
-      return loadReadonlyLibraryGraph(new DeltaImpl(Set.of(), Set.of()) /*depGraph.createDelta(Set.of(), Set.of(), false)*/, ClassDataZipEntry.fromSteam(is));
+      return loadReadonlyLibraryGraph(new DeltaImpl(Set.of(), Set.of(), GraphImpl.IndexFactory.mandatoryIndices()) /*depGraph.createDelta(Set.of(), Set.of(), false)*/, ClassDataZipEntry.fromSteam(is));
     }
   }
 
