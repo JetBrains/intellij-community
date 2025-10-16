@@ -1418,8 +1418,8 @@ jvm_import(
 
 jvm_import(
   name = "expects-compiler-plugin",
-  jar = "@jetbrains_fleet-expects-compiler-plugin-2_2_20-0_1_http//file",
-  source_jar = "@jetbrains_fleet-expects-compiler-plugin-2_2_20-0_1_http//file",
+  jar = "@jetbrains_fleet-expects-compiler-plugin-2_2_21-RC2-0_1_http//file",
+  source_jar = "@jetbrains_fleet-expects-compiler-plugin-2_2_21-RC2-0_1_http//file",
   visibility = ["//visibility:public"]
 )
 
@@ -3492,8 +3492,8 @@ jvm_import(
 
 jvm_import(
   name = "jetbrains-kotlin-compose-compiler-plugin",
-  jar = "@org_jetbrains_kotlin-kotlin-compose-compiler-plugin-2_2_20_http//file",
-  source_jar = "@org_jetbrains_kotlin-kotlin-compose-compiler-plugin-2_2_20_http//file",
+  jar = "@org_jetbrains_kotlin-kotlin-compose-compiler-plugin-2_2_21-RC2_http//file",
+  source_jar = "@org_jetbrains_kotlin-kotlin-compose-compiler-plugin-2_2_21-RC2_http//file",
   visibility = ["//visibility:public"]
 )
 
@@ -4166,8 +4166,8 @@ jvm_import(
 
 jvm_import(
   name = "kotlin-metadata",
-  jar = "@org_jetbrains_kotlin-kotlin-metadata-jvm-2_2_20_http//file",
-  source_jar = "@org_jetbrains_kotlin-kotlin-metadata-jvm-2_2_20_http//file",
+  jar = "@org_jetbrains_kotlin-kotlin-metadata-jvm-2_2_21-RC2_http//file",
+  source_jar = "@org_jetbrains_kotlin-kotlin-metadata-jvm-2_2_21-RC2_http//file",
   visibility = ["//visibility:public"]
 )
 
@@ -4180,22 +4180,22 @@ jvm_import(
 
 jvm_import(
   name = "kotlin-reflect",
-  jar = "@org_jetbrains_kotlin-kotlin-reflect-2_2_20_http//file",
-  source_jar = "@org_jetbrains_kotlin-kotlin-reflect-2_2_20_http//file",
+  jar = "@org_jetbrains_kotlin-kotlin-reflect-2_2_21-RC2_http//file",
+  source_jar = "@org_jetbrains_kotlin-kotlin-reflect-2_2_21-RC2_http//file",
   visibility = ["//visibility:public"]
 )
 
 jvm_import(
   name = "kotlin-script-runtime",
-  jar = "@org_jetbrains_kotlin-kotlin-script-runtime-2_2_20_http//file",
-  source_jar = "@org_jetbrains_kotlin-kotlin-script-runtime-2_2_20_http//file",
+  jar = "@org_jetbrains_kotlin-kotlin-script-runtime-2_2_21-RC2_http//file",
+  source_jar = "@org_jetbrains_kotlin-kotlin-script-runtime-2_2_21-RC2_http//file",
   visibility = ["//visibility:public"]
 )
 
 jvm_import(
   name = "kotlin-stdlib",
-  jar = "@org_jetbrains_kotlin-kotlin-stdlib-2_2_20_http//file",
-  source_jar = "@org_jetbrains_kotlin-kotlin-stdlib-2_2_20_http//file",
+  jar = "@org_jetbrains_kotlin-kotlin-stdlib-2_2_21-RC2_http//file",
+  source_jar = "@org_jetbrains_kotlin-kotlin-stdlib-2_2_21-RC2_http//file",
   visibility = ["//visibility:public"]
 )
 
@@ -4208,8 +4208,8 @@ java_library(
 
 jvm_import(
   name = "kotlin-test",
-  jar = "@org_jetbrains_kotlin-kotlin-test-2_2_20_http//file",
-  source_jar = "@org_jetbrains_kotlin-kotlin-test-2_2_20_http//file",
+  jar = "@org_jetbrains_kotlin-kotlin-test-2_2_21-RC2_http//file",
+  source_jar = "@org_jetbrains_kotlin-kotlin-test-2_2_21-RC2_http//file",
   visibility = ["//visibility:public"]
 )
 
@@ -4251,8 +4251,8 @@ jvm_import(
 
 jvm_import(
   name = "kotlin-test-junit",
-  jar = "@org_jetbrains_kotlin-kotlin-test-junit-2_2_20_http//file",
-  source_jar = "@org_jetbrains_kotlin-kotlin-test-junit-2_2_20_http//file",
+  jar = "@org_jetbrains_kotlin-kotlin-test-junit-2_2_21-RC2_http//file",
+  source_jar = "@org_jetbrains_kotlin-kotlin-test-junit-2_2_21-RC2_http//file",
   visibility = ["//visibility:public"]
 )
 
@@ -8666,8 +8666,8 @@ jvm_import(
 
 jvm_import(
   name = "noria-compiler-plugin",
-  jar = "@jetbrains_fleet-noria-compiler-plugin-2_2_20-0_1_http//file",
-  source_jar = "@jetbrains_fleet-noria-compiler-plugin-2_2_20-0_1_http//file",
+  jar = "@jetbrains_fleet-noria-compiler-plugin-2_2_21-RC2-0_1_http//file",
+  source_jar = "@jetbrains_fleet-noria-compiler-plugin-2_2_21-RC2-0_1_http//file",
   visibility = ["//visibility:public"]
 )
 
@@ -9950,15 +9950,15 @@ jvm_import(
 
 jvm_import(
   name = "rhizomedb-compiler-plugin",
-  jar = "@jetbrains_fleet-rhizomedb-compiler-plugin-2_2_20-0_1_http//file",
-  source_jar = "@jetbrains_fleet-rhizomedb-compiler-plugin-2_2_20-0_1_http//file",
+  jar = "@jetbrains_fleet-rhizomedb-compiler-plugin-2_2_21-RC2-0_1_http//file",
+  source_jar = "@jetbrains_fleet-rhizomedb-compiler-plugin-2_2_21-RC2-0_1_http//file",
   visibility = ["//visibility:public"]
 )
 
 jvm_import(
   name = "rpc-compiler-plugin",
-  jar = "@com_jetbrains_fleet-rpc-compiler-plugin-2_2_20-0_1_http//file",
-  source_jar = "@com_jetbrains_fleet-rpc-compiler-plugin-2_2_20-0_1_http//file",
+  jar = "@com_jetbrains_fleet-rpc-compiler-plugin-2_2_21-RC2-0_1_http//file",
+  source_jar = "@com_jetbrains_fleet-rpc-compiler-plugin-2_2_21-RC2-0_1_http//file",
   visibility = ["//visibility:public"]
 )
 
