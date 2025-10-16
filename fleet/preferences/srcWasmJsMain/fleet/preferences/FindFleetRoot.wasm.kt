@@ -4,5 +4,10 @@ package fleet.preferences
 import fleet.util.multiplatform.Actual
 import kotlinx.io.files.Path
 
-@Actual("findFleetRootByClass")
-internal fun findFleetRootByClassWasmJs(): Path? = null
+@Actual
+internal fun findRepositoryRootWasmJs(): String? {
+  return MONOREPO_PATH
+}
+
+@JsName("MONOREPO_PATH")
+external val MONOREPO_PATH: String?
