@@ -153,6 +153,9 @@ public final class ScratchFileActions {
         String displayName = LangBundle.message("scratch.file.action.new.from.selection", selectionItem.fileType().getDisplayName());
         builder.withExtraTopValue(selectionItem, displayName, EmptyIcon.ICON_16);
       }
+      if (Registry.is("ide.scratch.plain.text.always.on.top")) {
+        builder.withPinnedId(builder.getStorageId(LanguageItem.fromLanguage(PlainTextLanguage.INSTANCE)));
+      }
       else if (extractItem != null) {
         String displayName = LangBundle.message("scratch.file.action.new.from.ui");
         if (textExtractor.hasSelection()) {
