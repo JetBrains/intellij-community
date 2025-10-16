@@ -128,6 +128,7 @@ class FrontendXBreakpointManager(private val project: Project, private val cs: C
 
   /**
    * Waits for breakpoint creation from [XBreakpointEvent.BreakpointAdded] event from backend.
+   * Returns `null` in case of timeout.
    *
    * [addBreakpoint] is not called in parallel, to have only one source of truth and avoid races.
    */
@@ -385,9 +386,10 @@ class FrontendXBreakpointManager(private val project: Project, private val cs: C
 }
 
 /**
- * Searches element with [search] or suspends until the element appears.
+ * Searches an element with [search] or suspends until the element appears.
  * Uses [updateFlow] as a trigger for updates.
- * [updateFlow] must be a flow with replay
+ * [updateFlow] must be a flow with replay.
+ * Returns `null` in case of timeout.
  */
 internal suspend fun <T> findOrAwaitElement(
   updateFlow: Flow<*>,
