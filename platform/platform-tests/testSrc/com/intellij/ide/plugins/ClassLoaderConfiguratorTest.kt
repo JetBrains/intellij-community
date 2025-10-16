@@ -52,7 +52,7 @@ internal class ClassLoaderConfiguratorTest {
       ))
     val plugins = arrayOf(kotlin, gradle, kotlinGradleJava, kotlinCompilerGradle)
     sortDependenciesInPlace(plugins)
-    assertThat(plugins.last().contentModuleId).isNull()
+    assertThat(plugins.last().contentModuleName).isNull()
   }
 
   @Test

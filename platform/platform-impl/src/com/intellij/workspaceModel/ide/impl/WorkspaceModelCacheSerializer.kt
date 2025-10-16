@@ -3,7 +3,7 @@ package com.intellij.workspaceModel.ide.impl
 
 import com.intellij.ide.plugins.PluginManagerCore
 import com.intellij.ide.plugins.cl.PluginAwareClassLoader
-import com.intellij.ide.plugins.contentModuleId
+import com.intellij.ide.plugins.contentModuleName
 import com.intellij.ide.plugins.contentModules
 import com.intellij.openapi.application.ApplicationInfo
 import com.intellij.openapi.application.ApplicationManager
@@ -131,7 +131,7 @@ class WorkspaceModelCacheSerializer(vfuManager: VirtualFileUrlManager, urlRelati
 
       val plugin = PluginManagerCore.getPlugin(id)
       if (plugin != null && moduleId != null) {
-        plugin.contentModules.find { it.contentModuleId == moduleId }?.let { return it.pluginClassLoader }
+        plugin.contentModules.find { it.contentModuleName == moduleId }?.let { return it.pluginClassLoader }
       }
       return plugin?.pluginClassLoader ?: ApplicationManager::class.java.classLoader
     }

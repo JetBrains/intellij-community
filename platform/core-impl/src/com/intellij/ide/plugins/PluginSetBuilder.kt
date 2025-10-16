@@ -56,7 +56,7 @@ class PluginSetBuilder(@JvmField val unsortedPlugins: Set<PluginMainDescriptor>)
         error = null,
       ))
       val detailedMessage = StringBuilder()
-      val pluginToString: (IdeaPluginDescriptorImpl) -> String = { "id = ${it.pluginId.idString}@${it.contentModuleId} (${it.name})" }
+      val pluginToString: (IdeaPluginDescriptorImpl) -> String = { "id = ${it.pluginId.idString}@${it.contentModuleName} (${it.name})" }
       detailedMessage.append("Detected plugin dependencies cycle details (only related dependencies are included):\n")
       component
         .asSequence()
@@ -138,7 +138,7 @@ class PluginSetBuilder(@JvmField val unsortedPlugins: Set<PluginMainDescriptor>)
 
       if (module.useIdeaClassLoader && !canExtendIdeaClassLoader) {
         module.isMarkedForLoading = false
-        logMessages.add("Module ${module.contentModuleId ?: module.pluginId} is not enabled because it uses deprecated `use-idea-classloader` attribute but PathClassLoader is disabled")
+        logMessages.add("Module ${module.contentModuleName ?: module.pluginId} is not enabled because it uses deprecated `use-idea-classloader` attribute but PathClassLoader is disabled")
         continue@m
       }
 
@@ -160,7 +160,7 @@ class PluginSetBuilder(@JvmField val unsortedPlugins: Set<PluginMainDescriptor>)
       for (ref in module.moduleDependencies.modules) {
         val targetModule = enabledModuleV2Ids[ref] ?: enabledRequiredContentModules[ref]
         if (targetModule == null) {
-          logMessages.add("Module ${module.contentModuleId ?: module.pluginId} is not enabled because dependency ${ref.name} is not available")
+          logMessages.add("Module ${module.contentModuleName ?: module.pluginId} is not enabled because dependency ${ref.name} is not available")
           when (module) {
             is ContentModuleDescriptor -> disabledModuleToProblematicPlugin.put(module.moduleId, disabledModuleToProblematicPlugin.get(ref)
                                                                                                  ?: PluginId.getId(ref.name))
@@ -171,7 +171,7 @@ class PluginSetBuilder(@JvmField val unsortedPlugins: Set<PluginMainDescriptor>)
         else {
           val visibilityError = checkVisibilityAndReturnErrorMessage(module, targetModule)
           if (visibilityError != null) {
-            logMessages.add("Module ${module.contentModuleId ?: module.pluginId} is not enabled because $visibilityError")
+            logMessages.add("Module ${module.contentModuleName ?: module.pluginId} is not enabled because $visibilityError")
             if (module is PluginMainDescriptor) {
               markRequiredModulesAsDisabled(module)
             }
@@ -180,7 +180,7 @@ class PluginSetBuilder(@JvmField val unsortedPlugins: Set<PluginMainDescriptor>)
       }
       for (ref in module.moduleDependencies.plugins) {
         if (!enabledPluginIds.containsKey(ref)) {
-          logMessages.add("Module ${module.contentModuleId ?: module.pluginId} is not enabled because dependency ${ref} is not available")
+          logMessages.add("Module ${module.contentModuleName ?: module.pluginId} is not enabled because dependency ${ref} is not available")
           when (module) {
             is ContentModuleDescriptor -> disabledModuleToProblematicPlugin.put(module.moduleId, ref)
             is PluginMainDescriptor -> markRequiredModulesAsDisabled(module)
@@ -197,8 +197,8 @@ class PluginSetBuilder(@JvmField val unsortedPlugins: Set<PluginMainDescriptor>)
           if (module is ContentModuleDescriptor) {
             isDisabledDueToPackagePrefixConflict.put(module.moduleId, alreadyRegistered)
           }
-          logMessages.add("Module ${module.contentModuleId ?: module.pluginId} is not enabled because package prefix ${module.packagePrefix} is already used by " +
-                          "${alreadyRegistered.contentModuleId ?: alreadyRegistered.pluginId}")
+          logMessages.add("Module ${module.contentModuleName ?: module.pluginId} is not enabled because package prefix ${module.packagePrefix} is already used by " +
+                          "${alreadyRegistered.contentModuleName ?: alreadyRegistered.pluginId}")
           loadingErrors.add(PluginPackagePrefixConflict(module, module, alreadyRegistered))
           continue@m
         }
@@ -274,19 +274,19 @@ class PluginSetBuilder(@JvmField val unsortedPlugins: Set<PluginMainDescriptor>)
         else {
           val sourceNamespace = sourceModule.namespace?.let { "is from namespace '$it'" } ?: "has no namespace specified"
           val targetNamespace = targetModule.parent.namespace?.let { "namespace '$it'" } ?: "unspecified namespace"
-          "it $sourceNamespace and depends on module '${targetModule.contentModuleId}' which is registered in '${targetModule.parent.pluginId}' plugin with internal visibility in $targetNamespace"
+          "it $sourceNamespace and depends on module '${targetModule.contentModuleName}' which is registered in '${targetModule.parent.pluginId}' plugin with internal visibility in $targetNamespace"
         }
       }
       ModuleVisibility.PRIVATE -> {
         if (sourceModule.pluginId == targetModule.pluginId) null
-        else "it depends on module '${targetModule.contentModuleId}' which private visibility in '${targetModule.pluginId}' plugin"
+        else "it depends on module '${targetModule.contentModuleName}' which private visibility in '${targetModule.pluginId}' plugin"
       }
     }
     if (errorMessage == null) {
       return null
     }
 
-    val sourceModuleId = sourceModule.contentModuleId ?: sourceModule.pluginId
+    val sourceModuleId = sourceModule.contentModuleName ?: sourceModule.pluginId
     return when (pluginModuleVisibilityCheck) {
       PluginModuleVisibilityCheckOption.REPORT_WARNING -> {
         PluginManagerCore.logger.warn("$sourceModuleId has accessibility problem which is currently ignored: $errorMessage")
