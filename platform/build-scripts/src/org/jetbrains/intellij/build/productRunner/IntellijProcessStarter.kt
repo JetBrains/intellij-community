@@ -100,7 +100,7 @@ suspend fun runApplicationStarter(
   }
 }
 
-private fun prepareFlatClasspath(classpath: Collection<String>, tempDir: Path, context: BuildContext): LinkedHashSet<String> {
+private suspend fun prepareFlatClasspath(classpath: Collection<String>, tempDir: Path, context: BuildContext): LinkedHashSet<String> {
   val effectiveIdeClasspath = LinkedHashSet(classpath)
 
   val additionalPluginPaths = context.productProperties.getAdditionalPluginPaths(context)
