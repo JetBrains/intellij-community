@@ -1693,6 +1693,16 @@ public class Py3TypeTest extends PyTestCase {
              expr = Derived().cls()""");
   }
 
+  public void testDunderClassOnClassObject() {
+    // In Typeshed it's declared as a property, maybe it should be special-cased
+    doTest("property",
+           """
+             class C:
+                 pass
+             expr = C.__class__
+             """);
+  }
+
   // PY-29665
   public void testRawBytesLiteral() {
     doTest("bytes", "expr = rb'raw bytes'");
