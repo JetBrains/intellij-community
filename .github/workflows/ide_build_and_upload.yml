@@ -1,0 +1,87 @@
+name: IDE Build and Upload
+
+on:
+  workflow_call:
+    inputs:
+      product:
+        description: 'product, available options: intellij_idea, pycharm'
+        type: string
+        required: true
+      artifacts_dir:
+        description: 'artifacts directory'
+        type: string
+        required: true
+
+jobs:
+  build-linux:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4.2.2
+      - uses: ./.github/actions/build_ide
+        with:
+          os: linux
+          extension: tar.gz
+          product: ${{inputs.product}}
+      - uses: ./.github/actions/upload_ide
+        with:
+          os: linux
+          extension: tar.gz
+          artifacts_dir: ${{inputs.artifacts_dir}}
+  build-windows:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4.2.2
+      - uses: ./.github/actions/build_ide
+        with:
+          os: windows
+          extension: exe
+          product: ${{inputs.product}}
+      - uses: ./.github/actions/upload_ide
+        with:
+          os: windows
+          extension: exe
+          artifacts_dir: ${{inputs.artifacts_dir}}
+  build-macos:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4.2.2
+      - uses: ./.github/actions/build_ide
+        with:
+          os: mac
+          extension: sit
+          product: ${{inputs.product}}
+      - uses: ./.github/actions/upload_ide
+        with:
+          os: mac
+          extension: sit
+          artifacts_dir: ${{inputs.artifacts_dir}}
+      - name: Upload .dmg build scripts
+        uses: actions/upload-artifact@v4.4.3
+        with:
+          name: dmg-build-scripts
+          if-no-files-found: 'error'
+          retention-days: 1
+          path: ${{inputs.artifacts_dir}}/macos-dmg-build/
+  build-dmg:
+    runs-on: macos-latest
+    needs: build-macos
+    steps:
+      - uses: actions/checkout@v4.2.2
+      - name: Download .dmg build scripts
+        uses: actions/download-artifact@v4.1.8
+        with:
+          name: dmg-build-scripts
+      - name: Download .sit
+        uses: actions/download-artifact@v4.1.8
+        with:
+          name: mac-sit-unsigned
+      - name: Build .dmg
+        shell: bash
+        # language=bash
+        run: /bin/bash ./build.sh
+      - name: Upload .dmg
+        uses: ./.github/actions/upload_ide
+        with:
+          os: mac
+          extension: dmg
+          artifacts_dir: .

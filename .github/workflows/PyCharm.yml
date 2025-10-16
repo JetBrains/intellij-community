@@ -1,4 +1,4 @@
-name: IntelliJ IDEA
+name: PyCharm
 on:
   schedule:
     # daily at 4AM for the master branch
@@ -6,11 +6,11 @@ on:
   push:
     # for each release
     tags:
-      - 'idea/20*'
+      - 'pycharm/20*'
 
 jobs:
   build:
     uses: ./.github/workflows/ide_build_and_upload.yml
     with:
-      artifacts_dir: out/idea-ce/artifacts
-      product: intellij_idea
+      artifacts_dir: out/pycharm-ce/artifacts
+      product: pycharm
