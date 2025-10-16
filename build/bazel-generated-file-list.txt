@@ -1497,6 +1497,7 @@ tools/intellij.tools.ide.starter.junit5
 tools/intellij.tools.ide.util.common
 tools/lambdaTestFramework
 tools/lambdaTestFramework/lambdaTestPlugin
+tools/lambdaTests
 tools/launcher-generator
 tools/reproducibleBuilds.diff
 uast/testFramework
