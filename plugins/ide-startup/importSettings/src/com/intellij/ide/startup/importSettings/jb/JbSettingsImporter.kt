@@ -486,7 +486,7 @@ internal class JbSettingsImporter(private val configDirPath: Path, private val p
       else {
         Files.copy(externalVmOptionsFile, currentVMFile)
       }
-      ConfigImportHelper.updateVMOptions(PathManager.getConfigDir(), LOG)
+      ConfigImportHelper.updateVMOptions(PathManager.getConfigDir(), configDirPath, LOG)
     }
     CustomConfigMigrationOption.MigrateFromCustomPlace(configDirPath).writeConfigMarkerFile(PathManager.getConfigDir())
     migrateLocalization()
