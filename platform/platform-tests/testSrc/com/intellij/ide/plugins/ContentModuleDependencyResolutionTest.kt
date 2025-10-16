@@ -35,7 +35,7 @@ internal class ContentModuleDependencyResolutionTest {
     val foo = pluginSet.getEnabledModule("foo")
     val bar = pluginSet.getEnabledModule("bar")
     val dependency = foo.moduleDependencies.modules.single()
-    assertThat(dependency.id).isEqualTo("bar")
+    assertThat(dependency.name).isEqualTo("bar")
     assertThat(dependency.namespace).isEqualTo(bar.moduleId.namespace)
   }
 
@@ -59,7 +59,7 @@ internal class ContentModuleDependencyResolutionTest {
     }
 
     val dependency = pluginSet.getEnabledModule("foo").moduleDependencies.modules.single()
-    assertThat(dependency.id).isEqualTo("platform")
+    assertThat(dependency.name).isEqualTo("platform")
     assertThat(dependency.namespace).isEqualTo(PluginModuleId.JETBRAINS_NAMESPACE)
   }
 
@@ -84,9 +84,9 @@ internal class ContentModuleDependencyResolutionTest {
     }
     val foo = pluginSet.getEnabledModule("foo")
     val dependency = foo.moduleDependencies.modules.single()
-    assertThat(dependency.id).isEqualTo("platform")
+    assertThat(dependency.name).isEqualTo("platform")
     assertThat(dependency.namespace).isNotEqualTo(PluginModuleId.JETBRAINS_NAMESPACE)
-    val fooPlatform = pluginSet.getEnabledPlugin("foo").contentModules.first { it.moduleId.id == "platform" }
+    val fooPlatform = pluginSet.getEnabledPlugin("foo").contentModules.first { it.moduleId.name == "platform" }
     assertThat(dependency.namespace).isEqualTo(fooPlatform.moduleId.namespace)
   }
 
@@ -116,7 +116,7 @@ internal class ContentModuleDependencyResolutionTest {
     }
     val bar = pluginSet.getEnabledModule("bar")
     val dependency = bar.moduleDependencies.modules.single()
-    assertThat(dependency.id).isEqualTo("foo")
+    assertThat(dependency.name).isEqualTo("foo")
     assertThat(dependency.namespace).isEqualTo("bar_ns")
   }
 

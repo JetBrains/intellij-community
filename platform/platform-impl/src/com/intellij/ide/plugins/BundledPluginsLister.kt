@@ -64,7 +64,7 @@ private class BundledPluginsLister : ModernApplicationStarter() {
           }
           for (module in plugin.contentModules) {
             layout.add(LayoutItemDescriptor(
-              name = module.moduleId.id,
+              name = module.moduleId.name,
               kind = if (plugin.pluginId == PluginManagerCore.CORE_ID) {
                 ProductInfoLayoutItemKind.productModuleV2
               }

@@ -175,7 +175,7 @@ sealed class IdeaPluginDescriptorImpl(
       }
       val moduleDeps = ArrayList<PluginModuleId>()
       val pluginDeps = ArrayList<PluginId>()
-      var cachedContentModuleIds: Set<String>? = null
+      var cachedContentModuleNames: Set<String>? = null
       for (dep in dependencies) {
         when (dep) {
           is DependenciesElement.PluginDependency -> pluginDeps.add(PluginId.getId(dep.pluginId))
@@ -183,10 +183,10 @@ sealed class IdeaPluginDescriptorImpl(
             val namespace =
               dep.namespace
               ?: run {
-                if (cachedContentModuleIds == null) {
-                  cachedContentModuleIds = parent?.content?.modules?.mapTo(HashSet()) { it.moduleId.id } ?: emptySet()
+                if (cachedContentModuleNames == null) {
+                  cachedContentModuleNames = parent?.content?.modules?.mapTo(HashSet()) { it.moduleId.name } ?: emptySet()
                 }
-                if (dep.moduleName in cachedContentModuleIds) parent!!.namespace ?: parent.implicitNamespaceForPrivateModules else null
+                if (dep.moduleName in cachedContentModuleNames) parent!!.namespace ?: parent.implicitNamespaceForPrivateModules else null
               }
               ?: PluginModuleId.JETBRAINS_NAMESPACE
             moduleDeps.add(PluginModuleId(dep.moduleName, namespace))
@@ -215,7 +215,7 @@ sealed class IdeaPluginDescriptorImpl(
       LOG.warnInProduction(PluginException(buildString {
         append("Plugin descriptor for ")
         when (this@logUnexpectedElement) {
-          is ContentModuleDescriptor -> append("content module '${moduleId.id}' of plugin '${pluginId}'")
+          is ContentModuleDescriptor -> append("content module '${moduleId.name}' of plugin '${pluginId}'")
           is DependsSubDescriptor -> append("'depends' sub-descriptor '${descriptorPath}' of plugin '${pluginId}'")
           is PluginMainDescriptor -> append("plugin '${pluginId}'")
         }
@@ -622,17 +622,17 @@ class ContentModuleDescriptor(
   private val resourceBundleBaseName: String? = raw.resourceBundleBaseName
 
   /** java helper */
-  fun getModuleIdString(): String = moduleId.id
+  fun getModuleIdString(): String = moduleId.name
 
   override fun getDescriptorPath(): String = descriptorPath
 
   override fun getResourceBundleBaseName(): String? = resourceBundleBaseName
 
   override fun toString(): String =
-    "ContentModuleDescriptor(id=${this@ContentModuleDescriptor.moduleId.id}" +
+    "ContentModuleDescriptor(id=${this@ContentModuleDescriptor.moduleId.name}" +
     (if (moduleLoadingRule == ModuleLoadingRule.OPTIONAL) "" else ", loadingRule=$moduleLoadingRule") +
     (if (packagePrefix == null) "" else ", package=$packagePrefix") +
-    (if (descriptorPath == "${this@ContentModuleDescriptor.moduleId.id}.xml") "" else ", descriptorPath=$descriptorPath") +
+    (if (descriptorPath == "${this@ContentModuleDescriptor.moduleId.name}.xml") "" else ", descriptorPath=$descriptorPath") +
     ") <- $parent"
 
   init {

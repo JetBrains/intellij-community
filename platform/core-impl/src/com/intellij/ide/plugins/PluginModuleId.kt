@@ -14,8 +14,8 @@ import org.jetbrains.annotations.ApiStatus
  */
 @ApiStatus.Internal
 @IntellijInternalApi
-class PluginModuleId private constructor(val id: String, val namespace: String) {
-  override fun toString(): String = id
+class PluginModuleId private constructor(val name: String, val namespace: String) {
+  override fun toString(): String = name
 
   override fun equals(other: Any?): Boolean {
     if (this === other) return true
@@ -23,11 +23,11 @@ class PluginModuleId private constructor(val id: String, val namespace: String) 
 
     other as PluginModuleId
 
-    return id == other.id && (!useNamespaceInId || namespace == other.namespace)
+    return name == other.name && (!useNamespaceInId || namespace == other.namespace)
   }
 
   override fun hashCode(): Int {
-    return if (useNamespaceInId) id.hashCode() + 31 * namespace.hashCode() else id.hashCode()
+    return if (useNamespaceInId) name.hashCode() + 31 * namespace.hashCode() else name.hashCode()
   }
 
   companion object {
@@ -35,15 +35,15 @@ class PluginModuleId private constructor(val id: String, val namespace: String) 
     /** this property is temporarily added to allow using modules without specifying namespace */
     private val useNamespaceInId = SystemProperties.getBooleanProperty("intellij.platform.plugin.modules.use.namespace.in.id", false)
 
-    fun getId(id: String, namespace: String): PluginModuleId {
-      val interned = interner[id]
-      /* Strictly speaking, a key composed of 'id' and 'namespace' should be used. However, in almost all cases ids will be unique, so using composite keys won't bring value
+    fun getId(name: String, namespace: String): PluginModuleId {
+      val interned = interner[name]
+      /* Strictly speaking, a key composed of 'name' and 'namespace' should be used. However, in almost all cases names will be unique, so using composite keys won't bring value
          but may affect performance. Also, we'll need to store concatenated values somewhere in the model to ensure that GC won't collect the corresponding entries. */
       if (interned != null && interned.namespace == namespace) {
         return interned
       }
-      val moduleId = PluginModuleId(id, namespace)
-      val old = interner.putIfAbsent(id, moduleId)
+      val moduleId = PluginModuleId(name, namespace)
+      val old = interner.putIfAbsent(name, moduleId)
       if (old != null && old.namespace == namespace) {
         return old
       }
@@ -51,7 +51,7 @@ class PluginModuleId private constructor(val id: String, val namespace: String) 
     }
 
     /** shorthand for [getId] in kotlin */
-    operator fun invoke(id: String, namespace: String): PluginModuleId = getId(id, namespace)
+    operator fun invoke(name: String, namespace: String): PluginModuleId = getId(name, namespace)
 
     /**
      * The namespace used for modules from the IntelliJ Platform and plugins developed by JetBrains.
@@ -60,13 +60,13 @@ class PluginModuleId private constructor(val id: String, val namespace: String) 
     const val JETBRAINS_NAMESPACE: String = "jetbrains"
 
     @ApiStatus.ScheduledForRemoval
-    @Deprecated("Use getId(id, namespace) instead")
-    fun getId(id: String): PluginModuleId {
-      return getId(id, JETBRAINS_NAMESPACE)
+    @Deprecated("Use getId(name, namespace) instead")
+    fun getId(name: String): PluginModuleId {
+      return getId(name, JETBRAINS_NAMESPACE)
     }
 
     @ApiStatus.ScheduledForRemoval
-    @Deprecated("Use PluginModuleId(id, namespace) instead")
-    operator fun invoke(id: String): PluginModuleId = getId(id)
+    @Deprecated("Use PluginModuleId(name, namespace) instead")
+    operator fun invoke(name: String): PluginModuleId = getId(name)
   }
 }

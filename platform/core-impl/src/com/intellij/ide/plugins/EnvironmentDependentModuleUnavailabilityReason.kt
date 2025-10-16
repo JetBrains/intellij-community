@@ -14,5 +14,5 @@ class UnsuitableProductModeModuleUnavailabilityReason(
   val moduleId: PluginModuleId,
   val productMode: @NlsSafe String,
 ) : EnvironmentDependentModuleUnavailabilityReason {
-  override val logMessage: String get() = "Module '${moduleId.id}' is not available in '$productMode' product mode"
+  override val logMessage: String get() = "Module '${moduleId.name}' is not available in '$productMode' product mode"
 }

@@ -258,7 +258,7 @@ class PluginBuilder() {
             ModuleLoadingRule.EMBEDDED -> "loading=\"embedded\" "
             ModuleLoadingRule.ON_DEMAND -> "loading=\"on-demand\" "
           }
-          """<module name="${moduleItem.moduleId.id}" $loadingAttribute/>"""
+          """<module name="${moduleItem.moduleId.name}" $loadingAttribute/>"""
         }
         append("\n</content>")
       }

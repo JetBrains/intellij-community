@@ -58,7 +58,7 @@ class PluginContentDescriptor(@JvmField val modules: List<ModuleItem>) {
       val targetModule = initContext.environmentConfiguredModules[requiredIfAvailable]
       if (targetModule == null) {
         // TODO should lift this log out of here
-        logger<PluginManagerCore>().error("Plugin id='$diagnosticPluginId' uses required-if-available statement in content module '${moduleId.id}' " +
+        logger<PluginManagerCore>().error("Plugin id='$diagnosticPluginId' uses required-if-available statement in content module '${moduleId.name}' " +
                                           "with a target module that is unknown or is not configured by the environment: $requiredIfAvailable")
         return loadingRule
       }

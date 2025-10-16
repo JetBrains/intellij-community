@@ -144,18 +144,18 @@ class ClassLoaderConfigurator(
     }
     else {
       val mimicJarUrlConnection = module.vendor == PluginManagerCore.VENDOR_JETBRAINS
-                                  && (module.moduleId.id == "intellij.rider.test.cases"
-                                      || module.moduleId.id == "intellij.rider.plugins.android.test.cases"
-                                      || module.moduleId.id == "intellij.rider.plugins.efCore.test.cases"
-                                      || module.moduleId.id == "intellij.rider.plugins.for.tea.test.cases"
-                                      || module.moduleId.id == "intellij.rider.plugins.fsharp.test.cases"
-                                      || module.moduleId.id == "intellij.rider.plugins.godot.test.cases"
-                                      || module.moduleId.id == "intellij.rider.plugins.unity.test.cases"
-                                      || module.moduleId.id == "intellij.rider.plugins.unreal.link.test.cases"
-                                      || module.moduleId.id == "intellij.rider.test.cases.qodana"
-                                      || module.moduleId.id == "intellij.rider.test.cases.supplementary"
-                                      || module.moduleId.id == "intellij.rider.test.cases.consoles"
-                                      || module.moduleId.id == "intellij.rider.test.cases.rdct")
+                                  && (module.moduleId.name == "intellij.rider.test.cases"
+                                      || module.moduleId.name == "intellij.rider.plugins.android.test.cases"
+                                      || module.moduleId.name == "intellij.rider.plugins.efCore.test.cases"
+                                      || module.moduleId.name == "intellij.rider.plugins.for.tea.test.cases"
+                                      || module.moduleId.name == "intellij.rider.plugins.fsharp.test.cases"
+                                      || module.moduleId.name == "intellij.rider.plugins.godot.test.cases"
+                                      || module.moduleId.name == "intellij.rider.plugins.unity.test.cases"
+                                      || module.moduleId.name == "intellij.rider.plugins.unreal.link.test.cases"
+                                      || module.moduleId.name == "intellij.rider.test.cases.qodana"
+                                      || module.moduleId.name == "intellij.rider.test.cases.supplementary"
+                                      || module.moduleId.name == "intellij.rider.test.cases.consoles"
+                                      || module.moduleId.name == "intellij.rider.test.cases.rdct")
       module.pluginClassLoader = PluginClassLoader(
         classPath = ClassPath(customJarFiles, DEFAULT_CLASSLOADER_CONFIGURATION, resourceFileFactory, mimicJarUrlConnection),
         parents = dependencies,
@@ -442,7 +442,7 @@ private fun getDependencyPackagePrefixes(descriptor: PluginMainDescriptor, plugi
   for (item in dependencies) {
     val packagePrefix = (pluginSet.findEnabledModule(item) ?: continue).packagePrefix
     // intellij.platform.commercial.verifier is injected
-    if (packagePrefix != null && item.id != "intellij.platform.commercial.verifier") {
+    if (packagePrefix != null && item.name != "intellij.platform.commercial.verifier") {
       result.add("$packagePrefix.")
     }
   }

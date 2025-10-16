@@ -121,7 +121,7 @@ class PluginSetBuilder(@JvmField val unsortedPlugins: Set<PluginMainDescriptor>)
       for (module in plugin.contentModules) {
         if (module.moduleLoadingRule.required && enabledRequiredContentModules.remove(module.moduleId) != null) {
           module.isMarkedForLoading = false
-          logMessages.add("Module ${module.moduleId.id} is disabled because the containing plugin ${plugin.pluginId} won't be loaded")
+          logMessages.add("Module ${module.moduleId.name} is disabled because the containing plugin ${plugin.pluginId} won't be loaded")
         }
       }
     }
@@ -160,10 +160,10 @@ class PluginSetBuilder(@JvmField val unsortedPlugins: Set<PluginMainDescriptor>)
       for (ref in module.moduleDependencies.modules) {
         val targetModule = enabledModuleV2Ids[ref] ?: enabledRequiredContentModules[ref]
         if (targetModule == null) {
-          logMessages.add("Module ${module.contentModuleId ?: module.pluginId} is not enabled because dependency ${ref.id} is not available")
+          logMessages.add("Module ${module.contentModuleId ?: module.pluginId} is not enabled because dependency ${ref.name} is not available")
           when (module) {
             is ContentModuleDescriptor -> disabledModuleToProblematicPlugin.put(module.moduleId, disabledModuleToProblematicPlugin.get(ref)
-                                                                                                 ?: PluginId.getId(ref.id))
+                                                                                                 ?: PluginId.getId(ref.name))
             is PluginMainDescriptor -> markRequiredModulesAsDisabled(module)
           }
           continue@m
