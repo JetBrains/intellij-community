@@ -463,6 +463,8 @@
 
     <extensionPoint name="defaultLiveTemplatesProvider" interface="com.intellij.codeInsight.template.impl.DefaultLiveTemplatesProvider"/>
     <extensionPoint name="defaultLiveTemplates" beanClass="com.intellij.codeInsight.template.impl.DefaultLiveTemplateEP" dynamic="true"/>
+    <extensionPoint name="templateFilter" interface="com.intellij.codeInsight.template.TemplateFilter" dynamic="true"/>
+    <extensionPoint name="templateGroupHintProvider" interface="com.intellij.codeInsight.template.TemplateGroupHintProvider" dynamic="true"/>
     <extensionPoint name="codeInsight.implementMethod" beanClass="com.intellij.lang.LanguageExtensionPoint" dynamic="true">
       <with attribute="implementationClass" implements="com.intellij.lang.LanguageCodeInsightActionHandler"/>
     </extensionPoint>
