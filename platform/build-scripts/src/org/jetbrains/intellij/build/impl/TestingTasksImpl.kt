@@ -1337,12 +1337,14 @@ internal class TestingTasksImpl(context: CompilationContext, private val options
     args += "--add-opens"
     args += "java.base/java.nio.file.spi=ALL-UNNAMED"
 
+    val environment: MutableMap<String, String> = HashMap(envVariables)
+
     val mainClass = if (suiteName == null) "com.intellij.tests.JUnit5TeamCityRunnerForTestsOnClasspath" else "com.intellij.tests.JUnit5TeamCityRunnerForTestAllSuite"
     if (devBuildModeSettings == null) {
       args.add(mainClass)
     }
     else {
-      devBuildModeSettings.apply(mainClass, mainModule, args)
+      devBuildModeSettings.apply(mainClass, mainModule, args, environment)
     }
 
     if (suiteName != null) {
@@ -1358,9 +1360,7 @@ internal class TestingTasksImpl(context: CompilationContext, private val options
 
     context.messages.info("Starting tests on runtime $runtime")
     val builder = ProcessBuilder(runtime, "@" + argFile.absolutePath)
-    builder.environment().putAll(envVariables)
-    if (devBuildModeSettings != null)
-      builder.environment().putAll(devBuildModeSettings.parseEnvs())
+    builder.environment().putAll(environment)
     builder.inheritIO()
     val exitCode = builder.start().awaitExit()
     if (exitCode != 0 && exitCode != NO_TESTS_ERROR) {

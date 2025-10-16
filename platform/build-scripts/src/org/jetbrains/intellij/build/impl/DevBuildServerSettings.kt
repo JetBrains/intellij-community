@@ -62,17 +62,20 @@ data class DevBuildServerSettings(
       }
   }
 
-  fun apply(mainClass: String, mainModule: String, args: MutableList<String>) {
-    args.addAll(jvmArgs.map {
-      it.replace("${'$'}TEST_MODULE_NAME$", mainModule)
+  fun apply(mainClass: String, mainModule: String, args: MutableList<String>, environment: MutableMap<String, String>) {
+    environment.putAll(envs.map {
+      val (key, value) = it.split('=', limit = 2)
+      key to value.replacePlaceholders(mainModule)
     })
-    if (args.none { it.startsWith("-Didea.dev.build.test.entry.point.class=") })
-      args.add("-Didea.dev.build.test.entry.point.class=$mainClass")
+
+    args.addAll(jvmArgs.map {
+      it.replacePlaceholders(mainModule)
+    })
+    args.add("-Didea.dev.build.test.entry.point.class=$mainClass")
     args.add(this.mainClass)
   }
 
-  fun parseEnvs(): Map<String, String> = envs.associate {
-    val (key, value) = it.split('=', limit = 2)
-    key to value.replace("${'$'}TEST_PROJECT_BASE_PATH$", PathManager.getHomeDir().toString())
-  }
+  private fun String.replacePlaceholders(mainModule: String) =
+    this.replace("${'$'}TEST_MODULE_NAME$", mainModule)
+      .replace("${'$'}TEST_PROJECT_BASE_PATH$", PathManager.getHomeDir().toString())
 }
