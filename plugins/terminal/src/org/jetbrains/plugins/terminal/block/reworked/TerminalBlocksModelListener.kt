@@ -10,6 +10,8 @@ interface TerminalBlocksModelListener : EventListener {
   fun blockAdded(event: TerminalBlockAddedEvent) {}
 
   fun blockRemoved(event: TerminalBlockRemovedEvent) {}
+
+  fun blocksReplaced(event: TerminalBlocksReplacedEvent) {}
 }
 
 @ApiStatus.Internal
@@ -25,4 +27,10 @@ sealed interface TerminalBlockAddedEvent : TerminalBlocksModelEvent {
 @ApiStatus.Internal
 sealed interface TerminalBlockRemovedEvent : TerminalBlocksModelEvent {
   val block: TerminalOutputBlock
+}
+
+@ApiStatus.Internal
+sealed interface TerminalBlocksReplacedEvent : TerminalBlocksModelEvent {
+  val oldBlocks: List<TerminalOutputBlock>
+  val newBlocks: List<TerminalOutputBlock>
 }
