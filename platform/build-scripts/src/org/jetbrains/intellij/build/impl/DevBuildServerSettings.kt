@@ -5,6 +5,7 @@ import com.fasterxml.jackson.databind.JsonNode
 import com.fasterxml.jackson.databind.ObjectMapper
 import com.fasterxml.jackson.dataformat.yaml.YAMLFactory
 import com.intellij.openapi.application.PathManager
+import com.intellij.util.text.nullize
 import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.intellij.build.BuildPaths.Companion.COMMUNITY_ROOT
 import kotlin.io.path.exists
@@ -71,7 +72,8 @@ data class DevBuildServerSettings(
     args.addAll(jvmArgs.map {
       it.replacePlaceholders(mainModule)
     })
-    args.add("-Didea.dev.build.test.entry.point.class=$mainClass")
+    val entryPointClass = System.getProperty("idea.dev.build.test.entry.point.class").nullize(nullizeSpaces = true) ?: mainClass
+    args.add("-Didea.dev.build.test.entry.point.class=$entryPointClass")
     args.add(this.mainClass)
   }
 
