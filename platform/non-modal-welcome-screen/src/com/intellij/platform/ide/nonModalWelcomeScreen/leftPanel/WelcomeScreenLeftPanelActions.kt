@@ -7,7 +7,7 @@ import com.intellij.openapi.actionSystem.*
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.project.guessProjectDir
 import com.intellij.openapi.wm.impl.welcomeScreen.WelcomeScreenActionsUtil
-import com.intellij.openapi.wm.impl.welcomeScreen.WelcomeScreenVerticalToolbar
+import com.intellij.openapi.wm.impl.welcomeScreen.createToolWindowWelcomeScreenVerticalToolbar
 import com.intellij.psi.PsiDirectory
 import com.intellij.psi.PsiElement
 import com.intellij.psi.PsiManager
@@ -25,7 +25,7 @@ internal class WelcomeScreenLeftPanelActions(val project: Project) {
     actionManager.getAction("ProjectFromVersionControl")?.let { group.add(it) }
     actionManager.getAction("NonModalWelcomeScreen.RemoteDevelopmentActions")?.let { group.add(it) }
 
-    val toolbar = WelcomeScreenVerticalToolbar.createToolbar(group)
+    val toolbar = createToolWindowWelcomeScreenVerticalToolbar(group)
 
     return UiDataProvider.wrapComponent(toolbar.component) { sink ->
       sink[WelcomeScreenActionsUtil.NON_MODAL_WELCOME_SCREEN] = true

@@ -42,14 +42,16 @@ internal fun emptyStateProjectPanel(disposable: Disposable): JComponent = panel 
       text(text).align(AlignX.CENTER).customize(UnscaledGaps(0)).applyToComponent { foreground = JBUI.CurrentTheme.ContextHelp.FOREGROUND }
     }.customize(UnscaledGapsY(bottom = 7))
   }
-  val (mainActions, moreActions) = createActionToolbars(disposable)
-  panel {
-    row {
-      cell(mainActions).align(AlignX.FILL)
-    }
-  }.align(AlignX.CENTER).customize(UnscaledGaps(27))
+
+  val actionManager = ActionManager.getInstance()
+  val group = actionManager.getAction(IdeActions.GROUP_WELCOME_SCREEN_QUICKSTART_EMPTY_STATE) as ActionGroup
+  val toolbar = createFrameWelcomeScreenVerticalToolbar(group, disposable)
+
   row {
-    cell(moreActions).align(AlignX.CENTER)
+    cell(toolbar.component)
+      .customize(UnscaledGaps(27))
+      .align(AlignX.CENTER)
+      .resizableColumn()
   }
 }.apply {
   background = WelcomeScreenUIManager.getMainAssociatedComponentBackground()

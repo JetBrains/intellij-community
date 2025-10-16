@@ -2423,6 +2423,15 @@
       "description": ""
     },
     {
+      "key": "WelcomeScreen.Frame.DisclosureButton.defaultBackground"
+    },
+    {
+      "key": "WelcomeScreen.Frame.DisclosureButton.hoverOverlay"
+    },
+    {
+      "key": "WelcomeScreen.Frame.DisclosureButton.pressedOverlay"
+    },
+    {
       "key": "Window.border",
       "description": "Dialog border. Format: \"top,left,bottom,right,hex\", e.g. \"1,1,1,1,FFFFFF\". Sizes in pixels"
     },

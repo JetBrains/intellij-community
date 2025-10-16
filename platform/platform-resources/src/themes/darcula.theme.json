@@ -1071,7 +1071,11 @@
       "Projects.actions.background": "#3C5C86",
       "SidePanel.background": "#3C3F41"
     },
-
+    "WelcomeScreen.Frame.DisclosureButton": {
+      "defaultBackground": "Gray2",
+      "hoverOverlay": "#FFFFFF0D",
+      "pressedOverlay": "#FFFFFF1A"
+    },
     "RecentProject": {
       "Color1": {
         "MainToolbarGradientStart": "#654B40",
