@@ -57,6 +57,8 @@ jvm_library(
     "@lib//:junit5Params",
     "@lib//:junit5Pioneer",
     "//libraries/junit5",
+    "@lib//:rd-framework",
+    "@lib//:rd-core",
   ]
 )
 ### auto-generated section `build intellij.lambda.tests` end
