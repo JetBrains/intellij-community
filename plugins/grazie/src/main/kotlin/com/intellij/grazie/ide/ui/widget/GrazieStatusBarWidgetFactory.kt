@@ -2,7 +2,7 @@ package com.intellij.grazie.ide.ui.widget
 
 import com.intellij.grazie.GrazieBundle
 import com.intellij.grazie.GrazieConfig
-import com.intellij.grazie.GrazieConfig.State.Processing.*
+import com.intellij.grazie.GrazieConfig.State.Processing.Cloud
 import com.intellij.grazie.cloud.GrazieCloudConnector
 import com.intellij.grazie.ide.msg.GrazieInitializerManager
 import com.intellij.grazie.ide.msg.GrazieStateLifecycle
@@ -15,6 +15,7 @@ import com.intellij.openapi.wm.StatusBar
 import com.intellij.openapi.wm.StatusBarWidget
 import com.intellij.openapi.wm.StatusBarWidgetFactory
 import com.intellij.openapi.wm.impl.status.widget.StatusBarWidgetsManager
+import com.intellij.util.application
 
 internal class GrazieStatusBarWidgetFactory : StatusBarWidgetFactory, GrazieStateLifecycle {
 
@@ -47,9 +48,11 @@ internal class GrazieStatusBarWidgetFactory : StatusBarWidgetFactory, GrazieStat
   }
 
   override fun update(prevState: GrazieConfig.State, newState: GrazieConfig.State) {
-    if (newState.explicitlyChosenProcessing != prevState.explicitlyChosenProcessing) {
-      ProjectManager.getInstance().openProjects.forEach { project ->
-        project.service<StatusBarWidgetsManager>().updateWidget(this)
+    application.invokeLater {
+      if (newState.explicitlyChosenProcessing != prevState.explicitlyChosenProcessing && prevState.explicitlyChosenProcessing != null) {
+        ProjectManager.getInstance().openProjects.forEach { project ->
+          project.service<StatusBarWidgetsManager>().updateWidget(this)
+        }
       }
     }
   }
