@@ -147,9 +147,7 @@ final class CommandBuilder {
       isTransparent(),
       isForcedGlobal,
       isGlobal(),
-      hasActions(),
-      isValid,
-      shouldClearRedoStack()
+      isValid
     );
     reset();
     return performedCommand;
@@ -182,10 +180,6 @@ final class CommandBuilder {
       }
     }
     return hasActions() && additionalAffectedDocuments.affects(ref);
-  }
-
-  private boolean shouldClearRedoStack() {
-    return !isTransparent() && hasActions();
   }
 
   private boolean isGlobal() {

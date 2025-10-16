@@ -23,8 +23,14 @@ record PerformedCommand(
   boolean isTransparent,
   boolean isForcedGlobal,
   boolean isGlobal,
-  boolean hasActions,
-  boolean isValid,
-  boolean shouldClearRedoStack
+  boolean isValid
 ) {
+
+  boolean hasActions() {
+    return !undoableActions.isEmpty();
+  }
+
+  boolean shouldClearRedoStack() {
+    return !isTransparent() && hasActions();
+  }
 }
