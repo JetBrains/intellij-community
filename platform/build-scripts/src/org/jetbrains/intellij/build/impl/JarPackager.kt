@@ -314,12 +314,12 @@ class JarPackager private constructor(
                     !item.relativeOutputFile.contains('/') &&
                     (patchedContent.isEmpty() || (patchedContent.size == 1 && patchedContent.containsKey("META-INF/plugin.xml"))) &&
                     extraExcludes.isEmpty() &&
-                    moduleOutputRoots.none { it.toString().endsWith(".jar") }  // TODO(k15tfu): consider running on output sources "as is", without packing
+                    moduleOutputRoots.isNotEmpty()
 
     val outFile = outDir.resolve(item.relativeOutputFile)
     val asset = if (packToDir) {
       assets.computeIfAbsent(moduleOutputRoots.single()) { file ->
-        AssetDescriptor(isDir = true, file, relativePath = "")
+        AssetDescriptor(isDir = !file.toString().endsWith(".jar"), file = file, relativePath = "")
       }
     }
     else {
