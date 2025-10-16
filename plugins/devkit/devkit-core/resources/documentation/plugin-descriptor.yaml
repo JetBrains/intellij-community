@@ -41,7 +41,16 @@ elements:
             renderContexts: [doc_provider]
             deprecatedSince: "2026.1"
             deprecationNote: |
-              Proper module packaging should be used instead of this attribute: content modules should be packed into their own jars under `lib/modules/`.
+              Package attribute usage is discouraged and deprecated, content modules should be packaged into separate jars under `lib/modules/`.
+              IntelliJ Monorepository build system does it automatically when the attribute is not specified.
+              IntelliJ Platform Gradle Plugin allows doing that with `pluginModule` declaration since version 2.7.0.
+              
+              Note that after this attribute is removed, the classloader configuration will change.
+              While the class files of the module were packed into the main plugin's jar,
+              other modules could've accidentally accessed them. After they are separated into a module jar,
+              such accesses will start to throw `NoClassDefFoundError`.
+              Double-check that compile-time dependencies between modules match the module dependencies in module XMLs.
+              
               See [_Plugin Model_](https://youtrack.jetbrains.com/articles/IJPL-A-31){internal} for more details.
             requirement:
               required: no
