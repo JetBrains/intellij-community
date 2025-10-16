@@ -157,7 +157,7 @@ internal class ContentModuleVisibilityInspection : DevKitPluginXmlInspectionBase
     val currentXmlFile = dependencyValue.xmlElement?.containingFile as? XmlFile ?: return
     val project = currentXmlFile.project
     val productionXmlFilesScope = getProjectProductionXmlFilesScope(project)
-    val currentModuleIncludingPlugins = getPluginsIncludingFileAsContentModule(currentXmlFile, productionXmlFilesScope)
+    val currentModuleIncludingPlugins = getPluginXmlFilesIncludingFileAsContentModule(currentXmlFile, productionXmlFilesScope)
     val dependencyXmlFile = moduleDependency.xmlElement?.containingFile as? XmlFile ?: return
     val dependencyIncludingPlugins = getPluginsIncludingFileAsContentModule(dependencyXmlFile, productionXmlFilesScope)
     for (currentModuleIncludingPlugin in currentModuleIncludingPlugins) {
@@ -166,13 +166,21 @@ internal class ContentModuleVisibilityInspection : DevKitPluginXmlInspectionBase
         if (currentModuleIncludingPlugin != dependencyIncludingPlugin) {
           val dependencyModuleName = getModuleName(dependencyXmlFile)
           val dependencyXmlFilePointer = dependencyXmlFile.createSmartPointer()
-          holder.createProblem(
-            dependencyValue,
-            message(
-              "inspection.content.module.visibility.private",
+          val currentIdeaPlugin = DescriptorUtil.getIdeaPlugin(currentXmlFile)
+          val message = if (currentIdeaPlugin != null && isActualPluginDescriptor(currentIdeaPlugin, currentXmlFile)) {
+            message("inspection.content.module.visibility.private.accessed.from.plugin",
+                    dependencyModuleName, dependencyIncludingPlugin.getIdOrUniqueFileName(),
+                    currentModuleIncludingPlugin.getIdOrUniqueFileName())
+          }
+          else {
+            message("inspection.content.module.visibility.private",
               dependencyModuleName, dependencyIncludingPlugin.getIdOrUniqueFileName(),
               getModuleName(currentXmlFile), currentModuleIncludingPlugin.getIdOrUniqueFileName()
-            ),
+            )
+          }
+          holder.createProblem(
+            dependencyValue,
+            message,
             ChangeModuleModuleVisibilityFix(dependencyModuleName, ContentModuleVisibility.INTERNAL, dependencyXmlFilePointer),
             ChangeModuleModuleVisibilityFix(dependencyModuleName, ContentModuleVisibility.PUBLIC, dependencyXmlFilePointer)
           )
