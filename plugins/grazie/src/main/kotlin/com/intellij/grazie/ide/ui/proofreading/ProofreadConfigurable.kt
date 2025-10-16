@@ -64,11 +64,12 @@ class ProofreadConfigurable : BoundSearchableConfigurable(
     get() = GrazieConfig.get().autoFix
     set(value) = GrazieConfig.update { it.copy(autoFix = value) }
 
-  private suspend fun download(langs: Collection<Lang>) {
-    withProcessIcon(langs) {
+  private suspend fun download(langs: Collection<Lang>): Boolean {
+    val downloaded = withProcessIcon(langs) {
       LanguageDownloader.startDownloading(it)
     }
     languages.updateLinkToDownloadMissingLanguages()
+    return downloaded
   }
 
   override fun createPanel(): DialogPanel {
@@ -179,14 +180,14 @@ class ProofreadConfigurable : BoundSearchableConfigurable(
     }
   }
 
-  private suspend fun withProcessIcon(langs: Collection<Lang>, download: suspend (Collection<Lang>) -> Unit) {
+  private suspend fun withProcessIcon(langs: Collection<Lang>, download: suspend (Collection<Lang>) -> Unit): Boolean {
     var failed = false
     try {
-      if (GrazieRemote.allAvailableLocally(langs)) return
+      if (GrazieRemote.allAvailableLocally(langs)) return false
       val filteredLanguages = withContext(Dispatchers.EDT + ModalityState.any().asContextElement()) {
         getLanguagesBasedOnUserAgreement(langs, project)
       }
-      if (filteredLanguages.isEmpty()) return
+      if (filteredLanguages.isEmpty()) return false
       if (downloadingLanguages.isEmpty()) {
         downloadingLanguages.addAll(langs)
         withContext(Dispatchers.EDT + ModalityState.any().asContextElement()) {
@@ -197,6 +198,7 @@ class ProofreadConfigurable : BoundSearchableConfigurable(
         }
       }
       download(filteredLanguages)
+      return true
     }
     catch (e: Exception) {
       withContext(Dispatchers.EDT + ModalityState.any().asContextElement()) {
