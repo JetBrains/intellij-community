@@ -10,6 +10,7 @@
     <module name="intellij.python.community.execService.python"/>
     <module name="intellij.python.community.interpreters"/>
     <module name="intellij.python.community.impl.poetry"/>
+    <module name="intellij.python.community.impl.uv"/>
     <module name="intellij.python.community.impl.pipenv"/>
     <module name="intellij.python.hatch"/>
     <module name="intellij.python.pydev"/>
@@ -52,8 +53,10 @@
                                           language="Python"
                                           nameKey="INLAY.type.hints"
                                           providerId="python.type.inlays">
-      <option bundle="messages.PyPsiBundle" descriptionKey="INLAY.reveal.type" enabledByDefault="true" nameKey="INLAY.reveal.type" optionId="python.type.inlays.reveal_type" />
-      <option bundle="messages.PyPsiBundle" descriptionKey="INLAY.function.return" enabledByDefault="false" nameKey="INLAY.function.return" optionId="python.type.inlays.function.return" />
+      <option bundle="messages.PyPsiBundle" descriptionKey="INLAY.reveal.type" enabledByDefault="true" nameKey="INLAY.reveal.type"
+              optionId="python.type.inlays.reveal_type"/>
+      <option bundle="messages.PyPsiBundle" descriptionKey="INLAY.function.return" enabledByDefault="false" nameKey="INLAY.function.return"
+              optionId="python.type.inlays.function.return"/>
     </codeInsight.declarativeInlayProvider>
 
 
@@ -81,11 +84,7 @@
     <virtualFileCustomDataProvider implementation="com.jetbrains.python.psi.PyLangLevelVirtualFileCustomDataProvider"/>
   </extensions>
 
-  <extensions defaultExtensionNs="com.intellij.python.pyproject.model">
-    <tool implementation="com.jetbrains.python.projectModel.poetry.PoetryTool"/>
-    <tool implementation="com.jetbrains.python.projectModel.uv.UvTool"/>
-    <tool implementation="com.jetbrains.python.projectModel.hatch.HatchTool"/>
-  </extensions>
+
 
   <projectListeners>
     <listener

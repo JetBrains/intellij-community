@@ -147,6 +147,7 @@ class ProofreadConfigurable : BoundSearchableConfigurable(
         GrazieConfig.update { state -> state.copy(explicitlyChosenProcessing = Processing.Local) }
       }.visibleIf(GrazieListeningComponentPredicate(disposable!!) { isLoggedIn })
       link(GrazieBundle.message("grazie.settings.logout.action.text")) {
+        GrazieConfig.update { state -> state.copy(explicitlyChosenProcessing = Processing.Local) }
         GrazieScope.coroutineScope().launch { GrazieLoginManager.getInstance().logOutFromCloud() }
       }.visibleIf(GrazieListeningComponentPredicate(disposable!!) {
         isLoggedIn && !GrazieCloudConnector.hasAdditionalConnectors()

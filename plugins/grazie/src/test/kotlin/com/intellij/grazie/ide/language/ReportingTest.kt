@@ -141,6 +141,7 @@ class ReportingTest : BasePlatformTestCase() {
       "mock intention and fix", // if a custom fix overrides an intention, it's raised in the list
       "Ignore 'S' in this sentence", // then the built-in general context action
       "Configure rule 'something'…",
+      "Enable Cloud mode for deeper checks",
       "mock intention", // normal intentions are at the bottom
     )
   }

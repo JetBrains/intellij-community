@@ -31,23 +31,23 @@ import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
 
 object PyProjectSdkConfiguration {
-  fun configureSdkUsingCreateSdkInfo(module: Module, createSdkInfo: CreateSdkInfo) {
-    val lifetime = suppressTipAndInspectionsFor(module, createSdkInfo.toolInfo.toolName)
+  fun configureSdkUsingCreateSdkInfo(module: Module, createSdkInfoWithTool: CreateSdkInfoWithTool) {
+    val lifetime = suppressTipAndInspectionsFor(module, createSdkInfoWithTool.toolId.id)
 
     val project = module.project
     PyPackageCoroutine.launch(project) {
-      withBackgroundProgress(project, createSdkInfo.intentionName, false) {
-        lifetime.use { setSdkUsingCreateSdkInfo(module, createSdkInfo, false) }
+      withBackgroundProgress(project, createSdkInfoWithTool.createSdkInfo.intentionName, false) {
+        lifetime.use { setSdkUsingCreateSdkInfo(module, createSdkInfoWithTool, false) }
       }
     }
   }
 
   suspend fun setSdkUsingCreateSdkInfo(
-    module: Module, createSdkInfo: CreateSdkInfo, needsConfirmation: NeedsConfirmation,
+    module: Module, createSdkInfoWithTool: CreateSdkInfoWithTool, needsConfirmation: NeedsConfirmation,
   ): Boolean = withContext(Dispatchers.Default) {
-    thisLogger().debug("Configuring sdk using ${createSdkInfo.toolInfo.toolName}")
+    thisLogger().debug("Configuring sdk using ${createSdkInfoWithTool.toolId}")
 
-    val sdk = createSdkInfo.sdkCreator(needsConfirmation).getOr {
+    val sdk = createSdkInfoWithTool.createSdkInfo.sdkCreator(needsConfirmation).getOr {
       ShowingMessageErrorSync.emit(it.error)
       return@withContext true
     } ?: return@withContext false

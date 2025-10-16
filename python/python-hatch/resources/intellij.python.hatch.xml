@@ -12,4 +12,7 @@
                             order="after CondaEvoProvider"
                             implementation="com.intellij.python.hatch.sdk.evolution.HatchSelectSdkProvider"/>
   </extensions>
+  <extensions defaultExtensionNs="com.intellij.python.pyproject.model">
+    <tool implementation="com.intellij.python.hatch.impl.HatchTool"/>
+  </extensions>
 </idea-plugin>

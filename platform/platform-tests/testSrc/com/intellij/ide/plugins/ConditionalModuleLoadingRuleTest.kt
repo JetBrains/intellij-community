@@ -8,6 +8,7 @@ import com.intellij.platform.testFramework.plugins.*
 import com.intellij.testFramework.TestLoggerFactory
 import com.intellij.testFramework.rules.InMemoryFsExtension
 import org.assertj.core.api.Assertions.assertThat
+import org.junit.jupiter.api.Test
 import org.junit.jupiter.api.extension.RegisterExtension
 import org.junit.jupiter.params.ParameterizedTest
 import org.junit.jupiter.params.provider.ValueSource
@@ -86,6 +87,27 @@ class ConditionalModuleLoadingRuleTest {
       assertThat(errors).hasSizeGreaterThan(0)
       assertThat(errors[0].htmlMessage.toString()).contains("foo", "requires plugin", "unavailable", "to be installed")
     }
+  }
+
+  @Test
+  fun `content module with required-if-available and a dependency on an optional content module may break plugin loading`() {
+    plugin("foo") {
+      content {
+        module("foo.optional", loadingRule = ModuleLoadingRule.OPTIONAL) {}
+        module("foo.maybe.req", loadingRule = ModuleLoadingRule.OPTIONAL, requiredIfAvailable = "intellij.platform.backend") {
+          dependencies { module("foo.optional") }
+        }
+      }
+    }.buildDir(pluginsDirPath.resolve("foo"))
+
+    val pluginSetFrontend = buildPluginSet { withProductMode(ProductMode.findById("frontend")!!) }
+    assertThat(pluginSetFrontend).hasExactlyEnabledPlugins("foo")
+
+    val pluginSetMonolith = buildPluginSet { withProductMode(ProductMode.findById("monolith")!!) }
+    assertThat(pluginSetMonolith).doesNotHaveEnabledPlugins()
+    val errors = PluginManagerCore.getAndClearPluginLoadingErrors()
+    assertThat(errors).hasSizeGreaterThan(0)
+    assertThat(errors[0].htmlMessage.toString()).contains("foo", "cannot be loaded", "form a dependency cycle")
   }
 
   private fun buildPluginSet(builder: PluginSetTestBuilder.() -> Unit = {}): PluginSet = PluginSetTestBuilder.fromPath(pluginsDirPath).apply(builder).build()

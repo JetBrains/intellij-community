@@ -102,6 +102,4 @@ public final class PythonIcons {
     @ScheduledForRemoval
     public static final @NotNull Icon ViewAsImage = load("icons/com/jetbrains/pythonCore/python/expui/viewAsImage.svg", "icons/com/jetbrains/pythonCore/python/viewAsImage.svg", 0, 0);
   }
-
-  /** 16x16 */ public static final @NotNull Icon UV = load("icons/com/jetbrains/pythonCore/python/expui/uv.svg", -856014559, 0);
 }

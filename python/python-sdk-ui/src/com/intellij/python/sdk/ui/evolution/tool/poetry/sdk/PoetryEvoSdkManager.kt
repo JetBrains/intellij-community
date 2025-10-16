@@ -3,6 +3,8 @@ package com.intellij.python.sdk.ui.evolution.tool.poetry.sdk
 //import com.jetbrains.python.sdk.poetry.PyPoetrySdkAdditionalData
 import com.intellij.openapi.module.Module
 import com.intellij.openapi.projectRoots.Sdk
+import com.intellij.python.community.impl.poetry.icons.PythonCommunityImplPoetryIcons
+import com.intellij.python.community.impl.poetry.impl.POETRY_UI_INFO
 import com.intellij.python.sdk.ui.evolution.sdk.EvoSdk
 import com.intellij.python.sdk.ui.evolution.sdk.EvoSdkProvider
 import com.intellij.python.sdk.ui.icons.PythonSdkUIIcons
@@ -17,7 +19,7 @@ internal object PoetryEvoSdkManager  {
     val name = venvName.takeIf { !it.startsWith(module.name.lowercase()) }
 
     return EvoSdk(
-      icon = PythonSdkUIIcons.Tools.Poetry,
+      icon = PythonCommunityImplPoetryIcons.Poetry,
       name = name,
       pythonBinaryPath = pythonBinaryPath,
     )

@@ -9,6 +9,8 @@ import com.intellij.openapi.util.UserDataHolderBase
 import com.intellij.openapi.util.io.toNioPathOrNull
 import com.intellij.openapi.vfs.readText
 import com.intellij.pycharm.community.ide.impl.PyCharmCommunityCustomizationBundle
+import com.intellij.python.community.impl.uv.UV_TOOL_ID
+import com.intellij.python.community.impl.uv.UV_UI_INFO
 import com.intellij.python.pyproject.PyProjectToml
 import com.intellij.python.pyproject.model.api.SuggestedSdk
 import com.intellij.python.pyproject.model.api.suggestSdk
@@ -18,7 +20,6 @@ import com.jetbrains.python.ToolId
 import com.jetbrains.python.errorProcessing.PyResult
 import com.jetbrains.python.getOrLogException
 import com.jetbrains.python.onSuccess
-import com.jetbrains.python.projectModel.uv.UV_TOOL_ID
 import com.jetbrains.python.sdk.*
 import com.jetbrains.python.sdk.configuration.*
 import com.jetbrains.python.sdk.legacy.PythonSdkUtil
@@ -39,15 +40,14 @@ class PyUvSdkConfiguration : PyProjectTomlConfigurationExtension {
   private val existingSdks by lazy { PythonSdkUtil.getAllSdks() }
   private val context = UserDataHolderBase()
 
-  override val toolInfo: PyToolUIInfo = PyToolUIInfo("uv", PythonSdkUIIcons.Tools.UV)
   override val toolId: ToolId = UV_TOOL_ID
 
   override suspend fun checkEnvironmentAndPrepareSdkCreator(module: Module): CreateSdkInfo? = prepareSdkCreator(
-    toolInfo, { checkExistence -> checkManageableEnv(module, checkExistence, true) }
+    { checkExistence -> checkManageableEnv(module, checkExistence, true) }
   ) { envExists -> { createUv(module, envExists) } }
 
   override suspend fun createSdkWithoutPyProjectTomlChecks(module: Module): CreateSdkInfo? = prepareSdkCreator(
-    toolInfo, { checkExistence -> checkManageableEnv(module, checkExistence, false) }
+    { checkExistence -> checkManageableEnv(module, checkExistence, false) }
   ) { envExists -> { createUv(module, envExists) } }
 
   override fun asPyProjectTomlSdkConfigurationExtension(): PyProjectTomlConfigurationExtension = this

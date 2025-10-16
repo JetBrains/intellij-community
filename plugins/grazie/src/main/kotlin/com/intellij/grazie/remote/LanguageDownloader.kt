@@ -35,7 +35,7 @@ internal object LanguageDownloader {
 
   @Deprecated("Use downloadAsync(Collection<Lang>, Project) instead", replaceWith = ReplaceWith("downloadAsync(listOf(lang), project)"))
   @ApiStatus.ScheduledForRemoval
-  fun download(lang: Lang): Boolean {
+  internal fun download(lang: Lang): Boolean {
     if (isAvailableLocally(lang)) return true
     val path = runDownload(lang) ?: return false
     performGrazieUpdate(LanguageBundles(lang to path))

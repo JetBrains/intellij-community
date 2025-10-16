@@ -3,6 +3,7 @@ package com.jetbrains.python.sdk.uv
 
 import com.intellij.platform.eel.EelApi
 import com.intellij.platform.eel.provider.localEel
+import com.intellij.python.community.impl.uv.UV_UI_INFO
 import com.intellij.python.community.services.systemPython.SystemPythonProvider
 import com.jetbrains.python.PyToolUIInfo
 import com.jetbrains.python.PythonBinary
@@ -27,4 +28,3 @@ internal class UvSystemPythonProvider : SystemPythonProvider {
   override val uiCustomization: PyToolUIInfo = UV_UI_INFO
 }
 
-internal val UV_UI_INFO = PyToolUIInfo("uv", PythonIcons.UV)

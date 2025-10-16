@@ -353,6 +353,7 @@ jvm_library(
     "//python/python-exec-service/execService.python",
     "//python/interpreters",
     "//python/python-sdk-configurator/common",
+    "//python/impl.uv",
   ],
   exports = [
     "//python/openapi:community",
@@ -494,6 +495,7 @@ jvm_library(
     "//platform/workspace/storage",
     "//python/python-psi-api:psi",
     "//python:python-community-impl",
+    "//python:python-community-impl_test_lib",
     "//platform/xdebugger-api:debugger",
     "//libraries/guava",
     "//spellchecker",
@@ -525,6 +527,7 @@ jvm_library(
     "//python/python-psi-impl:psi-impl",
     "//python:python-commonTests_test_lib",
     "//plugins/restructuredtext",
+    "//plugins/restructuredtext:restructuredtext_test_lib",
     "//python/python-restructuredtext:restructuredtext-python",
     "//libraries/stream",
     "//platform/core-ui",

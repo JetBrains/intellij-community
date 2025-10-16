@@ -464,6 +464,7 @@ jvm_library(
     "//python/python-sdk:sdk",
     "//python/python-sdk:sdk_test_lib",
     "//plugins/restructuredtext",
+    "//plugins/restructuredtext:restructuredtext_test_lib",
     "//plugins/markdown/test:tests_test_lib",
     "//plugins/laf/macos",
     "//plugins/laf/win10",

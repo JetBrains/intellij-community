@@ -5,7 +5,7 @@ import com.intellij.openapi.extensions.ExtensionPointName
 import com.intellij.openapi.module.Module
 import com.intellij.openapi.progress.runBlockingMaybeCancellable
 import com.intellij.util.concurrency.annotations.RequiresBackgroundThread
-import com.jetbrains.python.PyToolUIInfo
+import com.jetbrains.python.ToolId
 import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.annotations.CheckReturnValue
 
@@ -24,12 +24,15 @@ interface PyProjectSdkConfigurationExtension {
 
     @JvmStatic
     @RequiresBackgroundThread
-    fun findForModule(module: Module): CreateSdkInfo? = runBlockingMaybeCancellable {
-      EP_NAME.extensionsIfPointIsRegistered.firstNotNullOfOrNull { ext -> ext.checkEnvironmentAndPrepareSdkCreator(module) }
+    fun findForModule(module: Module): CreateSdkInfoWithTool? = runBlockingMaybeCancellable {
+      EP_NAME.extensionsIfPointIsRegistered
+        .firstNotNullOfOrNull { ext ->
+          ext.checkEnvironmentAndPrepareSdkCreator(module)?.let { CreateSdkInfoWithTool(it, ext.toolId) }
+        }
     }
   }
 
-  val toolInfo: PyToolUIInfo
+  val toolId: ToolId
 
   /**
    * Discovers whether this extension can provide a Python SDK for the given module and prepares a creator for it.
@@ -66,3 +69,8 @@ interface PyProjectSdkConfigurationExtension {
    */
   fun asPyProjectTomlSdkConfigurationExtension(): PyProjectTomlConfigurationExtension?
 }
+
+/**
+ * [createSdkInfo] with [toolId] that created it
+ */
+data class CreateSdkInfoWithTool(val createSdkInfo: CreateSdkInfo, val toolId: ToolId)
