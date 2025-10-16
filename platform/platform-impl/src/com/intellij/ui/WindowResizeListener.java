@@ -130,6 +130,7 @@ public class WindowResizeListener extends WindowMouseListener {
   @Override
   void updateBounds(Rectangle bounds, Component view, int dx, int dy) {
     Dimension minimum = view.getMinimumSize();
+    var myCursorType = getCursorType();
     if (myCursorType == NE_RESIZE_CURSOR || myCursorType == E_RESIZE_CURSOR || myCursorType == SE_RESIZE_CURSOR || myCursorType == DEFAULT_CURSOR) {
       bounds.width += fixMinSize(dx, bounds.width, minimum.width);
     }
