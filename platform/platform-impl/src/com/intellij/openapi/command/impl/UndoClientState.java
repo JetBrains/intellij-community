@@ -72,7 +72,7 @@ final class UndoClientState implements Disposable {
     this.undoStacksHolder = new UndoRedoStacksHolder(sharedState.getAdjustableActions(), true);
     this.redoStacksHolder = new UndoRedoStacksHolder(sharedState.getAdjustableActions(), false);
     this.commandMerger = new CommandMerger(project != null, undoManager.isTransparentSupported());
-    this.commandBuilder = new CommandBuilder(project, undoManager.isTransparentSupported());
+    this.commandBuilder = new CommandBuilder(project, undoManager.isTransparentSupported(), undoManager.isGroupIdChangeSupported());
   }
 
   @Override
@@ -179,7 +179,7 @@ final class UndoClientState implements Disposable {
       recordOriginalDocument,
       isTransparent
     );
-    undoSpy.commandStarted(commandProject, confirmationPolicy);
+    undoSpy.commandStarted(commandProject, commandName, commandGroupId, confirmationPolicy, isTransparent);
   }
 
   void commandFinished(@Nullable Project commandProject, @Nullable @Command String commandName, @Nullable Object groupId) {
@@ -453,7 +453,14 @@ final class UndoClientState implements Disposable {
           }
         }
       }
-      if (!undoRedo.execute(false, !isConfirmationSupported || isInsideStartFinishGroup)) {
+      boolean executed = undoRedo.execute(
+        false,
+        !isConfirmationSupported || isInsideStartFinishGroup,
+        // TODO: it is a hot fix for rename refactoring redo
+        //  for some reason restore(...) returns true on FE but false on BE during FinishMarkAction execution
+        !isConfirmationSupported && isInsideStartFinishGroup
+      );
+      if (!executed) {
         return;
       }
 

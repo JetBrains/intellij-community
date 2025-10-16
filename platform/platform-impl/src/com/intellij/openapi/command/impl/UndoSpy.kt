@@ -17,7 +17,10 @@ interface UndoSpy {
 
   fun commandStarted(
     project: Project?,
-    undoConfirmationPolicy: UndoConfirmationPolicy,
+    commandName: @Command String?,
+    commandGroupId: Any?,
+    confirmationPolicy: UndoConfirmationPolicy,
+    isTransparent: Boolean,
   )
 
   fun undoableActionAdded(
@@ -45,7 +48,7 @@ interface UndoSpy {
   companion object {
     @JvmField
     val BLIND: UndoSpy = object : UndoSpy {
-      override fun commandStarted(project: Project?, undoConfirmationPolicy: UndoConfirmationPolicy) {}
+      override fun commandStarted(project: Project?, commandName: @Command String?, commandGroupId: Any?, confirmationPolicy: UndoConfirmationPolicy, isTransparent: Boolean) {}
       override fun undoableActionAdded(project: Project?, action: UndoableAction, type: UndoableActionType) {}
       override fun commandFinished(project: Project?, commandName: @Command String?, commandGroupId: Any?, isTransparent: Boolean) {}
       override fun undoRedoPerformed(project: Project?, editor: FileEditor?, isUndo: Boolean) {}

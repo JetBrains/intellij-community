@@ -221,6 +221,14 @@ public final class CommandMerger {
     return commandIds;
   }
 
+  @Nullable EditorAndState getStateBefore() {
+    return editorStateBefore;
+  }
+
+  @Nullable EditorAndState getStateAfter() {
+    return editorStateAfter;
+  }
+
   @NotNull String dumpState() {
     return UndoDumpUnit.fromMerger(this).toString();
   }

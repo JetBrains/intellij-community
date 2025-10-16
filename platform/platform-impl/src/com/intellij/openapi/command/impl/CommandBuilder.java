@@ -22,6 +22,7 @@ final class CommandBuilder {
 
   private final @Nullable Project undoProject; // null - global, isDefault - error
   private final boolean isTransparentSupported;
+  private final boolean isGroupIdChangeSupported;
 
   private @Nullable Project commandProject;
   private @NotNull CurrentEditorProvider editorProvider;
@@ -40,9 +41,10 @@ final class CommandBuilder {
   private boolean isValid;
   private boolean isInsideCommand;
 
-  CommandBuilder(@Nullable Project undoProject, boolean isTransparentSupported) {
+  CommandBuilder(@Nullable Project undoProject, boolean isTransparentSupported, boolean isGroupIdChangeSupported) {
     this.undoProject = undoProject;
     this.isTransparentSupported = isTransparentSupported;
+    this.isGroupIdChangeSupported = isGroupIdChangeSupported;
     reset();
   }
 
@@ -124,8 +126,10 @@ final class CommandBuilder {
 
   @NotNull PerformedCommand commandFinished(@Nullable @Command String commandName, @Nullable Object groupId) {
     assertInsideCommand();
-    this.commandName = commandName;
-    this.groupId = groupId;
+    if (isGroupIdChangeSupported) {
+      this.commandName = commandName;
+      this.groupId = groupId;
+    }
     this.editorStateAfter = currentEditorState();
     if (originalDocument != null && hasActions() && !isTransparent() && affectedDocuments.affectsOnlyPhysical()) {
       addDocumentAsAffected(Objects.requireNonNull(originalDocument));

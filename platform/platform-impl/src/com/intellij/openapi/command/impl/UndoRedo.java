@@ -82,6 +82,10 @@ abstract class UndoRedo {
   }
 
   boolean execute(boolean drop, boolean disableConfirmation) {
+    return execute(drop, disableConfirmation, false);
+  }
+
+  boolean execute(boolean drop, boolean disableConfirmation, boolean isInsideStartFinishGroup) {
     if (!undoableGroup.isUndoable()) {
       String operationName = Objects.requireNonNull(
         CommandProcessor.getInstance().getCurrentCommandName(),
@@ -116,10 +120,14 @@ abstract class UndoRedo {
       }
     }
     else {
-      if (!shouldMove && editor != null && restore(getBeforeState(), true)) {
-        setBeforeState(new EditorAndState(editor, editor.getState(FileEditorStateLevel.UNDO)));
-        if (!isCaretMovementUndoTransparent()) {
-          return true;
+      if (!shouldMove && editor != null) {
+        EditorAndState stateToRestore = getBeforeState();
+        FileEditorState restoredState = restore(stateToRestore, true);
+        if (restoredState != null) {
+          setBeforeState(new EditorAndState(editor, restoredState));
+          if (!isCaretMovementUndoTransparent() && !isInsideStartFinishGroup) {
+            return true;
+          }
         }
       }
     }
@@ -314,10 +322,10 @@ abstract class UndoRedo {
     return UndoManagerImpl.ourNeverAskUser;
   }
 
-  private boolean restore(@Nullable EditorAndState pair, boolean onlyIfDiffers) {
+  private @Nullable FileEditorState restore(@Nullable EditorAndState pair, boolean onlyIfDiffers) {
     // editor can be invalid if underlying file is deleted during undo (e.g. after undoing scratch file creation)
     if (pair == null || editor == null || !editor.isValid() || !pair.canBeAppliedTo(editor)) {
-      return false;
+      return null;
     }
 
     FileEditorState stateToRestore = pair.getState();
@@ -327,16 +335,21 @@ abstract class UndoRedo {
     // restore scroll proportion if editor doesn not have scrolling any more.
     FileEditorState currentState = editor.getState(FileEditorStateLevel.UNDO);
     if (onlyIfDiffers && currentState.equals(stateToRestore)) {
-      return false;
+      return null;
     }
 
     editor.setState(stateToRestore);
     FileEditorState newState = editor.getState(FileEditorStateLevel.UNDO);
-    return newState.equals(stateToRestore);
+    return newState.equals(stateToRestore) ? newState : null;
   }
 
   private Collection<DocumentReference> getDocRefs() {
     return editor == null ? Collections.emptySet() : UndoDocumentUtil.getDocumentReferences(editor);
+  }
+
+  @Override
+  public String toString() {
+    return (isRedo ? "Redo" : "Undo") + "{" + undoableGroup + "}";
   }
 
   private static @NotNull Map<DocumentReference, Map<Integer, MutableActionChangeRange>> decompose(@NotNull UndoableGroup group, boolean isRedo) {

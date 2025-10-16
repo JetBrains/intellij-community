@@ -42,4 +42,9 @@ final class EditorAndState {
   @NotNull FileEditorState getState() {
     return editorState;
   }
+
+  @Override
+  public String toString() {
+    return editorState.toString();
+  }
 }
