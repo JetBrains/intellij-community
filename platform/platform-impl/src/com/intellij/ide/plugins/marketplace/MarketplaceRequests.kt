@@ -9,6 +9,7 @@ import com.intellij.ide.plugins.PluginInfoProvider
 import com.intellij.ide.plugins.PluginNode
 import com.intellij.ide.plugins.auth.PluginRepositoryAuthService
 import com.intellij.ide.plugins.marketplace.utils.MarketplaceUrls
+import com.intellij.ide.plugins.marketplace.utils.buildEncodedArchParameter
 import com.intellij.ide.plugins.marketplace.utils.buildEncodedOsParameter
 import com.intellij.ide.plugins.newui.PluginUiModel
 import com.intellij.ide.plugins.newui.PluginUiModelAdapter
@@ -224,6 +225,7 @@ class MarketplaceRequests(private val coroutineScope: CoroutineScope) : PluginIn
         val query = buildString {
           append("build=${ApplicationInfoImpl.orFromPluginCompatibleBuild(buildNumber)}")
           append("&os=${buildEncodedOsParameter()}")
+          append("&arch=${buildEncodedArchParameter()}")
           if (machineId != null && updateCheck) {
             append("&mid=$machineId")
           }
