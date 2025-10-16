@@ -9,29 +9,21 @@ import org.jetbrains.kotlin.analysis.api.projectStructure.KaModule
 import org.jetbrains.kotlin.base.fir.scripting.projectStructure.modules.KaScriptDependencyLibraryModuleImpl
 import org.jetbrains.kotlin.base.fir.scripting.projectStructure.modules.KaScriptModuleImpl
 import org.jetbrains.kotlin.idea.KotlinFileType
-import org.jetbrains.kotlin.idea.base.fir.projectStructure.FirKaModuleFactory
 import org.jetbrains.kotlin.idea.core.script.k2.modules.KotlinScriptLibraryEntity
+import org.jetbrains.kotlin.idea.base.fir.projectStructure.FirKaModuleFactory
 import org.jetbrains.kotlin.psi.KtFile
-import org.jetbrains.kotlin.scripting.definitions.isNonScript
 
 internal class FirKaScriptingModuleFactory : FirKaModuleFactory {
     override fun createScriptLibraryModule(
-        project: Project, entity: KotlinScriptLibraryEntity
+        project: Project,
+        entity: KotlinScriptLibraryEntity
     ): KaLibraryModule {
         return KaScriptDependencyLibraryModuleImpl(entity, project)
     }
 
     override fun createKaModuleByPsiFile(file: PsiFile): KaModule? {
         val ktFile = file as? KtFile ?: return null
-
-        /*
-        For compiled scripts we should not create any KaScriptModule
-        as we do not treat them as scripts, a proper module for them
-        should be KaScriptDependencyModule. */
-        if (ktFile.isCompiled) return null
-
         if (file.virtualFile is VirtualFileWindow) return null
-        if (file.virtualFile.isNonScript()) return null
 
         if (file.virtualFile.extension == KotlinFileType.EXTENSION) {
             /*
@@ -45,6 +37,23 @@ internal class FirKaScriptingModuleFactory : FirKaModuleFactory {
             return null
         }
 
-        return KaScriptModuleImpl(file.project, file.originalFile.virtualFile)
+        return when {
+            !ktFile.isScript() -> {
+                null
+            }
+            ktFile.isCompiled -> {
+                /*
+                For compiled scripts we should not create any KaScriptModule
+                as we do not treat them as scripts, a proper module for them
+                should be KaScriptDependencyModule.
+                */
+                null
+            }
+            else -> {
+                val virtualFile = file.originalFile.virtualFile
+
+                KaScriptModuleImpl(file.project, virtualFile)
+            }
+        }
     }
 }
