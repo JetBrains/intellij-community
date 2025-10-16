@@ -2,6 +2,7 @@
 package com.intellij.platform.searchEverywhere.backend.providers.text
 
 import com.intellij.find.FindManager
+import com.intellij.find.FindModel
 import com.intellij.find.impl.JComboboxAction
 import com.intellij.find.impl.SearchEverywhereItem
 import com.intellij.ide.actions.searcheverywhere.SearchEverywhereContributor
@@ -68,27 +69,26 @@ class SeTextItemsProvider(project: Project, private val contributorWrapper: SeAs
     }
     applyScope(scopeToApply)
 
-    if (textFilter != null) {
+    var originalModel: FindModel? = null
+    val isAllTab: Boolean = SeEverywhereFilter.isAllTab(params.filter) == true
+    if (isAllTab) {
+      originalModel = findModel.clone()
+      findModel.fileFilter = null
+      findModel.isCaseSensitive = false
+      findModel.isWholeWordsOnly = false
+      findModel.isRegularExpressions = false
+    }
+    else if (textFilter != null) {
       // Sync the file mask from the filter to the TextSearchContributor's JComboboxAction to prevent state conflicts
       contributorWrapper.contributor.getActions { }.filterIsInstance<JComboboxAction>().firstOrNull()?.onMaskChanged(textFilter.selectedType)
-      // Apply type for the correct search
-      findModel.fileFilter = textFilter.selectedType
 
+      findModel.fileFilter = textFilter.selectedType
       findModel.isCaseSensitive = SeTextFilter.isCaseSensitive(params.filter) ?: false
       findModel.isWholeWordsOnly = SeTextFilter.isWholeWordsOnly(params.filter) ?: false
       findModel.isRegularExpressions = SeTextFilter.isRegularExpressions(params.filter) ?: false
     }
 
-    val isAllTab: Boolean = SeEverywhereFilter.isAllTab(params.filter) == true
-    val savedModel = findModel.clone()
     try {
-      if (isAllTab) {
-        findModel.fileFilter = null
-        findModel.isCaseSensitive = false
-        findModel.isWholeWordsOnly = false
-        findModel.isRegularExpressions = false
-      }
-
       contributorWrapper.fetchElements(inputQuery, object : AsyncProcessor<Any> {
         override suspend fun process(item: Any, weight: Int): Boolean {
           if (item !is SearchEverywhereItem) return true
@@ -97,7 +97,7 @@ class SeTextItemsProvider(project: Project, private val contributorWrapper: SeAs
       })
     }
     finally {
-      findModel.copyFrom(savedModel)
+      originalModel?.let { findModel.copyFrom(originalModel) }
     }
   }
 
