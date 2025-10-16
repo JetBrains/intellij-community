@@ -1,14 +1,24 @@
 package com.intellij.ide.starter.community
 
+import com.fasterxml.jackson.core.JsonParser
 import com.fasterxml.jackson.core.type.TypeReference
+import com.fasterxml.jackson.databind.DeserializationContext
 import com.fasterxml.jackson.databind.DeserializationFeature
-import com.fasterxml.jackson.datatype.jsr310.JavaTimeModule
+import com.fasterxml.jackson.databind.JsonDeserializer
+import com.fasterxml.jackson.databind.module.SimpleModule
 import com.fasterxml.jackson.module.kotlin.jacksonObjectMapper
 import com.intellij.ide.starter.community.model.ReleaseInfo
 import com.intellij.ide.starter.utils.HttpClient
 import com.intellij.tools.ide.util.common.logOutput
 import org.apache.http.client.methods.HttpGet
+import java.time.LocalDate
+import java.time.format.DateTimeFormatter
 
+private class LocalDateDeserializer : JsonDeserializer<LocalDate>() {
+  override fun deserialize(p: JsonParser, ctxt: DeserializationContext): LocalDate {
+    return LocalDate.parse(p.text, DateTimeFormatter.ISO_LOCAL_DATE)
+  }
+}
 
 object JetBrainsDataServiceClient {
   private const val DATA_SERVICE_URL = "https://data.services.jetbrains.com"
@@ -16,7 +26,7 @@ object JetBrainsDataServiceClient {
 
   private val jsonMapper = jacksonObjectMapper()
     .configure(DeserializationFeature.FAIL_ON_UNKNOWN_PROPERTIES, false)
-    .registerModule(JavaTimeModule())
+    .registerModule(SimpleModule().addDeserializer(LocalDate::class.java, LocalDateDeserializer()))
 
   fun getIdeaIUAnnotations(libVersion: String): List<String> {
     val getUrlToJbDataServices = RELEASES_REPO_URL

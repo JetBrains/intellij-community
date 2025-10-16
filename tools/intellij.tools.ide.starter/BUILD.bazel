@@ -38,7 +38,6 @@ jvm_library(
     "//platform/lang-impl",
     "//plugins/performanceTesting/commands-model:tools-ide-performanceTesting-commands",
     "@lib//:jetbrains-annotations",
-    "@lib//:jackson-datatype-jsr310",
     "@lib//:tools-ide-starter-github-stephenc-monte-screen-recorder",
     "@lib//:io-qameta-allure-java-commons",
     "//tools/intellij.tools.ide.util.common:ide-util-common",

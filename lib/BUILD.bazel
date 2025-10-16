@@ -3137,13 +3137,6 @@ jvm_import(
 )
 
 jvm_import(
-  name = "jackson-datatype-jsr310",
-  jar = "@com_fasterxml_jackson_datatype-jackson-datatype-jsr310-2_19_0_http//file",
-  source_jar = "@com_fasterxml_jackson_datatype-jackson-datatype-jsr310-2_19_0_http//file",
-  visibility = ["//visibility:public"]
-)
-
-jvm_import(
   name = "jackson-module-kotlin",
   jar = "@com_fasterxml_jackson_module-jackson-module-kotlin-2_19_0_http//file",
   source_jar = "@com_fasterxml_jackson_module-jackson-module-kotlin-2_19_0_http//file",
