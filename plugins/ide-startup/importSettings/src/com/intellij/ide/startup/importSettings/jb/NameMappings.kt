@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.ide.startup.importSettings.jb
 
 import com.intellij.ide.startup.importSettings.StartupImportIcons.IdeIcons.*
@@ -8,25 +8,13 @@ import com.intellij.util.PlatformUtils
 import javax.swing.Icon
 
 object NameMappings {
-
-  fun getIcon(ideName: String, iconSize: IconProductSize): Icon? {
-    when (iconSize) {
-      IconProductSize.SMALL -> {
-        return IDE_MAP[ideName]?.icon20
-      }
-      IconProductSize.MIDDLE -> {
-        return IDE_MAP[ideName]?.icon24
-      }
-      IconProductSize.LARGE -> {
-        return IDE_MAP[ideName]?.icon48
-      }
-      else -> {
-        return null
-      }
-    }
+  fun getIcon(ideName: String, iconSize: IconProductSize): Icon? = when (iconSize) {
+    IconProductSize.SMALL -> IDE_MAP[ideName]?.icon20
+    IconProductSize.MIDDLE -> IDE_MAP[ideName]?.icon24
+    IconProductSize.LARGE -> IDE_MAP[ideName]?.icon48
   }
 
-  fun getFullName(ideName: String) : String? = IDE_MAP[ideName]?.fullName
+  fun getFullName(ideName: String): String? = IDE_MAP[ideName]?.fullName
 
   fun canImportDirectly(prevIdeName: String): Boolean {
     val prevIdeData = IDE_MAP[prevIdeName] ?: return false
@@ -43,16 +31,15 @@ object NameMappings {
   )
 }
 
-enum class IDEData(val code: String,
-                   val marketplaceCode: String,
-                   val folderName: String,
-                   val fullName: String,
-                   val icon20: Icon?,
-                   val icon24: Icon?,
-                   val icon48: Icon?
+enum class IDEData(
+  val code: String,
+  val marketplaceCode: String,
+  val folderName: String,
+  val fullName: String,
+  val icon20: Icon?,
+  val icon24: Icon?,
+  val icon48: Icon?,
 ) {
-  APPCODE("AC", "appcode", "AppCode", "AppCode", AC_20, AC_24, AC_48),
-  AQUA("QA", "aqua", "Aqua", "Aqua", Aqua_20, Aqua_24, Aqua_48),
   CLION("CL", "clion", "CLion", "CLion", CL_20, CL_24, CL_48),
   CLION_NOVA("CL", "clion", "CLionNova", "CLion Nova", CL_20, CL_24, CL_48),
   DATAGRIP("DG", "dbe", "DataGrip", "DataGrip", DG_20, DG_24, DG_48),
@@ -68,22 +55,20 @@ enum class IDEData(val code: String,
   RUBYMINE("RM", "ruby", "RubyMine", "RubyMine", RM_20, RM_24, RM_48),
   RUSTROVER("RR", "rust", "RustRover", "RustRover", RR_20, RR_24, RR_48),
   WEBSTORM("WS", "webstorm", "WebStorm", "WebStorm", WS_20, WS_24, WS_48),
-  WRITERSIDE("Writerside", "", "Writerside", "Writerside", Writerside_20, Writerside_24, Writerside_48)
   ;
 
   companion object {
-    val IDE_MAP = entries.associateBy { it.folderName }
+    val IDE_MAP: Map<String, IDEData> = entries.associateBy { it.folderName }
 
     @Suppress("DEPRECATION")
     fun getSelf(): IDEData? = when {
-      PlatformUtils.isAppCode() -> APPCODE
-      PlatformUtils.isAqua() -> AQUA
       PlatformUtils.isCLion() -> CLION
       PlatformUtils.isDataGrip() -> DATAGRIP
       PlatformUtils.isDataSpell() -> DATASPELL
       PlatformUtils.isGoIde() -> GOLAND
       PlatformUtils.isIdeaCommunity() -> IDEA_COMMUNITY
       PlatformUtils.isIdeaUltimate() -> IDEA_ULTIMATE
+      PlatformUtils.isMPS() -> MPS
       PlatformUtils.isPhpStorm() -> PHPSTORM
       PlatformUtils.isPyCharmCommunity() -> PYCHARM_CE
       PlatformUtils.isPyCharmPro() -> PYCHARM
@@ -91,9 +76,7 @@ enum class IDEData(val code: String,
       PlatformUtils.isRubyMine() -> RUBYMINE
       PlatformUtils.isRustRover() -> RUSTROVER
       PlatformUtils.isWebStorm() -> WEBSTORM
-      else -> {
-        null
-      }
+      else -> null
     }
   }
 }

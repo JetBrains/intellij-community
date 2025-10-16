@@ -1,4 +1,4 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.ide.startup.importSettings.data
 
 import com.intellij.ide.BootstrapBundle
@@ -6,7 +6,6 @@ import com.intellij.ide.plugins.marketplace.MarketplaceRequests
 import com.intellij.ide.startup.importSettings.StartupImportIcons
 import com.intellij.ide.startup.importSettings.TransferableIdeId
 import com.intellij.ide.startup.importSettings.chooser.ui.SettingsImportOrigin
-import com.intellij.ide.startup.importSettings.jb.IDEData
 import com.intellij.ide.startup.importSettings.jb.JbImportServiceImpl
 import com.intellij.ide.startup.importSettings.sync.SyncServiceImpl
 import com.intellij.ide.startup.importSettings.transfer.SettingTransferService
@@ -18,12 +17,11 @@ import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.diagnostic.runAndLogException
 import com.intellij.openapi.diagnostic.thisLogger
 import com.intellij.openapi.fileChooser.FileChooser
-import com.intellij.openapi.fileChooser.FileChooserDescriptor
+import com.intellij.openapi.fileChooser.FileChooserDescriptorFactory
 import com.intellij.openapi.rd.createLifetime
 import com.intellij.openapi.util.NlsSafe
 import com.intellij.ui.JBAccountInfoService
 import com.intellij.util.PlatformUtils
-import com.intellij.util.SystemProperties
 import com.jetbrains.rd.util.reactive.*
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.ExperimentalCoroutinesApi
@@ -35,11 +33,10 @@ import java.nio.file.Path
 import java.time.LocalDate
 import javax.swing.Icon
 
-internal val useMockDataForStartupWizard: Boolean
-  get() = SystemProperties.getBooleanProperty("intellij.startup.wizard.use-mock-data", false)
-
 internal interface SettingsService {
   companion object {
+    internal val useMockDataForStartupWizard: Boolean get() = System.getProperty("intellij.startup.wizard.use-mock-data").toBoolean()
+
     fun getInstance(): SettingsService = service()
   }
 
@@ -70,15 +67,15 @@ internal interface SettingsService {
 
 internal class SettingsServiceImpl(private val coroutineScope: CoroutineScope) : SettingsService, Disposable.Default {
   override fun getSyncService() =
-    if (useMockDataForStartupWizard) TestSyncService.getInstance()
+    if (SettingsService.useMockDataForStartupWizard) TestSyncService.getInstance()
     else SyncServiceImpl.getInstance()
 
   override fun getJbService() =
-    if (useMockDataForStartupWizard) TestJbService.getInstance()
+    if (SettingsService.useMockDataForStartupWizard) TestJbService.getInstance()
     else JbImportServiceImpl.getInstance()
 
   override fun getExternalService(): ExternalService =
-    if (useMockDataForStartupWizard) TestExternalService.getInstance()
+    if (SettingsService.useMockDataForStartupWizard) TestExternalService.getInstance()
     else SettingTransferService.getInstance()
 
   @OptIn(ExperimentalCoroutinesApi::class)
@@ -135,11 +132,10 @@ internal class SettingsServiceImpl(private val coroutineScope: CoroutineScope) :
   override var pluginIdsPreloaded: Boolean = false
 
   override fun configChosen() {
-    if (useMockDataForStartupWizard) {
+    if (SettingsService.useMockDataForStartupWizard) {
       TestJbService.getInstance().configChosen()
     } else {
-      val fileChooserDescriptor = FileChooserDescriptor(true, true, false, false, false, false)
-      val selectedDir = FileChooser.chooseFile(fileChooserDescriptor, null, null)
+      val selectedDir = FileChooser.chooseFile(FileChooserDescriptorFactory.singleFileOrDir(), null, null)
       if (selectedDir != null) {
         val prevPath = selectedDir.toNioPath()
         if (ConfigImportHelper.findConfigDirectoryByPath(prevPath) != null) {
@@ -147,8 +143,7 @@ internal class SettingsServiceImpl(private val coroutineScope: CoroutineScope) :
         } else {
           notification.set(object : NotificationData {
             override val status = NotificationData.NotificationStatus.ERROR
-            override val message = BootstrapBundle.message("import.chooser.error.unrecognized", selectedDir,
-                                                           IDEData.getSelf()?.fullName ?: "Current IDE")
+            override val message = BootstrapBundle.message("import.chooser.error.unrecognized", selectedDir)
             override val customActionList = emptyList<NotificationData.Action>()
           })
         }
@@ -163,7 +158,8 @@ internal class SettingsServiceImpl(private val coroutineScope: CoroutineScope) :
   override val isSyncEnabled = System.getProperty("import.settings.sync.enabled").toBoolean()
 
   init {
-    if (useMockDataForStartupWizard) {
+    if (SettingsService.useMockDataForStartupWizard) {
+      @Suppress("SpellCheckingInspection")
       jbAccount.set(JBAccountInfoService.JBAData("Aleksey Ivanovskii", "alex.ivanovskii", "alex.ivanovskii@gmail.com", "Alex Ivanovskii"))
     }
   }
@@ -172,6 +168,7 @@ internal class SettingsServiceImpl(private val coroutineScope: CoroutineScope) :
 private val logger = logger<SettingsServiceImpl>()
 
 interface SyncService : JbService {
+  @Suppress("ClassName")
   enum class SYNC_STATE {
     UNLOGGED,
     LOGGED,
@@ -260,8 +257,7 @@ interface BaseSetting {
     get() = true
 }
 
-interface Configurable : Multiple {
-}
+interface Configurable : Multiple
 
 interface Multiple : BaseSetting {
   val list: List<List<ChildSetting>>
@@ -287,27 +283,24 @@ interface DialogImportData {
 }
 
 data class DialogImportItem(val item: SettingsContributor, val icon: Icon) {
-
   companion object {
-
-    fun self() = DialogImportItem(
+    fun self(): DialogImportItem = DialogImportItem(
       object : SettingsContributor {
         override val id = "DialogImportItem.self"
-        override val name = ApplicationNamesInfo.getInstance().getFullProductName()
+        override val name = ApplicationNamesInfo.getInstance().fullProductName
       },
       getCurrentProductIcon()
     )
 
     @Suppress("DEPRECATION")
     private fun getCurrentProductIcon() = when {
-      PlatformUtils.isAppCode() -> StartupImportIcons.IdeIcons.AC_48
-      PlatformUtils.isAqua() -> StartupImportIcons.IdeIcons.Aqua_48
       PlatformUtils.isCLion() -> StartupImportIcons.IdeIcons.CL_48
       PlatformUtils.isDataGrip() -> StartupImportIcons.IdeIcons.DG_48
       PlatformUtils.isDataSpell() -> StartupImportIcons.IdeIcons.DS_48
       PlatformUtils.isGoIde() -> StartupImportIcons.IdeIcons.GO_48
       PlatformUtils.isIdeaCommunity() -> StartupImportIcons.IdeIcons.IC_48
       PlatformUtils.isIdeaUltimate() -> StartupImportIcons.IdeIcons.IU_48
+      PlatformUtils.isMPS() -> StartupImportIcons.IdeIcons.MPS_48
       PlatformUtils.isPhpStorm() -> StartupImportIcons.IdeIcons.PS_48
       PlatformUtils.isPyCharmCommunity() -> StartupImportIcons.IdeIcons.PC_48
       PlatformUtils.isPyCharmPro() -> StartupImportIcons.IdeIcons.PY_48
@@ -315,7 +308,6 @@ data class DialogImportItem(val item: SettingsContributor, val icon: Icon) {
       PlatformUtils.isRubyMine() -> StartupImportIcons.IdeIcons.RM_48
       PlatformUtils.isRustRover() -> StartupImportIcons.IdeIcons.RR_48
       PlatformUtils.isWebStorm() -> StartupImportIcons.IdeIcons.WS_48
-      // TODO: StartupImportIcons.IdeIcons.MPS_48
       else -> {
         logger<DialogImportItem>().error("Unknown IDE: ${PlatformUtils.getPlatformPrefix()}.")
         StartupImportIcons.IdeIcons.IC_48 // fall back to IDEA Community
