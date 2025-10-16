@@ -1503,6 +1503,7 @@ public final class ConfigImportHelper {
         "-Dsun.io.useCanonPrefixCache=false".equals(line) ||
         "-Dfile.encoding=UTF-8".equals(line) && OS.CURRENT == OS.macOS ||
         line.startsWith("-DJETBRAINS_LICENSE_SERVER") && fromCE ||
+        line.startsWith("-Dide.do.not.disable.paid.plugins.on.startup") ||
         isDuplicateOrLowerValue(line, platformLines)
       ) {
         i.remove(); updated = true;
