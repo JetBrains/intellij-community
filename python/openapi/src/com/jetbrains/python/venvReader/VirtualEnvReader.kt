@@ -10,9 +10,7 @@ import com.jetbrains.python.PythonHomePath
 import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.annotations.NonNls
 import java.io.IOException
-import java.nio.file.FileSystemException
 import java.nio.file.Path
-import java.nio.file.attribute.BasicFileAttributes
 import kotlin.io.path.*
 
 typealias Directory = Path
@@ -153,19 +151,7 @@ class VirtualEnvReader(
    */
   @RequiresBackgroundThread
   private fun findInterpreter(dir: Path): PythonBinary? =
-    dir.listDirectoryEntries().firstOrNull { child ->
-      if (child.name.lowercase() !in pythonNames) {
-        return@firstOrNull false
-      }
-      try {
-        child.readAttributes<BasicFileAttributes>().isRegularFile
-      }
-      catch (err: FileSystemException) {
-        // Handling a possible reparse point from WindowsApps.
-        if (SystemInfoRt.isWindows && err.javaClass == FileSystemException::class.java) true
-        else throw err
-      }
-    }
+    dir.listDirectoryEntries().firstOrNull { it.isRegularFile() && it.name.lowercase() in pythonNames }
 
   @RequiresBackgroundThread
   private fun resolveDirFromEnvOrElseGetDirInHomePath(env: String, dirName: String): Path =
