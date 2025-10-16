@@ -80,9 +80,14 @@ private fun documentationTargetsInner(dataProvider: DataMap): List<Documentation
 }
 
 @ApiStatus.Internal
-fun targetsFromEditor(project: Project, editor: Editor, offset: Int): List<DocumentationTarget>? {
+fun targetsFromEditor(
+  project: Project,
+  editor: Editor,
+  offset: Int,
+): List<DocumentationTarget>? {
   val file = PsiUtilBase.getPsiFileInEditor(editor, project)
              ?: return null
+
   val ideTargetProvider = IdeDocumentationTargetProvider.getInstance(project)
   val lookup = LookupManager.getActiveLookup(editor)
   if (lookup != null) {
