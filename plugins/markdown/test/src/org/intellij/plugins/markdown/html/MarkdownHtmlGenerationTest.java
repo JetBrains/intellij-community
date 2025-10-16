@@ -2,6 +2,8 @@
 package org.intellij.plugins.markdown.html;
 
 import com.intellij.idea.TestFor;
+import com.intellij.openapi.editor.colors.EditorColorsManager;
+import com.intellij.openapi.editor.colors.EditorColorsScheme;
 import com.intellij.psi.PsiFile;
 import com.intellij.testFramework.fixtures.BasePlatformTestCase;
 import org.intellij.plugins.markdown.MarkdownTestingUtil;
@@ -9,6 +11,34 @@ import org.intellij.plugins.markdown.ui.preview.html.MarkdownUtil;
 import org.jetbrains.annotations.NotNull;
 
 public class MarkdownHtmlGenerationTest extends BasePlatformTestCase {
+  private EditorColorsScheme myOriginalScheme;
+
+  @Override
+  protected void setUp() throws Exception {
+    super.setUp();
+    EditorColorsManager manager = EditorColorsManager.getInstance();
+    myOriginalScheme = manager.getGlobalScheme();
+    EditorColorsScheme emptyScheme = manager.getScheme("Empty");
+    if (emptyScheme != null) {
+      manager.setGlobalScheme(emptyScheme);
+    }
+  }
+
+  @Override
+  protected void tearDown() throws Exception {
+    try {
+      if (myOriginalScheme != null) {
+        EditorColorsManager.getInstance().setGlobalScheme(myOriginalScheme);
+      }
+    }
+    catch (Throwable e) {
+      addSuppressedException(e);
+    }
+    finally {
+      super.tearDown();
+    }
+  }
+
   @NotNull
   @Override
   protected String getTestDataPath() {
