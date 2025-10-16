@@ -1401,7 +1401,10 @@ public class AbstractPopup implements JBPopup, ScreenAreaConsumer, AlignedPopup 
       WindowRoundedCornersManager.setRoundedCorners(window, roundedCornerParams);
     }
 
-    if (myNormalWindowLevel && !window.isDisplayable()) {
+    if (shouldUseTrueWaylandPopups()) {
+      window.setType(Window.Type.POPUP);
+    }
+    else if (myNormalWindowLevel && !window.isDisplayable()) {
       window.setType(Window.Type.NORMAL);
     }
     myWindow = window;
@@ -2833,6 +2836,7 @@ public class AbstractPopup implements JBPopup, ScreenAreaConsumer, AlignedPopup 
   }
 
   private @Nullable Point getStoredLocation() {
+    if (shouldUseTrueWaylandPopups()) return null; // not supported at the moment
     if (myDimensionServiceKey == null) return null;
     return getWindowStateService(getProjectDependingOnKey(myDimensionServiceKey)).getLocation(myDimensionServiceKey);
   }
@@ -2908,5 +2912,9 @@ public class AbstractPopup implements JBPopup, ScreenAreaConsumer, AlignedPopup 
       mySpeedSearch.update();
     }
     return event.isConsumed();
+  }
+
+  private static boolean shouldUseTrueWaylandPopups() {
+    return StartupUiUtil.isWaylandToolkit() && Registry.is("wayland.true.popups", false);
   }
 }
