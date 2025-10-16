@@ -1,6 +1,6 @@
 ### auto-generated section `build intellij.kotlin.codeInsight` start
 load("//build:compiler-options.bzl", "create_kotlinc_options")
-load("@rules_jvm//:jvm.bzl", "jvm_library", "resourcegroup")
+load("@rules_jvm//:jvm.bzl", "jvm_library", "jvm_provided_library", "resourcegroup")
 
 create_kotlinc_options(
   name = "custom_kotlin-codeInsight",
@@ -17,6 +17,11 @@ resourcegroup(
   name = "kotlin-codeInsight_resources",
   srcs = glob(["resources/**/*"]),
   strip_prefix = "resources"
+)
+
+jvm_provided_library(
+  name = "plugins_kotlin_code-insight_descriptions_provided",
+  lib = "//plugins/kotlin/code-insight/descriptions"
 )
 
 jvm_library(
@@ -84,6 +89,7 @@ jvm_library(
     "//plugins/kotlin/kotlin.searching",
     "//plugins/kotlin/base/statistics",
     "//platform/editor-ui-ex:editor-ex",
+    ":plugins_kotlin_code-insight_descriptions_provided",
   ]
 )
 
@@ -171,6 +177,7 @@ jvm_library(
     "//plugins/kotlin/bundled-compiler-plugins-support",
     "//plugins/kotlin/base/scripting/scripting.k2:kotlin-base-scripting",
     "//plugins/kotlin/base/scripting/scripting.k2:kotlin-base-scripting_test_lib",
+    ":plugins_kotlin_code-insight_descriptions_provided",
   ]
 )
 ### auto-generated section `build intellij.kotlin.codeInsight` end

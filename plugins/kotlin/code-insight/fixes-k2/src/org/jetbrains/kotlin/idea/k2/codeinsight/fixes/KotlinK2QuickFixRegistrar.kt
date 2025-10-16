@@ -589,6 +589,7 @@ class KotlinK2QuickFixRegistrar : KotlinQuickFixRegistrar() {
         registerFactory(ReplaceJvmFieldWithConstFixFactory.inapplicableJvmField)
 
         registerFactory(ConvertExtensionToFunctionTypeFixFactory.superTypeIsExtensionFunctionType)
+        registerFactory(ConvertExtensionFunctionInExternalDeclarationFixFactory.extensionFunctionInExternalDeclarationFactory)
 
         registerFactory(RenameUnderscoreFixFactory.renameUnderscore)
         registerFactory(NamedContextParameterInFunctionTypeFixFactory.removeParameterName)
