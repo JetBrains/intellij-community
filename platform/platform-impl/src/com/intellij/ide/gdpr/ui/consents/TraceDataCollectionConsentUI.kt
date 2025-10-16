@@ -2,8 +2,11 @@
 
 package com.intellij.ide.gdpr.ui.consents
 
+import com.intellij.ide.IdeBundle
 import com.intellij.ide.gdpr.Consent
 import com.intellij.ide.gdpr.DataCollectionAgreement
+import com.intellij.openapi.diagnostic.Logger
+import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.util.NlsSafe
 import com.intellij.openapi.util.text.StringUtil
 
@@ -16,19 +19,27 @@ internal class TraceDataCollectionConsentUI(
 
   override fun getForcedState(): ConsentForcedState? {
     val externalSettings = AiDataCollectionExternalSettings.findSettingsImplementedByAiAssistant()
-    if (externalSettings != null && externalSettings.isForciblyDisabled()) {
-      return ConsentForcedState.ExternallyDisabled(null)
+    if (LOG.isDebugEnabled) {
+      LOG.debug("AiDataCollectionExternalSettings: $externalSettings")
+    }
+    if (externalSettings != null) {
+      val isForciblyDisabled = externalSettings.isForciblyDisabled()
+      if (LOG.isDebugEnabled) {
+        LOG.debug("AiDataCollectionExternalSettings: isForciblyDisabled: ${isForciblyDisabled}")
+      }
+      if (isForciblyDisabled) {
+        return ConsentForcedState.ExternallyDisabled(externalSettings.getForciblyDisabledDescription()
+                                                     ?: IdeBundle.message("gdpr.consent.externally.disabled.warning"))
+      }
     }
     val dataCollectionAgreement = DataCollectionAgreement.getInstance()
-    val forcedState = when (dataCollectionAgreement) {
-      DataCollectionAgreement.YES -> ConsentForcedState.AlwaysEnabled(null)
-      DataCollectionAgreement.NO -> ConsentForcedState.ExternallyDisabled(null)
+    return when (dataCollectionAgreement) {
+      DataCollectionAgreement.YES -> ConsentForcedState.AlwaysEnabled(IdeBundle.message("gdpr.data.collection.consent.setting.enabled.warning.text"))
+      DataCollectionAgreement.NO -> ConsentForcedState.ExternallyDisabled(IdeBundle.message("gdpr.data.collection.consent.setting.disabled.warning.text"))
       DataCollectionAgreement.NOT_SET -> null
       else -> null
     }
-    if (forcedState != null) {
-      return forcedState
-    }
-    return null
   }
 }
+
+private val LOG: Logger = logger<TraceDataCollectionConsentUI>()
