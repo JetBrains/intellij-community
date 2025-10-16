@@ -24,10 +24,17 @@ object WslPromoPanelUsageCollector: CounterUsagesCollector()  {
     "learn.more.button.clicked",
   )
 
+  private val TRY_NATIVE_MODE: EventId = GROUP.registerEvent(
+    "try.native.mode.button.clicked",
+  )
+
   fun logGoToProjectsClick() {
     GO_TO_PROJECTS.log()
   }
   fun logLearnMoreClick() {
     LEARN_MORE.log()
+  }
+  fun logTryNativeModeClick() {
+    TRY_NATIVE_MODE.log()
   }
 }

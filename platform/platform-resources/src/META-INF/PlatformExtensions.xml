@@ -1,6 +1,9 @@
 <!--suppress PluginXmlRegistrationCheck -->
 <idea-plugin xmlns:xi="http://www.w3.org/2001/XInclude">
   <extensions defaultExtensionNs="com.intellij">
+    <applicationService serviceInterface="com.intellij.execution.wsl.GatewayNativeWslProjectOpener"
+                        serviceImplementation="com.intellij.execution.wsl.GatewayNativeWslProjectOpenerImpl"/>
+
     <applicationService
       serviceInterface="com.intellij.diagnostic.StartUpPerformanceService"
       serviceImplementation="com.intellij.platform.ide.diagnostic.startUpPerformanceReporter.IdeStartUpPerformanceService"
