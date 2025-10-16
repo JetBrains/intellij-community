@@ -420,7 +420,11 @@ class InfoAndProgressPanel internal constructor(
                                     type.titleForeground,
                                     type.popupBackground,
                                     listener)
+      .setPointerSize(JBUI.size(16, 8))
+      .setPointerShiftedToStart(true)
+      .setBorderInsets(JBUI.insets(9, 7, 11, 7))
       .setBorderColor(type.borderColor)
+      .setCornerRadius(JBUI.scale(8))
       .createBalloon()
     SwingUtilities.invokeLater(Runnable {
       val oldBalloon = SoftReference.dereference(lastShownBalloon)
@@ -431,10 +435,14 @@ class InfoAndProgressPanel internal constructor(
       }
       lastShownBalloon = WeakReference(balloon)
       val comp: Component = mainPanel
+      val targetComponent = mainPanel.inlinePanel.indicator?.textPanel ?: comp
       if (comp.isShowing()) {
-        val offset = comp.height / 2
-        val point = Point(comp.width - offset, comp.height - offset)
-        balloon.show(RelativePoint(comp, point), Balloon.Position.above)
+        // in the middle of the text label, shifted slightly left
+        val x = targetComponent.width / 2 - 5
+        // above the label, 9 = pointer height + 1
+        val y = -9
+        val point = Point(x, y)
+        balloon.show(RelativePoint(targetComponent, point), Balloon.Position.above)
       }
       else {
         val rootPane = SwingUtilities.getRootPane(comp)
