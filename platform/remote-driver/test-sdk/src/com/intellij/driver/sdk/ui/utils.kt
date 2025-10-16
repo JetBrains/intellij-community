@@ -57,6 +57,12 @@ fun UiComponent.waitEnabled(timeout: Duration = 5.seconds) = apply {
   }
 }
 
+fun UiComponent.shouldHaveFocus(message: String? = null, timeout: Duration = 5.seconds) = apply {
+  waitFor(message ?: "'$accessibleName' component has focus", timeout) {
+    driver.hasFocus(this)
+  }
+}
+
 @Remote("com.intellij.util.IJSwingUtilities")
 interface IJSwingUtilities {
   fun hasFocus(c: Component): Boolean
