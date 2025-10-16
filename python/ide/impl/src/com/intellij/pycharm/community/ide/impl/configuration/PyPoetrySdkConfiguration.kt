@@ -41,16 +41,13 @@ class PyPoetrySdkConfiguration : PyProjectTomlConfigurationExtension {
     private val LOGGER = Logger.getInstance(PyPoetrySdkConfiguration::class.java)
   }
 
-  override val toolInfo: PyToolUIInfo = POETRY_UI_INFO
   override val toolId: ToolId = POETRY_TOOL_ID
 
   override suspend fun checkEnvironmentAndPrepareSdkCreator(module: Module): CreateSdkInfo? = prepareSdkCreator(
-    toolInfo,
     { checkExistence -> checkManageableEnv(module, checkExistence, true) },
   ) { { createPoetry(module) } }
 
   override suspend fun createSdkWithoutPyProjectTomlChecks(module: Module): CreateSdkInfo? = prepareSdkCreator(
-    toolInfo,
     { checkExistence -> checkManageableEnv(module, checkExistence, false) },
   ) { { createPoetry(module) } }
 

@@ -2,7 +2,6 @@ package com.jetbrains.python.sdk.configuration
 
 import com.intellij.codeInspection.util.IntentionName
 import com.intellij.openapi.projectRoots.Sdk
-import com.jetbrains.python.PyToolUIInfo
 import com.jetbrains.python.errorProcessing.PyResult
 import org.jetbrains.annotations.ApiStatus
 
@@ -15,7 +14,6 @@ typealias EnvExists = Boolean
 sealed interface CreateSdkInfo : Comparable<CreateSdkInfo> {
   @get:IntentionName
   val intentionName: String
-  val toolInfo: PyToolUIInfo
   val sdkCreator: suspend (NeedsConfirmation) -> PyResult<Sdk?>
 
   /**
@@ -30,13 +28,11 @@ sealed interface CreateSdkInfo : Comparable<CreateSdkInfo> {
   data class ExistingEnv(
     val version: String,
     override val intentionName: String,
-    override val toolInfo: PyToolUIInfo,
     override val sdkCreator: suspend (NeedsConfirmation) -> PyResult<Sdk?>,
   ) : CreateSdkInfo
 
   data class WillCreateEnv(
     override val intentionName: String,
-    override val toolInfo: PyToolUIInfo,
     override val sdkCreator: suspend (NeedsConfirmation) -> PyResult<Sdk?>,
   ) : CreateSdkInfo
 }
@@ -51,7 +47,6 @@ sealed interface EnvCheckerResult {
 @ApiStatus.Internal
 // TODO: Make internal after we drop WSL sdk configurator
 suspend fun prepareSdkCreator(
-  toolInfo: PyToolUIInfo,
   envChecker: suspend (CheckExistence) -> EnvCheckerResult,
   sdkCreator: (EnvExists) -> (suspend (NeedsConfirmation) -> PyResult<Sdk?>),
 ): CreateSdkInfo? {
@@ -60,13 +55,12 @@ suspend fun prepareSdkCreator(
     is EnvCheckerResult.EnvFound -> CreateSdkInfo.ExistingEnv(
       res.version,
       res.intentionName,
-      toolInfo,
       sdkCreator(true)
     )
     is EnvCheckerResult.EnvNotFound -> {
       res = envChecker(false)
       when (res) {
-        is EnvCheckerResult.EnvNotFound -> CreateSdkInfo.WillCreateEnv(res.intentionName, toolInfo, sdkCreator(false))
+        is EnvCheckerResult.EnvNotFound -> CreateSdkInfo.WillCreateEnv(res.intentionName,  sdkCreator(false))
         is EnvCheckerResult.EnvFound -> throw AssertionError("Env shouldn't exist if we didn't check for it")
         is EnvCheckerResult.CannotConfigure -> null
       }

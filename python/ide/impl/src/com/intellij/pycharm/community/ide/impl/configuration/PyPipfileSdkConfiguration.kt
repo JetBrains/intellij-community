@@ -23,6 +23,7 @@ import com.intellij.ui.components.JBLabel
 import com.intellij.util.ui.JBUI
 import com.jetbrains.python.PyBundle
 import com.jetbrains.python.PyToolUIInfo
+import com.jetbrains.python.ToolId
 import com.jetbrains.python.errorProcessing.PyResult
 import com.jetbrains.python.getOrLogException
 import com.jetbrains.python.sdk.PythonSdkType
@@ -50,10 +51,10 @@ private val LOGGER = Logger.getInstance(PyPipfileSdkConfiguration::class.java)
 @ApiStatus.Internal
 class PyPipfileSdkConfiguration : PyProjectSdkConfigurationExtension {
 
-  override val toolInfo: PyToolUIInfo = PyToolUIInfo("Pipenv", PythonSdkUIIcons.Tools.Pip)
+  override val toolId: ToolId = ToolId("pipenv")
 
   override suspend fun checkEnvironmentAndPrepareSdkCreator(module: Module): CreateSdkInfo? = prepareSdkCreator(
-    toolInfo, { checkManageableEnv(module, it) }
+     { checkManageableEnv(module, it) }
   ) { envExists ->
     { needsConfirmation -> createAndAddSdk(module, if (needsConfirmation) Source.CONFIGURATOR else Source.INSPECTION, envExists) }
   }

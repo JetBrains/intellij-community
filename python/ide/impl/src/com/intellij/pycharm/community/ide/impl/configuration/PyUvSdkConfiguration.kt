@@ -40,15 +40,14 @@ class PyUvSdkConfiguration : PyProjectTomlConfigurationExtension {
   private val existingSdks by lazy { PythonSdkUtil.getAllSdks() }
   private val context = UserDataHolderBase()
 
-  override val toolInfo: PyToolUIInfo = UV_UI_INFO
   override val toolId: ToolId = UV_TOOL_ID
 
   override suspend fun checkEnvironmentAndPrepareSdkCreator(module: Module): CreateSdkInfo? = prepareSdkCreator(
-    toolInfo, { checkExistence -> checkManageableEnv(module, checkExistence, true) }
+    { checkExistence -> checkManageableEnv(module, checkExistence, true) }
   ) { envExists -> { createUv(module, envExists) } }
 
   override suspend fun createSdkWithoutPyProjectTomlChecks(module: Module): CreateSdkInfo? = prepareSdkCreator(
-    toolInfo, { checkExistence -> checkManageableEnv(module, checkExistence, false) }
+    { checkExistence -> checkManageableEnv(module, checkExistence, false) }
   ) { envExists -> { createUv(module, envExists) } }
 
   override fun asPyProjectTomlSdkConfigurationExtension(): PyProjectTomlConfigurationExtension = this

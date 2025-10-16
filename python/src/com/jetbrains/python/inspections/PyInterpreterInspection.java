@@ -51,6 +51,7 @@ import com.jetbrains.python.sdk.PySdkPopupFactory;
 import com.jetbrains.python.sdk.PythonSdkType;
 import com.jetbrains.python.sdk.conda.PyCondaSdkCustomizer;
 import com.jetbrains.python.sdk.configuration.CreateSdkInfo;
+import com.jetbrains.python.sdk.configuration.CreateSdkInfoWithTool;
 import com.jetbrains.python.sdk.configuration.PyProjectSdkConfiguration;
 import com.jetbrains.python.sdk.configuration.PyProjectSdkConfigurationExtension;
 import com.jetbrains.python.sdk.legacy.PythonSdkUtil;
@@ -182,7 +183,7 @@ public final class PyInterpreterInspection extends PyInspection {
         return new UseDetectedInterpreterFix(detectedAssociatedSdk, existingSdks, true, module);
       }
 
-      final CreateSdkInfo createSdkInfo = PyProjectSdkConfigurationExtension.findForModule(module);
+      final CreateSdkInfoWithTool createSdkInfo = PyProjectSdkConfigurationExtension.findForModule(module);
       if (createSdkInfo != null) {
         return new UseProvidedInterpreterFix(module, createSdkInfo);
       }
@@ -220,7 +221,7 @@ public final class PyInterpreterInspection extends PyInspection {
 
       PyProjectSdkConfigurationExtension configurator = PyCondaSdkCustomizer.Companion.getInstance().getFallbackConfigurator();
       if (configurator != null) {
-        final CreateSdkInfo fallbackCreateSdkInfo =
+        var fallbackCreateSdkInfo =
           PyCondaSdkCustomizer.Companion.checkEnvironmentAndPrepareSdkCreatorBlocking(configurator, module);
         if (fallbackCreateSdkInfo != null) {
           return new UseProvidedInterpreterFix(module, fallbackCreateSdkInfo);
@@ -411,10 +412,10 @@ public final class PyInterpreterInspection extends PyInspection {
 
     private final @NotNull Module myModule;
 
-    private final @NotNull CreateSdkInfo myCreateSdkInfo;
+    private final @NotNull CreateSdkInfoWithTool myCreateSdkInfo;
 
     private UseProvidedInterpreterFix(@NotNull Module module,
-                                      @NotNull CreateSdkInfo createSdkInfo) {
+                                      @NotNull CreateSdkInfoWithTool createSdkInfo) {
       myModule = module;
       myCreateSdkInfo = createSdkInfo;
     }
@@ -426,7 +427,7 @@ public final class PyInterpreterInspection extends PyInspection {
 
     @Override
     public @IntentionName @NotNull String getName() {
-      return myCreateSdkInfo.getIntentionName();
+      return myCreateSdkInfo.getCreateSdkInfo().getIntentionName();
     }
 
     @Override
