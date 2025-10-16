@@ -32,7 +32,6 @@ import com.jetbrains.python.getOrLogException
 import com.jetbrains.python.packaging.utils.PyPackageCoroutine
 import com.jetbrains.python.sdk.*
 import com.jetbrains.python.sdk.conda.PyCondaSdkCustomizer
-import com.jetbrains.python.sdk.configuration.CreateSdkInfo
 import com.jetbrains.python.sdk.configuration.CreateSdkInfoWithTool
 import com.jetbrains.python.sdk.configuration.PyProjectSdkConfiguration.setReadyToUseSdk
 import com.jetbrains.python.sdk.configuration.PyProjectSdkConfiguration.setSdkUsingCreateSdkInfo
@@ -43,7 +42,6 @@ import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
 import org.jetbrains.annotations.ApiStatus
 import java.nio.file.Path
-import kotlin.collections.sorted
 
 
 class PythonSdkConfigurator : DirectoryProjectConfigurator {
@@ -87,9 +85,7 @@ class PythonSdkConfigurator : DirectoryProjectConfigurator {
       emptyList()
     }
     else {
-      PyProjectSdkConfigurationExtension.EP_NAME.extensionsIfPointIsRegistered.mapNotNull { e ->
-        e.checkEnvironmentAndPrepareSdkCreator(module)?.let { CreateSdkInfoWithTool(it, e.toolId) }
-      }.sortedBy { it.createSdkInfo }
+      PyProjectSdkConfigurationExtension.findAllSortedForModule(module)
     }
   }
 
