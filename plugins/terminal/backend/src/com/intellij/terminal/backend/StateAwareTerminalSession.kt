@@ -46,7 +46,7 @@ internal class StateAwareTerminalSession(
   private val outputHyperlinkFacade: BackendTerminalHyperlinkFacade
   private val alternateBufferModel: MutableTerminalOutputModel
   private val alternateBufferHyperlinkFacade: BackendTerminalHyperlinkFacade
-  private val blocksModel: TerminalBlocksModel
+  private val blocksModel: TerminalBlocksModelImpl
 
   private val inputChannel: SendChannel<TerminalInputEvent>
 

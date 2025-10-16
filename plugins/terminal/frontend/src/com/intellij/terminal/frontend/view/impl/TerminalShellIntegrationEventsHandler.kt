@@ -6,7 +6,7 @@ import com.intellij.openapi.application.asContextElement
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
 import org.jetbrains.plugins.terminal.block.reworked.TerminalAliasesStorage
-import org.jetbrains.plugins.terminal.block.reworked.TerminalBlocksModel
+import org.jetbrains.plugins.terminal.block.reworked.TerminalBlocksModelImpl
 import org.jetbrains.plugins.terminal.session.*
 import org.jetbrains.plugins.terminal.session.dto.toState
 import org.jetbrains.plugins.terminal.view.TerminalShellIntegration
@@ -15,7 +15,7 @@ import java.util.concurrent.CompletableFuture
 internal class TerminalShellIntegrationEventsHandler(
   private val outputModelController: TerminalOutputModelController,
   private val commandDetectionFuture: CompletableFuture<TerminalShellIntegration>,
-  private val blocksModel: TerminalBlocksModel,
+  private val blocksModel: TerminalBlocksModelImpl,
   private val aliasesStorage: TerminalAliasesStorage,
 ) : TerminalOutputEventsHandler {
   private val edtContext = Dispatchers.EDT + ModalityState.any().asContextElement()

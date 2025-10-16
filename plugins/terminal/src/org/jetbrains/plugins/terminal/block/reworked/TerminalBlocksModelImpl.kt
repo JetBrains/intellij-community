@@ -37,7 +37,7 @@ class TerminalBlocksModelImpl(private val outputModel: TerminalOutputModel, pare
     dispatcher.addListener(listener, parentDisposable)
   }
 
-  override fun promptStarted(offset: TerminalOffset) {
+  fun promptStarted(offset: TerminalOffset) {
     val lastBlock = blocks.last()
     if (offset == lastBlock.startOffset) {
       blocks.removeLast()
@@ -51,29 +51,29 @@ class TerminalBlocksModelImpl(private val outputModel: TerminalOutputModel, pare
     addNewBlock(offset)
   }
 
-  override fun promptFinished(offset: TerminalOffset) {
+  fun promptFinished(offset: TerminalOffset) {
     val curBlock = blocks.last()
     blocks[blocks.lastIndex] = curBlock.copy(commandStartOffset = offset)
   }
 
-  override fun commandStarted(offset: TerminalOffset) {
+  fun commandStarted(offset: TerminalOffset) {
     val curBlock = blocks.last()
     blocks[blocks.lastIndex] = curBlock.copy(outputStartOffset = offset)
   }
 
-  override fun commandFinished(exitCode: Int) {
+  fun commandFinished(exitCode: Int) {
     val curBlock = blocks.last()
     blocks[blocks.lastIndex] = curBlock.copy(exitCode = exitCode)
   }
 
-  override fun dumpState(): TerminalBlocksModelState {
+  fun dumpState(): TerminalBlocksModelState {
     return TerminalBlocksModelState(
       blocks = blocks.toList(),
       blockIdCounter = blockIdCounter
     )
   }
 
-  override fun restoreFromState(state: TerminalBlocksModelState) {
+  fun restoreFromState(state: TerminalBlocksModelState) {
     check(state.blocks.isNotEmpty()) { "There should be always at least one block in the blocks model state" }
 
     blockIdCounter = state.blockIdCounter
