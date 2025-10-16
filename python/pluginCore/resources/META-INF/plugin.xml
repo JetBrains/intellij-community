@@ -24,6 +24,7 @@ The Python plug-in provides smart editing for Python scripts. The feature set of
   </dependencies>
 
   <content namespace="jetbrains">
+    <module name="intellij.python.common" loading="required"/>
     <module name="intellij.python.parser" loading="required"/>
     <module name="intellij.python.ast" loading="required"/>
     <module name="intellij.python.syntax.core" loading="required"/>
@@ -36,8 +37,10 @@ The Python plug-in provides smart editing for Python scripts. The feature set of
     <module name="intellij.python.sdkConfigurator.common" loading="required"/>
     <module name="intellij.python.sdkConfigurator.backend"/>
     <module name="intellij.python.sdkConfigurator.frontend"/>
-    <module name="intellij.python.community.impl.poetry" loading="required"/>
-    <module name="intellij.python.community.impl.uv" loading="required"/>
+    <module name="intellij.python.community.impl.poetry.common" loading="required"/>
+    <module name="intellij.python.community.impl.poetry.backend"/>
+    <module name="intellij.python.community.impl.uv.common" loading="required"/>
+    <module name="intellij.python.community.impl.uv.backend"/>
     <module name="intellij.python.community.impl.pipenv" loading="required"/>
     <module name="intellij.python.community.core.impl" loading="required"/>
     <module name="intellij.python.community.helpersLocator" loading="required"/>
@@ -69,7 +72,6 @@ The Python plug-in provides smart editing for Python scripts. The feature set of
     <module name="intellij.python.markdown"/>
     <module name="intellij.python.ml.features"/>
     <module name="intellij.python.terminal"/>
-    <module name="intellij.python.common"/>
     <module name="intellij.platform.ide.nonModalWelcomeScreen"/>
     <module name="intellij.platform.ide.nonModalWelcomeScreen.backend"/>
     <module name="intellij.platform.ide.nonModalWelcomeScreen.frontend"/>

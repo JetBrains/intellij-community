@@ -2,8 +2,8 @@
   <dependencies>
     <module name="intellij.python.sdk"/>
     <module name="intellij.python.community.execService"/>
-    <module name="intellij.python.community.impl.poetry"/>
-    <module name="intellij.python.community.impl.uv"/>
+    <module name="intellij.python.community.impl.poetry.common"/>
+    <module name="intellij.python.community.impl.uv.common"/>
   </dependencies>
 
   <extensionPoints>

@@ -330,7 +330,6 @@ jvm_library(
     "//platform/platform-impl/remote",
     "//platform/platform-impl/ui",
     "//libraries/jackson/module-kotlin:libraries-jackson-module-kotlin",
-    "//python/poetry",
     "//python/pipenv",
     "//python/installer",
     "//platform/eel",
@@ -353,7 +352,9 @@ jvm_library(
     "//python/python-exec-service/execService.python",
     "//python/interpreters",
     "//python/python-sdk-configurator/common",
-    "//python/impl.uv",
+    "//python/python-poetry/common",
+    "//python/python-uv/common",
+    "//python/common",
   ],
   exports = [
     "//python/openapi:community",

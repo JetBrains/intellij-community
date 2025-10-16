@@ -28,8 +28,8 @@ jvm_library(
     "//libraries/caffeine",
     "@lib//:io-github-z4kn4fein-semver-jvm",
     "//python/python-exec-service:community-execService",
-    "//python/poetry",
-    "//python/impl.uv",
+    "//python/python-poetry/common",
+    "//python/python-uv/common",
   ]
 )
 ### auto-generated section `build intellij.python.sdk.ui` end

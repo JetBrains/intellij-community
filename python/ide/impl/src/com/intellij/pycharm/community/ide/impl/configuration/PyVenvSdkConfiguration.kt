@@ -6,9 +6,8 @@ import com.intellij.openapi.projectRoots.Sdk
 import com.intellij.openapi.util.UserDataHolderBase
 import com.intellij.platform.ide.progress.withBackgroundProgress
 import com.intellij.pycharm.community.ide.impl.PyCharmCommunityCustomizationBundle
+import com.intellij.python.common.tools.ToolId
 import com.jetbrains.python.PyBundle
-import com.jetbrains.python.PyToolUIInfo
-import com.jetbrains.python.ToolId
 import com.jetbrains.python.errorProcessing.MessageError
 import com.jetbrains.python.errorProcessing.PyResult
 import com.jetbrains.python.sdk.*

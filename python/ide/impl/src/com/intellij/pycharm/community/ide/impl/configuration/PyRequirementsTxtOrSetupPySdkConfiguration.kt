@@ -21,10 +21,10 @@ import com.intellij.pycharm.community.ide.impl.configuration.PySdkConfigurationC
 import com.intellij.pycharm.community.ide.impl.configuration.PySdkConfigurationCollector.Source
 import com.intellij.pycharm.community.ide.impl.configuration.PySdkConfigurationCollector.VirtualEnvResult
 import com.intellij.pycharm.community.ide.impl.configuration.ui.PyAddNewVirtualEnvFromFilePanel
+import com.intellij.python.common.tools.ToolId
 import com.intellij.ui.IdeBorderFactory
 import com.intellij.ui.components.JBLabel
 import com.intellij.util.ui.JBUI
-import com.jetbrains.python.ToolId
 import com.jetbrains.python.errorProcessing.PyResult
 import com.jetbrains.python.packaging.PyPackageUtil
 import com.jetbrains.python.packaging.management.PythonPackageManager

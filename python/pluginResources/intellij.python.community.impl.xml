@@ -4,13 +4,14 @@
     <module name="intellij.python.sdk"/>
     <module name="intellij.python.syntax"/>
     <module name="intellij.python.community"/>
+    <module name="intellij.python.common"/>
     <module name="intellij.python.community.core.impl"/>
     <module name="intellij.python.community.helpersLocator"/>
     <module name="intellij.python.community.execService"/>
     <module name="intellij.python.community.execService.python"/>
     <module name="intellij.python.community.interpreters"/>
-    <module name="intellij.python.community.impl.poetry"/>
-    <module name="intellij.python.community.impl.uv"/>
+    <module name="intellij.python.community.impl.poetry.common"/>
+    <module name="intellij.python.community.impl.uv.common"/>
     <module name="intellij.python.community.impl.pipenv"/>
     <module name="intellij.python.hatch"/>
     <module name="intellij.python.pydev"/>

@@ -16,7 +16,7 @@ import com.intellij.python.community.execService.Args
 import com.intellij.python.community.execService.BinOnEel
 import com.intellij.python.community.execService.ExecService
 import com.intellij.python.community.execService.execGetStdout
-import com.intellij.python.community.impl.poetry.poetryPath
+import com.intellij.python.community.impl.poetry.common.poetryPath
 import com.intellij.python.pyproject.PY_PROJECT_TOML
 import com.jetbrains.python.*
 import com.jetbrains.python.errorProcessing.PyResult

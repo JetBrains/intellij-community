@@ -42,7 +42,7 @@ internal object MetadataStorageImpl : MetadataStorageBase() {
         OwnPropertyMetadata(isComputable = false, isKey = false, isOpen = false, name = "participatedTools",
                             valueType = ValueTypeMetadata.ParameterizedType(generics = listOf(
                               ValueTypeMetadata.SimpleType.CustomType(isNullable = false, typeMetadata = FinalClassMetadata.ClassMetadata(
-                                fqName = "com.jetbrains.python.ToolId", properties = listOf(
+                                fqName = "com.intellij.python.common.tools.ToolId", properties = listOf(
                                   OwnPropertyMetadata(isComputable = false, isKey = false, isOpen = false, name = "id",
                                                       valueType = primitiveTypeStringNotNullable, withDefault = false)),
                                 supertypes = listOf())),
@@ -70,8 +70,8 @@ internal object MetadataStorageImpl : MetadataStorageBase() {
   }
 
   override fun initializeMetadataHash() {
-    addMetadataHash(typeFqn = "com.intellij.python.pyproject.model.internal.PyProjectTomlWorkspaceEntity", metadataHash = 674942214)
-    addMetadataHash(typeFqn = "com.jetbrains.python.ToolId", metadataHash = 434494956)
+    addMetadataHash(typeFqn = "com.intellij.python.pyproject.model.internal.PyProjectTomlWorkspaceEntity", metadataHash = 1939139269)
+    addMetadataHash(typeFqn = "com.intellij.python.common.tools.ToolId", metadataHash = -1193602517)
     addMetadataHash(typeFqn = "com.intellij.platform.workspace.jps.entities.ModuleId", metadataHash = -575206713)
     addMetadataHash(typeFqn = "com.intellij.platform.workspace.storage.EntitySource", metadataHash = -1282078904)
     addMetadataHash(typeFqn = "com.intellij.python.pyproject.model.internal.PyProjectTomlEntitySource", metadataHash = -1054650782)

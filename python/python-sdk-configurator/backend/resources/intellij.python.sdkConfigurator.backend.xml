@@ -6,6 +6,7 @@
     <module name="intellij.python.sdkConfigurator.common"/>
     <module name="intellij.platform.backend"/>
     <module name="intellij.platform.rpc.backend"/>
+    <module name="intellij.python.common"/>
   </dependencies>
   <resource-bundle>messages.PySdkConfiguratorBundle</resource-bundle>
   <projectListeners>

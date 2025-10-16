@@ -4,8 +4,8 @@ package com.jetbrains.python.sdk.configuration
 import com.intellij.openapi.extensions.ExtensionPointName
 import com.intellij.openapi.module.Module
 import com.intellij.openapi.progress.runBlockingMaybeCancellable
+import com.intellij.python.common.tools.ToolId
 import com.intellij.util.concurrency.annotations.RequiresBackgroundThread
-import com.jetbrains.python.ToolId
 import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.annotations.CheckReturnValue
 

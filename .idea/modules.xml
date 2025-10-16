@@ -1370,8 +1370,10 @@
       <module fileurl="file://$PROJECT_DIR$/python/huggingFace/intellij.python.community.impl.huggingFace.iml" filepath="$PROJECT_DIR$/python/huggingFace/intellij.python.community.impl.huggingFace.iml" />
       <module fileurl="file://$PROJECT_DIR$/python/installer/intellij.python.community.impl.installer.iml" filepath="$PROJECT_DIR$/python/installer/intellij.python.community.impl.installer.iml" />
       <module fileurl="file://$PROJECT_DIR$/python/pipenv/intellij.python.community.impl.pipenv.iml" filepath="$PROJECT_DIR$/python/pipenv/intellij.python.community.impl.pipenv.iml" />
-      <module fileurl="file://$PROJECT_DIR$/python/poetry/intellij.python.community.impl.poetry.iml" filepath="$PROJECT_DIR$/python/poetry/intellij.python.community.impl.poetry.iml" />
-      <module fileurl="file://$PROJECT_DIR$/python/impl.uv/intellij.python.community.impl.uv.iml" filepath="$PROJECT_DIR$/python/impl.uv/intellij.python.community.impl.uv.iml" />
+      <module fileurl="file://$PROJECT_DIR$/python/python-poetry/backend/intellij.python.community.impl.poetry.backend.iml" filepath="$PROJECT_DIR$/python/python-poetry/backend/intellij.python.community.impl.poetry.backend.iml" />
+      <module fileurl="file://$PROJECT_DIR$/python/python-poetry/common/intellij.python.community.impl.poetry.common.iml" filepath="$PROJECT_DIR$/python/python-poetry/common/intellij.python.community.impl.poetry.common.iml" />
+      <module fileurl="file://$PROJECT_DIR$/python/python-uv/backend/intellij.python.community.impl.uv.backend.iml" filepath="$PROJECT_DIR$/python/python-uv/backend/intellij.python.community.impl.uv.backend.iml" />
+      <module fileurl="file://$PROJECT_DIR$/python/python-uv/common/intellij.python.community.impl.uv.common.iml" filepath="$PROJECT_DIR$/python/python-uv/common/intellij.python.community.impl.uv.common.iml" />
       <module fileurl="file://$PROJECT_DIR$/python/python-venv/intellij.python.community.impl.venv.iml" filepath="$PROJECT_DIR$/python/python-venv/intellij.python.community.impl.venv.iml" />
       <module fileurl="file://$PROJECT_DIR$/python/interpreters/intellij.python.community.interpreters.iml" filepath="$PROJECT_DIR$/python/interpreters/intellij.python.community.interpreters.iml" />
       <module fileurl="file://$PROJECT_DIR$/python/junit5Tests-framework/intellij.python.community.junit5Tests.framework.iml" filepath="$PROJECT_DIR$/python/junit5Tests-framework/intellij.python.community.junit5Tests.framework.iml" />

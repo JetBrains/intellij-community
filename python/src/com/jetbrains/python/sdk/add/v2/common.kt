@@ -29,8 +29,8 @@ import com.intellij.python.community.execService.Args
 import com.intellij.python.community.execService.BinaryToExec
 import com.intellij.python.community.execService.ExecService
 import com.intellij.python.community.execService.execGetStdout
-import com.intellij.python.community.impl.poetry.icons.PythonCommunityImplPoetryIcons
-import com.intellij.python.community.impl.uv.icons.PythonCommunityImplUVIcons
+import com.intellij.python.community.impl.poetry.common.icons.PythonCommunityImplPoetryCommonIcons
+import com.intellij.python.community.impl.uv.common.icons.PythonCommunityImplUVCommonIcons
 import com.intellij.python.hatch.icons.PythonHatchIcons
 import com.intellij.ui.dsl.builder.Align
 import com.intellij.ui.dsl.builder.Panel
@@ -142,9 +142,9 @@ enum class PythonSupportedEnvironmentManagers(
 ) {
   VIRTUALENV("sdk.create.custom.virtualenv", PythonIcons.Python.Virtualenv, { true }),
   CONDA("sdk.create.custom.conda", PythonIcons.Python.Anaconda, { true }),
-  POETRY("sdk.create.custom.poetry", PythonCommunityImplPoetryIcons.Poetry),
+  POETRY("sdk.create.custom.poetry", PythonCommunityImplPoetryCommonIcons.Poetry),
   PIPENV("sdk.create.custom.pipenv", PIPENV_ICON),
-  UV("sdk.create.custom.uv", PythonCommunityImplUVIcons.UV),
+  UV("sdk.create.custom.uv", PythonCommunityImplUVCommonIcons.UV),
   HATCH("sdk.create.custom.hatch", PythonHatchIcons.Logo, { it is FileSystem.Eel }),
   PYTHON("sdk.create.custom.python", PythonParserIcons.PythonFile, { true })
 }

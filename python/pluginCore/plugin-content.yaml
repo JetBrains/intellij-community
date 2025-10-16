@@ -63,12 +63,18 @@
 - name: lib/modules/intellij.python.community.impl.pipenv.jar
   contentModules:
   - name: intellij.python.community.impl.pipenv
-- name: lib/modules/intellij.python.community.impl.poetry.jar
+- name: lib/modules/intellij.python.community.impl.poetry.backend.jar
   contentModules:
-  - name: intellij.python.community.impl.poetry
-- name: lib/modules/intellij.python.community.impl.uv.jar
+  - name: intellij.python.community.impl.poetry.backend
+- name: lib/modules/intellij.python.community.impl.poetry.common.jar
   contentModules:
-  - name: intellij.python.community.impl.uv
+  - name: intellij.python.community.impl.poetry.common
+- name: lib/modules/intellij.python.community.impl.uv.backend.jar
+  contentModules:
+  - name: intellij.python.community.impl.uv.backend
+- name: lib/modules/intellij.python.community.impl.uv.common.jar
+  contentModules:
+  - name: intellij.python.community.impl.uv.common
 - name: lib/modules/intellij.python.community.impl.venv.jar
   contentModules:
   - name: intellij.python.community.impl.venv

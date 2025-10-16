@@ -9,14 +9,11 @@ import com.intellij.openapi.util.UserDataHolderBase
 import com.intellij.openapi.util.io.toNioPathOrNull
 import com.intellij.openapi.vfs.readText
 import com.intellij.pycharm.community.ide.impl.PyCharmCommunityCustomizationBundle
-import com.intellij.python.community.impl.uv.UV_TOOL_ID
-import com.intellij.python.community.impl.uv.UV_UI_INFO
+import com.intellij.python.common.tools.ToolId
+import com.intellij.python.community.impl.uv.common.UV_TOOL_ID
 import com.intellij.python.pyproject.PyProjectToml
 import com.intellij.python.pyproject.model.api.SuggestedSdk
 import com.intellij.python.pyproject.model.api.suggestSdk
-import com.intellij.python.sdk.ui.icons.PythonSdkUIIcons
-import com.jetbrains.python.PyToolUIInfo
-import com.jetbrains.python.ToolId
 import com.jetbrains.python.errorProcessing.PyResult
 import com.jetbrains.python.getOrLogException
 import com.jetbrains.python.onSuccess

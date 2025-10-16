@@ -15,9 +15,9 @@ import com.intellij.platform.workspace.storage.instrumentation.EntityStorageInst
 import com.intellij.platform.workspace.storage.instrumentation.EntityStorageInstrumentationApi
 import com.intellij.platform.workspace.storage.instrumentation.MutableEntityStorageInstrumentation
 import com.intellij.platform.workspace.storage.metadata.model.EntityMetadata
+import com.intellij.python.common.tools.ToolId
 import com.intellij.python.pyproject.model.internal.ModifiablePyProjectTomlWorkspaceEntity
 import com.intellij.python.pyproject.model.internal.PyProjectTomlWorkspaceEntity
-import com.jetbrains.python.ToolId
 
 @GeneratedCodeApiVersion(3)
 @GeneratedCodeImplVersion(7)

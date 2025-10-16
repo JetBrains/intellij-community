@@ -3,13 +3,12 @@ package com.intellij.python.sdk.ui.evolution.ui
 import com.intellij.icons.AllIcons
 import com.intellij.openapi.actionSystem.AnAction
 import com.intellij.openapi.actionSystem.AnActionEvent
-import com.intellij.python.community.impl.uv.icons.PythonCommunityImplUVIcons
+import com.intellij.python.community.impl.uv.common.icons.PythonCommunityImplUVCommonIcons
 import com.intellij.python.sdk.ui.PySdkUiBundle
 import com.intellij.python.sdk.ui.evolution.sdk.EvoModuleSdk
 import com.intellij.python.sdk.ui.evolution.ui.components.EvoTreeLazyNodeElement
 import com.intellij.python.sdk.ui.evolution.ui.components.EvoTreeLeafElement
 import com.intellij.python.sdk.ui.evolution.ui.components.EvoTreeSection
-import com.intellij.python.sdk.ui.icons.PythonSdkUIIcons
 import com.jetbrains.python.Result
 import com.jetbrains.python.sdk.configuration.PyProjectSdkConfigurationExtension
 
@@ -25,7 +24,7 @@ internal val autoSetupWithAIAction = object : AnAction(
 internal val defaultUvAction = object : AnAction(
   { PySdkUiBundle.message("evo.sdk.status.bar.popup.shortcuts.uv") },
   { "" },
-  PythonCommunityImplUVIcons.UV,
+  PythonCommunityImplUVCommonIcons.UV,
 ) {
   override fun actionPerformed(e: AnActionEvent) {
   }

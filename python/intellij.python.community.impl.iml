@@ -167,7 +167,6 @@
     <orderEntry type="module" module-name="intellij.platform.ide.remote" />
     <orderEntry type="module" module-name="intellij.platform.ide.ui" />
     <orderEntry type="module" module-name="intellij.libraries.jackson.module.kotlin" />
-    <orderEntry type="module" module-name="intellij.python.community.impl.poetry" />
     <orderEntry type="module" module-name="intellij.python.community.impl.pipenv" />
     <orderEntry type="module" module-name="intellij.python.community.impl.installer" />
     <orderEntry type="module" module-name="intellij.platform.eel" />
@@ -190,6 +189,8 @@
     <orderEntry type="module" module-name="intellij.python.community.execService.python" />
     <orderEntry type="module" module-name="intellij.python.community.interpreters" />
     <orderEntry type="module" module-name="intellij.python.sdkConfigurator.common" />
-    <orderEntry type="module" module-name="intellij.python.community.impl.uv" />
+    <orderEntry type="module" module-name="intellij.python.community.impl.poetry.common" />
+    <orderEntry type="module" module-name="intellij.python.community.impl.uv.common" />
+    <orderEntry type="module" module-name="intellij.python.common" />
   </component>
 </module>

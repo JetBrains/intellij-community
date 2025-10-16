@@ -10,7 +10,7 @@ import com.intellij.openapi.projectRoots.Sdk
 import com.intellij.openapi.ui.validation.DialogValidationRequestor
 import com.intellij.openapi.vfs.VirtualFileManager
 import com.intellij.platform.eel.LocalEelApi
-import com.intellij.python.community.impl.poetry.poetryPath
+import com.intellij.python.community.impl.poetry.common.poetryPath
 import com.intellij.python.pyproject.PyProjectToml
 import com.intellij.ui.dsl.builder.Panel
 import com.intellij.ui.dsl.builder.bindSelected
