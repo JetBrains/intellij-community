@@ -222,6 +222,72 @@ class UseOptimizedEelFunctionsTest {
     }
 
     @Nested
+    inner class `class dot method in call chain` {
+      @Test
+      fun Java() {
+        @Language("Java")
+        val source = """
+          import java.io.IOException;
+          import java.nio.ByteBuffer;
+          import java.nio.file.Files;
+          import java.nio.file.Path;
+    
+          class Example {
+            void example() throws IOException {
+              int hash = Files.<warning descr="Works ineffectively with remote Eel">readAllBytes</warning>(Path.of("hello.txt")).hashCode();
+            }
+          }
+        """.trimIndent()
+
+        @Language("Java")
+        val expectedResult = """
+          import com.intellij.platform.eel.fs.EelFiles;
+          
+          import java.io.IOException;
+          import java.nio.ByteBuffer;
+          import java.nio.file.Files;
+          import java.nio.file.Path;
+    
+          class Example {
+            void example() throws IOException {
+              int hash = EelFiles.readAllBytes(Path.of("hello.txt")).hashCode();
+            }
+          }
+        """.trimIndent()
+
+        doTest("Example.java", source, expectedResult)
+      }
+
+      @Test
+      fun Kotlin() {
+        @Language("Kt")
+        val source = """
+          import java.nio.ByteBuffer
+          import java.nio.file.Files
+          import java.nio.file.Path
+    
+          fun example() {
+            val hash = Files.<warning descr="Works ineffectively with remote Eel">readAllBytes</warning>(Path.of("hello.txt")).hashCode()
+          }
+        """.trimIndent()
+
+        @Language("Kt")
+        val expectedResult = """
+          import com.intellij.platform.eel.fs.EelFiles
+          import java.nio.ByteBuffer
+          import java.nio.file.Files
+          import java.nio.file.Path
+    
+          fun example() {
+            val hash = EelFiles.readAllBytes(Path.of("hello.txt")).hashCode()
+          }
+        """.trimIndent()
+
+        doTest("Example.kt", source, expectedResult)
+      }
+    }
+
+    @Nested
     inner class `class dot method and wildcard import` {
       @Test
       fun Java() {
