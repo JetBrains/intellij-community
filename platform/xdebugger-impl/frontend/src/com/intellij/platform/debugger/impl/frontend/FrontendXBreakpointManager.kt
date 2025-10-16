@@ -296,9 +296,11 @@ class FrontendXBreakpointManager(private val project: Project, private val cs: C
     val scope = cs.childScope("BreakpointsChangesListener")
     val childDisposable = Disposable { scope.cancel("disposed") }
     Disposer.register(disposable, childDisposable)
-    scope.launch(Dispatchers.EDT) {
+    scope.launch(start = CoroutineStart.UNDISPATCHED) {
       breakpointsChanged.collect {
-        listener()
+        withContext(Dispatchers.EDT) {
+          listener()
+        }
       }
     }
   }
