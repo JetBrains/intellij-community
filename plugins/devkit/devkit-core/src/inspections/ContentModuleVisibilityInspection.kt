@@ -34,7 +34,7 @@ import org.jetbrains.idea.devkit.util.DescriptorUtil
 
 internal class ContentModuleVisibilityInspection : DevKitPluginXmlInspectionBase() {
 
-  private val rootPluginNames = IntelliJPlatformProduct.entries.map { "${it.platformPrefix}Plugin.xml" }
+  private val rootPluginNames by lazy { IntelliJPlatformProduct.entries.mapTo(HashSet()) { "${it.platformPrefix}Plugin.xml" } }
 
   override fun checkDomElement(element: DomElement, holder: DomElementAnnotationHolder, helper: DomHighlightingHelper) {
     val dependencyModule = element as? DependencyDescriptor.ModuleDescriptor ?: return
