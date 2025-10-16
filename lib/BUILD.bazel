@@ -3045,6 +3045,27 @@ java_library(
   visibility = ["//visibility:public"]
 )
 
+java_library(
+  name = "io-qameta-allure-java-commons",
+  exports = [
+    ":io_qameta_allure-allure-java-commons-2_25_0_http_import",
+    ":io_qameta_allure-allure-model-2_25_0_http_import",
+  ],
+  visibility = ["//visibility:public"]
+)
+
+jvm_import(
+  name = "io_qameta_allure-allure-java-commons-2_25_0_http_import",
+  jar = "@io_qameta_allure-allure-java-commons-2_25_0_http//file",
+  source_jar = "@io_qameta_allure-allure-java-commons-2_25_0_http//file"
+)
+
+jvm_import(
+  name = "io_qameta_allure-allure-model-2_25_0_http_import",
+  jar = "@io_qameta_allure-allure-model-2_25_0_http//file",
+  source_jar = "@io_qameta_allure-allure-model-2_25_0_http//file"
+)
+
 jvm_import(
   name = "ion",
   jar = "@com_amazon_ion-ion-java-1_11_10_http//file",
@@ -3113,6 +3134,13 @@ jvm_import(
   name = "joda-time-joda-time-2_12_7_http_import",
   jar = "@joda-time-joda-time-2_12_7_http//file",
   source_jar = "@joda-time-joda-time-2_12_7_http//file"
+)
+
+jvm_import(
+  name = "jackson-datatype-jsr310",
+  jar = "@com_fasterxml_jackson_datatype-jackson-datatype-jsr310-2_19_0_http//file",
+  source_jar = "@com_fasterxml_jackson_datatype-jackson-datatype-jsr310-2_19_0_http//file",
+  visibility = ["//visibility:public"]
 )
 
 jvm_import(
@@ -4078,6 +4106,27 @@ jvm_import(
   name = "net_thauvin_erik_urlencoder-urlencoder-lib-jvm-1_6_0_http_import",
   jar = "@net_thauvin_erik_urlencoder-urlencoder-lib-jvm-1_6_0_http//file",
   source_jar = "@net_thauvin_erik_urlencoder-urlencoder-lib-jvm-1_6_0_http//file"
+)
+
+java_library(
+  name = "kodein-di-jvm",
+  exports = [
+    ":org_kodein_di-kodein-di-jvm-7_26_1_http_import",
+    ":org_kodein_type-kaverit-jvm-2_10_0_http_import",
+  ],
+  visibility = ["//visibility:public"]
+)
+
+jvm_import(
+  name = "org_kodein_di-kodein-di-jvm-7_26_1_http_import",
+  jar = "@org_kodein_di-kodein-di-jvm-7_26_1_http//file",
+  source_jar = "@org_kodein_di-kodein-di-jvm-7_26_1_http//file"
+)
+
+jvm_import(
+  name = "org_kodein_type-kaverit-jvm-2_10_0_http_import",
+  jar = "@org_kodein_type-kaverit-jvm-2_10_0_http//file",
+  source_jar = "@org_kodein_type-kaverit-jvm-2_10_0_http//file"
 )
 
 jvm_import(
@@ -9838,6 +9887,13 @@ jvm_import(
 )
 
 jvm_import(
+  name = "qodana-sarif",
+  jar = "@com_jetbrains_qodana-qodana-sarif-0_2_113_http//file",
+  source_jar = "@com_jetbrains_qodana-qodana-sarif-0_2_113_http//file",
+  visibility = ["//visibility:public"]
+)
+
+jvm_import(
   name = "rd-core",
   jar = "@com_jetbrains_rd-rd-core-2025_3_1_http//file",
   source_jar = "@com_jetbrains_rd-rd-core-2025_3_1_http//file",
@@ -10234,6 +10290,19 @@ jvm_import(
   name = "tools-api_dump-kotlinx-bcv",
   jar = "@org_jetbrains_kotlinx-binary-compatibility-validator-0_17_0_http//file",
   source_jar = "@org_jetbrains_kotlinx-binary-compatibility-validator-0_17_0_http//file",
+  visibility = ["//visibility:public"]
+)
+
+jvm_import(
+  name = "tools-ide-starter-github-stephenc-monte-screen-recorder",
+  jar = "@com_github_stephenc_monte-monte-screen-recorder-0_7_7_0_http//file",
+  source_jar = "@com_github_stephenc_monte-monte-screen-recorder-0_7_7_0_http//file",
+  visibility = ["//visibility:public"]
+)
+
+jvm_import(
+  name = "tools-ide-starter-rauschig-jarchivelib",
+  jar = "@org_rauschig-jarchivelib-1_2_0_http//file",
   visibility = ["//visibility:public"]
 )
 
