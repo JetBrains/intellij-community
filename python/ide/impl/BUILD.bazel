@@ -56,7 +56,6 @@ jvm_library(
     "//platform/eel",
     "//platform/eel-provider",
     "//python/services/shared",
-    "//python/poetry",
     "//python/pipenv",
     "//python/python-venv:community-impl-venv",
     "@lib//:jetbrains-annotations",
@@ -69,8 +68,9 @@ jvm_library(
     "//python/python-exec-service:community-execService",
     "//python/python-sdk-configurator/common",
     "//python/python-sdk-ui:sdk-ui",
+    "//python/python-poetry/common",
+    "//python/python-uv/common",
     "//python/python-exec-service/execService.python",
-    "//python/impl.uv",
   ],
   runtime_deps = ["//python/python-features-trainer:featuresTrainer"],
   plugins = ["@lib//:compose-plugin"]
@@ -127,7 +127,6 @@ jvm_library(
     "//platform/eel-provider",
     "//python/services/shared",
     "//python/services/shared:shared_test_lib",
-    "//python/poetry",
     "//python/pipenv",
     "//python/python-venv:community-impl-venv",
     "//python/python-venv:community-impl-venv_test_lib",
@@ -146,9 +145,10 @@ jvm_library(
     "//python/python-exec-service:community-execService_test_lib",
     "//python/python-sdk-configurator/common",
     "//python/python-sdk-ui:sdk-ui",
+    "//python/python-poetry/common",
+    "//python/python-uv/common",
     "//python/python-exec-service/execService.python",
     "//python/python-exec-service/execService.python:execService.python_test_lib",
-    "//python/impl.uv",
   ],
   plugins = ["@lib//:compose-plugin"]
 )

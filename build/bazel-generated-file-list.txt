@@ -1417,7 +1417,6 @@ python/ide/impl
 python/ide/impl/intellij.pycharm.community.ide.impl.promotion
 python/ide/implTraining/intellij.pycharm.community.ide.implTraining
 python/impl.helperLocator
-python/impl.uv
 python/installer
 python/intellij.python.community.communityOnly
 python/intellij.python.ml.features
@@ -1431,7 +1430,6 @@ python/pluginCore/impl
 python/pluginJava
 python/pluginMinor
 python/pluginMinorRider
-python/poetry
 python/python-ast
 python/python-copyright
 python/python-core-impl
@@ -1442,6 +1440,8 @@ python/python-grazie
 python/python-hatch
 python/python-markdown
 python/python-parser
+python/python-poetry/backend
+python/python-poetry/common
 python/python-process-output
 python/python-process-output/impl
 python/python-psi-api
@@ -1456,6 +1456,8 @@ python/python-sdk-ui
 python/python-syntax
 python/python-syntax-core
 python/python-terminal
+python/python-uv/backend
+python/python-uv/common
 python/python-venv
 python/services/internal-impl
 python/services/shared

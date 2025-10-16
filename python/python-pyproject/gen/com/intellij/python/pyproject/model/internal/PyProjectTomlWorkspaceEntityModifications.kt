@@ -6,7 +6,7 @@ import com.intellij.platform.workspace.jps.entities.ModuleEntityBuilder
 import com.intellij.platform.workspace.jps.entities.ModuleId
 import com.intellij.platform.workspace.storage.*
 import com.intellij.platform.workspace.storage.annotations.Parent
-import com.jetbrains.python.ToolId
+import com.intellij.python.common.tools.ToolId
 
 @GeneratedCodeApiVersion(3)
 internal interface PyProjectTomlWorkspaceEntityBuilder : WorkspaceEntityBuilder<PyProjectTomlWorkspaceEntity> {

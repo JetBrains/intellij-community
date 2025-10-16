@@ -37,6 +37,7 @@ jvm_library(
     "//libraries/kotlinx/serialization/core",
     "@lib//:io-github-z4kn4fein-semver-jvm-provided",
     "//python/python-sdk-ui:sdk-ui",
+    "//python/common",
     "//python/python-exec-service/execService.python",
   ]
 )

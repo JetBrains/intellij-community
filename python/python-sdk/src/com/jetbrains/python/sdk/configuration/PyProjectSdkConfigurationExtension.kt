@@ -3,7 +3,7 @@ package com.jetbrains.python.sdk.configuration
 
 import com.intellij.openapi.extensions.ExtensionPointName
 import com.intellij.openapi.module.Module
-import com.jetbrains.python.ToolId
+import com.intellij.python.common.tools.ToolId
 import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.annotations.CheckReturnValue
 

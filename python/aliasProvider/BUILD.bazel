@@ -22,7 +22,6 @@ jvm_library(
     "//python/python-sdk:sdk",
     "//python/python-sdk-ui:sdk-ui",
     "//python/python-pyproject:pyproject",
-    "//python/poetry",
     "//python/python-core-impl:community-core-impl",
     "//python/impl.helperLocator:community-helpersLocator",
     "//python/openapi:community",

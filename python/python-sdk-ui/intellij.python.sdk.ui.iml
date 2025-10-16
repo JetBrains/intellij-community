@@ -23,7 +23,7 @@
     <orderEntry type="module" module-name="intellij.libraries.caffeine" />
     <orderEntry type="library" name="io.github.z4kn4fein.semver.jvm" level="project" />
     <orderEntry type="module" module-name="intellij.python.community.execService" />
-    <orderEntry type="module" module-name="intellij.python.community.impl.poetry" />
-    <orderEntry type="module" module-name="intellij.python.community.impl.uv" />
+    <orderEntry type="module" module-name="intellij.python.community.impl.poetry.common" />
+    <orderEntry type="module" module-name="intellij.python.community.impl.uv.common" />
   </component>
 </module>

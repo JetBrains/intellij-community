@@ -4,6 +4,7 @@
     <module name="intellij.python.psi.impl"/>
     <module name="intellij.python.sdk"/>
     <plugin id="org.toml.lang"/>
+    <module name="intellij.python.common"/>
   </dependencies>
 
   <resource-bundle>messages.PyProjectTomlBundle</resource-bundle>
