@@ -45,7 +45,8 @@ internal sealed class WindowMouseListenerSupport(private val source: WindowMouse
   private var location: Point? = null
   private var viewBounds: Rectangle? = null
   private var mouseButton = 0
-  private var wasDragged = false
+  private var expectMouseReleased = false
+  private var expectMouseClicked = false
   
   var leftMouseButtonOnly = false
   
@@ -64,22 +65,33 @@ internal sealed class WindowMouseListenerSupport(private val source: WindowMouse
       return
     }
 
-    if (start) wasDragged = false // reset dragged state when mouse pressed
+    if (start) {
+      expectMouseReleased = true
+      expectMouseClicked = true
+    }
 
     if (location == null) {
       val content = source.getContent(event)
       val view = source.getView(content)
       if (view != null) {
-        cursorType = if (source.isDisabled(view)) Cursor.CUSTOM_CURSOR else source.getCursorType(view, event.locationOnScreen)
-        source.setCursor(content, Cursor.getPredefinedCursor(if (cursorType == Cursor.CUSTOM_CURSOR) Cursor.DEFAULT_CURSOR else cursorType))
+        updateCursor(event, content, view)
         if (start && cursorType != Cursor.CUSTOM_CURSOR) {
-          mouseButton = event.getButton()
-          location = event.locationOnScreen
-          viewBounds = view.bounds
+          start(event, view)
           event.consume()
         }
       }
     }
+  }
+
+  private fun updateCursor(event: MouseEvent, content: Component, view: Component) {
+    cursorType = if (source.isDisabled(view)) Cursor.CUSTOM_CURSOR else source.getCursorType(view, event.locationOnScreen)
+    source.setCursor(content, Cursor.getPredefinedCursor(if (cursorType == Cursor.CUSTOM_CURSOR) Cursor.DEFAULT_CURSOR else cursorType))
+  }
+
+  private fun start(event: MouseEvent, view: Component) {
+    mouseButton = event.getButton()
+    location = event.locationOnScreen
+    viewBounds = view.bounds
   }
 
   /**
@@ -87,59 +99,93 @@ internal sealed class WindowMouseListenerSupport(private val source: WindowMouse
    */
   fun process(event: MouseEvent, mouseMove: Boolean) {
     if (event.isConsumed) return
-    if (mouseMove) wasDragged = true // set dragged state when mouse dragged
+    if (mouseMove) expectMouseClicked = false // after dragging starts, there will be only one "released" event
 
     val viewBounds = this.viewBounds
     val location = this.location
     if (location != null && viewBounds != null) {
       val content = source.getContent(event)
       val view = source.getView(content)
+      // Enter in move mode only after mouse move, so double click is supported
       if (mouseMove && cursorType == Cursor.DEFAULT_CURSOR && jbrMoveSupported(view)) {
-        // Enter in move mode only after mouse move, so double click is supported
-        JBR.getWindowMove().startMovingTogetherWithMouse(view as Window, mouseButton)
-        this.location = null
-        this.viewBounds = null
+        enterJbrMoveMode(view)
         return
       }
 
       if (view != null) {
         val bounds = Rectangle(viewBounds)
-        var dx: Int = event.xOnScreen - location.x
-        var dy: Int = event.yOnScreen - location.y
+        val delta = computeOffsetFromInitialLocation(event)
         if (cursorType == Cursor.DEFAULT_CURSOR && view is Frame) {
           val state = view.extendedState
-          if (WindowMouseListener.isStateSet(Frame.MAXIMIZED_HORIZ, state)) dx = 0
-          if (WindowMouseListener.isStateSet(Frame.MAXIMIZED_VERT, state)) dy = 0
+          if (WindowMouseListener.isStateSet(Frame.MAXIMIZED_HORIZ, state)) delta.x = 0
+          if (WindowMouseListener.isStateSet(Frame.MAXIMIZED_VERT, state)) delta.y = 0
         }
-        source.updateBounds(bounds, view, dx, dy)
+        source.updateBounds(bounds, view, delta.x, delta.y)
         val currentViewBounds = view.bounds
         if (bounds != currentViewBounds) {
           val moved = bounds.x != currentViewBounds.x || bounds.y != currentViewBounds.y
           val resized = bounds.width != currentViewBounds.width || bounds.height != currentViewBounds.height
           val reallyMoveWindow = !moveAfterMouseRelease() || !mouseMove
           if ((moved && reallyMoveWindow) || resized) {
-            view.reshape(bounds.x, bounds.y, bounds.width, bounds.height)
-            view.invalidate()
-            view.validate()
-            view.repaint()
-            if (moved) source.notifyMoved()
-            if (resized) source.notifyResized()
+            setViewBounds(view, bounds, moved, resized)
           }
         }
       }
       if (!mouseMove) {
-        source.setCursor(content, Cursor.getPredefinedCursor(Cursor.DEFAULT_CURSOR))
-        this.location = null
-        if (wasDragged) {
-          this.viewBounds = null // no mouse clicked when mouse released after mouse dragged
-        }
+        resetCursor(content)
       }
       event.consume()
     }
-    else if (!mouseMove && viewBounds != null) {
-      this.viewBounds = null // consume mouse clicked for consumed mouse released if no mouse dragged
+    if (isBusy && !mouseMove) {
+      handleStopEvent(event)
+    }
+  }
+  
+  private fun computeOffsetFromInitialLocation(event: MouseEvent): Point {
+    val location = this.location
+    checkNotNull(location) { "Must not be called when inactive" }
+    val dx: Int = event.xOnScreen - location.x
+    val dy: Int = event.yOnScreen - location.y
+    return Point(dx, dy)
+  }
+
+  private fun setViewBounds(view: Component, bounds: Rectangle, moved: Boolean, resized: Boolean) {
+    view.reshape(bounds.x, bounds.y, bounds.width, bounds.height)
+    view.invalidate()
+    view.validate()
+    view.repaint()
+    if (moved) source.notifyMoved()
+    if (resized) source.notifyResized()
+  }
+
+  private fun resetCursor(content: Component) {
+    source.setCursor(content, Cursor.getPredefinedCursor(Cursor.DEFAULT_CURSOR))
+  }
+
+  private fun handleStopEvent(event: MouseEvent) {
+    if (expectMouseReleased && event.id == MouseEvent.MOUSE_RELEASED) {
+      expectMouseReleased = false
       event.consume()
     }
+    if (expectMouseClicked && event.id == MouseEvent.MOUSE_CLICKED) {
+      expectMouseClicked = false
+      event.consume()
+    }
+    if (!expectMouseReleased && !expectMouseClicked) {
+      stop()
+    }
+  }
+
+  private fun stop() {
+    this.location = null
+    this.viewBounds = null
+    expectMouseClicked = false
+    expectMouseReleased = false
+  }
+
+  private fun enterJbrMoveMode(view: Component?) {
+    JBR.getWindowMove().startMovingTogetherWithMouse(view as Window, mouseButton)
+    stop()
   }
 }
 
