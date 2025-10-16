@@ -4129,6 +4129,13 @@ jvm_import(
   source_jar = "@org_kodein_type-kaverit-jvm-2_10_0_http//file"
 )
 
+java_library(
+  name = "kodein-di-jvm-provided",
+  exports = [":kodein-di-jvm"],
+  neverlink = True,
+  visibility = ["//visibility:public"]
+)
+
 jvm_import(
   name = "kotlin-analysis-platform-ehcache-sizeof",
   jar = "@org_ehcache-sizeof-0_4_0_http//file",
