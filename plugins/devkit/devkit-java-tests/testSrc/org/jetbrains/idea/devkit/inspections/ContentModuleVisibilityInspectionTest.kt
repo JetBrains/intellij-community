@@ -553,6 +553,43 @@ class ContentModuleVisibilityInspectionTest : ContentModuleVisibilityInspectionT
     testHighlighting(testedFile)
   }
 
+  fun `test should report private module dependency directly from plugin`() {
+    myFixture.addModuleWithPluginDescriptor(
+      "com.example.plugin.with.privatemodule",
+      "com.example.plugin.with.privatemodule/META-INF/plugin.xml",
+      """
+      <idea-plugin>
+        <id>com.example.plugin.with.privatemodule</id>
+        <content>
+          <module name="com.example.privatemodule"/>
+        </content>
+      </idea-plugin>
+      """.trimIndent())
+    myFixture.addModuleWithPluginDescriptor(
+      "com.example.privatemodule",
+      "com.example.privatemodule/com.example.privatemodule.xml",
+      """
+      <idea-plugin>
+      </idea-plugin>
+      """.trimIndent())
+
+    val testedFile = myFixture.addModuleWithPluginDescriptor(
+      "com.example.plugin",
+      "com.example.plugin/META-INF/plugin.xml",
+      """
+      <idea-plugin>
+        <id>com.example.plugin</id>
+        <dependencies>
+          <module name="<error descr="The 'com.example.privatemodule' module is private and declared in plugin 'com.example.plugin.with.privatemodule', so it cannot be accessed from plugin 'com.example.plugin'">com.example.privatemodule</error>"/>
+        </dependencies>
+        <content namespace="test-namespace">
+          <!-- to register namespace for the plugin -->
+        </content>
+      </idea-plugin>
+      """.trimIndent())
+    testHighlighting(testedFile)
+  }
+
   fun `test should not report public module`() {
     myFixture.addModuleWithPluginDescriptor(
       "com.example.plugin.with.publicmodule",
