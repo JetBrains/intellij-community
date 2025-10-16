@@ -25,6 +25,7 @@ final class CommandBuilder {
 
   private @Nullable Project commandProject;
   private @NotNull CurrentEditorProvider editorProvider;
+  private @NotNull CommandId commandId;
   private @Nullable @Command String commandName;
   private @Nullable Object groupId;
   private @NotNull UndoConfirmationPolicy confirmationPolicy;
@@ -63,6 +64,8 @@ final class CommandBuilder {
     boolean isTransparent
   ) {
     assertOutsideCommand();
+    CommandId id = CommandIdService.currCommandId();
+    this.commandId = id == null ? NoCommandId.INSTANCE : id;
     this.commandProject = commandProject;
     this.commandName = commandName;
     this.groupId = commandGroupId;
@@ -132,6 +135,7 @@ final class CommandBuilder {
 
   private @NotNull PerformedCommand buildAndReset() {
     PerformedCommand performedCommand = new PerformedCommand(
+      commandId,
       commandName,
       groupId,
       confirmationPolicy,
@@ -191,6 +195,7 @@ final class CommandBuilder {
   private void reset() {
     this.commandProject = null;
     this.editorProvider = NoEditorProvider.INSTANCE;
+    this.commandId = NoCommandId.INSTANCE;
     this.commandName = null;
     this.groupId = null;
     this.confirmationPolicy = UndoConfirmationPolicy.DEFAULT;
@@ -220,6 +225,15 @@ final class CommandBuilder {
 
   private static boolean isRefresh() {
     return ExternalChangeActionUtil.isExternalChangeInProgress();
+  }
+
+  private static final class NoCommandId implements CommandId {
+    static final NoCommandId INSTANCE = new NoCommandId();
+
+    @Override
+    public boolean isCompatible(@NotNull CommandId commandId) {
+      return true;
+    }
   }
 
   private static final class NoEditorProvider implements CurrentEditorProvider {

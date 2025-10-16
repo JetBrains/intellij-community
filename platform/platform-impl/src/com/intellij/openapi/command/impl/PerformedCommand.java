@@ -11,6 +11,7 @@ import java.util.Collection;
 
 
 record PerformedCommand(
+  @NotNull CommandId commandId,
   @Nullable @Command String commandName,
   @Nullable Object groupId,
   @NotNull UndoConfirmationPolicy confirmationPolicy,

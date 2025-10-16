@@ -19,6 +19,7 @@ internal class UndoDumpUnit(
   private val affectedDocuments: Collection<DocumentReference>,
   private val additionalAffectedDocuments: Collection<DocumentReference>,
   private val flushReason: UndoCommandFlushReason?,
+  private val commandIds: Collection<CommandId>,
 ) {
 
   companion object {
@@ -37,6 +38,7 @@ internal class UndoDumpUnit(
         group.affectedDocuments,
         emptyList(),
         group.flushReason,
+        group.commandIds,
       )
     }
 
@@ -54,6 +56,7 @@ internal class UndoDumpUnit(
         ArrayList(merger.affectedDocuments),
         ArrayList(merger.additionalAffectedDocuments),
         null,
+        merger.commandIds,
       )
     }
 
@@ -77,7 +80,8 @@ internal class UndoDumpUnit(
     val confirmationPolicyStr = if (confirmationPolicy != UndoConfirmationPolicy.DEFAULT) " $confirmationPolicy" else ""
     val docs = if (affectedDocuments.size > 1) " affected: ${printDocs(affectedDocuments)}" else ""
     val addDocs = if (additionalAffectedDocuments.size > 1) " additional: ${printDocs(additionalAffectedDocuments)}" else ""
-    return "{$command $id$isGlobalStr$isTransparentStr$isTemporaryStr$isValidStr with ${actions.size} ${if (actions.size == 1) "action" else "actions"} $flushReason: $actionsStr$confirmationPolicyStr$docs$addDocs}"
+    val commandIds = " ids: $commandIds"
+    return "{$command $id$isGlobalStr$isTransparentStr$isTemporaryStr$isValidStr with ${actions.size} ${if (actions.size == 1) "action" else "actions"} $flushReason: $actionsStr$confirmationPolicyStr$docs$addDocs$commandIds}"
   }
 
   private fun printDocs(docs: Collection<DocumentReference>): String {

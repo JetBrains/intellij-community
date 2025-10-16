@@ -223,6 +223,7 @@ abstract class UndoRedo {
       }
       stack.removeLast();
       UndoableGroup replacingGroup = new UndoableGroup(
+        undoableGroup.getCommandIds(),
         IdeBundle.message("undo.command.local.name") + undoableGroup.getCommandName(),
         localActions, // only action that changes file locally
         undoableGroup.getConfirmationPolicy(),
@@ -237,6 +238,7 @@ abstract class UndoRedo {
       );
       stack.add(replacingGroup);
       UndoableGroup groupWithoutLocalChanges = new UndoableGroup(
+        undoableGroup.getCommandIds(),
         undoableGroup.getCommandName(),
         nonLocalActions, // all action except local
         undoableGroup.getConfirmationPolicy(),

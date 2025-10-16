@@ -33,5 +33,8 @@
     
     <applicationService serviceInterface="com.intellij.psi.impl.DocumentCommitProcessor"
                         serviceImplementation="com.intellij.psi.impl.DocumentCommitThread"/>
+
+    <applicationService serviceInterface="com.intellij.openapi.command.impl.CommandIdService"
+                        serviceImplementation="com.intellij.openapi.command.impl.CommandIdServiceImpl"/>
   </extensions>
 </idea-plugin>

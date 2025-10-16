@@ -26,6 +26,7 @@ final class UndoableGroup implements Dumpable {
   private static final Logger LOG = Logger.getInstance(UndoableGroup.class);
   private static final int BULK_MODE_ACTION_THRESHOLD = 50;
 
+  private final @NotNull List<CommandId> commandIds;
   private final @Nullable @Command String commandName;
   private final @NotNull List<? extends UndoableAction> actions;
   private final @NotNull UndoConfirmationPolicy confirmationPolicy;
@@ -43,6 +44,7 @@ final class UndoableGroup implements Dumpable {
   private boolean isValid;
 
   UndoableGroup(
+    @NotNull List<CommandId> commandIds,
     @Nullable @Command String commandName,
     @NotNull List<? extends UndoableAction> actions,
     @NotNull UndoConfirmationPolicy confirmationPolicy,
@@ -55,6 +57,7 @@ final class UndoableGroup implements Dumpable {
     boolean isGlobal,
     boolean isValid
   ) {
+    this.commandIds = commandIds;
     this.commandName = commandName;
     this.actions = actions;
     this.confirmationPolicy = confirmationPolicy;
@@ -132,6 +135,10 @@ final class UndoableGroup implements Dumpable {
 
   @NotNull UndoConfirmationPolicy getConfirmationPolicy() {
     return confirmationPolicy;
+  }
+
+  @NotNull List<CommandId> getCommandIds() {
+    return commandIds;
   }
 
   @NotNull List<? extends UndoableAction> getActions() {
