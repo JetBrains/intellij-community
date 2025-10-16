@@ -80,7 +80,7 @@ class SeTextItemsProvider(project: Project, private val contributorWrapper: SeAs
     }
 
     val isAllTab: Boolean = SeEverywhereFilter.isAllTab(params.filter) == true
-    val savedModel = findModel
+    val savedModel = findModel.clone()
     try {
       if (isAllTab) {
         findModel.fileFilter = null
