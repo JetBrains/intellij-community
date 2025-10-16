@@ -99,6 +99,7 @@ class PluginsSettingsPageUiComponent(data: ComponentData) : UiComponent(data) {
     val whatsNewTab = tabbedPane.tab("What's New")
     val reviewsTab = tabbedPane.tab("Reviews")
     val additionalInfoTab = tabbedPane.tab("Additional Info")
+    val versionPanel = x { byType("com.intellij.ide.plugins.newui.VersionPanel") }
 
     class OptionButtonUiComponent(data: ComponentData) : UiComponent(data) {
       val disableButton = x { and(byType(JButton::class.java), byAccessibleName("Disable")) }
