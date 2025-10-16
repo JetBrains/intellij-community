@@ -622,7 +622,7 @@ class ContentModuleDescriptor(
   private val resourceBundleBaseName: String? = raw.resourceBundleBaseName
 
   /** java helper */
-  fun getModuleIdString(): String = moduleId.name
+  fun getModuleNameString(): String = moduleId.name
 
   override fun getDescriptorPath(): String = descriptorPath
 
