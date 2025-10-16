@@ -41,17 +41,19 @@ internal class EelFilesAccessorImpl : EelSharedSecrets.EelFilesAccessor {
     return String(readAllBytes(path), cs)
   }
 
-  /**
-   * Although functions from this class must behave the same as their nio counterparts,
-   * there's still a chance of performance degradations if Eel API is used for the local descriptor,
-   * and the functions from this class are for hot code.
-   *
-   * The registry flag can be enabled and removed only after thorough performance testing.
-   */
-  private fun shouldInvokeOriginal(path: Path): Boolean =
-    path.getEelDescriptor() == LocalEelDescriptor &&
-    (
-      !Registry.Companion.`is`("use.generic.functions.for.local.eel", false)
-      || path.fileSystem != FileSystems.getDefault()  // It may be a path from ZipFileSystem or something like that.
-    )
+  companion object {
+    /**
+     * Although functions from this class must behave the same as their nio counterparts,
+     * there's still a chance of performance degradations if Eel API is used for the local descriptor,
+     * and the functions from this class are for hot code.
+     *
+     * The registry flag can be enabled and removed only after thorough performance testing.
+     */
+    internal fun shouldInvokeOriginal(path: Path): Boolean =
+      path.getEelDescriptor() == LocalEelDescriptor &&
+      (
+        !Registry.Companion.`is`("use.generic.functions.for.local.eel", false)
+        || path.fileSystem != FileSystems.getDefault()  // It may be a path from ZipFileSystem or something like that.
+      )
+  }
 }

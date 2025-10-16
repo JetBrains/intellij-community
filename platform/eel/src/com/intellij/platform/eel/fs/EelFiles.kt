@@ -7,6 +7,11 @@ import java.io.IOException
 import java.nio.charset.Charset
 import java.nio.file.Path
 
+/**
+ * A drop-in replacement for some methods of [java.nio.file.Files].
+ *
+ * See also [EelFileUtils].
+ */
 @ApiStatus.Experimental
 object EelFiles {
   /**
