@@ -27,6 +27,17 @@ interface PyProjectSdkConfigurationExtension {
     fun findForModule(module: Module): CreateSdkInfo? = runBlockingMaybeCancellable {
       EP_NAME.extensionsIfPointIsRegistered.firstNotNullOfOrNull { ext -> ext.checkEnvironmentAndPrepareSdkCreator(module) }
     }
+
+    @JvmStatic
+    @RequiresBackgroundThread
+      /**
+       * We return all configurators in a sorted order. The order is determined by extensions order, but existing environments have a
+       * higher priority. That means we first have all existing envs, and only after SDK creators that extensions can manage.
+       */
+    fun findAllSortedForModule(module: Module): List<CreateSdkInfo> = runBlockingMaybeCancellable {
+      EP_NAME.extensionsIfPointIsRegistered
+        .mapNotNull { e -> e.checkEnvironmentAndPrepareSdkCreator(module) }.sorted()
+    }
   }
 
   val toolInfo: PyToolUIInfo

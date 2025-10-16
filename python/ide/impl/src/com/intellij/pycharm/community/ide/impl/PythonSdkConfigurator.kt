@@ -85,7 +85,7 @@ class PythonSdkConfigurator : DirectoryProjectConfigurator {
       emptyList()
     }
     else {
-      PyProjectSdkConfigurationExtension.EP_NAME.extensionsIfPointIsRegistered.mapNotNull { it.checkEnvironmentAndPrepareSdkCreator(module) }.sorted()
+      PyProjectSdkConfigurationExtension.findAllSortedForModule(module)
     }
   }
 
