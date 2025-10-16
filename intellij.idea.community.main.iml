@@ -256,5 +256,6 @@
     <orderEntry type="module" module-name="intellij.mcpserver" scope="RUNTIME" />
     <orderEntry type="module" module-name="intellij.textmate.tests" scope="TEST" />
     <orderEntry type="module" module-name="intellij.python.processOutput" scope="TEST" />
+    <orderEntry type="module" module-name="intellij.tools.ide.starter.junit5" scope="TEST" />
   </component>
 </module>

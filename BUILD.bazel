@@ -559,6 +559,8 @@ jvm_library(
     "//plugins/mcp-server:mcpserver",
     "//plugins/textmate/tests:tests_test_lib",
     "//python/python-process-output:processOutput",
+    "//tools/intellij.tools.ide.starter.junit5:ide-starter-junit5",
+    "//tools/intellij.tools.ide.starter.junit5:ide-starter-junit5_test_lib",
   ]
 )
 ### auto-generated section `build intellij.idea.community.main` end
