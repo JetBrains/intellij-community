@@ -1,6 +1,7 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.lang.documentation.ide.actions
 
+import com.intellij.codeInsight.lookup.LookupElement
 import com.intellij.codeInsight.lookup.LookupManager
 import com.intellij.lang.documentation.ide.IdeDocumentationTargetProvider
 import com.intellij.lang.documentation.ide.impl.DocumentationBrowser
@@ -9,10 +10,12 @@ import com.intellij.lang.documentation.psi.psiDocumentationTargets
 import com.intellij.lang.documentation.symbol.impl.symbolDocumentationTargets
 import com.intellij.openapi.actionSystem.*
 import com.intellij.openapi.actionSystem.ex.ActionUtil
+import com.intellij.openapi.diagnostic.fileLogger
 import com.intellij.openapi.editor.Editor
 import com.intellij.openapi.keymap.KeymapUtil
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.ui.popup.JBPopup
+import com.intellij.openapi.util.registry.Registry
 import com.intellij.platform.backend.documentation.DocumentationTarget
 import com.intellij.platform.ide.documentation.DOCUMENTATION_BROWSER
 import com.intellij.platform.ide.documentation.DOCUMENTATION_TARGETS
@@ -84,11 +87,19 @@ fun targetsFromEditor(
   project: Project,
   editor: Editor,
   offset: Int,
+  forceLookupElement: LookupElement? = null
 ): List<DocumentationTarget>? {
   val file = PsiUtilBase.getPsiFileInEditor(editor, project)
              ?: return null
 
   val ideTargetProvider = IdeDocumentationTargetProvider.getInstance(project)
+
+  if (forceLookupElement != null) {
+    fileLogger().assertTrue(Registry.`is`("remdev.completion.on.frontend"), "completionItemId can be not null only if remdev completion is on")
+
+    return ideTargetProvider.documentationTargets(editor, file, forceLookupElement)
+  }
+
   val lookup = LookupManager.getActiveLookup(editor)
   if (lookup != null) {
     val lookupElement = lookup.currentItem
