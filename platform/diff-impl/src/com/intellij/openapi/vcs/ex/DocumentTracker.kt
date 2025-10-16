@@ -316,7 +316,18 @@ class DocumentTracker(
   @Internal
   fun recreateBlocks(map: Map<Range, BlockData>) {
     LOCK.write {
-      tracker.setRanges(map.keys.toList().sortedWith(compareBy<Range> { it.start1 }.thenBy { it.end1 }.thenBy { it.start2 }.thenBy { it.end2 } ), false)
+      val content1 = getContent(Side.LEFT)
+      val content2 = getContent(Side.RIGHT)
+      val ranges = map.keys.toList().sortedWith(compareBy<Range> { it.start1 }.thenBy { it.end1 }.thenBy { it.start2 }.thenBy { it.end2 })
+      if (!isValidRanges(content1, content2, content1.lineOffsets, content2.lineOffsets, ranges)) {
+        logger<DocumentTracker>().error(
+          "ranges are invalid in recreateBlocks" +
+          "document1: $document1, document2: $document2, " +
+          "isFrozen1: ${freezeHelper.isFrozen(Side.LEFT)}, isFrozen2: ${freezeHelper.isFrozen(Side.RIGHT)}, " +
+          "isBulk1: ${document1.isInBulkUpdate}, isBulk2: ${document2.isInBulkUpdate}")
+        return
+      }
+      tracker.setRanges(ranges, false)
       for (block in tracker.blocks) {
         block.data = map[block.range]
       }
