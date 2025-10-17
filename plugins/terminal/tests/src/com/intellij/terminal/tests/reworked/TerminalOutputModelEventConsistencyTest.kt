@@ -51,6 +51,30 @@ internal class TerminalOutputModelEventConsistencyTest : BasePlatformTestCase() 
     sut.updateContent(0L, "0123456789", emptyList())
   }
 
+  @Test
+  fun `trimming - with highlightings`() = consistencyTest(maxLength = 5) { sut ->
+    sut.updateContent(0L, "01234", listOf(styleRange(0L, 5L)))
+    sut.updateContent(0L, "0123456789", listOf(styleRange(5L, 10L)))
+    sut.updateContent(3L, "a", listOf(styleRange(0L, 1L)))
+  }
+
+  @Test
+  fun `clear - with highlightings`() = consistencyTest { sut ->
+    sut.updateContent(0L, "01", emptyList())
+    sut.updateContent(1L, "23", listOf(styleRange(0L, 2L)))
+    sut.updateContent(0L, "", emptyList())
+  }
+
+  @Test
+  fun `trim then clear - with highlightings`() = consistencyTest(maxLength = 10) { sut ->
+    sut.updateContent(0L, "01", emptyList())
+    sut.updateContent(1L, "23", listOf(styleRange(0L, 2L)))
+    sut.updateContent(2L, "45", listOf(styleRange(1L, 2L)))
+    sut.updateContent(3L, "67", listOf(styleRange(0L, 1L)))
+    sut.updateContent(4L, "89", listOf(styleRange(0L, 2L)))
+    sut.updateContent(0L, "", emptyList())
+  }
+
   private inline fun consistencyTest(maxLength: Int = 0, crossinline block: (MutableTerminalOutputModel) -> Unit): Unit = timeoutRunBlocking(
     DEFAULT_TEST_TIMEOUT,
     "TerminalOutputModelEventConsistencyTest"
@@ -61,10 +85,18 @@ internal class TerminalOutputModelEventConsistencyTest : BasePlatformTestCase() 
     sut.addListener(asDisposable(), object : TerminalOutputModelListener {
       override fun afterContentChanged(event: TerminalContentChangeEvent) {
         if (event.isTrimming) {
+          assertThat(event.offset).isLessThan(sut.startOffset)
+          assertThat(sut.startOffset - event.offset).isEqualTo(event.oldText.length.toLong())
           mirror.delete(0, event.oldText.length)
           trimmed += event.oldText.length
         }
         else {
+          assertThat(event.offset).isBetween(sut.startOffset, sut.endOffset)
+          val affectedLine = sut.getLineByOffset(event.offset)
+          assertThat(affectedLine).isBetween(sut.firstLineIndex, sut.lastLineIndex)
+          if (event.offset == TerminalOffset.ZERO && sut.textLength == 0) { // clear
+            trimmed = 0
+          }
           val startRelativeIndex = (event.offset.toAbsolute() - trimmed).toInt()
           mirror.replace(startRelativeIndex, startRelativeIndex + event.oldText.length, event.newText.toString())
         }
