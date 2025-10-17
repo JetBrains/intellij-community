@@ -71,7 +71,7 @@ public class JavaMethodCallInsertHandler(
   private val myHandlers: List<InsertHandler<in JavaMethodCallElement>> = listOfNotNull(
     RefStartInsertHandler(),
     createDiamondInsertHandler(item),
-    ParenthInsertHandler.create(item),
+    MethodCallParenthesesInsertHandler.create(item),
     beforeHandler,
     ImportQualifyAndInsertTypeParametersHandler.create(needImportOrQualify, needExplicitTypeParameters, item),
     MethodCallInstallerHandler(),
@@ -193,7 +193,7 @@ private fun createDiamondInsertHandler(item: JavaMethodCallElement): InsertHandl
   return DiamondInsertHandler()
 }
 
-private class ParenthInsertHandler private constructor(
+private class MethodCallParenthesesInsertHandler private constructor(
   private val hasParameters: Boolean,
   private val hasTailType: Boolean,
 ) : InsertHandler<JavaMethodCallElement>, FrontendConvertibleInsertHandler<JavaMethodCallElement> {
@@ -213,7 +213,7 @@ private class ParenthInsertHandler private constructor(
     fun create(item: JavaMethodCallElement): InsertHandler<JavaMethodCallElement> {
       val method = item.getObject()
       val hasTailType = item.tailType != TailTypes.unknownType()
-      return ParenthInsertHandler(!method.parameterList.isEmpty, hasTailType)
+      return MethodCallParenthesesInsertHandler(!method.parameterList.isEmpty, hasTailType)
     }
   }
 }
