@@ -15,8 +15,11 @@ class TerminalBlocksModelImpl(private val outputModel: TerminalOutputModel, pare
 
   override val blocks: MutableList<TerminalBlockBase> = mutableListOf()
 
-  override val activeBlock: TerminalBlockBase
+  override var activeBlock: TerminalBlockBase
     get() = blocks.last()
+    set(value) {
+      blocks[blocks.lastIndex] = value
+    }
 
   private val dispatcher = EventDispatcher.create(TerminalBlocksModelListener::class.java)
 
@@ -40,22 +43,20 @@ class TerminalBlocksModelImpl(private val outputModel: TerminalOutputModel, pare
   }
 
   fun startNewBlock(offset: TerminalOffset) {
-    val lastBlock = blocks.last() as TerminalCommandBlockImpl
-    if (offset == lastBlock.startOffset) {
+    val active = activeBlock as TerminalCommandBlockImpl
+    if (offset == active.startOffset) {
       blocks.removeLast()
-      dispatcher.multicaster.blockRemoved(TerminalBlockRemovedEventImpl(this, lastBlock))
+      dispatcher.multicaster.blockRemoved(TerminalBlockRemovedEventImpl(this, active))
     }
     else {
-      val updatedBlock = lastBlock.copy(endOffset = offset)
-      blocks[blocks.lastIndex] = updatedBlock
+      activeBlock = active.copy(endOffset = offset)
     }
 
     addNewBlock(offset)
   }
 
   inline fun updateActiveCommandBlock(doUpdate: (TerminalCommandBlockImpl) -> TerminalCommandBlock) {
-    val newBlock = doUpdate(activeBlock as TerminalCommandBlockImpl)
-    blocks[blocks.lastIndex] = newBlock
+    activeBlock = doUpdate(activeBlock as TerminalCommandBlockImpl)
   }
 
   fun dumpState(): TerminalBlocksModelState {
@@ -106,8 +107,8 @@ class TerminalBlocksModelImpl(private val outputModel: TerminalOutputModel, pare
       addNewBlock(outputModel.startOffset)
     }
     else {
-      val lastBlock = blocks.last() as TerminalCommandBlockImpl
-      blocks[blocks.lastIndex] = lastBlock.copy(endOffset = outputModel.endOffset)
+      val active = activeBlock as TerminalCommandBlockImpl
+      activeBlock = active.copy(endOffset = outputModel.endOffset)
     }
   }
 
@@ -162,10 +163,10 @@ private data class TerminalBlocksReplacedEventImpl(
 @ApiStatus.Internal
 @RequiresEdt
 fun TerminalBlocksModel.isCommandTypingMode(): Boolean {
-  val lastBlock = blocks.lastOrNull() as? TerminalCommandBlock ?: return false
+  val commandBlock = activeBlock as? TerminalCommandBlock ?: return false
   // The command start offset is where the prompt ends.
   // If it's not there yet, it means the user can't type a command yet.
   // The output start offset is -1 until the command starts executing.
   // Once that happens, it means the user can't type anymore.
-  return lastBlock.commandStartOffset != null && lastBlock.outputStartOffset == null
+  return commandBlock.commandStartOffset != null && commandBlock.outputStartOffset == null
 }

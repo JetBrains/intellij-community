@@ -77,10 +77,10 @@ internal class TerminalTypeAheadOutputModelController(
     if (!isTypeAheadEnabled()) return
 
     val shellIntegration = shellIntegrationFuture.getNow(null)!!  // isTypeAheadEnabled should guarantee that it is available
-    val lastBlock = shellIntegration.blocksModel.blocks.lastOrNull() as? TerminalCommandBlock
+    val commandBlock = shellIntegration.blocksModel.activeBlock as? TerminalCommandBlock
     val cursorOffset = outputModel.cursorOffset
-    val commandStartOffset = lastBlock?.commandStartOffset
-    if (lastBlock == null || (commandStartOffset != null && cursorOffset <= commandStartOffset) || cursorOffset == outputModel.startOffset) {
+    val commandStartOffset = commandBlock?.commandStartOffset
+    if (commandBlock == null || (commandStartOffset != null && cursorOffset <= commandStartOffset) || cursorOffset == outputModel.startOffset) {
       // Cursor is placed before or at the command start, so we can't backspace anymore.
       return
     }

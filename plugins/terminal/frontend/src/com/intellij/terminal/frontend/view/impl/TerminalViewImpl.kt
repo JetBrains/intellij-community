@@ -505,8 +505,8 @@ class TerminalViewImpl(
 
       override fun afterContentChanged(event: TerminalContentChangeEvent) {
         val inlineCompletionTypingSession = InlineCompletion.getHandlerOrNull(editor)?.typingSessionTracker
-        val lastBlock = shellIntegration.blocksModel.blocks.lastOrNull() as? TerminalCommandBlock ?: return
-        val lastBlockCommandStartIndex = lastBlock.commandStartOffset ?: lastBlock.startOffset
+        val commandBlock = shellIntegration.blocksModel.activeBlock as? TerminalCommandBlock ?: return
+        val lastBlockCommandStartIndex = commandBlock.commandStartOffset ?: commandBlock.startOffset
 
         // When resizing the terminal, the blocks model may fall out of sync for a short time.
         // These updates will never trigger a completion, so we return early to avoid reading out of bounds.

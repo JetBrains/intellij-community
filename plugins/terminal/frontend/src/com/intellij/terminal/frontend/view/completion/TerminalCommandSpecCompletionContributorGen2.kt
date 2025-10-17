@@ -37,8 +37,8 @@ internal class TerminalCommandSpecCompletionContributorGen2 : CompletionContribu
     if (!parameters.editor.isReworkedTerminalEditor) return
     val outputModel = parameters.editor.getUserData(TerminalOutputModel.KEY) ?: return
     val blocksModel = parameters.editor.getUserData(TerminalBlocksModel.KEY) ?: return
-    val lastBlock = blocksModel.blocks.lastOrNull() as? TerminalCommandBlock ?: return
-    val commandStartOffset = lastBlock.commandStartOffset ?: return
+    val commandBlock = blocksModel.activeBlock as? TerminalCommandBlock ?: return
+    val commandStartOffset = commandBlock.commandStartOffset ?: return
 
     if (parameters.completionType != CompletionType.BASIC) {
       return
