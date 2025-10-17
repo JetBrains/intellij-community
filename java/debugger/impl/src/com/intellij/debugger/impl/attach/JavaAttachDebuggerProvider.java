@@ -118,10 +118,6 @@ public class JavaAttachDebuggerProvider implements XAttachDebuggerProvider {
     }
   }
 
-  static boolean isJavaAttachDebugger(XAttachDebugger debugger) {
-    return debugger instanceof JavaLocalAttachDebugger;
-  }
-
   @Override
   public @NotNull XAttachPresentationGroup<ProcessInfo> getPresentationGroup() {
     return ourAttachGroup;
@@ -162,10 +158,6 @@ public class JavaAttachDebuggerProvider implements XAttachDebuggerProvider {
 
   boolean isDebuggerAttach(LocalAttachInfo info) {
     return info instanceof DebuggerLocalAttachInfo;
-  }
-
-  static @Nullable LocalAttachInfo getAttachInfo(@NotNull ProcessInfo info, @NotNull UserDataHolder dataHolder) {
-    return getAttachInfo(null, info.getPid(), info.getCommandLine(), dataHolder.getUserData(ADDRESS_MAP_KEY));
   }
 
   private static @Nullable LocalAttachInfo getAttachInfo(@Nullable Project project,
@@ -557,50 +549,53 @@ public class JavaAttachDebuggerProvider implements XAttachDebuggerProvider {
     ((JavaAttachDebuggerProvider.ProcessAttachRunConfiguration)runSettings.getConfiguration()).myAttachInfo = info;
     ProgramRunnerUtil.executeConfiguration(runSettings, JavaAttachDebuggerProvider.ProcessAttachDebugExecutor.INSTANCE);
   }
-}
 
-class JavaAttachDialogItemPresentationProvider implements XAttachDialogItemPresentationProvider {
+  static class JavaAttachDialogItemPresentationProvider implements XAttachDialogItemPresentationProvider {
 
-  @Override
-  public boolean isApplicableFor(@NotNull AttachDialogProcessItem item) {
-    return ContainerUtil.exists(item.getDebuggers(), JavaAttachDebuggerProvider::isJavaAttachDebugger);
-  }
+    @Override
+    public boolean isApplicableFor(@NotNull AttachDialogProcessItem item) {
+      return ContainerUtil.exists(item.getDebuggers(), d -> d instanceof JavaLocalAttachDebugger);
+    }
 
-  @Override
-  public int getPriority() {
-    // Almost arbitrary number.
-    return 5;
-  }
+    @Override
+    public int getPriority() {
+      // Almost arbitrary number.
+      return 5;
+    }
 
-  @Override
-  public @Nls @NotNull String getProcessExecutableText(@NotNull AttachDialogProcessItem item) {
-    String executable = XAttachDialogItemPresentationProvider.super.getProcessExecutableText(item);
+    @Override
+    public @Nls @NotNull String getProcessExecutableText(@NotNull AttachDialogProcessItem item) {
+      String executable = XAttachDialogItemPresentationProvider.super.getProcessExecutableText(item);
 
-    JavaAttachDebuggerProvider.LocalAttachInfo attachInfo = JavaAttachDebuggerProvider.getAttachInfo(item.getProcessInfo(), item.getDataHolder());
-    if (attachInfo == null) return executable;
+      ProcessInfo info = item.getProcessInfo();
+      UserDataHolder dataHolder = item.getDataHolder();
+      JavaAttachDebuggerProvider.LocalAttachInfo attachInfo =
+        getAttachInfo(null, info.getPid(), info.getCommandLine(), dataHolder.getUserData(ADDRESS_MAP_KEY));
+      if (attachInfo == null) return executable;
 
-    StringBuilder extra = new StringBuilder();
-    if ("java".equals(executable)) {
-      if (!StringUtil.isEmpty(attachInfo.myClass)) {
-        extra.append(attachInfo.myClass);
-      }
-      else {
-        var shouldBeClassName = ArrayUtil.getLastElement(item.getProcessInfo().getCommandLine().split(" "));
-        if (!StringUtil.isEmpty(shouldBeClassName)) {
-          extra.append(shouldBeClassName);
+      StringBuilder extra = new StringBuilder();
+      if ("java".equals(executable)) {
+        if (!StringUtil.isEmpty(attachInfo.myClass)) {
+          extra.append(attachInfo.myClass);
+        }
+        else {
+          var shouldBeClassName = ArrayUtil.getLastElement(item.getProcessInfo().getCommandLine().split(" "));
+          if (!StringUtil.isEmpty(shouldBeClassName)) {
+            extra.append(shouldBeClassName);
+          }
         }
       }
-    }
-    var address = attachInfo.getAddress();
-    if (!StringUtil.isEmpty(address)) {
-      if (!extra.isEmpty()) {
-        extra.append(", ");
+      var address = attachInfo.getAddress();
+      if (!StringUtil.isEmpty(address)) {
+        if (!extra.isEmpty()) {
+          extra.append(", ");
+        }
+        extra.append(address);
       }
-      extra.append(address);
-    }
 
-    return !extra.isEmpty()
-           ? executable + " (" + extra + ")"
-           : executable;
+      return !extra.isEmpty()
+             ? executable + " (" + extra + ")"
+             : executable;
+    }
   }
 }
