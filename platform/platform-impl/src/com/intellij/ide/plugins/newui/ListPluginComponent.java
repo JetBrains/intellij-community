@@ -546,7 +546,8 @@ public final class ListPluginComponent extends JPanel {
   }
 
   public void setUpdateDescriptor(@Nullable PluginUiModel descriptor) {
-    if (myMarketplace && myInstalledDescriptorForMarketplace == null) {
+    if (myMarketplace && myInstalledDescriptorForMarketplace == null ||
+        (descriptor != null && myModelFacade.isUninstalled(descriptor.getPluginId()))) {
       return;
     }
     if (myUpdateDescriptor == null && descriptor == null) {
