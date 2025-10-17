@@ -8,10 +8,10 @@ import com.intellij.lang.properties.psi.PropertyKeyValueFormat
 import com.intellij.modcommand.ModPsiUpdater
 import com.intellij.modcommand.PsiUpdateModCommandQuickFix
 import com.intellij.openapi.project.Project
+import com.intellij.openapi.util.TextRange
 import com.intellij.psi.PsiElement
 import org.gradle.util.GradleVersion
 import org.jetbrains.plugins.gradle.codeInspection.GradleInspectionBundle
-import org.jetbrains.plugins.gradle.util.GradleUtil.getWrapperDistributionUri
 
 /**
  * A local quick-fix implementation to replace the Gradle wrapper distribution URL in a `gradle-wrapper.properties` file
@@ -19,7 +19,10 @@ import org.jetbrains.plugins.gradle.util.GradleUtil.getWrapperDistributionUri
  *
  * @param newGradleVersion The new Gradle version to set in the `distributionUrl` property.
  */
-class GradleWrapperVersionFix(private val newGradleVersion: GradleVersion) : PsiUpdateModCommandQuickFix() {
+class GradleWrapperVersionFix(
+  private val newGradleVersion: GradleVersion,
+  private val versionTextRange: TextRange,
+) : PsiUpdateModCommandQuickFix() {
   override fun getName(): @IntentionName String {
     return GradleInspectionBundle.message("intention.name.upgrade.gradle.version", newGradleVersion.version)
   }
@@ -29,8 +32,14 @@ class GradleWrapperVersionFix(private val newGradleVersion: GradleVersion) : Psi
   }
 
   override fun applyFix(project: Project, element: PsiElement, updater: ModPsiUpdater) {
-    val prop = element as Property
-    val newGradleWrapperDistributionUri = getWrapperDistributionUri(newGradleVersion).toString().replace(":", "\\:")
-    prop.setValue(newGradleWrapperDistributionUri, PropertyKeyValueFormat.FILE)
+    val property = element as Property
+    val oldDistributionUrl = property.value ?: return
+    val offset = property.text.indexOf(oldDistributionUrl)
+    val newDistributionUrl = oldDistributionUrl.replaceRange(
+      versionTextRange.startOffset - offset,
+      versionTextRange.endOffset - offset,
+      newGradleVersion.version
+    )
+    property.setValue(newDistributionUrl, PropertyKeyValueFormat.FILE)
   }
 }

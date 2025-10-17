@@ -43,7 +43,7 @@ class GradleLatestMinorVersionInspection : LocalInspectionTool() {
 
         holder.problem(element, GradleInspectionBundle.message("inspection.message.newer.gradle.minor.version.available.descriptor"))
           .range(versionTextRange)
-          .fix(GradleWrapperVersionFix(latestMinorGradleVersion))
+          .fix(GradleWrapperVersionFix(latestMinorGradleVersion, versionTextRange))
           .register()
       }
     }

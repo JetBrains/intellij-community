@@ -7,7 +7,6 @@ import org.jetbrains.plugins.gradle.jvmcompat.GradleJvmSupportMatrix
 import org.jetbrains.plugins.gradle.testFramework.GradleCodeInsightTestCase
 import org.jetbrains.plugins.gradle.tooling.VersionMatcherRule
 import org.jetbrains.plugins.gradle.tooling.VersionMatcherRule.BASE_GRADLE_VERSION
-import org.jetbrains.plugins.gradle.util.GradleUtil.getWrapperDistributionUri
 import org.junit.jupiter.api.Test
 import org.junit.jupiter.api.extension.ExtensionContext
 import org.junit.jupiter.params.ParameterizedTest
@@ -29,13 +28,10 @@ class GradleLatestMinorVersionInspectionTest : GradleCodeInsightTestCase() {
   @ParameterizedTest
   @ArgumentsSource(LatestMinorGradleVersionsProvider::class)
   fun testAlreadyLatestMinorVersion(gradleVersion: GradleVersion) {
-    val wrapperDistribution = getWrapperDistributionUri(gradleVersion).toString()
-
-    // no warning markers
     runTest {
       testHighlighting(
         "gradle/wrapper/gradle-wrapper.properties",
-        "distributionUrl=$wrapperDistribution"
+        "distributionUrl=https\\://services.gradle.org/distributions/gradle-${gradleVersion.version}-bin.zip"
       )
     }
   }
@@ -43,13 +39,30 @@ class GradleLatestMinorVersionInspectionTest : GradleCodeInsightTestCase() {
   @ParameterizedTest
   @ArgumentsSource(NonLatestMinorGradleVersionsProvider::class)
   fun testNotLatestMinorVersion(gradleVersion: GradleVersion) {
-    // put warning markers around the version text
-    val wrapperDistributionWithWarning = getWrapperDistributionUri(gradleVersion).toString()
-      .replace(gradleVersion.version, "<warning>${gradleVersion.version}</warning>")
     runTest {
       testHighlighting(
         "gradle/wrapper/gradle-wrapper.properties",
-        "distributionUrl=$wrapperDistributionWithWarning"
+        "distributionUrl=https\\://services.gradle.org/distributions/gradle-<warning>${gradleVersion.version}</warning>-bin.zip"
+      )
+    }
+  }
+
+  @Test
+  fun testWhiteSpaceInProperty() {
+    runTest {
+      testHighlighting(
+        "gradle/wrapper/gradle-wrapper.properties",
+        "distributionUrl = https\\://services.gradle.org/distributions/gradle-<warning>8.13</warning>-bin.zip"
+      )
+    }
+  }
+
+  @Test
+  fun testCustomUrl() {
+    runTest {
+      testHighlighting(
+        "gradle/wrapper/gradle-wrapper.properties",
+        "distributionUrl=https\\://cache-redirector.jetbrains.com/services.gradle.org/distributions/gradle-<warning>8.13</warning>-bin.zip"
       )
     }
   }
@@ -61,8 +74,36 @@ class GradleLatestMinorVersionInspectionTest : GradleCodeInsightTestCase() {
     runTest {
       testIntention(
         "gradle/wrapper/gradle-wrapper.properties",
-        "distributionUrl=https\\://services.gradle.org/distributions/gradle-<caret>8.13-bin.zip",
+        "distributionUrl=https\\://services.gradle.org/distributions/gradle-8.13<caret>-bin.zip",
         "distributionUrl=https\\://services.gradle.org/distributions/gradle-$latestGradle8Version-bin.zip",
+        "Upgrade to Gradle $latestGradle8Version"
+      )
+    }
+  }
+
+  @Test
+  fun testUpgradeWhiteSpace() {
+    val latestGradle8Version = GradleJvmSupportMatrix.getLatestMinorGradleVersion(8).version
+
+    runTest {
+      testIntention(
+        "gradle/wrapper/gradle-wrapper.properties",
+        "distributionUrl = https\\://services.gradle.org/distributions/gradle-8.13<caret>-bin.zip",
+        "distributionUrl = https\\://services.gradle.org/distributions/gradle-$latestGradle8Version-bin.zip",
+        "Upgrade to Gradle $latestGradle8Version"
+      )
+    }
+  }
+
+  @Test
+  fun testUpgradeCustomUrl() {
+    val latestGradle8Version = GradleJvmSupportMatrix.getLatestMinorGradleVersion(8).version
+
+    runTest {
+      testIntention(
+        "gradle/wrapper/gradle-wrapper.properties",
+        "distributionUrl=https\\://cache-redirector.jetbrains.com/services.gradle.org/distributions/gradle-8.13<caret>-bin.zip",
+        "distributionUrl=https\\://cache-redirector.jetbrains.com/services.gradle.org/distributions/gradle-$latestGradle8Version-bin.zip",
         "Upgrade to Gradle $latestGradle8Version"
       )
     }
@@ -71,19 +112,14 @@ class GradleLatestMinorVersionInspectionTest : GradleCodeInsightTestCase() {
   @ParameterizedTest
   @ArgumentsSource(NonLatestMinorGradleVersionsProvider::class)
   fun testUpgradeAllVersions(gradleVersion: GradleVersion) {
-    val latestGradleMinorVersion = GradleJvmSupportMatrix.getLatestMinorGradleVersion(gradleVersion.majorVersion)
-
-    val wrapperDistribution = getWrapperDistributionUri(gradleVersion).toString().replace(":", "\\:")
-      .replace(gradleVersion.version, "<caret>${gradleVersion.version}")
-    val upgradedWrapperDistribution = getWrapperDistributionUri(latestGradleMinorVersion)
-      .toString().replace(":", "\\:")
+    val latestGradleMinorVersion = GradleJvmSupportMatrix.getLatestMinorGradleVersion(gradleVersion.majorVersion).version
 
     runTest {
       testIntention(
         "gradle/wrapper/gradle-wrapper.properties",
-        "distributionUrl=$wrapperDistribution",
-        "distributionUrl=$upgradedWrapperDistribution",
-        "Upgrade to Gradle ${latestGradleMinorVersion.version}"
+        "distributionUrl=https\\://services.gradle.org/distributions/gradle-${gradleVersion.version}<caret>-bin.zip",
+        "distributionUrl=https\\://services.gradle.org/distributions/gradle-$latestGradleMinorVersion-bin.zip",
+        "Upgrade to Gradle $latestGradleMinorVersion"
       )
     }
   }
