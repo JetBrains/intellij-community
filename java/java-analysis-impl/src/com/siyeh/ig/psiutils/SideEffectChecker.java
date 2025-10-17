@@ -29,39 +29,12 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.annotations.Unmodifiable;
 
-import java.util.*;
+import java.util.List;
 import java.util.function.Predicate;
 
 import static com.intellij.util.ObjectUtils.tryCast;
 
 public final class SideEffectChecker {
-  private static final Set<String> ourSideEffectFreeClasses = Set.of(
-    Object.class.getName(),
-    Short.class.getName(),
-    Character.class.getName(),
-    Byte.class.getName(),
-    Integer.class.getName(),
-    Long.class.getName(),
-    Float.class.getName(),
-    Double.class.getName(),
-    String.class.getName(),
-    StringBuffer.class.getName(),
-    Boolean.class.getName(),
-
-    ArrayList.class.getName(),
-    Date.class.getName(),
-    HashMap.class.getName(),
-    HashSet.class.getName(),
-    Hashtable.class.getName(),
-    LinkedHashMap.class.getName(),
-    LinkedHashSet.class.getName(),
-    LinkedList.class.getName(),
-    Stack.class.getName(),
-    TreeMap.class.getName(),
-    TreeSet.class.getName(),
-    Vector.class.getName(),
-    WeakHashMap.class.getName());
-
   private SideEffectChecker() {
   }
 
