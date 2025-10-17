@@ -15,3 +15,4 @@ fun main() {
 
 // EXPRESSION: bar()
 // RESULT: "bar": Ljava/lang/String;
+// IGNORE_K2

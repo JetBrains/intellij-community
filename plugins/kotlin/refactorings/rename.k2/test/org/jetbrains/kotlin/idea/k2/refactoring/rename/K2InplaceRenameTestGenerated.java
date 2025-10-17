@@ -285,16 +285,6 @@ public class K2InplaceRenameTestGenerated extends AbstractK2InplaceRenameTest {
         runTest("../../idea/tests/testData/refactoring/rename/inplace/HidingClassFromCompanionObject.kt");
     }
 
-    @TestMetadata("HidingClassFromReceiver.kt")
-    public void testHidingClassFromReceiver() throws Exception {
-        runTest("../../idea/tests/testData/refactoring/rename/inplace/HidingClassFromReceiver.kt");
-    }
-
-    @TestMetadata("HidingClassFromReceiver1.kt")
-    public void testHidingClassFromReceiver1() throws Exception {
-        runTest("../../idea/tests/testData/refactoring/rename/inplace/HidingClassFromReceiver1.kt");
-    }
-
     @TestMetadata("HidingClassFromSuper.kt")
     public void testHidingClassFromSuper() throws Exception {
         runTest("../../idea/tests/testData/refactoring/rename/inplace/HidingClassFromSuper.kt");
@@ -358,16 +348,6 @@ public class K2InplaceRenameTestGenerated extends AbstractK2InplaceRenameTest {
     @TestMetadata("HidingExternalClass.kt")
     public void testHidingExternalClass() throws Exception {
         runTest("../../idea/tests/testData/refactoring/rename/inplace/HidingExternalClass.kt");
-    }
-
-    @TestMetadata("HidingFunctionFromReceiver.kt")
-    public void testHidingFunctionFromReceiver() throws Exception {
-        runTest("../../idea/tests/testData/refactoring/rename/inplace/HidingFunctionFromReceiver.kt");
-    }
-
-    @TestMetadata("HidingFunctionFromReceiver1.kt")
-    public void testHidingFunctionFromReceiver1() throws Exception {
-        runTest("../../idea/tests/testData/refactoring/rename/inplace/HidingFunctionFromReceiver1.kt");
     }
 
     @TestMetadata("HidingLocalByParameter.kt")
@@ -463,16 +443,6 @@ public class K2InplaceRenameTestGenerated extends AbstractK2InplaceRenameTest {
     @TestMetadata("HidingPropertyByTopLevel1.kt")
     public void testHidingPropertyByTopLevel1() throws Exception {
         runTest("../../idea/tests/testData/refactoring/rename/inplace/HidingPropertyByTopLevel1.kt");
-    }
-
-    @TestMetadata("HidingPropertyFromReceiver.kt")
-    public void testHidingPropertyFromReceiver() throws Exception {
-        runTest("../../idea/tests/testData/refactoring/rename/inplace/HidingPropertyFromReceiver.kt");
-    }
-
-    @TestMetadata("HidingPropertyFromReceiver1.kt")
-    public void testHidingPropertyFromReceiver1() throws Exception {
-        runTest("../../idea/tests/testData/refactoring/rename/inplace/HidingPropertyFromReceiver1.kt");
     }
 
     @TestMetadata("HidingTopLevelClass.kt")

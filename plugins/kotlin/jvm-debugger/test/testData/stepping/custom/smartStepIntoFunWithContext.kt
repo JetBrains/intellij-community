@@ -37,3 +37,6 @@ fun main() {
     testContext()
     testContextInline()
 }
+
+// IGNORE_FOR_K2_CODE
+// Context receivers are not longer supported in K2

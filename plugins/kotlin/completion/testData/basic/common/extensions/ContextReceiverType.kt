@@ -1,5 +1,3 @@
-// FIR_COMPARISON
-// FIR_IDENTICAL
 context(String)
 fun test() {
     ba<caret>
@@ -8,3 +6,4 @@ fun test() {
 fun String.bar() {}
 
 // EXIST: bar
+// IGNORE_K2

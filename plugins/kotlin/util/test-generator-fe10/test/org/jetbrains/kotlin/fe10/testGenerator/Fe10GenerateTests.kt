@@ -205,6 +205,22 @@ private fun assembleWorkspace(): TWorkspace = workspace(KotlinPluginMode.K1) {
         listOf(
             AbstractIndyLambdaIrKotlinEvaluateExpressionTest::class,
             AbstractIrKotlinEvaluateExpressionWithIRFragmentCompilerTest::class,
+        ).forEach {
+            testClass(it) {
+                model(
+                    "evaluation/singleBreakpoint",
+                    testMethodName = "doSingleBreakpointTest",
+                    targetBackend = TargetBackend.JVM_IR_WITH_IR_EVALUATOR,
+                    excludedDirectories = listOf(
+                        "contextParameters",
+                    ),
+                )
+                model("evaluation/multipleBreakpoints", testMethodName = "doMultipleBreakpointsTest", targetBackend = TargetBackend.JVM_IR_WITH_IR_EVALUATOR)
+                model("evaluation/jvmMultiModule", testMethodName = "doJvmMultiModuleTest", targetBackend = TargetBackend.JVM_IR_WITH_IR_EVALUATOR)
+            }
+        }
+
+        listOf(
             AbstractK1IdeK2CodeKotlinEvaluateExpressionTest::class,
             AbstractInlineScopesAndK1IdeK2CodeEvaluateExpressionTest::class,
         ).forEach {
@@ -215,6 +231,7 @@ private fun assembleWorkspace(): TWorkspace = workspace(KotlinPluginMode.K1) {
                     targetBackend = TargetBackend.JVM_IR_WITH_IR_EVALUATOR,
                     excludedDirectories = listOf(
                         "contextParameters",
+                        "contextReceivers",
                     ),
                 )
                 model("evaluation/multipleBreakpoints", testMethodName = "doMultipleBreakpointsTest", targetBackend = TargetBackend.JVM_IR_WITH_IR_EVALUATOR)
@@ -251,6 +268,7 @@ private fun assembleWorkspace(): TWorkspace = workspace(KotlinPluginMode.K1) {
                 targetBackend = TargetBackend.JVM_IR_WITH_IR_EVALUATOR,
                 excludedDirectories = listOf(
                     "contextParameters",
+                    "contextReceivers",
                 ),
             )
             model("evaluation/multipleBreakpoints", testMethodName = "doMultipleBreakpointsTest", targetBackend = TargetBackend.JVM_IR_WITH_IR_EVALUATOR)
@@ -652,7 +670,6 @@ private fun assembleWorkspace(): TWorkspace = workspace(KotlinPluginMode.K1) {
                     "canConvertToMultiDollarString", // K2-only
                     "branched/introduceWhenSubject/whenGuards", // K2-only
                     "removeRedundantLabel", // quick fix in K1
-                    "contextParametersMigration", // K2-only
                     "defaultAnnotationTarget", // K2-only
                     "orInWhenGuard", // K2-only
                     "convertFromMultiDollarToRegularString", // K2-only

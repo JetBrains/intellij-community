@@ -124,7 +124,6 @@ internal fun MutableTWorkspace.generateK2InspectionTests() {
             model("${idea}/inspectionsLocal/removeRedundantLabel")
             model("${idea}/inspectionsLocal/removeRedundantCallsOfConversionMethods")
             model("${idea}/inspectionsLocal/removeExplicitTypeArguments")
-            model("${idea}/inspectionsLocal/contextParametersMigration")
             model("${idea}/inspectionsLocal/defaultAnnotationTarget")
             model("${idea}/inspectionsLocal/redundantEnumConstructorInvocation")
             model("${idea}/inspectionsLocal/redundantReturnKeyword")
