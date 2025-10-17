@@ -181,13 +181,16 @@ public class KotlinCompilerRunner implements CompilerRunner {
       }
       finally {
         processTrackers(out, generatedClasses);
-        if (myModuleEntryPath != null && completedOk && !messageCollector.hasErrors()) {
+        if (myModuleEntryPath != null) {
           byte[] updated = myStorageManager.getOutputBuilder().getContent(myModuleEntryPath);
-          if (updated == null) {
-            // report probable error
-            diagnostic.report(Message.info(this, "Module entry \"" + myModuleEntryPath +"\" has not been generated for target \"" + myContext.getTargetName() + "\""));
+          if (updated != null) {
+            // save the updated state for the next round
+            myLastGoodModuleEntryContent = updated;
           }
-          myLastGoodModuleEntryContent = updated; // save the updated state for the next round
+          else {
+            // make sure the output contains the module entry corresponding to last known good state
+            myStorageManager.getOutputBuilder().putEntry(myModuleEntryPath, myLastGoodModuleEntryContent);
+          }
         }
       }
     }
