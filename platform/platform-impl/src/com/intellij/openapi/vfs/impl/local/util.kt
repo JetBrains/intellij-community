@@ -168,10 +168,11 @@ internal fun listWithAttributesUsingEel(
   }
   try {
     val nioPath = Path.of(toIoPath(dir))
-    val eelPath = nioPath.asEelPath()
-    if (eelPath.descriptor === LocalEelDescriptor) {
+    val eelDescriptor = nioPath.getEelDescriptor()
+    if (eelDescriptor === LocalEelDescriptor) {
       return LocalFileSystemImpl.listWithAttributesImpl(nioPath, filter)
     }
+    val eelPath = nioPath.asEelPath(eelDescriptor)
     val directAccessPath = eelPath.descriptor.mountProvider()?.getMountRoot(eelPath)?.takeIf {
       fsBlocking {
         it.canReadPermissionsDirectly(EelMountRoot.DirectAccessOptions.BasicAttributesAndWritable)
