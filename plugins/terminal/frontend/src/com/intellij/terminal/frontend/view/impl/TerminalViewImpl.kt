@@ -273,9 +273,8 @@ class TerminalViewImpl(
     listenAlternateBufferSwitch()
 
     val synchronizer = TerminalVfsSynchronizer(
-      controller,
+      shellIntegrationFuture,
       outputModel,
-      sessionModel,
       terminalPanel,
       coroutineScope.childScope("TerminalVfsSynchronizer"),
     )
@@ -306,7 +305,7 @@ class TerminalViewImpl(
       configureCommandCompletion(
         outputEditor,
         sessionModel,
-        controller,
+        shellIntegration,
         coroutineScope.childScope("TerminalCommandCompletion")
       )
     }
@@ -534,15 +533,17 @@ class TerminalViewImpl(
   private fun configureCommandCompletion(
     editor: Editor,
     sessionModel: TerminalSessionModel,
-    controller: TerminalSessionController,
+    shellIntegration: TerminalShellIntegration,
     coroutineScope: CoroutineScope,
   ) {
     val eelDescriptor = LocalEelDescriptor // TODO: it should be determined by where shell is running to work properly in WSL and Docker
     val services = TerminalCommandCompletionServices(
       commandSpecsManager = ShellCommandSpecsManagerImpl.getInstance(),
       runtimeContextProvider = ShellRuntimeContextProviderReworkedImpl(project, sessionModel, eelDescriptor),
-      dataGeneratorsExecutor = ShellDataGeneratorsExecutorReworkedImpl(controller,
-                                                                       coroutineScope.childScope("ShellDataGeneratorsExecutorReworkedImpl"))
+      dataGeneratorsExecutor = ShellDataGeneratorsExecutorReworkedImpl(
+        shellIntegration,
+        coroutineScope.childScope("ShellDataGeneratorsExecutorReworkedImpl")
+      )
     )
     editor.putUserData(TerminalCommandCompletionServices.KEY, services)
   }
