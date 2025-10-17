@@ -41,6 +41,10 @@ internal fun generateClassPathByLayoutReport(libDir: Path, entries: List<Distrib
       if (skipNioFs && moduleName == "intellij.platform.core.nio.fs") {
         continue
       }
+      val fileName = entry.relativeOutputFile
+      if (fileName == PlatformJarNames.TEST_FRAMEWORK_JAR) {
+        continue
+      }
     }
 
     val parent = file.parent
