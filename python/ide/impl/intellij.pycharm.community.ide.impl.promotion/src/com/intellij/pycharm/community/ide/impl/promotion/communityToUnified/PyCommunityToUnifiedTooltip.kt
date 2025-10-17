@@ -36,7 +36,8 @@ object PyCommunityToUnifiedTooltip {
         val tooltip = constructToolTip(project)
         PyCommunityUnifiedPromoFusCollector.TooltipShown.log()
         tooltip.show(settingsButton.rootPane.layeredPane) { pane, _ ->
-          SwingUtilities.convertPoint(settingsButton, Point(0, settingsButton.height), pane)
+          SwingUtilities.convertPoint(settingsButton,
+                                      Point(settingsButton.width / 2, settingsButton.height), pane)
         }
       }
     }
