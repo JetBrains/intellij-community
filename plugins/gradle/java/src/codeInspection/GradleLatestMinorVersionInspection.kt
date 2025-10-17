@@ -41,7 +41,7 @@ class GradleLatestMinorVersionInspection : LocalInspectionTool() {
         val latestMinorGradleVersion = GradleJvmSupportMatrix.getLatestMinorGradleVersion(currentGradleVersion.majorVersion)
         if (currentGradleVersion >= latestMinorGradleVersion) return
 
-        holder.problem(element, GradleInspectionBundle.message("inspection.message.outdated.gradle.minor.version.descriptor"))
+        holder.problem(element, GradleInspectionBundle.message("inspection.message.newer.gradle.minor.version.available.descriptor"))
           .range(versionTextRange)
           .fix(GradleWrapperVersionFix(latestMinorGradleVersion))
           .register()
