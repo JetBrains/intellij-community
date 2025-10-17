@@ -14,22 +14,26 @@ interface TerminalBlocksModelListener : EventListener {
 }
 
 @ApiStatus.Internal
-sealed interface TerminalBlocksModelEvent {
+@ApiStatus.NonExtendable
+interface TerminalBlocksModelEvent {
   val model: TerminalBlocksModel
 }
 
 @ApiStatus.Internal
-sealed interface TerminalBlockAddedEvent : TerminalBlocksModelEvent {
+@ApiStatus.NonExtendable
+interface TerminalBlockAddedEvent : TerminalBlocksModelEvent {
   val block: TerminalBlockBase
 }
 
 @ApiStatus.Internal
-sealed interface TerminalBlockRemovedEvent : TerminalBlocksModelEvent {
+@ApiStatus.NonExtendable
+interface TerminalBlockRemovedEvent : TerminalBlocksModelEvent {
   val block: TerminalBlockBase
 }
 
 @ApiStatus.Internal
-sealed interface TerminalBlocksReplacedEvent : TerminalBlocksModelEvent {
+@ApiStatus.NonExtendable
+interface TerminalBlocksReplacedEvent : TerminalBlocksModelEvent {
   val oldBlocks: List<TerminalBlockBase>
   val newBlocks: List<TerminalBlockBase>
 }

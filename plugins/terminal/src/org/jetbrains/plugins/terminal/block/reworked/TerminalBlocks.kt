@@ -4,14 +4,16 @@ package org.jetbrains.plugins.terminal.block.reworked
 import org.jetbrains.annotations.ApiStatus
 
 @ApiStatus.Internal
-sealed interface TerminalBlockBase {
+@ApiStatus.NonExtendable
+interface TerminalBlockBase {
   val id: TerminalBlockId
   val startOffset: TerminalOffset
   val endOffset: TerminalOffset
 }
 
 @ApiStatus.Internal
-sealed interface TerminalCommandBlock : TerminalBlockBase {
+@ApiStatus.NonExtendable
+interface TerminalCommandBlock : TerminalBlockBase {
   val commandStartOffset: TerminalOffset?
   val outputStartOffset: TerminalOffset?
   val exitCode: Int?
