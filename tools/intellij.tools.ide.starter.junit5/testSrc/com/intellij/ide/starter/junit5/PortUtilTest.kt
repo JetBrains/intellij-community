@@ -7,6 +7,7 @@ import org.junit.jupiter.api.Assertions.assertTrue
 import org.junit.jupiter.api.Test
 import java.net.InetAddress
 import java.net.ServerSocket
+import java.nio.file.Files
 import java.nio.file.Paths
 
 class PortUtilTest {
@@ -44,7 +45,12 @@ class PortUtilTest {
     else {
       ListeningSocketApp::class.java.name
     }
-    val pb = ProcessBuilder(listOf(getJavaBin(), "-cp", System.getProperty("java.class.path"), neededApp, port.toString()))
+
+    val classPath = System.getProperty("java.class.path")
+    val classpathFile = Files.createTempFile("", "classpath-${System.currentTimeMillis()}.txt")
+    Files.writeString(classpathFile, classPath)
+
+    val pb = ProcessBuilder(listOf(getJavaBin(), "-cp", "@${classpathFile.toAbsolutePath()}", neededApp, port.toString()))
 
     pb.inheritIO()
     val process = pb.start()
