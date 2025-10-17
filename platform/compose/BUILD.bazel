@@ -25,6 +25,7 @@ jvm_library(
     "@lib//:jetbrains-annotations",
     "@lib//:kotlinx-coroutines-core",
     "@lib//:jetbrains-compose-components-ui-tooling-preview-desktop",
+    "//platform/diagnostic/telemetry",
   ],
   exports = [
     "//platform/jewel/ui",
@@ -57,6 +58,8 @@ jvm_library(
     "@lib//:jetbrains-compose-components-ui-tooling-preview-desktop",
     "@lib//:junit4",
     "//platform/jewel/int-ui/int-ui-standalone:jewel-intUi-standalone",
+    "//platform/diagnostic/telemetry",
+    "//platform/diagnostic/telemetry:telemetry_test_lib",
   ],
   exports = [
     "//platform/jewel/ui",
