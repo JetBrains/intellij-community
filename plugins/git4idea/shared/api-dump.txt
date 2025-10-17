@@ -2,6 +2,7 @@ f:com.intellij.vcs.git.GitDisplayName
 - sf:INSTANCE:com.intellij.vcs.git.GitDisplayName
 - sf:NAME:java.lang.String
 - sf:POINTER:java.util.function.Supplier
+com.intellij.vcs.git.actions.branch.GitBranchActionToBeWrapped
 f:com.intellij.vcs.git.ref.GitRefUtil
 - sf:INSTANCE:com.intellij.vcs.git.ref.GitRefUtil
 - f:getCommonCurrentBranch(java.util.Collection):git4idea.GitStandardLocalBranch

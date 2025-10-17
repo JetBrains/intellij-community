@@ -15,7 +15,7 @@ import git4idea.GitStandardLocalBranch
 import org.jetbrains.annotations.ApiStatus
 
 @ApiStatus.Internal
-class GitCheckoutWithUpdateAction : DumbAwareAction(), ActionRemoteBehaviorSpecification.FrontendOtherwiseBackend {
+class GitCheckoutWithUpdateAction : GitBranchActionToBeWrapped, DumbAwareAction(), ActionRemoteBehaviorSpecification.FrontendOtherwiseBackend {
   override fun getActionUpdateThread(): ActionUpdateThread = ActionUpdateThread.BGT
 
   override fun update(e: AnActionEvent) {

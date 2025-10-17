@@ -3,13 +3,13 @@ package git4idea.ui.branch
 
 import com.intellij.openapi.actionSystem.*
 import com.intellij.vcs.git.actions.GitSingleRefActions
+import com.intellij.vcs.git.actions.branch.GitBranchActionToBeWrapped
 import git4idea.GitBranch
 import git4idea.actions.branch.GitBranchActionsDataKeys
-import git4idea.actions.ref.GitSingleRefAction
 import git4idea.repo.GitRepository
 
 internal class GitBranchActionWrapper(
-  action: GitSingleRefAction<*>,
+  action: AnAction,
   private val branch: GitBranch,
   private val selectedRepository: GitRepository,
   private val repositories: List<GitRepository>,
@@ -45,7 +45,7 @@ internal class GitBranchActionWrapper(
       repositories: List<GitRepository>,
     ) {
       when (action) {
-        is GitSingleRefAction<*> -> result.add(GitBranchActionWrapper(action, branch, selectedRepository, repositories))
+        is GitBranchActionToBeWrapped -> result.add(GitBranchActionWrapper(action, branch, selectedRepository, repositories))
         is ActionGroup -> {
           action.getChildren(e).forEach {
             doWrapActions(result, e, it, branch, selectedRepository, repositories)
