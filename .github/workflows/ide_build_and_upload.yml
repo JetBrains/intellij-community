@@ -4,7 +4,7 @@ on:
   workflow_call:
     inputs:
       product:
-        description: 'product, available options: intellij_idea, pycharm'
+        description: 'a product, available options: intellij_idea, pycharm'
         type: string
         required: true
       artifacts_dir:
