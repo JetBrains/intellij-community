@@ -20,6 +20,7 @@ fleetModule {
   module {
     name = "fleet.build.http"
     importedFromJps {}
+    test {}
   }
 }
 
