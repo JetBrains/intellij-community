@@ -1,3 +1,5 @@
+@file:Suppress("KDocUnresolvedReference")
+
 package org.jetbrains.jewel.ui.component
 
 import androidx.compose.foundation.interaction.FocusInteraction
@@ -27,6 +29,7 @@ import androidx.compose.ui.graphics.takeOrElse
 import androidx.compose.ui.semantics.Role
 import androidx.compose.ui.state.ToggleableState
 import androidx.compose.ui.text.TextStyle
+import androidx.compose.ui.text.style.TextOverflow
 import org.jetbrains.jewel.foundation.Stroke
 import org.jetbrains.jewel.foundation.state.CommonStateBitMask.Active
 import org.jetbrains.jewel.foundation.state.CommonStateBitMask.Enabled
@@ -79,7 +82,7 @@ import org.jetbrains.jewel.ui.theme.checkboxStyle
  * @param icons The icon configuration for the checkbox
  * @param textStyle The typography style to be applied to the checkbox's text content
  * @param verticalAlignment The vertical alignment of the checkbox relative to its text content
- * @see javax.swing.JCheckBox
+ * @see com.intellij.ui.components.JBCheckBox
  * @see com.intellij.ui.components.JBCheckBox
  */
 @Composable
@@ -139,7 +142,7 @@ public fun Checkbox(
  * @param icons The icon configuration for the checkbox
  * @param textStyle The typography style to be applied to the checkbox's text content
  * @param verticalAlignment The vertical alignment of the checkbox relative to its text content
- * @see javax.swing.JCheckBox
+ * @see com.intellij.ui.components.JBCheckBox
  */
 @Composable
 public fun TriStateCheckbox(
@@ -200,8 +203,9 @@ public fun TriStateCheckbox(
  * @param icons The icon configuration for the checkbox
  * @param textStyle The typography style to be applied to the text content
  * @param verticalAlignment The vertical alignment of the checkbox relative to its text content
- * @see javax.swing.JCheckBox
+ * @see com.intellij.ui.components.JBCheckBox
  */
+@Deprecated("Use the variant with overflow, softWrap, and maxLines", level = DeprecationLevel.HIDDEN)
 @Composable
 public fun TriStateCheckboxRow(
     text: String,
@@ -218,6 +222,83 @@ public fun TriStateCheckboxRow(
     textStyle: TextStyle = LocalTextStyle.current,
     verticalAlignment: Alignment.Vertical = Alignment.CenterVertically,
 ) {
+    TriStateCheckboxRow(
+        text,
+        state,
+        onClick,
+        modifier,
+        textModifier,
+        enabled,
+        outline,
+        interactionSource,
+        colors,
+        metrics,
+        icons,
+        textStyle,
+        verticalAlignment,
+        overflow = TextOverflow.Clip,
+        softWrap = true,
+        maxLines = Int.MAX_VALUE,
+    )
+}
+
+/**
+ * A three-state checkbox with accompanying text, following the standard visual styling.
+ *
+ * Provides a horizontal layout combining a three-state checkbox with text content. The entire row is clickable, making
+ * it easier for users to interact with the checkbox. This variant is particularly useful for representing partially
+ * selected states in hierarchical selections with labels.
+ *
+ * **Guidelines:** [on IJP SDK webhelp](https://plugins.jetbrains.com/docs/intellij/checkbox.html#three-state-checkbox)
+ *
+ * **Usage example:**
+ * [`Checkboxes.kt`](https://github.com/JetBrains/intellij-community/blob/master/platform/jewel/samples/showcase/src/main/kotlin/org/jetbrains/jewel/samples/showcase/components/Checkboxes.kt)
+ *
+ * **Swing equivalent:** [`JCheckBox`](https://docs.oracle.com/javase/tutorial/uiswing/components/button.html#checkbox)
+ * with text constructor and
+ * [setIndeterminate](https://docs.oracle.com/javase/8/docs/api/javax/swing/JCheckBox.html#setIndeterminate-boolean-)
+ *
+ * @param text The text to be displayed next to the checkbox
+ * @param state The current state of the checkbox (On, Off, or Indeterminate)
+ * @param onClick Called when the checkbox or row is clicked
+ * @param modifier Modifier to be applied to the entire row
+ * @param textModifier Modifier to be applied to the text content
+ * @param enabled Controls the enabled state of the checkbox. When false, the row cannot be interacted with
+ * @param outline The outline style to be applied to the checkbox
+ * @param interactionSource Source of interactions for this checkbox
+ * @param colors The color styling configuration for the checkbox
+ * @param metrics The sizing and spacing configuration for the checkbox
+ * @param icons The icon configuration for the checkbox
+ * @param textStyle The typography style to be applied to the text content
+ * @param verticalAlignment The vertical alignment of the checkbox relative to its text content
+ * @param overflow How visual overflow should be handled
+ * @param softWrap Whether the text should break at soft line breaks. If false, the glyphs in the text will be
+ *   positioned as if there was unlimited horizontal space. If [softWrap] is false, [overflow] may have unexpected
+ *   effects
+ * @param maxLines An optional maximum number of lines for the text to span, wrapping if necessary. If the text exceeds
+ *   the given number of lines, it will be truncated according to [overflow] and [softWrap]. It is required that
+ *   [maxLines] >= 1
+ * @see com.intellij.ui.components.JBCheckBox
+ */
+@Composable
+public fun TriStateCheckboxRow(
+    text: String,
+    state: ToggleableState,
+    onClick: () -> Unit,
+    modifier: Modifier = Modifier,
+    textModifier: Modifier = Modifier,
+    enabled: Boolean = true,
+    outline: Outline = Outline.None,
+    interactionSource: MutableInteractionSource = remember { MutableInteractionSource() },
+    colors: CheckboxColors = LocalCheckboxStyle.current.colors,
+    metrics: CheckboxMetrics = LocalCheckboxStyle.current.metrics,
+    icons: CheckboxIcons = LocalCheckboxStyle.current.icons,
+    textStyle: TextStyle = LocalTextStyle.current,
+    verticalAlignment: Alignment.Vertical = Alignment.CenterVertically,
+    overflow: TextOverflow = TextOverflow.Clip,
+    softWrap: Boolean = true,
+    maxLines: Int = Int.MAX_VALUE,
+) {
     CheckboxImpl(
         state = state,
         onClick = onClick,
@@ -229,7 +310,7 @@ public fun TriStateCheckboxRow(
         interactionSource = interactionSource,
         textStyle = textStyle,
         verticalAlignment = verticalAlignment,
-        { Text(text) },
+        content = { Text(text, overflow = overflow, softWrap = softWrap, maxLines = maxLines, style = textStyle) },
         modifier = modifier,
         contentModifier = textModifier,
     )
@@ -262,8 +343,9 @@ public fun TriStateCheckboxRow(
  * @param icons The icon configuration for the checkbox
  * @param textStyle The typography style to be applied to the text content
  * @param verticalAlignment The vertical alignment of the checkbox relative to its text content
- * @see javax.swing.JCheckBox
+ * @see com.intellij.ui.components.JBCheckBox
  */
+@Deprecated("Use the variant with overflow, softWrap, and maxLines", level = DeprecationLevel.HIDDEN)
 @Composable
 public fun CheckboxRow(
     text: String,
@@ -280,6 +362,81 @@ public fun CheckboxRow(
     textStyle: TextStyle = LocalTextStyle.current,
     verticalAlignment: Alignment.Vertical = Alignment.CenterVertically,
 ) {
+    CheckboxRow(
+        text,
+        checked,
+        onCheckedChange,
+        modifier,
+        textModifier,
+        enabled,
+        outline,
+        interactionSource,
+        colors,
+        metrics,
+        icons,
+        textStyle,
+        verticalAlignment,
+        overflow = TextOverflow.Clip,
+        softWrap = true,
+        maxLines = Int.MAX_VALUE,
+    )
+}
+
+/**
+ * A checkbox with accompanying text, following the standard visual styling with customizable appearance.
+ *
+ * Provides a horizontal layout combining a checkbox with text content. The entire row is clickable, making it easier
+ * for users to interact with the checkbox. This component is commonly used in forms, settings panels, and option lists.
+ *
+ * **Guidelines:** [on IJP SDK webhelp](https://plugins.jetbrains.com/docs/intellij/checkbox.html)
+ *
+ * **Usage example:**
+ * [`Checkboxes.kt`](https://github.com/JetBrains/intellij-community/blob/master/platform/jewel/samples/showcase/src/main/kotlin/org/jetbrains/jewel/samples/showcase/components/Checkboxes.kt)
+ *
+ * **Swing equivalent:** [`JCheckBox`](https://docs.oracle.com/javase/tutorial/uiswing/components/button.html#checkbox)
+ * with text constructor
+ *
+ * @param text The text to be displayed next to the checkbox
+ * @param checked The current state of the checkbox
+ * @param onCheckedChange Called when the checkbox or row is clicked, with the new checked state
+ * @param modifier Modifier to be applied to the entire row
+ * @param textModifier Modifier to be applied to the text content
+ * @param enabled Controls the enabled state of the checkbox. When false, the row cannot be interacted with
+ * @param outline The outline style to be applied to the checkbox
+ * @param interactionSource Source of interactions for this checkbox
+ * @param colors The color styling configuration for the checkbox
+ * @param metrics The sizing and spacing configuration for the checkbox
+ * @param icons The icon configuration for the checkbox
+ * @param textStyle The typography style to be applied to the text content
+ * @param verticalAlignment The vertical alignment of the checkbox relative to its text content
+ * @param overflow How visual overflow should be handled
+ * @param softWrap Whether the text should break at soft line breaks. If false, the glyphs in the text will be
+ *   positioned as if there was unlimited horizontal space. If [softWrap] is false, [overflow] may have unexpected
+ *   effects
+ * @param maxLines An optional maximum number of lines for the text to span, wrapping if necessary. If the text exceeds
+ *   the given number of lines, it will be truncated according to [overflow] and [softWrap]. It is required that
+ *   [maxLines] >= 1
+ * @see com.intellij.ui.components.JBCheckBox
+ */
+@Composable
+public fun CheckboxRow(
+    text: String,
+    checked: Boolean,
+    onCheckedChange: (Boolean) -> Unit,
+    modifier: Modifier = Modifier,
+    textModifier: Modifier = Modifier,
+    enabled: Boolean = true,
+    outline: Outline = Outline.None,
+    interactionSource: MutableInteractionSource = remember { MutableInteractionSource() },
+    colors: CheckboxColors = LocalCheckboxStyle.current.colors,
+    metrics: CheckboxMetrics = LocalCheckboxStyle.current.metrics,
+    icons: CheckboxIcons = LocalCheckboxStyle.current.icons,
+    textStyle: TextStyle = LocalTextStyle.current,
+    verticalAlignment: Alignment.Vertical = Alignment.CenterVertically,
+    overflow: TextOverflow = TextOverflow.Clip,
+    softWrap: Boolean = true,
+    maxLines: Int = Int.MAX_VALUE,
+) {
     val state by remember(checked) { mutableStateOf(ToggleableState(checked)) }
 
     CheckboxImpl(
@@ -293,7 +450,7 @@ public fun CheckboxRow(
         interactionSource = interactionSource,
         textStyle = textStyle,
         verticalAlignment = verticalAlignment,
-        { Text(text) },
+        content = { Text(text, overflow = overflow, softWrap = softWrap, maxLines = maxLines, style = textStyle) },
         modifier = modifier,
         contentModifier = textModifier,
     )
@@ -325,7 +482,7 @@ public fun CheckboxRow(
  * @param textStyle The typography style to be applied to the content
  * @param verticalAlignment The vertical alignment of the checkbox relative to its content
  * @param content Composable content to be displayed next to the checkbox
- * @see javax.swing.JCheckBox
+ * @see com.intellij.ui.components.JBCheckBox
  */
 @Composable
 public fun CheckboxRow(
@@ -386,7 +543,7 @@ public fun CheckboxRow(
  * @param textStyle The typography style to be applied to the content
  * @param verticalAlignment The vertical alignment of the checkbox relative to its content
  * @param content Composable content to be displayed next to the checkbox
- * @see javax.swing.JCheckBox
+ * @see com.intellij.ui.components.JBCheckBox
  */
 @Composable
 public fun TriStateCheckboxRow(
