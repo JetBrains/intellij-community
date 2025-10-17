@@ -193,10 +193,8 @@ public fun JewelComposeNoThemePanel(
 public fun JewelComposeNoThemePanel(config: ComposePanel.() -> Unit = {}, content: @Composable () -> Unit): JComponent =
     JewelComposeNoThemePanel(focusOnClickInside = false, config, content)
 
-private fun createJewelComposePanel(
-    focusOnClickInside: Boolean,
-    config: ComposePanel.(JewelComposePanelWrapper) -> Unit,
-): JewelComposePanelWrapper {
+@ApiStatus.Internal
+public fun setSkikoLibraryPath() {
     if (System.getProperty("skiko.library.path") == null) {
         val bundledSkikoFolder = File(PathManager.getLibPath(), "/skiko-awt-runtime-all")
         if (bundledSkikoFolder.isDirectory && bundledSkikoFolder.canRead()) {
@@ -205,6 +203,14 @@ private fun createJewelComposePanel(
             JewelLogger.getInstance("SkikoLoader").warn("Bundled Skiko not found/not readable, falling back to default")
         }
     }
+}
+
+private fun createJewelComposePanel(
+    focusOnClickInside: Boolean,
+    config: ComposePanel.(JewelComposePanelWrapper) -> Unit,
+): JewelComposePanelWrapper {
+    setSkikoLibraryPath()
+
     val jewelPanel = JewelComposePanelWrapper(focusOnClickInside)
     jewelPanel.composePanel.config(jewelPanel)
     ComposeUiInspector(jewelPanel)
