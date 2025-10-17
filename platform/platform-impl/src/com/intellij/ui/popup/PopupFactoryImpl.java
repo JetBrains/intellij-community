@@ -549,9 +549,9 @@ public class PopupFactoryImpl extends JBPopupFactory {
 
     // https://youtrack.jetbrains.com/issue/DPA-3312 Unexpected component for dataContext: org.jetbrains.skiko.SkiaLayer$1
     // The focus owner may be a non-JComponent, but it resides inside a wrapping JComponent parent
-    JComponent jComponent = (JComponent)SwingUtilities.getAncestorOfClass(JComponent.class, component);
-    if (jComponent != null) {
-      return jComponent;
+    Container parent = component == null ? null : component.getParent();
+    if (parent instanceof JComponent c) {
+      return c;
     }
     else {
       String componentClass = component == null ? null : component.getClass().getName();
