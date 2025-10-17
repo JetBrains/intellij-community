@@ -169,7 +169,7 @@ public class StorageManager implements CloseableExt {
 
   @Override
   public final void close() {
-    close(!myContext.hasErrors());
+    close(true); // close saving all successfully compiled content
   }
 
   @Override
