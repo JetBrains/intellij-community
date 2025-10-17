@@ -65,12 +65,23 @@ internal class ContentModuleVisibilityInspection : DevKitPluginXmlInspectionBase
         val currentModuleNamespace = currentModuleInclusionContext.registrationPlace.namespace
         val dependencyNamespace = dependencyInclusionContext.registrationPlace.namespace
         if (currentModuleNamespace != dependencyNamespace) {
+          val currentModuleVendor = currentModuleInclusionContext.rootPlugin.actualVendor
+          val currentModuleRegistrationFile = currentModuleInclusionContext.registrationPlace.xmlElement?.containingFile as? XmlFile
+          val fixes =
+            if (currentModuleNamespace == null && dependencyNamespace != null && currentModuleRegistrationFile != null &&
+                currentModuleVendor != null && currentModuleVendor == dependencyInclusionContext.rootPlugin.actualVendor) {
+              arrayOf(SetNamespaceFix(dependencyNamespace, currentModuleInclusionContext.registrationPlace.getIdOrUniqueFileName(), currentModuleRegistrationFile.createSmartPointer()))
+            }
+            else {
+              emptyArray()
+            }
           holder.createProblem(
             dependencyValue,
             getInternalVisibilityProblemMessage(
               dependencyValue, dependencyInclusionContext.registrationPlace, dependencyNamespace,
               currentXmlFile, currentModuleInclusionContext.registrationPlace, currentModuleNamespace
-            )
+            ),
+            *fixes
           )
           return // report only one problem at once
         }
@@ -162,6 +173,15 @@ internal class ContentModuleVisibilityInspection : DevKitPluginXmlInspectionBase
   private fun IdeaPlugin.getUniqueFileName(): String {
     return UniqueVFilePathBuilder.getInstance().getUniqueVirtualFilePath(xmlElement!!.project, xmlElement!!.containingFile.virtualFile)
   }
+
+  private val IdeaPlugin.actualVendor: String?
+    get() {
+      val explicitValue = this.vendor.stringValue
+      if (explicitValue != null) return explicitValue
+      val xmlFileName = xmlElement?.containingFile?.name
+      //it would be more reliable to collect data from all included XML files to find the proper vendor, but this heuristic should work ok
+      return if (xmlFileName in rootPluginNames) "JetBrains" else null
+    }
 
   private fun checkPrivateVisibility(
     dependencyValue: GenericAttributeValue<IdeaPlugin?>,
@@ -294,4 +314,43 @@ internal class ContentModuleVisibilityInspection : DevKitPluginXmlInspectionBase
     }
   }
 
+  private class SetNamespaceFix(
+    private val namespace: String,
+    private val declaringPluginId: String,
+    private val declaringXmlFilePointer: SmartPsiElementPointer<XmlFile>,
+  ) : LocalQuickFix {
+    override fun getFamilyName(): @IntentionFamilyName String =
+      message("inspection.content.module.visibility.internal.fix.set.namespace.family.name")
+
+    override fun getName(): @IntentionName String =
+      message("inspection.content.module.visibility.internal.fix.set.namespace.to", declaringPluginId, namespace)
+
+    override fun applyFix(project: Project, descriptor: ProblemDescriptor) {
+      val declaringXmlFile = declaringXmlFilePointer.dereference() ?: return
+      setNamespace(declaringXmlFile)
+    }
+
+    private fun setNamespace(declaringXmlFile: XmlFile) {
+      val ideaPlugin = DescriptorUtil.getIdeaPlugin(declaringXmlFile) ?: return
+      if (ideaPlugin.content.isNotEmpty()) {
+        ideaPlugin.content.forEach { it.namespace.stringValue = namespace }
+      }
+      else {
+        ideaPlugin.addContent().namespace.stringValue = namespace
+      }
+    }
+
+    override fun generatePreview(project: Project, previewDescriptor: ProblemDescriptor): IntentionPreviewInfo {
+      val declaringXmlFile = declaringXmlFilePointer.dereference() ?: return IntentionPreviewInfo.EMPTY
+      val declaringXmlFileCopy = declaringXmlFile.copy() as XmlFile
+      setNamespace(declaringXmlFileCopy)
+      return IntentionPreviewInfo.CustomDiff(
+        XmlFileType.INSTANCE,
+        declaringXmlFile.name,
+        declaringXmlFile.text,
+        declaringXmlFileCopy.text,
+        true
+      )
+    }
+  }
 }

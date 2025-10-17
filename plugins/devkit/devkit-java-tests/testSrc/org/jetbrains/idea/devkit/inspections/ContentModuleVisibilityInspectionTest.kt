@@ -1049,6 +1049,124 @@ class ChangeModuleModuleVisibilityFix : ContentModuleVisibilityInspectionTestBas
     )
   }
 
+  fun `test fix set namespace`() {
+    myFixture.addModuleWithPluginDescriptor(
+      "com.example.plugin.with.internalmodule",
+      "com.example.plugin.with.internalmodule/META-INF/plugin.xml",
+      """
+      <idea-plugin>
+        <id>com.example.plugin.with.internalmodule</id>
+        <vendor>ExampleVendor</vendor>
+        <content namespace="example_namespace">
+          <module name="com.example.internalmodule"/>
+        </content>
+      </idea-plugin>
+      """.trimIndent())
+    myFixture.addModuleWithPluginDescriptor(
+      "com.example.internalmodule",
+      "com.example.internalmodule/com.example.internalmodule.xml",
+      """
+      <idea-plugin visibility="internal">
+      </idea-plugin>
+      """.trimIndent())
+
+    myFixture.addModuleWithPluginDescriptor(
+      "com.example.plugin.with.publicmodule",
+      "com.example.plugin.with.publicmodule/META-INF/plugin.xml",
+      """
+      <idea-plugin>
+        <id>com.example.plugin.with.publicmodule</id>
+        <vendor>ExampleVendor</vendor>
+        <content>
+          <module name="com.example.publicmodule"/>
+        </content>
+      </idea-plugin>
+      """.trimIndent())
+    val testedFile = myFixture.addModuleWithPluginDescriptor(
+      "com.example.publicmodule",
+      "com.example.publicmodule/com.example.publicmodule.xml",
+      """
+      <idea-plugin visibility="public">
+        <dependencies>
+          <module name="com.example.int<caret>ernalmodule"/>
+        </dependencies>
+      </idea-plugin>
+      """.trimIndent())
+    myFixture.configureFromExistingVirtualFile(testedFile.virtualFile)
+
+    val intention = myFixture.findSingleIntention("Set namespace in 'com.example.plugin.with.publicmodule' to 'example_namespace'")
+    myFixture.launchAction(intention)
+
+    myFixture.checkResult(
+      "com.example.plugin.with.publicmodule/META-INF/plugin.xml",
+      //language=XML
+      """
+      <idea-plugin>
+        <id>com.example.plugin.with.publicmodule</id>
+        <vendor>ExampleVendor</vendor>
+        <content namespace="example_namespace">
+          <module name="com.example.publicmodule"/>
+        </content>
+      </idea-plugin>
+      """.trimIndent(),
+      false
+    )
+  }
+
+  fun `test fix set namespace for dependency from plugin descriptor`() {
+    myFixture.addModuleWithPluginDescriptor(
+      "com.example.plugin.with.internalmodule",
+      "com.example.plugin.with.internalmodule/META-INF/plugin.xml",
+      """
+      <idea-plugin>
+        <id>com.example.plugin.with.internalmodule</id>
+        <vendor>ExampleVendor</vendor>
+        <content namespace="example_namespace">
+          <module name="com.example.internalmodule"/>
+        </content>
+      </idea-plugin>
+      """.trimIndent())
+    myFixture.addModuleWithPluginDescriptor(
+      "com.example.internalmodule",
+      "com.example.internalmodule/com.example.internalmodule.xml",
+      """
+      <idea-plugin visibility="internal">
+      </idea-plugin>
+      """.trimIndent())
+
+    val testedFile = myFixture.addModuleWithPluginDescriptor(
+      "com.example.plugin",
+      "com.example.plugin/META-INF/plugin.xml",
+      """
+      <idea-plugin>
+          <id>com.example.plugin</id>
+          <vendor>ExampleVendor</vendor>
+          <dependencies>
+              <module name="com.example.internal<caret>module"/>
+          </dependencies>
+      </idea-plugin>
+      """.trimIndent())
+    myFixture.configureFromExistingVirtualFile(testedFile.virtualFile)
+
+    val intention = myFixture.findSingleIntention("Set namespace in 'com.example.plugin' to 'example_namespace'")
+    myFixture.launchAction(intention)
+
+    myFixture.checkResult(
+      "com.example.plugin/META-INF/plugin.xml",
+      //language=XML
+      """
+      <idea-plugin>
+          <id>com.example.plugin</id>
+          <vendor>ExampleVendor</vendor>
+          <dependencies>
+              <module name="com.example.internalmodule"/>
+          </dependencies>
+          <content namespace="example_namespace"/>
+      </idea-plugin>
+      """.trimIndent(),
+      false
+    )
+  }
 }
 
 private fun CodeInsightTestFixture.addModuleWithPluginDescriptor(
