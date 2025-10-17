@@ -10,7 +10,9 @@ class ServiceViewSelectionDataRule : UiDataRule {
   override fun uiDataSnapshot(sink: DataSink, snapshot: DataSnapshot) {
     val project = snapshot[CommonDataKeys.PROJECT] ?: return
     val ids = snapshot[SERVICES_SELECTED_DESCRIPTOR_IDS] ?: return
-    sink[CommonDataKeys.NAVIGATABLE_ARRAY] = ids.mapNotNull { it.getNavigatable(project) }.toTypedArray()
+    val navigatables = ids.mapNotNull { it.getNavigatable(project) }.toTypedArray()
+    sink.lazy(CommonDataKeys.NAVIGATABLE) { navigatables.firstOrNull() }
+    sink.lazy(CommonDataKeys.NAVIGATABLE_ARRAY) { navigatables }
     sink[PlatformCoreDataKeys.SELECTED_ITEMS] = ids.mapNotNull { it.getSelectedItem(project) }.toTypedArray()
   }
 }
