@@ -20,6 +20,7 @@ import org.jetbrains.plugins.terminal.fus.*
 import org.jetbrains.plugins.terminal.session.*
 import org.jetbrains.plugins.terminal.session.dto.toDto
 import org.jetbrains.plugins.terminal.session.dto.toTerminalState
+import org.jetbrains.plugins.terminal.view.shellIntegration.impl.TerminalBlocksModelImpl
 import kotlin.coroutines.cancellation.CancellationException
 import kotlin.time.TimeSource
 

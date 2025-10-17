@@ -9,7 +9,7 @@ import org.jetbrains.plugins.terminal.block.reworked.TerminalOutputModel
 import org.jetbrains.plugins.terminal.session.TerminalGridSize
 import org.jetbrains.plugins.terminal.view.TerminalOutputModelsSet
 import org.jetbrains.plugins.terminal.view.TerminalSendTextBuilder
-import org.jetbrains.plugins.terminal.view.TerminalShellIntegration
+import org.jetbrains.plugins.terminal.view.shellIntegration.TerminalShellIntegration
 import javax.swing.JComponent
 
 @ApiStatus.Experimental

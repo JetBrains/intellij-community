@@ -26,10 +26,14 @@ import org.jetbrains.plugins.terminal.JBTerminalSystemSettingsProvider
 import org.jetbrains.plugins.terminal.block.completion.spec.ShellCommandSpecConflictStrategy
 import org.jetbrains.plugins.terminal.block.completion.spec.ShellCommandSpecInfo
 import org.jetbrains.plugins.terminal.block.completion.spec.ShellCommandSpecsProvider
-import org.jetbrains.plugins.terminal.block.reworked.*
+import org.jetbrains.plugins.terminal.block.reworked.MutableTerminalOutputModel
+import org.jetbrains.plugins.terminal.block.reworked.TerminalCommandCompletion
+import org.jetbrains.plugins.terminal.block.reworked.TerminalOutputModel
 import org.jetbrains.plugins.terminal.session.TerminalBlocksModelState
 import org.jetbrains.plugins.terminal.util.terminalProjectScope
-import org.jetbrains.plugins.terminal.view.impl.TerminalShellIntegrationImpl
+import org.jetbrains.plugins.terminal.view.shellIntegration.TerminalBlockIdImpl
+import org.jetbrains.plugins.terminal.view.shellIntegration.impl.TerminalCommandBlockImpl
+import org.jetbrains.plugins.terminal.view.shellIntegration.impl.TerminalShellIntegrationImpl
 import org.junit.Assume
 import java.awt.event.KeyEvent
 import java.awt.event.KeyEvent.VK_UNDEFINED

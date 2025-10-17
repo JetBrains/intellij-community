@@ -15,9 +15,9 @@ import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.cancel
 import kotlinx.coroutines.isActive
 import org.jetbrains.plugins.terminal.block.reworked.TerminalOutputModel
-import org.jetbrains.plugins.terminal.view.TerminalCommandExecutionListener
-import org.jetbrains.plugins.terminal.view.TerminalCommandFinishedEvent
-import org.jetbrains.plugins.terminal.view.TerminalShellIntegration
+import org.jetbrains.plugins.terminal.view.shellIntegration.TerminalCommandExecutionListener
+import org.jetbrains.plugins.terminal.view.shellIntegration.TerminalCommandFinishedEvent
+import org.jetbrains.plugins.terminal.view.shellIntegration.TerminalShellIntegration
 import java.awt.event.FocusEvent
 import java.awt.event.FocusListener
 import java.awt.event.KeyEvent

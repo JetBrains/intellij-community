@@ -63,10 +63,12 @@ import org.jetbrains.plugins.terminal.session.TerminalHyperlinkId
 import org.jetbrains.plugins.terminal.session.TerminalSession
 import org.jetbrains.plugins.terminal.view.TerminalOutputModelsSet
 import org.jetbrains.plugins.terminal.view.TerminalSendTextBuilder
-import org.jetbrains.plugins.terminal.view.TerminalShellIntegration
 import org.jetbrains.plugins.terminal.view.impl.TerminalOutputModelsSetImpl
 import org.jetbrains.plugins.terminal.view.impl.TerminalSendTextBuilderImpl
 import org.jetbrains.plugins.terminal.view.impl.TerminalSendTextOptions
+import org.jetbrains.plugins.terminal.view.shellIntegration.TerminalBlocksModel
+import org.jetbrains.plugins.terminal.view.shellIntegration.TerminalCommandBlock
+import org.jetbrains.plugins.terminal.view.shellIntegration.TerminalShellIntegration
 import java.awt.Component
 import java.awt.Dimension
 import java.awt.event.ComponentAdapter

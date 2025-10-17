@@ -12,9 +12,9 @@ import com.intellij.terminal.completion.spec.ShellRuntimeDataGenerator
 import com.intellij.util.asDisposable
 import kotlinx.coroutines.*
 import org.jetbrains.plugins.terminal.block.completion.spec.impl.ShellCacheableDataGenerator
-import org.jetbrains.plugins.terminal.view.TerminalCommandExecutionListener
-import org.jetbrains.plugins.terminal.view.TerminalCommandStartedEvent
-import org.jetbrains.plugins.terminal.view.TerminalShellIntegration
+import org.jetbrains.plugins.terminal.view.shellIntegration.TerminalCommandExecutionListener
+import org.jetbrains.plugins.terminal.view.shellIntegration.TerminalCommandStartedEvent
+import org.jetbrains.plugins.terminal.view.shellIntegration.TerminalShellIntegration
 import java.time.Duration
 
 /**

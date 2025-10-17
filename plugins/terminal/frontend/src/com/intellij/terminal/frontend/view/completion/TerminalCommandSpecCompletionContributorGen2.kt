@@ -23,13 +23,13 @@ import org.jetbrains.plugins.terminal.block.completion.TerminalCompletionUtil
 import org.jetbrains.plugins.terminal.block.completion.spec.ShellDataGenerators
 import org.jetbrains.plugins.terminal.block.completion.spec.impl.TerminalCommandCompletionServices
 import org.jetbrains.plugins.terminal.block.reworked.TerminalAliasesStorage
-import org.jetbrains.plugins.terminal.block.reworked.TerminalBlocksModel
-import org.jetbrains.plugins.terminal.block.reworked.TerminalCommandBlock
 import org.jetbrains.plugins.terminal.block.reworked.TerminalOutputModel
 import org.jetbrains.plugins.terminal.block.util.TerminalDataContextUtils.isReworkedTerminalEditor
 import org.jetbrains.plugins.terminal.block.util.TerminalDataContextUtils.isSuppressCompletion
 import org.jetbrains.plugins.terminal.exp.completion.TerminalShellSupport
 import org.jetbrains.plugins.terminal.util.ShellType
+import org.jetbrains.plugins.terminal.view.shellIntegration.TerminalBlocksModel
+import org.jetbrains.plugins.terminal.view.shellIntegration.TerminalCommandBlock
 
 internal class TerminalCommandSpecCompletionContributorGen2 : CompletionContributor(), DumbAware {
 

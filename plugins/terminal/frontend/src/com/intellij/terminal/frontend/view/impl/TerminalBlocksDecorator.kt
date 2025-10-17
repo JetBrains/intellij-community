@@ -11,8 +11,10 @@ import com.intellij.util.asDisposable
 import kotlinx.coroutines.CoroutineScope
 import org.jetbrains.plugins.terminal.block.BlockTerminalOptions
 import org.jetbrains.plugins.terminal.block.BlockTerminalOptionsListener
-import org.jetbrains.plugins.terminal.block.reworked.*
+import org.jetbrains.plugins.terminal.block.reworked.TerminalOffset
+import org.jetbrains.plugins.terminal.block.reworked.TerminalOutputModel
 import org.jetbrains.plugins.terminal.block.ui.*
+import org.jetbrains.plugins.terminal.view.shellIntegration.*
 
 internal class TerminalBlocksDecorator(
   private val editor: EditorEx,

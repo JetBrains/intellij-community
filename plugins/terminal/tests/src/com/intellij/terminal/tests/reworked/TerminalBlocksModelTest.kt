@@ -7,8 +7,13 @@ import com.intellij.terminal.tests.reworked.util.TerminalTestUtil.update
 import com.intellij.testFramework.fixtures.BasePlatformTestCase
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.runBlocking
-import org.jetbrains.plugins.terminal.block.reworked.*
+import org.jetbrains.plugins.terminal.block.reworked.MutableTerminalOutputModel
+import org.jetbrains.plugins.terminal.block.reworked.TerminalOffset
 import org.jetbrains.plugins.terminal.session.TerminalBlocksModelState
+import org.jetbrains.plugins.terminal.view.shellIntegration.TerminalBlockIdImpl
+import org.jetbrains.plugins.terminal.view.shellIntegration.TerminalCommandBlock
+import org.jetbrains.plugins.terminal.view.shellIntegration.impl.TerminalBlocksModelImpl
+import org.jetbrains.plugins.terminal.view.shellIntegration.impl.TerminalCommandBlockImpl
 import org.junit.Assert.assertNotEquals
 import org.junit.Test
 import org.junit.runner.RunWith

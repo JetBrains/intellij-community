@@ -10,8 +10,8 @@ import kotlinx.coroutines.withContext
 import org.jetbrains.plugins.terminal.block.reworked.TerminalAliasesStorage
 import org.jetbrains.plugins.terminal.session.*
 import org.jetbrains.plugins.terminal.session.dto.toState
-import org.jetbrains.plugins.terminal.view.TerminalShellIntegration
-import org.jetbrains.plugins.terminal.view.impl.TerminalShellIntegrationImpl
+import org.jetbrains.plugins.terminal.view.shellIntegration.TerminalShellIntegration
+import org.jetbrains.plugins.terminal.view.shellIntegration.impl.TerminalShellIntegrationImpl
 import java.util.concurrent.CompletableFuture
 
 internal class TerminalShellIntegrationEventsHandler(

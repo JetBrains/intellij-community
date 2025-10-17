@@ -19,7 +19,9 @@ import org.jetbrains.plugins.terminal.block.util.TerminalDataContextUtils.isRewo
 import org.jetbrains.plugins.terminal.session.TerminalContentUpdatedEvent
 import org.jetbrains.plugins.terminal.session.TerminalCursorPositionChangedEvent
 import org.jetbrains.plugins.terminal.session.TerminalOutputEvent
-import org.jetbrains.plugins.terminal.view.TerminalShellIntegration
+import org.jetbrains.plugins.terminal.view.shellIntegration.TerminalCommandBlock
+import org.jetbrains.plugins.terminal.view.shellIntegration.TerminalShellIntegration
+import org.jetbrains.plugins.terminal.view.shellIntegration.impl.isCommandTypingMode
 import java.lang.Runnable
 import java.util.concurrent.CompletableFuture
 
