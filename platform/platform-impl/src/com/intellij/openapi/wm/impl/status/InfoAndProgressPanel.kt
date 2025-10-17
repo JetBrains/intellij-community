@@ -416,7 +416,7 @@ class InfoAndProgressPanel internal constructor(
     val htmlContent = htmlBody.replace("\n", "<br>")
     val balloon = JBPopupFactory.getInstance()
       .createHtmlTextBalloonBuilder(htmlContent,
-                                    icon ?: type.defaultIcon,
+                                    null,
                                     type.titleForeground,
                                     type.popupBackground,
                                     listener)

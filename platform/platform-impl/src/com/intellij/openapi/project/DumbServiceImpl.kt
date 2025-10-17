@@ -428,7 +428,7 @@ open class DumbServiceImpl @NonInjectable @VisibleForTesting constructor(
       val ideFrame = WindowManager.getInstance().getIdeFrame(myProject)
       if (ideFrame != null) {
         val statusBar = ideFrame.statusBar as StatusBarEx?
-        statusBar?.notifyProgressByBalloon(MessageType.WARNING, message)
+        statusBar?.notifyProgressByBalloon(MessageType.INFO, message)
       }
     }
   }
