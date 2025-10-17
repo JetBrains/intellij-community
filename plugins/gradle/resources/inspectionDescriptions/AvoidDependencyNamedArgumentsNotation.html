@@ -1,6 +1,19 @@
 <html>
 <body>
-<p>Detects usage of named arguments notation for dependencies when the GAV string notation could be used instead.</p>
+<p>Detects usage of named arguments notation for dependencies when the GAV string notation could be used instead
+  and offers a quick-fix to convert to it.</p>
+<p><b>Example:</b></p>
+<pre><code lang="kotlin">
+dependencies {
+  implementation(group = "org.gradle.api", name = "gradle", version = "1.0") // reports the argument list
+}
+</code></pre>
+<p>After the quick-fix is applied:</p>
+<pre><code lang="kotlin">
+dependencies {
+  implementation("org.gradle.api:gradle:1.0")
+}
+</code></pre>
 <p>Best practice described <a
   href="https://docs.gradle.org/current/userguide/best_practices_dependencies.html#single-gav-string">here</a>.</p>
 </body>
