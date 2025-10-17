@@ -274,6 +274,7 @@ public final class DebuggerUtilsImpl extends DebuggerUtilsEx {
   }
 
   public static boolean instanceOf(@Nullable ReferenceType type, @NotNull ReferenceType superType) {
+    // Use the reference implementation if possible
     if (type instanceof ReferenceTypeImpl referenceTypeImpl) {
       return referenceTypeImpl.isAssignableTo(superType);
     }
@@ -308,9 +309,7 @@ public final class DebuggerUtilsImpl extends DebuggerUtilsEx {
       }
       else {
         String superName = superType.name();
-        return CommonClassNames.JAVA_LANG_CLONEABLE.equals(superName) ||
-               CommonClassNames.JAVA_IO_SERIALIZABLE.equals(superName) ||
-               CommonClassNames.JAVA_LANG_OBJECT.equals(superName);
+        return CommonClassNames.JAVA_LANG_CLONEABLE.equals(superName) || CommonClassNames.JAVA_IO_SERIALIZABLE.equals(superName);
       }
     }
     if (superType instanceof ClassType) { // may check superclass only
