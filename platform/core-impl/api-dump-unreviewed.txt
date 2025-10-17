@@ -2301,6 +2301,7 @@ c:com.intellij.psi.impl.file.PsiDirectoryImpl
 - findElementAt(I):com.intellij.psi.PsiElement
 - findFile(java.lang.String):com.intellij.psi.PsiFile
 - findSubdirectory(java.lang.String):com.intellij.psi.PsiDirectory
+- p:getBaseIcon():javax.swing.Icon
 - getChildren():com.intellij.psi.PsiElement[]
 - getContainingFile():com.intellij.psi.PsiFile
 - getFiles():com.intellij.psi.PsiFile[]

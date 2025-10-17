@@ -37,6 +37,8 @@ import com.intellij.psi.search.PsiElementProcessor;
 import com.intellij.psi.search.PsiFileSystemItemProcessor;
 import com.intellij.psi.util.PsiUtilCore;
 import com.intellij.testFramework.LightVirtualFile;
+import com.intellij.ui.IconManager;
+import com.intellij.ui.PlatformIcons;
 import com.intellij.util.ArrayUtilRt;
 import com.intellij.util.IncorrectOperationException;
 import com.intellij.util.ThrowableRunnable;
@@ -44,6 +46,7 @@ import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
+import javax.swing.*;
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Collection;
@@ -261,6 +264,15 @@ public class PsiDirectoryImpl extends PsiElementBase implements PsiDirectory, Qu
   @Override
   public PsiFile getContainingFile() {
     return null;
+  }
+
+  @Override
+  protected @Nullable Icon getBaseIcon() {
+    Icon baseIcon = super.getBaseIcon();
+    Icon placeholder = IconManager.getInstance().getPlatformIcon(PlatformIcons.NodePlaceholder);
+    return baseIcon == placeholder
+           ? IconManager.getInstance().getPlatformIcon(PlatformIcons.Folder)
+           : baseIcon;
   }
 
   @Override
