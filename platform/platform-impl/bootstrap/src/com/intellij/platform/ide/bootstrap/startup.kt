@@ -37,6 +37,7 @@ import com.intellij.util.PlatformUtils
 import com.intellij.util.ShellEnvironmentReader
 import com.intellij.util.containers.Java11Shim
 import com.intellij.util.lang.ZipFilePool
+import com.intellij.util.singleProduct.migrateCommunityToSingleProductIfNeeded
 import com.intellij.util.system.OS
 import com.jetbrains.JBR
 import kotlinx.collections.immutable.toImmutableMap
@@ -213,6 +214,11 @@ fun startApplication(
     importConfigIfNeeded(
       scope, isHeadless, configImportNeededDeferred, lockSystemDirsJob, logDeferred, args, customTargetDirectoryToImportConfig,
       appStarterDeferred, euaDocumentDeferred, initLafJob)
+  }
+
+  configImportDeferred.invokeOnCompletion {
+    // In case of patch update from Community Edition to Single Product we need to rename IDE folder on MacOS and rename Desktop shortcuts on Windows.
+    migrateCommunityToSingleProductIfNeeded(args)
   }
 
   val appStartPreparedJob = CompletableDeferred<Unit>()
