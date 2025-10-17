@@ -65,7 +65,12 @@ class RootKindMatcherImpl(private val project: Project) : RootKindMatcher {
             return false
         }
 
-        val scriptConfiguration = (@Suppress("DEPRECATION") virtualFile.findScriptDefinition(project))?.compilationConfiguration
+        val scriptConfiguration =
+            if (!hasBinaryFileExtension && !nameSequence.endsWith(KotlinFileType.DOT_DEFAULT_EXTENSION)) {
+                (@Suppress("DEPRECATION") virtualFile.findScriptDefinition(project))?.compilationConfiguration
+            } else {
+                null
+            }
         val scriptScope = scriptConfiguration?.get(ScriptCompilationConfiguration.ide.acceptedLocations)
 
         val correctedFilter = if (scriptScope != null) {
