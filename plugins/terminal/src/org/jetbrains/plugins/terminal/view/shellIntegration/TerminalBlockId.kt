@@ -4,7 +4,7 @@ package org.jetbrains.plugins.terminal.view.shellIntegration
 import kotlinx.serialization.Serializable
 import org.jetbrains.annotations.ApiStatus
 
-@ApiStatus.Internal
+@ApiStatus.Experimental
 @Serializable
 sealed interface TerminalBlockId
 
