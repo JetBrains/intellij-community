@@ -1,8 +1,10 @@
 package com.intellij.ide.starter.ide
 
 import com.intellij.ide.starter.config.ConfigurationStorage
+import com.intellij.ide.starter.config.jbrVersionForDevServer
 import com.intellij.ide.starter.config.useDockerContainer
 import com.intellij.ide.starter.di.di
+import com.intellij.ide.starter.path.GlobalPaths
 import com.intellij.ide.starter.runner.SetupException
 import com.intellij.ide.starter.telemetry.computeWithSpan
 import com.intellij.ide.starter.utils.catchAll
@@ -12,7 +14,10 @@ import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
 import org.kodein.di.direct
 import org.kodein.di.instance
+import java.io.FileReader
 import java.nio.file.Path
+import java.util.*
+import kotlin.io.path.div
 
 object JBRResolver {
   data class JBRVersion(val majorVersion: String, val buildNumber: String)
@@ -59,7 +64,7 @@ object JBRResolver {
     return catchAll { downloadAndUnpackJbrIfNeeded(getJBRVersionFromSources(jbrFullVersion)) } ?: throw JBRDownloadException(jbrFullVersion)
   }
 
-  public suspend fun downloadAndUnpackJbrIfNeeded(jbrVersion: JBRVersion): Path = computeWithSpan("download and unpack JBR") {
+  suspend fun downloadAndUnpackJbrIfNeeded(jbrVersion: JBRVersion): Path = computeWithSpan("download and unpack JBR") {
     val (majorVersion, buildNumber) = listOf(jbrVersion.majorVersion, jbrVersion.buildNumber)
 
     var os = when {
@@ -83,5 +88,15 @@ object JBRResolver {
       di.direct.instance<JBRDownloader>().downloadJbr(jbrFileName)
     }
     return if (SystemInfo.isMac && !ConfigurationStorage.useDockerContainer()) appHome.resolve("Contents/Home") else appHome
+  }
+
+  fun getRuntimeBuildVersion(): String {
+    val jbrVersion = ConfigurationStorage.jbrVersionForDevServer() ?: run {
+      val jbrDependencyFile = GlobalPaths.instance.checkoutDir / "community" / "build" / "dependencies" / "dependencies.properties"
+      val props = Properties()
+      FileReader(jbrDependencyFile.toFile()).use { reader -> props.load(reader) }
+      props.getProperty("runtimeBuild")
+    }
+    return jbrVersion
   }
 }

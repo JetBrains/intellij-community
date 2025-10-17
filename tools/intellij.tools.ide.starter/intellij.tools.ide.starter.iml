@@ -79,5 +79,7 @@
     <orderEntry type="module" module-name="intellij.tools.ide.starter.bus" exported="" />
     <orderEntry type="library" name="opentelemetry" level="project" />
     <orderEntry type="library" name="github.oshi.core" level="project" />
+    <orderEntry type="module" module-name="intellij.platform.runtime.repository" />
+    <orderEntry type="module" module-name="intellij.platform.buildScripts" />
   </component>
 </module>

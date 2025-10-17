@@ -13,6 +13,8 @@ private const val IGNORED_TEST_FAILURE_PATTERN = "IGNORED_TEST_FAILURE_PATTERN"
 private const val ENV_USE_DOCKER_CONTAINER = "USE_DOCKER_CONTAINER"
 private const val ENV_USE_DOCKER_ADDITIONAL_BINDS = "USE_DOCKER_ADDITIONAL_BINDS"
 private const val AFTER_EACH_MESSAGE_BUS_CLEANUP = "AFTER_EACH_MESSAGE_BUS_CLEANUP"
+private const val ENV_JBR_DEV_SERVER_VERSION = "JBR_DEV_SERVER_VERSION"
+private const val ENABLE_SCRAMBLING_FOR_DEVSERVER = "ENABLE_SCRAMBLING_FOR_DEVSERVER"
 
 val starterConfigurationStorageDefaults = mapOf<String, String>(
   ENV_ENABLE_CLASS_FILE_VERIFICATION to System.getenv(ENV_ENABLE_CLASS_FILE_VERIFICATION),
@@ -23,7 +25,9 @@ val starterConfigurationStorageDefaults = mapOf<String, String>(
   IGNORED_TEST_FAILURE_PATTERN to System.getenv(IGNORED_TEST_FAILURE_PATTERN),
   AFTER_EACH_MESSAGE_BUS_CLEANUP to System.getenv().getOrDefault(AFTER_EACH_MESSAGE_BUS_CLEANUP, "false"),
   ENV_LOG_ENVIRONMENT_VARIABLES to CIServer.instance.isBuildRunningOnCI.toString(),
-  SPLIT_MODE_ENABLED to System.getenv().getOrDefault("REMOTE_DEV_RUN", "false")
+  SPLIT_MODE_ENABLED to System.getenv().getOrDefault("REMOTE_DEV_RUN", "false"),
+  ENV_JBR_DEV_SERVER_VERSION to System.getenv(ENV_JBR_DEV_SERVER_VERSION),
+  ENABLE_SCRAMBLING_FOR_DEVSERVER to System.getenv().getOrDefault("ENABLE_SCRAMBLING_FOR_DEVSERVER", "false")
 ).filter { entry ->
   @Suppress("SENSELESS_COMPARISON")
   entry.value != null
@@ -39,7 +43,7 @@ fun ConfigurationStorage.Companion.useDockerContainer(value: Boolean) = instance
 fun ConfigurationStorage.Companion.setAdditionDockerBinds(value: Set<SystemBind>) = instance().put(ENV_USE_DOCKER_ADDITIONAL_BINDS, SystemBind.string(value))
 fun ConfigurationStorage.Companion.additionDockerBinds(): Set<SystemBind> = SystemBind.setFromString(instance().get(ENV_USE_DOCKER_ADDITIONAL_BINDS)?:"")
 /**
- *  Is it needed to include [runtime module repository](psi_element://com.intellij.platform.runtime.repository) in the installed IDE?
+ *  Is it necessary to include [runtime module repository](psi_element://com.intellij.platform.runtime.repository) in the installed IDE?
  */
 fun ConfigurationStorage.Companion.includeRuntimeModuleRepositoryInIde(): Boolean = instance().getBoolean(INSTALLER_INCLUDE_RUNTIME_MODULE_REPOSITORY)
 fun ConfigurationStorage.Companion.includeRuntimeModuleRepositoryInIde(value: Boolean) = instance().put(INSTALLER_INCLUDE_RUNTIME_MODULE_REPOSITORY, value)
@@ -72,3 +76,19 @@ fun ConfigurationStorage.Companion.ignoredTestFailuresPattern(): String? = insta
  */
 fun ConfigurationStorage.Companion.afterEachMessageBusCleanup() = instance().getBoolean(AFTER_EACH_MESSAGE_BUS_CLEANUP)
 fun ConfigurationStorage.Companion.afterEachMessageBusCleanup(value: Boolean) = instance().put(AFTER_EACH_MESSAGE_BUS_CLEANUP, value)
+
+/**
+ * If ENV variable like `17.0.10b1171.14` otherwise the value will be read from `community/build/dependencies/dependencies.properties`
+ */
+fun ConfigurationStorage.Companion.jbrVersionForDevServer(): String? = instance().getOrNull(ENV_JBR_DEV_SERVER_VERSION)
+
+fun ConfigurationStorage.Companion.isScramblingEnabled(): Boolean = instance().getBoolean(ENABLE_SCRAMBLING_FOR_DEVSERVER)
+
+/**
+ * To enable scrambling on TC, you have to have:
+ * `jps.auth.spaceUsername` and `jps.auth.spacePassword` otherwise you will get error: `Credentials are missing, unable to download from`
+ *
+ * Note that enabling scrambling increase the run of dev server by 5 minutes tests might require bigger timeout.
+ */
+fun ConfigurationStorage.Companion.enableScrambling() = instance().put(ENABLE_SCRAMBLING_FOR_DEVSERVER, true)
+fun ConfigurationStorage.Companion.disableScrambling() = instance().put(ENABLE_SCRAMBLING_FOR_DEVSERVER, false)

@@ -5,6 +5,7 @@ import com.intellij.ide.starter.ci.CIServer
 import com.intellij.ide.starter.ci.NoCIServer
 import com.intellij.ide.starter.community.PublicIdeDownloader
 import com.intellij.ide.starter.config.ConfigurationStorage
+import com.intellij.ide.starter.config.ScrambleToolProvider
 import com.intellij.ide.starter.config.splitMode
 import com.intellij.ide.starter.config.starterConfigurationStorageDefaults
 import com.intellij.ide.starter.frameworks.Framework
@@ -80,6 +81,7 @@ var di = DI {
   bindProvider<TestContainer<*>> { if (ConfigurationStorage.splitMode()) TestContainer.newInstance<RemDevTestContainer>() else TestContainer.newInstance<TestContainerImpl>() }
   bindSingleton<JBRDownloader> { StarterJBRDownloader }
   bindSingleton<TargetResolver> { LocalOnlyTargetResolver }
+  bindSingleton<ScrambleToolProvider> { object : ScrambleToolProvider {} }
 }.apply {
   logOutput("Starter DI was initialized")
 }
