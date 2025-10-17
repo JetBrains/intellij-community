@@ -271,6 +271,18 @@ class SeBackendService(val project: Project, private val coroutineScope: Corouti
     }
   }
 
+  suspend fun isCommandsSupported(
+    session: SeSession,
+    dataContextId: DataContextId,
+    providerIds: List<SeProviderId>,
+    isAllTab: Boolean,
+  ): Boolean {
+    return providerIds.any { providerId ->
+      val provider = getProvidersHolder(session, dataContextId)?.get(providerId, isAllTab)
+      provider?.isCommandsSupported() ?: false
+    }
+  }
+
   companion object {
     @JvmStatic
     fun getInstance(project: Project): SeBackendService = project.service<SeBackendService>()

@@ -62,6 +62,10 @@ class SeGitTab(private val delegate: SeTabDelegate) : SeTab {
     return delegate.isExtendedInfoEnabled()
   }
 
+  override suspend fun isCommandsSupported(): Boolean {
+    return delegate.isCommandsSupported()
+  }
+
   override fun dispose() {
     Disposer.dispose(delegate)
   }

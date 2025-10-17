@@ -22,6 +22,8 @@ class SeItemData private constructor(
   val additionalInfo: Map<String, String>,
   private val itemRef: DurableRef<SeItemEntity>,
 ) {
+  val isCommand: Boolean get() = additionalInfo[SeItemDataKeys.IS_COMMAND]?.toBoolean() == true
+  
   fun fetchItemIfExists(): SeItem? {
     return itemRef.derefOrNull()?.findItemOrNull()
   }

@@ -154,4 +154,9 @@ class SeRemoteApiImpl : SeRemoteApi {
     val project = projectId.findProjectOrNull() ?: return false
     return SeBackendService.getInstance(project).isExtendedInfoEnabled(session, dataContextId, providerIds, isAllTab)
   }
+
+  override suspend fun isCommandsSupported(projectId: ProjectId, session: SeSession, dataContextId: DataContextId, providerIds: List<SeProviderId>, isAllTab: Boolean): Boolean {
+    val project = projectId.findProjectOrNull() ?: return false
+    return SeBackendService.getInstance(project).isCommandsSupported(session, dataContextId, providerIds, isAllTab)
+  }
 }

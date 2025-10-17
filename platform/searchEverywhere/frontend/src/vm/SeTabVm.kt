@@ -21,6 +21,10 @@ import com.intellij.platform.searchEverywhere.*
 import com.intellij.platform.searchEverywhere.frontend.AutoToggleAction
 import com.intellij.platform.searchEverywhere.frontend.SeEmptyResultInfo
 import com.intellij.platform.searchEverywhere.frontend.SeFilterEditor
+import com.intellij.platform.searchEverywhere.frontend.SeSelectionResult
+import com.intellij.platform.searchEverywhere.frontend.SeSelectionResultClose
+import com.intellij.platform.searchEverywhere.frontend.SeSelectionResultKeep
+import com.intellij.platform.searchEverywhere.frontend.SeSelectionResultText
 import com.intellij.platform.searchEverywhere.frontend.SeTab
 import com.intellij.platform.searchEverywhere.providers.SeAdaptedItem
 import com.intellij.platform.searchEverywhere.providers.SeLog
@@ -32,6 +36,7 @@ import org.jetbrains.annotations.ApiStatus
 import java.util.*
 import kotlin.concurrent.atomics.AtomicBoolean
 import kotlin.concurrent.atomics.ExperimentalAtomicApi
+import kotlin.text.toBoolean
 
 @OptIn(ExperimentalCoroutinesApi::class, ExperimentalAtomicApi::class)
 @ApiStatus.Internal
@@ -152,9 +157,17 @@ class SeTabVm(
     isActiveFlow.value = isActive
   }
 
-  suspend fun itemSelected(itemWithIndex: Pair<Int, SeItemData>, isIndexOriginal: Boolean, modifiers: Int, searchText: String): Boolean {
+  suspend fun itemSelected(itemWithIndex: Pair<Int, SeItemData>, isIndexOriginal: Boolean, modifiers: Int, searchText: String): SeSelectionResult {
     logItemSelectedEvent(itemWithIndex, isIndexOriginal)
-    return tab.itemSelected(itemWithIndex.second, modifiers, searchText)
+
+    if (itemWithIndex.second.isCommand) {
+      return SeSelectionResultText(itemWithIndex.second.presentation.text)
+    }
+
+    return if (tab.itemSelected(itemWithIndex.second, modifiers, searchText))
+      SeSelectionResultClose()
+    else
+      SeSelectionResultKeep()
   }
 
   private fun logItemSelectedEvent(itemWithIndex: Pair<Int, SeItemData>, isIndexOriginal: Boolean) {
@@ -242,6 +255,10 @@ class SeTabVm(
   suspend fun isExtendedInfoEnabled() : Boolean {
     return tab.isExtendedInfoEnabled()
   }
+
+  suspend fun isCommandsSupported(): Boolean {
+    return tab.isCommandsSupported()
+  }
 }
 
 private const val ESSENTIALS_THROTTLE_DELAY: Long = 100
@@ -258,7 +275,7 @@ private fun Flow<SeResultEvent>.throttleUntilEssentialsArrive(essentialProviderI
     resultThrottlingMs = essentialWaitingTimeout,
     shouldPassItem = { it !is SeResultEndEvent },
     fastPassThrottlingMs = FAST_PASS_THROTTLE,
-    shouldFastPassItem = { it.providerId().shouldIgnoreThrottling() }
+    shouldFastPassItem = { it.itemDataOrNull()?.shouldIgnoreThrottling() == true }
   ) { event: SeResultEvent, _: Int ->
     val providerId = event.providerId()
 
@@ -295,8 +312,12 @@ private fun SeResultEvent.itemDataOrNull(): SeItemData? = when (this) {
   is SeResultEndEvent -> null
 }
 
-private fun SeProviderId.shouldIgnoreThrottling(): Boolean =
-  AdvancedSettings.getBoolean("search.everywhere.recent.at.top") && this.value == SeProviderIdUtils.RECENT_FILES_ID
+private fun SeItemData.shouldIgnoreThrottling(): Boolean =
+  AdvancedSettings.getBoolean("search.everywhere.recent.at.top") &&
+  this.providerId.value == SeProviderIdUtils.RECENT_FILES_ID ||
+  this.isCommand
 
 @ApiStatus.Internal
-class SeSearchContext(val searchId: String, val tabId: String, val searchPattern: String, val resultsFlow: Flow<ThrottledItems<SeResultEvent>>)
+class SeSearchContext(val searchId: String, val tabId: String,
+                      val searchPattern: String,
+                      val resultsFlow: Flow<ThrottledItems<SeResultEvent>>)

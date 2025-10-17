@@ -82,6 +82,10 @@ class SeAllTab(private val delegate: SeTabDelegate) : SeTab {
     return delegate.getPreviewInfo(itemData, true)
   }
 
+  override suspend fun isCommandsSupported(): Boolean {
+    return delegate.isCommandsSupported()
+  }
+
   override fun dispose() {
     Disposer.dispose(delegate)
   }

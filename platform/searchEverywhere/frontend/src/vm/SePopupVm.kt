@@ -2,6 +2,7 @@
 package com.intellij.platform.searchEverywhere.frontend.vm
 
 import com.intellij.ide.IdeBundle
+import com.intellij.ide.SearchTopHitProvider.Companion.getTopHitAccelerator
 import com.intellij.ide.actions.searcheverywhere.*
 import com.intellij.ide.actions.searcheverywhere.SEHeaderActionListener.Companion.SE_HEADER_ACTION_TOPIC
 import com.intellij.ide.actions.searcheverywhere.SearchEverywhereUI.PREVIEW_EVENTS
@@ -21,6 +22,7 @@ import com.intellij.openapi.wm.ToolWindowManager.Companion.getInstance
 import com.intellij.platform.searchEverywhere.SeItemData
 import com.intellij.platform.searchEverywhere.SeProviderId
 import com.intellij.platform.searchEverywhere.SeSession
+import com.intellij.platform.searchEverywhere.frontend.SeSelectionResult
 import com.intellij.platform.searchEverywhere.frontend.SeTab
 import com.intellij.platform.searchEverywhere.frontend.tabs.actions.SeActionsTab
 import com.intellij.platform.searchEverywhere.utils.SuspendLazyProperty
@@ -62,8 +64,10 @@ class SePopupVm(
   private val canBeShownInFindResultsFlow = MutableStateFlow(false)
   val canBeShownInFindResults: Boolean get() = canBeShownInFindResultsFlow.value
 
-  private val _searchFieldWarning = MutableStateFlow<Pair<String, String?>?>(null)
-  val searchFieldWarning: StateFlow<Pair<String, String?>?> = _searchFieldWarning
+  data class SearchFieldHint(val text: String?, val tooltip: String?, val isWarning: Boolean)
+
+  private val _searchFieldHint = MutableStateFlow(SearchFieldHint("", null, false))
+  val searchFieldHint: StateFlow<SearchFieldHint> = _searchFieldHint
 
   private var historyIterator: HistoryIterator = historyList.getIterator(currentTab.tabId)
     get() {
@@ -135,21 +139,26 @@ class SePopupVm(
       }.map { (currentTab, isDumb, isIncomplete) ->
         // IJPL-193615: In RemDev, IncompleteDependenciesService state is not synchronized between frontend and backend,
         // so isIncomplete always remains false on frontend, making dependency loading messages unavailable in RemDev.
-        if (!currentTab.isIndexingDependent || (!isDumb && !isIncomplete)) return@map null
-
-        if (isDumb) {
+        if (currentTab.isIndexingDependent && isDumb) {
           if (currentTab.tabId == SeActionsTab.ID) {
-            Pair(IdeBundle.message("dumb.mode.analyzing.project"), IdeBundle.message("dumb.mode.some.actions.might.be.unavailable.during.project.analysis"))
+            SearchFieldHint(IdeBundle.message("dumb.mode.analyzing.project"), IdeBundle.message("dumb.mode.some.actions.might.be.unavailable.during.project.analysis"), true)
           }
           else {
-            Pair(IdeBundle.message("dumb.mode.analyzing.project"), IdeBundle.message("dumb.mode.results.might.be.incomplete.during.project.analysis"))
+            SearchFieldHint(IdeBundle.message("dumb.mode.analyzing.project"), IdeBundle.message("dumb.mode.results.might.be.incomplete.during.project.analysis"), true)
           }
         }
+        else if (currentTab.isIndexingDependent && isIncomplete) {
+          SearchFieldHint(IdeBundle.message("incomplete.mode.results.might.be.incomplete"), null, true)
+        }
         else {
-          Pair(IdeBundle.message("incomplete.mode.results.might.be.incomplete"), null)
+          val text = if (currentTab.isCommandsSupported()) {
+            IdeBundle.message("searcheverywhere.textfield.hint", getTopHitAccelerator())
+          }
+          else null
+          SearchFieldHint(text, null, false)
         }
       }.distinctUntilChanged().collect {
-        _searchFieldWarning.value = it
+        _searchFieldHint.value = it
       }
     }
 
@@ -182,7 +191,7 @@ class SePopupVm(
     }
   }
 
-  suspend fun itemsSelected(indexedItems: List<Pair<Int, SeItemData>>, areIndexesOriginal: Boolean, modifiers: Int): Boolean {
+  suspend fun itemsSelected(indexedItems: List<Pair<Int, SeItemData>>, areIndexesOriginal: Boolean, modifiers: Int): List<SeSelectionResult> {
     val currentTab = currentTab
 
     return coroutineScope {
@@ -190,7 +199,7 @@ class SePopupVm(
         async {
           currentTab.itemSelected(item, areIndexesOriginal, modifiers, searchPattern.value)
         }
-      }.awaitAll().any { it }
+      }.awaitAll()
     }
   }
 

@@ -6,6 +6,7 @@ import com.intellij.ide.rpc.ThrottledItems
 import com.intellij.ide.rpc.ThrottledOneItem
 import com.intellij.platform.searchEverywhere.SeResultEvent
 import com.intellij.platform.searchEverywhere.frontend.SeSearchStatePublisher
+import com.intellij.platform.searchEverywhere.frontend.vm.SeSearchContext
 import com.intellij.platform.searchEverywhere.providers.SeLog
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
@@ -43,7 +44,7 @@ class SeResultListModel(private val searchStatePublisher: SeSearchStatePublisher
     }
   }
 
-  fun addFromThrottledEvent(searchId: String, throttledEvent: ThrottledItems<SeResultEvent>) {
+  fun addFromThrottledEvent(searchContext: SeSearchContext, throttledEvent: ThrottledItems<SeResultEvent>) {
     if (!isValid) reset()
 
     val resultListAdapter = SeResultListModelAdapter(this, selectionModelProvider())
@@ -51,7 +52,7 @@ class SeResultListModel(private val searchStatePublisher: SeSearchStatePublisher
       is ThrottledAccumulatedItems<SeResultEvent> -> {
         val accumulatedList = SeResultListCollection(pendingReplacementElementUuids)
         throttledEvent.items.forEach {
-          accumulatedList.handleEvent(it)
+          accumulatedList.handleEvent(searchContext, it)
         }
 
         // Remove SeResultListMoreRow from the accumulatedList if we already have one in the real listModel
@@ -71,14 +72,14 @@ class SeResultListModel(private val searchStatePublisher: SeSearchStatePublisher
         accumulatedList.list.filterIsInstance<SeResultListItemRow>().takeIf { it.isNotEmpty() }?.map {
           it.item
         }?.let { items ->
-          searchStatePublisher.elementsAdded(searchId, items.associateBy { it.uuid })
+          searchStatePublisher.elementsAdded(searchContext.searchId, items.associateBy { it.uuid })
         }
       }
       is ThrottledOneItem<SeResultEvent> -> {
-        resultListAdapter.handleEvent(throttledEvent.item, onAdd = {
-          searchStatePublisher.elementsAdded(searchId, mapOf(it.uuid to it))
+        resultListAdapter.handleEvent(searchContext, throttledEvent.item, onAdd = {
+          searchStatePublisher.elementsAdded(searchContext.searchId, mapOf(it.uuid to it))
         }, onRemove = {
-          searchStatePublisher.elementsRemoved(searchId, 1)
+          searchStatePublisher.elementsRemoved(searchContext.searchId, 1)
         })
       }
     }

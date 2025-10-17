@@ -30,6 +30,8 @@ import com.intellij.platform.searchEverywhere.frontend.AutoToggleAction
 import com.intellij.platform.searchEverywhere.frontend.SeSearchStatePublisher
 import com.intellij.platform.searchEverywhere.frontend.SeSelectionListener
 import com.intellij.platform.searchEverywhere.frontend.SeSelectionState
+import com.intellij.platform.searchEverywhere.frontend.SeSelectionResultClose
+import com.intellij.platform.searchEverywhere.frontend.SeSelectionResultText
 import com.intellij.platform.searchEverywhere.frontend.tabs.actions.SeActionItemPresentationRenderer
 import com.intellij.platform.searchEverywhere.frontend.tabs.all.SeAllTab
 import com.intellij.platform.searchEverywhere.frontend.tabs.files.SeTargetItemPresentationRenderer
@@ -271,7 +273,7 @@ class SePopupContentPane(
               hintHelper.setSearchInProgress(false)
               val wasFrozen = resultListModel.freezer.isEnabled
 
-              resultListModel.addFromThrottledEvent(searchId, event)
+              resultListModel.addFromThrottledEvent(searchContext, event)
 
               // Freeze back if it was frozen before
               if (wasFrozen) resultListModel.freezer.enable()
@@ -343,11 +345,16 @@ class SePopupContentPane(
     }
 
     launch {
-      vm.searchFieldWarning.collect { warning ->
+      vm.searchFieldHint.collect { hint ->
         withContext(Dispatchers.EDT) {
-          warning?.let { (text, tooltip) ->
-            hintHelper.setLoadingText(text, tooltip)
-          } ?: hintHelper.setHint(null)
+          hint.let { (text, tooltip, isWarning) ->
+            if (isWarning) {
+              hintHelper.setLoadingText(text, tooltip)
+            }
+            else {
+              hintHelper.setHint(text)
+            }
+          }
         }
       }
     }
@@ -488,10 +495,13 @@ class SePopupContentPane(
       }
     }
 
-    if (vmState.value?.itemsSelected(itemDataList, nonItemDataCount == 0, modifiers) == true) {
+    val selectedItems = vmState.value?.itemsSelected(itemDataList, nonItemDataCount == 0, modifiers)
+    if (selectedItems?.any { it is SeSelectionResultClose } == true) {
       closePopup()
     }
     else {
+      (selectedItems?.filterIsInstance<SeSelectionResultText>()?.firstOrNull())?.let { textField.text = it.searchText }
+
       resultList.repaint()
       refreshPresentations()
     }
@@ -502,7 +512,7 @@ class SePopupContentPane(
 
     val listSize = resultListModel.size
     val firstIndex = resultList.firstVisibleIndex.takeIf { it in 0..<listSize } ?: return
-    val lastIndex = resultList.lastVisibleIndex.takeIf { it in 0..<listSize && it >= firstIndex} ?: return
+    val lastIndex = resultList.lastVisibleIndex.takeIf { it in 0..<listSize && it >= firstIndex } ?: return
 
     val visibleRows = (firstIndex..lastIndex).mapNotNull {
       resultListModel.get(it) as? SeResultListItemRow

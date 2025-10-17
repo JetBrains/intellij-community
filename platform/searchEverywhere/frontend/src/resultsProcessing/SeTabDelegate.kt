@@ -26,6 +26,9 @@ import kotlinx.coroutines.channels.BufferOverflow
 import kotlinx.coroutines.flow.*
 import org.jetbrains.annotations.ApiStatus.Internal
 import org.jetbrains.annotations.Nls
+import kotlin.collections.flatMap
+import kotlin.collections.plus
+import kotlin.collections.toSet
 
 @OptIn(ExperimentalCoroutinesApi::class)
 @Internal
@@ -167,6 +170,10 @@ class SeTabDelegate(
     return providers.getValue().isExtendedInfoEnabled()
   }
 
+  suspend fun isCommandsSupported(): Boolean {
+    return providers.getValue().isCommandsSupported()
+  }
+
   override fun dispose() {}
 
   private class Providers(
@@ -273,6 +280,10 @@ class SeTabDelegate(
 
     suspend fun isExtendedInfoEnabled(): Boolean {
       return localProviders.values.any { it.isExtendedInfoEnabled() } || frontendProvidersFacade?.isExtendedInfoEnabled() == true
+    }
+
+    suspend fun isCommandsSupported(): Boolean {
+      return localProviders.values.any { it.isCommandsSupported() } || frontendProvidersFacade?.isCommandsSupported() == true
     }
   }
 

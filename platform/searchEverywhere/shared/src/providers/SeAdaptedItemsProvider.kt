@@ -60,6 +60,14 @@ class SeAdaptedItemsProvider(contributor: SearchEverywhereContributor<Any>) : Se
     return contributorWrapper.contributor is SearchEverywhereExtendedInfoProvider
   }
 
+  fun isCommandsSupported(): Boolean {
+    return contributorWrapper.contributor.supportedCommands.isNotEmpty()
+  }
+
+  fun getSupportedCommands(): List<SeCommandInfo> {
+    return contributorWrapper.contributor.supportedCommands.map { commandInfo -> SeCommandInfo(commandInfo, id) }
+  }
+
   override fun dispose() {
     Disposer.dispose(contributorWrapper)
   }
