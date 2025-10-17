@@ -1415,6 +1415,7 @@ public final class PluginManagerConfigurablePanel implements Disposable {
               .loadErrors(myPluginModelFacade.getModel().mySessionId.toString(),
                           ContainerUtil.map(descriptors, PluginUiModel::getPluginId));
             result.getPreloadedModel().setErrors(MyPluginModel.getErrors(errors));
+            result.getPreloadedModel().setPluginInstallationStates(UiPluginManager.getInstance().getInstallationStatesSync());
             PluginManagerUsageCollector.performInstalledTabSearch(
               ProjectUtil.getActiveProject(), parser, result.getModels(), searchIndex, null);
 

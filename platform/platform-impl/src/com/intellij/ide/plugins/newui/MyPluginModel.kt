@@ -672,9 +672,8 @@ open class MyPluginModel(project: Project?) : InstalledPluginsTableModel(project
 
   val installedDescriptors: MutableList<PluginUiModel>
     get() {
-      checkNotNull(myInstalledPanel)
-
-      return myInstalledPanel!!
+      val panel = myInstalledPanel ?: return mutableListOf()
+      return panel
         .groups
         .filterNot { it.excluded }
         .flatMap { it.plugins }
