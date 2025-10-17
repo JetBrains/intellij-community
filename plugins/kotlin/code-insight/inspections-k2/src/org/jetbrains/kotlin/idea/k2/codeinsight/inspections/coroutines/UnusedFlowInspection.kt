@@ -13,16 +13,14 @@ import org.jetbrains.kotlin.analysis.api.KaSession
 import org.jetbrains.kotlin.analysis.api.symbols.KaCallableSymbol
 import org.jetbrains.kotlin.analysis.api.types.KaClassType
 import org.jetbrains.kotlin.idea.base.resources.KotlinBundle
+import org.jetbrains.kotlin.idea.codeInsight.inspections.shared.coroutines.CoroutinesIds
 import org.jetbrains.kotlin.idea.codeinsight.api.applicable.inspections.KotlinApplicableInspectionBase
 import org.jetbrains.kotlin.idea.codeinsight.utils.resolveExpression
 import org.jetbrains.kotlin.lexer.KtTokens
-import org.jetbrains.kotlin.name.ClassId
 import org.jetbrains.kotlin.psi.*
 import org.jetbrains.kotlin.psi.psiUtil.getStartOffsetIn
 import org.jetbrains.kotlin.psi.psiUtil.isInImportDirective
 import org.jetbrains.kotlin.psi.psiUtil.parents
-
-private val FLOW_CLASS_ID = ClassId.fromString("kotlinx/coroutines/flow/Flow")
 
 internal class UnusedFlowInspection : KotlinApplicableInspectionBase<KtExpression, Unit>() {
     override fun InspectionManager.createProblemDescriptor(
@@ -110,7 +108,7 @@ internal class UnusedFlowInspection : KotlinApplicableInspectionBase<KtExpressio
         // We check if the element is a flow value and if it is used as an expression (i.e. its value is used).
         // If it is not used, then the user forgot to collect this flow.
         val returnType = (element.resolveExpression() as? KaCallableSymbol)?.returnType as? KaClassType ?: return null
-        if (returnType.classId != FLOW_CLASS_ID) return null
+        if (returnType.classId != CoroutinesIds.Flows.Flow.ID) return null
         if (element.isUsedAsExpression) return null
         return Unit
     }

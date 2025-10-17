@@ -1,12 +1,14 @@
 // Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.kotlin.idea.codeInsight.inspections.shared.coroutines
 
+import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.kotlin.name.CallableId
 import org.jetbrains.kotlin.name.ClassId
 import org.jetbrains.kotlin.name.FqName
 import org.jetbrains.kotlin.name.Name
 
-internal object CoroutinesIds {
+@ApiStatus.Internal
+object CoroutinesIds {
     val PACKAGE: FqName = FqName("kotlinx.coroutines")
 
     object Job {
@@ -58,6 +60,10 @@ internal object CoroutinesIds {
 
     object Flows {
         val PACKAGE: FqName = FqName("kotlinx.coroutines.flow")
+
+        object Flow {
+            val ID: ClassId = ClassId(PACKAGE, Name.identifier("Flow"))
+        }
 
         val flowOn: CallableId = CallableId(PACKAGE, Name.identifier("flowOn"))
     }
