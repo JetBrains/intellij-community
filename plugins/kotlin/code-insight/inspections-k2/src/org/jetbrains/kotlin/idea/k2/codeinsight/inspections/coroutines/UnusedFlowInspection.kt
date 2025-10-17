@@ -32,7 +32,7 @@ internal class UnusedFlowInspection : KotlinApplicableInspectionBase<KtExpressio
         element,
         rangeInElement,
         KotlinBundle.message("flow.constructed.but.not.used"),
-        ProblemHighlightType.WARNING,
+        ProblemHighlightType.GENERIC_ERROR_OR_WARNING,
         onTheFly
     )
 
