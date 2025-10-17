@@ -169,13 +169,15 @@
                      key="inspection.display.name.avoid.dependency.named.arguments.notation" groupKey="inspection.best.practises"
                      groupBundle="messages.GradleInspectionBundle"
                      enabledByDefault="true" level="WEAK WARNING"
-                     implementationClass="org.jetbrains.plugins.gradle.codeInspection.GradleAvoidDependencyNamedArgumentsNotationInspection"/>
+                     implementationClass="org.jetbrains.plugins.gradle.codeInspection.GradleAvoidDependencyNamedArgumentsNotationInspection"
+                     isInternal="true"/>
 
     <localInspection language="UAST" groupPath="Gradle" shortName="RedundantKotlinStdLibDependency"
                      bundle="messages.GradleInspectionBundle"
                      key="inspection.display.name.redundant.kotlin.std.lib.dependency" groupKey="inspection.best.practises"
                      groupBundle="messages.GradleInspectionBundle"
                      enabledByDefault="true" level="WARNING"
-                     implementationClass="org.jetbrains.plugins.gradle.codeInspection.GradleRedundantKotlinStdLibInspection"/>
+                     implementationClass="org.jetbrains.plugins.gradle.codeInspection.GradleRedundantKotlinStdLibInspection"
+                     isInternal="true"/>
   </extensions>
 </idea-plugin>

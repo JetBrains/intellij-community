@@ -8,7 +8,8 @@
                      key="inspection.display.name.latest.minor.version" groupKey="inspection.best.practises"
                      groupBundle="messages.GradleInspectionBundle"
                      enabledByDefault="true" level="WARNING"
-                     implementationClass="org.jetbrains.plugins.gradle.codeInspection.GradleLatestMinorVersionInspection"/>
+                     implementationClass="org.jetbrains.plugins.gradle.codeInspection.GradleLatestMinorVersionInspection"
+                     isInternal="true"/>
 
   </extensions>
 </idea-plugin>
