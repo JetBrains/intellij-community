@@ -6,7 +6,8 @@ import com.intellij.openapi.util.Key
 import com.intellij.util.concurrency.annotations.RequiresEdt
 import org.jetbrains.annotations.ApiStatus
 
-@ApiStatus.Internal
+@ApiStatus.Experimental
+@ApiStatus.NonExtendable
 interface TerminalBlocksModel {
   /** The list can be mutable in the implementation, so it should not be cached. */
   @get:RequiresEdt

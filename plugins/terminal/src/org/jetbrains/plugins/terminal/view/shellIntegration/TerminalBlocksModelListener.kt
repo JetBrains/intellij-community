@@ -4,7 +4,7 @@ package org.jetbrains.plugins.terminal.view.shellIntegration
 import org.jetbrains.annotations.ApiStatus
 import java.util.*
 
-@ApiStatus.Internal
+@ApiStatus.Experimental
 interface TerminalBlocksModelListener : EventListener {
   fun blockAdded(event: TerminalBlockAddedEvent) {}
 
@@ -13,25 +13,25 @@ interface TerminalBlocksModelListener : EventListener {
   fun blocksReplaced(event: TerminalBlocksReplacedEvent) {}
 }
 
-@ApiStatus.Internal
+@ApiStatus.Experimental
 @ApiStatus.NonExtendable
 interface TerminalBlocksModelEvent {
   val model: TerminalBlocksModel
 }
 
-@ApiStatus.Internal
+@ApiStatus.Experimental
 @ApiStatus.NonExtendable
 interface TerminalBlockAddedEvent : TerminalBlocksModelEvent {
   val block: TerminalBlockBase
 }
 
-@ApiStatus.Internal
+@ApiStatus.Experimental
 @ApiStatus.NonExtendable
 interface TerminalBlockRemovedEvent : TerminalBlocksModelEvent {
   val block: TerminalBlockBase
 }
 
-@ApiStatus.Internal
+@ApiStatus.Experimental
 @ApiStatus.NonExtendable
 interface TerminalBlocksReplacedEvent : TerminalBlocksModelEvent {
   val oldBlocks: List<TerminalBlockBase>

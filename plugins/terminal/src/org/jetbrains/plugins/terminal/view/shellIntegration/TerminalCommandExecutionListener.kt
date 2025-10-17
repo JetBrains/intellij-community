@@ -5,26 +5,26 @@ import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.plugins.terminal.block.reworked.TerminalOutputModel
 import java.util.*
 
-@ApiStatus.Internal
+@ApiStatus.Experimental
 interface TerminalCommandExecutionListener : EventListener {
   fun commandStarted(event: TerminalCommandStartedEvent) {}
 
   fun commandFinished(event: TerminalCommandFinishedEvent) {}
 }
 
-@ApiStatus.Internal
+@ApiStatus.Experimental
 @ApiStatus.NonExtendable
 interface TerminalCommandExecutionEvent {
   val outputModel: TerminalOutputModel
 }
 
-@ApiStatus.Internal
+@ApiStatus.Experimental
 @ApiStatus.NonExtendable
 interface TerminalCommandStartedEvent : TerminalCommandExecutionEvent {
   val commandBlock: TerminalCommandBlock
 }
 
-@ApiStatus.Internal
+@ApiStatus.Experimental
 @ApiStatus.NonExtendable
 interface TerminalCommandFinishedEvent : TerminalCommandExecutionEvent {
   val commandBlock: TerminalCommandBlock

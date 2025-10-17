@@ -4,7 +4,7 @@ package org.jetbrains.plugins.terminal.view.shellIntegration
 import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.plugins.terminal.block.reworked.TerminalOffset
 
-@ApiStatus.Internal
+@ApiStatus.Experimental
 @ApiStatus.NonExtendable
 interface TerminalBlockBase {
   val id: TerminalBlockId
@@ -12,7 +12,7 @@ interface TerminalBlockBase {
   val endOffset: TerminalOffset
 }
 
-@ApiStatus.Internal
+@ApiStatus.Experimental
 @ApiStatus.NonExtendable
 interface TerminalCommandBlock : TerminalBlockBase {
   val commandStartOffset: TerminalOffset?
