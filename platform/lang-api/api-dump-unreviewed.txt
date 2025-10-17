@@ -1519,10 +1519,6 @@ c:com.intellij.execution.services.SimpleServiceViewDescriptor
 - <init>(java.lang.String,javax.swing.Icon,java.lang.String):V
 - getId():java.lang.String
 - getPresentation():com.intellij.navigation.ItemPresentation
-com.intellij.execution.target.CustomToolLanguageConfigurable
-- a:createCustomTool():java.lang.Object
-- a:setIntrospectable(com.intellij.execution.target.LanguageRuntimeType$Introspectable):V
-- a:validate():java.util.Collection
 f:com.intellij.execution.testframework.TestIconMapper
 - com.intellij.execution.testframework.PoolOfTestIcons
 - <init>():V

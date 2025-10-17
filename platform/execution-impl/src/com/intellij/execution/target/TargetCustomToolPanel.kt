@@ -22,6 +22,7 @@ class TargetCustomToolPanel(
   private val targetSupplier: Supplier<TargetEnvironmentConfiguration>,
   private val language: LanguageRuntimeConfiguration,
   private val introspectable: LanguageRuntimeType.Introspectable?,
+  private val stateChangedCallback: (() -> Unit)? = null,
 ) {
 
   val component: JComponent by lazy { createComponent() }
@@ -69,8 +70,9 @@ class TargetCustomToolPanel(
 
   private fun createRuntimePanel(language: LanguageRuntimeConfiguration): LanguagePanel {
     val configurable = language.getRuntimeType().createConfigurable(project, language, targetEnvironmentType, targetSupplier)
-    if (introspectable != null) {
-      (configurable as? CustomToolLanguageConfigurable<*>)?.setIntrospectable(introspectable)
+    (configurable as? CustomToolLanguageConfigurable<*>)?.apply {
+      introspectable?.let { setIntrospectable(it) }
+      stateChangedCallback?.let { registerStateChangedCallback(it) }
     }
     val panel = panel {
       row {

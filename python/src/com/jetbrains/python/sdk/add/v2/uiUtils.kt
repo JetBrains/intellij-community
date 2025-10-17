@@ -25,7 +25,6 @@ import com.intellij.ui.components.ActionLink
 import com.intellij.ui.components.fields.ExtendableTextComponent
 import com.intellij.ui.components.fields.ExtendableTextField
 import com.intellij.ui.dsl.builder.*
-import com.intellij.ui.util.preferredHeight
 import com.intellij.util.SystemProperties
 import com.intellij.util.ui.JBUI
 import com.jetbrains.python.PyBundle
@@ -136,7 +135,7 @@ class PythonNewEnvironmentDialogNavigator {
 }
 
 
-internal fun <P: PathHolder> SimpleColoredComponent.customizeForPythonInterpreter(isLoading: Boolean, interpreter: PythonSelectableInterpreter<P>?) {
+internal fun <P : PathHolder> SimpleColoredComponent.customizeForPythonInterpreter(isLoading: Boolean, interpreter: PythonSelectableInterpreter<P>?) {
   when {
     isLoading -> {
       append(message("sdk.create.custom.hatch.environment.loading"), SimpleTextAttributes.GRAYED_ITALIC_ATTRIBUTES)
@@ -200,7 +199,7 @@ fun replaceHomePathToTilde(sdkHomePath: @NonNls String): @NlsSafe String {
 }
 
 
-class PythonSdkComboBoxListCellRenderer<P: PathHolder>(val isLoading: () -> Boolean) : ColoredListCellRenderer<PythonSelectableInterpreter<P>?>() {
+class PythonSdkComboBoxListCellRenderer<P : PathHolder>(val isLoading: () -> Boolean) : ColoredListCellRenderer<PythonSelectableInterpreter<P>?>() {
 
   override fun getListCellRendererComponent(list: JList<out PythonSelectableInterpreter<P>?>?, value: PythonSelectableInterpreter<P>?, index: Int, selected: Boolean, hasFocus: Boolean): Component {
     return super.getListCellRendererComponent(list, value, index, selected, hasFocus)
@@ -262,10 +261,18 @@ internal fun <P : PathHolder> Panel.pythonInterpreterComboBox(
         }
         .validationRequestor(validationRequestor and WHEN_PROPERTY_CHANGED(selectedSdkProperty))
         .validationInfo {
-          if (comboBox.isVisible && !comboBox.isBusy && selectedSdkProperty.get() == null) {
-            ValidationInfo(message("sdk.create.custom.existing.error.no.interpreters.to.select"))
+          when {
+            !comboBox.isVisible -> null
+            selectedSdkProperty.get() == null -> {
+              if (comboBox.isBusy) {
+                ValidationInfo(message("python.add.sdk.panel.wait"))
+              }
+              else {
+                ValidationInfo(message("sdk.create.custom.existing.error.no.interpreters.to.select"))
+              }
+            }
+            else -> null
           }
-          else null
         }
         .validationOnApply {
           if (!comboBox.isVisible) return@validationOnApply null
