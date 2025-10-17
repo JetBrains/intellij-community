@@ -526,6 +526,18 @@ public final class PyResolveUtil {
     final var context = resolveContext.getTypeEvalContext();
     final var call = context.maySwitchToAST(element) ? PyCallExpressionNavigator.getPyCallExpressionByCallee(element) : null;
     if (call != null && element instanceof PyTypedElement) {
+      // Prefer alias declaration (e.g., NewType, functional factories) when callee type carries a declaration element
+      final var calleeType = context.getType((PyTypedElement)element);
+      for (var t : PyTypeUtil.toStream(calleeType).toList()) {
+        final var classLike = PyUtil.as(t, PyClassLikeType.class);
+        if (classLike != null) {
+          final var decl = classLike.getDeclarationElement();
+          if (decl instanceof PyTargetExpression) {
+            return List.of(decl);
+          }
+        }
+      }
+
       final var type = PyUtil.as(context.getType((PyTypedElement)element), PyClassType.class);
 
       if (type != null && type.isDefinition()) {

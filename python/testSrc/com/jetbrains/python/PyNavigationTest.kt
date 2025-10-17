@@ -402,6 +402,134 @@ class PyNavigationTest : PyTestCase() {
     }
   }
 
+  // PY-82962 - NewType
+  fun testGoToDeclarationOnNewTypeAliasCall() {
+    myFixture.configureByText(
+      "a.py",
+      """
+      from typing import NewType
+      
+      JobId = NewType("JobId", str)
+      
+      def f():
+          x = Jo<caret>bId("1")
+      """.trimIndent()
+    )
+    val target = PyGotoDeclarationHandler().getGotoDeclarationTarget(elementAtCaret, myFixture.editor)
+    assertNotNull(target)
+    assertInstanceOf(target, PyTargetExpression::class.java)
+    val targetExpr = target as PyTargetExpression
+    assertEquals("JobId", targetExpr.name)
+  }
+
+  // PY-82962: collections.namedtuple
+  fun testGoToDeclarationOnCollectionsNamedTupleAliasCall() {
+    myFixture.configureByText(
+      "a.py",
+      """
+      from collections import namedtuple
+
+      Point = namedtuple("Point", ["x", "y"]) 
+
+      def f():
+          p = Po<caret>int(1, 2)
+      """.trimIndent()
+    )
+    val target = PyGotoDeclarationHandler().getGotoDeclarationTarget(elementAtCaret, myFixture.editor)
+    assertNotNull(target)
+    assertInstanceOf(target, PyTargetExpression::class.java)
+    val targetExpr = target as PyTargetExpression
+    assertEquals("Point", targetExpr.name)
+  }
+
+  // PY-82962: typing.NamedTuple
+  fun testGoToDeclarationOnTypingNamedTupleFunctionalCall() {
+    myFixture.configureByText(
+      "a.py",
+      """
+      from typing import NamedTuple
+
+      Point = NamedTuple("Point", [("x", int), ("y", int)])
+
+      def f():
+          p = Po<caret>int(1, 2)
+      """.trimIndent()
+    )
+    val target = PyGotoDeclarationHandler().getGotoDeclarationTarget(elementAtCaret, myFixture.editor)
+    assertNotNull(target)
+    assertInstanceOf(target, PyTargetExpression::class.java)
+    val targetExpr = target as PyTargetExpression
+    assertEquals("Point", targetExpr.name)
+  }
+
+  // PY-82962: typing.TypedDict
+  fun testGoToDeclarationOnTypedDictFunctionalCall() {
+    myFixture.configureByText(
+      "a.py",
+      """
+      from typing import TypedDict
+
+      Movie = TypedDict("Movie", {"name": str})
+
+      def f():
+          m = Mo<caret>vie(name="x")
+      """.trimIndent()
+    )
+    val target = PyGotoDeclarationHandler().getGotoDeclarationTarget(elementAtCaret, myFixture.editor)
+    assertNotNull(target)
+    assertInstanceOf(target, PyTargetExpression::class.java)
+    val targetExpr = target as PyTargetExpression
+    assertEquals("Movie", targetExpr.name)
+  }
+
+  // PY-82962: enum.Enum
+  fun testGoToDeclarationOnEnumFunctionalCall() {
+    myFixture.configureByText(
+      "a.py",
+      """
+      from enum import Enum
+
+      Color = Enum("Color", "RED GREEN")
+
+      def f():
+          c = Co<caret>lor(1)
+      """.trimIndent()
+    )
+    val target = PyGotoDeclarationHandler().getGotoDeclarationTarget(elementAtCaret, myFixture.editor)
+    assertNotNull(target)
+    assertInstanceOf(target, PyTargetExpression::class.java)
+    val targetExpr = target as PyTargetExpression
+    assertEquals("Color", targetExpr.name)
+  }
+
+
+  // PY-82962: Cross-module import of alias
+  fun testGoToDeclarationOnAliasCallImportedFromOtherModule() {
+    myFixture.addFileToProject(
+      "m.py",
+      """
+      from collections import namedtuple
+      Point = namedtuple("Point", ["x", "y"]) 
+      """.trimIndent()
+    )
+    myFixture.configureByText(
+      "main.py",
+      """
+      from m import Point
+
+      def f():
+          p = Po<caret>int(1, 2)
+      """.trimIndent()
+    )
+    val target = PyGotoDeclarationHandler().getGotoDeclarationTarget(elementAtCaret, myFixture.editor)
+    assertNotNull(target)
+    assertInstanceOf(target, PyTargetExpression::class.java)
+    val targetExpr = target as PyTargetExpression
+    assertEquals("Point", targetExpr.name)
+    assertEquals("m.py", targetExpr.containingFile.name)
+  }
+
+
   fun `test multi with pyi`() {
     myFixture.copyDirectoryToProject("test_multi_with_pyi", "")
     val (stubbed, local) = checkMulti(
