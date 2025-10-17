@@ -416,7 +416,8 @@ internal fun toPsiType(
         psiTypeParent,
         allowErrorTypes = false,
         config.typeMappingMode,
-        isAnnotationMethod = false
+        isAnnotationMethod = false,
+        allowNonJvmPlatforms = true,
     ) ?: UastErrorType
 }
 
