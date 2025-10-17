@@ -111,8 +111,7 @@ class ParsedSentence private constructor(
     }
 
     private suspend fun getSentences(content: TextContent, rangeInFile: TextRange, minimal: Boolean): List<ParsedSentence> {
-      if (HighlightingUtil.isTooLargeText(listOf(content)) ||
-          !NaturalTextDetector.seemsNatural(content.toString())) {
+      if (HighlightingUtil.isTooLargeText(listOf(content)) || !NaturalTextDetector.seemsNatural(content)) {
         return emptyList()
       }
       val parser = DependencyParser.getParser(content, minimal) ?: return emptyList()

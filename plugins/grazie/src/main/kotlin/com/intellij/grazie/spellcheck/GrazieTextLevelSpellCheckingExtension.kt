@@ -146,7 +146,7 @@ object GrazieTextLevelSpellCheckingExtension {
         || GrazieConfig.get().processing == Processing.Local
         || !GrazieCloudConnector.seemsCloudConnected()
         || GrazieCloudConnector.isAfterRecentGecError()
-        || !NaturalTextDetector.seemsNatural(text.toString())) {
+        || !NaturalTextDetector.seemsNatural(text)) {
       return localTypos
     }
 

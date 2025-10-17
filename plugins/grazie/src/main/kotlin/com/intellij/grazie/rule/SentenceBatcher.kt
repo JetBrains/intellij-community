@@ -190,7 +190,7 @@ abstract class SentenceBatcher<T>(val language: Language, private val batchSize:
   protected open fun reportStatus(reporter: RawProgressReporter) {}
 
   private fun hasOurLanguage(tc: TextContent): Boolean {
-    if (!NaturalTextDetector.seemsNatural(tc.toString())) {
+    if (!NaturalTextDetector.seemsNatural(tc)) {
       return false
     }
     return getLanguageIfAvailable(tc.toString().substring(HighlightingUtil.stripPrefix(tc))) == language
