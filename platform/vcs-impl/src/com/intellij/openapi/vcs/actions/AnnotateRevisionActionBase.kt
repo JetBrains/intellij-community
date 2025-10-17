@@ -2,38 +2,40 @@
 package com.intellij.openapi.vcs.actions
 
 import com.intellij.openapi.actionSystem.AnActionEvent
+import com.intellij.openapi.application.EDT
 import com.intellij.openapi.editor.Editor
 import com.intellij.openapi.fileEditor.FileEditorManager
 import com.intellij.openapi.fileEditor.OpenFileDescriptor
 import com.intellij.openapi.fileEditor.impl.LoadTextUtil
-import com.intellij.openapi.progress.ProgressIndicator
-import com.intellij.openapi.progress.ProgressManager
-import com.intellij.openapi.progress.Task
 import com.intellij.openapi.project.DumbAwareAction
-import com.intellij.openapi.util.Ref
+import com.intellij.openapi.project.Project
+import com.intellij.openapi.util.NlsSafe
 import com.intellij.openapi.vcs.AbstractVcs
 import com.intellij.openapi.vcs.AbstractVcsHelper
 import com.intellij.openapi.vcs.VcsBundle
 import com.intellij.openapi.vcs.VcsException
-import com.intellij.openapi.vcs.annotate.FileAnnotation
+import com.intellij.openapi.vcs.annotate.AnnotationProvider
 import com.intellij.openapi.vcs.history.VcsFileRevision
 import com.intellij.openapi.vcs.history.VcsHistoryUtil
-import com.intellij.openapi.vcs.impl.BackgroundableActionLock
 import com.intellij.openapi.vfs.VirtualFile
+import com.intellij.platform.ide.progress.withBackgroundProgress
 import com.intellij.ui.progress.ProgressUIUtil
 import com.intellij.util.diff.Diff
 import com.intellij.util.diff.FilesTooBigForDiffException
-import java.util.concurrent.Semaphore
-import java.util.concurrent.TimeUnit
-import java.util.concurrent.atomic.AtomicBoolean
+import com.intellij.vcs.VcsDisposable
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.launch
+import kotlinx.coroutines.withContext
+import kotlinx.coroutines.withTimeoutOrNull
 import java.util.function.Supplier
 import javax.swing.Icon
+import kotlin.time.Duration.Companion.milliseconds
 
 internal abstract class AnnotateRevisionActionBase : DumbAwareAction {
   constructor(
     dynamicText: Supplier<String>,
     dynamicDescription: Supplier<String>,
-    icon: Icon?
+    icon: Icon?,
   ) : super(dynamicText, dynamicDescription, icon)
 
   protected abstract fun getVcs(e: AnActionEvent): AbstractVcs?
@@ -61,8 +63,7 @@ internal abstract class AnnotateRevisionActionBase : DumbAwareAction {
     val file = getFile(e)
     val vcs = getVcs(e)
     if (fileRevision == null || file == null || vcs == null) return
-
-    annotate(file, fileRevision, vcs, getEditor(e), getAnnotatedLine(e))
+    annotateAsync(file, fileRevision, vcs, getEditor(e), getAnnotatedLine(e))
   }
 
   companion object {
@@ -70,7 +71,7 @@ internal abstract class AnnotateRevisionActionBase : DumbAwareAction {
     fun isEnabled(
       vcs: AbstractVcs?,
       file: VirtualFile?,
-      fileRevision: VcsFileRevision?
+      fileRevision: VcsFileRevision?,
     ): Boolean {
       if (file == null || vcs == null || fileRevision == null || VcsHistoryUtil.isEmpty(fileRevision)) return false
       val provider = vcs.annotationProvider ?: return false
@@ -80,72 +81,81 @@ internal abstract class AnnotateRevisionActionBase : DumbAwareAction {
     }
 
     @JvmStatic
-    fun annotate(
+    fun annotateAsync(file: VirtualFile, fileRevision: VcsFileRevision, vcs: AbstractVcs, editor: Editor?, annotatedLine: Int) {
+      VcsDisposable.getInstance(vcs.project).coroutineScope.launch {
+        annotate(file, fileRevision, vcs, editor, annotatedLine)
+      }
+    }
+
+    private suspend fun annotate(
       file: VirtualFile,
       fileRevision: VcsFileRevision,
       vcs: AbstractVcs,
       editor: Editor?,
-      annotatedLine: Int
+      annotatedLine: Int,
     ) {
       val annotationProvider = vcs.annotationProvider ?: return
-      val oldContent = editor?.document?.getImmutableCharSequence()
+      withContext(Dispatchers.IO) {
+        val oldContent = editor?.document?.getImmutableCharSequence()
 
-      val fileAnnotationRef = Ref<FileAnnotation>()
-      val newLineRef = Ref<Int>()
-      val exceptionRef = Ref<VcsException>()
-
-      val actionLock: BackgroundableActionLock = VcsAnnotateUtil.getBackgroundableLock(vcs.project, file)
-      actionLock.lock()
-
-      val semaphore = Semaphore(0)
-      val shouldOpenEditorInSync = AtomicBoolean(true)
-
-      ProgressManager.getInstance().run(object : Task.Backgroundable(vcs.project, VcsBundle.message("retrieving.annotations"), true) {
-        override fun run(indicator: ProgressIndicator) {
-          try {
-            val fileAnnotation = annotationProvider.annotate(file, fileRevision)
-
-            val newLine = if (annotatedLine < 0) -1 else translateLine(oldContent, fileAnnotation.annotatedContent, annotatedLine)
-
-            fileAnnotationRef.set(fileAnnotation)
-            newLineRef.set(newLine)
-
-            shouldOpenEditorInSync.set(false)
-            semaphore.release()
-          }
-          catch (e: VcsException) {
-            exceptionRef.set(e)
-          }
+        val annotationJob = launch {
+          computeAnnotation(vcs, file, annotationProvider, fileRevision, annotatedLine, oldContent)
         }
 
-        override fun onFinished() {
-          actionLock.unlock()
-        }
-
-        override fun onSuccess() {
-          if (!exceptionRef.isNull) {
-            AbstractVcsHelper.getInstance(project).showError(exceptionRef.get(), VcsBundle.message("operation.name.annotate"))
-          }
-          if (fileAnnotationRef.isNull) return
-
-          AbstractVcsHelper.getInstance(project).showAnnotation(fileAnnotationRef.get(), file, vcs, newLineRef.get())
-        }
-      })
-
-      try {
-        semaphore.tryAcquire(ProgressUIUtil.DEFAULT_PROGRESS_DELAY_MILLIS, TimeUnit.MILLISECONDS)
-
-        // We want to let Backgroundable task open editor if it was fast enough.
+        // We want to let the background task open the editor if it was fast enough.
         // This will remove blinking on editor opening (step 1 - editor opens, step 2 - annotations are shown).
-        if (shouldOpenEditorInSync.get()) {
-          val content = LoadTextUtil.loadText(file)
-          val newLine = translateLine(oldContent, content, annotatedLine)
-
-          val openFileDescriptor = OpenFileDescriptor(vcs.project, file, newLine, 0)
-          FileEditorManager.getInstance(vcs.project).openTextEditor(openFileDescriptor, true)
+        val annotationSlow = withTimeoutOrNull(ProgressUIUtil.DEFAULT_PROGRESS_DELAY_MILLIS.milliseconds) { annotationJob.join() } == null
+        if (annotationSlow) {
+          openEditor(vcs.project, file, oldContent, annotatedLine)
         }
       }
-      catch (_: InterruptedException) {
+    }
+
+    private suspend fun computeAnnotation(
+      vcs: AbstractVcs,
+      file: VirtualFile,
+      annotationProvider: AnnotationProvider,
+      fileRevision: VcsFileRevision,
+      annotatedLine: Int,
+      oldContent: @NlsSafe CharSequence?,
+    ) {
+      val project = vcs.project
+      val actionLock = VcsAnnotateUtil.getBackgroundableLock(project, file)
+      withContext(Dispatchers.EDT) {
+        actionLock.lock()
+        try {
+          val (annotation, line) = withContext(Dispatchers.Default) {
+            withBackgroundProgress(project, VcsBundle.message("retrieving.annotations")) {
+              val fileAnnotation = annotationProvider.annotate(file, fileRevision)
+              val newLine = if (annotatedLine < 0) -1 else translateLine(oldContent, fileAnnotation.annotatedContent, annotatedLine)
+              fileAnnotation to newLine
+            }
+          }
+          AbstractVcsHelper.getInstance(vcs.project).showAnnotation(annotation, file, vcs, line)
+        }
+        catch (e: VcsException) {
+          AbstractVcsHelper.getInstance(vcs.project).showError(e, VcsBundle.message("operation.name.annotate"))
+        }
+        finally {
+          actionLock.unlock()
+        }
+      }
+    }
+
+    private suspend fun openEditor(
+      project: Project,
+      file: VirtualFile,
+      oldContent: CharSequence?,
+      annotatedLine: Int,
+    ) {
+      val newLine = withContext(Dispatchers.IO) {
+        val content = LoadTextUtil.loadText(file)
+        translateLine(oldContent, content, annotatedLine)
+      }
+
+      withContext(Dispatchers.EDT) {
+        val openFileDescriptor = OpenFileDescriptor(project, file, newLine, 0)
+        FileEditorManager.getInstance(project).openTextEditor(openFileDescriptor, true)
       }
     }
 
