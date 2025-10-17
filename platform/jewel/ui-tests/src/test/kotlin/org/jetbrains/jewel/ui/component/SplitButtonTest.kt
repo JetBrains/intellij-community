@@ -1,6 +1,7 @@
 // Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.jewel.ui.component
 
+import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.width
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.testTag
@@ -12,9 +13,12 @@ import androidx.compose.ui.test.assertWidthIsEqualTo
 import androidx.compose.ui.test.junit4.createComposeRule
 import androidx.compose.ui.test.onNodeWithTag
 import androidx.compose.ui.test.performClick
+import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
+import org.jetbrains.jewel.foundation.theme.JewelTheme
 import org.jetbrains.jewel.foundation.util.JewelLogger
 import org.jetbrains.jewel.intui.standalone.theme.IntUiTheme
+import org.jetbrains.jewel.ui.theme.outlinedSplitButtonStyle
 import org.junit.Rule
 import org.junit.Test
 
@@ -154,6 +158,45 @@ class SplitButtonTest {
         composeRule.waitForIdle()
 
         popupMenu.assertHeightIsEqualTo(100.dp)
+    }
+
+    @Test
+    fun `chevron does not get squashed when width-constrained (JEWEL-1061)`() {
+        var expectedWidthDp: Dp = Dp.Unspecified
+        composeRule.setContent {
+            IntUiTheme {
+                expectedWidthDp = JewelTheme.outlinedSplitButtonStyle.button.metrics.minSize.height
+
+                OutlinedSplitButton(
+                    onClick = {},
+                    secondaryOnClick = {},
+                    content = { Text("Long text that gets ellipsized", maxLines = 1) },
+                    menuContent = {},
+                    modifier = Modifier.width(80.dp),
+                )
+            }
+        }
+
+        // The chevron should be as wide as the min height of the button
+        composeRule.onNodeWithTag("Jewel.SplitButton.SecondaryAction").assertWidthIsEqualTo(expectedWidthDp)
+    }
+
+    @Test
+    fun `chevron and divider scale beyond the minimum button height if the button is taller (JEWEL-1061)`() {
+        composeRule.setContent {
+            IntUiTheme {
+                OutlinedSplitButton(
+                    onClick = {},
+                    secondaryOnClick = {},
+                    content = { Text("My text", maxLines = 1) },
+                    menuContent = {},
+                    modifier = Modifier.height(80.dp),
+                )
+            }
+        }
+
+        // The chevron should be as wide as the min height of the button
+        composeRule.onNodeWithTag("Jewel.SplitButton.SecondaryAction").assertHeightIsEqualTo(80.dp)
     }
 
     private val popupItems =

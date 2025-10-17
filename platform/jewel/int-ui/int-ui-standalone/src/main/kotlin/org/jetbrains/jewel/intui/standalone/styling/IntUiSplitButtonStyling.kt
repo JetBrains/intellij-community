@@ -5,6 +5,7 @@ package org.jetbrains.jewel.intui.standalone.styling
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
+import org.jetbrains.jewel.intui.core.theme.IntUiDarkTheme
 import org.jetbrains.jewel.intui.core.theme.IntUiLightTheme
 import org.jetbrains.jewel.ui.component.styling.ButtonStyle
 import org.jetbrains.jewel.ui.component.styling.DividerMetrics
@@ -20,9 +21,9 @@ public object IntUiDefaultSplitButtonStyleFactory {
         buttonStyle: ButtonStyle = ButtonStyle.Default.light(),
         dividerMetrics: DividerMetrics = DividerMetrics.defaults(),
         dividerColor: Color = IntUiLightTheme.colors.blue(8),
-        dividerDisabledColor: Color = IntUiLightTheme.colors.gray(12),
+        dividerDisabledColor: Color = IntUiLightTheme.colors.gray(11),
         dividerPadding: Dp = 4.dp,
-        chevronColor: Color = Color.White,
+        chevronColor: Color = IntUiLightTheme.colors.gray(14),
     ): SplitButtonStyle =
         SplitButtonStyle(
             button = buttonStyle,
@@ -33,10 +34,10 @@ public object IntUiDefaultSplitButtonStyleFactory {
     public fun dark(
         buttonStyle: ButtonStyle = ButtonStyle.Default.dark(),
         dividerMetrics: DividerMetrics = DividerMetrics.defaults(),
-        dividerColor: Color = IntUiLightTheme.colors.blue(9),
-        dividerDisabledColor: Color = IntUiLightTheme.colors.gray(5),
+        dividerColor: Color = IntUiDarkTheme.colors.blue(9),
+        dividerDisabledColor: Color = IntUiDarkTheme.colors.gray(4),
         dividerPadding: Dp = 4.dp,
-        chevronColor: Color = Color.White,
+        chevronColor: Color = IntUiDarkTheme.colors.gray(14),
     ): SplitButtonStyle =
         SplitButtonStyle(
             button = buttonStyle,
@@ -53,7 +54,7 @@ public object IntUiOutlinedSplitButtonStyleFactory {
         buttonStyle: ButtonStyle = ButtonStyle.Outlined.light(),
         dividerMetrics: DividerMetrics = DividerMetrics.defaults(),
         dividerColor: Color = IntUiLightTheme.colors.gray(9),
-        dividerDisabledColor: Color = IntUiLightTheme.colors.gray(12),
+        dividerDisabledColor: Color = IntUiLightTheme.colors.gray(11),
         dividerPadding: Dp = 4.dp,
         chevronColor: Color = Color.Unspecified,
     ): SplitButtonStyle =
@@ -66,10 +67,10 @@ public object IntUiOutlinedSplitButtonStyleFactory {
     public fun dark(
         buttonStyle: ButtonStyle = ButtonStyle.Outlined.dark(),
         dividerMetrics: DividerMetrics = DividerMetrics.defaults(),
-        dividerColor: Color = IntUiLightTheme.colors.gray(5),
-        dividerDisabledColor: Color = IntUiLightTheme.colors.gray(5),
+        dividerColor: Color = IntUiDarkTheme.colors.gray(5),
+        dividerDisabledColor: Color = IntUiDarkTheme.colors.gray(4),
         dividerPadding: Dp = 4.dp,
-        chevronColor: Color = Color.White,
+        chevronColor: Color = IntUiDarkTheme.colors.gray(10),
     ): SplitButtonStyle =
         SplitButtonStyle(
             button = buttonStyle,
