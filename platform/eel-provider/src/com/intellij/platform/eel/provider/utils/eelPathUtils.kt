@@ -1,39 +1,25 @@
 // Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
-package com.intellij.platform.eel.provider.utils
 
-import com.intellij.platform.eel.provider.utils.EelPathUtils.UnixFilePermissionBranch.*
+@file:ApiStatus.Experimental
+package com.intellij.platform.eel.provider.utils
 
 import com.intellij.openapi.application.PathManager
 import com.intellij.openapi.components.Service
 import com.intellij.openapi.components.service
 import com.intellij.openapi.progress.runBlockingMaybeCancellable
 import com.intellij.openapi.project.Project
+import com.intellij.openapi.util.NlsSafe
 import com.intellij.openapi.util.io.FileAttributes
 import com.intellij.openapi.util.io.NioFiles
 import com.intellij.openapi.util.registry.Registry
-import com.intellij.platform.eel.EelApi
-import com.intellij.platform.eel.EelDescriptor
-import com.intellij.platform.eel.EelUserPosixInfo
-import com.intellij.platform.eel.fs.ChangeAttributesOptionsBuilder
-import com.intellij.platform.eel.fs.EelFileInfo
-import com.intellij.platform.eel.fs.WalkDirectoryEntryResult
-import com.intellij.platform.eel.fs.WalkDirectoryEntry
-import com.intellij.platform.eel.fs.WalkDirectoryEntryPosix
-import com.intellij.platform.eel.fs.WalkDirectoryEntryWindows
-import com.intellij.platform.eel.fs.EelFileSystemApi
+import com.intellij.platform.eel.*
+import com.intellij.platform.eel.fs.*
 import com.intellij.platform.eel.fs.EelFileSystemApi.WalkDirectoryOptions.WalkDirectoryEntryOrder
 import com.intellij.platform.eel.fs.EelFileSystemApi.WalkDirectoryOptions.WalkDirectoryTraversalOrder
-import com.intellij.platform.eel.fs.EelPosixFileInfo
-import com.intellij.platform.eel.fs.EelPosixFileInfoImpl
-import com.intellij.platform.eel.fs.WalkDirectoryOptionsBuilder
-import com.intellij.platform.eel.fs.createTemporaryDirectory
-import com.intellij.platform.eel.fs.createTemporaryFile
-import com.intellij.platform.eel.fs.getPath
-import com.intellij.platform.eel.getOrThrow
-import com.intellij.platform.eel.isPosix
-import com.intellij.platform.eel.isWindows
 import com.intellij.platform.eel.path.EelPath
 import com.intellij.platform.eel.provider.*
+import com.intellij.platform.eel.provider.utils.EelPathUtils.UnixFilePermissionBranch.*
+import com.intellij.platform.eel.provider.utils.EelPathUtils.incrementalWalkingTransfer
 import com.intellij.platform.eel.provider.utils.EelPathUtils.transferLocalContentToRemote
 import com.intellij.util.concurrency.annotations.RequiresBackgroundThread
 import com.intellij.util.concurrency.annotations.RequiresBlockingContext
@@ -41,7 +27,6 @@ import com.intellij.util.containers.CollectionFactory
 import com.intellij.util.io.copyToAsync
 import kotlinx.coroutines.*
 import kotlinx.coroutines.channels.ClosedReceiveChannelException
-import kotlinx.coroutines.channels.ReceiveChannel
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.flow
 import kotlinx.coroutines.flow.produceIn
@@ -61,7 +46,9 @@ import java.nio.file.StandardOpenOption.*
 import java.nio.file.attribute.*
 import java.security.MessageDigest
 import java.util.concurrent.ConcurrentHashMap
+import kotlin.io.FileAlreadyExistsException
 import kotlin.io.path.*
+import kotlin.io.path.Path
 import kotlin.math.min
 
 @ApiStatus.Internal
@@ -1604,6 +1591,13 @@ object EelPathUtils {
     NioFiles.deleteRecursively(path)
   }
 }
+
+/**
+ * Create [Path] from [pathOnEel] on [eel]
+ * Same as Java [Path.of] but supports paths on eels
+ */
+@ApiStatus.Experimental
+fun Path(pathOnEel: @NlsSafe String, eel: EelDescriptor): Path = EelPath.parse(pathOnEel, eel).asNioPath()
 
 private inline fun <T> Result<T>.handleIOExceptionOrThrow(action: (exception: IOException) -> Unit): Result<T> =
   onFailure { if (it is IOException) action(it) else throw it }
