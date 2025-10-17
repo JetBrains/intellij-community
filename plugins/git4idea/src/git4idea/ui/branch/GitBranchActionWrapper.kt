@@ -8,17 +8,23 @@ import git4idea.GitBranch
 import git4idea.actions.branch.GitBranchActionsDataKeys
 import git4idea.repo.GitRepository
 
-internal class GitBranchActionWrapper(
+
+private class GitBranchActionWrapperGroup(
+  actionGroup: ActionGroup,
+  private val branch: GitBranch,
+  private val selectedRepository: GitRepository,
+  private val repositories: List<GitRepository>,
+) : ActionGroupWrapper(actionGroup), DataSnapshotProvider {
+  override fun dataSnapshot(sink: DataSink) = dataSnapshot(sink, branch, repositories, selectedRepository)
+}
+
+internal class GitBranchActionWrapper private constructor(
   action: AnAction,
   private val branch: GitBranch,
   private val selectedRepository: GitRepository,
   private val repositories: List<GitRepository>,
 ) : AnActionWrapper(action), DataSnapshotProvider {
-  override fun dataSnapshot(sink: DataSink) {
-    sink[GitSingleRefActions.SELECTED_REF_DATA_KEY] = branch
-    sink[GitBranchActionsDataKeys.AFFECTED_REPOSITORIES] = repositories
-    sink[GitBranchActionsDataKeys.SELECTED_REPOSITORY] = selectedRepository
-  }
+  override fun dataSnapshot(sink: DataSink) = dataSnapshot(sink, branch, repositories, selectedRepository)
 
   companion object {
     @JvmStatic
@@ -45,7 +51,14 @@ internal class GitBranchActionWrapper(
       repositories: List<GitRepository>,
     ) {
       when (action) {
-        is GitBranchActionToBeWrapped -> result.add(GitBranchActionWrapper(action, branch, selectedRepository, repositories))
+        is GitBranchActionToBeWrapped -> {
+          if (action is ActionGroup) {
+            result.add(GitBranchActionWrapperGroup(action, branch, selectedRepository, repositories))
+          }
+          else {
+            result.add(GitBranchActionWrapper(action, branch, selectedRepository, repositories))
+          }
+        }
         is ActionGroup -> {
           action.getChildren(e).forEach {
             doWrapActions(result, e, it, branch, selectedRepository, repositories)
@@ -55,4 +68,10 @@ internal class GitBranchActionWrapper(
       }
     }
   }
+}
+
+private fun dataSnapshot(sink: DataSink, branch: GitBranch, repositories: List<GitRepository>, repository: GitRepository) {
+  sink[GitSingleRefActions.SELECTED_REF_DATA_KEY] = branch
+  sink[GitBranchActionsDataKeys.AFFECTED_REPOSITORIES] = repositories
+  sink[GitBranchActionsDataKeys.SELECTED_REPOSITORY] = repository
 }
