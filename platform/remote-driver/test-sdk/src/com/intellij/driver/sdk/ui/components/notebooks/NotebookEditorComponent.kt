@@ -378,6 +378,13 @@ fun Driver.createNewNotebookWithMouse(name: String = "New Notebook", type: Noteb
     waitFor("the editor is present", timeout = 1.minutes) {
       notebookEditor().present()
     }
+    projectView {
+      projectViewTree.run {
+        waitOneText(message = "File name should present in project tree", timeout = 15.seconds) {
+          it.text == "$name.ipynb"
+        }
+      }
+    }
   }
 }
 
