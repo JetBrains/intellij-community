@@ -66,6 +66,9 @@ class FrontendXDebuggerManager(private val project: Project, private val cs: Cor
         ValueLookupManager.getInstance(project).startListening()
       }
     }
+    if (SplitDebuggerMode.isSplitDebugger()) {
+      startContentSelectionListening()
+    }
   }
 
   private suspend fun initCapabilities() {
@@ -158,7 +161,7 @@ class FrontendXDebuggerManager(private val project: Project, private val cs: Cor
     return newSession
   }
 
-  internal fun startContentSelectionListening() {
+  private fun startContentSelectionListening() {
     val selectedSessionId = MutableSharedFlow<XDebugSessionId?>(1, 1, BufferOverflow.DROP_OLDEST)
     cs.launch {
       selectedSessionId.collectLatest { sessionId ->
