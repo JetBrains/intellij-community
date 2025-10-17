@@ -1042,9 +1042,9 @@ public class PyControlFlowBuilder extends PyRecursiveElementVisitor {
       }
       myBuilder.addEdge(instruction, toAllExits);
     }
+    myBuilder.addEdge(myBuilder.prevInstruction, toAllExits);
 
-    // Checks if exit nodes will have at least one predecessor
-    if (exits.size() > 1 || !toAllExits.allPred().isEmpty()) {
+    if (!exits.isEmpty()) {
       myBuilder.addPendingEdge(node, fromAllExits);
     }
   }

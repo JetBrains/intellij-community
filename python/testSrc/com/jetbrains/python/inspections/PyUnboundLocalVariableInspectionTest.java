@@ -463,6 +463,17 @@ public class PyUnboundLocalVariableInspectionTest extends PyInspectionTestCase {
           print(foo)""");
   }
 
+  // PY-80828
+  public void testNoUnboundTryWith() {
+    doTestByText("""
+      def check_access(test: str):
+          try:
+              with open(test, 'w+'):
+                  pass
+          except PermissionError:
+              print(f"{test}")""");
+  }
+
   @NotNull
   @Override
   protected Class<? extends PyInspection> getInspectionClass() {
