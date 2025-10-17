@@ -89,20 +89,33 @@ fun EelPath.asNioPathOrNull(): @MultiRoutingFileSystemPath Path? {
 @Throws(IllegalArgumentException::class, EelPathException::class)
 @ApiStatus.Internal
 fun Path.asEelPath(): EelPath {
+  return asEelPath(getEelDescriptor())
+}
+
+/**
+ * [descriptor] should be exactly `this.getEelDescriptor()`. This method exists only to avoid calling `getEelDescriptor()` twice.
+ */
+@Throws(IllegalArgumentException::class, EelPathException::class)
+@ApiStatus.Internal
+fun Path.asEelPath(descriptor: EelDescriptor): EelPath {
   if (fileSystem != FileSystems.getDefault()) {
     throw IllegalArgumentException("Could not convert $this to EelPath: the path does not belong to the default NIO FileSystem")
   }
-  val descriptor = EelProvider.EP_NAME.extensionList.firstNotNullOfOrNull { eelProvider -> eelProvider.getEelDescriptor(this) }
-                   ?: return EelPath.parse(toString(), LocalEelDescriptor)
-
-  val root = (descriptor as? EelPathBoundDescriptor)?.rootPath ?: throw NoSuchElementException("Cannot find a root for $this")
-
-  val relative = root.relativize(this)
-  if (descriptor.osFamily.isPosix) {
-    return relative.fold(EelPath.parse("/", descriptor), { path, part -> path.resolve(part.toString()) })
-  }
-  else {
-    TODO() // on Windows, we need additional logic to guess the new root
+  when (descriptor) {
+    is LocalEelDescriptor -> return EelPath.parse(toString(), descriptor)
+    is EelPathBoundDescriptor if (descriptor.osFamily.isPosix) -> {
+      val root = descriptor.rootPath
+      val relative = root.relativize(this)
+      return relative.fold(EelPath.parse("/", descriptor)) { path, part ->
+        part.toString().takeIf { it.isNotEmpty() }?.let { path.getChild(it) } ?: path
+      }
+    }
+    is EelPathBoundDescriptor -> {
+      TODO() // on Windows, we need additional logic to guess the new root
+    }
+    else -> {
+      throw NoSuchElementException("Cannot find a root for $this")
+    }
   }
 }
 
