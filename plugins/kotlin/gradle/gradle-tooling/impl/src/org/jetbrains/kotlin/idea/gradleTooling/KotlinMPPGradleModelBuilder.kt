@@ -2,6 +2,7 @@
 
 package org.jetbrains.kotlin.idea.gradleTooling
 
+import com.intellij.gradle.toolingExtension.impl.telemetry.GradleOpenTelemetry
 import org.gradle.api.Project
 import org.gradle.api.logging.Logging
 import org.jetbrains.kotlin.idea.gradleTooling.GradleImportProperties.*
@@ -38,7 +39,9 @@ class KotlinMPPGradleModelBuilder : AbstractModelBuilderService() {
     }
 
     override fun buildAll(modelName: String, project: Project, builderContext: ModelBuilderContext): KotlinMPPGradleModel? {
-        return buildAll(project, builderContext)
+        return GradleOpenTelemetry.callWithSpan("kotlin_import_daemon_mpp_buildAll") {
+            buildAll(project, builderContext)
+        }
     }
 
     private fun buildAll(project: Project, builderContext: ModelBuilderContext?): KotlinMPPGradleModel? {

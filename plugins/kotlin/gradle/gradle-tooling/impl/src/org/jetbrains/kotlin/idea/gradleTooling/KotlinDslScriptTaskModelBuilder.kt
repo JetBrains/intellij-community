@@ -2,6 +2,7 @@
 
 package org.jetbrains.kotlin.idea.gradleTooling
 
+import com.intellij.gradle.toolingExtension.impl.telemetry.GradleOpenTelemetry
 import com.intellij.gradle.toolingExtension.util.GradleVersionUtil
 import org.gradle.api.Project
 import org.gradle.api.logging.Logging
@@ -21,12 +22,14 @@ class KotlinDslScriptTaskModelBuilder : AbstractModelBuilderService() {
     }
 
     override fun buildAll(modelName: String, project: Project, context: ModelBuilderContext): Any? {
-        if (kotlinDslScriptsModelImportSupported(project.gradle.gradleVersion)) {
-            val startParameter = project.gradle.startParameter
+        GradleOpenTelemetry.runWithSpan("kotlin_import_dsl_script_task_buildAll") {
+            if (kotlinDslScriptsModelImportSupported(project.gradle.gradleVersion)) {
+                val startParameter = project.gradle.startParameter
 
-            val tasks = HashSet(startParameter.taskNames)
-            tasks.add(PREPARATION_TASK_NAME)
-            startParameter.setTaskNames(tasks)
+                val tasks = HashSet(startParameter.taskNames)
+                tasks.add(PREPARATION_TASK_NAME)
+                startParameter.setTaskNames(tasks)
+            }
         }
         return null
     }
