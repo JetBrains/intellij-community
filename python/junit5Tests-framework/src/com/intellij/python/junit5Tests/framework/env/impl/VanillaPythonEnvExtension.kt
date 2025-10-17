@@ -62,7 +62,7 @@ internal class VanillaPythonEnvExtension : PythonEnvExtensionBase<PythonBinary, 
           throw AssertionError(customPythonMessage, e)
         }
         else {
-          LOG.error(customPythonMessage)
+          LOG.warn(customPythonMessage)
           return null
         }
       }
