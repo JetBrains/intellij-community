@@ -436,7 +436,6 @@ abstract class SuspendContextImpl @ApiStatus.Internal constructor(
   }
 
   override fun computeExecutionStacks(container: XExecutionStackContainer) {
-    assertCanBeUsed()
     managerThread.schedule(object : SuspendContextCommandImpl(this) {
       val myAddedThreads = hashSetOf<ThreadReferenceProxyImpl>()
 
