@@ -1,182 +1,163 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
-package com.intellij.openapi.vcs.actions;
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+package com.intellij.openapi.vcs.actions
 
-import com.intellij.openapi.actionSystem.AnActionEvent;
-import com.intellij.openapi.editor.Editor;
-import com.intellij.openapi.fileEditor.FileEditorManager;
-import com.intellij.openapi.fileEditor.OpenFileDescriptor;
-import com.intellij.openapi.fileEditor.impl.LoadTextUtil;
-import com.intellij.openapi.progress.ProgressIndicator;
-import com.intellij.openapi.progress.ProgressManager;
-import com.intellij.openapi.progress.Task;
-import com.intellij.openapi.project.DumbAwareAction;
-import com.intellij.openapi.util.NlsActions;
-import com.intellij.openapi.util.Ref;
-import com.intellij.openapi.vcs.AbstractVcs;
-import com.intellij.openapi.vcs.AbstractVcsHelper;
-import com.intellij.openapi.vcs.VcsBundle;
-import com.intellij.openapi.vcs.VcsException;
-import com.intellij.openapi.vcs.annotate.AnnotationProvider;
-import com.intellij.openapi.vcs.annotate.FileAnnotation;
-import com.intellij.openapi.vcs.history.VcsFileRevision;
-import com.intellij.openapi.vcs.history.VcsHistoryUtil;
-import com.intellij.openapi.vcs.impl.BackgroundableActionLock;
-import com.intellij.openapi.vfs.VirtualFile;
-import com.intellij.ui.progress.ProgressUIUtil;
-import com.intellij.util.diff.Diff;
-import com.intellij.util.diff.FilesTooBigForDiffException;
-import org.jetbrains.annotations.ApiStatus;
-import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
+import com.intellij.openapi.actionSystem.AnActionEvent
+import com.intellij.openapi.editor.Editor
+import com.intellij.openapi.fileEditor.FileEditorManager
+import com.intellij.openapi.fileEditor.OpenFileDescriptor
+import com.intellij.openapi.fileEditor.impl.LoadTextUtil
+import com.intellij.openapi.progress.ProgressIndicator
+import com.intellij.openapi.progress.ProgressManager
+import com.intellij.openapi.progress.Task
+import com.intellij.openapi.project.DumbAwareAction
+import com.intellij.openapi.util.Ref
+import com.intellij.openapi.vcs.AbstractVcs
+import com.intellij.openapi.vcs.AbstractVcsHelper
+import com.intellij.openapi.vcs.VcsBundle
+import com.intellij.openapi.vcs.VcsException
+import com.intellij.openapi.vcs.annotate.FileAnnotation
+import com.intellij.openapi.vcs.history.VcsFileRevision
+import com.intellij.openapi.vcs.history.VcsHistoryUtil
+import com.intellij.openapi.vcs.impl.BackgroundableActionLock
+import com.intellij.openapi.vfs.VirtualFile
+import com.intellij.ui.progress.ProgressUIUtil
+import com.intellij.util.diff.Diff
+import com.intellij.util.diff.FilesTooBigForDiffException
+import java.util.concurrent.Semaphore
+import java.util.concurrent.TimeUnit
+import java.util.concurrent.atomic.AtomicBoolean
+import java.util.function.Supplier
+import javax.swing.Icon
 
-import javax.swing.*;
-import java.util.Objects;
-import java.util.concurrent.Semaphore;
-import java.util.concurrent.TimeUnit;
-import java.util.concurrent.atomic.AtomicBoolean;
-import java.util.function.Supplier;
+internal abstract class AnnotateRevisionActionBase : DumbAwareAction {
+  constructor(
+    dynamicText: Supplier<String>,
+    dynamicDescription: Supplier<String>,
+    icon: Icon?
+  ) : super(dynamicText, dynamicDescription, icon)
 
-@ApiStatus.Internal
-public abstract class AnnotateRevisionActionBase extends DumbAwareAction {
-  public AnnotateRevisionActionBase(@Nullable @NlsActions.ActionText String text,
-                                    @Nullable @NlsActions.ActionDescription String description,
-                                    @Nullable Icon icon) {
-    super(text, description, icon);
+  protected abstract fun getVcs(e: AnActionEvent): AbstractVcs?
+
+  protected abstract fun getFile(e: AnActionEvent): VirtualFile?
+
+  protected abstract fun getFileRevision(e: AnActionEvent): VcsFileRevision?
+
+  protected open fun getEditor(e: AnActionEvent): Editor? = null
+
+  protected abstract fun getAnnotatedLine(e: AnActionEvent): Int
+
+  override fun update(e: AnActionEvent) {
+    e.presentation.isEnabled = isEnabled(e)
   }
 
-  public AnnotateRevisionActionBase(@NotNull Supplier<String> dynamicText,
-                                    @NotNull Supplier<String> dynamicDescription,
-                                    @Nullable Icon icon) {
-    super(dynamicText, dynamicDescription, icon);
+  fun isEnabled(e: AnActionEvent): Boolean {
+    if (e.project == null) return false
+
+    return isEnabled(getVcs(e), getFile(e), getFileRevision(e))
   }
 
-  protected abstract @Nullable AbstractVcs getVcs(@NotNull AnActionEvent e);
+  override fun actionPerformed(e: AnActionEvent) {
+    val fileRevision = getFileRevision(e)
+    val file = getFile(e)
+    val vcs = getVcs(e)
+    if (fileRevision == null || file == null || vcs == null) return
 
-  protected abstract @Nullable VirtualFile getFile(@NotNull AnActionEvent e);
-
-  protected abstract @Nullable VcsFileRevision getFileRevision(@NotNull AnActionEvent e);
-
-  protected @Nullable Editor getEditor(@NotNull AnActionEvent e) {
-    return null;
+    annotate(file, fileRevision, vcs, getEditor(e), getAnnotatedLine(e))
   }
 
-  protected abstract int getAnnotatedLine(@NotNull AnActionEvent e);
+  companion object {
+    @JvmStatic
+    fun isEnabled(
+      vcs: AbstractVcs?,
+      file: VirtualFile?,
+      fileRevision: VcsFileRevision?
+    ): Boolean {
+      if (file == null || vcs == null || fileRevision == null || VcsHistoryUtil.isEmpty(fileRevision)) return false
+      val provider = vcs.annotationProvider ?: return false
+      if (!provider.isAnnotationValid(fileRevision)) return false
 
-  @Override
-  public void update(@NotNull AnActionEvent e) {
-    e.getPresentation().setEnabled(isEnabled(e));
-  }
-
-  public boolean isEnabled(@NotNull AnActionEvent e) {
-    if (e.getProject() == null) return false;
-
-    return isEnabled(getVcs(e), getFile(e), getFileRevision(e));
-  }
-
-  public static boolean isEnabled(@Nullable AbstractVcs vcs,
-                                  @Nullable VirtualFile file,
-                                  @Nullable VcsFileRevision fileRevision) {
-    if (VcsHistoryUtil.isEmpty(fileRevision) || file == null || vcs == null) return false;
-    AnnotationProvider provider = vcs.getAnnotationProvider();
-    if (provider == null) return false;
-    if (!provider.isAnnotationValid(fileRevision)) return false;
-
-    if (VcsAnnotateUtil.getBackgroundableLock(vcs.getProject(), file).isLocked()) {
-      return false;
+      return !VcsAnnotateUtil.getBackgroundableLock(vcs.project, file).isLocked
     }
 
-    return true;
-  }
+    @JvmStatic
+    fun annotate(
+      file: VirtualFile,
+      fileRevision: VcsFileRevision,
+      vcs: AbstractVcs,
+      editor: Editor?,
+      annotatedLine: Int
+    ) {
+      val annotationProvider = vcs.annotationProvider ?: return
+      val oldContent = editor?.document?.getImmutableCharSequence()
 
-  @Override
-  public void actionPerformed(final @NotNull AnActionEvent e) {
-    final VcsFileRevision fileRevision = getFileRevision(e);
-    final VirtualFile file = getFile(e);
-    final AbstractVcs vcs = getVcs(e);
+      val fileAnnotationRef = Ref<FileAnnotation>()
+      val newLineRef = Ref<Int>()
+      val exceptionRef = Ref<VcsException>()
 
-    annotate(Objects.requireNonNull(file), Objects.requireNonNull(fileRevision), Objects.requireNonNull(vcs), getEditor(e),
-             getAnnotatedLine(e));
-  }
+      val actionLock: BackgroundableActionLock = VcsAnnotateUtil.getBackgroundableLock(vcs.project, file)
+      actionLock.lock()
 
-  public static void annotate(@NotNull VirtualFile file,
-                              @NotNull VcsFileRevision fileRevision,
-                              @NotNull AbstractVcs vcs,
-                              @Nullable Editor editor,
-                              int annotatedLine) {
-    final CharSequence oldContent = editor == null ? null : editor.getDocument().getImmutableCharSequence();
+      val semaphore = Semaphore(0)
+      val shouldOpenEditorInSync = AtomicBoolean(true)
 
-    final AnnotationProvider annotationProvider = vcs.getAnnotationProvider();
-    assert annotationProvider != null;
+      ProgressManager.getInstance().run(object : Task.Backgroundable(vcs.project, VcsBundle.message("retrieving.annotations"), true) {
+        override fun run(indicator: ProgressIndicator) {
+          try {
+            val fileAnnotation = annotationProvider.annotate(file, fileRevision)
 
-    final Ref<FileAnnotation> fileAnnotationRef = new Ref<>();
-    final Ref<Integer> newLineRef = new Ref<>();
-    final Ref<VcsException> exceptionRef = new Ref<>();
+            val newLine = if (annotatedLine < 0) -1 else translateLine(oldContent, fileAnnotation.annotatedContent, annotatedLine)
 
-    final BackgroundableActionLock actionLock = VcsAnnotateUtil.getBackgroundableLock(vcs.getProject(), file);
-    actionLock.lock();
+            fileAnnotationRef.set(fileAnnotation)
+            newLineRef.set(newLine)
 
-    Semaphore semaphore = new Semaphore(0);
-    AtomicBoolean shouldOpenEditorInSync = new AtomicBoolean(true);
-
-    ProgressManager.getInstance().run(new Task.Backgroundable(vcs.getProject(), VcsBundle.message("retrieving.annotations"), true) {
-      @Override
-      public void run(@NotNull ProgressIndicator indicator) {
-        try {
-          FileAnnotation fileAnnotation = annotationProvider.annotate(file, fileRevision);
-
-          int newLine = annotatedLine < 0 ? -1 : translateLine(oldContent, fileAnnotation.getAnnotatedContent(), annotatedLine);
-
-          fileAnnotationRef.set(fileAnnotation);
-          newLineRef.set(newLine);
-
-          shouldOpenEditorInSync.set(false);
-          semaphore.release();
+            shouldOpenEditorInSync.set(false)
+            semaphore.release()
+          }
+          catch (e: VcsException) {
+            exceptionRef.set(e)
+          }
         }
-        catch (VcsException e) {
-          exceptionRef.set(e);
+
+        override fun onFinished() {
+          actionLock.unlock()
+        }
+
+        override fun onSuccess() {
+          if (!exceptionRef.isNull) {
+            AbstractVcsHelper.getInstance(project).showError(exceptionRef.get(), VcsBundle.message("operation.name.annotate"))
+          }
+          if (fileAnnotationRef.isNull) return
+
+          AbstractVcsHelper.getInstance(project).showAnnotation(fileAnnotationRef.get(), file, vcs, newLineRef.get())
+        }
+      })
+
+      try {
+        semaphore.tryAcquire(ProgressUIUtil.DEFAULT_PROGRESS_DELAY_MILLIS, TimeUnit.MILLISECONDS)
+
+        // We want to let Backgroundable task open editor if it was fast enough.
+        // This will remove blinking on editor opening (step 1 - editor opens, step 2 - annotations are shown).
+        if (shouldOpenEditorInSync.get()) {
+          val content = LoadTextUtil.loadText(file)
+          val newLine = translateLine(oldContent, content, annotatedLine)
+
+          val openFileDescriptor = OpenFileDescriptor(vcs.project, file, newLine, 0)
+          FileEditorManager.getInstance(vcs.project).openTextEditor(openFileDescriptor, true)
         }
       }
-
-      @Override
-      public void onFinished() {
-        actionLock.unlock();
-      }
-
-      @Override
-      public void onSuccess() {
-        if (!exceptionRef.isNull()) {
-          AbstractVcsHelper.getInstance(myProject).showError(exceptionRef.get(), VcsBundle.message("operation.name.annotate"));
-        }
-        if (fileAnnotationRef.isNull()) return;
-
-        AbstractVcsHelper.getInstance(myProject).showAnnotation(fileAnnotationRef.get(), file, vcs, newLineRef.get());
-      }
-    });
-
-    try {
-      semaphore.tryAcquire(ProgressUIUtil.DEFAULT_PROGRESS_DELAY_MILLIS, TimeUnit.MILLISECONDS);
-
-      // We want to let Backgroundable task open editor if it was fast enough.
-      // This will remove blinking on editor opening (step 1 - editor opens, step 2 - annotations are shown).
-      if (shouldOpenEditorInSync.get()) {
-        CharSequence content = LoadTextUtil.loadText(file);
-        int newLine = translateLine(oldContent, content, annotatedLine);
-
-        OpenFileDescriptor openFileDescriptor = new OpenFileDescriptor(vcs.getProject(), file, newLine, 0);
-        FileEditorManager.getInstance(vcs.getProject()).openTextEditor(openFileDescriptor, true);
+      catch (_: InterruptedException) {
       }
     }
-    catch (InterruptedException ignore) {
-    }
-  }
 
-  private static int translateLine(@Nullable CharSequence oldContent, @Nullable CharSequence newContent, int line) {
-    if (oldContent == null || newContent == null) return line;
-    try {
-      return Diff.translateLine(oldContent, newContent, line, true);
-    }
-    catch (FilesTooBigForDiffException ignore) {
-      return line;
+    @JvmStatic
+    private fun translateLine(oldContent: CharSequence?, newContent: CharSequence?, line: Int): Int {
+      if (oldContent == null || newContent == null) return line
+      return try {
+        Diff.translateLine(oldContent, newContent, line, true)
+      }
+      catch (_: FilesTooBigForDiffException) {
+        line
+      }
     }
   }
 }
