@@ -182,6 +182,8 @@ com.intellij.codeInsight.lookup.Lookup
 - a:itemMatcher(com.intellij.codeInsight.lookup.LookupElement):com.intellij.codeInsight.completion.PrefixMatcher
 - a:itemPattern(com.intellij.codeInsight.lookup.LookupElement):java.lang.String
 - a:removeLookupListener(com.intellij.codeInsight.lookup.LookupListener):V
+f:com.intellij.codeInsight.lookup.LookupElementBuilder
+- s:createWithSymbolPointer(java.lang.String,com.intellij.model.Symbol):com.intellij.codeInsight.lookup.LookupElementBuilder
 com.intellij.codeInsight.lookup.LookupEx
 - com.intellij.codeInsight.lookup.Lookup
 - a:getComponent():java.awt.Component

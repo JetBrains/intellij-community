@@ -4,6 +4,7 @@ package com.intellij.codeInsight.lookup;
 
 import com.intellij.codeInsight.completion.InsertHandler;
 import com.intellij.codeInsight.completion.InsertionContext;
+import com.intellij.model.Symbol;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiNamedElement;
@@ -79,6 +80,10 @@ public final class LookupElementBuilder extends LookupElement {
     PsiUtilCore.ensureValid(element);
     return new LookupElementBuilder(lookupString,
                                     SmartPointerManager.getInstance(element.getProject()).createSmartPsiElementPointer(element));
+  }
+
+  public static @NotNull LookupElementBuilder createWithSymbolPointer(@NotNull String lookupString, @NotNull Symbol symbol) {
+    return new LookupElementBuilder(lookupString, symbol.createPointer());
   }
 
   public static @NotNull LookupElementBuilder create(@NotNull PsiNamedElement element) {

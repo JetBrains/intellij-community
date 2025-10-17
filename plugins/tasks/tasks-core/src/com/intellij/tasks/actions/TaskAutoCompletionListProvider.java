@@ -59,7 +59,7 @@ public class TaskAutoCompletionListProvider extends TextFieldWithAutoCompletionL
   @Override
   public @NotNull LookupElementBuilder createLookupBuilder(final @NotNull Task task) {
     LookupElementBuilder builder =
-      LookupElementBuilder.create(new TaskSymbol(task).createPointer(), getLookupString(task))
+      LookupElementBuilder.createWithSymbolPointer(getLookupString(task), new TaskSymbol(task))
         .withIcon(task.getIcon())
         .withInsertHandler(createInsertHandler(task))
         .withTailText(" " + task.getSummary(), true)
