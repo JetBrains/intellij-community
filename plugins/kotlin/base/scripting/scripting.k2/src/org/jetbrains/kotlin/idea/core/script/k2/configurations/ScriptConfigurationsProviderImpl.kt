@@ -37,8 +37,8 @@ import kotlin.script.experimental.api.ide
 private class AllScriptsDependencies(
     val classes: Set<VirtualFile>,
     val sources: Set<VirtualFile>,
-    val sdkClasses: Set<VirtualFile>,
-    val sdkSources: Set<VirtualFile>,
+    val allClasses: List<VirtualFile>,
+    val allSources: List<VirtualFile>,
 )
 
 private data class ScriptDependencies(
@@ -68,18 +68,19 @@ class ScriptConfigurationsProviderImpl(project: Project, val coroutineScope: Cor
                         accClasses to accSources
                     }
 
-            AllScriptsDependencies(classes, sources, sdkClasses, sdkSources)
+            val allClasses = classes.toList() + sdkClasses
+            val allSources = sources.toList() + sdkSources
+
+            AllScriptsDependencies(classes, sources, allClasses, allSources)
         }
 
     override fun getAllScriptsDependenciesClassFiles(): Collection<VirtualFile> = allScriptsDependencies.classes
 
-    override fun getAllScriptsDependenciesClassFilesScope(): GlobalSearchScope = with(allScriptsDependencies) {
-        compose(classes.toList() + sdkClasses)
-    }
+    override fun getAllScriptsDependenciesClassFilesScope(): GlobalSearchScope =
+        compose(allScriptsDependencies.allClasses)
 
-    override fun getAllScriptDependenciesSourcesScope(): GlobalSearchScope = with(allScriptsDependencies) {
-        compose(sources.toList() + sdkSources)
-    }
+    override fun getAllScriptDependenciesSourcesScope(): GlobalSearchScope =
+        compose(allScriptsDependencies.allSources)
 
     override fun getScriptDependenciesClassFilesScope(virtualFile: VirtualFile): GlobalSearchScope {
         val sdk = virtualFile.currentDependencies.sdk
