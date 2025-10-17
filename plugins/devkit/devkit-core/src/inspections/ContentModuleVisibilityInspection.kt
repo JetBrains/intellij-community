@@ -214,11 +214,16 @@ internal class ContentModuleVisibilityInspection : DevKitPluginXmlInspectionBase
               getModuleName(currentXmlFile), currentModuleIncludingPlugin.getIdOrUniqueFileName()
             )
           }
+          val fixes = buildList {
+            if (currentModuleIncludingPlugin.actualVendor == dependencyIncludingPlugin.actualVendor) {
+              add(ChangeModuleModuleVisibilityFix(dependencyModuleName, ContentModuleVisibility.INTERNAL, dependencyXmlFilePointer))
+            }
+            add(ChangeModuleModuleVisibilityFix(dependencyModuleName, ContentModuleVisibility.PUBLIC, dependencyXmlFilePointer))
+          }
           holder.createProblem(
             dependencyValue,
             message,
-            ChangeModuleModuleVisibilityFix(dependencyModuleName, ContentModuleVisibility.INTERNAL, dependencyXmlFilePointer),
-            ChangeModuleModuleVisibilityFix(dependencyModuleName, ContentModuleVisibility.PUBLIC, dependencyXmlFilePointer)
+            *fixes.toTypedArray(),
           )
           return // report only one problem at once
         }
