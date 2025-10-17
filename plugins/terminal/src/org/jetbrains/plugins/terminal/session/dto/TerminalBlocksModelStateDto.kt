@@ -3,8 +3,8 @@ package org.jetbrains.plugins.terminal.session.dto
 
 import kotlinx.serialization.Serializable
 import org.jetbrains.annotations.ApiStatus
-import org.jetbrains.plugins.terminal.block.reworked.TerminalCommandBlock
 import org.jetbrains.plugins.terminal.session.TerminalBlocksModelState
+import org.jetbrains.plugins.terminal.view.shellIntegration.TerminalCommandBlock
 
 @Serializable
 @ApiStatus.Internal

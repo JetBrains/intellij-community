@@ -18,7 +18,8 @@ import org.jetbrains.plugins.terminal.TerminalOptionsProvider
 import org.jetbrains.plugins.terminal.block.reworked.*
 import org.jetbrains.plugins.terminal.block.util.TerminalDataContextUtils.isOutputModelEditor
 import org.jetbrains.plugins.terminal.session.TerminalState
-import org.jetbrains.plugins.terminal.view.TerminalShellIntegration
+import org.jetbrains.plugins.terminal.view.shellIntegration.TerminalShellIntegration
+import org.jetbrains.plugins.terminal.view.shellIntegration.impl.isCommandTypingMode
 import java.awt.Point
 import java.awt.event.InputEvent
 import java.awt.event.KeyEvent

@@ -1,7 +1,10 @@
 // Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
-package org.jetbrains.plugins.terminal.block.reworked
+package org.jetbrains.plugins.terminal.view.shellIntegration.impl
 
 import org.jetbrains.annotations.ApiStatus
+import org.jetbrains.plugins.terminal.block.reworked.TerminalOffset
+import org.jetbrains.plugins.terminal.view.shellIntegration.TerminalBlockId
+import org.jetbrains.plugins.terminal.view.shellIntegration.TerminalCommandBlock
 
 @ApiStatus.Internal
 data class TerminalCommandBlockImpl(

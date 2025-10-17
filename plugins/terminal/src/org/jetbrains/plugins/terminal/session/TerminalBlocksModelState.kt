@@ -2,7 +2,7 @@
 package org.jetbrains.plugins.terminal.session
 
 import org.jetbrains.annotations.ApiStatus
-import org.jetbrains.plugins.terminal.block.reworked.TerminalBlockBase
+import org.jetbrains.plugins.terminal.view.shellIntegration.TerminalBlockBase
 
 @ApiStatus.Internal
 data class TerminalBlocksModelState(
