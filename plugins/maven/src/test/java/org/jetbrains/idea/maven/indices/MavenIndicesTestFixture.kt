@@ -52,7 +52,7 @@ class MavenIndicesTestFixture(
     }
 
     MavenProjectsManager.getInstance(myProject).getGeneralSettings().setLocalRepository(
-      myRepositoryHelper!!.getTestData(myLocalRepoDir).toString())
+      myRepositoryHelper!!.getTestData(myLocalRepoDir!!).toString())
     MavenSettingsCache.getInstance(myProject).reload()
     get("maven.skip.gav.update.in.unit.test.mode").setValue(false, myTestRootDisposable)
   }
@@ -78,7 +78,7 @@ class MavenIndicesTestFixture(
 
   @Throws(IOException::class)
   fun addToRepository(relPath: String?) {
-    myRepositoryHelper!!.copy(relPath, myLocalRepoDir)
+    myRepositoryHelper!!.copy(relPath!!, myLocalRepoDir!!)
   }
 
   fun tearDown() {

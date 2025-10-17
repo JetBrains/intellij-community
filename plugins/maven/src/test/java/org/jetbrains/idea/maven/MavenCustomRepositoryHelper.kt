@@ -13,108 +13,110 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.jetbrains.idea.maven;
+package org.jetbrains.idea.maven
 
-import com.intellij.openapi.application.PluginPathManager;
-import com.intellij.openapi.util.io.FileUtil;
-import com.intellij.openapi.vfs.LocalFileSystem;
-import org.jetbrains.idea.maven.utils.MavenLog;
+import com.intellij.openapi.application.PluginPathManager
+import com.intellij.openapi.util.io.FileUtilRt
+import com.intellij.openapi.vfs.LocalFileSystem
+import org.jetbrains.idea.maven.utils.MavenLog
+import java.io.IOException
+import java.nio.file.*
+import java.nio.file.attribute.BasicFileAttributes
 
-import java.io.IOException;
-import java.nio.file.*;
-import java.nio.file.attribute.BasicFileAttributes;
-import java.util.Collections;
+class MavenCustomRepositoryHelper(tempDir: Path, vararg subFolders: String) {
+  private val myWorkingData: Path = tempDir.resolve("testData")
 
-public class MavenCustomRepositoryHelper {
-
-  private final Path myWorkingData;
-
-  public MavenCustomRepositoryHelper(Path tempDir, String... subFolders) throws IOException {
-    myWorkingData = tempDir.resolve("testData");
-    Files.createDirectories(myWorkingData);
-    for (String each : subFolders) {
-      addTestData(each);
+  init {
+    Files.createDirectories(myWorkingData)
+    for (each in subFolders) {
+      addTestData(each)
     }
   }
 
-  public void addTestData(String relativePath) throws IOException {
-    addTestData(relativePath, relativePath);
+  @Throws(IOException::class)
+  fun addTestData(relativePath: String) {
+    addTestData(relativePath, relativePath)
   }
 
-  public void addTestData(String relativePathFrom, String relativePathTo) throws IOException {
-    Path to = myWorkingData.resolve(relativePathTo);
-    Path from = Paths.get(getOriginalTestDataPath(), relativePathFrom);
-    Files.createDirectories(to.getParent());
-    Files.walkFileTree(from, new SimpleFileVisitor<>() {
-      @Override
-      public FileVisitResult visitFile(Path file, BasicFileAttributes attrs) throws IOException {
-        Path target = to.resolve(from.relativize(file));
-        Files.createDirectories(target.getParent());
-        Files.copy(file, target, StandardCopyOption.REPLACE_EXISTING);
-        return FileVisitResult.CONTINUE;
+  @Throws(IOException::class)
+  fun addTestData(relativePathFrom: String, relativePathTo: String) {
+    val to = myWorkingData.resolve(relativePathTo)
+    val from = Paths.get(originalTestDataPath, relativePathFrom)
+    Files.createDirectories(to.parent)
+    Files.walkFileTree(from, object : SimpleFileVisitor<Path>() {
+      @Throws(IOException::class)
+      override fun visitFile(file: Path, attrs: BasicFileAttributes): FileVisitResult {
+        val target = to.resolve(from.relativize(file))
+        Files.createDirectories(target.parent)
+        Files.copy(file, target, StandardCopyOption.REPLACE_EXISTING)
+        return FileVisitResult.CONTINUE
       }
-    });
-    LocalFileSystem.getInstance().refreshNioFiles(Collections.singleton(to));
-    LocalFileSystem.getInstance().refreshNioFiles(Collections.singleton(to));
+    })
+    LocalFileSystem.getInstance().refreshNioFiles(mutableSetOf<Path?>(to))
+    LocalFileSystem.getInstance().refreshNioFiles(mutableSetOf<Path?>(to))
   }
 
-  public static String getOriginalTestDataPath() {
-    String sourcesDir = System.getProperty("maven.sources.dir", PluginPathManager.getPluginHomePath("maven"));
-    return FileUtil.toSystemIndependentName(sourcesDir + "/src/test/data");
+  fun getTestData(relativePath: String): Path {
+    return myWorkingData.resolve(relativePath)
   }
 
-  public Path getTestData(String relativePath) {
-    return myWorkingData.resolve(relativePath);
-  }
-
-  public void delete(String relativePath) {
+  fun delete(relativePath: String) {
     try {
-      Path path = getTestData(relativePath);
-      MavenLog.LOG.warn("Deleting " + path);
+      val path = getTestData(relativePath)
+      MavenLog.LOG.warn("Deleting $path")
       if (Files.isDirectory(path)) {
         // delete directory content recursively
-        Files.walkFileTree(path, new SimpleFileVisitor<>() {
-          @Override
-          public FileVisitResult visitFile(Path file, BasicFileAttributes attrs) throws IOException {
-            Files.delete(file);
-            return FileVisitResult.CONTINUE;
+        Files.walkFileTree(path, object : SimpleFileVisitor<Path>() {
+          @Throws(IOException::class)
+          override fun visitFile(file: Path, attrs: BasicFileAttributes): FileVisitResult {
+            Files.delete(file)
+            return FileVisitResult.CONTINUE
           }
 
-          @Override
-          public FileVisitResult postVisitDirectory(Path dir, IOException exc) throws IOException {
-            Files.delete(dir);
-            return FileVisitResult.CONTINUE;
+          @Throws(IOException::class)
+          override fun postVisitDirectory(dir: Path, exc: IOException?): FileVisitResult {
+            Files.delete(dir)
+            return FileVisitResult.CONTINUE
           }
-        });
+        })
       }
       else {
-        Files.deleteIfExists(path);
+        Files.deleteIfExists(path)
       }
     }
-    catch (IOException e) {
-      throw new RuntimeException(e);
+    catch (e: IOException) {
+      throw RuntimeException(e)
     }
   }
 
-  public void copy(String fromRelativePath, String toRelativePath) throws IOException {
-    Path from = getTestData(fromRelativePath);
-    Path to = getTestData(toRelativePath);
+  @Throws(IOException::class)
+  fun copy(fromRelativePath: String, toRelativePath: String) {
+    val from = getTestData(fromRelativePath)
+    val to = getTestData(toRelativePath)
 
     if (Files.isDirectory(from)) {
-      Files.walkFileTree(from, new SimpleFileVisitor<>() {
-        @Override
-        public FileVisitResult visitFile(Path file, BasicFileAttributes attrs) throws IOException {
-          Path target = to.resolve(from.relativize(file));
-          Files.createDirectories(target.getParent());
-          Files.copy(file, target, StandardCopyOption.REPLACE_EXISTING);
-          return FileVisitResult.CONTINUE;
+      Files.walkFileTree(from, object : SimpleFileVisitor<Path>() {
+        @Throws(IOException::class)
+        override fun visitFile(file: Path, attrs: BasicFileAttributes): FileVisitResult {
+          val target = to.resolve(from.relativize(file))
+          Files.createDirectories(target.parent)
+          Files.copy(file, target, StandardCopyOption.REPLACE_EXISTING)
+          return FileVisitResult.CONTINUE
         }
-      });
+      })
     }
     else {
-      Files.copy(from, to, StandardCopyOption.REPLACE_EXISTING);
+      Files.copy(from, to, StandardCopyOption.REPLACE_EXISTING)
     }
 
-    LocalFileSystem.getInstance().refreshNioFiles(Collections.singleton(to));
+    LocalFileSystem.getInstance().refreshNioFiles(mutableSetOf<Path?>(to))
+  }
+
+  companion object {
+    val originalTestDataPath: String
+      get() {
+        val sourcesDir = System.getProperty("maven.sources.dir", PluginPathManager.getPluginHomePath("maven"))
+        return FileUtilRt.toSystemIndependentName("$sourcesDir/src/test/data")
+      }
   }
 }
