@@ -62,11 +62,7 @@ public class PyTypeAssertionEvaluator extends PyRecursiveElementVisitor {
   }
 
   private void visitExpressionInCondition(@NotNull PyExpression node) {
-    if (myPositive && (
-      isIfReferenceStatement(node) ||
-      isIfReferenceConditionalStatement(node) ||
-      isBinaryExpressionPart(node)
-    )) {
+    if (myPositive && isReferenceInTruthyCondition(node)) {
       // TODO: we can actually check if the class defines __bool__ or __len__, and use it to exclude the type
       // we could not suggest `None` because it could be a reference to an empty collection
       // so we could push only non-`None` assertions
@@ -404,19 +400,13 @@ public class PyTypeAssertionEvaluator extends PyRecursiveElementVisitor {
     return null;
   }
 
-  private static boolean isIfReferenceStatement(@NotNull PyExpression node) {
-    return skipNotAndParens(node) instanceof PyConditionalStatementPart;
-  }
-
-  private static boolean isIfReferenceConditionalStatement(@NotNull PyExpression node) {
+  private static boolean isReferenceInTruthyCondition(@NotNull PyExpression node) {
     final PsiElement parent = skipNotAndParens(node);
-    return parent instanceof PyConditionalExpression cond &&
-           PsiTreeUtil.isAncestor(cond.getCondition(), node, false);
-  }
-
-  private static boolean isBinaryExpressionPart(@NotNull PyExpression node) {
-    return skipNotAndParens(node) instanceof PyBinaryExpression binExpr &&
-           (binExpr.isOperator(PyNames.AND) || binExpr.isOperator(PyNames.OR));
+    if (parent instanceof PyConditionalStatementPart) return true;
+    if (parent instanceof PyConditionalExpression cond && PsiTreeUtil.isAncestor(cond.getCondition(), node, false)) return true;
+    if (parent instanceof PyBinaryExpression binExpr && (binExpr.isOperator(PyNames.AND) || binExpr.isOperator(PyNames.OR))) return true;
+    if (parent instanceof PyAssertStatement) return true;
+    return false;
   }
 
   static class Assertion {
