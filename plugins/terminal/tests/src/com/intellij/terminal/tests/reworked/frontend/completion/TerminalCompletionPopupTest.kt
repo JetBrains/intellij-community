@@ -183,9 +183,10 @@ class TerminalCompletionPopupTest : BasePlatformTestCase() {
     assertFalse(fixture.isLookupActive())
   }
 
-  private fun createFixture(): TerminalCompletionFixture {
+  private suspend fun createFixture(): TerminalCompletionFixture {
     val fixture = TerminalCompletionFixture(project, testRootDisposable)
     fixture.mockTestShellCommand(testCommandSpec)
+    fixture.awaitShellIntegrationFeaturesInitialized()
     return fixture
   }
 }
