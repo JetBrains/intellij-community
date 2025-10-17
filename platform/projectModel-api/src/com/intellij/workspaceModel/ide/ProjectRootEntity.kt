@@ -27,6 +27,29 @@ suspend fun registerProjectRoot(project: Project, projectDir: Path) {
   registerProjectRoot(project, projectBaseDirUrl)
 }
 
+@Internal
+suspend fun unregisterProjectRoot(project: Project, projectRoot: VirtualFileUrl) {
+  val workspaceModel = project.serviceAsync<WorkspaceModel>()
+  workspaceModel.update("Remove project root ${projectRoot.presentableUrl} from project ${project.name}") { storage ->
+    val entity = storage.entities(ProjectRootEntity::class.java).firstOrNull { it.root == projectRoot } ?: return@update
+    storage.removeEntity(entity)
+  }
+}
+
+/**
+ * Non-suspend alternative to [unregisterProjectRoot]
+ */
+@Internal
+fun unregisterProjectRootBlocking(project: Project, projectDir: VirtualFileUrl) {
+  val workspaceModel = WorkspaceModel.getInstance(project)
+  ApplicationManager.getApplication().runWriteAction {
+    workspaceModel.updateProjectModel("Remove project root ${projectDir.presentableUrl} from project ${project.name}") { storage ->
+      val entity = storage.entities<ProjectRootEntity>().firstOrNull { it.root == projectDir } ?: return@updateProjectModel
+      storage.removeEntity(entity)
+    }
+  }
+}
+
 /**
  * Non-suspend alternative
  */
