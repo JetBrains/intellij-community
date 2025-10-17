@@ -37,10 +37,16 @@ import org.jetbrains.annotations.VisibleForTesting
 @Service(Service.Level.PROJECT)
 class FrontendXDebuggerManager(private val project: Project, private val cs: CoroutineScope) {
   private val sessionsFlow = MutableStateFlow<List<FrontendXDebuggerSession>>(listOf())
+
+  /**
+   * A session might be created after it's ID becomes the current one.
+   * So we store the ID separately to update [_currentSessionFlow] when [sessionsFlow] updates.
+   */
+  private var currentSessionId: XDebugSessionId? = null
   private val _currentSessionFlow = MutableStateFlow<FrontendXDebuggerSession?>(null)
 
   val currentSessionFlow: StateFlow<FrontendXDebuggerSession?> = _currentSessionFlow.asStateFlow()
-  val currentSession: FrontendXDebuggerSession? get() = currentSessionFlow.value
+  val currentSession: FrontendXDebuggerSession? get() = _currentSessionFlow.value
 
   val breakpointsManager: FrontendXBreakpointManager = FrontendXBreakpointManager(project, cs)
   internal val sessions get() = sessionsFlow.value
@@ -98,12 +104,14 @@ class FrontendXDebuggerManager(private val project: Project, private val cs: Cor
                 sessions
               }
             }
+            updateCurrentSession()
           }
           is XDebuggerManagerSessionEvent.CurrentSessionChanged -> {
             val sessions = sessionsFlow.value
-            val previousSession = sessions.firstOrNull { it.id == event.previousSession }
-            val currentSession = sessions.firstOrNull { it.id == event.currentSession }
-            _currentSessionFlow.value = currentSession
+            val previousSession = findSessionById(sessions, event.previousSession)
+            val currentSession = findSessionById(sessions, event.currentSession)
+            currentSessionId = event.currentSession
+            updateCurrentSession()
             if (shouldTriggerListener) {
               project.messageBus.syncPublisher(XDebuggerManagerProxyListener.TOPIC).activeSessionChanged(previousSession, currentSession)
             }
@@ -119,8 +127,16 @@ class FrontendXDebuggerManager(private val project: Project, private val cs: Cor
         }
         listOf()
       }
+      updateCurrentSession()
     })
   }
+
+  private fun updateCurrentSession() {
+    _currentSessionFlow.value = findSessionById(sessions, currentSessionId)
+  }
+
+  private fun findSessionById(sessions: List<FrontendXDebuggerSession>, sessionId: XDebugSessionId?): FrontendXDebuggerSession? =
+    sessions.firstOrNull { it.id == sessionId }
 
   private fun installEditorListeners() {
     val eventMulticaster = EditorFactory.getInstance().getEventMulticaster()
@@ -137,6 +153,7 @@ class FrontendXDebuggerManager(private val project: Project, private val cs: Cor
     val old = sessionsFlow.getAndUpdate {
       it + newSession
     }
+    updateCurrentSession()
     assert(old.none { it.id == sessionDto.id }) { "Session with id ${sessionDto.id} already exists" }
     return newSession
   }
