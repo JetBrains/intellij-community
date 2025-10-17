@@ -204,6 +204,8 @@ class ProxyImportingTest : MavenMultiVersionImportingTestCase() {
     myProxyFixture.requireAuthentication(proxyUsername, proxyPassword)
     assertFalse("Jar file should be deleted", myHelper.getTestData("local1/intellij/test/maven-extension/1.0/maven-extension-1.0.jar").isRegularFile())
     assertFalse("Pom file should be deleted", myHelper.getTestData("local1/intellij/test/maven-extension/1.0/maven-extension-1.0.pom").isRegularFile())
+    assertTrue("Jar file not found in plugin repo", myHelper.getTestData("plugins/intellij/test/maven-extension/1.0/maven-extension-1.0.jar").isRegularFile())
+    assertTrue("Pom file not found in plugin repo", myHelper.getTestData("plugins/intellij/test/maven-extension/1.0/maven-extension-1.0.pom").isRegularFile())
     importProjectAsync("""
                        <groupId>test</groupId>
                        <artifactId>project</artifactId>
