@@ -26,6 +26,7 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.function.Supplier;
+import java.util.stream.Stream;
 
 import static com.intellij.openapi.util.NullableLazyValue.lazyNullable;
 
@@ -143,9 +144,10 @@ public final class Restarter {
 
   @ApiStatus.Internal
   public static void scheduleRestart(boolean elevate, @NotNull List<@NotNull String> @NotNull ... beforeRestart) throws IOException {
+    var beforeRestartCommands = Stream.of(beforeRestart).filter(cmd -> !cmd.isEmpty()).toList();
     var exitCodeVariable = EnvironmentUtil.getValue(SPECIAL_EXIT_CODE_FOR_RESTART_ENV_VAR);
     if (exitCodeVariable != null) {
-      if (beforeRestart.length > 0) {
+      if (!beforeRestartCommands.isEmpty()) {
         throw new IOException("Cannot restart application: specific exit code restart mode does not support executing additional commands");
       }
       try {
@@ -156,13 +158,13 @@ public final class Restarter {
       }
     }
     else if (OS.CURRENT == OS.Windows) {
-      restartOnWindows(elevate, List.of(beforeRestart), mainAppArgs);
+      restartOnWindows(elevate, beforeRestartCommands, mainAppArgs);
     }
     else if (OS.CURRENT == OS.macOS) {
-      restartOnMac(List.of(beforeRestart), mainAppArgs);
+      restartOnMac(beforeRestartCommands, mainAppArgs);
     }
     else if (OS.CURRENT == OS.Linux) {
-      restartOnLinux(List.of(beforeRestart), mainAppArgs);
+      restartOnLinux(beforeRestartCommands, mainAppArgs);
     }
     else {
       throw new IOException("Cannot restart application: not supported.");
