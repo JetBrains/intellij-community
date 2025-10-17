@@ -957,6 +957,7 @@
       <module fileurl="file://$PROJECT_DIR$/plugins/performanceTesting/core/intellij.performanceTesting.iml" filepath="$PROJECT_DIR$/plugins/performanceTesting/core/intellij.performanceTesting.iml" />
       <module fileurl="file://$PROJECT_DIR$/plugins/performanceTesting/frontend/intellij.performanceTesting.frontend.iml" filepath="$PROJECT_DIR$/plugins/performanceTesting/frontend/intellij.performanceTesting.frontend.iml" />
       <module fileurl="file://$PROJECT_DIR$/plugins/performanceTesting/remote-driver/intellij.performanceTesting.remoteDriver.iml" filepath="$PROJECT_DIR$/plugins/performanceTesting/remote-driver/intellij.performanceTesting.remoteDriver.iml" />
+      <module fileurl="file://$PROJECT_DIR$/plugins/performanceTesting/remote-driver.compose/intellij.performanceTesting.remoteDriver.compose.iml" filepath="$PROJECT_DIR$/plugins/performanceTesting/remote-driver.compose/intellij.performanceTesting.remoteDriver.compose.iml" />
       <module fileurl="file://$PROJECT_DIR$/plugins/performanceTesting/scripts-ui/intellij.performanceTesting.ui.iml" filepath="$PROJECT_DIR$/plugins/performanceTesting/scripts-ui/intellij.performanceTesting.ui.iml" />
       <module fileurl="file://$PROJECT_DIR$/plugins/performanceTesting/vcs/intellij.performanceTesting.vcs.iml" filepath="$PROJECT_DIR$/plugins/performanceTesting/vcs/intellij.performanceTesting.vcs.iml" />
       <module fileurl="file://$PROJECT_DIR$/platform/analysis-api/intellij.platform.analysis.iml" filepath="$PROJECT_DIR$/platform/analysis-api/intellij.platform.analysis.iml" />

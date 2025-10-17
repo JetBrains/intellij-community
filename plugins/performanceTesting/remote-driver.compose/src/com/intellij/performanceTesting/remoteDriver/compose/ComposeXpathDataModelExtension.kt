@@ -1,5 +1,5 @@
 // Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
-package com.jetbrains.performancePlugin.remotedriver.xpath
+package com.intellij.performanceTesting.remoteDriver.compose
 
 import androidx.compose.ui.ExperimentalComposeUiApi
 import androidx.compose.ui.awt.ComposePanel
@@ -8,6 +8,7 @@ import androidx.compose.ui.semantics.SemanticsProperties
 import androidx.compose.ui.semantics.getOrNull
 import com.intellij.ui.scale.JBUIScale
 import com.jetbrains.performancePlugin.jmxDriver.InvokerService
+import com.jetbrains.performancePlugin.remotedriver.xpath.XpathDataModelExtension
 import org.jetbrains.jewel.bridge.JewelComposePanelWrapper
 import org.w3c.dom.Document
 import org.w3c.dom.Element

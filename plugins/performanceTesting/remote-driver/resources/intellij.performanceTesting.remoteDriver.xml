@@ -1,8 +1,4 @@
 <idea-plugin visibility="internal" package="com.jetbrains.performancePlugin.remotedriver">
-  <dependencies>
-    <module name="intellij.platform.compose"/>
-  </dependencies>
-
   <extensionPoints>
     <extensionPoint interface="com.jetbrains.performancePlugin.remotedriver.xpath.XpathDataModelExtension"
                     qualifiedName="com.jetbrains.performancePlugin.remotedriver.xpathDataModelExtension" dynamic="true"/>
@@ -22,6 +18,5 @@
 
   <extensions defaultExtensionNs="com.jetbrains.performancePlugin">
     <remotedriver.xpathDataModelExtension implementation="com.jetbrains.performancePlugin.remotedriver.RemoteDriverDataModelExtension"/>
-    <remotedriver.xpathDataModelExtension implementation="com.jetbrains.performancePlugin.remotedriver.xpath.ComposeXpathDataModelExtension"/>
   </extensions>
 </idea-plugin>
