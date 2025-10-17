@@ -21,7 +21,6 @@ import com.intellij.openapi.util.Disposer
 import com.intellij.openapi.util.IconLoader.getDarkIcon
 import com.intellij.openapi.util.IconLoader.getDisabledIcon
 import com.intellij.openapi.util.NlsContexts
-import com.intellij.openapi.util.SystemInfo
 import com.intellij.openapi.util.SystemInfoRt
 import com.intellij.openapi.util.registry.Registry
 import com.intellij.openapi.wm.IdeFocusManager
@@ -42,6 +41,8 @@ import com.intellij.util.SingleAlarm
 import com.intellij.util.concurrency.EdtScheduler
 import com.intellij.util.concurrency.annotations.RequiresEdt
 import com.intellij.util.ui.JBUI
+import com.intellij.util.ui.StartupUiUtil
+import com.intellij.util.ui.moveToFitChildPopupX
 import kotlinx.coroutines.Job
 import java.awt.*
 import java.awt.event.AWTEventListener
@@ -365,6 +366,26 @@ class ActionMenu constructor(
     if (value) {
       subElementSelector?.selectSubElementIfNecessary()
     }
+  }
+
+  override fun getPopupMenuOrigin(): Point {
+    val result = super.getPopupMenuOrigin()
+    if (!StartupUiUtil.isWaylandToolkit() || parent !is JPopupMenu) return result
+    correctPopupMenuPositionForWayland(result)
+    return result
+  }
+
+  private fun correctPopupMenuPositionForWayland(result: Point) {
+    val popupMenu = popupMenu
+    var popupMenuSize = popupMenu.size
+    if (popupMenuSize.width <= 0) { // not shown yet
+      popupMenuSize = popupMenu.preferredSize
+    }
+
+    val popupMenuBounds = Rectangle(result, popupMenuSize)
+    moveToFitChildPopupX(popupMenuBounds, this)
+    result.x = popupMenuBounds.x
+    result.y = popupMenuBounds.y
   }
 
   fun clearItems() {
