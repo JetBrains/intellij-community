@@ -113,6 +113,9 @@ class TerminalViewImpl(
   @VisibleForTesting
   val outputEditorEventsHandler: TerminalEventsHandler
 
+  @VisibleForTesting
+  val shellIntegrationFeaturesInitJob: Job
+
   override val component: JComponent
     get() = terminalPanel
   override val preferredFocusableComponent: JComponent
@@ -282,7 +285,7 @@ class TerminalViewImpl(
     )
     outputEditor.putUserData(TerminalVfsSynchronizer.KEY, synchronizer)
 
-    coroutineScope.launch(
+    shellIntegrationFeaturesInitJob = coroutineScope.launch(
       Dispatchers.EDT +
       ModalityState.any().asContextElement() +
       CoroutineName("Shell integration features init")
