@@ -5601,6 +5601,27 @@ jvm_import(
   visibility = ["//visibility:public"]
 )
 
+java_library(
+  name = "libraries-opencsv-opencsv",
+  exports = [
+    ":com_opencsv-opencsv-5_10_http_import",
+    ":commons-beanutils-commons-beanutils-1_10_0_http_import",
+  ],
+  visibility = ["//visibility:public"]
+)
+
+jvm_import(
+  name = "com_opencsv-opencsv-5_10_http_import",
+  jar = "@com_opencsv-opencsv-5_10_http//file",
+  source_jar = "@com_opencsv-opencsv-5_10_http//file"
+)
+
+jvm_import(
+  name = "commons-beanutils-commons-beanutils-1_10_0_http_import",
+  jar = "@commons-beanutils-commons-beanutils-1_10_0_http//file",
+  source_jar = "@commons-beanutils-commons-beanutils-1_10_0_http//file"
+)
+
 jvm_import(
   name = "libraries-pty4j-pty4j",
   jar = "@org_jetbrains_pty4j-pty4j-0_13_11_http//file",

@@ -1046,6 +1046,9 @@ object CommunityLibraryLicenses {
     LibraryLicense("OkHttp", libraryName = "okhttp", url = "https://square.github.io/okhttp/")
       .apache("https://square.github.io/okhttp/#license"),
 
+    LibraryLicense("opencsv", libraryName = "opencsv", url = "https://opencsv.sourceforge.net/")
+      .apache("https://sourceforge.net/p/opencsv/source/ci/master/tree/LICENSE"),
+
     LibraryLicense(libraryName = "opentelemetry", url = "https://opentelemetry.io/")
       .apache("https://github.com/open-telemetry/opentelemetry-java/blob/main/LICENSE")
       .suppliedByOrganizations("The OpenTelemetry Authors"),

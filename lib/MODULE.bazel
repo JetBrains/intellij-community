@@ -8127,6 +8127,34 @@ http_file(
 )
 
 http_file(
+  name = "com_opencsv-opencsv-5_10_http",
+  url = "https://cache-redirector.jetbrains.com/repo1.maven.org/maven2/com/opencsv/opencsv/5.10/opencsv-5.10.jar",
+  sha256 = "e7927eb9a6d4f8a348a520907dbb08da6283a4448abb9bd9ef2f950d7bb950b0",
+  downloaded_file_path = "opencsv-5.10.jar"
+)
+
+http_file(
+  name = "commons-beanutils-commons-beanutils-1_10_0_http",
+  url = "https://cache-redirector.jetbrains.com/repo1.maven.org/maven2/commons-beanutils/commons-beanutils/1.10.0/commons-beanutils-1.10.0.jar",
+  sha256 = "b6e8dbf5d4a7fd66edbc7106886909c097dc7e0768ca78cc1055955d6ff877a1",
+  downloaded_file_path = "commons-beanutils-1.10.0.jar"
+)
+
+http_file(
+  name = "com_opencsv-opencsv-5_10-sources_http",
+  url = "https://cache-redirector.jetbrains.com/repo1.maven.org/maven2/com/opencsv/opencsv/5.10/opencsv-5.10-sources.jar",
+  sha256 = "f99deea74bba9b19160d14f323f58cdc273ae95fccd13903b20bada2030c1a01",
+  downloaded_file_path = "opencsv-5.10-sources.jar"
+)
+
+http_file(
+  name = "commons-beanutils-commons-beanutils-1_10_0-sources_http",
+  url = "https://cache-redirector.jetbrains.com/repo1.maven.org/maven2/commons-beanutils/commons-beanutils/1.10.0/commons-beanutils-1.10.0-sources.jar",
+  sha256 = "881aa4751a1e68906bca056d230f535814222d959f55c2a166ca45300931822a",
+  downloaded_file_path = "commons-beanutils-1.10.0-sources.jar"
+)
+
+http_file(
   name = "org_jetbrains_pty4j-pty4j-0_13_11_http",
   url = "https://cache-redirector.jetbrains.com/repo1.maven.org/maven2/org/jetbrains/pty4j/pty4j/0.13.11/pty4j-0.13.11.jar",
   sha256 = "0329ee5520f3b0177a0b2bdefac3c4c69cc9d3915e4f210a8bf39be7ab3887c8",

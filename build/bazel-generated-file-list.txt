@@ -440,6 +440,7 @@ libraries/microba
 libraries/miglayout-swing
 libraries/mockito
 libraries/mvstore
+libraries/opencsv
 libraries/oro-matcher
 libraries/proxy-vole
 libraries/pty4j
