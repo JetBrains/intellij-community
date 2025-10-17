@@ -138,6 +138,9 @@ internal class ContentModuleVisibilityInspection : DevKitPluginXmlInspectionBase
     }
   }
 
+  private val IdeaPlugin.pluginIdOrPlainFileName: String?
+    get() = pluginId ?: xmlElement?.containingFile?.name
+
   private fun getInclusionContextsForContentModuleOrPluginXmlFile(xmlFile: XmlFile, scope: GlobalSearchScope): Collection<ContentModuleInclusionContext> {
     val ideaPlugin = DescriptorUtil.getIdeaPlugin(xmlFile)
     if (ideaPlugin != null && isActualPluginDescriptor(ideaPlugin, xmlFile)) {
@@ -152,7 +155,7 @@ internal class ContentModuleVisibilityInspection : DevKitPluginXmlInspectionBase
         getRootIncludingPlugins(xmlFile, currentDescriptor, registrationPlace = currentDescriptor, scope)
       }
       .distinct()
-      .toList()
+      .sortedWith(compareBy<ContentModuleInclusionContext> { it.rootPlugin.pluginIdOrPlainFileName }.thenBy { it.registrationPlace.pluginIdOrPlainFileName })
   }
 
   private data class ContentModuleInclusionContext(
