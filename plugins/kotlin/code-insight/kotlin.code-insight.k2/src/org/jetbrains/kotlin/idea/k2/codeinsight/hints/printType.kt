@@ -124,16 +124,26 @@ internal fun PresentationTreeBuilder.printKtType(type: KaType) {
 
 context(_: KaSession)
 private fun PresentationTreeBuilder.printNonErrorClassType(type: KaClassType, anotherType: KaClassType? = null) {
-    val truncatedName = truncatedName(type)
+    val classType =
+        when (val symbol = type.symbol) {
+            is KaClassSymbol if symbol.classKind == KaClassKind.ANONYMOUS_OBJECT -> {
+                (symbol.superTypes.firstOrNull() as? KaClassType) ?: type
+            }
+
+            else -> {
+                type
+            }
+        }
+    val truncatedName = truncatedName(classType)
     if (truncatedName.isNotEmpty()) {
-        if (type.classId.isLocal) {
-            printSymbolPsi(type.symbol, truncatedName)
+        if (classType.classId.isLocal) {
+            printSymbolPsi(classType.symbol, truncatedName)
         } else {
-            printClassId(type.classId, truncatedName)
+            printClassId(classType.classId, truncatedName)
         }
     }
 
-    val ownTypeArguments = type.typeArguments
+    val ownTypeArguments = classType.typeArguments
     if (ownTypeArguments.isNotEmpty()) {
         text("<")
 
@@ -246,12 +256,10 @@ private fun truncatedName(classType: KaClassType): String {
     val names = classType.qualifiers
         .mapNotNull {
             val symbol = it.symbol
-            symbol.takeUnless {
-                (it as? KaNamedClassSymbol)?.classKind == KaClassKind.COMPANION_OBJECT &&
-                        it.name == SpecialNames.DEFAULT_NAME_FOR_COMPANION_OBJECT
-            }?.name ?: symbol.takeIf { (symbol as? KaClassSymbol)?.classKind == KaClassKind.ANONYMOUS_OBJECT }?.let {
-                SpecialNames.ANONYMOUS
-            }
+            symbol.takeUnless { classifierSymbol ->
+                (classifierSymbol as? KaNamedClassSymbol)?.classKind == KaClassKind.COMPANION_OBJECT &&
+                        classifierSymbol.name == SpecialNames.DEFAULT_NAME_FOR_COMPANION_OBJECT
+            }?.name
         }
 
     names.joinToString(".", transform = Name::asString)
