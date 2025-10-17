@@ -3,6 +3,8 @@ package org.jetbrains.kotlin.gradle.scripting.k2.importing
 
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.openapi.vfs.VirtualFileManager
+import com.intellij.platform.eel.provider.getEelDescriptor
+import com.intellij.platform.eel.provider.utils.asNio
 import com.intellij.platform.workspace.storage.ImmutableEntityStorage
 import com.intellij.platform.workspace.storage.MutableEntityStorage
 import com.intellij.platform.workspace.storage.toBuilder
@@ -19,6 +21,7 @@ import org.jetbrains.plugins.gradle.service.syncAction.GradleSyncContributor
 import org.jetbrains.plugins.gradle.service.syncAction.GradleSyncExtension
 import org.jetbrains.plugins.gradle.service.syncAction.GradleSyncPhase
 import java.nio.file.Path
+import kotlin.io.path.pathString
 
 internal class KotlinDslScriptSyncExtension : GradleSyncExtension {
 
@@ -64,7 +67,9 @@ internal class KotlinDslScriptSyncContributor : GradleSyncContributor {
             .mapNotNull { context.getProjectModel(it, GradleBuildScriptClasspathModel::class.java) }
             .firstNotNullOfOrNull { it.gradleHomeDir?.absolutePath } ?: context.settings.gradleHome ?: return storage
 
-        val javaHome = context.buildEnvironment.java.javaHome.absolutePath
+        // String is then converted to `nio.Path` and must reside on the same eel as project
+        // i.e: homePath = "/foo/java", eel is Docker, so javaHome must be "\\docker\..\foo\java\" to be converted to nioPath
+        val javaHome = context.buildEnvironment.java.javaHome.asNio(context.project.getEelDescriptor())
 
         val builder = storage.toBuilder()
 
@@ -83,7 +88,7 @@ internal class KotlinDslScriptSyncContributor : GradleSyncContributor {
             GradleDefinitionsParams(
                 context.projectPath,
                 gradleHome,
-                javaHome,
+                javaHome.pathString,
                 context.buildEnvironment.gradle.gradleVersion,
                 context.settings.jvmArguments,
                 context.settings.env
