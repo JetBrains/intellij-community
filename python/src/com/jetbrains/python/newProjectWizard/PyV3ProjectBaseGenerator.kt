@@ -23,7 +23,6 @@ import com.jetbrains.python.newProjectWizard.impl.PyV3GeneratorPeer
 import com.jetbrains.python.newProjectWizard.impl.PyV3UIServicesProd
 import com.jetbrains.python.newProjectWizard.projectPath.ProjectPathFlows.Companion.validatePath
 import com.jetbrains.python.onFailure
-import com.jetbrains.python.sdk.add.v2.PythonInterpreterSelectionMode
 import com.jetbrains.python.sdk.refreshPaths
 import com.jetbrains.python.statistics.version
 import kotlinx.coroutines.CoroutineScope
@@ -48,7 +47,6 @@ import kotlin.reflect.jvm.jvmName
 abstract class PyV3ProjectBaseGenerator<TYPE_SPECIFIC_SETTINGS : PyV3ProjectTypeSpecificSettings>(
   private val typeSpecificSettings: TYPE_SPECIFIC_SETTINGS,
   private val typeSpecificUI: PyV3ProjectTypeSpecificUI<TYPE_SPECIFIC_SETTINGS>?,
-  private val allowedInterpreterTypes: Set<PythonInterpreterSelectionMode>? = null,
   private val _newProjectName: @NlsSafe String? = null,
   private val supportsNotEmptyModuleStructure: Boolean = false,
 ) : DirectoryProjectGenerator<PyV3BaseProjectSettings>, PyProjectTypeGenerator {
@@ -106,7 +104,7 @@ abstract class PyV3ProjectBaseGenerator<TYPE_SPECIFIC_SETTINGS : PyV3ProjectType
 
 
   override fun createPeer(): ProjectGeneratorPeer<PyV3BaseProjectSettings> =
-    PyV3GeneratorPeer(baseSettings, typeSpecificUI?.let { Pair(it, typeSpecificSettings) }, allowedInterpreterTypes, uiServices)
+    PyV3GeneratorPeer(baseSettings, typeSpecificUI?.let { Pair(it, typeSpecificSettings) }, uiServices)
 
   override fun validate(baseDirPath: String): ValidationResult =
     when (val pathOrError = validatePath(baseDirPath)) {

@@ -151,6 +151,7 @@ enum class PythonSupportedEnvironmentManagers(
 
 enum class PythonInterpreterSelectionMode(val nameKey: String) {
   PROJECT_VENV("sdk.create.type.project.venv"),
+  PROJECT_UV("sdk.create.type.project.uv"),
   BASE_CONDA("sdk.create.type.base.conda"),
   CUSTOM("sdk.create.type.custom")
 }
