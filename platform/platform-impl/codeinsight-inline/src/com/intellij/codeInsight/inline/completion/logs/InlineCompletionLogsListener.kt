@@ -222,7 +222,8 @@ private object StartingLogs : PhasedLogs(Phase.INLINE_API_STARTING) {
   val FILE_LANGUAGE = register(EventFields.Language("file_language", "Language of the file that was opened for the request")).alsoLocalStatistic()
 }
 
-private object FinishingLogs : PhasedLogs(Phase.INLINE_API_FINISHING) {
+internal object FinishingLogs : PhasedLogs(Phase.INLINE_API_FINISHING) {
+  val FULL_LOGS = register(EventFields.Boolean("full_logs", "Indicates whether the event contains all the fields or only the basic ones (when missing)"))
   val WAS_SHOWN = register(EventFields.Boolean("was_shown", "Indicates whether completion or some part of it was shown during the session or not")).alsoLocalStatistic()
   val TIME_TO_START_SHOWING = register(EventFields.Long("time_to_start_showing", "Time from the completion request to start showing at least one element"))
   val SHOWING_TIME = register(EventFields.Long("showing_time", "Duration from the beginning of the show to its end (for any reason)"))
