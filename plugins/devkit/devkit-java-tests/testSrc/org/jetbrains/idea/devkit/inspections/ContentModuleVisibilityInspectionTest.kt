@@ -941,6 +941,7 @@ class ChangeModuleModuleVisibilityFix : ContentModuleVisibilityInspectionTestBas
       """
       <idea-plugin>
         <id>com.example.plugin.with.privatemodule</id>
+        <vendor>ExampleVendor</vendor>
         <content>
           <module name="com.example.privatemodule"/>
         </content>
@@ -961,6 +962,7 @@ class ChangeModuleModuleVisibilityFix : ContentModuleVisibilityInspectionTestBas
       """
       <idea-plugin>
         <id>com.example.plugin.with.publicmodule</id>
+        <vendor>ExampleVendor</vendor>
         <content>
           <module name="com.example.publicmodule"/>
         </content>
@@ -999,6 +1001,7 @@ class ChangeModuleModuleVisibilityFix : ContentModuleVisibilityInspectionTestBas
       """
       <idea-plugin>
         <id>com.example.plugin.with.privatemodule</id>
+        <vendor>Vendor1</vendor>
         <content>
           <module name="com.example.privatemodule"/>
         </content>
@@ -1018,6 +1021,7 @@ class ChangeModuleModuleVisibilityFix : ContentModuleVisibilityInspectionTestBas
       """
       <idea-plugin>
         <id>com.example.plugin.with.publicmodule</id>
+        <vendor>Vendor2</vendor>
         <content>
           <module name="com.example.publicmodule"/>
         </content>
@@ -1035,6 +1039,8 @@ class ChangeModuleModuleVisibilityFix : ContentModuleVisibilityInspectionTestBas
       """.trimIndent())
     myFixture.configureFromExistingVirtualFile(testedFile.virtualFile)
 
+    val makeInternalIntention = myFixture.filterAvailableIntentions("Make module 'com.example.privatemodule' internal")
+    assertEmpty("'Make internal' must not be available if vendors are different", makeInternalIntention)
     val intention = myFixture.findSingleIntention("Make module 'com.example.privatemodule' public")
     myFixture.launchAction(intention)
 
