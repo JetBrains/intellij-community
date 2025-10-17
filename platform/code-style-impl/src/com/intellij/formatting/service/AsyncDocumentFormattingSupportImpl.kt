@@ -178,9 +178,15 @@ class AsyncDocumentFormattingSupportImpl(private val service: AsyncDocumentForma
       // There is an implicit contract that a task that was already created is also started.
       // GlobalScope is used here to prevent cancellation before that can happen.
       val taskJob = GlobalScope.launch(dispatcher) {
-        underProgressIfNeeded(task.isRunUnderProgress) {
-          taskStarted.complete(Unit)
-          task.run()
+        try {
+          underProgressIfNeeded(task.isRunUnderProgress) {
+            taskStarted.complete(Unit)
+            task.run()
+          }
+        } catch (t: Throwable) {
+          // unblock waiter if failure happened before `taskStarted.complete(Unit)` could run
+          taskStarted.completeExceptionally(t)
+          throw t
         }
       }
       val timeout = getTimeout(service).toNanos().nanoseconds
