@@ -19,7 +19,7 @@ import static com.intellij.ui.WindowMouseListenerSupportKt.createWindowMouseList
 @ApiStatus.Internal
 public abstract class WindowMouseListener extends MouseAdapter implements MouseInputListener {
   protected final Component myContent;
-  private final WindowMouseListenerSupport support = createWindowMouseListenerSupport(new SourceAdapter());
+  protected final WindowMouseListenerSupport support = createWindowMouseListenerSupport(new SourceAdapter());
   
   private class SourceAdapter implements WindowMouseListenerSource {
     @Override

@@ -9,6 +9,7 @@ import java.awt.*
 import java.awt.event.MouseEvent
 import javax.swing.SwingUtilities
 
+
 @ApiStatus.Internal
 internal interface WindowMouseListenerSource {
   fun getContent(event: MouseEvent): Component
@@ -146,6 +147,33 @@ internal sealed class WindowMouseListenerSupport(private val source: WindowMouse
     }
   }
 
+  @JdkConstants.CursorType
+  open fun getResizeCursor(top: Int, left: Int, bottom: Int, right: Int, resizeArea: Insets): Int {
+    // Wayland doesn't allow to change window's location programmatically,
+    // so resizing from top/left shall be forbidden for now.
+    if (top < resizeArea.top) {
+      if (left < resizeArea.left * 2) return Cursor.NW_RESIZE_CURSOR
+      if (right < resizeArea.right * 2) return Cursor.NE_RESIZE_CURSOR
+      return Cursor.N_RESIZE_CURSOR
+    }
+    if (bottom < resizeArea.bottom) {
+      if (left < resizeArea.left * 2) return Cursor.SW_RESIZE_CURSOR
+      if (right < resizeArea.right * 2) return Cursor.SE_RESIZE_CURSOR
+      return Cursor.S_RESIZE_CURSOR
+    }
+    if (left < resizeArea.left) {
+      if (top < resizeArea.top * 2) return Cursor.NW_RESIZE_CURSOR
+      if (bottom < resizeArea.bottom * 2) return Cursor.SW_RESIZE_CURSOR
+      return Cursor.W_RESIZE_CURSOR
+    }
+    if (right < resizeArea.right) {
+      if (top < resizeArea.top * 2) return Cursor.NE_RESIZE_CURSOR
+      if (bottom < resizeArea.bottom * 2) return Cursor.SE_RESIZE_CURSOR
+      return Cursor.E_RESIZE_CURSOR
+    }
+    return Cursor.CUSTOM_CURSOR
+  }
+
   protected abstract fun onDraggingStarted()
 
   protected open fun computeOffsetFromInitialLocation(event: MouseEvent): Point {
@@ -228,6 +256,20 @@ private class WaylandWindowMouseListenerSupport(source: WindowMouseListenerSourc
   }
 
   override fun onDraggingStarted() { } // on Wayland, whether dragging has started or not, both "released" and "clicked" events will arrive
+
+  override fun getResizeCursor(top: Int, left: Int, bottom: Int, right: Int, resizeArea: Insets): Int {
+    // Wayland doesn't allow to change window's location programmatically,
+    // so resizing from top/left shall be forbidden for now.
+    if (bottom < resizeArea.bottom) {
+      if (right < resizeArea.right * 2) return Cursor.SE_RESIZE_CURSOR
+      return Cursor.S_RESIZE_CURSOR
+    }
+    if (right < resizeArea.right) {
+      if (bottom < resizeArea.bottom * 2) return Cursor.SE_RESIZE_CURSOR
+      return Cursor.E_RESIZE_CURSOR
+    }
+    return Cursor.CUSTOM_CURSOR
+  }
 
   override fun computeOffsetFromInitialLocation(event: MouseEvent): Point {
     if (isRelativeMovementMode()) {
