@@ -38,17 +38,27 @@ internal class GitTrackedBranchActionGroup : ActionGroup(), DumbAware {
   override fun getChildren(e: AnActionEvent?): Array<AnAction> {
     if (e == null) return EMPTY_ARRAY
     val trackedBranch = findTrackedBranch(e.dataContext) ?: return EMPTY_ARRAY
+    val children = GitSingleRefActions.getSingleRefActionGroup().getChildren(e)
 
-    return GitSingleRefActions.getSingleRefActionGroup().getChildren(e)
-      .mapNotNull {
-        when (it) {
-          is GitSingleRefAction<*> -> wrapToOverrideSelectedRefWithTracked(it, trackedBranch)
-          is Separator -> it
-          else -> null
-        }
-      }.toTypedArray()
+    val wrappedActions = mutableListOf<AnAction>()
+    children.forEach { wrapActions(wrappedActions, e, it, trackedBranch) }
+    return wrappedActions.toTypedArray()
   }
 
+  private fun wrapActions(result: MutableList<AnAction>, e: AnActionEvent?, action: AnAction, trackedBranch: GitStandardRemoteBranch) {
+    when (action) {
+      is GitSingleRefAction<*> -> result += wrapToOverrideSelectedRefWithTracked(action, trackedBranch )
+      is ActionGroup -> {
+        // don't allow adding the group to itself
+        if (action.javaClass == this.javaClass) return
+
+        action.getChildren(e).forEach {
+          wrapActions(result, e, it, trackedBranch)
+        }
+      }
+      else -> result += action
+    }
+  }
 }
 
 private fun wrapToOverrideSelectedRefWithTracked(action: AnAction, trackedBranch: GitStandardRemoteBranch): AnActionWrapper =
