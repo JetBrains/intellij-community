@@ -20,8 +20,8 @@ import org.jetbrains.plugins.terminal.session.TerminalContentUpdatedEvent
 import org.jetbrains.plugins.terminal.session.TerminalCursorPositionChangedEvent
 import org.jetbrains.plugins.terminal.session.TerminalOutputEvent
 import org.jetbrains.plugins.terminal.view.shellIntegration.TerminalCommandBlock
+import org.jetbrains.plugins.terminal.view.shellIntegration.TerminalOutputStatus
 import org.jetbrains.plugins.terminal.view.shellIntegration.TerminalShellIntegration
-import org.jetbrains.plugins.terminal.view.shellIntegration.impl.isCommandTypingMode
 import java.lang.Runnable
 import java.util.concurrent.CompletableFuture
 
@@ -60,8 +60,8 @@ internal class TerminalTypeAheadOutputModelController(
 
   private fun isTypeAheadEnabled(): Boolean {
     val enabledInRegistry = Registry.`is`("terminal.type.ahead", false)
-    val inCommandTypingMode = shellIntegrationFuture.getNow(null)?.blocksModel?.isCommandTypingMode() == true
-    return enabledInRegistry && inCommandTypingMode
+    val outputStatus = shellIntegrationFuture.getNow(null)?.outputStatus?.value
+    return enabledInRegistry && outputStatus == TerminalOutputStatus.TypingCommand
   }
 
   override fun type(string: String) {
