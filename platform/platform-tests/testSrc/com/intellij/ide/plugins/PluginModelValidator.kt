@@ -17,7 +17,6 @@ import com.intellij.project.IntelliJProjectConfiguration
 import com.intellij.testFramework.PlatformTestUtil
 import com.intellij.testFramework.junit5.NamedFailure
 import com.intellij.testFramework.junit5.groupFailures
-import com.intellij.util.SystemProperties
 import com.intellij.util.io.jackson.array
 import com.intellij.util.io.jackson.obj
 import org.jetbrains.jps.model.JpsProject
@@ -522,7 +521,7 @@ class PluginModelValidator(
           }
           
           referencingModuleInfo.dependencies.add(Reference(moduleName, isPlugin = false, moduleInfo))
-          if (SystemProperties.getBooleanProperty("intellij.plugin.model.check.module.visibility", false)) {
+          if (!pluginModuleVisibilityCheckDisabled) {
             when (moduleInfo.descriptor.moduleVisibility) {
               ModuleVisibility.PRIVATE -> {
                 if (containingPlugins.all { it.pluginId != referencingPluginInfo.pluginId }) {
@@ -530,17 +529,30 @@ class PluginModelValidator(
                   registerError("""
                   |Module '$moduleName' has 'private' (default) visibility in '${differentContainingPlugin.pluginId}' but it is used as a dependency in 
                   |a plugin '${referencingPluginInfo.pluginId}'.
-                  |Use 'internal' visibility instead by adding 'visibility="internal"' to the root tag of $moduleName.xml.
+                  |Use 'internal' or 'public' visibility instead by adding 'visibility' attribute to the root tag of $moduleName.xml.
                   |""".trimMargin())
                 }
               }
               ModuleVisibility.INTERNAL -> {
-                val containingPluginFromAnotherNamespace = containingPlugins.find { it.descriptor.namespace != referencingPluginInfo.descriptor.namespace }
+                val referencingNamespace = referencingPluginInfo.descriptor.namespace
+                val containingPluginFromAnotherNamespace = containingPlugins.find { it.descriptor.namespace != referencingNamespace }
                 if (containingPluginFromAnotherNamespace != null) {
+                  val declaringNamespace = containingPluginFromAnotherNamespace.descriptor.namespace
+                  val declaringNamespaceText =
+                    if (declaringNamespace != null) "with namespace '$declaringNamespace'"
+                    else "without namespace"
+                  val referencingNamespaceText =
+                    if (referencingNamespace != null) "from another namespace '$referencingNamespace'"
+                    else "without namespace"
+                  val setNamespaceFixText = when {
+                    declaringNamespace == null && referencingNamespace != null -> " or set the namespace to '$referencingNamespace' in '${containingPluginFromAnotherNamespace.pluginId}' plugin"
+                    declaringNamespace != null && referencingNamespace == null -> " or set the namespace to '$declaringNamespace' in '${referencingPluginInfo.pluginId}' plugin"
+                    else -> " or set the same namespace in both ${containingPluginFromAnotherNamespace.pluginId} and '${referencingPluginInfo.pluginId}' plugins"
+                  }
                   registerError("""
-                  |Module '$moduleName' has 'internal' visibility in '${containingPluginFromAnotherNamespace.pluginId}' with namespace '${containingPluginFromAnotherNamespace.descriptor.namespace}' but it is used as a dependency in 
-                  |a plugin '${referencingPluginInfo.pluginId}' from another namespace '${referencingPluginInfo.descriptor.namespace}'.
-                  |Use 'public' visibility instead by adding 'visibility="public"' to the root tag of $moduleName.xml.
+                  |Module '$moduleName' has 'internal' visibility in '${containingPluginFromAnotherNamespace.pluginId}' $declaringNamespaceText but it is used as a dependency in 
+                  |a plugin '${referencingPluginInfo.pluginId}' $referencingNamespaceText.
+                  |Use 'public' visibility in '$moduleName.xml'$setNamespaceFixText
                 """.trimMargin())
                 }
               }
@@ -1031,6 +1043,10 @@ private fun writeDependencies(items: List<Reference>, writer: JsonGenerator) {
       writer.writeStringField(if (entry.isPlugin) "plugin" else "module", entry.name)
     }
   }
+}
+
+private val pluginModuleVisibilityCheckDisabled by lazy {
+  System.getProperty("intellij.platform.plugin.modules.check.visibility") == "disabled"
 }
 
 internal class PluginValidationError(message: String, val sourceModule: JpsModule) : RuntimeException(message)
