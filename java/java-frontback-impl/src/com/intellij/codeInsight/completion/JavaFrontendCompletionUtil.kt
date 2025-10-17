@@ -1,11 +1,7 @@
 // Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInsight.completion
 
-import com.intellij.codeInsight.AutoPopupController
-import com.intellij.codeInsight.AutoPopupControllerHelper
-import com.intellij.codeInsight.CodeInsightSettings
-import com.intellij.codeInsight.TailType
-import com.intellij.codeInsight.TailTypes
+import com.intellij.codeInsight.*
 import com.intellij.codeInsight.completion.util.CompletionStyleUtil
 import com.intellij.codeInsight.completion.util.ParenthesesInsertHandler
 import com.intellij.codeInsight.editorActions.TabOutScopesTracker
@@ -18,7 +14,6 @@ import com.intellij.patterns.PlatformPatterns
 import com.intellij.psi.*
 import com.intellij.psi.util.PsiTreeUtil
 import com.intellij.psi.util.PsiUtilCore
-import com.intellij.util.PlatformUtils
 import com.intellij.util.ThreeState
 
 object JavaFrontendCompletionUtil {
@@ -68,27 +63,14 @@ object JavaFrontendCompletionUtil {
       val spaceBetweenParentheses = hasParams == ThreeState.YES && styleSettings.SPACE_WITHIN_METHOD_CALL_PARENTHESES ||
                                     hasParams == ThreeState.UNSURE && styleSettings.SPACE_WITHIN_EMPTY_METHOD_CALL_PARENTHESES
 
-      object : ParenthesesInsertHandler<LookupElement>(
-        /* spaceBeforeParentheses = */ styleSettings.SPACE_BEFORE_METHOD_CALL_PARENTHESES,
-        /* spaceBetweenParentheses = */ spaceBetweenParentheses,
-        /* mayInsertRightParenthesis = */ needRightParenth,
-        /* allowParametersOnNextLine = */ styleSettings.METHOD_PARAMETERS_LPAREN_ON_NEXT_LINE
-      ) {
-        override fun placeCaretInsideParentheses(context: InsertionContext?, item: LookupElement): Boolean {
-          return hasParameters != ThreeState.NO
-        }
-
-        override fun findExistingLeftParenthesis(context: InsertionContext): PsiElement? {
-          val token = super.findExistingLeftParenthesis(context)
-          return if (isPartOfLambda(token)) null else token
-        }
-
-        fun isPartOfLambda(token: PsiElement?): Boolean {
-          return token != null &&
-                 token.parent is PsiExpressionList &&
-                 PsiUtilCore.getElementType(PsiTreeUtil.nextVisibleLeaf(token.parent)) === JavaTokenType.ARROW
-        }
-      }.handleInsert(context, item)
+      val parenthesesInsertHandler = JavaParenthesesInsertHandler(
+        spaceBeforeParentheses = styleSettings.SPACE_BEFORE_METHOD_CALL_PARENTHESES,
+        spaceBetweenParentheses = spaceBetweenParentheses,
+        mayInsertRightParenthesis = needRightParenth,
+        allowParametersOnNextLine = styleSettings.METHOD_PARAMETERS_LPAREN_ON_NEXT_LINE,
+        hasParameters = hasParameters != ThreeState.NO
+      )
+      parenthesesInsertHandler.handleInsert(context, item)
     }
 
     if (hasParams != ThreeState.NO) {
@@ -178,5 +160,27 @@ object JavaFrontendCompletionUtil {
   @JvmStatic
   fun insertSemicolon(parent: PsiElement?): Boolean {
     return parent !is PsiExpressionList && parent !is PsiExpression
+  }
+}
+
+private class JavaParenthesesInsertHandler(
+  spaceBeforeParentheses: Boolean,
+  spaceBetweenParentheses: Boolean,
+  mayInsertRightParenthesis: Boolean,
+  allowParametersOnNextLine: Boolean,
+  val hasParameters: Boolean,
+) : ParenthesesInsertHandler<LookupElement>(spaceBeforeParentheses, spaceBetweenParentheses, mayInsertRightParenthesis, allowParametersOnNextLine) {
+
+  override fun placeCaretInsideParentheses(context: InsertionContext?, item: LookupElement): Boolean = hasParameters
+
+  override fun findExistingLeftParenthesis(context: InsertionContext): PsiElement? {
+    val token = super.findExistingLeftParenthesis(context)
+    return if (isPartOfLambda(token)) null else token
+  }
+
+  private fun isPartOfLambda(token: PsiElement?): Boolean {
+    return token != null &&
+           token.parent is PsiExpressionList &&
+           PsiUtilCore.getElementType(PsiTreeUtil.nextVisibleLeaf(token.parent)) === JavaTokenType.ARROW
   }
 }
