@@ -636,6 +636,7 @@ public final class PersistentFSImpl extends PersistentFS implements Disposable {
    * @return data about the child with childName -- either in VFS persistent cache or in the actual file system fs (and cache
    * this information, if not yet cached)
    */
+  //@GuardedBy(parent.directoryData)
   @Override
   @ApiStatus.Internal
   public ChildInfo findChildInfo(@NotNull VirtualFile parent,
