@@ -17,7 +17,6 @@ import com.intellij.platform.util.coroutines.childScope
 import com.intellij.terminal.completion.spec.ShellCommandSpec
 import com.intellij.terminal.frontend.view.activeOutputModel
 import com.intellij.terminal.frontend.view.completion.TerminalLookupPrefixUpdater
-import com.intellij.terminal.frontend.view.impl.TerminalShellIntegrationImpl
 import com.intellij.terminal.frontend.view.impl.TerminalViewImpl
 import com.intellij.terminal.frontend.view.impl.TimedKeyEvent
 import com.intellij.terminal.tests.block.util.TestCommandSpecsProvider
@@ -30,6 +29,7 @@ import org.jetbrains.plugins.terminal.block.completion.spec.ShellCommandSpecsPro
 import org.jetbrains.plugins.terminal.block.reworked.*
 import org.jetbrains.plugins.terminal.session.TerminalBlocksModelState
 import org.jetbrains.plugins.terminal.util.terminalProjectScope
+import org.jetbrains.plugins.terminal.view.impl.TerminalShellIntegrationImpl
 import org.junit.Assume
 import java.awt.event.KeyEvent
 import java.awt.event.KeyEvent.VK_UNDEFINED
