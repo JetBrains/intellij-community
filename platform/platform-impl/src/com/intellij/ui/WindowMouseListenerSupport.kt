@@ -66,6 +66,7 @@ internal sealed class WindowMouseListenerSupport(private val source: WindowMouse
       return
     }
 
+
     if (start) {
       expectMouseReleased = true
       expectMouseClicked = true
@@ -75,6 +76,7 @@ internal sealed class WindowMouseListenerSupport(private val source: WindowMouse
       val content = source.getContent(event)
       val view = source.getView(content)
       if (view != null) {
+        beforeUpdate(event, view)
         updateCursor(event, content, view)
         if (start && cursorType != Cursor.CUSTOM_CURSOR) {
           start(event, view)
@@ -83,6 +85,8 @@ internal sealed class WindowMouseListenerSupport(private val source: WindowMouse
       }
     }
   }
+
+  protected open fun beforeUpdate(event: MouseEvent, view: Component) { }
 
   private fun updateCursor(event: MouseEvent, content: Component, view: Component) {
     cursorType = if (source.isDisabled(view)) Cursor.CUSTOM_CURSOR else source.getCursorType(view, event.locationOnScreen)
@@ -243,8 +247,11 @@ private class WaylandWindowMouseListenerSupport(source: WindowMouseListenerSourc
   private var expectReleasedEvent = false
   private var expectClickedEvent = false
 
-  override fun onStarted(event: MouseEvent, view: Component) {
+  override fun beforeUpdate(event: MouseEvent, view: Component) {
     isTruePopup = view is Window && view.type == Window.Type.POPUP
+  }
+
+  override fun onStarted(event: MouseEvent, view: Component) {
     dx = 0
     dy = 0
     if (isRelativeMovementMode()) {
@@ -258,6 +265,7 @@ private class WaylandWindowMouseListenerSupport(source: WindowMouseListenerSourc
   override fun onDraggingStarted() { } // on Wayland, whether dragging has started or not, both "released" and "clicked" events will arrive
 
   override fun getResizeCursor(top: Int, left: Int, bottom: Int, right: Int, resizeArea: Insets): Int {
+    if (isRelativeMovementMode()) return super.getResizeCursor(top, left, bottom, right, resizeArea)
     // Wayland doesn't allow to change window's location programmatically,
     // so resizing from top/left shall be forbidden for now.
     if (bottom < resizeArea.bottom) {
