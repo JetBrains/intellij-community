@@ -12,10 +12,7 @@ import java.io.InputStream;
 import java.io.OutputStream;
 import java.lang.ref.SoftReference;
 import java.nio.charset.StandardCharsets;
-import java.nio.file.Files;
-import java.nio.file.NoSuchFileException;
-import java.nio.file.Path;
-import java.nio.file.StandardCopyOption;
+import java.nio.file.*;
 import java.time.*;
 import java.util.*;
 import java.util.zip.CRC32;
@@ -164,8 +161,15 @@ public class ZipOutputBuilderImpl implements ZipOutputBuilder {
           myReadZipFile.close();
           if (saveChanges && !myReadZipPath.equals(myWriteZipPath)) {
             // ensure content at the destination path is the same as the source content
-            if (!Files.exists(myWriteZipPath) || !Files.isSameFile(myReadZipPath, myWriteZipPath)) {
-              Files.copy(myReadZipPath, myWriteZipPath, StandardCopyOption.REPLACE_EXISTING);
+            boolean destinationExists = Files.exists(myWriteZipPath);
+            if (!destinationExists || !Files.isSameFile(myReadZipPath, myWriteZipPath)) {
+              if (destinationExists) {
+                Files.delete(myWriteZipPath);
+              }
+              // optimization: if possible, create a hardlink to content instead of copying
+              if (!Utils.tryCreateLink(myWriteZipPath, myReadZipPath)) {
+                Files.copy(myReadZipPath, myWriteZipPath);
+              }
             }
           }
         }
