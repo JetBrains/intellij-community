@@ -170,6 +170,8 @@ data class LibraryLicense(
 
   fun newBsd(licenseUrl: String): LibraryLicense = license("BSD 3-Clause", licenseUrl, spdxIdentifier = "BSD-3-Clause")
 
+  fun zeroBsd(licenseUrl: String): LibraryLicense = license("BSD Zero Clause", licenseUrl, spdxIdentifier = "0BSD")
+
   fun mit(licenseUrl: String): LibraryLicense = license("MIT", licenseUrl, spdxIdentifier = "MIT")
 
   fun eplV1(licenseUrl: String): LibraryLicense = license("EPL 1.0", licenseUrl, spdxIdentifier = "EPL-1.0")
