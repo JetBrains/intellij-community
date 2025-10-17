@@ -1049,9 +1049,8 @@ fun loadDescriptorFromArtifact(file: Path, buildNumber: BuildNumber?): PluginMai
       //org.jetbrains.intellij.build.io.ZipArchiveOutputStream may add __index__ entry to the plugin zip, we need to ignore it here
       val rootDir = NioFiles.list(outputDir).firstOrNull { it.fileName.toString() != "__index__" }
       if (rootDir != null) {
-        @Suppress("SSBasedInspection")
-        return runBlocking {
-          loadFromPluginDir(dir = rootDir, loadingContext = loadingContext, pool = NonShareableJavaZipFilePool(), isUnitTestMode = PluginManagerCore.isUnitTestMode)
+        NonShareableJavaZipFilePool().use { pool ->
+          return loadFromPluginDir(dir = rootDir, loadingContext = loadingContext, pool = pool, isUnitTestMode = PluginManagerCore.isUnitTestMode)
         }
       }
     }
@@ -1059,7 +1058,11 @@ fun loadDescriptorFromArtifact(file: Path, buildNumber: BuildNumber?): PluginMai
     }
   }
   finally {
-    NioFiles.deleteRecursively(outputDir)
+    try {
+      NioFiles.deleteRecursively(outputDir)
+    } catch (e: IOException) {
+      LOG.warn("Failed to delete temporary plugin directory: $outputDir", e)
+    }
   }
 
   return null
