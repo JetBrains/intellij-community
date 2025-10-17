@@ -88,10 +88,7 @@ class MutableTerminalOutputModelImpl(
     // then it means that the terminal was cleared, and we should reset to the initial state.
     if (absoluteLineIndex < trimmedLinesCount) {
       changeDocumentContent {
-        trimmedLinesCount = 0
-        trimmedCharsCount = 0
-        firstLineTrimmedCharsCount = 0
-        doReplaceContentIgnoringEqualPrefixAndOrSuffix(TerminalOffset.ZERO, textLength, "", emptyList())
+        clear()
       }
     }
 
@@ -162,6 +159,17 @@ class MutableTerminalOutputModelImpl(
         doReplaceContentIgnoringEqualPrefixAndOrSuffix(endOffset, 0, newLines, emptyList())
       }
     }
+  }
+  
+  private fun clear(): ModelChange {
+    val oldText = getText(startOffset, endOffset)
+    trimmedLinesCount = 0
+    trimmedCharsCount = 0
+    firstLineTrimmedCharsCount = 0
+    document.replaceString(0, textLength, "")
+    highlightingsModel.clear()
+    // Report ZERO and not the actual old offset because listeners expect the offset to be consistent with the model.
+    return ModelChange(TerminalOffset.ZERO, oldText, "")
   }
 
   private fun doReplaceContentIgnoringEqualPrefixAndOrSuffix(startOffset: TerminalOffset, length: Int, newText: String, styles: List<StyleRange>): ModelChange {
@@ -419,6 +427,11 @@ class MutableTerminalOutputModelImpl(
         styleRanges.removeAt(0)
       }
 
+      highlightingsSnapshot = null
+    }
+    
+    fun clear() {
+      styleRanges.clear()
       highlightingsSnapshot = null
     }
 

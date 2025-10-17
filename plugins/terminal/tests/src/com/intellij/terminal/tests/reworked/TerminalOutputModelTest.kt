@@ -564,7 +564,7 @@ internal class TerminalOutputModelTest : BasePlatformTestCase() {
   }
 }
 
-private fun styleRange(start: Long, end: Long, textStyle: TextStyle = TextStyle()): StyleRange {
+internal fun styleRange(start: Long, end: Long, textStyle: TextStyle = TextStyle()): StyleRange {
   return StyleRange(start, end, textStyle)
 }
 
