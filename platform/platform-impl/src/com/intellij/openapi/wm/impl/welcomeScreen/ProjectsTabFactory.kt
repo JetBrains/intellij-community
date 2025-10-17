@@ -141,7 +141,7 @@ internal class ProjectsTab(private val parentDisposable: Disposable) : DefaultWe
 
   private fun createRecentProjectsPanel(): JComponent {
     val recentProjectTree = createComponent(
-      parentDisposable, ProjectCollectors.all
+      parentDisposable, ProjectCollectors.all, disableSearchFieldBorder = false
     )
     recentProjectTree.selectLastOpenedProject()
     val treeComponent = recentProjectTree.component
@@ -160,9 +160,10 @@ internal class ProjectsTab(private val parentDisposable: Disposable) : DefaultWe
       }
       row {
         cell(projectSearch)
+          .customize(UnscaledGaps(left = 4, right = 4, top = 18, bottom = 4))
+          .align(Align.FILL)
       }
 
-      separator()
       row {
         val scrollPane = ScrollPaneFactory.createScrollPane(treeComponent, true)
           .apply {
