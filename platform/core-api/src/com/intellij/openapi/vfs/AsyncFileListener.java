@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.vfs;
 
 import com.intellij.openapi.progress.ProgressManager;
@@ -72,9 +72,6 @@ public interface AsyncFileListener {
   @Nullable
   ChangeApplier prepareChange(@NotNull List<? extends @NotNull VFileEvent> events);
 
-  /**
-   * Consider using {@link ChangeApplierBackgroundable} to allow running your listener in background threads
-   */
   interface ChangeApplier {
     /**
      * This method is called in write action before the VFS events are delivered and applied, and allows
