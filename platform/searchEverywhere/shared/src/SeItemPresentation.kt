@@ -32,7 +32,7 @@ sealed interface SeItemPresentation {
 
   fun contentEquals(other: SeItemPresentation?): Boolean {
     if (other == null) return false
-    return text == other.text && extendedInfo?.actionText == other.extendedInfo?.actionText
+    return text == other.text && extendedInfo == other.extendedInfo
   }
 }
 
@@ -130,7 +130,6 @@ data class SeRunnableActionItemPresentation(
     if (other !is SeRunnableActionItemPresentation) return false
 
     return super.contentEquals(other) &&
-           commonData == other.commonData &&
            toolTip == other.toolTip &&
            actionId == other.actionId &&
            shortcut == other.shortcut &&

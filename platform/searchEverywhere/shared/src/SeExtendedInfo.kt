@@ -26,4 +26,25 @@ class SeExtendedInfoImpl(
   @NlsActions.ActionDescription override val actionDescription: String?,
   override val keyCode: Int? = null,
   override val modifiers: Int? = null,
-) : SeExtendedInfo
+) : SeExtendedInfo{
+
+  override fun equals(other: Any?): Boolean {
+    if (this === other) return true
+    if (other !is SeExtendedInfoImpl) return false
+
+    return text == other.text &&
+           actionText == other.actionText &&
+           actionDescription == other.actionDescription &&
+           keyCode == other.keyCode &&
+           modifiers == other.modifiers
+  }
+
+  override fun hashCode(): Int {
+    var result = text?.hashCode() ?: 0
+    result = 31 * result + (actionText?.hashCode() ?: 0)
+    result = 31 * result + (actionDescription?.hashCode() ?: 0)
+    result = 31 * result + (keyCode ?: 0)
+    result = 31 * result + (modifiers ?: 0)
+    return result
+  }
+}
