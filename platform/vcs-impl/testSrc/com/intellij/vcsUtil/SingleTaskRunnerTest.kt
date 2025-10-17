@@ -5,18 +5,13 @@ import com.intellij.platform.util.coroutines.childScope
 import com.intellij.platform.vcs.impl.shared.SingleTaskRunner
 import com.intellij.testFramework.LoggedErrorProcessor
 import com.intellij.testFramework.common.timeoutRunBlocking
-import kotlinx.coroutines.CoroutineScope
-import kotlinx.coroutines.TimeoutCancellationException
-import kotlinx.coroutines.cancel
+import kotlinx.coroutines.*
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.first
-import kotlinx.coroutines.withTimeout
 import org.junit.jupiter.api.Assertions
 import org.junit.jupiter.api.Assertions.assertEquals
 import org.junit.jupiter.api.Test
 import org.junit.jupiter.api.assertThrows
-import kotlin.time.Duration
-import kotlin.time.Duration.Companion
 
 internal class SingleTaskRunnerTest {
   @Test
@@ -44,40 +39,12 @@ internal class SingleTaskRunnerTest {
   }
 
   @Test
-  fun `test instant execution`() = timeoutRunBlocking {
-    var counter = 0
-    withRunner({ counter++ }, delay = Duration.INFINITE) {
-      start()
-      request()
-      requestNow()
-      awaitNotBusy()
-      assertEquals(1, counter)
-    }
-  }
-
-  @Test
-  fun `test delayed execution after instant`() = timeoutRunBlocking {
-    var counter = 0
-    withRunner({ counter++ }, delay = Duration.INFINITE) {
-      start()
-      request()
-      requestNow()
-      awaitNotBusy()
-      request()
-      assertThrows<TimeoutCancellationException> {
-        withTimeout(100) {
-          awaitNotBusy()
-        }
-      }
-      assertEquals(1, counter)
-    }
-  }
-
-  @Test
   fun `test execution debounced`() = timeoutRunBlocking {
     var counter = 0
+    val taskStarted = CompletableDeferred<Unit>()
     val runAllowed = MutableStateFlow(false)
     withRunner({
+                 taskStarted.complete(Unit)
                  runAllowed.first { it }
                  counter++
                }) {
@@ -85,11 +52,13 @@ internal class SingleTaskRunnerTest {
 
       repeat(10) {
         request()
+        taskStarted.await()
       }
       runAllowed.value = true
       awaitNotBusy()
-      assertEquals(1, counter)
+      assertEquals(2, counter)
 
+      counter = 0
       runAllowed.value = false
       request()
       assertThrows<TimeoutCancellationException> {
@@ -97,10 +66,10 @@ internal class SingleTaskRunnerTest {
           awaitNotBusy()
         }
       }
-      assertEquals(1, counter)
+      assertEquals(0, counter)
       runAllowed.value = true
       awaitNotBusy()
-      assertEquals(2, counter)
+      assertEquals(1, counter)
     }
   }
 
@@ -131,11 +100,10 @@ internal class SingleTaskRunnerTest {
 
   private inline fun CoroutineScope.withRunner(
     noinline task: suspend () -> Unit,
-    delay: Duration = Companion.ZERO,
     consumer: SingleTaskRunner.() -> Unit,
   ) {
     val cs = childScope("BG runner")
-    SingleTaskRunner(cs, delay, task).also(consumer)
+    SingleTaskRunner(cs, task).also(consumer)
     cs.cancel()
   }
 }

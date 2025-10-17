@@ -34,6 +34,8 @@ import org.jetbrains.annotations.CalledInAny
 import java.lang.Runnable
 import kotlin.time.Duration.Companion.milliseconds
 
+private val REFRESH_DELAY = 100.milliseconds
+
 @ApiStatus.Internal
 class CommitChangesViewWithToolbarPanel(
   changesView: ChangesListView,
@@ -42,7 +44,7 @@ class CommitChangesViewWithToolbarPanel(
   val project: Project get() = changesView.project
   private val settings get() = ChangesViewSettings.getInstance(project)
 
-  private val refresher = SingleTaskRunner(cs, 100.milliseconds) {
+  private val refresher = SingleTaskRunner(cs) {
     refreshView()
   }
 
@@ -57,8 +59,8 @@ class CommitChangesViewWithToolbarPanel(
   init {
     refresher.start()
     cs.launch(Dispatchers.UI) {
-      refresher.getPendingTasksFlow().collect {
-        isBusy -> changesView.setPaintBusy(isBusy)
+      refresher.getIdleFlow().collect { idle ->
+        changesView.setPaintBusy(!idle)
       }
     }
   }
@@ -119,13 +121,14 @@ class CommitChangesViewWithToolbarPanel(
 
   @CalledInAny
   private fun scheduleRefresh(withDelay: Boolean, @RequiresBackgroundThread callback: Runnable? = null) {
-    if (withDelay) {
+    if (!withDelay && callback == null) {
       refresher.request()
+      return
     }
-    else {
-      refresher.requestNow()
-    }
+
     cs.launch {
+      if (withDelay) delay(REFRESH_DELAY)
+      refresher.request()
       refresher.awaitNotBusy()
       callback?.run()
     }
