@@ -45,7 +45,7 @@ object CreateLocalVariableActionFactory : KotlinSingleIntentionActionFactory() {
         }
     }
 
-    class CreateLocalFromUsageAction(refExpr: KtNameReferenceExpression, val propertyName: String = refExpr.getReferencedName())
+    class CreateLocalFromUsageAction(refExpr: KtNameReferenceExpression, val propertyName: String = refExpr.text)
         : CreateFromUsageFixBase<KtNameReferenceExpression>(refExpr) {
         override fun getText(): String = KotlinBundle.message("fix.create.from.usage.local.variable", propertyName)
 

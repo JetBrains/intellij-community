@@ -6837,6 +6837,11 @@ public abstract class K1QuickFixTestGenerated extends AbstractK1QuickFixTest {
                     runTest("testData/quickfix/createFromUsage/createVariable/localVariable/assignedInFun.kt");
                 }
 
+                @TestMetadata("backticksVar.kt")
+                public void testBackticksVar() throws Exception {
+                    runTest("testData/quickfix/createFromUsage/createVariable/localVariable/backticksVar.kt");
+                }
+
                 @TestMetadata("callableRef.kt")
                 public void testCallableRef() throws Exception {
                     runTest("testData/quickfix/createFromUsage/createVariable/localVariable/callableRef.kt");

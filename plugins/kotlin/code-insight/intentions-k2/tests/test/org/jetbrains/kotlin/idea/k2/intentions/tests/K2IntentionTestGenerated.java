@@ -8003,6 +8003,11 @@ public abstract class K2IntentionTestGenerated extends AbstractK2IntentionTest {
             runTest("../../../idea/tests/testData/intentions/convertFunctionToProperty/annotationLineBreak.kt");
         }
 
+        @TestMetadata("backticks.kt")
+        public void testBackticks() throws Exception {
+            runTest("../../../idea/tests/testData/intentions/convertFunctionToProperty/backticks.kt");
+        }
+
         @TestMetadata("blockBody.kt")
         public void testBlockBody() throws Exception {
             runTest("../../../idea/tests/testData/intentions/convertFunctionToProperty/blockBody.kt");
@@ -11076,6 +11081,11 @@ public abstract class K2IntentionTestGenerated extends AbstractK2IntentionTest {
 
         private void runTest(String testDataFilePath) throws Exception {
             KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
+        }
+
+        @TestMetadata("backtickedEnum.kt")
+        public void testBacktickedEnum() throws Exception {
+            runTest("../../../idea/tests/testData/intentions/convertEnumToSealedClass/backtickedEnum.kt");
         }
 
         @TestMetadata("entriesAndMembers.kt")

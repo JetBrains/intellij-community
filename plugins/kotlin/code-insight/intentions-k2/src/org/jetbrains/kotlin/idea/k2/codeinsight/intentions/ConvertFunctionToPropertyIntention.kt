@@ -33,9 +33,7 @@ import org.jetbrains.kotlin.types.expressions.OperatorConventions.UNARY_OPERATIO
 
 private data class Context(
     val callables: Collection<PsiElement>,
-    val refsToRename: Collection<PsiReference>,
-    val kotlinCallsToReplace: Collection<KtCallElement>,
-    val foreignRefsToRename: Collection<PsiReference>,
+    val elementsToChange: ElementsToChange,
     val newName: String,
     val conflicts: Map<PsiElement, ModShowConflicts.Conflict>,
     val newGetterName: String
@@ -95,13 +93,20 @@ internal class ConvertFunctionToPropertyIntention :
             if (returnType.isUnitType || returnType.isNothingType) return false
 
             val propertyName = element.getPropertyName() ?: return false
-            val existingProperty = findExistingPropertyWithSameName(element, propertyName)
-            return existingProperty == null
+            return findExistingPropertyWithSameName(element, propertyName) == null
         }
+
+    private fun findExistingPropertyWithSameName(element: KtNamedFunction, propertyName: String): KtProperty? {
+        val scope = element.getContainingKtFile().declarations
+            .filterIsInstance<KtProperty>()
+            .filter { it.name == propertyName && it.receiverTypeReference?.text == element.receiverTypeReference?.text }
+
+        return scope.firstOrNull()
+    }
 }
 
 private fun KtNamedFunction.getPropertyName(): String? {
-    val functionName = this.name?.let { Name.identifier(it) } ?: return null
+    val functionName = this.nameIdentifier?.let { Name.identifier(it.text) } ?: return null
     return (propertyNameByGetMethodName(functionName) ?: functionName).toString()
 }
 
@@ -114,12 +119,18 @@ private fun KaSession.prepareContext(element: KtNamedFunction): Context? {
 
     val functionSymbol = element.symbol
     val affectedCallablesWithSelf = getAffectedCallables(functionSymbol)
+    
+    val conflictCheckContext = ConflictCheckContext(
+        conflicts = conflicts,
+        getterName = newGetterName,
+        callables = affectedCallablesWithSelf
+    )
 
     for (callable in affectedCallablesWithSelf) {
         if (callable !is PsiNamedElement) continue
 
         addConflictIfCantRefactor(callable, conflicts)
-        addConflictIfSamePropertyFound(callable, functionSymbol, conflicts, newGetterName, affectedCallablesWithSelf)
+        addConflictIfSamePropertyFound(callable, functionSymbol, conflictCheckContext)
 
         val foundReferences = findReferencesToElement(callable) ?: continue
         for (reference in foundReferences) {
@@ -129,9 +140,7 @@ private fun KaSession.prepareContext(element: KtNamedFunction): Context? {
 
     return Context(
         callables = affectedCallablesWithSelf,
-        refsToRename = elementsToChange.kotlinRefsToRename,
-        kotlinCallsToReplace = elementsToChange.kotlinCalls,
-        foreignRefsToRename = elementsToChange.foreignRefs,
+        elementsToChange = elementsToChange,
         newName = propertyName,
         conflicts = conflicts,
         newGetterName = newGetterName
@@ -144,13 +153,17 @@ private class ElementsToChange {
     val foreignRefs = mutableListOf<PsiReference>()
 }
 
-private fun findExistingPropertyWithSameName(element: KtNamedFunction, propertyName: String): KtProperty? {
-    val scope = element.getContainingKtFile().declarations
-        .filterIsInstance<KtProperty>()
-        .filter { it.name == propertyName && it.receiverTypeReference?.text == element.receiverTypeReference?.text }
+private data class ConflictCheckContext(
+    val conflicts: MutableMap<PsiElement, ModShowConflicts.Conflict>,
+    val getterName: String,
+    val callables: Collection<PsiElement>
+)
 
-    return scope.firstOrNull()
-}
+private data class FunctionConversionContext(
+    val newName: String,
+    val psiFactory: KtPsiFactory,
+    val updater: ModPsiUpdater
+)
 
 private fun checkReferenceCanBeChanged(
     reference: PsiReference,
@@ -182,19 +195,26 @@ private fun convertFunctionToProperty(
     actionContext: ActionContext
 ) {
     val writableElementContext = getWritable(elementContext, updater)
-    val (callables, refsToRename, kotlinCallsToReplace, foreignRefsToRename, newName, _, newGetterName) = writableElementContext
+    val (callables, elementsToChange, newName, _, newGetterName) = writableElementContext
 
     val psiFactory = KtPsiFactory(element.project)
     val newReference = psiFactory.createExpression(newName)
 
-    kotlinCallsToReplace.forEach { it.replace(newReference) }
-    refsToRename.forEach { it.handleElementRename(newName) }
-    foreignRefsToRename.forEach { it.handleElementRename(newGetterName) }
+    elementsToChange.kotlinCalls.forEach { it.replace(newReference) }
+    elementsToChange.kotlinRefsToRename.forEach { it.handleElementRename(newName) }
+    elementsToChange.foreignRefs.forEach { it.handleElementRename(newGetterName) }
 
     val mainElement = findMainElement(element, callables, actionContext)
     callables.forEach {
         when (it) {
-            is KtNamedFunction -> convertFunction(it, newName, psiFactory, updater, moveCaret = it == mainElement)
+            is KtNamedFunction -> {
+                val context = FunctionConversionContext(
+                    newName = newName,
+                    psiFactory = psiFactory,
+                    updater = updater
+                )
+                convertFunction(it, context, moveCaret = it == mainElement)
+            }
             is PsiMethod -> it.name = newGetterName
         }
     }
@@ -202,15 +222,15 @@ private fun convertFunctionToProperty(
 
 private fun convertFunction(
     originalFunction: KtNamedFunction,
-    newName: String,
-    psiFactory: KtPsiFactory,
-    updater: ModPsiUpdater,
+    context: FunctionConversionContext,
     moveCaret: Boolean
 ) {
-    val propertyName = getPropertyName(originalFunction, newName)
-    val newProperty = psiFactory.createDeclaration<KtProperty>(propertyName)
+    val propertyName = getPropertyName(originalFunction, context.newName)
+    val newProperty = context.psiFactory.createDeclaration<KtProperty>(propertyName)
     val replaced = originalFunction.replaced(newProperty)
-    if (moveCaret) updater.moveCaretTo(replaced.nameIdentifier!!.endOffset)
+    if (moveCaret) {
+        replaced.nameIdentifier?.let { context.updater.moveCaretTo(it.endOffset) }
+    }
 }
 
 private fun findMainElement(
@@ -229,7 +249,9 @@ private fun getPropertyName(
     return KtPsiFactory.CallableBuilder(target = KtPsiFactory.CallableBuilder.Target.READ_ONLY_PROPERTY).apply {
         val originalFunctionText = originalFunction.text
         val funKeyword = originalFunction.funKeyword
-        modifier(originalFunctionText.take(funKeyword!!.getStartOffsetIn(originalFunction)))
+        funKeyword?.let { keyword ->
+            modifier(originalFunctionText.take(keyword.getStartOffsetIn(originalFunction)))
+        }
         typeParams(originalFunction.typeParameters.map { it.text })
         originalFunction.receiverTypeReference?.let { receiver(it.text) }
         name(newName)
@@ -237,7 +259,9 @@ private fun getPropertyName(
         typeConstraints(originalFunction.typeConstraints.map { it.text })
 
         if (originalFunction.equalsToken != null) {
-            getterExpression(originalFunction.bodyExpression!!.text, breakLine = originalFunction.typeReference != null)
+            originalFunction.bodyExpression?.let { bodyExpr ->
+                getterExpression(bodyExpr.text, breakLine = originalFunction.typeReference != null)
+            }
         } else {
             originalFunction.bodyBlockExpression?.let { body ->
                 transform {
@@ -274,9 +298,7 @@ private fun checkValueArgumentsNotEmpty(callElement: KtCallElement, conflicts: M
 private fun KaSession.addConflictIfSamePropertyFound(
     callable: PsiNamedElement,
     callableSymbol: KaCallableSymbol,
-    conflicts: MutableMap<PsiElement, ModShowConflicts.Conflict>,
-    getterName: String,
-    callables: Collection<PsiElement>
+    context: ConflictCheckContext
 ) {
     if (callable is KtNamedFunction) {
         callable.containingKtFile
@@ -288,9 +310,13 @@ private fun KaSession.addConflictIfSamePropertyFound(
                 val receiverType = it.receiverType ?: return@find false
                 (callableSymbol.containingSymbol as? KaClassifierSymbol)?.defaultType?.semanticallyEquals(receiverType)
                     ?: return@find false
-            }?.let { reportDeclarationConflict(conflicts, declaration = it.psi!!) { s -> KotlinBundle.message("0.already.exists", s) } }
+            }?.let { propertySymbol ->
+                propertySymbol.psi?.let { psiElement ->
+                    reportDeclarationConflict(context.conflicts, declaration = psiElement) { s -> KotlinBundle.message("0.already.exists", s) }
+                }
+            }
     } else if (callable is PsiMethod) {
-        callable.checkDeclarationConflict(getterName, conflicts, callables)
+        callable.checkDeclarationConflict(context.getterName, context.conflicts, context.callables)
     }
 }
 
@@ -312,18 +338,27 @@ private fun getWritable(
     elementContext: Context,
     updater: ModPsiUpdater,
 ): Context {
-    val (callables, refsToRename, kotlinCallsToReplace, foreignRefsToRename, newName, _, newGetterName) = elementContext
+    val (callables, elementsToChange, newName, _, newGetterName) = elementContext
+    
+    val writableElementsToChange = ElementsToChange().apply {
+        kotlinCalls.addAll(elementsToChange.kotlinCalls.map(updater::getWritable))
+        kotlinRefsToRename.addAll(
+            elementsToChange.kotlinRefsToRename
+                .map(PsiReference::getElement)
+                .map(updater::getWritable)
+                .mapNotNull(PsiElement::getReference)
+        )
+        foreignRefs.addAll(
+            elementsToChange.foreignRefs
+                .map(PsiReference::getElement)
+                .map(updater::getWritable)
+                .mapNotNull(PsiElement::getReference)
+        )
+    }
+    
     return Context(
         callables = callables.map(updater::getWritable),
-        refsToRename = refsToRename
-            .map(PsiReference::getElement)
-            .map(updater::getWritable)
-            .mapNotNull(PsiElement::getReference),
-        kotlinCallsToReplace = kotlinCallsToReplace.map(updater::getWritable),
-        foreignRefsToRename = foreignRefsToRename
-            .map(PsiReference::getElement)
-            .map(updater::getWritable)
-            .mapNotNull(PsiElement::getReference),
+        elementsToChange = writableElementsToChange,
         newName = newName,
         conflicts = emptyMap(),
         newGetterName = newGetterName

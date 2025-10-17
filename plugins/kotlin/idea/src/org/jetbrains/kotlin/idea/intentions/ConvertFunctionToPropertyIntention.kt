@@ -55,13 +55,23 @@ class ConvertFunctionToPropertyIntention :
             (propertyNameByGetMethodName(name) ?: name).asString()
         }
 
+        private fun getPropertyName(originalFunction: KtNamedFunction?): String {
+            return if (propertyNameByGetMethodName(callableDescriptor.name) != null) {
+                newName  // Use transformed name for getter methods
+            } else {
+                originalFunction?.nameIdentifier?.text ?: newName  // Preserve backticks for non-getter functions
+            }
+        }
+
         private fun convertFunction(originalFunction: KtNamedFunction, psiFactory: KtPsiFactory, moveCaret: Boolean) {
+            val propertyName = getPropertyName(originalFunction)
+            
             val propertyString = KtPsiFactory.CallableBuilder(READ_ONLY_PROPERTY).apply {
                 // make sure to capture all comments and line breaks
                 modifier(originalFunction.text.substring(0, originalFunction.funKeyword!!.getStartOffsetIn(originalFunction)))
                 typeParams(originalFunction.typeParameters.map { it.text })
                 originalFunction.receiverTypeReference?.let { receiver(it.text) }
-                name(newName)
+                name(propertyName)
                 originalFunction.getReturnTypeReference()?.let { returnType(it.text) }
                 typeConstraints(originalFunction.typeConstraints.map { it.text })
 
@@ -147,10 +157,12 @@ class ConvertFunctionToPropertyIntention :
                 project.executeWriteCommand(text) {
                     val psiFactory = KtPsiFactory(project)
                     val newGetterName = JvmAbi.getterName(newName)
-                    val newRefExpr = psiFactory.createExpression(newName)
+                    val mainKtFunction = mainElement as? KtNamedFunction
+                    val propertyName = getPropertyName(mainKtFunction)
+                    val newRefExpr = psiFactory.createExpression(propertyName)
 
                     kotlinCalls.forEach { it.replace(newRefExpr) }
-                    kotlinRefsToRename.forEach { it.handleElementRename(newName) }
+                    kotlinRefsToRename.forEach { it.handleElementRename(propertyName) }
                     foreignRefs.forEach { it.handleElementRename(newGetterName) }
                     callables.forEach {
                         when (it) {
@@ -187,7 +199,14 @@ class ConvertFunctionToPropertyIntention :
 
         val descriptor = element.resolveToDescriptorIfAny() ?: return false
         val returnType = descriptor.returnType ?: return false
-        return !KotlinBuiltIns.isUnit(returnType) && !KotlinBuiltIns.isNothing(returnType)
+        if (KotlinBuiltIns.isUnit(returnType) || KotlinBuiltIns.isNothing(returnType)) return false
+
+        val propertyName = element.getPropertyName()
+        val existingProperty = findExistingPropertyWithSameName(element, propertyName)
+        if (existingProperty != null) return false
+        
+        val conflictingFunction = findConflictingFunctionWithSamePropertyName(element, propertyName)
+        return conflictingFunction == null
     }
 
     override fun applyTo(element: KtNamedFunction, editor: Editor?) {
@@ -195,3 +214,42 @@ class ConvertFunctionToPropertyIntention :
         Converter(element.project, element.containingKtFile, editor, descriptor).run()
     }
 }
+
+private fun KtNamedFunction.getPropertyName(): String {
+    val functionName = this.nameIdentifier?.let { Name.identifier(it.text) } ?: return this.name ?: ""
+    return (propertyNameByGetMethodName(functionName) ?: functionName).asString()
+}
+
+private inline fun <reified T : KtDeclaration> findDeclarationInScope(
+    element: KtNamedFunction,
+    filter: (T) -> Boolean
+): T? {
+    // Check file-level declarations
+    val fileScope = element.getContainingKtFile().declarations
+        .filterIsInstance<T>()
+        .filter(filter)
+
+    if (fileScope.isNotEmpty()) return fileScope.first()
+
+    // Check class members
+    val containingClass = element.containingClass()
+    if (containingClass != null) {
+        val classScope = containingClass.body?.declarations
+            ?.filterIsInstance<T>()
+            ?.filter(filter)
+
+        if (classScope?.isNotEmpty() == true) return classScope.first()
+    }
+
+    return null
+}
+
+private fun findExistingPropertyWithSameName(element: KtNamedFunction, propertyName: String): KtProperty? =
+    findDeclarationInScope<KtProperty>(element) { 
+        it.name == propertyName && it.receiverTypeReference?.text == element.receiverTypeReference?.text 
+    }
+
+private fun findConflictingFunctionWithSamePropertyName(element: KtNamedFunction, propertyName: String): KtNamedFunction? =
+    findDeclarationInScope<KtNamedFunction>(element) { 
+        it != element && it.getPropertyName() == propertyName && it.receiverTypeReference?.text == element.receiverTypeReference?.text 
+    }

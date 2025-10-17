@@ -5154,6 +5154,11 @@ public abstract class HighLevelQuickFixTestGenerated extends AbstractHighLevelQu
                 runTest("../../../idea/tests/testData/quickfix/createFromUsage/createVariable/localVariable/assignedInFun.kt");
             }
 
+            @TestMetadata("backticksVar.kt")
+            public void testBackticksVar() throws Exception {
+                runTest("../../../idea/tests/testData/quickfix/createFromUsage/createVariable/localVariable/backticksVar.kt");
+            }
+
             @TestMetadata("callableRef.kt")
             public void testCallableRef() throws Exception {
                 runTest("../../../idea/tests/testData/quickfix/createFromUsage/createVariable/localVariable/callableRef.kt");

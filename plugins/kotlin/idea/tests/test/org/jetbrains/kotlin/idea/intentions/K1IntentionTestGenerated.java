@@ -5015,6 +5015,11 @@ public abstract class K1IntentionTestGenerated extends AbstractK1IntentionTest {
             KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
         }
 
+        @TestMetadata("backtickedEnum.kt")
+        public void testBacktickedEnum() throws Exception {
+            runTest("testData/intentions/convertEnumToSealedClass/backtickedEnum.kt");
+        }
+
         @TestMetadata("entriesAndMembers.kt")
         public void testEntriesAndMembers() throws Exception {
             runTest("testData/intentions/convertEnumToSealedClass/entriesAndMembers.kt");
@@ -5733,6 +5738,11 @@ public abstract class K1IntentionTestGenerated extends AbstractK1IntentionTest {
         @TestMetadata("annotationLineBreak.kt")
         public void testAnnotationLineBreak() throws Exception {
             runTest("testData/intentions/convertFunctionToProperty/annotationLineBreak.kt");
+        }
+
+        @TestMetadata("backticks.kt")
+        public void testBackticks() throws Exception {
+            runTest("testData/intentions/convertFunctionToProperty/backticks.kt");
         }
 
         @TestMetadata("blockBody.kt")

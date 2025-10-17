@@ -1,0 +1,6 @@
+class X {
+    val `make some fun`: Int
+        get() {
+            return 0
+        }
+}
