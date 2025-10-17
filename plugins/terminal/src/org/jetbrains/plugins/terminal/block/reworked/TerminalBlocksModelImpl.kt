@@ -15,6 +15,9 @@ class TerminalBlocksModelImpl(private val outputModel: TerminalOutputModel, pare
 
   override val blocks: MutableList<TerminalBlockBase> = mutableListOf()
 
+  override val activeBlock: TerminalBlockBase
+    get() = blocks.last()
+
   private val dispatcher = EventDispatcher.create(TerminalBlocksModelListener::class.java)
 
   init {
@@ -36,7 +39,7 @@ class TerminalBlocksModelImpl(private val outputModel: TerminalOutputModel, pare
     dispatcher.addListener(listener, parentDisposable)
   }
 
-  fun promptStarted(offset: TerminalOffset) {
+  fun startNewBlock(offset: TerminalOffset) {
     val lastBlock = blocks.last() as TerminalCommandBlockImpl
     if (offset == lastBlock.startOffset) {
       blocks.removeLast()
@@ -50,19 +53,9 @@ class TerminalBlocksModelImpl(private val outputModel: TerminalOutputModel, pare
     addNewBlock(offset)
   }
 
-  fun promptFinished(offset: TerminalOffset) {
-    val curBlock = blocks.last() as TerminalCommandBlockImpl
-    blocks[blocks.lastIndex] = curBlock.copy(commandStartOffset = offset)
-  }
-
-  fun commandStarted(offset: TerminalOffset) {
-    val curBlock = blocks.last() as TerminalCommandBlockImpl
-    blocks[blocks.lastIndex] = curBlock.copy(outputStartOffset = offset)
-  }
-
-  fun commandFinished(exitCode: Int) {
-    val curBlock = blocks.last() as TerminalCommandBlockImpl
-    blocks[blocks.lastIndex] = curBlock.copy(exitCode = exitCode)
+  inline fun updateActiveCommandBlock(doUpdate: (TerminalCommandBlockImpl) -> TerminalCommandBlock) {
+    val newBlock = doUpdate(activeBlock as TerminalCommandBlockImpl)
+    blocks[blocks.lastIndex] = newBlock
   }
 
   fun dumpState(): TerminalBlocksModelState {

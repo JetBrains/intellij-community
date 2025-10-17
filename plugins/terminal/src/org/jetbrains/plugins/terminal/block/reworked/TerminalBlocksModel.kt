@@ -12,6 +12,8 @@ interface TerminalBlocksModel {
   @get:RequiresEdt
   val blocks: List<TerminalBlockBase>
 
+  val activeBlock: TerminalBlockBase
+
   fun addListener(parentDisposable: Disposable, listener: TerminalBlocksModelListener)
 
   companion object {

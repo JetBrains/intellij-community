@@ -182,16 +182,22 @@ internal class StateAwareTerminalSession(
           sessionModel.updateTerminalState(state)
         }
         TerminalPromptStartedEvent -> {
-          blocksModel.promptStarted(outputModel.cursorOffset)
+          blocksModel.startNewBlock(outputModel.cursorOffset)
         }
         TerminalPromptFinishedEvent -> {
-          blocksModel.promptFinished(outputModel.cursorOffset)
+          blocksModel.updateActiveCommandBlock { block ->
+            block.copy(commandStartOffset = outputModel.cursorOffset)
+          }
         }
         is TerminalCommandStartedEvent -> {
-          blocksModel.commandStarted(outputModel.cursorOffset)
+          blocksModel.updateActiveCommandBlock { block ->
+            block.copy(outputStartOffset = outputModel.cursorOffset)
+          }
         }
         is TerminalCommandFinishedEvent -> {
-          blocksModel.commandFinished(event.exitCode)
+          blocksModel.updateActiveCommandBlock { block ->
+            block.copy(exitCode = event.exitCode)
+          }
         }
         is TerminalHyperlinksHeartbeatEvent -> {
           val facade = getHyperlinkFacade(event)

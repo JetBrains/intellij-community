@@ -48,25 +48,31 @@ internal class TerminalShellIntegrationEventsHandler(
       TerminalPromptStartedEvent -> {
         withContext(edtContext) {
           outputModelController.applyPendingUpdates()
-          getIntegrationOrThrow().blocksModel.promptStarted(outputModelController.model.cursorOffset)
+          getIntegrationOrThrow().blocksModel.startNewBlock(outputModelController.model.cursorOffset)
         }
       }
       TerminalPromptFinishedEvent -> {
         withContext(edtContext) {
           outputModelController.applyPendingUpdates()
-          getIntegrationOrThrow().blocksModel.promptFinished(outputModelController.model.cursorOffset)
+          getIntegrationOrThrow().blocksModel.updateActiveCommandBlock { block ->
+            block.copy(commandStartOffset = outputModelController.model.cursorOffset)
+          }
         }
       }
       is TerminalCommandStartedEvent -> {
         withContext(edtContext) {
           outputModelController.applyPendingUpdates()
-          getIntegrationOrThrow().blocksModel.commandStarted(outputModelController.model.cursorOffset)
+          getIntegrationOrThrow().blocksModel.updateActiveCommandBlock { block ->
+            block.copy(outputStartOffset = outputModelController.model.cursorOffset)
+          }
         }
       }
       is TerminalCommandFinishedEvent -> {
         withContext(edtContext) {
           outputModelController.applyPendingUpdates()
-          getIntegrationOrThrow().blocksModel.commandFinished(event.exitCode)
+          getIntegrationOrThrow().blocksModel.updateActiveCommandBlock { block ->
+            block.copy(exitCode = event.exitCode)
+          }
         }
       }
       is TerminalAliasesReceivedEvent -> {
