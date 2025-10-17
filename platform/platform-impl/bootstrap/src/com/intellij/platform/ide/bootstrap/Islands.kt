@@ -29,6 +29,18 @@ suspend fun applyIslandsTheme(afterImportSettings: Boolean) {
   }
 
   val properties = serviceAsync<PropertiesComponent>()
+
+  if (PlatformUtils.isRider() && !properties.getBoolean("rider.color.scheme.updated", false)) {
+    properties.setValue("rider.color.scheme.updated", true)
+
+    val finish = withContext(Dispatchers.EDT) {
+      changeColorSchemeForRiderIslandsDarkTheme()
+    }
+    if (finish) {
+      return
+    }
+  }
+
   if (afterImportSettings) {
     if (properties.getValue("ide.islands.show.feedback2") != "show.promo") {
       return
@@ -90,4 +102,20 @@ private suspend fun enableTheme() {
   newTheme.installEditorScheme(colorsManager.getScheme(editorScheme) ?: colorsManager.defaultScheme)
 
   lafManager.updateUI()
+}
+
+private suspend fun changeColorSchemeForRiderIslandsDarkTheme(): Boolean {
+  val colorsManager = EditorColorsManager.getInstance()
+  val lafManager = serviceAsync<LafManager>()
+  val currentLaf = lafManager.currentUIThemeLookAndFeel ?: return false
+
+  if (currentLaf.id != "Islands Dark" || colorsManager.globalScheme.displayName != "Rider Dark") {
+    return false
+  }
+
+  currentLaf.installEditorScheme(colorsManager.getScheme("Rider Islands Dark") ?: return false)
+
+  lafManager.updateUI()
+
+  return true
 }
