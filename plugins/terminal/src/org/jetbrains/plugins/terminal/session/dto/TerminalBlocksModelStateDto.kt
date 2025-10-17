@@ -3,7 +3,7 @@ package org.jetbrains.plugins.terminal.session.dto
 
 import kotlinx.serialization.Serializable
 import org.jetbrains.annotations.ApiStatus
-import org.jetbrains.plugins.terminal.block.reworked.TerminalCommandBlockImpl
+import org.jetbrains.plugins.terminal.block.reworked.TerminalCommandBlock
 import org.jetbrains.plugins.terminal.session.TerminalBlocksModelState
 
 @Serializable
@@ -16,10 +16,9 @@ data class TerminalBlocksModelStateDto(
 @ApiStatus.Internal
 fun TerminalBlocksModelState.toDto(): TerminalBlocksModelStateDto {
   val blocksDto = blocks.map {
-    // Every block implementation should also provide DTO.
-    // Use 'when' here to break compilation there if a new block implementation is added.
     when (it) {
-      is TerminalCommandBlockImpl -> it.toDto()
+      is TerminalCommandBlock -> it.toDto()
+      else -> error("Unexpected block type: ${it::class.java}, provide serialization for it.")
     }
   }
   return TerminalBlocksModelStateDto(blocksDto, blockIdCounter)
