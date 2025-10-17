@@ -1529,19 +1529,33 @@ public class AbstractPopup implements JBPopup, ScreenAreaConsumer, AlignedPopup 
   }
 
   private static Point getLocationRelativeToParent(Rectangle bounds, Window popupParent) {
+    Rectangle newBounds = new Rectangle(bounds);
+    // The Wayland server may refuse to show a popup whose top-left corner is located outside the parent toplevel's bounds.
+    var toplevelParent = ComponentUtil.findUltimateParent(popupParent);
+    var toplevelParentLocation = toplevelParent.getLocationOnScreen();
+    if (LOG.isDebugEnabled()) {
+      LOG.debug(
+        "The top-level parent is located at " + toplevelParentLocation +
+        " and has the size " + toplevelParent.getSize()
+      );
+    }
+    Rectangle okBounds = new Rectangle(toplevelParentLocation.x, toplevelParentLocation.y,
+                                       toplevelParent.getWidth() + newBounds.width, toplevelParent.getHeight() + newBounds.height);
+    ScreenUtil.moveToFit(newBounds, okBounds, new Insets(0, 0, 1, 1));
+    if (LOG.isDebugEnabled()) {
+      LOG.debug("The bounds after fitting into the top-level parent: " + newBounds);
+    }
     // The "bounds" are "screen" coordinates, which in Wayland means that they
     // are relative to the nearest toplevel (Window) in the hierarchy.
     // But popups in Wayland are expected to be located relative to popup's "parent" (a toplevel or another popup).
     // We need to adjust "bounds" to be relative to the parent.
-    Rectangle newBounds = new Rectangle(bounds);
     Point parentLocation = popupParent.getLocationOnScreen();
     newBounds.x -= parentLocation.x;
     newBounds.y -= parentLocation.y;
-    // The Wayland server may refuse to show a popup whose top-left corner is located outside the parent toplevel's bounds.
-    // TODO: Need to fit into the nearest toplevel, not popupParent that may be another popup.
-    Rectangle okBounds = new Rectangle(0, 0,
-                                       popupParent.getWidth() + newBounds.width, popupParent.getHeight() + newBounds.height);
-    ScreenUtil.moveToFit(newBounds, okBounds, new Insets(0, 0, 1, 1));
+    if (LOG.isDebugEnabled()) {
+      LOG.debug("The direct popup parent is located at " + parentLocation);
+      LOG.debug("The bounds after converting to the parent coordinate system: " + newBounds);
+    }
     return newBounds.getLocation();
   }
 
