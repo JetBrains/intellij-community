@@ -3,9 +3,12 @@ package com.intellij.execution.target
 
 import com.intellij.openapi.ui.ValidationInfo
 import com.intellij.util.concurrency.annotations.RequiresEdt
+import org.jetbrains.annotations.ApiStatus
 
+@ApiStatus.Internal
 interface CustomToolLanguageConfigurable<T> {
   fun setIntrospectable(introspectable: LanguageRuntimeType.Introspectable)
+  fun registerStateChangedCallback(stateChangedCallback: () -> Unit): Unit = Unit
 
   /**
    * Call [validate] first to make sure there are no errors

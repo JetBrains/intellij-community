@@ -70,9 +70,15 @@ internal class CondaExistingEnvironmentSelector<P : PathHolder>(model: PythonAdd
               validationRequestor
                 and WHEN_PROPERTY_CHANGED(state.selectedCondaEnv)
                 and WHEN_PROPERTY_CHANGED(state.condaExecutable)
+                and WHEN_PROPERTY_CHANGED(isReloadLinkVisible)
             )
             .validationOnInput {
-              return@validationOnInput if (it.isVisible && it.selectedItem == null) ValidationInfo(message("python.sdk.conda.no.env.selected.error")) else null
+              when {
+                !it.isVisible -> null
+                !isReloadLinkVisible.get() -> ValidationInfo(message("python.add.sdk.panel.wait")).asWarning()
+                it.selectedItem == null -> ValidationInfo(message("python.sdk.conda.no.env.selected.error"))
+                else -> null
+              }
             }
             .align(Align.FILL)
             .applyToComponent {

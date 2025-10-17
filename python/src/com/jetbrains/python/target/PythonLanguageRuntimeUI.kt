@@ -36,9 +36,10 @@ class PythonLanguageRuntimeUI(
   val project: Project,
   val config: PythonLanguageRuntimeConfiguration,
   val targetSupplier: Supplier<TargetEnvironmentConfiguration>,
-) : BoundConfigurable(PyBundle.message("configurable.name.python.language")), CustomToolLanguageConfigurable<Sdk> {
+) : BoundConfigurable(message("configurable.name.python.language")), CustomToolLanguageConfigurable<Sdk> {
   private val module: Module = project.modules.first() // TODO get the real one, this behaviour was copied from legacy "createSdkForTarget"
   private var introspectable: LanguageRuntimeType.Introspectable? = null
+  private var stateChangedCallback: (() -> Unit)? = null
 
   private lateinit var mainPanel: PythonAddCustomInterpreter<PathHolder.Target>
   private var validationErrors: Collection<ValidationInfo> = emptyList()
@@ -77,6 +78,7 @@ class PythonLanguageRuntimeUI(
     disposable?.let {
       dialogPanel.registerValidators(it) { map ->
         this.validationErrors = map.values
+        this.stateChangedCallback?.invoke()
       }
     }
 
@@ -85,6 +87,10 @@ class PythonLanguageRuntimeUI(
 
   override fun setIntrospectable(introspectable: LanguageRuntimeType.Introspectable) {
     this.introspectable = introspectable
+  }
+
+  override fun registerStateChangedCallback(stateChangedCallback: () -> Unit) {
+    this@PythonLanguageRuntimeUI.stateChangedCallback = stateChangedCallback
   }
 
   @RequiresEdt
