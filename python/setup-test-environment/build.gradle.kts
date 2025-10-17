@@ -188,7 +188,7 @@ createPython("python3.10", "3.10",
 
 createPython("python3.11", "3.11",
              listOf("black == 23.1.0", "joblib", "tensorflow", "poetry", "uv"),
-             listOf("python3.11", "black", "poetry", "uv", "joblib", "tensorflow"))
+             listOf("python3.11", "python3", "black", "poetry", "uv", "joblib", "tensorflow"))
 
 createPython("python3.12", "3.12",
              listOf("teamcity-messages", "Twisted", "pytest", "poetry", "uv", "hatch", "pipenv", "black>=23.11.0")
