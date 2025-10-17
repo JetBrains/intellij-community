@@ -18,8 +18,8 @@ import org.jetbrains.plugins.terminal.TerminalOptionsProvider
 import org.jetbrains.plugins.terminal.block.reworked.*
 import org.jetbrains.plugins.terminal.block.util.TerminalDataContextUtils.isOutputModelEditor
 import org.jetbrains.plugins.terminal.session.TerminalState
+import org.jetbrains.plugins.terminal.view.shellIntegration.TerminalOutputStatus
 import org.jetbrains.plugins.terminal.view.shellIntegration.TerminalShellIntegration
-import org.jetbrains.plugins.terminal.view.shellIntegration.impl.isCommandTypingMode
 import java.awt.Point
 import java.awt.event.InputEvent
 import java.awt.event.KeyEvent
@@ -404,11 +404,11 @@ internal open class TerminalEventsHandlerImpl(
 
   private fun scheduleCompletionPopupIfNeeded(charTyped: Char) {
     val project = editor.project ?: return
-    val blocksModel = shellIntegrationFuture?.getNow(null)?.blocksModel ?: return
+    val shellIntegration = shellIntegrationFuture?.getNow(null) ?: return
     if (editor.isOutputModelEditor
         && TerminalCommandCompletion.isEnabled()
         && TerminalOptionsProvider.instance.showCompletionPopupAutomatically
-        && blocksModel.isCommandTypingMode()
+        && shellIntegration.outputStatus.value == TerminalOutputStatus.TypingCommand
         && canTriggerCompletion(charTyped)
         && LookupManager.getActiveLookup(editor) == null
         && outputModel.getTextAfterCursor().isBlank()

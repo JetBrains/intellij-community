@@ -2,6 +2,7 @@
 package org.jetbrains.plugins.terminal.view.shellIntegration
 
 import com.intellij.openapi.Disposable
+import kotlinx.coroutines.flow.StateFlow
 import org.jetbrains.annotations.ApiStatus
 
 @ApiStatus.Experimental
@@ -9,7 +10,7 @@ import org.jetbrains.annotations.ApiStatus
 interface TerminalShellIntegration {
   val blocksModel: TerminalBlocksModel
 
-  fun addCommandExecutionListener(parentDisposable: Disposable, listener: TerminalCommandExecutionListener)
+  val outputStatus: StateFlow<TerminalOutputStatus>
 
-  // todo
+  fun addCommandExecutionListener(parentDisposable: Disposable, listener: TerminalCommandExecutionListener)
 }

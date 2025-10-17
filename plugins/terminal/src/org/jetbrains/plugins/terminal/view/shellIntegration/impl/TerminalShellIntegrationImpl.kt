@@ -5,10 +5,14 @@ import com.intellij.openapi.Disposable
 import com.intellij.util.EventDispatcher
 import com.intellij.util.asDisposable
 import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.flow.MutableStateFlow
+import kotlinx.coroutines.flow.StateFlow
+import kotlinx.coroutines.flow.asStateFlow
 import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.plugins.terminal.block.reworked.TerminalOffset
 import org.jetbrains.plugins.terminal.block.reworked.TerminalOutputModel
 import org.jetbrains.plugins.terminal.view.shellIntegration.*
+import org.jetbrains.plugins.terminal.view.shellIntegration.TerminalOutputStatus.*
 
 @ApiStatus.Internal
 class TerminalShellIntegrationImpl(
@@ -23,20 +27,27 @@ class TerminalShellIntegrationImpl(
     dispatcher.addListener(listener, parentDisposable)
   }
 
+  private val mutableOutputStatus = MutableStateFlow<TerminalOutputStatus>(WaitingForPrompt)
+  override val outputStatus: StateFlow<TerminalOutputStatus> = mutableOutputStatus.asStateFlow()
+
   fun onPromptStarted(offset: TerminalOffset) {
     blocksModel.startNewBlock(offset)
+    mutableOutputStatus.value = WaitingForPrompt
   }
 
   fun onPromptFinished(offset: TerminalOffset) {
     blocksModel.updateActiveCommandBlock { block ->
       block.copy(commandStartOffset = offset)
     }
+    mutableOutputStatus.value = TypingCommand
   }
 
   fun onCommandStarted(offset: TerminalOffset) {
     blocksModel.updateActiveCommandBlock { block ->
       block.copy(outputStartOffset = offset)
     }
+    mutableOutputStatus.value = ExecutingCommand
+
     val block = blocksModel.activeBlock as TerminalCommandBlock
     dispatcher.multicaster.commandStarted(TerminalCommandStartedEventImpl(outputModel, block))
   }
@@ -45,6 +56,8 @@ class TerminalShellIntegrationImpl(
     blocksModel.updateActiveCommandBlock { block ->
       block.copy(exitCode = exitCode)
     }
+    mutableOutputStatus.value = WaitingForPrompt
+
     val block = blocksModel.activeBlock as TerminalCommandBlock
     dispatcher.multicaster.commandFinished(TerminalCommandFinishedEventImpl(outputModel, block))
   }

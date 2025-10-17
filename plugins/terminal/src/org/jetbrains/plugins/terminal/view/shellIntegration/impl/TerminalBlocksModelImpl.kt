@@ -3,7 +3,6 @@ package org.jetbrains.plugins.terminal.view.shellIntegration.impl
 
 import com.intellij.openapi.Disposable
 import com.intellij.util.EventDispatcher
-import com.intellij.util.concurrency.annotations.RequiresEdt
 import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.annotations.VisibleForTesting
 import org.jetbrains.plugins.terminal.block.reworked.*
@@ -158,17 +157,3 @@ private data class TerminalBlocksReplacedEventImpl(
   override val oldBlocks: List<TerminalBlockBase>,
   override val newBlocks: List<TerminalBlockBase>,
 ) : TerminalBlocksReplacedEvent
-
-/**
- * Returns true if the user can type a command right now.
- */
-@ApiStatus.Internal
-@RequiresEdt
-fun TerminalBlocksModel.isCommandTypingMode(): Boolean {
-  val commandBlock = activeBlock as? TerminalCommandBlock ?: return false
-  // The command start offset is where the prompt ends.
-  // If it's not there yet, it means the user can't type a command yet.
-  // The output start offset is -1 until the command starts executing.
-  // Once that happens, it means the user can't type anymore.
-  return commandBlock.commandStartOffset != null && commandBlock.outputStartOffset == null
-}
