@@ -11,7 +11,7 @@ This document explains how to convert between EelPath and java.nio.file.Path in 
 
 ## Overview
 
-The Eel API provides seamless conversion between Java NIO paths and EEL paths through the `EelNioBridgeService` class. This conversion is crucial for:
+The Eel API provides seamless conversion between Java NIO paths and EEL paths through extension functions. This conversion is crucial for:
 
 - Interoperating between Eel and standard Java APIs
 - Working with paths in different environments (local, WSL, Docker, etc.)
@@ -148,7 +148,7 @@ Path conversion is essential when passing paths as command-line arguments or env
 
 ```kotlin
 // Convert a local JDK path to a path in the target environment for JAVA_HOME
-val jdkPath = Path(javaParams.jdkPath).asEelPath().toString()
+val jdkPath = Path.of(javaParams.jdkPath).asEelPath().toString()
 env["JAVA_HOME"] = jdkPath
 
 // Convert a Maven executable path for use in a command line
