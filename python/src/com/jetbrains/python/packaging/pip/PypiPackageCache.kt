@@ -15,6 +15,7 @@ import com.jetbrains.python.Result
 import com.jetbrains.python.packaging.PyPIPackageUtil
 import com.jetbrains.python.packaging.PyPackageName
 import com.jetbrains.python.packaging.cache.PythonPackageCache
+import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.sync.Mutex
 import kotlinx.coroutines.sync.withLock
@@ -151,8 +152,7 @@ open class PypiPackageCache : PythonPackageCache<String> {
   class PypiPackageLoader {
     @RequiresBackgroundThread
     fun loadPackages(): Result<Collection<String>, IOException> = try {
-      val pypiPackages = PyPIPackageUtil.parsePyPIListFromWeb(PyPIPackageUtil.PYPI_LIST_URL)
-        .map { PyPackageName.normalizePackageName(it) }.toSet()
+      val pypiPackages = loadPackagesFromPypi().map { PyPackageName.normalizePackageName(it) }.toSet()
       Result.success(pypiPackages)
     }
     catch (e: IOException) {
@@ -162,6 +162,40 @@ open class PypiPackageCache : PythonPackageCache<String> {
       thisLogger().warn("Cannot load pypiList from internet", t)
       throw t
     }
+
+    /**
+     * In some tests we have a problem that pypi return 0 packages without any error.
+     * So we need to retry this operation.
+     */
+    private fun loadPackagesFromPypi(): List<String> {
+      var error: Throwable? = null
+
+      val maxAttempts = 3
+      repeat(maxAttempts) {
+        thisLogger().debug("Attempt ${it + 1} to load Pypi packages list")
+        val loaded = try {
+          PyPIPackageUtil.parsePyPIListFromWeb(PyPIPackageUtil.PYPI_LIST_URL)
+        }
+        catch (t: CancellationException) {
+          throw t
+        }
+        catch (t: Throwable) {
+          thisLogger().warn("Attempt ${it + 1} Cannot load Pypi packages list", t)
+          error = t
+          return@repeat
+        }
+        thisLogger().debug("Attempt ${it + 1} Loaded ${loaded.size} Pypi packages")
+        if (loaded.isNotEmpty()) {
+          return loaded
+        }
+      }
+      if (error != null) {
+        throw error
+      }
+      thisLogger().warn("Return empty Pypi packages list after $maxAttempts attempts")
+      return emptyList()
+    }
+
   }
 
   companion object {
