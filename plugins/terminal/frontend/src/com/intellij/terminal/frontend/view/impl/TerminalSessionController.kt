@@ -9,11 +9,9 @@ import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.diagnostic.thisLogger
 import com.intellij.terminal.JBTerminalSystemSettingsProviderBase
 import com.intellij.terminal.frontend.view.hyperlinks.FrontendTerminalHyperlinkFacade
-import com.intellij.util.EventDispatcher
 import com.intellij.util.containers.DisposableWrapperList
 import kotlinx.coroutines.*
 import org.jetbrains.plugins.terminal.block.reworked.TerminalSessionModel
-import org.jetbrains.plugins.terminal.block.reworked.TerminalShellIntegrationEventsListener
 import org.jetbrains.plugins.terminal.session.*
 import org.jetbrains.plugins.terminal.session.dto.toState
 import org.jetbrains.plugins.terminal.session.dto.toTerminalState
@@ -31,8 +29,6 @@ internal class TerminalSessionController(
 ) {
   private val eventHandlers: DisposableWrapperList<TerminalOutputEventsHandler> = DisposableWrapperList()
   private val terminationListeners: DisposableWrapperList<Runnable> = DisposableWrapperList()
-  private val shellIntegrationEventDispatcher: EventDispatcher<TerminalShellIntegrationEventsListener> =
-    EventDispatcher.create(TerminalShellIntegrationEventsListener::class.java)
 
   private val edtContext = Dispatchers.EDT + ModalityState.any().asContextElement()
 
@@ -148,10 +144,6 @@ internal class TerminalSessionController(
         thisLogger().error("Unhandled exception in termination listener", t)
       }
     }
-  }
-
-  fun addShellIntegrationListener(parentDisposable: Disposable, listener: TerminalShellIntegrationEventsListener) {
-    shellIntegrationEventDispatcher.addListener(listener, parentDisposable)
   }
 
   fun addEventsHandler(handler: TerminalOutputEventsHandler, parentDisposable: Disposable? = null) {

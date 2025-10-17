@@ -14,19 +14,19 @@ import com.intellij.util.concurrency.annotations.RequiresEdt
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.cancel
 import kotlinx.coroutines.isActive
-import kotlinx.coroutines.launch
 import org.jetbrains.plugins.terminal.block.reworked.TerminalOutputModel
-import org.jetbrains.plugins.terminal.block.reworked.TerminalSessionModel
-import org.jetbrains.plugins.terminal.block.reworked.TerminalShellIntegrationEventsListener
+import org.jetbrains.plugins.terminal.view.TerminalCommandExecutionListener
+import org.jetbrains.plugins.terminal.view.TerminalCommandFinishedEvent
+import org.jetbrains.plugins.terminal.view.TerminalShellIntegration
 import java.awt.event.FocusEvent
 import java.awt.event.FocusListener
 import java.awt.event.KeyEvent
+import java.util.concurrent.CompletableFuture
 import javax.swing.JComponent
 
 internal class TerminalVfsSynchronizer(
-  sessionController: TerminalSessionController,
+  shellIntegrationFuture: CompletableFuture<TerminalShellIntegration>,
   outputModel: TerminalOutputModel,
-  sessionModel: TerminalSessionModel,
   terminalComponent: JComponent,
   coroutineScope: CoroutineScope,
 ) {
@@ -45,12 +45,18 @@ internal class TerminalVfsSynchronizer(
   init {
     val disposable = coroutineScope.asDisposable()
 
-    sessionController.addShellIntegrationListener(disposable, object : TerminalShellIntegrationEventsListener {
-      override fun commandFinished(command: String, exitCode: Int, currentDirectory: String) {
-        SaveAndSyncHandler.getInstance().scheduleRefresh()
-        LOG.debug { "Command finished, schedule VFS refresh." }
-      }
-    })
+    shellIntegrationFuture.thenAccept { shellIntegration ->
+      // If we have events from the shell integration, we no more need heuristic-based refresher.
+      heuristicBasedRefresherScope.cancel()
+      LOG.debug { "Shell integration initialized, cancel heuristic-based VFS refresher." }
+
+      shellIntegration.addCommandExecutionListener(disposable, object : TerminalCommandExecutionListener {
+        override fun commandFinished(event: TerminalCommandFinishedEvent) {
+          SaveAndSyncHandler.getInstance().scheduleRefresh()
+          LOG.debug { "Command finished, schedule VFS refresh." }
+        }
+      })
+    }
 
     terminalComponent.addFocusListener(disposable, object : FocusListener {
       override fun focusGained(e: FocusEvent) {
@@ -72,18 +78,6 @@ internal class TerminalVfsSynchronizer(
         }
       }
     })
-
-    coroutineScope.launch {
-      var shellIntegrationEnabled = false
-      sessionModel.terminalState.collect { state ->
-        if (state.isShellIntegrationEnabled != shellIntegrationEnabled) {
-          shellIntegrationEnabled = state.isShellIntegrationEnabled
-          // If we have events from the shell integration, we no more need heuristic-based refresher.
-          heuristicBasedRefresherScope.cancel()
-          LOG.debug { "Shell integration initialized, cancel heuristic-based VFS refresher." }
-        }
-      }
-    }
   }
 
   @RequiresEdt
