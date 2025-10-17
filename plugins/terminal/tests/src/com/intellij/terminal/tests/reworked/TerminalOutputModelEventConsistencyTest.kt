@@ -45,11 +45,17 @@ internal class TerminalOutputModelEventConsistencyTest : BasePlatformTestCase() 
     sut.updateCursorPosition(999L, 100500)
   }
 
-  private inline fun consistencyTest(crossinline block: (MutableTerminalOutputModel) -> Unit): Unit = timeoutRunBlocking(
+  @Test
+  fun `trimming - no highlightings`() = consistencyTest(maxLength = 5) { sut ->
+    sut.updateContent(0L, "01234", emptyList())
+    sut.updateContent(0L, "0123456789", emptyList())
+  }
+
+  private inline fun consistencyTest(maxLength: Int = 0, crossinline block: (MutableTerminalOutputModel) -> Unit): Unit = timeoutRunBlocking(
     DEFAULT_TEST_TIMEOUT,
     "TerminalOutputModelEventConsistencyTest"
   ) {
-    val sut = TerminalTestUtil.createOutputModel()
+    val sut = TerminalTestUtil.createOutputModel(maxLength)
     val mirror = StringBuilder()
     var trimmed = 0L
     sut.addListener(asDisposable(), object : TerminalOutputModelListener {

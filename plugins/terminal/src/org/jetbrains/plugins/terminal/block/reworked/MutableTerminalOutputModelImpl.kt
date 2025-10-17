@@ -174,7 +174,6 @@ class MutableTerminalOutputModelImpl(
     val effectiveNewText = newText.subSequence(skipPrefix, newText.length - skipSuffix)
     val change = doReplaceContent(effectiveStartOffset, effectiveLength, effectiveNewText)
     highlightingsModel.updateHighlightings(startOffset.toRelative(), length, newText.length, styles)
-    ensureCorrectCursorOffset()
     return change
   }
 
@@ -215,12 +214,13 @@ class MutableTerminalOutputModelImpl(
   }
 
   private fun ensureCorrectCursorOffset() {
-    // If the document became shorter, immediately ensure that the cursor is still within the document.
+    // If the document became shorter or was trimmed, immediately ensure that the cursor is still within the document.
     // It'll update itself later to the correct position anyway, but having the incorrect value can cause exceptions before that.
-    val newLength = document.textLength
-    val docEndOffset = relativeOffset(newLength)
-    if (cursorOffset > docEndOffset) {
-      updateCursorPosition(docEndOffset)
+    if (cursorOffset < startOffset) {
+      updateCursorPosition(startOffset)
+    }
+    if (cursorOffset > endOffset) {
+      updateCursorPosition(endOffset)
     }
   }
 
@@ -265,6 +265,7 @@ class MutableTerminalOutputModelImpl(
       contentUpdateInProgress = false
     }
 
+    ensureCorrectCursorOffset()
     dispatcher.multicaster.afterContentChanged(TerminalContentChangeEventImpl(
       this,
       change.offset,
@@ -279,6 +280,7 @@ class MutableTerminalOutputModelImpl(
       dispatcher.multicaster.beforeContentChanged(this)
       val startBeforeTrimming = startOffset
       val trimmedSequence = trimToSize()
+      ensureCorrectCursorOffset()
       dispatcher.multicaster.afterContentChanged(TerminalContentChangeEventImpl(
         this,
         startBeforeTrimming,
