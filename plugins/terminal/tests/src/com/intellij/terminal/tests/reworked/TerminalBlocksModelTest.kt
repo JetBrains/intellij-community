@@ -10,8 +10,7 @@ import kotlinx.coroutines.runBlocking
 import org.jetbrains.plugins.terminal.block.reworked.MutableTerminalOutputModel
 import org.jetbrains.plugins.terminal.block.reworked.TerminalOffset
 import org.jetbrains.plugins.terminal.session.TerminalBlocksModelState
-import org.jetbrains.plugins.terminal.view.shellIntegration.TerminalBlockIdImpl
-import org.jetbrains.plugins.terminal.view.shellIntegration.TerminalCommandBlock
+import org.jetbrains.plugins.terminal.view.shellIntegration.*
 import org.jetbrains.plugins.terminal.view.shellIntegration.impl.TerminalBlocksModelImpl
 import org.jetbrains.plugins.terminal.view.shellIntegration.impl.TerminalCommandBlockImpl
 import org.junit.Assert.assertNotEquals
@@ -37,6 +36,9 @@ internal class TerminalBlocksModelTest : BasePlatformTestCase() {
     assertEquals(null, block.commandStartOffset)
     assertEquals(null, block.outputStartOffset)
     assertEquals(null, block.exitCode)
+    assertEquals(null, block.getCommandText(outputModel))
+    assertEquals(null, block.getOutputText(outputModel))
+    assertEquals(false, block.wasExecuted)
   }
 
   @Test
@@ -55,6 +57,9 @@ internal class TerminalBlocksModelTest : BasePlatformTestCase() {
     assertEquals(null, block.commandStartOffset)
     assertEquals(null, block.outputStartOffset)
     assertEquals(null, block.exitCode)
+    assertEquals(null, block.getCommandText(outputModel))
+    assertEquals(null, block.getOutputText(outputModel))
+    assertEquals(false, block.wasExecuted)
   }
 
   @Test
@@ -124,8 +129,120 @@ internal class TerminalBlocksModelTest : BasePlatformTestCase() {
     assertEquals(1, blocksModel.blocks.size)
     val block = blocksModel.activeBlock as TerminalCommandBlock
     assertEquals("myCommand\n", outputModel.getTextAsString(block.commandStartOffset!!, block.outputStartOffset!!))
+    assertEquals("myCommand", block.getCommandText(outputModel))
     assertEquals("someOutput\n\n", outputModel.getTextAsString(block.outputStartOffset!!, block.endOffset))
+    assertEquals("someOutput", block.getOutputText(outputModel))
+    assertEquals(true, block.wasExecuted)
     assertEquals("myPrompt: myCommand\nsomeOutput\n\n", outputModel.getTextAsString(block.startOffset, block.endOffset))
+  }
+
+  @Test
+  fun `aborted command block contains valid command and no output`() = runBlocking(Dispatchers.EDT) {
+    val outputModel = TerminalTestUtil.createOutputModel()
+    val blocksModel = TerminalBlocksModelImpl(outputModel, testRootDisposable)
+
+    outputModel.update(0, "\n\n\n")
+    blocksModel.startNewBlock(TerminalOffset.ZERO)
+    outputModel.update(0, "myPrompt: \n\n\n")
+    blocksModel.updateCommandStartOffset(TerminalOffset.of(10))
+    outputModel.update(0, "myPrompt: abortedCommand\n\n\n")
+    blocksModel.startNewBlock(TerminalOffset.of(25))
+    outputModel.update(1, "myPrompt: \n\n")
+    blocksModel.updateCommandStartOffset(TerminalOffset.of(35))
+
+    assertEquals(2, blocksModel.blocks.size)
+    val firstBlock = blocksModel.blocks[0] as TerminalCommandBlock
+    assertEquals("abortedCommand", firstBlock.getCommandText(outputModel))
+    assertEquals(null, firstBlock.getOutputText(outputModel))
+    assertEquals(false, firstBlock.wasExecuted)
+  }
+
+  @Test
+  fun `getOutputText of command with no output is empty`() = runBlocking(Dispatchers.EDT) {
+    val outputModel = TerminalTestUtil.createOutputModel()
+    val blocksModel = TerminalBlocksModelImpl(outputModel, testRootDisposable)
+
+    outputModel.update(0, "\n\n\n")
+    blocksModel.startNewBlock(TerminalOffset.ZERO)
+    outputModel.update(0, "myPrompt: \n\n\n")
+    blocksModel.updateCommandStartOffset(TerminalOffset.of(10))
+    outputModel.update(0, "myPrompt: myCommand\n\n\n")
+    blocksModel.updateOutputStartOffset(TerminalOffset.of(20))
+    blocksModel.startNewBlock(TerminalOffset.of(20))
+    outputModel.update(1, "myPrompt: \n\n")
+    blocksModel.updateCommandStartOffset(TerminalOffset.of(30))
+
+    assertEquals(2, blocksModel.blocks.size)
+    val firstBlock = blocksModel.blocks[0] as TerminalCommandBlock
+    assertEquals("myCommand", firstBlock.getCommandText(outputModel))
+    assertEquals("", firstBlock.getOutputText(outputModel))
+    assertEquals(true, firstBlock.wasExecuted)
+  }
+
+  @Test
+  fun `getOutputText of running command returns current output`() = runBlocking(Dispatchers.EDT) {
+    val outputModel = TerminalTestUtil.createOutputModel()
+    val blocksModel = TerminalBlocksModelImpl(outputModel, testRootDisposable)
+
+    outputModel.update(0, "\n\n\n")
+    blocksModel.startNewBlock(TerminalOffset.ZERO)
+    outputModel.update(0, "myPrompt: \n\n\n")
+    blocksModel.updateCommandStartOffset(TerminalOffset.of(10))
+    outputModel.update(0, "myPrompt: myCommand\n\n\n")
+    blocksModel.updateOutputStartOffset(TerminalOffset.of(20))
+    outputModel.update(1, "someOutput...\n\n")
+
+    assertEquals(1, blocksModel.blocks.size)
+    val firstBlock = blocksModel.blocks[0] as TerminalCommandBlock
+    assertEquals("myCommand", firstBlock.getCommandText(outputModel))
+    assertEquals("someOutput...", firstBlock.getOutputText(outputModel))
+    assertEquals(true, firstBlock.wasExecuted)
+  }
+
+  @Test
+  fun `getCommandText returns null if command start is trimmed`() = runBlocking(Dispatchers.EDT) {
+    val outputModel = TerminalTestUtil.createOutputModel(30)
+    val blocksModel = TerminalBlocksModelImpl(outputModel, testRootDisposable)
+
+    outputModel.update(0, "\n\n\n")
+    blocksModel.startNewBlock(TerminalOffset.ZERO)
+    outputModel.update(0, "myPrompt: \n\n\n")
+    blocksModel.updateCommandStartOffset(TerminalOffset.of(10))
+    outputModel.update(0, "myPrompt: myCommand myCommand\n\n\n")
+    blocksModel.updateOutputStartOffset(TerminalOffset.of(30))
+    outputModel.update(1, "someOutput\n\n")
+    blocksModel.startNewBlock(TerminalOffset.of(41))
+    outputModel.update(2, "myPrompt: \n")
+    blocksModel.updateCommandStartOffset(TerminalOffset.of(51))
+
+    assertEquals(2, blocksModel.blocks.size)
+    val firstBlock = blocksModel.blocks[0] as TerminalCommandBlock
+    assertEquals(null, firstBlock.getCommandText(outputModel))
+    assertEquals("someOutput", firstBlock.getOutputText(outputModel))
+    assertEquals(true, firstBlock.wasExecuted)
+  }
+
+  @Test
+  fun `getOutputText returns partial output if output start is trimmed`() = runBlocking(Dispatchers.EDT) {
+    val outputModel = TerminalTestUtil.createOutputModel(25)
+    val blocksModel = TerminalBlocksModelImpl(outputModel, testRootDisposable)
+
+    outputModel.update(0, "\n\n")
+    blocksModel.startNewBlock(TerminalOffset.ZERO)
+    outputModel.update(0, "myPrompt: \n\n")
+    blocksModel.updateCommandStartOffset(TerminalOffset.of(10))
+    outputModel.update(0, "myPrompt: myCommand\n\n")
+    blocksModel.updateOutputStartOffset(TerminalOffset.of(20))
+    outputModel.update(1, "123456789-123456789\n")
+    blocksModel.startNewBlock(TerminalOffset.of(40))
+    outputModel.update(2, "myPrompt: ")
+    blocksModel.updateCommandStartOffset(TerminalOffset.of(50))
+
+    assertEquals(2, blocksModel.blocks.size)
+    val firstBlock = blocksModel.blocks[0] as TerminalCommandBlock
+    assertEquals(null, firstBlock.getCommandText(outputModel))
+    assertEquals("6789-123456789", firstBlock.getOutputText(outputModel))
+    assertEquals(true, firstBlock.wasExecuted)
   }
 
   @Test
