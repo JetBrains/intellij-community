@@ -492,7 +492,7 @@ public class TestCaseLoader {
 
     if (sorter != null) {
       try {
-        var testSorter = (TestSorter)Class.forName(sorter).getConstructor().newInstance();
+        var testSorter = (TestSorter)Class.forName(sorter, true, getClassLoader()).getConstructor().newInstance();
         System.out.printf("Using test sorter from %s%n", sorter);
         return testSorter;
       }
