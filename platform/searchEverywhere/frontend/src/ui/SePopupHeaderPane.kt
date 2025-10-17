@@ -108,6 +108,7 @@ class SePopupHeaderPane(
     coroutineScope.launch {
       configuration.collectLatest { configuration ->
         withContext(Dispatchers.EDT) {
+          val uiSelectedTabIndex = tabbedPane.selectedIndex
           tabbedPane.removeAll()
 
           if (configuration.tabs.isNotEmpty()) {
@@ -115,7 +116,10 @@ class SePopupHeaderPane(
               tabbedPane.addTab(tab.name, null, JPanel(), tabShortcuts[tab.id])
             }
 
-            setSelectedIndexSafe(initialConfiguration.selectedTab.value)
+            if (uiSelectedTabIndex in configuration.tabs.indices) {
+              configuration.selectedTab.value = uiSelectedTabIndex
+            }
+
             tabbedPane.bindSelectedTabIn(configuration.selectedTab, this)
           }
           else {
