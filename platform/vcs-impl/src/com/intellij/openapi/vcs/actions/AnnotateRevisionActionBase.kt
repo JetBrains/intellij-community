@@ -17,6 +17,7 @@ import com.intellij.openapi.vcs.VcsException
 import com.intellij.openapi.vcs.annotate.AnnotationProvider
 import com.intellij.openapi.vcs.history.VcsFileRevision
 import com.intellij.openapi.vcs.history.VcsHistoryUtil
+import com.intellij.openapi.vcs.vfs.VcsVirtualFile
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.platform.ide.progress.withBackgroundProgress
 import com.intellij.ui.progress.ProgressUIUtil
@@ -96,6 +97,11 @@ internal abstract class AnnotateRevisionActionBase : DumbAwareAction {
     ) {
       val annotationProvider = vcs.annotationProvider ?: return
       withContext(Dispatchers.IO) {
+        // Explicitly load content to ensure that it won't be loaded on EDT later.
+        if (file is VcsVirtualFile) {
+          file.loadContent()
+        }
+
         val oldContent = editor?.document?.getImmutableCharSequence()
 
         val annotationJob = launch {
