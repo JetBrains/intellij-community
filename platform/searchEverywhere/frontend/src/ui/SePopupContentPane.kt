@@ -988,9 +988,8 @@ class SePopupContentPane(
 
   private fun autoSelectIndex(searchPattern: String, isEndEvent: Boolean) {
     val indexToSelect = selectionListener.getIndexToSelect(getMaxVisibleRowCount(), searchPattern, textField.isInitialSearchPattern, isEndEvent)
-    if (indexToSelect != -1 && indexToSelect < resultListModel.size()) {
+    if (indexToSelect != -1 && indexToSelect < resultListModel.size() && indexToSelect != resultList.selectedIndex) {
       resultList.autoSelectIndex(indexToSelect)
-
       ScrollingUtil.ensureIndexIsVisible(resultList, resultList.selectedIndex, 1)
     }
   }

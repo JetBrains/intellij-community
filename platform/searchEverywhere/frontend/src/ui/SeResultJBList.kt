@@ -8,10 +8,8 @@ import javax.swing.ListModel
 
 @ApiStatus.Internal
 class SeResultJBList<E : SeResultListRow>(model: ListModel<E>) : JBList<E>(model) {
-
-  private var _isAutoSelectionChange: Boolean = false
-  val isAutoSelectionChange: Boolean
-    get() = _isAutoSelectionChange
+  var isAutoSelectionChange: Boolean = false
+    private set
 
   /**
    * Returns the number of items in the result list, excluding the loading indicator.
@@ -31,8 +29,8 @@ class SeResultJBList<E : SeResultListRow>(model: ListModel<E>) : JBList<E>(model
 
   @RequiresEdt
   fun autoSelectIndex(index: Int) {
-    _isAutoSelectionChange = true
+    isAutoSelectionChange = true
     selectedIndex = index
-    _isAutoSelectionChange = false
+    isAutoSelectionChange = false
   }
 }
