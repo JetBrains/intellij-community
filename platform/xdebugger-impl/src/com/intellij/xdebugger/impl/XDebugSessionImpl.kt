@@ -1,12 +1,15 @@
 // Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.xdebugger.impl
 
+import com.intellij.execution.Executor
 import com.intellij.execution.RunContentDescriptorIdImpl
 import com.intellij.execution.configurations.RunConfiguration
 import com.intellij.execution.configurations.RunConfigurationBase
 import com.intellij.execution.configurations.RunProfile
 import com.intellij.execution.filters.HyperlinkInfo
 import com.intellij.execution.filters.OpenFileHyperlinkInfo
+import com.intellij.execution.impl.RUN_CONTENT_DESCRIPTOR_LIFECYCLE_TOPIC
+import com.intellij.execution.impl.RunContentDescriptorLifecycleListener
 import com.intellij.execution.process.ProcessEvent
 import com.intellij.execution.process.ProcessListener
 import com.intellij.execution.rpc.toDto
@@ -125,6 +128,7 @@ class XDebugSessionImpl @JvmOverloads constructor(
 
   private val myActiveNonLineBreakpointAndPositionFlow = MutableStateFlow<Pair<XBreakpoint<*>, XSourcePosition?>?>(null)
   private val myPausedEvents = MutableSharedFlow<XDebugSessionPausedInfo>(replay = 1, extraBufferCapacity = 1)
+  private val myShowTabDeferred = CompletableDeferred<Unit>()
   private val myDispatcher = EventDispatcher.create(XDebugSessionListener::class.java)
   private val myProject: Project = debuggerManager.project
 
@@ -468,6 +472,9 @@ class XDebugSessionImpl @JvmOverloads constructor(
     val defaultFramesViewKey: String? = debugProcess.getDefaultFramesViewKey()
 
     if (SplitDebuggerMode.isSplitDebugger()) {
+      if (shouldShowTab) {
+        myShowTabDeferred.complete(Unit)
+      }
       val localTabScope = tabCoroutineScope.childScope("ExecutionEnvironmentDto")
       val tabClosedChannel = Channel<Unit>()
       val additionalTabComponentManager = XDebugSessionAdditionalTabComponentManager(localTabScope)
@@ -476,7 +483,7 @@ class XDebugSessionImpl @JvmOverloads constructor(
       val tabInfo = XDebuggerSessionTabInfo(myIcon?.rpcId(), forceNewDebuggerUi, withFramesCustomization, defaultFramesViewKey,
                                             executionEnvironmentId, executionEnvironment?.toDto(localTabScope),
                                             additionalTabComponentManager.id, tabClosedChannel,
-                                            runContentDescriptorId)
+                                            runContentDescriptorId, myShowTabDeferred)
       if (myTabInitDataFlow.compareAndSet(null, tabInfo)) {
         addAdditionalTabsToManager(additionalTabComponentManager)
         // This is a mock tab used in backend only
@@ -514,6 +521,16 @@ class XDebugSessionImpl @JvmOverloads constructor(
         }
         myMockRunContentDescriptor = mockDescriptor
         myDebugProcess!!.sessionInitialized()
+        project.messageBus.connect(localTabScope).subscribe(RUN_CONTENT_DESCRIPTOR_LIFECYCLE_TOPIC, object : RunContentDescriptorLifecycleListener {
+          override fun beforeContentShown(descriptor: RunContentDescriptor, executor: Executor) {
+            if (descriptor === mockDescriptor) {
+              myShowTabDeferred.complete(Unit)
+            }
+          }
+
+          override fun afterContentShown(descriptor: RunContentDescriptor, executor: Executor) {
+          }
+        })
       }
       else {
         localTabScope.cancel()
@@ -565,7 +582,10 @@ class XDebugSessionImpl @JvmOverloads constructor(
   }
 
   fun showSessionTab() {
-    if (!SplitDebuggerMode.isSplitDebugger()) {
+    if (SplitDebuggerMode.isSplitDebugger()) {
+      myShowTabDeferred.complete(Unit)
+    }
+    else {
       sessionTab?.showTab()
     }
   }

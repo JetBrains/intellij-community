@@ -320,8 +320,12 @@ class FrontendXDebuggerSession private constructor(
         }
         sessionTabDeferred.complete(this)
         proxy.onTabInitialized(this)
-        showTab()
       }
+    }
+
+    tabScope.launch(Dispatchers.EDT) {
+      tabInfo.showTab.await()
+      tab.showTab()
     }
 
     val runContentDescriptor = tab.runContentDescriptor
