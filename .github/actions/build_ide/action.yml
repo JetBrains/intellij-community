@@ -6,7 +6,7 @@ inputs:
     description: 'tar.gz, exe or sit'
     required: true
   product:
-    description: 'product, available options: intellij_idea, pycharm'
+    description: 'a product, available options: intellij_idea, pycharm'
     required: true
 runs:
   using: composite
