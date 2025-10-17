@@ -18,6 +18,10 @@ class UseOptimizedEelFunctions : LocalInspectionTool() {
       private val visitedCalls = hashSetOf<UExpression>()
 
       override fun visitQualifiedReferenceExpression(node: UQualifiedReferenceExpression): Boolean {
+        if (!visitedCalls.add(node)) {
+          return true
+        }
+
         val selector = node.selector
         if (selector is UCallExpression) {
           return visitCallExpression(selector)
@@ -27,28 +31,30 @@ class UseOptimizedEelFunctions : LocalInspectionTool() {
       }
 
       override fun visitCallExpression(node: UCallExpression): Boolean {
-        if (visitedCalls.add(node)) {
-          val methodName = node.methodName ?: return true
-
-          val receiverName = node.receiver
-            ?.getQualifiedChain()
-            ?.lastOrNull()
-            ?.let { it as? UReferenceExpression }
-            ?.getQualifiedName()
-
-          val fqn = if (receiverName != null) {
-            "$receiverName.$methodName"
-          }
-          else {
-            // Handle static imports and aliases: resolve the method to get its fully qualified name
-            val method = node.resolve() ?: return true
-            val containingClass = method.containingClass?.qualifiedName ?: return true
-            val actualMethodName = method.name
-            "$containingClass.$actualMethodName"
-          }
-
-          handleMethod(holder, node, fqn)
+        if (!visitedCalls.add(node)) {
+          return true
         }
+
+        val methodName = node.methodName ?: return true
+
+        val receiverName = node.receiver
+          ?.getQualifiedChain()
+          ?.lastOrNull()
+          ?.let { it as? UReferenceExpression }
+          ?.getQualifiedName()
+
+        val fqn = if (receiverName != null) {
+          "$receiverName.$methodName"
+        }
+        else {
+          // Handle static imports and aliases: resolve the method to get its fully qualified name
+          val method = node.resolve() ?: return true
+          val containingClass = method.containingClass?.qualifiedName ?: return true
+          val actualMethodName = method.name
+          "$containingClass.$actualMethodName"
+        }
+
+        handleMethod(holder, node, fqn)
 
         return true
       }

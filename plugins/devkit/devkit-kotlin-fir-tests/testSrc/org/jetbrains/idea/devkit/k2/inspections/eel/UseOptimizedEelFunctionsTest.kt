@@ -103,6 +103,59 @@ class UseOptimizedEelFunctionsTest {
     }
 
     @Nested
+    inner class `usages in docs are ignored` {
+      @Test
+      fun Java() {
+        @Language("Java")
+        val source = """
+          import java.io.IOException;
+          import java.nio.file.Files;
+          import java.nio.file.Path;
+    
+          class Example {
+            /**
+             * <p>{@link java.nio.file.Files#readAllBytes}</p>
+             * <p>{@link java.nio.file.Files#readAllBytes(Path)}</p>
+             * <p>{@link java.nio.file.Files#readAllBytes(Path) Files.readAllBytes(Path)}</p>
+             */
+            void example() {}
+          }
+        """.trimIndent()
+
+        doTest("Example.java", source)
+      }
+
+      @Test
+      fun Kotlin() {
+        @Language("Kt")
+        val source = """
+          import java.nio.file.Files
+          import java.nio.file.Path
+    
+          /**
+           * [java.nio.file.Files.readAllBytes]
+           * 
+           * [java.nio.file.Files.readAllBytes(Path)]
+           *
+           * [java.nio.file.Files.readAllBytes(Path) Files.readAllBytes(Path)]
+           */
+          fun example() = Unit
+        """.trimIndent()
+
+        doTest("Example.kt", source)
+      }
+
+      private fun doTest(fileName: String, source: String) = timeoutRunBlocking {
+        val exampleFile = myFixture.configureByText(fileName, source)
+        withContext(Dispatchers.EDT) {
+          myFixture.openFileInEditor(exampleFile.virtualFile)
+        }
+
+        myFixture.testHighlighting()
+      }
+    }
+
+    @Nested
     inner class `class dot method inside another call` {
       @Test
       fun Java() {
