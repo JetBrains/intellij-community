@@ -24,8 +24,6 @@ import com.jetbrains.python.sdk.add.v2.hatch.HatchExistingEnvironmentSelector
 import com.jetbrains.python.sdk.add.v2.hatch.HatchNewEnvironmentCreator
 import com.jetbrains.python.sdk.add.v2.poetry.EnvironmentCreatorPoetry
 import com.jetbrains.python.sdk.add.v2.poetry.PoetryExistingEnvironmentSelector
-import com.jetbrains.python.sdk.add.v2.uv.EnvironmentCreatorUv
-import com.jetbrains.python.sdk.add.v2.uv.UvExistingEnvironmentSelector
 import com.jetbrains.python.sdk.add.v2.venv.EnvironmentCreatorVenv
 import com.jetbrains.python.sdk.add.v2.venv.PythonExistingEnvironmentSelector
 import kotlinx.coroutines.CoroutineScope
@@ -65,7 +63,6 @@ class PythonAddCustomInterpreter<P : PathHolder>(
     CONDA to { CondaNewEnvironmentCreator(model, errorSink) },
     PIPENV to { EnvironmentCreatorPip(model, errorSink) },
     POETRY to { EnvironmentCreatorPoetry(model, module, errorSink) },
-    UV to { EnvironmentCreatorUv(model, module, errorSink) },
     HATCH to { HatchNewEnvironmentCreator(model, errorSink) },
   ).filterKeys { it.isFSSupported(model.fileSystem) }.mapValues { it.value() }
 
@@ -74,7 +71,6 @@ class PythonAddCustomInterpreter<P : PathHolder>(
     put(CONDA) { CondaExistingEnvironmentSelector(model, errorSink) }
     if (!limitExistingEnvironments) {
       put(POETRY) { PoetryExistingEnvironmentSelector(model, module) }
-      put(UV) { UvExistingEnvironmentSelector(model, module) }
       put(HATCH) { HatchExistingEnvironmentSelector(model) }
     }
   }.filterKeys { it.isFSSupported(model.fileSystem) }.mapValues { it.value() }

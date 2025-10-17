@@ -31,6 +31,7 @@ import com.jetbrains.python.sdk.uv.impl.createUvLowLevel
 import com.jetbrains.python.sdk.uv.impl.setUvExecutable
 import com.jetbrains.python.sdk.uv.setupNewUvSdkAndEnv
 import com.jetbrains.python.statistics.InterpreterType
+import com.jetbrains.python.util.ShowingMessageErrorSync
 import io.github.z4kn4fein.semver.Version
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
@@ -44,6 +45,16 @@ import java.nio.file.Paths
 import kotlin.io.path.exists
 import kotlin.io.path.readText
 
+/**
+ * Creates a UV environment creator for the given model.
+ *
+ * @param module The module context for environment creation. Can be null when creating an interpreter
+ *               at the project level (not associated with a specific module). When null, the creator
+ *               will navigate to the generic Python existing environment selector instead of the
+ *               UV-specific selector if a .venv directory already exists.
+ */
+internal fun PythonMutableTargetAddInterpreterModel<PathHolder.Eel>.uvCreator(module: Module?): EnvironmentCreatorUv<PathHolder.Eel> =
+  EnvironmentCreatorUv(this, module, ShowingMessageErrorSync)
 
 internal class EnvironmentCreatorUv<P : PathHolder>(
   model: PythonMutableTargetAddInterpreterModel<P>,
@@ -53,7 +64,7 @@ internal class EnvironmentCreatorUv<P : PathHolder>(
   override val interpreterType: InterpreterType = InterpreterType.UV
   override val executable: ObservableMutableProperty<ValidatedPath.Executable<P>?> = model.state.uvExecutable
   private val executableFlow = MutableStateFlow(model.state.uvExecutable.get())
-  private lateinit var pythonVersion: ObservableMutableProperty<Version?>
+  private val pythonVersion: ObservableMutableProperty<Version?> = propertyGraph.property(null)
   private lateinit var versionComboBox: ComboBox<Version?>
 
   private val loading = AtomicBooleanProperty(false)
@@ -67,7 +78,6 @@ internal class EnvironmentCreatorUv<P : PathHolder>(
   override fun setupUI(panel: Panel, validationRequestor: DialogValidationRequestor) {
     with(panel) {
       row(message("sdk.create.python.version")) {
-        pythonVersion = propertyGraph.property(null)
         versionComboBox = comboBox(listOf<Version?>(null), textListCellRenderer {
           it?.let { "${it.major}.${it.minor}" } ?: message("python.sdk.uv.default.version")
         })

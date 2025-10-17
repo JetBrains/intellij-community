@@ -101,7 +101,6 @@ class NewPythonProjectStep(parent: NewProjectWizardStep, val createPythonModuleS
     builder.row { cell(onShowTrigger) }
 
     val sdkPanelBuilder = PythonSdkPanelBuilderAndSdkCreator(
-      onlyAllowedInterpreterTypes = null,
       errorSink = ShowingMessageErrorSync,
       module = null,
     )
