@@ -31,6 +31,8 @@ abstract class UndoRedo {
   private final @NotNull SharedUndoRedoStacksHolder sharedStacksHolderReversed;
   private final @NotNull UndoProblemReport undoProblemReport;
   protected final @NotNull UndoableGroup undoableGroup;
+  private final boolean isConfirmationSupported;
+  private final boolean isEditorStateRestoreSupported;
   private final boolean isRedo;
 
   protected UndoRedo(
@@ -40,6 +42,8 @@ abstract class UndoRedo {
     @NotNull UndoRedoStacksHolder stacksHolderReversed,
     @NotNull SharedUndoRedoStacksHolder sharedStacksHolder,
     @NotNull SharedUndoRedoStacksHolder sharedStacksHolderReversed,
+    boolean isConfirmationSupported,
+    boolean isEditorStateRestoreSupported,
     boolean isRedo
   ) {
     this.project = project;
@@ -48,6 +52,8 @@ abstract class UndoRedo {
     this.stacksHolderReversed = stacksHolderReversed;
     this.sharedStacksHolder = sharedStacksHolder;
     this.sharedStacksHolderReversed = sharedStacksHolderReversed;
+    this.isConfirmationSupported = isConfirmationSupported;
+    this.isEditorStateRestoreSupported = isEditorStateRestoreSupported;
     this.isRedo = isRedo;
     this.undoProblemReport = new UndoProblemReport(project, isRedo);
     this.undoableGroup = Objects.requireNonNull(stacksHolder.getLastAction(getDocRefs()), "undo is not available");
@@ -82,10 +88,6 @@ abstract class UndoRedo {
   }
 
   boolean execute(boolean drop, boolean disableConfirmation) {
-    return execute(drop, disableConfirmation, false);
-  }
-
-  boolean execute(boolean drop, boolean disableConfirmation, boolean isInsideStartFinishGroup) {
     if (!undoableGroup.isUndoable()) {
       String operationName = Objects.requireNonNull(
         CommandProcessor.getInstance().getCurrentCommandName(),
@@ -114,7 +116,7 @@ abstract class UndoRedo {
       }
     }
 
-    if (!disableConfirmation && undoableGroup.shouldAskConfirmation(isRedo) && !isNeverAskUser()) {
+    if (!(disableConfirmation || !isConfirmationSupported) && undoableGroup.shouldAskConfirmation(isRedo) && !isNeverAskUser()) {
       if (!askUser()) {
         return false;
       }
@@ -125,7 +127,7 @@ abstract class UndoRedo {
         FileEditorState restoredState = restore(stateToRestore, true);
         if (restoredState != null) {
           setBeforeState(new EditorAndState(editor, restoredState));
-          if (!isCaretMovementUndoTransparent() && !isInsideStartFinishGroup) {
+          if (!isCaretMovementUndoTransparent()) {
             return true;
           }
         }
@@ -376,8 +378,9 @@ abstract class UndoRedo {
   /**
    * Returns {@code true} if caret movement is not a separate undo step, see IJPL-28593
    */
-  private static boolean isCaretMovementUndoTransparent() {
+  private boolean isCaretMovementUndoTransparent() {
     return Registry.is("ide.undo.transparent.caret.movement") ||
-           AdvancedSettings.getBoolean("editor.undo.transparent.caret.movement");
+           AdvancedSettings.getBoolean("editor.undo.transparent.caret.movement") ||
+           !isEditorStateRestoreSupported;
   }
 }

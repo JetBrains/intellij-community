@@ -45,6 +45,7 @@ final class UndoClientState implements Disposable {
   private final boolean isConfirmationSupported;
   private final boolean isCompactSupported;
   private final boolean isGlobalSplitSupported;
+  private final boolean isEditorStateRestoreSupported;
 
   private final @NotNull UndoSharedState sharedState;
 
@@ -68,6 +69,7 @@ final class UndoClientState implements Disposable {
     this.isConfirmationSupported = undoManager.isConfirmationSupported();
     this.isCompactSupported = undoManager.isCompactSupported();
     this.isGlobalSplitSupported = undoManager.isGlobalSplitSupported();
+    this.isEditorStateRestoreSupported = undoManager.isEditorStateRestoreSupported();
     this.sharedState = undoManager.getUndoSharedState();
     this.undoStacksHolder = new UndoRedoStacksHolder(sharedState.getAdjustableActions(), true);
     this.redoStacksHolder = new UndoRedoStacksHolder(sharedState.getAdjustableActions(), false);
@@ -422,13 +424,13 @@ final class UndoClientState implements Disposable {
     UndoRedo undoRedo;
     while ((undoRedo = createUndoOrRedo(editor, true)) != null) {
       if (!undoRedo.isTemporary()) break;
-      if (!undoRedo.execute(true, !isConfirmationSupported)) return;
+      if (!undoRedo.execute(true, false)) return;
       if (!undoRedo.hasMoreActions()) break;
     }
 
     while ((undoRedo = createUndoOrRedo(editor, isUndo)) != null) {
       if (!undoRedo.isTransparent()) break;
-      if (!undoRedo.execute(false, !isConfirmationSupported)) return;
+      if (!undoRedo.execute(false, false)) return;
       if (!undoRedo.hasMoreActions()) break;
     }
 
@@ -453,13 +455,7 @@ final class UndoClientState implements Disposable {
           }
         }
       }
-      boolean executed = undoRedo.execute(
-        false,
-        !isConfirmationSupported || isInsideStartFinishGroup,
-        // TODO: it is a hot fix for rename refactoring redo
-        //  for some reason restore(...) returns true on FE but false on BE during FinishMarkAction execution
-        !isConfirmationSupported && isInsideStartFinishGroup
-      );
+      boolean executed = undoRedo.execute(false, isInsideStartFinishGroup);
       if (!executed) {
         return;
       }
@@ -484,8 +480,8 @@ final class UndoClientState implements Disposable {
       return null;
     }
     return isUndo
-           ? new Undo(project, editor, undoStacksHolder, redoStacksHolder, sharedState.getUndoStacks(), sharedState.getRedoStacks())
-           : new Redo(project, editor, undoStacksHolder, redoStacksHolder, sharedState.getUndoStacks(), sharedState.getRedoStacks());
+           ? new Undo(project, editor, undoStacksHolder, redoStacksHolder, sharedState.getUndoStacks(), sharedState.getRedoStacks(), isConfirmationSupported, isEditorStateRestoreSupported)
+           : new Redo(project, editor, undoStacksHolder, redoStacksHolder, sharedState.getUndoStacks(), sharedState.getRedoStacks(), isConfirmationSupported, isEditorStateRestoreSupported);
   }
 
   private boolean isGlobalSplitEnabled() {
