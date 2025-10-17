@@ -17,6 +17,8 @@ import javax.swing.JTabbedPane
 
 @Experimental
 fun JTabbedPane.bindSelectedTabIn(selectedTabState: MutableStateFlow<Int>, coroutineScope: CoroutineScope) {
+  selectedIndex = selectedTabState.value
+
   val changeListener = javax.swing.event.ChangeListener {
     val selectedIndex = selectedIndex
     if (selectedTabState.value != selectedIndex) {
