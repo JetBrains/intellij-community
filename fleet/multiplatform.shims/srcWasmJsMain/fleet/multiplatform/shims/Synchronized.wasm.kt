@@ -4,4 +4,7 @@ package fleet.multiplatform.shims
 import fleet.util.multiplatform.Actual
 
 @Actual("synchronizedImpl")
-internal inline fun synchronizedImplWasmJs(lock: Any, block: () -> Any?): Any? = block()
+internal inline fun synchronizedImplWasmJs(lock: SynchronizedObject, block: () -> Any?): Any? = block()
+
+@Actual
+fun SynchronizedObjectWasmJs(): SynchronizedObject = SynchronizedObject(Unit)
