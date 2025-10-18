@@ -51,9 +51,7 @@ public class DefaultGroovyScriptRunner extends GroovyScriptRunner {
 
   @Override
   public void configureCommandLine(JavaParameters params, @Nullable Module module, boolean tests, VirtualFile script, GroovyScriptRunConfiguration configuration) throws CantRunException {
-    configureGenericGroovyRunner(params, module, "groovy.ui.GroovyMain", false, tests, configuration.isAddClasspathToTheRunner(), true);
-
-    //addClasspathFromRootModel(module, tests, params, true);
+    configureGenericGroovyRunner(params, module, "groovy.ui.GroovyMain", false, tests, configuration.isAddClasspathToTheRunner());
 
     params.getVMParametersList().addParametersString(configuration.getVMParameters());
 
@@ -73,7 +71,7 @@ public class DefaultGroovyScriptRunner extends GroovyScriptRunner {
                                                   @NotNull String mainClass,
                                                   boolean useBundled,
                                                   boolean tests) throws CantRunException {
-    configureGenericGroovyRunner(params, module, mainClass, useBundled, tests, true, true);
+    configureGenericGroovyRunner(params, module, mainClass, useBundled, tests, true);
   }
 
   public static void configureGenericGroovyRunner(@NotNull JavaParameters params,
@@ -81,8 +79,7 @@ public class DefaultGroovyScriptRunner extends GroovyScriptRunner {
                                                   @NotNull String mainClass,
                                                   boolean useBundled,
                                                   boolean tests,
-                                                  boolean addClasspathToRunner,
-                                                  boolean addClassPathToStarter) throws CantRunException {
+                                                  boolean addClasspathToRunner) throws CantRunException {
     final VirtualFile groovyJar = findGroovyJar(module);
     if (useBundled) {
       params.getClassPath().add(getBundledGroovyFile().get());
@@ -117,10 +114,6 @@ public class DefaultGroovyScriptRunner extends GroovyScriptRunner {
 
     params.getProgramParametersList().add("--main");
     params.getProgramParametersList().add(mainClass);
-
-    if (addClassPathToStarter) {
-      addClasspathFromRootModel(module, tests, params, true);
-    }
 
     if (params.getVMParametersList().getPropertyValue(GroovycOutputParser.GRAPE_ROOT) == null) {
       String sysRoot = System.getProperty(GroovycOutputParser.GRAPE_ROOT);

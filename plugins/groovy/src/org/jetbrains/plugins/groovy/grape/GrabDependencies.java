@@ -170,7 +170,7 @@ public final class GrabDependencies implements IntentionAction {
       //javaParameters.getVMParametersList().add("-Xrunjdwp:transport=dt_socket,server=y,suspend=y,address=5239");
 
       try {
-        DefaultGroovyScriptRunner.configureGenericGroovyRunner(javaParameters, module, GRAPE_RUNNER, false, true, true, false);
+        DefaultGroovyScriptRunner.configureGenericGroovyRunner(javaParameters, module, GRAPE_RUNNER, false, true, true);
         javaParameters.getClassPath().add(PathUtil.getJarPathForClass(GrapeRunner.class));
         javaParameters.getProgramParametersList().add(queries.get(grabText));
         javaParameters.setUseDynamicClasspath(project);
