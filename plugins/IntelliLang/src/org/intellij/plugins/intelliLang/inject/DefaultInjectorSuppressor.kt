@@ -7,10 +7,11 @@ import org.jetbrains.annotations.ApiStatus
 
 private val EP = LanguageExtension<DefaultInjectorSuppressor>("org.intellij.intelliLang.defaultInjectorSuppressor")
 
+@ApiStatus.Internal
 fun isSuppressedFor(contextElement: PsiElement): Boolean = EP.allForLanguage(contextElement.language).any { it.isSuppressedFor(contextElement) }
 
 /**
- * This extension allows you to suppress injections with [DefaultLanguageInjector].
+ * This extension allows you to suppress injections by [DefaultLanguageInjector].
  *
  * Possible use case:
  *
