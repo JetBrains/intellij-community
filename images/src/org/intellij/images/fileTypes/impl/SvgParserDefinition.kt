@@ -8,8 +8,7 @@ import com.intellij.psi.impl.source.xml.XmlFileImpl
 import com.intellij.psi.tree.IFileElementType
 import org.jetbrains.annotations.NotNull
 
-internal class SvgParserDefinition : XMLParserDefinition() {
-
+private class SvgParserDefinition : XMLParserDefinition() {
   override fun getFileNodeType(): IFileElementType = SVG_FILE
 
   override fun createFile(viewProvider: @NotNull FileViewProvider): @NotNull PsiFile = XmlFileImpl(viewProvider, SVG_FILE)

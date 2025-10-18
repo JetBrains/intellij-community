@@ -9,10 +9,7 @@ import com.intellij.openapi.ui.playback.commands.PlaybackCommandCoroutineAdapter
 import com.intellij.openapi.util.Disposer
 import com.jetbrains.performancePlugin.FakeBrowser
 
-/**
- *
- */
-class ReplaceBrowser(text: String, line: Int) : PerformanceCommandCoroutineAdapter(text, line) {
+internal class ReplaceBrowser(text: String, line: Int) : PerformanceCommandCoroutineAdapter(text, line) {
   companion object {
     const val PREFIX: String = PlaybackCommandCoroutineAdapter.CMD_PREFIX + "replaceBrowser"
     val browser = FakeBrowser()

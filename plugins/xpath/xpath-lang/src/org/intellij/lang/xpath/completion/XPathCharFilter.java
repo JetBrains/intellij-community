@@ -7,7 +7,7 @@ import com.intellij.codeInsight.lookup.LookupElement;
 import org.intellij.lang.xpath.XPathFile;
 import org.jetbrains.annotations.Nullable;
 
-public class XPathCharFilter extends CharFilter {
+public final class XPathCharFilter extends CharFilter {
   @Override
   public @Nullable CharFilter.Result acceptChar(char c, int prefixLength, Lookup lookup) {
     if (c != '.' || !lookup.isCompletion()) {

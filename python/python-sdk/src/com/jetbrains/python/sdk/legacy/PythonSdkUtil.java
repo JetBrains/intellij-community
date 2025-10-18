@@ -39,8 +39,6 @@ import java.util.List;
 import java.util.function.Predicate;
 import java.util.stream.Collectors;
 
-import static com.intellij.ide.plugins.PluginManagerCore.ULTIMATE_PLUGIN_ID;
-
 /**
  * Utility methods for Python {@link Sdk} based on the project model and the file system.
  * <p>
@@ -84,7 +82,7 @@ public final class PythonSdkUtil {
    * @return PyCharm with Pro mode disabled
    */
   public static boolean isFreeTier() {
-    return PlatformUtils.isPyCharm() && (!PlatformUtils.isDataSpell()) && PluginManagerCore.isDisabled(ULTIMATE_PLUGIN_ID);
+    return PlatformUtils.isPyCharm() && (!PlatformUtils.isDataSpell()) && PluginManagerCore.isDisabled(PluginManagerCore.ULTIMATE_PLUGIN_ID);
   }
 
   public static @Unmodifiable @NotNull List<@NotNull Sdk> getAllSdks() {

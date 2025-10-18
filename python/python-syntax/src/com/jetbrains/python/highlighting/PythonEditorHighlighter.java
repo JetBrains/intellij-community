@@ -19,10 +19,7 @@ import com.jetbrains.python.lexer.PythonHighlightingLexer;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-/**
- * User : catherine
- */
-public class PythonEditorHighlighter extends LexerEditorHighlighter {
+public final class PythonEditorHighlighter extends LexerEditorHighlighter {
 
   public PythonEditorHighlighter(@NotNull EditorColorsScheme scheme, @Nullable Project project, @Nullable VirtualFile file) {
     super(SyntaxHighlighterFactory.getSyntaxHighlighter(file != null ? file.getFileType() : PythonFileType.INSTANCE,

@@ -16,7 +16,6 @@ import org.jetbrains.kotlin.psi.*
 import org.jetbrains.kotlin.psi.psiUtil.endOffset
 import org.jetbrains.kotlin.psi.psiUtil.getNextSiblingIgnoringWhitespace
 import org.jetbrains.kotlin.psi.psiUtil.startOffset
-import kotlin.collections.firstOrNull
 
 internal fun getElementAtOffsetIgnoreWhitespaceAfter(file: PsiFile, offset: Int): PsiElement? {
     val element = file.findElementAt(offset - 1)
@@ -26,7 +25,7 @@ internal fun getElementAtOffsetIgnoreWhitespaceAfter(file: PsiFile, offset: Int)
     return element
 }
 
-class KotlinEnterAfterUnmatchedBraceHandler : EnterAfterUnmatchedBraceHandler() {
+private class KotlinEnterAfterUnmatchedBraceHandler : EnterAfterUnmatchedBraceHandler() {
     override fun preprocessEnter(
         file: PsiFile,
         editor: Editor,

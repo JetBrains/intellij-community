@@ -11,7 +11,7 @@ import training.featuresSuggester.SuggesterSupport
 import training.featuresSuggester.getParentByPredicate
 import training.featuresSuggester.getParentOfType
 
-class KotlinSuggesterSupport : SuggesterSupport {
+private class KotlinSuggesterSupport : SuggesterSupport {
     override fun isLoadedSourceFile(file: PsiFile): Boolean {
         return file is KtFile && !file.isCompiled && file.isContentsLoaded
     }
