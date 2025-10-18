@@ -71,7 +71,7 @@ public class PluginConfigReferenceTest extends JavaCodeInsightFixtureTestCase {
     assertEquals(AllIcons.Nodes.PluginRestart, plugin.getIcon());
 
     final LookupElementPresentation properties = getLookupElementPresentation("vcs.showConsole");
-    assertEquals(" Show 'Console' tab in VCS toolwindow that logs all write-commands performed by IDE.", properties.getTailText());
+    assertEquals(" Show the 'Console' tab in the VCS toolwindow that logs all write-commands performed by IDE.", properties.getTailText());
     assertEquals("true", properties.getTypeText());
     assertEquals(AllIcons.Nodes.Plugin, properties.getIcon());
   }

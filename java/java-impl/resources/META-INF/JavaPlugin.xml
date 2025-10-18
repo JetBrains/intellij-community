@@ -678,10 +678,6 @@
                          implementationClass="com.intellij.codeInsight.hint.NextParameterAfterCompletionHandler"/>
     <compiler.updateResourcesBuildContributor implementation="com.intellij.compiler.impl.JavaResourcesBuildContributor"/>
 
-    <!--<expectedTypesProvider implementation="com.intellij.codeInsight.JavaExpectedTypesProvider"/>-->
-
-
-
     <projectService serviceImplementation="com.intellij.execution.testDiscovery.JavaAutoRunManager"/>
     <registryKey defaultValue="true" description="Trigger autotest on delay instead of build events" key="trigger.autotest.on.delay"/>
 
@@ -810,6 +806,10 @@
                             order="first" id="VmOptionsCompletionContributor"/>
     <applicationService serviceInterface="com.intellij.execution.vmOptions.VMOptionsService"
                         serviceImplementation="com.intellij.execution.vmOptions.VMOptionsServiceImpl"/>
+
+    <registryKey key="ide.jvm.run.marker" defaultValue="false" description="Enable JVM-lang-based run line markers"/>
+    <registryKey key="ide.jvm.command.line.clear.all.environments" defaultValue="true"
+                 description="Clear all environments when running a JVM command line application"/>
 
     <runDashboardCustomizer implementation="com.intellij.execution.CommonJavaRunDashboardCustomizer" id="commonJavaCustomizer"/>
 
@@ -2785,12 +2785,19 @@
     <registryKey key="java.completion.methods.use.tags"
                  defaultValue="true"
                  description="Use additional tags for methods for completion"/>
+    <registryKey key="ide.java.completion.suggest.static.after.instance"
+                 defaultValue="false"
+                 description="Suggest static methods/fields after instance qualifier in Java completion"/>
 
     <registryKey key="java.create.compact.source.file.separately"
                  defaultValue="true"
                  description="Show 'Create java compact file' separately from all other classes"/>
 
     <virtualFileCustomDataProvider implementation="com.intellij.ide.JavaCodeStyleSettingsCustomDataSynchronizer"/>
+
+    <registryKey key="compiler.external.javac.keep.alive.timeout" defaultValue="300000"
+                 description="If not used for the specified period of time or longer, the IDE will shut down the cached javac compilation process"/>
+    <registryKey key="compiler.build.can.use.eel" defaultValue="true" description="Allow using Eel API to run build processes"/>
   </extensions>
 
   <extensions defaultExtensionNs="org.jetbrains">

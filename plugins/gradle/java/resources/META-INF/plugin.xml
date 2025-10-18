@@ -129,6 +129,10 @@
                  description="Specifies port at which Gradle target server process will wait for debugger connections. -1 means disabled feature."/>
     <registryKey key="gradle.refresh.project.outputs" defaultValue="true"
                  description="After a Gradle task, do a shallow refresh of modules outputs in VFS"/>
+    <registryKey key="android.gradle.project.startup.activity.disabled" defaultValue="false"
+                 description="Disable Gradle post-startup activity for Android projects"/>
+    <registryKey key="android.sdk.local.properties.update.disabled" defaultValue="false"
+                 description="Disable update android sdk for local.properties"/>
 
     <localInspection language="UAST" groupPath="Gradle" shortName="ConfigurationAvoidance"
                      bundle="messages.GradleInspectionBundle"

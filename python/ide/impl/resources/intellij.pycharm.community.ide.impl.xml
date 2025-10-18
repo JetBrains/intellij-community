@@ -93,6 +93,9 @@
                              instance="com.intellij.pycharm.community.ide.impl.settings.MemoryUsageConfigurable"
                              groupId="root"/>
 
+    <registryKey key="dataspell.interpreter.widget" defaultValue="true"
+                 description="Interpreter widget for lightweight interpreter management"/>
+
     <statusBarWidgetFactory id="pythonInterpreterWidget"
                             implementation="com.intellij.pycharm.community.ide.impl.configuration.PySdkStatusBarWidgetFactory"
                             order="after CodeStyleStatusBarWidget, before git, before hg, before Notifications"/>

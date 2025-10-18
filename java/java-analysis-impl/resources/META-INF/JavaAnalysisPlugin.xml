@@ -365,5 +365,8 @@
     <referenceInjector implementation="com.intellij.microservices.jvm.url.HttpUrlReferenceInjector"/>
     <referenceInjector implementation="com.intellij.microservices.jvm.url.WSUrlReferenceInjector"/>
     <referenceInjector implementation="com.intellij.microservices.jvm.url.HttpMethodReferenceInjector"/>
+
+    <registryKey key="batch.inspections.ignored.jvm.languages" defaultValue="Groovy,Scala"
+                 description="Disable UAST processing for JVM languages; a comma separated list of UAST capable language ids."/>
   </extensions>
 </idea-plugin>
