@@ -29,6 +29,7 @@ import java.io.IOException
 import java.nio.charset.Charset
 import java.util.concurrent.ConcurrentHashMap
 import kotlin.concurrent.Volatile
+import kotlin.coroutines.EmptyCoroutineContext
 import kotlin.time.Duration.Companion.nanoseconds
 import kotlin.time.TimeSource
 
@@ -83,6 +84,7 @@ class AsyncDocumentFormattingSupportImpl(private val service: AsyncDocumentForma
   private fun runAsyncFormatBlocking(request: FormattingRequestImpl) {
     val app = ApplicationManager.getApplication()
     if (app.isDispatchThread) {
+      // TODO improve this comment
       // Synchronous switches (e.g. `withContext`) to EDT inside `FormattingTask.run` will result in a deadlock.
       //
       // Unfortunately, `runWithModalProgressBlocking` will not help us here:
@@ -165,11 +167,11 @@ class AsyncDocumentFormattingSupportImpl(private val service: AsyncDocumentForma
       )
     }
 
-    @OptIn(DelicateCoroutinesApi::class) // GlobalScope
+    @OptIn(DelicateCoroutinesApi::class) // GlobalScope, CoroutineStart.ATOMIC -- TODO describe
     suspend fun runAndAwaitTask() = coroutineScope {
       val task = checkNotNull(task)
-      val dispatcher = if (isSync) {
-        // Keep sync tasks in the runBlocking event loop; otherwise, deadlocks ensue.
+      val taskDispatcher = if (isSync) {
+        // Keep sync tasks in the runBlocking event loop; FormattingTask.run must be called from the calling thread in sync mode
         requireNotNull(coroutineContext[CoroutineDispatcher])
       }
       else {
@@ -177,7 +179,7 @@ class AsyncDocumentFormattingSupportImpl(private val service: AsyncDocumentForma
       }
       // There is an implicit contract that a task that was already created is also started.
       // GlobalScope is used here to prevent cancellation before that can happen.
-      val taskJob = GlobalScope.launch(dispatcher) {
+      val taskJob = GlobalScope.launch(taskDispatcher) {
         try {
           underProgressIfNeeded(task.isRunUnderProgress) {
             taskStarted.complete(Unit)
@@ -189,43 +191,47 @@ class AsyncDocumentFormattingSupportImpl(private val service: AsyncDocumentForma
           throw t
         }
       }
-      val timeout = getTimeout(service).toNanos().nanoseconds
-      val markStarted = TimeSource.Monotonic.markNow()
-      try {
-        withContext(NonCancellable) {
-          taskStarted.await()
-        }
-        val formattedText = withTimeout(timeout) {
-          taskResult.await()
-        } ?: return@coroutineScope
-        if (ApplicationManager.getApplication().isWriteAccessAllowed()) {
-          updateDocument(formattedText)
-        }
-        else {
-          withContext(Dispatchers.EDT) {
-            CommandProcessor.getInstance().runUndoTransparentAction {
-              WriteAction.run<Throwable> {
-                updateDocument(formattedText)
+      launch(Dispatchers.Default, start = CoroutineStart.ATOMIC) {
+        val timeout = getTimeout(service).toNanos().nanoseconds
+        val markStarted = TimeSource.Monotonic.markNow()
+        try {
+          withContext(NonCancellable) {
+            taskStarted.await()
+          }
+          val formattedText = withTimeout(timeout) {
+            taskResult.await()
+          } ?: return@launch
+          withContext(if (isSync) taskDispatcher else EmptyCoroutineContext) {
+            if (ApplicationManager.getApplication().isWriteAccessAllowed()) {
+              updateDocument(formattedText)
+            }
+            else {
+              withContext(Dispatchers.EDT) {
+                CommandProcessor.getInstance().runUndoTransparentAction {
+                  WriteAction.run<Throwable> {
+                    updateDocument(formattedText)
+                  }
+                }
               }
             }
           }
         }
-      }
-      catch (t: Throwable) {
-        if (t !is CancellationException) {
-          LOG.error(t)
+        catch (t: Throwable) {
+          if (t !is CancellationException) {
+            LOG.error(t)
+          }
+          this@FormattingRequestImpl.cancel()
+          taskJob.cancel()
+          throw t
         }
-        this@FormattingRequestImpl.cancel()
-        taskJob.cancel()
-        throw t
-      }
-      finally {
-        val elapsed = markStarted.elapsedNow()
-        val remainingToTimeout = timeout - elapsed
-        withContext(NonCancellable) {
-          withTimeoutOrNull(remainingToTimeout) {
-            taskJob.join()
-          } ?: notifyExpired()
+        finally {
+          val elapsed = markStarted.elapsedNow()
+          val remainingToTimeout = timeout - elapsed
+          withContext(NonCancellable) {
+            withTimeoutOrNull(remainingToTimeout) {
+              taskJob.join()
+            } ?: notifyExpired()
+          }
         }
       }
     }
