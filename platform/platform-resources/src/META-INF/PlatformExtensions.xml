@@ -645,6 +645,9 @@
                         serviceImplementation="com.intellij.ide.PlatformIdeServiceImpl"/>
 
     <postStartupActivity implementation="com.intellij.ide.ProjectWindowCustomizerListener" order="last"/>
+    <backgroundPostStartupActivity implementation="com.intellij.util.singleProduct.MigrationStartupActivity"/>
+    <statistics.counterUsagesCollector implementationClass="com.intellij.util.singleProduct.MigrateToSingleProductCollector"/>
+
 
     <applicationService
       serviceInterface="com.intellij.platform.ide.productInfo.IdeProductInfo"
