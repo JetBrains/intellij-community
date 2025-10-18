@@ -7,14 +7,12 @@ import com.intellij.execution.target.getTargetType
 import com.intellij.icons.AllIcons
 import com.intellij.openapi.actionSystem.AnActionEvent
 import com.intellij.openapi.actionSystem.CustomShortcutSet
-import com.intellij.openapi.application.EDT
 import com.intellij.openapi.fileChooser.FileChooserDescriptor
 import com.intellij.openapi.fileChooser.FileChooserDescriptorFactory
 import com.intellij.openapi.observable.properties.ObservableMutableProperty
-import com.intellij.openapi.observable.properties.PropertyGraph
 import com.intellij.openapi.observable.util.and
-import com.intellij.openapi.observable.util.isNull
 import com.intellij.openapi.observable.util.not
+import com.intellij.openapi.observable.util.transform
 import com.intellij.openapi.project.DumbAwareAction
 import com.intellij.openapi.project.ProjectManager
 import com.intellij.openapi.ui.TextComponentAccessor
@@ -40,11 +38,13 @@ import com.intellij.util.asDisposable
 import com.jetbrains.python.PyBundle.message
 import com.jetbrains.python.onFailure
 import com.jetbrains.python.onSuccess
-import kotlinx.coroutines.*
+import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.FlowPreview
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.collectLatest
 import kotlinx.coroutines.flow.debounce
 import kotlinx.coroutines.flow.map
+import kotlinx.coroutines.launch
 import org.jetbrains.annotations.Nls
 import java.awt.AlphaComposite
 import java.awt.Component
@@ -60,7 +60,17 @@ import javax.swing.event.DocumentEvent
 import kotlin.concurrent.atomics.AtomicBoolean
 import kotlin.concurrent.atomics.ExperimentalAtomicApi
 import kotlin.math.cos
-import kotlin.time.Duration.Companion.minutes
+
+interface PathValidator<T, P : PathHolder, VP : ValidatedPath<T, P>> {
+  val backProperty: ObservableMutableProperty<VP?>
+  val isDirtyValue: ObservableMutableProperty<Boolean>
+  val isValidationInProgress: Boolean
+  fun validate(input: String)
+  fun markDirty() {
+    isDirtyValue.set(true)
+    backProperty.set(null)
+  }
+}
 
 private class ValidationSuccessExtension<T>(val validationInfo: T) : ExtendableTextComponent.Extension {
   override fun getIcon(hovered: Boolean): Icon = AllIcons.General.GreenCheckmark
@@ -136,17 +146,14 @@ private class AnimatedFadingIcon(private val icon: DebounceCounterIcon) : Animat
 private const val VALIDATION_DELAY = 2000
 
 @OptIn(FlowPreview::class, ExperimentalAtomicApi::class)
-class ValidatedPathField<T, P : PathHolder, V : ValidatedPath<T, P>>(
+internal class ValidatedPathField<T, P : PathHolder, VP : ValidatedPath<T, P>>(
   val fileSystem: FileSystem<P>,
-  val backProperty: ObservableMutableProperty<V?>,
+  val pathValidator: PathValidator<T, P, VP>,
   browseFolderDialogTitle: @Nls String,
   isFileSelectionMode: Boolean,
-  val isValidationActiveProperty: ObservableMutableProperty<Boolean>,
-  val pathValidator: suspend (P) -> V,
 ) : TextFieldWithBrowseButton() {
   private lateinit var scope: CoroutineScope
   private val textInputFlow: MutableStateFlow<String?> = MutableStateFlow(null)
-  private var validationJob: Deferred<Unit>? = null
 
   /**
    * Single Back Property is shared across multiple forms,
@@ -155,49 +162,11 @@ class ValidatedPathField<T, P : PathHolder, V : ValidatedPath<T, P>>(
    */
   private val editorMode = AtomicBoolean(false)
 
-  /**
-   * There are several UIs for the same back property,
-   * this method emulates the validation job for the current field when the user switches to another form.
-   */
-  private fun runJobFor3rdPartyValidation() {
-    scope.launch {
-      resetValidationJob {
-        if (backProperty.get() == null) delay(1.minutes)
-      }
-    }
-  }
-
-  private suspend fun resetValidationJob(block: suspend CoroutineScope.() -> Unit) {
-    validationJob?.cancelAndJoin()
-
-    validationJob = scope.async(Dispatchers.EDT) {
-      isEnabled = false
-      isValidationActiveProperty.set(true)
-      block()
-    }.apply {
-      invokeOnCompletion {
-        isEnabled = true
-        isValidationActiveProperty.set(false)
-      }
-    }
-  }
-
   private val validationAction = object : DumbAwareAction(AllIcons.Gutter.SuggestedRefactoringBulb) {
     fun doValidate() {
       if (!editorMode.load()) return
 
-      scope.launch {
-        resetValidationJob {
-          val exec = withContext(Dispatchers.IO) {
-            val path = fileSystem.parsePath(text).getOr { error ->
-              //TODO HANDLE PATH ERRORS
-              return@withContext null
-            }
-            pathValidator.invoke(path)
-          }
-          backProperty.set(exec)
-        }
-      }
+      pathValidator.validate(text.trim())
     }
 
     override fun actionPerformed(e: AnActionEvent) {
@@ -243,25 +212,26 @@ class ValidatedPathField<T, P : PathHolder, V : ValidatedPath<T, P>>(
   }
 
   private fun registerPropertyCallbacks() {
-    backProperty.afterChange(scope.asDisposable()) { validatedPath ->
+    pathValidator.backProperty.afterChange(scope.asDisposable()) { validatedPath ->
       if (validatedPath == null) {
-        isValidationActiveProperty.set(true)
-        if (!editorMode.load()) runJobFor3rdPartyValidation()
         return@afterChange
       }
 
       if (validatedPath.pathHolder != null) {
         text = validatedPath.pathHolder.toString()
       }
-      validationJob?.cancel()
+      else {
+        text = ""
+      }
     }
 
-    isValidationActiveProperty.afterChange(scope.asDisposable()) { isValidationActive ->
+    pathValidator.isDirtyValue.afterChange(scope.asDisposable()) { isDirtyValue ->
       with(textField as ExtendableTextComponent) {
         extensions.forEach { removeExtension(it) }
 
-        if (isValidationActive) {
-          if (validationJob?.isActive == true) {
+        if (isDirtyValue) {
+          if (pathValidator.isValidationInProgress) {
+            isEnabled = false
             addExtension(ValidationInProgressExtension)
           }
           else {
@@ -270,10 +240,10 @@ class ValidatedPathField<T, P : PathHolder, V : ValidatedPath<T, P>>(
         }
         else {
           editorMode.store(false)
-          if (browseFolderActionLister != null) {
-            setButtonVisible(true)
-          }
-          backProperty.get()?.validationResult?.let { validationResult ->
+          browseFolderActionLister?.let { setButtonVisible(true) }
+          isEnabled = true
+
+          pathValidator.backProperty.get()?.validationResult?.let { validationResult ->
             validationResult
               .onFailure {
                 addExtension(ValidationErrorExtension)
@@ -290,7 +260,6 @@ class ValidatedPathField<T, P : PathHolder, V : ValidatedPath<T, P>>(
   fun initialize(scope: CoroutineScope) {
     this.scope = scope
     registerPropertyCallbacks()
-    runJobFor3rdPartyValidation() // initial validation is processed by the common v2 model
 
     scope.launch {
       textInputFlow
@@ -298,12 +267,14 @@ class ValidatedPathField<T, P : PathHolder, V : ValidatedPath<T, P>>(
         .map {
           if (it == null) return@map null
 
-          if (!editorMode.load() && backProperty.get()?.pathHolder?.toString() != it) {
+          if (editorMode.load()) {
+            validationWaitIcon.reset()
+          }
+          else if ((pathValidator.backProperty.get()?.pathHolder?.toString() ?: "") != it) {
             editorMode.store(true)
-            backProperty.set(null)
+            pathValidator.markDirty()
           }
 
-          validationWaitIcon.reset()
           it
         }
         .debounce(VALIDATION_DELAY.toLong())
@@ -391,72 +362,21 @@ private fun <T, P : PathHolder, V : ValidatedPath<T, P>> Panel.installToolRow(
   }
 }
 
-fun <P : PathHolder> Panel.validatableVenvField(
-  propertyGraph: PropertyGraph,
+internal fun <T, P : PathHolder, VP : ValidatedPath<T, P>> Panel.validatablePathField(
   fileSystem: FileSystem<P>,
-  backProperty: ObservableMutableProperty<ValidatedPath.Folder<P>?>,
+  pathValidator: PathValidator<T, P, VP>,
   validationRequestor: DialogValidationRequestor,
   labelText: @Nls String,
   missingExecutableText: @Nls String?,
   installAction: ActionLink? = null,
-  selectedPathValidator: suspend (P) -> ValidatedPath.Folder<P>,
-): ValidatedPathField<Unit, P, ValidatedPath.Folder<P>> {
-  return validatablePathField(
-    propertyGraph = propertyGraph,
-    fileSystem = fileSystem,
-    backProperty = backProperty,
-    validationRequestor = validationRequestor,
-    labelText = labelText,
-    missingExecutableText = missingExecutableText,
-    installAction = installAction,
-    isFileSelectionMode = false,
-    selectedPathValidator = selectedPathValidator,
-  )
-}
-
-fun <P : PathHolder> Panel.validatableExecutableField(
-  propertyGraph: PropertyGraph,
-  fileSystem: FileSystem<P>,
-  backProperty: ObservableMutableProperty<ValidatedPath.Executable<P>?>,
-  validationRequestor: DialogValidationRequestor,
-  labelText: @Nls String,
-  missingExecutableText: @Nls String?,
-  installAction: ActionLink? = null,
-  selectedPathValidator: suspend (P) -> ValidatedPath.Executable<P>,
-): ValidatedPathField<Version, P, ValidatedPath.Executable<P>> {
-  return validatablePathField(
-    propertyGraph = propertyGraph,
-    fileSystem = fileSystem,
-    backProperty = backProperty,
-    validationRequestor = validationRequestor,
-    labelText = labelText,
-    missingExecutableText = missingExecutableText,
-    installAction = installAction,
-    isFileSelectionMode = true,
-    selectedPathValidator = selectedPathValidator,
-  )
-}
-
-private fun <T, P : PathHolder, V : ValidatedPath<T, P>> Panel.validatablePathField(
-  propertyGraph: PropertyGraph,
-  fileSystem: FileSystem<P>,
-  backProperty: ObservableMutableProperty<V?>,
-  validationRequestor: DialogValidationRequestor,
-  labelText: @Nls String,
-  missingExecutableText: @Nls String?,
-  installAction: ActionLink? = null,
-  isFileSelectionMode: Boolean,
-  selectedPathValidator: suspend (P) -> V,
-): ValidatedPathField<T, P, V> {
-  val isValidationActiveProperty = propertyGraph.property(false)
+  isFileSelectionMode: Boolean = true,
+): ValidatedPathField<T, P, VP> {
 
   val validatedPathField = ValidatedPathField(
     fileSystem = fileSystem,
-    backProperty = backProperty,
+    pathValidator = pathValidator,
     browseFolderDialogTitle = labelText,
     isFileSelectionMode = isFileSelectionMode,
-    isValidationActiveProperty = isValidationActiveProperty,
-    pathValidator = selectedPathValidator,
   )
 
   missingExecutableText?.let {
@@ -465,26 +385,26 @@ private fun <T, P : PathHolder, V : ValidatedPath<T, P>> Panel.validatablePathFi
       missingExecutableText = missingExecutableText,
       installAction = installAction,
       validatedPathField = validatedPathField
-    ).visibleIf(backProperty.isNull().and(isValidationActiveProperty.not()))
+    ).visibleIf(pathValidator.backProperty.transform { it?.pathHolder == null }.and(pathValidator.isDirtyValue.not()))
   }
 
   row(labelText) {
     cell(validatedPathField)
       .align(AlignX.FILL)
       .validationRequestor(validationRequestor
-                             and WHEN_PROPERTY_CHANGED(isValidationActiveProperty)
-                             and WHEN_PROPERTY_CHANGED(backProperty)
+                             and WHEN_PROPERTY_CHANGED(pathValidator.isDirtyValue)
+                             and WHEN_PROPERTY_CHANGED(pathValidator.backProperty)
       )
       .validationOnInput { component ->
         if (!component.isVisible) return@validationOnInput null
 
-        val pyErrorMessage = backProperty.get()?.validationResult?.errorOrNull?.message
+        val pyErrorMessage = pathValidator.backProperty.get()?.validationResult?.errorOrNull?.message
 
         when {
           pyErrorMessage != null -> {
             ValidationInfo(pyErrorMessage)
           }
-          isValidationActiveProperty.get() -> {
+          pathValidator.isDirtyValue.get() -> {
             ValidationInfo(message("python.add.sdk.wait.for.validation"))
           }
           else -> null

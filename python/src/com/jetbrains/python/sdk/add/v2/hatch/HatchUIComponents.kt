@@ -4,7 +4,6 @@ package com.jetbrains.python.sdk.add.v2.hatch
 import com.intellij.icons.AllIcons
 import com.intellij.openapi.application.EDT
 import com.intellij.openapi.observable.properties.AtomicBooleanProperty
-import com.intellij.openapi.observable.properties.ObservableMutableProperty
 import com.intellij.openapi.observable.util.transform
 import com.intellij.openapi.ui.ComboBox
 import com.intellij.openapi.ui.ValidationInfo
@@ -101,7 +100,6 @@ private class HatchEnvComboBoxListCellRenderer(val contentFlow: StateFlow<PyResu
 
 private fun <P : PathHolder> Panel.addEnvironmentComboBox(
   model: PythonAddInterpreterModel<P>,
-  hatchEnvironmentProperty: ObservableMutableProperty<HatchVirtualEnvironment?>,
   validationRequestor: DialogValidationRequestor,
   isValidateOnlyNotExisting: Boolean,
 ): ComboBox<HatchVirtualEnvironment> {
@@ -110,9 +108,9 @@ private fun <P : PathHolder> Panel.addEnvironmentComboBox(
   lateinit var environmentComboBox: ComboBox<HatchVirtualEnvironment>
 
   row(message("sdk.create.custom.hatch.environment")) {
-    environmentComboBox = comboBox(emptyList(), HatchEnvComboBoxListCellRenderer(model.hatchEnvironmentsResult))
-      .bindItem(hatchEnvironmentProperty)
-      .validationRequestor(validationRequestor and WHEN_PROPERTY_CHANGED(hatchEnvironmentProperty))
+    environmentComboBox = comboBox(emptyList(), HatchEnvComboBoxListCellRenderer(model.hatchState.hatchEnvironmentsResult))
+      .bindItem(model.hatchState.selectedHatchEnv)
+      .validationRequestor(validationRequestor and WHEN_PROPERTY_CHANGED(model.hatchState.selectedHatchEnv))
       .validationInfo { component ->
         environmentAlreadyExists.set(false)
         when {
@@ -139,7 +137,7 @@ private fun <P : PathHolder> Panel.addEnvironmentComboBox(
       message = message("sdk.create.custom.hatch.environment.exists"),
       firstActionLink = ActionLink(message("sdk.create.custom.venv.select.existing.link")) {
         PythonNewProjectWizardCollector.logExistingVenvFixUsed()
-        model.state.selectedHatchEnv.set(environmentComboBox.item)
+        model.hatchState.selectedHatchEnv.set(environmentComboBox.item)
         model.navigator.navigateTo(newMethod = SELECT_EXISTING, newManager = PythonSupportedEnvironmentManagers.HATCH)
       },
       validationType = ValidationType.ERROR
@@ -150,22 +148,18 @@ private fun <P : PathHolder> Panel.addEnvironmentComboBox(
 
 private fun <P : PathHolder> Panel.addExecutableSelector(
   model: PythonMutableTargetAddInterpreterModel<P>,
-  hatchExecutableProperty: ObservableMutableProperty<ValidatedPath.Executable<P>?>,
   validationRequestor: DialogValidationRequestor,
   installHatchActionLink: ActionLink? = null,
-  binaryValidator: suspend (P) -> ValidatedPath.Executable<P>,
 ): ValidatedPathField<Version, P, ValidatedPath.Executable<P>> {
 
 
-  val executablePath = validatableExecutableField(
-    propertyGraph = model.propertyGraph,
+  val executablePath = validatablePathField(
     fileSystem = model.fileSystem,
-    backProperty = hatchExecutableProperty,
+    pathValidator = model.hatchState.toolValidator,
     validationRequestor = validationRequestor,
     labelText = message("sdk.create.custom.venv.executable.path", "hatch"),
     missingExecutableText = message("sdk.create.custom.venv.missing.text", "hatch"),
     installAction = installHatchActionLink,
-    selectedPathValidator = binaryValidator
   )
 
   return executablePath
@@ -176,23 +170,23 @@ internal data class HatchFormFields<P : PathHolder>(
   val basePythonComboBox: PythonInterpreterComboBox<P>?,
   val validatedPathField: ValidatedPathField<Version, P, ValidatedPath.Executable<P>>,
 ) {
-  fun onShown(scope: CoroutineScope, model: PythonMutableTargetAddInterpreterModel<P>, state: AddInterpreterState<P>, isFilterOnlyExisting: Boolean) {
-    model.hatchEnvironmentsResult.onEach { environmentsResult ->
+  fun onShown(scope: CoroutineScope, model: PythonMutableTargetAddInterpreterModel<P>, isFilterOnlyExisting: Boolean) {
+    model.hatchState.hatchEnvironmentsResult.onEach { environmentsResult ->
       when (environmentsResult) {
         null -> environmentComboBox.isEnabled = false
         else -> {
           environmentComboBox.isEnabled = true
           environmentComboBox.syncWithEnvs(environmentsResult, isFilterOnlyExisting = isFilterOnlyExisting)
-          if (environmentsResult.isFailure) state.selectedHatchEnv.set(null)
+          if (environmentsResult.isFailure) model.hatchState.selectedHatchEnv.set(null)
         }
       }
     }.launchIn(scope + Dispatchers.EDT)
 
     with(validatedPathField) {
       initialize(scope)
-      backProperty.afterChange { executable ->
-        if (executable != model.state.hatchExecutable.get()) {
-          model.state.hatchExecutable.set(executable)
+      pathValidator.backProperty.afterChange { executable ->
+        if (executable != model.hatchState.hatchExecutable.get()) {
+          model.hatchState.hatchExecutable.set(executable)
         }
       }
     }
@@ -201,8 +195,6 @@ internal data class HatchFormFields<P : PathHolder>(
 
 internal fun <P : PathHolder> Panel.buildHatchFormFields(
   model: PythonMutableTargetAddInterpreterModel<P>,
-  hatchEnvironmentProperty: ObservableMutableProperty<HatchVirtualEnvironment?>,
-  hatchExecutableProperty: ObservableMutableProperty<ValidatedPath.Executable<P>?>,
   validationRequestor: DialogValidationRequestor,
   isGenerateNewMode: Boolean = false,
   installHatchActionLink: ActionLink? = null,
@@ -210,20 +202,15 @@ internal fun <P : PathHolder> Panel.buildHatchFormFields(
 
   val executablePath = addExecutableSelector(
     model,
-    hatchExecutableProperty,
     validationRequestor,
     installHatchActionLink
-  ) {
-    val binaryToExec = model.fileSystem.getBinaryToExec(it)
-    ValidatedPath.Executable(it, binaryToExec.getToolVersion("hatch"))
-  }
+  )
   var environmentComboBox: ComboBox<HatchVirtualEnvironment> by lateinitVal()
   var basePythonComboBox: PythonInterpreterComboBox<P>? = null
 
   rowsRange {
     environmentComboBox = addEnvironmentComboBox(
       model = model,
-      hatchEnvironmentProperty = hatchEnvironmentProperty,
       validationRequestor = validationRequestor,
       isValidateOnlyNotExisting = isGenerateNewMode
     )
@@ -237,7 +224,7 @@ internal fun <P : PathHolder> Panel.buildHatchFormFields(
         onPathSelected = model::addManuallyAddedInterpreter,
       )
     }
-  }.visibleIf(hatchExecutableProperty.transform { it?.validationResult?.successOrNull != null })
+  }.visibleIf(model.hatchState.hatchExecutable.transform { it?.validationResult?.successOrNull != null })
 
 
   return HatchFormFields(environmentComboBox, basePythonComboBox, executablePath)

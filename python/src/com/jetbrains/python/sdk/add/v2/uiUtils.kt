@@ -37,7 +37,6 @@ import com.jetbrains.python.sdk.add.v2.PythonInterpreterSelectionMethod.CREATE_N
 import com.jetbrains.python.sdk.add.v2.PythonInterpreterSelectionMethod.SELECT_EXISTING
 import com.jetbrains.python.sdk.add.v2.PythonInterpreterSelectionMode.CUSTOM
 import com.jetbrains.python.sdk.add.v2.PythonSupportedEnvironmentManagers.VIRTUALENV
-import com.jetbrains.python.sdk.add.v2.conda.detectCondaExecutable
 import com.jetbrains.python.sdk.flavors.PythonSdkFlavor
 import com.jetbrains.python.sdk.flavors.conda.PyCondaEnv
 import com.jetbrains.python.sdk.flavors.conda.PyCondaEnvIdentity
@@ -425,10 +424,7 @@ internal fun <P : PathHolder> createInstallCondaFix(model: PythonAddInterpreterM
     PythonSdkFlavor.clearExecutablesCache()
     CondaInstallManager.installLatest(null)
     runWithModalProgressBlocking(ModalTaskOwner.guess(), message("sdk.create.custom.venv.progress.title.detect.executable")) {
-      model.condaEnvironmentsLoading.value = true
-      model.detectCondaExecutable()
-      model.detectCondaEnvironmentsOrError(errorSink)
-      model.condaEnvironmentsLoading.value = false
+      model.condaState.toolValidator.autodetectExecutable()
     }
   }
 }

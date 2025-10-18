@@ -127,18 +127,13 @@ internal class PythonSdkPanelBuilderAndSdkCreator(
       }
 
       rowsRange {
-        executablePath = validatableExecutableField(
-          propertyGraph = propertyGraph,
+        executablePath = validatablePathField(
           fileSystem = model.fileSystem,
-          backProperty = model.state.condaExecutable,
+          pathValidator = model.condaState.toolValidator,
           validationRequestor = validationRequestor,
           labelText = message("sdk.create.custom.venv.executable.path", "conda"),
           missingExecutableText = message("sdk.create.custom.venv.missing.text", "conda"),
           installAction = createInstallCondaFix(model, errorSink),
-          selectedPathValidator = {
-            val binToExec = model.fileSystem.getBinaryToExec(it)
-            ValidatedPath.Executable(it, binToExec.getToolVersion("conda"))
-          }
         )
       }.visibleIf(_baseConda)
 
@@ -146,7 +141,7 @@ internal class PythonSdkPanelBuilderAndSdkCreator(
 
       row("") {
         comment("").bindText(venvHint)
-      }.visibleIf(_projectVenv or (_baseConda and model.state.condaExecutable.isNotNull()) or uvSection.hintVisiblePredicate() or _custom)
+      }.visibleIf(_projectVenv or (_baseConda and model.condaState.condaExecutable.isNotNull()) or uvSection.hintVisiblePredicate() or _custom)
 
       rowsRange {
         custom.setupUI(this, validationRequestor)

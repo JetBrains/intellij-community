@@ -1,7 +1,6 @@
 // Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.jetbrains.python.sdk.add.v2
 
-import com.intellij.openapi.observable.properties.ObservableMutableProperty
 import com.intellij.openapi.projectRoots.Sdk
 import com.intellij.openapi.ui.validation.DialogValidationRequestor
 import com.intellij.platform.ide.progress.ModalTaskOwner
@@ -48,15 +47,13 @@ internal abstract class CustomNewEnvironmentCreator<P: PathHolder>(
         onPathSelected = model::addManuallyAddedInterpreter,
       )
 
-      executablePath = validatableExecutableField(
-        propertyGraph = propertyGraph,
+      executablePath = validatablePathField(
         fileSystem = model.fileSystem,
-        backProperty = executable,
+        pathValidator = toolValidator,
         validationRequestor = validationRequestor,
         labelText = message("sdk.create.custom.venv.executable.path", name),
         missingExecutableText = message("sdk.create.custom.venv.missing.text", name),
         installAction = createInstallFix(errorSink),
-        selectedPathValidator = ::onBinarySelection
       )
 
       row("") {
@@ -96,7 +93,7 @@ internal abstract class CustomNewEnvironmentCreator<P: PathHolder>(
 
     newSdk.persist()
     if (module != null) {
-      if (!model.state.makeAvailableForAllProjects.get()) {
+      if (!model.venvState.makeAvailableForAllProjects.get()) {
         newSdk.setAssociationToModule(module)
       }
       module.baseDir?.refresh(true, false)
@@ -112,7 +109,7 @@ internal abstract class CustomNewEnvironmentCreator<P: PathHolder>(
       type = interpreterType,
       target = target.toStatisticsField(),
       globalSitePackage = false,
-      makeAvailableToAllProjects = model.state.makeAvailableForAllProjects.get(),
+      makeAvailableToAllProjects = model.venvState.makeAvailableForAllProjects.get(),
       previouslyConfigured = false,
       isWSLContext = false, // todo fix for wsl
       creationMode = InterpreterCreationMode.CUSTOM
@@ -135,7 +132,7 @@ internal abstract class CustomNewEnvironmentCreator<P: PathHolder>(
       PythonSdkFlavor.clearExecutablesCache()
       installExecutable(errorSink)
       runWithModalProgressBlocking(ModalTaskOwner.guess(), message("sdk.create.custom.venv.progress.title.detect.executable")) {
-        detectExecutable()
+        toolValidator.autodetectExecutable()
       }
     }
   }
@@ -184,7 +181,7 @@ internal abstract class CustomNewEnvironmentCreator<P: PathHolder>(
 
   internal abstract val interpreterType: InterpreterType
 
-  internal abstract val executable: ObservableMutableProperty<ValidatedPath.Executable<P>?>
+  internal abstract val toolValidator: ToolValidator<P>
 
   internal open val installationVersion: String? = null
 
@@ -197,8 +194,6 @@ internal abstract class CustomNewEnvironmentCreator<P: PathHolder>(
   internal abstract suspend fun savePathToExecutableToProperties(pathHolder: PathHolder?)
 
   protected abstract suspend fun setupEnvSdk(moduleBasePath: Path, baseSdks: List<Sdk>, basePythonBinaryPath: P?, installPackages: Boolean): PyResult<Sdk>
-
-  internal abstract suspend fun detectExecutable()
 
   internal open fun onVenvSelectExisting() {}
 }

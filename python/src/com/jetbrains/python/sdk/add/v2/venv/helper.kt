@@ -25,7 +25,7 @@ suspend fun <P : PathHolder> PythonMutableTargetAddInterpreterModel<P>.setupVirt
     project = moduleOrProject?.project,
     pathToBasePython = baseSdkPath,
     pathToVenvHome = venvFolder,
-    inheritSitePackages = state.inheritSitePackages.get(),
+    inheritSitePackages = venvState.inheritSitePackages.get(),
     existingSdks = existingSdks
   ).getOr { return it }
 
@@ -34,7 +34,7 @@ suspend fun <P : PathHolder> PythonMutableTargetAddInterpreterModel<P>.setupVirt
 
   if (module != null) {
     module.excludeInnerVirtualEnv(newSdk.sdk)
-    if (!this.state.makeAvailableForAllProjects.get()) {
+    if (!this.venvState.makeAvailableForAllProjects.get()) {
       newSdk.sdk.setAssociationToModule(module)
     }
   }
