@@ -31,15 +31,9 @@ internal class HatchExistingEnvironmentSelector<P: PathHolder>(
   override val model: PythonMutableTargetAddInterpreterModel<P>,
 ) : PythonExistingEnvironmentConfigurator<P>(model) {
   val interpreterType: InterpreterType = InterpreterType.HATCH
-  val executable: ObservableMutableProperty<ValidatedPath.Executable<P>?> = propertyGraph.property(model.state.hatchExecutable.get())
+  val executable: ObservableMutableProperty<ValidatedPath.Executable<P>?> = model.state.hatchExecutable
 
   private lateinit var hatchFormFields: HatchFormFields<P>
-
-  init {
-    propertyGraph.dependsOn(executable, model.state.hatchExecutable, deleteWhenChildModified = false) {
-      model.state.hatchExecutable.get()
-    }
-  }
 
   override fun setupUI(panel: Panel, validationRequestor: DialogValidationRequestor) {
     hatchFormFields = panel.buildHatchFormFields(
@@ -53,13 +47,13 @@ internal class HatchExistingEnvironmentSelector<P: PathHolder>(
 
   override fun onShown(scope: CoroutineScope) {
     hatchFormFields.onShown(scope, model, state, isFilterOnlyExisting = true)
-    model.state.hatchExecutable.afterChange { commonExecutable ->
-      if (commonExecutable == null) {
+    executable.afterChange { hatchExecutable ->
+      if (hatchExecutable?.validationResult?.successOrNull == null) {
         model.hatchEnvironmentsResult.value = null
         return@afterChange
       }
 
-      val binaryToExec = commonExecutable.pathHolder?.let { model.fileSystem.getBinaryToExec(it) }
+      val binaryToExec = hatchExecutable.pathHolder?.let { model.fileSystem.getBinaryToExec(it) }
                          ?: return@afterChange
       scope.launch(Dispatchers.IO) {
         model.detectHatchEnvironments(binaryToExec).also {

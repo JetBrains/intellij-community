@@ -5,6 +5,7 @@ import com.intellij.icons.AllIcons
 import com.intellij.openapi.application.EDT
 import com.intellij.openapi.observable.properties.AtomicBooleanProperty
 import com.intellij.openapi.observable.properties.ObservableMutableProperty
+import com.intellij.openapi.observable.util.transform
 import com.intellij.openapi.ui.ComboBox
 import com.intellij.openapi.ui.ValidationInfo
 import com.intellij.openapi.ui.validation.DialogValidationRequestor
@@ -20,6 +21,7 @@ import com.intellij.ui.dsl.builder.Panel
 import com.intellij.ui.dsl.builder.bindItem
 import com.intellij.ui.dsl.builder.components.ValidationType
 import com.intellij.ui.dsl.builder.components.validationTooltip
+import com.intellij.util.lateinitVal
 import com.intellij.util.ui.JBUI
 import com.jetbrains.python.PyBundle.message
 import com.jetbrains.python.Result
@@ -215,24 +217,28 @@ internal fun <P : PathHolder> Panel.buildHatchFormFields(
     val binaryToExec = model.fileSystem.getBinaryToExec(it)
     ValidatedPath.Executable(it, binaryToExec.getToolVersion("hatch"))
   }
-
-  val environmentComboBox = addEnvironmentComboBox(
-    model = model,
-    hatchEnvironmentProperty = hatchEnvironmentProperty,
-    validationRequestor = validationRequestor,
-    isValidateOnlyNotExisting = isGenerateNewMode
-  )
-
+  var environmentComboBox: ComboBox<HatchVirtualEnvironment> by lateinitVal()
   var basePythonComboBox: PythonInterpreterComboBox<P>? = null
-  if (isGenerateNewMode) {
-    basePythonComboBox = pythonInterpreterComboBox(
-      model.fileSystem,
-      title = message("sdk.create.custom.base.python"),
-      selectedSdkProperty = model.state.baseInterpreter,
+
+  rowsRange {
+    environmentComboBox = addEnvironmentComboBox(
+      model = model,
+      hatchEnvironmentProperty = hatchEnvironmentProperty,
       validationRequestor = validationRequestor,
-      onPathSelected = model::addManuallyAddedInterpreter,
+      isValidateOnlyNotExisting = isGenerateNewMode
     )
-  }
+
+    if (isGenerateNewMode) {
+      basePythonComboBox = pythonInterpreterComboBox(
+        model.fileSystem,
+        title = message("sdk.create.custom.base.python"),
+        selectedSdkProperty = model.state.baseInterpreter,
+        validationRequestor = validationRequestor,
+        onPathSelected = model::addManuallyAddedInterpreter,
+      )
+    }
+  }.visibleIf(hatchExecutableProperty.transform { it?.validationResult?.successOrNull != null })
+
 
   return HatchFormFields(environmentComboBox, basePythonComboBox, executablePath)
 }

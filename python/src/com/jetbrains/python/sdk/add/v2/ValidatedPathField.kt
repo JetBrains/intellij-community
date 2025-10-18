@@ -160,7 +160,11 @@ class ValidatedPathField<T, P : PathHolder, V : ValidatedPath<T, P>>(
    * this method emulates the validation job for the current field when the user switches to another form.
    */
   private fun runJobFor3rdPartyValidation() {
-    scope.launch { resetValidationJob { delay(1.minutes) } }
+    scope.launch {
+      resetValidationJob {
+        if (backProperty.get() == null) delay(1.minutes)
+      }
+    }
   }
 
   private suspend fun resetValidationJob(block: suspend CoroutineScope.() -> Unit) {
