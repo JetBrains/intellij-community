@@ -24,7 +24,7 @@ class PyNavigationTest : PyTestCase() {
   // PY-35129
   fun testGoToDeclarationOnPyiFile() {
     configureByDir("onPyiFile")
-    val target = PyGotoDeclarationHandler().getGotoDeclarationTarget(elementAtCaret, myFixture.editor)
+    val target = gotoDeclaration()
     checkPyNotPyi(target)
   }
 
@@ -40,7 +40,7 @@ class PyNavigationTest : PyTestCase() {
   fun testGoToDeclarationForDirectory() {
     runWithAdditionalFileInLibDir("collections/__init__.py", "") {
       configureByDir(getTestName(true))
-      val target = PyGotoDeclarationHandler().getGotoDeclarationTarget(elementAtCaret, myFixture.editor)
+      val target = gotoDeclaration()
       checkPyNotPyi(target)
     }
   }
@@ -101,7 +101,7 @@ class PyNavigationTest : PyTestCase() {
       "  pass\n" +
       "MyCla<caret>ss()"
     )
-    val target = PyGotoDeclarationHandler().getGotoDeclarationTarget(elementAtCaret, myFixture.editor)
+    val target = gotoDeclaration()
     assertInstanceOf(target, PyClass::class.java)
   }
 
@@ -113,7 +113,7 @@ class PyNavigationTest : PyTestCase() {
       "    pass\n" +
       "MyCla<caret>ss()"
     )
-    val target = PyGotoDeclarationHandler().getGotoDeclarationTarget(elementAtCaret, myFixture.editor)
+    val target = gotoDeclaration()
     assertInstanceOf(target, PyFunction::class.java)
   }
 
@@ -127,7 +127,7 @@ class PyNavigationTest : PyTestCase() {
       "  pass\n" +
       "MyCla<caret>ss()"
     )
-    val target = PyGotoDeclarationHandler().getGotoDeclarationTarget(elementAtCaret, myFixture.editor)
+    val target = gotoDeclaration()
     assertInstanceOf(target, PyClass::class.java)
   }
 
@@ -142,7 +142,7 @@ class PyNavigationTest : PyTestCase() {
       "    pass\n" +
       "MyCla<caret>ss()"
     )
-    val target = PyGotoDeclarationHandler().getGotoDeclarationTarget(elementAtCaret, myFixture.editor)
+    val target = gotoDeclaration()
     assertInstanceOf(target, PyClass::class.java)
   }
 
@@ -165,7 +165,7 @@ class PyNavigationTest : PyTestCase() {
       "<caret>A(\"abc\")"
     )
 
-    val foo = PyGotoDeclarationHandler().getGotoDeclarationTarget(elementAtCaret, myFixture.editor) as PyFunction
+    val foo = gotoDeclaration() as PyFunction
     assertEquals(PyNames.INIT, foo.name)
 
     val context = TypeEvalContext.codeAnalysis(myFixture.project, myFixture.file)
@@ -195,7 +195,7 @@ class PyNavigationTest : PyTestCase() {
       "<caret>A(\"abc\")"
     )
 
-    val foo = PyGotoDeclarationHandler().getGotoDeclarationTarget(elementAtCaret, myFixture.editor) as PyFunction
+    val foo = gotoDeclaration() as PyFunction
     assertEquals(PyNames.INIT, foo.name)
 
     val context = TypeEvalContext.codeAnalysis(myFixture.project, myFixture.file)
@@ -206,7 +206,7 @@ class PyNavigationTest : PyTestCase() {
   fun testClassInPyiAssignedToFunctionInPy() {
     myFixture.copyDirectoryToProject(getTestName(true), "")
     myFixture.configureByFile("test.py")
-    val target = PyGotoDeclarationHandler().getGotoDeclarationTarget(elementAtCaret, myFixture.editor)
+    val target = gotoDeclaration()
     assertInstanceOf(target, PyTargetExpression::class.java)
     checkPyNotPyi(target?.containingFile)
   }
@@ -216,7 +216,7 @@ class PyNavigationTest : PyTestCase() {
     myFixture.copyDirectoryToProject("importFile", "")
     myFixture.configureByFile("test.py")
     runWithAdditionalClassEntryInSdkRoots(myFixture.findFileInTempDir("addRoots")) {
-      val target = PyGotoDeclarationHandler().getGotoDeclarationTarget(elementAtCaret, myFixture.editor)
+      val target = gotoDeclaration()
       checkPyNotPyi(target?.containingFile)
     }
   }
@@ -225,7 +225,7 @@ class PyNavigationTest : PyTestCase() {
   fun testClassInPyiClassInPy() {
     myFixture.copyDirectoryToProject(getTestName(true), "")
     myFixture.configureByFile("test.py")
-    val target = PyGotoDeclarationHandler().getGotoDeclarationTarget(elementAtCaret, myFixture.editor)
+    val target = gotoDeclaration()
     assertInstanceOf(target, PyFunction::class.java)
     checkPyNotPyi(target?.containingFile)
   }
@@ -313,7 +313,7 @@ class PyNavigationTest : PyTestCase() {
     // ensure that `collections.abc` navigates to `_collections_abc.py`, not `collections/abc.pyi`
     runWithAdditionalFileInLibDir("_collections_abc.py", "class Mapping: ...") {
       myFixture.configureByFile(getTestName(true) + "/test.py")
-      val target = PyGotoDeclarationHandler().getGotoDeclarationTarget(this.elementAtCaret, myFixture.editor)
+      val target = gotoDeclaration()
       assertNotNull(target)
       assertEquals("_collections_abc.py", target!!.containingFile.name)
     }
@@ -324,7 +324,7 @@ class PyNavigationTest : PyTestCase() {
     // ensure that `collections.abc.Mapping` navigates to `_collections_abc.py`, not `typing.pyi`
     runWithAdditionalFileInLibDir("_collections_abc.py", "class Mapping: ...") {
       myFixture.configureByFile(getTestName(true) + "/test.py")
-      val target = PyGotoDeclarationHandler().getGotoDeclarationTarget(this.elementAtCaret, myFixture.editor)
+      val target = gotoDeclaration()
       assertNotNull(target)
       assertEquals("_collections_abc.py", target!!.containingFile.name)
     }
@@ -412,7 +412,7 @@ class PyNavigationTest : PyTestCase() {
           x = Jo<caret>bId("1")
       """.trimIndent()
     )
-    val target = PyGotoDeclarationHandler().getGotoDeclarationTarget(elementAtCaret, myFixture.editor)
+    val target = gotoDeclaration()
     val targetExpr = assertInstanceOf(target, PyTargetExpression::class.java)
     assertEquals("JobId", targetExpr.name)
   }
@@ -430,7 +430,7 @@ class PyNavigationTest : PyTestCase() {
           p = Po<caret>int(1, 2)
       """.trimIndent()
     )
-    val target = PyGotoDeclarationHandler().getGotoDeclarationTarget(elementAtCaret, myFixture.editor)
+    val target = gotoDeclaration()
     val targetExpr = assertInstanceOf(target, PyTargetExpression::class.java)
     assertEquals("Point", targetExpr.name)
   }
@@ -448,7 +448,7 @@ class PyNavigationTest : PyTestCase() {
           p = Po<caret>int(1, 2)
       """.trimIndent()
     )
-    val target = PyGotoDeclarationHandler().getGotoDeclarationTarget(elementAtCaret, myFixture.editor)
+    val target = gotoDeclaration()
     val targetExpr = assertInstanceOf(target, PyTargetExpression::class.java)
     assertEquals("Point", targetExpr.name)
   }
@@ -466,7 +466,7 @@ class PyNavigationTest : PyTestCase() {
           m = Mo<caret>vie(name="x")
       """.trimIndent()
     )
-    val target = PyGotoDeclarationHandler().getGotoDeclarationTarget(elementAtCaret, myFixture.editor)
+    val target = gotoDeclaration()
     val targetExpr = assertInstanceOf(target, PyTargetExpression::class.java)
     assertEquals("Movie", targetExpr.name)
   }
@@ -484,7 +484,7 @@ class PyNavigationTest : PyTestCase() {
           c = Co<caret>lor(1)
       """.trimIndent()
     )
-    val target = PyGotoDeclarationHandler().getGotoDeclarationTarget(elementAtCaret, myFixture.editor)
+    val target = gotoDeclaration()
     val targetExpr = assertInstanceOf(target, PyTargetExpression::class.java)
     assertEquals("Color", targetExpr.name)
   }
@@ -507,7 +507,7 @@ class PyNavigationTest : PyTestCase() {
           p = Po<caret>int(1, 2)
       """.trimIndent()
     )
-    val target = PyGotoDeclarationHandler().getGotoDeclarationTarget(elementAtCaret, myFixture.editor)
+    val target = gotoDeclaration()
     val targetExpr = assertInstanceOf(target, PyTargetExpression::class.java)
     assertEquals("Point", targetExpr.name)
     assertEquals("m.py", targetExpr.containingFile.name)
@@ -537,8 +537,12 @@ class PyNavigationTest : PyTestCase() {
   private fun doTestGotoDeclarationNavigatesToPyNotPyi() {
     myFixture.copyDirectoryToProject(getTestName(true), "")
     myFixture.configureByFile("test.py")
-    val target = PyGotoDeclarationHandler().getGotoDeclarationTarget(elementAtCaret, myFixture.editor)
+    val target = gotoDeclaration()
     checkPyNotPyi(target!!.containingFile)
+  }
+
+  private fun gotoDeclaration(): PsiElement? {
+    return PyGotoDeclarationHandler().getGotoDeclarationTarget(elementAtCaret, myFixture.editor)
   }
 
   private fun doTestGotoImplementationNavigatesToPyNotPyi(numTargets: Int = 1) {
