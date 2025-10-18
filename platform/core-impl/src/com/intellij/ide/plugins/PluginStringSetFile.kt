@@ -5,6 +5,7 @@ import com.intellij.openapi.diagnostic.Logger
 import com.intellij.openapi.extensions.PluginId
 import com.intellij.openapi.util.io.NioFiles
 import org.jetbrains.annotations.ApiStatus
+import org.jetbrains.annotations.ApiStatus.Internal
 import java.io.IOException
 import java.nio.file.Files
 import java.nio.file.NoSuchFileException
@@ -13,40 +14,27 @@ import java.nio.file.StandardOpenOption.*
 import java.util.*
 import kotlin.streams.asSequence
 
+@Synchronized
+@Internal
+fun writePluginStringSet(path: Path, strings: Set<String>) {
+  NioFiles.createDirectories(path.parent)
+  Files.write(path, TreeSet(strings))
+}
+
 /**
  * DO NOT USE outside the plugins subsystem code, API can be changed arbitrarily without a notice.
  *
  * Persists a set of trimmed, non-empty strings to a file on disk.
  */
-@ApiStatus.Internal
+@Internal
 object PluginStringSetFile {
-  @Synchronized
-  @Throws(IOException::class)
-  fun write(path: Path, strings: Set<String>) {
-    NioFiles.createDirectories(path.parent)
-    // TODO: TreeSet demands comparable, probably we can drop Comparable on PluginId if we drop this usage
-    //  wait, it's String, not PluginId
-
-    Files.write(path, TreeSet(strings))
-  }
-
-  @Synchronized
-  fun writeSafe(path: Path, strings: Set<String>, logger: Logger): Boolean {
-    try {
-      write(path, strings)
-      return true
-    } catch (e: IOException) {
-      logger.warn("failed to write plugin strings to $path", e)
-      return false
-    }
-  }
-
   @Synchronized
   fun writeIdsSafe(path: Path, ids: Set<PluginId>, logger: Logger): Boolean {
     try {
-      write(path, ids.mapTo(mutableSetOf()) { it.idString })
+      writePluginStringSet(path, ids.mapTo(mutableSetOf()) { it.idString })
       return true
-    } catch (e: IOException) {
+    }
+    catch (e: IOException) {
       logger.warn("failed to write plugin strings to $path", e)
       return false
     }
@@ -60,22 +48,12 @@ object PluginStringSetFile {
   }
 
   @Synchronized
-  fun appendSafe(path: Path, strings: Set<String>, logger: Logger): Boolean {
-    try {
-      append(path, strings)
-      return true
-    } catch (e: IOException) {
-      logger.warn("failed to append plugin strings to $path", e)
-      return false
-    }
-  }
-
-  @Synchronized
   fun appendIdsSafe(path: Path, ids: Set<PluginId>, logger: Logger): Boolean {
     try {
       append(path, ids.mapTo(mutableSetOf()) { it.idString })
       return true
-    } catch (e: IOException) {
+    }
+    catch (e: IOException) {
       logger.warn("failed to append plugin strings to $path", e)
       return false
     }
@@ -83,16 +61,16 @@ object PluginStringSetFile {
 
   @Synchronized
   fun consumeSafe(path: Path, logger: Logger): Set<String> {
-    return try {
+    try {
       val ids = read(path)
       if (!ids.isEmpty()) {
         Files.delete(path) // TODO may throw, but in that case we'll return emptySet, huh?
       }
-      ids
+      return ids
     }
     catch (e: IOException) {
       logger.error(path.toString(), e)
-      emptySet()
+      return emptySet()
     }
   }
 
@@ -101,12 +79,12 @@ object PluginStringSetFile {
 
   @Synchronized
   fun readSafe(path: Path, log: Logger): Set<String> {
-    return try {
-      read(path)
+    try {
+      return read(path)
     }
     catch (e: IOException) {
       log.warn("Unable to read plugin string set from: $path", e)
-      emptySet()
+      return emptySet()
     }
   }
 

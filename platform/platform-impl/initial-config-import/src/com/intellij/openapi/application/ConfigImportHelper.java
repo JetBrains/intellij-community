@@ -76,6 +76,8 @@ import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 import java.util.stream.Collectors;
 
+import static com.intellij.ide.plugins.BundledPluginsStateKt.BUNDLED_PLUGINS_FILENAME;
+
 @ApiStatus.Internal
 public final class ConfigImportHelper {
   public static final String IMPORT_FROM_ENV_VAR = "JB_IMPORT_SETTINGS_FROM";
@@ -1566,7 +1568,7 @@ public final class ConfigImportHelper {
   private static boolean shouldSkipFileDuringImport(Path path, @Nullable ConfigImportSettings settings) {
     var fileName = path.getFileName().toString();
     return SESSION_FILES.contains(fileName) ||
-           fileName.equals(BundledPluginsState.BUNDLED_PLUGINS_FILENAME) ||
+           fileName.equals(BUNDLED_PLUGINS_FILENAME) ||
            fileName.equals(StoragePathMacros.APP_INTERNAL_STATE_DB) ||
            fileName.equals(ExpiredPluginsState.EXPIRED_PLUGINS_FILENAME) ||
            fileName.startsWith(SpecialConfigFiles.CHROME_USER_DATA) ||
