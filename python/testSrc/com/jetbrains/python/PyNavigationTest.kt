@@ -18,7 +18,6 @@ import com.jetbrains.python.psi.impl.PyPsiUtils
 import com.jetbrains.python.psi.types.TypeEvalContext
 import com.jetbrains.python.pyi.PyiFile
 import com.jetbrains.python.pyi.PyiUtil
-import junit.framework.TestCase
 
 class PyNavigationTest : PyTestCase() {
 
@@ -208,7 +207,6 @@ class PyNavigationTest : PyTestCase() {
     myFixture.copyDirectoryToProject(getTestName(true), "")
     myFixture.configureByFile("test.py")
     val target = PyGotoDeclarationHandler().getGotoDeclarationTarget(elementAtCaret, myFixture.editor)
-    TestCase.assertNotNull(target)
     assertInstanceOf(target, PyTargetExpression::class.java)
     checkPyNotPyi(target?.containingFile)
   }
@@ -228,7 +226,6 @@ class PyNavigationTest : PyTestCase() {
     myFixture.copyDirectoryToProject(getTestName(true), "")
     myFixture.configureByFile("test.py")
     val target = PyGotoDeclarationHandler().getGotoDeclarationTarget(elementAtCaret, myFixture.editor)
-    assertNotNull(target)
     assertInstanceOf(target, PyFunction::class.java)
     checkPyNotPyi(target?.containingFile)
   }
@@ -402,8 +399,8 @@ class PyNavigationTest : PyTestCase() {
     }
   }
 
-  // PY-82962 - NewType
-  fun testGoToDeclarationOnNewTypeAliasCall() {
+  // PY-82962
+  fun testGoToDeclarationOnNewTypeConstructorCall() {
     myFixture.configureByText(
       "a.py",
       """
@@ -416,14 +413,12 @@ class PyNavigationTest : PyTestCase() {
       """.trimIndent()
     )
     val target = PyGotoDeclarationHandler().getGotoDeclarationTarget(elementAtCaret, myFixture.editor)
-    assertNotNull(target)
-    assertInstanceOf(target, PyTargetExpression::class.java)
-    val targetExpr = target as PyTargetExpression
+    val targetExpr = assertInstanceOf(target, PyTargetExpression::class.java)
     assertEquals("JobId", targetExpr.name)
   }
 
-  // PY-82962: collections.namedtuple
-  fun testGoToDeclarationOnCollectionsNamedTupleAliasCall() {
+  // PY-82962
+  fun testGoToDeclarationOnCollectionsNamedTupleConstructorCall() {
     myFixture.configureByText(
       "a.py",
       """
@@ -436,14 +431,12 @@ class PyNavigationTest : PyTestCase() {
       """.trimIndent()
     )
     val target = PyGotoDeclarationHandler().getGotoDeclarationTarget(elementAtCaret, myFixture.editor)
-    assertNotNull(target)
-    assertInstanceOf(target, PyTargetExpression::class.java)
-    val targetExpr = target as PyTargetExpression
+    val targetExpr = assertInstanceOf(target, PyTargetExpression::class.java)
     assertEquals("Point", targetExpr.name)
   }
 
-  // PY-82962: typing.NamedTuple
-  fun testGoToDeclarationOnTypingNamedTupleFunctionalCall() {
+  // PY-82962
+  fun testGoToDeclarationOnTypingNamedTupleConstructorCall() {
     myFixture.configureByText(
       "a.py",
       """
@@ -456,14 +449,12 @@ class PyNavigationTest : PyTestCase() {
       """.trimIndent()
     )
     val target = PyGotoDeclarationHandler().getGotoDeclarationTarget(elementAtCaret, myFixture.editor)
-    assertNotNull(target)
-    assertInstanceOf(target, PyTargetExpression::class.java)
-    val targetExpr = target as PyTargetExpression
+    val targetExpr = assertInstanceOf(target, PyTargetExpression::class.java)
     assertEquals("Point", targetExpr.name)
   }
 
-  // PY-82962: typing.TypedDict
-  fun testGoToDeclarationOnTypedDictFunctionalCall() {
+  // PY-82962
+  fun testGoToDeclarationOnTypedDictConstructorCall() {
     myFixture.configureByText(
       "a.py",
       """
@@ -476,14 +467,12 @@ class PyNavigationTest : PyTestCase() {
       """.trimIndent()
     )
     val target = PyGotoDeclarationHandler().getGotoDeclarationTarget(elementAtCaret, myFixture.editor)
-    assertNotNull(target)
-    assertInstanceOf(target, PyTargetExpression::class.java)
-    val targetExpr = target as PyTargetExpression
+    val targetExpr = assertInstanceOf(target, PyTargetExpression::class.java)
     assertEquals("Movie", targetExpr.name)
   }
 
-  // PY-82962: enum.Enum
-  fun testGoToDeclarationOnEnumFunctionalCall() {
+  // PY-82962
+  fun testGoToDeclarationOnEnumConstructorCall() {
     myFixture.configureByText(
       "a.py",
       """
@@ -496,15 +485,12 @@ class PyNavigationTest : PyTestCase() {
       """.trimIndent()
     )
     val target = PyGotoDeclarationHandler().getGotoDeclarationTarget(elementAtCaret, myFixture.editor)
-    assertNotNull(target)
-    assertInstanceOf(target, PyTargetExpression::class.java)
-    val targetExpr = target as PyTargetExpression
+    val targetExpr = assertInstanceOf(target, PyTargetExpression::class.java)
     assertEquals("Color", targetExpr.name)
   }
 
-
-  // PY-82962: Cross-module import of alias
-  fun testGoToDeclarationOnAliasCallImportedFromOtherModule() {
+  // PY-82962
+  fun testGoToDeclarationOnImportedCollectionsNamedTupleConstructorCall() {
     myFixture.addFileToProject(
       "m.py",
       """
@@ -522,13 +508,10 @@ class PyNavigationTest : PyTestCase() {
       """.trimIndent()
     )
     val target = PyGotoDeclarationHandler().getGotoDeclarationTarget(elementAtCaret, myFixture.editor)
-    assertNotNull(target)
-    assertInstanceOf(target, PyTargetExpression::class.java)
-    val targetExpr = target as PyTargetExpression
+    val targetExpr = assertInstanceOf(target, PyTargetExpression::class.java)
     assertEquals("Point", targetExpr.name)
     assertEquals("m.py", targetExpr.containingFile.name)
   }
-
 
   fun `test multi with pyi`() {
     myFixture.copyDirectoryToProject("test_multi_with_pyi", "")
