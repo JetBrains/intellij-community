@@ -13,13 +13,13 @@ import java.nio.file.StandardOpenOption
 import kotlin.io.path.name
 import kotlin.system.exitProcess
 
-private const val MIGRATION_FILE_MARKER = "migration_from_community_attempted.txt"
+private const val MIGRATION_FILE_MARKER = ".ce_migration_attempted"
 
 @ApiStatus.Internal
 fun migrateCommunityToSingleProductIfNeeded(args: List<String>) {
   if (
     OS.CURRENT != OS.macOS ||
-    !(PlatformUtils.isIdeaUltimate() || PlatformUtils.isPyCharmPro()) ||
+    !(PlatformUtils.isIdeaUltimate() || @Suppress("DEPRECATION") PlatformUtils.isPyCharmPro()) ||
     AppMode.isRemoteDevHost()
   ) return
 
