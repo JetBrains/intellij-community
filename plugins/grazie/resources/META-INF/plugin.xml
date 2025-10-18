@@ -133,8 +133,6 @@
     <grazie.textChecker implementation="com.intellij.grazie.text.AsyncTreeRuleChecker$GrammarLowPriority" id="grammarLowPriority"/>
     <grazie.textChecker implementation="com.intellij.grazie.text.AsyncTreeRuleChecker$Style" id="styleTreeRules"/>
 
-    <grazie.problemFilter language="" implementationClass="com.intellij.grazie.text.TreeRuleChecker$DocProblemFilter"/>
-
     <intentionAction>
       <language/>
       <bundleName>messages.GrazieBundle</bundleName>
