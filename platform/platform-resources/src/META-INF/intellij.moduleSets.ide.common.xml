@@ -1,5 +1,6 @@
 <idea-plugin xmlns:xi="http://www.w3.org/2001/XInclude">
   <xi:include href="/META-INF/intellij.moduleSets.essential.xml"/>
+  <xi:include href="/META-INF/intellij.moduleSets.compose.xml"/>
 
   <content namespace="jetbrains">
     <module name="intellij.platform.lvcs.impl"/>
@@ -14,26 +15,6 @@
     <module name="intellij.platform.scriptDebugger.protocolReaderRuntime"/>
     <module name="intellij.platform.ml.impl"/>
     <module name="intellij.libraries.microba"/>
-    <module name="intellij.charts"/>
-
-    <!-- Compose UI Modules -->
-    <module name="intellij.libraries.skiko"/>
-    <module name="intellij.libraries.coil"/>
-    <module name="intellij.platform.compose"/>
-    <module name="intellij.platform.compose.markdown"/>
-    <module name="intellij.platform.jewel.foundation"/>
-    <module name="intellij.libraries.compose.foundation.desktop"/>
-    <module name="intellij.libraries.compose.runtime.desktop"/>
-    <module name="intellij.platform.jewel.ui"/>
-    <module name="intellij.platform.jewel.ideLafBridge"/>
-    <module name="intellij.platform.jewel.markdown.ideLafBridgeStyling"/>
-    <module name="intellij.platform.jewel.markdown.extensions.autolink"/>
-    <module name="intellij.platform.jewel.markdown.extensions.gfmAlerts"/>
-    <module name="intellij.platform.jewel.markdown.extensions.gfmTables"/>
-    <module name="intellij.platform.jewel.markdown.extensions.gfmStrikethrough"/>
-    <module name="intellij.platform.jewel.markdown.extensions.images"/>
-    <module name="intellij.platform.jewel.markdown.core"/>
-    <!-- -->
 
     <module name="intellij.platform.diagnostic.freezeAnalyzer"/>
     <module name="intellij.platform.diagnostic.freezes"/>
@@ -66,5 +47,10 @@
   <xi:include href="/META-INF/intellij.moduleSets.grid.core.xml"/>
   <xi:include href="/META-INF/intellij.moduleSets.vcs.xml"/>
   <xi:include href="/META-INF/intellij.moduleSets.xml.xml"/>
+  <xi:include href="/META-INF/intellij.moduleSets.duplicates.xml"/>
+
+  <!-- Note: rd.common is intentionally NOT included in ide.common
+       Reason: Rider uses custom module loading mode due to early backend startup requirements.
+       Products that need rd.common include it explicitly in their product files. -->
 
 </idea-plugin>

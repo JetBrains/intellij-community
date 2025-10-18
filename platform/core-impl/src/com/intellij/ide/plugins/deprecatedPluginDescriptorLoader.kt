@@ -6,7 +6,44 @@ import com.intellij.openapi.application.PathManager
 import com.intellij.util.containers.Java11Shim
 import com.intellij.util.lang.ZipEntryResolverPool
 import kotlinx.coroutines.*
+import org.jetbrains.annotations.ApiStatus
+import org.jetbrains.annotations.ApiStatus.Internal
 import java.nio.file.Path
+
+@Internal
+@Deprecated("Used only by module-based loader")
+fun loadCorePlugin(
+  platformPrefix: String,
+  isInDevServerMode: Boolean,
+  isUnitTestMode: Boolean,
+  isRunningFromSources: Boolean,
+  loadingContext: PluginDescriptorLoadingContext,
+  pathResolver: PathResolver,
+  useCoreClassLoader: Boolean,
+  classLoader: ClassLoader,
+): PluginMainDescriptor? {
+  if (isProductWithTheOnlyDescriptor(platformPrefix) && (isInDevServerMode || (!isUnitTestMode && !isRunningFromSources))) {
+    val reader = getResourceReader(PluginManagerCore.PLUGIN_XML_PATH, classLoader)!!
+    return loadCoreProductPlugin(
+      loadingContext = loadingContext,
+      pathResolver = pathResolver,
+      useCoreClassLoader = useCoreClassLoader,
+      reader = reader,
+      isRunningFromSourcesWithoutDevBuild = false,
+    )
+  }
+  else {
+    val path = "${PluginManagerCore.META_INF}${platformPrefix}Plugin.xml"
+    val reader = getResourceReader(path, classLoader) ?: return null
+    return loadCoreProductPlugin(
+      loadingContext = loadingContext,
+      pathResolver = pathResolver,
+      useCoreClassLoader = useCoreClassLoader,
+      reader = reader,
+      isRunningFromSourcesWithoutDevBuild = isRunningFromSources && !isInDevServerMode,
+    )
+  }
+}
 
 internal fun CoroutineScope.loadPluginDescriptorsInDeprecatedUnitTestMode(
   loadingContext: PluginDescriptorLoadingContext,

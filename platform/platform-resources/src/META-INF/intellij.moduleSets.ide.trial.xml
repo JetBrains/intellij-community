@@ -1,8 +1,0 @@
-<idea-plugin xmlns:xi="http://www.w3.org/2001/XInclude">
-  <content namespace="jetbrains">
-    <!-- Trial and Monetization Features for Commercial IDEs without Free Tier -->
-    <module name="intellij.platform.trialPromotion.idesWithoutFreeTier"/>
-    <module name="intellij.platform.trialPromotion.common"/>
-    <module name="intellij.platform.trace.consent"/>
-  </content>
-</idea-plugin>

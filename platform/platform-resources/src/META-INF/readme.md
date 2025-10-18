@@ -23,9 +23,9 @@ Includes [intellij.moduleSets.libraries](#intellijmodulesetslibrariesxml).
 
 Included in the [ide.common](#intellijmodulesetsidecommonxml) set.
 
-### [intellij.moduleSets.ide.commercial.xml](intellij.moduleSets.ide.commercial.xml)
+### [intellij.moduleSets.ide.ultimate.xml](intellij.moduleSets.ide.ultimate.xml)
 
-A set of modules common to all commercial IDEs.
+A set of modules common to all ultimate IDEs.
 
 Includes observability features (coverage, profiling), IDE infrastructure (new UI onboarding, import settings, DAP, tips, registry cloud), and Language Server Protocol support.
 

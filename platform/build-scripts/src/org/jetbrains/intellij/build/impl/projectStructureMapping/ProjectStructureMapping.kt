@@ -11,6 +11,7 @@ import org.jetbrains.intellij.build.BuildPaths
 import org.jetbrains.intellij.build.DistFile
 import org.jetbrains.intellij.build.MAVEN_REPO
 import org.jetbrains.intellij.build.PluginBuildDescriptor
+import org.jetbrains.intellij.build.impl.MODULE_SET_CHAIN_SEPARATOR
 import org.jetbrains.intellij.build.impl.ModuleIncludeReasons
 import org.jetbrains.intellij.build.impl.ModuleItem
 import org.jetbrains.intellij.build.impl.ProjectLibraryData
@@ -19,6 +20,7 @@ import java.io.ByteArrayOutputStream
 import java.io.File
 import java.nio.file.Path
 import java.util.TreeMap
+import java.util.TreeSet
 
 internal fun getIncludedModules(entries: Sequence<DistributionFileEntry>): Sequence<String> {
   return entries.mapNotNull { (it as? ModuleOutputEntry)?.owner?.moduleName }.distinct()
@@ -27,9 +29,37 @@ internal fun getIncludedModules(entries: Sequence<DistributionFileEntry>): Seque
 internal fun buildJarContentReport(contentReport: ContentReport, zipFileWriter: ZipFileWriter, buildPaths: BuildPaths, context: BuildContext) {
   val (fileToEntry, productModules) = groupPlatformEntries(contentReport = contentReport, buildPaths = buildPaths)
 
-  val moduleSets = productModules
-    .filter { it.first.moduleSet != null }
-    .groupByTo(TreeMap()) { it.first.moduleSet!! }
+  // Collect all module set data in a single pass for better performance
+  val allModuleSets = TreeMap<String, MutableList<Pair<ModuleItem, List<DistributionFileEntry>>>>()
+  val moduleSetIncludes = TreeMap<String, MutableSet<String>>()
+  val directModuleSets = TreeMap<String, MutableList<Pair<ModuleItem, List<DistributionFileEntry>>>>()
+
+  for (entry in productModules) {
+    val chain = entry.first.moduleSet ?: continue
+
+    // Parse chain once
+    val parts = chain.split(MODULE_SET_CHAIN_SEPARATOR)
+    val moduleSetName = parts.last()
+
+    // Skip non-module-sets
+    if (!moduleSetName.startsWith("intellij.moduleSets.")) continue
+
+    // Add to allModuleSets (all module sets used by product)
+    allModuleSets.computeIfAbsent(moduleSetName) { mutableListOf() }.add(entry)
+
+    // Add to directModuleSets if no separator (directly included by product)
+    if (parts.size == 1) {
+      directModuleSets.computeIfAbsent(moduleSetName) { mutableListOf() }.add(entry)
+    }
+
+    // Extract include relationship if chain exists (parent includes child)
+    if (parts.size >= 2) {
+      val parentModuleSet = parts[parts.size - 2]
+      if (parentModuleSet.startsWith("intellij.moduleSets.")) {
+        moduleSetIncludes.computeIfAbsent(parentModuleSet) { TreeSet() }.add(moduleSetName)
+      }
+    }
+  }
 
   val platformData = buildPlatformContentReport(
     contentReport = contentReport,
@@ -37,13 +67,31 @@ internal fun buildJarContentReport(contentReport: ContentReport, zipFileWriter: 
     distFiles = context.getDistFiles(os = null, arch = null, libcImpl = null),
     fileToEntry = fileToEntry,
     productModules = productModules,
-    moduleSets = moduleSets,
+    moduleSets = directModuleSets,
   )
   zipFileWriter.uncompressedData("platform.yaml", platformData)
   zipFileWriter.uncompressedData("product-modules.yaml", buildProductModuleContentReport(productModules, buildPaths))
 
-  for ((moduleSetName, modules) in moduleSets) {
-    zipFileWriter.uncompressedData("moduleSets/$moduleSetName.yaml", modules.asSequence().map { it.first.moduleName }.sorted().joinToString("\n"))
+  // Write module set YAMLs with both direct modules and included module sets
+  for ((moduleSetName, modules) in allModuleSets) {
+    val entries = mutableListOf<String>()
+
+    // Add direct module names
+    entries.addAll(modules.map { it.first.moduleName })
+
+    // Add included module set names (preserving hierarchy)
+    moduleSetIncludes.get(moduleSetName)?.let { includedSets ->
+      entries.addAll(includedSets)
+    }
+
+    val out = ByteArrayOutputStream()
+    createYamlGenerator(out).use { writer ->
+      writer.writeStartArray()
+      entries.sorted().forEach(writer::writeString)
+      writer.writeEndArray()
+    }
+
+    zipFileWriter.uncompressedData("moduleSets/$moduleSetName.yaml", out.toByteArray())
   }
 
   zipFileWriter.uncompressedData("bundled-plugins.yaml", buildPluginContentReport(contentReport.bundledPlugins, buildPaths))

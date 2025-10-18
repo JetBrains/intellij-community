@@ -1,7 +1,0 @@
-<idea-plugin>
-  <content namespace="jetbrains">
-    <module name="intellij.platform.ssh.core" loading="embedded"/>
-    <module name="intellij.platform.ssh" loading="embedded"/>
-    <module name="intellij.platform.ssh.ui" loading="embedded"/>
-  </content>
-</idea-plugin>

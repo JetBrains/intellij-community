@@ -43,7 +43,6 @@ import java.util.SortedSet
  */
 @Suppress("RemoveRedundantQualifierName")
 private val PLATFORM_CORE_MODULES = java.util.List.of(
-  "intellij.platform.analysis",
   "intellij.platform.builtInServer",
   "intellij.platform.diff",
   "intellij.platform.editor.ui",
@@ -657,11 +656,11 @@ suspend fun embedContentModules(file: Path, xIncludePathResolver: XIncludePathRe
   }
 }
 
-// see PluginXmlPathResolver.toLoadPath
+// see isV2ModulePath
 private fun toLoadPath(relativePath: String): String {
   return when {
     relativePath[0] == '/' -> relativePath.substring(1)
-    relativePath.startsWith("intellij.") -> relativePath
+    relativePath.startsWith("intellij.") || relativePath.startsWith("fleet.") -> relativePath
     else -> "META-INF/$relativePath"
   }
 }
@@ -701,7 +700,7 @@ private suspend fun collectAndEmbedProductModules(root: Element, xIncludePathRes
 
     // Extract module set from parent <content> element's source-file attribute
     val contentElement = moduleElement.parentElement
-    val moduleSet = contentElement?.getAttributeValue(SOURCE_FILE_ATTRIBUTE)?.removeSuffix(".xml")
+    val moduleSet = contentElement?.getAttributeValue(SOURCE_FILE_ATTRIBUTE)
     result.add(
       ModuleItem(
         moduleName = moduleName,

@@ -281,7 +281,7 @@ class BuildContextImpl internal constructor(
 
     return asyncLazy("Content Modules Filter") {
       val bundledPluginModules = getBundledPluginModules()
-      ContentModuleByProductModeFilter(project, bundledPluginModules, productProperties.productMode)
+      ContentModuleByProductModeFilter(project = project, bundledPluginModules = bundledPluginModules, productMode = productProperties.productMode)
     }
   }
 

@@ -1,7 +1,7 @@
 // Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 @file:JvmName("PluginDescriptorLoader")
 @file:Internal
-@file:Suppress("ReplacePutWithAssignment")
+@file:Suppress("ReplacePutWithAssignment", "UseOptimizedEelFunctions")
 
 package com.intellij.ide.plugins
 
@@ -835,41 +835,6 @@ private fun loadModuleFromSeparateJar(
   }
 }
 
-@Deprecated("Used only by module-based loader")
-fun loadCorePlugin(
-  platformPrefix: String,
-  isInDevServerMode: Boolean,
-  isUnitTestMode: Boolean,
-  isRunningFromSources: Boolean,
-  loadingContext: PluginDescriptorLoadingContext,
-  pathResolver: PathResolver,
-  useCoreClassLoader: Boolean,
-  classLoader: ClassLoader,
-): PluginMainDescriptor? {
-  if (isProductWithTheOnlyDescriptor(platformPrefix) && (isInDevServerMode || (!isUnitTestMode && !isRunningFromSources))) {
-    val reader = getResourceReader(PluginManagerCore.PLUGIN_XML_PATH, classLoader)!!
-    return loadCoreProductPlugin(
-      loadingContext = loadingContext,
-      pathResolver = pathResolver,
-      useCoreClassLoader = useCoreClassLoader,
-      reader = reader,
-      isRunningFromSourcesWithoutDevBuild = false,
-    )
-  }
-  else {
-    val path = "${PluginManagerCore.META_INF}${platformPrefix}Plugin.xml"
-    val reader = getResourceReader(path, classLoader) ?: return null
-    return loadCoreProductPlugin(
-      loadingContext = loadingContext,
-      pathResolver = pathResolver,
-      useCoreClassLoader = useCoreClassLoader,
-      reader = reader,
-      isRunningFromSourcesWithoutDevBuild = isRunningFromSources && !isInDevServerMode,
-      useModuleDirAsParent = false,
-    )
-  }
-}
-
 // should be the only plugin in lib
 fun isProductWithTheOnlyDescriptor(platformPrefix: String): Boolean {
   return platformPrefix == PlatformUtils.IDEA_PREFIX ||
@@ -903,7 +868,7 @@ internal fun loadCoreProductPlugin(
 
     override fun load(path: String, pluginDescriptorSourceOnly: Boolean) = throw IllegalStateException("must be not called")
 
-    override fun toString() = "product classpath"
+    override fun toString() = "product classpath (platformPrefix=${PlatformUtils.getPlatformPrefix()})"
   }
   val consumer = PluginDescriptorFromXmlStreamConsumer(loadingContext.readContext, pathResolver.toXIncludeLoader(dataLoader))
   consumer.consume(reader)
@@ -946,7 +911,7 @@ private fun loadContentModuleDescriptors(
 
     if (moduleDirExists &&
         !isRunningFromSourcesWithoutDevBuild &&
-        moduleId.name.startsWith("intellij.") &&
+        (moduleId.name.startsWith("intellij.") || moduleId.name.startsWith("fleet.")) &&
         loadProductModule(
           jarFile = if (useModuleDirAsParent) moduleDir.resolve("$moduleId.jar") else loadingStrategy.findProductContentModuleClassesRoot(moduleId, moduleDir),
           module = module,
@@ -1061,7 +1026,8 @@ fun loadDescriptorFromArtifact(file: Path, buildNumber: BuildNumber?): PluginMai
   finally {
     try {
       NioFiles.deleteRecursively(outputDir)
-    } catch (e: IOException) {
+    }
+    catch (e: IOException) {
       LOG.warn("Failed to delete temporary plugin directory: $outputDir", e)
     }
   }

@@ -26,6 +26,7 @@ private fun isIncludeElement(element: Element): Boolean {
 }
 
 internal const val SOURCE_FILE_ATTRIBUTE = "source-file"
+internal const val MODULE_SET_CHAIN_SEPARATOR = " <- "
 
 private fun resolveXIncludeElement(element: Element, bases: Deque<Path>, pathResolver: XIncludePathResolver, trackSourceFile: Boolean): MutableList<Element>? {
   val base = bases.peek()
@@ -47,15 +48,28 @@ private fun resolveXIncludeElement(element: Element, bases: Deque<Path>, pathRes
   assert(!bases.contains(remote)) { "Circular XInclude Reference to $remote" }
 
   val remoteElement = parseRemote(bases = bases, remote = remote, fallbackElement = fallbackElement, pathResolver = pathResolver, trackSourceFile = trackSourceFile) ?: return null
-  var remoteParsed = extractNeededChildren(element, remoteElement)
+  val remoteParsed = extractNeededChildren(element, remoteElement)
 
   // Add source-file attribute to <content> elements if tracking is enabled
-  // Only set if not already set to preserve the original source file in nested includes
+  // Build chain incrementally by prepending to existing chains to preserve include hierarchy
+  // Strip .xml extension here so downstream code doesn't need to
+  // Only add module set files to chain (skip product files)
   if (trackSourceFile) {
-    val sourceFileName = remote.fileName.toString()
     for (resolvedElement in remoteParsed) {
-      if (resolvedElement.name == "content" && resolvedElement.getAttribute(SOURCE_FILE_ATTRIBUTE) == null) {
-        resolvedElement.setAttribute(SOURCE_FILE_ATTRIBUTE, sourceFileName)
+      if (resolvedElement.name == "content") {
+        val existingChain = resolvedElement.getAttributeValue(SOURCE_FILE_ATTRIBUTE)
+        val currentName = remote.fileName.toString().removeSuffix(".xml")
+
+        // Only add to chain if it's a module set file
+        if (currentName.startsWith("intellij.moduleSets.")) {
+          val newChain = if (existingChain != null) {
+            "$currentName$MODULE_SET_CHAIN_SEPARATOR$existingChain"
+          }
+          else {
+            currentName
+          }
+          resolvedElement.setAttribute(SOURCE_FILE_ATTRIBUTE, newChain)
+        }
       }
     }
   }
@@ -68,7 +82,7 @@ private fun resolveXIncludeElement(element: Element, bases: Deque<Path>, pathRes
 
     val o = remoteParsed.get(i)
     if (isIncludeElement(o)) {
-      val elements = resolveXIncludeElement(o, bases, pathResolver, trackSourceFile)
+      val elements = resolveXIncludeElement(element = o, bases = bases, pathResolver = pathResolver, trackSourceFile = trackSourceFile)
       if (elements != null) {
         remoteParsed.addAll(i, elements)
         i += elements.size - 1
@@ -76,7 +90,7 @@ private fun resolveXIncludeElement(element: Element, bases: Deque<Path>, pathRes
       }
     }
     else {
-      doResolveNonXIncludeElement(o, bases, pathResolver, trackSourceFile)
+      doResolveNonXIncludeElement(original = o, bases = bases, pathResolver = pathResolver, trackSourceFile = trackSourceFile)
     }
 
     i++
@@ -123,11 +137,11 @@ private fun parseRemote(bases: Deque<Path>, remote: Path, fallbackElement: Eleme
     bases.push(remote)
     val root = JDOMUtil.load(remote)
     if (isIncludeElement(root)) {
-      val resolved = resolveXIncludeElement(root, bases, pathResolver, trackSourceFile)
+      val resolved = resolveXIncludeElement(element = root, bases = bases, pathResolver = pathResolver, trackSourceFile = trackSourceFile)
       return if (resolved.isNullOrEmpty()) root else resolved.single()
     }
     else {
-      doResolveNonXIncludeElement(root, bases, pathResolver, trackSourceFile)
+      doResolveNonXIncludeElement(original = root, bases = bases, pathResolver = pathResolver, trackSourceFile = trackSourceFile)
       return root
     }
   }

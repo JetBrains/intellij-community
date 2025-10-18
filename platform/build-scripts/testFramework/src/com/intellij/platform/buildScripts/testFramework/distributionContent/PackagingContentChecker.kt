@@ -7,6 +7,7 @@ import com.intellij.platform.buildScripts.testFramework.spanName
 import com.intellij.platform.distributionContent.testFramework.FileEntry
 import com.intellij.platform.distributionContent.testFramework.PluginContentReport
 import com.intellij.platform.distributionContent.testFramework.deserializeContentData
+import com.intellij.platform.distributionContent.testFramework.deserializeModuleList
 import com.intellij.platform.distributionContent.testFramework.deserializePluginData
 import com.intellij.util.lang.HashMapZipFile
 import kotlinx.serialization.SerializationException
@@ -220,13 +221,18 @@ private fun computePackageResult(
           }
         }
 
-        // auto-discover all module set files from zip
         val moduleSets = zip.entries
           .asSequence()
           .filter { it.name.startsWith("moduleSets/") && it.name.endsWith(".yaml") }
           .associate {
             val moduleSetName = it.name.removePrefix("moduleSets/").removeSuffix(".yaml")
-            moduleSetName to it.getData(zip).decodeToString().lines()
+            val yamlData = it.getData(zip).decodeToString()
+            moduleSetName to try {
+              deserializeModuleList(yamlData)
+            }
+            catch (e: SerializationException) {
+              throw RuntimeException("Cannot parse module set $moduleSetName in $file\ndata:$yamlData", e)
+            }
           }
 
         contentConsumer(PackageResult(

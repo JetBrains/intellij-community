@@ -8,6 +8,7 @@ import com.intellij.platform.plugins.parser.impl.PluginDescriptorFromXmlStreamCo
 import com.intellij.platform.plugins.parser.impl.PluginDescriptorReaderContext
 import com.intellij.platform.plugins.parser.impl.XIncludeLoader
 import com.intellij.platform.plugins.parser.impl.consume
+import com.intellij.platform.plugins.parser.impl.isV2ModulePath
 import com.intellij.util.lang.ZipEntryResolverPool
 import org.jetbrains.annotations.ApiStatus
 import java.io.IOException
@@ -72,7 +73,7 @@ class PluginXmlPathResolver(private val pluginJarFiles: List<Path>, private val 
       }
     }
 
-    if (relativePath.startsWith("intellij.")) {
+    if (isV2ModulePath(relativePath)) {
       // module in a new file name format must always be resolved
       throw RuntimeException("Cannot resolve $path (dataLoader=$dataLoader)")
     }

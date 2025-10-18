@@ -64,7 +64,6 @@ open class IdeaCommunityProperties(private val communityHomeDir: Path) : BaseIde
     ))
 
     productLayout.addPlatformSpec { layout, _ ->
-      layout.withModule("intellij.platform.duplicates.analysis")
       layout.withModule("intellij.platform.structuralSearch")
     }
 
