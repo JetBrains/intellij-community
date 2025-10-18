@@ -80,6 +80,7 @@ import com.intellij.platform.attachToProjectAsync
 import com.intellij.platform.core.nio.fs.MultiRoutingFileSystem
 import com.intellij.platform.diagnostic.telemetry.impl.span
 import com.intellij.platform.eel.provider.EelInitialization
+import com.intellij.platform.ide.diagnostic.startUpPerformanceReporter.FUSProjectHotStartUpMeasurer
 import com.intellij.platform.isLoadedFromCacheButHasNoModules
 import com.intellij.platform.project.ProjectEntitiesStorage
 import com.intellij.platform.workspace.jps.JpsMetrics
@@ -622,7 +623,9 @@ open class ProjectManagerImpl : ProjectManagerEx(), Disposable {
     }
 
     return span("ProjectManager.openAsync") {
-      doOpenAsync(options, projectIdentityFile)
+      FUSProjectHotStartUpMeasurer.withProjectContextElement(projectIdentityFile) {
+        doOpenAsync(options, projectIdentityFile)
+      }
     }
   }
 
