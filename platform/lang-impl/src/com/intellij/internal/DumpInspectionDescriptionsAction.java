@@ -4,7 +4,6 @@ package com.intellij.internal;
 import com.intellij.codeInspection.InspectionProfile;
 import com.intellij.codeInspection.ex.InspectionToolWrapper;
 import com.intellij.codeInspection.ex.LocalInspectionToolWrapper;
-import com.intellij.idea.ActionsBundle;
 import com.intellij.notification.Notification;
 import com.intellij.notification.NotificationType;
 import com.intellij.notification.Notifications;
@@ -31,11 +30,6 @@ import java.util.TreeSet;
 
 final class DumpInspectionDescriptionsAction extends AnAction implements DumbAware {
   private static final Logger LOG = Logger.getInstance(DumpInspectionDescriptionsAction.class);
-
-  DumpInspectionDescriptionsAction() {
-    super(ActionsBundle.messagePointer("action.DumpInspectionDescriptionsAction.text"));
-  }
-
 
   @Override
   public @NotNull ActionUpdateThread getActionUpdateThread() {
@@ -137,6 +131,6 @@ final class DumpInspectionDescriptionsAction extends AnAction implements DumbAwa
   }
 
   private static void doNotify(final String message) {
-    Notifications.Bus.notify(new Notification("Actions", "Inspection descriptions dumped", message, NotificationType.INFORMATION));
+    Notifications.Bus.notify(new Notification("System Messages", "Inspection descriptions dumped", message, NotificationType.INFORMATION));
   }
 }

@@ -4,7 +4,6 @@ package com.intellij.internal;
 
 import com.intellij.codeInsight.intention.impl.config.IntentionActionMetaData;
 import com.intellij.codeInsight.intention.impl.config.IntentionManagerSettings;
-import com.intellij.idea.ActionsBundle;
 import com.intellij.openapi.actionSystem.ActionUpdateThread;
 import com.intellij.openapi.actionSystem.AnAction;
 import com.intellij.openapi.actionSystem.AnActionEvent;
@@ -24,10 +23,6 @@ import java.util.HashMap;
 import java.util.Map;
 
 final class DumpIntentionsAction extends AnAction implements DumbAware {
-  DumpIntentionsAction() {
-    super(ActionsBundle.messagePointer("action.DumpIntentionsAction.text"));
-  }
-
   @Override
   public @NotNull ActionUpdateThread getActionUpdateThread() {
     return ActionUpdateThread.BGT;
