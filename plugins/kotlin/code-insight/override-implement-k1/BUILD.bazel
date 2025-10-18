@@ -17,6 +17,7 @@ jvm_library(
     "//platform/lang-impl",
     "//plugins/kotlin/base/fe10/analysis",
     "//plugins/kotlin/base/fe10/code-insight",
+    "//platform/core-impl",
     "//plugins/kotlin/base/kdoc",
     "//plugins/kotlin/base/project-structure",
     "//plugins/kotlin/base/psi",

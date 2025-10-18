@@ -23,6 +23,7 @@ jvm_library(
     "//plugins/kotlin/code-insight/api",
     "//platform/lang-impl",
     "//plugins/kotlin/code-insight/inspections-shared:kotlin-code-insight-inspections-shared",
+    "@lib//:kotlin-stdlib",
   ]
 )
 ### auto-generated section `build kotlin.project-wizard.idea.k1` end

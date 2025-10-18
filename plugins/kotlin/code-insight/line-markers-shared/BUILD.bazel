@@ -24,6 +24,7 @@ jvm_library(
     "//platform/projectModel-api:projectModel",
     "//plugins/kotlin/base/util",
     "//plugins/kotlin/base/platforms",
+    "//platform/core-impl",
     "//plugins/kotlin/base/facet",
     "//plugins/kotlin/base/code-insight",
     "//platform/platform-impl:ide-impl",

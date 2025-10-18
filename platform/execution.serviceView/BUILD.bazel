@@ -25,6 +25,7 @@ jvm_library(
     "//platform/core-ui",
     "//platform/platform-api:ide",
     "//platform/platform-impl:ide-impl",
+    "//platform/core-impl",
     "//platform/lang-api:lang",
     "//platform/lang-impl",
     "//platform/platform-impl/concurrency",

@@ -17,6 +17,7 @@ jvm_library(
     "@lib//:kotlin-stdlib",
     "//platform/lang-impl",
     "//platform/execution.serviceView",
+    "//platform/core-impl",
     "//platform/core-ui",
     "//platform/kernel/rpc",
     "//platform/platform-impl/rpc",

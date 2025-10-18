@@ -34,6 +34,7 @@ jvm_library(
     "//platform/analysis-api:analysis",
     "//platform/util/concurrency",
     "//platform/core-api:core",
+    "//platform/core-impl",
     "//platform/lang-core",
     "//platform/projectModel-api:projectModel",
     "//plugins/kotlin/base/util",

@@ -30,6 +30,7 @@ jvm_library(
     "//libraries/jcef",
     "//libraries/kotlinx/serialization/core",
     "//libraries/kotlinx/serialization/json",
+    "//platform/core-impl",
     "//xml/xml-parser:parser",
     "//platform/ui.jcef",
     "@lib//:kotlin-stdlib",
@@ -37,6 +38,7 @@ jvm_library(
     "//platform/util/coroutines",
     "//xml/xml-psi-impl:psi-impl",
     "//xml/xml-psi-api:psi",
+    "//platform/util-ex",
   ]
 )
 
@@ -65,6 +67,7 @@ jvm_library(
     "@lib//:junit4",
     "//libraries/kotlinx/serialization/core",
     "//libraries/kotlinx/serialization/json",
+    "//platform/core-impl",
     "//xml/xml-parser:parser",
     "//platform/ui.jcef",
     "@lib//:kotlin-stdlib",
@@ -73,6 +76,7 @@ jvm_library(
     "//platform/util/coroutines",
     "//xml/xml-psi-impl:psi-impl",
     "//xml/xml-psi-api:psi",
+    "//platform/util-ex",
   ]
 )
 ### auto-generated section `build intellij.platform.images` end

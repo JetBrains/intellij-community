@@ -39,6 +39,7 @@ jvm_library(
     "//platform/statistics",
     "//platform/util/jdom",
     "//plugins/coverage-common/intellij.platform.coverage.agent:coverage-agent",
+    "//platform/core-impl",
   ]
 )
 
@@ -77,6 +78,7 @@ jvm_library(
     "//platform/statistics:statistics_test_lib",
     "//platform/util/jdom",
     "//plugins/coverage-common/intellij.platform.coverage.agent:coverage-agent",
+    "//platform/core-impl",
   ]
 )
 ### auto-generated section `build intellij.platform.coverage` end

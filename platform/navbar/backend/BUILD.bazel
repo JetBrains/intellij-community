@@ -21,6 +21,7 @@ jvm_library(
     "//jps/model-api:model",
     "//platform/lang-core",
     "//platform/projectModel-api:projectModel",
+    "//platform/projectModel-impl",
     "//platform/util:util-ui",
     "//platform/platform-api:ide",
     "//platform/editor-ui-api:editor-ui",

@@ -24,6 +24,7 @@ jvm_library(
     "//platform/kernel/shared:kernel",
     "//platform/projectModel-api:projectModel",
     "//platform/util:util-ui",
+    "//platform/core-impl",
     "//platform/xdebugger-impl:debugger-impl",
     "//platform/kernel/backend",
     "//libraries/kotlinx/serialization/core",

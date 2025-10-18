@@ -24,6 +24,7 @@ jvm_library(
     "//plugins/markdown/fenceInjection",
     "//plugins/markdown/frontmatter",
     "//plugins/markdown/frontmatter/toml",
+    "//platform/core-impl",
     "//plugins/markdown/frontmatter/yaml",
     "//platform/analysis-api:analysis",
     "//platform/code-style-api:codeStyle",

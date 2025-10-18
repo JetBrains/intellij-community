@@ -36,6 +36,7 @@ jvm_library(
     "//plugins/kotlin/fir/tests:tests_test_lib",
     "//plugins/kotlin/base/plugin",
     "//plugins/kotlin/base/plugin:plugin_test_lib",
+    "//platform/duplicates-analysis",
   ]
 )
 ### auto-generated section `build intellij.kotlin.codeInsight.structuralSearch.tests` end

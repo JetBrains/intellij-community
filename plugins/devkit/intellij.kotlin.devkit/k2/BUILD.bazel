@@ -39,6 +39,7 @@ jvm_library(
     "//plugins/devkit/intellij.kotlin.devkit:kotlin-devkit",
     "//plugins/kotlin/refactorings/kotlin.refactorings.common:kotlin-refactorings-common",
     "//plugins/kotlin/refactorings/kotlin.refactorings.move.k2:kotlin-refactorings-move",
+    "//platform/core-impl",
     "//plugins/devkit/devkit-core:core",
     "//plugins/kotlin/code-insight/intentions-k2:kotlin-codeInsight-intentions",
   ]

@@ -17,6 +17,7 @@ jvm_library(
     "//platform/core-api:core",
     "//platform/lang-impl",
     "//plugins/IntelliLang:langInjection",
+    "//platform/core-impl",
     "//plugins/markdown/core:markdown",
     "//json/backend",
     "@lib//:kotlin-stdlib",

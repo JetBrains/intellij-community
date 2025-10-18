@@ -32,6 +32,7 @@ jvm_library(
     "//platform/core-ui",
     "//platform/platform-impl/concurrency",
     "//platform/util/coroutines",
+    "//platform/core-impl",
   ]
 )
 ### auto-generated section `build intellij.dev.psiViewer` end

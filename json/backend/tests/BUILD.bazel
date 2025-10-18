@@ -51,6 +51,7 @@ jvm_library(
     "//platform/syntax/syntax-psi:psi",
     "//json/syntax",
     "//platform/syntax/syntax-util:util",
+    "//platform/core-impl",
   ]
 )
 ### auto-generated section `build intellij.json.tests` end

@@ -38,6 +38,7 @@ jvm_library(
     "//libraries/javax/annotation",
     "//platform/core-ui",
     "//libraries/jsonpath",
+    "//platform/core-impl",
     "//platform/statistics",
     "//platform/util/jdom",
     "//platform/markdown-utils",

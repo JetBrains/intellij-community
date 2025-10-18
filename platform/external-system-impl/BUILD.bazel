@@ -43,6 +43,7 @@ jvm_library(
     "//libraries/commons/cli",
     "//platform/core-ui",
     "//platform/platform-util-io-impl:ide-util-io-impl",
+    "//platform/core-impl",
     "//platform/util/jdom",
     "@lib//:kotlinx-coroutines-core",
     "//platform/diagnostic/telemetry",

@@ -28,6 +28,7 @@ jvm_library(
     "//platform/analysis-api:analysis",
     "//platform/core-api:core",
     "//platform/editor-ui-api:editor-ui",
+    "//platform/core-impl",
     "//platform/util",
     "//platform/code-style-api:codeStyle",
     "//platform/platform-impl:ide-impl",

@@ -35,5 +35,6 @@
     <orderEntry type="module" module-name="intellij.platform.statistics" />
     <orderEntry type="module" module-name="intellij.platform.util.jdom" />
     <orderEntry type="module" module-name="intellij.platform.coverage.agent" />
+    <orderEntry type="module" module-name="intellij.platform.core.impl" />
   </component>
 </module>

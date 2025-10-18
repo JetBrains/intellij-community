@@ -21,6 +21,7 @@ jvm_library(
     "//platform/projectModel-api:projectModel",
     "//platform/util",
     "//platform/util:util-ui",
+    "//platform/core-impl",
     "@lib//:kotlin-stdlib",
     "//libraries/stream",
     "//libraries/fastutil",

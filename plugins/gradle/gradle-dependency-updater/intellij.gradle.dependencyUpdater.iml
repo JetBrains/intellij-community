@@ -21,5 +21,6 @@
     <orderEntry type="module" module-name="intellij.android.gradle.dsl.declarative" scope="RUNTIME" />
     <orderEntry type="module" module-name="intellij.android.gradle.dsl.groovy" scope="RUNTIME" />
     <orderEntry type="module" module-name="intellij.platform.core.ui" />
+    <orderEntry type="library" name="kotlin-stdlib" level="project" />
   </component>
 </module>

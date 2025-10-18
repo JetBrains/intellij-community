@@ -20,6 +20,7 @@ jvm_library(
     "//plugins/completion-ml-ranking",
     "//libraries/io",
     "//libraries/ktor/client",
+    "//platform/core-impl",
     "//platform/analysis-api:analysis",
     "//platform/code-style-api:codeStyle",
     "//platform/util/concurrency",

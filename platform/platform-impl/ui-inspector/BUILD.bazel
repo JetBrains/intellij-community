@@ -22,10 +22,12 @@ jvm_library(
     "//platform/analysis-impl",
     "//platform/lang-api:lang",
     "//platform/core-ui",
+    "//platform/core-impl",
     "//platform/ide-core-impl",
     "//libraries/miglayout-swing",
     "//libraries/guava",
     "//platform/projectModel-api:projectModel",
+    "//platform/projectModel-impl",
     "//platform/editor-ui-ex:editor-ex",
   ]
 )

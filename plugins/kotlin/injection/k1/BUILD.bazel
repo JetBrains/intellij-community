@@ -31,6 +31,7 @@ jvm_library(
     "//plugins/kotlin/base/fe10/analysis",
     "//plugins/kotlin/base/fe10/code-insight",
     "//plugins/kotlin/core",
+    "//platform/core-impl",
     "//plugins/kotlin/frontend-independent",
     "//plugins/kotlin/idea",
     "//plugins/IntelliLang:langInjection",

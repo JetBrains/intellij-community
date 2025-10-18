@@ -19,6 +19,7 @@ jvm_library(
     "//platform/util/concurrency",
     "//platform/core-api:core",
     "//platform/editor-ui-api:editor-ui",
+    "//platform/util-ex",
     "//platform/projectModel-api:projectModel",
     "//platform/vcs-api:vcs",
     "//platform/vcs-impl",
@@ -37,6 +38,7 @@ jvm_library(
     "//platform/util",
     "//platform/vcs-impl/shared",
     "@lib//:jetbrains-annotations",
+    "//platform/projectModel-impl",
   ]
 )
 
@@ -52,6 +54,7 @@ jvm_library(
     "//platform/util/concurrency:concurrency_test_lib",
     "//platform/core-api:core",
     "//platform/editor-ui-api:editor-ui",
+    "//platform/util-ex",
     "//jps/model-api:model",
     "//platform/projectModel-api:projectModel",
     "//platform/vcs-api:vcs",
@@ -79,6 +82,7 @@ jvm_library(
     "//tools/intellij.tools.ide.metrics.benchmark:ide-metrics-benchmark_test_lib",
     "//platform/vcs-impl/shared",
     "@lib//:jetbrains-annotations",
+    "//platform/projectModel-impl",
   ]
 )
 ### auto-generated section `build intellij.platform.lvcs.impl` end

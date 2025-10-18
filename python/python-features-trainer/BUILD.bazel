@@ -21,6 +21,7 @@ jvm_library(
   resources = [":featuresTrainer_resources"],
   deps = [
     "@lib//:kotlin-stdlib",
+    "//platform/core-impl",
     "//platform/analysis-api:analysis",
     "//platform/core-api:core",
     "//platform/editor-ui-api:editor-ui",
@@ -52,6 +53,7 @@ jvm_library(
   associates = [":featuresTrainer"],
   deps = [
     "@lib//:kotlin-stdlib",
+    "//platform/core-impl",
     "//platform/analysis-api:analysis",
     "//platform/core-api:core",
     "//platform/editor-ui-api:editor-ui",

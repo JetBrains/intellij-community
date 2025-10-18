@@ -76,6 +76,7 @@ jvm_library(
     "//libraries/stream",
     "//platform/statistics",
     "//platform/ide-core-impl",
+    "//platform/core-impl",
     "@lib//:kotlinx-coroutines-core",
     "//libraries/fastutil",
     "//libraries/pty4j",
@@ -232,6 +233,7 @@ jvm_library(
     "@lib//:mockito",
     "//platform/diagnostic/telemetry",
     "//platform/diagnostic/telemetry:telemetry_test_lib",
+    "//platform/core-impl",
   ],
   exports = [
     "//platform/lang-api:lang",

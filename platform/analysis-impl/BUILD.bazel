@@ -49,9 +49,6 @@ jvm_library(
     "//libraries/kotlinx/serialization/core",
     "//libraries/kotlinx/serialization/json",
   ],
-  exports = [
-    "//platform/core-impl",
-    "//platform/projectModel-impl",
-  ]
+  exports = ["//platform/projectModel-impl"]
 )
 ### auto-generated section `build intellij.platform.analysis.impl` end
