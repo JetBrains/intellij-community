@@ -20,11 +20,13 @@ import com.intellij.codeInspection.naming.NamingConventionBean;
 import com.intellij.psi.PsiMethod;
 import com.intellij.psi.PsiModifier;
 import com.siyeh.InspectionGadgetsBundle;
+import org.jetbrains.annotations.NonNls;
 
 public final class NativeMethodNamingConvention extends NamingConvention<PsiMethod>{
 
   private static final int DEFAULT_MIN_LENGTH = 4;
   private static final int DEFAULT_MAX_LENGTH = 32;
+  private static final @NonNls NamingConventionBean DEFAULT_BEAN = new NamingConventionBean("[a-z][A-Za-z\\d]*", DEFAULT_MIN_LENGTH, DEFAULT_MAX_LENGTH);
 
   @Override
   public String getElementDescription() {
@@ -33,7 +35,7 @@ public final class NativeMethodNamingConvention extends NamingConvention<PsiMeth
 
   @Override
   public NamingConventionBean createDefaultBean() {
-    return new NamingConventionBean("[a-z][A-Za-z\\d]*", DEFAULT_MIN_LENGTH, DEFAULT_MAX_LENGTH);
+    return DEFAULT_BEAN;
   }
 
   @Override

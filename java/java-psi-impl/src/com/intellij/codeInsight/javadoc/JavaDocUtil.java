@@ -32,6 +32,9 @@ public final class JavaDocUtil {
   private static final Logger LOG = Logger.getInstance(JavaDocUtil.class);
 
   private static final @NonNls Pattern ourTypePattern = Pattern.compile("[ ]+[^ ^\\[^\\]]");
+  private static final Pattern STAR_PATTERN = Pattern.compile("[*]");
+  private static final Pattern LEADING_HASH = Pattern.compile("^#");
+  private static final Pattern ALL_HASHES = Pattern.compile("#");
   private static final String JAVA_LANG = "java.lang.";
 
   private JavaDocUtil() {
@@ -211,7 +214,7 @@ public final class JavaDocUtil {
       if (rparenIndex == -1) return null;
 
       String parmsText = memberRefText.substring(parenthIndex + 1, rparenIndex).trim();
-      StringTokenizer tokenizer = new StringTokenizer(parmsText.replaceAll("[*]", ""), ",");
+      StringTokenizer tokenizer = new StringTokenizer(STAR_PATTERN.matcher(parmsText).replaceAll(""), ",");
       PsiType[] types = PsiType.createArray(tokenizer.countTokens());
       int i = 0;
       PsiElementFactory factory = JavaPsiFacade.getElementFactory(aClass.getProject());
@@ -369,7 +372,8 @@ public final class JavaDocUtil {
       return refText;
     }
     if (refElement == null) {
-      return refText.replaceFirst("^#", "").replaceAll("#", ".");
+      String withoutLeading = LEADING_HASH.matcher(refText).replaceFirst("");
+      return ALL_HASHES.matcher(withoutLeading).replaceAll(".");
     }
     int poundIndex = refText.indexOf('#');
     if (poundIndex < 0) {

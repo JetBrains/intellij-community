@@ -25,6 +25,7 @@ import com.intellij.psi.xml.XmlTag
 import com.intellij.testFramework.LightVirtualFile
 import com.intellij.util.ObjectUtils
 import com.intellij.util.containers.ContainerUtil
+import com.intellij.util.text.VersionComparatorUtil
 import com.intellij.util.xml.*
 import org.jetbrains.idea.maven.dom.model.*
 import org.jetbrains.idea.maven.model.MavenConstants
@@ -523,6 +524,6 @@ object MavenDomUtil {
 
   @JvmStatic
   fun isAtLeastMaven4(file: VirtualFile?, project: Project): Boolean {
-    return StringUtil.compareVersionNumbers(getMavenVersion(file, project), "4") >= 0
+    return VersionComparatorUtil.compare(getMavenVersion(file, project), "4") >= 0
   }
 }

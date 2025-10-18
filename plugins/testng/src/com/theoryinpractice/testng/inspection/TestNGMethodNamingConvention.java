@@ -20,11 +20,14 @@ import com.intellij.codeInspection.naming.NamingConventionBean;
 import com.intellij.psi.PsiMethod;
 import com.theoryinpractice.testng.TestngBundle;
 import com.theoryinpractice.testng.util.TestNGUtil;
+import org.jetbrains.annotations.NonNls;
 
 /**
  * @author Bas Leijdekkers
  */
 public class TestNGMethodNamingConvention extends NamingConvention<PsiMethod> {
+  private static final @NonNls NamingConventionBean DEFAULT_BEAN = new NamingConventionBean("[a-z][A-Za-z_\\d]*", 4, 64);
+
   @Override
   public String getElementDescription() {
     return TestngBundle.message("checkbox.testng.test");
@@ -38,7 +41,7 @@ public class TestNGMethodNamingConvention extends NamingConvention<PsiMethod> {
 
   @Override
   public NamingConventionBean createDefaultBean() {
-    return new NamingConventionBean("[a-z][A-Za-z_\\d]*", 4, 64);
+    return DEFAULT_BEAN;
   }
 
   @Override
