@@ -62,15 +62,15 @@ internal class EnvironmentCreatorUv<P : PathHolder>(
   errorSink: ErrorSink,
 ) : CustomNewEnvironmentCreator<P>("uv", model, errorSink) {
   override val interpreterType: InterpreterType = InterpreterType.UV
-  override val executable: ObservableMutableProperty<ValidatedPath.Executable<P>?> = model.state.uvExecutable
-  private val executableFlow = MutableStateFlow(model.state.uvExecutable.get())
+  override val toolValidator: ToolValidator<P> = model.uvState.toolValidator
+  private val executableFlow = MutableStateFlow(model.uvState.uvExecutable.get())
   private val pythonVersion: ObservableMutableProperty<Version?> = propertyGraph.property(null)
   private lateinit var versionComboBox: ComboBox<Version?>
 
   private val loading = AtomicBooleanProperty(false)
 
   init {
-    executable.afterChange {
+    toolValidator.backProperty.afterChange {
       executableFlow.value = it
     }
   }
@@ -91,18 +91,14 @@ internal class EnvironmentCreatorUv<P : PathHolder>(
           .visibleIf(loading)
       }
 
-      executablePath = validatableExecutableField(
-        propertyGraph = propertyGraph,
+      executablePath = validatablePathField(
         fileSystem = model.fileSystem,
-        backProperty = executable,
+        pathValidator = toolValidator,
         validationRequestor = validationRequestor,
         labelText = message("sdk.create.custom.venv.executable.path", "uv"),
         missingExecutableText = message("sdk.create.custom.venv.missing.text", "uv"),
         installAction = createInstallFix(errorSink)
-      ) {
-        val result = model.fileSystem.getBinaryToExec(it).getToolVersion("uv")
-        ValidatedPath.Executable(it, result)
-      }
+      )
 
       row("") {
         venvExistenceValidationAlert(validationRequestor) {
@@ -184,7 +180,7 @@ internal class EnvironmentCreatorUv<P : PathHolder>(
     if ((model.fileSystem as? FileSystem.Eel)?.eelApi !is LocalEelApi) return
 
     val savingPath = (pathHolder as? PathHolder.Eel)?.path
-                     ?: (executable.get()?.pathHolder as? PathHolder.Eel)?.path
+                     ?: (toolValidator.backProperty.get()?.pathHolder as? PathHolder.Eel)?.path
     savingPath?.let {
       setUvExecutable(it)
     }
@@ -198,9 +194,4 @@ internal class EnvironmentCreatorUv<P : PathHolder>(
   ): PyResult<Sdk> {
     return setupNewUvSdkAndEnv(moduleBasePath, baseSdks, pythonVersion.get())
   }
-
-  override suspend fun detectExecutable() {
-    model.detectUvExecutable()
-  }
-
 }

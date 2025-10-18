@@ -31,13 +31,9 @@ import com.jetbrains.python.sdk.add.v2.venv.PythonExistingEnvironmentSelector
 import kotlinx.coroutines.CoroutineScope
 import org.jetbrains.annotations.ApiStatus.Internal
 
-class VenvAlreadyExistsError<P: PathHolder>(
-  val detectedSelectableInterpreter: DetectedSelectableInterpreter<P>,
-) : MessageError("Already contains python installation with version ${detectedSelectableInterpreter.languageLevel}")
-
 class ValidationInfoError(val validationInfo: ValidationInfo) : MessageError(validationInfo.message)
 
-class PythonAddCustomInterpreter<P : PathHolder>(
+internal class PythonAddCustomInterpreter<P : PathHolder>(
   val model: PythonMutableTargetAddInterpreterModel<P>,
   val module: Module?,
   private val errorSink: ErrorSink,

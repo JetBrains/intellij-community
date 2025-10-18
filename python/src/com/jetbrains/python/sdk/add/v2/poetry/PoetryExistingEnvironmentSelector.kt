@@ -2,7 +2,6 @@
 package com.jetbrains.python.sdk.add.v2.poetry
 
 import com.intellij.openapi.module.Module
-import com.intellij.openapi.observable.properties.ObservableMutableProperty
 import com.intellij.openapi.projectRoots.ProjectJdkTable
 import com.intellij.openapi.projectRoots.Sdk
 import com.jetbrains.python.PyBundle
@@ -14,7 +13,9 @@ import com.jetbrains.python.sdk.add.v2.CustomExistingEnvironmentSelector
 import com.jetbrains.python.sdk.add.v2.DetectedSelectableInterpreter
 import com.jetbrains.python.sdk.add.v2.PathHolder
 import com.jetbrains.python.sdk.add.v2.PythonMutableTargetAddInterpreterModel
+import com.jetbrains.python.sdk.add.v2.PathValidator
 import com.jetbrains.python.sdk.add.v2.ValidatedPath
+import com.jetbrains.python.sdk.add.v2.Version
 import com.jetbrains.python.sdk.basePath
 import com.jetbrains.python.sdk.poetry.createPoetrySdk
 import com.jetbrains.python.sdk.poetry.detectPoetryEnvs
@@ -25,7 +26,7 @@ import java.nio.file.Path
 import kotlin.io.path.pathString
 
 internal class PoetryExistingEnvironmentSelector<P: PathHolder>(model: PythonMutableTargetAddInterpreterModel<P>, module: Module?) : CustomExistingEnvironmentSelector<P>("poetry", model, module) {
-  override val executable: ObservableMutableProperty<ValidatedPath.Executable<P>?> = model.state.poetryExecutable
+  override val toolState: PathValidator<Version, P, ValidatedPath.Executable<P>> = model.poetryState.toolValidator
   override val interpreterType: InterpreterType = InterpreterType.POETRY
 
   override suspend fun getOrCreateSdk(moduleOrProject: ModuleOrProject): PyResult<Sdk> {

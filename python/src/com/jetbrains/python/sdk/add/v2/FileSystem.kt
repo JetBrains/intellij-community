@@ -15,7 +15,9 @@ import com.intellij.python.community.services.internal.impl.VanillaPythonWithLan
 import com.intellij.python.community.services.shared.VanillaPythonWithLanguageLevel
 import com.intellij.python.community.services.systemPython.SystemPython
 import com.intellij.python.community.services.systemPython.SystemPythonService
+import com.jetbrains.python.PyBundle.message
 import com.jetbrains.python.Result
+import com.jetbrains.python.errorProcessing.MessageError
 import com.jetbrains.python.errorProcessing.PyResult
 import com.jetbrains.python.getOrLogException
 import com.jetbrains.python.pathValidation.PlatformAndRoot.Companion.getPlatformAndRoot
@@ -35,12 +37,17 @@ import kotlinx.coroutines.withContext
 import java.nio.file.InvalidPathException
 import java.nio.file.Path
 import kotlin.io.path.Path
+import kotlin.io.path.exists
 
 
 private val LOG: Logger = fileLogger()
 
 
 data class SdkWrapper<P>(val sdk: Sdk, val homePath: P)
+
+internal class VenvAlreadyExistsError<P : PathHolder>(
+  val detectedSelectableInterpreter: DetectedSelectableInterpreter<P>,
+) : MessageError(message("python.add.sdk.already.contains.python.with.version", detectedSelectableInterpreter.languageLevel))
 
 sealed interface FileSystem<P : PathHolder> {
   val isReadOnly: Boolean
@@ -49,8 +56,8 @@ sealed interface FileSystem<P : PathHolder> {
 
   suspend fun getSystemPythonFromSelection(pathToPython: P): PyResult<DetectedSelectableInterpreter<P>>
 
-  suspend fun validateVenv(homePath: P): ValidatedPath.Folder<P>
-  suspend fun suggestVenv(projectPath: Path): ValidatedPath.Folder<P>
+  suspend fun validateVenv(homePath: P): PyResult<Unit>
+  suspend fun suggestVenv(projectPath: Path): PyResult<P>
   fun wrapSdk(sdk: Sdk): SdkWrapper<P>
   suspend fun detectSelectableVenv(): List<DetectedSelectableInterpreter<P>>
   fun preferredInterpreterBasePath(): P? = null
@@ -75,27 +82,29 @@ sealed interface FileSystem<P : PathHolder> {
       PyResult.localizedError(e.localizedMessage)
     }
 
-    override suspend fun validateVenv(homePath: PathHolder.Eel): ValidatedPath.Folder<PathHolder.Eel> = withContext(Dispatchers.IO) {
-      val pythonBinaryPath = homePath.path.resolvePythonBinary()?.let { PathHolder.Eel(it) }
-      val existingPython = pythonBinaryPath?.let { getSystemPythonFromSelection(it) }?.successOrNull
-
-      val validationResult = if (existingPython == null) {
-        PyResult.success(Unit)
+    override suspend fun validateVenv(homePath: PathHolder.Eel): PyResult<Unit> = withContext(Dispatchers.IO) {
+      val validationResult = when {
+        !homePath.path.isAbsolute -> PyResult.localizedError(message("python.sdk.new.error.no.absolute"))
+        homePath.path.exists() -> {
+          val pythonBinaryPath = homePath.path.resolvePythonBinary()?.let { PathHolder.Eel(it) }
+          val existingPython = pythonBinaryPath?.let { getSystemPythonFromSelection(it) }?.successOrNull
+          if (existingPython == null) {
+            PyResult.localizedError(message("sdk.create.custom.venv.folder.not.empty"))
+          }
+          else {
+            PyResult.failure(VenvAlreadyExistsError(existingPython))
+          }
+        }
+        else -> PyResult.success(Unit)
       }
-      else {
-        PyResult.failure(VenvAlreadyExistsError(existingPython))
-      }
 
-      ValidatedPath.Folder(homePath, validationResult)
+      validationResult
     }
 
-    override suspend fun suggestVenv(projectPath: Path): ValidatedPath.Folder<PathHolder.Eel> = withContext(Dispatchers.IO) {
+    override suspend fun suggestVenv(projectPath: Path): PyResult<PathHolder.Eel> = withContext(Dispatchers.IO) {
       val preferedFilePath = PySdkSettings.instance.getPreferredVirtualEnvBasePath(projectPath.toString())
       val suggestedVirtualEnvPath = FileUtil.toSystemDependentName(preferedFilePath)
-      val path = parsePath(suggestedVirtualEnvPath).getOr {
-        return@withContext ValidatedPath.Folder(null, it)
-      }
-      validateVenv(path)
+      parsePath(suggestedVirtualEnvPath)
     }
 
     override suspend fun getSystemPythonFromSelection(pathToPython: PathHolder.Eel): PyResult<DetectedSelectableInterpreter<PathHolder.Eel>> {
@@ -174,7 +183,7 @@ sealed interface FileSystem<P : PathHolder> {
       return PyResult.success(PathHolder.Target(raw))
     }
 
-    override suspend fun validateVenv(homePath: PathHolder.Target): ValidatedPath.Folder<PathHolder.Target> = withContext(Dispatchers.IO) {
+    override suspend fun validateVenv(homePath: PathHolder.Target): PyResult<Unit> = withContext(Dispatchers.IO) {
       val pythonBinaryPath = resolvePythonBinary(homePath)
 
       val existingPython = getSystemPythonFromSelection(pythonBinaryPath).successOrNull
@@ -199,18 +208,17 @@ sealed interface FileSystem<P : PathHolder> {
         PyResult.failure(VenvAlreadyExistsError(existingPython))
       }
 
-      ValidatedPath.Folder(homePath, validationResult)
+      validationResult
     }
 
-    override suspend fun suggestVenv(projectPath: Path): ValidatedPath.Folder<PathHolder.Target> = withContext(Dispatchers.IO) {
+    override suspend fun suggestVenv(projectPath: Path): PyResult<PathHolder.Target> = withContext(Dispatchers.IO) {
       val homePathString = when {
         projectPath.toString().isEmpty() -> pythonLanguageRuntimeConfiguration.userHome
         else -> joinTargetPaths(pythonLanguageRuntimeConfiguration.userHome, VirtualEnvReader.DEFAULT_VIRTUALENVS_DIR,
                                 projectPath.fileName.toString(), fileSeparator = '/')
       }
 
-      val homePath = PathHolder.Target(homePathString)
-      validateVenv(homePath)
+      PyResult.success(PathHolder.Target(homePathString))
     }
 
     private suspend fun registerSystemPython(pathToPython: PathHolder.Target): PyResult<DetectedSelectableInterpreter<PathHolder.Target>> {

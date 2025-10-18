@@ -196,7 +196,7 @@ internal fun installBaseSdk(sdk: Sdk, existingSdks: List<Sdk>): Sdk? {
 }
 
 
-suspend fun <P: PathHolder> setupSdk(
+internal suspend fun <P: PathHolder> setupSdk(
   project: Project?,
   allSdks: List<Sdk>,
   fileSystem: FileSystem<P>,

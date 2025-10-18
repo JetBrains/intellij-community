@@ -2,8 +2,8 @@
 package com.jetbrains.python.sdk.add.v2.venv
 
 import com.intellij.openapi.application.EDT
+import com.intellij.openapi.observable.properties.ObservableMutableProperty
 import com.intellij.openapi.observable.util.isNotNull
-import com.intellij.openapi.observable.util.transform
 import com.intellij.openapi.projectRoots.Sdk
 import com.intellij.openapi.ui.validation.DialogValidationRequestor
 import com.intellij.ui.components.ActionLink
@@ -14,19 +14,7 @@ import com.jetbrains.python.errorProcessing.PyResult
 import com.jetbrains.python.newProject.collector.InterpreterStatisticsInfo
 import com.jetbrains.python.newProjectWizard.collector.PythonNewProjectWizardCollector
 import com.jetbrains.python.sdk.ModuleOrProject
-import com.jetbrains.python.sdk.add.v2.PathHolder
-import com.jetbrains.python.sdk.add.v2.PythonInterpreterComboBox
-import com.jetbrains.python.sdk.add.v2.PythonInterpreterCreationTargets
-import com.jetbrains.python.sdk.add.v2.PythonInterpreterSelectionMethod
-import com.jetbrains.python.sdk.add.v2.PythonMutableTargetAddInterpreterModel
-import com.jetbrains.python.sdk.add.v2.PythonNewEnvironmentCreator
-import com.jetbrains.python.sdk.add.v2.PythonSupportedEnvironmentManagers
-import com.jetbrains.python.sdk.add.v2.ValidatedPath
-import com.jetbrains.python.sdk.add.v2.ValidatedPathField
-import com.jetbrains.python.sdk.add.v2.VenvAlreadyExistsError
-import com.jetbrains.python.sdk.add.v2.pythonInterpreterComboBox
-import com.jetbrains.python.sdk.add.v2.toStatisticsField
-import com.jetbrains.python.sdk.add.v2.validatableVenvField
+import com.jetbrains.python.sdk.add.v2.*
 import com.jetbrains.python.statistics.InterpreterCreationMode
 import com.jetbrains.python.statistics.InterpreterType
 import kotlinx.coroutines.CoroutineScope
@@ -39,14 +27,25 @@ class EnvironmentCreatorVenv<P : PathHolder>(model: PythonMutableTargetAddInterp
   private lateinit var versionComboBox: PythonInterpreterComboBox<P>
   private lateinit var venvPathField: ValidatedPathField<Unit, P, ValidatedPath.Folder<P>>
 
-  private val locationValidationMessage = propertyGraph.property("Current location already exists")
+  private val venvAlreadyExistsError = propertyGraph.property<VenvAlreadyExistsError<P>?>(null)
+  private val venvAlreadyExistsErrorMessage: ObservableMutableProperty<String> = propertyGraph.property("")
+
   private var locationModified = false
+
+  init {
+    propertyGraph.dependsOn(venvAlreadyExistsError, model.venvState.backProperty, deleteWhenChildModified = false) {
+      model.venvState.backProperty.get()?.validationResult?.errorOrNull as? VenvAlreadyExistsError<P>
+    }
+    propertyGraph.dependsOn(venvAlreadyExistsErrorMessage, venvAlreadyExistsError, deleteWhenChildModified = false) {
+      venvAlreadyExistsError.get()?.message ?: ""
+    }
+  }
 
 
   override fun setupUI(panel: Panel, validationRequestor: DialogValidationRequestor) {
     val secondFixLink = ActionLink(message("sdk.create.custom.venv.select.existing.link")) {
       PythonNewProjectWizardCollector.logExistingVenvFixUsed()
-      val venvAlreadyExistsError = model.state.venvPath.get()?.validationResult?.errorOrNull as? VenvAlreadyExistsError<P>
+      val venvAlreadyExistsError = venvAlreadyExistsError.get()
 
       venvAlreadyExistsError?.let { error ->
         val interpreter = error.detectedSelectableInterpreter.also {
@@ -71,29 +70,28 @@ class EnvironmentCreatorVenv<P : PathHolder>(model: PythonMutableTargetAddInterp
       )
 
 
-      venvPathField = validatableVenvField(
-        propertyGraph = propertyGraph,
+      venvPathField = validatablePathField(
         fileSystem = model.fileSystem,
-        backProperty = model.state.venvPath,
+        pathValidator = model.venvState.venvValidator,
         validationRequestor = validationRequestor,
         labelText = message("sdk.create.custom.location"),
         missingExecutableText = null,
-        selectedPathValidator = { model.fileSystem.validateVenv(it) }
+        isFileSelectionMode = false,
       )
 
 
       row("") {
-        validationTooltip(locationValidationMessage,  secondFixLink)
+        validationTooltip(venvAlreadyExistsErrorMessage, secondFixLink)
           .align(Align.FILL)
-      }.visibleIf(venvPathField.backProperty.transform { it?.validationResult?.errorOrNull }.isNotNull())
+      }.visibleIf(venvAlreadyExistsError.isNotNull())
 
       row("") {
         checkBox(message("sdk.create.custom.inherit.packages"))
-          .bindSelected(model.state.inheritSitePackages)
+          .bindSelected(model.venvState.inheritSitePackages)
       }
       row("") {
         checkBox(message("available.to.all.projects"))
-          .bindSelected(model.state.makeAvailableForAllProjects)
+          .bindSelected(model.venvState.makeAvailableForAllProjects)
       }
     }
   }
@@ -106,13 +104,12 @@ class EnvironmentCreatorVenv<P : PathHolder>(model: PythonMutableTargetAddInterp
     model.projectPathFlows.projectPathWithDefault.onEach {
       if (locationModified) return@onEach
 
-      val suggestedVirtualEnv = model.fileSystem.suggestVenv(it)
-      model.state.venvPath.set(suggestedVirtualEnv)
+      model.venvState.venvValidator.autodetectFolder()
     }.launchIn(scope + Dispatchers.EDT)
   }
 
   override suspend fun getOrCreateSdk(moduleOrProject: ModuleOrProject): PyResult<Sdk> {
-    val venv = model.state.venvPath.get()?.pathHolder
+    val venv = model.venvState.backProperty.get()?.pathHolder
                ?: return PyResult.localizedError(message("no.venv.path.specified"))
     return model.setupVirtualenv(venv, moduleOrProject)
   }
@@ -121,8 +118,8 @@ class EnvironmentCreatorVenv<P : PathHolder>(model: PythonMutableTargetAddInterp
     return InterpreterStatisticsInfo(
       type = InterpreterType.VIRTUALENV,
       target = target.toStatisticsField(),
-      globalSitePackage = model.state.inheritSitePackages.get(),
-      makeAvailableToAllProjects = model.state.makeAvailableForAllProjects.get(),
+      globalSitePackage = model.venvState.inheritSitePackages.get(),
+      makeAvailableToAllProjects = model.venvState.makeAvailableForAllProjects.get(),
       previouslyConfigured = false,
       isWSLContext = false, // todo fix for wsl
       creationMode = InterpreterCreationMode.CUSTOM
