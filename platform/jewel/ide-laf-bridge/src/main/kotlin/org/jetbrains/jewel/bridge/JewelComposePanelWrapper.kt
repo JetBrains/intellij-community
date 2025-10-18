@@ -194,6 +194,7 @@ public fun JewelComposeNoThemePanel(config: ComposePanel.() -> Unit = {}, conten
     JewelComposeNoThemePanel(focusOnClickInside = false, config, content)
 
 @ApiStatus.Internal
+@InternalJewelApi
 public fun setSkikoLibraryPath() {
     if (System.getProperty("skiko.library.path") == null) {
         val bundledSkikoFolder = File(PathManager.getLibPath(), "/skiko-awt-runtime-all")
