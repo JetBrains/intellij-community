@@ -129,7 +129,7 @@ class AsyncDocumentFormattingSupportImpl(private val service: AsyncDocumentForma
 
     fun cancel(): Boolean {
       if (!taskStarted.isCompleted) return false
-      // for our purpose, result.cancel is equivalent, but we need the CAS semantics
+      // for our purpose, taskResult.cancel is equivalent, but we need the CAS semantics
       if (taskResult.completeExceptionally(CancellationException())) {
         val formattingTask = checkNotNull(task)
         return formattingTask.cancel()
