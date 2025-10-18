@@ -1,8 +1,7 @@
 // Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.ui
 
-import com.intellij.openapi.application.ApplicationManager
-import com.intellij.openapi.components.serviceOrNull
+import com.intellij.openapi.extensions.ExtensionPointName
 import org.jetbrains.annotations.ApiStatus
 import java.awt.Dimension
 import java.awt.Image
@@ -11,10 +10,12 @@ import java.awt.Image
 interface BannerImageProvider {
 
   companion object {
+    @JvmField
+    val EP_NAME: ExtensionPointName<BannerImageProvider> = ExtensionPointName.create("com.intellij.commercialBannerImageProvider")
+
     @JvmStatic
-    fun getInstance(): BannerImageProvider? = ApplicationManager.getApplication().serviceOrNull()
+    fun getInstance(): BannerImageProvider? = EP_NAME.extensionList.firstOrNull()
   }
 
   fun getIDEBanner(size: Dimension): Image?
-
 }

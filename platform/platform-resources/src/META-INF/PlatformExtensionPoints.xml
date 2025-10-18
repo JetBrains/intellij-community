@@ -92,6 +92,7 @@
     <extensionPoint name="exportable" beanClass="com.intellij.openapi.components.ServiceBean" dynamic="true"/>
 
     <extensionPoint name="ideRootPaneNorth" interface="com.intellij.openapi.wm.IdeRootPaneNorthExtension" dynamic="false"/>
+    <extensionPoint name="commercialBannerImageProvider" interface="com.intellij.openapi.ui.BannerImageProvider" dynamic="true"/>
 
     <extensionPoint name="handleTypeFactory" interface="com.intellij.openapi.vcs.readOnlyHandler.HandleTypeFactory"
                     area="IDEA_PROJECT" dynamic="false"/>
