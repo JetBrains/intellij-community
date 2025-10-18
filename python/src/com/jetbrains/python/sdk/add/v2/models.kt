@@ -14,7 +14,7 @@ import com.intellij.platform.eel.provider.localEel
 import com.intellij.python.community.execService.BinOnEel
 import com.intellij.python.community.execService.BinaryToExec
 import com.intellij.python.community.services.shared.*
-import com.intellij.python.hatch.HatchConfiguration
+import com.intellij.python.hatch.HatchConfiguration.getOrDetectHatchExecutablePath
 import com.intellij.python.hatch.HatchVirtualEnvironment
 import com.intellij.python.hatch.getHatchService
 import com.intellij.python.pyproject.PyProjectToml
@@ -195,52 +195,61 @@ abstract class PythonMutableTargetAddInterpreterModel<P : PathHolder>(projectPat
     }
   }
 
-  suspend fun detectPoetryExecutable(): Unit = withContext(Dispatchers.IO) {
-    if ((fileSystem as? FileSystem.Eel)?.eelApi != localEel) return@withContext // getPoetryExecutable() works only with localEel currently
+  suspend fun detectPoetryExecutable() {
+    if ((fileSystem as? FileSystem.Eel)?.eelApi != localEel) return // getPoetryExecutable() works only with localEel currently
 
-    getPoetryExecutable().getOrNull()?.let {
-      val binaryToExec = fileSystem.getBinaryToExec(PathHolder.Eel(it))
-      val version = binaryToExec.getToolVersion("poetry")
-      withContext(Dispatchers.EDT) {
-        state.poetryExecutable.set(ValidatedPath.Executable(PathHolder.Eel(it) as P, version))
-      }
+    state.poetryExecutable.autodetectWithVersionProbe("poetry") {
+      getPoetryExecutable().getOrNull()?.let { PathHolder.Eel(it) } as P?
     }
   }
 
-  suspend fun detectPipEnvExecutable(): Unit = withContext(Dispatchers.IO) {
-    if ((fileSystem as? FileSystem.Eel)?.eelApi != localEel) return@withContext // getPipEnvExecutable() works only with localEel currently
+  suspend fun detectPipEnvExecutable() {
+    if ((fileSystem as? FileSystem.Eel)?.eelApi != localEel) return // getPipEnvExecutable() works only with localEel currently
 
-    getPipEnvExecutable().getOrNull()?.let {
-      val binaryToExec = fileSystem.getBinaryToExec(PathHolder.Eel(it))
-      val version = binaryToExec.getToolVersion("pipenv")
-      withContext(Dispatchers.EDT) {
-        state.pipenvExecutable.set(ValidatedPath.Executable(PathHolder.Eel(it) as P, version))
-      }
+    state.pipenvExecutable.autodetectWithVersionProbe("pipenv") {
+      getPipEnvExecutable().getOrNull()?.let { PathHolder.Eel(it) } as P?
     }
   }
 
-  suspend fun detectUvExecutable(): Unit = withContext(Dispatchers.IO) {
-    if ((fileSystem as? FileSystem.Eel)?.eelApi != localEel) return@withContext // getUvExecutable() works only with localEel currently
+  suspend fun detectUvExecutable() {
+    if ((fileSystem as? FileSystem.Eel)?.eelApi != localEel) return // getUvExecutable() works only with localEel currently
 
-    getUvExecutable()?.let {
-      val binaryToExec = fileSystem.getBinaryToExec(PathHolder.Eel(it))
-      val version = binaryToExec.getToolVersion("uv")
-      withContext(Dispatchers.EDT) {
-        state.uvExecutable.set(ValidatedPath.Executable(PathHolder.Eel(it) as P, version))
-      }
+    state.uvExecutable.autodetectWithVersionProbe("uv") {
+      getUvExecutable()?.let { PathHolder.Eel(it) } as P?
     }
   }
 
-  suspend fun detectHatchExecutable(): Unit = withContext(Dispatchers.IO) {
-    if (fileSystem !is FileSystem.Eel) return@withContext // getOrDetectHatchExecutablePath() works only with eel filesystem currently
+  suspend fun detectHatchExecutable() {
+    if (fileSystem !is FileSystem.Eel) return // getOrDetectHatchExecutablePath() works only with eel filesystem currently
 
-    HatchConfiguration.getOrDetectHatchExecutablePath(fileSystem.eelApi).getOrNull()?.let {
-      val binaryToExec = fileSystem.getBinaryToExec(PathHolder.Eel(it))
-      val version = binaryToExec.getToolVersion("hatch")
-      withContext(Dispatchers.EDT) {
-        state.hatchExecutable.set(ValidatedPath.Executable(PathHolder.Eel(it) as P, version))
-      }
+    state.hatchExecutable.autodetectWithVersionProbe("hatch") {
+      getOrDetectHatchExecutablePath(fileSystem.eelApi).getOrNull()?.let { PathHolder.Eel(it) } as P?
     }
+  }
+
+  private suspend fun ObservableMutableProperty<ValidatedPath.Executable<P>?>.autodetectWithVersionProbe(
+    toolVersionPrefix: String,
+    toolPathSupplier: suspend () -> P?,
+  ): Unit = withContext(Dispatchers.IO) {
+    val path = toolPathSupplier.invoke()
+    val validatedPath = path?.validateToolExecutableByVersionProbe(toolVersionPrefix)
+                        ?: ValidatedPath.Executable(
+                          pathHolder = path,
+                          validationResult = PyResult.localizedError(message("python.sdk.executable.is.not.detected"))
+                        )
+
+    withContext(Dispatchers.EDT) {
+      set(validatedPath)
+    }
+  }
+
+  private suspend fun P.validateToolExecutableByVersionProbe(toolVersionPrefix: String): ValidatedPath.Executable<P> {
+    val binaryToExec = fileSystem.getBinaryToExec(this)
+    val validationResult = binaryToExec.getToolVersion(toolVersionPrefix)
+    return ValidatedPath.Executable(
+      pathHolder = this,
+      validationResult = validationResult
+    )
   }
 }
 

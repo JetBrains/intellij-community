@@ -31,15 +31,9 @@ internal class HatchNewEnvironmentCreator<P: PathHolder>(
   errorSink: ErrorSink,
 ) : CustomNewEnvironmentCreator<P>("hatch", model, errorSink) {
   override val interpreterType: InterpreterType = InterpreterType.HATCH
-  override val executable: ObservableMutableProperty<ValidatedPath.Executable<P>?> = propertyGraph.property(model.state.hatchExecutable.get())
+  override val executable: ObservableMutableProperty<ValidatedPath.Executable<P>?> = model.state.hatchExecutable
   private val hatchEnvironmentProperty: ObservableMutableProperty<HatchVirtualEnvironment?> = propertyGraph.property(null)
   private lateinit var hatchFormFields: HatchFormFields<P>
-
-  init {
-    propertyGraph.dependsOn(executable, model.state.hatchExecutable, deleteWhenChildModified = false) {
-      model.state.hatchExecutable.get()
-    }
-  }
 
   override fun setupUI(panel: Panel, validationRequestor: DialogValidationRequestor) {
     hatchFormFields = panel.buildHatchFormFields(
