@@ -10,7 +10,7 @@ import org.jetbrains.kotlin.idea.codeInsight.inspections.shared.ReplaceUntilWith
 import org.jetbrains.kotlin.tools.projectWizard.core.service.InspectionWizardService
 import org.jetbrains.kotlin.tools.projectWizard.wizard.service.IdeaWizardService
 
-class IdeaInspectionsWizardService(private val project: Project) : InspectionWizardService, IdeaWizardService {
+private class IdeaInspectionsWizardService(private val project: Project) : InspectionWizardService, IdeaWizardService {
     override fun changeInspectionSettings() {
         val projectProfile = ProjectInspectionProfileManager.getInstance(project).projectProfile
         val key = HighlightDisplayKey.find(ReplaceUntilWithRangeUntilInspection().shortName)

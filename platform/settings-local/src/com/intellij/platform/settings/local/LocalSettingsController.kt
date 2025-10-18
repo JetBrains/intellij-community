@@ -74,7 +74,7 @@ private class LocalSettingsController : DelegatedSettingsController {
           return internalOperation(storageManager.value.internalMap, componentName)
         }
         is PersistenceStateComponentPropertyTag -> {
-          // this tag is expected to be first
+          // this tag is expected to be the first
           componentName = tag.componentName
         }
       }
