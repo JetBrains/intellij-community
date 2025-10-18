@@ -8,8 +8,11 @@ import com.intellij.openapi.util.Ref
 import com.intellij.psi.PsiElement
 import com.intellij.psi.PsiReference
 import com.intellij.psi.PsiWhiteSpace
+import com.intellij.psi.PsiComment
+import com.intellij.psi.PsiDocumentManager
 import com.intellij.psi.SyntaxTraverser
 import com.intellij.psi.codeStyle.CodeStyleManager
+import com.intellij.openapi.util.TextRange
 import com.intellij.psi.search.searches.ReferencesSearch
 import com.intellij.psi.util.PsiTreeUtil
 import com.intellij.refactoring.BaseRefactoringProcessor
@@ -257,12 +260,31 @@ class PyInlineFunctionProcessor(project: Project,
         }
       }
 
+      // We may need to delete redundant self-assignment after insertion
+      var assignmentToDelete: PyAssignmentStatement? = null
       if (returnStatements.size == 1 && returnStatements[0].expression !is PyTupleExpression) {
         // replace single return with expression itself
         val statement = returnStatements[0]
         val replaced = callSite.replace(statement.expression!!)
         PyClassRefactoringUtil.restoreNamedReferences(replaced)
         statement.delete()
+
+        // Detect redundant self-assignment like `x = x` and defer deletion until after insertion
+        val parentStmt = PsiTreeUtil.getParentOfType(replaced, PyAssignmentStatement::class.java)
+        if (parentStmt != null) {
+          val targets = parentStmt.targets
+          val assigned = parentStmt.assignedValue
+          if (targets.size == 1 && assigned is PyReferenceExpression) {
+            val target = targets[0]
+            if (target is PyTargetExpression && target.name != null) {
+              val targetName = target.name
+              val refName = assigned.name
+              if (refName != null && refName == targetName && !assigned.isQualified) {
+                assignmentToDelete = parentStmt
+              }
+            }
+          }
+        }
       }
       else if (returnStatements.isNotEmpty())  {
         val newReturn = generateUniqueAssignment(languageLevel, "result", generatedNames, scopeAnchor)
@@ -274,19 +296,56 @@ class PyInlineFunctionProcessor(project: Project,
         callSite.replace(newReturn.assignedValue!!)
       }
 
-      CodeStyleManager.getInstance(myProject).reformat(replacement, true)
-
       val insertElement = { elem: PsiElement -> containingStatement.parent.addBefore(elem, containingStatement) }
 
-      declarations.forEach { insertElement(it) }
-      if (replacement.firstChild != null) {
-        val children = SyntaxTraverser.psiApi().children(replacement).filter { it !is PsiWhiteSpace }.toList()
-        val statements = children.filterIsInstance<PyStatement>()
-        if (statements.size > 1 || statements.firstOrNull() !is PyPassStatement) {
-          children.asSequence()
+      val insertedStatements = mutableListOf<PyStatement>()
+      declarations.forEach { insertedStatements += insertElement(it) as PyStatement }
+      run {
+        val bodyChildren = replacement.children.toList()
+        val elementsToInsert = bodyChildren.asSequence()
+          .filter { it !is PsiWhiteSpace }
+          .filter { it is PyStatement || it is PsiComment }
+          .toList()
+        if (elementsToInsert.isNotEmpty() && !(elementsToInsert.size == 1 && elementsToInsert.first() is PyPassStatement)) {
+          elementsToInsert.asSequence()
             .map { insertElement(it) }
+            .onEach { if (it is PyStatement) PyClassRefactoringUtil.restoreNamedReferences(it) }
             .filterIsInstance<PyStatement>()
-            .forEach { PyClassRefactoringUtil.restoreNamedReferences(it) }
+            .forEach { insertedStatements += it }
+        }
+      }
+
+      // Delete any redundant self-assignment before formatting
+      assignmentToDelete?.delete()
+
+      // Adjust indentation for the inserted block in the final context using a single indent adjustment pass
+      if (insertedStatements.isNotEmpty()) {
+        val codeStyle = CodeStyleManager.getInstance(myProject)
+        val first = insertedStatements.first()
+        val last = insertedStatements.last()
+        val file = containingStatement.containingFile
+
+        // If there are standalone comments immediately preceding the insertion point,
+        // avoid formatting to preserve their position exactly (PY-keeping-comments case).
+        var hasLeadingStandaloneComments = false
+        run {
+          var sib: PsiElement? = containingStatement.prevSibling
+          while (sib is PsiWhiteSpace || sib is PsiComment) {
+            if (sib is PsiComment) {
+              hasLeadingStandaloneComments = true
+              break
+            }
+            sib = sib.prevSibling
+          }
+        }
+
+        if (!hasLeadingStandaloneComments) {
+          val psiDocMgr = PsiDocumentManager.getInstance(myProject)
+          psiDocMgr.getDocument(file)?.let { doc ->
+            psiDocMgr.doPostponedOperationsAndUnblockDocument(doc)
+            psiDocMgr.commitDocument(doc)
+          }
+          codeStyle.adjustLineIndent(file, TextRange(first.textRange.startOffset, last.textRange.endOffset))
         }
       }
 
