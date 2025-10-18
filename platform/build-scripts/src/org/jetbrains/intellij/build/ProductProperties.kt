@@ -134,8 +134,9 @@ abstract class ProductProperties {
    * An identifier which will be used to form names for directories where configuration and caches will be stored, usually a product name
    * without spaces with an added version ('IntelliJIdea2016.1' for IntelliJ IDEA 2016.1).
    */
-  open fun getSystemSelector(appInfo: ApplicationInfoProperties, buildNumber: String): String =
-    "${appInfo.fullProductName}${appInfo.majorVersion}.${appInfo.minorVersionMainPart}"
+  open fun getSystemSelector(appInfo: ApplicationInfoProperties, buildNumber: String): String {
+    return "${appInfo.fullProductName}${appInfo.majorVersion}.${appInfo.minorVersionMainPart}"
+  }
 
   /**
    * If `true`, Alt+Button1 shortcut will be removed from 'Quick Evaluate Expression' action and assigned to 'Add/Remove Caret' action
@@ -467,12 +468,11 @@ abstract class ProductProperties {
       is PluginCreationFail -> result.errorsAndWarnings
     }
   }
-
-  private companion object {
-    /**
-     * From https://plugins.jetbrains.com/docs/intellij/plugin-configuration-file.html#idea-plugin__id:
-     * > Please use characters, numbers, and '.'/'-'/'_' symbols only and keep it reasonably short.
-     */
-    val PLUGIN_ID_REGEX: Regex = "^[\\w.-]+$".toRegex()
-  }
 }
+
+/**
+ * From https://plugins.jetbrains.com/docs/intellij/plugin-configuration-file.html#idea-plugin__id:
+ * > Please use characters, numbers, and '.'/'-'/'_' symbols only and keep it reasonably short.
+ */
+private val PLUGIN_ID_REGEX: Regex = "^[\\w.-]+$".toRegex()
+
