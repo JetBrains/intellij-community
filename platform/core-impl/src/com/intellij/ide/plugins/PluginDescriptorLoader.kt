@@ -912,7 +912,8 @@ internal fun loadCoreProductPlugin(
   loadContentModuleDescriptors(
     descriptor = descriptor,
     pathResolver = pathResolver,
-    libDir = libDir,
+    moduleDir = libDir,
+    useModuleDirAsParent = true,
     loadingContext = loadingContext,
     dataLoader = dataLoader,
     isRunningFromSourcesWithoutDevBuild = isRunningFromSourcesWithoutDevBuild,
@@ -924,12 +925,12 @@ internal fun loadCoreProductPlugin(
 private fun loadContentModuleDescriptors(
   descriptor: PluginMainDescriptor,
   pathResolver: PathResolver,
-  libDir: Path,
+  moduleDir: Path,
+  useModuleDirAsParent: Boolean,
   loadingContext: PluginDescriptorLoadingContext,
   dataLoader: DataLoader,
   isRunningFromSourcesWithoutDevBuild: Boolean,
 ) {
-  val moduleDir = libDir.resolve("modules")
   val moduleDirExists = Files.isDirectory(moduleDir)
   val loadingStrategy = ProductLoadingStrategy.strategy
 
@@ -942,10 +943,10 @@ private fun loadContentModuleDescriptors(
     val subDescriptorFile = "${moduleId.name}.xml"
 
     if (moduleDirExists &&
-        !isRunningFromSourcesWithoutDevBuild && moduleId.name.startsWith("intellij.") &&
+        !isRunningFromSourcesWithoutDevBuild &&
+        moduleId.name.startsWith("intellij.") &&
         loadProductModule(
-          loadingStrategy = loadingStrategy,
-          moduleDir = moduleDir,
+          jarFile = if (useModuleDirAsParent) moduleDir.resolve("$moduleId.jar") else loadingStrategy.findProductContentModuleClassesRoot(moduleId, moduleDir),
           module = module,
           subDescriptorFile = subDescriptorFile,
           loadingContext = loadingContext,
@@ -967,8 +968,7 @@ private fun loadContentModuleDescriptors(
 }
 
 private fun loadProductModule(
-  loadingStrategy: ProductLoadingStrategy,
-  moduleDir: Path,
+  jarFile: Path?,
   module: PluginContentDescriptor.ModuleItem,
   subDescriptorFile: String,
   loadingContext: PluginDescriptorLoadingContext,
@@ -977,7 +977,6 @@ private fun loadProductModule(
   containerDescriptor: PluginMainDescriptor,
 ): Boolean {
   val moduleId = module.moduleId
-  val jarFile = loadingStrategy.findProductContentModuleClassesRoot(moduleId, moduleDir)
   val moduleRaw: PluginDescriptorBuilder = if (jarFile == null) {
     // do not log - the severity of the error is determined by the loadingStrategy, the default strategy does not return null at all
     PluginDescriptorBuilder.builder().apply {
@@ -1262,7 +1261,8 @@ internal fun loadDescriptorFromResource(
       loadContentModuleDescriptors(
         descriptor = descriptor,
         pathResolver = pathResolver,
-        libDir = libDir,
+        moduleDir = libDir.resolve("modules"),
+        useModuleDirAsParent = false,
         loadingContext = loadingContext,
         dataLoader = dataLoader,
         isRunningFromSourcesWithoutDevBuild = pathResolver.isRunningFromSourcesWithoutDevBuild,

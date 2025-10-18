@@ -312,6 +312,7 @@ class JarPackager private constructor(
 
     val packToDir = context.options.isUnpackedDist &&
                     !item.relativeOutputFile.contains('/') &&
+                    !item.isProductModule() &&
                     (patchedContent.isEmpty() || (patchedContent.size == 1 && patchedContent.containsKey("META-INF/plugin.xml"))) &&
                     extraExcludes.isEmpty() &&
                     moduleOutputRoots.isNotEmpty()
@@ -324,7 +325,7 @@ class JarPackager private constructor(
     }
     else {
       assets.computeIfAbsent(outFile) { file ->
-        createAssetDescriptor(relativeOutputFile = item.relativeOutputFile, targetFile = file)
+        AssetDescriptor(isDir = false, file = file, relativePath = item.relativeOutputFile, useCacheAsTargetFile = !item.isProductModule())
       }
     }
 
@@ -761,7 +762,7 @@ class JarPackager private constructor(
   }
 
   private fun getJarAsset(targetFile: Path, relativeOutputFile: String): AssetDescriptor = assets.computeIfAbsent(targetFile) {
-    createAssetDescriptor(targetFile = targetFile, relativeOutputFile = relativeOutputFile)
+    AssetDescriptor(isDir = false, file = targetFile, relativePath = relativeOutputFile)
   }
 }
 
@@ -1178,10 +1179,6 @@ private fun createModuleSource(module: JpsModule, outputDir: Path, excludes: Lis
     module.sourceRoots.any { !it.rootType.isForTests } -> error("Module ${module.name} output does not exist: $outputDir")
     else -> null
   }
-}
-
-private fun createAssetDescriptor(relativeOutputFile: String, targetFile: Path): AssetDescriptor {
-  return AssetDescriptor(isDir = false, file = targetFile, relativePath = relativeOutputFile)
 }
 
 private fun computeDistributionFileEntries(

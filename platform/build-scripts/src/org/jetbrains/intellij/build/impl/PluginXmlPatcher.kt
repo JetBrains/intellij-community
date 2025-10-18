@@ -78,7 +78,10 @@ internal suspend fun patchPluginXml(
     embedContentModules(
       xml = element,
       file = findFileInModuleSources(module = pluginModule, relativePath = "META-INF/plugin.xml")!!,
-      xIncludePathResolver = createXIncludePathResolver(plugin.includedModules.map { it.moduleName } + platformLayout.includedModules.map { it.moduleName }, context),
+      xIncludePathResolver = createXIncludePathResolver(
+        includedPlatformModulesPartialList = plugin.includedModules.asSequence().map { it.moduleName } + platformLayout.includedModules.asSequence().map { it.moduleName },
+        context = context,
+      ),
       layout = plugin,
       context = context,
     )

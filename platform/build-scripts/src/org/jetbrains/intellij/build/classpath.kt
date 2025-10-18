@@ -15,6 +15,8 @@ import org.jetbrains.intellij.build.impl.PluginLayout
 import org.jetbrains.intellij.build.impl.projectStructureMapping.CustomAssetEntry
 import org.jetbrains.intellij.build.impl.projectStructureMapping.DistributionFileEntry
 import org.jetbrains.intellij.build.impl.projectStructureMapping.ModuleOutputEntry
+import org.jetbrains.intellij.build.impl.projectStructureMapping.ModuleOwnedFileEntry
+import org.jetbrains.intellij.build.impl.projectStructureMapping.ProjectLibraryEntry
 import org.jetbrains.intellij.build.io.ZipEntryProcessorResult
 import org.jetbrains.intellij.build.io.readZipFile
 import java.io.ByteArrayOutputStream
@@ -26,7 +28,9 @@ import kotlin.io.path.relativeToOrSelf
 internal fun generateClassPathByLayoutReport(libDir: Path, entries: List<DistributionFileEntry>, skipNioFs: Boolean): Set<Path> {
   val classPath = LinkedHashSet<Path>()
   for (entry in entries) {
-    val file = entry.path
+    if (entry is ModuleOwnedFileEntry && entry.owner?.reason == ModuleIncludeReasons.PRODUCT_MODULES) {
+      continue
+    }
 
     // exclude files like ext/platform-main.jar - if a file in lib, take only direct children in an account
     if ((entry.relativeOutputFile ?: "").contains('/') && !(entry is ModuleOutputEntry && entry.reason == ModuleIncludeReasons.PRODUCT_EMBEDDED_MODULES)) {
@@ -47,6 +51,7 @@ internal fun generateClassPathByLayoutReport(libDir: Path, entries: List<Distrib
       }
     }
 
+    val file = entry.path
     val parent = file.parent
     if (parent == libDir) {
       val fileName = file.fileName.toString()

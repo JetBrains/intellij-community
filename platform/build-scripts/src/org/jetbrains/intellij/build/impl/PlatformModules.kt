@@ -1,5 +1,6 @@
 // Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 @file:Suppress("ReplaceJavaStaticMethodWithKotlinAnalog", "RedundantSuppression", "ReplaceGetOrSet")
+
 package org.jetbrains.intellij.build.impl
 
 import com.intellij.openapi.util.JDOMUtil
@@ -57,7 +58,7 @@ private val PLATFORM_CORE_MODULES = java.util.List.of(
   "intellij.platform.usageView",
   "intellij.platform.execution",
   "intellij.platform.kernel",
-  
+
   "intellij.platform.analysis.impl",
   "intellij.platform.diff.impl",
   "intellij.platform.editor.ex",
@@ -86,7 +87,6 @@ private val PLATFORM_CORE_MODULES = java.util.List.of(
 
   // do we need it?
   "intellij.platform.sqlite",
-  //"fleet.rpc.server",
   // todo not used by platform - move to plugin
   "intellij.platform.ide.designer",
   "intellij.platform.ide.remote",
@@ -148,7 +148,6 @@ internal suspend fun createPlatformLayout(projectLibrariesUsedByPlugins: SortedS
     "intellij.platform.util.trove",
     "intellij.platform.util.troveCompileOnly",
   ), productLayout = productLayout, layout = layout)
-  layout.withProjectLibrary(libraryName = "ion", jarName = UTIL_8_JAR)
 
   // maven uses JDOM in an external process
   addModule(UTIL_8_JAR, sequenceOf(
@@ -158,7 +157,7 @@ internal suspend fun createPlatformLayout(projectLibrariesUsedByPlugins: SortedS
     "intellij.platform.util.base",
     "intellij.platform.util.base.multiplatform",
     "intellij.platform.diagnostic",
-    // it contains common telemetry related code (utils, TelemetryContext) for OpenTelemetry
+    // it contains common telemetry-related code (utils, TelemetryContext) for OpenTelemetry
     "intellij.platform.diagnostic.telemetry.rt",
     "intellij.platform.util",
     "intellij.platform.util.multiplatform",
@@ -205,11 +204,6 @@ internal suspend fun createPlatformLayout(projectLibrariesUsedByPlugins: SortedS
     )
   }
 
-  //used as a transitive dependency in the 'proxy-vole' library and excluded from it, so needs to be included explicitly
-  layout.withProjectLibrary("rhino")
-
-  // used by intellij.database.jdbcConsole - put to a small util module
-  layout.withProjectLibrary(libraryName = "jbr-api", jarName = UTIL_JAR)
   // platform-loader.jar is loaded by JVM classloader as part of loading our custom PathClassLoader class - reduce file size
   addModule(PLATFORM_LOADER_JAR, sequenceOf(
     "intellij.platform.util.rt.java8",
@@ -268,14 +262,17 @@ internal suspend fun createPlatformLayout(projectLibrariesUsedByPlugins: SortedS
   val productPluginContentModules = processAndGetProductPluginContentModules(
     context = context,
     layout = layout,
-    includedPlatformModulesPartialList = (layout.includedModules.asSequence().map { it.moduleName } + computeImplicitRequiredModules(
-      explicit = explicitModuleNames,
-      layout = layout,
-      productPluginContentModules = emptySet(),
-      productLayout = productLayout,
-      context = context,
-      validateImplicitPlatformModule = false,
-    ).asSequence().map { it.first } + explicitModuleNames).toList(),
+    includedPlatformModulesPartialList = layout.includedModules.asSequence().map { it.moduleName } +
+                                         computeImplicitRequiredModules(
+                                           explicit = explicitModuleNames,
+                                           layout = layout,
+                                           productPluginContentModules = emptySet(),
+                                           productLayout = productLayout,
+                                           context = context,
+                                           validateImplicitPlatformModule = false,
+                                         ).asSequence().map { it.first } +
+                                         explicitModuleNames
+
   )
 
   val implicit = computeImplicitRequiredModules(
@@ -286,8 +283,21 @@ internal suspend fun createPlatformLayout(projectLibrariesUsedByPlugins: SortedS
     context = context,
     validateImplicitPlatformModule = context.options.validateImplicitPlatformModule,
   )
+
+  val filteredExplicit = LinkedHashSet(explicit)
+  for (item in productPluginContentModules) {
+    val iterator = filteredExplicit.iterator()
+    while (iterator.hasNext()) {
+      if (item.moduleName == iterator.next().moduleName) {
+        // todo - error instead of warn
+        Span.current().addEvent("product module MUST NOT BE explicitly specified: ${item.moduleName}")
+        iterator.remove()
+      }
+    }
+  }
+
   layout.withModules(
-    (explicit.asSequence() +
+    (filteredExplicit.asSequence() +
      productPluginContentModules +
      implicit.asSequence().map {
        ModuleItem(
@@ -324,11 +334,13 @@ internal suspend fun createPlatformLayout(projectLibrariesUsedByPlugins: SortedS
     }
 
     layout.includedProjectLibraries
-      .addOrGet(ProjectLibraryData(
-        libraryName = libName,
-        packMode = PLATFORM_CUSTOM_PACK_MODE.getOrDefault(libName, LibraryPackMode.MERGED),
-        reason = "<- ${module.name}",
-      ))
+      .addOrGet(
+        ProjectLibraryData(
+          libraryName = libName,
+          packMode = PLATFORM_CUSTOM_PACK_MODE.getOrDefault(libName, LibraryPackMode.MERGED),
+          reason = "<- ${module.name}",
+        )
+      )
       .dependentModules.computeIfAbsent("core") { mutableListOf() }.add(module.name)
   }
 
@@ -359,11 +371,11 @@ internal suspend fun createPlatformLayout(projectLibrariesUsedByPlugins: SortedS
  */
 fun collectExportedLibrariesFromLibraryModules(
   layout: PlatformLayout,
-  context: BuildContext
+  context: BuildContext,
 ): Map<String, String> {
   val javaExtensionService = JpsJavaExtensionService.getInstance()
   val result = mutableMapOf<String, String>()
-  
+
   layout.includedModules
     .asSequence()
     .filter { it.moduleName.startsWith(LIB_MODULE_PREFIX) }
@@ -382,7 +394,7 @@ fun collectExportedLibrariesFromLibraryModules(
           result[libName] = moduleItem.moduleName
         }
     }
-  
+
   return result
 }
 
@@ -544,7 +556,7 @@ private fun computeTransitive(
 private suspend fun processAndGetProductPluginContentModules(
   context: BuildContext,
   layout: PlatformLayout,
-  includedPlatformModulesPartialList: List<String>,
+  includedPlatformModulesPartialList: Sequence<String>,
 ): Set<ModuleItem> {
   val xIncludePathResolver = createXIncludePathResolver(includedPlatformModulesPartialList, context)
   return withContext(Dispatchers.IO) {
@@ -583,7 +595,7 @@ private val COMMUNITY_IMPL_EXTENSIONS = setOf(
   "/META-INF/community-extensions.xml"
 )
 
-fun createXIncludePathResolver(includedPlatformModulesPartialList: List<String>, context: BuildContext): XIncludePathResolver {
+fun createXIncludePathResolver(includedPlatformModulesPartialList: Sequence<String>, context: BuildContext): XIncludePathResolver {
   return object : XIncludePathResolver {
     override fun resolvePath(relativePath: String, base: Path?, isOptional: Boolean, isDynamic: Boolean): Path? {
       if ((isOptional || isDynamic || excludedPaths.contains(relativePath)) && !COMMUNITY_IMPL_EXTENSIONS.contains(relativePath)) {
@@ -607,7 +619,7 @@ fun createXIncludePathResolver(includedPlatformModulesPartialList: List<String>,
         }
       }
 
-      for (module in includedPlatformModulesPartialList) {
+      for (module in includedPlatformModulesPartialList.distinct()) {
         findFileInModuleSources(context.findRequiredModule(module), loadPath)?.let {
           return it
         }
@@ -680,29 +692,24 @@ private suspend fun collectAndEmbedProductModules(root: Element, xIncludePathRes
     }
 
     val isEmbedded = loadingRule == "embedded"
-    val relativeOutFile = if (isEmbedded) {
-      if (isModuleCloseSource(moduleName, context = context)) {
-        if (frontendModuleFilter.isBackendModule(moduleName)) PRODUCT_BACKEND_JAR else PRODUCT_JAR
-      }
-      else {
-        // todo Change location after feature-freeze (and maybe by that time, https://youtrack.jetbrains.com/issue/IJPL-209476/extract-core-out-of-core will be ready).
-        // Using `modules` before release is not a safe option.
-        "module-$moduleName.jar"
-      }
+    val relativeOutFile = if (isEmbedded && isModuleCloseSource(moduleName, context = context)) {
+      if (frontendModuleFilter.isBackendModule(moduleName)) PRODUCT_BACKEND_JAR else PRODUCT_JAR
     }
     else {
-      "modules/$moduleName.jar"
+      "$moduleName.jar"
     }
 
     // Extract module set from parent <content> element's source-file attribute
     val contentElement = moduleElement.parentElement
     val moduleSet = contentElement?.getAttributeValue(SOURCE_FILE_ATTRIBUTE)?.removeSuffix(".xml")
-    result.add(ModuleItem(
-      moduleName = moduleName,
-      relativeOutputFile = relativeOutFile,
-      reason = if (isEmbedded) ModuleIncludeReasons.PRODUCT_EMBEDDED_MODULES else ModuleIncludeReasons.PRODUCT_MODULES,
-      moduleSet = moduleSet,
-    ))
+    result.add(
+      ModuleItem(
+        moduleName = moduleName,
+        relativeOutputFile = relativeOutFile,
+        reason = if (isEmbedded) ModuleIncludeReasons.PRODUCT_EMBEDDED_MODULES else ModuleIncludeReasons.PRODUCT_MODULES,
+        moduleSet = moduleSet,
+      )
+    )
     PRODUCT_MODULE_IMPL_COMPOSITION.get(moduleName)?.let {
       it.mapTo(result) { subModuleName ->
         ModuleItem(moduleName = subModuleName, relativeOutputFile = relativeOutFile, reason = ModuleIncludeReasons.PRODUCT_MODULES, moduleSet = moduleSet)
@@ -723,11 +730,11 @@ private suspend fun collectAndEmbedProductModules(root: Element, xIncludePathRes
 @Suppress("RemoveRedundantQualifierName")
 private val PRODUCT_MODULE_IMPL_COMPOSITION = java.util.Map.of(
   "intellij.rider", listOf(
-    "intellij.platform.debugger.modulesView"
-  ),
+  "intellij.platform.debugger.modulesView"
+),
   "intellij.platform.rpc.backend", listOf(
-    "fleet.rpc.server",
-  )
+  "fleet.rpc.server",
+)
 )
 
 internal object ModuleIncludeReasons {
