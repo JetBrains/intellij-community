@@ -201,16 +201,16 @@ class AsyncDocumentFormattingSupportImpl(private val service: AsyncDocumentForma
           val formattedText = withTimeout(timeout) {
             taskResult.await()
           } ?: return@launch
-          withContext(if (isSync) taskDispatcher else EmptyCoroutineContext) {
-            if (ApplicationManager.getApplication().isWriteAccessAllowed()) {
+          if (isSync) {
+            withContext(taskDispatcher) {
               updateDocument(formattedText)
             }
-            else {
-              withContext(Dispatchers.EDT) {
-                CommandProcessor.getInstance().runUndoTransparentAction {
-                  WriteAction.run<Throwable> {
-                    updateDocument(formattedText)
-                  }
+          }
+          else {
+            withContext(Dispatchers.EDT) {
+              CommandProcessor.getInstance().runUndoTransparentAction {
+                WriteAction.run<Throwable> {
+                  updateDocument(formattedText)
                 }
               }
             }
