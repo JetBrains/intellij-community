@@ -8,7 +8,6 @@ import com.intellij.codeInsight.lookup.LookupElement
 import com.intellij.util.ThreeState
 import kotlinx.serialization.Serializable
 
-@Suppress("NonDefaultConstructor")
 @Serializable
 class FrontendFriendlyParenthesesInsertHandler(
   private val hasParameters: Boolean

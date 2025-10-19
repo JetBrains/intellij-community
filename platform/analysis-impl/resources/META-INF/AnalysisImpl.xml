@@ -24,7 +24,7 @@
     <extensionPoint name="daemon.highlightInfoFilter" interface="com.intellij.codeInsight.daemon.impl.HighlightInfoFilter" dynamic="true"/>
     <extensionPoint name="daemon.intentionActionFilter" interface="com.intellij.codeInsight.daemon.impl.IntentionActionFilter" dynamic="true"/>
     <extensionPoint name="completion.frontendFriendlyInsertHandler" beanClass="com.intellij.codeInsight.completion.FrontendFriendlyInsertHandlerSerializerBean" dynamic="true">
-      <with attribute="implementationClass" implements="com.intellij.codeInsight.completion.FrontendFriendlyInsertHandler"/>
+      <with attribute="handler" implements="com.intellij.codeInsight.completion.FrontendFriendlyInsertHandler"/>
     </extensionPoint>
   </extensionPoints>
   <extensions defaultExtensionNs="com.intellij">
@@ -95,8 +95,9 @@
     <daemon.highlightInfoFilter implementation="com.intellij.codeInsight.daemon.SyntheticPsiFileSupport$HighlightFilter"/>
     <daemon.intentionActionFilter implementation="com.intellij.codeInsight.daemon.SyntheticPsiFileSupport$IntentionFilter"/>
     <completion.frontendFriendlyInsertHandler
-      implementationClass="com.intellij.codeInsight.completion.CompositeFrontendFriendlyInsertHandler"/>
+      handler="com.intellij.codeInsight.completion.CompositeFrontendFriendlyInsertHandler"/>
+    <!--suppress KotlinObjectExtensionRegistration -->
     <completion.frontendFriendlyInsertHandler
-      implementationClass="com.intellij.codeInsight.completion.NoOpFrontendFriendlyInsertHandler"/>
+      handler="com.intellij.codeInsight.completion.NoOpFrontendFriendlyInsertHandler"/>
   </extensions>
 </idea-plugin>

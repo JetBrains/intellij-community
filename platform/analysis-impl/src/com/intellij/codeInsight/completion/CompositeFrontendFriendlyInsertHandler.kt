@@ -17,7 +17,6 @@ import org.jetbrains.annotations.ApiStatus
  *
  * @see FrontendFriendlyInsertHandler
  */
-@Suppress("NonDefaultConstructor")
 @ApiStatus.Internal
 @Serializable
 data class CompositeFrontendFriendlyInsertHandler(

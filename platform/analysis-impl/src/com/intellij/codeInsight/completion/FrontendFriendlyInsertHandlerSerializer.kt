@@ -61,7 +61,7 @@ private fun <T : FrontendFriendlyInsertHandler> findSerializer(fqn: String): KSe
 private val ep_name = ExtensionPointName<FrontendFriendlyInsertHandlerSerializerBean>("com.intellij.completion.frontendFriendlyInsertHandler")
 
 internal class FrontendFriendlyInsertHandlerSerializerBean : BaseKeyedLazyInstance<KSerializer<Any>>(), KeyedLazyInstance<KSerializer<Any>> {
-  @Attribute("implementationClass")
+  @Attribute("handler")
   @RequiredElement
   @JvmField
   var implementationClass: String? = null
