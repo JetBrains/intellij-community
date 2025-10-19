@@ -2,7 +2,6 @@
 package com.intellij.util.singleProduct
 
 import com.intellij.idea.AppMode
-import com.intellij.idea.AppModeAssertions
 import com.intellij.internal.InternalActionsBundle
 import com.intellij.internal.statistic.eventLog.EventLogGroup
 import com.intellij.internal.statistic.eventLog.events.EventId
@@ -49,9 +48,8 @@ private const val MIGRATION_FILE_MARKER = ".ce_migration_attempted"
 @ApiStatus.Internal
 fun migrateCommunityToSingleProductIfNeeded(args: List<String>) {
   if (
-    OS.CURRENT != OS.macOS ||
     !(PlatformUtils.isIdeaUltimate() || @Suppress("DEPRECATION") PlatformUtils.isPyCharmPro()) ||
-    isRemDev()
+    AppMode.isRemoteDevHost()
   ) return
 
   val currentDir = PathManager.getHomeDir().parent
@@ -59,10 +57,7 @@ fun migrateCommunityToSingleProductIfNeeded(args: List<String>) {
   val newDirName = currentDirName.replace(" CE", "").replace(" Community Edition", "")
   if (newDirName == currentDirName) return
 
-  val newDir = currentDir.resolveSibling(newDirName)
-  if (Files.exists(newDir)) return
-
-  // a marker file is used because standard storage is unavailable at this early startup stage
+  // a marker file is used because standard storage is unavailable at this early startup stage (used later to trigger the Vision page)
   val migrationAttemptMarker = PathManager.getConfigDir().resolve(MIGRATION_FILE_MARKER)
   try {
     Files.writeString(migrationAttemptMarker, "", StandardOpenOption.CREATE_NEW)
@@ -71,6 +66,11 @@ fun migrateCommunityToSingleProductIfNeeded(args: List<String>) {
     return
   }
 
+  if (!(OS.CURRENT == OS.macOS && currentDirName.endsWith(".app"))) return
+
+  val newDir = currentDir.resolveSibling(newDirName)
+  if (Files.exists(newDir)) return
+
   val renameCommand = listOf("/bin/mv", "-n", currentDir.toString(), newDir.toString())
   val startCommand = listOf(newDir.resolve("Contents/MacOS/${ApplicationNamesInfo.getInstance().scriptName}").toString()) + args
   Restarter.setMainAppArgs(args)  // fallback if the rename fails
@@ -78,10 +78,7 @@ fun migrateCommunityToSingleProductIfNeeded(args: List<String>) {
   exitProcess(0)
 }
 
-private fun isRemDev(): Boolean = AppMode.isRemoteDevHost() || AppModeAssertions.isFrontend()
-
-private const val VISION_URL_MARKER = "\$__VISION_PAGE_SETTINGS_MEDIA_BASE_PATH__\$"
-
+private const val VISION_URL_MARKER = $$"$__VISION_PAGE_SETTINGS_MEDIA_BASE_PATH__$"
 private const val VISION_RESOURCE_PACKAGE_PREFIX = "migration"
 
 @ApiStatus.Internal
@@ -98,7 +95,7 @@ class MigrationStartupActivity : ProjectActivity {
 
   @OptIn(ExperimentalSerializationApi::class)
   override suspend fun execute(project: Project) {
-    if (!PlatformUtils.isIdeaUltimate() && !PlatformUtils.isPyCharmPro() || isRemDev()) {
+    if (!PlatformUtils.isIdeaUltimate() && @Suppress("DEPRECATION") !PlatformUtils.isPyCharmPro() || AppMode.isRemoteDevHost()) {
       return
     }
     val migrationAttemptMarker = PathManager.getConfigDir().resolve(MIGRATION_FILE_MARKER)
@@ -174,7 +171,7 @@ class MigrationStartupActivity : ProjectActivity {
 
 @ApiStatus.Internal
 private object MigrateToSingleProductCollector : CounterUsagesCollector() {
-  private val GROUP = EventLogGroup("migrate.to.single.product", 1)
+  private val GROUP = @Suppress("DEPRECATION") EventLogGroup("migrate.to.single.product", 1)
 
   @JvmField
   val WELCOME_PAGE_SHOWN: EventId = GROUP.registerEvent("vision.page.shown", "How many times button on welcome vision page was shown after patch update to SID")
