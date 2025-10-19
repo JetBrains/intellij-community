@@ -96,5 +96,7 @@
     <daemon.intentionActionFilter implementation="com.intellij.codeInsight.daemon.SyntheticPsiFileSupport$IntentionFilter"/>
     <completion.frontendFriendlyInsertHandler
       implementationClass="com.intellij.codeInsight.completion.CompositeFrontendFriendlyInsertHandler"/>
+    <completion.frontendFriendlyInsertHandler
+      implementationClass="com.intellij.codeInsight.completion.NoOpFrontendFriendlyInsertHandler"/>
   </extensions>
 </idea-plugin>
