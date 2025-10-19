@@ -69,7 +69,7 @@ class PackageDirectoryMismatchInspection : AbstractKotlinInspection() {
                 fixes += ChangePackageFix("'${fqNameWithImplicitPrefix.asString()}'", fqNameWithImplicitPrefix)
             }
 
-            val element = if (directive.textLength != 0) directive else (file.declarations.firstOrNull() ?: file)
+            val element = if (directive.textLength != 0) directive else file
             holder.registerProblem(
                 element,
               KotlinBundle.message("text.package.directive.dont.match.file.location"),

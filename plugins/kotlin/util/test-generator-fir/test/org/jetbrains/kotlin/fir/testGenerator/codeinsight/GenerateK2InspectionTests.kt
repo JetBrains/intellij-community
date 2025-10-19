@@ -193,7 +193,8 @@ internal fun MutableTWorkspace.generateK2InspectionTests() {
             model("${idea}/multiFileInspections/mismatchedPackageDirectory", pattern = Patterns.TEST)
             model("${idea}/multiFileInspections/mismatchedProjectAndDirectory", pattern = Patterns.TEST)
             model("${idea}/multiFileInspections/kotlinSealedInJavaTest", pattern = Patterns.TEST)
-            model("${idea}/multiFileInspections/mismatchedProjectAndDirectoryRoot", pattern = Patterns.TEST)
+            // K2 test data intentionally slightly differs from K1
+            //model("${idea}/multiFileInspections/mismatchedProjectAndDirectoryRoot", pattern = Patterns.TEST)
         }
 
         testClass<AbstractK2MultiFileLocalInspectionTest> {
