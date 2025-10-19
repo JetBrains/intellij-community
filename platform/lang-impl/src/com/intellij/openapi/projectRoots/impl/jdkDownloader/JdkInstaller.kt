@@ -415,7 +415,7 @@ abstract class JdkInstallerBase {
   }
 
   private val myLock = ReentrantLock()
-  private val myPendingDownloads = HashMap<JdkItem, PendingJdkRequest>()
+  private val myPendingDownloads = HashMap<JdkItemByEnvironmentKey, PendingJdkRequest>()
 
   /**
    * Checks if we already have the requested JDK or the download is already running.
@@ -438,7 +438,7 @@ abstract class JdkInstallerBase {
 
     if (Registry.`is`("jdk.downloader.reuse.downloading")) {
       return myLock.withLock {
-        myPendingDownloads.computeIfAbsent(jdkItem) { prepareJdkInstallationImpl(jdkItem, targetPath) }
+        myPendingDownloads.computeIfAbsent(jdkItem on targetPath.getEelDescriptor()) { prepareJdkInstallationImpl(jdkItem, targetPath) }
       }
     } else {
       return prepareJdkInstallationDirect(jdkItem, targetPath)
@@ -555,6 +555,12 @@ abstract class JdkInstallerBase {
   protected open fun findHistoryRoots(feedItem: JdkItem): List<Path> = listOf()
   protected open fun wslDistributionFromPath(targetDir: Path) : OsAbstractionForJdkInstaller.Wsl? = null
   protected open fun eelFromPath(targetDir: Path): OsAbstractionForJdkInstaller.Eel? = null
+
+  private data class JdkItemByEnvironmentKey(val jdkItem: JdkItem, val eelDescriptor: EelDescriptor)
+
+  companion object {
+    private infix fun JdkItem.on(eelDescriptor: EelDescriptor) = JdkItemByEnvironmentKey(this, eelDescriptor)
+  }
 }
 
 private data class PendingJdkRequest(
