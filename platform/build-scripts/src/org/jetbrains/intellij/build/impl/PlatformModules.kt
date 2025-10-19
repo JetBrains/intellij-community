@@ -288,7 +288,7 @@ internal suspend fun createPlatformLayout(projectLibrariesUsedByPlugins: SortedS
   for (item in productPluginContentModules) {
     val iterator = filteredExplicit.iterator()
     while (iterator.hasNext()) {
-      if (item.moduleName == iterator.next().moduleName) {
+      if (item.moduleName == iterator.next().moduleName && !PRODUCT_MODULE_IMPL_COMPOSITION.values.any { it.contains(item.moduleName) }) {
         // todo - error instead of warn
         Span.current().addEvent("product module MUST NOT BE explicitly specified: ${item.moduleName}")
         iterator.remove()
@@ -710,10 +710,12 @@ private suspend fun collectAndEmbedProductModules(root: Element, xIncludePathRes
         moduleSet = moduleSet,
       )
     )
-    PRODUCT_MODULE_IMPL_COMPOSITION.get(moduleName)?.let {
-      it.mapTo(result) { subModuleName ->
-        ModuleItem(moduleName = subModuleName, relativeOutputFile = relativeOutFile, reason = ModuleIncludeReasons.PRODUCT_MODULES, moduleSet = moduleSet)
-      }
+    PRODUCT_MODULE_IMPL_COMPOSITION.get(moduleName)?.let { list ->
+      list
+        .filter { !context.productProperties.productLayout.productImplementationModules.contains(it) }
+        .mapTo(result) { subModuleName ->
+          ModuleItem(moduleName = subModuleName, relativeOutputFile = relativeOutFile, reason = ModuleIncludeReasons.PRODUCT_MODULES, moduleSet = moduleSet)
+        }
     }
 
     check(moduleElement.content.isEmpty())
