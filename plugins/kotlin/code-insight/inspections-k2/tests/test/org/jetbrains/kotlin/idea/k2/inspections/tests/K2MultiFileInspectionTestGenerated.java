@@ -94,23 +94,4 @@ public abstract class K2MultiFileInspectionTestGenerated extends AbstractK2Multi
             runTest("../../../idea/tests/testData/multiFileInspections/kotlinSealedInJavaTest/kotlinSealedInJavaTest.test");
         }
     }
-
-    @RunWith(JUnit3RunnerWithInners.class)
-    @TestMetadata("../../../idea/tests/testData/multiFileInspections/mismatchedProjectAndDirectoryRoot")
-    public static class MismatchedProjectAndDirectoryRoot extends AbstractK2MultiFileInspectionTest {
-        @java.lang.Override
-        @org.jetbrains.annotations.NotNull
-        public final KotlinPluginMode getPluginMode() {
-            return KotlinPluginMode.K2;
-        }
-
-        private void runTest(String testDataFilePath) throws Exception {
-            KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
-        }
-
-        @TestMetadata("mismatchedProjectAndDirectoryRoot.test")
-        public void testMismatchedProjectAndDirectoryRoot() throws Exception {
-            runTest("../../../idea/tests/testData/multiFileInspections/mismatchedProjectAndDirectoryRoot/mismatchedProjectAndDirectoryRoot.test");
-        }
-    }
 }
