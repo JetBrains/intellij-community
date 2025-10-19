@@ -4741,37 +4741,37 @@ jvm_import(
 
 jvm_import(
   name = "kotlinx-serialization-cbor",
-  jar = "@org_jetbrains_kotlinx-kotlinx-serialization-cbor-jvm-1_8_1_http//file",
-  source_jar = "@org_jetbrains_kotlinx-kotlinx-serialization-cbor-jvm-1_8_1_http//file",
+  jar = "@org_jetbrains_kotlinx-kotlinx-serialization-cbor-jvm-1_9_0_http//file",
+  source_jar = "@org_jetbrains_kotlinx-kotlinx-serialization-cbor-jvm-1_9_0_http//file",
   visibility = ["//visibility:public"]
 )
 
 jvm_import(
   name = "kotlinx-serialization-core",
-  jar = "@org_jetbrains_kotlinx-kotlinx-serialization-core-jvm-1_8_1_http//file",
-  source_jar = "@org_jetbrains_kotlinx-kotlinx-serialization-core-jvm-1_8_1_http//file",
+  jar = "@org_jetbrains_kotlinx-kotlinx-serialization-core-jvm-1_9_0_http//file",
+  source_jar = "@org_jetbrains_kotlinx-kotlinx-serialization-core-jvm-1_9_0_http//file",
   exported_compiler_plugins = ["@lib//:kotlin-serialization-plugin"],
   visibility = ["//visibility:public"]
 )
 
 jvm_import(
   name = "kotlinx-serialization-json",
-  jar = "@org_jetbrains_kotlinx-kotlinx-serialization-json-jvm-1_8_1_http//file",
-  source_jar = "@org_jetbrains_kotlinx-kotlinx-serialization-json-jvm-1_8_1_http//file",
+  jar = "@org_jetbrains_kotlinx-kotlinx-serialization-json-jvm-1_9_0_http//file",
+  source_jar = "@org_jetbrains_kotlinx-kotlinx-serialization-json-jvm-1_9_0_http//file",
   visibility = ["//visibility:public"]
 )
 
 jvm_import(
   name = "kotlinx-serialization-json-io",
-  jar = "@org_jetbrains_kotlinx-kotlinx-serialization-json-io-jvm-1_8_1_http//file",
-  source_jar = "@org_jetbrains_kotlinx-kotlinx-serialization-json-io-jvm-1_8_1_http//file",
+  jar = "@org_jetbrains_kotlinx-kotlinx-serialization-json-io-jvm-1_9_0_http//file",
+  source_jar = "@org_jetbrains_kotlinx-kotlinx-serialization-json-io-jvm-1_9_0_http//file",
   visibility = ["//visibility:public"]
 )
 
 jvm_import(
   name = "kotlinx-serialization-protobuf",
-  jar = "@org_jetbrains_kotlinx-kotlinx-serialization-protobuf-jvm-1_8_1_http//file",
-  source_jar = "@org_jetbrains_kotlinx-kotlinx-serialization-protobuf-jvm-1_8_1_http//file",
+  jar = "@org_jetbrains_kotlinx-kotlinx-serialization-protobuf-jvm-1_9_0_http//file",
+  source_jar = "@org_jetbrains_kotlinx-kotlinx-serialization-protobuf-jvm-1_9_0_http//file",
   visibility = ["//visibility:public"]
 )
 
