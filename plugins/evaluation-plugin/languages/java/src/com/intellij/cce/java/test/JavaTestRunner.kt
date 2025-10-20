@@ -35,7 +35,8 @@ class JavaTestRunner : TestRunner {
       }
       .groupBy { it.first }
       .map {
-        ModuleTests(it.key, it.value
+        val module = if(it.key == "src") null else it.key
+        ModuleTests(module, it.value
           .map { it.second }
           .filter { it != "gradle_test_execution" })   // just a command to run all the tests (no specific)
       }
