@@ -1,4 +1,4 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package git4idea.branch
 
 import com.intellij.dvcs.repo.Repository
@@ -30,12 +30,8 @@ import git4idea.repo.GitBranchTrackInfo
 import git4idea.repo.GitTagHolder
 import git4idea.test.MockGitRepository
 import git4idea.test.MockGitRepositoryModel
-import git4idea.ui.branch.dashboard.BRANCHES_UI_CONTROLLER
-import git4idea.ui.branch.dashboard.BranchNodeDescriptor
-import git4idea.ui.branch.dashboard.BranchesDashboardActions
+import git4idea.ui.branch.dashboard.*
 import git4idea.ui.branch.dashboard.BranchesDashboardActions.BranchActionsBuilder
-import git4idea.ui.branch.dashboard.BranchesDashboardTreeController
-import git4idea.ui.branch.dashboard.BranchesTreeSelection
 import git4idea.ui.branch.dashboard.BranchesTreeSelection.Companion.getSelectedRepositories
 import org.mockito.Mockito
 import javax.swing.tree.TreePath
@@ -68,6 +64,7 @@ class GitBranchesTreeActionsForSelectionTest : GitBranchesTreeTest() {
       isEnabledAndVisible<GitMergeRefAction>(),
       isEnabledAndVisible<GitUpdateSelectedBranchAction>(),
       isEnabledAndVisible<GitPushBranchAction>(),
+      isEnabledAndVisible<GitTrackedBranchActionGroup>(),
       isEnabledAndVisible<GitRenameBranchAction>(),
       isEnabledAndVisible<GitDeleteRefAction>(),
     ))
@@ -82,6 +79,7 @@ class GitBranchesTreeActionsForSelectionTest : GitBranchesTreeTest() {
       isEnabledAndVisible<GitShowDiffWithRefAction>(),
       isEnabledAndVisible<GitUpdateSelectedBranchAction>(),
       isEnabledAndVisible<GitPushBranchAction>(),
+      isEnabledAndVisible<GitTrackedBranchActionGroup>(),
       isEnabledAndVisible<GitRenameBranchAction>(),
     ))
   }
@@ -232,6 +230,7 @@ class GitBranchesTreeActionsForSelectionTest : GitBranchesTreeTest() {
 
   private fun GitBranchesTreeTestContext.expandAction(action: AnAction): List<AnAction> {
     return when (action) {
+      is GitTrackedBranchActionGroup -> listOf(action)
       is Separator -> emptyList()
       is ActionGroup -> action.getChildren(simpleEvent()).flatMap { expandAction(it) }
       else -> listOf(action)
