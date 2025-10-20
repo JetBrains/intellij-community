@@ -78,6 +78,8 @@
     <postStartupActivity implementation="com.jetbrains.python.poetry.PoetryPyProjectTomlPostStartupActivity"/>
 
     <virtualFileCustomDataProvider implementation="com.jetbrains.python.psi.PyLangLevelVirtualFileCustomDataProvider"/>
+    <statistics.counterUsagesCollector implementationClass="com.jetbrains.python.run.features.PyRunToolUsageCollector"/>
+    <statistics.validation.customValidationRule implementation="com.jetbrains.python.run.features.PyRunToolIdValidator"/>
   </extensions>
 
   <extensions defaultExtensionNs="com.intellij.python.pyproject.model">
