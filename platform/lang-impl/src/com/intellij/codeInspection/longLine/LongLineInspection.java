@@ -1,4 +1,4 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInspection.longLine;
 
 import com.intellij.application.options.CodeStyle;
@@ -38,20 +38,19 @@ public final class LongLineInspection extends LocalInspectionTool {
   public @NotNull PsiElementVisitor buildVisitor(@NotNull ProblemsHolder holder, boolean isOnTheFly, @NotNull LocalInspectionToolSession session) {
     final PsiFile file = holder.getFile();
     if (InjectedLanguageManager.getInstance(file.getProject()).getInjectionHost(file) != null) return PsiElementVisitor.EMPTY_VISITOR;
-
     final Document document = file.getViewProvider().getDocument();
     if (document == null) return PsiElementVisitor.EMPTY_VISITOR;
 
-    final CodeStyleSettings codeStyleSettings = CodeStyle.getSettings(file);
-    final int codeStyleRightMargin = codeStyleSettings.getRightMargin(file.getLanguage());
-    final int tabSize = codeStyleSettings.getTabSize(file.getFileType());
-    final TextRange restrictRange = session.getRestrictRange();
-    final CharSequence text = document.getImmutableCharSequence();
-    final int lineCount = document.getLineCount();
     return new PsiElementVisitor() {
 
       @Override
       public void visitFile(@NotNull PsiFile psiFile) {
+        final CodeStyleSettings codeStyleSettings = CodeStyle.getSettings(file);
+        final int codeStyleRightMargin = codeStyleSettings.getRightMargin(file.getLanguage());
+        final int tabSize = codeStyleSettings.getTabSize(file.getFileType());
+        final TextRange restrictRange = session.getRestrictRange();
+        final CharSequence text = document.getImmutableCharSequence();
+        final int lineCount = document.getLineCount();
         final TextRange range = restrictRange.intersection(psiFile.getTextRange());
         if (range == null || range.isEmpty()) return;
 
