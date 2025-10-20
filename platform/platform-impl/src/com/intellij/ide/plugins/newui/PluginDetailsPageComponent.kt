@@ -24,6 +24,7 @@ import com.intellij.openapi.application.ModalityState
 import com.intellij.openapi.application.asContextElement
 import com.intellij.openapi.application.impl.ApplicationInfoImpl
 import com.intellij.openapi.components.service
+import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.extensions.PluginId
 import com.intellij.openapi.progress.runBlockingCancellable
 import com.intellij.openapi.project.Project
@@ -177,7 +178,13 @@ class PluginDetailsPageComponent @JvmOverloads constructor(
 
   init {
     nameAndButtons = BaselinePanel(12, false)
-    customizer = getPluginsViewCustomizer().getPluginDetailsCustomizer(pluginModel.getModel())
+    customizer = try {
+      getPluginsViewCustomizer().getPluginDetailsCustomizer(pluginModel.getModel())
+    }
+    catch (e: Exception) {
+      LOG.error("Error while getting plugin details customizer", e)
+      NoOpPluginsViewCustomizer.getPluginDetailsCustomizer(pluginModel.getModel())
+    }
     pluginManagerCustomizer = PluginManagerCustomizer.getInstance()
 
     createPluginPanel()
@@ -186,6 +193,8 @@ class PluginDetailsPageComponent @JvmOverloads constructor(
   }
 
   companion object {
+    private val LOG = logger<PluginDetailsPageComponent>()
+
     @JvmStatic
     fun createDescriptionComponent(imageViewHandler: Consumer<in View>?): JEditorPane {
       val kit = HTMLEditorKitBuilder().withViewFactoryExtensions({ e, view ->
@@ -460,7 +469,12 @@ class PluginDetailsPageComponent @JvmOverloads constructor(
       component.background = PluginManagerConfigurable.MAIN_BG_COLOR
     }
 
-    customizer.processPluginNameAndButtonsComponent(nameAndButtons)
+    try {
+      customizer.processPluginNameAndButtonsComponent(nameAndButtons)
+    }
+    catch (e: Exception) {
+      LOG.error("Error during PluginDetailsPage customization", e)
+    }
   }
 
   fun setOnlyUpdateMode() {
@@ -893,7 +907,12 @@ class PluginDetailsPageComponent @JvmOverloads constructor(
     }
 
     if (plugin != null) {
-      customizer.processShowPlugin(plugin!!.getDescriptor())
+      try {
+        customizer.processShowPlugin(plugin!!.getDescriptor())
+      }
+      catch (e: Exception) {
+        LOG.error("Error during processShowPlugin() customization", e)
+      }
     }
 
     mySuggestedIdeBanner.suggestIde(suggestedCommercialIde, plugin!!.pluginId)
