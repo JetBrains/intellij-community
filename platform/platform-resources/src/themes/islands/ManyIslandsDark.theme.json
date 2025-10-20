@@ -249,8 +249,8 @@
     },
 
     "Button": {
-      "startBackground": "PanelBackground",
-      "endBackground": "PanelBackground",
+      "startBackground": "#00000000",
+      "endBackground": "#00000000",
       "default.foreground": "#ffffff"
     },
 
@@ -687,6 +687,8 @@
 
       "ToolWindow.Header.inactiveBackground": "#212326",
       "ToolWindow.background": "#212326"
-    }
+    },
+
+    "AlertDialog.background": "PopupBackground"
   }
 }
