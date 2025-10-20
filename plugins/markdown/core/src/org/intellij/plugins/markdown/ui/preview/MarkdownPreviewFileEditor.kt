@@ -136,6 +136,7 @@ class MarkdownPreviewFileEditor(
   fun setMainEditor(editor: Editor) {
     check(mainEditor.value == null)
     mainEditor.value = editor
+    logger.info("MarkdownPreviewFileEditor: the main editor has been set")
     if (Registry.`is`("markdown.experimental.boundary.precise.scroll.enable")) {
       coroutineScope.launch { setupScrollHelper() }
     }
