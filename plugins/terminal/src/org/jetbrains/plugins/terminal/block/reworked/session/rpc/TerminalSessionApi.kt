@@ -8,8 +8,8 @@ import fleet.rpc.remoteApiDescriptor
 import kotlinx.coroutines.channels.SendChannel
 import kotlinx.coroutines.flow.Flow
 import org.jetbrains.annotations.ApiStatus
-import org.jetbrains.plugins.terminal.session.TerminalInputEvent
-import org.jetbrains.plugins.terminal.session.TerminalOutputEvent
+import org.jetbrains.plugins.terminal.session.impl.TerminalInputEvent
+import org.jetbrains.plugins.terminal.session.impl.TerminalOutputEvent
 
 @ApiStatus.Internal
 @Rpc

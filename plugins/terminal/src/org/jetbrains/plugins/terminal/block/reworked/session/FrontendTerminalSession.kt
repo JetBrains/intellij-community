@@ -10,10 +10,10 @@ import kotlinx.coroutines.flow.onEach
 import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.plugins.terminal.block.reworked.session.rpc.TerminalSessionApi
 import org.jetbrains.plugins.terminal.block.reworked.session.rpc.TerminalSessionId
-import org.jetbrains.plugins.terminal.session.TerminalInputEvent
-import org.jetbrains.plugins.terminal.session.TerminalOutputEvent
-import org.jetbrains.plugins.terminal.session.TerminalSession
-import org.jetbrains.plugins.terminal.session.TerminalSessionTerminatedEvent
+import org.jetbrains.plugins.terminal.session.impl.TerminalInputEvent
+import org.jetbrains.plugins.terminal.session.impl.TerminalOutputEvent
+import org.jetbrains.plugins.terminal.session.impl.TerminalSession
+import org.jetbrains.plugins.terminal.session.impl.TerminalSessionTerminatedEvent
 
 /**
  * [TerminalSession] implementation that is delegating the methods to [TerminalSessionApi] RPC to backend.

@@ -18,7 +18,7 @@ import org.jetbrains.plugins.terminal.block.prompt.TerminalPromptState
 import org.jetbrains.plugins.terminal.block.session.ShellCommandOutputScraperImpl
 import org.jetbrains.plugins.terminal.block.session.StyledCommandOutput
 import org.jetbrains.plugins.terminal.block.ui.normalize
-import org.jetbrains.plugins.terminal.session.StyleRange
+import org.jetbrains.plugins.terminal.session.impl.StyleRange
 
 internal class ShellPromptRenderer(
   private val colorPalette: TerminalColorPalette,

@@ -1,5 +1,5 @@
 // Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
-package org.jetbrains.plugins.terminal.session.dto
+package org.jetbrains.plugins.terminal.session.impl.dto
 
 import com.intellij.execution.filters.HyperlinkInfo
 import com.intellij.execution.impl.InlayProvider
@@ -10,7 +10,7 @@ import com.intellij.openapi.editor.markup.TextAttributes
 import kotlinx.serialization.Serializable
 import kotlinx.serialization.Transient
 import org.jetbrains.annotations.ApiStatus
-import org.jetbrains.plugins.terminal.session.*
+import org.jetbrains.plugins.terminal.session.impl.*
 
 @ApiStatus.Internal
 @Serializable

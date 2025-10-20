@@ -5,7 +5,7 @@ import com.intellij.execution.filters.HyperlinkInfo
 import com.intellij.openapi.components.service
 import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.plugins.terminal.block.reworked.session.rpc.TerminalSessionId
-import org.jetbrains.plugins.terminal.session.TerminalHyperlinkId
+import org.jetbrains.plugins.terminal.session.impl.TerminalHyperlinkId
 import java.awt.event.MouseEvent
 
 /**

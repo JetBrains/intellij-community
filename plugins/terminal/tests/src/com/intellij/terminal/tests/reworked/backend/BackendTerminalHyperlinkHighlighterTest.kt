@@ -24,7 +24,7 @@ import org.assertj.core.api.Assertions.assertThat
 import org.jetbrains.plugins.terminal.block.reworked.TerminalOffset
 import org.jetbrains.plugins.terminal.block.reworked.TerminalOutputModel
 import org.jetbrains.plugins.terminal.block.reworked.updateContent
-import org.jetbrains.plugins.terminal.session.*
+import org.jetbrains.plugins.terminal.session.impl.*
 import org.junit.Test
 import org.junit.runner.RunWith
 import org.junit.runners.JUnit4

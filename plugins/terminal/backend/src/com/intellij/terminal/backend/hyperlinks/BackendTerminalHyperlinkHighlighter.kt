@@ -22,12 +22,10 @@ import kotlinx.coroutines.flow.*
 import org.jetbrains.annotations.TestOnly
 import org.jetbrains.plugins.terminal.block.hyperlinks.CompositeFilterWrapper
 import org.jetbrains.plugins.terminal.block.reworked.*
-import org.jetbrains.plugins.terminal.block.reworked.TerminalLineIndex
-import org.jetbrains.plugins.terminal.block.reworked.TerminalOffset
-import org.jetbrains.plugins.terminal.session.TerminalHyperlinkId
-import org.jetbrains.plugins.terminal.session.TerminalHyperlinksChangedEvent
-import org.jetbrains.plugins.terminal.session.TerminalHyperlinksHeartbeatEvent
-import org.jetbrains.plugins.terminal.session.dto.*
+import org.jetbrains.plugins.terminal.session.impl.TerminalHyperlinkId
+import org.jetbrains.plugins.terminal.session.impl.TerminalHyperlinksChangedEvent
+import org.jetbrains.plugins.terminal.session.impl.TerminalHyperlinksHeartbeatEvent
+import org.jetbrains.plugins.terminal.session.impl.dto.*
 import java.awt.event.MouseEvent
 import java.util.*
 import java.util.concurrent.LinkedBlockingDeque

@@ -11,7 +11,7 @@ import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.diagnostic.trace
 import org.jetbrains.plugins.terminal.block.reworked.session.rpc.TerminalSessionId
 import org.jetbrains.plugins.terminal.block.util.TerminalDataContextUtils.IS_ALTERNATE_BUFFER_DATA_KEY
-import org.jetbrains.plugins.terminal.session.TerminalHyperlinkId
+import org.jetbrains.plugins.terminal.session.impl.TerminalHyperlinkId
 
 internal class HyperlinkContextMenuActionGroup : ActionGroup(), ActionRemoteBehaviorSpecification.BackendOnly {
   override fun getActionUpdateThread(): ActionUpdateThread = ActionUpdateThread.BGT

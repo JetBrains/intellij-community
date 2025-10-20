@@ -9,9 +9,9 @@ import kotlinx.coroutines.CoroutineScope
 import org.jetbrains.plugins.terminal.block.reworked.TerminalOffset
 import org.jetbrains.plugins.terminal.block.reworked.TerminalOutputModel
 import org.jetbrains.plugins.terminal.block.reworked.hyperlinks.TerminalHyperlinksModel
-import org.jetbrains.plugins.terminal.session.*
-import org.jetbrains.plugins.terminal.session.dto.TerminalHyperlinksModelStateDto
-import org.jetbrains.plugins.terminal.session.dto.toFilterResultInfo
+import org.jetbrains.plugins.terminal.session.impl.*
+import org.jetbrains.plugins.terminal.session.impl.dto.TerminalHyperlinksModelStateDto
+import org.jetbrains.plugins.terminal.session.impl.dto.toFilterResultInfo
 
 internal class FrontendTerminalHyperlinkFacade(
   private val isInAlternateBuffer: Boolean,

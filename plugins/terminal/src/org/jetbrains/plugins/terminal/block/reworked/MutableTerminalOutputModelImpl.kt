@@ -15,8 +15,8 @@ import org.jetbrains.plugins.terminal.block.output.HighlightingInfo
 import org.jetbrains.plugins.terminal.block.output.TerminalOutputHighlightingsSnapshot
 import org.jetbrains.plugins.terminal.block.output.TextStyleAdapter
 import org.jetbrains.plugins.terminal.block.ui.BlockTerminalColorPalette
-import org.jetbrains.plugins.terminal.session.StyleRange
-import org.jetbrains.plugins.terminal.session.TerminalOutputModelState
+import org.jetbrains.plugins.terminal.session.impl.StyleRange
+import org.jetbrains.plugins.terminal.session.impl.TerminalOutputModelState
 
 /**
  * [maxOutputLength] limits the length of the document. Zero means unlimited length.

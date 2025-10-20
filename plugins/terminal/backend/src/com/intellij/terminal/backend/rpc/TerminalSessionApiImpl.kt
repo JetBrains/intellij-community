@@ -5,9 +5,9 @@ import kotlinx.coroutines.channels.SendChannel
 import kotlinx.coroutines.flow.Flow
 import org.jetbrains.plugins.terminal.block.reworked.session.rpc.TerminalSessionApi
 import org.jetbrains.plugins.terminal.block.reworked.session.rpc.TerminalSessionId
-import org.jetbrains.plugins.terminal.session.TerminalInputEvent
-import org.jetbrains.plugins.terminal.session.TerminalOutputEvent
-import org.jetbrains.plugins.terminal.session.TerminalSession
+import org.jetbrains.plugins.terminal.session.impl.TerminalInputEvent
+import org.jetbrains.plugins.terminal.session.impl.TerminalOutputEvent
+import org.jetbrains.plugins.terminal.session.impl.TerminalSession
 
 internal class TerminalSessionApiImpl : TerminalSessionApi {
   override suspend fun getInputChannel(sessionId: TerminalSessionId): SendChannel<TerminalInputEvent> {

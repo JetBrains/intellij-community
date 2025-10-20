@@ -3,10 +3,10 @@ package org.jetbrains.plugins.terminal.block.reworked
 
 import com.intellij.openapi.editor.Document
 import org.jetbrains.annotations.ApiStatus
-import org.jetbrains.plugins.terminal.session.StyleRange
-import org.jetbrains.plugins.terminal.session.TerminalContentUpdatedEvent
-import org.jetbrains.plugins.terminal.session.TerminalOutputModelState
-import org.jetbrains.plugins.terminal.session.dto.toStyleRange
+import org.jetbrains.plugins.terminal.session.impl.StyleRange
+import org.jetbrains.plugins.terminal.session.impl.TerminalContentUpdatedEvent
+import org.jetbrains.plugins.terminal.session.impl.TerminalOutputModelState
+import org.jetbrains.plugins.terminal.session.impl.dto.toStyleRange
 
 /**
  * Model that should manage the terminal output content: text, highlightings, and cursor position.

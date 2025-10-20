@@ -2,8 +2,8 @@ package com.intellij.terminal.frontend.view.impl
 
 import org.jetbrains.plugins.terminal.block.reworked.MutableTerminalOutputModel
 import org.jetbrains.plugins.terminal.block.reworked.updateContent
-import org.jetbrains.plugins.terminal.session.TerminalContentUpdatedEvent
-import org.jetbrains.plugins.terminal.session.TerminalCursorPositionChangedEvent
+import org.jetbrains.plugins.terminal.session.impl.TerminalContentUpdatedEvent
+import org.jetbrains.plugins.terminal.session.impl.TerminalCursorPositionChangedEvent
 
 /**
  * Simple implementation of the [TerminalOutputModelController] that just updates the output model immediately.

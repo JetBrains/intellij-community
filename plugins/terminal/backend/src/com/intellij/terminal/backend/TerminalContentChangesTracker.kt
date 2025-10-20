@@ -12,9 +12,9 @@ import org.jetbrains.plugins.terminal.block.session.collectLines
 import org.jetbrains.plugins.terminal.block.session.scraper.SimpleStringCollector
 import org.jetbrains.plugins.terminal.block.session.scraper.StylesCollectingTerminalLinesCollector
 import org.jetbrains.plugins.terminal.fus.*
-import org.jetbrains.plugins.terminal.session.StyleRange
-import org.jetbrains.plugins.terminal.session.dto.StyleRangeDto
-import org.jetbrains.plugins.terminal.session.dto.toDto
+import org.jetbrains.plugins.terminal.session.impl.StyleRange
+import org.jetbrains.plugins.terminal.session.impl.dto.StyleRangeDto
+import org.jetbrains.plugins.terminal.session.impl.dto.toDto
 import java.util.concurrent.CopyOnWriteArrayList
 import kotlin.math.min
 import kotlin.time.TimeSource

@@ -23,8 +23,8 @@ import org.jetbrains.plugins.terminal.TerminalEngine
 import org.jetbrains.plugins.terminal.TerminalOptionsProvider
 import org.jetbrains.plugins.terminal.runner.LocalShellIntegrationInjector
 import org.jetbrains.plugins.terminal.runner.LocalTerminalStartCommandBuilder
-import org.jetbrains.plugins.terminal.session.TerminalOutputEvent
-import org.jetbrains.plugins.terminal.session.TerminalSession
+import org.jetbrains.plugins.terminal.session.impl.TerminalOutputEvent
+import org.jetbrains.plugins.terminal.session.impl.TerminalSession
 import org.junit.Assume
 import java.nio.file.Files
 import java.nio.file.Path
@@ -47,7 +47,7 @@ internal object TerminalSessionTestUtil {
    *
    * @param isLowLevelSession whether the same session should be used as in the production or its low-level JediTerm implementation.
    * Low-level session outputs the events in their natural order,
-   * while production one replaces some initial events with [org.jetbrains.plugins.terminal.session.TerminalInitialStateEvent].
+   * while production one replaces some initial events with [org.jetbrains.plugins.terminal.session.impl.TerminalInitialStateEvent].
    * Prefer low-level session in exceptional cases only when you need to test the exact sequences of events.
    * Use production session (specify `false`) in all other cases.
    */
