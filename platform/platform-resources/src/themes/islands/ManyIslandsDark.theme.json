@@ -208,15 +208,25 @@
       "background": "Blue3",
       "borderColor": "Blue3",
       "foreground": "#ffffff",
-      "Button.foreground": "#ffffff",
+      "Button": {
+        "foreground": "#ffffff",
+        "startBackground": "#00000000",
+        "endBackground": "#00000000",
+        "contrastBackground": "#294273"
+      },
       "Header.foreground": "#ffffff"
     },
 
     "Tooltip.Learning": {
       "background": "Blue4",
       "borderColor": "Blue4",
-      "Learning.foreground": "#ffffff",
-      "Learning.Header.foreground": "#ffffff"
+      "foreground": "#ffffff",
+      "Header.foreground": "#ffffff",
+      "spanBackground": "#294273",
+      "spanForeground": "ForegroundDefault",
+      "codeBorderColor": "#FFFFFF70",
+      "iconFillColor": "Blue4",
+      "iconBorderColor": "#FFFFFF"
     },
 
     "ParameterInfo": {
