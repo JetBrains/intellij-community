@@ -49,11 +49,10 @@ import com.intellij.util.io.storage.HeavyProcessLatch
 import com.intellij.util.ui.EdtInvocationManager
 import com.intellij.util.ui.GridBag
 import it.unimi.dsi.fastutil.ints.IntArrayList
-import it.unimi.dsi.fastutil.objects.Object2IntOpenHashMap
 import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.annotations.Nls
 import java.awt.Container
-import java.util.Collections
+import java.util.*
 import java.util.concurrent.CancellationException
 
 open class TrafficLightRenderer private constructor(
@@ -64,7 +63,7 @@ open class TrafficLightRenderer private constructor(
 ) : ErrorStripeRenderer, Disposable {
   private val daemonCodeAnalyzer: DaemonCodeAnalyzerImpl
   private val severityRegistrar: SeverityRegistrar
-  private val errorCount = Object2IntOpenHashMap<HighlightKey>() // guarded by errorCount
+  private val errorCount = ErrorCountStorage()
   @JvmField
   @ApiStatus.Internal
   protected val uiController: UIController
@@ -167,8 +166,7 @@ open class TrafficLightRenderer private constructor(
       val context = getContext()
       for (severity in severities) {
         val severityIndex = severityRegistrar.getSeverityIdx(severity)
-        val highlightKey = HighlightKey(severity, context)
-        cachedErrors[severityIndex] = synchronized(errorCount) { errorCount.getInt(highlightKey) }
+        cachedErrors[severityIndex] = errorCount.getErrorCount(severity, context)
       }
       return cachedErrors
     }
@@ -177,20 +175,15 @@ open class TrafficLightRenderer private constructor(
   }
 
   override fun dispose() {
-    synchronized(errorCount) {
-      errorCount.clear()
-    }
+    errorCount.clear()
   }
 
   private fun incErrorCount(highlighter: RangeHighlighter, delta: Int) {
     val info = HighlightInfo.fromRangeHighlighter(highlighter) ?: return
     val infoSeverity = info.severity
     if (infoSeverity > HighlightSeverity.TEXT_ATTRIBUTES) {
-      val highlightKey = HighlightKey(infoSeverity, getContext(highlighter))
-      synchronized(errorCount) {
-        val oldVal = errorCount.getInt(highlightKey)
-        errorCount.put(highlightKey, Math.max(0, oldVal + delta))
-      }
+      val context = getContext(highlighter)
+      errorCount.incErrorCount(infoSeverity, context, delta)
     }
   }
 
@@ -675,8 +668,3 @@ open class TrafficLightRenderer private constructor(
     }
  }
 }
-
-private data class HighlightKey(
-  val severity: HighlightSeverity,
-  val context: CodeInsightContext,
-)
