@@ -8,6 +8,7 @@
     <search.traverseUiHelper implementation="com.intellij.platform.compose.ComposeTraverseUiHelper"/>
 
     <applicationActivity implementation="com.intellij.platform.compose.SkikoPreloader"/>
+    <undoManagerProvider implementation="com.intellij.platform.compose.ComposeUndoManagerProvider"/>
   </extensions>
 
   <dependencies>

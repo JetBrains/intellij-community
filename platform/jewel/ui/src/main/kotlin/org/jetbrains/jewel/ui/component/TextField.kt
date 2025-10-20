@@ -38,6 +38,7 @@ import org.jetbrains.jewel.foundation.theme.LocalTextStyle
 import org.jetbrains.jewel.ui.Outline
 import org.jetbrains.jewel.ui.component.styling.TextFieldStyle
 import org.jetbrains.jewel.ui.theme.textFieldStyle
+import org.jetbrains.jewel.ui.util.addUndoRedoSemantics
 
 /**
  * A single-line text input component that follows the standard visual styling.
@@ -137,7 +138,7 @@ public fun TextField(
             },
         undecorated = undecorated,
         scrollState = rememberScrollState(),
-        modifier = modifier,
+        modifier = modifier.addUndoRedoSemantics(state.undoState),
     )
 }
 
