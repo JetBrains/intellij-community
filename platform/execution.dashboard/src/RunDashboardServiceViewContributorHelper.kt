@@ -91,4 +91,12 @@ internal object RunDashboardServiceViewContributorHelper {
       RunDashboardManagerRpc.getInstance().detachRunContentDescriptorId(project.projectId(), descriptorId)
     }
   }
+
+  @JvmStatic
+  fun scheduleSetConfigurationTypes(project: Project, configurationTypes: Set<String>) {
+    RunDashboardCoroutineScopeProvider.getInstance(project).cs.launch {
+      RunDashboardManagerRpc.getInstance().setConfigurationTypes(project.projectId(),
+                                                                 configurationTypes)
+    }
+  }
 }

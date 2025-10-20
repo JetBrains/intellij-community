@@ -147,4 +147,9 @@ internal class RunDashboardManagerRpcImpl : RunDashboardManagerRpc {
     val project = projectId.findProjectOrNull() ?: return
     RunDashboardManagerImpl.getInstance(project).detachServiceRunContentDescriptor(descriptorId);
   }
+
+  override suspend fun setConfigurationTypes(projectId: ProjectId, configurationTypes: Set<String>) {
+    val project = projectId.findProjectOrNull() ?: return
+    RunDashboardManagerImpl.getInstance(project).types = configurationTypes
+  }
 }

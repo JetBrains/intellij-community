@@ -101,7 +101,7 @@ class FrontendRunDashboardManager(private val project: Project) : RunDashboardMa
 
   internal suspend fun subscribeToBackendConfigurationTypesUpdates() {
     RunDashboardServiceRpc.getInstance().getConfigurationTypes(project.projectId()).collect { updateFromBackend ->
-      setTypes(updateFromBackend.toMutableSet())
+      syncTypes(updateFromBackend.toMutableSet())
     }
   }
 
@@ -153,15 +153,19 @@ class FrontendRunDashboardManager(private val project: Project) : RunDashboardMa
     return configurationTypes.toSet()
   }
 
-  override fun setTypes(types: MutableSet<String>) {
-    LOG.debug("setTypes(${types.size} types) invoked on frontend;")
+  private fun syncTypes(types: MutableSet<String>){
     configurationTypes.clear()
     configurationTypes.addAll(types)
 
     frontendDtos.update { currentDtos ->
       currentDtos.filter { dto -> dto.typeId in types }
     }
+  }
 
+  override fun setTypes(types: MutableSet<String>) {
+    LOG.debug("setTypes(${types.size} types) invoked on frontend;")
+    syncTypes(types)
+    RunDashboardServiceViewContributorHelper.scheduleSetConfigurationTypes(project, types)
     updateDashboard(true)
   }
 

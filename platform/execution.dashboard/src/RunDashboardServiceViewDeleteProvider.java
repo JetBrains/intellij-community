@@ -63,7 +63,7 @@ final class RunDashboardServiceViewDeleteProvider implements DeleteProvider {
       return;
     }
     RunDashboardManager runDashboardManager = RunDashboardManager.getInstance(project);
-    Set<String> types = new HashSet<>(runDashboardManager.getTypes());//todo: this is empty
+    Set<String> types = new HashSet<>(runDashboardManager.getTypes());
     for (ConfigurationType type : targetTypes) {
       types.remove(type.getId());
     }
