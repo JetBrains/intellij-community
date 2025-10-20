@@ -1,17 +1,12 @@
 // Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.build.eventBuilders
 
-import com.intellij.build.events.BuildEventsNls.Description
-import com.intellij.build.events.BuildEventsNls.Hint
-import com.intellij.build.events.BuildEventsNls.Message
-import com.intellij.build.events.BuildEventsNls.Title
+import com.intellij.build.events.BuildEventsNls.*
 import com.intellij.build.events.MessageEvent
 import com.intellij.pom.Navigatable
-import org.jetbrains.annotations.ApiStatus.Experimental
 import org.jetbrains.annotations.ApiStatus.NonExtendable
 import org.jetbrains.annotations.CheckReturnValue
 
-@Experimental
 @NonExtendable
 interface MessageEventBuilder {
 

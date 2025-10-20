@@ -3,11 +3,9 @@ package com.intellij.build.eventBuilders
 
 import com.intellij.build.events.BuildEventsNls.*
 import com.intellij.build.events.FileDownloadEvent
-import org.jetbrains.annotations.ApiStatus.Experimental
 import org.jetbrains.annotations.ApiStatus.NonExtendable
 import org.jetbrains.annotations.CheckReturnValue
 
-@Experimental
 @NonExtendable
 interface FileDownloadEventBuilder {
 

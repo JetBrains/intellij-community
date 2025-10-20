@@ -11,7 +11,6 @@ import org.jetbrains.annotations.ApiStatus.Experimental
 import org.jetbrains.annotations.ApiStatus.NonExtendable
 import org.jetbrains.annotations.CheckReturnValue
 
-@Experimental
 @NonExtendable
 interface StartBuildEventBuilder {
 

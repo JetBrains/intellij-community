@@ -6,10 +6,10 @@ import com.intellij.build.events.BuildEventsNls.Description
 import com.intellij.build.events.BuildEventsNls.Hint
 import com.intellij.build.events.BuildEventsNls.Message
 import com.intellij.build.events.PresentableBuildEvent
-import org.jetbrains.annotations.ApiStatus
+import org.jetbrains.annotations.ApiStatus.Experimental
 import org.jetbrains.annotations.CheckReturnValue
 
-@ApiStatus.Experimental
+@Experimental
 interface PresentableBuildEventBuilder {
 
   @CheckReturnValue
