@@ -192,7 +192,7 @@ internal class StateAwareTerminalSession(
         }
         is TerminalCommandStartedEvent -> {
           blocksModel.updateActiveCommandBlock { block ->
-            block.copy(outputStartOffset = outputModel.cursorOffset)
+            block.copy(outputStartOffset = outputModel.cursorOffset, executedCommand = event.command)
           }
         }
         is TerminalCommandFinishedEvent -> {

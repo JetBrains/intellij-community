@@ -133,6 +133,7 @@ class TerminalBlocksModelImpl(private val outputModel: TerminalOutputModel, pare
       endOffset = outputModel.endOffset,
       commandStartOffset = null,
       outputStartOffset = null,
+      executedCommand = null,
       exitCode = null,
     )
   }

@@ -61,7 +61,7 @@ internal class TerminalShellIntegrationEventsHandler(
       is TerminalCommandStartedEvent -> {
         withContext(edtContext) {
           outputModelController.applyPendingUpdates()
-          getIntegrationOrThrow().onCommandStarted(outputModelController.model.cursorOffset)
+          getIntegrationOrThrow().onCommandStarted(outputModelController.model.cursorOffset, event.command)
         }
       }
       is TerminalCommandFinishedEvent -> {

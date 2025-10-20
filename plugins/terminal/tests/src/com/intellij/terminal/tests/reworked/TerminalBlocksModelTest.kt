@@ -36,7 +36,7 @@ internal class TerminalBlocksModelTest : BasePlatformTestCase() {
     assertEquals(null, block.commandStartOffset)
     assertEquals(null, block.outputStartOffset)
     assertEquals(null, block.exitCode)
-    assertEquals(null, block.getCommandText(outputModel))
+    assertEquals(null, block.getTypedCommandText(outputModel))
     assertEquals(null, block.getOutputText(outputModel))
     assertEquals(false, block.wasExecuted)
   }
@@ -57,7 +57,7 @@ internal class TerminalBlocksModelTest : BasePlatformTestCase() {
     assertEquals(null, block.commandStartOffset)
     assertEquals(null, block.outputStartOffset)
     assertEquals(null, block.exitCode)
-    assertEquals(null, block.getCommandText(outputModel))
+    assertEquals(null, block.getTypedCommandText(outputModel))
     assertEquals(null, block.getOutputText(outputModel))
     assertEquals(false, block.wasExecuted)
   }
@@ -129,7 +129,7 @@ internal class TerminalBlocksModelTest : BasePlatformTestCase() {
     assertEquals(1, blocksModel.blocks.size)
     val block = blocksModel.activeBlock as TerminalCommandBlock
     assertEquals("myCommand\n", outputModel.getTextAsString(block.commandStartOffset!!, block.outputStartOffset!!))
-    assertEquals("myCommand", block.getCommandText(outputModel))
+    assertEquals("myCommand", block.getTypedCommandText(outputModel))
     assertEquals("someOutput\n\n", outputModel.getTextAsString(block.outputStartOffset!!, block.endOffset))
     assertEquals("someOutput", block.getOutputText(outputModel))
     assertEquals(true, block.wasExecuted)
@@ -152,7 +152,7 @@ internal class TerminalBlocksModelTest : BasePlatformTestCase() {
 
     assertEquals(2, blocksModel.blocks.size)
     val firstBlock = blocksModel.blocks[0] as TerminalCommandBlock
-    assertEquals("abortedCommand", firstBlock.getCommandText(outputModel))
+    assertEquals("abortedCommand", firstBlock.getTypedCommandText(outputModel))
     assertEquals(null, firstBlock.getOutputText(outputModel))
     assertEquals(false, firstBlock.wasExecuted)
   }
@@ -174,7 +174,7 @@ internal class TerminalBlocksModelTest : BasePlatformTestCase() {
 
     assertEquals(2, blocksModel.blocks.size)
     val firstBlock = blocksModel.blocks[0] as TerminalCommandBlock
-    assertEquals("myCommand", firstBlock.getCommandText(outputModel))
+    assertEquals("myCommand", firstBlock.getTypedCommandText(outputModel))
     assertEquals("", firstBlock.getOutputText(outputModel))
     assertEquals(true, firstBlock.wasExecuted)
   }
@@ -194,13 +194,13 @@ internal class TerminalBlocksModelTest : BasePlatformTestCase() {
 
     assertEquals(1, blocksModel.blocks.size)
     val firstBlock = blocksModel.blocks[0] as TerminalCommandBlock
-    assertEquals("myCommand", firstBlock.getCommandText(outputModel))
+    assertEquals("myCommand", firstBlock.getTypedCommandText(outputModel))
     assertEquals("someOutput...", firstBlock.getOutputText(outputModel))
     assertEquals(true, firstBlock.wasExecuted)
   }
 
   @Test
-  fun `getCommandText returns null if command start is trimmed`() = runBlocking(Dispatchers.EDT) {
+  fun `getTypedCommandText returns null if command start is trimmed`() = runBlocking(Dispatchers.EDT) {
     val outputModel = TerminalTestUtil.createOutputModel(30)
     val blocksModel = TerminalBlocksModelImpl(outputModel, testRootDisposable)
 
@@ -217,7 +217,7 @@ internal class TerminalBlocksModelTest : BasePlatformTestCase() {
 
     assertEquals(2, blocksModel.blocks.size)
     val firstBlock = blocksModel.blocks[0] as TerminalCommandBlock
-    assertEquals(null, firstBlock.getCommandText(outputModel))
+    assertEquals(null, firstBlock.getTypedCommandText(outputModel))
     assertEquals("someOutput", firstBlock.getOutputText(outputModel))
     assertEquals(true, firstBlock.wasExecuted)
   }
@@ -240,7 +240,7 @@ internal class TerminalBlocksModelTest : BasePlatformTestCase() {
 
     assertEquals(2, blocksModel.blocks.size)
     val firstBlock = blocksModel.blocks[0] as TerminalCommandBlock
-    assertEquals(null, firstBlock.getCommandText(outputModel))
+    assertEquals(null, firstBlock.getTypedCommandText(outputModel))
     assertEquals("6789-123456789", firstBlock.getOutputText(outputModel))
     assertEquals(true, firstBlock.wasExecuted)
   }
@@ -506,6 +506,7 @@ internal class TerminalBlocksModelTest : BasePlatformTestCase() {
       commandStartOffset = outputModel.startOffset + 10,
       outputStartOffset = outputModel.startOffset + 20,
       endOffset = outputModel.startOffset + 31,
+      executedCommand = null,
       exitCode = null
     )
     assertEquals(expectedFirstBlock, state.blocks[0])
@@ -516,6 +517,7 @@ internal class TerminalBlocksModelTest : BasePlatformTestCase() {
       commandStartOffset = outputModel.startOffset + 46,
       outputStartOffset = null,
       endOffset = outputModel.startOffset + 47,
+      executedCommand = null,
       exitCode = null
     )
     assertEquals(expectedSecondBlock, state.blocks[1])
@@ -532,6 +534,7 @@ internal class TerminalBlocksModelTest : BasePlatformTestCase() {
       commandStartOffset = outputModel.startOffset + 10,
       outputStartOffset = outputModel.startOffset + 20,
       endOffset = outputModel.startOffset + 31,
+      executedCommand = null,
       exitCode = null
     )
     val secondBlock = TerminalCommandBlockImpl(
@@ -540,6 +543,7 @@ internal class TerminalBlocksModelTest : BasePlatformTestCase() {
       commandStartOffset = outputModel.startOffset + 46,
       outputStartOffset = null,
       endOffset = outputModel.startOffset + 47,
+      executedCommand = null,
       exitCode = null
     )
     val state = TerminalBlocksModelState(
@@ -588,6 +592,7 @@ internal class TerminalBlocksModelTest : BasePlatformTestCase() {
       commandStartOffset = newOutputModel.startOffset + 10,
       outputStartOffset = newOutputModel.startOffset + 20,
       endOffset = newOutputModel.startOffset + 31,
+      executedCommand = null,
       exitCode = null
     )
     assertEquals(expectedFirstBlock, state.blocks[0])
@@ -598,6 +603,7 @@ internal class TerminalBlocksModelTest : BasePlatformTestCase() {
       commandStartOffset = newOutputModel.startOffset + 46,
       outputStartOffset = null,
       endOffset = newOutputModel.startOffset + 47,
+      executedCommand = null,
       exitCode = null
     )
     assertEquals(expectedSecondBlock, state.blocks[1])

@@ -16,6 +16,7 @@ data class TerminalCommandBlockDto(
   val endOffset: Long,
   val commandStartOffset: Long?,
   val outputStartOffset: Long?,
+  val executedCommand: String?,
   val exitCode: Int?,
 )
 
@@ -27,6 +28,7 @@ fun TerminalCommandBlock.toDto(): TerminalCommandBlockDto {
     endOffset = endOffset.toAbsolute(),
     commandStartOffset = commandStartOffset?.toAbsolute(),
     outputStartOffset = outputStartOffset?.toAbsolute(),
+    executedCommand = executedCommand,
     exitCode = exitCode,
   )
 }
@@ -39,6 +41,7 @@ fun TerminalCommandBlockDto.toCommandBlock(): TerminalCommandBlock {
     endOffset = TerminalOffset.of(endOffset),
     commandStartOffset = commandStartOffset?.let { TerminalOffset.of(it) },
     outputStartOffset = outputStartOffset?.let { TerminalOffset.of(it) },
+    executedCommand = executedCommand,
     exitCode = exitCode,
   )
 }
