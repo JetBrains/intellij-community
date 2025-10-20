@@ -42,9 +42,9 @@ class TerminalShellIntegrationImpl(
     mutableOutputStatus.value = TypingCommand
   }
 
-  fun onCommandStarted(offset: TerminalOffset) {
+  fun onCommandStarted(offset: TerminalOffset, command: String) {
     blocksModel.updateActiveCommandBlock { block ->
-      block.copy(outputStartOffset = offset)
+      block.copy(outputStartOffset = offset, executedCommand = command)
     }
     mutableOutputStatus.value = ExecutingCommand
 

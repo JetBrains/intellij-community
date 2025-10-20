@@ -19,6 +19,12 @@ interface TerminalBlockBase {
 interface TerminalCommandBlock : TerminalBlockBase {
   val commandStartOffset: TerminalOffset?
   val outputStartOffset: TerminalOffset?
+
+  /**
+   * Should be non-null if the command was started to execute.
+   * It is the command text reported by the shell integration right before it is started.
+   */
+  val executedCommand: String?
   val exitCode: Int?
 }
 
@@ -26,13 +32,14 @@ interface TerminalCommandBlock : TerminalBlockBase {
  * @param model regular terminal output model (not alternative one)
  * @return the text without trailing whitespaces that was typed at the place of the command.
  * Can return null if this block doesn't contain the command
- * or if the command became partially output of model bounds because of trimming.
+ * or if the command became partial out of model bounds because of trimming.
  *
- * **Note**: the return text might be not exactly the command, because currently,
- * we do not take the right part of the prompt and inline completion grey text (provided by the shell plugins) into account.
+ * **Note**: the returned text might be different from [TerminalCommandBlock.executedCommand], because currently,
+ * we do not detect the right part of the prompt and inline completion grey text (provided by the shell plugins).
+ * But this method can be called before command execution is started to get the currently typed command.
  */
 @ApiStatus.Experimental
-fun TerminalCommandBlock.getCommandText(model: TerminalOutputModel): String? {
+fun TerminalCommandBlock.getTypedCommandText(model: TerminalOutputModel): String? {
   val start = commandStartOffset ?: return null
   val end = outputStartOffset ?: endOffset
   if (start < model.startOffset || start > model.endOffset
