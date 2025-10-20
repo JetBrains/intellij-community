@@ -900,22 +900,26 @@ public final class PluginManagerConfigurablePanel implements Disposable {
               Map<PluginUiModel, Double> pluginToScore = null;
 
               if (parser.internal) {
-                PluginsViewCustomizer.PluginsGroupDescriptor groupDescriptor =
-                  PluginsViewCustomizerKt.getPluginsViewCustomizer().getInternalPluginsGroupDescriptor();
-                if (groupDescriptor != null) {
-                  if (parser.searchQuery == null) {
-                    result.addDescriptors(groupDescriptor.getPlugins());
-                  }
-                  else {
-                    for (IdeaPluginDescriptor pluginDescriptor : groupDescriptor.getPlugins()) {
-                      if (StringUtil.containsIgnoreCase(pluginDescriptor.getName(), parser.searchQuery)) {
-                        result.addDescriptor(pluginDescriptor);
+                try {
+                  PluginsViewCustomizer.PluginsGroupDescriptor groupDescriptor =
+                    PluginsViewCustomizerKt.getPluginsViewCustomizer().getInternalPluginsGroupDescriptor();
+                  if (groupDescriptor != null) {
+                    if (parser.searchQuery == null) {
+                      result.addDescriptors(groupDescriptor.getPlugins());
+                    }
+                    else {
+                      for (IdeaPluginDescriptor pluginDescriptor : groupDescriptor.getPlugins()) {
+                        if (StringUtil.containsIgnoreCase(pluginDescriptor.getName(), parser.searchQuery)) {
+                          result.addDescriptor(pluginDescriptor);
+                        }
                       }
                     }
+                    result.removeDuplicates();
+                    result.sortByName();
+                    return;
                   }
-                  result.removeDuplicates();
-                  result.sortByName();
-                  return;
+                } catch (Exception e) {
+                  LOG.error("Error while loading internal plugins group", e);
                 }
               }
 
