@@ -17,6 +17,8 @@
     "Gray0.25": "#151517",
     "Gray0": "#000000",
 
+    "ForegroundDefault": "#D1D3D9",
+
     "BackgroundDark": "Gray0.75",
     "BackgroundMid": "Gray1.5",
     "BackgroundLight": "Gray1.5",
@@ -50,6 +52,7 @@
 
   "ui": {
     "*": {
+      "foreground": "ForegroundDefault",
       "background": "PanelBackground",
       "borderColor": "BorderDark",
       "separatorColor": "BorderLight",
@@ -74,7 +77,11 @@
     },
 
     "MainWindow.background": "BackgroundLight",
-    "List.background": "BackgroundDark",
+
+    "List": {
+      "background": "BackgroundDark",
+      "Tag.foreground": "#868a91"
+    },
 
     "Borders.color": "BorderDark",
     "Borders.ContrastBorderColor": "BorderDark",
@@ -97,12 +104,15 @@
 
     "StatusBar": {
       "background": "BackgroundLight",
-      "borderColor": "BorderTransparent"
+      "borderColor": "BorderTransparent",
+      "Breadcrumbs.foreground": "#9da0a8",
+      "Widget.foreground": "#9da0a8"
     },
 
     "ToolWindow": {
       "background": "ToolWindowBackground",
       "borderColor": "BorderDark",
+      "Button.foreground": "#9da0a8",
       "Header": {
         "background": "ToolWindowBackground",
         "inactiveBackground": "ToolWindowBackground",
@@ -164,11 +174,17 @@
       "Header.activeBackground": "PopupBackground",
       "Advertiser.background": "PopupBackgroundLight",
       "Advertiser.borderColor": "PopupBackgroundLight",
+      "Advertiser.foreground": "#868a91",
       "borderColor": "PopupBorder",
       "Toolbar.background": "PopupBackground"
     },
     "ComplexPopup.Header.background": "PopupBackgroundLight",
-    "CompletionPopup.Advertiser.background": "PopupBackgroundLight",
+
+    "CompletionPopup": {
+      "foreground": "#b4b8bf",
+      "Advertiser.background": "PopupBackgroundLight",
+      "Advertiser.foreground": "#6f737a"
+    },
 
     "Menu": {
       "background": "PopupBackground",
@@ -179,28 +195,42 @@
 
     "ToolTip": {
       "background": "TooltipBackground",
-      "borderColor": "TooltipBorder"
+      "borderColor": "TooltipBorder",
+      "foreground": "#f0f1f2"
     },
+
     "GotItTooltip": {
       "background": "Blue3",
-      "borderColor": "Blue3"
+      "borderColor": "Blue3",
+      "foreground": "#ffffff",
+      "Button.foreground": "#ffffff",
+      "Header.foreground": "#ffffff"
     },
+
     "Tooltip.Learning": {
       "background": "Blue4",
-      "borderColor": "Blue4"
+      "borderColor": "Blue4",
+      "Learning.foreground": "#ffffff",
+      "Learning.Header.foreground": "#ffffff"
     },
+
     "ParameterInfo": {
       "background": "Gray3",
-      "borderColor": "Gray6"
+      "borderColor": "Gray6",
+      "foreground": "#ced0d6"
     },
 
     "Notification": {
+      "Button.foreground": "#f0f1f2",
+      "foreground": "#f0f1f2",
       "background": "TooltipBackground",
       "borderColor": "TooltipBorder",
       "Button.background": "TooltipBackground",
       "Button.borderColor": "Gray7",
-      "MoreButton.background": "PanelBackground"
+      "MoreButton.background": "PanelBackground",
+      "MoreButton.foreground": "#9da0a8"
     },
+
     "NotificationsToolwindow.newNotification.background": "BackgroundLight",
 
     "SpeedSearch": {
@@ -208,14 +238,21 @@
       "borderColor": "BorderLight"
     },
 
-    "SearchEverywhere.Header.insets": "2,4,0,9",
+    "SearchEverywhere": {
+      "Header.insets": "2,4,0,9",
+      "Advertiser.foreground": "#868a91"
+    },
 
     "Button": {
       "startBackground": "PanelBackground",
-      "endBackground": "PanelBackground"
+      "endBackground": "PanelBackground",
+      "default.foreground": "#ffffff"
     },
+
     "TextField.background": "InputBackground",
+
     "Component.borderColor": "ComponentBorder",
+
     "ComboBox": {
       "background": "ComboboxBackground",
       "disabledBackground": "PanelBackground",
@@ -225,34 +262,53 @@
     },
 
     "Toolbar.borderColor": "BorderLight",
+
     "TabbedPane.hoverColor": "HoverBackgroundMid",
 
-    "Counter.background": "Gray8",
+    "Counter": {
+      "background": "Gray8",
+      "foreground": "#000000"
+    },
+
     "Shortcut.borderColor": "Gray6",
     "Tag.background": "BackgroundLightest",
     "List.Tag.background": "Gray3",
     "DragAndDrop.borderColor": "Blue6",
     "TipOfTheDay.Image.borderColor": "Gray3",
-
     "OnePixelDivider.background": "BorderLight",
     "Plugins.SectionHeader.background": "Gray1.5",
     "Debugger.EvaluateExpression.background": "Gray3",
     "NewUiOnboarding.Dialog.background": "PanelBackground",
     "WelcomeScreen.Details.background": "BackgroundDark",
 
+    "Bookmark.MnemonicAssigned.foreground": "#1e1f22",
+
+    "LineProfiler": {
+      "HotLine.foreground": "#db5c5c",
+      "IgnoredLine.foreground": "#4e5157",
+      "Line.foreground": "#6f737a"
+    },
+
+    "PresentationAssistant": {
+      "Bright.Popup.foreground": "#ffffff",
+      "Pale.Popup.foreground": "#ffffff"
+    },
+
     "HelpBrowser": {
       "UserMessage": {
         "background": "BackgroundLightest",
         "Snippet": {
           "MoreLines": {
-            "background": "BackgroundMid"
+            "background": "BackgroundMid",
+            "foreground": "#868a91"
           }
         }
       },
       "HelpBrowserMessage": {
         "Snippet": {
           "MoreLines": {
-            "background": "BackgroundMid"
+            "background": "BackgroundMid",
+            "foreground": "#868a91"
           }
         }
       }
@@ -507,7 +563,12 @@
       "Default.borderColor": "#B4B8BF",
       "Active.borderColor": "#4E8052",
       "Alert.borderColor": "#826A41",
-      "Expiring.borderColor": "#DB5C5C"
+      "Expiring.borderColor": "#DB5C5C",
+      "Active.foreground": "#5fad65",
+      "Alert.foreground": "#d6ae58",
+      "Default.foreground": "#ced0d6",
+      "Expiring.foreground": "#e37774",
+      "Progress.foreground": "#868a91"
     },
 
     "Bookmark": {
@@ -540,7 +601,9 @@
       "SearchResult.background": "#1c2433",
       "SearchResult.PackageTag.background": "#2e3643",
       "PackageTag.background": "Gray4",
-      "PackageTagSelected.background": "Blue4"
+      "PackageTag.foreground": "#9da0a8",
+      "PackageTagSelected.background": "Blue4",
+      "PackageTagSelected.foreground": "#b4b8bf"
     },
 
     "Profiler": {
@@ -593,7 +656,11 @@
       }
     },
 
-    "VersionControl.MarkerPopup.borderColor": "Gray4",
+    "VersionControl":{
+      "MarkerPopup.borderColor": "Gray4",
+      "Log.Commit.Reference.foreground": "#6f737a",
+      "Merge.Status.NoConflicts.foreground": "#57965c"
+    },
 
     "NewClass": {
       "Panel.background": "PopupBackground",
