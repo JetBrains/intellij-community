@@ -348,6 +348,7 @@ internal class BuildTreeView(private val project: Project, parentScope: Coroutin
       }
 
     private var cachedVisibleChildren: MutableList<MyNode>? = null
+    private var cachedIndex = -1
     private var cachedFilteringState: BuildTreeFilteringState? = null
 
     val occurrenceNavigatable: NavigatableId?
@@ -363,7 +364,9 @@ internal class BuildTreeView(private val project: Project, parentScope: Coroutin
       clearCacheIfInvalid()
       if (node.isVisible()) {
         cachedVisibleChildren?.add(node)
-        treeModel.nodesWereInserted(this, intArrayOf(childCount - 1))
+        val newIndex = childCount - 1
+        node.cachedIndex = newIndex
+        treeModel.nodesWereInserted(this, intArrayOf(newIndex))
         return true
       }
       return false
@@ -392,7 +395,7 @@ internal class BuildTreeView(private val project: Project, parentScope: Coroutin
         }
       }
       else if (wasVisible) {
-        parent.cachedVisibleChildren?.removeAt(nodeIndex)
+        parent.clearCache()
         treeModel.nodesWereRemoved(parent, intArrayOf(nodeIndex), arrayOf(this))
       }
       else {
@@ -414,6 +417,7 @@ internal class BuildTreeView(private val project: Project, parentScope: Coroutin
 
     private fun clearCache() {
       cachedVisibleChildren = null
+      cachedFilteringState = null
     }
 
     private fun clearCacheIfInvalid() {
@@ -431,17 +435,26 @@ internal class BuildTreeView(private val project: Project, parentScope: Coroutin
     }
 
     fun getVisibleChildren(): List<MyNode> {
-      val allChildren = children ?: return emptyList()
+      if (children == null) return emptyList()
       val cached = cachedVisibleChildren
-      val currentFilteringState = filteringState
-      if (cached != null && cachedFilteringState == currentFilteringState) {
+      if (cached != null && cachedFilteringState == filteringState) {
         return cached
       }
-      cachedFilteringState = currentFilteringState
+      return rebuildCache()
+    }
+
+    private fun rebuildCache(): List<MyNode> {
+      cachedFilteringState = filteringState
       val result = mutableListOf<MyNode>()
-      allChildren.forEach {
-        if ((it as MyNode).isVisible()) {
+      var index = 0
+      children.forEach {
+        val child = it as MyNode
+        if (child.isVisible()) {
           result.add(it)
+          child.cachedIndex = index++
+        }
+        else {
+          child.cachedIndex = -1
         }
       }
       cachedVisibleChildren = result
@@ -461,7 +474,11 @@ internal class BuildTreeView(private val project: Project, parentScope: Coroutin
     }
 
     override fun getIndex(node: TreeNode): Int {
-      return if ((node as? MyNode)?.isVisible() == true) getVisibleChildren().indexOf(node) else -1
+      if (node !is MyNode || children == null || node.parent !== this) return -1
+      if (cachedFilteringState != filteringState) {
+        rebuildCache()
+      }
+      return node.cachedIndex
     }
 
     override fun children(): Enumeration<TreeNode> {
