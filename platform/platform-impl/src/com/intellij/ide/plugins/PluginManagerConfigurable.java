@@ -266,6 +266,12 @@ public final class PluginManagerConfigurable
     }
   }
 
+  public void scheduleApply() {
+    if (myPanel != null) {
+      myPanel.scheduleApply();
+    }
+  }
+
   @Override
   public void reset() {
     if (myPanel != null) {
