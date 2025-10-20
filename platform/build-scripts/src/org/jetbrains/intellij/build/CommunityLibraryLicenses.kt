@@ -1392,6 +1392,7 @@ object CommunityLibraryLicenses {
     jetbrainsLibrary("jetbrains.ml.models.jetenry.inline.prompt.detection.model"),
     jetbrainsLibrary("jetbrains.ml.models.python.imports.ranking.model"),
     jetbrainsLibrary("jetbrains.mlapi.catboost.shadow.need.slf4j"),
+    jetbrainsLibrary("jetbrains.mlapi.core"),
     jetbrainsLibrary("jetbrains.mlapi.ml.api"),
     jetbrainsLibrary("jetbrains.mlapi.ml.tools"),
     jetbrainsLibrary("jshell-frontend"),
