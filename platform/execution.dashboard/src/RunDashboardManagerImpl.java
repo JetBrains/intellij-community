@@ -274,6 +274,10 @@ public final class RunDashboardManagerImpl implements RunDashboardManager, Persi
     return mySharedState.getExcludedTypes();
   }
 
+  public Flow<Set<String>> getConfigurationTypes() {
+    return mySharedState.getConfigurationTypes();
+  }
+
   public void runCallbackForLink(@NotNull String link, @NotNull RunDashboardServiceId serviceId) {
     Runnable callback = mySharedState.getLinkByServiceId(link, serviceId);
     if (callback != null) {
@@ -529,6 +533,7 @@ public final class RunDashboardManagerImpl implements RunDashboardManager, Persi
     finally {
       myServiceLock.writeLock().unlock();
       mySharedState.setServices(myServices);
+      mySharedState.setConfigurationTypes(myState.configurationTypes);
     }
   }
 
