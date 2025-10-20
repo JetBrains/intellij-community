@@ -36,6 +36,7 @@
     "Islands": 1,
     "Island": {
       "arc": 20,
+      "arc.compact": 16,
       "borderWidth": 5,
       "borderWidth.compact": 4,
       "borderColor": "BackgroundMid",
@@ -140,6 +141,8 @@
     "PopupMenu.background": "PopupBackground",
 
     "Toolbar.Floating.background": "#E4E6EB",
+
+    "Tree.border.compact": "2,8,2,8",
 
     "ToolTip": {
       "background": "TooltipBackground",

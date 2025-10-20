@@ -66,6 +66,7 @@
     "Islands": 1,
     "Island": {
       "arc": 20,
+      "arc.compact": 16,
       "borderWidth": 5,
       "borderWidth.compact": 4,
       "borderColor": "ToolWindowBackground",
@@ -271,6 +272,8 @@
     "Toolbar.Floating.background": "Gray3",
 
     "TabbedPane.hoverColor": "HoverBackgroundMid",
+
+    "Tree.border.compact": "2,8,2,8",
 
     "Counter": {
       "background": "Gray8",
