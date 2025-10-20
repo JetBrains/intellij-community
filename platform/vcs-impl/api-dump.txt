@@ -770,7 +770,7 @@ com.intellij.openapi.vcs.changes.ChangesViewI
 c:com.intellij.openapi.vcs.changes.ChangesViewManager
 - com.intellij.openapi.Disposable
 - com.intellij.openapi.vcs.changes.ChangesViewEx
-- <init>(com.intellij.openapi.project.Project):V
+- <init>(com.intellij.openapi.project.Project,kotlinx.coroutines.CoroutineScope):V
 - closeEditorPreview(Z):V
 - s:createTextStatusFactory(java.lang.String,Z):com.intellij.openapi.util.Factory
 - diffPreviewChanged(Z):V

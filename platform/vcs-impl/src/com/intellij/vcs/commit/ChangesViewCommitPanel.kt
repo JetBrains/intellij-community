@@ -21,7 +21,7 @@ import com.intellij.platform.vcs.impl.shared.commit.EditedCommitPresentation
 import com.intellij.util.application
 import com.intellij.util.ui.UIUtil
 import com.intellij.vcs.VcsDisposable
-import com.intellij.vcs.changes.BackendChangesView
+import com.intellij.vcs.changes.viewModel.BackendCommitChangesViewModel
 import kotlinx.coroutines.CompletableDeferred
 import kotlinx.coroutines.cancel
 import kotlinx.coroutines.flow.launchIn
@@ -32,7 +32,7 @@ import kotlin.properties.Delegates.observable
 
 class ChangesViewCommitPanel internal constructor(
   project: Project,
-  private val changesView: BackendChangesView,
+  private val viewModel: BackendCommitChangesViewModel,
 ) : NonModalCommitPanel(project), ChangesViewCommitWorkflowUi {
   private var isHideToolWindowOnCommit = false
 
@@ -54,7 +54,7 @@ class ChangesViewCommitPanel internal constructor(
 
     val scope = VcsDisposable.getInstance(project).coroutineScope.childScope("ChangesViewCommitPanel")
     Disposer.register(this) { scope.cancel() }
-    changesView.viewModel.inclusionChanged.onEach { writeIntentReadAction { fireInclusionChanged() } }.launchIn(scope)
+    viewModel.inclusionChanged.onEach { writeIntentReadAction { fireInclusionChanged() } }.launchIn(scope)
 
     commitActionsPanel.isCommitButtonDefault = {
       !progressPanel.isDumbMode && UIUtil.isFocusAncestor(rootComponent ?: component)
@@ -79,32 +79,32 @@ class ChangesViewCommitPanel internal constructor(
   }
 
   override fun expand(item: Any) {
-    changesView.viewModel.expand(item)
+    viewModel.expand(item)
   }
 
   override fun select(item: Any) {
-    changesView.viewModel.select(item)
+    viewModel.select(item)
   }
 
   override fun selectFirst(items: Collection<Any>) {
-    changesView.viewModel.selectFirst(items)
+    viewModel.selectFirst(items)
   }
 
   override fun setCompletionContext(changeLists: List<LocalChangeList>) {
     commitMessage.setChangesSupplier(ChangeListChangesSupplier(changeLists))
   }
 
-  override fun getDisplayedChanges(): List<Change> = changesView.viewModel.getDisplayedChanges()
-  override fun getIncludedChanges(): List<Change> = changesView.viewModel.getIncludedChanges()
+  override fun getDisplayedChanges(): List<Change> = viewModel.getDisplayedChanges()
+  override fun getIncludedChanges(): List<Change> = viewModel.getIncludedChanges()
 
   override fun getDisplayedUnversionedFiles(): List<FilePath> =
-    changesView.viewModel.getDisplayedUnversionedFiles()
+    viewModel.getDisplayedUnversionedFiles()
 
   override fun getIncludedUnversionedFiles(): List<FilePath> =
-    changesView.viewModel.getIncludedUnversionedFiles()
+    viewModel.getIncludedUnversionedFiles()
 
   override fun setInclusionModel(model: InclusionModel?) {
-    changesView.viewModel.setInclusionModel(model)
+    viewModel.setInclusionModel(model)
   }
 
   override val commitProgressUi: CommitProgressUi get() = progressPanel
@@ -122,7 +122,7 @@ class ChangesViewCommitPanel internal constructor(
 
   override fun dispose() {
     super.dispose()
-    changesView.viewModel.setShowCheckboxes(false)
+    viewModel.setShowCheckboxes(false)
   }
 
   override fun activate(): Boolean {
@@ -130,7 +130,7 @@ class ChangesViewCommitPanel internal constructor(
     val contentManager = ChangesViewContentManager.getInstance(project)
 
     saveToolWindowState()
-    changesView.viewModel.setShowCheckboxes(true)
+    viewModel.setShowCheckboxes(true)
     component.isVisible = true
     commitActionsPanel.isActive = true
 
@@ -147,7 +147,7 @@ class ChangesViewCommitPanel internal constructor(
     }
 
     clearToolWindowState()
-    changesView.viewModel.setShowCheckboxes(false)
+    viewModel.setShowCheckboxes(false)
     component.isVisible = false
     commitActionsPanel.isActive = false
 

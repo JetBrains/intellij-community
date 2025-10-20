@@ -3,7 +3,6 @@ package com.intellij.platform.vcs.impl.shared.changes
 
 import com.intellij.openapi.components.serviceOrNull
 import com.intellij.openapi.project.Project
-import com.intellij.openapi.vcs.FilePath
 import com.intellij.openapi.vcs.changes.Change
 import com.intellij.openapi.vcs.changes.ui.ChangeListRemoteState
 import com.intellij.openapi.vcs.changes.ui.ChangeNodeDecorator
@@ -20,7 +19,7 @@ interface TreeModelBuilderEx {
    */
   fun getChangeNodeInChangelistBaseDecorator(listRemoteState: ChangeListRemoteState, change: Change, index: Int): ChangeNodeDecorator?
 
-  fun modifyTreeModelBuilder(modelBuilder: TreeModelBuilder, unversionedFiles: List<FilePath>)
+  fun modifyTreeModelBuilder(modelBuilder: TreeModelBuilder)
 
   companion object {
     @JvmStatic

@@ -1,15 +1,15 @@
 // Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
-package com.intellij.openapi.vcs.changes
+package com.intellij.vcs.changes.viewModel
 
 import com.intellij.openapi.actionSystem.ActionManager
 import com.intellij.openapi.actionSystem.AnAction
 import com.intellij.openapi.vcs.FilePath
+import com.intellij.openapi.vcs.changes.*
 import com.intellij.openapi.vcs.changes.ui.ChangesBrowserNode.UNVERSIONED_FILES_TAG
 import com.intellij.openapi.vcs.changes.ui.ChangesListView
 import com.intellij.openapi.vcs.changes.ui.VcsTreeModelData.*
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.platform.vcs.impl.shared.changes.ChangesViewSettings
-import com.intellij.util.ui.tree.TreeUtil
 import com.intellij.util.ui.tree.TreeUtil.*
 import com.intellij.vcs.commit.ChangesViewCommitWorkflowHandler
 import kotlinx.coroutines.flow.MutableSharedFlow
@@ -97,7 +97,7 @@ internal class BackendLocalCommitChangesViewModel(private val panel: CommitChang
     for (change in changes) {
       panel.changesView.findNodePathInTree(change)?.let { paths.add(it) }
     }
-    TreeUtil.selectPaths(panel.changesView, paths)
+    selectPaths(panel.changesView, paths)
   }
 
   override fun getTree(): ChangesListView = panel.changesView

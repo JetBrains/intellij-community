@@ -49,6 +49,7 @@ import com.intellij.util.ui.UIUtil;
 import com.intellij.util.ui.components.BorderLayoutPanel;
 import com.intellij.vcs.changes.BackendChangesView;
 import com.intellij.vcs.commit.*;
+import kotlinx.coroutines.CoroutineScope;
 import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
@@ -69,6 +70,7 @@ import static com.intellij.util.ui.JBUI.Panels.simplePanel;
 public class ChangesViewManager implements ChangesViewEx, Disposable {
   private static final String CHANGES_VIEW_PREVIEW_SPLITTER_PROPORTION = "ChangesViewManager.DETAILS_SPLITTER_PROPORTION";
 
+  private final @NotNull CoroutineScope myScope;
   private final @NotNull Project myProject;
 
   private @Nullable BackendChangesView myChangesView;
@@ -79,7 +81,7 @@ public class ChangesViewManager implements ChangesViewEx, Disposable {
   BackendChangesView initChangesView() {
     if (myChangesView == null) {
       Activity activity = StartUpMeasurer.startActivity("ChangesViewPanel initialization");
-      myChangesView = BackendChangesView.create(myProject, this);
+      myChangesView = BackendChangesView.create(myProject, myScope);
       activity.end();
     }
     return myChangesView;
@@ -108,7 +110,8 @@ public class ChangesViewManager implements ChangesViewEx, Disposable {
     return myToolWindowPanel;
   }
 
-  public ChangesViewManager(@NotNull Project project) {
+  public ChangesViewManager(@NotNull Project project, @NotNull CoroutineScope coroutineScope) {
+    myScope = coroutineScope;
     myProject = project;
 
     MessageBusConnection busConnection = project.getMessageBus().connect(this);

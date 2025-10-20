@@ -3,7 +3,6 @@ package com.intellij.openapi.vcs.changes.ui
 
 import com.intellij.openapi.project.InitialVfsRefreshService
 import com.intellij.openapi.project.Project
-import com.intellij.openapi.vcs.FilePath
 import com.intellij.openapi.vcs.FileStatus
 import com.intellij.openapi.vcs.changes.*
 import com.intellij.openapi.vfs.VirtualFile
@@ -24,10 +23,9 @@ internal class BackendChangesViewModelBuilderService(private val project: Projec
   ): ChangeNodeDecorator =
     RemoteStatusChangeNodeDecorator(revisionsCache, listRemoteState, index)
 
-  override fun modifyTreeModelBuilder(modelBuilder: TreeModelBuilder, unversionedFiles: List<FilePath>) {
+  override fun modifyTreeModelBuilder(modelBuilder: TreeModelBuilder) {
     val changeListManager = ChangeListManagerImpl.getInstanceImpl(project)
-
-    val shouldShowUntrackedLoading = unversionedFiles.isEmpty() &&
+    val shouldShowUntrackedLoading = changeListManager.unversionedFilesPaths.isEmpty() &&
                                      !project.getService(InitialVfsRefreshService::class.java).isInitialVfsRefreshFinished() &&
                                      changeListManager.isUnversionedInUpdateMode
     if (shouldShowUntrackedLoading) {

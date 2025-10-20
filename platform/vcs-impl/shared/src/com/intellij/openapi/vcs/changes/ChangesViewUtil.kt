@@ -32,7 +32,7 @@ object ChangesViewUtil {
     val skipSingleDefaultChangeList = !ChangeListsViewModel.getInstance(project).areChangeListsEnabled.value
     val treeModelBuilder = TreeModelBuilder(project, grouping)
       .setChangeLists(changeLists, skipSingleDefaultChangeList, getChangeDecoratorProvider(project, isAllowExcludeFromCommit))
-      .also { TreeModelBuilderEx.getInstanceOrNull(project)?.modifyTreeModelBuilder(it, unversionedFiles) }
+      .also { TreeModelBuilderEx.getInstanceOrNull(project)?.modifyTreeModelBuilder(it) }
       .setUnversioned(unversionedFiles)
 
     treeModelBuilder.setIgnored(ignoredFiles)
