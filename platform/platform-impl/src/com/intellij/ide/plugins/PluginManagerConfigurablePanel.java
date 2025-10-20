@@ -47,6 +47,8 @@ import com.intellij.openapi.util.NlsContexts;
 import com.intellij.openapi.util.NlsSafe;
 import com.intellij.openapi.util.text.HtmlChunk;
 import com.intellij.openapi.util.text.StringUtil;
+import com.intellij.openapi.wm.impl.welcomeScreen.PluginsTabFactory;
+import com.intellij.openapi.wm.impl.welcomeScreen.WelcomeScreenEventCollector;
 import com.intellij.ui.GotItTooltip;
 import com.intellij.ui.SimpleTextAttributes;
 import com.intellij.ui.components.JBScrollPane;
@@ -1977,6 +1979,19 @@ public final class PluginManagerConfigurablePanel implements Disposable {
       return true;
     }
     return myPluginModelFacade.getModel().isModified();
+  }
+
+  public void scheduleApply() {
+    ApplicationManager.getApplication().invokeLater(() -> {
+      try {
+        apply();
+        WelcomeScreenEventCollector.logPluginsModified();
+        InstalledPluginsState.getInstance().runShutdownCallback();
+      }
+      catch (ConfigurationException exception) {
+        Logger.getInstance(PluginsTabFactory.class).error(exception);
+      }
+    }, ModalityState.nonModal());
   }
 
   public void apply() throws ConfigurationException {
