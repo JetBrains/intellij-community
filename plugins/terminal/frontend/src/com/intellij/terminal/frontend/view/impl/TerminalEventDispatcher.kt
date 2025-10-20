@@ -19,6 +19,7 @@ import com.intellij.openapi.util.Disposer
 import com.intellij.openapi.util.registry.Registry
 import com.intellij.terminal.JBTerminalSystemSettingsProviderBase
 import com.intellij.terminal.frontend.action.SendShortcutToTerminalAction
+import com.intellij.terminal.frontend.view.TerminalAllowedActionsProvider
 import com.intellij.util.concurrency.ThreadingAssertions
 import com.jediterm.terminal.emulator.mouse.MouseMode
 import org.intellij.lang.annotations.Language
@@ -98,16 +99,19 @@ private class TerminalEventDispatcher(
   fun registerIfNeeded() {
     ThreadingAssertions.assertEventDispatchThread()
     if (!settings.overrideIdeShortcuts()) return // handled by the listener instead
-    this.allowedActions = getAllowedActions()
+
+    val actionManager = ActionManager.getInstance()
+    val actions = getAllowedActionIds().mapNotNull { actionManager.getAction(it) }
+    this.allowedActions = actions
     if (!myRegistered) {
       IdeEventQueue.getInstance().addDispatcher(this, parentDisposable)
-      sendShortcutAction.register(editor.contentComponent, getAllowedActions())
+      sendShortcutAction.register(editor.contentComponent, actions)
       myRegistered = true
       // The same reasoning as with the initialization:
       // the terminal might have been activated with a shortcut that will be immediately followed by a "key typed" event.
       // If that's the case, we should ignore that event. If not, the flag will be cleared when the next event is processed.
       ignoreNextKeyTypedEvent = true
-      LOG.trace { "Dispatcher registered: start capturing key events" }
+      LOG.trace { "Dispatcher registered: start capturing key events. Allowed actions: ${actions.map { it.javaClass.name }}" }
     }
   }
 
@@ -140,9 +144,10 @@ private class TerminalEventDispatcher(
     return false
   }
 
-  private fun getAllowedActions(): List<AnAction> {
-    val actionManager = ActionManager.getInstance()
-    return ALLOWED_ACTION_IDS.mapNotNull { actionId -> actionManager.getAction(actionId) }
+  private fun getAllowedActionIds(): List<String> {
+    val actionIds = LinkedHashSet(ALLOWED_ACTION_IDS)
+    TerminalAllowedActionsProvider.EP_NAME.extensionList.flatMapTo(actionIds) { it.getActionIds() }
+    return actionIds.toList()
   }
 
   companion object {
