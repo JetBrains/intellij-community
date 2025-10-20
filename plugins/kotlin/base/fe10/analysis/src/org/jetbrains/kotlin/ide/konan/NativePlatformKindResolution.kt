@@ -127,12 +127,10 @@ internal fun KotlinLibrary.createKlibPackageFragmentProvider(
 ): PackageFragmentProvider? {
     if (!compatibilityInfo.isCompatible) return null
 
-    val packageFragmentNames = CachingIdeKlibMetadataLoader.loadModuleHeader(this).packageFragmentNameList
-
     return metadataModuleDescriptorFactory.createPackageFragmentProvider(
         library = this,
-        packageAccessHandler = CachingIdeKlibMetadataLoader,
-        packageFragmentNames = packageFragmentNames,
+        packageAccessHandler = null,
+        customMetadataProtoLoader = CachingIdeKlibMetadataLoader,
         storageManager = storageManager,
         moduleDescriptor = moduleDescriptor,
         configuration = KlibCompilerDeserializationConfiguration(languageVersionSettings),
