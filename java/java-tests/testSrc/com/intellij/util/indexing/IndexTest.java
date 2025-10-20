@@ -75,7 +75,6 @@ import com.intellij.util.io.EnumeratorStringDescriptor;
 import com.intellij.util.io.PersistentMapImpl;
 import com.intellij.util.ref.GCUtil;
 import com.intellij.util.ref.GCWatcher;
-import com.intellij.util.ui.UIUtil;
 import com.intellij.workspaceModel.ide.impl.WorkspaceEntityLifecycleSupporterUtils;
 import com.siyeh.ig.JavaOverridingMethodUtil;
 import kotlin.Unit;
@@ -519,8 +518,9 @@ public class IndexTest extends JavaCodeInsightFixtureTestCase {
     //Let's help GC, even in interpreter mode
     //noinspection UnusedAssignment
     psiFile = null;
+
     GCWatcher.tracking(getPsiManager().getFileManager().getCachedPsiFile(vFile))
-      .ensureCollected(() -> UIUtil.dispatchAllInvocationEvents());
+      .ensureCollectedWithinTimeout(5_000, PlatformTestUtil::dispatchAllInvocationEventsInIdeEventQueue); // wait for document commit queue
     assertNull(getPsiManager().getFileManager().getCachedPsiFile(vFile));
 
     WriteAction.run(() -> VfsUtil.saveText(vFile, "class Foo3 {}"));

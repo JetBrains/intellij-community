@@ -110,7 +110,8 @@ public class ConcurrentIndexTest extends JavaCodeInsightFixtureTestCase {
         ((PsiJavaFile)file).getImportList()
           .add(JavaPsiFacade.getElementFactory(getProject()).createImportStatementOnDemand("foo.bar" + finalI));
       });
-      GCWatcher.tracking(file.getNode()).ensureCollected();
+      // Wait for com.intellij.codeInsight.daemon.impl.PsiChangeHandler$Change to release the reference
+      GCWatcher.tracking(file.getNode()).ensureCollectedWithinTimeout(5_000);
       assertFalse(file.isContentsLoaded());
 
       List<Future<?>> futuresToWait = new ArrayList<>();
@@ -170,7 +171,8 @@ public class ConcurrentIndexTest extends JavaCodeInsightFixtureTestCase {
         ((PsiJavaFile)file).getImportList()
           .add(JavaPsiFacade.getElementFactory(getProject()).createImportStatementOnDemand("foo.bar" + finalI));
       });
-      GCWatcher.tracking(file.getNode()).ensureCollected();
+
+      GCWatcher.tracking(file.getNode()).ensureCollectedWithinTimeout(5_000); // wait for document commit queue
       assertFalse(file.isContentsLoaded());
 
       myFixture.addFileToProject("Foo" + i + ".java",
@@ -233,7 +235,9 @@ public class ConcurrentIndexTest extends JavaCodeInsightFixtureTestCase {
         document.insertString(document.getText().indexOf("(null") + 1, " ");
         PsiDocumentManager.getInstance(getProject()).commitAllDocuments();
       });
-      GCWatcher.tracking(file.getNode()).ensureCollected();
+
+      // Wait for com.intellij.codeInsight.daemon.impl.PsiChangeHandler$Change to release the reference
+      GCWatcher.tracking(file.getNode()).ensureCollectedWithinTimeout(5_000);
       assertFalse(file.isContentsLoaded());
 
       assertTrue(file.getNode().getLighterAST() instanceof FCTSBackedLighterAST);

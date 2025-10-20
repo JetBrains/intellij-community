@@ -212,7 +212,9 @@ public class SmartPsiElementPointersTest extends JavaCodeInsightTestCase {
       PsiDocumentManager.getInstance(myProject).commitAllDocuments();
     });
 
-    GCWatcher.tracking(myFile.getNode()).ensureCollected();
+    // Wait for com.intellij.codeInsight.daemon.impl.PsiChangeHandler$Change to release the reference
+    GCWatcher.tracking(myFile.getNode()).ensureCollectedWithinTimeout(5_000);
+
     assertEquals(myFile.getFirstChild(), pointer.getElement());
   }
 
