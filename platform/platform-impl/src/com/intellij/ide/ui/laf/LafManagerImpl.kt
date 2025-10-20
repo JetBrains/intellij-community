@@ -48,6 +48,7 @@ import com.intellij.openapi.util.SystemInfo
 import com.intellij.openapi.util.SystemInfoRt
 import com.intellij.openapi.util.registry.Registry
 import com.intellij.openapi.wm.impl.IdeGlassPaneImpl
+import com.intellij.openapi.wm.impl.ToolWindowManagerImpl
 import com.intellij.openapi.wm.impl.welcomeScreen.WelcomeFrame
 import com.intellij.platform.diagnostic.telemetry.impl.span
 import com.intellij.ui.*
@@ -748,6 +749,7 @@ class LafManagerImpl(private val coroutineScope: CoroutineScope) : LafManager(),
   override fun applyAltColors() {
     setCurrentLookAndFeel(currentTheme!!, true)
     updateUI()
+    ToolWindowManagerImpl.applyAltColors()
   }
 
   /**

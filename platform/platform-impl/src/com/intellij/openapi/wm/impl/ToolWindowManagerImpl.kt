@@ -185,6 +185,18 @@ open class ToolWindowManagerImpl @NonInjectable @TestOnly internal constructor(
       ratio += (((partSize.toFloat() + direction) / totalSize) - ratio) / 2
       return ratio
     }
+
+    @ApiStatus.Internal
+    fun applyAltColors() {
+      for (frameHelper in WindowManager.getInstance().allProjectFrames) {
+        val manager = getInstance(frameHelper.project ?: continue) as ToolWindowManagerEx
+        for (toolwindow in manager.toolWindows) {
+          if (toolwindow is ToolWindowImpl) {
+            toolwindow.updateContentBackgroundColors()
+          }
+        }
+      }
+    }
   }
 
   fun isToolWindowRegistered(id: String): Boolean = idToEntry.containsKey(id)
