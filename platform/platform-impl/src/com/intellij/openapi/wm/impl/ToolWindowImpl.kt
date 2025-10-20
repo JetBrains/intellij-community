@@ -175,6 +175,14 @@ import kotlin.math.abs
     }
   }
 
+  internal fun updateContentBackgroundColors() {
+    val color = JBUI.CurrentTheme.ToolWindow.background()
+
+    for (content in contentManager.value.contents) {
+      InternalDecoratorImpl.setBackgroundRecursively(content.component, color)
+    }
+  }
+
   internal fun getOrCreateDecoratorComponent(): InternalDecoratorImpl {
     ensureContentManagerInitialized()
     return decorator!!
