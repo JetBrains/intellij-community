@@ -1252,6 +1252,7 @@ private class CounterLabel : JPanel() {
     label = createLabel()
     layout = BorderLayout()
     add(label, BorderLayout.CENTER)
+    isOpaque = false
     setNumber(0, isProgressVisible =false, isPopupShowing = false)
   }
 
