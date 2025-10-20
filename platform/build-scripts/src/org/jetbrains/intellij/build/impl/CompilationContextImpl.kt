@@ -7,7 +7,6 @@ import com.intellij.diagnostic.COROUTINE_DUMP_HEADER
 import com.intellij.diagnostic.dumpCoroutines
 import com.intellij.diagnostic.enableCoroutineDump
 import com.intellij.openapi.util.io.NioFiles
-import com.intellij.util.PathUtilRt
 import com.jetbrains.JBR
 import io.opentelemetry.api.common.AttributeKey
 import io.opentelemetry.api.common.Attributes
@@ -50,7 +49,6 @@ import org.jetbrains.jps.model.JpsElementFactory
 import org.jetbrains.jps.model.JpsGlobal
 import org.jetbrains.jps.model.JpsModel
 import org.jetbrains.jps.model.JpsProject
-import org.jetbrains.jps.model.artifact.JpsArtifactService
 import org.jetbrains.jps.model.java.JavaResourceRootType
 import org.jetbrains.jps.model.java.JavaSourceRootType
 import org.jetbrains.jps.model.java.JpsJavaClasspathKind
@@ -276,9 +274,6 @@ class CompilationContextImpl private constructor(
         categoriesWithDebugLevel = System.getProperty("intellij.build.debug.logging.categories", "") ?: "",
       )
     }
-    for (artifact in JpsArtifactService.getInstance().getArtifacts(project)) {
-      artifact.outputPath = "${paths.jpsArtifacts.resolve(PathUtilRt.getFileName(artifact.outputPath))}"
-    }
     suppressWarnings(project)
     ConsoleSpanExporter.setPathRoot(paths.buildOutputDir)
     if (options.cleanOutDir || options.forceRebuild) {
@@ -467,7 +462,6 @@ internal suspend fun cleanOutput(context: CompilationContext, keepCompilationSta
   val compilationState = setOf(
     context.compilationData.dataStorageRoot,
     context.classesOutputDirectory,
-    context.paths.jpsArtifacts,
   )
   val outputDirectoriesToKeep = buildSet {
     add(context.paths.logDir)

@@ -26,7 +26,6 @@ import org.jetbrains.intellij.build.BuildContext
 import org.jetbrains.intellij.build.BuildOptions
 import org.jetbrains.intellij.build.BuildTasks
 import org.jetbrains.intellij.build.CompilationContext
-import org.jetbrains.intellij.build.CompilationTasks
 import org.jetbrains.intellij.build.DistFileContent
 import org.jetbrains.intellij.build.InMemoryDistFileContent
 import org.jetbrains.intellij.build.JvmArchitecture
@@ -60,7 +59,6 @@ import org.jetbrains.intellij.build.telemetry.TraceManager.spanBuilder
 import org.jetbrains.intellij.build.telemetry.block
 import org.jetbrains.intellij.build.telemetry.use
 import org.jetbrains.intellij.build.zipSourcesOfModules
-import org.jetbrains.jps.model.artifact.JpsArtifactService
 import java.nio.file.FileVisitResult
 import java.nio.file.Files
 import java.nio.file.NoSuchFileException
@@ -94,8 +92,6 @@ internal class BuildTasksImpl(private val context: BuildContextImpl) : BuildTask
     val pluginsToPublish = getPluginLayoutsByJpsModuleNames(modules = mainPluginModules, productLayout = context.productProperties.productLayout, toPublish = true)
     val distState = createDistributionBuilderState(pluginsToPublish, context)
     context.compileModules(null)
-
-    buildProjectArtifacts(platform = distState.platform, enabledPluginModules = getEnabledPluginModules(distState.pluginsToPublish, context), context = context)
 
     val searchableOptionSet = buildSearchableOptions(context.createProductRunner(mainPluginModules + dependencyModules), context)
     buildNonBundledPlugins(
@@ -384,7 +380,6 @@ internal suspend fun createDistributionState(context: BuildContext): Distributio
     return distributionState(
       pluginsToPublish = pluginsToPublish,
       projectLibrariesUsedByPlugins = projectLibrariesUsedByPlugins,
-      enabledPluginModules = enabledPluginModules,
       context = context
     )
   }
@@ -419,16 +414,10 @@ internal suspend fun createDistributionState(context: BuildContext): Distributio
       filterPluginsToPublish(pluginsToPublish, context)
 
       // update enabledPluginModules to reflect changes in pluginsToPublish - used for buildProjectArtifacts
-      distributionState(
-        pluginsToPublish = pluginsToPublish,
-        projectLibrariesUsedByPlugins = projectLibrariesUsedByPlugins,
-        enabledPluginModules = getEnabledPluginModules(pluginsToPublish, context),
-        context = context,
-      )
+      distributionState(pluginsToPublish, projectLibrariesUsedByPlugins, context)
     }
     else {
       val platform = createPlatformLayout(context)
-      buildProjectArtifacts(platform, enabledPluginModules, context)
       DistributionBuilderState(platform, pluginsToPublish, context)
     }
   }
@@ -446,22 +435,11 @@ internal fun additionalProperties(): VmProperties = VmProperties(mapOf("user.hom
 private suspend fun distributionState(
   pluginsToPublish: Set<PluginLayout>,
   projectLibrariesUsedByPlugins: SortedSet<ProjectLibraryData>,
-  enabledPluginModules: Set<String>,
   context: BuildContext,
 ): DistributionBuilderState {
   val platform = createPlatformLayout(projectLibrariesUsedByPlugins, context)
   val distState = DistributionBuilderState(platform, pluginsToPublish, context)
-  buildProjectArtifacts(platform, enabledPluginModules, context)
   return distState
-}
-
-private suspend fun buildProjectArtifacts(platform: PlatformLayout, enabledPluginModules: Set<String>, context: BuildContext) {
-  val artifactNames = LinkedHashSet<String>()
-  artifactNames.addAll(platform.includedArtifacts.keys)
-  getPluginLayoutsByJpsModuleNames(enabledPluginModules, context.productProperties.productLayout)
-    .flatMapTo(artifactNames) { it.includedArtifacts.keys }
-
-  CompilationTasks.create(context).buildProjectArtifacts(artifactNames)
 }
 
 suspend fun buildDistributions(context: BuildContext): Unit = block("build distributions") {
@@ -691,7 +669,6 @@ private fun checkProductLayout(context: BuildContext) {
 
 private fun checkBaseLayout(layout: BaseLayout, description: String, context: BuildContext) {
   checkModules(layout.includedModules.asSequence().map { it.moduleName }.distinct().toList(), "moduleJars in $description", context)
-  checkArtifacts(layout.includedArtifacts.keys, "includedArtifacts in $description", context)
   checkModules(layout.resourcePaths.map { it.moduleName }, "resourcePaths in $description", context)
   checkModules(layout.moduleExcludes.keys, "moduleExcludes in $description", context)
 
@@ -756,13 +733,6 @@ private fun checkModules(modules: Collection<String?>?, fieldName: String, conte
 private fun checkModule(moduleName: String?, fieldName: String, context: CompilationContext) {
   if (moduleName != null && context.findModule(moduleName) == null) {
     context.messages.logErrorAndThrow("Module '$moduleName' from $fieldName isn't found in the project")
-  }
-}
-
-private fun checkArtifacts(names: Collection<String>, fieldName: String, context: CompilationContext) {
-  val unknownArtifacts = names - JpsArtifactService.getInstance().getArtifacts(context.project).map { it.name }.toSet()
-  check(unknownArtifacts.isEmpty()) {
-    "The following artifacts from $fieldName aren't found in the project: $unknownArtifacts"
   }
 }
 

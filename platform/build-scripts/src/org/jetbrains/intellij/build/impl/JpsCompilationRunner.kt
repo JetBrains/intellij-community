@@ -3,7 +3,6 @@ package org.jetbrains.intellij.build.impl
 
 import io.opentelemetry.api.common.AttributeKey
 import io.opentelemetry.api.common.Attributes
-import io.opentelemetry.api.trace.Span
 import kotlinx.coroutines.Dispatchers
 import org.jetbrains.intellij.build.BuildOptions
 import org.jetbrains.intellij.build.CompilationContext
@@ -18,18 +17,10 @@ import org.jetbrains.jps.backwardRefs.JavaBackwardReferenceIndexWriter
 import org.jetbrains.jps.build.Standalone
 import org.jetbrains.jps.builders.java.JavaModuleBuildTargetType
 import org.jetbrains.jps.incremental.artifacts.ArtifactBuildTargetType
-import org.jetbrains.jps.incremental.artifacts.impl.ArtifactSorter
-import org.jetbrains.jps.incremental.artifacts.impl.JpsArtifactUtil
 import org.jetbrains.jps.incremental.dependencies.DependencyResolvingBuilder
-import org.jetbrains.jps.model.artifact.JpsArtifact
-import org.jetbrains.jps.model.artifact.JpsArtifactService
-import org.jetbrains.jps.model.artifact.elements.JpsModuleOutputPackagingElement
 import org.jetbrains.jps.model.java.JpsJavaExtensionService
 import org.jetbrains.jps.model.module.JpsModule
-import java.nio.file.Files
-import java.nio.file.Path
 import java.util.concurrent.TimeUnit
-import kotlin.io.path.extension
 
 internal class JpsCompilationRunner(private val context: CompilationContext) {
   companion object {
@@ -92,10 +83,6 @@ internal class JpsCompilationRunner(private val context: CompilationContext) {
     )
   }
 
-  suspend fun buildModulesWithoutDependencies(modules: Collection<JpsModule>, includeTests: Boolean) {
-    runBuild(moduleSet = modules.map { it.name }, allModules = false, artifactNames = emptyList(), includeTests = includeTests)
-  }
-
   suspend fun resolveProjectDependencies() {
     runBuild(moduleSet = emptyList(), allModules = false, artifactNames = emptyList(), resolveProjectDependencies = true)
   }
@@ -125,100 +112,6 @@ internal class JpsCompilationRunner(private val context: CompilationContext) {
       artifactNames = emptyList(),
       canceledStatus = canceledStatus,
     )
-  }
-
-  suspend fun buildArtifacts(artifactNames: Set<String>, buildIncludedModules: Boolean) {
-    val artifacts = getArtifactsWithIncluded(artifactNames)
-    val missing = artifactNames.filter { name ->
-      artifacts.none { it.name == name }
-    }
-    check(missing.isEmpty()) {
-      "Artifacts aren't configured in the project: " + missing.joinToString()
-    }
-    artifacts.forEach {
-      if (context.compilationData.builtArtifacts.contains(it.name) &&
-          it.outputFilePath?.let(Path::of)?.let(Files::exists) != true) {
-        context.messages.warning("${it.name} is expected to be already built at ${it.outputFilePath} but it's missing")
-        context.compilationData.builtArtifacts.remove(it.name)
-      }
-    }
-    val includedModules = getModulesIncludedInArtifacts(artifacts)
-    val modules = if (buildIncludedModules) {
-      includedModules
-    }
-    else {
-      includedModules.filter {
-        val module = context.findRequiredModule(it)
-        val outputDir = context.getModuleOutputDir(module)
-        if (Files.isDirectory(outputDir) && Files.newDirectoryStream(outputDir).use { stream -> stream.any() }) {
-          false
-        } else if (Files.isRegularFile(outputDir) && outputDir.extension == "jar") {
-          false
-        }
-        else {
-          /**
-           * See [compileMissingArtifactsModules]
-           */
-          Span.current().addEvent("compilation output of module $it is missing: $outputDir")
-          true
-        }
-      }
-    }
-    runBuild(moduleSet = modules, allModules = false, artifactNames = artifacts.map { it.name })
-    val failedToBeBuilt = artifacts.filter {
-      if (it.outputFilePath?.let(Path::of)?.let(Files::exists) == true) {
-        Span.current().addEvent("${it.name} was successfully built at ${it.outputFilePath}")
-        false
-      }
-      else {
-        Span.current().addEvent("${it.name} is expected to be built at ${it.outputFilePath}")
-        true
-      }
-    }
-    if (failedToBeBuilt.isNotEmpty()) {
-      compileMissingArtifactsModules(failedToBeBuilt)
-    }
-  }
-
-  // FIXME: workaround for sporadically missing build artifacts, to be investigated
-  private suspend fun compileMissingArtifactsModules(artifacts: Collection<JpsArtifact>) {
-    val modules = getModulesIncludedInArtifacts(artifacts)
-    require(modules.isNotEmpty()) {
-      "No modules found for artifacts ${artifacts.map { it.name }}"
-    }
-    for (artifact in artifacts) {
-      context.compilationData.builtArtifacts.remove(artifact.name)
-    }
-    spanBuilder("Compiling modules for missing artifacts: ${modules.joinToString()}").use {
-      runBuild(moduleSet = modules, allModules = false, artifactNames = artifacts.map { it.name })
-    }
-    for (artifact in artifacts) {
-      if (artifact.outputFilePath?.let(Path::of)?.let(Files::exists) == false) {
-        context.messages.logErrorAndThrow("${artifact.name} is expected to be built at ${artifact.outputFilePath}")
-      }
-    }
-  }
-
-  fun getModulesIncludedInArtifacts(artifactNames: Collection<String>): Collection<String> {
-    return getModulesIncludedInArtifacts(getArtifactsWithIncluded(artifactNames))
-  }
-
-  private fun getModulesIncludedInArtifacts(artifacts: Collection<JpsArtifact>): Set<String> {
-    val modulesSet = LinkedHashSet<String>()
-    for (artifact in artifacts) {
-      JpsArtifactUtil.processPackagingElements(artifact.rootElement) { element ->
-        if (element is JpsModuleOutputPackagingElement) {
-          modulesSet.addAll(getModuleDependencies(module = context.findRequiredModule(element.moduleReference.moduleName), includeTests = false))
-        }
-        true
-      }
-    }
-    return modulesSet
-  }
-
-  private fun getArtifactsWithIncluded(artifactNames: Collection<String>): Set<JpsArtifact> {
-    val artifacts = JpsArtifactService.getInstance().getArtifacts(context.project).filter { it.name in artifactNames }
-    return ArtifactSorter.addIncludedArtifacts(artifacts)
   }
 
   private suspend fun runBuild(

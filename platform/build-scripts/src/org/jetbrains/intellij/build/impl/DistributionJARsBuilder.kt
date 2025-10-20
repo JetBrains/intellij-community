@@ -46,15 +46,10 @@ import org.jetbrains.intellij.build.generatePluginClassPathFromPrebuiltPluginFil
 import org.jetbrains.intellij.build.impl.plugins.doBuildNonBundledPlugins
 import org.jetbrains.intellij.build.impl.projectStructureMapping.ContentReport
 import org.jetbrains.intellij.build.impl.projectStructureMapping.DistributionFileEntry
-import org.jetbrains.intellij.build.impl.projectStructureMapping.ModuleLibraryFileEntry
-import org.jetbrains.intellij.build.impl.projectStructureMapping.ModuleOutputEntry
-import org.jetbrains.intellij.build.impl.projectStructureMapping.ModuleTestOutputEntry
-import org.jetbrains.intellij.build.impl.projectStructureMapping.ProjectLibraryEntry
 import org.jetbrains.intellij.build.impl.projectStructureMapping.buildJarContentReport
 import org.jetbrains.intellij.build.impl.projectStructureMapping.getIncludedModules
 import org.jetbrains.intellij.build.injectAppInfo
 import org.jetbrains.intellij.build.io.copyDir
-import org.jetbrains.intellij.build.io.copyFile
 import org.jetbrains.intellij.build.io.copyFileToDir
 import org.jetbrains.intellij.build.io.writeNewZipWithoutIndex
 import org.jetbrains.intellij.build.io.zip
@@ -64,12 +59,6 @@ import org.jetbrains.intellij.build.telemetry.TraceManager.spanBuilder
 import org.jetbrains.intellij.build.telemetry.block
 import org.jetbrains.intellij.build.telemetry.use
 import org.jetbrains.intellij.build.writePluginClassPathHeader
-import org.jetbrains.jps.model.artifact.JpsArtifact
-import org.jetbrains.jps.model.artifact.JpsArtifactService
-import org.jetbrains.jps.model.artifact.elements.JpsLibraryFilesPackagingElement
-import org.jetbrains.jps.model.java.JpsProductionModuleOutputPackagingElement
-import org.jetbrains.jps.model.java.JpsTestModuleOutputPackagingElement
-import org.jetbrains.jps.model.module.JpsModuleReference
 import org.jetbrains.jps.util.JpsPathUtil
 import java.io.ByteArrayOutputStream
 import java.io.DataOutputStream
@@ -78,8 +67,6 @@ import java.nio.file.Files
 import java.nio.file.NoSuchFileException
 import java.nio.file.Path
 import java.nio.file.StandardCopyOption
-import kotlin.io.path.ExperimentalPathApi
-import kotlin.io.path.copyToRecursively
 import kotlin.io.path.listDirectoryEntries
 
 /**
@@ -901,13 +888,6 @@ suspend fun layoutDistribution(
       })
     }
 
-    if (!layout.includedArtifacts.isEmpty()) {
-      tasks.add(async(CoroutineName("pack artifacts")) {
-        spanBuilder("pack artifacts").use {
-          layoutArtifacts(layout = layout, context = context, copyFiles = copyFiles, targetDirectory = targetDirectory)
-        }
-      })
-    }
     tasks
   }.flatMap { it.getCompleted() }
 
@@ -982,95 +962,6 @@ private suspend fun layoutAdditionalResources(layout: BaseLayout, context: Build
     spanBuilder("generate and pack resources").use {
       for (item in resourceGenerators) {
         item(targetDirectory, context)
-      }
-    }
-  }
-}
-
-@OptIn(ExperimentalPathApi::class)
-private suspend fun layoutArtifacts(
-  layout: BaseLayout,
-  context: BuildContext,
-  copyFiles: Boolean,
-  targetDirectory: Path,
-): Collection<DistributionFileEntry> {
-  val span = Span.current()
-  val entries = mutableListOf<DistributionFileEntry>()
-  val jpsArtifactService = JpsArtifactService.getInstance()
-  for ((artifactName, relativePath) in layout.includedArtifacts.entries) {
-    span.addEvent("include artifact", Attributes.of(AttributeKey.stringKey("artifactName"), artifactName))
-    val artifact = jpsArtifactService.getArtifacts(context.project).find { it.name == artifactName }
-                   ?: error("Cannot find artifact '$artifactName' in the project")
-    var artifactPath = targetDirectory.resolve(LIB_DIRECTORY).resolve(relativePath)
-    val sourcePath = artifact.outputFilePath?.let(Path::of) ?: error("Missing output path for '$artifactName' artifact")
-    if (copyFiles) {
-      require(withContext(Dispatchers.IO) { Files.exists(sourcePath) }) {
-        "Missing output file for '$artifactName' artifact: outputFilePath=${artifact.outputFilePath}, outputPath=${artifact.outputPath}"
-      }
-    }
-    if (artifact.outputFilePath == artifact.outputPath) {
-      if (copyFiles) {
-        withContext(Dispatchers.IO) {
-          sourcePath.copyToRecursively(target = artifactPath, followLinks = false)
-        }
-      }
-    }
-    else {
-      artifactPath = artifactPath.resolve(sourcePath.fileName)
-      if (copyFiles) {
-        withContext(Dispatchers.IO) {
-          copyFile(sourcePath, artifactPath)
-        }
-      }
-    }
-    addArtifactMapping(artifact = artifact, entries = entries, artifactFile = artifactPath)
-  }
-  return entries
-}
-
-private fun addArtifactMapping(artifact: JpsArtifact, entries: MutableCollection<DistributionFileEntry>, artifactFile: Path) {
-  val rootElement = artifact.rootElement
-  for (element in rootElement.children) {
-    if (element is JpsProductionModuleOutputPackagingElement) {
-      entries.add(
-        ModuleOutputEntry(
-          path = artifactFile,
-          owner = ModuleItem(moduleName = element.moduleReference.moduleName, relativeOutputFile = "DO NOT USE ME", reason = null),
-          size = 0,
-          hash = 0,
-          relativeOutputFile = "",
-          reason = "artifact: ${artifact.name}",
-        )
-      )
-    }
-    else if (element is JpsTestModuleOutputPackagingElement) {
-      entries.add(ModuleTestOutputEntry(path = artifactFile, moduleName = element.moduleReference.moduleName))
-    }
-    else if (element is JpsLibraryFilesPackagingElement) {
-      val library = element.libraryReference.resolve()
-      val parentReference = library!!.createReference().parentReference
-      if (parentReference is JpsModuleReference) {
-        entries.add(ModuleLibraryFileEntry(
-          path = artifactFile,
-          moduleName = parentReference.moduleName,
-          libraryName = getLibraryFilename(library),
-          libraryFile = null,
-          hash = 0,
-          size = 0,
-          relativeOutputFile = null,
-          owner = null,
-        ))
-      }
-      else {
-        val libraryData = ProjectLibraryData(libraryName = library.name, reason = "<- artifact ${artifact.name}")
-        entries.add(ProjectLibraryEntry(
-          path = artifactFile,
-          data = libraryData,
-          libraryFile = null,
-          hash = 0,
-          size = 0,
-          relativeOutputFile = null,
-        ))
       }
     }
   }

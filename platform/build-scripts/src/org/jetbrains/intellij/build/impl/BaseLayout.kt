@@ -28,10 +28,6 @@ sealed class BaseLayout {
   val includedModules: Collection<ModuleItem>
     get() = _includedModules
 
-  /** artifact name to a relative output path */
-  @JvmField
-  internal var includedArtifacts: PersistentMap<String, String> = persistentMapOf()
-
   /** list of additional resources which should be included in the distribution */
   @JvmField
   internal var resourcePaths: PersistentList<ModuleResourceData> = persistentListOf()

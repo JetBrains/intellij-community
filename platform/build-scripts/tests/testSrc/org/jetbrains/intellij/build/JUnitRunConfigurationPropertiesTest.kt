@@ -21,7 +21,6 @@ class JUnitRunConfigurationPropertiesTest {
     assertEquals("main-module", properties.moduleName)
     assertEquals(listOf("com.example.test.MainTest"), properties.testClassPatterns)
     assertEquals(listOf("-ea", "-Xmx512m"), properties.vmParameters)
-    assertEquals(listOf("artifact1", "artifact2"), properties.requiredArtifacts)
     assertEquals(mapOf("foo" to "1", "bar" to "2"), properties.envVariables)
   }
 
@@ -32,7 +31,6 @@ class JUnitRunConfigurationPropertiesTest {
     assertEquals("main-module", properties.moduleName)
     assertEquals(listOf("com.example.test.*"), properties.testClassPatterns)
     assertEquals(listOf("-ea"), properties.vmParameters)
-    assertEquals(emptyList<String>(), properties.requiredArtifacts)
   }
 
   @Test
@@ -42,7 +40,6 @@ class JUnitRunConfigurationPropertiesTest {
     assertEquals("main-module", properties.moduleName)
     assertEquals(listOf("com.example.Test", "com.example.package..*"), properties.testClassPatterns)
     assertEquals(listOf("-ea", "-Dintellij.build.test.patterns.escaped=true"), properties.vmParameters)
-    assertEquals(emptyList<String>(), properties.requiredArtifacts)
   }
 
   @Test(expected = RuntimeException::class)

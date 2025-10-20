@@ -36,7 +36,6 @@ internal suspend fun buildPlugins(
   context: BuildContext,
   runDir: Path,
   platformLayout: Deferred<PlatformLayout>,
-  artifactTask: Job,
   searchableOptionSet: SearchableOptionSetDescriptor?,
   buildPlatformJob: Job,
   moduleOutputPatcher: ModuleOutputPatcher,
@@ -51,8 +50,6 @@ internal suspend fun buildPlugins(
   withContext(Dispatchers.IO) {
     Files.createDirectories(pluginRootDir)
   }
-
-  artifactTask.join()
 
   val platform = platformLayout.await()
   val pluginEntries = spanBuilder("build plugins").setAttribute(AttributeKey.longKey("count"), plugins.size.toLong()).use {

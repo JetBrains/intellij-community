@@ -139,11 +139,6 @@ open class TestingOptions {
   var testDiscoveryExcludePatterns: String? = System.getProperty("intellij.build.test.discovery.exclude.class.patterns")
 
   /**
-   * Specifies a list of semicolon separated project artifacts that need to be built before running the tests.
-   */
-  var beforeRunProjectArtifacts: String? = System.getProperty("intellij.build.test.beforeRun.projectArtifacts")
-
-  /**
    * If `true` causal profiler agent will be attached to the testing process.
    */
   var isEnableCausalProfiling: Boolean = getBooleanProperty("intellij.build.test.enable.causal.profiling", false)

@@ -192,9 +192,6 @@ internal class TestingTasksImpl(context: CompilationContext, private val options
     val systemProperties = LinkedHashMap<String, String>(additionalSystemProperties)
     try {
       val compilationTasks = CompilationTasks.create(context)
-      options.beforeRunProjectArtifacts?.splitToSequence(';')?.filterNotTo(HashSet(), String::isEmpty)?.let {
-        compilationTasks.buildProjectArtifacts(it)
-      }
 
       if (runConfigurations.any { it.buildProject }) {
         context.messages.info(
@@ -207,7 +204,6 @@ internal class TestingTasksImpl(context: CompilationContext, private val options
         compilationTasks.compileModules(
           listOf("intellij.tools.testsBootstrap"),
           listOf("intellij.platform.buildScripts") + runConfigurations.map { it.moduleName })
-        compilationTasks.buildProjectArtifacts(runConfigurations.flatMapTo(LinkedHashSet()) { it.requiredArtifacts })
       }
       else {
         compilationTasks.compileModules(

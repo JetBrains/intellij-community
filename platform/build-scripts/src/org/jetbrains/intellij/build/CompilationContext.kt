@@ -97,10 +97,5 @@ interface CompilationTasks {
    */
   suspend fun compileModules(moduleNames: Collection<String>?, includingTestsInModules: List<String>? = emptyList())
 
-  /**
-   * [compileModules] is called if required
-   */
-  suspend fun buildProjectArtifacts(artifactNames: Set<String>)
-
   suspend fun resolveProjectDependencies()
 }

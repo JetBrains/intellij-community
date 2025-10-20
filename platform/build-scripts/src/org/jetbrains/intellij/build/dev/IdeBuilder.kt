@@ -6,7 +6,6 @@ import com.dynatrace.hash4j.hashing.Hashing
 import com.intellij.openapi.application.PathManager
 import com.intellij.openapi.util.io.NioFiles
 import com.intellij.platform.ijent.community.buildConstants.isMultiRoutingFileSystemEnabledForProduct
-import com.intellij.util.PathUtilRt
 import com.intellij.util.lang.PathClassLoader
 import com.intellij.util.lang.UrlClassLoader
 import io.opentelemetry.api.trace.Span
@@ -75,7 +74,6 @@ import org.jetbrains.intellij.build.telemetry.TraceManager
 import org.jetbrains.intellij.build.telemetry.TraceManager.spanBuilder
 import org.jetbrains.intellij.build.telemetry.use
 import org.jetbrains.intellij.build.writePluginClassPathHeader
-import org.jetbrains.jps.model.artifact.JpsArtifactService
 import org.jetbrains.jps.model.java.JpsJavaExtensionService
 import java.io.ByteArrayOutputStream
 import java.io.DataOutputStream
@@ -238,15 +236,8 @@ internal suspend fun buildProduct(request: BuildRequest, createProductProperties
       platformDistributionEntries
     }
 
-    val artifactTask = launch {
-      val artifactOutDir = request.projectDir.resolve("out/classes/artifacts").toString()
-      for (artifact in JpsArtifactService.getInstance().getArtifacts(context.project)) {
-        artifact.outputPath = "$artifactOutDir/${PathUtilRt.getFileName(artifact.outputPath)}"
-      }
-    }
-
     val pluginDistributionEntriesDeferred = async(CoroutineName("build plugins")) {
-      buildPlugins(request, context, runDir, platformLayout, artifactTask, searchableOptionSet, platformDistributionEntriesDeferred, moduleOutputPatcher)
+      buildPlugins(request, context, runDir, platformLayout, searchableOptionSet, platformDistributionEntriesDeferred, moduleOutputPatcher)
     }
 
     if (context.generateRuntimeModuleRepository) {

@@ -12,7 +12,6 @@ class JUnitRunConfigurationProperties(
   val testSearchScope: TestSearchScope,
   val testClassPatterns: List<String>,
   vmParameters: List<String>,
-  val requiredArtifacts: List<String>,
   envVariables: Map<String, String>,
   val buildProject: Boolean,
 ) : RunConfigurationProperties(name, moduleName, vmParameters, envVariables) {
@@ -46,11 +45,6 @@ class JUnitRunConfigurationProperties(
         throw RuntimeException("Cannot run ${file.name} configuration: fork mode '$forkMode' is not supported")
       }
 
-      val requiredArtifacts = configuration.getChild("method")?.children("option")
-                                ?.filter { it.getAttributeValue("name") == "BuildArtifacts" && it.getAttributeValue("enabled") == "true" }
-                                ?.flatMap { it.children("artifact").map { it.getAttributeValue("name")!! } }
-                                ?.toList()
-                              ?: emptyList()
       val vmParameters = getVmParameters(options) + (if ("pattern" == testKind) listOf("-Dintellij.build.test.patterns.escaped=true") else emptyList())
       val envVariables = getEnv(configuration)
 
@@ -71,7 +65,6 @@ class JUnitRunConfigurationProperties(
                                              testSearchScope = testSearchScope,
                                              testClassPatterns = testClassPatterns,
                                              vmParameters = vmParameters,
-                                             requiredArtifacts = requiredArtifacts,
                                              envVariables = envVariables,
                                              buildProject = buildProject)
     }

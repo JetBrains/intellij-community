@@ -66,10 +66,10 @@ class BuildPaths(
   var distAllDir: Path = buildOutputDir.resolve("dist.all")
 
   /**
-   * Build scripts use different folder to store JPS build artifacts
-   * instead of 'out/classes/artifacts' which is IDE default folder for those artifacts.
-   * Different folders are used not to affect incremental build of IDE.
-   * Not to be confused with [artifactDir].
+   * It was used before as a folder to output JPS artifacts.
+   * Now we don't use JPS artifacts, but the fixed path is still used by some scripts.
+   * It's recommended to migrate into [artifactDir] or [tempDir].
    */
+  @Deprecated("Use [artifactDir] or [tempDir] instead")
   val jpsArtifacts: Path = buildOutputDir.resolve("jps-artifacts")
 }
