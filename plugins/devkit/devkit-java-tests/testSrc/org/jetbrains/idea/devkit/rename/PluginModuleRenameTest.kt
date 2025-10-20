@@ -39,7 +39,9 @@ class PluginModuleRenameTest : JavaCodeInsightFixtureTestCase() {
       """.trimIndent()
     )
 
-    myFixture.renameElement(moduleFile, "intellij.test.module.renamed")
+    myFixture.renameElement(moduleFile, "intellij.test.module.renamed.xml")
+    assertThat(moduleFile.name).isEqualTo("intellij.test.module.renamed.xml")
+
     myFixture.checkResult("intellij.test.plugin1/plugin.xml", """
       <idea-plugin>
         <content>
