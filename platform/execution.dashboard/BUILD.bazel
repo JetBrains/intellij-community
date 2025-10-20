@@ -38,6 +38,7 @@ jvm_library(
     "//platform/object-serializer",
     "//platform/kernel/shared:kernel",
     "//platform/lang-core",
+    "//platform/execution",
   ]
 )
 ### auto-generated section `build intellij.platform.execution.dashboard` end

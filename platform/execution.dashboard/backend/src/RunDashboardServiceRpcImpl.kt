@@ -1,6 +1,7 @@
 // Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.platform.execution.dashboard.backend
 
+import com.intellij.execution.RunManager
 import com.intellij.execution.dashboard.RunDashboardServiceId
 import com.intellij.execution.impl.RunManagerImpl
 import com.intellij.ide.rpc.ComponentDirectTransferId
@@ -13,6 +14,7 @@ import com.intellij.platform.project.findProjectOrNull
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.emptyFlow
+import kotlinx.coroutines.flow.flowOf
 import kotlinx.coroutines.withContext
 
 internal class RunDashboardServiceRpcImpl : RunDashboardServiceRpc {
@@ -66,5 +68,24 @@ internal class RunDashboardServiceRpcImpl : RunDashboardServiceRpc {
   override suspend fun pauseLuxingContentForService(projectId: ProjectId, id: RunDashboardServiceId) {
     val project = projectId.findProjectOrNull() ?: return
     BackendLuxedRunDashboardContentManager.getInstance(project).pauseLuxing(id)
+  }
+
+  override suspend fun getAvailableConfigurations(projectId: ProjectId): Flow<Set<RunDashboardConfigurationDto>> {
+    val project = projectId.findProjectOrNull() ?: return emptyFlow()
+    // todo backend state with updates
+    val availableConfigurations = RunManager.getInstance(project).allSettings.map {
+      RunDashboardConfigurationDto(it.type.id, it.name, it.folderName)
+    }.toSet()
+    return flowOf(availableConfigurations)
+  }
+
+  override suspend fun getExcludedConfigurations(projectId: ProjectId): Flow<Set<String>> {
+    val project = projectId.findProjectOrNull() ?: return emptyFlow()
+    return RunDashboardManagerImpl.getInstance(project).excludedTypesDto
+  }
+
+  override suspend fun setNewExcluded(projectId: ProjectId, configurationTypeId: String, newExcluded: Boolean) {
+    val project = projectId.findProjectOrNull() ?: return
+    RunDashboardManagerImpl.getInstance(project).setNewExcluded(configurationTypeId, newExcluded)
   }
 }
