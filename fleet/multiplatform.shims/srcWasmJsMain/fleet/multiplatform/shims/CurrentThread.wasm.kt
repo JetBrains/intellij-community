@@ -3,8 +3,8 @@ package fleet.multiplatform.shims
 
 import fleet.util.multiplatform.Actual
 
-@fleet.util.multiplatform.Actual("currentThreadId")
+@Actual
 fun currentThreadIdWasmJs(): Long = 0
 
-@fleet.util.multiplatform.Actual("currentThreadName")
+@Actual
 fun currentThreadNameWasmJs(): String = "main"

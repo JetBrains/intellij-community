@@ -9,16 +9,16 @@ import java.net.URLEncoder
 import java.nio.charset.StandardCharsets
 import java.util.Locale
 
-@Actual("capitalizeWithCurrentLocale")
+@Actual
 fun String.capitalizeWithCurrentLocaleJvm(): String = replaceFirstChar { if (it.isLowerCase()) it.titlecase(Locale.getDefault()) else it.toString() }
 
-@Actual("lowercaseWithCurrentLocale")
+@Actual
 fun String.lowercaseWithCurrentLocaleJvm(): String = lowercase(Locale.getDefault())
 
-@Actual("uppercaseWithCurrentLocale")
+@Actual
 fun String.uppercaseWithCurrentLocaleJvm(): String = uppercase(Locale.getDefault())
 
-@Actual("encodeUriComponent")
+@Actual
 fun String.encodeUriComponentJvm(): String = URLEncoder.encode(this, StandardCharsets.UTF_8.name())
     .replace("+", "%20")
     .replace("%21", "!")
@@ -27,7 +27,7 @@ fun String.encodeUriComponentJvm(): String = URLEncoder.encode(this, StandardCha
     .replace("%29", ")")
     .replace("%7E", "~")
 
-@Actual("decodeUriComponent")
+@Actual
 fun String.decodeUriComponentJvm(): String = this
   .replace("%20", "+")
   .replace("!", "%21")
@@ -37,7 +37,7 @@ fun String.decodeUriComponentJvm(): String = this
   .replace("~", "%7E")
   .let { URLDecoder.decode(it, StandardCharsets.UTF_8.name()) }
 
-@Actual("isValidUriString")
+@Actual
 fun String.isValidUriStringJvm(): Boolean = try {
   URI(this)
   true

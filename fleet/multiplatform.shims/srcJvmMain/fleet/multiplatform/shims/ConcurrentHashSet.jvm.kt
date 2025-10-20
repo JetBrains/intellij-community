@@ -6,5 +6,5 @@ import fleet.util.multiplatform.Actual
 import java.util.concurrent.ConcurrentHashMap as JavaConcurrentHashMap
 
 
-@Actual("ConcurrentHashSet")
+@Actual
 internal fun <K> ConcurrentHashSetJvm(): MutableSet<K> = JavaConcurrentHashMap.newKeySet()

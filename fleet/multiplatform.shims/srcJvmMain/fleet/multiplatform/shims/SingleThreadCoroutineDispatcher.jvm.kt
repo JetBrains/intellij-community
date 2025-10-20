@@ -8,7 +8,7 @@ import kotlinx.coroutines.coroutineScope
 import java.util.concurrent.Executors
 import kotlin.coroutines.CoroutineContext
 
-@Actual("newSingleThreadCoroutineDispatcher")
+@Actual
 fun newSingleThreadCoroutineDispatcherJvm(
   name: String,
   priority: DispatcherPriority,
