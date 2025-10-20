@@ -1349,7 +1349,7 @@ public class AbstractPopup implements JBPopup, ScreenAreaConsumer, AlignedPopup 
       LOG.warn("Lightweight popup is shown using AbstractPopup class. But this class is not supposed to work with lightweight popups.");
     }
 
-    window.setFocusableWindowState(myRequestFocus);
+    window.setFocusableWindowState(myFocusable);
     window.setFocusable(myRequestFocus);
 
     // Swing popup default always on top state is set in true
