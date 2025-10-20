@@ -12,7 +12,7 @@ import kotlinx.coroutines.CompletableDeferred
 import org.jetbrains.annotations.Nls
 import java.util.concurrent.CompletableFuture
 
-private data class TrackedSteppingData(val stepCompetedStatus: CompletableDeferred<Unit>, val threadFilter: (ThreadReferenceProxy?) -> Boolean)
+private data class TrackedSteppingData(val stepCompetedStatus: CompletableDeferred<Unit>, val threadFilter: (ThreadReferenceProxy?, SuspendContextImpl) -> Boolean)
 
 internal class SteppingProgressTracker(private val debuggerProcessImpl: DebugProcessImpl) {
   private val trackedStepping = mutableListOf<TrackedSteppingData>()
@@ -21,7 +21,7 @@ internal class SteppingProgressTracker(private val debuggerProcessImpl: DebugPro
     debuggerProcessImpl.addDebugProcessListener(object : DebugProcessListener {
       override fun paused(suspendContext: SuspendContext) {
         val thread = suspendContext.thread
-        val completedSteps = trackedStepping.filter { it.threadFilter(thread) }
+        val completedSteps = trackedStepping.filter { it.threadFilter(thread, suspendContext as SuspendContextImpl) }
         for ((stepCompetedStatus, _) in completedSteps) {
             stepCompetedStatus.complete(Unit)
         }
@@ -30,7 +30,7 @@ internal class SteppingProgressTracker(private val debuggerProcessImpl: DebugPro
     })
   }
 
-  fun addStepping(stepCompetedStatus: CompletableDeferred<Unit>, threadFilter: (ThreadReferenceProxy?) -> Boolean) {
+  fun addStepping(stepCompetedStatus: CompletableDeferred<Unit>, threadFilter: (ThreadReferenceProxy?, SuspendContextImpl) -> Boolean) {
     trackedStepping.add(TrackedSteppingData(stepCompetedStatus, threadFilter))
   }
 }
@@ -75,8 +75,8 @@ private class CancelingSteppingListener : SteppingListener {
     }
 
     val tracker = suspendContext.debugProcess.mySteppingProgressTracker
-    tracker.addStepping(stepCompetedStatus) { thread ->
-      !needSuspendOnlyThread || thread == null || thread == threadForStepping
+    tracker.addStepping(stepCompetedStatus) { thread, suspendContext ->
+      thread == null || filter != null && filter.checkSameThread(thread.threadReference, suspendContext) || thread == threadForStepping
     }
   }
 }
