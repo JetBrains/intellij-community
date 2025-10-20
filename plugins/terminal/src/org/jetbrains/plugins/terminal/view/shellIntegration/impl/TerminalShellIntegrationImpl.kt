@@ -11,15 +11,17 @@ import kotlinx.coroutines.flow.asStateFlow
 import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.plugins.terminal.block.reworked.TerminalOffset
 import org.jetbrains.plugins.terminal.block.reworked.TerminalOutputModel
+import org.jetbrains.plugins.terminal.block.reworked.TerminalSessionModel
 import org.jetbrains.plugins.terminal.view.shellIntegration.*
 import org.jetbrains.plugins.terminal.view.shellIntegration.TerminalOutputStatus.*
 
 @ApiStatus.Internal
 class TerminalShellIntegrationImpl(
   private val outputModel: TerminalOutputModel,
+  sessionModel: TerminalSessionModel,
   coroutineScope: CoroutineScope,
 ) : TerminalShellIntegration {
-  override val blocksModel: TerminalBlocksModelImpl = TerminalBlocksModelImpl(outputModel, coroutineScope.asDisposable())
+  override val blocksModel: TerminalBlocksModelImpl = TerminalBlocksModelImpl(outputModel, sessionModel, coroutineScope.asDisposable())
 
   private val dispatcher = EventDispatcher.create(TerminalCommandExecutionListener::class.java)
 

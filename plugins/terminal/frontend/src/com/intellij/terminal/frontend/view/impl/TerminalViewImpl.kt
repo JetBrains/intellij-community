@@ -92,7 +92,8 @@ class TerminalViewImpl(
   @VisibleForTesting
   val shellIntegrationFuture: CompletableFuture<TerminalShellIntegration> = CompletableFuture()
 
-  private val sessionModel: TerminalSessionModel
+  @VisibleForTesting
+  val sessionModel: TerminalSessionModel
 
   private val encodingManager: TerminalKeyEncodingManager
   private val controller: TerminalSessionController
@@ -261,6 +262,7 @@ class TerminalViewImpl(
     )
     val shellIntegrationEventsHandler = TerminalShellIntegrationEventsHandler(
       outputModelController,
+      sessionModel,
       shellIntegrationFuture,
       terminalAliasesStorage,
       coroutineScope.childScope("TerminalShellIntegrationEventsHandler"),

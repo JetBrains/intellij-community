@@ -13,6 +13,7 @@ data class TerminalCommandBlockImpl(
   override val endOffset: TerminalOffset,
   override val commandStartOffset: TerminalOffset?,
   override val outputStartOffset: TerminalOffset?,
+  override val workingDirectory: String?,
   override val executedCommand: String?,
   override val exitCode: Int?,
 ) : TerminalCommandBlock

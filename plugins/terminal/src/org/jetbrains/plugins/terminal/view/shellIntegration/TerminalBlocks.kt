@@ -20,6 +20,7 @@ interface TerminalCommandBlock : TerminalBlockBase {
   val commandStartOffset: TerminalOffset?
   val outputStartOffset: TerminalOffset?
 
+  val workingDirectory: String?
   /**
    * Should be non-null if the command was started to execute.
    * It is the command text reported by the shell integration right before it is started.

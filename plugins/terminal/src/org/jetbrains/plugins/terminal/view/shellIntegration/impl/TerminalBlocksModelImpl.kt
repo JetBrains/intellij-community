@@ -3,6 +3,7 @@ package org.jetbrains.plugins.terminal.view.shellIntegration.impl
 
 import com.intellij.openapi.Disposable
 import com.intellij.util.EventDispatcher
+import com.intellij.util.text.nullize
 import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.annotations.VisibleForTesting
 import org.jetbrains.plugins.terminal.block.reworked.*
@@ -10,7 +11,11 @@ import org.jetbrains.plugins.terminal.session.TerminalBlocksModelState
 import org.jetbrains.plugins.terminal.view.shellIntegration.*
 
 @ApiStatus.Internal
-class TerminalBlocksModelImpl(private val outputModel: TerminalOutputModel, parentDisposable: Disposable) : TerminalBlocksModel {
+class TerminalBlocksModelImpl(
+  private val outputModel: TerminalOutputModel,
+  private val sessionModel: TerminalSessionModel,
+  parentDisposable: Disposable,
+) : TerminalBlocksModel {
   @VisibleForTesting
   var blockIdCounter: Int = 0
 
@@ -133,6 +138,7 @@ class TerminalBlocksModelImpl(private val outputModel: TerminalOutputModel, pare
       endOffset = outputModel.endOffset,
       commandStartOffset = null,
       outputStartOffset = null,
+      workingDirectory = sessionModel.terminalState.value.currentDirectory.nullize(), // it can be empty string, so use nullize()
       executedCommand = null,
       exitCode = null,
     )
