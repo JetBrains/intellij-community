@@ -26,7 +26,7 @@ import java.nio.file.Path
 import kotlin.io.path.pathString
 
 internal class PoetryExistingEnvironmentSelector<P: PathHolder>(model: PythonMutableTargetAddInterpreterModel<P>, module: Module?) : CustomExistingEnvironmentSelector<P>("poetry", model, module) {
-  override val toolState: PathValidator<Version, P, ValidatedPath.Executable<P>> = model.poetryState.toolValidator
+  override val toolState: PathValidator<Version, P, ValidatedPath.Executable<P>> = model.poetryViewModel.toolValidator
   override val interpreterType: InterpreterType = InterpreterType.POETRY
 
   override suspend fun getOrCreateSdk(moduleOrProject: ModuleOrProject): PyResult<Sdk> {

@@ -33,8 +33,8 @@ class EnvironmentCreatorVenv<P : PathHolder>(model: PythonMutableTargetAddInterp
   private var locationModified = false
 
   init {
-    propertyGraph.dependsOn(venvAlreadyExistsError, model.venvState.backProperty, deleteWhenChildModified = false) {
-      model.venvState.backProperty.get()?.validationResult?.errorOrNull as? VenvAlreadyExistsError<P>
+    propertyGraph.dependsOn(venvAlreadyExistsError, model.venvViewModel.backProperty, deleteWhenChildModified = false) {
+      model.venvViewModel.backProperty.get()?.validationResult?.errorOrNull as? VenvAlreadyExistsError<P>
     }
     propertyGraph.dependsOn(venvAlreadyExistsErrorMessage, venvAlreadyExistsError, deleteWhenChildModified = false) {
       venvAlreadyExistsError.get()?.message ?: ""
@@ -72,7 +72,7 @@ class EnvironmentCreatorVenv<P : PathHolder>(model: PythonMutableTargetAddInterp
 
       venvPathField = validatablePathField(
         fileSystem = model.fileSystem,
-        pathValidator = model.venvState.venvValidator,
+        pathValidator = model.venvViewModel.venvValidator,
         validationRequestor = validationRequestor,
         labelText = message("sdk.create.custom.location"),
         missingExecutableText = null,
@@ -87,11 +87,11 @@ class EnvironmentCreatorVenv<P : PathHolder>(model: PythonMutableTargetAddInterp
 
       row("") {
         checkBox(message("sdk.create.custom.inherit.packages"))
-          .bindSelected(model.venvState.inheritSitePackages)
+          .bindSelected(model.venvViewModel.inheritSitePackages)
       }
       row("") {
         checkBox(message("available.to.all.projects"))
-          .bindSelected(model.venvState.makeAvailableForAllProjects)
+          .bindSelected(model.venvViewModel.makeAvailableForAllProjects)
       }
     }
   }
@@ -104,12 +104,12 @@ class EnvironmentCreatorVenv<P : PathHolder>(model: PythonMutableTargetAddInterp
     model.projectPathFlows.projectPathWithDefault.onEach {
       if (locationModified) return@onEach
 
-      model.venvState.venvValidator.autodetectFolder()
+      model.venvViewModel.venvValidator.autodetectFolder()
     }.launchIn(scope + Dispatchers.EDT)
   }
 
   override suspend fun getOrCreateSdk(moduleOrProject: ModuleOrProject): PyResult<Sdk> {
-    val venv = model.venvState.backProperty.get()?.pathHolder
+    val venv = model.venvViewModel.backProperty.get()?.pathHolder
                ?: return PyResult.localizedError(message("no.venv.path.specified"))
     return model.setupVirtualenv(venv, moduleOrProject)
   }
@@ -118,8 +118,8 @@ class EnvironmentCreatorVenv<P : PathHolder>(model: PythonMutableTargetAddInterp
     return InterpreterStatisticsInfo(
       type = InterpreterType.VIRTUALENV,
       target = target.toStatisticsField(),
-      globalSitePackage = model.venvState.inheritSitePackages.get(),
-      makeAvailableToAllProjects = model.venvState.makeAvailableForAllProjects.get(),
+      globalSitePackage = model.venvViewModel.inheritSitePackages.get(),
+      makeAvailableToAllProjects = model.venvViewModel.makeAvailableForAllProjects.get(),
       previouslyConfigured = false,
       isWSLContext = false, // todo fix for wsl
       creationMode = InterpreterCreationMode.CUSTOM

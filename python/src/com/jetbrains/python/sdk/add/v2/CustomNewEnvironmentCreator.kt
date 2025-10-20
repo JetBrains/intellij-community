@@ -93,9 +93,7 @@ internal abstract class CustomNewEnvironmentCreator<P: PathHolder>(
 
     newSdk.persist()
     if (module != null) {
-      if (!model.venvState.makeAvailableForAllProjects.get()) {
-        newSdk.setAssociationToModule(module)
-      }
+      newSdk.setAssociationToModule(module)
       module.baseDir?.refresh(true, false)
     }
 
@@ -109,7 +107,7 @@ internal abstract class CustomNewEnvironmentCreator<P: PathHolder>(
       type = interpreterType,
       target = target.toStatisticsField(),
       globalSitePackage = false,
-      makeAvailableToAllProjects = model.venvState.makeAvailableForAllProjects.get(),
+      makeAvailableToAllProjects = false,
       previouslyConfigured = false,
       isWSLContext = false, // todo fix for wsl
       creationMode = InterpreterCreationMode.CUSTOM

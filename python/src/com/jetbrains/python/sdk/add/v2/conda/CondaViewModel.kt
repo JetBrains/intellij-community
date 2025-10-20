@@ -8,15 +8,12 @@ import com.intellij.openapi.diagnostic.getOrLogException
 import com.intellij.openapi.observable.properties.ObservableMutableProperty
 import com.intellij.openapi.observable.properties.PropertyGraph
 import com.jetbrains.python.PyBundle.message
-import com.jetbrains.python.errorProcessing.ErrorSink
 import com.jetbrains.python.errorProcessing.PyResult
 import com.jetbrains.python.getOrLogException
-import com.jetbrains.python.onFailure
 import com.jetbrains.python.sdk.add.v2.*
 import com.jetbrains.python.sdk.conda.suggestCondaPath
 import com.jetbrains.python.sdk.flavors.conda.PyCondaEnv
 import com.jetbrains.python.sdk.flavors.conda.PyCondaEnvIdentity
-import com.jetbrains.python.util.ShowingMessageErrorSync
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.MutableStateFlow
@@ -25,10 +22,10 @@ import kotlinx.coroutines.withContext
 
 private val LOG: Logger = fileLogger()
 
-class CondaState<P : PathHolder>(
+class CondaViewModel<P : PathHolder>(
   val fileSystem: FileSystem<P>,
   propertyGraph: PropertyGraph,
-) : ToolState {
+) : PythonToolViewModel {
   val condaExecutable: ObservableMutableProperty<ValidatedPath.Executable<P>?> = propertyGraph.property(null)
   val condaEnvironmentsResult: MutableStateFlow<PyResult<List<PyCondaEnv>>?> = MutableStateFlow(null)
   val condaEnvironmentsLoading: MutableStateFlow<Boolean> = MutableStateFlow(false)

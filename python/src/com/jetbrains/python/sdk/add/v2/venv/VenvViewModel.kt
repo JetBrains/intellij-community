@@ -8,11 +8,11 @@ import com.jetbrains.python.sdk.add.v2.*
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.flow.first
 
-class VenvState<P : PathHolder>(
+class VenvViewModel<P : PathHolder>(
   fileSystem: FileSystem<P>,
   propertyGraph: PropertyGraph,
   projectPathFlows: ProjectPathFlows,
-) : ToolState {
+) : PythonToolViewModel {
   val backProperty: ObservableMutableProperty<ValidatedPath.Folder<P>?> = propertyGraph.property(null)
   val inheritSitePackages: GraphProperty<Boolean> = propertyGraph.property(false)
   val makeAvailableForAllProjects: GraphProperty<Boolean> = propertyGraph.property(false)

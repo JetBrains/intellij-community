@@ -62,8 +62,8 @@ internal class EnvironmentCreatorUv<P : PathHolder>(
   errorSink: ErrorSink,
 ) : CustomNewEnvironmentCreator<P>("uv", model, errorSink) {
   override val interpreterType: InterpreterType = InterpreterType.UV
-  override val toolValidator: ToolValidator<P> = model.uvState.toolValidator
-  private val executableFlow = MutableStateFlow(model.uvState.uvExecutable.get())
+  override val toolValidator: ToolValidator<P> = model.uvViewModel.toolValidator
+  private val executableFlow = MutableStateFlow(model.uvViewModel.uvExecutable.get())
   private val pythonVersion: ObservableMutableProperty<Version?> = propertyGraph.property(null)
   private lateinit var versionComboBox: ComboBox<Version?>
 

@@ -45,7 +45,7 @@ internal class EnvironmentCreatorPoetry<P: PathHolder>(
   errorSink: ErrorSink,
 ) : CustomNewEnvironmentCreator<P>("poetry", model, errorSink) {
   override val interpreterType: InterpreterType = InterpreterType.POETRY
-  override val toolValidator: ToolValidator<P> = model.poetryState.toolValidator
+  override val toolValidator: ToolValidator<P> = model.poetryViewModel.toolValidator
   override val installationVersion: String = "1.8.0"
 
   private val isInProjectEnvFlow = MutableStateFlow(service<PoetryConfigService>().state.isInProjectEnv)

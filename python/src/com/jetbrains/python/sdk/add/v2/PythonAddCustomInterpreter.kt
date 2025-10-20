@@ -22,6 +22,7 @@ import com.jetbrains.python.sdk.add.v2.conda.CondaExistingEnvironmentSelector
 import com.jetbrains.python.sdk.add.v2.conda.CondaNewEnvironmentCreator
 import com.jetbrains.python.sdk.add.v2.hatch.HatchExistingEnvironmentSelector
 import com.jetbrains.python.sdk.add.v2.hatch.HatchNewEnvironmentCreator
+import com.jetbrains.python.sdk.add.v2.pipenv.EnvironmentCreatorPip
 import com.jetbrains.python.sdk.add.v2.poetry.EnvironmentCreatorPoetry
 import com.jetbrains.python.sdk.add.v2.poetry.PoetryExistingEnvironmentSelector
 import com.jetbrains.python.sdk.add.v2.uv.EnvironmentCreatorUv

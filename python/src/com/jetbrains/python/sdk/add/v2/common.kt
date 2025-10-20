@@ -58,7 +58,7 @@ import kotlinx.coroutines.withContext
 import org.jetbrains.annotations.ApiStatus
 import javax.swing.Icon
 
-abstract class PythonAddEnvironment<P: PathHolder>(open val model: PythonAddInterpreterModel<P>) {
+abstract class PythonAddEnvironment<P : PathHolder>(open val model: PythonAddInterpreterModel<P>) {
 
   val state: AddInterpreterState<P>
     get() = model.state
@@ -107,7 +107,7 @@ abstract class PythonAddEnvironment<P: PathHolder>(open val model: PythonAddInte
   abstract fun createStatisticsInfo(target: PythonInterpreterCreationTargets): InterpreterStatisticsInfo
 }
 
-abstract class PythonNewEnvironmentCreator<P: PathHolder>(override val model: PythonMutableTargetAddInterpreterModel<P>) : PythonAddEnvironment<P>(model) {
+abstract class PythonNewEnvironmentCreator<P : PathHolder>(override val model: PythonMutableTargetAddInterpreterModel<P>) : PythonAddEnvironment<P>(model) {
   internal val venvExistenceValidationState: AtomicProperty<VenvExistenceValidationState> =
     AtomicProperty(VenvExistenceValidationState.Invisible)
 
@@ -132,7 +132,7 @@ abstract class PythonNewEnvironmentCreator<P: PathHolder>(override val model: Py
   }
 }
 
-abstract class PythonExistingEnvironmentConfigurator<P: PathHolder>(model: PythonAddInterpreterModel<P>) : PythonAddEnvironment<P>(model)
+abstract class PythonExistingEnvironmentConfigurator<P : PathHolder>(model: PythonAddInterpreterModel<P>) : PythonAddEnvironment<P>(model)
 
 
 enum class PythonSupportedEnvironmentManagers(
@@ -196,7 +196,7 @@ internal fun installBaseSdk(sdk: Sdk, existingSdks: List<Sdk>): Sdk? {
 }
 
 
-internal suspend fun <P: PathHolder> setupSdk(
+internal suspend fun <P : PathHolder> setupSdk(
   project: Project?,
   allSdks: List<Sdk>,
   fileSystem: FileSystem<P>,
@@ -241,18 +241,34 @@ internal suspend fun <P: PathHolder> setupSdk(
   return PyResult.success(sdk)
 }
 
-internal suspend fun <P: PathHolder> PythonSelectableInterpreter<P>.setupSdk(
-  project: Project?,
+internal suspend fun <P : PathHolder> PythonSelectableInterpreter<P>.setupSdk(
+  moduleOrProject: ModuleOrProject,
   allSdks: List<Sdk>,
   fileSystem: FileSystem<P>,
   targetPanelExtension: TargetPanelExtension?,
+  isAssociateWithModule: Boolean,
 ): PyResult<Sdk> {
   if (this is ExistingSelectableInterpreter) {
     return PyResult.success(sdkWrapper.sdk)
   }
 
-  val newSdk = setupSdk(project, allSdks, fileSystem, homePath!!, languageLevel, targetPanelExtension).getOr { return it }
+  val newSdk = setupSdk(
+    project = moduleOrProject.project,
+    allSdks = allSdks,
+    fileSystem = fileSystem,
+    pythonBinaryPath = homePath!!,
+    languageLevel = languageLevel,
+    targetPanelExtension = targetPanelExtension
+  ).getOr { return it }
+
+  val module = PyProjectCreateHelpers.getModule(moduleOrProject, newSdk.homeDirectory)
+  if (isAssociateWithModule && module != null) {
+    newSdk.setAssociationToModule(module)
+  }
   newSdk.persist()
+
+  moduleOrProject.project.excludeInnerVirtualEnv(newSdk)
+
   return PyResult.success(newSdk)
 }
 

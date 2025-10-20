@@ -29,7 +29,7 @@ import kotlin.io.path.pathString
 
 internal class UvExistingEnvironmentSelector<P: PathHolder>(model: PythonMutableTargetAddInterpreterModel<P>, module: Module?)
   : CustomExistingEnvironmentSelector<P>("uv", model, module) {
-  override val toolState: PathValidator<Version, P, ValidatedPath.Executable<P>> = model.uvState.toolValidator
+  override val toolState: PathValidator<Version, P, ValidatedPath.Executable<P>> = model.uvViewModel.toolValidator
   override val interpreterType: InterpreterType = InterpreterType.UV
 
   override suspend fun getOrCreateSdk(moduleOrProject: ModuleOrProject): PyResult<Sdk> {

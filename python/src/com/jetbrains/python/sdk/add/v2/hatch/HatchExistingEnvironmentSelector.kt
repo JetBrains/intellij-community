@@ -44,7 +44,7 @@ internal class HatchExistingEnvironmentSelector<P: PathHolder>(
   }
 
   override suspend fun getOrCreateSdk(moduleOrProject: ModuleOrProject): PyResult<Sdk> {
-    val environment = model.hatchState.selectedHatchEnv.get()
+    val environment = model.hatchViewModel.selectedHatchEnv.get()
     val existingHatchVenv = environment?.pythonVirtualEnvironment as? PythonVirtualEnvironment.Existing
                             ?: return Result.failure(HatchUIError.HatchEnvironmentIsNotSelected())
 
@@ -63,7 +63,7 @@ internal class HatchExistingEnvironmentSelector<P: PathHolder>(
         }
       }
     }.onSuccess {
-      when (val pathHolder = model.hatchState.hatchExecutable.get()?.pathHolder) {
+      when (val pathHolder = model.hatchViewModel.hatchExecutable.get()?.pathHolder) {
         is PathHolder.Eel -> HatchConfiguration.persistPathForTarget(hatchExecutablePath = pathHolder.path)
         else -> Unit
       }
