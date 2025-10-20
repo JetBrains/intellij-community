@@ -745,14 +745,23 @@ class MarketplaceRequests(private val coroutineScope: CoroutineScope) : PluginIn
 
   fun getCompatibleUpdateByModule(module: String): PluginId? {
     try {
-      val data = objectMapper.writeValueAsString(CompatibleUpdateForModuleRequest(module))
+      val url = URI(MarketplaceUrls.getSearchPluginsUpdatesUrl())
 
-      @Suppress("DEPRECATION")
-      return HttpRequests.post(MarketplaceUrls.getSearchCompatibleUpdatesUrl(), HttpRequests.JSON_CONTENT_TYPE)
+      val query = buildString {
+        append("build=${ApplicationInfoImpl.orFromPluginCompatibleBuild(null)}")
+        append("&os=${buildEncodedOsParameter()}")
+        append("&arch=${buildEncodedArchParameter()}")
+        append("&module=${URLEncoder.encode(module, StandardCharsets.UTF_8)}")
+      }
+
+      val urlString = url.withQuery(query).toString()
+
+      return HttpRequests.request(urlString)
+        .accept(HttpRequests.JSON_CONTENT_TYPE)
+        .setHeadersViaTuner()
         .productNameAsUserAgent()
         .throwStatusCodeException(false)
         .connect {
-          it.write(data)
           objectMapper.readValue(it.inputStream, object : TypeReference<List<IdeCompatibleUpdate>>() {})
         }.firstOrNull()
         ?.pluginId
