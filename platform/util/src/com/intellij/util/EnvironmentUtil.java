@@ -112,7 +112,8 @@ public final class EnvironmentUtil {
     ourEnvGetter.set(loader);
   }
 
-  private static Map<String, String> getSystemEnv() {
+  @ApiStatus.Internal
+  public static Map<String, String> getSystemEnv() {
     if (OS.CURRENT == OS.Windows) {
       return Collections.unmodifiableMap(CollectionFactory.createCaseInsensitiveStringMap(System.getenv()));
     }
