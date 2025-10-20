@@ -14,10 +14,12 @@ import com.jediterm.terminal.emulator.mouse.MouseButtonCodes
 import com.jediterm.terminal.emulator.mouse.MouseButtonModifierFlags
 import com.jediterm.terminal.emulator.mouse.MouseFormat
 import com.jediterm.terminal.emulator.mouse.MouseMode
+import kotlinx.coroutines.Deferred
 import org.jetbrains.plugins.terminal.TerminalOptionsProvider
 import org.jetbrains.plugins.terminal.block.reworked.*
 import org.jetbrains.plugins.terminal.block.util.TerminalDataContextUtils.isOutputModelEditor
 import org.jetbrains.plugins.terminal.session.TerminalState
+import org.jetbrains.plugins.terminal.util.getNow
 import org.jetbrains.plugins.terminal.view.shellIntegration.TerminalOutputStatus
 import org.jetbrains.plugins.terminal.view.shellIntegration.TerminalShellIntegration
 import java.awt.Point
@@ -26,7 +28,6 @@ import java.awt.event.KeyEvent
 import java.awt.event.MouseEvent
 import java.awt.event.MouseWheelEvent
 import java.nio.charset.Charset
-import java.util.concurrent.CompletableFuture
 import javax.swing.SwingUtilities
 import kotlin.math.abs
 
@@ -43,7 +44,7 @@ internal open class TerminalEventsHandlerImpl(
   private val settings: JBTerminalSystemSettingsProviderBase,
   private val scrollingModel: TerminalOutputScrollingModel?,
   private val outputModel: TerminalOutputModel,
-  private val shellIntegrationFuture: CompletableFuture<TerminalShellIntegration>?,
+  private val shellIntegrationDeferred: Deferred<TerminalShellIntegration>?,
   private val typeAhead: TerminalTypeAhead?,
 ) : TerminalEventsHandler {
   private var ignoreNextKeyTypedEvent: Boolean = false
@@ -404,7 +405,7 @@ internal open class TerminalEventsHandlerImpl(
 
   private fun scheduleCompletionPopupIfNeeded(charTyped: Char) {
     val project = editor.project ?: return
-    val shellIntegration = shellIntegrationFuture?.getNow(null) ?: return
+    val shellIntegration = shellIntegrationDeferred?.getNow() ?: return
     if (editor.isOutputModelEditor
         && TerminalCommandCompletion.isEnabled()
         && TerminalOptionsProvider.instance.showCompletionPopupAutomatically

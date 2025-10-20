@@ -40,7 +40,6 @@ import kotlinx.coroutines.*
 import kotlinx.coroutines.channels.awaitClose
 import kotlinx.coroutines.channels.trySendBlocking
 import kotlinx.coroutines.flow.*
-import kotlinx.coroutines.future.await
 import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.annotations.VisibleForTesting
 import org.jetbrains.plugins.terminal.TerminalPanelMarker
@@ -90,9 +89,6 @@ class TerminalViewImpl(
   private val sessionFuture: CompletableFuture<TerminalSession> = CompletableFuture()
 
   @VisibleForTesting
-  val shellIntegrationFuture: CompletableFuture<TerminalShellIntegration> = CompletableFuture()
-
-  @VisibleForTesting
   val sessionModel: TerminalSessionModel
 
   private val encodingManager: TerminalKeyEncodingManager
@@ -131,11 +127,12 @@ class TerminalViewImpl(
   private val mutableSessionState: MutableStateFlow<TerminalViewSessionState> = MutableStateFlow(TerminalViewSessionState.NotStarted)
   override val sessionState: StateFlow<TerminalViewSessionState> = mutableSessionState.asStateFlow()
 
+  override val shellIntegrationDeferred: CompletableDeferred<TerminalShellIntegration> = CompletableDeferred(coroutineScope.coroutineContext.job)
+
   init {
     // Cancell the hanging callbacks that wait for future completion if the coroutine scope is cancelled.
     coroutineScope.coroutineContext.job.invokeOnCompletion {
       sessionFuture.cancel(true)
-      shellIntegrationFuture.cancel(true)
     }
 
     val hyperlinkScope = coroutineScope.childScope("TerminalViewImpl hyperlink facades")
@@ -167,7 +164,7 @@ class TerminalViewImpl(
       settings,
       scrollingModel = null,
       alternateBufferModel,
-      shellIntegrationFuture = null,
+      shellIntegrationDeferred = null,
       typeAhead = null,
     )
     configureOutputEditor(
@@ -201,7 +198,7 @@ class TerminalViewImpl(
     val outputModelController = TerminalTypeAheadOutputModelController(
       project,
       outputModel,
-      shellIntegrationFuture,
+      shellIntegrationDeferred,
       coroutineScope.childScope("TerminalTypeAheadOutputModelController")
     )
     outputEditor.putUserData(TerminalTypeAhead.KEY, outputModelController)
@@ -214,7 +211,7 @@ class TerminalViewImpl(
       settings,
       scrollingModel,
       outputModel,
-      shellIntegrationFuture,
+      shellIntegrationDeferred,
       typeAhead = outputModelController
     )
 
@@ -263,7 +260,7 @@ class TerminalViewImpl(
     val shellIntegrationEventsHandler = TerminalShellIntegrationEventsHandler(
       outputModelController,
       sessionModel,
-      shellIntegrationFuture,
+      shellIntegrationDeferred,
       terminalAliasesStorage,
       coroutineScope.childScope("TerminalShellIntegrationEventsHandler"),
     )
@@ -280,7 +277,7 @@ class TerminalViewImpl(
     listenAlternateBufferSwitch()
 
     val synchronizer = TerminalVfsSynchronizer(
-      shellIntegrationFuture,
+      shellIntegrationDeferred,
       outputModel,
       terminalPanel,
       coroutineScope.childScope("TerminalVfsSynchronizer"),
@@ -292,7 +289,7 @@ class TerminalViewImpl(
       ModalityState.any().asContextElement() +
       CoroutineName("Shell integration features init")
     ) {
-      val shellIntegration = awaitShellIntegrationInitialized()
+      val shellIntegration = shellIntegrationDeferred.await()
 
       outputEditor.putUserData(TerminalBlocksModel.KEY, shellIntegration.blocksModel)
       TerminalBlocksDecorator(
@@ -345,14 +342,6 @@ class TerminalViewImpl(
 
   private fun doSendText(options: TerminalSendTextOptions) {
     terminalInput.sendText(options)
-  }
-
-  override fun getShellIntegration(): TerminalShellIntegration? {
-    return shellIntegrationFuture.getNow(null)
-  }
-
-  override suspend fun awaitShellIntegrationInitialized(): TerminalShellIntegration {
-    return shellIntegrationFuture.await()
   }
 
   fun setTopComponent(component: JComponent, disposable: Disposable) {
