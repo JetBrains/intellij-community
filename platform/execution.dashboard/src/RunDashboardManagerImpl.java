@@ -485,7 +485,7 @@ public final class RunDashboardManagerImpl implements RunDashboardManager, Persi
   @Override
   public void updateDashboard(boolean withStructure) {
     for (RunDashboardService backendService : getRunConfigurations()) {
-      mySharedState.fireStatusUpdated(backendService);
+      mySharedState.fireStatusUpdated(backendService, getPersistedStatus(backendService.getConfigurationSettings().getConfiguration()));
 
       var applicableCustomizers = getCustomizers(backendService.getConfigurationSettings(), backendService.getDescriptor());
       if (applicableCustomizers.isEmpty()) continue;
