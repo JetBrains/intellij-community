@@ -551,7 +551,8 @@
                      key="inspection.content.module.namespace.name"/>
 
     <localInspection isInternal="true"
-                     language="JVM"
+                     language="UAST"
+                     projectType="INTELLIJ_PLUGIN"
                      enabledByDefault="true"
                      level="WARNING"
                      implementationClass="org.jetbrains.idea.devkit.inspections.eel.UseOptimizedEelFunctions"

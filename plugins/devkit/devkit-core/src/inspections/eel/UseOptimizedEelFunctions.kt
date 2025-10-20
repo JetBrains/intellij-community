@@ -14,12 +14,16 @@ import com.intellij.psi.PsiElement
 import com.intellij.psi.PsiElementVisitor
 import com.intellij.psi.search.GlobalSearchScope
 import com.intellij.uast.UastVisitorAdapter
+import org.jetbrains.annotations.ApiStatus
+import org.jetbrains.annotations.VisibleForTesting
+import org.jetbrains.idea.devkit.DevKitBundle
 import org.jetbrains.uast.*
 import org.jetbrains.uast.generate.getUastElementFactory
 import org.jetbrains.uast.generate.replace
 import org.jetbrains.uast.visitor.AbstractUastNonRecursiveVisitor
 
-@Suppress("HardCodedStringLiteral")
+@ApiStatus.Internal
+@VisibleForTesting
 class UseOptimizedEelFunctions : LocalInspectionTool() {
   override fun buildVisitor(holder: ProblemsHolder, isOnTheFly: Boolean): PsiElementVisitor =
     UastVisitorAdapter(object : AbstractUastNonRecursiveVisitor() {
@@ -72,13 +76,13 @@ class UseOptimizedEelFunctions : LocalInspectionTool() {
     val methodPsi = node.methodIdentifier?.sourcePsi ?: return
     if (fqn == "java.nio.file.Files.readAllBytes") {
       holder.registerProblem(
-        methodPsi, "Works ineffectively with remote Eel", ProblemHighlightType.WARNING,
+        methodPsi, DevKitBundle.message("inspection.message.works.ineffectively.with.remote.eel"), ProblemHighlightType.WARNING,
         ReplaceWithEelFunction(holder.project, "com.intellij.platform.eel.fs.EelFiles", "readAllBytes"),
       )
     }
     if (fqn == "java.nio.file.Files.readString") {
       holder.registerProblem(
-        methodPsi, "Works ineffectively with remote Eel", ProblemHighlightType.WARNING,
+        methodPsi, DevKitBundle.message("inspection.message.works.ineffectively.with.remote.eel"), ProblemHighlightType.WARNING,
         ReplaceWithEelFunction(holder.project, "com.intellij.platform.eel.fs.EelFiles", "readString"),
       )
     }
@@ -90,7 +94,7 @@ class UseOptimizedEelFunctions : LocalInspectionTool() {
       node.valueArgumentCount == 1
     ) {
       holder.registerProblem(
-        methodPsi, "Works ineffectively with remote Eel", ProblemHighlightType.WARNING,
+        methodPsi, DevKitBundle.message("inspection.message.works.ineffectively.with.remote.eel"), ProblemHighlightType.WARNING,
         ReplaceWithEelFunction(holder.project, "com.intellij.platform.eel.fs.EelFileUtils", "deleteRecursively"),
       )
     }
@@ -108,7 +112,7 @@ class UseOptimizedEelFunctions : LocalInspectionTool() {
         ?.name
 
     override fun getFamilyName(): @IntentionFamilyName String =
-      "Replace it with Eel API"
+      DevKitBundle.message("intention.family.name.replace.it.with.eel.api")
 
     override fun generatePreview(project: Project, previewDescriptor: ProblemDescriptor): IntentionPreviewInfo {
       doTheJob(project, previewDescriptor, preview = true)
