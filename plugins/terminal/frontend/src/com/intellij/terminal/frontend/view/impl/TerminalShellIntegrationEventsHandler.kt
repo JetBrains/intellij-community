@@ -8,6 +8,7 @@ import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
 import org.jetbrains.plugins.terminal.block.reworked.TerminalAliasesStorage
+import org.jetbrains.plugins.terminal.block.reworked.TerminalSessionModel
 import org.jetbrains.plugins.terminal.session.*
 import org.jetbrains.plugins.terminal.session.dto.toState
 import org.jetbrains.plugins.terminal.view.shellIntegration.TerminalShellIntegration
@@ -16,6 +17,7 @@ import java.util.concurrent.CompletableFuture
 
 internal class TerminalShellIntegrationEventsHandler(
   private val outputModelController: TerminalOutputModelController,
+  private val sessionModel: TerminalSessionModel,
   private val shellIntegrationFuture: CompletableFuture<TerminalShellIntegration>,
   private val aliasesStorage: TerminalAliasesStorage,
   private val coroutineScope: CoroutineScope,
@@ -82,6 +84,7 @@ internal class TerminalShellIntegrationEventsHandler(
   private fun initShellIntegration() {
     val integration = TerminalShellIntegrationImpl(
       outputModelController.model,
+      sessionModel,
       coroutineScope.childScope("TerminalShellIntegration")
     )
     shellIntegrationFuture.complete(integration)

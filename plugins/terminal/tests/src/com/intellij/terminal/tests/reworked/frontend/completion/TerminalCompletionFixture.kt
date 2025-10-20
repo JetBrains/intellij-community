@@ -52,7 +52,7 @@ class TerminalCompletionFixture(val project: Project, val testRootDisposable: Di
       terminalScope.cancel()
     }
     view = TerminalViewImpl(project, JBTerminalSystemSettingsProvider(), null, terminalScope)
-    val shellIntegration = TerminalShellIntegrationImpl(outputModel, terminalScope.childScope("TerminalShellIntegration"))
+    val shellIntegration = TerminalShellIntegrationImpl(outputModel, view.sessionModel, terminalScope.childScope("TerminalShellIntegration"))
     view.shellIntegrationFuture.complete(shellIntegration)
 
     shellIntegration.onPromptFinished(TerminalOffset.ZERO)  // To make TerminalOutputStatus = TypingCommand

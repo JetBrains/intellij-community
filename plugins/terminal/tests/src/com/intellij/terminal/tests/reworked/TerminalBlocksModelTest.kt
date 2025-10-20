@@ -9,6 +9,8 @@ import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.runBlocking
 import org.jetbrains.plugins.terminal.block.reworked.MutableTerminalOutputModel
 import org.jetbrains.plugins.terminal.block.reworked.TerminalOffset
+import org.jetbrains.plugins.terminal.block.reworked.TerminalOutputModel
+import org.jetbrains.plugins.terminal.block.reworked.TerminalSessionModelImpl
 import org.jetbrains.plugins.terminal.session.TerminalBlocksModelState
 import org.jetbrains.plugins.terminal.view.shellIntegration.*
 import org.jetbrains.plugins.terminal.view.shellIntegration.impl.TerminalBlocksModelImpl
@@ -25,7 +27,7 @@ internal class TerminalBlocksModelTest : BasePlatformTestCase() {
   @Test
   fun `initial block is created from empty output model`() = runBlocking(Dispatchers.EDT) {
     val outputModel = TerminalTestUtil.createOutputModel()
-    val blocksModel = TerminalBlocksModelImpl(outputModel, testRootDisposable)
+    val blocksModel = createBlocksModel(outputModel)
 
     assertEquals(1, blocksModel.blocks.size)
     val block = blocksModel.activeBlock as TerminalCommandBlock
@@ -46,7 +48,7 @@ internal class TerminalBlocksModelTest : BasePlatformTestCase() {
     val outputModel = TerminalTestUtil.createOutputModel()
     outputModel.update(0, "some welcome text\n")
 
-    val blocksModel = TerminalBlocksModelImpl(outputModel, testRootDisposable)
+    val blocksModel = createBlocksModel(outputModel)
 
     assertEquals(1, blocksModel.blocks.size)
     val block = blocksModel.activeBlock as TerminalCommandBlock
@@ -65,7 +67,7 @@ internal class TerminalBlocksModelTest : BasePlatformTestCase() {
   @Test
   fun `initial block is replaced with a new one`() = runBlocking(Dispatchers.EDT) {
     val outputModel = TerminalTestUtil.createOutputModel()
-    val blocksModel = TerminalBlocksModelImpl(outputModel, testRootDisposable)
+    val blocksModel = createBlocksModel(outputModel)
 
     outputModel.update(0, "\n\n\n")
 
@@ -81,7 +83,7 @@ internal class TerminalBlocksModelTest : BasePlatformTestCase() {
   @Test
   fun `command start offset is set correctly after prompt finish`() = runBlocking(Dispatchers.EDT) {
     val outputModel = TerminalTestUtil.createOutputModel()
-    val blocksModel = TerminalBlocksModelImpl(outputModel, testRootDisposable)
+    val blocksModel = createBlocksModel(outputModel)
 
     outputModel.update(0, "\n\n\n")
     blocksModel.startNewBlock(outputModel.startOffset + 0L)
@@ -100,7 +102,7 @@ internal class TerminalBlocksModelTest : BasePlatformTestCase() {
   @Test
   fun `block end offset is updated on command typing`() = runBlocking(Dispatchers.EDT) {
     val outputModel = TerminalTestUtil.createOutputModel()
-    val blocksModel = TerminalBlocksModelImpl(outputModel, testRootDisposable)
+    val blocksModel = createBlocksModel(outputModel)
 
     outputModel.update(0, "\n\n\n")
     blocksModel.startNewBlock(outputModel.startOffset + 0L)
@@ -116,7 +118,7 @@ internal class TerminalBlocksModelTest : BasePlatformTestCase() {
   @Test
   fun `output start offset is set correctly after command start`() = runBlocking(Dispatchers.EDT) {
     val outputModel = TerminalTestUtil.createOutputModel()
-    val blocksModel = TerminalBlocksModelImpl(outputModel, testRootDisposable)
+    val blocksModel = createBlocksModel(outputModel)
 
     outputModel.update(0, "\n\n\n")
     blocksModel.startNewBlock(outputModel.startOffset + 0L)
@@ -139,7 +141,7 @@ internal class TerminalBlocksModelTest : BasePlatformTestCase() {
   @Test
   fun `aborted command block contains valid command and no output`() = runBlocking(Dispatchers.EDT) {
     val outputModel = TerminalTestUtil.createOutputModel()
-    val blocksModel = TerminalBlocksModelImpl(outputModel, testRootDisposable)
+    val blocksModel = createBlocksModel(outputModel)
 
     outputModel.update(0, "\n\n\n")
     blocksModel.startNewBlock(TerminalOffset.ZERO)
@@ -160,7 +162,7 @@ internal class TerminalBlocksModelTest : BasePlatformTestCase() {
   @Test
   fun `getOutputText of command with no output is empty`() = runBlocking(Dispatchers.EDT) {
     val outputModel = TerminalTestUtil.createOutputModel()
-    val blocksModel = TerminalBlocksModelImpl(outputModel, testRootDisposable)
+    val blocksModel = createBlocksModel(outputModel)
 
     outputModel.update(0, "\n\n\n")
     blocksModel.startNewBlock(TerminalOffset.ZERO)
@@ -182,7 +184,7 @@ internal class TerminalBlocksModelTest : BasePlatformTestCase() {
   @Test
   fun `getOutputText of running command returns current output`() = runBlocking(Dispatchers.EDT) {
     val outputModel = TerminalTestUtil.createOutputModel()
-    val blocksModel = TerminalBlocksModelImpl(outputModel, testRootDisposable)
+    val blocksModel = createBlocksModel(outputModel)
 
     outputModel.update(0, "\n\n\n")
     blocksModel.startNewBlock(TerminalOffset.ZERO)
@@ -202,7 +204,7 @@ internal class TerminalBlocksModelTest : BasePlatformTestCase() {
   @Test
   fun `getTypedCommandText returns null if command start is trimmed`() = runBlocking(Dispatchers.EDT) {
     val outputModel = TerminalTestUtil.createOutputModel(30)
-    val blocksModel = TerminalBlocksModelImpl(outputModel, testRootDisposable)
+    val blocksModel = createBlocksModel(outputModel)
 
     outputModel.update(0, "\n\n\n")
     blocksModel.startNewBlock(TerminalOffset.ZERO)
@@ -225,7 +227,7 @@ internal class TerminalBlocksModelTest : BasePlatformTestCase() {
   @Test
   fun `getOutputText returns partial output if output start is trimmed`() = runBlocking(Dispatchers.EDT) {
     val outputModel = TerminalTestUtil.createOutputModel(25)
-    val blocksModel = TerminalBlocksModelImpl(outputModel, testRootDisposable)
+    val blocksModel = createBlocksModel(outputModel)
 
     outputModel.update(0, "\n\n")
     blocksModel.startNewBlock(TerminalOffset.ZERO)
@@ -248,7 +250,7 @@ internal class TerminalBlocksModelTest : BasePlatformTestCase() {
   @Test
   fun `new block is created after next prompt start`() = runBlocking(Dispatchers.EDT) {
     val outputModel = TerminalTestUtil.createOutputModel()
-    val blocksModel = TerminalBlocksModelImpl(outputModel, testRootDisposable)
+    val blocksModel = createBlocksModel(outputModel)
 
     outputModel.update(0, "\n\n\n")
     blocksModel.startNewBlock(outputModel.startOffset + 0L)
@@ -272,7 +274,7 @@ internal class TerminalBlocksModelTest : BasePlatformTestCase() {
   @Test
   fun `initial block is left if there was some text`() = runBlocking(Dispatchers.EDT) {
     val outputModel = TerminalTestUtil.createOutputModel()
-    val blocksModel = TerminalBlocksModelImpl(outputModel, testRootDisposable)
+    val blocksModel = createBlocksModel(outputModel)
 
     outputModel.update(0, "\n\n\n")
     outputModel.update(0, "welcomeText\n\n\n")
@@ -294,7 +296,7 @@ internal class TerminalBlocksModelTest : BasePlatformTestCase() {
   @Test
   fun `blocks are preserved after full text replace`() = runBlocking(Dispatchers.EDT) {
     val outputModel = TerminalTestUtil.createOutputModel()
-    val blocksModel = TerminalBlocksModelImpl(outputModel, testRootDisposable)
+    val blocksModel = createBlocksModel(outputModel)
 
     // Prepare
     outputModel.update(0, "\n\n\n")
@@ -330,7 +332,7 @@ internal class TerminalBlocksModelTest : BasePlatformTestCase() {
   @Test
   fun `single block is left after full replace`() = runBlocking(Dispatchers.EDT) {
     val outputModel = TerminalTestUtil.createOutputModel()
-    val blocksModel = TerminalBlocksModelImpl(outputModel, testRootDisposable)
+    val blocksModel = createBlocksModel(outputModel)
 
     // Prepare
     outputModel.update(0, "\n\n\n")
@@ -362,7 +364,7 @@ internal class TerminalBlocksModelTest : BasePlatformTestCase() {
   @Test
   fun `single block is left after clear`() = runBlocking(Dispatchers.EDT) {
     val outputModel = TerminalTestUtil.createOutputModel()
-    val blocksModel = TerminalBlocksModelImpl(outputModel, testRootDisposable)
+    val blocksModel = createBlocksModel(outputModel)
 
     // Prepare
     outputModel.update(0, "\n\n\n")
@@ -390,7 +392,7 @@ internal class TerminalBlocksModelTest : BasePlatformTestCase() {
   @Test
   fun `single block is left after clear (with trimming)`() = runBlocking(Dispatchers.EDT) {
     val outputModel = TerminalTestUtil.createOutputModel(100)
-    val blocksModel = TerminalBlocksModelImpl(outputModel, testRootDisposable)
+    val blocksModel = createBlocksModel(outputModel)
 
     // Prepare
     outputModel.update(0, "\n\n\n")
@@ -419,7 +421,7 @@ internal class TerminalBlocksModelTest : BasePlatformTestCase() {
   @Test
   fun `block positions stay the same after output start trimmed`() = runBlocking(Dispatchers.EDT) {
     val outputModel = TerminalTestUtil.createOutputModel(maxLength = 30)
-    val blocksModel = TerminalBlocksModelImpl(outputModel, testRootDisposable)
+    val blocksModel = createBlocksModel(outputModel)
 
     outputModel.update(0, "\n\n\n")
     blocksModel.startNewBlock(TerminalOffset.ZERO)
@@ -449,7 +451,7 @@ internal class TerminalBlocksModelTest : BasePlatformTestCase() {
   @Test
   fun `block was removed after output start trimmed`() = runBlocking(Dispatchers.EDT) {
     val outputModel = TerminalTestUtil.createOutputModel(maxLength = 30)
-    val blocksModel = TerminalBlocksModelImpl(outputModel, testRootDisposable)
+    val blocksModel = createBlocksModel(outputModel)
 
     outputModel.update(0, "\n\n\n")
     outputModel.update(0, "welcome12\n\n\n")
@@ -480,7 +482,7 @@ internal class TerminalBlocksModelTest : BasePlatformTestCase() {
   @Test
   fun `check state is dumped correctly`() = runBlocking(Dispatchers.EDT) {
     val outputModel = TerminalTestUtil.createOutputModel()
-    val blocksModel = TerminalBlocksModelImpl(outputModel, testRootDisposable)
+    val blocksModel = createBlocksModel(outputModel)
 
     // Prepare
     outputModel.update(0, "\n\n\n")
@@ -506,6 +508,7 @@ internal class TerminalBlocksModelTest : BasePlatformTestCase() {
       commandStartOffset = outputModel.startOffset + 10,
       outputStartOffset = outputModel.startOffset + 20,
       endOffset = outputModel.startOffset + 31,
+      workingDirectory = null,
       executedCommand = null,
       exitCode = null
     )
@@ -517,6 +520,7 @@ internal class TerminalBlocksModelTest : BasePlatformTestCase() {
       commandStartOffset = outputModel.startOffset + 46,
       outputStartOffset = null,
       endOffset = outputModel.startOffset + 47,
+      workingDirectory = null,
       executedCommand = null,
       exitCode = null
     )
@@ -526,7 +530,7 @@ internal class TerminalBlocksModelTest : BasePlatformTestCase() {
   @Test
   fun `check state is restored correctly`() = runBlocking(Dispatchers.EDT) {
     val outputModel = TerminalTestUtil.createOutputModel()
-    val blocksModel = TerminalBlocksModelImpl(outputModel, testRootDisposable)
+    val blocksModel = createBlocksModel(outputModel)
 
     val firstBlock = TerminalCommandBlockImpl(
       id = TerminalBlockIdImpl(1),
@@ -534,6 +538,7 @@ internal class TerminalBlocksModelTest : BasePlatformTestCase() {
       commandStartOffset = outputModel.startOffset + 10,
       outputStartOffset = outputModel.startOffset + 20,
       endOffset = outputModel.startOffset + 31,
+      workingDirectory = null,
       executedCommand = null,
       exitCode = null
     )
@@ -543,6 +548,7 @@ internal class TerminalBlocksModelTest : BasePlatformTestCase() {
       commandStartOffset = outputModel.startOffset + 46,
       outputStartOffset = null,
       endOffset = outputModel.startOffset + 47,
+      workingDirectory = null,
       executedCommand = null,
       exitCode = null
     )
@@ -563,7 +569,7 @@ internal class TerminalBlocksModelTest : BasePlatformTestCase() {
   @Test
   fun `check state is restored correctly after applying dumped state`() = runBlocking(Dispatchers.EDT) {
     val sourceOutputModel = TerminalTestUtil.createOutputModel()
-    val sourceBlocksModel = TerminalBlocksModelImpl(sourceOutputModel, testRootDisposable)
+    val sourceBlocksModel = createBlocksModel(sourceOutputModel)
 
     // Prepare
     sourceOutputModel.update(0, "\n\n\n")
@@ -580,7 +586,7 @@ internal class TerminalBlocksModelTest : BasePlatformTestCase() {
     // Test
     val state = sourceBlocksModel.dumpState()
     val newOutputModel = TerminalTestUtil.createOutputModel()
-    val newBlocksModel = TerminalBlocksModelImpl(newOutputModel, testRootDisposable)
+    val newBlocksModel = createBlocksModel(newOutputModel)
     newBlocksModel.restoreFromState(state)
 
     assertEquals(3, state.blockIdCounter)
@@ -592,6 +598,7 @@ internal class TerminalBlocksModelTest : BasePlatformTestCase() {
       commandStartOffset = newOutputModel.startOffset + 10,
       outputStartOffset = newOutputModel.startOffset + 20,
       endOffset = newOutputModel.startOffset + 31,
+      workingDirectory = null,
       executedCommand = null,
       exitCode = null
     )
@@ -603,10 +610,16 @@ internal class TerminalBlocksModelTest : BasePlatformTestCase() {
       commandStartOffset = newOutputModel.startOffset + 46,
       outputStartOffset = null,
       endOffset = newOutputModel.startOffset + 47,
+      workingDirectory = null,
       executedCommand = null,
       exitCode = null
     )
     assertEquals(expectedSecondBlock, state.blocks[1])
+  }
+
+  private fun createBlocksModel(outputModel: TerminalOutputModel): TerminalBlocksModelImpl {
+    val sessionModel = TerminalSessionModelImpl()
+    return TerminalBlocksModelImpl(outputModel, sessionModel, testRootDisposable)
   }
 
   private fun MutableTerminalOutputModel.getTextAsString(startOffset: TerminalOffset, endOffset: TerminalOffset): String {

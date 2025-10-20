@@ -80,7 +80,7 @@ internal class StateAwareTerminalSession(
     alternateBufferModel = MutableTerminalOutputModelImpl(alternateBufferDocument, maxOutputLength = 0)
     alternateBufferHyperlinkFacade = BackendTerminalHyperlinkFacade(project, hyperlinkScope, alternateBufferModel, isInAlternateBuffer = true)
 
-    blocksModel = TerminalBlocksModelImpl(outputModel, coroutineScope.asDisposable())
+    blocksModel = TerminalBlocksModelImpl(outputModel, sessionModel, coroutineScope.asDisposable())
 
     coroutineScope.launch(CoroutineName("StateAwareTerminalSession: models updating")) {
       merge(
