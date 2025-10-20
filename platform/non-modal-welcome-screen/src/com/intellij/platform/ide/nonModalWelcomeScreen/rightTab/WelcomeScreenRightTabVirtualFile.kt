@@ -12,7 +12,8 @@ import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.annotations.NonNls
 import javax.swing.Icon
 
-internal class WelcomeScreenRightTabVirtualFile(val window: WelcomeScreenRightTab, val project: Project) :
+@ApiStatus.Internal
+class WelcomeScreenRightTabVirtualFile(val window: WelcomeScreenRightTab, val project: Project) :
   LightVirtualFile(window.contentProvider.title.get(), WelcomeScreenFileType(window.contentProvider), "") {
 
   init {
