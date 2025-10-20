@@ -567,19 +567,25 @@ public class DebugProcessEvents extends DebugProcessImpl {
         StatisticsStorage.stepRequestCompleted(this, commandToken);
         showStatusText("");
         stopWatchingMethodReturn();
-        getSuspendManager().voteSuspend(suspendContext);
-        if (hint != null) {
-          final MethodFilter methodFilter = hint.getMethodFilter();
-          if (methodFilter instanceof NamedMethodFilter namedMethodFilter && !hint.wasStepTargetMethodMatched()) {
-            String methodName = namedMethodFilter.getMethodName();
-            String message = JavaDebuggerBundle.message("notification.method.has.not.been.called", methodName);
-            XDebuggerManagerImpl.getNotificationGroup().createNotification(message, MessageType.INFO).notify(project);
-            DebuggerStatistics.logMethodSkippedDuringStepping(project, StatisticsStorage.getSteppingStatisticOrNull(commandToken));
+        RequestHint lastHint = hint;
+        suspendContext.getManagerThread().schedule(new SuspendContextCommandImpl(suspendContext) {
+          @Override
+          public void contextAction(@NotNull SuspendContextImpl suspendContext) {
+            getSuspendManager().voteSuspend(suspendContext);
+            if (lastHint != null) {
+              final MethodFilter methodFilter = lastHint.getMethodFilter();
+              if (methodFilter instanceof NamedMethodFilter namedMethodFilter && !lastHint.wasStepTargetMethodMatched()) {
+                String methodName = namedMethodFilter.getMethodName();
+                String message = JavaDebuggerBundle.message("notification.method.has.not.been.called", methodName);
+                XDebuggerManagerImpl.getNotificationGroup().createNotification(message, MessageType.INFO).notify(project);
+                DebuggerStatistics.logMethodSkippedDuringStepping(project, StatisticsStorage.getSteppingStatisticOrNull(commandToken));
+              }
+              if (lastHint.wasStepTargetMethodMatched()) {
+                suspendContext.getDebugProcess().resetIgnoreSteppingFilters(event.location(), lastHint);
+              }
+            }
           }
-          if (hint.wasStepTargetMethodMatched()) {
-            suspendContext.getDebugProcess().resetIgnoreSteppingFilters(event.location(), hint);
-          }
-        }
+        });
       }
       return;
     }
