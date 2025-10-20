@@ -26,6 +26,7 @@ import com.intellij.terminal.TerminalTitle
 import com.intellij.terminal.actions.TerminalActionUtil
 import com.intellij.terminal.frontend.fus.TerminalFusCursorPainterListener
 import com.intellij.terminal.frontend.fus.TerminalFusFirstOutputListener
+import com.intellij.terminal.frontend.view.TerminalTextSelectionModel
 import com.intellij.terminal.frontend.view.TerminalView
 import com.intellij.terminal.frontend.view.TerminalViewSessionState
 import com.intellij.terminal.frontend.view.completion.ShellDataGeneratorsExecutorReworkedImpl
@@ -124,6 +125,8 @@ class TerminalViewImpl(
 
   private val mutableOutputModels: TerminalOutputModelsSetImpl
   override val outputModels: TerminalOutputModelsSet
+
+  override val textSelectionModel: TerminalTextSelectionModel
 
   private val mutableSessionState: MutableStateFlow<TerminalViewSessionState> = MutableStateFlow(TerminalViewSessionState.NotStarted)
   override val sessionState: StateFlow<TerminalViewSessionState> = mutableSessionState.asStateFlow()
@@ -234,6 +237,13 @@ class TerminalViewImpl(
 
     mutableOutputModels = TerminalOutputModelsSetImpl(outputModel, alternateBufferModel)
     outputModels = mutableOutputModels
+
+    textSelectionModel = TerminalTextSelectionModelImpl(
+      outputModels,
+      outputEditor,
+      alternateBufferEditor,
+      coroutineScope.childScope("TerminalTextSelectionModel")
+    )
 
     terminalSearchController = TerminalSearchController(project)
 

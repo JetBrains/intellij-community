@@ -29,6 +29,8 @@ interface TerminalView {
 
   val outputModels: TerminalOutputModelsSet
 
+  val textSelectionModel: TerminalTextSelectionModel
+
   val sessionState: StateFlow<TerminalViewSessionState>
 
   val shellIntegrationDeferred: Deferred<TerminalShellIntegration>
