@@ -16,7 +16,12 @@ import java.nio.file.Path
 import java.util.regex.Pattern
 import kotlin.io.path.exists
 
-internal object GradleDependencySourceDownloaderErrorHandler {
+interface GradleDependencySourceDownloaderErrorHandler {
+  fun handle(project: Project, externalProjectPath: String, artifact: String, exception: Exception): Unit = Unit
+}
+
+internal object DefaultGradleDependencySourceDownloaderErrorHandler : GradleDependencySourceDownloaderErrorHandler {
+
   private const val BUILD_GRADLE = "build.gradle"
   private const val BUILD_GRADLE_KTS = "$BUILD_GRADLE.kts"
 
@@ -28,7 +33,7 @@ internal object GradleDependencySourceDownloaderErrorHandler {
     """.trimIndent()
   private val artifactRepositoryRegex = Pattern.compile(artifactRepositoryRegexPattern)
 
-  fun handle(project: Project, externalProjectPath: String, artifact: String, exception: Exception) {
+  override fun handle(project: Project, externalProjectPath: String, artifact: String, exception: Exception) {
     val repository = getUsedRepository(exception)
     if (repository != null) {
       val projectRepository = findProjectRepository(project, repository)

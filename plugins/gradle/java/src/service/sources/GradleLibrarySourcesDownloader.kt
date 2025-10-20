@@ -23,10 +23,7 @@ import org.jetbrains.plugins.gradle.execution.build.CachedModuleDataFinder
 import org.jetbrains.plugins.gradle.execution.target.maybeGetLocalValue
 import org.jetbrains.plugins.gradle.service.GradleInstallationManager
 import org.jetbrains.plugins.gradle.service.cache.GradleLocalCacheHelper
-import org.jetbrains.plugins.gradle.util.GradleArtifactDownloader
-import org.jetbrains.plugins.gradle.util.GradleBundle
-import org.jetbrains.plugins.gradle.util.GradleConstants
-import org.jetbrains.plugins.gradle.util.isValidJar
+import org.jetbrains.plugins.gradle.util.*
 import java.nio.file.Path
 import java.util.*
 
@@ -47,15 +44,25 @@ object GradleLibrarySourcesDownloader {
     return findAssociatedGradleModule(orderEntries) != null
   }
 
-  suspend fun download(project: Project, file: VirtualFile): Path? {
+  suspend fun download(project: Project, file: VirtualFile): Path? =
+    download(project, file, DefaultGradleDependencySourceDownloaderErrorHandler)
+
+  suspend fun download(project: Project, file: VirtualFile, errorHandler: GradleDependencySourceDownloaderErrorHandler): Path? {
     if (!file.isClassFile()) {
       return null
     }
     val libraryEntries = findLibraryEntriesForFile(project, file)
-    return download(project, libraryEntries)
+    return download(project, libraryEntries, errorHandler)
   }
 
-  suspend fun download(project: Project, orderEntries: List<LibraryOrderEntry>): Path? {
+  suspend fun download(project: Project, orderEntries: List<LibraryOrderEntry>): Path? =
+    download(project, orderEntries, DefaultGradleDependencySourceDownloaderErrorHandler)
+
+  suspend fun download(
+    project: Project,
+    orderEntries: List<LibraryOrderEntry>,
+    errorHandler: GradleDependencySourceDownloaderErrorHandler,
+  ): Path? {
     if (orderEntries.isEmpty()) {
       return null
     }
@@ -73,7 +80,8 @@ object GradleLibrarySourcesDownloader {
       project,
       GradleBundle.message("gradle.action.download.sources"),
       sourceArtifactNotation,
-      externalProjectPath
+      externalProjectPath,
+      errorHandler
     ).await()
     if (path != null) {
       attachSources(path, orderEntries)
