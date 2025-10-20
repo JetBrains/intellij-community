@@ -558,7 +558,6 @@
 
     <refactoring.elementListenerProvider implementation="com.intellij.packageDependencies.ui.RefactoringScopeElementListenerProvider"/>
 
-    <highlightVisitor implementation="com.intellij.codeInsight.daemon.impl.DefaultHighlightVisitor"/>
     <daemon.changeLocalityDetector implementation="com.intellij.codeInsight.daemon.impl.DefaultChangeLocalityDetector"/>
 
     <registryKey defaultValue="false" description="Enables navigation for TODO comments" key="todo.navigation"/>

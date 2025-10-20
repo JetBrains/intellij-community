@@ -18,6 +18,9 @@ import org.jetbrains.annotations.NotNull;
 
 import java.util.List;
 
+/**
+ * Highlight {@link PsiErrorElement} red, and tooltip its error description
+ */
 final class DefaultHighlightVisitor implements HighlightVisitor, DumbAware {
   private final Project myProject;
   private final boolean myHighlightErrorElements;
