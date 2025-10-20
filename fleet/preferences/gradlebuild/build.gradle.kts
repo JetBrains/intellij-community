@@ -61,12 +61,13 @@ kotlin {
     api(jps.org.jetbrains.kotlinx.kotlinx.io.core.jvm479158162.get().let { "${it.group}:kotlinx-io-core:${it.version}" }) {
       exclude(group = "org.jetbrains.kotlin", module = "kotlin-stdlib")
     }
+    compileOnly(project(":fleet.util.multiplatform"))
   }
   sourceSets.jvmMain.dependencies {
     compileOnly(project(":fleet.util.multiplatform"))
   }
   sourceSets.wasmJsMain.dependencies {
-    implementation(project(":fleet.util.multiplatform"))
+    api(project(":fleet.util.multiplatform"))
   }
   // KOTLIN__MARKER_END
 }

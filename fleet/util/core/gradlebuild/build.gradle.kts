@@ -74,13 +74,14 @@ kotlin {
     implementation(project(":fleet.reporting.api"))
     implementation(project(":fleet.reporting.shared"))
     api(project(":fleet.multiplatform.shims"))
+    compileOnly(project(":fleet.util.multiplatform"))
     api(project(":fleet.util.serialization"))
   }
   sourceSets.jvmMain.dependencies {
     compileOnly(project(":fleet.util.multiplatform"))
   }
   sourceSets.wasmJsMain.dependencies {
-    implementation(project(":fleet.util.multiplatform"))
+    api(project(":fleet.util.multiplatform"))
   }
   // KOTLIN__MARKER_END
 }

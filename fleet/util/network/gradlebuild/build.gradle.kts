@@ -76,12 +76,13 @@ kotlin {
     implementation(project(":fleet.ktor.network.tls"))
     implementation(project(":fleet.multiplatform.shims"))
     implementation(project(":fleet.rpc"))
+    compileOnly(project(":fleet.util.multiplatform"))
   }
   sourceSets.jvmMain.dependencies {
     compileOnly(project(":fleet.util.multiplatform"))
   }
   sourceSets.wasmJsMain.dependencies {
-    implementation(project(":fleet.util.multiplatform"))
+    api(project(":fleet.util.multiplatform"))
   }
   // KOTLIN__MARKER_END
 }

@@ -59,12 +59,13 @@ kotlin {
       exclude(group = "org.jetbrains", module = "annotations")
     }
     implementation(project(":fleet.util.core"))
+    compileOnly(project(":fleet.util.multiplatform"))
   }
   sourceSets.jvmMain.dependencies {
     compileOnly(project(":fleet.util.multiplatform"))
   }
   sourceSets.wasmJsMain.dependencies {
-    implementation(project(":fleet.util.multiplatform"))
+    api(project(":fleet.util.multiplatform"))
   }
   // KOTLIN__MARKER_END
 }
