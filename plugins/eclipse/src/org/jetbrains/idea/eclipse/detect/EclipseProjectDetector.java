@@ -11,6 +11,7 @@ import com.intellij.openapi.util.JDOMUtil;
 import com.intellij.openapi.util.SystemInfo;
 import com.intellij.openapi.util.io.FileSystemUtil;
 import com.intellij.openapi.util.io.FileUtil;
+import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.wm.impl.welcomeScreen.ProjectDetector;
 import com.intellij.util.ArrayUtil;
@@ -53,7 +54,7 @@ public final class EclipseProjectDetector extends ProjectDetector {
     for (String appLocation : getStandardAppLocations()) {
       collectProjects(projects, Path.of(appLocation));
     }
-    if (PropertiesComponent.getInstance().getBoolean("eclipse.scan.home.directory", true)) {
+    if (Registry.is("eclipse.scan.home.directory", true)) {
       visitFiles(new File(home), file1 -> scanForProjects(file1.getPath(), projects), 2);
     }
   }
@@ -80,7 +81,7 @@ public final class EclipseProjectDetector extends ProjectDetector {
         ProjectGroup group = ContainerUtil.find(manager.getGroups(), g -> groupName.equals(g.getName()));
         String property = "eclipse.projects.detected";
         if (group == null && PropertiesComponent.getInstance().isValueSet(property)) {
-          // the group was removed by user
+          // the user removed the group
           return;
         }
 

@@ -1,6 +1,8 @@
 // Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.plugins.gradle.service.execution;
 
+import com.intellij.build.events.MessageEvent;
+import com.intellij.build.events.impl.BuildIssueEventImpl;
 import com.intellij.execution.configurations.GeneralCommandLine;
 import com.intellij.execution.process.ProcessOutputType;
 import com.intellij.openapi.application.Application;
@@ -12,6 +14,7 @@ import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.externalSystem.model.ExternalSystemException;
 import com.intellij.openapi.externalSystem.model.task.ExternalSystemTaskId;
 import com.intellij.openapi.externalSystem.model.task.ExternalSystemTaskNotificationListener;
+import com.intellij.openapi.externalSystem.model.task.event.ExternalSystemBuildEvent;
 import com.intellij.openapi.externalSystem.service.execution.ExternalSystemExecutionAware;
 import com.intellij.openapi.externalSystem.service.execution.ExternalSystemJdkUtil;
 import com.intellij.openapi.externalSystem.service.execution.ExternalSystemRunConfiguration;
@@ -35,6 +38,7 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.annotations.VisibleForTesting;
 import org.jetbrains.plugins.gradle.connection.GradleConnectorService;
+import org.jetbrains.plugins.gradle.issue.DeprecatedGradleVersionIssue;
 import org.jetbrains.plugins.gradle.jvmcompat.GradleJvmSupportMatrix;
 import org.jetbrains.plugins.gradle.properties.GradlePropertiesFile;
 import org.jetbrains.plugins.gradle.service.execution.cmd.GradleCommandLineOptionsProvider;
@@ -560,6 +564,7 @@ public final class GradleExecutionHelper {
       }
 
       checkThatGradleBuildEnvironmentIsSupportedByIdea(buildEnvironment);
+      checkThatGradleBuildEnvironmentIsDeprecatedByIdea(context, buildEnvironment);
 
       return buildEnvironment;
     }
@@ -573,6 +578,23 @@ public final class GradleExecutionHelper {
     }
     finally {
       span.end();
+    }
+  }
+
+  private static void checkThatGradleBuildEnvironmentIsDeprecatedByIdea(
+    @NotNull GradleExecutionContext context,
+    @NotNull BuildEnvironment buildEnvironment
+  ) {
+    final GradleVersion gradleVersion = GradleVersion.version(buildEnvironment.getGradle().getGradleVersion());
+    if (GradleJvmSupportMatrix.isGradleDeprecatedByIdea(gradleVersion)) {
+      final String projectPath = context.getProjectPath();
+      final var issue = new DeprecatedGradleVersionIssue(gradleVersion, projectPath);
+      context.getListener().onStatusChange(
+        new ExternalSystemBuildEvent(
+          context.getTaskId(),
+          new BuildIssueEventImpl(context.getTaskId(), issue, MessageEvent.Kind.WARNING)
+        )
+      );
     }
   }
 

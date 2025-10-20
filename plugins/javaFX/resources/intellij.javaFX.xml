@@ -105,6 +105,9 @@
     <internalFileTemplate name="FxmlFile"/>
 
     <spellchecker.bundledDictionaryProvider implementation="org.jetbrains.plugins.javaFX.JavafxBundledDictionaryProvider"/>
+
+    <registryKey key="javafx.fxml.controller.from.loader" defaultValue="false"
+                 description="Resolve FXML controllers specified with FXMLLoader.setController()"/>
   </extensions>
 
   <projectListeners>

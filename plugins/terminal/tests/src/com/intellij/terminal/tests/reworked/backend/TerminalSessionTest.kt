@@ -11,7 +11,7 @@ import com.intellij.testFramework.common.timeoutRunBlocking
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.CoroutineStart
 import kotlinx.coroutines.launch
-import org.jetbrains.plugins.terminal.session.*
+import org.jetbrains.plugins.terminal.session.impl.*
 import org.junit.Rule
 import org.junit.Test
 import org.junit.runner.RunWith

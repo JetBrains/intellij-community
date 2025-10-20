@@ -66,8 +66,8 @@ class ChangesViewCommitWorkflowHandler(
     ui.addExecutorListener(this, this)
     ui.addDataProvider(EdtNoGetDataProvider { sink -> uiDataSnapshot(sink) })
     ui.addInclusionListener(this, this)
-    ui.inclusionModel = inclusionModel
-    Disposer.register(inclusionModel, Disposable { ui.inclusionModel = null })
+    ui.setInclusionModel(inclusionModel)
+    Disposer.register(inclusionModel, Disposable { ui.setInclusionModel(null) })
     ui.setCompletionContext(changeListManager.changeLists)
 
     setupDumbModeTracking()

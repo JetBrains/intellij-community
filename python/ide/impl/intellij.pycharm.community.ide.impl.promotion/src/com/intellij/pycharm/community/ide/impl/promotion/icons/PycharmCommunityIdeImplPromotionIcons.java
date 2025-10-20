@@ -15,12 +15,5 @@ public final class PycharmCommunityIdeImplPromotionIcons {
   private static @NotNull Icon load(@NotNull String path, int cacheKey, int flags) {
     return IconManager.getInstance().loadRasterizedIcon(path, PycharmCommunityIdeImplPromotionIcons.class.getClassLoader(), cacheKey, flags);
   }
-
-  public static final class Backgrounds {
-    /** 360x128 */ public static final @NotNull Icon Promotion_bg = load("promo/backgrounds/promotion_bg.svg", -882473096, 0);
-  }
-
-  public static final class Images {
-    /** 384x242 */ public static final @NotNull Icon Popup_img = load("promo/images/popup_img.svg", 986597622, 0);
-  }
+  /** 384x242 */ public static final @NotNull Icon Popup_img = load("promo/images/popup_img.svg", 986597622, 0);
 }

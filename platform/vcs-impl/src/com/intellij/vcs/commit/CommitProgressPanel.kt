@@ -81,6 +81,10 @@ private fun JBLabel.setWarning(@NlsContexts.Label warningText: String) {
 open class CommitProgressPanel(project: Project) : CommitProgressUi, InclusionListener, DocumentListener, Disposable {
   private val scope = VcsDisposable.getInstance(project).coroutineScope.childScope("CommitProgressPanel", Dispatchers.EDT)
 
+  constructor(project: Project, commitWorkflowUi: CommitWorkflowUi, commitMessage: EditorTextComponent) : this(project) {
+    setup(commitWorkflowUi, commitMessage, empty())
+  }
+
   private val taskInfo = CommitChecksTaskInfo()
   private val progressFlow = MutableStateFlow<InlineCommitChecksProgressIndicator?>(null)
   private var progress: InlineCommitChecksProgressIndicator? by progressFlow::value

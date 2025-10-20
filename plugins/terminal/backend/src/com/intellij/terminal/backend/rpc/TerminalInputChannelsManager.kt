@@ -15,7 +15,7 @@ import kotlinx.coroutines.launch
 import kotlinx.coroutines.sync.Mutex
 import kotlinx.coroutines.sync.withLock
 import org.jetbrains.plugins.terminal.block.reworked.session.rpc.TerminalSessionId
-import org.jetbrains.plugins.terminal.session.TerminalInputEvent
+import org.jetbrains.plugins.terminal.session.impl.TerminalInputEvent
 
 /**
  * Service that has separate instances for each [com.intellij.openapi.client.ClientAppSession]

@@ -21,7 +21,7 @@ import kotlin.properties.Delegates.observable
 open class ChangesViewPanel(val changesView: ChangesListView) : BorderLayoutPanel() {
   val toolbarActionGroup = DefaultActionGroup()
 
-  var isToolbarHorizontal: Boolean by observable(false) { _, oldValue, newValue ->
+  var isToolbarHorizontal: Boolean by observable(true) { _, oldValue, newValue ->
     if (oldValue != newValue) {
       addToolbar(newValue) // this also removes toolbar from previous parent
     }

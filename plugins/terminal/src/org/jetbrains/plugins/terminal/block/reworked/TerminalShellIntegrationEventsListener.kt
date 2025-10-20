@@ -2,7 +2,7 @@
 package org.jetbrains.plugins.terminal.block.reworked
 
 import org.jetbrains.annotations.ApiStatus
-import org.jetbrains.plugins.terminal.session.TerminalAliasesInfo
+import org.jetbrains.plugins.terminal.session.impl.TerminalAliasesInfo
 import java.util.*
 
 @ApiStatus.Internal

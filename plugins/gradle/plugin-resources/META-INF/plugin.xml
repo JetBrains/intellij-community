@@ -210,6 +210,8 @@
 
     <search.optionContributor implementation="org.jetbrains.plugins.gradle.config.GradleSearchableOptionContributor"/>
 
+    <registryKey key="GRADLE.system.in.process" defaultValue="true"
+                 description="Whether IDEA should use 'in-process' mode for interaction with Gradle API"/>
     <registryKey key="gradle.daemon.jvm.criteria" defaultValue="true"
                  description="Enable the Gradle Daemon JVM criteria allowing to detect provisioning required toolchain for the build"/>
     <registryKey key="gradle.daemon.jvm.criteria.new.project" defaultValue="false"
@@ -246,6 +248,9 @@
     <registryKey key="gradle.daemon.legacy.dependency.resolver" defaultValue="false"
                  description="Use ArtifactResolutionQuery instead of ArtifactView to resolve Javadoc/Sources"/>
     <registryKey key="gradle.sync.use.eel.for.wsl" defaultValue="true" description="Use EEL API for WSL projects"/>
+    <registryKey key="gradle.auto.auto.jdk.fix.disabled" defaultValue="false"
+                 description="Disable attempt to fix unknown JDK in Gradle configuration on project open"/>
+
     <commandLineInspectionProjectConfigurator implementation="org.jetbrains.plugins.gradle.GradleCommandLineProjectConfigurator"/>
     <warmupConfigurator implementation="org.jetbrains.plugins.gradle.GradleWarmupConfigurator"/>
     <notificationGroup id="Gradle Notification Group" displayType="STICKY_BALLOON" bundle="messages.GradleBundle" key="notification.group.gradle"/>

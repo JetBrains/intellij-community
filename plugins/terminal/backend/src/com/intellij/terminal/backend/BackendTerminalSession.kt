@@ -4,7 +4,7 @@ import com.intellij.openapi.diagnostic.Logger
 import com.intellij.openapi.diagnostic.logger
 import kotlinx.coroutines.CoroutineScope
 import org.jetbrains.annotations.ApiStatus
-import org.jetbrains.plugins.terminal.session.TerminalSession
+import org.jetbrains.plugins.terminal.session.impl.TerminalSession
 
 @ApiStatus.Internal
 interface BackendTerminalSession : TerminalSession {

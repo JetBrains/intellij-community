@@ -33,7 +33,9 @@ import com.intellij.util.ObjectUtils;
 import com.intellij.util.SlowOperations;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.ui.JBInsets;
+import com.intellij.util.ui.StartupUiUtil;
 import com.intellij.util.ui.UIUtil;
+import com.intellij.util.ui.WaylandUtilKt;
 import com.intellij.util.ui.accessibility.ScreenReader;
 import kotlin.Unit;
 import org.jetbrains.annotations.ApiStatus;
@@ -628,7 +630,15 @@ public class ListPopupImpl extends WizardPopup implements ListPopup, NextStepHan
 
     if (!UiInterceptors.tryIntercept(myChild)) {
       // Intercept child popup in tests because it is impossible to calculate location on screen there
-      myChild.show(container, container.getLocationOnScreen().x + container.getWidth() - STEP_X_PADDING, y, true);
+      var childLocation = new Point(container.getLocationOnScreen().x + container.getWidth() - STEP_X_PADDING, y);
+      if (StartupUiUtil.isWaylandToolkit()) {
+        SwingUtilities.convertPointFromScreen(childLocation, container);
+        var childBounds = new Rectangle(childLocation, myChild.getPreferredContentSize());
+        WaylandUtilKt.moveToFitChildPopupX(childBounds, container);
+        childLocation = childBounds.getLocation();
+        SwingUtilities.convertPointToScreen(childLocation, container);
+      }
+      myChild.show(container, childLocation.x, childLocation.y, true);
     }
     setIndexForShowingChild(myList.getSelectedIndex());
     myMouseMovementTracker.reset();

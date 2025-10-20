@@ -8,7 +8,7 @@ import com.intellij.terminal.tests.reworked.util.TextWithReplacement.Companion.S
 import com.jediterm.terminal.TerminalColor
 import com.jediterm.terminal.TextStyle
 import org.assertj.core.api.Assertions.assertThat
-import org.jetbrains.plugins.terminal.session.StyleRange
+import org.jetbrains.plugins.terminal.session.impl.StyleRange
 
 
 internal fun parseTextWithReplacement(textWithReplacement: String): TextWithReplacement {

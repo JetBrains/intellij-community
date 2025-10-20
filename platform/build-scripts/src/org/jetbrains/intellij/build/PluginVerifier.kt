@@ -12,7 +12,7 @@ import kotlin.io.path.pathString
 import kotlin.io.path.readText
 
 
-private const val DEFAULT_PLUGIN_VERIFIER_VERSION = "1.381"
+private const val DEFAULT_PLUGIN_VERIFIER_VERSION = "1.396"
 
 suspend fun createPluginVerifier(
   pluginVerifierVersion: String = DEFAULT_PLUGIN_VERIFIER_VERSION,

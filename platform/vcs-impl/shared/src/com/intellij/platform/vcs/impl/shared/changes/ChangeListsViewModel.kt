@@ -22,7 +22,7 @@ class ChangeListsViewModel(
 ) {
   val areChangeListsEnabled: StateFlow<Boolean> = changeListsApiFlow(checkRegistry = false) { api, projectId ->
     emitAll(api.areChangeListsEnabled(projectId))
-  }.stateIn(cs, SharingStarted.Eagerly, false)
+  }.stateIn(cs, SharingStarted.Eagerly, true)
 
   val changeListManagerState: StateFlow<ChangeListManagerState> = changeListsApiFlow(checkRegistry = false) { api, projectId ->
     emitAll(api.getChangeListManagerState(projectId))

@@ -7,7 +7,7 @@ import com.jediterm.terminal.model.StyleState
 import com.jediterm.terminal.model.TerminalTextBuffer
 import com.jediterm.terminal.ui.settings.DefaultSettingsProvider
 import org.assertj.core.api.Assertions.assertThat
-import org.jetbrains.plugins.terminal.session.TerminalCursorPositionChangedEvent
+import org.jetbrains.plugins.terminal.session.impl.TerminalCursorPositionChangedEvent
 import org.junit.Test
 
 internal class TerminalCursorPositionTrackerTest {

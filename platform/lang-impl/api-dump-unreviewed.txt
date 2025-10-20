@@ -1723,8 +1723,6 @@ c:com.intellij.codeInsight.codeVision.ui.model.TextCodeVisionEntry
 - f:getText():java.lang.String
 f:com.intellij.codeInsight.codeVision.ui.model.ZombieCodeVisionEntry
 - com.intellij.codeInsight.codeVision.CodeVisionEntry
-- <init>(java.lang.String,java.lang.String,java.lang.String,javax.swing.Icon,java.lang.Integer,java.lang.String):V
-- b:<init>(java.lang.String,java.lang.String,java.lang.String,javax.swing.Icon,java.lang.Integer,java.lang.String,I,kotlin.jvm.internal.DefaultConstructorMarker):V
 - f:getCount():java.lang.Integer
 - f:getText():java.lang.String
 f:com.intellij.codeInsight.codeVision.ui.model.richText.RichString

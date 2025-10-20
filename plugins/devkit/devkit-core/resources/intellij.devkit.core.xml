@@ -551,7 +551,8 @@
                      key="inspection.content.module.namespace.name"/>
 
     <localInspection isInternal="true"
-                     language="JVM"
+                     language="UAST"
+                     projectType="INTELLIJ_PLUGIN"
                      enabledByDefault="true"
                      level="WARNING"
                      implementationClass="org.jetbrains.idea.devkit.inspections.eel.UseOptimizedEelFunctions"
@@ -659,7 +660,13 @@
       implementation="org.jetbrains.idea.devkit.references.MessageBundleReferenceContributor$ImplicitUsageProvider"/>
     <codeInsight.implicitSubclassProvider implementation="org.jetbrains.idea.devkit.inspections.DevKitImplicitSubclassProvider"/>
 
-    <annotator language="Properties" implementationClass="org.jetbrains.idea.devkit.inspections.RegistryPropertiesAnnotator"/>
+    <localInspection language="Properties"
+                     level="ERROR"
+                     enabledByDefault="true"
+                     key="inspections.plugin.keys.in.platform.registry"
+                     groupPathKey="inspections.group.path" groupKey="inspections.group.code"
+                     shortName="PluginKeysAreProhibitedInPlatformRegistry"
+                     implementationClass="org.jetbrains.idea.devkit.inspections.RegistryPropertiesInspection"/>
 
     <moduleService serviceImplementation="org.jetbrains.idea.devkit.build.PluginBuildConfiguration"/>
     <backgroundPostStartupActivity

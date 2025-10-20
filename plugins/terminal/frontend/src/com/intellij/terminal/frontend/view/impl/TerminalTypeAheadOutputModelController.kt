@@ -16,14 +16,14 @@ import kotlinx.coroutines.flow.MutableSharedFlow
 import kotlinx.coroutines.flow.debounce
 import org.jetbrains.plugins.terminal.block.reworked.*
 import org.jetbrains.plugins.terminal.block.util.TerminalDataContextUtils.isReworkedTerminalEditor
-import org.jetbrains.plugins.terminal.session.TerminalContentUpdatedEvent
-import org.jetbrains.plugins.terminal.session.TerminalCursorPositionChangedEvent
-import org.jetbrains.plugins.terminal.session.TerminalOutputEvent
+import org.jetbrains.plugins.terminal.session.impl.TerminalContentUpdatedEvent
+import org.jetbrains.plugins.terminal.session.impl.TerminalCursorPositionChangedEvent
+import org.jetbrains.plugins.terminal.session.impl.TerminalOutputEvent
+import org.jetbrains.plugins.terminal.util.getNow
 import org.jetbrains.plugins.terminal.view.shellIntegration.TerminalCommandBlock
 import org.jetbrains.plugins.terminal.view.shellIntegration.TerminalOutputStatus
 import org.jetbrains.plugins.terminal.view.shellIntegration.TerminalShellIntegration
 import java.lang.Runnable
-import java.util.concurrent.CompletableFuture
 
 /**
  * Implementation of the [TerminalOutputModelController] that supports type-ahead.
@@ -33,11 +33,11 @@ import java.util.concurrent.CompletableFuture
  * This way, there will be no flickering when partial backend updates are applied on top of the predictions.
  * And if type-ahead predictions were incorrect, the user will see the actual state with a small delay.
  */
-@OptIn(FlowPreview::class)
+@OptIn(FlowPreview::class, ExperimentalCoroutinesApi::class)
 internal class TerminalTypeAheadOutputModelController(
   private val project: Project,
   private val outputModel: MutableTerminalOutputModel,
-  private val shellIntegrationFuture: CompletableFuture<TerminalShellIntegration>,
+  private val shellIntegrationDeferred: Deferred<TerminalShellIntegration>,
   coroutineScope: CoroutineScope,
 ) : TerminalOutputModelController, TerminalTypeAhead {
   override val model: MutableTerminalOutputModel = outputModel
@@ -60,7 +60,7 @@ internal class TerminalTypeAheadOutputModelController(
 
   private fun isTypeAheadEnabled(): Boolean {
     val enabledInRegistry = Registry.`is`("terminal.type.ahead", false)
-    val outputStatus = shellIntegrationFuture.getNow(null)?.outputStatus?.value
+    val outputStatus = shellIntegrationDeferred.getNow()?.outputStatus?.value
     return enabledInRegistry && outputStatus == TerminalOutputStatus.TypingCommand
   }
 
@@ -78,7 +78,7 @@ internal class TerminalTypeAheadOutputModelController(
   override fun backspace() {
     if (!isTypeAheadEnabled()) return
 
-    val shellIntegration = shellIntegrationFuture.getNow(null)!!  // isTypeAheadEnabled should guarantee that it is available
+    val shellIntegration = shellIntegrationDeferred.getCompleted()  // isTypeAheadEnabled should guarantee that it is available
     val commandBlock = shellIntegration.blocksModel.activeBlock as? TerminalCommandBlock
     val cursorOffset = outputModel.cursorOffset
     val commandStartOffset = commandBlock?.commandStartOffset

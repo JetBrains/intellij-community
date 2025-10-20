@@ -7,28 +7,64 @@ import com.jetbrains.JBR;
 import org.intellij.lang.annotations.JdkConstants;
 import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
-import javax.swing.*;
 import javax.swing.event.MouseInputListener;
 import java.awt.*;
 import java.awt.event.MouseAdapter;
 import java.awt.event.MouseEvent;
 
-import static java.awt.Cursor.*;
+import static com.intellij.ui.WindowMouseListenerSupportKt.createWindowMouseListenerSupport;
 
 @ApiStatus.Internal
 public abstract class WindowMouseListener extends MouseAdapter implements MouseInputListener {
-  private static final boolean moveAfterMouseRelease = StartupUiUtil.isWaylandToolkit();
   protected final Component myContent;
-  @JdkConstants.CursorType int myCursorType;
-  private Point myLocation;
-  private Rectangle viewBounds;
-  private int mouseButton;
-  private boolean wasDragged;
-  private boolean leftMouseButtonOnly = false;
+  protected final WindowMouseListenerSupport support = createWindowMouseListenerSupport(new SourceAdapter());
+  
+  private class SourceAdapter implements WindowMouseListenerSource {
+    @Override
+    public @NotNull Component getContent(@NotNull MouseEvent event) {
+      return WindowMouseListener.this.getContent(event);
+    }
+
+    @Override
+    public @Nullable Component getView(@NotNull Component event) {
+      return WindowMouseListener.this.getView(event);
+    }
+
+    @Override
+    public boolean isDisabled(@NotNull Component view) {
+      return WindowMouseListener.this.isDisabled(view);
+    }
+
+    @Override
+    public int getCursorType(@Nullable Component view, @Nullable Point location) {
+      return WindowMouseListener.this.getCursorType(view, location);
+    }
+
+    @Override
+    public void setCursor(@NotNull Component content, @Nullable Cursor cursor) {
+      WindowMouseListener.this.setCursor(content, cursor);
+    }
+
+    @Override
+    public void updateBounds(@NotNull Rectangle bounds, @NotNull Component view, int dx, int dy) {
+      WindowMouseListener.this.updateBounds(bounds, view, dx, dy);
+    }
+
+    @Override
+    public void notifyMoved() {
+      WindowMouseListener.this.notifyMoved();
+    }
+
+    @Override
+    public void notifyResized() {
+      WindowMouseListener.this.notifyResized();
+    }
+  }
 
   /**
-   * @param content the window content to find a window, or {@code null} to use a component from a mouse event eeeqweq3r
+   * @param content the window content to find a window, or {@code null} to use a component from a mouse event
    */
   WindowMouseListener(Component content) {
     myContent = content;
@@ -42,6 +78,11 @@ public abstract class WindowMouseListener extends MouseAdapter implements MouseI
   @JdkConstants.CursorType
   abstract int getCursorType(Component view, Point location);
 
+  @JdkConstants.CursorType
+  int getCursorType() {
+    return support.getCursorType();
+  }
+
   /**
    * @param bounds the component bounds, which should be updated
    * @param view   the component to move/resize
@@ -51,32 +92,32 @@ public abstract class WindowMouseListener extends MouseAdapter implements MouseI
   abstract void updateBounds(Rectangle bounds, Component view, int dx, int dy);
 
   public void setLeftMouseButtonOnly(boolean leftMouseButtonOnly) {
-    this.leftMouseButtonOnly = leftMouseButtonOnly;
+    support.setLeftMouseButtonOnly(leftMouseButtonOnly);
   }
 
   @Override
   public void mouseMoved(MouseEvent event) {
-    update(event, false);
+    support.update(event, false);
   }
 
   @Override
   public void mousePressed(MouseEvent event) {
-    update(event, true);
+    support.update(event, true);
   }
 
   @Override
   public void mouseDragged(MouseEvent event) {
-    process(event, true);
+    support.process(event, true);
   }
 
   @Override
   public void mouseReleased(MouseEvent event) {
-    process(event, false);
+    support.process(event, false);
   }
 
   @Override
   public void mouseClicked(MouseEvent event) {
-    process(event, false);
+    support.process(event, false);
   }
 
   /**
@@ -90,88 +131,6 @@ public abstract class WindowMouseListener extends MouseAdapter implements MouseI
       if (isStateSet(Frame.MAXIMIZED_BOTH, state) && !jbrMoveSupported(view)) return true;
     }
     return false;
-  }
-
-  /**
-   * Updates a cursor and starts moving/resizing if the {@code start} is specified.
-   */
-  private void update(MouseEvent event, boolean start) {
-    if (event.isConsumed() || (start && leftMouseButtonOnly && !SwingUtilities.isLeftMouseButton(event))) {
-      return;
-    }
-
-    if (start) wasDragged = false; // reset dragged state when mouse pressed
-    if (myLocation == null) {
-      Component content = getContent(event);
-      Component view = getView(content);
-      if (view != null) {
-        myCursorType = isDisabled(view) ? CUSTOM_CURSOR : getCursorType(view, event.getLocationOnScreen());
-        setCursor(content, getPredefinedCursor(myCursorType == CUSTOM_CURSOR ? DEFAULT_CURSOR : myCursorType));
-        if (start && myCursorType != CUSTOM_CURSOR) {
-          mouseButton = event.getButton();
-          myLocation = event.getLocationOnScreen();
-          viewBounds = view.getBounds();
-          event.consume();
-        }
-      }
-    }
-  }
-
-  /**
-   * Processes moving/resizing and stops it if not {@code mouseMove}.
-   */
-  private void process(MouseEvent event, boolean mouseMove) {
-    if (event.isConsumed()) return;
-    if (mouseMove) wasDragged = true; // set dragged state when mouse dragged
-    if (myLocation != null && viewBounds != null) {
-      Component content = getContent(event);
-      Component view = getView(content);
-      if (mouseMove && myCursorType == DEFAULT_CURSOR && jbrMoveSupported(view)) {
-        // Enter in move mode only after mouse move, so double click is supported
-        JBR.getWindowMove().startMovingTogetherWithMouse((Window)view, mouseButton);
-        myLocation = null;
-        viewBounds = null;
-        return;
-      }
-
-      if (view != null) {
-        Rectangle bounds = new Rectangle(viewBounds);
-        int dx = event.getXOnScreen() - myLocation.x;
-        int dy = event.getYOnScreen() - myLocation.y;
-        if (myCursorType == DEFAULT_CURSOR && view instanceof Frame) {
-          int state = ((Frame)view).getExtendedState();
-          if (isStateSet(Frame.MAXIMIZED_HORIZ, state)) dx = 0;
-          if (isStateSet(Frame.MAXIMIZED_VERT, state)) dy = 0;
-        }
-        updateBounds(bounds, view, dx, dy);
-        Rectangle viewBounds = view.getBounds();
-        if (!bounds.equals(viewBounds)) {
-          boolean moved = bounds.x != viewBounds.x || bounds.y != viewBounds.y;
-          boolean resized = bounds.width != viewBounds.width || bounds.height != viewBounds.height;
-          boolean reallyMoveWindow = !moveAfterMouseRelease || !mouseMove;
-          if ((moved && reallyMoveWindow) || resized) {
-            view.reshape(bounds.x, bounds.y, bounds.width, bounds.height);
-            view.invalidate();
-            view.validate();
-            view.repaint();
-            if (moved) notifyMoved();
-            if (resized) notifyResized();
-          }
-        }
-      }
-      if (!mouseMove) {
-        setCursor(content, getPredefinedCursor(DEFAULT_CURSOR));
-        myLocation = null;
-        if (wasDragged) {
-          viewBounds = null; // no mouse clicked when mouse released after mouse dragged
-        }
-      }
-      event.consume();
-    }
-    else if (!mouseMove && viewBounds != null) {
-      viewBounds = null; // consume mouse clicked for consumed mouse released if no mouse dragged
-      event.consume();
-    }
   }
 
   /**
@@ -206,7 +165,7 @@ public abstract class WindowMouseListener extends MouseAdapter implements MouseI
    * Returns {@code true} if a window is now moving/resizing.
    */
   public boolean isBusy() {
-    return myLocation != null;
+    return support.isBusy();
   }
 
   protected void notifyMoved() { }

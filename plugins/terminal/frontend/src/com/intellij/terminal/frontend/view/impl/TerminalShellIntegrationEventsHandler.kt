@@ -4,26 +4,29 @@ import com.intellij.openapi.application.EDT
 import com.intellij.openapi.application.ModalityState
 import com.intellij.openapi.application.asContextElement
 import com.intellij.platform.util.coroutines.childScope
+import kotlinx.coroutines.CompletableDeferred
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
 import org.jetbrains.plugins.terminal.block.reworked.TerminalAliasesStorage
-import org.jetbrains.plugins.terminal.session.*
-import org.jetbrains.plugins.terminal.session.dto.toState
+import org.jetbrains.plugins.terminal.block.reworked.TerminalSessionModel
+import org.jetbrains.plugins.terminal.session.impl.*
+import org.jetbrains.plugins.terminal.session.impl.dto.toState
+import org.jetbrains.plugins.terminal.util.getNow
 import org.jetbrains.plugins.terminal.view.shellIntegration.TerminalShellIntegration
 import org.jetbrains.plugins.terminal.view.shellIntegration.impl.TerminalShellIntegrationImpl
-import java.util.concurrent.CompletableFuture
 
 internal class TerminalShellIntegrationEventsHandler(
   private val outputModelController: TerminalOutputModelController,
-  private val shellIntegrationFuture: CompletableFuture<TerminalShellIntegration>,
+  private val sessionModel: TerminalSessionModel,
+  private val shellIntegrationDeferred: CompletableDeferred<TerminalShellIntegration>,
   private val aliasesStorage: TerminalAliasesStorage,
   private val coroutineScope: CoroutineScope,
 ) : TerminalOutputEventsHandler {
   private val edtContext = Dispatchers.EDT + ModalityState.any().asContextElement()
 
   private val shellIntegration: TerminalShellIntegrationImpl?
-    get() = shellIntegrationFuture.getNow(null) as? TerminalShellIntegrationImpl
+    get() = shellIntegrationDeferred.getNow() as? TerminalShellIntegrationImpl
 
   private fun getIntegrationOrThrow(): TerminalShellIntegrationImpl {
     return shellIntegration ?: error("Shell integration is not initialized yet")
@@ -61,7 +64,7 @@ internal class TerminalShellIntegrationEventsHandler(
       is TerminalCommandStartedEvent -> {
         withContext(edtContext) {
           outputModelController.applyPendingUpdates()
-          getIntegrationOrThrow().onCommandStarted(outputModelController.model.cursorOffset)
+          getIntegrationOrThrow().onCommandStarted(outputModelController.model.cursorOffset, event.command)
         }
       }
       is TerminalCommandFinishedEvent -> {
@@ -82,8 +85,9 @@ internal class TerminalShellIntegrationEventsHandler(
   private fun initShellIntegration() {
     val integration = TerminalShellIntegrationImpl(
       outputModelController.model,
+      sessionModel,
       coroutineScope.childScope("TerminalShellIntegration")
     )
-    shellIntegrationFuture.complete(integration)
+    shellIntegrationDeferred.complete(integration)
   }
 }

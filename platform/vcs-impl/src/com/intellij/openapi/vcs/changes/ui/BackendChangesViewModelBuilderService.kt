@@ -1,6 +1,7 @@
 // Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.vcs.changes.ui
 
+import com.intellij.openapi.project.InitialVfsRefreshService
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.vcs.FileStatus
 import com.intellij.openapi.vcs.changes.*
@@ -24,6 +25,12 @@ internal class BackendChangesViewModelBuilderService(private val project: Projec
 
   override fun modifyTreeModelBuilder(modelBuilder: TreeModelBuilder) {
     val changeListManager = ChangeListManagerImpl.getInstanceImpl(project)
+    val shouldShowUntrackedLoading = changeListManager.unversionedFilesPaths.isEmpty() &&
+                                     !project.getService(InitialVfsRefreshService::class.java).isInitialVfsRefreshFinished() &&
+                                     changeListManager.isUnversionedInUpdateMode
+    if (shouldShowUntrackedLoading) {
+      modelBuilder.insertSubtreeRoot(ChangesBrowserUnversionedLoadingPendingNode())
+    }
 
     modelBuilder.setLocallyDeletedPaths(changeListManager.deletedFiles)
       .setModifiedWithoutEditing(changeListManager.modifiedWithoutEditing)

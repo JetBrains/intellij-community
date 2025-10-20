@@ -190,6 +190,9 @@ public abstract class DebuggerUtilsEx extends DebuggerUtils {
     catch (PatternSyntaxException e) {
       LOG.debug(e);
     }
+    catch (Exception e) {
+      LOG.error("Exception while matching ClassFilter \"" + classFilter.getPattern() + "\" with the input \"" + qName + "\"", e);
+    }
     return false;
   }
 

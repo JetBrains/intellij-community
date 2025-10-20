@@ -1,9 +1,7 @@
 // Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.tools.build.bazel.jvmIncBuilder;
 
-import com.intellij.tools.build.bazel.jvmIncBuilder.impl.CompositeZipOutputBuilder;
-import com.intellij.tools.build.bazel.jvmIncBuilder.impl.Utils;
-import com.intellij.tools.build.bazel.jvmIncBuilder.impl.ZipOutputBuilderImpl;
+import com.intellij.tools.build.bazel.jvmIncBuilder.impl.*;
 import com.intellij.tools.build.bazel.jvmIncBuilder.impl.forms.FormBinding;
 import com.intellij.tools.build.bazel.jvmIncBuilder.impl.graph.PersistentMVStoreMapletFactory;
 import com.intellij.tools.build.bazel.jvmIncBuilder.instrumentation.InstrumentationClassFinder;
@@ -15,6 +13,7 @@ import org.jetbrains.annotations.Nullable;
 import org.jetbrains.jps.dependency.DependencyGraph;
 import org.jetbrains.jps.dependency.GraphConfiguration;
 import org.jetbrains.jps.dependency.impl.DependencyGraphImpl;
+import org.jetbrains.jps.dependency.kotlin.LookupsIndex;
 
 import java.io.*;
 import java.net.MalformedURLException;
@@ -34,6 +33,7 @@ public class StorageManager implements CloseableExt {
   private CompositeZipOutputBuilder myComposite;
   private InstrumentationClassFinder myInstrumentationClassFinder;
   private FormBinding myFormBinding;
+  private boolean isKotlinCriDataGenerationEnabled;
 
   private final MVStore myDataSwapStore;
 
@@ -45,6 +45,7 @@ public class StorageManager implements CloseableExt {
       .cacheSize(8)
       .open();
     myDataSwapStore.setVersionsToKeep(0);
+    isKotlinCriDataGenerationEnabled = myContext.getKotlinCriStoragePath() != null;
   }
 
   public void cleanBuildState() throws IOException {
@@ -106,14 +107,29 @@ public class StorageManager implements CloseableExt {
 
   @NotNull
   public GraphConfiguration getGraphConfiguration() throws IOException {
-    GraphConfiguration config = myGraphConfig;
-    if (config == null) {
-      DependencyGraphImpl graph = new DependencyGraphImpl(
-        new PersistentMVStoreMapletFactory(DataPaths.getDepGraphStoreFile(myContext).toString(), Math.min(8, Runtime.getRuntime().availableProcessors()))
-      );
-      myGraphConfig = config = GraphConfiguration.create(graph, myContext.getPathMapper());
+    if (myGraphConfig != null) {
+      return myGraphConfig;
     }
-    return config;
+
+    DependencyGraphImpl graph = createDependencyGraph();
+    myGraphConfig = GraphConfiguration.create(graph, myContext.getPathMapper());
+    return myGraphConfig;
+  }
+
+  @NotNull
+  private DependencyGraphImpl createDependencyGraph() throws IOException {
+    var filePath = DataPaths.getDepGraphStoreFile(myContext).toString();
+    int maxBuilderThreads = Math.min(8, Runtime.getRuntime().availableProcessors());
+    var containerFactory = new PersistentMVStoreMapletFactory(filePath, maxBuilderThreads);
+
+    if (isKotlinCriDataGenerationEnabled) {
+      return new DependencyGraphImpl(
+        containerFactory,
+        DependencyGraphImpl.IndexFactory.create(LookupsIndex::new)
+      );
+    } else {
+      return new DependencyGraphImpl(containerFactory);
+    }
   }
 
   @NotNull
@@ -190,6 +206,7 @@ public class StorageManager implements CloseableExt {
     GraphConfiguration config = myGraphConfig;
     if (config != null) {
       myGraphConfig = null;
+      writeKotlinCriData(config.getGraph(), saveChanges);
       safeClose(config.getGraph(), saveChanges);
     }
 
@@ -206,6 +223,31 @@ public class StorageManager implements CloseableExt {
       myInstrumentationClassFinder = null;
       finder.releaseResources();
     }
+  }
+
+  private void writeKotlinCriData(DependencyGraph graph, Boolean saveChanges) {
+    if (!saveChanges || !isKotlinCriDataGenerationEnabled) return;
+    Path kotlinCriPath = myContext.getKotlinCriStoragePath();
+    if (kotlinCriPath == null) return;
+    if (!Files.exists(kotlinCriPath)) {
+      try { Files.createDirectories(kotlinCriPath); }
+      catch (IOException e) { myContext.report(Message.create(null, e)); }
+    }
+
+    KotlinCriUtilKt.prepareSerializedData(graph)
+      .forEach(
+        (name, content) -> {
+          try {
+            Files.write(kotlinCriPath.resolve(name), content,
+                        StandardOpenOption.CREATE,
+                        StandardOpenOption.WRITE,
+                        StandardOpenOption.TRUNCATE_EXISTING);
+          }
+          catch (IOException e) {
+            myContext.report(Message.create(null, e));
+          }
+        }
+      );
   }
 
   private void safeClose(Closeable cl, boolean saveChanges) {

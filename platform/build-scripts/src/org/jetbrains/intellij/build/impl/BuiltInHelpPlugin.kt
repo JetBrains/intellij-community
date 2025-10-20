@@ -14,6 +14,7 @@ import org.jetbrains.intellij.build.telemetry.TraceManager.spanBuilder
 import org.jetbrains.intellij.build.telemetry.use
 import java.nio.file.Files
 import java.nio.file.Path
+import kotlin.io.path.exists
 
 internal const val BUILT_IN_HELP_MODULE_NAME = "intellij.builtInHelp"
 
@@ -88,25 +89,63 @@ private fun pluginXml(buildContext: BuildContext, version: String): String {
  */
 private val helpIndexerMutex = Mutex()
 
+
+/*  Offline help plugins include a separate set of help topics for each of the supported languages.
+This is a map of language code to descriptors that define resources associated with that language.
+ */
+
+private data class LanguageResourcesDescriptor(
+  val isRequired: Boolean = false,
+  val resPath: String,
+  val resList: List<String> = listOf("topics", "images", "search"),
+)
+
+private val supportedLanguages = mapOf(
+  //Localized resources don't include images
+  Pair("zh-cn", LanguageResourcesDescriptor(resPath = "zh-cn/", resList = listOf("topics", "search"))),
+  Pair("en-us", LanguageResourcesDescriptor(isRequired = true, resPath = ""))
+)
+
 private suspend fun buildResourcesForHelpPlugin(resourceRoot: Path, classPath: List<String>, assetJar: Path, context: CompilationContext) {
   spanBuilder("index help topics").use {
     helpIndexerMutex.withLock {
-      runJavaForIntellijModule(
-        context = context, mainClass = "com.jetbrains.builtInHelp.indexer.HelpIndexer",
-        args = listOf(
-          resourceRoot.resolve("search").toString(),
-          resourceRoot.resolve("topics").toString(),
-        ),
-        jvmArgs = emptyList(),
-        classPath = classPath,
-      )
+      supportedLanguages.forEach { (lang, descriptor) ->
+        val topicPath = resourceRoot.resolve("${descriptor.resPath}topics")
+
+        if (topicPath.exists())
+          runJavaForIntellijModule(
+            context = context, mainClass = "com.jetbrains.builtInHelp.indexer.HelpIndexer",
+            args = listOf(
+              resourceRoot.resolve("${descriptor.resPath}search").toString(),
+              topicPath.toString(),
+            ),
+            jvmArgs = emptyList(),
+            classPath = classPath,
+          )
+        else
+          Span.current().addEvent("skip \"${lang}\" for offline help plugin because it was not supplied. ")
+      }
     }
+
     writeNewZipWithoutIndex(file = assetJar, compress = true) { zipCreator ->
       val archiver = ZipArchiver()
       archiver.setRootDir(resourceRoot)
-      archiveDir(startDir = resourceRoot.resolve("topics"), addFile = { archiver.addFile(it, zipCreator) })
-      archiveDir(startDir = resourceRoot.resolve("images"), addFile = { archiver.addFile(it, zipCreator) })
-      archiveDir(startDir = resourceRoot.resolve("search"), addFile = { archiver.addFile(it, zipCreator) })
+
+      supportedLanguages.forEach { (lang, descriptor) ->
+        val langRootDir = resourceRoot.resolve(descriptor.resPath)
+        if (langRootDir.exists()) {
+          Span.current().addEvent("adding \"${lang}\" to the resulting ZIP.")
+          descriptor.resList.forEach { resDir ->
+            archiveDir(
+              startDir = langRootDir.resolve(resDir),
+              addFile = { archiver.addFile(it, zipCreator) })
+          }
+        }
+        else
+          Span.current().addEvent("skip adding \"${lang}\" to the resulting ZIP because it was not supplied.")
+      }
     }
   }
 }
+
+

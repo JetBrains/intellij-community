@@ -414,9 +414,14 @@ class InfoAndProgressPanel internal constructor(
   ): BalloonHandler {
     @Suppress("HardCodedStringLiteral")
     val htmlContent = htmlBody.replace("\n", "<br>")
+    val icon = icon ?: if (type == MessageType.INFO) {
+      null
+    } else {
+      type.defaultIcon
+    }
     val balloon = JBPopupFactory.getInstance()
       .createHtmlTextBalloonBuilder(htmlContent,
-                                    null,
+                                    icon,
                                     type.titleForeground,
                                     type.popupBackground,
                                     listener)
@@ -1252,6 +1257,7 @@ private class CounterLabel : JPanel() {
     label = createLabel()
     layout = BorderLayout()
     add(label, BorderLayout.CENTER)
+    isOpaque = false
     setNumber(0, isProgressVisible =false, isPopupShowing = false)
   }
 

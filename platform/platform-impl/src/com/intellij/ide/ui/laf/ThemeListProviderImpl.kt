@@ -5,7 +5,6 @@ import com.intellij.ide.IdeBundle
 import com.intellij.ide.ui.TargetUIType
 import com.intellij.ide.ui.ThemeListProvider
 import com.intellij.openapi.editor.colors.Groups
-import com.intellij.openapi.util.registry.Registry
 import com.intellij.ui.ExperimentalUI
 
 private class ThemeListProviderImpl : ThemeListProvider {
@@ -41,13 +40,7 @@ private class ThemeListProviderImpl : ThemeListProvider {
         else customThemes.add(info)
       }
 
-    if (Registry.`is`("llm.riderNext.enabled", false)) {
-      uiThemeProviderListManager.getThemeListForTargetUI(TargetUIType.NEXT).forEach { info ->
-        if (!info.isThemeFromPlugin) nextUiThemes.add(info)
-        else customThemes.add(info)
-      }
-    }
-    else if (ExperimentalUI.isNewUI()) {
+    if (ExperimentalUI.isNewUI()) {
       uiThemeProviderListManager.getThemeListForTargetUI(TargetUIType.ISLANDS).forEach { info ->
         if (!info.isThemeFromPlugin) islandsUiThemes.add(info)
         else customThemes.add(info)

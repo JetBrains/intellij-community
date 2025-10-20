@@ -15,7 +15,6 @@ import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.options.ShowSettingsUtil
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.startup.ProjectActivity
-import com.intellij.openapi.util.registry.Registry
 import com.intellij.ui.ExperimentalUI
 import java.lang.ref.WeakReference
 
@@ -39,8 +38,7 @@ internal class IslandsFeedback : ProjectActivity {
 
       if (!ApplicationManager.getApplication().isUnitTestMode &&
           !ApplicationManager.getApplication().isHeadlessEnvironment &&
-          !AppMode.isRemoteDevHost() &&
-          !Registry.`is`("llm.riderNext.enabled", false) && ExperimentalUI.isNewUI()) {
+          !AppMode.isRemoteDevHost() && ExperimentalUI.isNewUI()) {
 
         handleFeedback(project)
       }

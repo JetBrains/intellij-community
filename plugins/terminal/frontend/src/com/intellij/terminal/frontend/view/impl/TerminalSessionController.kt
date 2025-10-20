@@ -12,9 +12,11 @@ import com.intellij.terminal.frontend.view.hyperlinks.FrontendTerminalHyperlinkF
 import com.intellij.util.containers.DisposableWrapperList
 import kotlinx.coroutines.*
 import org.jetbrains.plugins.terminal.block.reworked.TerminalSessionModel
-import org.jetbrains.plugins.terminal.session.*
-import org.jetbrains.plugins.terminal.session.dto.toState
-import org.jetbrains.plugins.terminal.session.dto.toTerminalState
+import org.jetbrains.plugins.terminal.session.TerminalStartupOptions
+import org.jetbrains.plugins.terminal.session.impl.*
+import org.jetbrains.plugins.terminal.session.impl.dto.toOptions
+import org.jetbrains.plugins.terminal.session.impl.dto.toState
+import org.jetbrains.plugins.terminal.session.impl.dto.toTerminalState
 import java.awt.Toolkit
 import kotlin.coroutines.cancellation.CancellationException
 
@@ -24,6 +26,7 @@ internal class TerminalSessionController(
   private val outputHyperlinkFacade: FrontendTerminalHyperlinkFacade?,
   private val alternateBufferModelController: TerminalOutputModelController,
   private val alternateBufferHyperlinkFacade: FrontendTerminalHyperlinkFacade?,
+  private val startupOptionsDeferred: CompletableDeferred<TerminalStartupOptions>,
   private val settings: JBTerminalSystemSettingsProviderBase,
   private val coroutineScope: CoroutineScope,
 ) {
@@ -67,6 +70,7 @@ internal class TerminalSessionController(
     when (event) {
       is TerminalInitialStateEvent -> {
         sessionModel.updateTerminalState(event.sessionState.toTerminalState())
+        startupOptionsDeferred.complete(event.startupOptions.toOptions())
         withContext(edtContext) {
           outputModelController.applyPendingUpdates()
           alternateBufferModelController.applyPendingUpdates()

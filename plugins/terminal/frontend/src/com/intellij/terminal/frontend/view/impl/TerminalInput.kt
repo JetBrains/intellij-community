@@ -14,7 +14,8 @@ import kotlinx.coroutines.future.await
 import org.jetbrains.plugins.terminal.block.reworked.TerminalSessionModel
 import org.jetbrains.plugins.terminal.block.ui.sanitizeLineSeparators
 import org.jetbrains.plugins.terminal.fus.*
-import org.jetbrains.plugins.terminal.session.*
+import org.jetbrains.plugins.terminal.session.TerminalGridSize
+import org.jetbrains.plugins.terminal.session.impl.*
 import org.jetbrains.plugins.terminal.view.impl.TerminalSendTextOptions
 import java.awt.event.KeyEvent
 import java.nio.charset.StandardCharsets

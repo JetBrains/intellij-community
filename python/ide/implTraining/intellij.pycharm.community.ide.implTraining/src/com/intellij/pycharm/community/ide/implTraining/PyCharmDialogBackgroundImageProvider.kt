@@ -5,6 +5,5 @@ import com.intellij.openapi.wm.impl.DialogBackgroundImageProviderBase
 import java.net.URL
 
 internal class PyCharmDialogBackgroundImageProvider : DialogBackgroundImageProviderBase() {
-  override fun getImageUrl(isDark: Boolean): URL? = javaClass.getResource(if (isDark) "/img/pycharm-onboarding-gradient-background-dark.svg"
-                                                                          else "/img/pycharm-onboarding-gradient-background-light.svg")
+  override fun getImageUrl(isDark: Boolean): URL? = javaClass.getResource("/img/pycharm-onboarding-gradient-background.svg")
 }

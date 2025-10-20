@@ -3,7 +3,7 @@ package org.jetbrains.plugins.terminal.block.reworked
 
 import com.intellij.openapi.util.Key
 import org.jetbrains.annotations.ApiStatus
-import org.jetbrains.plugins.terminal.session.TerminalAliasesInfo
+import org.jetbrains.plugins.terminal.session.impl.TerminalAliasesInfo
 
 @ApiStatus.Internal
 class TerminalAliasesStorage {

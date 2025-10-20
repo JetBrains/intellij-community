@@ -30,6 +30,11 @@ public class KtReferenceTypeHintsProviderTestGenerated extends AbstractKtReferen
         KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
     }
 
+    @TestMetadata("AnonymousAnyCollectionElement.kt")
+    public void testAnonymousAnyCollectionElement() throws Exception {
+        runTest("../../idea/tests/testData/codeInsight/hints/types/AnonymousAnyCollectionElement.kt");
+    }
+
     @TestMetadata("AnonymousCollectionElement.kt")
     public void testAnonymousCollectionElement() throws Exception {
         runTest("../../idea/tests/testData/codeInsight/hints/types/AnonymousCollectionElement.kt");

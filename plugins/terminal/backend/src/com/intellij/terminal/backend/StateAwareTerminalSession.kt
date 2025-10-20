@@ -17,16 +17,17 @@ import kotlinx.coroutines.flow.merge
 import org.jetbrains.plugins.terminal.block.reworked.*
 import org.jetbrains.plugins.terminal.block.ui.TerminalUiUtils
 import org.jetbrains.plugins.terminal.fus.*
-import org.jetbrains.plugins.terminal.session.*
-import org.jetbrains.plugins.terminal.session.dto.toDto
-import org.jetbrains.plugins.terminal.session.dto.toTerminalState
+import org.jetbrains.plugins.terminal.session.TerminalStartupOptions
+import org.jetbrains.plugins.terminal.session.impl.*
+import org.jetbrains.plugins.terminal.session.impl.dto.toDto
+import org.jetbrains.plugins.terminal.session.impl.dto.toTerminalState
 import org.jetbrains.plugins.terminal.view.shellIntegration.impl.TerminalBlocksModelImpl
 import kotlin.coroutines.cancellation.CancellationException
 import kotlin.time.TimeSource
 
 /**
  * TerminalSession implementation that stores the state of the [delegate] session output.
- * This state is then passed as the [org.jetbrains.plugins.terminal.session.TerminalInitialStateEvent] to the output flow as the first event
+ * This state is then passed as the [org.jetbrains.plugins.terminal.session.impl.TerminalInitialStateEvent] to the output flow as the first event
  * every time when [getOutputFlow] is requested.
  *
  * So, actually it allows restoring the state of UI that requests the [getOutputFlow].
@@ -38,6 +39,7 @@ import kotlin.time.TimeSource
 internal class StateAwareTerminalSession(
   project: Project,
   private val delegate: BackendTerminalSession,
+  private val startupOptions: TerminalStartupOptions,
   override val coroutineScope: CoroutineScope,
 ) : BackendTerminalSession {
   private val outputFlowProducer = IncrementalUpdateFlowProducer(State())
@@ -80,7 +82,7 @@ internal class StateAwareTerminalSession(
     alternateBufferModel = MutableTerminalOutputModelImpl(alternateBufferDocument, maxOutputLength = 0)
     alternateBufferHyperlinkFacade = BackendTerminalHyperlinkFacade(project, hyperlinkScope, alternateBufferModel, isInAlternateBuffer = true)
 
-    blocksModel = TerminalBlocksModelImpl(outputModel, coroutineScope.asDisposable())
+    blocksModel = TerminalBlocksModelImpl(outputModel, sessionModel, coroutineScope.asDisposable())
 
     coroutineScope.launch(CoroutineName("StateAwareTerminalSession: models updating")) {
       merge(
@@ -192,7 +194,7 @@ internal class StateAwareTerminalSession(
         }
         is TerminalCommandStartedEvent -> {
           blocksModel.updateActiveCommandBlock { block ->
-            block.copy(outputStartOffset = outputModel.cursorOffset)
+            block.copy(outputStartOffset = outputModel.cursorOffset, executedCommand = event.command)
           }
         }
         is TerminalCommandFinishedEvent -> {
@@ -218,6 +220,7 @@ internal class StateAwareTerminalSession(
 
     override suspend fun takeSnapshot(): List<List<TerminalOutputEvent>> {
       val event = TerminalInitialStateEvent(
+        startupOptions = startupOptions.toDto(),
         sessionState = sessionModel.terminalState.value.toDto(),
         outputModelState = outputModel.dumpState().toDto(),
         alternateBufferState = alternateBufferModel.dumpState().toDto(),

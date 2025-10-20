@@ -7,6 +7,7 @@ import com.intellij.openapi.vfs.newvfs.persistent.FSRecords;
 import com.intellij.testFramework.LightProjectDescriptor;
 import com.intellij.testFramework.fixtures.IdeaTestFixture;
 import com.intellij.testFramework.fixtures.IdeaTestFixtureFactory;
+import com.intellij.util.ConcurrencyUtil;
 import it.unimi.dsi.fastutil.ints.Int2ObjectMap;
 import it.unimi.dsi.fastutil.ints.Int2ObjectOpenHashMap;
 import it.unimi.dsi.fastutil.longs.LongArrayList;
@@ -191,9 +192,7 @@ public final class FileNameCacheMicroBenchmark {
       futures.add(ApplicationManager.getApplication().executeOnPooledThread(
         () -> testIteration.doTest(finalI, ids, threadRandom, queryCount)));
     }
-    for (Future<?> future : futures) {
-      future.get();
-    }
+    ConcurrencyUtil.getAll(futures);
     return System.currentTimeMillis() - start;
   }
 

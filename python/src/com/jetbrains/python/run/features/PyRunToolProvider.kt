@@ -3,13 +3,24 @@ package com.jetbrains.python.run.features
 
 import com.intellij.openapi.extensions.ExtensionPointName
 import com.intellij.openapi.projectRoots.Sdk
+import com.intellij.openapi.util.registry.Registry
 import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.annotations.Nls
 import org.jetbrains.annotations.NonNls
 
+/**
+ * Feature flag for Python "Run with …" tool integration.
+ */
+internal val enableRunTool: Boolean get() = Registry.`is`("run.with.py.tool")
+
 @JvmInline
 @ApiStatus.Internal
 value class PyRunToolId(@param:NonNls val value: String)
+
+internal object PyRunToolIds {
+  @JvmStatic
+  fun idOf(provider: PyRunToolProvider): String = provider.runToolData.id.value
+}
 
 /**
  * Metadata describing a concrete Python "Run with …" tool option.
@@ -17,12 +28,14 @@ value class PyRunToolId(@param:NonNls val value: String)
  * - id: a unique identifier of the tool.
  * - name: user‑visible action/configuration name (localized).
  * - group: user‑visible group name under which the action is shown in UI (localized).
+ * - idForStatistics: identifier for FUS statistics (should not change to avoid breaking statistics).
  */
 @ApiStatus.Internal
 data class PyRunToolData(
   @param:NonNls val id: PyRunToolId,
   @param:Nls val name: String,
-  @param:Nls val group: String
+  @param:Nls val group: String,
+  @param:NonNls val idForStatistics: String = id.value
 )
 
 /**

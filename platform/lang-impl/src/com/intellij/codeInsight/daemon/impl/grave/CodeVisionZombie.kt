@@ -4,6 +4,7 @@ package com.intellij.codeInsight.daemon.impl.grave
 import com.intellij.codeInsight.codeVision.CodeVisionEntry
 import com.intellij.codeInsight.codeVision.ui.model.CounterCodeVisionEntry
 import com.intellij.codeInsight.codeVision.ui.model.ZombieCodeVisionEntry
+import com.intellij.codeInsight.codeVision.ui.renderers.providers.painter
 import com.intellij.codeInsight.daemon.impl.readGutterIcon
 import com.intellij.codeInsight.daemon.impl.writeGutterIcon
 import com.intellij.openapi.editor.impl.zombie.LimbedNecromancy
@@ -35,6 +36,7 @@ internal object CodeVisionNecromancy : LimbedNecromancy<CodeVisionZombie, CodeVi
     writeUTF(grave, limb.providerId)
     writeGutterIcon(grave, limb.icon)
     writeCount(grave, limb)
+    if (limb.shouldBeDelimited) writeINT(grave, 1) else writeINT(grave, 0)
   }
 
   override fun exhumeLimb(grave: DataInput): CodeVisionLimb {
@@ -45,7 +47,8 @@ internal object CodeVisionNecromancy : LimbedNecromancy<CodeVisionZombie, CodeVi
     val provId: String       = readUTF(grave)
     val icon: Icon?          = readGutterIcon(grave)
     val count: Int?          = readCount(grave)
-    return CodeVisionLimb(startOffset, endOffset, provId, presentation, tooltip, icon, count)
+    val shouldBeDelimited    = readINT(grave) == 1
+    return CodeVisionLimb(startOffset, endOffset, provId, presentation, tooltip, icon, count, shouldBeDelimited)
   }
 
   override fun formZombie(limbs: List<CodeVisionLimb>): CodeVisionZombie {
@@ -74,6 +77,7 @@ internal data class CodeVisionLimb(
   val tooltip: String,
   val icon: Icon?,
   val count: Int?,
+  val shouldBeDelimited: Boolean
 ) {
   constructor(pair: Pair<TextRange, CodeVisionEntry>) : this(
     pair.first.startOffset,
@@ -83,9 +87,10 @@ internal data class CodeVisionLimb(
     pair.second.tooltip,
     pair.second.icon,
     (pair.second as? CounterCodeVisionEntry)?.count,
+    pair.second.painter().shouldBeDelimited(pair.second)
   )
 
   fun asEntry(): ZombieCodeVisionEntry {
-    return ZombieCodeVisionEntry(providerId, longPresentation, tooltip, icon, count)
+    return ZombieCodeVisionEntry(providerId, longPresentation, tooltip, icon, count, shouldBeDelimited = shouldBeDelimited)
   }
 }

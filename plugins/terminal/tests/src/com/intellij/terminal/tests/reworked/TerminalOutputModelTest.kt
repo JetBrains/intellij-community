@@ -16,8 +16,8 @@ import org.jetbrains.plugins.terminal.block.output.TerminalOutputHighlightingsSn
 import org.jetbrains.plugins.terminal.block.output.TextStyleAdapter
 import org.jetbrains.plugins.terminal.block.reworked.*
 import org.jetbrains.plugins.terminal.block.ui.BlockTerminalColorPalette
-import org.jetbrains.plugins.terminal.session.StyleRange
-import org.jetbrains.plugins.terminal.session.TerminalOutputModelState
+import org.jetbrains.plugins.terminal.session.impl.StyleRange
+import org.jetbrains.plugins.terminal.session.impl.TerminalOutputModelState
 import org.junit.Test
 import org.junit.runner.RunWith
 import org.junit.runners.JUnit4

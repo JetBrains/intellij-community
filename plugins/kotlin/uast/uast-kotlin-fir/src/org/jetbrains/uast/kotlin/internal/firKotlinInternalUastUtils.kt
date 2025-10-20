@@ -416,7 +416,8 @@ internal fun toPsiType(
         psiTypeParent,
         allowErrorTypes = false,
         config.typeMappingMode,
-        isAnnotationMethod = false
+        isAnnotationMethod = false,
+        allowNonJvmPlatforms = true,
     ) ?: UastErrorType
 }
 
@@ -502,7 +503,7 @@ internal tailrec fun psiForUast(
         }
 
         val psiProvider = FirKotlinUastLibraryPsiProviderService.getInstance()
-        return with(psiProvider) { session.provide(symbol) }
+        return with(psiProvider) { session.provide(symbol, context) }
     }
 
     if (symbol is KaConstructorSymbol) {

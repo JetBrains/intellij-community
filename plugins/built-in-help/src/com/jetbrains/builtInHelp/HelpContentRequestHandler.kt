@@ -28,6 +28,8 @@ class HelpContentRequestHandler : HelpRequestHandlerBase() {
     request: FullHttpRequest,
     context: ChannelHandlerContext,
   ): Boolean {
+    val locale = getRequestLocalePath(request)
+
     for (name: String in urlDecoder.parameters().keys) {
       val param = urlDecoder.parameters()[name]
       if (param != null && (param.isEmpty() || StringUtil.isEmpty(param[0]))) {
@@ -43,13 +45,14 @@ class HelpContentRequestHandler : HelpRequestHandlerBase() {
 
         val response = DefaultHttpResponse(HttpVersion.HTTP_1_1, HttpResponseStatus.PERMANENT_REDIRECT)
 
-        var location = "http://127.0.0.1:${BuiltInServerOptions.getInstance().effectiveBuiltInServerPort}/help/${
+        var location = "http://127.0.0.1:${BuiltInServerOptions.getInstance().effectiveBuiltInServerPort}${if (locale.isNotEmpty()) "/$locale" else ""}/help/${
           map.getUrlForId(
             name
           )
         }"
 
-        if (urlDecoder.parameters().containsKey("keymap")) location += "?keymap=${URLEncoder.encode(urlDecoder.parameters()["keymap"]!![0], StandardCharsets.UTF_8)}"
+        if (urlDecoder.parameters().containsKey("keymap"))
+          location += "?keymap=${URLEncoder.encode(urlDecoder.parameters()["keymap"]!![0], StandardCharsets.UTF_8)}"
 
         response.headers().add(
           "Location",
@@ -63,14 +66,12 @@ class HelpContentRequestHandler : HelpRequestHandlerBase() {
 
     when (val resourceName: String = urlDecoder.path().substringAfterLast("/")) {
       "config.json" -> {
-        val configStream = ResourceUtil.getResourceAsStream(
-          HelpContentRequestHandler::class.java.classLoader,
-          "topics", "config.json"
-        )
+
+        val configContent = Utils.getResourceWithFallback("topics", resourceName, locale)
 
         @Suppress("UNCHECKED_CAST")
         val configJson: LinkedHashMap<String, Any> = jacksonObjectMapper().readValue(
-          configStream,
+          configContent,
           LinkedHashMap::class.java
         ) as LinkedHashMap<String, Any>
 

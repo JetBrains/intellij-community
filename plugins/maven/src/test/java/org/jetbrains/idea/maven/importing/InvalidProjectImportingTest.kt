@@ -21,7 +21,6 @@ import com.intellij.build.events.BuildIssueEvent
 import com.intellij.build.events.MessageEvent
 import com.intellij.maven.testFramework.MavenMultiVersionImportingTestCase
 import com.intellij.openapi.application.edtWriteAction
-import com.intellij.openapi.util.registry.Registry
 import com.intellij.testFramework.UsefulTestCase
 import com.intellij.testFramework.replaceService
 import kotlinx.coroutines.runBlocking
@@ -1007,6 +1006,38 @@ class InvalidProjectImportingTest : MavenMultiVersionImportingTestCase() {
 
     val root = rootProjects[0]
     assertProblems(root, "'settings.xml' has syntax errors")
+  }
+
+  @Test
+  fun testImportingWithEmptyPath() = runBlocking {
+    importProjectAsync("""
+                              <groupId>test</groupId>
+                              <artifactId>project</artifactId>
+                              <version>1</version>
+                              <packaging>pom</packaging>
+                              <modules>
+                                  <module></module>
+                              </modules>
+                              """.trimIndent())
+    assertModules("project")
+    val rootProject = projectsManager.findProject(projectPom)
+    assertNotNull("Project should be found", rootProject)
+    val rootOfRoot = projectsManager.findRootProject(rootProject!!)
+    assertNotNull("Root of root should be null", rootOfRoot)
+  }
+
+  @Test
+  fun testImportingWithSelfInclusionInclusion() = runBlocking {
+    importProjectAsync("""
+                              <groupId>test</groupId>
+                              <artifactId>project</artifactId>
+                              <version>1</version>
+                              <packaging>pom</packaging>
+                              <modules>
+                                  <module>./pom.xml</module>
+                              </modules>
+                              """.trimIndent())
+    assertModules("project")
   }
 
   private val rootProjects: List<MavenProject>
