@@ -44,6 +44,7 @@ data object TerminalSessionTerminatedEvent : TerminalOutputEvent
 @ApiStatus.Internal
 @Serializable
 data class TerminalInitialStateEvent(
+  val startupOptions: TerminalStartupOptionsDto,
   val sessionState: TerminalStateDto,
   val outputModelState: TerminalOutputModelStateDto,
   val alternateBufferState: TerminalOutputModelStateDto,
