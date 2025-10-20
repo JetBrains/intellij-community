@@ -22,7 +22,6 @@ import com.intellij.openapi.ui.*
 import com.intellij.openapi.util.Key
 import com.intellij.openapi.util.SystemInfo
 import com.intellij.openapi.util.SystemInfoRt
-import com.intellij.openapi.util.registry.Registry
 import com.intellij.openapi.wm.*
 import com.intellij.openapi.wm.ex.ToolWindowManagerEx
 import com.intellij.openapi.wm.impl.*
@@ -66,7 +65,7 @@ private data class WindowBackgroundComponentData(val origOpaque: Boolean, val or
 private val WINDOW_BACKGROUND_COMPONENT_KEY: Key<WindowBackgroundComponentData> = Key.create("Islands.WINDOW_BACKGROUND_COMPONENT_KEY")
 
 internal class IslandsUICustomization : InternalUICustomization() {
-  private val isIslandsAvailable = !Registry.`is`("llm.riderNext.enabled", false) && ExperimentalUI.isNewUI()
+  private val isIslandsAvailable = ExperimentalUI.isNewUI()
 
   private var isManyIslandEnabledCache: Boolean? = null
 
