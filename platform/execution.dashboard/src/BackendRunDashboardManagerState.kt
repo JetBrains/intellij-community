@@ -51,9 +51,12 @@ internal class BackendRunDashboardManagerState(private val project: Project) {
     sharedSettings.value = RunDashboardSettingsDto(openRunningConfigInTab)
   }
 
-  fun fireStatusUpdated(backendService: RunDashboardService) {
-    sharedStatuses.tryEmit(ServiceStatusDto(backendService.uuid,
-                                            RunDashboardRunConfigurationStatus.getStatus(backendService.descriptor).id))
+  fun fireStatusUpdated(backendService: RunDashboardService, persistedStatus: RunDashboardRunConfigurationStatus?) {
+    val effectiveStatus = when {
+      backendService.descriptor == null && persistedStatus != null -> persistedStatus
+      else -> RunDashboardRunConfigurationStatus.getStatus(backendService.descriptor)
+    }
+    sharedStatuses.tryEmit(ServiceStatusDto(backendService.uuid, effectiveStatus.id))
   }
 
   fun getStatuses(): Flow<ServiceStatusDto> {
