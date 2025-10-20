@@ -559,12 +559,21 @@ public final class DebuggerSession implements AbstractDebuggerSession {
           return;
         }
         else {
-          currentThread = mySteppingThroughThread.get();
+          if (suspendContext.threadFilterWasPassed) {
+            currentThread = mySteppingThroughThread.get();
+          }
+          else {
+            return;
+          }
         }
       }
       else {
-        setSteppingThrough(currentThread);
+        if (suspendContext.threadFilterWasPassed) {
+          setSteppingThrough(currentThread);
+        }
       }
+
+      myDebugProcess.cancelSteppingBreakpoints();
 
       final StackFrameContext positionContext;
       SourcePosition position;
@@ -702,11 +711,15 @@ public final class DebuggerSession implements AbstractDebuggerSession {
 
       final ThreadReferenceProxyImpl newThread = suspendContext.getEventThread();
       if (newThread == null || suspendContext.getSuspendPolicy() == EventRequest.SUSPEND_ALL || !myDebugProcess.isSteppingInProgress()) {
-        return true;
+        if (suspendContext.threadFilterWasPassed) {
+          return true;
+        }
       }
       final SuspendContextImpl currentSuspendContext = getContextManager().getContext().getSuspendContext();
       if (currentSuspendContext == null || currentSuspendContext.isResumed()) {
-        return mySteppingThroughThread.get() == null;
+        if (suspendContext.threadFilterWasPassed) {
+          return mySteppingThroughThread.get() == null;
+        }
       }
       if (enableBreakpointsDuringEvaluation()) {
         final ThreadReferenceProxyImpl currentThread = currentSuspendContext.getThread();

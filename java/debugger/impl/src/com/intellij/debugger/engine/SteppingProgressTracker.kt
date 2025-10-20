@@ -7,17 +7,20 @@ import com.intellij.debugger.engine.jdi.ThreadReferenceProxy
 import com.intellij.debugger.impl.DebuggerUtilsAsync
 import com.intellij.debugger.impl.PrioritizedTask
 import com.intellij.debugger.jdi.ThreadReferenceProxyImpl
+import com.intellij.debugger.settings.DebuggerSettings
 import com.sun.jdi.request.EventRequest
 import kotlinx.coroutines.CompletableDeferred
 import org.jetbrains.annotations.Nls
 import java.util.concurrent.CompletableFuture
 
-private data class TrackedSteppingData(val stepCompetedStatus: CompletableDeferred<Unit>, val threadFilter: (ThreadReferenceProxy?, SuspendContextImpl) -> Boolean)
+private data class TrackedSteppingData(val stepCompetedStatus: CompletableDeferred<Unit>, val isSuspendAllStepping: Boolean, val threadFilter: (ThreadReferenceProxy?, SuspendContextImpl) -> Boolean)
 
 internal class SteppingProgressTracker(private val debuggerProcessImpl: DebugProcessImpl) {
   private val trackedStepping = mutableListOf<TrackedSteppingData>()
 
   val isSteppingInProgress: Boolean get() = trackedStepping.isNotEmpty()
+
+  val isSuspendAllStepping: Boolean get() = trackedStepping.any { it.isSuspendAllStepping }
 
   /** returns true iff the [suspendContext] is the end of ongoing stepping */
   fun onPaused(suspendContext: SuspendContext): Boolean {
@@ -31,8 +34,8 @@ internal class SteppingProgressTracker(private val debuggerProcessImpl: DebugPro
     return completedSteps.isNotEmpty()
   }
 
-  fun addStepping(stepCompetedStatus: CompletableDeferred<Unit>, threadFilter: (ThreadReferenceProxy?, SuspendContextImpl) -> Boolean) {
-    trackedStepping.add(TrackedSteppingData(stepCompetedStatus, threadFilter))
+  fun addStepping(stepCompetedStatus: CompletableDeferred<Unit>, isSuspendAllStepping: Boolean, threadFilter: (ThreadReferenceProxy?, SuspendContextImpl) -> Boolean) {
+    trackedStepping.add(TrackedSteppingData(stepCompetedStatus, isSuspendAllStepping, threadFilter))
   }
 }
 
@@ -40,6 +43,8 @@ private class CancelingSteppingListener : SteppingListener {
   override fun beforeSteppingStarted(suspendContext: SuspendContextImpl, steppingAction: SteppingAction) {
     val debuggerProcessImpl: DebugProcessImpl = suspendContext.debugProcess
     val filter: LightOrRealThreadInfo? = debuggerProcessImpl.requestsManager.filterThread
+
+    val isSuspendAllPolicy = suspendContext.suspendPolicyFromRequestors == DebuggerSettings.SUSPEND_ALL
 
     val threadForStepping: ThreadReferenceProxyImpl? =
       if (filter != null) suspendContext.virtualMachineProxy.getThreadReferenceProxy(filter.realThread)
@@ -76,8 +81,10 @@ private class CancelingSteppingListener : SteppingListener {
     }
 
     val tracker = suspendContext.debugProcess.mySteppingProgressTracker
-    tracker.addStepping(stepCompetedStatus) { thread, suspendContext ->
-      thread == null || filter != null && filter.checkSameThread(thread.threadReference, suspendContext) || thread == threadForStepping
+    tracker.addStepping(stepCompetedStatus, isSuspendAllPolicy) { thread, suspendContext ->
+      thread == null
+      || (filter != null && filter.checkSameThread(thread.threadReference, suspendContext))
+      || (filter == null && thread == threadForStepping)
     }
   }
 }

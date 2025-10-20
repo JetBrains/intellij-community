@@ -638,7 +638,7 @@ public class DebugProcessEvents extends DebugProcessImpl {
       @Override
       public void contextAction(@NotNull SuspendContextImpl suspendContext) {
         logSuspendContext(suspendContext, () -> "start locatable event processing");
-        final SuspendManager suspendManager = getSuspendManager();
+        final SuspendManagerImpl suspendManager = (SuspendManagerImpl)getSuspendManager();
 
         final LocatableEventRequestor requestor = (LocatableEventRequestor)RequestManagerImpl.findRequestor(event.request());
         ThreadReferenceProxyImpl threadProxy = suspendContext.getThread();
@@ -671,7 +671,10 @@ public class DebugProcessEvents extends DebugProcessImpl {
                   suspendContext.getSuspendPolicy() == EventRequest.SUSPEND_EVENT_THREAD &&
                   myRunToCursorManager.shouldTryToPauseAnotherHit(suspendContext)) {
                 postponeSuspendRunToCursorBP = true;
-              } else {
+              } else if (mySteppingProgressTracker.isSuspendAllStepping() ||
+                         !suspendManager.getSuspendAllContexts().isEmpty() ||
+                         requestor instanceof SyntheticBreakpoint
+              ) {
                 // notify only if the current session is not one with evaluations hidden from the user
                 if (!checkContextIsFromImplicitThread(suspendContext)) {
                   notifySkippedBreakpoints(event, SkippedBreakpointReason.STEPPING);
@@ -679,6 +682,8 @@ public class DebugProcessEvents extends DebugProcessImpl {
                 logSuspendContext(suspendContext, () -> "Skip breakpoint because of filter " + filter);
                 suspendManager.voteResume(suspendContext);
                 return;
+              } else {
+                suspendContext.threadFilterWasPassed = false;
               }
             }
           }
