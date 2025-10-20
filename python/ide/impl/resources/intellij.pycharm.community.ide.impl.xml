@@ -123,6 +123,8 @@
 
     <codeInsight.codeVision.settings.defaults implementation="com.intellij.pycharm.community.ide.impl.PyCharmCodeVisionSettingsDefaults"/>
     <statistics.counterUsagesCollector implementationClass="com.intellij.pycharm.community.ide.impl.configuration.ui.PyAddNewEnvCollector"/>
+    <startPagePromoter
+      implementation="com.intellij.pycharm.community.ide.impl.promo.WelcomeToUnifiedWelcomeScreenBanner"/>
   </extensions>
 
   <extensions defaultExtensionNs="Pythonid">
@@ -141,6 +143,11 @@
     <projectSdkConfigurationExtension implementation="com.intellij.pycharm.community.ide.impl.configuration.PyUvSdkConfiguration"
                                       id="uv" order="after hatch"/>
   </extensions>
+
+  <applicationListeners>
+    <listener class="com.intellij.pycharm.community.ide.impl.promo.CommunityToUnifiedListener"
+              topic="com.intellij.ide.AppLifecycleListener"/>
+  </applicationListeners>
 
   <actions resource-bundle="messages.ActionsBundle">
     <action id="PySwitchSdkAction" class="com.intellij.pycharm.community.ide.impl.configuration.PySwitchSdkAction"/>
