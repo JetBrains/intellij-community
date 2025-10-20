@@ -975,23 +975,6 @@ private data class CompatibleUpdateRequest(
   )
 }
 
-private data class CompatibleUpdateForModuleRequest(
-  val module: String,
-  val build: String,
-  val os: String = OS.CURRENT.name,
-  val arch: String = CpuArch.CURRENT.name,
-) {
-
-  @JvmOverloads
-  constructor(
-    module: String,
-    buildNumber: BuildNumber? = null,
-  ) : this(
-    module,
-    ApplicationInfoImpl.orFromPluginCompatibleBuild(buildNumber),
-  )
-}
-
 private fun Logger.infoOrDebug(
   message: String,
   throwable: Throwable,

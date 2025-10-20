@@ -56,9 +56,6 @@ object MarketplaceUrls {
     "${getPluginManagerUrl()}/api/search/aggregation/$field"
   ).addParameters(mapOf("build" to IDE_BUILD_FOR_REQUEST))
 
-  @Deprecated("Use getSearchPluginsUpdatesUrl() instead")
-  fun getSearchCompatibleUpdatesUrl(): String = Urls.newFromEncoded("${getPluginManagerUrl()}/api/search/compatibleUpdates").toExternalForm()
-
   fun getSearchPluginsUpdatesUrl(): String = Urls.newFromEncoded("${getPluginManagerUrl()}/api/search/updates/compatible").toExternalForm()
 
   fun getSearchNearestUpdate(): String = Urls.newFromEncoded("${getPluginManagerUrl()}/api/search/updates/nearest").toExternalForm()
