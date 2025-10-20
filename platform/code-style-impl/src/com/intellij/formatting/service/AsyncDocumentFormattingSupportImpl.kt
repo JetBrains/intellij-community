@@ -65,6 +65,7 @@ class AsyncDocumentFormattingSupportImpl(private val service: AsyncDocumentForma
       }
       else {
         withCurrentThreadCoroutineScopeBlocking {
+          // UNDISPATCHED start: formattingTask.run must be called even if the currentThreadCoroutineScope is already canceled
           currentThreadCoroutineScope().launch(start = CoroutineStart.UNDISPATCHED) {
             runAsyncFormat(formattingRequest)
           }
@@ -167,7 +168,7 @@ class AsyncDocumentFormattingSupportImpl(private val service: AsyncDocumentForma
       )
     }
 
-    @OptIn(DelicateCoroutinesApi::class) // GlobalScope, CoroutineStart.ATOMIC -- TODO describe
+    @OptIn(DelicateCoroutinesApi::class) // GlobalScope, CoroutineStart.ATOMIC
     suspend fun runAndAwaitTask() = coroutineScope {
       val task = checkNotNull(task)
       val taskDispatcher = if (isSync) {
@@ -177,7 +178,7 @@ class AsyncDocumentFormattingSupportImpl(private val service: AsyncDocumentForma
       else {
         Dispatchers.IO
       }
-      // There is an implicit contract that a task that was already created is also started.
+      // There is an existing contract that a task that was already created is also started.
       // GlobalScope is used here to prevent cancellation before that can happen.
       val taskJob = GlobalScope.launch(taskDispatcher) {
         try {
@@ -191,6 +192,7 @@ class AsyncDocumentFormattingSupportImpl(private val service: AsyncDocumentForma
           throw t
         }
       }
+      // ATOMIC start is used here to ensure taskJob is properly cleaned up
       launch(Dispatchers.Default, start = CoroutineStart.ATOMIC) {
         val timeout = getTimeout(service).toNanos().nanoseconds
         val markStarted = TimeSource.Monotonic.markNow()
