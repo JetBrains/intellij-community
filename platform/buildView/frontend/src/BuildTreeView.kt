@@ -173,11 +173,13 @@ internal class BuildTreeView(private val project: Project, parentScope: Coroutin
       is BuildNodesUpdate -> {
         timeDiff = event.currentTimestamp - System.currentTimeMillis()
         val nodeInfos = event.nodes
+        var needsNavigationContextUpdate = false
         if (nodeInfos.isEmpty()) {
           LOG.debug("Clearing nodes")
           durationUpdater.reset()
           nodeMap.clear()
           rootNode.removeChildren()
+          needsNavigationContextUpdate = true
         }
         else {
           nodeInfos.forEach { nodeInfo ->
@@ -195,16 +197,23 @@ internal class BuildTreeView(private val project: Project, parentScope: Coroutin
               nodeMap[nodeInfo.id] = newNode
               if (parentNode.addChild(newNode)) {
                 maybeExpand(TreePathUtil.toTreePath(parentNode))
+                needsNavigationContextUpdate = needsNavigationContextUpdate ||
+                                               parentNode.childCount == 1 || // adding first child might change parent's navigatable status
+                                               newNode.occurrenceNavigatable != null
               }
             }
             else {
               LOG.debug { "Updating node (id=${nodeInfo.id})" }
+              val wasNavigatable = node.isNavigatable
               durationUpdater.onNodeUpdated(node.content, nodeInfo)
               node.content = nodeInfo
+              needsNavigationContextUpdate = needsNavigationContextUpdate || node.childCount != 0 || node.isNavigatable != wasNavigatable
             }
           }
         }
-        updateNavigationContext()
+        if (needsNavigationContextUpdate) {
+          updateNavigationContext()
+        }
       }
       is BuildTreeExposeRequest -> {
         val nodeId = event.nodeId
@@ -353,6 +362,9 @@ internal class BuildTreeView(private val project: Project, parentScope: Coroutin
 
     val occurrenceNavigatable: NavigatableId?
       get() = if (content.hasProblems && childCount == 0) content.navigatables.firstOrNull() else null
+
+    val isNavigatable: Boolean
+      get() = isVisible() && occurrenceNavigatable != null
 
     fun addChild(node: MyNode): Boolean {
       assert(node.parent == null)
