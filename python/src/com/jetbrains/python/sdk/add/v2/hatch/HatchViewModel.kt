@@ -23,11 +23,11 @@ import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
 import kotlin.io.path.isDirectory
 
-class HatchState<P : PathHolder>(
+class HatchViewModel<P : PathHolder>(
   val fileSystem: FileSystem<P>,
   propertyGraph: PropertyGraph,
   val projectPathFlows: ProjectPathFlows,
-) : ToolState {
+) : PythonToolViewModel {
   val selectedHatchEnv: ObservableMutableProperty<HatchVirtualEnvironment?> = propertyGraph.property(null)
   val hatchEnvironmentsResult: MutableStateFlow<PyResult<List<HatchVirtualEnvironment>>?> = MutableStateFlow(null)
   val hatchExecutable: ObservableMutableProperty<ValidatedPath.Executable<P>?> = propertyGraph.property(null)

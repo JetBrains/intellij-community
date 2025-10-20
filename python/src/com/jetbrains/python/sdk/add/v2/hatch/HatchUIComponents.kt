@@ -108,9 +108,9 @@ private fun <P : PathHolder> Panel.addEnvironmentComboBox(
   lateinit var environmentComboBox: ComboBox<HatchVirtualEnvironment>
 
   row(message("sdk.create.custom.hatch.environment")) {
-    environmentComboBox = comboBox(emptyList(), HatchEnvComboBoxListCellRenderer(model.hatchState.hatchEnvironmentsResult))
-      .bindItem(model.hatchState.selectedHatchEnv)
-      .validationRequestor(validationRequestor and WHEN_PROPERTY_CHANGED(model.hatchState.selectedHatchEnv))
+    environmentComboBox = comboBox(emptyList(), HatchEnvComboBoxListCellRenderer(model.hatchViewModel.hatchEnvironmentsResult))
+      .bindItem(model.hatchViewModel.selectedHatchEnv)
+      .validationRequestor(validationRequestor and WHEN_PROPERTY_CHANGED(model.hatchViewModel.selectedHatchEnv))
       .validationInfo { component ->
         environmentAlreadyExists.set(false)
         when {
@@ -137,7 +137,7 @@ private fun <P : PathHolder> Panel.addEnvironmentComboBox(
       message = message("sdk.create.custom.hatch.environment.exists"),
       firstActionLink = ActionLink(message("sdk.create.custom.venv.select.existing.link")) {
         PythonNewProjectWizardCollector.logExistingVenvFixUsed()
-        model.hatchState.selectedHatchEnv.set(environmentComboBox.item)
+        model.hatchViewModel.selectedHatchEnv.set(environmentComboBox.item)
         model.navigator.navigateTo(newMethod = SELECT_EXISTING, newManager = PythonSupportedEnvironmentManagers.HATCH)
       },
       validationType = ValidationType.ERROR
@@ -155,7 +155,7 @@ private fun <P : PathHolder> Panel.addExecutableSelector(
 
   val executablePath = validatablePathField(
     fileSystem = model.fileSystem,
-    pathValidator = model.hatchState.toolValidator,
+    pathValidator = model.hatchViewModel.toolValidator,
     validationRequestor = validationRequestor,
     labelText = message("sdk.create.custom.venv.executable.path", "hatch"),
     missingExecutableText = message("sdk.create.custom.venv.missing.text", "hatch"),
@@ -171,13 +171,13 @@ internal data class HatchFormFields<P : PathHolder>(
   val validatedPathField: ValidatedPathField<Version, P, ValidatedPath.Executable<P>>,
 ) {
   fun onShown(scope: CoroutineScope, model: PythonMutableTargetAddInterpreterModel<P>, isFilterOnlyExisting: Boolean) {
-    model.hatchState.hatchEnvironmentsResult.onEach { environmentsResult ->
+    model.hatchViewModel.hatchEnvironmentsResult.onEach { environmentsResult ->
       when (environmentsResult) {
         null -> environmentComboBox.isEnabled = false
         else -> {
           environmentComboBox.isEnabled = true
           environmentComboBox.syncWithEnvs(environmentsResult, isFilterOnlyExisting = isFilterOnlyExisting)
-          if (environmentsResult.isFailure) model.hatchState.selectedHatchEnv.set(null)
+          if (environmentsResult.isFailure) model.hatchViewModel.selectedHatchEnv.set(null)
         }
       }
     }.launchIn(scope + Dispatchers.EDT)
@@ -185,8 +185,8 @@ internal data class HatchFormFields<P : PathHolder>(
     with(validatedPathField) {
       initialize(scope)
       pathValidator.backProperty.afterChange { executable ->
-        if (executable != model.hatchState.hatchExecutable.get()) {
-          model.hatchState.hatchExecutable.set(executable)
+        if (executable != model.hatchViewModel.hatchExecutable.get()) {
+          model.hatchViewModel.hatchExecutable.set(executable)
         }
       }
     }
@@ -224,7 +224,7 @@ internal fun <P : PathHolder> Panel.buildHatchFormFields(
         onPathSelected = model::addManuallyAddedInterpreter,
       )
     }
-  }.visibleIf(model.hatchState.hatchExecutable.transform { it?.validationResult?.successOrNull != null })
+  }.visibleIf(model.hatchViewModel.hatchExecutable.transform { it?.validationResult?.successOrNull != null })
 
 
   return HatchFormFields(environmentComboBox, basePythonComboBox, executablePath)

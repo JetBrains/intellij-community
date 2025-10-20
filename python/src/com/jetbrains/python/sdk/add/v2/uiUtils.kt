@@ -424,7 +424,7 @@ internal fun <P : PathHolder> createInstallCondaFix(model: PythonAddInterpreterM
     PythonSdkFlavor.clearExecutablesCache()
     CondaInstallManager.installLatest(null)
     runWithModalProgressBlocking(ModalTaskOwner.guess(), message("sdk.create.custom.venv.progress.title.detect.executable")) {
-      model.condaState.toolValidator.autodetectExecutable()
+      model.condaViewModel.toolValidator.autodetectExecutable()
     }
   }
 }

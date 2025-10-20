@@ -27,7 +27,7 @@ internal class HatchNewEnvironmentCreator<P : PathHolder>(
   errorSink: ErrorSink,
 ) : CustomNewEnvironmentCreator<P>("hatch", model, errorSink) {
   override val interpreterType: InterpreterType = InterpreterType.HATCH
-  override val toolValidator: ToolValidator<P> = model.hatchState.toolValidator
+  override val toolValidator: ToolValidator<P> = model.hatchViewModel.toolValidator
   private val hatchEnvironmentProperty: ObservableMutableProperty<HatchVirtualEnvironment?> = propertyGraph.property(null)
   private lateinit var hatchFormFields: HatchFormFields<P>
 

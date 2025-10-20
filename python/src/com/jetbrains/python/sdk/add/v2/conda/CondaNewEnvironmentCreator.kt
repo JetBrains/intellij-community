@@ -39,13 +39,13 @@ internal class CondaNewEnvironmentCreator<P: PathHolder>(model: PythonMutableTar
       }
       row(message("sdk.create.custom.conda.env.name")) {
         textField()
-          .bindText(model.condaState.newCondaEnvName) // property setter for getOrCreateSdk
+          .bindText(model.condaViewModel.newCondaEnvName) // property setter for getOrCreateSdk
           .bindText(model.projectPathFlows.projectName) // default value getter
       }
 
       condaExecutable = validatablePathField(
         fileSystem = model.fileSystem,
-        pathValidator = model.condaState.toolValidator,
+        pathValidator = model.condaViewModel.toolValidator,
         validationRequestor = validationRequestor,
         labelText = message("sdk.create.custom.venv.executable.path", "conda"),
         missingExecutableText = message("sdk.create.custom.venv.missing.text", "conda"),
@@ -57,13 +57,13 @@ internal class CondaNewEnvironmentCreator<P: PathHolder>(model: PythonMutableTar
   override fun onShown(scope: CoroutineScope) {
     condaExecutable.initialize(scope)
     condaExecutable.displayLoaderWhen(
-      loading = model.condaState.condaEnvironmentsLoading,
+      loading = model.condaViewModel.condaEnvironmentsLoading,
       scope = scope,
     )
   }
 
   override suspend fun getOrCreateSdk(moduleOrProject: ModuleOrProject): PyResult<Sdk> {
-    return model.createCondaEnvironment(moduleOrProject, NewCondaEnvRequest.EmptyNamedEnv(pythonVersion.get(), model.condaState.newCondaEnvName.get()))
+    return model.createCondaEnvironment(moduleOrProject, NewCondaEnvRequest.EmptyNamedEnv(pythonVersion.get(), model.condaViewModel.newCondaEnvName.get()))
   }
 
   override fun createStatisticsInfo(target: PythonInterpreterCreationTargets): InterpreterStatisticsInfo {

@@ -38,10 +38,10 @@ internal class UvInterpreterSection(
     uvCreator.onShown(scope)
   }
 
-  fun hintVisiblePredicate() = _uv and model.uvState.uvExecutable.isNotNull()
+  fun hintVisiblePredicate() = _uv and model.uvViewModel.uvExecutable.isNotNull()
 
   private fun selectUvIfExists() {
-    if (model.uvState.uvExecutable.get() != null
+    if (model.uvViewModel.uvExecutable.get() != null
         && selectedMode.get() != PythonInterpreterSelectionMode.PROJECT_UV) {
       selectedMode.set(PythonInterpreterSelectionMode.PROJECT_UV)
     }

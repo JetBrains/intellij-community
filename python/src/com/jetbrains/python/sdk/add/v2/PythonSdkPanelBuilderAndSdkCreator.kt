@@ -129,7 +129,7 @@ internal class PythonSdkPanelBuilderAndSdkCreator(
       rowsRange {
         executablePath = validatablePathField(
           fileSystem = model.fileSystem,
-          pathValidator = model.condaState.toolValidator,
+          pathValidator = model.condaViewModel.toolValidator,
           validationRequestor = validationRequestor,
           labelText = message("sdk.create.custom.venv.executable.path", "conda"),
           missingExecutableText = message("sdk.create.custom.venv.missing.text", "conda"),
@@ -141,7 +141,7 @@ internal class PythonSdkPanelBuilderAndSdkCreator(
 
       row("") {
         comment("").bindText(venvHint)
-      }.visibleIf(_projectVenv or (_baseConda and model.condaState.condaExecutable.isNotNull()) or uvSection.hintVisiblePredicate() or _custom)
+      }.visibleIf(_projectVenv or (_baseConda and model.condaViewModel.condaExecutable.isNotNull()) or uvSection.hintVisiblePredicate() or _custom)
 
       rowsRange {
         custom.setupUI(this, validationRequestor)
@@ -191,7 +191,7 @@ internal class PythonSdkPanelBuilderAndSdkCreator(
         val venvFolder = PathHolder.Eel(projectPath.resolve(VirtualEnvReader.DEFAULT_VIRTUALENV_DIRNAME))
         model.setupVirtualenv(venvFolder, moduleOrProject)
       }
-      BASE_CONDA -> model.selectCondaEnvironment(base = true)
+      BASE_CONDA -> model.selectCondaEnvironment(moduleOrProject, base = true)
       PROJECT_UV -> model.uvCreator(module).getOrCreateSdkWithBackground(moduleOrProject)
       CUSTOM -> custom.currentSdkManager.getOrCreateSdkWithBackground(moduleOrProject)
     }.getOr { return it }

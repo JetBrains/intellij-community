@@ -21,11 +21,12 @@ import com.jetbrains.python.newProjectWizard.projectPath.ProjectPathFlows
 import com.jetbrains.python.psi.LanguageLevel
 import com.jetbrains.python.sdk.PySdkToInstall
 import com.jetbrains.python.sdk.PySdkUtil
-import com.jetbrains.python.sdk.add.v2.conda.CondaState
-import com.jetbrains.python.sdk.add.v2.hatch.HatchState
-import com.jetbrains.python.sdk.add.v2.poetry.PoetryState
-import com.jetbrains.python.sdk.add.v2.uv.UvState
-import com.jetbrains.python.sdk.add.v2.venv.VenvState
+import com.jetbrains.python.sdk.add.v2.conda.CondaViewModel
+import com.jetbrains.python.sdk.add.v2.hatch.HatchViewModel
+import com.jetbrains.python.sdk.add.v2.pipenv.PipenvViewModel
+import com.jetbrains.python.sdk.add.v2.poetry.PoetryViewModel
+import com.jetbrains.python.sdk.add.v2.uv.UvViewModel
+import com.jetbrains.python.sdk.add.v2.venv.VenvViewModel
 import com.jetbrains.python.sdk.basePath
 import com.jetbrains.python.sdk.isSystemWide
 import com.jetbrains.python.target.ui.TargetPanelExtension
@@ -36,7 +37,7 @@ import org.jetbrains.annotations.TestOnly
 import java.nio.file.Path
 import kotlin.io.path.pathString
 
-interface ToolState {
+interface PythonToolViewModel {
   fun initialize(scope: CoroutineScope)
 }
 
@@ -51,12 +52,12 @@ abstract class PythonAddInterpreterModel<P : PathHolder>(
   val navigator: PythonNewEnvironmentDialogNavigator = PythonNewEnvironmentDialogNavigator()
   open val state: AddInterpreterState<P> = AddInterpreterState(propertyGraph)
 
-  val condaState: CondaState<P> = CondaState(fileSystem, propertyGraph)
-  val uvState: UvState<P> = UvState(fileSystem, propertyGraph)
-  val pipenvState: PipenvState<P> = PipenvState(fileSystem, propertyGraph)
-  val poetryState: PoetryState<P> = PoetryState(fileSystem, propertyGraph)
-  val hatchState: HatchState<P> = HatchState(fileSystem, propertyGraph, projectPathFlows)
-  val venvState: VenvState<P> = VenvState(fileSystem, propertyGraph, projectPathFlows)
+  val condaViewModel: CondaViewModel<P> = CondaViewModel(fileSystem, propertyGraph)
+  val uvViewModel: UvViewModel<P> = UvViewModel(fileSystem, propertyGraph)
+  val pipenvViewModel: PipenvViewModel<P> = PipenvViewModel(fileSystem, propertyGraph)
+  val poetryViewModel: PoetryViewModel<P> = PoetryViewModel(fileSystem, propertyGraph)
+  val hatchViewModel: HatchViewModel<P> = HatchViewModel(fileSystem, propertyGraph, projectPathFlows)
+  val venvViewModel: VenvViewModel<P> = VenvViewModel(fileSystem, propertyGraph, projectPathFlows)
 
   internal val knownInterpreters: MutableStateFlow<List<PythonSelectableInterpreter<P>>?> = MutableStateFlow(null)
   private val _detectedInterpreters: MutableStateFlow<List<DetectedSelectableInterpreter<P>>?> = MutableStateFlow(null)
@@ -77,15 +78,15 @@ abstract class PythonAddInterpreterModel<P : PathHolder>(
 
   // If the project is provided, sdks associated with it will be kept in the list of interpreters. If not, then they will be filtered out.
   open fun initialize(scope: CoroutineScope) {
-    listOf(condaState, uvState, pipenvState, poetryState, hatchState, venvState).forEach { it.initialize(scope) }
+    listOf(condaViewModel, uvViewModel, pipenvViewModel, poetryViewModel, hatchViewModel, venvViewModel).forEach { it.initialize(scope) }
 
     merge(
       projectPathFlows.projectPathWithDefault,
       knownInterpreters,
       detectedInterpreters,
       manuallyAddedInterpreters,
-      condaState.condaEnvironmentsResult,
-      hatchState.hatchEnvironmentsResult,
+      condaViewModel.condaEnvironmentsResult,
+      hatchViewModel.hatchEnvironmentsResult,
     ).map {
       modificationCounter.updateAndGet { it + 1 }
     }.launchIn(scope + Dispatchers.UI)
