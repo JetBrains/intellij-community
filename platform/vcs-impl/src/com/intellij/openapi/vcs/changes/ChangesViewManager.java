@@ -31,6 +31,7 @@ import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.platform.vcs.impl.shared.changes.ChangesViewDataKeys;
 import com.intellij.platform.vcs.impl.shared.changes.ChangesViewSettings;
 import com.intellij.platform.vcs.impl.shared.changes.PreviewDiffSplitterComponent;
+import com.intellij.ui.ExpandableItemsHandler;
 import com.intellij.ui.JBColor;
 import com.intellij.ui.components.JBLabel;
 import com.intellij.ui.components.panels.Wrapper;
@@ -352,28 +353,36 @@ public class ChangesViewManager implements ChangesViewEx, Disposable {
       JPanel mainPanel = simplePanel(myMainPanelContent)
         .addToBottom(myProgressLabel);
 
+      ChangesListView tree = myChangesView.getTree();
       myEditorDiffPreview = new ChangesViewEditorDiffPreview(
-        myChangesView.getViewModel().getTree(),
+        tree,
         myContentPanel,
         () -> createDiffPreviewProcessor(true),
         () -> mySplitterDiffPreview != null
       );
       Disposer.register(this, myEditorDiffPreview);
 
-      // Override the handlers registered by editorDiffPreview
-      myChangesView.getTree().setDoubleClickHandler(e -> {
-        if (EditSourceOnDoubleClickHandler.isToggleEvent(myChangesView.getTree(), e)) return false;
+      tree.setDoubleClickHandler(e -> {
+        if (EditSourceOnDoubleClickHandler.isToggleEvent(tree, e)) return false;
         if (performHoverAction()) return true;
-        if (myEditorDiffPreview.handleDoubleClick(e)) return true;
-        OpenSourceUtil.openSourcesFrom(DataManager.getInstance().getDataContext(myChangesView.getTree()), true);
+        if (myEditorDiffPreview.isPreviewOnDoubleClickOrEnter()) {
+          myEditorDiffPreview.performDiffAction();
+        } else {
+          OpenSourceUtil.openSourcesFrom(DataManager.getInstance().getDataContext(tree), true);
+        }
         return true;
       });
-      myChangesView.getTree().setEnterKeyHandler(e -> {
+      tree.setEnterKeyHandler(e -> {
         if (performHoverAction()) return true;
-        if (myEditorDiffPreview.handleEnterKey()) return true;
-        OpenSourceUtil.openSourcesFrom(DataManager.getInstance().getDataContext(myChangesView.getTree()), false);
+        if (myEditorDiffPreview.isPreviewOnDoubleClickOrEnter()) {
+          myEditorDiffPreview.performDiffAction();
+        } else {
+          OpenSourceUtil.openSourcesFrom(DataManager.getInstance().getDataContext(tree), false);
+        }
         return true;
       });
+      tree.addSelectionListener(() -> myEditorDiffPreview.handleSingleClick());
+      tree.putClientProperty(ExpandableItemsHandler.IGNORE_ITEM_SELECTION, true);
 
       setContent(mainPanel);
 
