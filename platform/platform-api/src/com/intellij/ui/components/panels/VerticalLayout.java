@@ -73,11 +73,11 @@ public final class VerticalLayout implements LayoutManager2 {
 
   @Override
   public void addLayoutComponent(Component component, Object constraints) {
-    if ((constraints == null) || (constraints instanceof String)) {
-      addLayoutComponent((String)constraints, component);
-    }
-    else {
-      throw new IllegalArgumentException("unsupported constraints: " + constraints);
+    switch (constraints) {
+      case null -> addLayoutComponent((String)null, component);
+      case String name -> addLayoutComponent(name, component);
+      case Integer index -> addLayoutComponent(index, component);
+      default -> throw new IllegalArgumentException("unsupported constraints: " + constraints);
     }
   }
 
@@ -114,6 +114,17 @@ public final class VerticalLayout implements LayoutManager2 {
       }
       else {
         throw new IllegalArgumentException("unsupported name: " + name);
+      }
+    }
+  }
+
+  private void addLayoutComponent(Integer index, Component component) {
+    synchronized (component.getTreeLock()) {
+      if (index == -1) {
+        myTop.add(component);
+      }
+      else {
+        myTop.add(index, component);
       }
     }
   }
