@@ -66,8 +66,9 @@
     "Islands": 1,
     "Island": {
       "arc": 20,
-      "borderWidth": 4,
-      "borderWidth.compact": 3,
+      "borderWidth": 5,
+      "borderWidth.compact": 4,
+      "borderColor": "ToolWindowBackground",
       "inactiveAlpha": 0.44,
       "inactiveAlphaInStatusBar": {
         "os.mac": 0.2,
