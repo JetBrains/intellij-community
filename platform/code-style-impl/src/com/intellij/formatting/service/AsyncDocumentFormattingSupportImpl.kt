@@ -29,7 +29,6 @@ import java.io.IOException
 import java.nio.charset.Charset
 import java.util.concurrent.ConcurrentHashMap
 import kotlin.concurrent.Volatile
-import kotlin.coroutines.EmptyCoroutineContext
 import kotlin.time.Duration.Companion.nanoseconds
 import kotlin.time.TimeSource
 
@@ -75,23 +74,22 @@ class AsyncDocumentFormattingSupportImpl(private val service: AsyncDocumentForma
   }
 
   private fun isSyncFormat(document: Document): Boolean {
-    val forceSync = document.getUserData(FORMAT_DOCUMENT_SYNCHRONOUSLY) == true
+    val forceSync = isForceSyncFormat(document)
     val isHeadless = ApplicationManager.getApplication().isHeadlessEnvironment
     val isIgnoreHeadless = SystemProperties.getBooleanProperty("intellij.async.formatting.ignoreHeadless", false)
     return forceSync || (isHeadless && !isIgnoreHeadless)
   }
 
+  private fun isForceSyncFormat(document: Document): Boolean = document.getUserData(FORMAT_DOCUMENT_SYNCHRONOUSLY) == true
+
   @Suppress("RAW_RUN_BLOCKING")
   private fun runAsyncFormatBlocking(request: FormattingRequestImpl) {
     val app = ApplicationManager.getApplication()
     if (app.isDispatchThread) {
-      // TODO improve this comment
-      // Synchronous switches (e.g. `withContext`) to EDT inside `FormattingTask.run` will result in a deadlock.
-      //
-      // Unfortunately, `runWithModalProgressBlocking` will not help us here:
-      //  1. There are existing FormattingTask.run implementations that switch to EDT to perform WAs.
-      //  2. FormattingServices are usually invoked in an EDT WA.
-      // Hence, using `runWithModalProgressBlocking` would result in a deadlock anyway.
+      // raw runBlocking instead of runWithModalProgressBlocking:
+      // FormattingService.format* is usually called in EDT WA (i.e., in a way that permits modifying the document/PSI)
+      //  1. in headless mode/unit tests, we do not want to log error
+      //  2. in non-headless mode, forced sync formating should only be used with background documents
       runBlocking {
         runAsyncFormat(request)
       }
