@@ -46,6 +46,8 @@ sealed interface K2MoveTargetModel {
 
     val explicitPkgMoveFqName: FqName?
 
+    val observableUiSettings: ObservableUiSettings
+
     /**
      * Creates a [K2MoveTargetDescriptor] from this model.
      * @param kmpSourceRoot source KMP directory that corresponds to the base [directory] in a different source set.
@@ -60,6 +62,7 @@ sealed interface K2MoveTargetModel {
         override var pkgName: FqName,
         override var directory: PsiDirectory,
         override val explicitPkgMoveFqName: FqName?,
+        override val observableUiSettings: ObservableUiSettings,
     ) : K2MoveTargetModel {
         private val initialDirectory = directory
 
@@ -147,7 +150,8 @@ sealed interface K2MoveTargetModel {
         pkgName: FqName,
         directory: PsiDirectory,
         explicitPkgMoveFqName: FqName?,
-    ) : SourceDirectoryChooser(pkgName, directory, explicitPkgMoveFqName) {
+        observableUiSettings: ObservableUiSettings,
+    ) : SourceDirectoryChooser(pkgName, directory, explicitPkgMoveFqName, observableUiSettings) {
         override fun toDescriptor(kmpSourceRoot: PsiDirectory?): K2MoveTargetDescriptor.Directory {
             return K2MoveTargetDescriptor.Directory(
                 pkgName = pkgName,
@@ -167,7 +171,8 @@ sealed interface K2MoveTargetModel {
         pkg: FqName,
         directory: PsiDirectory,
         explicitPkgMoveFqName: FqName?,
-    ) : SourceDirectoryChooser(pkg, directory, explicitPkgMoveFqName) {
+        observableUiSettings: ObservableUiSettings,
+    ) : SourceDirectoryChooser(pkg, directory, explicitPkgMoveFqName, observableUiSettings) {
         var fileName: String = fileName
             protected set
 
@@ -221,8 +226,13 @@ sealed interface K2MoveTargetModel {
         }
     }
 
-    class File(fileName: String, pkg: FqName, directory: PsiDirectory, explicitPkgMoveFqName: FqName?) :
-        FileChooser(fileName, pkg, directory, explicitPkgMoveFqName) {
+    class File(
+        fileName: String,
+        pkg: FqName,
+        directory: PsiDirectory,
+        explicitPkgMoveFqName: FqName?,
+        observableUiSettings: ObservableUiSettings,
+    ) : FileChooser(fileName, pkg, directory, explicitPkgMoveFqName, observableUiSettings) {
         override fun toDescriptor(kmpSourceRoot: PsiDirectory?): K2MoveTargetDescriptor.File =
             K2MoveTargetDescriptor.File(
                 fileName = fileName,
@@ -242,8 +252,9 @@ sealed interface K2MoveTargetModel {
     class Declarations(
         defaultDirectory: PsiDirectory,
         defaultPkgName: FqName,
-        defaultFileName: String
-    ) : FileChooser(defaultFileName, defaultPkgName, defaultDirectory, explicitPkgMoveFqName = null) {
+        defaultFileName: String,
+        observableUiSettings: ObservableUiSettings,
+    ) : FileChooser(defaultFileName, defaultPkgName, defaultDirectory, explicitPkgMoveFqName = null, observableUiSettings) {
         private val propertyGraph = PropertyGraph()
 
         private val destinationClassProperty = propertyGraph.property<KtClassOrObject?>(null)
@@ -354,9 +365,15 @@ sealed interface K2MoveTargetModel {
     }
 
     companion object {
-        fun File(file: KtFile): File {
+        fun File(file: KtFile, observableUiSettings: ObservableUiSettings): File {
             val directory = file.containingDirectory ?: error("No containing directory was found")
-            return File(file.name, file.packageFqName, directory, null)
+            return File(
+                fileName = file.name,
+                pkg = file.packageFqName,
+                directory = directory,
+                explicitPkgMoveFqName = null,
+                observableUiSettings = observableUiSettings,
+            )
         }
     }
 }
