@@ -9,7 +9,7 @@ import java.awt.Color
 
 internal object PyPromoSharedComponents {
 
-  val popUpImg = PycharmCommunityIdeImplPromotionIcons.Images.Popup_img
+  val popUpImg = PycharmCommunityIdeImplPromotionIcons.Popup_img
   val infoFontColor = JBColor(Color.decode("#6C707E"), Color.decode("#A8ADBD"))
 
   // URLs used by promo-related messages

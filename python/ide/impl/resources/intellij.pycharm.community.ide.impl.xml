@@ -139,6 +139,8 @@
 
     <codeInsight.codeVision.settings.defaults implementation="com.intellij.pycharm.community.ide.impl.PyCharmCodeVisionSettingsDefaults"/>
     <statistics.counterUsagesCollector implementationClass="com.intellij.pycharm.community.ide.impl.configuration.ui.PyAddNewEnvCollector"/>
+    <startPagePromoter
+      implementation="com.intellij.pycharm.community.ide.impl.promo.WelcomeToUnifiedWelcomeScreenBanner"/>
   </extensions>
 
   <extensions defaultExtensionNs="Pythonid">
@@ -162,6 +164,8 @@
 
   <applicationListeners>
     <listener class="com.intellij.pycharm.community.ide.impl.welcomeScreen.PyWelcomeScreenNewUsersTracker"
+              topic="com.intellij.ide.AppLifecycleListener"/>
+    <listener class="com.intellij.pycharm.community.ide.impl.promo.CommunityToUnifiedListener"
               topic="com.intellij.ide.AppLifecycleListener"/>
   </applicationListeners>
 

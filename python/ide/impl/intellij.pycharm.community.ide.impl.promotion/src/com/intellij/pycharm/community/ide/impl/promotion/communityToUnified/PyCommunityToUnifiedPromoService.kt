@@ -9,6 +9,7 @@ import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.updateSettings.UpdateStrategyCustomization
 import com.intellij.openapi.updateSettings.impl.*
 import com.intellij.openapi.util.registry.Registry
+import com.intellij.pycharm.community.ide.impl.promo.WelcomeToUnifiedWelcomeScreenBanner
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.sync.Mutex
@@ -48,6 +49,8 @@ internal class PyCommunityToUnifiedPromoService(val serviceScope: CoroutineScope
     val propertiesComponent = PropertiesComponent.getInstance()
     propertiesComponent.unsetValue(PROMO_UPDATE_DECLINED)
     propertiesComponent.unsetValue(PROMO_REMIND_ME_LATER_LAST_TIME_CLICKED)
+    propertiesComponent.unsetValue(WelcomeToUnifiedWelcomeScreenBanner.BANNER_CLOSED_PROPERTY)
+
     Registry.get(REG_PROMO_INTERVAL_SECONDS).resetToDefault()
   }
 
