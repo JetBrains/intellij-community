@@ -43,7 +43,7 @@ class InstallOptionButton @JvmOverloads constructor(
   override fun setEnabled(enabled: Boolean, statusText: @Nls String?) {
     isEnabled = enabled
     if (enabled) {
-      setTextAndSize(statusText)
+      setTextAndSize(null)
     }
     else {
       text = statusText
