@@ -115,6 +115,11 @@ class XMixedModeCombinedDebugProcess(
   }
 
   override fun startPausing() {
+    if (!session.isMixedModeHighProcessReady) {
+      low.startPausing()
+      return
+    }
+
     stateMachine.set(PauseRequested)
   }
 
