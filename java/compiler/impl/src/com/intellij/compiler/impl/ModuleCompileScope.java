@@ -1,8 +1,5 @@
 // Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 
-/*
- * @author Eugene Zhuravlev
- */
 package com.intellij.compiler.impl;
 
 import com.intellij.compiler.ModuleSourceSet;
@@ -71,6 +68,12 @@ public class ModuleCompileScope extends FileIndexCompileScope {
           }
           return true;
         });
+        enumerator.forEach(orderEntry -> {
+          if (orderEntry instanceof ModuleOrderEntry moduleEntry && moduleEntry.isProductionOnTestDependency() && myScopeModules.contains(moduleEntry.getModule())) {
+            myTestSourcesModules.add(moduleEntry.getModule());
+          }
+          return true;
+        });
       }
       else {
         myScopeModules.add(module);
@@ -90,7 +93,7 @@ public class ModuleCompileScope extends FileIndexCompileScope {
     if (myIncludeTests) {
       return result.stream().filter(set -> !set.getType().isTest() || myTestSourcesModules.contains(set.getModule())).collect(Collectors.toList());
     }
-    return result.stream().filter(set -> !set.getType().isTest()).collect(Collectors.toList());
+    return result.stream().filter(set -> !set.getType().isTest() || myTestSourcesModules.contains(set.getModule())).collect(Collectors.toList());
   }
 
   public static boolean shouldIncludeTestsFromDependentModulesToTestClasspath(@NotNull Module module) {
