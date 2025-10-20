@@ -436,7 +436,8 @@ public final class RunDashboardServiceViewContributor
 
     @Override
     public @Nullable Runnable getRemover() {
-      ConfigurationType type = ObjectUtils.tryCast(((RunDashboardGroupImpl<?>)myGroup).getValue(), ConfigurationType.class);
+      Object value = ((RunDashboardGroupImpl<?>)myGroup).getValue();
+      ConfigurationType type = ConfigurationTypeUtil.findConfigurationType(value.toString());
       if (type != null) {
         return () -> {
           RunDashboardManager runDashboardManager = RunDashboardManagerProxy.getInstance(myNode.getProject());
