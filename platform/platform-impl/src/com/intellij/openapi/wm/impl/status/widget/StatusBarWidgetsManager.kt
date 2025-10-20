@@ -38,6 +38,7 @@ class StatusBarWidgetsManager(
   private val project: Project,
   private val parentScope: CoroutineScope,
 ) : SimpleModificationTracker(), Disposable {
+  private var wasInitialized = false
   private val widgetFactories = LinkedHashMap<StatusBarWidgetFactory, StatusBarWidget>()
   private val widgetIdMap = HashMap<String, StatusBarWidgetFactory>()
 
@@ -83,6 +84,11 @@ class StatusBarWidgetsManager(
     }
 
     synchronized(widgetFactories) {
+      if (!wasInitialized) {
+        // do not initialize widgets too early by eager listeners
+        return
+      }
+
       if (widgetFactories.containsKey(factory)) {
         // this widget is already enabled
         return
@@ -184,6 +190,8 @@ class StatusBarWidgetsManager(
     }
 
     val widgets = synchronized(widgetFactories) {
+      wasInitialized = true
+      
       val result = mutableListOf<Pair<StatusBarWidget, LoadingOrder>>()
 
       for ((factory, anchor) in pendingFactories) {
