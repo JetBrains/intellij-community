@@ -95,6 +95,7 @@ import java.util.function.Function;
 import static com.intellij.execution.util.EnvFilesUtilKt.configureEnvsFromFiles;
 import static com.jetbrains.python.run.PythonScriptCommandLineState.getExpandedWorkingDir;
 import static com.jetbrains.python.run.features.PyRunToolExtKt.useRunTool;
+import static com.jetbrains.python.run.features.PyRunToolProviderKt.getEnableRunTool;
 
 /**
  * Since this state is async, any method could be called on any thread
@@ -352,7 +353,7 @@ public abstract class PythonCommandLineState extends CommandLineState {
         .toList();
 
     PyRunToolParameters runToolParameters = null;
-    if (sdk != null) {
+    if (sdk != null && getEnableRunTool()) {
       PyRunToolProvider runToolProvider = PyRunToolProvider.forSdk(sdk);
       if (runToolProvider != null && useRunTool(myConfig, sdk)) {
         runToolParameters = runToolProvider.getRunToolParameters();
