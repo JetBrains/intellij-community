@@ -25,6 +25,8 @@ internal class BackendRunDashboardManagerState(private val project: Project) {
 
   private val sharedStatuses = MutableSharedFlow<ServiceStatusDto>(1, 100, BufferOverflow.DROP_OLDEST)
 
+  private val sharedExcludedTypes = MutableStateFlow(emptySet<String>())
+
   fun getLinkByServiceId(link: String, serviceId: RunDashboardServiceId): Runnable? {
     return tagCallbacksByServiceId[serviceId]?.firstOrNull { linkDto -> linkDto.presentableText == link }?.callback
   }
@@ -49,6 +51,14 @@ internal class BackendRunDashboardManagerState(private val project: Project) {
 
   fun setSettings(openRunningConfigInTab: Boolean) {
     sharedSettings.value = RunDashboardSettingsDto(openRunningConfigInTab)
+  }
+
+  fun fireExcludedTypesUpdated(excludedTypes: Set<String>) {
+    sharedExcludedTypes.value = excludedTypes
+  }
+
+  fun getExcludedTypes(): Flow<Set<String>> {
+    return sharedExcludedTypes.asStateFlow()
   }
 
   fun fireStatusUpdated(backendService: RunDashboardService, persistedStatus: RunDashboardRunConfigurationStatus?) {
