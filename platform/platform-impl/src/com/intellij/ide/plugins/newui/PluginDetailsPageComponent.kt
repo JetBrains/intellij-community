@@ -536,13 +536,15 @@ class PluginDetailsPageComponent @JvmOverloads constructor(
     val mainAction = customizationModel.mainAction
     if (mainAction != null) {
       setInstallAction(installOptionButton, mainAction)
-      installOptionButton.setEnabled(customizationModel.isVisible, customizationModel.text)
+      installOptionButton.setEnabled(customizationModel.isVisible)
+      installOptionButton.setTextAndSize(customizationModel.text)
       installOptionButton.isVisible = customizationModel.isVisible
     }
     else {
       setDefaultInstallAction(installOptionButton)
       val text = if (customizationModel.isVisible) null else IdeBundle.message("plugins.configurable.installed")
-      installButton?.setEnabled(customizationModel.isVisible, text)
+      installButton?.setEnabled(customizationModel.isVisible, null)
+      installOptionButton.setTextAndSize(text)
       installButton?.setVisible(customizationModel.isVisible)
     }
 
