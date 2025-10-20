@@ -139,6 +139,8 @@
     "MenuItem.background": "PopupBackground",
     "PopupMenu.background": "PopupBackground",
 
+    "Toolbar.Floating.background": "#E4E6EB",
+
     "ToolTip": {
       "background": "TooltipBackground",
       "borderColor": "TooltipBorder"
