@@ -3,6 +3,7 @@ package com.intellij.terminal.frontend.view
 import com.intellij.openapi.actionSystem.DataKey
 import com.intellij.terminal.TerminalTitle
 import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.Deferred
 import kotlinx.coroutines.flow.StateFlow
 import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.plugins.terminal.block.reworked.TerminalOutputModel
@@ -29,6 +30,8 @@ interface TerminalView {
 
   val sessionState: StateFlow<TerminalViewSessionState>
 
+  val shellIntegrationDeferred: Deferred<TerminalShellIntegration>
+
   suspend fun hasChildProcesses(): Boolean
 
   fun getCurrentDirectory(): String?
@@ -36,10 +39,6 @@ interface TerminalView {
   fun sendText(text: String)
 
   fun createSendTextBuilder(): TerminalSendTextBuilder
-
-  fun getShellIntegration(): TerminalShellIntegration?
-
-  suspend fun awaitShellIntegrationInitialized(): TerminalShellIntegration
 
   // todo
 

@@ -11,9 +11,7 @@ import com.intellij.openapi.util.Key
 import com.intellij.platform.util.coroutines.childScope
 import com.intellij.util.asDisposable
 import com.intellij.util.concurrency.annotations.RequiresEdt
-import kotlinx.coroutines.CoroutineScope
-import kotlinx.coroutines.cancel
-import kotlinx.coroutines.isActive
+import kotlinx.coroutines.*
 import org.jetbrains.plugins.terminal.block.reworked.TerminalOutputModel
 import org.jetbrains.plugins.terminal.view.shellIntegration.TerminalCommandExecutionListener
 import org.jetbrains.plugins.terminal.view.shellIntegration.TerminalCommandFinishedEvent
@@ -21,11 +19,10 @@ import org.jetbrains.plugins.terminal.view.shellIntegration.TerminalShellIntegra
 import java.awt.event.FocusEvent
 import java.awt.event.FocusListener
 import java.awt.event.KeyEvent
-import java.util.concurrent.CompletableFuture
 import javax.swing.JComponent
 
 internal class TerminalVfsSynchronizer(
-  shellIntegrationFuture: CompletableFuture<TerminalShellIntegration>,
+  shellIntegrationDeferred: Deferred<TerminalShellIntegration>,
   outputModel: TerminalOutputModel,
   terminalComponent: JComponent,
   coroutineScope: CoroutineScope,
@@ -45,7 +42,9 @@ internal class TerminalVfsSynchronizer(
   init {
     val disposable = coroutineScope.asDisposable()
 
-    shellIntegrationFuture.thenAccept { shellIntegration ->
+    coroutineScope.launch(CoroutineName("Shell integration awaiting")) {
+      val shellIntegration = shellIntegrationDeferred.await()
+
       // If we have events from the shell integration, we no more need heuristic-based refresher.
       heuristicBasedRefresherScope.cancel()
       LOG.debug { "Shell integration initialized, cancel heuristic-based VFS refresher." }
