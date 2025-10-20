@@ -108,6 +108,7 @@ internal class MarkdownComposePanel(
           AutolinkProcessorExtension,
         ),
         markdownMode,
+        parseEmbeddedHtml = true,
       )
     }
     val tableRenderer = remember(markdownStyling) {
