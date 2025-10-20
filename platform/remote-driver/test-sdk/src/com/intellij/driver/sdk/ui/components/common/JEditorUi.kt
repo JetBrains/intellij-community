@@ -372,7 +372,7 @@ data class GutterState(
   val iconPath: String = "",
 )
 
-class InlayHint(val offset: Int, val text: String)
+data class InlayHint(val offset: Int, val text: String)
 
 fun List<InlayHint>.getHint(offset: Int): InlayHint {
   val foundHint = this.find { it.offset == offset }
