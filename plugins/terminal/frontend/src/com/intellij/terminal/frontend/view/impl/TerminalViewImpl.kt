@@ -58,6 +58,7 @@ import org.jetbrains.plugins.terminal.block.ui.isTerminalOutputScrollChangingAct
 import org.jetbrains.plugins.terminal.block.util.TerminalDataContextUtils
 import org.jetbrains.plugins.terminal.fus.TerminalStartupFusInfo
 import org.jetbrains.plugins.terminal.session.TerminalGridSize
+import org.jetbrains.plugins.terminal.session.TerminalStartupOptions
 import org.jetbrains.plugins.terminal.session.impl.TerminalHyperlinkId
 import org.jetbrains.plugins.terminal.session.impl.TerminalSession
 import org.jetbrains.plugins.terminal.view.TerminalOutputModelsSet
@@ -128,6 +129,7 @@ class TerminalViewImpl(
   override val sessionState: StateFlow<TerminalViewSessionState> = mutableSessionState.asStateFlow()
 
   override val shellIntegrationDeferred: CompletableDeferred<TerminalShellIntegration> = CompletableDeferred(coroutineScope.coroutineContext.job)
+  override val startupOptionsDeferred: CompletableDeferred<TerminalStartupOptions> = CompletableDeferred(coroutineScope.coroutineContext.job)
 
   init {
     // Cancell the hanging callbacks that wait for future completion if the coroutine scope is cancelled.
@@ -254,6 +256,7 @@ class TerminalViewImpl(
       outputHyperlinkFacade,
       alternateBufferModelController,
       alternateBufferHyperlinkFacade,
+      startupOptionsDeferred,
       settings,
       coroutineScope.childScope("TerminalSessionController")
     )

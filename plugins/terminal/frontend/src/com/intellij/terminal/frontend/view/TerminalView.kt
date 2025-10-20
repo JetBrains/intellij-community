@@ -8,6 +8,7 @@ import kotlinx.coroutines.flow.StateFlow
 import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.plugins.terminal.block.reworked.TerminalOutputModel
 import org.jetbrains.plugins.terminal.session.TerminalGridSize
+import org.jetbrains.plugins.terminal.session.TerminalStartupOptions
 import org.jetbrains.plugins.terminal.view.TerminalOutputModelsSet
 import org.jetbrains.plugins.terminal.view.TerminalSendTextBuilder
 import org.jetbrains.plugins.terminal.view.shellIntegration.TerminalShellIntegration
@@ -31,6 +32,8 @@ interface TerminalView {
   val sessionState: StateFlow<TerminalViewSessionState>
 
   val shellIntegrationDeferred: Deferred<TerminalShellIntegration>
+
+  val startupOptionsDeferred: Deferred<TerminalStartupOptions>
 
   suspend fun hasChildProcesses(): Boolean
 

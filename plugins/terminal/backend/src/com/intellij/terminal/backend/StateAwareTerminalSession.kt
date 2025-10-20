@@ -17,6 +17,7 @@ import kotlinx.coroutines.flow.merge
 import org.jetbrains.plugins.terminal.block.reworked.*
 import org.jetbrains.plugins.terminal.block.ui.TerminalUiUtils
 import org.jetbrains.plugins.terminal.fus.*
+import org.jetbrains.plugins.terminal.session.TerminalStartupOptions
 import org.jetbrains.plugins.terminal.session.impl.*
 import org.jetbrains.plugins.terminal.session.impl.dto.toDto
 import org.jetbrains.plugins.terminal.session.impl.dto.toTerminalState
@@ -38,6 +39,7 @@ import kotlin.time.TimeSource
 internal class StateAwareTerminalSession(
   project: Project,
   private val delegate: BackendTerminalSession,
+  private val startupOptions: TerminalStartupOptions,
   override val coroutineScope: CoroutineScope,
 ) : BackendTerminalSession {
   private val outputFlowProducer = IncrementalUpdateFlowProducer(State())
@@ -218,6 +220,7 @@ internal class StateAwareTerminalSession(
 
     override suspend fun takeSnapshot(): List<List<TerminalOutputEvent>> {
       val event = TerminalInitialStateEvent(
+        startupOptions = startupOptions.toDto(),
         sessionState = sessionModel.terminalState.value.toDto(),
         outputModelState = outputModel.dumpState().toDto(),
         alternateBufferState = alternateBufferModel.dumpState().toDto(),
