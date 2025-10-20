@@ -30,6 +30,7 @@ import kotlinx.coroutines.selects.select
 import org.jetbrains.annotations.TestOnly
 import org.junit.jupiter.api.Assertions.*
 import org.junit.jupiter.api.Assumptions.assumeFalse
+import org.junit.jupiter.api.Disabled
 import org.junit.jupiter.api.fail
 import org.junit.jupiter.params.ParameterizedTest
 import org.junit.jupiter.params.provider.MethodSource
@@ -288,7 +289,7 @@ class AsyncDocumentFormattingBlockingContextScopeTest {
   }
 
 
-  //@Disabled // TODO enable me when IJPL-211314 is fixed
+  @Disabled // TODO enable me when IJPL-211314 is fixed, until then, it will be flaky
   @ParameterizedTest
   // test non-sync-mode only: the formatting request is not cancellable by scope in sync mode on EDT
   @MethodSource("createAsyncTestParams")
