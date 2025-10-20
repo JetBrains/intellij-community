@@ -17,6 +17,8 @@ import com.intellij.openapi.util.registry.RegistryValue
 import com.intellij.openapi.util.registry.RegistryValueListener
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.platform.backend.workspace.workspaceModel
+import com.intellij.platform.eel.provider.getEelDescriptor
+import com.intellij.platform.eel.provider.utils.Path
 import com.intellij.platform.workspace.jps.entities.FacetEntity
 import com.intellij.util.concurrency.SynchronizedClearableLazy
 import com.intellij.util.containers.ContainerUtil
@@ -273,8 +275,8 @@ internal class KtCompilerPluginsProviderIdeImpl(
 
         val pathMacroManager = PathMacroManager.getInstance(project)
         val expandedPluginClassPaths = pluginClassPaths.map { pathMacroManager.expandPath(it) }
-
-        return expandedPluginClassPaths.map { Path.of(it).toAbsolutePath() }
+        val eel = project.getEelDescriptor()
+        return expandedPluginClassPaths.map { Path(it, eel).toAbsolutePath() }
     }
 
     /**
