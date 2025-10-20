@@ -64,9 +64,7 @@ class EelLocalExecPosixApi(
 
     val (cache, interactive) = when (opts.mode) {
       EelExecPosixApi.PosixEnvironmentVariablesOptions.Mode.MINIMAL -> {
-        return service<CoroutineScopeService>().coroutineScope.async {
-          EnvironmentUtil.getEnvironmentMap()
-        }
+        return CompletableDeferred(EnvironmentUtil.getSystemEnv())
       }
 
       EelExecPosixApi.PosixEnvironmentVariablesOptions.Mode.LOGIN_NON_INTERACTIVE -> {
@@ -200,9 +198,7 @@ class EelLocalExecWindowsApi : EelExecWindowsApi, LocalEelExecApi {
   override val descriptor: EelDescriptor = LocalEelDescriptor
 
   override fun environmentVariables(opts: EelExecApi.EnvironmentVariablesOptions): Deferred<Map<String, String>> =
-    service<CoroutineScopeService>().coroutineScope.async {
-      EnvironmentUtil.getEnvironmentMap()
-    }
+    CompletableDeferred(EnvironmentUtil.getEnvironmentMap())
 
   override suspend fun findExeFilesInPath(binaryName: String): List<EelPath> =
     findExeFilesInPath(binaryName, LOG)
