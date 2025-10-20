@@ -8,6 +8,7 @@ import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.kotlin.analysis.api.KaExperimentalApi
 import org.jetbrains.kotlin.analysis.api.KaSession
 import org.jetbrains.kotlin.analysis.api.components.DefaultTypeClassIds
+import org.jetbrains.kotlin.analysis.api.components.approximateToDenotableSupertypeOrSelf
 import org.jetbrains.kotlin.analysis.api.components.isMarkedNullable
 import org.jetbrains.kotlin.analysis.api.components.withNullability
 import org.jetbrains.kotlin.analysis.api.symbols.KaClassKind
@@ -122,18 +123,16 @@ internal fun PresentationTreeBuilder.printKtType(type: KaType) {
     if (markedNullable) text("?")
 }
 
+@OptIn(KaExperimentalApi::class)
 context(_: KaSession)
 private fun PresentationTreeBuilder.printNonErrorClassType(type: KaClassType, anotherType: KaClassType? = null) {
-    val classType =
-        when (val symbol = type.symbol) {
-            is KaClassSymbol if symbol.classKind == KaClassKind.ANONYMOUS_OBJECT -> {
-                (symbol.superTypes.firstOrNull() as? KaClassType) ?: type
-            }
+    val classType = when (val symbol = type.symbol) {
+        is KaClassSymbol if symbol.classKind == KaClassKind.ANONYMOUS_OBJECT ->
+            type.approximateToDenotableSupertypeOrSelf(allowLocalDenotableTypes = false) as? KaClassType ?: type
 
-            else -> {
-                type
-            }
-        }
+        else -> type
+
+    }
     val truncatedName = truncatedName(classType)
     if (truncatedName.isNotEmpty()) {
         if (classType.classId.isLocal) {
