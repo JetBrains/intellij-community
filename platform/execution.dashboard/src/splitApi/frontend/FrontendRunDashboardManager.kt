@@ -22,6 +22,7 @@ import com.intellij.platform.project.projectId
 import com.intellij.ui.content.Content
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.MutableStateFlow
+import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
 import org.jetbrains.annotations.ApiStatus
@@ -156,6 +157,11 @@ class FrontendRunDashboardManager(private val project: Project) : RunDashboardMa
     LOG.debug("setTypes(${types.size} types) invoked on frontend;")
     configurationTypes.clear()
     configurationTypes.addAll(types)
+
+    frontendDtos.update { currentDtos ->
+      currentDtos.filter { dto -> dto.typeId in types }
+    }
+
     updateDashboard(true)
   }
 
