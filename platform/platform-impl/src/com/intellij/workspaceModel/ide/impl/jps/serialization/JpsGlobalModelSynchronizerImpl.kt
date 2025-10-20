@@ -241,7 +241,7 @@ open class JpsGlobalModelSynchronizerImpl(private val coroutineScope: CoroutineS
       }
     }
     // Notify the listeners that synchronization process completed
-    ApplicationManager.getApplication().messageBus.syncPublisher(JpsGlobalModelLoadedListener.LOADED).loaded()
+    ApplicationManager.getApplication().messageBus.syncPublisher(JpsGlobalModelLoadedListener.LOADED).loaded(environmentName)
   }
 
   private fun loadGlobalEntitiesToEmptyStorage(
@@ -295,7 +295,7 @@ open class JpsGlobalModelSynchronizerImpl(private val coroutineScope: CoroutineS
       callbacks.forEach { it.invoke() }
       if (notifyListeners) {
         // Notify the listeners that synchronization process completed
-        ApplicationManager.getApplication().messageBus.syncPublisher(JpsGlobalModelLoadedListener.LOADED).loaded()
+        ApplicationManager.getApplication().messageBus.syncPublisher(JpsGlobalModelLoadedListener.LOADED).loaded(environmentName)
       }
     }
   }
