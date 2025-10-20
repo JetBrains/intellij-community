@@ -212,10 +212,12 @@ class MavenProjectResolver(private val myProject: Project) {
       val virtualFile = VirtualFileManager.getInstance().findFileByNioPath(file) ?: return@forEach
       val aggregatorProject = tree.findProject(virtualFile) ?: return@forEach
       modules.forEach modules@{ modulePath ->
-        val moduleFile = file.parent.resolve(modulePath).resolve("pom.xml")
-        val moduleVirtualFile = VirtualFileManager.getInstance().findFileByNioPath(moduleFile) ?: return@modules
-        val moduleProject = tree.findProject(moduleVirtualFile) ?: return@modules
-        tree.reconnect(aggregatorProject, moduleProject)
+        if (modulePath.isNotBlank()) {
+          val moduleFile = file.parent.resolve(modulePath).resolve("pom.xml")
+          val moduleVirtualFile = VirtualFileManager.getInstance().findFileByNioPath(moduleFile) ?: return@modules
+          val moduleProject = tree.findProject(moduleVirtualFile) ?: return@modules
+          tree.reconnect(aggregatorProject, moduleProject)
+        }
       }
     }
 
