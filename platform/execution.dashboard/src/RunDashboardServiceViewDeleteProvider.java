@@ -3,6 +3,7 @@ package com.intellij.platform.execution.dashboard;
 
 import com.intellij.execution.ExecutionBundle;
 import com.intellij.execution.configurations.ConfigurationType;
+import com.intellij.execution.configurations.ConfigurationTypeUtil;
 import com.intellij.execution.dashboard.RunDashboardGroup;
 import com.intellij.execution.dashboard.RunDashboardManager;
 import com.intellij.execution.services.ServiceViewDefaultDeleteProvider;
@@ -17,7 +18,6 @@ import com.intellij.openapi.ui.MessageDialogBuilder;
 import com.intellij.openapi.ui.Messages;
 import com.intellij.platform.execution.dashboard.splitApi.frontend.tree.GroupingNode;
 import com.intellij.platform.execution.dashboard.splitApi.frontend.tree.RunDashboardGroupImpl;
-import com.intellij.util.ObjectUtils;
 import com.intellij.util.SmartList;
 import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
@@ -84,7 +84,7 @@ final class RunDashboardServiceViewDeleteProvider implements DeleteProvider {
     for (Object item : items) {
       if (item instanceof GroupingNode) {
         RunDashboardGroup group = ((GroupingNode)item).getGroup();
-        ConfigurationType type = ObjectUtils.tryCast(((RunDashboardGroupImpl<?>)group).getValue(), ConfigurationType.class);
+        ConfigurationType type = ConfigurationTypeUtil.findConfigurationType(((RunDashboardGroupImpl<?>)group).getValue().toString());
         if (type != null) {
           types.add(type);
           continue;
