@@ -67,8 +67,10 @@ import com.jetbrains.python.library.PythonLibraryType;
 import com.jetbrains.python.packaging.PyExecutionException;
 import com.jetbrains.python.remote.PyRemotePathMapper;
 import com.jetbrains.python.remote.PyRemoteSdkAdditionalData;
+import com.jetbrains.python.run.features.PyRunToolIds;
 import com.jetbrains.python.run.features.PyRunToolParameters;
 import com.jetbrains.python.run.features.PyRunToolProvider;
+import com.jetbrains.python.run.features.PyRunToolUsageCollector;
 import com.jetbrains.python.run.target.HelpersAwareTargetEnvironmentRequest;
 import com.jetbrains.python.run.target.PySdkTargetPaths;
 import com.jetbrains.python.run.target.PythonCommandLineTargetEnvironmentProvider;
@@ -355,6 +357,7 @@ public abstract class PythonCommandLineState extends CommandLineState {
       PyRunToolProvider runToolProvider = PyRunToolProvider.forSdk(sdk);
       if (runToolProvider != null && useRunTool(myConfig, sdk)) {
         runToolParameters = runToolProvider.getRunToolParameters();
+        PyRunToolUsageCollector.logRun(myConfig.getProject(), PyRunToolIds.idOf(runToolProvider));
       }
     }
 
