@@ -10,7 +10,10 @@ import com.intellij.codeInsight.daemon.ProblemHighlightFilter
 import com.intellij.codeInsight.daemon.impl.analysis.FileHighlightingSetting
 import com.intellij.codeInsight.daemon.impl.analysis.HighlightLevelUtil
 import com.intellij.codeInsight.daemon.impl.analysis.HighlightingSettingsPerFile
-import com.intellij.codeInsight.multiverse.*
+import com.intellij.codeInsight.multiverse.CodeInsightContext
+import com.intellij.codeInsight.multiverse.EditorContextManager
+import com.intellij.codeInsight.multiverse.codeInsightContext
+import com.intellij.codeInsight.multiverse.defaultContext
 import com.intellij.codeInspection.InspectionsBundle
 import com.intellij.diff.util.DiffUserDataKeys
 import com.intellij.icons.AllIcons
@@ -140,19 +143,6 @@ open class TrafficLightRenderer private constructor(
       defaultContext()
     }
   }
-  private fun getContext(highlighter: RangeHighlighter): CodeInsightContext {
-    val context: CodeInsightContext = if (isSharedSourceSupportEnabled(project)) {
-      highlighter.codeInsightContext ?: run {
-        // todo IJPL-339 please improve this code if context can indeed be null
-        // logger<TrafficLightRenderer>().error("highlightInfo's rangeHighlighter must have a context")
-        defaultContext()
-      }
-    }
-    else {
-      defaultContext()
-    }
-    return context
-  }
 
   open val errorCounts: IntArray
     /**
@@ -182,7 +172,7 @@ open class TrafficLightRenderer private constructor(
     val info = HighlightInfo.fromRangeHighlighter(highlighter) ?: return
     val infoSeverity = info.severity
     if (infoSeverity > HighlightSeverity.TEXT_ATTRIBUTES) {
-      val context = getContext(highlighter)
+      val context = highlighter.codeInsightContext
       errorCount.incErrorCount(infoSeverity, context, delta)
     }
   }

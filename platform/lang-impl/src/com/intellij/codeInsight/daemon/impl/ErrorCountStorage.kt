@@ -9,7 +9,8 @@ import kotlin.math.max
 
 /**
  * Synchronized storage for error counts.
- * Stores a separate number for each severity and context combination.
+ * Stores a separate number for each severity and context combination, including `null` context.
+ * If a highlighter does not have a context, it's always shown, so errorCount for each context should count it.
  */
 @ApiStatus.Internal
 class ErrorCountStorage {
@@ -17,12 +18,13 @@ class ErrorCountStorage {
 
   fun getErrorCount(severity: HighlightSeverity, context: CodeInsightContext): Int {
     val contextHighlightKey = HighlightKey(severity, context)
+    val noContextHighlightKey = HighlightKey(severity, null) // highlighters without context are always shown
     return synchronized(errorCount) {
-      errorCount.getInt(contextHighlightKey)
+      errorCount.getInt(contextHighlightKey) + errorCount.getInt(noContextHighlightKey)
     }
   }
 
-  fun incErrorCount(infoSeverity: HighlightSeverity, context: CodeInsightContext, delta: Int) {
+  fun incErrorCount(infoSeverity: HighlightSeverity, context: CodeInsightContext?, delta: Int) {
     val highlightKey = HighlightKey(infoSeverity, context)
     synchronized(errorCount) {
       val oldVal = errorCount.getInt(highlightKey)
