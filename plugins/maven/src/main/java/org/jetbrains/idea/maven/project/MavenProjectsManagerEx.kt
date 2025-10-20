@@ -20,6 +20,7 @@ import com.intellij.openapi.project.IncompleteDependenciesService
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.startup.ProjectActivity
 import com.intellij.openapi.util.NlsContexts
+import com.intellij.openapi.util.registry.Registry
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.openapi.vfs.VirtualFileManager
 import com.intellij.platform.backend.observation.launchTracked
@@ -38,7 +39,8 @@ import kotlinx.coroutines.sync.Mutex
 import kotlinx.coroutines.sync.withLock
 import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.concurrency.AsyncPromise
-import org.jetbrains.idea.maven.buildtool.MavenDownloadConsole
+import org.jetbrains.idea.maven.buildtool.MavenEventHandler
+import org.jetbrains.idea.maven.buildtool.MavenSyncConsole
 import org.jetbrains.idea.maven.buildtool.MavenSyncSpec
 import org.jetbrains.idea.maven.buildtool.incrementalMode
 import org.jetbrains.idea.maven.importing.MavenImportStats
@@ -54,6 +56,8 @@ import org.jetbrains.idea.maven.server.MavenDistributionsCache
 import org.jetbrains.idea.maven.server.MavenServerConsoleIndicator
 import org.jetbrains.idea.maven.server.MavenWrapperDownloader
 import org.jetbrains.idea.maven.server.showUntrustedProjectNotification
+import org.jetbrains.idea.maven.server.*
+import org.jetbrains.idea.maven.server.MavenArtifactEvent.ArtifactEventType.*
 import org.jetbrains.idea.maven.telemetry.tracer
 import org.jetbrains.idea.maven.utils.MavenActivityKey
 import org.jetbrains.idea.maven.utils.MavenLog
@@ -703,22 +707,37 @@ open class MavenProjectsManagerEx(project: Project, private val cs: CoroutineSco
     progressReporter: RawProgressReporter,
   ): ArtifactDownloadResult {
     project.messageBus.syncPublisher<MavenImportListener>(MavenImportListener.TOPIC).artifactDownloadingStarted()
-    val downloadConsole = MavenDownloadConsole(project, sources, docs)
     try {
-      downloadConsole.start()
-      downloadConsole.startDownloadTask(projects, artifacts)
-      val downloader = MavenArtifactDownloader(project, projectsTree, artifacts, progressReporter, downloadConsole)
-      val result = downloader.downloadSourcesAndJavadocs(projects, sources, docs)
-      downloadConsole.finishDownloadTask(projects, artifacts)
-      return result
+      val downloader = MavenArtifactDownloader(
+        project,
+        projectsTree,
+        artifacts,
+        progressReporter,
+        MavenArtifactDownloaderListener(syncConsole)
+      )
+      return downloader.downloadSourcesAndJavadocs(projects, sources, docs)
     }
     catch (e: Exception) {
-      downloadConsole.addException(e)
+      syncConsole.notifyDownloadSourcesProblem(e)
       return ArtifactDownloadResult()
     }
     finally {
-      downloadConsole.finish()
       project.messageBus.syncPublisher<MavenImportListener>(MavenImportListener.TOPIC).artifactDownloadingFinished()
+    }
+  }
+
+  private class MavenArtifactDownloaderListener(private val console: MavenSyncConsole) : MavenEventHandler {
+
+    override fun handleConsoleEvents(consoleEvents: List<MavenServerConsoleEvent>) {
+      if (Registry.`is`("maven.download.sources.build.output.notifications")) {
+        console.handleConsoleEvents(consoleEvents)
+      }
+    }
+
+    override fun handleDownloadEvents(downloadEvents: List<MavenArtifactEvent>) {
+      val progressNotifications = Registry.`is`("maven.download.sources.build.output.notifications")
+      val events = downloadEvents.filter { return@filter progressNotifications || it.artifactEventType == DOWNLOAD_FAILED }
+      console.handleDownloadEvents(events)
     }
   }
 

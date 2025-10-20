@@ -70,13 +70,6 @@ abstract class MavenSyncConsoleBase(protected val myProject: Project) : MavenEve
     completeTask(myTaskId, taskName, result)
   }
 
-  @ApiStatus.Internal
-  fun addException(e: Throwable) {
-    MavenLog.LOG.warn(e)
-    hasErrors = true
-    progressListener.onEvent(myTaskId, createMessageEvent(myProject, myTaskId, e))
-  }
-
   fun addError(@NlsSafe message: String) {
     val group = SyncBundle.message("build.event.title.error")
     progressListener.onEvent(myTaskId, MessageEventImpl(myTaskId, MessageEvent.Kind.ERROR, group, message, message))
@@ -159,41 +152,6 @@ abstract class MavenSyncConsoleBase(protected val myProject: Project) : MavenEve
       MavenServerConsoleIndicator.LEVEL_ERROR to "ERROR",
       MavenServerConsoleIndicator.LEVEL_FATAL to "FATAL_ERROR"
     )
-  }
-}
-
-/**
- * An instance of this class is not supposed to be reused in multiple downloads
- */
-class MavenDownloadConsole(myProject: Project,
-                           downloadSources: Boolean,
-                           downloadDocs: Boolean) : MavenSyncConsoleBase(myProject) {
-  override val title: String = MavenConsoleBundle.message("maven.download.title")
-  override val message: String = if (downloadSources) {
-    if (downloadDocs) {
-      MavenConsoleBundle.message("maven.download.sources.and.docs")
-    }
-    else {
-      MavenConsoleBundle.message("maven.download.sources")
-    }
-  }
-  else {
-    MavenConsoleBundle.message("maven.download.docs")
-  }
-
-  fun startDownloadTask(projects: Collection<MavenProject>, artifacts: Collection<MavenArtifact>?) {
-    startTask(getStringRepresentation(projects, artifacts))
-  }
-
-  fun finishDownloadTask(projects: Collection<MavenProject>, artifacts: Collection<MavenArtifact>?) {
-    completeTask(getStringRepresentation(projects, artifacts), SuccessResultImpl())
-  }
-
-  private fun getStringRepresentation(projects: Collection<MavenProject>, artifacts: Collection<MavenArtifact>?): String {
-    val projectNames = if (projects.isEmpty()) "-" else projects.map { it.mavenId }.joinToString()
-    val artifactNames = if (artifacts.isNullOrEmpty()) "" else artifacts.map { it.mavenId }.joinToString()
-    return if (artifactNames.isEmpty()) MavenConsoleBundle.message("maven.download.projects", projectNames)
-    else MavenConsoleBundle.message("maven.download.projects.and.artifacts", projectNames, artifactNames)
   }
 }
 

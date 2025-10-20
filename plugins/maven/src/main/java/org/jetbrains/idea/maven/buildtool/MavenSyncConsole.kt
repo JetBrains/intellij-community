@@ -204,6 +204,12 @@ class MavenSyncConsole(private val myProject: Project) : MavenEventHandler, Mave
   }
 
   @Synchronized
+  fun notifyDownloadSourcesProblem(e: Exception) {
+    hasErrors = true
+    mySyncView.onEvent(mySyncId, createMessageEvent(myProject, mySyncId, e))
+  }
+
+  @Synchronized
   fun showProblem(problem: MavenProjectProblem) = doIfImportInProcess {
     hasErrors = hasErrors || problem.isError
     val group = if (problem.isError) SyncBundle.message("maven.sync.group.error") else SyncBundle.message("maven.sync.group.warning")
