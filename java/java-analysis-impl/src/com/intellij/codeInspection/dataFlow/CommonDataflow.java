@@ -26,6 +26,7 @@ import com.intellij.psi.*;
 import com.intellij.psi.util.*;
 import com.intellij.util.JavaPsiConstructorUtil;
 import com.intellij.util.ThreeState;
+import com.intellij.util.containers.ConcurrentFactoryMap;
 import com.intellij.util.containers.ContainerUtil;
 import com.siyeh.ig.psiutils.ExpressionUtils;
 import org.jetbrains.annotations.Contract;
@@ -33,9 +34,7 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.*;
-import java.util.concurrent.ConcurrentHashMap;
-import java.util.concurrent.ForkJoinPool;
-import java.util.concurrent.RejectedExecutionException;
+import java.util.concurrent.ConcurrentMap;
 
 import static com.intellij.codeInspection.dataFlow.DfaUtil.hasImplicitImpureSuperCall;
 
@@ -272,41 +271,14 @@ public final class CommonDataflow {
   public static @Nullable DataflowResult getDataflowResult(@NotNull PsiElement context) {
     PsiElement body = DfaUtil.getDataflowContext(context);
     if (body == null) return null;
-    ConcurrentHashMap<PsiElement, DataflowResult> fileMap =
+
+    ConcurrentMap<PsiElement, DataflowResult> fileMap =
       CachedValuesManager.getCachedValue(body.getContainingFile(), () ->
-        CachedValueProvider.Result.create(new ConcurrentHashMap<>(), PsiModificationTracker.MODIFICATION_COUNT));
-    class ManagedCompute implements ForkJoinPool.ManagedBlocker {
-      DataflowResult myResult;
-
-      @Override
-      public boolean block() {
-        myResult = fileMap.computeIfAbsent(body, CommonDataflow::runDFA);
-        return true;
-      }
-
-      @Override
-      public boolean isReleasable() {
-        myResult = fileMap.get(body);
-        return myResult != null;
-      }
-
-      DataflowResult getResult() {
-        return myResult == null || myResult.myResult != RunnerResult.OK ? null : myResult;
-      }
-    }
-    ManagedCompute managedCompute = new ManagedCompute();
-    try {
-      ForkJoinPool.managedBlock(managedCompute);
-    }
-    catch (RejectedExecutionException ex) {
-      // Too many FJP threads: execute anyway in current thread
-      managedCompute.block();
-    }
-    catch (InterruptedException ex) {
-      // Should not happen
-      throw new AssertionError(ex);
-    }
-    return managedCompute.getResult();
+        CachedValueProvider.Result.create(ConcurrentFactoryMap.createMap(e -> {
+          DataflowResult result = runDFA(e);
+          return result.myResult != RunnerResult.OK ? null : result;
+        }), PsiModificationTracker.MODIFICATION_COUNT));
+    return fileMap.get(body);
   }
 
   /**
