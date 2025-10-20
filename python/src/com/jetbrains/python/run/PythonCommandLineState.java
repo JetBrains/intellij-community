@@ -59,6 +59,7 @@ import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.execution.ParametersListUtil;
 import com.jetbrains.python.PyBundle;
 import com.jetbrains.python.console.PyDebugConsoleBuilder;
+import com.jetbrains.python.debugger.PyDebugRunner;
 import com.jetbrains.python.debugger.PyDebuggerOptionsProvider;
 import com.jetbrains.python.debugger.PyTargetPathMapper;
 import com.jetbrains.python.facet.LibraryContributingFacet;
@@ -175,7 +176,10 @@ public abstract class PythonCommandLineState extends CommandLineState {
 
   @Override
   public @NotNull ExecutionResult execute(@NotNull Executor executor, @NotNull ProgramRunner<?> runner) throws ExecutionException {
-    return execute(executor, new CommandLinePatcher[0]);
+    if (runner instanceof PyDebugRunner || runner instanceof PythonRunner) {
+      return execute(executor, new CommandLinePatcher[0]);
+    }
+    return executeWithoutStartProcess(executor);
   }
 
   /**
@@ -198,6 +202,12 @@ public abstract class PythonCommandLineState extends CommandLineState {
     else {
       return Collections.emptyList();
     }
+  }
+
+  private @NotNull ExecutionResult executeWithoutStartProcess(@NotNull Executor executor) throws ExecutionException {
+    ProcessHandler processHandler = new SimpleProcessHandler();
+    ConsoleView console = createAndAttachConsoleInEDT(myConfig.getProject(), processHandler, executor);
+    return new DefaultExecutionResult(console, processHandler, createActions(console, processHandler));
   }
 
   /**
