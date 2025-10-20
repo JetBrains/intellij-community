@@ -6,7 +6,7 @@ import com.jediterm.terminal.model.TerminalLine
 import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.plugins.terminal.block.ui.TerminalUiUtils
 import org.jetbrains.plugins.terminal.block.ui.normalize
-import org.jetbrains.plugins.terminal.session.StyleRange
+import org.jetbrains.plugins.terminal.session.impl.StyleRange
 
 @ApiStatus.Internal
 class StylesCollectingTerminalLinesCollector(

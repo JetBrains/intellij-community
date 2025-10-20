@@ -8,7 +8,7 @@ import com.jediterm.terminal.util.CharUtils
 import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.plugins.terminal.block.ui.getLengthWithoutDwc
 import org.jetbrains.plugins.terminal.block.ui.withLock
-import org.jetbrains.plugins.terminal.session.TerminalCursorPositionChangedEvent
+import org.jetbrains.plugins.terminal.session.impl.TerminalCursorPositionChangedEvent
 
 @ApiStatus.Internal
 class TerminalCursorPositionTracker(

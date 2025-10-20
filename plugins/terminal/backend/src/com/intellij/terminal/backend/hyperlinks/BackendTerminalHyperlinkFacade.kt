@@ -18,11 +18,11 @@ import org.jetbrains.plugins.terminal.block.reworked.TerminalOutputModel
 import org.jetbrains.plugins.terminal.block.reworked.hyperlinks.TerminalHyperlinksModel
 import org.jetbrains.plugins.terminal.fus.ReworkedTerminalUsageCollector
 import org.jetbrains.plugins.terminal.hyperlinks.BackendHyperlinkInfo
-import org.jetbrains.plugins.terminal.session.TerminalHyperlinkId
-import org.jetbrains.plugins.terminal.session.TerminalHyperlinksChangedEvent
-import org.jetbrains.plugins.terminal.session.TerminalHyperlinksHeartbeatEvent
-import org.jetbrains.plugins.terminal.session.TerminalHyperlinksModelState
-import org.jetbrains.plugins.terminal.session.dto.toFilterResultInfo
+import org.jetbrains.plugins.terminal.session.impl.TerminalHyperlinkId
+import org.jetbrains.plugins.terminal.session.impl.TerminalHyperlinksChangedEvent
+import org.jetbrains.plugins.terminal.session.impl.TerminalHyperlinksHeartbeatEvent
+import org.jetbrains.plugins.terminal.session.impl.TerminalHyperlinksModelState
+import org.jetbrains.plugins.terminal.session.impl.dto.toFilterResultInfo
 
 @ApiStatus.Internal
 class BackendTerminalHyperlinkFacade(

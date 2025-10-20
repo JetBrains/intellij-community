@@ -18,7 +18,7 @@ import kotlinx.coroutines.Deferred
 import org.jetbrains.plugins.terminal.TerminalOptionsProvider
 import org.jetbrains.plugins.terminal.block.reworked.*
 import org.jetbrains.plugins.terminal.block.util.TerminalDataContextUtils.isOutputModelEditor
-import org.jetbrains.plugins.terminal.session.TerminalState
+import org.jetbrains.plugins.terminal.session.impl.TerminalState
 import org.jetbrains.plugins.terminal.util.getNow
 import org.jetbrains.plugins.terminal.view.shellIntegration.TerminalOutputStatus
 import org.jetbrains.plugins.terminal.view.shellIntegration.TerminalShellIntegration

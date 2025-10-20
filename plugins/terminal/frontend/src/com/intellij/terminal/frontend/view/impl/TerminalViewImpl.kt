@@ -58,8 +58,8 @@ import org.jetbrains.plugins.terminal.block.ui.isTerminalOutputScrollChangingAct
 import org.jetbrains.plugins.terminal.block.util.TerminalDataContextUtils
 import org.jetbrains.plugins.terminal.fus.TerminalStartupFusInfo
 import org.jetbrains.plugins.terminal.session.TerminalGridSize
-import org.jetbrains.plugins.terminal.session.TerminalHyperlinkId
-import org.jetbrains.plugins.terminal.session.TerminalSession
+import org.jetbrains.plugins.terminal.session.impl.TerminalHyperlinkId
+import org.jetbrains.plugins.terminal.session.impl.TerminalSession
 import org.jetbrains.plugins.terminal.view.TerminalOutputModelsSet
 import org.jetbrains.plugins.terminal.view.TerminalSendTextBuilder
 import org.jetbrains.plugins.terminal.view.impl.TerminalOutputModelsSetImpl

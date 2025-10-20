@@ -17,16 +17,16 @@ import kotlinx.coroutines.flow.merge
 import org.jetbrains.plugins.terminal.block.reworked.*
 import org.jetbrains.plugins.terminal.block.ui.TerminalUiUtils
 import org.jetbrains.plugins.terminal.fus.*
-import org.jetbrains.plugins.terminal.session.*
-import org.jetbrains.plugins.terminal.session.dto.toDto
-import org.jetbrains.plugins.terminal.session.dto.toTerminalState
+import org.jetbrains.plugins.terminal.session.impl.*
+import org.jetbrains.plugins.terminal.session.impl.dto.toDto
+import org.jetbrains.plugins.terminal.session.impl.dto.toTerminalState
 import org.jetbrains.plugins.terminal.view.shellIntegration.impl.TerminalBlocksModelImpl
 import kotlin.coroutines.cancellation.CancellationException
 import kotlin.time.TimeSource
 
 /**
  * TerminalSession implementation that stores the state of the [delegate] session output.
- * This state is then passed as the [org.jetbrains.plugins.terminal.session.TerminalInitialStateEvent] to the output flow as the first event
+ * This state is then passed as the [org.jetbrains.plugins.terminal.session.impl.TerminalInitialStateEvent] to the output flow as the first event
  * every time when [getOutputFlow] is requested.
  *
  * So, actually it allows restoring the state of UI that requests the [getOutputFlow].

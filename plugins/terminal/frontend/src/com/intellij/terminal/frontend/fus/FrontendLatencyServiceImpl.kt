@@ -3,7 +3,7 @@ package com.intellij.terminal.frontend.fus
 import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.editor.impl.EditorImpl
 import org.jetbrains.plugins.terminal.fus.*
-import org.jetbrains.plugins.terminal.session.TerminalContentUpdatedEvent
+import org.jetbrains.plugins.terminal.session.impl.TerminalContentUpdatedEvent
 import java.util.concurrent.ArrayBlockingQueue
 import kotlin.time.TimeMark
 import kotlin.time.TimeSource

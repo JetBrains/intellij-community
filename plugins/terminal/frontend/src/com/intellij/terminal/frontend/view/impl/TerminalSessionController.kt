@@ -12,9 +12,9 @@ import com.intellij.terminal.frontend.view.hyperlinks.FrontendTerminalHyperlinkF
 import com.intellij.util.containers.DisposableWrapperList
 import kotlinx.coroutines.*
 import org.jetbrains.plugins.terminal.block.reworked.TerminalSessionModel
-import org.jetbrains.plugins.terminal.session.*
-import org.jetbrains.plugins.terminal.session.dto.toState
-import org.jetbrains.plugins.terminal.session.dto.toTerminalState
+import org.jetbrains.plugins.terminal.session.impl.*
+import org.jetbrains.plugins.terminal.session.impl.dto.toState
+import org.jetbrains.plugins.terminal.session.impl.dto.toTerminalState
 import java.awt.Toolkit
 import kotlin.coroutines.cancellation.CancellationException
 
