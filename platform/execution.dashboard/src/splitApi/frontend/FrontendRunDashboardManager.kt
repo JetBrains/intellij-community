@@ -25,6 +25,7 @@ import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
 import org.jetbrains.annotations.ApiStatus
+import java.util.*
 
 @ApiStatus.Internal
 @Service(Service.Level.PROJECT)
@@ -36,6 +37,7 @@ class FrontendRunDashboardManager(private val project: Project) : RunDashboardMa
   private val frontendAvailableConfigurations = MutableStateFlow(emptySet<RunDashboardConfigurationDto>())
   private val frontendExcludedConfigurationTypeIds = MutableStateFlow(emptySet<String>())
   private val statusFilter: RunDashboardStatusFilter = RunDashboardStatusFilter()
+  private val configurationTypes : MutableSet<String> = mutableSetOf()
 
   internal suspend fun subscribeToBackendSettingsUpdates() {
     RunDashboardServiceRpc.getInstance().getSettings(project.projectId()).collect { updatesFromBackend ->
@@ -96,6 +98,12 @@ class FrontendRunDashboardManager(private val project: Project) : RunDashboardMa
     return frontendDtos.value
   }
 
+  internal suspend fun subscribeToBackendConfigurationTypesUpdates() {
+    RunDashboardServiceRpc.getInstance().getConfigurationTypes(project.projectId()).collect { updateFromBackend ->
+      setTypes(updateFromBackend.toMutableSet())
+    }
+  }
+
   fun getServicePresentations(): List<FrontendRunDashboardService> {
     return frontendDtos.value.map { dto -> FrontendRunDashboardService(dto) }
   }
@@ -140,12 +148,15 @@ class FrontendRunDashboardManager(private val project: Project) : RunDashboardMa
   }
 
   override fun getTypes(): Set<String> {
-    LOG.debug("getTypes() invoked on frontend; returning empty set")
-    return emptySet()
+    LOG.debug("getTypes() invoked on frontend;")
+    return configurationTypes.toSet()
   }
 
   override fun setTypes(types: MutableSet<String>) {
-    LOG.debug("setTypes(${types.size} types) invoked on frontend; ignored")
+    LOG.debug("setTypes(${types.size} types) invoked on frontend;")
+    configurationTypes.clear()
+    configurationTypes.addAll(types)
+    updateDashboard(true)
   }
 
   override fun getHiddenConfigurations(): Set<RunConfiguration?> {

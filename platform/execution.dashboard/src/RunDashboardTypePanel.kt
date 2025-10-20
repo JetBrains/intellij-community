@@ -213,11 +213,11 @@ class RunDashboardTypePanel(private val project: Project) : NonOpaquePanel(Borde
   }
 
   private fun hasTypeWithOppositeExclusion(selectedTypeId: String): Boolean {
-    val RunDashboardManagerProxy = RunDashboardManagerProxy.getInstance(project)
-    val newExcluded = RunDashboardManagerProxy.isNewExcluded(selectedTypeId)
+    val manager = RunDashboardManagerProxy.getInstance(project)
+    val newExcluded = manager.isNewExcluded(selectedTypeId)
 
-    return RunDashboardManagerProxy.types.any { typeId ->
-      typeId != selectedTypeId && RunDashboardManagerProxy.isNewExcluded(typeId) != newExcluded
+    return manager.types.any { typeId ->
+      typeId != selectedTypeId && manager.isNewExcluded(typeId) != newExcluded
     }
   }
 

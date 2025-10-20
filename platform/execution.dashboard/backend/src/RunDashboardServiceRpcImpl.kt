@@ -38,6 +38,11 @@ internal class RunDashboardServiceRpcImpl : RunDashboardServiceRpc {
     return RunDashboardManagerImpl.getInstance(project).customizationsDto
   }
 
+  override suspend fun getConfigurationTypes(projectId: ProjectId): Flow<Set<String>> {
+    val project = projectId.findProjectOrNull() ?: return emptyFlow()
+    return RunDashboardManagerImpl.getInstance(project).configurationTypes;
+  }
+
   override suspend fun updateConfigurationFolderName(serviceIds: List<RunDashboardServiceId>, newGroupName: String?, projectId: ProjectId) {
     val project = projectId.findProjectOrNull() ?: return
     val dashboardManagerImpl = RunDashboardManagerImpl.getInstance(project)

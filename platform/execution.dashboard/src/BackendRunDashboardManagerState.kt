@@ -24,6 +24,7 @@ internal class BackendRunDashboardManagerState(private val project: Project) {
   private val tagCallbacksByServiceId = HashMap<RunDashboardServiceId, List<CustomLinkDto>>()
 
   private val sharedStatuses = MutableSharedFlow<ServiceStatusDto>(1, 100, BufferOverflow.DROP_OLDEST)
+  private val sharedConfigurationTypes = MutableStateFlow<Set<String>>(emptySet())
 
   private val sharedExcludedTypes = MutableStateFlow(emptySet<String>())
 
@@ -92,6 +93,14 @@ internal class BackendRunDashboardManagerState(private val project: Project) {
     }
 
     return customizationBuilder.buildDto(backendService.uuid)
+  }
+
+  fun setConfigurationTypes(value: Set<String>) {
+    sharedConfigurationTypes.value = value
+  }
+
+  fun getConfigurationTypes(): Flow<Set<String>> {
+    return sharedConfigurationTypes.asStateFlow()
   }
 
   companion object {
