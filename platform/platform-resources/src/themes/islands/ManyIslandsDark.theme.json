@@ -81,7 +81,11 @@
 
     "List": {
       "background": "BackgroundDark",
-      "Tag.foreground": "#868a91"
+      "Tag.foreground": "#868a91",
+      "Button": {
+        "hoverBackground": "#FFFFFF16",
+        "separatorColor": "#FFFFFF33"
+      }
     },
 
     "Borders.color": "BorderDark",
