@@ -36,6 +36,14 @@ internal class BackendChangesView private constructor(
   val changesPanel: JComponent,
   val viewModel: BackendCommitChangesViewModel,
 ) {
+  fun getPreferredFocusedComponent(): JComponent {
+    if (changesPanel is CommitChangesViewWithToolbarPanel) {
+      return changesPanel.changesView.preferredFocusedComponent
+    }
+
+    return changesPanel
+  }
+
   companion object {
     @JvmStatic
     fun create(project: Project, scope: CoroutineScope): BackendChangesView {

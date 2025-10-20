@@ -247,7 +247,7 @@ public class ChangesViewManager implements ChangesViewEx, Disposable {
 
       content.setHelpId(ChangesListView.HELP_ID);
       content.setComponent(panel);
-      content.setPreferredFocusableComponent(panel.myChangesView.getViewModel().getPreferredFocusableComponent());
+      content.setPreferredFocusableComponent(panel.myChangesView.getPreferredFocusedComponent());
     }
   }
 

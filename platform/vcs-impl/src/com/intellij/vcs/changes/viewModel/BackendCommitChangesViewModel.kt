@@ -10,7 +10,6 @@ import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.vcs.commit.ChangesViewCommitWorkflowHandler
 import kotlinx.coroutines.flow.SharedFlow
 import org.jetbrains.annotations.ApiStatus
-import javax.swing.JComponent
 
 // TODO IJPL-173924 cleanup methods returning tree/component
 /**
@@ -49,7 +48,4 @@ internal sealed interface BackendCommitChangesViewModel {
 
   @ApiStatus.Obsolete
   fun getTree(): ChangesListView
-
-  @ApiStatus.Obsolete
-  fun getPreferredFocusableComponent(): JComponent
 }

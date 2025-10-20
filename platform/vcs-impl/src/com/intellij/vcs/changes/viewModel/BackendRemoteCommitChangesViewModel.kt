@@ -20,7 +20,6 @@ import kotlinx.coroutines.launch
 import kotlinx.coroutines.withTimeout
 import java.util.concurrent.atomic.AtomicInteger
 import kotlin.time.Duration.Companion.minutes
-import javax.swing.JComponent
 
 /**
  * Events-based implementation of [CommitChangesViewWithToolbarPanel].
@@ -107,8 +106,6 @@ internal class BackendRemoteCommitChangesViewModel(private val project: Project,
   }
 
   override fun getTree(): ChangesListView = treeView
-
-  override fun getPreferredFocusableComponent(): JComponent = treeView.preferredFocusedComponent
 
   fun inclusionChanged() {
     _inclusionChanged.tryEmit(Unit)

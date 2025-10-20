@@ -14,7 +14,6 @@ import com.intellij.util.ui.tree.TreeUtil.*
 import com.intellij.vcs.commit.ChangesViewCommitWorkflowHandler
 import kotlinx.coroutines.flow.MutableSharedFlow
 import kotlinx.coroutines.flow.asSharedFlow
-import javax.swing.JComponent
 import javax.swing.tree.TreePath
 
 /**
@@ -105,8 +104,6 @@ internal class BackendLocalCommitChangesViewModel(val panel: CommitChangesViewWi
   }
 
   override fun getTree(): ChangesListView = panel.changesView
-
-  override fun getPreferredFocusableComponent(): JComponent = panel.changesView.preferredFocusedComponent
 
   private inner class ModelProvider : CommitChangesViewWithToolbarPanel.ModelProvider {
     override fun getModelData(): CommitChangesViewWithToolbarPanel.ModelProvider.ModelData {
