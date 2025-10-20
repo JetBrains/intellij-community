@@ -43,16 +43,12 @@ internal sealed class WindowMouseListenerSupport(private val source: WindowMouse
   @get:JdkConstants.CursorType
   var cursorType: Int = 0
     private set
-  private var location: Point? = null
-  private var viewBounds: Rectangle? = null
-  private var mouseButton = 0
-  protected var expectMouseReleased = false
-  protected var expectMouseClicked = false
+  private var currentSession: WindowListenerSession? = null
 
   var leftMouseButtonOnly = false
   
   val isBusy: Boolean
-    get() = location != null
+    get() = currentSession != null
 
   protected abstract fun moveAfterMouseRelease(): Boolean
 
@@ -66,13 +62,7 @@ internal sealed class WindowMouseListenerSupport(private val source: WindowMouse
       return
     }
 
-
-    if (start) {
-      expectMouseReleased = true
-      expectMouseClicked = true
-    }
-
-    if (location == null) {
+    if (!isBusy) {
       val content = source.getContent(event)
       val view = source.getView(content)
       if (view != null) {
@@ -94,9 +84,11 @@ internal sealed class WindowMouseListenerSupport(private val source: WindowMouse
   }
 
   private fun start(event: MouseEvent, view: Component) {
-    mouseButton = event.getButton()
-    location = event.locationOnScreen
-    viewBounds = view.bounds
+    currentSession = WindowListenerSession(
+      event.locationOnScreen,
+      view.bounds,
+      event.getButton(),
+    )
     onStarted(event, view)
   }
 
@@ -106,47 +98,13 @@ internal sealed class WindowMouseListenerSupport(private val source: WindowMouse
    * Processes moving/resizing and stops it if not `mouseMove`.
    */
   fun process(event: MouseEvent, mouseMove: Boolean) {
-    if (event.isConsumed) return
-    if (mouseMove) {
-      onDraggingStarted()
+    // Some points:
+    // 1. Stop events should be handled even if they're already consumed, so the session finishes correctly.
+    // 2. Non-drag unconsumed events should be handled as drag events anyway to support the "move on mouse release" mode.
+    if (!event.isConsumed) {
+      handleDragEvent(event, mouseMove)
     }
-
-    val viewBounds = this.viewBounds
-    val location = this.location
-    if (location != null && viewBounds != null) {
-      val content = source.getContent(event)
-      val view = source.getView(content)
-      // Enter in move mode only after mouse move, so double click is supported
-      if (mouseMove && cursorType == Cursor.DEFAULT_CURSOR && jbrMoveSupported(view)) {
-        enterJbrMoveMode(view)
-        return
-      }
-
-      if (view != null) {
-        val bounds = Rectangle(viewBounds)
-        val delta = computeOffsetFromInitialLocation(event)
-        if (cursorType == Cursor.DEFAULT_CURSOR && view is Frame) {
-          val state = view.extendedState
-          if (WindowMouseListener.isStateSet(Frame.MAXIMIZED_HORIZ, state)) delta.x = 0
-          if (WindowMouseListener.isStateSet(Frame.MAXIMIZED_VERT, state)) delta.y = 0
-        }
-        source.updateBounds(bounds, view, delta.x, delta.y)
-        val currentViewBounds = view.bounds
-        if (bounds != currentViewBounds) {
-          val moved = bounds.x != currentViewBounds.x || bounds.y != currentViewBounds.y
-          val resized = bounds.width != currentViewBounds.width || bounds.height != currentViewBounds.height
-          val reallyMoveWindow = !moveAfterMouseRelease() || !mouseMove
-          if ((moved && reallyMoveWindow) || resized) {
-            setViewBounds(view, bounds, moved, resized)
-          }
-        }
-      }
-      if (!mouseMove) {
-        resetCursor(content)
-      }
-      event.consume()
-    }
-    if (isBusy && !mouseMove) {
+    if (!mouseMove) {
       handleStopEvent(event)
     }
   }
@@ -178,11 +136,46 @@ internal sealed class WindowMouseListenerSupport(private val source: WindowMouse
     return Cursor.CUSTOM_CURSOR
   }
 
-  protected abstract fun onDraggingStarted()
+  private fun handleDragEvent(event: MouseEvent, mouseMove: Boolean) {
+    val session = currentSession ?: return
+    if (mouseMove) {
+      onDraggingStarted(session)
+    }
 
-  protected open fun computeOffsetFromInitialLocation(event: MouseEvent): Point {
-    val location = this.location
-    checkNotNull(location) { "Must not be called when inactive" }
+    val content = source.getContent(event)
+    val view = source.getView(content)
+    // Enter in move mode only after mouse move, so double click is supported
+    if (mouseMove && cursorType == Cursor.DEFAULT_CURSOR && jbrMoveSupported(view)) {
+      enterJbrMoveMode(session, view)
+      return
+    }
+
+    if (view != null) {
+      val bounds = Rectangle(session.viewBounds)
+      val delta = computeOffsetFromInitialLocation(session, event)
+      if (cursorType == Cursor.DEFAULT_CURSOR && view is Frame) {
+        val state = view.extendedState
+        if (WindowMouseListener.isStateSet(Frame.MAXIMIZED_HORIZ, state)) delta.x = 0
+        if (WindowMouseListener.isStateSet(Frame.MAXIMIZED_VERT, state)) delta.y = 0
+      }
+      source.updateBounds(bounds, view, delta.x, delta.y)
+      val currentViewBounds = view.bounds
+      if (bounds != currentViewBounds) {
+        val moved = bounds.x != currentViewBounds.x || bounds.y != currentViewBounds.y
+        val resized = bounds.width != currentViewBounds.width || bounds.height != currentViewBounds.height
+        val reallyMoveWindow = !moveAfterMouseRelease() || !mouseMove
+        if ((moved && reallyMoveWindow) || resized) {
+          setViewBounds(view, bounds, moved, resized)
+        }
+      }
+    }
+    event.consume()
+  }
+
+  protected abstract fun onDraggingStarted(session: WindowListenerSession)
+
+  protected open fun computeOffsetFromInitialLocation(session: WindowListenerSession, event: MouseEvent): Point {
+    val location = session.location
     val dx: Int = event.xOnScreen - location.x
     val dy: Int = event.yOnScreen - location.y
     return Point(dx, dy)
@@ -197,42 +190,52 @@ internal sealed class WindowMouseListenerSupport(private val source: WindowMouse
     if (resized) source.notifyResized()
   }
 
-  private fun resetCursor(content: Component) {
-    source.setCursor(content, Cursor.getPredefinedCursor(Cursor.DEFAULT_CURSOR))
-  }
-
   private fun handleStopEvent(event: MouseEvent) {
-    if (expectMouseReleased && event.id == MouseEvent.MOUSE_RELEASED) {
-      expectMouseReleased = false
+    val session = currentSession ?: return
+
+    resetCursor(source.getContent(event))
+
+    if (session.expectMouseReleased && event.id == MouseEvent.MOUSE_RELEASED) {
+      session.expectMouseReleased = false
       event.consume()
     }
-    if (expectMouseClicked && event.id == MouseEvent.MOUSE_CLICKED) {
-      expectMouseClicked = false
+    if (session.expectMouseClicked && event.id == MouseEvent.MOUSE_CLICKED) {
+      session.expectMouseClicked = false
       event.consume()
     }
-    if (!expectMouseReleased && !expectMouseClicked) {
+
+    if (!session.expectMouseReleased && !session.expectMouseClicked) {
       stop()
     }
   }
 
-  private fun stop() {
-    this.location = null
-    this.viewBounds = null
-    expectMouseClicked = false
-    expectMouseReleased = false
+  private fun resetCursor(content: Component) {
+    source.setCursor(content, Cursor.getPredefinedCursor(Cursor.DEFAULT_CURSOR))
   }
 
-  private fun enterJbrMoveMode(view: Component?) {
-    JBR.getWindowMove().startMovingTogetherWithMouse(view as Window, mouseButton)
+  private fun stop() {
+    currentSession = null
+  }
+
+  private fun enterJbrMoveMode(session: WindowListenerSession, view: Component?) {
+    JBR.getWindowMove().startMovingTogetherWithMouse(view as Window, session.mouseButton)
     stop()
   }
+
+  protected data class WindowListenerSession(
+    val location: Point,
+    val viewBounds: Rectangle,
+    val mouseButton: Int,
+    var expectMouseReleased: Boolean = true,
+    var expectMouseClicked: Boolean = true,
+  )
 }
 
 private class RegularWindowMouseListenerSupport(source: WindowMouseListenerSource) : WindowMouseListenerSupport(source) {
   override fun moveAfterMouseRelease(): Boolean = false
 
-  override fun onDraggingStarted() {
-    expectMouseClicked = false // after dragging starts, there will be only one "released" event
+  override fun onDraggingStarted(session: WindowListenerSession) {
+    session.expectMouseClicked = false // after dragging starts, there will be only one "released" event
   }
 
   override fun jbrMoveSupported(component: Component?): Boolean {
@@ -244,8 +247,6 @@ private class WaylandWindowMouseListenerSupport(source: WindowMouseListenerSourc
   private var isTruePopup = false
   private var dx = 0
   private var dy = 0
-  private var expectReleasedEvent = false
-  private var expectClickedEvent = false
 
   override fun beforeUpdate(event: MouseEvent, view: Component) {
     isTruePopup = view is Window && view.type == Window.Type.POPUP
@@ -257,12 +258,10 @@ private class WaylandWindowMouseListenerSupport(source: WindowMouseListenerSourc
     if (isRelativeMovementMode()) {
       @Suppress("UsePropertyAccessSyntax")
       JBR.getRelativePointerMovement().getAccumulatedMouseDeltaAndReset()
-      expectClickedEvent = true
-      expectReleasedEvent = true
     }
   }
 
-  override fun onDraggingStarted() { } // on Wayland, whether dragging has started or not, both "released" and "clicked" events will arrive
+  override fun onDraggingStarted(session: WindowListenerSession) { } // on Wayland, whether dragging has started or not, both "released" and "clicked" events will arrive
 
   override fun getResizeCursor(top: Int, left: Int, bottom: Int, right: Int, resizeArea: Insets): Int {
     if (isRelativeMovementMode()) return super.getResizeCursor(top, left, bottom, right, resizeArea)
@@ -279,7 +278,7 @@ private class WaylandWindowMouseListenerSupport(source: WindowMouseListenerSourc
     return Cursor.CUSTOM_CURSOR
   }
 
-  override fun computeOffsetFromInitialLocation(event: MouseEvent): Point {
+  override fun computeOffsetFromInitialLocation(session: WindowListenerSession, event: MouseEvent): Point {
     if (isRelativeMovementMode()) {
       @Suppress("UsePropertyAccessSyntax")
       val delta = JBR.getRelativePointerMovement().getAccumulatedMouseDeltaAndReset()
@@ -288,7 +287,7 @@ private class WaylandWindowMouseListenerSupport(source: WindowMouseListenerSourc
       return Point(dx, dy)
     }
     else {
-      return super.computeOffsetFromInitialLocation(event)
+      return super.computeOffsetFromInitialLocation(session, event)
     }
   }
 
