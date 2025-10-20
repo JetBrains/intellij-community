@@ -1,4 +1,4 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.project.impl
 
 import com.intellij.ide.impl.OpenProjectTask
@@ -6,6 +6,8 @@ import com.intellij.ide.impl.ProjectUtil
 import com.intellij.ide.impl.ProjectUtilCore
 import com.intellij.openapi.extensions.ExtensionPointName
 import com.intellij.openapi.project.Project
+import com.intellij.openapi.project.ProjectManager
+import com.intellij.openapi.project.ProjectManagerListener
 import com.intellij.openapi.project.ex.ProjectManagerEx
 import com.intellij.openapi.startup.InitProjectActivity
 import com.intellij.testFramework.ExtensionTestUtil
@@ -16,6 +18,7 @@ import com.intellij.testFramework.fixtures.BareTestFixtureTestCase
 import com.intellij.testFramework.rules.InMemoryFsRule
 import com.intellij.testFramework.rules.TempDirectory
 import com.intellij.testFramework.useProject
+import com.intellij.util.application
 import com.intellij.util.io.createDirectories
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.cancel
@@ -122,5 +125,20 @@ class ProjectOpeningTest : BareTestFixtureTestCase() {
     assertThat(project).isNotNull()
     val projectFilePath = project!!.useProject { it.projectFilePath }
     assertThat(projectFilePath).isEqualTo(projectFile.invariantSeparatorsPathString)
+  }
+
+  @Suppress("removal")
+  @Test
+  fun `project listener is called under write-intent lock`() {
+    val listenerRunsUnderWriteIntent = AtomicBoolean(false)
+    val projectDir = tempDir.root.toPath()
+    application.messageBus.connect(testRootDisposable).subscribe(ProjectManager.TOPIC, object : ProjectManagerListener {
+      override fun projectOpened(project: Project) {
+        listenerRunsUnderWriteIntent.set(application.isWriteIntentLockAcquired)
+      }
+    })
+    val project = ProjectUtil.openOrImport(projectDir, OpenProjectTask())
+    project?.useProject {  } // closing this project
+    assertThat(listenerRunsUnderWriteIntent.get()).isTrue()
   }
 }
