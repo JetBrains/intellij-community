@@ -26,7 +26,7 @@ internal class CodeVisionZombie(limbs: List<CodeVisionLimb>) : LimbedZombie<Code
   }
 }
 
-internal object CodeVisionNecromancy : LimbedNecromancy<CodeVisionZombie, CodeVisionLimb>(spellLevel=0) {
+internal object CodeVisionNecromancy : LimbedNecromancy<CodeVisionZombie, CodeVisionLimb>(spellLevel=1) {
 
   override fun buryLimb(grave: DataOutput, limb: CodeVisionLimb) {
     writeINT(grave, limb.startOffset)
