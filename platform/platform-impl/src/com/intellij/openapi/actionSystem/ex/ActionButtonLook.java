@@ -6,6 +6,7 @@ import com.intellij.openapi.actionSystem.impl.IdeaActionButtonLook;
 import com.intellij.openapi.util.IconLoader;
 import com.intellij.util.ui.JBInsets;
 import com.intellij.util.ui.JBUI;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -138,6 +139,7 @@ public abstract class ActionButtonLook {
     paintIconImpl(g, actionButton, icon, x, y);
   }
 
+  @ApiStatus.Internal
   protected static void paintIconImpl(Graphics g, ActionButtonComponent actionButton, Icon icon, int x, int y) {
     icon.paintIcon(actionButton instanceof Component ? (Component)actionButton : null, g, x, y);
   }
