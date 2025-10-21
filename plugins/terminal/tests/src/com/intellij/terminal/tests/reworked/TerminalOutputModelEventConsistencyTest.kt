@@ -1,16 +1,21 @@
 // Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.terminal.tests.reworked
 
+import com.intellij.openapi.editor.event.DocumentEvent
+import com.intellij.openapi.editor.event.DocumentListener
+import com.intellij.openapi.editor.markup.TextAttributes
 import com.intellij.terminal.tests.reworked.util.TerminalTestUtil
 import com.intellij.testFramework.common.DEFAULT_TEST_TIMEOUT
 import com.intellij.testFramework.common.timeoutRunBlocking
 import com.intellij.testFramework.fixtures.BasePlatformTestCase
 import com.intellij.util.asDisposable
 import org.assertj.core.api.Assertions.assertThat
+import org.jetbrains.plugins.terminal.block.output.TerminalOutputHighlightingsSnapshot
 import org.jetbrains.plugins.terminal.block.reworked.*
 import org.junit.Test
 import org.junit.runner.RunWith
 import org.junit.runners.JUnit4
+import java.awt.font.TextAttribute
 
 @RunWith(JUnit4::class)
 internal class TerminalOutputModelEventConsistencyTest : BasePlatformTestCase() {
@@ -82,6 +87,11 @@ internal class TerminalOutputModelEventConsistencyTest : BasePlatformTestCase() 
     val sut = TerminalTestUtil.createOutputModel(maxLength)
     val mirror = StringBuilder()
     var trimmed = 0L
+    sut.document.addDocumentListener(object : DocumentListener {
+      override fun documentChanged(event: DocumentEvent) {
+        assertEmptyHighlightings(sut.getHighlightings(), event.document.textLength)
+      }
+    }, asDisposable())
     sut.addListener(asDisposable(), object : TerminalOutputModelListener {
       override fun afterContentChanged(event: TerminalContentChangeEvent) {
         if (event.isTrimming) {
@@ -116,4 +126,16 @@ private fun assertConsistency(sut: TerminalOutputModel) {
     assertThat(highlighting.startOffset).isBetween(0, sut.textLength)
     assertThat(highlighting.endOffset).isBetween(0, sut.textLength)
   }
+}
+
+private fun assertEmptyHighlightings(highlightings: TerminalOutputHighlightingsSnapshot, textLength: Int) {
+  if (textLength == 0) {
+    assertThat(highlightings.size).isZero()
+    return
+  }
+  assertThat(highlightings.size).isOne()
+  val highlighting = highlightings[0]
+  assertThat(highlighting.startOffset).isEqualTo(0)
+  assertThat(highlighting.endOffset).isEqualTo(textLength)
+  assertThat(highlighting.textAttributesProvider.getTextAttributes()).isEqualTo(TextAttributes.ERASE_MARKER)
 }
