@@ -2,6 +2,7 @@
 package org.jetbrains.plugins.gradle.util
 
 import com.intellij.openapi.externalSystem.model.execution.ExternalSystemTaskExecutionSettings
+import com.intellij.openapi.externalSystem.service.execution.ExternalSystemRunnableState
 import com.intellij.openapi.externalSystem.service.execution.ProgressExecutionMode
 import com.intellij.openapi.externalSystem.util.task.TaskExecutionSpec
 import com.intellij.openapi.externalSystem.util.task.TaskExecutionUtil
@@ -87,6 +88,7 @@ object GradleArtifactDownloader {
           .withProgressExecutionMode(ProgressExecutionMode.IN_BACKGROUND_ASYNC)
           .withUserData(UserDataHolderBase().apply {
             putUserData(GradleTaskManager.VERSION_SPECIFIC_SCRIPTS_KEY, initScript)
+            putUserData(ExternalSystemRunnableState.NAVIGATE_TO_ERROR, errorHandler.navigateToError())
           })
           .withActivateToolWindowBeforeRun(false)
           .withActivateToolWindowOnFailure(false)
