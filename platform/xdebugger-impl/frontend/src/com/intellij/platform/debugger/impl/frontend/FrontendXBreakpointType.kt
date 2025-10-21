@@ -169,7 +169,9 @@ private open class FrontendXBreakpointType(
     return id.hashCode()
   }
 
-
+  override fun toString(): String {
+    return "FrontendXBreakpointType(type=$id)"
+  }
 }
 
 @Service(Service.Level.PROJECT)
