@@ -356,4 +356,30 @@ class JavaJavaApiUsageInspectionTest : JavaApiUsageInspectionTestBase() {
     myFixture.runQuickFix("Set language level to 25 (Preview) - Primitive Types in Patterns, etc.")
     assertEquals(LanguageLevel.JDK_25_PREVIEW, LanguageLevelUtil.getEffectiveLanguageLevel(myFixture.module))
   }
+
+  fun `test gatherer language level 22 with JDK 25`() {
+    myFixture.setLanguageLevel(LanguageLevel.JDK_22)
+    myFixture.testHighlighting(JvmLanguage.JAVA, """
+      import java.util.stream.Gatherers;
+      
+      class Main {
+          public static void main(String[] args) {
+              <error descr="Usage of API documented as @since 24+">Gatherers</error> gatherers = null;
+          }
+      }
+    """.trimIndent())
+  }
+
+  fun `test gatherer language level 22 preview with JDK 25`() {
+    myFixture.setLanguageLevel(LanguageLevel.JDK_22_PREVIEW)
+    myFixture.testHighlighting(JvmLanguage.JAVA, """
+      import java.util.stream.Gatherers;
+      
+      class Main {
+          public static void main(String[] args) {
+              Gatherers gatherers = null;
+          }
+      }
+    """.trimIndent())
+  }
 }

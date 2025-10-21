@@ -28,6 +28,11 @@ import java.util.concurrent.ConcurrentHashMap;
 public final class JdkApiCompatibilityService {
   private static final Logger LOG = Logger.getInstance(JdkApiCompatibilityService.class);
 
+  /**
+   * First language level at which preview APIs were introduced.
+   */
+  private static final @NotNull LanguageLevel FIRST_PREVIEW_API_LEVEL = LanguageLevel.JDK_13;
+
   private final Map<LanguageLevel, List<String>> cache = new ConcurrentHashMap<>();
 
   public static JdkApiCompatibilityService getInstance() {
@@ -55,6 +60,12 @@ public final class JdkApiCompatibilityService {
    *   its super method is annotated as {@code @since 8} this method will return {@link LanguageLevel#JDK_1_8}.
    *
    *   <li>if {@code member} is not annotated with a {@code @since} tag this method will return null.
+   *   
+   *   <li>if {@code member} is annotated as {@code @since 24} but it was in preview since 22, 
+   *   and the context language level is {@link LanguageLevel#JDK_22}, then this method will return null.</li>
+   *
+   *   <li>if {@code member} is annotated as {@code @since 24} but it was in preview since 22, 
+   *   and the context language level is {@link LanguageLevel#JDK_21}, then this method will return {@link LanguageLevel#JDK_24}.</li>
    * </ul>
    *
    * @param member               The member to find the incompatible language level for
@@ -63,6 +74,14 @@ public final class JdkApiCompatibilityService {
    * unknown.
    */
   public @Nullable LanguageLevel firstCompatibleLanguageLevel(@NotNull PsiMember member, @NotNull LanguageLevel contextLanguageLevel) {
+    LevelInfo info = firstCompatibleLanguageLevelInfo(member, contextLanguageLevel);
+    if (info == null) return null;
+    LanguageLevel targetLevel = info.outOfPreviewLevel() == null ? info.firstAppearLevel() : info.outOfPreviewLevel();
+    if (contextLanguageLevel.isLessThan(targetLevel)) return targetLevel;
+    return null;
+  }
+  
+  public @Nullable LevelInfo firstCompatibleLanguageLevelInfo(@NotNull PsiMember member, @NotNull LanguageLevel contextLanguageLevel) {
     if (member instanceof PsiAnonymousClass) return null;
     PsiClass containingClass = member.getContainingClass();
     if (containingClass instanceof PsiAnonymousClass) return null;
@@ -75,11 +94,11 @@ public final class JdkApiCompatibilityService {
     }
 
     LanguageLevel incompatibleLevelForContext = contextLanguageLevel.next();
-    LanguageLevel lowestCompatibleLanguageLevel = null;
+    LevelInfo lowestCompatibleLanguageLevel = null;
     for (PsiMember checkMember : membersToCheck) {
       String signature = getSignature(checkMember);
       if (signature == null) return null;
-      LanguageLevel compatibleLanguageLevelForMember = getIntroducedApiLevel(signature, incompatibleLevelForContext);
+      LevelInfo compatibleLanguageLevelForMember = getIntroducedApiLevel(signature, incompatibleLevelForContext);
       if (compatibleLanguageLevelForMember == null) return null;
       if (lowestCompatibleLanguageLevel == null || compatibleLanguageLevelForMember.isLessThan(lowestCompatibleLanguageLevel)) {
         lowestCompatibleLanguageLevel = compatibleLanguageLevelForMember;
@@ -115,19 +134,43 @@ public final class JdkApiCompatibilityService {
    * @param signature     The signature, example: "java.util.Iterator#remove()" as specified by {@link #getSignature(PsiMember)}.
    * @param languageLevel to start the search.
    * @return The newly introduced API if it appears after or including {@code languageLevel}, or null if it was introduced before
-   * {@code languageLevel}.
+   * {@code languageLevel}. If the API is in preview for languageLevel, null is returned. If the API was in preview and later standartized,
+   * but languageLevel is preview preview, then the first standard languageLevel is returned.
    */
   @Contract("_, null -> null")
-  private @Nullable LanguageLevel getIntroducedApiLevel(@NotNull String signature, @Nullable LanguageLevel languageLevel) {
+  private @Nullable LevelInfo getIntroducedApiLevel(@NotNull String signature, @Nullable LanguageLevel languageLevel) {
     if (languageLevel == null) return null;
     LanguageLevel curLevel = LanguageLevel.HIGHEST;
     while (true) {
-      if (getIntroducedApis(curLevel).contains(signature)) return curLevel;
+      if (getIntroducedApis(curLevel).contains(signature)) {
+        LanguageLevel maybePreview = languageLevel.previous();
+        while (maybePreview != null && maybePreview.isAtLeast(FIRST_PREVIEW_API_LEVEL)) {
+          if (getIntroducedApis(maybePreview).contains(signature)) {
+            return new LevelInfo(maybePreview, curLevel);
+          }
+          maybePreview = maybePreview.previous();
+        }
+        return new LevelInfo(curLevel, null);
+      }
       if (languageLevel == curLevel) return null;
       curLevel = curLevel.previous();
       if (curLevel == null) return null;
     }
   }
+
+  /**
+   * @param firstAppearLevel language level at which the feature appeared the first
+   * @param outOfPreviewLevel language level at which the feature was standardized if it was in preview first;
+   *                          null if the feature was not in preview at all or it's still in preview and was not standardized yet.
+   */
+  public record LevelInfo(@NotNull LanguageLevel firstAppearLevel, @Nullable LanguageLevel outOfPreviewLevel) {
+    boolean isLessThan(LevelInfo level) {
+      return firstAppearLevel.isLessThan(level.firstAppearLevel) ||
+             firstAppearLevel == level.firstAppearLevel &&
+             Comparator.nullsFirst(Comparator.<LanguageLevel>naturalOrder()).compare(outOfPreviewLevel, level.outOfPreviewLevel) < 0;
+    }
+  }
+  
 
   /**
    * Serializes a {@code member} for storage in apiX.txt files.
