@@ -3,9 +3,7 @@ package com.jetbrains.python.sdk.configuration
 
 import com.intellij.openapi.extensions.ExtensionPointName
 import com.intellij.openapi.module.Module
-import com.intellij.openapi.progress.runBlockingMaybeCancellable
 import com.intellij.python.common.tools.ToolId
-import com.intellij.util.concurrency.annotations.RequiresBackgroundThread
 import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.annotations.CheckReturnValue
 
@@ -22,26 +20,13 @@ interface PyProjectSdkConfigurationExtension {
     @JvmStatic
     val EP_NAME: ExtensionPointName<PyProjectSdkConfigurationExtension> = ExtensionPointName.create("Pythonid.projectSdkConfigurationExtension")
 
-    @JvmStatic
-    @RequiresBackgroundThread
-    fun findForModule(module: Module): CreateSdkInfoWithTool? = runBlockingMaybeCancellable {
-      EP_NAME.extensionsIfPointIsRegistered
-        .firstNotNullOfOrNull { ext ->
-          ext.checkEnvironmentAndPrepareSdkCreator(module)?.let { CreateSdkInfoWithTool(it, ext.toolId) }
-        }
-    }
-
-    @JvmStatic
-    @RequiresBackgroundThread
-      /**
-       * We return all configurators in a sorted order. The order is determined by extensions order, but existing environments have a
-       * higher priority. That means we first have all existing envs, and only after SDK creators that extensions can manage.
-       */
-    fun findAllSortedForModule(module: Module): List<CreateSdkInfoWithTool> = runBlockingMaybeCancellable {
-      EP_NAME.extensionsIfPointIsRegistered
-        .mapNotNull { e -> e.checkEnvironmentAndPrepareSdkCreator(module)?.let { CreateSdkInfoWithTool(it, e.toolId) } }
-        .sortedBy { it.createSdkInfo }
-    }
+    /**
+     * We return all configurators in a sorted order. The order is determined by extensions order, but existing environments have a
+     * higher priority. That means we first have all existing envs, and only after SDK creators that extensions can manage.
+     */
+    suspend fun findAllSortedForModule(module: Module): List<CreateSdkInfoWithTool> = EP_NAME.extensionsIfPointIsRegistered
+      .mapNotNull { e -> e.checkEnvironmentAndPrepareSdkCreator(module)?.let { CreateSdkInfoWithTool(it, e.toolId) } }
+      .sortedBy { it.createSdkInfo }
   }
 
   val toolId: ToolId

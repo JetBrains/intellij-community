@@ -59,6 +59,7 @@ import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
 import static com.jetbrains.python.inspections.PyInterpreterInspectionExKt.detectSdkForModulesForJvmIn;
+import static com.jetbrains.python.inspections.PyInterpreterInspectionExKt.findAllSortedForModuleForJvm;
 
 
 public final class PyInterpreterInspection extends PyInspection {
@@ -130,7 +131,7 @@ public final class PyInterpreterInspection extends PyInspection {
 
       final UserDataHolderBase context = new UserDataHolderBase();
 
-      final List<CreateSdkInfoWithTool> createSdkInfos = PyProjectSdkConfigurationExtension.findAllSortedForModule(module);
+      final List<CreateSdkInfoWithTool> createSdkInfos = findAllSortedForModuleForJvm(module);
       if (!createSdkInfos.isEmpty()) {
         return new UseProvidedInterpreterFix(module, createSdkInfos.getFirst());
       }
