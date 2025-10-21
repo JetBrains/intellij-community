@@ -1,5 +1,48 @@
 class UnnecessaryConditionalExpression {
 
+  String str1(boolean value) {
+    return <warning descr="'value ? \"true\" : \"false\"' can be simplified to 'java.lang.Boolean.toString(value)'">value</warning> ? "true" : "false";
+  }
+
+  String str2(boolean value) {
+    return <warning descr="'value ? \"false\" : \"true\"' can be simplified to 'java.lang.Boolean.toString(!value)'">value</warning> ? "false" : "true";
+  }
+
+  String str3(Boolean value) {
+    return <warning descr="'value ? \"true\" : \"false\"' can be simplified to 'value.toString()'">value</warning> ? "true" : "false";
+  }
+
+  String str4(Boolean value) {
+    return <warning descr="'value ? \"false\" : \"true\"' can be simplified to 'java.lang.Boolean.toString(!value)'">value</warning> ? "false" : "true";
+  }
+
+  String str5(int a, int b) {
+    return <warning descr="'a > b ? \"true\" : \"false\"' can be simplified to 'java.lang.Boolean.toString(a > b)'">a > b</warning> ? "true" : "false";
+  }
+
+  String str6(boolean value) {
+    return value ? "true" : "yes";
+  }
+
+  String str7(int num) {
+    return <warning descr="'num > 0 //comment
+           ? \"true\" : \"false\"' can be simplified to 'java.lang.Boolean.toString(num > 0)'">num > 0</warning> //comment
+           ? "true" : "false";
+  }
+
+  String str8(int num) {
+    return <warning descr="'num //comment
+           > 0 ? \"true\" : \"false\"' can be simplified to 'java.lang.Boolean.toString(num //comment
+           > 0)'">num //comment
+           > 0</warning> ? "true" : "false";
+  }
+
+  String str9(int num) {
+    // We don't want to be "too smart". Let's not suggest a fix in this case.
+    final String finalFalseStr = "false";
+    return num > 0 ? "true" : finalFalseStr;
+  }
+
   void one(boolean condition) {
     final boolean a = <warning descr="'condition ? true : false' can be simplified to 'condition'">condition</warning> ? true : false;
     final boolean b = <warning descr="'condition ? false : true' can be simplified to '!condition'">condition</warning> ? false : true;
