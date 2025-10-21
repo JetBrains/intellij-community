@@ -44,6 +44,8 @@ public final class MultiParentClassLoaderHelper {
    */
   @ApiStatus.Internal
   public ClassLoader @NotNull [] getAllParents() {
+    // todo https://youtrack.jetbrains.com/issue/IJPL-214092
+
     ClassLoader[] result = allParents;
     if (result != null && allParentsLastCacheId == parentListCacheIdCounter.get()) {
       return result;
