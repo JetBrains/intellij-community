@@ -53,7 +53,7 @@ private class RichTextCodeVisionEntryPainter : DefaultCodeVisionPainter<RichText
 private class ZombieCodeVisionEntryPainter : DefaultCodeVisionPainter<ZombieCodeVisionEntry>(
   iconProvider = { _, entry, _ -> entry.icon },
   textPainter = CodeVisionVisionTextPainter({
-    val result = if (it.count != null) "${it.count} ${it.text}" else it.text
+    val result = if (it.count != null) "${it.count} ${it.text}" else if (it.shouldBeDelimited) it.text else ""
     val debug = Registry.`is`("cache.markup.debug")
     if (debug) "${result}?" else result
   })
