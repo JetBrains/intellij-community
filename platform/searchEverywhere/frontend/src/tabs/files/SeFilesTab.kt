@@ -77,6 +77,7 @@ class SeFilesTab(private val delegate: SeTabDelegate) : SeTab {
   companion object {
     @Internal
     const val ID: String = "FileSearchEverywhereContributor"
+
     @Internal
     val NAME: String = IdeBundle.message("search.everywhere.group.name.files")
   }
