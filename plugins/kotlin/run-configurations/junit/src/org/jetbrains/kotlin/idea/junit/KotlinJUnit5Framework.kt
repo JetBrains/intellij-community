@@ -25,83 +25,96 @@ import org.jetbrains.kotlin.psi.KtClassOrObject
 import org.jetbrains.kotlin.psi.KtNamedDeclaration
 import org.jetbrains.kotlin.psi.KtNamedFunction
 
-class KotlinJUnit5Framework: JUnit5Framework(), KotlinPsiBasedTestFramework {
-    private val psiBasedDelegate = object : AbstractKotlinPsiBasedTestFramework() {
+/**
+ * Shared PSI-based delegate for Kotlin JUnit5-like frameworks (JUnit5 and JUnit6).
+ */
+internal class KotlinJUnit5PsiDelegate(
+    markerClassFqnsParam: Collection<String>,
+    private val isUnderTestSources: (KtClassOrObject) -> Boolean,
+    private val isKotlinTestClass: (KtClassOrObject) -> Boolean,
+) : AbstractKotlinPsiBasedTestFramework() {
+    override val markerClassFqns: Collection<String> = markerClassFqnsParam
 
-        override val markerClassFqns: Collection<String> = markerClassFQNames
-        override val disabledTestAnnotation: String = JUnitCommonClassNames.ORG_JUNIT_JUPITER_API_DISABLED
-        override val allowTestMethodsInObject: Boolean = true
+    override val disabledTestAnnotation: String = JUnitCommonClassNames.ORG_JUNIT_JUPITER_API_DISABLED
 
-        override fun checkTestClass(declaration: KtClassOrObject): ThreeState {
-            val checkState = super.checkTestClass(declaration)
-            if (checkState != UNSURE) return checkState
-            return CachedValuesManager.getCachedValue(declaration) {
-                CachedValueProvider.Result.create(
-                    checkJUnit5TestClass(declaration),
-                    OuterModelsModificationTrackerManager.getTracker(declaration.project)
-                )
-            }
+    override val allowTestMethodsInObject: Boolean = true
+
+    override fun checkTestClass(declaration: KtClassOrObject): ThreeState {
+        val checkState = super.checkTestClass(declaration)
+        if (checkState != UNSURE) return checkState
+        return CachedValuesManager.getCachedValue(declaration) {
+            CachedValueProvider.Result.create(
+                checkJUnit5TestClass(declaration),
+                OuterModelsModificationTrackerManager.getTracker(declaration.project)
+            )
         }
-
-        fun isPotentialTestClass(element: PsiElement): Boolean {
-            if (element.language != KotlinLanguage.INSTANCE) return false
-            val psiElement = (element as? KtLightElement<*, *>)?.kotlinOrigin ?: element
-            val ktClassOrObject = psiElement.parentOfType<KtClassOrObject>(true) ?: return false
-
-            return CachedValuesManager.getCachedValue(ktClassOrObject) {
-                CachedValueProvider.Result.create(
-                    checkJUnit5PotentialTestClass(ktClassOrObject) != NO,
-                    OuterModelsModificationTrackerManager.getTracker(ktClassOrObject.project)
-                )
-            }
-        }
-
-        override fun isTestMethod(declaration: KtNamedFunction): Boolean {
-            if (!super.isTestMethod(declaration)) return false
-            if (declaration.annotationEntries.isEmpty()) return false
-            return isJUnit5TestMethod(declaration)
-        }
-
-        private fun checkJUnit5TestClass(declaration: KtClassOrObject): ThreeState =
-            if (!isFrameworkAvailable(declaration)) {
-                NO
-            } else {
-                checkIsJUnit5LikeTestClass(declaration, false)
-            }
-
-        private fun checkJUnit5PotentialTestClass(declaration: KtClassOrObject): ThreeState =
-            if (!isFrameworkAvailable(declaration) && !isFrameworkAvailable(declaration, KotlinPsiBasedTestFramework.KOTLIN_TEST_TEST, false)) {
-                NO
-            } else {
-                checkIsJUnit5LikeTestClass(declaration, true)
-            }
-
-        private fun checkIsJUnit5LikeTestClass(declaration: KtClassOrObject, isPotential: Boolean): ThreeState =
-            if (isPotential) {
-                if (isUnderTestSources(declaration)) UNSURE else NO
-            } else if (!isFrameworkAvailable(declaration)) {
-                NO
-            } else if (declaration is KtClass && declaration.isInner()) {
-                if (isAnnotated(declaration, JUnitCommonClassNames.ORG_JUNIT_JUPITER_API_NESTED)) YES else NO
-            } else if (declaration.isTopLevel() && isAnnotated(declaration, JUnitCommonClassNames.ORG_JUNIT_JUPITER_API_EXTENSION_EXTEND_WITH)) {
-                YES
-            } else if (findAnnotatedFunction(declaration, testableAnnotations) != null) {
-                YES
-            } else {
-                UNSURE
-            }
-
-        private fun isJUnit5TestMethod(method: KtNamedFunction): Boolean {
-            return isAnnotated(method, METHOD_ANNOTATION_FQN)
-        }
-
-        override fun findSetUp(classOrObject: KtClassOrObject): KtNamedFunction? =
-            findAnnotatedFunction(classOrObject.takeIf { isTestClass(it) }, setUpAnnotations)
-
-        override fun findTearDown(classOrObject: KtClassOrObject): KtNamedFunction? =
-            findAnnotatedFunction(classOrObject.takeIf { isTestClass(it) }, tearDownAnnotations)
-
     }
+
+    fun isPotentialTestClass(element: PsiElement): Boolean {
+        if (element.language != KotlinLanguage.INSTANCE) return false
+        val psiElement = (element as? KtLightElement<*, *>)?.kotlinOrigin ?: element
+        val ktClassOrObject = psiElement.parentOfType<KtClassOrObject>(true) ?: return false
+
+        return CachedValuesManager.getCachedValue(ktClassOrObject) {
+            CachedValueProvider.Result.create(
+                checkJUnit5PotentialTestClass(ktClassOrObject) != NO,
+                OuterModelsModificationTrackerManager.getTracker(ktClassOrObject.project)
+            )
+        }
+    }
+
+    override fun isTestMethod(declaration: KtNamedFunction): Boolean {
+        if (!super.isTestMethod(declaration)) return false
+        if (declaration.annotationEntries.isEmpty()) return false
+        return isJUnit5TestMethod(declaration)
+    }
+
+    private fun checkJUnit5TestClass(declaration: KtClassOrObject): ThreeState =
+        if (!isFrameworkAvailable(declaration)) {
+            NO
+        } else {
+            checkIsJUnit5TestClass(declaration, isPotential = false)
+        }
+
+    private fun checkJUnit5PotentialTestClass(declaration: KtClassOrObject): ThreeState =
+        if (!isFrameworkAvailable(declaration) && !isFrameworkAvailable(declaration, KotlinPsiBasedTestFramework.KOTLIN_TEST_TEST, false)) {
+            NO
+        } else {
+            checkIsJUnit5TestClass(declaration, isPotential = true)
+        }
+
+    private fun checkIsJUnit5TestClass(declaration: KtClassOrObject, isPotential: Boolean): ThreeState =
+        if (isPotential) {
+            if (isUnderTestSources(declaration)) UNSURE else NO
+        } else if (!isFrameworkAvailable(declaration)) {
+            NO
+        } else if (declaration is KtClass && declaration.isInner()) {
+            if (isAnnotated(declaration, JUnitCommonClassNames.ORG_JUNIT_JUPITER_API_NESTED)) YES else NO
+        } else if (declaration.isTopLevel() && isAnnotated(declaration, JUnitCommonClassNames.ORG_JUNIT_JUPITER_API_EXTENSION_EXTEND_WITH)) {
+            YES
+        } else if (findAnnotatedFunction(declaration, testableAnnotations) != null) {
+            YES
+        } else {
+            UNSURE
+        }
+
+    private fun isJUnit5TestMethod(method: KtNamedFunction): Boolean {
+        return isAnnotated(method, METHOD_ANNOTATION_FQN)
+    }
+
+    override fun findSetUp(classOrObject: KtClassOrObject): KtNamedFunction? =
+        findAnnotatedFunction(classOrObject.takeIf { isKotlinTestClass(it) }, setUpAnnotations)
+
+    override fun findTearDown(classOrObject: KtClassOrObject): KtNamedFunction? =
+        findAnnotatedFunction(classOrObject.takeIf { isKotlinTestClass(it) }, tearDownAnnotations)
+}
+
+class KotlinJUnit5Framework : JUnit5Framework(), KotlinPsiBasedTestFramework {
+    private val psiBasedDelegate = KotlinJUnit5PsiDelegate(
+        markerClassFqnsParam = markerClassFQNames,
+        isUnderTestSources = this::isUnderTestSources,
+        isKotlinTestClass = this::isTestClass
+    )
 
     override fun responsibleFor(declaration: KtNamedDeclaration): Boolean =
         psiBasedDelegate.responsibleFor(declaration)
