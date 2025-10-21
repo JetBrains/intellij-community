@@ -316,22 +316,17 @@ class ClassLoaderConfigurator(
   }
 
   private fun createPluginClassLoader(
-    module: IdeaPluginDescriptorImpl,
+    module: PluginMainDescriptor,
     dependencies: Array<PluginModuleDescriptor>,
     classPath: ClassPath,
     libDirectories: List<Path>
   ): PluginClassLoader {
-    val resolveScopeManager: ResolveScopeManager? = if (module is PluginMainDescriptor) {
-       if (module.pluginId.idString == "com.intellij.diagram") {
-        // multiple packages - intellij.diagram and intellij.diagram.impl modules
-        createScopeWithExtraPackage("com.intellij.diagram.")
-      }
-      else {
-        createPluginDependencyAndContentBasedScope(descriptor = module, pluginSet = pluginSet)
-      }
+    val resolveScopeManager: ResolveScopeManager? = if (module.pluginId.idString == "com.intellij.diagram") {
+      // multiple packages - intellij.diagram and intellij.diagram.impl modules
+      createScopeWithExtraPackage("com.intellij.diagram.")
     }
     else {
-      createModuleResolveScopeManager()
+      createPluginDependencyAndContentBasedScope(descriptor = module, pluginSet = pluginSet)
     }
     return PluginClassLoader(classPath = classPath,
                              parents = dependencies,
