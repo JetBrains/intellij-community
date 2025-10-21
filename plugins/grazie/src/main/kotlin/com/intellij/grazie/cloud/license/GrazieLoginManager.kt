@@ -164,7 +164,7 @@ class GrazieLoginManager(coroutineScope: CoroutineScope) {
     }
     isLoggedOut = false
     if (!activationDialogWasShown) {
-      logger.warn("Need explicit activation dialog agreement, so skipping cloud login")
+      logger.debug("Need explicit activation dialog agreement, so skipping cloud login")
       setState(GrazieLoginState.Jba(token = accountToken, null))
       return
     }
