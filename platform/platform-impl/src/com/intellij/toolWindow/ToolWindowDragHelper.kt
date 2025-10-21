@@ -245,8 +245,8 @@ internal class ToolWindowDragHelper(parent: Disposable, @JvmField val dragSource
   private fun setInitialOffsetFromStripeButton(relativePoint: RelativePoint, clickedComponent: Component) {
     initialOffset.location = relativePoint.getPoint(clickedComponent).also {
       if (clickedComponent is AbstractSquareStripeButton) {
-        it.x -= clickedComponent.insets.left + SquareStripeButtonLook.ICON_PADDING.left
-        it.y -= clickedComponent.insets.top + SquareStripeButtonLook.ICON_PADDING.top
+        it.x -= clickedComponent.insets.left + SquareStripeButtonLook.getIconPadding(clickedComponent.isOnTheLeftStripe()).left
+        it.y -= clickedComponent.insets.top + SquareStripeButtonLook.getIconPadding(clickedComponent.isOnTheLeftStripe()).top
       }
     }
   }
@@ -703,6 +703,7 @@ internal class ToolWindowDragHelper(parent: Disposable, @JvmField val dragSource
         component.size = component.preferredSize
       }
 
+      val isLeft = component.isOnTheLeftStripe()
       val areaSize = when (component) {
         is StripeButton -> component.size.also {
           val delta = JBUIScale.scale(1)
@@ -711,7 +712,7 @@ internal class ToolWindowDragHelper(parent: Disposable, @JvmField val dragSource
         }
         is AbstractSquareStripeButton -> component.size.also {
           JBInsets.removeFrom(it, component.insets)
-          JBInsets.removeFrom(it, SquareStripeButtonLook.ICON_PADDING)
+          JBInsets.removeFrom(it, SquareStripeButtonLook.getIconPadding(isLeft))
         }
         else -> JBUI.emptySize()
       }
@@ -733,7 +734,7 @@ internal class ToolWindowDragHelper(parent: Disposable, @JvmField val dragSource
 
         when (component) {
           is StripeButton -> component.paint(it)
-          is AbstractSquareStripeButton -> component.paintDraggingButton(it)
+          is AbstractSquareStripeButton -> component.paintDraggingButton(it, isLeft)
         }
 
         it.dispose()
