@@ -112,7 +112,7 @@ public class Py3TypeCheckerInspectionTest extends PyInspectionTestCase {
   public void testFunctionReturnTypePy3() {
     doTest();
   }
-  
+
   public void testFunctionYieldTypePy3() {
     doTest();
   }
@@ -2658,7 +2658,7 @@ def foo(param: str | int) -> TypeGuard[str]:
                    compatible: MyCallable[[int], object] = MyCallable[[object], str]()
                    incompatible1: MyCallable[[object], object] = <warning descr="Expected type 'MyCallable[[object], object]', got 'MyCallable[[int], str]' instead">MyCallable[[int], str]()</warning>
                    incompatible2: MyCallable[[int], str] = <warning descr="Expected type 'MyCallable[[int], str]', got 'MyCallable[[object], object]' instead">MyCallable[[object], object]()</warning>
-                   """);    
+                   """);
   }
 
   // PY-77541
