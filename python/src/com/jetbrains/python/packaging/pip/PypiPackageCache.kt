@@ -185,9 +185,10 @@ open class PypiPackageCache : PythonPackageCache<String> {
           return@repeat
         }
         thisLogger().debug("Attempt ${it + 1} Loaded ${loaded.size} Pypi packages")
-        if (loaded.isNotEmpty()) {
+        if (loaded.size > 2) {
           return loaded
         }
+        thisLogger().debug("Attempt ${it + 1} Return TOO SMALL Pypi packages list. Loaded ${loaded}")
       }
       if (error != null) {
         throw error
