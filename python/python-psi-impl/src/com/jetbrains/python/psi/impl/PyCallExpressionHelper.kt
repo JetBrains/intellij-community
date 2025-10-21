@@ -1032,7 +1032,8 @@ fun analyzeArguments(
       }
       else {
         val keywordArgument = keywordArguments.removeKeywordArgument(parameterName)
-        if (keywordArgument != null && !(!hasSlashParameter && !seenStarArgs && parameterName != null && isPrivate(parameterName))) {
+        val oldStylePositionalOnlyParam = !hasSlashParameter && !seenStarArgs && parameterName != null && isPrivate(parameterName)
+        if (keywordArgument != null && !oldStylePositionalOnlyParam) {
           mappedParameters.put(keywordArgument, parameter)
         }
         else if (!variadicPositionalArguments.isEmpty() || !variadicKeywordArguments.isEmpty()) {
