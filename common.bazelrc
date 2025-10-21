@@ -16,6 +16,10 @@ startup --host_jvm_args=-Xmx12g
 # https://github.com/openjdk/jdk/blob/6705a9255d28f351950e7fbca9d05e73942a4e27/src/java.base/windows/classes/sun/nio/fs/WindowsWatchService.java#L630
 startup --host_jvm_args=-XX:+UseZGC
 
+# Increase file watch service queue maximum size to prevent overflow when watching local filesystem for changes on Windows
+# https://github.com/openjdk/jdk/blob/6705a9255d28f351950e7fbca9d05e73942a4e27/src/java.base/share/classes/sun/nio/fs/AbstractWatchKey.java#L39
+startup --host_jvm_args=-Djdk.nio.file.WatchService.maxEventsPerPoll=1000000  # 1M
+
 # Disk cache
 common --experimental_disk_cache_gc_max_size=32G --experimental_disk_cache_gc_max_age=28d
 common:macos --disk_cache=~/Library/Caches/JetBrains/monorepo-bazel-cache
