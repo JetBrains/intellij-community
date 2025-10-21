@@ -2,6 +2,7 @@
   <dependencies>
     <module name="intellij.kotlin.refactorings"/>
     <module name="intellij.kotlin.codeInsight"/>
+    <module name="intellij.kotlin.searching"/>
   </dependencies>
   <extensions defaultExtensionNs="org.jetbrains.kotlin">
     <codeinsight.quickfix.registrar implementation="org.jetbrains.kotlin.idea.k2.codeinsight.fixes.KotlinK2QuickFixRegistrar"/>
