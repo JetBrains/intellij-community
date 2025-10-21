@@ -19,6 +19,7 @@ import com.jetbrains.python.ast.PyAstWithAncestors;
 import com.jetbrains.python.psi.types.PyClassLikeType;
 import com.jetbrains.python.psi.types.TypeEvalContext;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import java.util.List;
 
@@ -32,5 +33,5 @@ public interface PyWithAncestors extends PyAstWithAncestors {
    * Returns types of all ancestors from the hierarchy.
    */
   @NotNull
-  List<PyClassLikeType> getAncestorTypes(@NotNull TypeEvalContext context);
+  List<@Nullable PyClassLikeType> getAncestorTypes(@NotNull TypeEvalContext context);
 }

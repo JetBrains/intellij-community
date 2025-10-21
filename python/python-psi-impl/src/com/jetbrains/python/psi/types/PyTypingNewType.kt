@@ -77,7 +77,7 @@ class PyTypingNewType(private val classType: PyClassType,
     }
   }
 
-  override fun getAncestorTypes(context: TypeEvalContext): List<PyClassLikeType> {
+  override fun getAncestorTypes(context: TypeEvalContext): List<PyClassLikeType?> {
     return listOf(classType) + classType.getAncestorTypes(context)
   }
 
