@@ -101,18 +101,27 @@ internal class RunDashboardServiceRpcImpl : RunDashboardServiceRpc {
   override suspend fun restoreConfigurations(projectId: ProjectId, configurations: List<RunDashboardConfigurationId>) {
     val project = projectId.findProjectOrNull() ?: return
     val backendConfigurations = configurations.map { it.findConfigurationValue() }
-    thisLogger().trace { "Received ${configurations.size} configurations from frontend, resolved ${backendConfigurations.size}. " +
-                         "Namely, from frontend: $RunDashboardConfigurationId" +
-                         "and resolved: $backendConfigurations" }
+    thisLogger().trace {
+      "Received ${configurations.size} configurations from frontend, resolved ${backendConfigurations.size}. " +
+      "Namely, from frontend: $RunDashboardConfigurationId" +
+      "and resolved: $backendConfigurations"
+    }
     RunDashboardManagerImpl.getInstance(project).restoreConfigurations(backendConfigurations)
   }
 
   override suspend fun hideConfigurations(projectId: ProjectId, configurations: List<RunDashboardConfigurationId>) {
     val project = projectId.findProjectOrNull() ?: return
     val backendConfigurations = configurations.map { it.findConfigurationValue() }
-    thisLogger().trace { "Received ${configurations.size} configurations from frontend, resolved ${backendConfigurations.size}. " +
-                         "Namely, from frontend: $RunDashboardConfigurationId" +
-                         "and resolved: $backendConfigurations" }
+    thisLogger().trace {
+      "Received ${configurations.size} configurations from frontend, resolved ${backendConfigurations.size}. " +
+      "Namely, from frontend: $RunDashboardConfigurationId" +
+      "and resolved: $backendConfigurations"
+    }
     RunDashboardManagerImpl.getInstance(project).hideConfigurations(backendConfigurations)
+  }
+
+  override suspend fun getRunManagerUpdates(projectId: ProjectId): Flow<Unit> {
+    val project = projectId.findProjectOrNull() ?: return emptyFlow()
+    return RunDashboardConfigurationUpdatesHolder.getInstance(project).getUpdates()
   }
 }

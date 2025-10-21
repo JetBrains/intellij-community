@@ -83,30 +83,11 @@ class RunDashboardTypePanel(private val project: Project) : NonOpaquePanel(Borde
   private val treeExpander = DefaultTreeExpander(tree)
 
   init {
-    //project.getMessageBus().connect(project).subscribe(RunManagerListener.TOPIC, object : RunManagerListener {
-    //  private var updateInProgress = false
-    //
-    //  override fun runConfigurationAdded(settings: RunnerAndConfigurationSettings) {
-    //    if (!updateInProgress) {
-    //      updateTree(type)
-    //    }
-    //  }
-    //
-    //  override fun runConfigurationRemoved(settings: RunnerAndConfigurationSettings) {
-    //    if (!updateInProgress) {
-    //      updateTree(type)
-    //    }
-    //  }
-    //
-    //  override fun beginUpdate() {
-    //    updateInProgress = true
-    //  }
-    //
-    //  override fun endUpdate() {
-    //    updateInProgress = false
-    //    updateTree(type)
-    //  }
-    //})
+    RunDashboardCoroutineScopeProvider.getInstance(project).cs.launch {
+      RunDashboardServiceRpc.getInstance().getRunManagerUpdates(project.projectId()).collect {
+        updateTree(type)
+      }
+    }
 
     tree.addCheckboxTreeListener(object : CheckboxTreeListener {
       override fun nodeStateChanged(node: CheckedTreeNode) {
