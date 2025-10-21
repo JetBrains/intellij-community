@@ -159,6 +159,13 @@ final class ProcessPopup {
     myContentPanel.setBorder(null);
   }
 
+  public void setHideOnFocusLost(boolean value) {
+    if (myPopup instanceof AbstractPopup popup) {
+      popup.setCancelOnClickOutside(value);
+      popup.setCancelOnOtherWindowOpen(value);
+    }
+  }
+
   private static void hideSeparator(@NotNull Component component) {
     ProgressPanel panel = ClientProperty.get(component, KEY);
     if (panel != null) {
