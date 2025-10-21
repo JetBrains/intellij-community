@@ -269,7 +269,8 @@ public abstract class PluginsGroupComponent extends JBPanelWithEmptyText {
     ListPluginComponent anchor = null;
     int uiIndex = -1;
 
-    if (index == group.ui.plugins.size()) {
+    List<ListPluginComponent> plugins = group.ui.plugins;
+    if (index == plugins.size()) {
       int groupIndex = myGroups.indexOf(group.ui);
       if (groupIndex < myGroups.size() - 1) {
         UIPluginGroup nextGroup = myGroups.get(groupIndex + 1);
@@ -278,12 +279,12 @@ public abstract class PluginsGroupComponent extends JBPanelWithEmptyText {
       }
     }
     else {
-      anchor = group.ui.plugins.get(index);
+      anchor = plugins.get(index);
       uiIndex = getComponentIndex(anchor);
     }
 
     ListPluginComponent pluginComponent = createListComponent(model, group, group.getPreloadedModel());
-    group.ui.plugins.add(index, pluginComponent);
+    plugins.add(index, pluginComponent);
     add(pluginComponent, uiIndex);
     myEventHandler.addCell(pluginComponent, anchor);
     pluginComponent.setListeners(myEventHandler);
