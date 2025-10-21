@@ -10,4 +10,5 @@ data class RunDashboardConfigurationDto(
   val configurationTypeId: String,
   val configurationDisplayName: String,
   val folderName: String?,
+  val configurationId: RunDashboardConfigurationId,
 )

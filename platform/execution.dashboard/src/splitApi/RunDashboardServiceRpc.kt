@@ -33,4 +33,6 @@ interface RunDashboardServiceRpc : RemoteApi<Unit> {
   suspend fun getAvailableConfigurations(projectId: ProjectId): Flow<Set<RunDashboardConfigurationDto>>
   suspend fun getExcludedConfigurations(projectId: ProjectId): Flow<Set<String>>
   suspend fun setNewExcluded(projectId: ProjectId, configurationTypeId: String, newExcluded: Boolean)
+  suspend fun restoreConfigurations(projectId: ProjectId, configurations: List<RunDashboardConfigurationId>)
+  suspend fun hideConfigurations(projectId: ProjectId, configurations: List<RunDashboardConfigurationId>)
 }
