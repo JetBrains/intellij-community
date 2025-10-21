@@ -89,9 +89,14 @@ public final class KotlinJvmDifferentiateStrategy extends JvmDifferentiateStrate
 
   @Override
   public boolean processAddedClasses(DifferentiateContext context, Iterable<JvmClass> addedClasses, Utils future, Utils present) {
-    for (JvmNodeReferenceID sealedSuperClass : unique(map(filter(flat(map(filter(addedClasses, cl -> !cl.isLibrary()), future::allDirectSupertypes)), KJvmUtils::isSealed), JVMClassNode::getReferenceID))) {
-      affectSealedClass(context, sealedSuperClass, "Subclass of a sealed class was added, affecting ", future, true /*affectUsages*/);
+    for (JvmClass sealedClass : Utils.uniqueBy(filter(flat(map(addedClasses, future::allDirectSupertypes)), KJvmUtils::isSealed), JvmClass::isSame, JVMClassNode::diffHashCode)) {
+      if (!sealedClass.isLibrary()) {
+        affectSealedClass(context, sealedClass.getReferenceID(), "Subclass of a sealed class was added, affecting ", future, false /*affectUsages*/);
+      }
+      // to track usages in 'when'
+      affectSealedSubclassUsages(context, sealedClass.getReferenceID(), "Subclass of a sealed class was added, affecting usages of a sealed class' subclass ", present);
     }
+
     return super.processAddedClasses(context, addedClasses, future, present);
   }
 
@@ -144,13 +149,20 @@ public final class KotlinJvmDifferentiateStrategy extends JvmDifferentiateStrate
   }
 
   @Override
-  public boolean processRemovedClass(DifferentiateContext context, JvmClass removedClass, Utils future, Utils present) {
-    if (!removedClass.isLibrary()) {
-      for (JvmClass superClass : filter(future.allDirectSupertypes(removedClass), KJvmUtils::isSealed)) {
-        affectSealedClass(context, superClass.getReferenceID(), "Subclass of a sealed class was removed, affecting ", future, true /*affectUsages*/);
+  public boolean processRemovedClasses(DifferentiateContext context, Iterable<JvmClass> removedClasses, Utils future, Utils present) {
+    for (JvmClass sealedClass : Utils.uniqueBy(filter(flat(map(removedClasses, future::allDirectSupertypes)), KJvmUtils::isSealed), JvmClass::isSame, JvmClass::diffHashCode)) {
+      if (!sealedClass.isLibrary()) {
+        affectSealedClass(context, sealedClass.getReferenceID(), "Subclass of a sealed class was removed, affecting ", future, false /*affectUsages*/);
       }
+      // to track usages in 'when'
+      affectSealedSubclassUsages(context, sealedClass.getReferenceID(), "Subclass of a sealed class was removed, affecting usages of a sealed class' subclass ", present);
     }
 
+    return super.processRemovedClasses(context, removedClasses, future, present);
+  }
+
+  @Override
+  public boolean processRemovedClass(DifferentiateContext context, JvmClass removedClass, Utils future, Utils present) {
     KmDeclarationContainer container = KJvmUtils.getDeclarationContainer(removedClass);
 
     if (!removedClass.isInnerClass()) {
@@ -231,14 +243,8 @@ public final class KotlinJvmDifferentiateStrategy extends JvmDifferentiateStrate
         }
       }
       else if (KJvmUtils.isSealed(change.getPast())) { // was sealed, but not anymore
-        for (ReferenceID id : present.directSubclasses(changedClass.getReferenceID())) {
-          String nodeName = present.getNodeName(id);
-          if (nodeName != null) {
-            // to track uses in 'when' expressions
-            debug("A sealed class is not sealed anymore, affecting its subclass usages ", nodeName);
-            context.affectUsage(new ClassUsage(nodeName));
-          }
-        }
+        // to track uses in 'when' expressions
+        affectSealedSubclassUsages(context, changedClass.getReferenceID(), "A sealed class is not sealed anymore, affecting its subclass usages ", present);
       }
     }
 
@@ -750,11 +756,16 @@ public final class KotlinJvmDifferentiateStrategy extends JvmDifferentiateStrate
     }
 
     if (affectSubclassUsages) { // to track uses in 'when' expressions
-      for (ReferenceID id : utils.directSubclasses(sealedClassId)) {
-        String nodeName = utils.getNodeName(id);
-        if (nodeName != null) {
-          context.affectUsage(new ClassUsage(nodeName));
-        }
+      affectSealedSubclassUsages(context, sealedClassId, "Affecting usages of a sealed class' subclass ", utils);
+    }
+  }
+
+  private void affectSealedSubclassUsages(DifferentiateContext context, JvmNodeReferenceID sealedClassId, String affectReason, Utils utils) {
+    for (ReferenceID id : utils.directSubclasses(sealedClassId)) {
+      String nodeName = utils.getNodeName(id);
+      if (nodeName != null) {
+        debug(affectReason, nodeName);
+        context.affectUsage(new ClassUsage(nodeName));
       }
     }
   }
