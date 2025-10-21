@@ -72,6 +72,7 @@ public final class ClasspathBootstrap {
   };
 
   private static final String[] REFLECTION_OPEN_PACKAGES = {
+    "java.base/sun.nio=ALL-UNNAMED",
     "java.base/sun.nio.ch=ALL-UNNAMED",
     "java.base/jdk.internal.ref=ALL-UNNAMED",
 
