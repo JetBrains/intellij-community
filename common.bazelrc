@@ -6,6 +6,9 @@
 
 ### --- ###
 
+# Limit the server memory usage as per https://youtrack.jetbrains.com/issue/IJI-3103#focus=Comments-27-12862178.0-0
+startup --host_jvm_args=-Xmx12g
+
 # Disk cache
 common --experimental_disk_cache_gc_max_size=32G --experimental_disk_cache_gc_max_age=28d
 common:macos --disk_cache=~/Library/Caches/JetBrains/monorepo-bazel-cache
