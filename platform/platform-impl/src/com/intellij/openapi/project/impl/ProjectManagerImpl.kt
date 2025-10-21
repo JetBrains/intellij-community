@@ -3,6 +3,7 @@
 
 package com.intellij.openapi.project.impl
 
+import com.intellij.CommonBundle
 import com.intellij.configurationStore.ProjectStorePathManager
 import com.intellij.configurationStore.StoreReloadManager
 import com.intellij.configurationStore.saveSettings
@@ -73,15 +74,11 @@ import com.intellij.openapi.wm.WindowManager
 import com.intellij.openapi.wm.ex.WelcomeScreenProjectProvider
 import com.intellij.openapi.wm.ex.WindowManagerEx
 import com.intellij.openapi.wm.impl.welcomeScreen.WelcomeFrame
-import com.intellij.platform.PROJECT_NEWLY_CREATED
-import com.intellij.platform.PROJECT_NEWLY_OPENED
-import com.intellij.platform.PlatformProjectOpenProcessor
-import com.intellij.platform.attachToProjectAsync
+import com.intellij.platform.*
 import com.intellij.platform.core.nio.fs.MultiRoutingFileSystem
 import com.intellij.platform.diagnostic.telemetry.impl.span
 import com.intellij.platform.eel.provider.EelInitialization
 import com.intellij.platform.ide.diagnostic.startUpPerformanceReporter.FUSProjectHotStartUpMeasurer
-import com.intellij.platform.isLoadedFromCacheButHasNoModules
 import com.intellij.platform.project.ProjectEntitiesStorage
 import com.intellij.platform.workspace.jps.JpsMetrics
 import com.intellij.projectImport.ProjectAttachProcessor
@@ -89,6 +86,7 @@ import com.intellij.serviceContainer.getComponentManagerImpl
 import com.intellij.ui.IdeUICustomization
 import com.intellij.util.ArrayUtil
 import com.intellij.util.ConcurrencyUtil
+import com.intellij.util.ExceptionUtil
 import com.intellij.util.PlatformUtils.isDataSpell
 import com.intellij.util.concurrency.ThreadingAssertions
 import com.intellij.util.concurrency.annotations.RequiresBackgroundThread
@@ -817,6 +815,24 @@ open class ProjectManagerImpl : ProjectManagerEx(), Disposable {
     catch (secondException: Throwable) {
       LOG.error(secondException)
     }
+
+    //show to the user at least some indication of the error happened:
+    if (exception != null) {
+      //TODO UX-3615: default error dialog is awful, make something better.
+      //      Also: use ApplicationNotificationsModel to check for Notifications that may be generated
+      //      during project opening -- they may contain some useful info about the error, and also
+      //      useful actions to 'fix' it -- better show those Notifications to user somehow, too.
+      val stackTraceText = ExceptionUtil.getThrowableText(exception)
+      val fullMessage = "${exception.localizedMessage}\n\nStack Trace:\n$stackTraceText"
+
+      withContext(Dispatchers.EDT) {
+        Messages.showErrorDialog(
+          IdeBundle.message("ide.opening.failed.message", fullMessage),
+          CommonBundle.getErrorTitle()
+        )
+      }
+    }
+
     if (options.showWelcomeScreen) {
       WelcomeFrame.showIfNoProjectOpened()
     }
