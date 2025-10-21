@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package git4idea.branch;
 
 import com.intellij.openapi.actionSystem.*;
@@ -34,7 +34,7 @@ import java.awt.event.MouseEvent;
 import java.util.Collection;
 import java.util.Set;
 
-public class DeepCompareAction extends ToggleAction implements DumbAware {
+public class HighlightCherryPickedCommitsAction extends ToggleAction implements DumbAware {
   @Override
   public @NotNull ActionUpdateThread getActionUpdateThread() {
     return ActionUpdateThread.EDT;
@@ -48,7 +48,7 @@ public class DeepCompareAction extends ToggleAction implements DumbAware {
     if (project == null || dataProvider == null || ui == null) {
       return false;
     }
-    return DeepComparator.getInstance(project, dataProvider, ui).hasHighlightingOrInProgress();
+    return CherryPickedCommitsHighlighter.getInstance(project, dataProvider, ui).hasHighlightingOrInProgress();
   }
 
   @Override
@@ -60,26 +60,26 @@ public class DeepCompareAction extends ToggleAction implements DumbAware {
       return;
     }
 
-    final DeepComparator dc = DeepComparator.getInstance(project, dataProvider, ui);
+    CherryPickedCommitsHighlighter highlighter = CherryPickedCommitsHighlighter.getInstance(project, dataProvider, ui);
     if (selected) {
       VcsLogUsageTriggerCollector.triggerUsage(e, this);
 
       VcsLogDataPack dataPack = ui.getDataPack();
-      String singleBranchName = DeepComparator.getComparedBranchFromFilters(ui.getFilterUi().getFilters(), dataPack.getRefs());
+      String singleBranchName = CherryPickedCommitsHighlighter.getComparedBranchFromFilters(ui.getFilterUi().getFilters(), dataPack.getRefs());
       if (singleBranchName == null) {
         selectBranchAndPerformAction(ui, e, selectedBranch -> {
           VcsLogFilterCollection collection = ui.getFilterUi().getFilters();
           collection = VcsLogFiltersKt.without(collection, VcsLogBranchLikeFilter.class);
           collection = VcsLogFiltersKt.with(collection, VcsLogFilterObject.fromBranch(selectedBranch));
           ui.getFilterUi().setFilters(collection);
-          dc.startTask(dataPack, selectedBranch);
+          highlighter.startTask(dataPack, selectedBranch);
         }, getGitRoots(project, ui));
         return;
       }
-      dc.startTask(dataPack, singleBranchName);
+      highlighter.startTask(dataPack, singleBranchName);
     }
     else {
-      dc.stopTaskAndUnhighlight();
+      highlighter.stopTaskAndUnhighlight();
     }
   }
 

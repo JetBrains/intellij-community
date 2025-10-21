@@ -321,7 +321,7 @@
     </group>
 
     <group id="Git.Log.Toolbar">
-      <action id="Git.Log.DeepCompare" class="git4idea.branch.DeepCompareAction"/>
+      <action id="Git.Log.HighlightCherryPickedCommits" class="git4idea.branch.HighlightCherryPickedCommitsAction"/>
       <add-to-group group-id="Vcs.Log.PresentationSettings" relative-to-action="Vcs.Log.HighlightersActionGroup" anchor="after"/>
     </group>
 
@@ -716,7 +716,7 @@
 
     <vcs.taskHandler implementation="git4idea.GitTaskHandler"/>
 
-    <logHighlighterFactory implementation="git4idea.branch.DeepComparator$Factory"/>
+    <logHighlighterFactory implementation="git4idea.branch.CherryPickedCommitsHighlighter$Factory"/>
 
     <ignoredFileContentProvider implementation="git4idea.ignore.GitIgnoredFileContentProvider"/>
     <openapi.vcs.changes.vcsPreservingExecutor implementation="git4idea.util.GitPreservingExecutor"/>

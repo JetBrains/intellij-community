@@ -47,11 +47,13 @@ import it.unimi.dsi.fastutil.ints.IntSet
 import org.jetbrains.annotations.NonNls
 import java.awt.Point
 
-class DeepComparator(private val project: Project,
-                     private val repositoryManager: GitRepositoryManager,
-                     private val vcsLogData: VcsLogData,
-                     private val ui: VcsLogUi,
-                     parent: Disposable) : VcsLogHighlighter, Disposable {
+internal class CherryPickedCommitsHighlighter(
+  private val project: Project,
+  private val repositoryManager: GitRepositoryManager,
+  private val vcsLogData: VcsLogData,
+  private val ui: VcsLogUi,
+  parent: Disposable,
+) : VcsLogHighlighter, Disposable {
   private val storage
     get() = vcsLogData.storage
 
@@ -330,7 +332,7 @@ class DeepComparator(private val project: Project,
 
     override fun getTitle(): String {
       // this method is not used as there is a separate action and showMenuItem returns false
-      return GitBundle.message("action.Git.Log.DeepCompare.text")
+      return GitBundle.message("action.Git.Log.HighlightCherryPickedCommits.text")
     }
 
     override fun showMenuItem(): Boolean {
@@ -339,11 +341,11 @@ class DeepComparator(private val project: Project,
   }
 
   companion object {
-    private val LOG = Logger.getInstance(DeepComparator::class.java)
+    private val LOG = Logger.getInstance(CherryPickedCommitsHighlighter::class.java)
 
     @JvmStatic
-    fun getInstance(project: Project, dataProvider: VcsLogData, logUi: VcsLogUi): DeepComparator {
-      return project.getService(DeepComparatorHolder::class.java).getInstance(dataProvider, logUi)
+    fun getInstance(project: Project, dataProvider: VcsLogData, logUi: VcsLogUi): CherryPickedCommitsHighlighter {
+      return project.getService(CherryPickedCommitsHighlighterHolder::class.java).getInstance(dataProvider, logUi)
     }
 
     @JvmStatic
