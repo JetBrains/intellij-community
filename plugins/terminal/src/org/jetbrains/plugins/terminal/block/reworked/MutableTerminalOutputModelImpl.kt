@@ -262,51 +262,57 @@ class MutableTerminalOutputModelImpl(
    * [block] should return an offset from which document content was changed.
    */
   private fun changeDocumentContent(isTypeAhead: Boolean = false, block: () -> ModelChange) {
-    dispatcher.multicaster.beforeContentChanged(this)
+    val changeEvent = doSingleDocumentChange(isTypeAhead) {
+      val change = block()
+      TerminalContentChangeEventImpl(
+        this,
+        change.offset,
+        change.oldText,
+        change.newText,
+        isTypeAhead,
+        false
+      )
+    }
 
+    var trimmed = 0
+    if (isTrimNeeded()) {
+      val trimEvent = doSingleDocumentChange(isTypeAhead) {
+        val startBeforeTrimming = startOffset
+        val trimmedSequence = trimToSize()
+        TerminalContentChangeEventImpl(
+          this,
+          startBeforeTrimming,
+          trimmedSequence,
+          "",
+          isTypeAhead,
+          true
+        )
+      }
+      trimmed = trimEvent.oldText.length
+    }
+
+    val startOffset = changeEvent.offset
+    val effectiveStartOffset = startOffset.coerceAtLeast(startOffset)
+    LOG.debug {
+      "Content updated from offset = $startOffset (effectively $effectiveStartOffset), " +
+      "new length = ${document.textLength} chars, ${document.lineCount} lines, " +
+      "currently trimmed = $trimmedCharsCount (+$trimmed) chars, $trimmedLinesCount lines"
+    }
+  }
+
+  private inline fun doSingleDocumentChange(isTypeAhead: Boolean, block: () -> TerminalContentChangeEventImpl): TerminalContentChangeEventImpl {
+    dispatcher.multicaster.beforeContentChanged(this)
     check(!contentUpdateInProgress) { "Recursive content updates aren't supported, schedule an update in a separate event if needed" }
     contentUpdateInProgress = true
-    val change = try {
+    val event = try {
       block()
     }
     finally {
       contentUpdateInProgress = false
     }
-
     ensureCorrectCursorOffset()
-    dispatcher.multicaster.afterContentChanged(TerminalContentChangeEventImpl(
-      this,
-      change.offset,
-      change.oldText,
-      change.newText,
-      isTypeAhead,
-      false
-    ))
-
-    var trimmed = 0
-    if (isTrimNeeded()) {
-      dispatcher.multicaster.beforeContentChanged(this)
-      val startBeforeTrimming = startOffset
-      val trimmedSequence = trimToSize()
-      ensureCorrectCursorOffset()
-      dispatcher.multicaster.afterContentChanged(TerminalContentChangeEventImpl(
-        this,
-        startBeforeTrimming,
-        trimmedSequence,
-        "",
-        isTypeAhead,
-        true
-      ))
-      trimmed = trimmedSequence.length
-    }
-
-    val effectiveStartOffset = change.offset.coerceAtLeast(startOffset)
-
-    LOG.debug {
-      "Content updated from offset = $effectiveStartOffset, " +
-      "new length = ${document.textLength} chars, ${document.lineCount} lines, " +
-      "currently trimmed = $trimmedCharsCount (+$trimmed) chars, $trimmedLinesCount lines"
-    }
+    dispatcher.multicaster.afterContentChanged(event)
+    return event
   }
 
   override fun getHighlightings(): TerminalOutputHighlightingsSnapshot {
