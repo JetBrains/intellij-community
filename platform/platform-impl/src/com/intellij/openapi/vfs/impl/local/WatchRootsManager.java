@@ -116,6 +116,12 @@ public final class WatchRootsManager {
       }
 
       if (!isDataConsistent(fileId, linkPath, linkTarget, oldDataById, oldDataByPath, oldDataByOldPath)) {
+        if (oldDataByPath != null) {
+          //TODO RC: remove oldDataByPath, because if we leave them there, the same error will be
+          //         repeated again, multiple times, which is useless
+          mySymlinksByPath.remove(linkPath);
+          oldDataByPath.removeRequest(this);
+        }
         return;
       }
 
@@ -177,15 +183,27 @@ public final class WatchRootsManager {
       return true;
     }
     else if (oldDataById != oldDataByNewPath) {
-      LOG.error("Symlink update is inconsistent. Existing symlink data by id: \n" +
-                oldDataById + "\n" +
-                " != existing symlink data by new path[" + linkPath + "]:\n" +
-                oldDataByNewPath + "\n" +
-                "existing symlink data by old path:\n" +
-                oldDataByOldPath + "\n" +
-                "incoming symlink: \n" +
-                "{#" + fileId + ", " + linkPath + " -> " + linkTarget + "}, " +
-                "default caseSensitivity: " + SystemInfoRt.isFileSystemCaseSensitive);
+      if (oldDataById == null) {
+        LOG.error("Symlink update is inconsistent. Existing symlink data by id: {null}\n" +
+                  " != existing symlink data by new path[" + linkPath + "]:\n" +
+                  oldDataByNewPath + "\n" +
+                  "existing symlink data by old path:\n" +
+                  oldDataByOldPath + "\n" +
+                  "incoming symlink: \n" +
+                  "{#" + fileId + ", " + linkPath + " -> " + linkTarget + "}, " +
+                  "default caseSensitivity: " + SystemInfoRt.isFileSystemCaseSensitive);
+      }
+      else {
+        LOG.error("Symlink update is inconsistent. Existing symlink data by id: \n" +
+                  oldDataById + "\n" +
+                  " != existing symlink data by new path[" + linkPath + "]:\n" +
+                  oldDataByNewPath + "\n" +
+                  "existing symlink data by old path:\n" +
+                  oldDataByOldPath + "\n" +
+                  "incoming symlink: \n" +
+                  "{#" + fileId + ", " + linkPath + " -> " + linkTarget + "}, " +
+                  "default caseSensitivity: " + SystemInfoRt.isFileSystemCaseSensitive);
+      }
       return false;
     }
     else if (oldDataByNewPath != null && !FileUtil.pathsEqual(oldDataByNewPath.path, linkPath)) {
