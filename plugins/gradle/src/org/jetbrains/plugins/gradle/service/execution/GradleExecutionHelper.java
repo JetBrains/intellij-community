@@ -355,8 +355,7 @@ public final class GradleExecutionHelper {
     if (!Files.isDirectory(javaHomePath)) {
       return;
     }
-    // Android Studio implementation to allow testing environment variables
-    if (EelProviderUtil.getEelDescriptor(javaHomePath).equals(LocalEelDescriptor.INSTANCE)) {
+    if (EelProviderUtil.getEelDescriptor(javaHomePath) == LocalEelDescriptor.INSTANCE) {
       //noinspection IO_FILE_USAGE
       operation.setJavaHome(new File(javaHome));
       LOG.debug("Java home to set for Gradle operation: " + javaHomePath);
