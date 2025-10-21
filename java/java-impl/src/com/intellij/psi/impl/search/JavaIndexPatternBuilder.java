@@ -52,6 +52,6 @@ public final class JavaIndexPatternBuilder implements IndexPatternBuilder {
 
   @Override
   public @NotNull String getCharsAllowedInContinuationPrefix(@NotNull IElementType tokenType) {
-    return tokenType == JavaTokenType.C_STYLE_COMMENT || tokenType == JavaDocElementType.DOC_COMMENT ? "*" : "";
+    return tokenType == JavaTokenType.C_STYLE_COMMENT || tokenType == JavaDocElementType.DOC_COMMENT ? "*" : tokenType == JavaDocElementType.DOC_MARKDOWN_COMMENT ? "///" : "";
   }
 }
