@@ -7,17 +7,13 @@ import com.intellij.psi.PsiElement
 import com.intellij.psi.impl.source.tree.LeafPsiElement
 import com.intellij.psi.util.PsiTreeUtil
 import org.jetbrains.kotlin.analysis.api.KaExperimentalApi
-import org.jetbrains.kotlin.analysis.api.KaImplementationDetail
 import org.jetbrains.kotlin.analysis.api.KaSession
 import org.jetbrains.kotlin.analysis.api.analyze
-import org.jetbrains.kotlin.analysis.api.lifetime.KaLifetimeToken
-import org.jetbrains.kotlin.analysis.api.lifetime.withValidityAssertion
 import org.jetbrains.kotlin.analysis.api.resolution.*
 import org.jetbrains.kotlin.analysis.api.signatures.KaCallableSignature
 import org.jetbrains.kotlin.analysis.api.signatures.KaFunctionSignature
 import org.jetbrains.kotlin.analysis.api.signatures.KaVariableSignature
 import org.jetbrains.kotlin.analysis.api.symbols.*
-import org.jetbrains.kotlin.analysis.api.types.KaType
 import org.jetbrains.kotlin.idea.references.mainReference
 import org.jetbrains.kotlin.kdoc.psi.api.KDoc
 import org.jetbrains.kotlin.lexer.KtTokens
@@ -25,8 +21,7 @@ import org.jetbrains.kotlin.psi.*
 
 sealed interface CallTarget {
     val caller: KtElement
-    val call: KaCall
-    val partiallyAppliedSymbol: KaPartiallyAppliedSymbol<KaCallableSymbol, KaCallableSignature<KaCallableSymbol>>
+    val partiallyAppliedSymbol: KaPartiallyAppliedSymbol<KaCallableSymbol, KaCallableSignature<KaCallableSymbol>>?
     val symbol: KaCallableSymbol
 
     val anchor: PsiElement
@@ -44,13 +39,11 @@ sealed interface CallTarget {
 }
 
 sealed interface TypedCallTarget<out S : KaCallableSymbol, out C : KaCallableSignature<S>> : CallTarget {
-    override val partiallyAppliedSymbol: KaPartiallyAppliedSymbol<S, C>
     override val symbol: S
 }
 
 class VariableCallTarget(
     override val caller: KtElement,
-    override val call: KaCall,
     override val partiallyAppliedSymbol: KaPartiallyAppliedVariableSymbol<KaVariableSymbol>
 ) : TypedCallTarget<KaVariableSymbol, KaVariableSignature<KaVariableSymbol>> {
     override val symbol: KaVariableSymbol
@@ -59,12 +52,17 @@ class VariableCallTarget(
 
 class FunctionCallTarget(
     override val caller: KtElement,
-    override val call: KaCall,
     override val partiallyAppliedSymbol: KaPartiallyAppliedFunctionSymbol<KaFunctionSymbol>
 ) : TypedCallTarget<KaFunctionSymbol, KaFunctionSignature<KaFunctionSymbol>> {
     override val symbol: KaFunctionSymbol
         get() = partiallyAppliedSymbol.symbol
 }
+
+class DesugaredFunctionCallTarget(
+    override val caller: KtElement,
+    override val symbol: KaFunctionSymbol,
+    override val partiallyAppliedSymbol: KaPartiallyAppliedVariableSymbol<KaVariableSymbol>? = null,
+) : TypedCallTarget<KaFunctionSymbol, KaFunctionSignature<KaFunctionSymbol>>
 
 interface KotlinCallTargetProcessor {
     /**
@@ -158,86 +156,26 @@ object KotlinCallProcessor {
         return current
     }
 
-    // TODO: KTIJ-34670 drop this implementation
-    @OptIn(KaImplementationDetail::class)
-    private object ReadAccess : KaSimpleVariableAccess.Read
-
-    // TODO: KTIJ-34670 drop this implementation
-    @OptIn(KaImplementationDetail::class)
-    private class SpecialPartiallyAppliedSymbol<out S : KaCallableSymbol, out C : KaCallableSignature<S>>(
-        private val backingSignature: C
-    ) : KaPartiallyAppliedSymbol<S, C> {
-        override val signature: C get() = withValidityAssertion { backingSignature }
-        override val dispatchReceiver: KaReceiverValue? get() = withValidityAssertion { null }
-        override val extensionReceiver: KaReceiverValue? get() = withValidityAssertion { null }
-
-        @KaExperimentalApi
-        override val contextArguments: List<KaReceiverValue> get() = withValidityAssertion { emptyList() }
-        override val token: KaLifetimeToken get() = backingSignature.token
-    }
-
     @OptIn(KaExperimentalApi::class)
     private fun handle(element: KtElement, processor: KotlinCallTargetProcessor): Boolean {
         analyze(element) {
-            fun handleSpecial(element: KtElement, filter: (KaSymbol) -> Boolean): Boolean {
+            fun handleSpecial(element: KtElement): Boolean {
                 val symbols = element.mainReference?.resolveToSymbols() ?: return true
                 for (symbol in symbols) {
-                    if (!filter(symbol)) {
-                        continue
-                    }
-
-                    @OptIn(KaImplementationDetail::class)
-                    val shouldContinue = with(processor) {
-                        when (symbol) {
-                            is KaFunctionSymbol -> {
-                                val signature = symbol.asSignature()
-                                val partiallyAppliedSymbol = SpecialPartiallyAppliedSymbol(signature)
-
-                                // TODO: KTIJ-34670 drop this implementation
-                                val call = object : KaSimpleFunctionCall {
-                                    override val isImplicitInvoke: Boolean get() = withValidityAssertion { false }
-                                    override val argumentMapping: Map<KtExpression, KaVariableSignature<KaValueParameterSymbol>> get() = withValidityAssertion { emptyMap() }
-                                    override val partiallyAppliedSymbol: KaPartiallyAppliedSymbol<KaFunctionSymbol, KaFunctionSignature<KaFunctionSymbol>> get() = withValidityAssertion { partiallyAppliedSymbol }
-                                    override val typeArgumentsMapping: Map<KaTypeParameterSymbol, KaType> get() = withValidityAssertion { emptyMap() }
-                                    override val token: KaLifetimeToken get() = partiallyAppliedSymbol.token
-                                }
-
-                                processCallTarget(FunctionCallTarget(element, call, partiallyAppliedSymbol))
-                            }
-
-                            is KaVariableSymbol -> {
-                                val signature = symbol.asSignature()
-                                val partiallyAppliedSymbol = SpecialPartiallyAppliedSymbol(signature)
-
-                                // TODO: KTIJ-34670 drop this implementation
-                                val call = object : KaSimpleVariableAccessCall {
-                                    override val simpleAccess: KaSimpleVariableAccess.Read get() = withValidityAssertion { ReadAccess }
-                                    @KaExperimentalApi
-                                    override val isContextSensitive: Boolean get() = withValidityAssertion { false }
-                                    override val partiallyAppliedSymbol: KaPartiallyAppliedSymbol<KaVariableSymbol, KaVariableSignature<KaVariableSymbol>> get() = withValidityAssertion { partiallyAppliedSymbol }
-                                    override val typeArgumentsMapping: Map<KaTypeParameterSymbol, KaType> get() = withValidityAssertion { emptyMap() }
-                                    override val token: KaLifetimeToken get() = partiallyAppliedSymbol.token
-                                }
-
-                                processCallTarget(VariableCallTarget(element, call, partiallyAppliedSymbol))
-                            }
-
-                            else -> true
-                        }
-                    }
-                    if (!shouldContinue) {
-                        return false
+                    if (symbol !is KaFunctionSymbol) continue
+                    with(processor) {
+                        if (!processCallTarget(DesugaredFunctionCallTarget(element, symbol))) return false
                     }
                 }
                 return true
             }
 
             if (element is KtForExpression) {
-                return handleSpecial(element) { it is KaFunctionSymbol }
+                return handleSpecial(element)
             }
 
             if (element is KtDestructuringDeclarationEntry) {
-                return handleSpecial(element) { !(it is KaLocalVariableSymbol && it.psi == element) }
+                return handleSpecial(element)
             }
 
             val callInfo = element.resolveToCall()
@@ -257,20 +195,20 @@ object KotlinCallProcessor {
     fun KaSession.processResolvedCall(targetProcessor: KotlinCallTargetProcessor, element: KtElement, call: KaCall): Boolean {
         with(targetProcessor) {
             return when (call) {
-                is KaDelegatedConstructorCall -> processCallTarget(FunctionCallTarget(element, call, call.partiallyAppliedSymbol))
-                is KaSimpleFunctionCall -> processCallTarget(FunctionCallTarget(element, call, call.partiallyAppliedSymbol))
+                is KaDelegatedConstructorCall -> processCallTarget(FunctionCallTarget(element, call.partiallyAppliedSymbol))
+                is KaSimpleFunctionCall -> processCallTarget(FunctionCallTarget(element, call.partiallyAppliedSymbol))
                 is KaCompoundVariableAccessCall -> {
-                    processCallTarget(VariableCallTarget(element, call, call.variablePartiallyAppliedSymbol))
-                    processCallTarget(FunctionCallTarget(element, call, call.compoundOperation.operationPartiallyAppliedSymbol))
+                    processCallTarget(VariableCallTarget(element, call.variablePartiallyAppliedSymbol))
+                    processCallTarget(FunctionCallTarget(element, call.compoundOperation.operationPartiallyAppliedSymbol))
                 }
 
                 is KaSimpleVariableAccessCall -> {
-                    processCallTarget(VariableCallTarget(element, call, call.partiallyAppliedSymbol))
+                    processCallTarget(VariableCallTarget(element, call.partiallyAppliedSymbol))
                 }
 
                 is KaCompoundArrayAccessCall -> {
-                    processCallTarget(FunctionCallTarget(element, call, call.getPartiallyAppliedSymbol))
-                    processCallTarget(FunctionCallTarget(element, call, call.setPartiallyAppliedSymbol))
+                    processCallTarget(FunctionCallTarget(element, call.getPartiallyAppliedSymbol))
+                    processCallTarget(FunctionCallTarget(element, call.setPartiallyAppliedSymbol))
                 }
 
                 else -> true
