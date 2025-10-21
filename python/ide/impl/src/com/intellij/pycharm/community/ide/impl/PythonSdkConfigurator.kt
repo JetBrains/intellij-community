@@ -124,7 +124,9 @@ class PythonSdkConfigurator : DirectoryProjectConfigurator {
       return@withContext
     }
 
-    if (findPreviousUsedSdk(existingSdks, project, module)) {
+    val systemPythons = findSortedSystemPythons(module)
+
+    if (findPreviousUsedSdk(module, existingSdks, systemPythons)) {
       return@withContext
     }
 
@@ -132,46 +134,58 @@ class PythonSdkConfigurator : DirectoryProjectConfigurator {
       return@withContext
     }
 
-    findSystemWideSdk(module, existingSdks, project)
+    findSystemWideSdk(module, existingSdks, systemPythons)
   }
 
   private suspend fun findSystemWideSdk(
     module: Module,
     existingSdks: List<Sdk>,
-    project: Project,
+    systemPythons: List<SystemPython>,
   ): Unit = reportRawProgress { indicator ->
     indicator.text(PyBundle.message("looking.for.system.interpreter"))
     thisLogger().debug("Looking for a system-wide interpreter")
-    val eelDescriptor = module.project.getEelDescriptor()
     val homePaths = existingSdks
-      .mapNotNull { sdk -> sdk.homePath?.let { homePath -> Path.of(homePath) } }
-      .filter { it.getEelDescriptor() == eelDescriptor }
-    SystemPythonService().findSystemPythons(eelDescriptor.toEelApi())
-      .sortedWith(compareByDescending<SystemPython> { it.languageLevel }.thenBy { it.pythonBinary })
-      .sortedByDescending { it.pythonBinary }
-      .sortedByDescending { it.languageLevel }
-      .firstOrNull { it.pythonBinary !in homePaths }?.let {
-        thisLogger().debug { "Detected system-wide interpreter: $it" }
-        withContext(Dispatchers.EDT) {
-          SdkConfigurationUtil.createAndAddSDK(project, it.pythonBinary, PythonSdkType.getInstance())?.apply {
-            thisLogger().debug { "Created system-wide interpreter: $this" }
-            setReadyToUseSdk(project, module, this)
-          }
+      .mapNotNull { sdk -> sdk.takeIf { !it.isTargetBased() }?.homePath?.let { homePath -> Path.of(homePath) } }
+      .filter { it.getEelDescriptor() == module.project.getEelDescriptor() }
+    systemPythons.firstOrNull { it.pythonBinary !in homePaths }?.let {
+      thisLogger().debug { "Detected system-wide interpreter: $it" }
+      withContext(Dispatchers.EDT) {
+        SdkConfigurationUtil.createAndAddSDK(module.project, it.pythonBinary, PythonSdkType.getInstance())?.apply {
+          thisLogger().debug { "Created system-wide interpreter: $this" }
+          setReadyToUseSdk(module.project, module, this)
         }
       }
+    }
   }
 
   private suspend fun findPreviousUsedSdk(
-    existingSdks: List<Sdk>,
-    project: Project,
     module: Module,
+    existingSdks: List<Sdk>,
+    systemPythons: List<SystemPython>,
   ): Boolean = reportRawProgress { indicator ->
     indicator.text(PyBundle.message("looking.for.previous.system.interpreter"))
     thisLogger().debug("Looking for the previously used system-wide interpreter")
-    val sdk = mostPreferred(filterSystemWideSdks(existingSdks)) ?: return@reportRawProgress false
+    val sdk = systemPythons.firstNotNullOfOrNull { systemPython ->
+      existingSdks.firstOrNull { sdk ->
+        val sdkHomePath = sdk.takeIf { !it.isTargetBased() }
+          ?.homePath
+          ?.let { Path.of(it) }
+          ?.takeIf { it.getEelDescriptor() == module.project.getEelDescriptor() }
+        sdkHomePath == systemPython.pythonBinary
+      }
+    } ?: return@reportRawProgress false
     thisLogger().debug { "Previously used system-wide interpreter: $sdk" }
-    setReadyToUseSdk(project, module, sdk)
+    setReadyToUseSdk(module.project, module, sdk)
     return@reportRawProgress true
+  }
+
+  private suspend fun findSortedSystemPythons(module: Module) = reportRawProgress { indicator ->
+    indicator.text(PyBundle.message("looking.for.system.pythons"))
+    SystemPythonService().findSystemPythons(module.project.getEelDescriptor().toEelApi())
+      .sortedWith(
+        // Free-threaded Python is unstable, we don't want to have it selected by default if we have alternatives
+        compareBy<SystemPython> { it.pythonInfo.freeThreaded }.thenByDescending { it.pythonInfo.languageLevel }
+      )
   }
 
   private suspend fun findDefaultInterpreter(project: Project, module: Module): Boolean = reportRawProgress { indicator ->

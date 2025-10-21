@@ -6,7 +6,7 @@ package com.jetbrains.python.target
 import com.intellij.python.community.execService.BinOnEel
 import com.intellij.python.community.execService.BinOnTarget
 import com.intellij.python.community.execService.BinaryToExec
-import com.intellij.python.community.execService.python.validatePythonAndGetVersion
+import com.intellij.python.community.execService.python.validatePythonAndGetInfo
 import com.intellij.remote.RemoteSdkException
 import com.jetbrains.python.Result
 import com.jetbrains.python.errorProcessing.PyResult
@@ -19,14 +19,16 @@ private fun PyTargetAwareAdditionalData.getBinaryToExec(): BinaryToExec {
   val configuration = targetEnvironmentConfiguration
   val binaryToExec = if (configuration == null) {
     BinOnEel(Path.of(interpreterPath))
-  } else {
+  }
+  else {
     BinOnTarget(interpreterPath, configuration)
   }
   return binaryToExec
 }
 
 @ApiStatus.Internal
-suspend fun PyTargetAwareAdditionalData.getInterpreterVersion(): PyResult<LanguageLevel> = getBinaryToExec().validatePythonAndGetVersion()
+suspend fun PyTargetAwareAdditionalData.getInterpreterVersion(): PyResult<LanguageLevel> =
+  getBinaryToExec().validatePythonAndGetInfo().mapSuccess { it.languageLevel }
 
 
 @ApiStatus.Internal

@@ -161,6 +161,7 @@ public final class PyInterpreterInspection extends PyInspection {
         }
       }
 
+      // TODO: We should use SystemPythonService here as well, postponing as it's quite unlikely we get here (although we can)
       final var systemWideSdk = PySdkExtKt.mostPreferred(PySdkExtKt.filterSystemWideSdks(existingSdks));
       if (systemWideSdk != null) {
         return new UseExistingInterpreterFix(systemWideSdk, module);

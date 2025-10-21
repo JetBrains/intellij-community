@@ -1,10 +1,11 @@
 // Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.python.junit5Tests.unit.comparators
 
-import com.intellij.python.community.services.shared.LanguageLevelHolder
-import com.intellij.python.community.services.shared.LanguageLevelWithUiComparator
-import com.jetbrains.python.PyToolUIInfo
+import com.intellij.python.community.services.shared.PythonInfoHolder
+import com.intellij.python.community.services.shared.PythonInfoWithUiComparator
 import com.intellij.python.community.services.shared.UiHolder
+import com.jetbrains.python.PyToolUIInfo
+import com.jetbrains.python.PythonInfo
 import com.jetbrains.python.psi.LanguageLevel
 import org.hamcrest.MatcherAssert
 import org.hamcrest.Matchers
@@ -16,29 +17,33 @@ class ComparatorsTest {
   @Test
   fun testComparators() {
     val mocks = arrayOf(
-      MockLevel(LanguageLevel.PYTHON314),
-      MockLevel(LanguageLevel.PYTHON310),
-      MockLevel(LanguageLevel.PYTHON310, ui = PyToolUIInfo("A")),
-      MockLevel(LanguageLevel.PYTHON310, ui = PyToolUIInfo("Z")),
-      MockLevel(LanguageLevel.PYTHON310, ui = PyToolUIInfo("B")),
-      MockLevel(LanguageLevel.PYTHON27),
-      MockLevel(LanguageLevel.PYTHON313),
+      MockInfo(PythonInfo(LanguageLevel.PYTHON314)),
+      MockInfo(PythonInfo(LanguageLevel.PYTHON314, true)),
+      MockInfo(PythonInfo(LanguageLevel.PYTHON310)),
+      MockInfo(PythonInfo(LanguageLevel.PYTHON310), ui = PyToolUIInfo("A")),
+      MockInfo(PythonInfo(LanguageLevel.PYTHON310), ui = PyToolUIInfo("Z")),
+      MockInfo(PythonInfo(LanguageLevel.PYTHON310), ui = PyToolUIInfo("B")),
+      MockInfo(PythonInfo(LanguageLevel.PYTHON27)),
+      MockInfo(PythonInfo(LanguageLevel.PYTHON313, true)),
+      MockInfo(PythonInfo(LanguageLevel.PYTHON313)),
     )
-    val set = TreeSet(LanguageLevelWithUiComparator<MockLevel>())
+    val set = TreeSet(PythonInfoWithUiComparator<MockInfo>())
     set.addAll(mocks)
     MatcherAssert.assertThat("", set, Matchers.contains(
-      MockLevel(LanguageLevel.PYTHON314),
-      MockLevel(LanguageLevel.PYTHON313),
-      MockLevel(LanguageLevel.PYTHON310),
-      MockLevel(LanguageLevel.PYTHON310, ui = PyToolUIInfo("A")),
-      MockLevel(LanguageLevel.PYTHON310, ui = PyToolUIInfo("B")),
-      MockLevel(LanguageLevel.PYTHON310, ui = PyToolUIInfo("Z")),
-      MockLevel(LanguageLevel.PYTHON27)
+      MockInfo(PythonInfo(LanguageLevel.PYTHON314)),
+      MockInfo(PythonInfo(LanguageLevel.PYTHON314, true)),
+      MockInfo(PythonInfo(LanguageLevel.PYTHON313)),
+      MockInfo(PythonInfo(LanguageLevel.PYTHON313, true)),
+      MockInfo(PythonInfo(LanguageLevel.PYTHON310)),
+      MockInfo(PythonInfo(LanguageLevel.PYTHON310), ui = PyToolUIInfo("A")),
+      MockInfo(PythonInfo(LanguageLevel.PYTHON310), ui = PyToolUIInfo("B")),
+      MockInfo(PythonInfo(LanguageLevel.PYTHON310), ui = PyToolUIInfo("Z")),
+      MockInfo(PythonInfo(LanguageLevel.PYTHON27))
     ))
   }
 }
 
-private data class MockLevel(
-  override val languageLevel: LanguageLevel,
+private data class MockInfo(
+  override val pythonInfo: PythonInfo,
   override val ui: PyToolUIInfo? = null,
-) : LanguageLevelHolder, UiHolder
+) : PythonInfoHolder, UiHolder

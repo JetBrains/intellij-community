@@ -2,6 +2,6 @@
 package com.intellij.python.community.services.shared
 
 /**
- * Python that has both [languageLevel] and [ui]
+ * Python that has both [pythonInfo] and [ui]
  */
-interface PythonWithUi : PythonWithLanguageLevel, UiHolder
+interface PythonWithUi : PythonWithPythonInfo, UiHolder

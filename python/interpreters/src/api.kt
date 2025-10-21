@@ -9,7 +9,7 @@ import com.intellij.python.community.execService.python.advancedApi.executeHelpe
 import com.intellij.python.community.execService.python.advancedApi.executePythonAdvanced
 import com.intellij.python.community.interpreters.impl.InterpreterFields
 import com.intellij.python.community.interpreters.impl.InterpreterServiceImpl
-import com.intellij.python.community.services.shared.PythonWithLanguageLevel
+import com.intellij.python.community.services.shared.PythonWithPythonInfo
 import com.intellij.python.community.services.shared.PythonWithUi
 import com.jetbrains.python.errorProcessing.PyResult
 import org.jetbrains.annotations.Nls
@@ -25,7 +25,7 @@ sealed interface Interpreter : InterpreterFields
  * Interpreter was usable at the moment it was loaded.
  * It has [ui] and [getReadableName] and can be used to execute code against [ExecService] (see extension functions)
  */
-interface ValidInterpreter : PythonWithLanguageLevel, PythonWithUi, Interpreter
+interface ValidInterpreter : PythonWithPythonInfo, PythonWithUi, Interpreter
 
 /**
  * At the moment of loading this interpreter was invalid due to [invalidMessage].

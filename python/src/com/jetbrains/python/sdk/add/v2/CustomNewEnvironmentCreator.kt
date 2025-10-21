@@ -25,7 +25,7 @@ import org.jetbrains.annotations.ApiStatus.Internal
 import java.nio.file.Path
 
 @Internal
-internal abstract class CustomNewEnvironmentCreator<P: PathHolder>(
+internal abstract class CustomNewEnvironmentCreator<P : PathHolder>(
   private val name: String,
   model: PythonMutableTargetAddInterpreterModel<P>,
   protected val errorSink: ErrorSink,
@@ -152,7 +152,7 @@ internal abstract class CustomNewEnvironmentCreator<P: PathHolder>(
       is InstallableSelectableInterpreter -> installBaseSdk(baseInterpreter.sdk, model.existingSdks)
         ?.let {
           val sdkWrapper = model.fileSystem.wrapSdk(it)
-          val installed = model.addInstalledInterpreter(sdkWrapper.homePath, baseInterpreter.languageLevel)
+          val installed = model.addInstalledInterpreter(sdkWrapper.homePath, baseInterpreter.pythonInfo)
           model.state.baseInterpreter.set(installed)
           installed
         }

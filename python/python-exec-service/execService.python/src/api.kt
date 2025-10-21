@@ -4,11 +4,11 @@ package com.intellij.python.community.execService.python
 import com.intellij.python.community.execService.*
 import com.intellij.python.community.execService.python.advancedApi.ExecutablePython
 import com.intellij.python.community.execService.python.advancedApi.executeHelperAdvanced
-import com.intellij.python.community.execService.python.advancedApi.validatePythonAndGetVersion
+import com.intellij.python.community.execService.python.advancedApi.validatePythonAndGetInfo
 import com.intellij.python.community.helpersLocator.PythonHelpersLocator
 import com.jetbrains.python.PythonBinary
+import com.jetbrains.python.PythonInfo
 import com.jetbrains.python.errorProcessing.PyResult
-import com.jetbrains.python.psi.LanguageLevel
 
 /**
  * Python binary itself (i.e python.exe)
@@ -30,17 +30,17 @@ suspend fun ExecService.executeHelper(
   executeHelperAdvanced(ExecutablePython.vanillaExecutablePython(python), helper, args, options, procListener, ZeroCodeStdoutTransformer)
 
 /**
- * Ensures that this python is executable and returns its version. Error if python is broken.
+ * Ensures that this python is executable and returns its info. Error if python is broken.
  *
  * Some pythons might be broken: they may be executable, even return a version, but still fail to execute it.
  * As we need workable pythons, we validate it by executing
  */
-suspend fun ExecService.validatePythonAndGetVersion(python: PythonBinaryOnEelOrTarget): PyResult<LanguageLevel> =
-  validatePythonAndGetVersion(ExecutablePython.vanillaExecutablePython(python))
+suspend fun ExecService.validatePythonAndGetInfo(python: PythonBinaryOnEelOrTarget): PyResult<PythonInfo> =
+  validatePythonAndGetInfo(ExecutablePython.vanillaExecutablePython(python))
 
-suspend fun PythonBinaryOnEelOrTarget.validatePythonAndGetVersion(): PyResult<LanguageLevel> = ExecService().validatePythonAndGetVersion(this)
-suspend fun ExecService.validatePythonAndGetVersion(python: PythonBinary): PyResult<LanguageLevel> = validatePythonAndGetVersion(python.asBinToExec())
-suspend fun PythonBinary.validatePythonAndGetVersion(): PyResult<LanguageLevel> = asBinToExec().validatePythonAndGetVersion()
+suspend fun PythonBinaryOnEelOrTarget.validatePythonAndGetInfo(): PyResult<PythonInfo> = ExecService().validatePythonAndGetInfo(this)
+suspend fun ExecService.validatePythonAndGetInfo(python: PythonBinary): PyResult<PythonInfo> = validatePythonAndGetInfo(python.asBinToExec())
+suspend fun PythonBinary.validatePythonAndGetInfo(): PyResult<PythonInfo> = asBinToExec().validatePythonAndGetInfo()
 
 
 /**

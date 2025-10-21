@@ -6,9 +6,9 @@ import com.intellij.openapi.components.service
 import com.intellij.platform.eel.EelApi
 import com.intellij.platform.eel.provider.localEel
 import com.intellij.python.community.impl.venv.createVenv
-import com.intellij.python.community.services.shared.LanguageLevelWithUiComparator
+import com.intellij.python.community.services.shared.PythonInfoWithUiComparator
 import com.intellij.python.community.services.shared.PythonWithUi
-import com.intellij.python.community.services.shared.VanillaPythonWithLanguageLevel
+import com.intellij.python.community.services.shared.VanillaPythonWithPythonInfo
 import com.jetbrains.python.PyToolUIInfo
 import com.jetbrains.python.PythonBinary
 import com.jetbrains.python.Result
@@ -56,10 +56,10 @@ fun SystemPythonService(): SystemPythonService = ApplicationManager.getApplicati
  *
  * Instances could be obtained with [SystemPythonService]
  */
-class SystemPython internal constructor(private val delegate: VanillaPythonWithLanguageLevel, override val ui: PyToolUIInfo?) : VanillaPythonWithLanguageLevel by delegate, PythonWithUi, Comparable<SystemPython> {
+class SystemPython internal constructor(private val delegate: VanillaPythonWithPythonInfo, override val ui: PyToolUIInfo?) : VanillaPythonWithPythonInfo by delegate, PythonWithUi, Comparable<SystemPython> {
 
   private companion object {
-    val comparator = LanguageLevelWithUiComparator<SystemPython>()
+    val comparator = PythonInfoWithUiComparator<SystemPython>()
   }
 
   override fun equals(other: Any?): Boolean {

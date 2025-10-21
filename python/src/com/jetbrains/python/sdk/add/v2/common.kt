@@ -257,7 +257,7 @@ internal suspend fun <P : PathHolder> PythonSelectableInterpreter<P>.setupSdk(
     allSdks = allSdks,
     fileSystem = fileSystem,
     pythonBinaryPath = homePath!!,
-    languageLevel = languageLevel,
+    languageLevel = pythonInfo.languageLevel,
     targetPanelExtension = targetPanelExtension
   ).getOr { return it }
 

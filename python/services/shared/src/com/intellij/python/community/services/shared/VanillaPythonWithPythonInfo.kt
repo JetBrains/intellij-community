@@ -8,7 +8,7 @@ import com.jetbrains.python.PythonBinary
 /**
  * Vanilla (not conda) has [pythonBinary]
  */
-interface VanillaPythonWithLanguageLevel : PythonWithLanguageLevel {
+interface VanillaPythonWithPythonInfo : PythonWithPythonInfo {
   val pythonBinary: PythonBinary
   override val asExecutablePython: ExecutablePython get() = ExecutablePython.vanillaExecutablePython(pythonBinary)
 

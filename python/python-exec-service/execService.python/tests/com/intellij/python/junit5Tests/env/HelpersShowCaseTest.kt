@@ -7,7 +7,7 @@ import com.intellij.platform.testFramework.junit5.eel.params.api.*
 import com.intellij.python.community.execService.ExecService
 import com.intellij.python.community.execService.asBinToExec
 import com.intellij.python.community.execService.python.executeHelper
-import com.intellij.python.community.execService.python.validatePythonAndGetVersion
+import com.intellij.python.community.execService.python.validatePythonAndGetInfo
 import com.intellij.python.community.helpersLocator.PythonHelpersLocator
 import com.intellij.python.junit5Tests.framework.env.PyEnvTestCase
 import com.intellij.python.junit5Tests.framework.env.PythonBinaryPath
@@ -53,7 +53,7 @@ class HelpersShowCaseTest() {
       val output = ExecService().executeHelper(python.asBinToExec(), helper.name, listOf("--version")).orThrow().trim()
       Assertions.assertEquals(hello, output, "wrong helper output")
 
-      val langLevel = ExecService().validatePythonAndGetVersion(python).getOrThrow()
+      val langLevel = ExecService().validatePythonAndGetInfo(python).getOrThrow().languageLevel
       Assertions.assertTrue(langLevel.isPy3K, "Wrong lang level:$langLevel")
     }
     finally {

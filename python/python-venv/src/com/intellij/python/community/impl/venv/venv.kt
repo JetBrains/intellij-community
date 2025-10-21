@@ -3,10 +3,13 @@ package com.intellij.python.community.impl.venv
 
 import com.intellij.openapi.application.EDT
 import com.intellij.openapi.diagnostic.fileLogger
-import com.intellij.python.community.execService.*
+import com.intellij.python.community.execService.BinaryToExec
+import com.intellij.python.community.execService.ExecOptions
+import com.intellij.python.community.execService.ExecService
+import com.intellij.python.community.execService.asBinToExec
 import com.intellij.python.community.execService.python.HelperName
 import com.intellij.python.community.execService.python.executeHelper
-import com.intellij.python.community.execService.python.validatePythonAndGetVersion
+import com.intellij.python.community.execService.python.validatePythonAndGetInfo
 import com.jetbrains.python.PythonBinary
 import com.jetbrains.python.Result
 import com.jetbrains.python.errorProcessing.PyResult
@@ -66,7 +69,7 @@ suspend fun createVenv(
     }
     add(venvDir)
   }
-  val version = python.validatePythonAndGetVersion().getOr(PyVenvBundle.message("py.venv.error.cant.base.version")) { return it }
+  val version = python.validatePythonAndGetInfo().getOr(PyVenvBundle.message("py.venv.error.cant.base.version")) { return it }.languageLevel
   val helper = if (version.isAtLeast(LanguageLevel.PYTHON38)) VIRTUALENV_ZIPAPP_NAME else LEGACY_VIRTUALENV_ZIPAPP_NAME
   execService.executeHelper(python, helper, args, ExecOptions(timeout = 3.minutes))
     .getOr(PyVenvBundle.message("py.venv.error.executing.script", helper)) { return it }

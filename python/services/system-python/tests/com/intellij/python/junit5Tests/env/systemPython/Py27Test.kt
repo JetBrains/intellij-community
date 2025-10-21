@@ -13,7 +13,8 @@ class Py27Test {
   @Test
   fun testPy27(): Unit = timeoutRunBlocking {
     val testEnvironments = SystemPythonService().findSystemPythons()
-    val python27 = testEnvironments.firstOrNull { it.languageLevel == LanguageLevel.PYTHON27 } ?: error("No 2.7 found in $testEnvironments")
+    val python27 = testEnvironments.firstOrNull { it.pythonInfo.languageLevel == LanguageLevel.PYTHON27 }
+                   ?: error("No 2.7 found in $testEnvironments")
     SystemPythonService().registerSystemPython(python27.pythonBinary).getOrThrow()
   }
 }

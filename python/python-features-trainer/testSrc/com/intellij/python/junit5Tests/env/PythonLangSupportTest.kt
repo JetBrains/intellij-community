@@ -6,7 +6,7 @@ import com.intellij.openapi.project.Project
 import com.intellij.openapi.project.ProjectManager
 import com.intellij.openapi.projectRoots.ProjectJdkTable
 import com.intellij.openapi.util.SystemInfoRt
-import com.intellij.python.community.services.internal.impl.VanillaPythonWithLanguageLevelImpl
+import com.intellij.python.community.services.internal.impl.VanillaPythonWithPythonInfoImpl
 import com.intellij.python.community.services.systemPython.SystemPythonService
 import com.intellij.python.community.services.systemPython.createVenvFromSystemPython
 import com.intellij.python.featuresTrainer.ift.PythonLangSupport
@@ -86,7 +86,7 @@ class PythonLangSupportTest {
     val sdk = project.pythonSdk!!
     try {
       val pythonBinary = Path.of(sdk.homePath!!)
-      Assertions.assertTrue(VanillaPythonWithLanguageLevelImpl.createByPythonBinary(pythonBinary).orThrow().languageLevel.isPy3K, "Sdk is broken")
+      Assertions.assertTrue(VanillaPythonWithPythonInfoImpl.createByPythonBinary(pythonBinary).orThrow().pythonInfo.languageLevel.isPy3K, "Sdk is broken")
     }
     finally {
       writeAction {

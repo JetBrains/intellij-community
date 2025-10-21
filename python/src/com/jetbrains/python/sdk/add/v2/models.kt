@@ -9,18 +9,19 @@ import com.intellij.openapi.observable.properties.ObservableMutableProperty
 import com.intellij.openapi.observable.properties.PropertyGraph
 import com.intellij.openapi.projectRoots.Sdk
 import com.intellij.openapi.vfs.toNioPathOrNull
-import com.intellij.python.community.services.shared.LanguageLevelHolder
-import com.intellij.python.community.services.shared.LanguageLevelWithUiComparator
+import com.intellij.python.community.services.shared.PythonInfoHolder
+import com.intellij.python.community.services.shared.PythonInfoWithUiComparator
 import com.intellij.python.community.services.shared.UiHolder
 import com.intellij.python.pyproject.PyProjectToml
 import com.intellij.util.concurrency.annotations.RequiresEdt
-import com.jetbrains.python.*
 import com.jetbrains.python.PyBundle.message
+import com.jetbrains.python.PyToolUIInfo
+import com.jetbrains.python.PythonInfo
+import com.jetbrains.python.TraceContext
 import com.jetbrains.python.errorProcessing.PyResult
 import com.jetbrains.python.errorProcessing.emit
 import com.jetbrains.python.getOrNull
 import com.jetbrains.python.newProjectWizard.projectPath.ProjectPathFlows
-import com.jetbrains.python.psi.LanguageLevel
 import com.jetbrains.python.sdk.PySdkToInstall
 import com.jetbrains.python.sdk.PySdkUtil
 import com.jetbrains.python.sdk.add.v2.conda.CondaViewModel
@@ -117,8 +118,8 @@ abstract class PythonAddInterpreterModel<P : PathHolder>(
       manuallyAddedInterpreters
     ) { detected, manual ->
       val base = detected?.filter { it.isBase } ?: return@combine null
-      val existingLanguageLevels = base.map { it.languageLevel }.toSet()
-      val nonExistingInstallable = installable.filter { it.languageLevel !in existingLanguageLevels }
+      val existingLanguageLevels = base.map { it.pythonInfo.languageLevel }.toSet()
+      val nonExistingInstallable = installable.filter { it.pythonInfo.languageLevel !in existingLanguageLevels }
       manual + base.sorted() + nonExistingInstallable
     }.stateIn(scope, started = SharingStarted.Eagerly, initialValue = null)
   }
@@ -132,7 +133,7 @@ abstract class PythonAddInterpreterModel<P : PathHolder>(
   internal suspend fun addManuallyAddedInterpreter(homePath: P): PyResult<ManuallyAddedSelectableInterpreter<P>> {
     val python = homePath.let { fileSystem.getSystemPythonFromSelection(it) }.getOr { return it }
 
-    val interpreter = ManuallyAddedSelectableInterpreter(homePath, python.languageLevel).also {
+    val interpreter = ManuallyAddedSelectableInterpreter(homePath, python.pythonInfo).also {
       this@PythonAddInterpreterModel.addManuallyAddedInterpreter(it)
     }
     return PyResult.success(interpreter)
@@ -141,15 +142,15 @@ abstract class PythonAddInterpreterModel<P : PathHolder>(
   open fun addInterpreter(sdk: Sdk) {
     val interpreter = ExistingSelectableInterpreter(
       fileSystem.wrapSdk(sdk),
-      PySdkUtil.getLanguageLevelForSdk(sdk),
+      PythonInfo(PySdkUtil.getLanguageLevelForSdk(sdk)),
       sdk.isSystemWide
     )
     this@PythonAddInterpreterModel.addManuallyAddedInterpreter(interpreter)
   }
 
   @RequiresEdt
-  internal fun addInstalledInterpreter(homePath: P, languageLevel: LanguageLevel): DetectedSelectableInterpreter<P> {
-    val installedInterpreter = DetectedSelectableInterpreter(homePath, languageLevel, true)
+  internal fun addInstalledInterpreter(homePath: P, pythonInfo: PythonInfo): DetectedSelectableInterpreter<P> {
+    val installedInterpreter = DetectedSelectableInterpreter(homePath, pythonInfo, true)
     _detectedInterpreters.value = (_detectedInterpreters.value ?: emptyList()) + installedInterpreter
     return installedInterpreter
   }
@@ -167,7 +168,7 @@ class PythonLocalAddInterpreterModel<P : PathHolder>(projectPathFlows: ProjectPa
 
     val interpreterToSelect = preferredInterpreterBasePath?.let { path ->
       detectedInterpreters.value?.find { it.homePath == path }
-    } ?: baseInterpreters.value?.filterIsInstance<ExistingSelectableInterpreter<P>>()?.maxByOrNull { it.languageLevel }
+    } ?: baseInterpreters.value?.filterIsInstance<ExistingSelectableInterpreter<P>>()?.maxByOrNull { it.pythonInfo.languageLevel }
 
     if (interpreterToSelect != null) {
       state.baseInterpreter.set(interpreterToSelect)
@@ -176,13 +177,13 @@ class PythonLocalAddInterpreterModel<P : PathHolder>(projectPathFlows: ProjectPa
 }
 
 
-sealed class PythonSelectableInterpreter<P : PathHolder> : Comparable<PythonSelectableInterpreter<*>>, UiHolder, LanguageLevelHolder {
+sealed class PythonSelectableInterpreter<P : PathHolder> : Comparable<PythonSelectableInterpreter<*>>, UiHolder, PythonInfoHolder {
   companion object {
-    private val comparator = LanguageLevelWithUiComparator<PythonSelectableInterpreter<*>>()
+    private val comparator = PythonInfoWithUiComparator<PythonSelectableInterpreter<*>>()
   }
 
   abstract val homePath: P?
-  abstract override val languageLevel: LanguageLevel
+  abstract override val pythonInfo: PythonInfo
   override val ui: PyToolUIInfo? = null
   override fun toString(): String = "PythonSelectableInterpreter(homePath='$homePath')"
 
@@ -191,14 +192,14 @@ sealed class PythonSelectableInterpreter<P : PathHolder> : Comparable<PythonSele
 
 class ExistingSelectableInterpreter<P : PathHolder>(
   val sdkWrapper: SdkWrapper<P>,
-  override val languageLevel: LanguageLevel,
+  override val pythonInfo: PythonInfo,
   val isSystemWide: Boolean,
 ) : PythonSelectableInterpreter<P>() {
   override val homePath: P
     get() = sdkWrapper.homePath
 
   override fun toString(): String {
-    return "ExistingSelectableInterpreter(sdk=${sdkWrapper.sdk}, languageLevel=$languageLevel, isSystemWide=$isSystemWide, homePath='$homePath')"
+    return "ExistingSelectableInterpreter(sdk=${sdkWrapper.sdk}, pythonInfo=$pythonInfo, isSystemWide=$isSystemWide, homePath='$homePath')"
   }
 }
 
@@ -207,26 +208,26 @@ class ExistingSelectableInterpreter<P : PathHolder>(
  */
 class DetectedSelectableInterpreter<P : PathHolder>(
   override val homePath: P,
-  override val languageLevel: LanguageLevel,
+  override val pythonInfo: PythonInfo,
   val isBase: Boolean,
   override val ui: PyToolUIInfo? = null,
 ) : PythonSelectableInterpreter<P>() {
   override fun toString(): String {
-    return "DetectedSelectableInterpreter(homePath='$homePath', languageLevel=$languageLevel, isBase=$isBase, uiCustomization=$ui)"
+    return "DetectedSelectableInterpreter(homePath='$homePath', pythonInfo=$pythonInfo, isBase=$isBase, uiCustomization=$ui)"
   }
 }
 
 class ManuallyAddedSelectableInterpreter<P : PathHolder>(
   override val homePath: P,
-  override val languageLevel: LanguageLevel,
+  override val pythonInfo: PythonInfo,
 ) : PythonSelectableInterpreter<P>() {
   override fun toString(): String {
-    return "ManuallyAddedSelectableInterpreter(homePath='$homePath', languageLevel=$languageLevel)"
+    return "ManuallyAddedSelectableInterpreter(homePath='$homePath', pythonInfo=$pythonInfo)"
   }
 }
 
 class InstallableSelectableInterpreter<P : PathHolder>(
-  override val languageLevel: LanguageLevel,
+  override val pythonInfo: PythonInfo,
   val sdk: PySdkToInstall,
 ) : PythonSelectableInterpreter<P>() {
   override val homePath: P? = null
