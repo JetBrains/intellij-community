@@ -2,6 +2,7 @@
 package com.intellij.openapi.application;
 
 import com.intellij.openapi.Disposable;
+import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.fileTypes.FileTypeRegistry;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.util.containers.ContainerUtil;
@@ -24,6 +25,11 @@ public class ApplicationManager {
 
   @ApiStatus.Internal
   public static void setApplication(@Nullable Application instance) {
+    Application old = ourApplication;
+    if ((old != null && old.isUnitTestMode()) || (instance != null && instance.isUnitTestMode())) {
+      Logger.getInstance(ApplicationManager.class).info("Switching application instance: " + old + " -> " + instance, new Throwable());
+    }
+
     ourApplication = instance;
     for (Runnable cleaner : cleaners) {
       cleaner.run();
