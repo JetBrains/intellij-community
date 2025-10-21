@@ -5,6 +5,7 @@ import com.intellij.find.FindManager
 import com.intellij.find.FindSettings
 import com.intellij.find.impl.JComboboxAction
 import com.intellij.find.impl.TextSearchRightActionAction.*
+import com.intellij.ide.actions.searcheverywhere.PreviewAction
 import com.intellij.openapi.Disposable
 import com.intellij.openapi.actionSystem.*
 import com.intellij.openapi.observable.properties.AtomicBooleanProperty
@@ -61,7 +62,7 @@ class SeTextFilterEditor(
     }
   }, registerShortcut) { }
 
-  override fun getHeaderActions(): List<AnAction> = listOfNotNull(scopeFilterAction, typesFilterAction)
+  override fun getHeaderActions(): List<AnAction> = listOfNotNull(scopeFilterAction, typesFilterAction, PreviewAction())
 
   override fun getSearchFieldActions(): List<AnAction> = listOf(caseSensitiveAction, wordAction, regexpAction)
 

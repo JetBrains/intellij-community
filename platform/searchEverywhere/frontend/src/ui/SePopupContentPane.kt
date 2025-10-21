@@ -286,12 +286,10 @@ class SePopupContentPane(
       vm.currentTabFlow.collectLatest { tabVm ->
         val filterEditor = tabVm.filterEditor.getValue()
         filterEditor?.let { filterEditor ->
-          val isPreviewEnabled = tabVm.isPreviewEnabled.getValue()
-
           withContext(Dispatchers.EDT) {
             if (!isActive) return@withContext
 
-            headerPane.setFilterActions(filterEditor.getHeaderActions(), vm.ShowInFindToolWindowAction(), isPreviewEnabled)
+            headerPane.setFilterActions(filterEditor.getHeaderActions(), vm.ShowInFindToolWindowAction())
             hintHelper.removeRightExtensions()
             val rightActions = filterEditor.getSearchFieldActions()
             if (rightActions.isNotEmpty()) {
@@ -949,7 +947,7 @@ class SePopupContentPane(
     return usagePreviewPanel
   }
 
-  private fun createSplitter() : OnePixelSplitter {
+  private fun createSplitter(): OnePixelSplitter {
     val splitter = OnePixelSplitter(true, .33f)
     splitter.splitterProportionKey = SearchEverywhereUI.SPLITTER_SERVICE_KEY
     splitter.divider.setBackground(OnePixelDivider.BACKGROUND)
