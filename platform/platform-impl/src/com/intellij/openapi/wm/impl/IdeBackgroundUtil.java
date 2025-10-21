@@ -274,7 +274,7 @@ public final class IdeBackgroundUtil {
       return new MyGraphics(getDelegate().create(), helper, offsets, preserved);
     }
 
-    private Boolean isNoBackground() {
+    private boolean isNoBackground() {
       Object obj = getRenderingHint(NO_BACKGROUND_HINT);
       return obj != null && Boolean.TRUE.equals(obj);
     }
