@@ -89,6 +89,7 @@ class SeAllTab(private val delegate: SeTabDelegate) : SeTab {
   companion object {
     @ApiStatus.Internal
     const val ID: String = SearchEverywhereManagerImpl.ALL_CONTRIBUTORS_GROUP_ID
+
     @ApiStatus.Internal
     val NAME: String = IdeBundle.message("searcheverywhere.all.elements.tab.name")
   }

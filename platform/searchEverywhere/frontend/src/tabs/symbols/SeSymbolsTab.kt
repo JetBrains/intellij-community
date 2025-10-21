@@ -76,6 +76,7 @@ class SeSymbolsTab(private val delegate: SeTabDelegate) : SeTab {
   companion object {
     @ApiStatus.Internal
     const val ID: String = "SymbolSearchEverywhereContributor"
+
     @ApiStatus.Internal
     val NAME: String = IdeBundle.message("search.everywhere.group.name.symbols")
   }

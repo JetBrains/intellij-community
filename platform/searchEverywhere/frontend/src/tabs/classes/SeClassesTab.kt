@@ -78,6 +78,6 @@ class SeClassesTab(private val delegate: SeTabDelegate) : SeTab {
     const val ID: String = "ClassSearchEverywhereContributor"
 
     val NAME: String
-    @ApiStatus.Internal get() = GotoClassPresentationUpdater.getTabTitlePluralized()
+      @ApiStatus.Internal get() = GotoClassPresentationUpdater.getTabTitlePluralized()
   }
 }

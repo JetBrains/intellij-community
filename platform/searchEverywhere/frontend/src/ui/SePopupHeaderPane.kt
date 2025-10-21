@@ -1,7 +1,6 @@
 // Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.platform.searchEverywhere.frontend.ui
 
-import com.intellij.ide.actions.searcheverywhere.PreviewAction
 import com.intellij.ide.actions.searcheverywhere.SearchEverywhereTabsShortcutsUtils
 import com.intellij.ide.actions.searcheverywhere.statistics.SearchEverywhereUsageTriggerCollector
 import com.intellij.openapi.Disposable
@@ -205,11 +204,13 @@ class SePopupHeaderPane(
     val tabs: List<Tab>,
     val deferredTabs: Flow<Tab>,
     val selectedTab: MutableStateFlow<Int>,
-    val showInFindToolWindowAction: AnAction?
+    val showInFindToolWindowAction: AnAction?,
   ) {
     companion object {
-      fun createInitial(initialTabs: List<Tab>,
-                        selectedTabId: String): Configuration =
+      fun createInitial(
+        initialTabs: List<Tab>,
+        selectedTabId: String,
+      ): Configuration =
         Configuration(initialTabs, emptyFlow(), MutableStateFlow(initialTabs.indexOfFirst { it.id == selectedTabId }), null)
     }
   }
