@@ -188,7 +188,7 @@ class DeclarativeInlayHintsPass(
       action: (line: Int,
                providerId: String,
                verticalPriority: Int,
-        // non-empty
+               // non-empty
                inlayData: List<InlayData>) -> Unit
     ) {
       if (isEmpty()) return
@@ -361,9 +361,9 @@ private fun shouldExecuteInBulkMode(
     eol.count { it.updateTarget == null } +
     aboveLine.count { it.updateTarget == null }
   }
-  val removals = existingInlays.inline.size +
-                 existingInlays.eol.size +
-                 existingInlays.aboveLine.size
+  val removals = existingInlays.inline.values.sumOf { it.size } +
+                 existingInlays.eol.values.sumOf { it.size } +
+                 existingInlays.aboveLine.values.sumOf { it.size }
   return adds + removals > INLAY_BATCH_MODE_THRESHOLD
 }
 
