@@ -1,5 +1,7 @@
 package fleet.buildtool.s3.upload
 
+import fleet.buildtool.fs.ReproducibilityMode
+import fleet.buildtool.fs.ReproducibilityMode.Reproducible.PermissionOption.Preserve
 import fleet.buildtool.fs.readBytesForSha256
 import fleet.buildtool.fs.sha256
 import fleet.buildtool.fs.tarZst
@@ -46,6 +48,7 @@ suspend fun uploadToS3(
           withTopLevelFolder = false,
           temporaryDir = temporaryDir,
           logger = logger,
+          reproducibilityMode = ReproducibilityMode.Reproducible(permissionOption = Preserve)
         )
       }
 

@@ -1,5 +1,11 @@
 package fleet.buildtool.fs
 
+import fleet.buildtool.fs.ReproducibilityMode.None
+import fleet.buildtool.fs.ReproducibilityMode.Reproducible
+import fleet.buildtool.fs.ReproducibilityMode.Reproducible.PermissionOption.Override
+import fleet.buildtool.fs.ReproducibilityMode.Reproducible.PermissionOption.Preserve
+import org.apache.commons.compress.archivers.tar.TarArchiveInputStream
+import org.apache.commons.compress.compressors.zstandard.ZstdCompressorInputStream
 import org.junit.Assume.assumeTrue
 import org.slf4j.Logger
 import org.slf4j.LoggerFactory
@@ -8,6 +14,7 @@ import java.io.IOException
 import java.nio.file.Files
 import java.nio.file.Path
 import java.nio.file.Paths
+import java.nio.file.attribute.FileTime
 import java.nio.file.attribute.PosixFilePermission
 import java.util.zip.ZipEntry
 import java.util.zip.ZipInputStream
@@ -167,7 +174,7 @@ class ArchiveUtilsTest {
     val extractTmpDir = tempDir.resolve("tmp2")
 
     // When
-    zip(sourceDir, outputFile, withTopLevelFolder = false, tmpDir, logger)
+    zip(sourceDir, outputFile, withTopLevelFolder = false, tmpDir, logger, None)
 
     extractZip(outputFile, extractDir, stripTopLevelFolder = false, cleanDestination = false, extractTmpDir, logger)
 
@@ -215,7 +222,7 @@ class ArchiveUtilsTest {
     val tmpDir = tempDir.resolve("tmp")
 
     // When
-    zip(sourceDir, outputFile, withTopLevelFolder = false, tmpDir, logger)
+    zip(sourceDir, outputFile, withTopLevelFolder = false, tmpDir, logger, None)
 
     // Then
     val extractDir = tempDir.resolve("extracted")
@@ -571,7 +578,7 @@ class ArchiveUtilsTest {
     val tmpDir = tempDir.resolve("tmp")
 
     // When
-    tarGz(sourceDir, outputFile, withTopLevelFolder = false, tmpDir, logger)
+    tarGz(sourceDir, outputFile, withTopLevelFolder = false, tmpDir, logger, None)
 
     // Then
     assertTrue(outputFile.exists())
@@ -588,7 +595,7 @@ class ArchiveUtilsTest {
     val tmpDir = tempDir.resolve("tmp")
 
     // When
-    tarGz(sourceDir, outputFile, withTopLevelFolder = true, tmpDir, logger)
+    tarGz(sourceDir, outputFile, withTopLevelFolder = true, tmpDir, logger, None)
 
     // Then
     assertTrue(outputFile.exists())
@@ -602,7 +609,7 @@ class ArchiveUtilsTest {
     val tmpDir = tempDir.resolve("tmp")
 
     // When
-    tarGz(sourceFile, outputFile, withTopLevelFolder = false, tmpDir, logger)
+    tarGz(sourceFile, outputFile, withTopLevelFolder = false, tmpDir, logger, None)
 
     // Then
     assertTrue(outputFile.exists())
@@ -617,7 +624,7 @@ class ArchiveUtilsTest {
     val tmpDir = tempDir.resolve("tmp")
 
     // When
-    val result = tarGz(sourceDir, outputFile, withTopLevelFolder = false, tmpDir, logger)
+    val result = tarGz(sourceDir, outputFile, withTopLevelFolder = false, tmpDir, logger, reproducibilityMode = None)
 
     // Then
     assertEquals(outputFile, result)
@@ -637,7 +644,7 @@ class ArchiveUtilsTest {
     val tmpDir = tempDir.resolve("tmp")
 
     // When
-    tarGz(sourceDir, outputFile, withTopLevelFolder = false, tmpDir, logger)
+    tarGz(sourceDir, outputFile, withTopLevelFolder = false, tmpDir, logger, reproducibilityMode = None)
 
     // Then
     val extractDir = tempDir.resolve("extracted")
@@ -661,7 +668,7 @@ class ArchiveUtilsTest {
     val tmpDir = tempDir.resolve("tmp")
 
     // When
-    tarZst(sourceDir, outputFile, withTopLevelFolder = false, tmpDir, logger)
+    tarZst(sourceDir, outputFile, withTopLevelFolder = false, tmpDir, logger, reproducibilityMode = None)
 
     // Then
     assertTrue(outputFile.exists())
@@ -678,7 +685,7 @@ class ArchiveUtilsTest {
     val tmpDir = tempDir.resolve("tmp")
 
     // When
-    tarZst(sourceDir, outputFile, withTopLevelFolder = true, tmpDir, logger)
+    tarZst(sourceDir, outputFile, withTopLevelFolder = true, tmpDir, logger, reproducibilityMode = None)
 
     // Then
     assertTrue(outputFile.exists())
@@ -695,7 +702,7 @@ class ArchiveUtilsTest {
     val extractTmpDir = tempDir.resolve("tmp2")
 
     // When
-    tarZst(sourceDir, outputFile, withTopLevelFolder = false, tmpDir, logger)
+    tarZst(sourceDir, outputFile, withTopLevelFolder = false, tmpDir, logger, reproducibilityMode = None)
 
     extractTarZst(outputFile, extractDir, stripTopLevelFolder = false, cleanDestination = false, extractTmpDir, logger)
 
@@ -713,7 +720,7 @@ class ArchiveUtilsTest {
     sourceDir.resolve("file.txt").writeText("content")
     val tarGz = tempDir.resolve("archive.tar.gz")
     val tmpDir = tempDir.resolve("tmp1")
-    tarGz(sourceDir, tarGz, withTopLevelFolder = true, tmpDir, logger)
+    tarGz(sourceDir, tarGz, withTopLevelFolder = true, tmpDir, logger, reproducibilityMode = None)
 
     val destination = tempDir.resolve("extracted")
     val extractTmpDir = tempDir.resolve("tmp2")
@@ -733,7 +740,7 @@ class ArchiveUtilsTest {
     sourceDir.resolve("file.txt").writeText("content")
     val tarGz = tempDir.resolve("archive.tar.gz")
     val tmpDir = tempDir.resolve("tmp1")
-    tarGz(sourceDir, tarGz, withTopLevelFolder = true, tmpDir, logger)
+    tarGz(sourceDir, tarGz, withTopLevelFolder = true, tmpDir, logger, reproducibilityMode = None)
 
     val destination = tempDir.resolve("extracted")
     val extractTmpDir = tempDir.resolve("tmp2")
@@ -753,7 +760,7 @@ class ArchiveUtilsTest {
     sourceDir.resolve("new.txt").writeText("new")
     val tarGz = tempDir.resolve("archive.tar.gz")
     val tmpDir = tempDir.resolve("tmp1")
-    tarGz(sourceDir, tarGz, withTopLevelFolder = false, tmpDir, logger)
+    tarGz(sourceDir, tarGz, withTopLevelFolder = false, tmpDir, logger, reproducibilityMode = None)
 
     val destination = tempDir.resolve("extracted").createDirectories()
     destination.resolve("old.txt").writeText("old")
@@ -776,7 +783,7 @@ class ArchiveUtilsTest {
     nested.resolve("deep.txt").writeText("deep content")
     val tarGz = tempDir.resolve("single_symlink.tar.gz")
     val tmpDir = tempDir.resolve("tmp1")
-    tarGz(sourceDir, tarGz, withTopLevelFolder = false, tmpDir, logger)
+    tarGz(sourceDir, tarGz, withTopLevelFolder = false, tmpDir, logger, reproducibilityMode = None)
 
     val destination = tempDir.resolve("extracted")
     val extractTmpDir = tempDir.resolve("tmp2")
@@ -834,7 +841,7 @@ class ArchiveUtilsTest {
     val tmpDir = tempDir.resolve("tmp")
 
     // When
-    tarGz(sourceDir, outputFile, withTopLevelFolder = false, tmpDir, logger)
+    tarGz(sourceDir, outputFile, withTopLevelFolder = false, tmpDir, logger, reproducibilityMode = None)
 
     // Then
     val extractDir = tempDir.resolve("extracted")
@@ -879,7 +886,7 @@ class ArchiveUtilsTest {
     sourceDir.resolve("file.txt").writeText("zst content")
     val tarZst = tempDir.resolve("archive.tar.zst")
     val tmpDir = tempDir.resolve("tmp1")
-    tarZst(sourceDir, tarZst, withTopLevelFolder = true, tmpDir, logger)
+    tarZst(sourceDir, tarZst, withTopLevelFolder = true, tmpDir, logger, reproducibilityMode = None)
 
     val destination = tempDir.resolve("extracted")
     val extractTmpDir = tempDir.resolve("tmp2")
@@ -899,7 +906,7 @@ class ArchiveUtilsTest {
     sourceDir.resolve("file.txt").writeText("zst content")
     val tarZst = tempDir.resolve("archive.tar.zst")
     val tmpDir = tempDir.resolve("tmp1")
-    tarZst(sourceDir, tarZst, withTopLevelFolder = true, tmpDir, logger)
+    tarZst(sourceDir, tarZst, withTopLevelFolder = true, tmpDir, logger, reproducibilityMode = None)
 
     val destination = tempDir.resolve("extracted")
     val extractTmpDir = tempDir.resolve("tmp2")
@@ -910,6 +917,86 @@ class ArchiveUtilsTest {
     // Then
     assertTrue(destination.resolve("file.txt").exists())
     assertEquals("zst content", destination.resolve("file.txt").readText())
+  }
+
+  @Test
+  fun `GIVEN last modified time changed WHEN extract tar zst  THEN extraction is Reproducible`() {
+    val sourceDir = tempDir.resolve("source").createDirectories()
+    val file = sourceDir.resolve("file.txt").apply { writeText("zst content") }
+    val archive1 = tempDir.resolve("archive1.tar.zst")
+    val archive2 = tempDir.resolve("archive2.tar.zst")
+    val tmpDir = tempDir.resolve("tmp1")
+
+    file.setLastModifiedTime(FileTime.fromMillis(0L))
+    val tarZst1 = tarZst(file, archive1, withTopLevelFolder = false, temporaryDir = tmpDir, logger, Reproducible(Preserve))
+    val firstSha256 = sha256(tarZst1.readBytesForSha256())
+
+    file.setLastModifiedTime(FileTime.fromMillis(System.currentTimeMillis()))
+    val tarZst2 = tarZst(file, archive2, withTopLevelFolder = false, temporaryDir = tmpDir, logger, Reproducible(Preserve))
+    val secondSha256 = sha256(tarZst2.readBytesForSha256())
+
+    assertEquals(firstSha256, secondSha256, "tarZst compression should be Reproducible and not change no matter of system meta information")
+  }
+
+  @Test
+  fun `GIVEN order is random WHEN extract tar zst  THEN order is alphabetical`() {
+    val sourceDir = tempDir.resolve("source").createDirectories()
+    val fileC = sourceDir.resolve("C.txt").apply { writeText("C") }
+    val dirA = sourceDir.resolve("A").apply { createDirectories() }
+    val dirAFileA = dirA.resolve("a.txt").apply { writeText("a") }
+    val fileB = sourceDir.resolve("B.txt").apply { writeText("B") }
+    val fileA = sourceDir.resolve("A.txt").apply { writeText("A") }
+    val archiveFile = tempDir.resolve("archive.tar.zst")
+    val tmpDir = tempDir.resolve("tmp1")
+    val destination = tempDir.resolve("dest")
+
+    val tarZstArchive =
+      tarZst(sourceDir, archiveFile, withTopLevelFolder = false, temporaryDir = tmpDir, logger, Reproducible(permissionOption = Override()))
+    extractTarZst(tarZstArchive, destination, stripTopLevelFolder = false, cleanDestination = false, tmpDir, logger)
+
+    archiveFile.inputStream().buffered().use { bufferedInputStream ->
+      ZstdCompressorInputStream(bufferedInputStream).use { zstdInputStream ->
+        TarArchiveInputStream(zstdInputStream).use { tarInputStream ->
+          var entry = tarInputStream.nextEntry
+          val entries = mutableListOf<String>()
+          while (entry != null) {
+            entries.add(entry.name)
+            entry = tarInputStream.nextEntry
+          }
+
+          assertEquals("./A.txt", entries[0])
+          assertEquals("./A/a.txt", entries[1])
+          assertEquals("./B.txt", entries[2])
+          assertEquals("./C.txt", entries[3])
+        }
+      }
+    }
+  }
+
+  @Test
+  fun `GIVEN permissions changed WHEN extract tar zst  THEN extraction is Reproducible`() {
+    assumePosixFileSystem()
+
+    val sourceDir = tempDir.resolve("source").createDirectories()
+    val file = sourceDir.resolve("file.txt").apply { writeText("zst content") }
+    val archive1 = tempDir.resolve("archive1.tar.zst")
+    val archive2 = tempDir.resolve("archive2.tar.zst")
+    val tmpDir = tempDir.resolve("tmp1")
+    archive1.deleteIfExists()
+    archive2.deleteIfExists()
+
+
+    val onlyOwnerReadPermissions = setOf(PosixFilePermission.OWNER_READ)
+    val readPermissions = setOf(PosixFilePermission.OTHERS_READ, PosixFilePermission.OWNER_READ, PosixFilePermission.GROUP_READ)
+    file.setPosixFilePermissions(readPermissions)
+    val tarZst1 = tarZst(file, archive1, withTopLevelFolder = false, temporaryDir = tmpDir, logger, Reproducible(Override()))
+    val firstSha256 = sha256(tarZst1.readBytesForSha256())
+
+    file.setPosixFilePermissions(onlyOwnerReadPermissions)
+    val tarZst2 = tarZst(file, archive2, withTopLevelFolder = false, temporaryDir = tmpDir, logger, Reproducible(Override()))
+    val secondSha256 = sha256(tarZst2.readBytesForSha256())
+
+    assertEquals(firstSha256, secondSha256, "tarZst compression should be Reproducible and not change no matter of system meta information")
   }
 
   // ========== Edge Cases and Error Handling ==========
@@ -990,7 +1077,7 @@ class ArchiveUtilsTest {
   }
 
   @Test
-  fun `tarGz and extractTarGz should preserve file permissions`() {
+  fun `tarGz and extractTarGz should preserve file permissions when ReproducibilityMode=NONE`() {
     assumePosixFileSystem()
 
     // Given
@@ -999,7 +1086,6 @@ class ArchiveUtilsTest {
     val expectedPerms = setOf(
       PosixFilePermission.OWNER_READ,
       PosixFilePermission.OWNER_WRITE,
-      PosixFilePermission.OWNER_EXECUTE,
       PosixFilePermission.GROUP_READ,
       PosixFilePermission.GROUP_EXECUTE,
       PosixFilePermission.OTHERS_READ,
@@ -1010,7 +1096,7 @@ class ArchiveUtilsTest {
 
     val archive = tempDir.resolve("perm.tar.gz")
     val tmp = tempDir.resolve("tmp")
-    tarGz(sourceDir, archive, withTopLevelFolder = false, tmp, logger)
+    tarGz(sourceDir, archive, withTopLevelFolder = false, tmp, logger, None)
 
     val dest = tempDir.resolve("out-tar")
     extractTarGz(archive, dest, stripTopLevelFolder = false, cleanDestination = false, tmp, logger)
@@ -1020,6 +1106,72 @@ class ArchiveUtilsTest {
     assertTrue(extracted.exists())
     val actualPerms = extracted.getPosixFilePermissions()
     assertEquals(expectedPerms, actualPerms)
+  }
+
+  @Test
+  fun `tarGz and extractTarGz should preserve file permissions when ReproducibilityMode=Reproducible with preserve`() {
+    assumePosixFileSystem()
+
+    // Given
+    val sourceDir = tempDir.resolve("src").createDirectories()
+    val file = sourceDir.resolve("script.sh").apply { writeText("echo hi") }
+    val expectedPerms = setOf(
+      PosixFilePermission.OWNER_READ,
+      PosixFilePermission.OWNER_WRITE,
+      PosixFilePermission.GROUP_READ,
+      PosixFilePermission.GROUP_EXECUTE,
+      PosixFilePermission.OTHERS_READ,
+      PosixFilePermission.OTHERS_EXECUTE,
+    )
+
+    file.setPosixFilePermissions(expectedPerms)
+
+    val archive = tempDir.resolve("perm.tar.gz")
+    val tmp = tempDir.resolve("tmp")
+    tarGz(sourceDir, archive, withTopLevelFolder = false, tmp, logger, Reproducible(Preserve))
+
+    val dest = tempDir.resolve("out-tar")
+    extractTarGz(archive, dest, stripTopLevelFolder = false, cleanDestination = false, tmp, logger)
+
+    // Then
+    val extracted = dest.resolve("script.sh")
+    assertTrue(extracted.exists())
+    val actualPerms = extracted.getPosixFilePermissions()
+    assertEquals(expectedPerms, actualPerms)
+  }
+
+  @Test
+  fun `tarGz and extractTarGz should use 0755 file permissions when ReproducibilityMode=Reproducible with override`() {
+    assumePosixFileSystem()
+
+    // Given
+    val sourceDir = tempDir.resolve("src").createDirectories()
+    val file = sourceDir.resolve("script.sh").apply { writeText("echo hi") }
+    val defaultPermissions = setOf(
+      PosixFilePermission.OWNER_READ,
+      PosixFilePermission.OWNER_WRITE,
+    )
+
+    val expectedPermissions = setOf(
+      PosixFilePermission.OWNER_READ, PosixFilePermission.OWNER_WRITE, PosixFilePermission.OWNER_EXECUTE,
+      PosixFilePermission.GROUP_READ, PosixFilePermission.GROUP_EXECUTE,
+      PosixFilePermission.OTHERS_READ, PosixFilePermission.OTHERS_EXECUTE,
+    )
+
+    file.setPosixFilePermissions(defaultPermissions)
+
+    val archive = tempDir.resolve("perm.tar.gz")
+    val tmp = tempDir.resolve("tmp")
+    tarGz(sourceDir, archive, withTopLevelFolder = false, tmp, logger, Reproducible(Override()))
+
+    val dest = tempDir.resolve("out-tar")
+    extractTarGz(archive, dest, stripTopLevelFolder = false, cleanDestination = false, tmp, logger)
+
+    // Then
+    val extracted = dest.resolve("script.sh")
+    assertTrue(extracted.exists())
+    val actualPerms = extracted.getPosixFilePermissions()
+    assertEquals(expectedPermissions, actualPerms)
   }
 
   @Test
@@ -1043,7 +1195,7 @@ class ArchiveUtilsTest {
 
     val archive = tempDir.resolve("script.sh")
     val tmp = tempDir.resolve("tmpZip")
-    zip(sourceDir, archive, withTopLevelFolder = false, tmp, logger)
+    zip(sourceDir, archive, withTopLevelFolder = false, tmp, logger, reproducibilityMode = None)
 
     val dest = tempDir.resolve("out-zip")
     extractZip(archive, dest, stripTopLevelFolder = false, cleanDestination = false, tmp, logger)

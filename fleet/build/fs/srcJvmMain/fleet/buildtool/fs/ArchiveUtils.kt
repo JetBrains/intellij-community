@@ -1,5 +1,7 @@
 package fleet.buildtool.fs
 
+import fleet.buildtool.fs.FilePermissions.Posix
+import fleet.buildtool.fs.ReproducibilityMode.Reproducible.PermissionOption
 import org.apache.commons.compress.archivers.ArchiveEntry
 import org.apache.commons.compress.archivers.ArchiveOutputStream
 import org.apache.commons.compress.archivers.tar.TarArchiveEntry
@@ -21,6 +23,7 @@ import java.io.InputStream
 import java.nio.file.Files
 import java.nio.file.LinkOption
 import java.nio.file.Path
+import java.nio.file.attribute.FileTime
 import java.nio.file.attribute.PosixFileAttributeView
 import java.nio.file.attribute.PosixFilePermission
 import java.util.zip.*
@@ -322,11 +325,6 @@ private fun restorePermissions(destinationFile: Path, unixMode: Int, isSymbolicL
 
 /**
  * Compresses a given [source] folder to an [outputFile] in ZIP format.
- *
- * TODO: Make it reproducible by using the methods from `zip(Path, Path, Boolean)` method (Make it optional, not to break backwards compatibility):
- *  1. Sort entries alphabetically
- *  2. Use invariant separators
- *  3. Reset lastModified to 0
  */
 fun zip(
   source: Path,
@@ -334,7 +332,8 @@ fun zip(
   withTopLevelFolder: Boolean,
   temporaryDir: Path,
   logger: Logger,
-) = compress(source, outputFile, withTopLevelFolder, ArchiveType.ZIP, compressorName = "", temporaryDir, logger)
+  reproducibilityMode: ReproducibilityMode,
+) = compress(source, outputFile, withTopLevelFolder, ArchiveType.ZIP, compressorName = "", reproducibilityMode, temporaryDir, logger)
 
 fun tarGz(
   source: Path,
@@ -342,7 +341,8 @@ fun tarGz(
   withTopLevelFolder: Boolean,
   temporaryDir: Path,
   logger: Logger,
-) = tarWithCompression(source, outputFile, withTopLevelFolder, CompressorStreamFactory.GZIP, temporaryDir, logger)
+  reproducibilityMode: ReproducibilityMode,
+) = tarWithCompression(source, outputFile, withTopLevelFolder, CompressorStreamFactory.GZIP, reproducibilityMode, temporaryDir, logger)
 
 fun tarZst(
   source: Path,
@@ -350,16 +350,18 @@ fun tarZst(
   withTopLevelFolder: Boolean,
   temporaryDir: Path,
   logger: Logger,
-) = tarWithCompression(source, outputFile, withTopLevelFolder, CompressorStreamFactory.ZSTANDARD, temporaryDir, logger)
+  reproducibilityMode: ReproducibilityMode,
+) = tarWithCompression(source, outputFile, withTopLevelFolder, CompressorStreamFactory.ZSTANDARD, reproducibilityMode, temporaryDir, logger)
 
 private fun tarWithCompression(
   source: Path,
   outputFile: Path,
   withTopLevelFolder: Boolean,
   compressorName: String,
+  reproducibilityMode: ReproducibilityMode,
   temporaryDir: Path,
   logger: Logger,
-): Path = compress(source, outputFile, withTopLevelFolder, ArchiveType.TAR, compressorName, temporaryDir, logger)
+): Path = compress(source, outputFile, withTopLevelFolder, ArchiveType.TAR, compressorName, reproducibilityMode, temporaryDir, logger)
 
 @OptIn(ExperimentalPathApi::class)
 private fun compress(
@@ -368,6 +370,7 @@ private fun compress(
   withTopLevelFolder: Boolean,
   archiveType: ArchiveType,
   compressorName: String,
+  reproducibilityMode: ReproducibilityMode,
   temporaryDir: Path,
   logger: Logger,
 ): Path {
@@ -399,19 +402,29 @@ private fun compress(
           source.isDirectory() -> {
             val base = when {
               withTopLevelFolder -> {
-                outputStream.addEntry(source, source.name, archiveType)
+                outputStream.addEntry(source, source.name, archiveType, reproducibilityMode)
                 "${source.name}/"
               }
 
               else -> "./"
             }
 
-            source.walk().forEach { // must not follow symlinks
-              outputStream.addEntry(it, "$base${it.relativeTo(source)}", archiveType)
+            val fileTree = when (reproducibilityMode) { // must not follow symlinks
+              is ReproducibilityMode.None -> source.walk()
+              is ReproducibilityMode.Reproducible -> source.walk().sortedBy { path -> path }
+            }
+
+            fileTree.forEach {
+              outputStream.addEntry(
+                it,
+                "$base${it.relativeTo(source).invariantSeparatorsPathString}",
+                archiveType,
+                reproducibilityMode,
+              )
             }
           }
 
-          else -> outputStream.addEntry(source, source.name, archiveType = archiveType)
+          else -> outputStream.addEntry(source, source.name, archiveType, reproducibilityMode)
         }
       }
     }
@@ -425,17 +438,15 @@ private fun compress(
   return outputFile
 }
 
-private fun ArchiveOutputStream<ArchiveEntry>.addEntry(path: Path, relativePathInArchive: String, archiveType: ArchiveType) {
+private fun ArchiveOutputStream<ArchiveEntry>.addEntry(path: Path, relativePathInArchive: String, archiveType: ArchiveType, reproducibilityMode: ReproducibilityMode) {
   when {
     path.isSymbolicLink() -> {
       when (archiveType) {
         ArchiveType.TAR -> {
           val entry = TarArchiveEntry(relativePathInArchive, LF_SYMLINK).also {
+            it.resetLastModifiedTime(reproducibilityMode)
             it.linkName = path.readSymbolicLink().pathString
-            when (val permissions = path.getFilePermissions(LinkOption.NOFOLLOW_LINKS)) {
-              FilePermissions.Other -> {}
-              is FilePermissions.Posix -> it.mode = permissions.toInt()
-            }
+            it.setFilePermissions(path, reproducibilityMode, LinkOption.NOFOLLOW_LINKS)
           }
           putArchiveEntry(entry)
           closeArchiveEntry()
@@ -443,10 +454,8 @@ private fun ArchiveOutputStream<ArchiveEntry>.addEntry(path: Path, relativePathI
         ArchiveType.ZIP -> {
           val link = path.readSymbolicLink().pathString
           val entry = ZipArchiveEntry(relativePathInArchive).also {
-            when (val permissions = path.getFilePermissions(LinkOption.NOFOLLOW_LINKS)) {
-              FilePermissions.Other -> {}
-              is FilePermissions.Posix -> it.unixMode = UnixStat.LINK_FLAG or permissions.toInt()
-            }
+            it.resetLastModifiedTime(reproducibilityMode)
+            it.setFilePermissions(path, reproducibilityMode, UnixStat.LINK_FLAG, LinkOption.NOFOLLOW_LINKS)
             it.size = link.toByteArray().size.toLong()
           }
           putArchiveEntry(entry)
@@ -461,16 +470,12 @@ private fun ArchiveOutputStream<ArchiveEntry>.addEntry(path: Path, relativePathI
     else -> path.inputStream().use { fileIn ->
       val entry: ArchiveEntry = when (archiveType) {
         ArchiveType.TAR -> TarArchiveEntry(path, relativePathInArchive).also {
-          when (val permissions = path.getFilePermissions()) {
-            FilePermissions.Other -> {}
-            is FilePermissions.Posix -> it.mode = permissions.toInt()
-          }
+          it.resetLastModifiedTime(reproducibilityMode)
+          it.setFilePermissions(path, reproducibilityMode)
         }
         ArchiveType.ZIP -> ZipArchiveEntry(path, relativePathInArchive).also {
-          when (val permissions = path.getFilePermissions()) {
-            FilePermissions.Other -> {}
-            is FilePermissions.Posix -> it.unixMode = permissions.toInt()
-          }
+          it.resetLastModifiedTime(reproducibilityMode)
+          it.setFilePermissions(path, reproducibilityMode)
         }
       }
       putArchiveEntry(entry)
@@ -480,10 +485,67 @@ private fun ArchiveOutputStream<ArchiveEntry>.addEntry(path: Path, relativePathI
   }
 }
 
+private fun TarArchiveEntry.setFilePermissions(path: Path, reproducibilityMode: ReproducibilityMode, vararg linkOption: LinkOption) {
+  when (val permissions = path.getFilePermissions(*linkOption)) {
+    FilePermissions.Other -> {}
+    is FilePermissions.Posix -> when (reproducibilityMode) {
+      is ReproducibilityMode.None ->  // Store real file permissions
+        mode = permissions.toInt()
+      is ReproducibilityMode.Reproducible -> when (val permissionOption = reproducibilityMode.permissionOption) {
+        is PermissionOption.Override ->
+          mode = permissionOption.permissions.toInt()
+        PermissionOption.Preserve ->
+          mode = permissions.toInt()
+      }
+    }
+  }
+}
+
+private fun ZipArchiveEntry.setFilePermissions(path: Path, reproducibilityMode: ReproducibilityMode, additionalFlags: Int? = null, vararg linkOption: LinkOption) {
+  when (val filePermissions = path.getFilePermissions(*linkOption)) {
+    FilePermissions.Other -> {}
+    is FilePermissions.Posix -> when (reproducibilityMode) {
+      is ReproducibilityMode.None -> // Store real file permissions
+        storePermissions(additionalFlags, filePermissions.permissions)
+      is ReproducibilityMode.Reproducible -> when (val permissionOption = reproducibilityMode.permissionOption) {
+        PermissionOption.Preserve -> // Store real file permissions
+          storePermissions(additionalFlags, filePermissions.permissions)
+        is PermissionOption.Override -> // Store artificial file permissions that make the file reproducible
+          storePermissions(additionalFlags, permissionOption.permissions)
+      }
+    }
+  }
+}
+
+private fun ZipArchiveEntry.storePermissions(additionalFlags: Int? = null, permissions: Set<PosixFilePermission>) {
+  unixMode = when {
+    additionalFlags != null -> permissions.toInt() or additionalFlags
+    else -> permissions.toInt()
+  }
+}
+
+private fun TarArchiveEntry.resetLastModifiedTime(reproducibilityMode: ReproducibilityMode) {
+  when (reproducibilityMode) {
+    is ReproducibilityMode.None -> {}
+    is ReproducibilityMode.Reproducible -> {
+      lastModifiedTime = FileTime.fromMillis(reproducibilityMode.lastModifiedTime)
+    }
+  }
+}
+
+private fun ZipArchiveEntry.resetLastModifiedTime(reproducibilityMode: ReproducibilityMode) {
+  when (reproducibilityMode) {
+    is ReproducibilityMode.None -> {}
+    is ReproducibilityMode.Reproducible -> {
+      lastModifiedTime = FileTime.fromMillis(reproducibilityMode.lastModifiedTime)
+    }
+  }
+}
+
 
 private fun Path.getFilePermissions(vararg options: LinkOption): FilePermissions {
   return try {
-    FilePermissions.Posix(getPosixFilePermissions(*options))
+    Posix(getPosixFilePermissions(*options))
   }
   catch (_: UnsupportedOperationException) {
     FilePermissions.Other
@@ -530,4 +592,54 @@ private sealed class FilePermissions {
 private enum class ArchiveType {
   ZIP,
   TAR,
+}
+
+/**
+ * Enum representing modes of reproducibility for file compression operations.
+ *
+ * Reproducibility is a measure of ensuring consistent and predictable outcomes when creating compressed archives.
+ * Depending on the selected mode, adjustments such as sorting file entries, normalizing file attributes,
+ * or resetting file modification timestamps may be applied during compression to ensure the output archive
+ * remains consistent across different environments and execution runs.
+ */
+sealed class ReproducibilityMode {
+
+  /**
+   * Represents the mode where no changes or adjustments are made to ensure reproducibility.
+   * Files and directories are processed and compressed as they are, preserving their original attributes.
+   */
+  data object None : ReproducibilityMode()
+
+  /**
+   * Represents the mode where adjustments are made to ensure reproducible outcomes.
+   * Files and directories are processed and compressed in a way that should ensure consistent and predictable outcomes across different environments and execution runs.
+   *
+   * @param permissionOption an option specifying how file permissions should be handled during compression. Defaults to [PermissionOption.Preserve].
+   *   - [PermissionOption.Preserve]: preserves the original file permissions.
+   *   This option might not always give a reproducible results, since posix file permissions are different from windows ones,
+   *   and will probably be lost during compression of the same files on Windows.
+   *   - [PermissionOption.Override]: overrides the original file permissions with the specified ones to have consistent results.
+   * @param lastModifiedTime last modification timestamp to apply to files and directories.
+   *
+   * Please make sure that all the parameters are consistent across different environments and execution runs.
+   */
+  data class Reproducible(
+    val permissionOption: PermissionOption,
+    val lastModifiedTime: Long = 0L,
+  ) : ReproducibilityMode() {
+
+    sealed class PermissionOption {
+      data object Preserve : PermissionOption()
+      data class Override(val permissions: Set<PosixFilePermission> = defaultPermissions) : PermissionOption()
+
+      companion object {
+        val defaultPermissions: Set<PosixFilePermission> = //Default permissions for reproducible archives, 0755
+          setOf(
+            PosixFilePermission.OWNER_READ, PosixFilePermission.OWNER_WRITE, PosixFilePermission.OWNER_EXECUTE,
+            PosixFilePermission.GROUP_READ, PosixFilePermission.GROUP_EXECUTE,
+            PosixFilePermission.OTHERS_READ, PosixFilePermission.OTHERS_EXECUTE,
+          )
+      }
+    }
+  }
 }

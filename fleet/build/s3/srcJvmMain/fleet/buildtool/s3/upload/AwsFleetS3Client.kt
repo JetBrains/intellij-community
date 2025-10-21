@@ -28,7 +28,6 @@ class AwsFleetS3Client(private val client: AwsClient) : FleetS3Client {
 
   override suspend fun getObject(bucket: String, key: String, temporaryDir: Path): Path {
     val file = createTempFile(temporaryDir, "s3-download-", "")
-    file.createFile()
     client.getObject(input = GetObjectRequest {
       this.bucket = bucket
       this.key = key
