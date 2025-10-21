@@ -268,11 +268,7 @@ public class PsiDirectoryImpl extends PsiElementBase implements PsiDirectory, Qu
 
   @Override
   protected @Nullable Icon getBaseIcon() {
-    Icon baseIcon = super.getBaseIcon();
-    Icon placeholder = IconManager.getInstance().getPlatformIcon(PlatformIcons.NodePlaceholder);
-    return baseIcon == placeholder
-           ? IconManager.getInstance().getPlatformIcon(PlatformIcons.Folder)
-           : baseIcon;
+    return IconManager.getInstance().getPlatformIcon(PlatformIcons.Folder);
   }
 
   @Override
