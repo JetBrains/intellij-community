@@ -1018,7 +1018,19 @@ fun analyzeArguments(
         variadicPositionalArguments.clear()
         variadicKeywordArguments.clear()
       }
-      else if (allPositionalArguments.isEmpty()) {
+      else if (!allPositionalArguments.isEmpty()) {
+        val positionalArgument = allPositionalArguments.next()
+        if (positionalArgument != null) {
+          mappedParameters.put(positionalArgument, parameter)
+          if (positionalComponentsOfVariadicArguments.contains(positionalArgument)) {
+            parametersMappedToVariadicPositionalArguments.add(parameter)
+          }
+        }
+        else if (!parameter.hasDefaultValue()) {
+          unmappedParameters.add(parameter)
+        }
+      }
+      else {
         val keywordArgument = keywordArguments.removeKeywordArgument(parameterName)
         if (keywordArgument != null && !(!hasSlashParameter && !seenStarArgs && parameterName != null && isPrivate(parameterName))) {
           mappedParameters.put(keywordArgument, parameter)
@@ -1031,18 +1043,6 @@ fun analyzeArguments(
             parametersMappedToVariadicKeywordArguments.add(parameter)
           }
           mappedVariadicArgumentsToParameters = true
-        }
-        else if (!parameter.hasDefaultValue()) {
-          unmappedParameters.add(parameter)
-        }
-      }
-      else {
-        val positionalArgument = allPositionalArguments.next()
-        if (positionalArgument != null) {
-          mappedParameters.put(positionalArgument, parameter)
-          if (positionalComponentsOfVariadicArguments.contains(positionalArgument)) {
-            parametersMappedToVariadicPositionalArguments.add(parameter)
-          }
         }
         else if (!parameter.hasDefaultValue()) {
           unmappedParameters.add(parameter)
