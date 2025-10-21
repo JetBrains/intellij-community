@@ -1,8 +1,6 @@
 // Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.jetbrains.python.sdk.add.v2.conda
 
-import com.intellij.execution.target.TargetEnvironmentConfiguration
-import com.intellij.execution.target.local.LocalTargetEnvironmentRequest
 import com.intellij.openapi.application.EDT
 import com.intellij.openapi.projectRoots.ProjectJdkTable
 import com.intellij.openapi.projectRoots.Sdk
@@ -51,11 +49,6 @@ internal suspend fun PythonAddInterpreterModel<*>.createCondaEnvironment(moduleO
 
   return result
 }
-
-internal fun TargetEnvironmentConfiguration?.toExecutor(): TargetCommandExecutor {
-  return TargetEnvironmentRequestCommandExecutor(this?.createEnvironmentRequest(project = null) ?: LocalTargetEnvironmentRequest())
-}
-
 
 internal fun PythonAddInterpreterModel<*>.getBaseCondaOrError(): PyResult<PyCondaEnv> {
   val baseConda = condaViewModel.baseCondaEnv.get()

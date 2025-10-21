@@ -4,6 +4,7 @@ package com.jetbrains.python.sdk.add.v2
 import com.intellij.icons.AllIcons
 import com.intellij.ide.util.PropertiesComponent
 import com.intellij.openapi.application.EDT
+import com.intellij.openapi.observable.properties.AtomicBooleanProperty
 import com.intellij.openapi.observable.properties.ObservableMutableProperty
 import com.intellij.openapi.observable.properties.ObservableProperty
 import com.intellij.openapi.observable.properties.PropertyGraph
@@ -14,6 +15,7 @@ import com.intellij.openapi.ui.validation.WHEN_PROPERTY_CHANGED
 import com.intellij.openapi.ui.validation.and
 import com.intellij.openapi.util.IconLoader
 import com.intellij.openapi.util.NlsSafe
+import com.intellij.platform.eel.provider.localEel
 import com.intellij.platform.ide.progress.ModalTaskOwner
 import com.intellij.platform.ide.progress.runWithModalProgressBlocking
 import com.intellij.python.community.impl.installer.CondaInstallManager
@@ -43,7 +45,11 @@ import com.jetbrains.python.sdk.flavors.conda.PyCondaEnv
 import com.jetbrains.python.sdk.flavors.conda.PyCondaEnvIdentity
 import com.jetbrains.python.util.ShowingMessageErrorSync
 import kotlinx.coroutines.*
-import kotlinx.coroutines.flow.*
+import kotlinx.coroutines.flow.Flow
+import kotlinx.coroutines.flow.SharedFlow
+import kotlinx.coroutines.flow.collectLatest
+import kotlinx.coroutines.flow.launchIn
+import kotlinx.coroutines.flow.onEach
 import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.annotations.Nls
 import org.jetbrains.annotations.NonNls
@@ -259,28 +265,18 @@ internal fun <P : PathHolder> Panel.pythonInterpreterComboBox(
           preferredSize = JBUI.size(preferredSize)
           isEditable = true
         }
-        .validationRequestor(validationRequestor and WHEN_PROPERTY_CHANGED(selectedSdkProperty))
+        .validationRequestor(
+          validationRequestor
+            and WHEN_PROPERTY_CHANGED(selectedSdkProperty)
+            and WHEN_PROPERTY_CHANGED(comboBox.isLoading)
+        )
         .validationInfo {
           when {
-            !comboBox.isVisible -> null
-            selectedSdkProperty.get() == null -> {
-              if (comboBox.isBusy) {
-                ValidationInfo(message("python.add.sdk.panel.wait"))
-              }
-              else {
-                ValidationInfo(message("sdk.create.custom.existing.error.no.interpreters.to.select"))
-              }
-            }
+            !it.isVisible -> null
+            it.isLoading.get() -> ValidationInfo(message("python.add.sdk.panel.wait"))
+            selectedSdkProperty.get() == null -> ValidationInfo(message("sdk.create.custom.existing.error.no.interpreters.to.select"))
             else -> null
           }
-        }
-        .validationOnApply {
-          if (!comboBox.isVisible) return@validationOnApply null
-          // This component must set sdk: clients expect it not to be null (PY-77463)
-          if (comboBox.isBusy || selectedSdkProperty.get() == null) {
-            ValidationInfo(message("python.add.sdk.panel.wait"))
-          }
-          else null
         }
         .align(Align.FILL)
     }
@@ -294,9 +290,10 @@ internal class PythonInterpreterComboBox<P : PathHolder>(
   val fileSystem: FileSystem<P>,
   private val errorSink: ErrorSink,
 ) : ComboBox<PythonSelectableInterpreter<P>?>() {
+  val isLoading: ObservableMutableProperty<Boolean> = AtomicBooleanProperty(true)
 
   init {
-    renderer = PythonSdkComboBoxListCellRenderer { isBusy }
+    renderer = PythonSdkComboBoxListCellRenderer { isLoading.get() }
     val newOnPathSelected: (String) -> Unit = { rawPath ->
       runWithModalProgressBlocking(ModalTaskOwner.guess(), message("python.sdk.validating.environment")) {
         val pathOnFileSystem = fileSystem.parsePath(rawPath).onFailure { error ->
@@ -331,6 +328,7 @@ internal class PythonInterpreterComboBox<P : PathHolder>(
       selectedItemReminder?.let { selectedItem = it }
 
       setBusy(false)
+      isLoading.set(false)
     }.launchIn(scope + Dispatchers.EDT)
   }
 
@@ -420,7 +418,9 @@ private fun ExtendableTextComponent.removeLoadingExtension() {
   removeExtension(loaderExtension)
 }
 
-internal fun <P : PathHolder> createInstallCondaFix(model: PythonAddInterpreterModel<P>, errorSink: ErrorSink): ActionLink {
+internal fun <P : PathHolder> createInstallCondaFix(model: PythonAddInterpreterModel<P>): ActionLink? {
+  if ((model.fileSystem as? FileSystem.Eel)?.eelApi != localEel) return null
+
   return ActionLink(message("sdk.create.custom.venv.install.fix.title", "Miniconda", "")) {
     PythonSdkFlavor.clearExecutablesCache()
     CondaInstallManager.installLatest(null)
