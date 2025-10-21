@@ -16,10 +16,10 @@ import com.intellij.openapi.project.IndexNotReadyException
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.NlsContexts
 import com.intellij.platform.debugger.impl.rpc.*
+import com.intellij.platform.util.coroutines.attachAsChildTo
 import com.intellij.util.AwaitCancellationAndInvoke
 import com.intellij.util.ThreeState
 import com.intellij.util.asDisposable
-import com.intellij.util.awaitCancellationAndInvoke
 import com.intellij.xdebugger.XSourcePosition
 import com.intellij.xdebugger.evaluation.EvaluationMode
 import com.intellij.xdebugger.evaluation.XDebuggerEditorsProvider
@@ -38,11 +38,11 @@ import com.intellij.xdebugger.stepping.ForceSmartStepIntoSource
 import com.intellij.xdebugger.stepping.XSmartStepIntoHandler
 import com.intellij.xdebugger.stepping.XSmartStepIntoVariant
 import fleet.rpc.core.toRpc
-import kotlinx.coroutines.CompletableDeferred
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.channels.BufferOverflow
 import kotlinx.coroutines.channels.Channel
+import kotlinx.coroutines.channels.awaitClose
 import kotlinx.coroutines.flow.*
 import kotlinx.coroutines.future.asDeferred
 import kotlinx.coroutines.withContext
@@ -188,10 +188,7 @@ internal class BackendXDebugSessionApi : XDebugSessionApi {
   override suspend fun computeExecutionStacks(suspendContextId: XSuspendContextId): Flow<XExecutionStacksEvent> {
     return channelFlow {
       val suspendContextModel = suspendContextId.findValue() ?: return@channelFlow
-      val completed = CompletableDeferred<Unit>()
-      suspendContextModel.coroutineScope.awaitCancellationAndInvoke {
-        completed.complete(Unit)
-      }
+      attachAsChildTo(suspendContextModel.coroutineScope)
 
       val container = object : XSuspendContext.XExecutionStackContainer {
         @Volatile
@@ -208,7 +205,7 @@ internal class BackendXDebugSessionApi : XDebugSessionApi {
           }
           trySend(XExecutionStacksEvent.NewExecutionStacks(stacks, last))
           if (last) {
-            completed.complete(Unit)
+            this@channelFlow.close()
           }
         }
 
@@ -216,11 +213,8 @@ internal class BackendXDebugSessionApi : XDebugSessionApi {
           trySend(XExecutionStacksEvent.ErrorOccurred(errorMessage))
         }
       }
-      try {
-        suspendContextModel.suspendContext.computeExecutionStacks(container)
-        completed.await()
-      }
-      finally {
+      suspendContextModel.suspendContext.computeExecutionStacks(container)
+      awaitClose {
         container.obsolete = true
       }
     }.buffer(Channel.UNLIMITED)
