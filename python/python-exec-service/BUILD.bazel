@@ -41,6 +41,7 @@ jvm_library(
     "//libraries/kotlinx/serialization/json",
     "//libraries/kotlinx/serialization/core",
     "//platform/remote-servers/impl",
+    "@lib//:guava",
   ]
 )
 
@@ -76,6 +77,7 @@ jvm_library(
     "//libraries/kotlinx/serialization/json",
     "//libraries/kotlinx/serialization/core",
     "//platform/remote-servers/impl",
+    "@lib//:guava",
   ]
 )
 ### auto-generated section `build intellij.python.community.execService` end

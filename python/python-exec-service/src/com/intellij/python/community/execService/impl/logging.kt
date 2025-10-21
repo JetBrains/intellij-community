@@ -1,37 +1,39 @@
 // Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.python.community.execService.impl
 
+import com.google.common.io.ByteStreams
 import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.components.Service
 import com.intellij.openapi.components.service
+import com.intellij.util.io.awaitExit
 import com.intellij.util.io.readLineAsync
 import com.jetbrains.python.TraceContext
 import com.jetbrains.python.errorProcessing.Exe
 import kotlinx.coroutines.CoroutineScope
-import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.MutableSharedFlow
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.SharedFlow
 import kotlinx.coroutines.flow.asSharedFlow
 import kotlinx.coroutines.launch
-import kotlinx.coroutines.withContext
 import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.annotations.Nls
 import java.io.BufferedReader
+import java.io.ByteArrayInputStream
 import java.io.IOException
 import java.io.InputStream
 import java.io.InputStreamReader
 import java.io.OutputStream
-import java.io.PipedInputStream
-import java.io.PipedOutputStream
 import java.util.concurrent.TimeUnit
 import java.util.concurrent.atomic.AtomicInteger
 import kotlin.time.Clock
 import kotlin.time.Instant
 
 internal object LoggingLimits {
-  const val MAX_LINE_SIZE = 16_384
+  /**
+   * The maximum buffer size of a LoggingProcess
+   */
+  const val MAX_OUTPUT_SIZE = 10_000_000
   const val MAX_LINES = 1024
 }
 
@@ -138,26 +140,21 @@ class LoggingProcess(
         exitInfoFlow,
       )
 
-    val outCollector = service.scope.launch {
-      collectOutputLines(stdoutStream.inputStream, linesFlow, LoggedProcessLine.Kind.OUT)
-    }
-
-    val errCollector = service.scope.launch {
-      collectOutputLines(stderrStream.inputStream, linesFlow, LoggedProcessLine.Kind.ERR)
-    }
-
     service.scope.launch {
       service.processesInternal.emit(loggedProcess)
-      withContext(Dispatchers.IO) {
-        waitFor()
-      }
+
+      awaitExit()
+
+      val stdoutReader = BufferedReader(InputStreamReader(ByteArrayInputStream(stdoutStream.byteArray)))
+      val stderrReader = BufferedReader(InputStreamReader(ByteArrayInputStream(stderrStream.byteArray)))
+
+      collectOutputLines(stdoutReader, linesFlow, LoggedProcessLine.Kind.OUT)
+      collectOutputLines(stderrReader, linesFlow, LoggedProcessLine.Kind.ERR)
+
       exitInfoFlow.value = LoggedProcessExitInfo(
         exitedAt = Clock.System.now(),
         exitValue = exitValue(),
       )
-
-      outCollector.cancel()
-      errCollector.cancel()
     }
   }
 
@@ -197,16 +194,17 @@ class LoggingProcess(
 private class LoggingInputStream(
   private val backingInputStream: InputStream,
 ) : InputStream() {
-  private val outputStream = PipedOutputStream()
-  val inputStream: InputStream = PipedInputStream(outputStream)
+  private val bytes = ByteStreams.newDataOutput()
+  private var tail = 0
+
+  val byteArray
+    get() = bytes.toByteArray()
 
   override fun read(): Int {
     val byte = try {
       backingInputStream.read()
     }
     catch (e: IOException) {
-      outputStream.close()
-
       // ugly hack; but the Process' `.destroy` methods abruptly close
       // the stream, making all pending readers throw an exception.
       // we can handle this case as legal here
@@ -217,16 +215,9 @@ private class LoggingInputStream(
       throw e
     }
 
-    try {
-      if (byte == -1) {
-        outputStream.close()
-      }
-      else {
-        outputStream.write(byte)
-      }
-    }
-    catch (_: IOException) {
-      // pipe might be closed, simply ignore it in this case
+    if (tail < LoggingLimits.MAX_OUTPUT_SIZE && byte != -1) {
+      bytes.write(byte)
+      tail += 1
     }
 
     return byte
@@ -234,16 +225,15 @@ private class LoggingInputStream(
 }
 
 private suspend fun collectOutputLines(
-  inputStream: InputStream,
+  reader: BufferedReader,
   linesFlow: MutableSharedFlow<LoggedProcessLine>,
   kind: LoggedProcessLine.Kind,
 ) {
-  val reader = BufferedReader(InputStreamReader(inputStream))
   var line: String? = null
 
   while (reader.readLineAsync()?.also { line = it } != null) {
     linesFlow.emit(LoggedProcessLine(
-      text = line!!.substring(0, line.length.coerceAtMost(LoggingLimits.MAX_LINE_SIZE)),
+      text = line!!,
       kind = kind,
     ))
   }

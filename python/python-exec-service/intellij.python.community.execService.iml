@@ -52,5 +52,6 @@
     <orderEntry type="module" module-name="intellij.libraries.kotlinx.serialization.json" />
     <orderEntry type="module" module-name="intellij.libraries.kotlinx.serialization.core" />
     <orderEntry type="module" module-name="intellij.platform.remoteServers.impl" />
+    <orderEntry type="library" name="Guava" level="project" />
   </component>
 </module>
