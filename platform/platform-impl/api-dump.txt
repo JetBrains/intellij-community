@@ -498,6 +498,27 @@ com.intellij.ide.wizard.language.LanguageGeneratorNewProjectWizard
 - getOrdinal():I
 - isEnabled(com.intellij.ide.util.projectWizard.WizardContext):Z
 com.intellij.notification.impl.NotificationFullContent
+a:com.intellij.openapi.actionSystem.ex.ActionButtonLook
+- sf:INPLACE_LOOK:com.intellij.openapi.actionSystem.ex.ActionButtonLook
+- sf:SYSTEM_LOOK:com.intellij.openapi.actionSystem.ex.ActionButtonLook
+- <init>():V
+- s:getButtonState(Z,Z,Z,Z,Z):I
+- getDisabledIcon(javax.swing.Icon):javax.swing.Icon
+- ps:getIconPosition(com.intellij.openapi.actionSystem.ActionButtonComponent,javax.swing.Icon):java.awt.Point
+- p:getState(com.intellij.openapi.actionSystem.ActionButtonComponent):I
+- p:getStateBackground(javax.swing.JComponent,I):java.awt.Color
+- paintBackground(java.awt.Graphics,javax.swing.JComponent):V
+- paintBackground(java.awt.Graphics,javax.swing.JComponent,I):V
+- paintBackground(java.awt.Graphics,javax.swing.JComponent,java.awt.Color):V
+- paintBorder(java.awt.Graphics,javax.swing.JComponent):V
+- paintBorder(java.awt.Graphics,javax.swing.JComponent,I):V
+- paintBorder(java.awt.Graphics,javax.swing.JComponent,java.awt.Color):V
+- paintDownArrow(java.awt.Graphics,com.intellij.openapi.actionSystem.ActionButtonComponent,javax.swing.Icon,javax.swing.Icon):V
+- paintIcon(java.awt.Graphics,com.intellij.openapi.actionSystem.ActionButtonComponent,javax.swing.Icon):V
+- paintIcon(java.awt.Graphics,com.intellij.openapi.actionSystem.ActionButtonComponent,javax.swing.Icon,I,I):V
+- paintLookBackground(java.awt.Graphics,java.awt.Rectangle,java.awt.Color):V
+- paintLookBorder(java.awt.Graphics,java.awt.Rectangle,java.awt.Color):V
+- updateUI():V
 com.intellij.openapi.actionSystem.impl.DynamicActionConfigurationCustomizer
 - registerActions(com.intellij.openapi.actionSystem.ActionManager):V
 - a:unregisterActions(com.intellij.openapi.actionSystem.ActionManager):V
