@@ -196,27 +196,39 @@ class GitIndexFileSystemRefresher(private val project: Project) : Disposable {
       val oldData = file.data
       val oldModificationStamp = file.modificationStamp
 
-      val applyChanges = computeUnderPotemkinProgress(project, GitBundle.message("stage.vfs.write.process", file.name)) {
-        val indexFileData = readFromGit(file, oldData, oldModificationStamp)
-        if (indexFileData != null) {
-          LOG.info("Detected memory-disk conflict in $file")
-          return@computeUnderPotemkinProgress {
-            applyRefresh(listOf(indexFileData))
-          }
-        }
-        val newHash = GitIndexUtil.write(project, file.root, file.filePath, ByteArrayInputStream(newContent), file.isExecutable)
-        LOG.debug("Written $file. newHash=$newHash")
-        return@computeUnderPotemkinProgress {
-          file.setDataFromWrite(newHash, newContent.size.toLong(), newModStamp)
-        }
+      val applyChangesHandler = computeUnderPotemkinProgressIfEdt(project, GitBundle.message("stage.vfs.write.process", file.name)) {
+        getApplyChangesHandler(file, oldData, oldModificationStamp, newContent, newModStamp)
       }
-
-      applyChanges.invoke()
+      applyChangesHandler.invoke()
 
       ApplicationManager.getApplication().messageBus.syncPublisher(VirtualFileManager.VFS_CHANGES).after(listOf(event))
     }
     catch (e: Exception) {
       throw IOException(e)
+    }
+  }
+
+  /**
+   * Returned function can be executed both on EDT and in the background, but always under write lock.
+   */
+  private fun getApplyChangesHandler(
+    file: GitIndexVirtualFile,
+    oldData: GitIndexVirtualFile.CachedData?,
+    oldModificationStamp: Long,
+    newContent: ByteArray,
+    newModStamp: Long,
+  ): () -> Unit {
+    val indexFileData = readFromGit(file, oldData, oldModificationStamp)
+    if (indexFileData != null) {
+      LOG.info("Detected memory-disk conflict in $file")
+      return {
+        applyRefresh(listOf(indexFileData))
+      }
+    }
+    val newHash = GitIndexUtil.write(project, file.root, file.filePath, ByteArrayInputStream(newContent), file.isExecutable)
+    LOG.debug("Written $file. newHash=$newHash")
+    return {
+      file.setDataFromWrite(newHash, newContent.size.toLong(), newModStamp)
     }
   }
 
@@ -303,6 +315,9 @@ class GitIndexFileSystemRefresher(private val project: Project) : Disposable {
       }
       return result.get()
     }
+
+    fun <T> computeUnderPotemkinProgressIfEdt(project: Project, @NlsContexts.ProgressTitle message: String, computation: () -> T): T =
+      if (ApplicationManager.getApplication().isDispatchThread) computeUnderPotemkinProgress(project, message, computation) else computation()
   }
 
   private inner class IndexFileData(
