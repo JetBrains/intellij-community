@@ -1,4 +1,4 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.tasks.actions;
 
 import com.intellij.codeInsight.documentation.DocumentationManager;
@@ -123,7 +123,7 @@ public class GotoTaskAction extends GotoActionBase implements DumbAware {
 
     protected GotoTaskPopupModel(@NotNull Project project) {
       super(project, TaskBundle.message("enter.task.name"), null);
-      myListCellRenderer = new TaskCellRenderer(project);
+      myListCellRenderer = TaskUiUtil.getTaskCellRenderer(project);
     }
 
     @Override

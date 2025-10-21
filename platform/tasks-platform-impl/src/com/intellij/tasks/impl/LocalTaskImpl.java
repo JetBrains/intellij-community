@@ -1,4 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 
 package com.intellij.tasks.impl;
 
@@ -291,7 +291,7 @@ public class LocalTaskImpl extends LocalTask {
       case BUG -> TasksIcons.Bug;
       case EXCEPTION -> TasksIcons.Exception;
       case FEATURE -> AllIcons.Nodes.Favorite;
-      case OTHER -> issue ? AllIcons.FileTypes.Any_type : EmptyIcon.ICON_0;
+      case OTHER -> issue ? AllIcons.FileTypes.Any_type : EmptyIcon.ICON_16;
     };
   }
 
