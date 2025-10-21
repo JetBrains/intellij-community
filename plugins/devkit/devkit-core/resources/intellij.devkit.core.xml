@@ -550,8 +550,7 @@
                      implementationClass="org.jetbrains.idea.devkit.inspections.ContentModuleNamespaceInspection"
                      key="inspection.content.module.namespace.name"/>
 
-    <localInspection isInternal="true"
-                     language="UAST"
+    <localInspection language="UAST"
                      projectType="INTELLIJ_PLUGIN"
                      enabledByDefault="true"
                      level="WARNING"
