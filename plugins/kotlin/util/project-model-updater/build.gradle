@@ -2,8 +2,7 @@
 // (probably, it's possible to run arbitrary `main`/runConfiguration on TeamCity but I don't know how to do it yet)
 
 plugins {
-    // Android Studio (b/262609124): temporarily bump this KGP version for compatibility with recent Gradle versions.
-    id "org.jetbrains.kotlin.jvm" version "1.9.22"
+	id "org.jetbrains.kotlin.jvm" version "1.9.0"
     id "application"
 }
 

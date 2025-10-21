@@ -7,9 +7,7 @@
       headlessImplementation="com.intellij.platform.diagnostic.startUpPerformanceReporter.HeadlessStartUpPerformanceService"
     />
 
-<!-- Android Studio: b/282808067
     <errorHandler implementation="com.intellij.diagnostic.ITNReporter"/>
-Android Studio: b/282808067 -->
     <appStarter id="save" implementation="com.intellij.openapi.application.SaveStarter"/>
     <appStarter id="exit" implementation="com.intellij.openapi.application.ExitStarter"/>
     <appStarter id="dumpLaunchParameters" implementation="com.intellij.openapi.application.DumpLaunchParametersStarter"/>
@@ -937,10 +935,8 @@ Android Studio: don't register IntelliJ fork -->
 
     <config.inlaySettingsProvider implementation="com.intellij.codeInsight.hints.settings.providers.ParameterInlaySettingsProvider"/>
     <config.inlaySettingsProvider implementation="com.intellij.codeInsight.hints.settings.providers.NewInlaySettingsProvider"/>
-    <!-- Android Studio b/395576525
     <applicationService serviceInterface="com.intellij.internal.statistic.eventLog.StatisticsRegionSettingsService"
                         serviceImplementation="com.intellij.internal.statistic.StatisticsRegionSettingsServiceImpl" preload="notLightEdit"/>
-    -->
     <applicationService serviceInterface="com.intellij.internal.statistic.JetBrainsConsentProvider"
                         serviceImplementation="com.intellij.internal.statistic.EmptyJetBrainsConsentProvider"/>
     <statistics.validation.customValidationRule

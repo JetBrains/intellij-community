@@ -55,23 +55,8 @@ import static java.util.concurrent.TimeUnit.NANOSECONDS;
 final class RefreshWorker {
   private static final Logger LOG = Logger.getInstance(RefreshWorker.class);
 
-  // Android Studio: Enable ASwB override this setting to conduct experiments.
   private static final int ourParallelism =
-    Optional.ofNullable(System.getProperty("vfs.refresh.worker.parallelism.unrestricted"))
-      .flatMap(RefreshWorker::tryParseInt)
-      .orElseGet(() ->
-                   MathUtil.clamp(Registry.intValue("vfs.refresh.worker.parallelism", 6), 1, Runtime.getRuntime().availableProcessors())
-      );
-
-  private static Optional<Integer> tryParseInt(String s) {
-    try {
-      return Optional.of(Integer.parseInt(s));
-    }
-    catch (NumberFormatException e) {
-      return Optional.empty();
-    }
-  }
-
+    MathUtil.clamp(Registry.intValue("vfs.refresh.worker.parallelism", 6), 1, Runtime.getRuntime().availableProcessors());
   private static final Executor ourExecutor = ExecutorsKt.asExecutor(
     Dispatchers.getIO().limitedParallelism(ourParallelism, "RefreshWorkerDispatcher")
   );

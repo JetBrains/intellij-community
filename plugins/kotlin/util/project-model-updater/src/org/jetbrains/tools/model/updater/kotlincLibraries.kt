@@ -162,12 +162,7 @@ private fun JpsLibrary.convertMavenUrlToCooperativeIfNeeded(artifactsMode: Artif
     fun convertUrl(url: JpsUrl): JpsUrl {
         return when (url.path) {
             is JpsPath.ProjectDir -> url
-            /* Android Studio (b/262609124): the relative path to our Kotlin fork differs from upstream.
             is JpsPath.MavenRepository -> JpsUrl.Jar(JpsPath.ProjectDir("../build/repo/${url.path.relativePath}", isCommunity))
-            */
-            is JpsPath.MavenRepository -> {
-                JpsUrl.Jar(JpsPath.ProjectDir("../../external/jetbrains/kotlin/build/repo/${url.path.relativePath}", isCommunity))
-            }
         }
     }
 

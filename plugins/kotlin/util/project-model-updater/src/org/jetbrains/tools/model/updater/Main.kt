@@ -46,10 +46,7 @@ fun main(args: Array<String>) {
         it.resolve(".idea").isDirectory && !it.resolve("community").isDirectory && it.name != "project-model-updater"
     }.normalize()
 
-    /* Android Studio (b/262609124): we need monorepoRoot to be null because we do not have IJ Ultimate sources.
     val monorepoRoot = communityRoot.resolve("..").takeIf { it.resolve(".idea").isDirectory }?.normalize()
-    */
-    val monorepoRoot: File? = null
 
     val resolverSettings = readJpsResolverSettings(communityRoot, monorepoRoot)
 
