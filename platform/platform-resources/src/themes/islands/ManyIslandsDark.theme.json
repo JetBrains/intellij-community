@@ -280,6 +280,11 @@
       "foreground": "#000000"
     },
 
+    "RunWidget" : {
+      "hoverBackground": "#00000019",
+      "pressedBackground": "#00000028"
+    },
+
     "Shortcut.borderColor": "Gray6",
     "Tag.background": "BackgroundLightest",
     "List.Tag.background": "Gray3",
