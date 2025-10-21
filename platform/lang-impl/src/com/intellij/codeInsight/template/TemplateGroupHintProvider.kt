@@ -6,11 +6,11 @@ import com.intellij.openapi.extensions.ExtensionPointName
 import org.jetbrains.annotations.ApiStatus
 
 /**
- * Returns an arbitrary hint and its weight for a template group which is displayed
+ * Returns an arbitrary hint for a template group which is displayed
  * as gray text near its name in the settings window.
  *
  * If there are multiple implementations loaded, their hints will
- * be sorted by weight, then lexicographically and then joined with `; `.
+ * be sorted lexicographically and joined with `; `.
  */
 @ApiStatus.Internal
 @ApiStatus.OverrideOnly
