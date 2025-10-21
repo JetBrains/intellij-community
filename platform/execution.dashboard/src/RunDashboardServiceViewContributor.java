@@ -20,6 +20,7 @@ import com.intellij.ide.util.treeView.AbstractTreeNode;
 import com.intellij.ide.util.treeView.WeighedItem;
 import com.intellij.navigation.ItemPresentation;
 import com.intellij.openapi.actionSystem.*;
+import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.NlsSafe;
 import com.intellij.platform.execution.dashboard.actions.RunDashboardDoubleClickRunAction;
@@ -437,7 +438,11 @@ public final class RunDashboardServiceViewContributor
     @Override
     public @Nullable Runnable getRemover() {
       Object value = ((RunDashboardGroupImpl<?>)myGroup).getValue();
-      ConfigurationType type = ConfigurationTypeUtil.findConfigurationType(value.toString());
+      if (!(value instanceof String configurationTypeId)) {
+        Logger.getInstance(RunDashboardGroupViewDescriptor.class).debug("Unexpected group value class: " + value + " (" + value.getClass() + ")");
+        return null;
+      }
+      ConfigurationType type = ConfigurationTypeUtil.findConfigurationType(configurationTypeId);
       if (type != null) {
         return () -> {
           RunDashboardManager runDashboardManager = RunDashboardManagerProxy.getInstance(myNode.getProject());
