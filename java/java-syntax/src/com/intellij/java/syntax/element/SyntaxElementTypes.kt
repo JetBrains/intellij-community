@@ -9,7 +9,7 @@ import com.intellij.java.syntax.element.JavaSyntaxTokenType as JToken
 
 object SyntaxElementTypes {
   val JAVA_PLAIN_COMMENT_BIT_SET: SyntaxElementTypeSet = syntaxElementTypeSetOf(JToken.END_OF_LINE_COMMENT, JToken.C_STYLE_COMMENT)
-  val JAVA_COMMENT_BIT_SET: SyntaxElementTypeSet = JAVA_PLAIN_COMMENT_BIT_SET + JavaDocSyntaxElementType.DOC_COMMENT
+  val JAVA_COMMENT_BIT_SET: SyntaxElementTypeSet = JAVA_PLAIN_COMMENT_BIT_SET + JavaDocSyntaxElementType.DOC_COMMENT + JavaDocSyntaxElementType.DOC_MARKDOWN_COMMENT
   val JAVA_COMMENT_OR_WHITESPACE_BIT_SET: SyntaxElementTypeSet = JAVA_COMMENT_BIT_SET + WHITE_SPACE
 
   val KEYWORD_BIT_SET: SyntaxElementTypeSet = syntaxElementTypeSetOf(

@@ -61,13 +61,13 @@ public interface JavaDocElementType {
 
   ILazyParseableElementType DOC_REFERENCE_HOLDER = new BasicJavaDocElementType.DocReferenceHolderElementType();
   ILazyParseableElementType DOC_TYPE_HOLDER = new BasicJavaDocElementType.DocTypeHolderElementType();
-  ILazyParseableElementType DOC_COMMENT = new BasicJavaDocElementType.DocCommentElementType() {
+  ILazyParseableElementType DOC_COMMENT = new BasicJavaDocElementType.DocCommentElementType("DOC_COMMENT") {
     @Override
     public ASTNode createNode(final CharSequence text) {
       return new PsiDocCommentImpl(text);
     }
   };
-  ILazyParseableElementType DOC_MARKDOWN_COMMENT = new BasicJavaDocElementType.DocCommentElementType() {
+  ILazyParseableElementType DOC_MARKDOWN_COMMENT = new BasicJavaDocElementType.DocCommentElementType("DOC_MARKDOWN_COMMENT") {
     @Override
     public ASTNode createNode(final CharSequence text) {
       return new PsiDocCommentImpl(text, true);
