@@ -1579,7 +1579,7 @@ public final class ListPluginComponent extends JPanel {
     }
 
     public void setProgressComponent(@NotNull JComponent progressComponent) {
-      assert myProgressComponent == null;
+      if (myProgressComponent != null) return;
       myProgressComponent = progressComponent;
       add(progressComponent);
 
